@@ -35,16 +35,35 @@ FetchContent_MakeAvailable(td)
 # Turn on standard Qt project layout (optional but handy)
 qt_standard_project_setup()
 
-# Our executable and its sources
-add_executable(${PROJECT_NAME}
-    src/main.cpp
-    src/MainWindow.h
-    src/MainWindow.cpp
-    src/MainWindow.ui
+# === Utils Library ===
+set(UTILS_SOURCES 
+    "src/utils/SettingsManager.h"
+    "src/utils/SettingsManager.cpp"
+    "src/utils/Constants.h"
+    "src/utils/Constants.cpp"
+    # Add .cpp files here when you create them
 )
+if(UTILS_SOURCES)
+    add_library(FinchGramUtils STATIC ${UTILS_SOURCES})
+    target_link_libraries(FinchGramUtils PRIVATE Qt6::Widgets)
+endif()
+
+# === Main Executable ===
+set(MAIN_SOURCES 
+    "src/main.cpp"
+    "src/MainWindow.cpp" 
+    "src/MainWindow.h"
+    "src/MainWindow.ui"
+)
+add_executable(${PROJECT_NAME} ${MAIN_SOURCES})
 
 # Link against Qt Widgets and TDLib
 target_link_libraries(${PROJECT_NAME} PRIVATE 
     Qt6::Widgets
     Td::TdStatic
 )
+
+# Link against Utils if the target exists
+if(TARGET FinchGramUtils)
+    target_link_libraries(${PROJECT_NAME} PRIVATE FinchGramUtils)
+endif()

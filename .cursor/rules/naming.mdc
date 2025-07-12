@@ -1,0 +1,105 @@
+---
+alwaysApply: true
+---
+
+# Cursor Rules for Setutu Qt Project
+
+## Naming Conventions
+
+### Static Instance Variables
+
+- NEVER use generic names like `s_instance`, `m_instance`, `instance_`, `inst`, or `_instance`
+- ALWAYS use descriptive names that clearly indicate the class purpose
+- Examples:
+  - ✅ `settingsManagerInstance` for SettingsManager singleton
+  - ✅ `deviceRegistrationInstance` for DeviceRegistration singleton
+  - ✅ `apiClientInstance` for ApiClient singleton
+  - ❌ `s_instance`, `m_instance`, `instance_`
+
+### Variable Naming Rules
+
+- Use descriptive, self-documenting names
+- Avoid abbreviations unless they are well-known (e.g., `url`, `api`, `uuid`)
+- Use camelCase for variables and methods
+- Use PascalCase for classes and enums
+
+### Static Member Variables
+
+- Static singleton instances should follow pattern: `{className}Instance`
+- Static configuration variables should be descriptive: `defaultApiBaseUrl` not `default_url`
+- Avoid prefixes like `s_`, `m_`, `g_` unless absolutely necessary for disambiguation
+
+### Settings Keys
+
+- Use enum classes for settings keys to prevent typos
+- Enum values should be descriptive: `ApiBaseUrl` not `Api_Url` or `URL`
+
+### Method Naming
+
+- Methods should clearly describe their action
+- Getters: `getApiBaseUrl()` not `getUrl()`
+- Setters: `updateApiBaseUrl()` not `setUrl()`
+- Boolean methods: `isFirstLaunch()` not `firstLaunch()`
+
+## Code Quality Rules
+
+### Settings Management
+
+- ALWAYS use SettingsManager singleton for configuration
+- NEVER hardcode URLs, paths, or configuration values
+- Use enum-based keys for type safety
+
+### Singleton Pattern
+
+- Use descriptive instance variable names
+- Singletons use lazy initialization through `instance()` method
+- Singletons are always available (no null checks needed)
+
+### Dependencies
+
+- Prefer dependency injection over tight coupling
+- Access shared resources through well-defined interfaces
+- Avoid circular dependencies between classes
+
+## Examples
+
+### Good Naming
+
+```cpp
+// Static instances
+static SettingsManager *settingsManagerInstance;
+static NetworkManager *networkManagerInstance;
+
+// Methods
+QString getApiBaseUrl() const;
+void updateConnectionTimeout(int seconds);
+bool isNetworkAvailable() const;
+
+// Variables
+QString deviceUuidFromSettings;
+QNetworkAccessManager *httpClient;
+```
+
+### Bad Naming
+
+```cpp
+// Static instances - AVOID
+static SettingsManager *s_instance;
+static NetworkManager *m_inst;
+
+// Methods - AVOID
+QString getUrl();
+void setTimeout(int t);
+bool connected();
+
+// Variables - AVOID
+QString uuid;
+QNetworkAccessManager *mgr;
+```
+
+## Enforcement
+
+- When creating singleton classes, suggest descriptive instance names
+- When hardcoding values, suggest moving to SettingsManager
+- When using cryptic abbreviations, suggest full descriptive names
+- Always prioritize code readability over brevity
