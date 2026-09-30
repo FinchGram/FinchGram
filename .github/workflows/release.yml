@@ -1,0 +1,133 @@
+name: release
+
+# Every push to main builds the app on a clean Apple-silicon runner and keeps the result as an
+# artifact for a week. That also keeps the Rust build cache warm: GitHub only shares caches from
+# the default branch, so a build triggered by a tag alone would always start cold.
+# When the pushed commit carries a v<version> tag (made by scripts/release.sh), the build is also
+# published as a release of this repository, from which installed copies of the app update
+# themselves (src/update.rs). Nothing is ever built on a developer machine.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false # a release build must never be cancelled by the next push
+
+env:
+  APP_NAME: FinchGram
+
+jobs:
+  macos-arm64:
+    runs-on: macos-latest # Apple silicon
+    permissions:
+      contents: write # gh release create needs it; the default token is read-only
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Version and tag
+        id: meta
+        run: |
+          git fetch --force --tags --quiet origin
+          TAG="$(git tag --points-at HEAD | grep '^v[0-9]' | head -1 || true)"
+          VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
+          if [ -n "$TAG" ] && [ "$TAG" != "v$VERSION" ]; then
+            echo "::error::tag $TAG does not match the version in Cargo.toml ($VERSION)"
+            exit 1
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "zip=FinchGram-$VERSION-macos-arm64.zip" >> "$GITHUB_OUTPUT" # the name the app looks for
+          echo "version $VERSION, tag ${TAG:-none}"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: finchgram-tdlib, pinned, from this repository's tdlib-* release
+        run: scripts/fetch-tdlib.sh
+
+      # FinchGram's own api_id and api_hash from my.telegram.org, compiled into the app. They exist
+      # only as secrets of this repository (docs/conventions.md, Telegram API credentials).
+      - name: Build and bundle
+        env:
+          FINCHGRAM_API_ID: ${{ secrets.FINCHGRAM_API_ID }}
+          FINCHGRAM_API_HASH: ${{ secrets.FINCHGRAM_API_HASH }}
+        run: |
+          if [ -z "$FINCHGRAM_API_ID" ] || [ -z "$FINCHGRAM_API_HASH" ]; then
+            echo "::error::secrets FINCHGRAM_API_ID and FINCHGRAM_API_HASH are missing (docs/conventions.md)"
+            exit 1
+          fi
+          scripts/bundle.sh
+
+      - name: Archive
+        env:
+          ZIP: ${{ steps.meta.outputs.zip }}
+        run: |
+          ditto -c -k --keepParent "dist/$APP_NAME.app" "dist/$ZIP"
+          (cd dist && shasum -a 256 "$ZIP" > SHA256SUMS)
+
+      # Ed25519 signature of SHA256SUMS; the app only installs releases it can verify with the
+      # public key in release-signing.pub (src/bin/finchgram-release-sign.rs).
+      - name: Sign
+        env:
+          RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
+        run: |
+          if [ -z "$RELEASE_SIGNING_KEY" ]; then
+            echo "::error::secret RELEASE_SIGNING_KEY is missing (docs/conventions.md, Release first)"
+            exit 1
+          fi
+          cargo run --release --quiet --bin finchgram-release-sign -- sign dist/SHA256SUMS
+          cargo run --release --quiet --bin finchgram-release-sign -- verify dist/SHA256SUMS release-signing.pub
+          ls -la dist
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: finchgram-${{ steps.meta.outputs.version }}-macos-arm64
+          path: |
+            dist/*.zip
+            dist/SHA256SUMS
+            dist/SHA256SUMS.sig
+          retention-days: 7
+
+      # ---- the rest only for a tagged commit ------------------------------------------------
+
+      - name: Release notes
+        if: steps.meta.outputs.tag != ''
+        env:
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          ZIP: ${{ steps.meta.outputs.zip }}
+        run: |
+          # The tag message holds the notes (scripts/release.sh). The app shows only what comes
+          # before the first "---" line (src/update.rs); the footer below is for the release page.
+          git tag -l --format='%(contents)' "$TAG" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > notes.md
+          [ -s notes.md ] || echo "$APP_NAME $VERSION." > notes.md
+          cat >> notes.md <<NOTES
+
+          ---
+          **This release contains** \`$ZIP\` (the app, with finchgram-tdlib inside), \`SHA256SUMS\` and \`SHA256SUMS.sig\` (its Ed25519 signature, which the app checks before installing). The "Source code" archives below are this repository at \`$TAG\`.
+
+          **这个版本包含**：\`$ZIP\`（app 本体，内含 finchgram-tdlib）、\`SHA256SUMS\` 和 \`SHA256SUMS.sig\`（它的 Ed25519 签名，app 安装前会校验）。下面的 "Source code" 压缩包就是本仓库在 \`$TAG\` 时的源码。
+          NOTES
+          cat notes.md
+
+      # --latest: installed copies look for the latest release (src/update.rs); tdlib-* releases
+      # are published with --latest=false and never take its place.
+      - name: Publish
+        if: steps.meta.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
+          VERSION: ${{ steps.meta.outputs.version }}
+          ZIP: ${{ steps.meta.outputs.zip }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "::error::release $TAG already exists"
+            exit 1
+          fi
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --latest --title "$APP_NAME $VERSION" \
+            --notes-file notes.md "dist/$ZIP" dist/SHA256SUMS dist/SHA256SUMS.sig
+          echo "released **$TAG**: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"

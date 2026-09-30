@@ -12,7 +12,7 @@ set -euo pipefail
 REPO="FinchGram/FinchGram"                        # this repository on GitHub
 RELEASE="tdlib-1.8.67-1"                          # release tag
 ASSET="finchgram-tdlib-1.8.67-macos-arm64.tar.gz" # asset name in that release
-SHA256="PENDING"                                  # from the release's SHA256SUMS
+SHA256="9cf74e246dabc924f29744858f95926a39e2c22ae40f869b649e8061346d0bd2" # from the release's SHA256SUMS
 # -----------------------------------------------------------------------------------
 
 URL="https://github.com/$REPO/releases/download/$RELEASE/$ASSET"
