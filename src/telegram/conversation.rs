@@ -86,6 +86,7 @@ pub fn connect(ui: &MainWindow) {
             mark_read(chat_id);
         }
     });
+    conversation.on_open_link(|url| open_link(&url));
     conversation.on_load_picture(|id| {
         if let Ok(id) = id.parse() {
             load_picture(id);
@@ -463,9 +464,64 @@ pub fn mark_read(chat_id: i64) {
     }
 }
 
+/// A link in a message or in its preview: a chat FinchGram opens itself (by its username, from an
+/// @mention or t.me; a user), else the browser or the mail app.
+fn open_link(url: &str) {
+    let open_answer = |what: &'static str| {
+        move |answer: Result<serde_json::Value, Error>| match answer {
+            Ok(chat) => {
+                if let Some(chat_id) = chat["id"].as_i64() {
+                    open(chat_id);
+                }
+            }
+            Err(err) => log_error(what, Err(err)),
+        }
+    };
+    if let Some(username) = public_username(url) {
+        send(json!({ "@type": "searchPublicChat", "username": username }), open_answer("open a chat by its username"));
+    } else if let Some(user_id) = url.strip_prefix("tg://user?id=").and_then(|id| id.parse::<i64>().ok()) {
+        send(json!({ "@type": "createPrivateChat", "user_id": user_id, "force": false }), open_answer("open a chat with a user"));
+    } else {
+        crate::platform::open_link(url);
+    }
+}
+
+/// The username a link names: tg://resolve?domain=name, or t.me/name (a post's link, t.me/name/12,
+/// names its channel). Other t.me links (invitations, sticker sets, …) are for the browser.
+fn public_username(url: &str) -> Option<&str> {
+    let name = if let Some(query) = url.strip_prefix("tg://resolve?domain=") {
+        query.split('&').next()?
+    } else {
+        let path = ["https://t.me/", "http://t.me/", "https://telegram.me/", "http://telegram.me/"]
+            .iter()
+            .find_map(|site| url.strip_prefix(site))?;
+        path.split(['/', '?', '#']).next()?
+    };
+    const NOT_NAMES: [&str; 12] = ["joinchat", "addstickers", "addemoji", "addlist", "share", "proxy", "socks", "iv", "login", "c", "s", "m"];
+    let valid = name.len() >= 4
+        && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+        && !NOT_NAMES.contains(&name.to_ascii_lowercase().as_str());
+    valid.then_some(name)
+}
+
 fn log_error(what: &str, answer: Result<serde_json::Value, Error>) {
     match answer {
         Ok(_) | Err(Error::Stopped) => {}
         Err(err) => eprintln!("telegram: cannot {what}: {err}"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn links_that_name_a_chat() {
+        assert_eq!(public_username("tg://resolve?domain=finchgram&start=hi"), Some("finchgram"));
+        assert_eq!(public_username("https://t.me/finchgram"), Some("finchgram"));
+        assert_eq!(public_username("https://t.me/durov/123"), Some("durov"));
+        assert_eq!(public_username("https://t.me/joinchat/AbCdEf"), None);
+        assert_eq!(public_username("https://t.me/+AbCdEf"), None);
+        assert_eq!(public_username("https://example.org/finchgram"), None);
     }
 }

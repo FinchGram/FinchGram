@@ -94,6 +94,7 @@ src/
     password.rs          #   two-step verification in Settings
     files.rs             #   downloading files
     viewer.rs            #   the media viewer: photos, videos, saving to Downloads
+    rich_text.rs         #   formatted text: bold, italic, links, …
   platform/              # what differs from one operating system to another
   player/                # video through libmpv, drawn into the window with OpenGL
   update.rs              # the self-updater: GitHub Releases, signature check, swap, relaunch

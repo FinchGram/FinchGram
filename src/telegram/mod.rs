@@ -24,6 +24,7 @@ mod files;
 mod login;
 mod password;
 mod process;
+mod rich_text;
 mod store;
 mod time;
 mod viewer;
@@ -231,7 +232,7 @@ fn deliver(run: u64, batch: Vec<Output>) {
                     on_answer(result);
                 }
             }
-            Output::Update(update) => on_update(update),
+            Output::Update(update) => on_update(*update),
             Output::Ended => on_ended(),
         }
     }

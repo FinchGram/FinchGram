@@ -99,6 +99,7 @@ src/
     password.rs          #   a verificação em duas etapas nas Configurações
     files.rs             #   o download de arquivos
     viewer.rs            #   o visualizador: fotos, vídeos, salvar em Downloads
+    rich_text.rs         #   texto formatado: negrito, itálico, links…
   platform/              # o que muda de um sistema operacional para outro
   player/                # o vídeo com a libmpv, desenhado na janela com OpenGL
   update.rs              # a atualização automática: GitHub Releases, assinatura, troca, reinício

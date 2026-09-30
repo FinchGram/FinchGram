@@ -101,6 +101,7 @@ src/
     password.rs          #   la validation en deux étapes dans les réglages
     files.rs             #   le téléchargement des fichiers
     viewer.rs            #   la visionneuse : photos, vidéos, enregistrer dans Téléchargements
+    rich_text.rs         #   texte mis en forme : gras, italique, liens…
   platform/              # ce qui change d'un système d'exploitation à l'autre
   player/                # la vidéo avec libmpv, dessinée dans la fenêtre par OpenGL
   update.rs              # la mise à jour automatique : GitHub Releases, signature, remplacement, relance

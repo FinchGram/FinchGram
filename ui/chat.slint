@@ -281,3 +281,12 @@ export component StickerPicture {
         image-fit: contain;
     }
 }
+
+// A message's words with their formatting and links (MessageRow.rich-text); a link opens as
+// Conversation.open-link says. Slint's StyledText has no line spacing of its own yet, so messages
+// without formatting stay plain text in the design's spacing.
+export component RichText inherits StyledText {
+    link-clicked(url) => {
+        Conversation.open-link(url);
+    }
+}

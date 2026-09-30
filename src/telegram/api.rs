@@ -560,6 +560,79 @@ pub enum MessageSendingState {
 #[derive(Debug, Clone, Default, PartialEq, Deserialize)]
 pub struct FormattedText {
     pub text: String,
+    /// Which parts of the text are bold, links and so on. Offsets and lengths count UTF-16 code
+    /// units.
+    #[serde(default)]
+    pub entities: Vec<TextEntity>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct TextEntity {
+    pub offset: i32,
+    pub length: i32,
+    #[serde(rename = "type")]
+    pub kind: TextEntityType,
+}
+
+/// What an entity makes of its part of the text. What FinchGram shows as plain text is `Other`:
+/// hashtags, bot commands, phone numbers, spoilers (for now), custom emoji (their emoji is in the
+/// text), and so on.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum TextEntityType {
+    #[serde(rename = "textEntityTypeBold")]
+    Bold,
+    #[serde(rename = "textEntityTypeItalic")]
+    Italic,
+    #[serde(rename = "textEntityTypeUnderline")]
+    Underline,
+    #[serde(rename = "textEntityTypeStrikethrough")]
+    Strikethrough,
+    #[serde(rename = "textEntityTypeCode")]
+    Code,
+    #[serde(rename = "textEntityTypePre")]
+    Pre,
+    #[serde(rename = "textEntityTypePreCode")]
+    PreCode {},
+    #[serde(rename = "textEntityTypeBlockQuote")]
+    BlockQuote,
+    #[serde(rename = "textEntityTypeExpandableBlockQuote")]
+    ExpandableBlockQuote,
+    /// A web address as written in the text.
+    #[serde(rename = "textEntityTypeUrl")]
+    Url,
+    /// Words that link to `url`.
+    #[serde(rename = "textEntityTypeTextUrl")]
+    TextUrl { url: String },
+    #[serde(rename = "textEntityTypeEmailAddress")]
+    EmailAddress,
+    /// @username.
+    #[serde(rename = "textEntityTypeMention")]
+    Mention,
+    /// A user's name, for a user without a username.
+    #[serde(rename = "textEntityTypeMentionName")]
+    MentionName { user_id: i64 },
+    #[serde(other)]
+    Other,
+}
+
+/// A link's preview, made by Telegram's servers (FinchGram never fetches the page itself).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct LinkPreview {
+    pub url: String,
+    #[serde(default)]
+    pub display_url: String,
+    #[serde(default)]
+    pub site_name: String,
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub description: FormattedText,
+    #[serde(default)]
+    pub author: String,
+    /// Not 0: Telegram has the page in its reading mode (Instant View).
+    #[serde(default)]
+    pub instant_view_version: i32,
 }
 
 /// What a message holds. Kinds FinchGram does not show yet are `Other`.
@@ -567,7 +640,11 @@ pub struct FormattedText {
 #[serde(tag = "@type")]
 pub enum MessageContent {
     #[serde(rename = "messageText")]
-    Text { text: FormattedText },
+    Text {
+        text: FormattedText,
+        #[serde(default)]
+        link_preview: Option<LinkPreview>,
+    },
     #[serde(rename = "messagePhoto")]
     Photo { photo: Photo, caption: FormattedText },
     #[serde(rename = "messageVideo")]
@@ -921,7 +998,7 @@ mod tests {
             message,
             MessageContent::Photo {
                 photo: Photo { minithumbnail: None, sizes: Vec::new() },
-                caption: FormattedText { text: "the view".into() },
+                caption: FormattedText { text: "the view".into(), entities: Vec::new() },
             }
         );
     }

@@ -1,10 +1,10 @@
 // Workbench's main area: the tabs of the open chats, and the chat in front — its header, the
 // messages as rows (a letter, the sender and time, the text), and where to write.
 import { AppState } from "../state.slint";
-import { Conversation, MessageRow, RowKind, ChatKind, Content, Account, Viewer } from "../telegram.slint";
+import { Conversation, MessageRow, RowKind, ChatKind, Content, Account, Viewer, LinkPreview } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Paragraph } from "../widgets.slint";
-import { ChatScroll, ChatIcons, MessageInput, Capped, MediaTiles, StickerPicture } from "../chat.slint";
+import { ChatScroll, ChatIcons, MessageInput, Capped, MediaTiles, StickerPicture, RichText } from "../chat.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 
 component TabItem inherits Rectangle {
@@ -315,6 +315,85 @@ component DayRule {
 }
 
 // A message in a chat: letter, sender, time, its photos and videos, words.
+// A link's preview under a message, as the design's card: the site, the page's title, a line about
+// it, and Instant View when Telegram has the page in its reading mode (greyed: not in FinchGram
+// yet). A click opens the link.
+component PreviewCard inherits Rectangle {
+    in property <LinkPreview> preview;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: P.line;
+    background: touch.has-hover ? P.side : transparent;
+    height: card.preferred-height;
+
+    card := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        spacing: 12px;
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            Text {
+                text: root.preview.site;
+                color: P.faint;
+                font-size: 11px;
+                overflow: elide;
+            }
+            Text {
+                text: root.preview.title;
+                color: P.text;
+                font-size: 14px;
+                font-weight: 600;
+                overflow: elide;
+            }
+            if root.preview.about != "": Text {
+                text: root.preview.about;
+                color: P.muted;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        if root.preview.instant-view: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: pill.preferred-width + 20px;
+                height: pill.preferred-height + 8px;
+                border-radius: 12px;
+                background: P.accent-soft;
+                opacity: 0.5;
+                pill := HorizontalLayout {
+                    alignment: center;
+                    spacing: 4px;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "lightning";
+                            size: 12px;
+                            color: P.accent-ink;
+                        }
+                    }
+                    Text {
+                        text: @tr("Instant View");
+                        color: P.accent-ink;
+                        font-size: 12px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Conversation.open-link(root.preview.url);
+        }
+    }
+}
+
 component MessageLine {
     in property <MessageRow> message;
     property <bool> has-media: message.media.length > 0;
@@ -387,11 +466,25 @@ component MessageLine {
                     sticker: root.message.sticker;
                 }
             }
-            if !root.has-sticker && (!root.has-media || root.message.text != ""): Paragraph {
+            if root.message.rich && !root.has-sticker: RichText {
+                text: root.message.rich-text;
+                default-color: P.text;
+                default-font-size: 14px;
+                link-color: P.accent-ink;
+            }
+            if !root.message.rich && !root.has-sticker && (!root.has-media || root.message.text != ""): Paragraph {
                 text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
                 color: root.has-media || root.message.content == Content.text ? P.text : P.muted;
                 font-size: 14px;
                 line-height-factor: P.leading(1.55);
+            }
+            if root.message.preview.url != "": HorizontalLayout {
+                alignment: start;
+                padding-top: 4px;
+                PreviewCard {
+                    preview: root.message.preview;
+                    max-width: 460px;
+                }
             }
             if root.message.failed: HorizontalLayout {
                 alignment: start;
@@ -449,11 +542,20 @@ component PostLine inherits Capped {
             sticker: root.message.sticker;
         }
     }
-    if !root.has-sticker && (!root.has-media || root.message.text != ""): Paragraph {
+    if root.message.rich && !root.has-sticker: RichText {
+        text: root.message.rich-text;
+        default-color: P.text;
+        default-font-size: 14px;
+        link-color: P.accent-ink;
+    }
+    if !root.message.rich && !root.has-sticker && (!root.has-media || root.message.text != ""): Paragraph {
         text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
         color: P.text;
         font-size: 14px;
         line-height-factor: P.leading(1.7);
+    }
+    if root.message.preview.url != "": PreviewCard {
+        preview: root.message.preview;
     }
     Text {
         text: root.message.edited ? root.message.time + " · " + @tr("edited") : root.message.time;

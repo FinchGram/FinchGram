@@ -87,6 +87,7 @@ src/
     password.rs          #   设置里的两步验证
     files.rs             #   下载文件
     viewer.rs            #   媒体查看器：照片、视频、保存到“下载”
+    rich_text.rs         #   带格式的文字：粗体、斜体、链接……
   platform/              # 随操作系统而不同的部分
   player/                # 用 libmpv 播放视频，经 OpenGL 画进窗口
   update.rs              # 自动更新：GitHub Releases、校验签名、替换、重启

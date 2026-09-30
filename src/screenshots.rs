@@ -353,7 +353,15 @@ fn open_keyboards(ui: &MainWindow) {
     conversation.set_can_write(true);
     conversation.set_messages(model(vec![
         day_row(Day::Today),
-        message("1", "Mi", "09:12", "Morning! This week's group-buy keycaps arrived; the delivery list is in the pinned post."),
+        // Formatting and a link.
+        MessageRow {
+            rich: true,
+            rich_text: slint::StyledText::from_markdown(
+                "Morning! This week's **group-buy keycaps** arrived; the [delivery list](https://geekhack.org/topic/12045) is in the pinned post.",
+            )
+            .expect("Markdown"),
+            ..message("1", "Mi", "09:12", "Morning! This week's group-buy keycaps arrived; the delivery list is in the pinned post.")
+        },
         message("2", "Jie", "10:30", "I'm lubing my 65% today, photos later."),
         message("3", "Zhou Ye", "10:31", "Nice, @ me when it's done."),
         MessageRow { content: Content::Sticker, detail: "👍".into(), sticker: sticker(), ..message("3a", "Zhou Ye", "10:31", "") },
@@ -364,7 +372,22 @@ fn open_keyboards(ui: &MainWindow) {
             media: model(album()),
             ..message("6", "Jie", "14:19", "The lubed switch comparison is in the group album, have a look.")
         },
-        message("7", "Jie", "14:20", "@Zhou Ye do you still sell the dark keycaps?"),
+        // A mention, a link and its preview.
+        MessageRow {
+            rich: true,
+            rich_text: slint::StyledText::from_markdown(
+                "[@Zhou Ye](tg://resolve?domain=zhouye) do you still sell the dark keycaps? The thread: [geekhack.org/topic/12045](https://geekhack.org/topic/12045)",
+            )
+            .expect("Markdown"),
+            preview: LinkPreview {
+                url: "https://geekhack.org/topic/12045".into(),
+                site: "geekhack".into(),
+                title: "[GB] Dark keycaps: the delivery list".into(),
+                about: "Posted by Mi · 42 replies".into(),
+                instant_view: false,
+            },
+            ..message("7", "Jie", "14:20", "@Zhou Ye do you still sell the dark keycaps?")
+        },
     ]));
 }
 
@@ -380,7 +403,17 @@ fn open_news(ui: &MainWindow) {
     let post = |id: &str, time: &str, text: &str| MessageRow { sender: "Tech Morning".into(), ..message(id, "Tech Morning", time, text) };
     conversation.set_messages(model(vec![
         day_row(Day::Today),
-        post("1", "07:00", "New chip export rules take effect\n\nApprovals for advanced equipment are now split into three tiers by type and end use, with a clear upper limit on how long a review may take. Most orders already in transit are unaffected."),
+        // The design's post with an article in Instant View.
+        MessageRow {
+            preview: LinkPreview {
+                url: "https://techmorning.example/2026/09/28/chip-rules".into(),
+                site: "Tech Morning".into(),
+                title: "The new chip export rules in full: which equipment is affected".into(),
+                about: "Tech Morning desk · Sep 28 · 4 min read".into(),
+                instant_view: true,
+            },
+            ..post("1", "07:00", "New chip export rules take effect\n\nApprovals for advanced equipment are now split into three tiers by type and end use, with a clear upper limit on how long a review may take. Most orders already in transit are unaffected.")
+        },
         MessageRow {
             kind: RowKind::Sponsored,
             sender: "Keyboard Autumn Launch".into(),

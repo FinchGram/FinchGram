@@ -94,6 +94,7 @@ src/
     password.rs          #   설정의 2단계 인증
     files.rs             #   파일 다운로드
     viewer.rs            #   미디어 뷰어: 사진, 동영상, ‘다운로드’에 저장
+    rich_text.rs         #   서식 있는 텍스트: 굵게, 기울임, 링크 등
   platform/              # 운영 체제마다 달라지는 부분
   player/                # libmpv로 동영상 재생. OpenGL로 창에 그림
   update.rs              # 자동 업데이트: GitHub Releases, 서명 확인, 교체, 재시작

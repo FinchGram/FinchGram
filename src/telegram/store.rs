@@ -18,11 +18,12 @@ use super::api::{
     self, ChatList, ChatMemberStatus, ChatType, MessageContent as M, MessageSender, MessageSendingState,
     NotificationSettingsScope, Update, UserStatus, UserType,
 };
+use super::rich_text;
 use super::time;
 use crate::images;
 use crate::{
-    Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, MainWindow, Media, MessageRow, Moment, RowKind,
-    Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
+    Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, LinkPreview, MainWindow, Media, MessageRow, Moment,
+    RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
 };
 
 /// How long someone counts as typing after TDLib last said so.
@@ -612,7 +613,7 @@ impl Store {
     pub fn content(&self, message: &api::Message, names: &Names) -> (Content, String, String) {
         let none = String::new;
         match &message.content {
-            M::Text { text } => (Content::Text, text.text.clone(), none()),
+            M::Text { text, .. } => (Content::Text, text.text.clone(), none()),
             M::AnimatedEmoji { emoji } => (Content::Text, emoji.clone(), none()),
             M::Photo { caption, .. } => (Content::Photo, caption.text.clone(), none()),
             M::Video { caption, .. } => (Content::Video, caption.text.clone(), none()),
@@ -913,6 +914,7 @@ impl Store {
                 duration: picture.duration,
                 name: file_name(&message.content).into(),
             });
+            let rich_text = formatted(&message.content).and_then(rich_text::styled_text);
             let sticker = sticker_picture(&message.content)
                 .map(|picture| Sticker { picture: self.picture_image(&picture), width: picture.width.max(1), height: picture.height.max(1) })
                 .unwrap_or_default();
@@ -925,6 +927,8 @@ impl Store {
                 list.extend(item);
                 if row.text.is_empty() {
                     row.text = text.into();
+                    row.rich = rich_text.is_some();
+                    row.rich_text = rich_text.unwrap_or_default();
                 }
                 continue;
             }
@@ -950,13 +954,16 @@ impl Store {
                 button: SharedString::new(),
                 media: ModelRc::default(),
                 sticker,
+                rich: rich_text.is_some(),
+                rich_text: rich_text.unwrap_or_default(),
+                preview: link_preview(&message.content),
             });
         }
         self.attach_media(&mut rows, media);
         // Telegram's sponsored message, after the newest post of a channel.
         if let Some(sponsored) = self.sponsored.get(&chat.id).and_then(|sponsored| sponsored.first()) {
             let text = match &sponsored.content {
-                M::Text { text } => text.text.clone(),
+                M::Text { text, .. } => text.text.clone(),
                 other => {
                     let message = api::Message {
                         id: 0,
@@ -1109,6 +1116,36 @@ pub fn picture(content: &M) -> Option<Picture<'_>> {
             animation.minithumbnail.as_ref(),
         )),
         _ => None,
+    }
+}
+
+/// A message's own words with their formatting: a text, or the caption of a photo, video, GIF,
+/// audio file, file or voice message.
+fn formatted(content: &M) -> Option<&api::FormattedText> {
+    match content {
+        M::Text { text, .. } => Some(text),
+        M::Photo { caption, .. }
+        | M::Video { caption, .. }
+        | M::Animation { caption, .. }
+        | M::Audio { caption, .. }
+        | M::Document { caption, .. }
+        | M::VoiceNote { caption } => Some(caption),
+        _ => None,
+    }
+}
+
+/// A text's link preview for the card under it: the site (else the address's host), the page's
+/// title (else the address), and a line about it (its author, else its description's first line).
+fn link_preview(content: &M) -> LinkPreview {
+    let M::Text { link_preview: Some(preview), .. } = content else { return LinkPreview::default() };
+    let address = if preview.display_url.is_empty() { preview.url.as_str() } else { preview.display_url.as_str() };
+    let host = address.trim_start_matches("https://").trim_start_matches("http://").split('/').next().unwrap_or_default();
+    LinkPreview {
+        url: preview.url.as_str().into(),
+        site: if preview.site_name.is_empty() { host } else { &preview.site_name }.into(),
+        title: if preview.title.is_empty() { address } else { &preview.title }.into(),
+        about: if preview.author.is_empty() { first_line(&preview.description.text) } else { &preview.author }.into(),
+        instant_view: preview.instant_view_version > 0,
     }
 }
 

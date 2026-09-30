@@ -28,7 +28,8 @@ pub const PROGRAM: &str = "finchgram-tdlib";
 pub enum Output {
     /// The answer to the request with this "@extra": the object TDLib returned, or its error.
     Answer { extra: u64, result: Result<Value, Error> },
-    Update(Update),
+    /// (Boxed: an update is much larger than the rest.)
+    Update(Box<Update>),
     /// Its standard output closed: the program has ended.
     Ended,
 }
@@ -165,7 +166,7 @@ fn parse(line: &str) -> Option<Output> {
     let kind = message.get("@type").and_then(Value::as_str).unwrap_or("?").to_string();
     match serde_json::from_value::<Update>(message) {
         Ok(Update::Other) => None,
-        Ok(update) => Some(Output::Update(update)),
+        Ok(update) => Some(Output::Update(Box::new(update))),
         Err(err) => {
             eprintln!("telegram: cannot read {kind}: {err}");
             None
@@ -201,9 +202,12 @@ mod tests {
 
     #[test]
     fn a_followed_update_is_read_and_its_unknown_fields_ignored() {
-        let Some(Output::Update(Update::AuthorizationState { authorization_state })) = parse(
+        let Some(Output::Update(update)) = parse(
             r#"{"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitPassword","password_hint":"cat","has_recovery_email_address":true,"has_passport_data":false},"@client_id":1}"#,
         ) else {
+            panic!("not an update");
+        };
+        let Update::AuthorizationState { authorization_state } = *update else {
             panic!("not an authorization state");
         };
         assert_eq!(

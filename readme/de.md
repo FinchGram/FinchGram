@@ -99,6 +99,7 @@ src/
     password.rs          #   die zweistufige Bestätigung in den Einstellungen
     files.rs             #   das Herunterladen von Dateien
     viewer.rs            #   der Viewer: Fotos, Videos, in „Downloads“ sichern
+    rich_text.rs         #   formatierter Text: fett, kursiv, Links …
   platform/              # was sich von Betriebssystem zu Betriebssystem unterscheidet
   player/                # Video mit libmpv, per OpenGL ins Fenster gezeichnet
   update.rs              # die Selbstaktualisierung: GitHub Releases, Signatur, Austausch, Neustart

@@ -92,7 +92,7 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 
 - `src/telegram/`：适配层。`process.rs` 负责运行那个程序，`api.rs` 是我们用到的 TDLib 类型，`mod.rs` 负责发请求、
   分发回复、重新启动和转交更新。`store.rs` 保存 TDLib 告诉我们的东西（聊天、用户、群组、文件夹、打开的聊天的消息），
-  每批更新之后把页面用的 model 更新到最新；`login.rs`、`chats.rs`、`conversation.rs`、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`viewer.rs` 给媒体查看器提供内容。
+  每批更新之后把页面用的 model 更新到最新；`login.rs`、`chats.rs`、`conversation.rs`、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`viewer.rs` 给媒体查看器提供内容，`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
 - `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）。
 - `src/platform/`：平台层。目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接；以及 macOS 上
   （设置 → 通用）关闭窗口后留在 Dock 里，即设计稿的“关闭窗口时：最小化到托盘”（点 Dock 图标重新打开窗口，退出时先让

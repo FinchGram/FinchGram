@@ -99,6 +99,7 @@ src/
     password.rs          #   la verificación en dos pasos en Ajustes
     files.rs             #   la descarga de archivos
     viewer.rs            #   el visor: fotos, vídeos, guardar en Descargas
+    rich_text.rs         #   texto con formato: negrita, cursiva, enlaces…
   platform/              # lo que cambia de un sistema operativo a otro
   player/                # el vídeo con libmpv, dibujado en la ventana con OpenGL
   update.rs              # la autoactualización: GitHub Releases, firma, sustitución, reinicio

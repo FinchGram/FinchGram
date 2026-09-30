@@ -94,6 +94,7 @@ src/
     password.rs          #   設定の 2 段階認証
     files.rs             #   ファイルのダウンロード
     viewer.rs            #   メディアビューア：写真、動画、「ダウンロード」への保存
+    rich_text.rs         #   書式付きテキスト：太字、斜体、リンクなど
   platform/              # OS ごとに異なる部分
   player/                # libmpv による動画再生。OpenGL でウィンドウに描画
   update.rs              # 自動アップデート：GitHub Releases、署名の検証、入れ替え、再起動

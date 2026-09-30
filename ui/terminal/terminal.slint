@@ -7,7 +7,7 @@ import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, C
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
-import { ChatScroll, MessageInput } from "../chat.slint";
+import { ChatScroll, MessageInput, RichText } from "../chat.slint";
 import { TerminalPalette as P } from "palette.slint";
 
 export enum TerminalView { chats, channels, bots, rules, scheduled }
@@ -550,7 +550,18 @@ component LogLine {
         }
         VerticalLayout {
             horizontal-stretch: 1;
-            if !root.has-media || root.message.text != "": Paragraph {
+            if root.message.rich: RichText {
+                text: root.message.rich-text;
+                default-color: P.text;
+                default-font-family: P.font;
+                default-font-size: 13px;
+                link-color: P.accent;
+            }
+            if root.message.rich && (root.message.edited || root.message.sending): T {
+                text: (root.message.edited ? @tr("(edited)") : "") + (root.message.sending ? " …" : "");
+                color: P.faint;
+            }
+            if !root.message.rich && (!root.has-media || root.message.text != ""): Paragraph {
                 text: (root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail))
                     + (root.message.edited ? " " + @tr("(edited)") : "")
                     + (root.message.sending ? " …" : "");
@@ -572,6 +583,24 @@ component LogLine {
                     mouse-cursor: pointer;
                     clicked => {
                         Viewer.view(item.id, true);
+                    }
+                }
+            }
+            // A link's preview, as the design's line: "↳ [⚡IV] title · author".
+            if root.message.preview.url != "": Rectangle {
+                height: preview-line.preferred-height;
+                preview-line := T {
+                    x: 0;
+                    width: parent.width;
+                    text: "↳ [" + (root.message.preview.instant-view ? "⚡IV" : "link") + "] " + root.message.preview.title
+                        + " · " + (root.message.preview.about != "" ? root.message.preview.about : root.message.preview.site);
+                    color: P.accent;
+                    overflow: elide;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Conversation.open-link(root.message.preview.url);
                     }
                 }
             }

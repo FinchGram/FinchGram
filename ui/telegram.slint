@@ -120,6 +120,16 @@ export struct Sticker {
     height: int,
 }
 
+// A link's preview, made by Telegram's servers: the site, the page's title and a line about it.
+// Instant View: Telegram has the page in its reading mode (not in FinchGram yet). No url: none.
+export struct LinkPreview {
+    url: string,
+    site: string,
+    title: string,
+    about: string,
+    instant-view: bool,
+}
+
 // One line of the open chat: a message, a service message, the day it starts, or a sponsored
 // message (channels show Telegram's own; they are never hidden).
 export struct MessageRow {
@@ -141,6 +151,9 @@ export struct MessageRow {
     button: string,         // a sponsored message's button
     media: [Media],         // its photos, videos and GIFs: one, or an album's
     sticker: Sticker,
+    rich: bool,             // its words have formatting or links: rich-text shows them
+    rich-text: styled-text,
+    preview: LinkPreview,
 }
 
 
@@ -180,6 +193,9 @@ export global Conversation {
     callback retry(string);                      // a message that failed to send
     callback open-sponsored(string);             // a sponsored message's button
     callback load-picture(string);               // a message with a photo, video or GIF is in view
+    // A link in a message or its preview: the browser, or FinchGram for a chat by its username
+    // (t.me, @mentions) or its user.
+    callback open-link(string);
     callback toggle-mute();
     callback toggle-pin();
     callback mark-read();

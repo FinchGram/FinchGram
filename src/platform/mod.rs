@@ -90,10 +90,11 @@ pub fn select_backend() -> Result<(), slint::PlatformError> {
         .select()
 }
 
-/// Open a web or Telegram link with the system (the browser, or whatever handles tg: links).
+/// Open a web, mail or Telegram link with the system (the browser, the mail app, or whatever
+/// handles tg: links).
 /// Anything else, a file or another kind of link, is refused.
 pub fn open_link(url: &str) {
-    let allowed = ["https://", "http://", "tg://"].iter().any(|scheme| url.starts_with(scheme));
+    let allowed = ["https://", "http://", "tg://", "mailto:"].iter().any(|scheme| url.starts_with(scheme));
     if !allowed {
         eprintln!("platform: not opening {url:?}: only web and Telegram links are opened");
         return;
