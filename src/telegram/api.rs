@@ -113,10 +113,19 @@ pub enum AuthorizationState {
     /// already logged in.
     #[serde(rename = "authorizationStateWaitOtherDeviceConfirmation")]
     WaitOtherDeviceConfirmation { link: String },
+    /// The phone number has no account yet: signing up (registerUser) makes one.
     #[serde(rename = "authorizationStateWaitRegistration")]
     WaitRegistration,
+    /// The account has a two-step verification password. `recovery_email_address_pattern` is
+    /// where a recovery code went, once one was asked for.
     #[serde(rename = "authorizationStateWaitPassword")]
-    WaitPassword { password_hint: String },
+    WaitPassword {
+        password_hint: String,
+        #[serde(default)]
+        has_recovery_email_address: bool,
+        #[serde(default)]
+        recovery_email_address_pattern: String,
+    },
     #[serde(rename = "authorizationStateReady")]
     Ready,
     #[serde(rename = "authorizationStateLoggingOut")]
@@ -161,6 +170,40 @@ pub enum AuthenticationCodeType {
 pub struct EmailAddressAuthenticationCodeInfo {
     pub email_address_pattern: String,
     pub length: i32,
+}
+
+/// The two-step verification password of the account logged in (getPasswordState).
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+pub struct PasswordState {
+    pub has_password: bool,
+    #[serde(default)]
+    pub password_hint: String,
+    pub has_recovery_email_address: bool,
+    /// A new recovery email address waits for the code sent to it.
+    #[serde(default)]
+    pub recovery_email_address_code_info: Option<EmailAddressAuthenticationCodeInfo>,
+    /// When a reset asked for without the password can be completed; 0 when none is pending.
+    #[serde(default)]
+    pub pending_reset_date: i32,
+}
+
+/// The recovery email address, which TDLib only gives for the password (getRecoveryEmailAddress).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct RecoveryEmailAddress {
+    pub recovery_email_address: String,
+}
+
+/// The answer to resetPassword: a password forgotten without a recovery email address is removed
+/// only after a wait.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum ResetPasswordResult {
+    #[serde(rename = "resetPasswordResultOk")]
+    Ok,
+    #[serde(rename = "resetPasswordResultPending")]
+    Pending { pending_reset_date: i32 },
+    #[serde(rename = "resetPasswordResultDeclined")]
+    Declined { retry_date: i32 },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
@@ -688,6 +731,45 @@ mod int64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn waiting_for_a_password_says_whether_it_can_be_recovered() {
+        let state: AuthorizationState = serde_json::from_str(
+            r#"{"@type":"authorizationStateWaitPassword","password_hint":"bird","has_recovery_email_address":true,"has_passport_data":false,"recovery_email_address_pattern":"z**@gmail.com"}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            state,
+            AuthorizationState::WaitPassword {
+                password_hint: "bird".into(),
+                has_recovery_email_address: true,
+                recovery_email_address_pattern: "z**@gmail.com".into(),
+            }
+        );
+        let state: AuthorizationState = serde_json::from_str(
+            r#"{"@type":"authorizationStateWaitRegistration","terms_of_service":{"@type":"termsOfService","text":{"@type":"formattedText","text":"…","entities":[]},"min_user_age":0,"show_popup":false}}"#,
+        )
+        .unwrap();
+        assert_eq!(state, AuthorizationState::WaitRegistration);
+    }
+
+    #[test]
+    fn a_password_state_and_a_reset() {
+        let state: PasswordState = serde_json::from_str(
+            r#"{"@type":"passwordState","has_password":true,"password_hint":"bird","has_recovery_email_address":true,"has_passport_data":false,"recovery_email_address_code_info":{"@type":"emailAddressAuthenticationCodeInfo","email_address_pattern":"n**@example.com","length":6},"login_email_address_pattern":"","pending_reset_date":0}"#,
+        )
+        .unwrap();
+        assert!(state.has_password && state.has_recovery_email_address);
+        assert_eq!(state.recovery_email_address_code_info.map(|info| info.length), Some(6));
+        let state: PasswordState = serde_json::from_str(
+            r#"{"@type":"passwordState","has_password":false,"password_hint":"","has_recovery_email_address":false,"has_passport_data":false,"recovery_email_address_code_info":null,"login_email_address_pattern":"","pending_reset_date":1791387600}"#,
+        )
+        .unwrap();
+        assert_eq!(state.pending_reset_date, 1_791_387_600);
+        let result: ResetPasswordResult =
+            serde_json::from_str(r#"{"@type":"resetPasswordResultPending","pending_reset_date":1791387600}"#).unwrap();
+        assert_eq!(result, ResetPasswordResult::Pending { pending_reset_date: 1_791_387_600 });
+    }
 
     #[test]
     fn int64_values_are_read_from_strings() {

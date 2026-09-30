@@ -8,10 +8,11 @@ Un client de bureau Telegram open source, avec un centre multimédia, écrit en 
 FinchGram utilise l'API Telegram et fait partie de l'écosystème Telegram. C'est un client non officiel,
 qui n'est pas développé par Telegram.
 
-État : débuts. La connexion, la liste des discussions et les discussions avec messages texte
-fonctionnent, dans les trois thèmes de la maquette : Workbench (par défaut), Broadsheet et Terminal,
-qu'on change dans Réglages › Apparence. Viennent ensuite les photos et fichiers, plusieurs comptes,
-les filtres par mots-clés et les messages programmés.
+État : débuts. L'inscription et la connexion, la liste des discussions et les discussions avec messages
+texte fonctionnent, dans les trois thèmes de la maquette : Workbench (par défaut), Broadsheet et
+Terminal, qu'on change dans Réglages › Apparence. La validation en deux étapes se gère dans Réglages ›
+Confidentialité et sécurité. Viennent ensuite les photos et fichiers, plusieurs comptes, les filtres par
+mots-clés et les messages programmés.
 
 L'application est une enveloppe (*shell*). Telegram lui-même est pris en charge par TDLib, la
 bibliothèque officielle de Telegram, qui tourne comme un programme séparé à côté de l'exécutable :
@@ -88,10 +89,11 @@ src/
     api.rs               #   les types TDLib qu'utilise FinchGram (td_api.tl de la version figée)
     mod.rs               #   requêtes et réponses, redémarrage ; les mises à jour vont au store
     store.rs             #   ce que TDLib a dit des discussions, utilisateurs et messages ; les modèles des pages
-    login.rs             #   la connexion
+    login.rs             #   la connexion, l'inscription
     chats.rs             #   la liste des discussions
     conversation.rs      #   la discussion ouverte : messages, écriture
     account.rs           #   le profil, la déconnexion
+    password.rs          #   la validation en deux étapes dans les réglages
   platform/              # ce qui change d'un système d'exploitation à l'autre
   update.rs              # la mise à jour automatique : GitHub Releases, signature, remplacement, relance
   settings.rs            # les préférences de l'utilisateur (settings.toml)

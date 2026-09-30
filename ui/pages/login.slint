@@ -5,7 +5,9 @@ import { ListView } from "std-widgets.slint";
 import { AppState, TelegramState } from "../state.slint";
 import { Login, LoginStep, CodeDelivery, Country } from "../telegram.slint";
 import { Look } from "../look.slint";
-import { Icon, Logo, Spinner, Field, PrimaryButton, Link, Heading, Paragraph } from "../widgets.slint";
+import { Fmt } from "../format.slint";
+import { Icon, Logo, Spinner, Field, PrimaryButton, Link, Avatar, Heading, Paragraph } from "../widgets.slint";
+import { FormHeading, FormError, EmailCodeField, LinkRow, NewPasswordForm } from "password.slint";
 import { PageFrame, SideColumn } from "frame.slint";
 
 export global LoginText {
@@ -32,6 +34,9 @@ export global LoginText {
         }
         if message == "EMAIL_INVALID" {
             return @tr("This email address is not valid.");
+        }
+        if message == "FIRSTNAME_INVALID" {
+            return @tr("Enter your first name");
         }
         if message.starts-with("Too Many Requests") || message.starts-with("FLOOD_WAIT") {
             return @tr("Too many tries. Wait a while, then try again.");
@@ -486,7 +491,7 @@ component CodeStep {
         StepTitle {
             title: @tr("Enter the code");
             hint: Login.delivery == CodeDelivery.telegram ? @tr("Sent to Telegram on {0}", Login.code-phone)
-                : Login.delivery == CodeDelivery.sms ? @tr("Sent by SMS to {0}", Login.code-phone)
+                : Login.delivery == CodeDelivery.sms ? @tr("Code sent by SMS to {0}", Login.code-phone)
                 : Login.delivery == CodeDelivery.call ? @tr("You will get a call at {0}", Login.code-phone)
                 : Login.delivery == CodeDelivery.fragment ? @tr("Sent to your anonymous number on Fragment")
                 : @tr("Sent to {0}", Login.code-phone);
@@ -559,6 +564,234 @@ component PasswordStep {
             busy: Login.busy;
             clicked => {
                 Login.submit-password(password.text);
+            }
+        }
+        Link {
+            text: @tr("Forgot password?");
+            enabled: !Login.busy;
+            clicked => {
+                Login.forgot-password();
+            }
+        }
+        Link {
+            text: @tr("Back");
+            enabled: !Login.busy;
+            clicked => {
+                Login.back();
+            }
+        }
+    }
+}
+
+// A forgotten password: a code sent to the recovery email address, then a new password.
+component RecoveryCodeStep {
+    VerticalLayout {
+        spacing: 22px;
+        FormHeading {
+            title: @tr("Recover via email");
+            description: @tr("A recovery code was sent to {0}. Enter it to set a new password.", Login.recovery-email);
+        }
+        VerticalLayout {
+            spacing: 10px;
+            code := EmailCodeField {
+                enabled: !Login.busy;
+                error: Login.error != "";
+                accepted(value) => {
+                    Login.submit-recovery-code(value);
+                }
+                init => {
+                    self.focus-text();
+                }
+            }
+            if Login.error != "": FormError {
+                message: Login.error;
+            }
+        }
+        PrimaryButton {
+            text: @tr("Next");
+            busy: Login.busy;
+            clicked => {
+                Login.submit-recovery-code(code.text);
+            }
+        }
+        LinkRow {
+            Link {
+                text: @tr("Can't access this email?");
+                enabled: !Login.busy;
+                clicked => {
+                    Login.error = "";
+                    Login.step = LoginStep.reset-account;
+                }
+            }
+            Link {
+                text: @tr("Back");
+                enabled: !Login.busy;
+                clicked => {
+                    Login.error = "";
+                    Login.step = LoginStep.password;
+                }
+            }
+        }
+    }
+}
+
+// The recovery code was right: a new password, and the account is logged in.
+component NewPasswordStep inherits VerticalLayout {
+    NewPasswordForm {
+        title: @tr("Set a new password");
+        description: @tr("You'll need this password when signing in on a new device.");
+        button-label: @tr("Save and sign in");
+        busy: Login.busy;
+        error: Login.error;
+        submitted(password, again, hint) => {
+            Login.submit-new-password(password, again, hint);
+        }
+    }
+}
+
+// No way to the recovery email address: all that is left is resetting the account, which
+// Telegram delays by a week when the account was in use lately.
+component ResetAccountStep {
+    VerticalLayout {
+        spacing: 22px;
+        FormHeading {
+            title: @tr("Can't access your recovery email");
+            description: @tr("The only option is to reset your account: chats, contacts, groups and channels will be deleted. Your number stays the same. If the account was active recently, this takes 7 days.");
+        }
+        if Login.error != "": FormError {
+            message: Login.error;
+        }
+        PrimaryButton {
+            text: @tr("Reset account");
+            fill: Look.danger;
+            busy: Login.busy;
+            clicked => {
+                Login.reset-account();
+            }
+        }
+        LinkRow {
+            Link {
+                text: @tr("Back");
+                enabled: !Login.busy;
+                clicked => {
+                    Login.error = "";
+                    Login.step = Login.recovery-email != "" ? LoginStep.recovery-code : LoginStep.password;
+                }
+            }
+        }
+    }
+}
+
+component AccountResetRequestedStep {
+    VerticalLayout {
+        spacing: 22px;
+        FormHeading {
+            title: @tr("Account reset requested");
+            description: @tr("Your account will be reset on {0}. You can cancel from any signed-in device before then.", Fmt.date-time(Login.reset-date));
+        }
+        PrimaryButton {
+            text: @tr("Back");
+            clicked => {
+                Login.error = "";
+                Login.step = LoginStep.password;
+            }
+        }
+    }
+}
+
+// The phone number has no account yet: a name makes one. The photo can come later (FinchGram
+// cannot upload one yet, so the link is greyed out).
+component SignUpStep {
+    VerticalLayout {
+        spacing: 22px;
+        FormHeading {
+            title: @tr("Create your account");
+            description: @tr("This number isn't registered yet. Enter your name to sign up — you can add a photo later.");
+        }
+        HorizontalLayout {
+            alignment: start;
+            spacing: 16px;
+            Rectangle {
+                width: 72px;
+                height: 72px;
+                Avatar {
+                    size: 72px;
+                    initial: Login.initial(first.text);
+                    font-size: 30px;
+                }
+                Rectangle {
+                    x: parent.width - 24px;
+                    y: parent.height - 24px;
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 14px;
+                    background: Look.accent;
+                    border-width: 3px;
+                    border-color: Look.bg;
+                    Icon {
+                        name: "camera";
+                        size: 15px;
+                        color: Look.on-accent;
+                        duotone: false;
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                Link {
+                    text: @tr("Add photo");
+                    enabled: false;
+                }
+            }
+        }
+        VerticalLayout {
+            spacing: 10px;
+            first := Field {
+                height: 48px;
+                placeholder: @tr("First name");
+                enabled: !Login.busy;
+                error: Login.error != "";
+                init => {
+                    self.focus-text();
+                }
+                accepted => {
+                    Login.sign-up(first.text, last.text);
+                }
+            }
+            last := Field {
+                height: 48px;
+                placeholder: @tr("Last name (optional)");
+                enabled: !Login.busy;
+                accepted => {
+                    Login.sign-up(first.text, last.text);
+                }
+            }
+            if Login.error != "": ErrorLine {
+                text: Login.error;
+            }
+        }
+        PrimaryButton {
+            text: @tr("Sign up");
+            busy: Login.busy;
+            clicked => {
+                Login.sign-up(first.text, last.text);
+            }
+        }
+        VerticalLayout {
+            spacing: 4px;
+            Paragraph {
+                text: @tr("By signing up, you agree to the Telegram Terms of Service.");
+                color: Look.faint;
+                font-size: 13px;
+                line-height-factor: Look.leading(1.5);
+            }
+            Link {
+                text: @tr("View Terms of Service");
+                trailing-icon: "arrow-square-out";
+                font-size: 13px;
+                clicked => {
+                    AppState.open-url("https://telegram.org/tos");
+                }
             }
         }
         Link {
@@ -854,12 +1087,13 @@ export component LoginPage inherits PageFrame {
                     if Login.step == LoginStep.qr: QrStep { }
                     if Login.step == LoginStep.code: CodeStep { }
                     if Login.step == LoginStep.password: PasswordStep { }
+                    if Login.step == LoginStep.recovery-code: RecoveryCodeStep { }
+                    if Login.step == LoginStep.new-password: NewPasswordStep { }
+                    if Login.step == LoginStep.reset-account: ResetAccountStep { }
+                    if Login.step == LoginStep.account-reset-requested: AccountResetRequestedStep { }
                     if Login.step == LoginStep.email-address: EmailStep { }
                     if Login.step == LoginStep.email-code: EmailCodeStep { }
-                    if Login.step == LoginStep.registration: NoticeStep {
-                        title: @tr("This number has no Telegram account yet");
-                        hint: @tr("Sign up in Telegram's official app first, then sign in here.");
-                    }
+                    if Login.step == LoginStep.registration: SignUpStep { }
                     if Login.step == LoginStep.premium: NoticeStep {
                         title: @tr("Telegram asks for Premium to sign in");
                         hint: @tr("This number can only sign in with Telegram Premium. Get it in Telegram's official app first, then sign in here.");

@@ -1,9 +1,13 @@
 // Settings, from the design's second round ("设置"): the categories on the left, one category on
 // the right. The three themes are chosen under Appearance, where the design puts them; the change
-// is immediate. Categories without a setting FinchGram has yet are greyed out.
-import { AppState, Page, SettingsSection, Theme, UpdateState } from "../state.slint";
+// is immediate. Categories without a setting FinchGram has yet are greyed out, and so are such
+// settings in the categories that have some.
+import { AppState, Page, SettingsSection, TelegramState, Theme, UpdateState } from "../state.slint";
+import { PasswordSettings, PasswordStep, PasswordChange } from "../telegram.slint";
 import { Look } from "../look.slint";
-import { Icon, Logo, Spinner, Switch, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
+import { Fmt } from "../format.slint";
+import { Icon, Logo, Spinner, Switch, Field, PrimaryButton, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
+import { FormHeading, FormError, HintLine, EmailCodeField, LinkRow, NewPasswordForm } from "password.slint";
 import { PageFrame, SideColumn } from "frame.slint";
 
 component Category inherits Rectangle {
@@ -43,6 +47,10 @@ component Category inherits Rectangle {
         mouse-cursor: pointer;
         clicked => {
             AppState.settings-section = root.section;
+            if PasswordSettings.open {
+                PasswordSettings.cancel();
+                PasswordSettings.open = false;
+            }
         }
     }
 }
@@ -76,6 +84,10 @@ component Categories {
                     back := TouchArea {
                         mouse-cursor: pointer;
                         clicked => {
+                            // A change of the password that is under way is dropped.
+                            if PasswordSettings.open {
+                                PasswordSettings.cancel();
+                            }
                             AppState.page = Page.chats;
                         }
                     }
@@ -102,6 +114,8 @@ component Categories {
             section: SettingsSection.privacy;
             icon: "lock-key";
             label: @tr("Privacy & security");
+            // These settings are the account's, kept by Telegram.
+            enabled: AppState.telegram-state == TelegramState.ready;
         }
         Category {
             section: SettingsSection.chats;
@@ -353,6 +367,65 @@ component SwitchRow {
                     root.toggled();
                 }
             }
+        }
+    }
+}
+
+// One setting that opens more: an icon, what it is, its value, and a caret.
+component NavRow inherits Rectangle {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> value;
+    in property <bool> enabled: true;
+    in property <bool> danger;
+    callback clicked();
+    background: touch.has-hover && enabled ? Look.sel : transparent;
+    opacity: enabled ? 1 : 0.4;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 20px;
+                color: root.danger ? Look.danger : Look.accent;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.title;
+            color: root.danger ? Look.danger : Look.text;
+            font-size: 15px;
+            font-weight: 500;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        if root.value != "": Text {
+            text: root.value;
+            color: Look.muted;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "caret-right";
+                size: 14px;
+                color: Look.faint;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
         }
     }
 }
@@ -709,7 +782,560 @@ component AboutSection {
     }
 }
 
+// Privacy & security. Who can see what, and the security settings besides two-step verification,
+// are not in FinchGram yet.
+component PrivacySection {
+    init => {
+        PasswordSettings.load();
+    }
+
+    VerticalLayout {
+        spacing: 26px;
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Who can see");
+            }
+            Card {
+                NavRow {
+                    icon: "phone";
+                    title: @tr("Phone number");
+                    enabled: false;
+                }
+                Separator { }
+                NavRow {
+                    icon: "clock";
+                    title: @tr("Last seen");
+                    enabled: false;
+                }
+                Separator { }
+                NavRow {
+                    icon: "user-circle";
+                    title: @tr("Profile photos");
+                    enabled: false;
+                }
+                Separator { }
+                NavRow {
+                    icon: "share-fat";
+                    title: @tr("Forwarded messages");
+                    enabled: false;
+                }
+                Separator { }
+                NavRow {
+                    icon: "phone-call";
+                    title: @tr("Calls");
+                    enabled: false;
+                }
+                Separator { }
+                NavRow {
+                    icon: "user-plus";
+                    title: @tr("Invites to groups");
+                    enabled: false;
+                }
+            }
+            Paragraph {
+                text: @tr("Stored on Telegram servers and synced across all your apps.");
+                color: Look.faint;
+                font-size: 12px;
+            }
+        }
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Security");
+            }
+            Card {
+                NavRow {
+                    icon: "shield-check";
+                    title: @tr("Two-step verification");
+                    value: !PasswordSettings.loaded ? "" : PasswordSettings.has-password ? @tr("On") : @tr("Off");
+                    clicked => {
+                        PasswordSettings.error = "";
+                        PasswordSettings.done = PasswordChange.nothing;
+                        PasswordSettings.step = PasswordStep.overview;
+                        PasswordSettings.open = true;
+                        PasswordSettings.load();
+                    }
+                }
+                Separator { }
+                NavRow {
+                    icon: "lock-simple";
+                    title: @tr("Local passcode");
+                    enabled: false;
+                }
+                Separator { }
+                NavRow {
+                    icon: "devices";
+                    title: @tr("Active sessions");
+                    enabled: false;
+                }
+                Separator { }
+                NavRow {
+                    icon: "prohibit";
+                    title: @tr("Blocked users");
+                    enabled: false;
+                }
+                Separator { }
+                NavRow {
+                    icon: "timer";
+                    title: @tr("Delete my account");
+                    enabled: false;
+                }
+            }
+        }
+    }
+}
+
+// Two-step verification as it is: on or off, a reset on its way, and what can be changed.
+component PasswordOverview {
+    VerticalLayout {
+        spacing: 26px;
+        HorizontalLayout {
+            spacing: 16px;
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 52px;
+                    height: 52px;
+                    border-radius: Look.avatar-radius;
+                    background: Look.soft;
+                    Icon {
+                        name: PasswordSettings.has-password ? "shield-check" : "shield-slash";
+                        size: 28px;
+                        color: PasswordSettings.has-password ? Look.accent : Look.faint;
+                    }
+                }
+            }
+            VerticalLayout {
+                horizontal-stretch: 1;
+                alignment: center;
+                spacing: 3px;
+                Text {
+                    text: PasswordSettings.has-password ? @tr("Two-step verification is on") : @tr("Two-step verification is off");
+                    color: Look.text;
+                    font-size: 17px;
+                    font-weight: 600;
+                    wrap: word-wrap;
+                }
+                Paragraph {
+                    text: PasswordSettings.has-password ? @tr("When you sign in on a new device, you'll need this password in addition to the code.")
+                        : @tr("Turn it on to require an extra password when signing in on a new device.");
+                    color: Look.muted;
+                    font-size: 14px;
+                    line-height-factor: Look.leading(1.5);
+                }
+            }
+        }
+        if PasswordSettings.has-password && PasswordSettings.reset-pending: Rectangle {
+            border-radius: Look.radius;
+            background: Look.soft;
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-top: 14px;
+                padding-bottom: 14px;
+                spacing: 12px;
+                VerticalLayout {
+                    alignment: start;
+                    padding-top: 1px;
+                    Icon {
+                        name: "clock-countdown";
+                        size: 20px;
+                        color: Look.soft-ink;
+                    }
+                }
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 3px;
+                    Paragraph {
+                        text: @tr("Password will reset on {0}", Fmt.date-time(PasswordSettings.reset-date));
+                        color: Look.soft-ink;
+                        font-size: 15px;
+                        font-weight: 600;
+                    }
+                    Paragraph {
+                        text: @tr("Come back then to set a new password. If this wasn't you, cancel now.");
+                        color: Look.soft-ink;
+                        font-size: 13px;
+                        line-height-factor: Look.leading(1.5);
+                    }
+                }
+                VerticalLayout {
+                    alignment: start;
+                    SmallButton {
+                        text: @tr("Cancel reset");
+                        enabled: !PasswordSettings.busy;
+                        clicked => {
+                            PasswordSettings.cancel-reset();
+                        }
+                    }
+                }
+            }
+        }
+        if PasswordSettings.has-password: Card {
+            NavRow {
+                icon: "key";
+                title: @tr("Change password");
+                clicked => {
+                    PasswordSettings.choose(PasswordStep.new-password);
+                }
+            }
+            Separator { }
+            NavRow {
+                icon: "lightbulb";
+                title: @tr("Password hint");
+                value: PasswordSettings.hint;
+                clicked => {
+                    PasswordSettings.choose(PasswordStep.hint);
+                }
+            }
+            Separator { }
+            NavRow {
+                icon: "envelope-simple";
+                title: @tr("Recovery email");
+                value: PasswordSettings.has-recovery-email ? PasswordSettings.recovery-email : "";
+                clicked => {
+                    PasswordSettings.choose(PasswordStep.recovery-email);
+                }
+            }
+            Separator { }
+            NavRow {
+                icon: "shield-slash";
+                title: @tr("Turn off two-step verification");
+                danger: true;
+                clicked => {
+                    PasswordSettings.choose(PasswordStep.turn-off);
+                }
+            }
+        }
+        if !PasswordSettings.has-password: HorizontalLayout {
+            alignment: start;
+            PrimaryButton {
+                text: @tr("Set password");
+                height: 42px;
+                font-size: 15px;
+                clicked => {
+                    PasswordSettings.choose(PasswordStep.new-password);
+                }
+            }
+        }
+    }
+}
+
+// The steps of a change, each a small form: the design's settings form is at most 420px wide.
+component PasswordForm inherits VerticalLayout {
+    max-width: 420px;
+    spacing: 18px;
+    alignment: start;
+}
+
+component CancelLink inherits Link {
+    text: @tr("Cancel");
+    enabled: !PasswordSettings.busy;
+    clicked => {
+        PasswordSettings.cancel();
+    }
+}
+
+component VerifyForm inherits PasswordForm {
+    FormHeading {
+        title: @tr("Enter your current password");
+        description: @tr("Confirm it's you before changing two-step verification settings.");
+        size: 20px;
+    }
+    VerticalLayout {
+        spacing: 10px;
+        password := Field {
+            height: 48px;
+            input-type: InputType.password;
+            placeholder: @tr("Password");
+            enabled: !PasswordSettings.busy;
+            error: PasswordSettings.error != "";
+            init => {
+                self.focus-text();
+            }
+            accepted(value) => {
+                PasswordSettings.verify(value);
+            }
+        }
+        if PasswordSettings.hint != "": HintLine {
+            hint: PasswordSettings.hint;
+        }
+        if PasswordSettings.error != "": FormError {
+            message: PasswordSettings.error;
+        }
+    }
+    PrimaryButton {
+        text: @tr("Next");
+        busy: PasswordSettings.busy;
+        clicked => {
+            PasswordSettings.verify(password.text);
+        }
+    }
+    LinkRow {
+        Link {
+            text: @tr("Forgot password?");
+            enabled: !PasswordSettings.busy;
+            clicked => {
+                PasswordSettings.forgot();
+            }
+        }
+        CancelLink { }
+    }
+}
+
+component NewPasswordStepForm inherits PasswordForm {
+    NewPasswordForm {
+        title: PasswordSettings.has-password ? @tr("Set a new password") : @tr("Set password");
+        description: @tr("You'll need this password when signing in on a new device.");
+        heading-size: 20px;
+        spacing: 18px;
+        button-label: @tr("Save");
+        busy: PasswordSettings.busy;
+        error: PasswordSettings.error;
+        submitted(password, again, hint) => {
+            PasswordSettings.submit-new-password(password, again, hint);
+        }
+    }
+    LinkRow {
+        CancelLink { }
+    }
+}
+
+component HintForm inherits PasswordForm {
+    FormHeading {
+        title: @tr("Change password hint");
+        description: @tr("The hint is shown on the sign-in screen to anyone who knows your number. Don't write the password itself.");
+        size: 20px;
+    }
+    VerticalLayout {
+        spacing: 10px;
+        hint := Field {
+            height: 48px;
+            text: PasswordSettings.hint;
+            placeholder: @tr("Password hint (optional)");
+            enabled: !PasswordSettings.busy;
+            error: PasswordSettings.error != "";
+            init => {
+                self.focus-text();
+            }
+            accepted(value) => {
+                PasswordSettings.submit-hint(value);
+            }
+        }
+        if PasswordSettings.error != "": FormError {
+            message: PasswordSettings.error;
+        }
+    }
+    PrimaryButton {
+        text: @tr("Save");
+        busy: PasswordSettings.busy;
+        clicked => {
+            PasswordSettings.submit-hint(hint.text);
+        }
+    }
+    LinkRow {
+        CancelLink { }
+    }
+}
+
+component RecoveryEmailForm inherits PasswordForm {
+    FormHeading {
+        title: @tr("Change recovery email");
+        description: @tr("If you forget your password, a recovery code will be sent to this address.");
+        size: 20px;
+    }
+    VerticalLayout {
+        spacing: 10px;
+        email := Field {
+            height: 48px;
+            text: PasswordSettings.code-sent-to;
+            placeholder: @tr("Email address");
+            enabled: !PasswordSettings.busy;
+            error: PasswordSettings.error != "";
+            init => {
+                self.focus-text();
+            }
+            accepted(value) => {
+                PasswordSettings.submit-recovery-email(value);
+            }
+        }
+        if PasswordSettings.error != "": FormError {
+            message: PasswordSettings.error;
+        }
+    }
+    PrimaryButton {
+        text: @tr("Send code");
+        busy: PasswordSettings.busy;
+        clicked => {
+            PasswordSettings.submit-recovery-email(email.text);
+        }
+    }
+    LinkRow {
+        CancelLink { }
+    }
+}
+
+component RecoveryEmailCodeForm inherits PasswordForm {
+    FormHeading {
+        title: @tr("Enter the email code");
+        description: @tr("Code sent to {0}", PasswordSettings.code-sent-to);
+        size: 20px;
+    }
+    VerticalLayout {
+        spacing: 10px;
+        code := EmailCodeField {
+            enabled: !PasswordSettings.busy;
+            error: PasswordSettings.error != "";
+            init => {
+                self.focus-text();
+            }
+            accepted(value) => {
+                PasswordSettings.submit-recovery-email-code(value);
+            }
+        }
+        if PasswordSettings.error != "": FormError {
+            message: PasswordSettings.error;
+        }
+    }
+    PrimaryButton {
+        text: @tr("Next");
+        busy: PasswordSettings.busy;
+        clicked => {
+            PasswordSettings.submit-recovery-email-code(code.text);
+        }
+    }
+    LinkRow {
+        Link {
+            text: @tr("Back");
+            enabled: !PasswordSettings.busy;
+            clicked => {
+                PasswordSettings.error = "";
+                PasswordSettings.step = PasswordStep.recovery-email;
+            }
+        }
+        CancelLink { }
+    }
+}
+
+component TurnOffForm inherits PasswordForm {
+    FormHeading {
+        title: @tr("Turn off two-step verification?");
+        description: @tr("Anyone who gets your sign-in code will be able to access your account.");
+        size: 20px;
+    }
+    if PasswordSettings.error != "": FormError {
+        message: PasswordSettings.error;
+    }
+    PrimaryButton {
+        text: @tr("Turn off");
+        fill: Look.danger;
+        busy: PasswordSettings.busy;
+        clicked => {
+            PasswordSettings.turn-off();
+        }
+    }
+    LinkRow {
+        CancelLink { }
+    }
+}
+
+component RecoveryCodeForm inherits PasswordForm {
+    FormHeading {
+        title: @tr("Recover via email");
+        description: @tr("A recovery code was sent to {0}. Enter it to set a new password.", PasswordSettings.code-sent-to);
+        size: 20px;
+    }
+    VerticalLayout {
+        spacing: 10px;
+        code := EmailCodeField {
+            enabled: !PasswordSettings.busy;
+            error: PasswordSettings.error != "";
+            init => {
+                self.focus-text();
+            }
+            accepted(value) => {
+                PasswordSettings.submit-recovery-code(value);
+            }
+        }
+        if PasswordSettings.error != "": FormError {
+            message: PasswordSettings.error;
+        }
+    }
+    PrimaryButton {
+        text: @tr("Next");
+        busy: PasswordSettings.busy;
+        clicked => {
+            PasswordSettings.submit-recovery-code(code.text);
+        }
+    }
+    LinkRow {
+        Link {
+            text: @tr("Can't access this email?");
+            enabled: !PasswordSettings.busy;
+            clicked => {
+                PasswordSettings.error = "";
+                PasswordSettings.step = PasswordStep.reset;
+            }
+        }
+        Link {
+            text: @tr("Back");
+            enabled: !PasswordSettings.busy;
+            clicked => {
+                PasswordSettings.error = "";
+                PasswordSettings.step = PasswordStep.verify;
+            }
+        }
+    }
+}
+
+component ResetForm inherits PasswordForm {
+    FormHeading {
+        title: @tr("Request password reset");
+        description: @tr("If you can't get the recovery email, you can request a reset. To protect your account it takes 7 days, and you can cancel any time before then.");
+        size: 20px;
+    }
+    if PasswordSettings.error != "": FormError {
+        message: PasswordSettings.error;
+    }
+    PrimaryButton {
+        text: @tr("Request reset");
+        fill: Look.danger;
+        busy: PasswordSettings.busy;
+        clicked => {
+            PasswordSettings.request-reset();
+        }
+    }
+    LinkRow {
+        Link {
+            text: @tr("Back");
+            enabled: !PasswordSettings.busy;
+            clicked => {
+                PasswordSettings.error = "";
+                PasswordSettings.step = PasswordSettings.code-sent-to != "" ? PasswordStep.recovery-code : PasswordStep.verify;
+            }
+        }
+    }
+}
+
+// Settings → Privacy & security → Two-step verification (src/telegram/password.rs).
+component PasswordSection {
+    VerticalLayout {
+        alignment: start;
+        if PasswordSettings.step == PasswordStep.overview && PasswordSettings.loaded: PasswordOverview { }
+        if PasswordSettings.step == PasswordStep.verify: VerifyForm { }
+        if PasswordSettings.step == PasswordStep.new-password: NewPasswordStepForm { }
+        if PasswordSettings.step == PasswordStep.hint: HintForm { }
+        if PasswordSettings.step == PasswordStep.recovery-email: RecoveryEmailForm { }
+        if PasswordSettings.step == PasswordStep.recovery-email-code: RecoveryEmailCodeForm { }
+        if PasswordSettings.step == PasswordStep.turn-off: TurnOffForm { }
+        if PasswordSettings.step == PasswordStep.recovery-code: RecoveryCodeForm { }
+        if PasswordSettings.step == PasswordStep.reset: ResetForm { }
+    }
+}
+
 export component SettingsPage inherits PageFrame {
+    property <bool> two-step: AppState.settings-section == SettingsSection.privacy && PasswordSettings.open;
     title: @tr("Settings");
 
     SideColumn {
@@ -731,16 +1357,54 @@ export component SettingsPage inherits PageFrame {
             padding-top: 40px;
             padding-bottom: 40px;
             alignment: start;
+            // As wide as the design's column (600px), where the window has room for it.
             VerticalLayout {
+                preferred-width: 600px;
                 max-width: 600px;
                 spacing: 26px;
                 alignment: start;
-                Heading {
-                    label: AppState.settings-section == SettingsSection.language ? @tr("Language")
-                        : AppState.settings-section == SettingsSection.about ? @tr("About") : @tr("Appearance");
+                // Two-step verification is a page within Privacy & security: the way back is above
+                // its heading, and what was just changed is said below it.
+                VerticalLayout {
+                    spacing: 12px;
+                    if root.two-step: Link {
+                        text: @tr("Privacy & security");
+                        icon: "caret-left";
+                        clicked => {
+                            PasswordSettings.cancel();
+                            PasswordSettings.open = false;
+                        }
+                    }
+                    Heading {
+                        label: root.two-step ? @tr("Two-step verification")
+                            : AppState.settings-section == SettingsSection.language ? @tr("Language")
+                            : AppState.settings-section == SettingsSection.privacy ? @tr("Privacy & security")
+                            : AppState.settings-section == SettingsSection.about ? @tr("About") : @tr("Appearance");
+                    }
+                    if root.two-step && PasswordSettings.step == PasswordStep.overview && PasswordSettings.done != PasswordChange.nothing: HorizontalLayout {
+                        spacing: 6px;
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "check-circle";
+                                size: 17px;
+                                color: Look.ok;
+                                duotone: false;
+                            }
+                        }
+                        Text {
+                            text: PasswordSettings.done == PasswordChange.password ? @tr("Password updated")
+                                : PasswordSettings.done == PasswordChange.hint ? @tr("Password hint updated") : @tr("Recovery email updated");
+                            color: Look.ok;
+                            font-size: 14px;
+                            vertical-alignment: center;
+                        }
+                    }
                 }
                 if AppState.settings-section == SettingsSection.appearance: AppearanceSection { }
                 if AppState.settings-section == SettingsSection.language: LanguageSection { }
+                if AppState.settings-section == SettingsSection.privacy && !root.two-step: PrivacySection { }
+                if root.two-step: PasswordSection { }
                 if AppState.settings-section == SettingsSection.about: AboutSection { }
             }
         }

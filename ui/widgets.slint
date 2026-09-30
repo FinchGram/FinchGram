@@ -207,22 +207,27 @@ export component Field inherits Rectangle {
     }
 }
 
-// The main action of a page: accent, full width.
+// The main action of a page: accent (or danger, for what cannot be undone), full width.
 export component PrimaryButton inherits Rectangle {
     in property <string> text;
     in property <bool> enabled: true;
     in property <bool> busy;
     in property <length> font-size: 16px;
+    in property <color> fill: Look.accent;
+    // Room on either side of the words, for a button as wide as they are.
+    in property <length> padding-x: 22px;
     callback clicked();
     height: 46px;
     border-radius: Look.button-radius;
-    background: touch.has-hover && enabled && !busy ? Look.accent.mix(Look.text, 0.88) : Look.accent;
+    background: touch.has-hover && enabled && !busy ? fill.mix(Look.text, 0.88) : fill;
     opacity: enabled ? 1 : 0.5;
     accessible-role: button;
     accessible-label: text;
 
     HorizontalLayout {
         alignment: center;
+        padding-left: root.padding-x;
+        padding-right: root.padding-x;
         spacing: 8px;
         if root.busy: VerticalLayout {
             alignment: center;
@@ -249,10 +254,12 @@ export component PrimaryButton inherits Rectangle {
     }
 }
 
-// A quiet action written as a link, with an optional icon before it.
+// A quiet action written as a link, with an optional icon before it (or after it, for a link that
+// leaves the app).
 export component Link {
     in property <string> text;
     in property <string> icon;
+    in property <string> trailing-icon;
     in property <color> color: Look.accent-ink;
     in property <length> font-size: 14px;
     in property <int> font-weight: 400;
@@ -279,6 +286,14 @@ export component Link {
             font-size: root.font-size;
             font-weight: root.font-weight;
             vertical-alignment: center;
+        }
+        if root.trailing-icon != "": VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.trailing-icon;
+                size: root.font-size;
+                color: root.color;
+            }
         }
     }
 

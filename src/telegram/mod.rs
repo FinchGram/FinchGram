@@ -7,8 +7,8 @@
 //! copies into its answer, and the answer goes to the callback given with the request. Updates are
 //! parsed on the reader thread and reach the UI thread in batches: logging in follows the
 //! authorization state (login.rs), everything else goes into the store (store.rs), and after each
-//! batch the pages are brought up to date. chats.rs, conversation.rs and account.rs do what the
-//! pages ask for.
+//! batch the pages are brought up to date. chats.rs, conversation.rs, account.rs and password.rs
+//! do what the pages ask for.
 //!
 //! When finchgram-tdlib ends unexpectedly, the requests still waiting fail and it is started
 //! again: TDLib's database is on disk, so it carries on where it was. After a log out TDLib closes
@@ -21,6 +21,7 @@ mod api;
 mod chats;
 mod conversation;
 mod login;
+mod password;
 mod process;
 mod store;
 mod time;
@@ -106,6 +107,7 @@ pub fn start(ui: &MainWindow) {
     chats::connect(ui);
     conversation::connect(ui);
     account::connect(ui);
+    password::connect(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {
@@ -290,6 +292,7 @@ fn on_authorization_state(state: AuthorizationState) {
             store::clear();
             chats::forget();
             account::forget();
+            password::forget();
             with_state(|app| app.set_page(Page::Chats));
             return;
         }

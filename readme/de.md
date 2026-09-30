@@ -8,10 +8,11 @@ Ein quelloffener Telegram-Desktop-Client mit Medienzentrale, geschrieben in Rust
 FinchGram nutzt die Telegram-API und ist Teil des Telegram-Ökosystems. Es ist ein inoffizieller Client
 und stammt nicht von Telegram.
 
-Stand: früh. Anmelden, die Chatliste und Chats mit Textnachrichten funktionieren, in den drei Designs
-des Entwurfs: Workbench (Standard), Broadsheet und Terminal, umschaltbar unter Einstellungen ›
-Darstellung. Als Nächstes kommen Fotos und Dateien, mehrere Konten, Stichwortfilter und geplante
-Nachrichten.
+Stand: früh. Registrieren und Anmelden, die Chatliste und Chats mit Textnachrichten funktionieren, in
+den drei Designs des Entwurfs: Workbench (Standard), Broadsheet und Terminal, umschaltbar unter
+Einstellungen › Darstellung. Die zweistufige Bestätigung wird unter Einstellungen › Datenschutz &
+Sicherheit verwaltet. Als Nächstes kommen Fotos und Dateien, mehrere Konten, Stichwortfilter und
+geplante Nachrichten.
 
 Die App ist eine Hülle (Shell). Telegram selbst übernimmt TDLib, die offizielle Bibliothek von Telegram,
 die als eigenes Programm neben der ausführbaren Datei läuft: `finchgram-tdlib`, von diesem Repository
@@ -84,10 +85,11 @@ src/
     api.rs               #   die TDLib-Typen, die FinchGram nutzt (td_api.tl der festgelegten Version)
     mod.rs               #   Anfragen und Antworten, Neustart; Updates gehen an den Store
     store.rs             #   was TDLib über Chats, Nutzer und Nachrichten gesagt hat; die Modelle der Seiten
-    login.rs             #   die Anmeldung
+    login.rs             #   die Anmeldung, die Registrierung
     chats.rs             #   die Chatliste
     conversation.rs      #   der offene Chat: Nachrichten, Schreiben
     account.rs           #   das Profil, Abmelden
+    password.rs          #   die zweistufige Bestätigung in den Einstellungen
   platform/              # was sich von Betriebssystem zu Betriebssystem unterscheidet
   update.rs              # die Selbstaktualisierung: GitHub Releases, Signatur, Austausch, Neustart
   settings.rs            # die Einstellungen des Nutzers (settings.toml)

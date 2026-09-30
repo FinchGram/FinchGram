@@ -3,6 +3,10 @@
 //! phone number on its own: TDLib takes a new phone number in every state that waits for a code,
 //! a password or an email. From the QR code it does not, so going back from there logs out, and
 //! TDLib starts over (mod.rs starts a new finchgram-tdlib once the old one has closed).
+//!
+//! A forgotten password is recovered while TDLib waits for it: a code goes to the recovery email
+//! address, and with it a new password logs in. Without that address, the account can only be
+//! reset, which Telegram delays by a week when the account was in use lately.
 
 use std::cell::RefCell;
 
@@ -10,7 +14,7 @@ use serde_json::json;
 use slint::{ComponentHandle, Image, ModelRc, Rgba8Pixel, SharedPixelBuffer, SharedString, VecModel};
 
 use super::api::{AuthenticationCodeType, AuthorizationState, Countries, CountryInfo, PhoneNumberInfo, Text};
-use super::{Error, send, with_ui};
+use super::{Error, password, send, time, with_ui};
 use crate::{CodeDelivery, Country, Login, LoginStep, MainWindow};
 
 /// How many countries the picker shows for its search words.
@@ -23,6 +27,8 @@ struct State {
     asked_for_countries: bool,
     /// TDLib's authorization state, as last reported.
     authorization: Option<AuthorizationState>,
+    /// The recovery code TDLib accepted, for the new password.
+    recovery_code: String,
 }
 
 thread_local! {
@@ -56,6 +62,36 @@ pub fn connect(ui: &MainWindow) {
     login.on_submit_password(|password| {
         request(json!({ "@type": "checkAuthenticationPassword", "password": password.as_str() }));
     });
+    login.on_forgot_password(forgot_password);
+    login.on_submit_recovery_code(|code| {
+        let code: String = code.chars().filter(char::is_ascii_digit).collect();
+        busy(true);
+        with_login(|login| login.set_error(SharedString::new()));
+        send(json!({ "@type": "checkAuthenticationPasswordRecoveryCode", "recovery_code": code }), move |answer| {
+            busy(false);
+            match answer {
+                Ok(_) => {
+                    STATE.with(|state| state.borrow_mut().recovery_code = code);
+                    with_login(|login| login.set_step(LoginStep::NewPassword));
+                }
+                Err(err) => show_error(err),
+            }
+        });
+    });
+    login.on_submit_new_password(|new_password, again, hint| {
+        if let Err(problem) = password::check_new_password(&new_password, &again, &hint) {
+            with_login(|login| login.set_error(problem.into()));
+            return;
+        }
+        let code = STATE.with(|state| state.borrow().recovery_code.clone());
+        request(json!({
+            "@type": "recoverAuthenticationPassword",
+            "recovery_code": code,
+            "new_password": new_password.as_str(),
+            "new_hint": hint.trim(),
+        }));
+    });
+    login.on_reset_account(reset_account);
     login.on_submit_email(|email| {
         request(json!({ "@type": "setAuthenticationEmailAddress", "email_address": email.trim() }));
     });
@@ -66,6 +102,20 @@ pub fn connect(ui: &MainWindow) {
             "code": { "@type": "emailAddressAuthenticationCode", "code": code },
         }));
     });
+    login.on_sign_up(|first_name, last_name| {
+        let first_name = first_name.trim();
+        if first_name.is_empty() {
+            with_login(|login| login.set_error("FIRSTNAME_INVALID".into()));
+            return;
+        }
+        request(json!({
+            "@type": "registerUser",
+            "first_name": first_name,
+            "last_name": last_name.trim(),
+            "disable_notification": false,
+        }));
+    });
+    login.on_initial(|name| name.trim().chars().next().map(|first| first.to_uppercase().collect::<String>()).unwrap_or_default().into());
     login.on_back(|| {
         let from_qr_code = STATE.with(|state| {
             matches!(state.borrow().authorization, Some(AuthorizationState::WaitOtherDeviceConfirmation { .. }))
@@ -118,12 +168,21 @@ pub fn on_state(state: &AuthorizationState) {
                 }
             });
         }
-        AuthorizationState::WaitPassword { password_hint } => {
-            let hint = password_hint.clone();
+        AuthorizationState::WaitPassword { password_hint, has_recovery_email_address, recovery_email_address_pattern } => {
+            let (hint, has_email, pattern) = (password_hint.clone(), *has_recovery_email_address, recovery_email_address_pattern.clone());
             with_login(|login| {
                 login.set_password_hint(hint.into());
-                login.set_error(SharedString::new());
-                login.set_step(LoginStep::Password);
+                login.set_has_recovery_email(has_email);
+                login.set_recovery_email(pattern.into());
+                // Asking for a recovery code says this state again: the recovery goes on.
+                let recovering = matches!(
+                    login.get_step(),
+                    LoginStep::RecoveryCode | LoginStep::NewPassword | LoginStep::ResetAccount | LoginStep::AccountResetRequested
+                );
+                if !recovering {
+                    login.set_error(SharedString::new());
+                    login.set_step(LoginStep::Password);
+                }
             });
         }
         AuthorizationState::WaitOtherDeviceConfirmation { link } => {
@@ -145,10 +204,14 @@ pub fn on_state(state: &AuthorizationState) {
                 login.set_step(LoginStep::EmailCode);
             });
         }
-        AuthorizationState::WaitRegistration => with_login(|login| login.set_step(LoginStep::Registration)),
+        AuthorizationState::WaitRegistration => with_login(|login| {
+            login.set_error(SharedString::new());
+            login.set_step(LoginStep::Registration);
+        }),
         AuthorizationState::WaitPremiumPurchase => with_login(|login| login.set_step(LoginStep::Premium)),
         AuthorizationState::Ready | AuthorizationState::Closed => {
             // Logged in, or starting over: the next login begins at the phone number.
+            STATE.with(|state| state.borrow_mut().recovery_code.clear());
             with_login(|login| {
                 login.set_error(SharedString::new());
                 login.set_resent(false);
@@ -158,6 +221,57 @@ pub fn on_state(state: &AuthorizationState) {
         }
         AuthorizationState::WaitTdlibParameters | AuthorizationState::LoggingOut | AuthorizationState::Closing => {}
     }
+}
+
+/// "Forgot password?": a recovery code by email, or without a recovery email address, the way
+/// that is left.
+fn forgot_password() {
+    let has_email = STATE.with(|state| {
+        matches!(state.borrow().authorization, Some(AuthorizationState::WaitPassword { has_recovery_email_address: true, .. }))
+    });
+    with_login(|login| login.set_error(SharedString::new()));
+    if !has_email {
+        with_login(|login| login.set_step(LoginStep::ResetAccount));
+        return;
+    }
+    busy(true);
+    send(json!({ "@type": "requestAuthenticationPasswordRecovery" }), |answer| {
+        busy(false);
+        match answer {
+            Ok(_) => with_login(|login| login.set_step(LoginStep::RecoveryCode)),
+            Err(err) => show_error(err),
+        }
+    });
+}
+
+/// Delete the account to sign up again with the same number. When it was in use lately, Telegram
+/// waits a week first (2FA_CONFIRM_WAIT, which TDLib reports as "retry after" that many seconds);
+/// the reset is then completed by asking again once the week is over.
+fn reset_account() {
+    busy(true);
+    with_login(|login| login.set_error(SharedString::new()));
+    send(json!({ "@type": "deleteAccount", "reason": "", "password": "" }), |answer| {
+        busy(false);
+        match answer {
+            // The account is gone: TDLib logs out, and the next login begins at the phone number.
+            Ok(_) => {}
+            Err(Error::Telegram { message, .. }) if wait_seconds(&message).is_some() => {
+                let seconds = wait_seconds(&message).unwrap_or_default();
+                let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |since| since.as_secs());
+                let date = i32::try_from(now.saturating_add(seconds)).unwrap_or(i32::MAX);
+                with_login(|login| {
+                    login.set_reset_date(time::moment(date));
+                    login.set_step(LoginStep::AccountResetRequested);
+                });
+            }
+            Err(err) => show_error(err),
+        }
+    });
+}
+
+/// "Too Many Requests: retry after 604800" → 604800
+fn wait_seconds(message: &str) -> Option<u64> {
+    message.strip_prefix("Too Many Requests: retry after ")?.trim().parse().ok()
 }
 
 fn submit_phone(calling_code: &str, number: &str) {
@@ -316,6 +430,12 @@ mod tests {
         let size = image.size();
         assert_eq!(size.width, size.height);
         assert!(size.width >= (21 + 4) * 8, "at least version 1 with its quiet zone");
+    }
+
+    #[test]
+    fn a_delayed_account_reset_says_how_long_it_waits() {
+        assert_eq!(wait_seconds("Too Many Requests: retry after 604800"), Some(604_800));
+        assert_eq!(wait_seconds("PASSWORD_HASH_INVALID"), None);
     }
 
     #[test]

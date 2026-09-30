@@ -170,7 +170,14 @@ export global Account {
 
 // Logging in (the design's second round, "登录引导"). Rust follows TDLib's authorization state; the
 // pages can go back a step on their own.
-export enum LoginStep { phone, qr, code, password, email-address, email-code, registration, premium }
+// The steps of logging in. After the password come the ways to recover a forgotten one: a code sent
+// to the recovery email address, then a new password; or, without that address, resetting the
+// account.
+export enum LoginStep {
+    phone, qr, code, password,
+    recovery-code, new-password, reset-account, account-reset-requested,
+    email-address, email-code, registration, premium,
+}
 export enum CodeDelivery { telegram, sms, call, flash-call, missed-call, fragment, email, other }
 
 export struct Country {
@@ -192,6 +199,9 @@ export global Login {
     in-out property <bool> can-resend;
     in-out property <bool> resent;
     in-out property <string> password-hint;
+    in-out property <bool> has-recovery-email;   // a forgotten password can be recovered by email
+    in-out property <string> recovery-email;     // where the recovery code went, partly hidden
+    in-out property <Moment> reset-date;         // when a requested account reset can be completed
     in-out property <string> email-pattern;      // the address the code went to, partly hidden
     in-out property <image> qr-code;
     callback search-countries(string);
@@ -202,9 +212,53 @@ export global Login {
     callback submit-code(string);
     callback resend-code();
     callback submit-password(string);
+    callback forgot-password();
+    callback submit-recovery-code(string);
+    callback submit-new-password(string, string, string);   // the password, again, its hint
+    callback reset-account();
     callback submit-email(string);
     callback submit-email-code(string);
+    callback sign-up(string, string);            // first name, last name
+    pure callback initial(string) -> string;     // "zhou" → "Z", for the new account's picture
     callback back();                             // to the phone number
+}
+
+// Settings → Privacy & security → Two-step verification (src/telegram/password.rs). What changes
+// the password asks for it first (verify); a forgotten one is recovered by email or reset.
+export enum PasswordStep {
+    overview, verify, new-password, hint, recovery-email, recovery-email-code, turn-off, recovery-code, reset,
+}
+
+// What the overview says was just done.
+export enum PasswordChange { nothing, password, hint, recovery-email }
+
+export global PasswordSettings {
+    in-out property <bool> open;                 // shown instead of Privacy & security
+    in-out property <bool> loaded;               // TDLib has said how the password is
+    in-out property <bool> has-password;
+    in-out property <string> hint;
+    in-out property <bool> has-recovery-email;
+    in-out property <string> recovery-email;     // once known: TDLib gives it only for the password
+    in-out property <string> code-sent-to;       // where the last recovery or confirmation code went
+    in-out property <bool> reset-pending;        // a reset without the password was asked for
+    in-out property <Moment> reset-date;         // when it can be completed
+    in-out property <PasswordStep> step;
+    in-out property <bool> busy;
+    in-out property <string> error;
+    in-out property <PasswordChange> done;
+    callback load();
+    callback choose(PasswordStep);               // from the overview: what to change
+    callback verify(string);
+    callback forgot();
+    callback submit-recovery-code(string);
+    callback request-reset();
+    callback cancel-reset();
+    callback submit-new-password(string, string, string);   // the password, again, its hint
+    callback submit-hint(string);
+    callback submit-recovery-email(string);
+    callback submit-recovery-email-code(string);
+    callback turn-off();
+    callback cancel();                           // back to the overview
 }
 
 // Words Rust needs in the UI language when it builds rows: names Telegram does not give. Rust reads

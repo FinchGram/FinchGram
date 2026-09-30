@@ -8,10 +8,11 @@ Un cliente de escritorio de Telegram de código abierto, con un centro multimedi
 FinchGram usa la API de Telegram y forma parte del ecosistema de Telegram. Es un cliente no oficial,
 no desarrollado por Telegram.
 
-Estado: temprano. El inicio de sesión, la lista de chats y los chats con mensajes de texto funcionan,
-en los tres temas del diseño: Workbench (el predeterminado), Broadsheet y Terminal, que se cambian en
-Ajustes › Apariencia. Después vienen fotos y archivos, varias cuentas, filtros por palabras clave y
-mensajes programados.
+Estado: temprano. El registro y el inicio de sesión, la lista de chats y los chats con mensajes de texto
+funcionan, en los tres temas del diseño: Workbench (el predeterminado), Broadsheet y Terminal, que se
+cambian en Ajustes › Apariencia. La verificación en dos pasos se gestiona en Ajustes › Privacidad y
+seguridad. Después vienen fotos y archivos, varias cuentas, filtros por palabras clave y mensajes
+programados.
 
 La app es una carcasa (*shell*). De Telegram en sí se encarga TDLib, la biblioteca oficial de Telegram,
 que se ejecuta como un programa aparte junto al ejecutable: `finchgram-tdlib`, compilado por este
@@ -85,10 +86,11 @@ src/
     api.rs               #   los tipos de TDLib que usa FinchGram (td_api.tl de la versión fijada)
     mod.rs               #   peticiones y respuestas, volver a arrancar; las actualizaciones van al store
     store.rs             #   lo que TDLib dijo de chats, usuarios y mensajes; los modelos de las páginas
-    login.rs             #   el inicio de sesión
+    login.rs             #   el inicio de sesión, el registro
     chats.rs             #   la lista de chats
     conversation.rs      #   el chat abierto: mensajes, escribir
     account.rs           #   el perfil, cerrar sesión
+    password.rs          #   la verificación en dos pasos en Ajustes
   platform/              # lo que cambia de un sistema operativo a otro
   update.rs              # la autoactualización: GitHub Releases, firma, sustitución, reinicio
   settings.rs            # las preferencias del usuario (settings.toml)

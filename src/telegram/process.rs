@@ -202,11 +202,18 @@ mod tests {
     #[test]
     fn a_followed_update_is_read_and_its_unknown_fields_ignored() {
         let Some(Output::Update(Update::AuthorizationState { authorization_state })) = parse(
-            r#"{"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitPassword","password_hint":"cat","has_recovery_email_address":true},"@client_id":1}"#,
+            r#"{"@type":"updateAuthorizationState","authorization_state":{"@type":"authorizationStateWaitPassword","password_hint":"cat","has_recovery_email_address":true,"has_passport_data":false},"@client_id":1}"#,
         ) else {
             panic!("not an authorization state");
         };
-        assert_eq!(authorization_state, AuthorizationState::WaitPassword { password_hint: "cat".to_string() });
+        assert_eq!(
+            authorization_state,
+            AuthorizationState::WaitPassword {
+                password_hint: "cat".to_string(),
+                has_recovery_email_address: true,
+                recovery_email_address_pattern: String::new(),
+            }
+        );
     }
 
     #[test]

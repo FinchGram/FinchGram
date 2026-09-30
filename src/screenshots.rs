@@ -87,6 +87,23 @@ fn fill(ui: &MainWindow) {
     login.set_code_length(5);
     login.set_can_resend(true);
     login.set_password_hint("bird".into());
+    login.set_has_recovery_email(true);
+    login.set_recovery_email("z**@gmail.com".into());
+    login.set_reset_date(reset_date());
+    login.on_initial(|name| name.chars().next().map(|first| first.to_uppercase().collect::<String>()).unwrap_or_default().into());
+
+    let password = ui.global::<PasswordSettings>();
+    password.set_loaded(true);
+    password.set_has_password(true);
+    password.set_hint("bird".into());
+    password.set_has_recovery_email(true);
+    password.set_recovery_email("z•••@gmail.com".into());
+    password.set_reset_date(reset_date());
+}
+
+/// When a reset asked for today can be completed, as in the design.
+fn reset_date() -> Moment {
+    Moment { day: Day::Earlier, hour: 14, minute: 20, weekday: 3, month: 10, date: 7, year: 2026 }
 }
 
 fn moment(day: Day, hour: i32, minute: i32) -> Moment {
@@ -242,6 +259,34 @@ fn open_news(ui: &MainWindow) {
     ]));
 }
 
+/// Settings → Privacy & security, and two-step verification: on, with a reset on its way and a
+/// change just made; off; asking for the password; a new password.
+fn two_step(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    let app = ui.global::<AppState>();
+    let password = ui.global::<PasswordSettings>();
+    app.set_settings_section(SettingsSection::Privacy);
+    password.set_open(false);
+    save(window, &name("settings-privacy"));
+    password.set_open(true);
+    password.set_step(PasswordStep::Overview);
+    password.set_reset_pending(true);
+    password.set_done(PasswordChange::Password);
+    save(window, &name("settings-two-step"));
+    password.set_reset_pending(false);
+    password.set_done(PasswordChange::Nothing);
+    password.set_has_password(false);
+    save(window, &name("settings-two-step-off"));
+    password.set_has_password(true);
+    password.set_step(PasswordStep::Verify);
+    password.set_error("PASSWORD_HASH_INVALID".into());
+    save(window, &name("settings-two-step-verify"));
+    password.set_error(SharedString::new());
+    password.set_step(PasswordStep::NewPassword);
+    save(window, &name("settings-two-step-new-password"));
+    password.set_step(PasswordStep::Overview);
+    password.set_open(false);
+}
+
 #[test]
 #[ignore = "takes over Slint's platform; run with: cargo test screenshots -- --ignored"]
 fn screenshots() {
@@ -272,6 +317,20 @@ fn screenshots() {
             login.set_error("Incorrect password".into());
             save(&window, &name("login-password"));
             login.set_error(SharedString::new());
+            login.set_step(LoginStep::RecoveryCode);
+            save(&window, &name("login-recovery-code"));
+            login.set_step(LoginStep::NewPassword);
+            login.set_error("NEW_PASSWORD_MISMATCH".into());
+            save(&window, &name("login-new-password"));
+            login.set_error(SharedString::new());
+            login.set_step(LoginStep::ResetAccount);
+            save(&window, &name("login-reset-account"));
+            login.set_step(LoginStep::AccountResetRequested);
+            save(&window, &name("login-account-reset-requested"));
+            app.set_telegram_state(TelegramState::WaitRegistration);
+            login.set_step(LoginStep::Registration);
+            save(&window, &name("login-sign-up"));
+            app.set_telegram_state(TelegramState::WaitPhoneNumber);
             login.set_step(LoginStep::Qr);
             save(&window, &name("login-qr"));
             app.set_telegram_state(TelegramState::Starting);
@@ -290,6 +349,7 @@ fn screenshots() {
                 app.set_settings_section(section);
                 save(&window, &name(&format!("settings-{section_name}")));
             }
+            two_step(&ui, &window, &name);
             app.set_page(Page::Profile);
             save(&window, &name("profile"));
             app.set_page(Page::Chats);
@@ -311,10 +371,23 @@ fn screenshots() {
     app.set_telegram_state(TelegramState::WaitPhoneNumber);
     login.set_step(LoginStep::Phone);
     save(&window, "zh-workbench-login-phone");
+    login.set_step(LoginStep::RecoveryCode);
+    save(&window, "zh-workbench-login-recovery-code");
+    app.set_telegram_state(TelegramState::WaitRegistration);
+    login.set_step(LoginStep::Registration);
+    save(&window, "zh-workbench-login-sign-up");
     app.set_telegram_state(TelegramState::Ready);
     app.set_page(Page::Settings);
     app.set_settings_section(SettingsSection::Appearance);
     save(&window, "zh-workbench-settings-appearance");
+    let password = ui.global::<PasswordSettings>();
+    app.set_settings_section(SettingsSection::Privacy);
+    save(&window, "zh-workbench-settings-privacy");
+    password.set_open(true);
+    password.set_reset_pending(true);
+    password.set_done(PasswordChange::Password);
+    save(&window, "zh-workbench-settings-two-step");
+    password.set_open(false);
     app.set_page(Page::Chats);
     let _ = login.get_countries().row_count();
 }

@@ -111,7 +111,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   use, `mod.rs` sends requests, hands out answers, starts the program again and passes updates on.
   `store.rs` keeps what TDLib has said (chats, users, groups, folders, the messages of the open
   chats) and brings the pages' models up to date after each batch; `login.rs`, `chats.rs`,
-  `conversation.rs` and `account.rs` do what the pages ask for.
+  `conversation.rs`, `account.rs` and `password.rs` (two-step verification) do what the pages ask
+  for.
 - `src/platform/`: the platform layer (so far: what the account's list of sessions calls this
   device, the transparent title bar on macOS, opening links).
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).

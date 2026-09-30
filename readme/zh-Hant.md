@@ -7,8 +7,9 @@
 
 FinchGram 使用 Telegram API，是 Telegram 生態系的一部分。它是非官方用戶端，並非 Telegram 出品。
 
-狀態：早期。登入、聊天列表和文字訊息的收發已經可用，介面是設計稿的三套主題：工作台（預設）、報紙和終端，
-在「設定 › 外觀」裡切換。接下來做圖片和檔案、多帳號、關鍵字隱藏和定時訊息。
+狀態：早期。註冊和登入、聊天列表和文字訊息的收發已經可用，介面是設計稿的三套主題：工作台（預設）、報紙和
+終端，在「設定 › 外觀」裡切換。兩步驟驗證在「設定 › 隱私與安全」裡管理。接下來做圖片和檔案、多帳號、關鍵字隱藏
+和定時訊息。
 
 app 是一個外殼。Telegram 本身交給 TDLib（Telegram 官方的程式庫），它以獨立程式的形式在執行檔旁邊執行：
 `finchgram-tdlib`，由本儲存庫從鎖定版本的原始碼建置（就像 Coova Studio 的 ffmpeg）。外殼只透過 `src/telegram/`
@@ -75,10 +76,11 @@ src/
     api.rs               #   FinchGram 用到的 TDLib 型別（依照鎖定版本的 td_api.tl 撰寫）
     mod.rs               #   請求和回覆、重新啟動；更新交給 store
     store.rs             #   TDLib 告訴我們的聊天、使用者和訊息；頁面用的 model
-    login.rs             #   登入
+    login.rs             #   登入、註冊
     chats.rs             #   聊天列表
     conversation.rs      #   開啟的聊天：訊息、傳送
     account.rs           #   個人資料、登出
+    password.rs          #   設定裡的兩步驟驗證
   platform/              # 隨作業系統而不同的部分
   update.rs              # 自動更新：GitHub Releases、驗證簽名、替換、重新啟動
   settings.rs            # 使用者偏好（settings.toml）

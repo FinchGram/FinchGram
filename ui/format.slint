@@ -114,6 +114,11 @@ export global Fmt {
         return @tr("long date with year" => "{0} {1}, {2}", month-long(m.month), m.date, m.year);
     }
 
+    // A moment in full, for one ahead: "October 7, 2026, 14:20".
+    public pure function date-time(m: Moment) -> string {
+        return @tr("date and time" => "{0}, {1}", @tr("long date with year" => "{0} {1}, {2}", month-long(m.month), m.date, m.year), clock(m));
+    }
+
     // The open chat's header: "online", "last seen at 14:20", "486 members, 32 online", …
     public pure function status(status: Status, last-seen: Moment, members: int, online: int) -> string {
         if status == Status.online {

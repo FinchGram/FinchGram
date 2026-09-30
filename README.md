@@ -8,9 +8,10 @@ macOS first (Apple silicon); Windows and Linux later.
 FinchGram uses the Telegram API and is part of the Telegram ecosystem. It is an unofficial client,
 not made by Telegram.
 
-Status: early. Logging in, the chat list and chats with text messages work, in the design's three
-themes: Workbench (the default), Broadsheet and Terminal, switched in Settings → Appearance. Photos
-and files, several accounts, keyword filters and scheduled messages come next.
+Status: early. Signing up and logging in, the chat list and chats with text messages work, in the
+design's three themes: Workbench (the default), Broadsheet and Terminal, switched in Settings →
+Appearance. Two-step verification is managed in Settings → Privacy & security. Photos and files,
+several accounts, keyword filters and scheduled messages come next.
 
 The app is a shell. Telegram itself is done by TDLib, Telegram's own library, running as a separate
 program next to the executable: `finchgram-tdlib`, built from pinned sources by this repository (as
@@ -80,10 +81,11 @@ src/
     api.rs               #   the TDLib types FinchGram uses (td_api.tl of the pinned version)
     mod.rs               #   requests and answers, starting again; updates go to the store
     store.rs             #   what TDLib said about chats, users and messages; the pages' models
-    login.rs             #   logging in
+    login.rs             #   logging in, signing up
     chats.rs             #   the chat list
     conversation.rs      #   the open chat: messages, writing
     account.rs           #   the profile, logging out
+    password.rs          #   two-step verification in Settings
   platform/              # what differs from one operating system to another
   update.rs              # the self-updater: GitHub Releases, signature check, swap, relaunch
   settings.rs            # the user's preferences (settings.toml)

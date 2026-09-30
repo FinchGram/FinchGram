@@ -114,8 +114,8 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
     state.on_open_url(|url| {
-        // Only our own pages are ever opened from here.
-        if url.starts_with("https://github.com/FinchGram/") {
+        // Only our own pages, and Telegram's terms of service when signing up, are opened from here.
+        if url.starts_with("https://github.com/FinchGram/") || url == "https://telegram.org/tos" {
             platform::open_link(&url);
         }
     });

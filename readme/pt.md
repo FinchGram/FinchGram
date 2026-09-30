@@ -8,9 +8,10 @@ Um cliente de desktop do Telegram de código aberto, com uma central de mídia, 
 O FinchGram usa a API do Telegram e faz parte do ecossistema do Telegram. É um cliente não oficial,
 não feito pelo Telegram.
 
-Status: fase inicial. O login, a lista de conversas e as conversas com mensagens de texto funcionam,
-nos três temas do design: Workbench (o padrão), Broadsheet e Terminal, trocados em Configurações ›
-Aparência. Em seguida vêm fotos e arquivos, várias contas, filtros por palavras-chave e mensagens
+Status: fase inicial. O cadastro e o login, a lista de conversas e as conversas com mensagens de texto
+funcionam, nos três temas do design: Workbench (o padrão), Broadsheet e Terminal, trocados em
+Configurações › Aparência. A verificação em duas etapas é gerenciada em Configurações › Privacidade e
+segurança. Em seguida vêm fotos e arquivos, várias contas, filtros por palavras-chave e mensagens
 agendadas.
 
 O app é uma casca (*shell*). O Telegram em si fica a cargo do TDLib, a biblioteca oficial do Telegram,
@@ -85,10 +86,11 @@ src/
     api.rs               #   os tipos do TDLib que o FinchGram usa (td_api.tl da versão fixada)
     mod.rs               #   pedidos e respostas, reiniciar; as atualizações vão para o store
     store.rs             #   o que o TDLib disse sobre conversas, usuários e mensagens; os modelos das páginas
-    login.rs             #   o login
+    login.rs             #   o login, o cadastro
     chats.rs             #   a lista de conversas
     conversation.rs      #   a conversa aberta: mensagens, escrever
     account.rs           #   o perfil, sair
+    password.rs          #   a verificação em duas etapas nas Configurações
   platform/              # o que muda de um sistema operacional para outro
   update.rs              # a atualização automática: GitHub Releases, assinatura, troca, reinício
   settings.rs            # as preferências do usuário (settings.toml)

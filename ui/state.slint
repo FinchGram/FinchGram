@@ -79,7 +79,7 @@ export global AppState {
     callback change-theme(Theme);
     callback change-check-for-updates-daily(bool);
 
-    // Our own pages only (GitHub); anything else is refused by Rust.
+    // Our own pages (GitHub) and Telegram's terms of service; anything else is refused by Rust.
     callback open-url(string);
 
     // The themes draw their own title bar: pressing on its empty part moves the window, a double
