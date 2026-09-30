@@ -89,6 +89,10 @@ pub enum Update {
     #[serde(rename = "updateDeleteMessages")]
     DeleteMessages { chat_id: i64, message_ids: Vec<i64>, is_permanent: bool },
 
+    /// A download went on (files.rs).
+    #[serde(rename = "updateFile")]
+    File { file: File },
+
     #[serde(other)]
     Other,
 }
@@ -562,11 +566,11 @@ pub enum MessageContent {
     #[serde(rename = "messageText")]
     Text { text: FormattedText },
     #[serde(rename = "messagePhoto")]
-    Photo { caption: FormattedText },
+    Photo { photo: Photo, caption: FormattedText },
     #[serde(rename = "messageVideo")]
-    Video { caption: FormattedText },
+    Video { video: Video, caption: FormattedText },
     #[serde(rename = "messageAnimation")]
-    Animation { caption: FormattedText },
+    Animation { animation: Animation, caption: FormattedText },
     #[serde(rename = "messageAudio")]
     Audio { audio: Audio, caption: FormattedText },
     #[serde(rename = "messageDocument")]
@@ -625,6 +629,94 @@ pub enum MessageContent {
     ContactRegistered {},
     #[serde(other)]
     Other,
+}
+
+/// A file TDLib knows of: on Telegram's servers, and on disk once downloaded (files.rs).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct File {
+    pub id: i32,
+    #[serde(default)]
+    pub size: i64,
+    pub local: LocalFile,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+pub struct LocalFile {
+    #[serde(default)]
+    pub path: String,
+    #[serde(default)]
+    pub is_downloading_completed: bool,
+}
+
+/// A photo in several sizes, smallest first, with a tiny preview in the message itself.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct Photo {
+    #[serde(default)]
+    pub minithumbnail: Option<Minithumbnail>,
+    pub sizes: Vec<PhotoSize>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct PhotoSize {
+    pub photo: File,
+    pub width: i32,
+    pub height: i32,
+}
+
+/// A JPEG about 40 pixels wide, in the message itself: base64 in TDLib's JSON.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct Minithumbnail {
+    pub width: i32,
+    pub height: i32,
+    pub data: String,
+}
+
+/// A video's or a GIF's still picture, downloaded like any file.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct Thumbnail {
+    pub format: ThumbnailFormat,
+    pub width: i32,
+    pub height: i32,
+    pub file: File,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum ThumbnailFormat {
+    #[serde(rename = "thumbnailFormatJpeg")]
+    Jpeg,
+    #[serde(rename = "thumbnailFormatPng")]
+    Png,
+    #[serde(rename = "thumbnailFormatWebp")]
+    Webp,
+    /// GIF, MPEG-4, WebM, TGS: moving pictures, for a player.
+    #[serde(other)]
+    Other,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct Video {
+    pub duration: i32,
+    pub width: i32,
+    pub height: i32,
+    #[serde(default)]
+    pub minithumbnail: Option<Minithumbnail>,
+    #[serde(default)]
+    pub thumbnail: Option<Thumbnail>,
+    pub video: File,
+}
+
+/// A GIF, as Telegram keeps it (usually a silent MPEG-4 video).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct Animation {
+    pub duration: i32,
+    pub width: i32,
+    pub height: i32,
+    #[serde(default)]
+    pub minithumbnail: Option<Minithumbnail>,
+    #[serde(default)]
+    pub thumbnail: Option<Thumbnail>,
+    pub animation: File,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -800,7 +892,43 @@ mod tests {
             r#"{"@type":"messagePhoto","photo":{"@type":"photo","sizes":[]},"caption":{"@type":"formattedText","text":"the view","entities":[]},"has_spoiler":false}"#,
         )
         .unwrap();
-        assert_eq!(message, MessageContent::Photo { caption: FormattedText { text: "the view".into() } });
+        assert_eq!(
+            message,
+            MessageContent::Photo {
+                photo: Photo { minithumbnail: None, sizes: Vec::new() },
+                caption: FormattedText { text: "the view".into() },
+            }
+        );
+    }
+
+    #[test]
+    fn a_photo_and_a_video_say_what_to_download() {
+        let file = |id: i32, done: bool| {
+            format!(
+                r#"{{"@type":"file","id":{id},"size":48213,"expected_size":48213,"local":{{"@type":"localFile","path":"{}","can_be_downloaded":true,"can_be_deleted":{done},"is_downloading_active":false,"is_downloading_completed":{done},"download_offset":0,"downloaded_prefix_size":0,"downloaded_size":0}},"remote":{{"@type":"remoteFile","id":"AgAC","unique_id":"AQAD","is_uploading_active":false,"is_uploading_completed":true,"uploaded_size":48213}}}}"#,
+                if done { "/tdlib/photos/file_7.jpg" } else { "" }
+            )
+        };
+        let photo: MessageContent = serde_json::from_str(&format!(
+            r#"{{"@type":"messagePhoto","photo":{{"@type":"photo","has_stickers":false,"minithumbnail":{{"@type":"minithumbnail","width":40,"height":30,"data":"/9j/4AAQ"}},"sizes":[{{"@type":"photoSize","type":"m","photo":{},"width":320,"height":240,"progressive_sizes":[]}},{{"@type":"photoSize","type":"x","photo":{},"width":800,"height":600,"progressive_sizes":[]}}]}},"video":null,"caption":{{"@type":"formattedText","text":"","entities":[]}},"show_caption_above_media":false,"has_spoiler":false,"is_secret":false}}"#,
+            file(6, false),
+            file(7, true)
+        ))
+        .unwrap();
+        let MessageContent::Photo { photo, .. } = photo else { panic!("not a photo") };
+        assert_eq!(photo.minithumbnail.map(|mini| (mini.width, mini.height)), Some((40, 30)));
+        assert_eq!(photo.sizes[1].photo.local.path, "/tdlib/photos/file_7.jpg");
+        assert!(photo.sizes[1].photo.local.is_downloading_completed && !photo.sizes[0].photo.local.is_downloading_completed);
+
+        let video: MessageContent = serde_json::from_str(&format!(
+            r#"{{"@type":"messageVideo","video":{{"@type":"video","duration":42,"width":1280,"height":720,"file_name":"clip.mp4","mime_type":"video/mp4","has_stickers":false,"supports_streaming":true,"minithumbnail":null,"thumbnail":{{"@type":"thumbnail","format":{{"@type":"thumbnailFormatJpeg"}},"width":320,"height":180,"file":{}}},"video":{}}},"alternative_videos":[],"storyboards":[],"cover":null,"start_timestamp":0,"caption":{{"@type":"formattedText","text":"42 seconds","entities":[]}},"show_caption_above_media":false,"has_spoiler":false,"is_secret":false}}"#,
+            file(8, false),
+            file(9, false)
+        ))
+        .unwrap();
+        let MessageContent::Video { video, caption } = video else { panic!("not a video") };
+        assert_eq!((video.duration, video.width, video.height, caption.text.as_str()), (42, 1280, 720, "42 seconds"));
+        assert_eq!(video.thumbnail.map(|thumbnail| (thumbnail.format, thumbnail.file.id)), Some((ThumbnailFormat::Jpeg, 8)));
     }
 
     #[test]

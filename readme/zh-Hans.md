@@ -55,6 +55,7 @@ TDLib 的数据库和下载的文件在 `~/Library/Application Support/FinchGram
 
 ```
 .github/workflows/
+  mpv.yml                # 在干净的机器上构建 libmpv；mpv-* tag 发布成 release
   release.yml            # 每次 push 到 main 都构建 app；v* tag 发布成 release
   tdlib.yml              # 在干净的机器上构建 finchgram-tdlib；tdlib-* tag 发布成 release
 Cargo.toml
@@ -66,11 +67,13 @@ release-signing.pub      # 允许给 release 签名的公钥，编译进 app
 scripts/
   bundle.sh              # 构建 dist/FinchGram.app（release 流程跑的就是它）
   fetch-fonts.sh         # 把锁定的界面字体下载到 vendor/fonts/
+  fetch-mpv.sh           # 把锁定的 libmpv release 下载到 vendor/mpv/bin/
   fetch-tdlib.sh         # 把锁定的 finchgram-tdlib release 下载到 vendor/tdlib/bin/
   release.sh             # 发起一次 release：改版本、打 tag、push，其余交给 GitHub Actions
 src/
   main.rs                # 窗口、设置、语言和主题、更新；启动 Telegram
   fonts.rs               # 界面字体，编译进可执行文件
+  images.rs              # 消息里的图片，在界面线程之外解码
   telegram/              # 唯一跟 finchgram-tdlib 打交道的代码
     process.rs           #   运行这个程序：通过标准输入输出传递 TDLib 的 JSON
     api.rs               #   FinchGram 用到的 TDLib 类型（照锁定版本的 td_api.tl 写）
@@ -81,6 +84,7 @@ src/
     conversation.rs      #   打开的聊天：消息、发送
     account.rs           #   个人资料、退出登录
     password.rs          #   设置里的两步验证
+    files.rs             #   下载文件
   platform/              # 随操作系统而不同的部分
   update.rs              # 自动更新：GitHub Releases、校验签名、替换、重启
   settings.rs            # 用户偏好（settings.toml）
@@ -101,6 +105,9 @@ ui/
   icons/                 # Phosphor 图标（MIT），常规和双色两种；icons.slint 列出它们
   logo/                  # FinchGram 的 logo（svg、png）和使用规则
 vendor/fonts/            # 不进 git：界面字体（scripts/fetch-fonts.sh）
+vendor/mpv/              # libmpv：mpv 和 FFmpeg，用来播放视频（还没接进 app）
+  build.sh               #   从锁定的源码构建它：版本和 SHA-256 都锁定在脚本顶部
+  bin/                   #   不进 git：库本身（scripts/fetch-mpv.sh 下载，或 build.sh install）
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   从锁定的源码构建它：TDLib commit、OpenSSL 版本和 SHA-256 都锁定在脚本顶部
   host/                  #   我们的小外壳程序（main.cpp）和它的 CMakeLists.txt

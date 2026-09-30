@@ -64,6 +64,7 @@ Die Datenbank von TDLib und die heruntergeladenen Dateien liegen in
 
 ```
 .github/workflows/
+  mpv.yml                # baut libmpv auf einer sauberen Maschine; veröffentlicht mpv-*-Tags als Releases
   release.yml            # baut die App bei jedem Push auf main; veröffentlicht v*-Tags als Releases
   tdlib.yml              # baut finchgram-tdlib auf einer sauberen Maschine; veröffentlicht tdlib-*-Tags als Releases
 Cargo.toml
@@ -75,11 +76,13 @@ release-signing.pub      # die öffentlichen Schlüssel, die Releases signieren 
 scripts/
   bundle.sh              # baut dist/FinchGram.app (das, was der Release-Workflow ausführt)
   fetch-fonts.sh         # die festgelegten Schriften der Oberfläche nach vendor/fonts/
+  fetch-mpv.sh           # das festgelegte libmpv-Release nach vendor/mpv/bin/
   fetch-tdlib.sh         # das festgelegte finchgram-tdlib-Release nach vendor/tdlib/bin/
   release.sh             # startet ein Release: Version, Tag, Push; den Rest erledigt GitHub Actions
 src/
   main.rs                # das Fenster, die Einstellungen, Sprache und Design, Updates; startet Telegram
   fonts.rs               # die Schriften der Oberfläche, in die ausführbare Datei kompiliert
+  images.rs              # Bilder in Nachrichten, außerhalb des UI-Threads dekodiert
   telegram/              # der einzige Code, der mit finchgram-tdlib spricht
     process.rs           #   führt das Programm aus: TDLib-JSON über Standardein- und -ausgabe
     api.rs               #   die TDLib-Typen, die FinchGram nutzt (td_api.tl der festgelegten Version)
@@ -90,6 +93,7 @@ src/
     conversation.rs      #   der offene Chat: Nachrichten, Schreiben
     account.rs           #   das Profil, Abmelden
     password.rs          #   die zweistufige Bestätigung in den Einstellungen
+    files.rs             #   das Herunterladen von Dateien
   platform/              # was sich von Betriebssystem zu Betriebssystem unterscheidet
   update.rs              # die Selbstaktualisierung: GitHub Releases, Signatur, Austausch, Neustart
   settings.rs            # die Einstellungen des Nutzers (settings.toml)
@@ -110,6 +114,9 @@ ui/
   icons/                 # Phosphor-Symbole (MIT), normal und zweifarbig; icons.slint listet sie auf
   logo/                  # das FinchGram-Logo (svg, png) und seine Regeln
 vendor/fonts/            # nicht in Git: die Schriften der Oberfläche (scripts/fetch-fonts.sh)
+vendor/mpv/              # libmpv: mpv und FFmpeg, zum Abspielen von Videos (noch nicht in der App)
+  build.sh               #   baut sie aus festgelegten Quellen: Versionen und SHA-256 ganz oben
+  bin/                   #   nicht in Git: die Bibliothek (scripts/fetch-mpv.sh oder build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   baut es aus festgelegten Quellen: TDLib-Commit, OpenSSL-Version und SHA-256 ganz oben
   host/                  #   unser kleines Host-Programm (main.cpp) und seine CMakeLists.txt

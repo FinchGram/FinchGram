@@ -32,6 +32,9 @@ things fit together.
   Appearance without a restart (docs/architecture.md). Every change to the pages goes into all three,
   Workbench first. What the design shows but FinchGram cannot do yet is greyed out; never invent
   pages or visual design beyond the design.
+- Video (and later voice messages and GIFs) plays through mpv, as libmpv built from pinned sources in
+  `vendor/mpv/` the way finchgram-tdlib is (`mpv-*` releases, `scripts/fetch-mpv.sh`). How media
+  looks in the chats and the player page wait for the design.
 - Telegram API credentials are never in the repository. Every developer uses their own
   (`FINCHGRAM_API_ID`, `FINCHGRAM_API_HASH` at build time); the release workflow uses secrets.
 

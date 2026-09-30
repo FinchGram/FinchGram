@@ -1,0 +1,48 @@
+name: mpv
+
+# Builds libmpv (mpv, FFmpeg, libplacebo and libass as pinned in vendor/mpv/build.sh) on a clean
+# Apple-silicon runner. Pushing a tag such as mpv-0.41.0-1 also publishes it as a release of this
+# repository, which scripts/fetch-mpv.sh pins by tag and SHA-256. A manual run only builds.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["mpv-*"] # mpv-<mpv version>-<n>; -<n> counts rebuilds of the same mpv
+
+jobs:
+  macos-arm64:
+    runs-on: macos-latest # Apple silicon
+    permissions:
+      contents: write # gh release create needs it; the default token is read-only
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install build tools
+        run: brew install meson ninja pkgconf # python3 comes with the runner
+
+      - name: Cache source downloads
+        uses: actions/cache@v6
+        with:
+          path: vendor/mpv/work/downloads
+          key: mpv-sources-${{ hashFiles('vendor/mpv/build.sh') }}
+
+      - name: Build
+        run: vendor/mpv/build.sh
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v7
+        with:
+          name: libmpv-macos-arm64
+          path: vendor/mpv/dist
+
+      # --latest=false: this repository's "Latest release" is always the newest app (v*), which
+      # installed copies of FinchGram look for to update themselves.
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/mpv-')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --latest=false \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file vendor/mpv/dist/BUILD-INFO.txt \
+            vendor/mpv/dist/*.tar.gz vendor/mpv/dist/SHA256SUMS vendor/mpv/dist/sources/*

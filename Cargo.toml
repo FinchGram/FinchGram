@@ -20,16 +20,15 @@ dirs = "7"
 sys-locale = "0.3"
 chrono = "0.4"                                  # local times of messages (Slint uses it already)
 qrcode = { version = "0.14", default-features = false }   # the QR code for logging in
+# Pictures in messages, decoded off the UI thread (src/images.rs); Slint uses the same crates.
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+base64 = "0.23"                                 # TDLib's bytes (a photo's tiny preview)
 # The self-updater (src/update.rs) and the release signing tool (src/bin/).
 ureq = "3"
 semver = "1"
 sha2 = "0.11"
 ed25519-dalek = "3"
 hex = "0.4"
-
-[dev-dependencies]
-# The screenshots of every page (src/screenshots.rs) are written as PNG.
-image = { version = "0.25", default-features = false, features = ["png"] }
 
 [build-dependencies]
 slint-build = "~1.18"

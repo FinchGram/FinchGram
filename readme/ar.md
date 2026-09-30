@@ -60,6 +60,7 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 
 ```
 .github/workflows/
+  mpv.yml                # يبني libmpv على جهاز نظيف؛ وينشر وسوم mpv-* كإصدارات
   release.yml            # يبني التطبيق مع كل push إلى main؛ وينشر وسوم v* كإصدارات
   tdlib.yml              # يبني finchgram-tdlib على جهاز نظيف؛ وينشر وسوم tdlib-* كإصدارات
 Cargo.toml
@@ -71,11 +72,13 @@ release-signing.pub      # المفاتيح العامة المسموح لها �
 scripts/
   bundle.sh              # يبني dist/FinchGram.app (وهو ما يشغّله مسار الإصدار)
   fetch-fonts.sh         # خطوط الواجهة المثبّتة إلى vendor/fonts/
+  fetch-mpv.sh           # إصدار libmpv المثبّت إلى vendor/mpv/bin/
   fetch-tdlib.sh         # إصدار finchgram-tdlib المثبّت إلى vendor/tdlib/bin/
   release.sh             # يبدأ إصدارًا: رقم الإصدار، والوسم، والدفع؛ ويتولى GitHub Actions الباقي
 src/
   main.rs                # النافذة، والإعدادات، واللغة والسمة، والتحديثات؛ يشغّل Telegram
   fonts.rs               # خطوط الواجهة، مُضمَّنة في الملف التنفيذي
+  images.rs              # صور الرسائل، تُفك خارج خيط الواجهة
   telegram/              # الشيفرة الوحيدة التي تتواصل مع finchgram-tdlib
     process.rs           #   يشغّل البرنامج: JSON الخاص بـ TDLib عبر الإدخال والإخراج القياسيين
     api.rs               #   أنواع TDLib التي يستخدمها FinchGram (td_api.tl للإصدار المثبّت)
@@ -86,6 +89,7 @@ src/
     conversation.rs      #   الدردشة المفتوحة: الرسائل، والكتابة
     account.rs           #   الملف الشخصي، وتسجيل الخروج
     password.rs          #   التحقق بخطوتين في الإعدادات
+    files.rs             #   تنزيل الملفات
   platform/              # ما يختلف من نظام تشغيل إلى آخر
   update.rs              # التحديث الذاتي: GitHub Releases، والتحقق من التوقيع، والاستبدال، وإعادة التشغيل
   settings.rs            # تفضيلات المستخدم (settings.toml)
@@ -106,6 +110,9 @@ ui/
   icons/                 # أيقونات Phosphor (MIT)، عادية وثنائية اللون؛ يسردها icons.slint
   logo/                  # شعار FinchGram (svg وpng) وقواعد استخدامه
 vendor/fonts/            # ليس في git: خطوط الواجهة (scripts/fetch-fonts.sh)
+vendor/mpv/              # libmpv: ‏mpv وFFmpeg لتشغيل الفيديو (ليس في التطبيق بعد)
+  build.sh               #   يبنيها من مصادر مثبّتة: الإصدارات وSHA-256 في أعلى الملف
+  bin/                   #   ليست في git: المكتبة نفسها (scripts/fetch-mpv.sh أو build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   يبنيه من مصادر مثبّتة: commit لـ TDLib، وإصدار OpenSSL وSHA-256 في أعلى الملف
   host/                  #   برنامجنا المضيف الصغير (main.cpp) وملف CMakeLists.txt الخاص به

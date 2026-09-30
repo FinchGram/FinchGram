@@ -92,10 +92,11 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 
 - `src/telegram/`：适配层。`process.rs` 负责运行那个程序，`api.rs` 是我们用到的 TDLib 类型，`mod.rs` 负责发请求、
   分发回复、重新启动和转交更新。`store.rs` 保存 TDLib 告诉我们的东西（聊天、用户、群组、文件夹、打开的聊天的消息），
-  每批更新之后把页面用的 model 更新到最新；`login.rs`、`chats.rs`、`conversation.rs`、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事。
+  每批更新之后把页面用的 model 更新到最新；`login.rs`、`chats.rs`、`conversation.rs`、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件。
 - `src/platform/`：平台层（目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接）。
 - `src/update.rs`：自动更新（[conventions.md](conventions.zh-Hans.md) 第 3 节）。
 - `src/settings.rs`、`src/i18n.rs`、`src/fonts.rs`（界面字体，编译进可执行文件）。
+- `src/images.rs`：图片（照片、视频封面、消息里自带的小预览图）在界面线程之外解码，并缓存最近的。
 - `src/screenshots.rs`：用 Slint 的软件渲染器和假数据，把每套主题的每个页面（浅色和深色）画成 PNG
   （`cargo test screenshots -- --ignored`）。
 - `ui/`：`app.slint`（窗口：菜单，以及显示哪个页面）、`state.slint` 和 `telegram.slint`（Rust 和页面共用的 global）、
@@ -121,9 +122,13 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 1. **数据库加密**：TDLib 可以用一个密钥加密它的数据库，密钥放在系统的安全存储（钥匙串）里。
    在那之前，数据库只靠用户的系统账号保护。
 2. **下载的文件放哪**：暂时放在数据库旁边。大小上限和缓存目录（`~/Library/Caches`）需要设计。
-3. **媒体播放**（媒体中心）：语音消息（Opus）、视频、GIF 和动态贴纸（WebM、Lottie）。解码需要一个自己的引擎，
-   跟 TDLib 一样从锁定的源码构建：要么像酷丸工具箱那样用独立程序形式的 FFmpeg，要么在我们自己的程序里用一个库。
-   做第一个媒体页面时再定。
+3. **媒体播放**（媒体中心）：语音消息（Opus）、视频、GIF 和动态贴纸（WebM、Lottie）。2026-09-30 定了：用 mpv。
+   它以 libmpv 的形式出现，跟 finchgram-tdlib 一样由 `vendor/mpv/build.sh` 从锁定的源码构建：mpv 加上 FFmpeg、
+   libplacebo 和 libass（FreeType、FriBidi、HarfBuzz），全部静态链接进一个只依赖 macOS 的库。mpv 通过它的
+   render API（OpenGL）把画面画进 app 的窗口，能硬解的用 VideoToolbox。它还没接进 app：显示和播放媒体的页面要等
+   设计稿。代价是 libmpv 在 app 的进程里解码，一个故意构造的视频如果弄坏了解码器，窗口会跟着一起崩。FFmpeg 构建时
+   去掉了网络、编码器和设备，并跟着上游升级；如果还不够，就把播放挪进一个沙箱里的辅助进程，由它把画面交给 app
+   （macOS 上用 IOSurface）。Lottie 贴纸要另想办法（rlottie）。
 4. **渲染**：暂时用 Slint 的默认渲染器（FemtoVG）。设计稿的字体都已打包，中文也在内（Noto Sans SC）；消息里的
    日文、韩文和彩色 emoji 暂时用系统字体，等界面支持这些语言时再说。Skia 得从源码构建才行：它的 Rust 绑定默认会
    下载预编译的库，这是 conventions.md 不允许的。

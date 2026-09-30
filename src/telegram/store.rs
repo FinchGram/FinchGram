@@ -8,16 +8,18 @@
 
 use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap};
+use std::hash::{DefaultHasher, Hash, Hasher};
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
-use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
+use slint::{ComponentHandle, Image, Model, ModelRc, SharedString, VecModel};
 
 use super::api::{
     self, ChatList, ChatMemberStatus, ChatType, MessageContent as M, MessageSender, MessageSendingState,
     NotificationSettingsScope, Update, UserStatus, UserType,
 };
 use super::time;
+use crate::images;
 use crate::{
     Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, MainWindow, MessageRow, Moment, RowKind,
     Status, Tab, TreeRow, Words,
@@ -25,6 +27,13 @@ use crate::{
 
 /// How long someone counts as typing after TDLib last said so.
 pub const TYPING_LASTS: Duration = Duration::from_secs(6);
+
+/// Decoded pictures kept: those of the open chats and some more.
+const PICTURES_KEPT: usize = 200;
+const PREVIEWS_KEPT: usize = 1000;
+/// A photo is downloaded in the smallest size that is at least this large on its longer side:
+/// still sharp at the size a chat shows it.
+const PICTURE_SIDE: i32 = 640;
 
 /// The messages of an open chat that TDLib has given us, by id (oldest first).
 #[derive(Default)]
@@ -87,6 +96,10 @@ pub struct Store {
     /// Who is typing where, and since when.
     pub typing: HashMap<i64, Vec<(MessageSender, Instant)>>,
     pub sponsored: HashMap<i64, Vec<api::SponsoredMessage>>,
+    /// Pictures of photos, videos and GIFs, downloaded and decoded, by file id.
+    pub pictures: images::Cache<i32>,
+    /// The tiny previews in messages, decoded once, by their bytes.
+    previews: RefCell<images::Cache<u64>>,
 
     pub dirty: Dirty,
     models: Models,
@@ -140,6 +153,8 @@ pub fn install(ui: &MainWindow) {
             histories: HashMap::new(),
             typing: HashMap::new(),
             sponsored: HashMap::new(),
+            pictures: images::Cache::new(PICTURES_KEPT),
+            previews: RefCell::new(images::Cache::new(PREVIEWS_KEPT)),
             dirty: Dirty::default(),
             models,
         })
@@ -171,6 +186,8 @@ pub fn clear() {
         store.histories.clear();
         store.typing.clear();
         store.sponsored.clear();
+        store.pictures.clear();
+        store.previews.borrow_mut().clear();
         store.dirty = Dirty { chats: true, conversation: true, account: true, scroll_to_end: false };
     });
     refresh();
@@ -444,7 +461,7 @@ impl Store {
                     self.dirty.conversation |= self.open == Some(chat_id);
                 }
             }
-            Update::AuthorizationState { .. } | Update::ConnectionState { .. } | Update::Other => {}
+            Update::AuthorizationState { .. } | Update::ConnectionState { .. } | Update::File { .. } | Update::Other => {}
         }
         followup
     }
@@ -584,9 +601,9 @@ impl Store {
         match &message.content {
             M::Text { text } => (Content::Text, text.text.clone(), none()),
             M::AnimatedEmoji { emoji } => (Content::Text, emoji.clone(), none()),
-            M::Photo { caption } => (Content::Photo, caption.text.clone(), none()),
-            M::Video { caption } => (Content::Video, caption.text.clone(), none()),
-            M::Animation { caption } => (Content::Animation, caption.text.clone(), none()),
+            M::Photo { caption, .. } => (Content::Photo, caption.text.clone(), none()),
+            M::Video { caption, .. } => (Content::Video, caption.text.clone(), none()),
+            M::Animation { caption, .. } => (Content::Animation, caption.text.clone(), none()),
             M::Audio { audio, caption } => {
                 let name = match (audio.performer.is_empty(), audio.title.is_empty()) {
                     (false, false) => format!("{} – {}", audio.performer, audio.title),
@@ -846,6 +863,10 @@ impl Store {
             }
             let (content, text, detail) = self.content(message, names);
             let sender = if message.is_outgoing && !me.is_empty() { me.clone() } else { self.sender_name(&message.sender_id, names) };
+            let (image, width, height, duration) = match picture(&message.content) {
+                Some(picture) => (self.picture_image(&picture), picture.width, picture.height, picture.duration),
+                None => (Image::default(), 0, 0, 0),
+            };
             rows.push(MessageRow {
                 kind: if is_service(content) { RowKind::Service } else { RowKind::Message },
                 id: message.id.to_string().into(),
@@ -863,6 +884,10 @@ impl Store {
                 failed: matches!(message.sending_state, Some(MessageSendingState::Failed { .. })),
                 seen: message.is_outgoing && message.id <= chat.last_read_outbox_message_id,
                 button: SharedString::new(),
+                picture: image,
+                picture_width: width,
+                picture_height: height,
+                duration,
             });
         }
         // Telegram's sponsored message, after the newest post of a channel.
@@ -893,6 +918,24 @@ impl Store {
             });
         }
         rows
+    }
+
+    /// The best picture there is so far: the downloaded one, else the message's tiny preview.
+    fn picture_image(&self, picture: &Picture) -> Image {
+        if let Some(image) = picture.file.and_then(|file| self.pictures.get(&file.id)) {
+            return image;
+        }
+        let Some(preview) = picture.preview else { return Image::default() };
+        let mut hasher = DefaultHasher::new();
+        preview.data.hash(&mut hasher);
+        let key = hasher.finish();
+        let mut previews = self.previews.borrow_mut();
+        if let Some(image) = previews.get(&key) {
+            return image;
+        }
+        let image = images::preview(&preview.data).unwrap_or_default();
+        previews.insert(key, image.clone());
+        image
     }
 
     fn refresh_account(&mut self, ui: &MainWindow) {
@@ -927,6 +970,56 @@ pub enum Followup {
 }
 
 /// Where `chat` is in `list`, if it is in it.
+/// What a message with a photo, a video or a GIF shows before it is played: the file with its
+/// picture (a photo in a suitable size, a video's still frame), its own size and length, and the
+/// tiny preview the message carries.
+pub struct Picture<'a> {
+    pub file: Option<&'a api::File>,
+    pub width: i32,
+    pub height: i32,
+    pub duration: i32,
+    pub preview: Option<&'a api::Minithumbnail>,
+}
+
+pub fn picture(content: &M) -> Option<Picture<'_>> {
+    match content {
+        M::Photo { photo, .. } => {
+            let largest = photo.sizes.last()?;
+            let size = photo.sizes.iter().find(|size| size.width.max(size.height) >= PICTURE_SIDE).unwrap_or(largest);
+            Some(Picture {
+                file: Some(&size.photo),
+                width: largest.width,
+                height: largest.height,
+                duration: 0,
+                preview: photo.minithumbnail.as_ref(),
+            })
+        }
+        M::Video { video, .. } => Some(still(video.thumbnail.as_ref(), (video.width, video.height), video.duration, video.minithumbnail.as_ref())),
+        M::Animation { animation, .. } => Some(still(
+            animation.thumbnail.as_ref(),
+            (animation.width, animation.height),
+            animation.duration,
+            animation.minithumbnail.as_ref(),
+        )),
+        _ => None,
+    }
+}
+
+/// A video's or a GIF's still frame, when it is a picture (not a moving one).
+fn still<'a>(
+    thumbnail: Option<&'a api::Thumbnail>,
+    (width, height): (i32, i32),
+    duration: i32,
+    preview: Option<&'a api::Minithumbnail>,
+) -> Picture<'a> {
+    let thumbnail = thumbnail.filter(|thumbnail| thumbnail.format != api::ThumbnailFormat::Other);
+    let (width, height) = match thumbnail {
+        Some(thumbnail) if width <= 0 || height <= 0 => (thumbnail.width, thumbnail.height),
+        _ => (width, height),
+    };
+    Picture { file: thumbnail.map(|thumbnail| &thumbnail.file), width, height, duration, preview }
+}
+
 pub fn position(chat: &api::Chat, list: ChatList) -> Option<&api::ChatPosition> {
     chat.positions.iter().find(|position| position.list == list && position.order != 0)
 }

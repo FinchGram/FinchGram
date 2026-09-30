@@ -60,13 +60,20 @@ into `vendor/fonts/` and checks their SHA-256, `src/fonts.rs` compiles them into
 `build.rs` stops early when they are missing. The icons are small SVG files (Phosphor, MIT), kept in
 git in `ui/icons/` exactly as they came, with their licence, as Coova Studio keeps its icons.
 
+libmpv follows it as finchgram-tdlib does: `vendor/mpv/build.sh` builds mpv and the libraries it needs
+(FFmpeg, libplacebo, and libass with FreeType, FriBidi and HarfBuzz) from pinned versions and
+SHA-256, statically into one `libmpv.2.dylib` that depends only on macOS; the script checks that
+(`otool -L`) and plays a short raw video as a smoke test. CI publishes it from an `mpv-<version>-<n>`
+tag (`.github/workflows/mpv.yml`), and `scripts/fetch-mpv.sh` downloads the pinned release into
+`vendor/mpv/bin/`.
+
 ## 2. One repository
 
 - The source, the vendor builds (`vendor/`) and the releases are all here, in public. Coova
   Studio splits them into three repositories because its source is private; FinchGram has no reason
   to.
-- Tags: `v<version>` for the app, `tdlib-<version>-<n>` for finchgram-tdlib (`<n>` counts rebuilds
-  of the same TDLib version).
+- Tags: `v<version>` for the app, `tdlib-<version>-<n>` for finchgram-tdlib and `mpv-<version>-<n>`
+  for libmpv (`<n>` counts rebuilds of the same version).
 - Vendor releases are published with `--latest=false`, so this repository's "Latest release" is
   always the newest app, which installed copies look for to update themselves.
 - Binaries live in releases, never in git history: `vendor/*/bin/`, `vendor/*/work/`,

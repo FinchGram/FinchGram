@@ -112,6 +112,14 @@ export struct MessageRow {
     failed: bool,
     seen: bool,             // an outgoing message the other side has read
     button: string,         // a sponsored message's button
+    // A photo, video or GIF (content says which): the best picture there is so far (the message's
+    // tiny preview until Conversation.load-picture has downloaded a sharp one), its own size, for
+    // its shape, and a video's or GIF's length in seconds. The pages do not draw them yet: the
+    // design comes first.
+    picture: image,
+    picture-width: int,
+    picture-height: int,
+    duration: int,
 }
 
 // How the open chat's header describes it.
@@ -147,6 +155,7 @@ export global Conversation {
     callback load-older();
     callback retry(string);                      // a message that failed to send
     callback open-sponsored(string);             // a sponsored message's button
+    callback load-picture(string);               // a message with a photo, video or GIF is in view
     callback toggle-mute();
     callback toggle-pin();
     callback mark-read();

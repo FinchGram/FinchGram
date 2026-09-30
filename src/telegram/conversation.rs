@@ -5,7 +5,8 @@
 //! updates only while open. The messages of the open chat are marked as seen as they arrive
 //! (viewMessages), which is what marks them read; that is what Telegram's own apps do, and
 //! FinchGram does not do otherwise (Telegram's API terms). Channels show Telegram's sponsored
-//! messages, marked as seen once shown.
+//! messages, marked as seen once shown. The pictures of photos, videos and GIFs are downloaded
+//! when a page shows their message.
 
 use std::cell::RefCell;
 
@@ -13,8 +14,10 @@ use serde_json::json;
 use slint::ComponentHandle;
 
 use super::api::{ChatList, ChatType, Messages, SponsoredMessages, SupergroupFullInfo};
+use super::files;
 use super::store::{self, History};
 use super::{Error, send};
+use crate::images;
 use crate::{Conversation, MainWindow};
 
 thread_local! {
@@ -71,6 +74,35 @@ pub fn connect(ui: &MainWindow) {
     conversation.on_toggle_mute(toggle_mute);
     conversation.on_toggle_pin(toggle_pin);
     conversation.on_mark_read(mark_read);
+    conversation.on_load_picture(|id| {
+        if let Ok(id) = id.parse() {
+            load_picture(id);
+        }
+    });
+}
+
+/// A message of the open chat with a photo, a video or a GIF is in view: download its picture and
+/// decode it, then its row shows it instead of the tiny preview.
+fn load_picture(message_id: i64) {
+    let file = store::with(|store| {
+        let chat_id = store.open?;
+        let message = store.histories.get(&chat_id)?.messages.get(&message_id)?;
+        let file = store::picture(&message.content)?.file?.clone();
+        (!store.pictures.contains(&file.id)).then_some(file)
+    })
+    .flatten();
+    let Some(file) = file else { return };
+    let id = file.id;
+    files::download(&file, files::ON_SCREEN, move |path| {
+        images::load(path, move |picture| {
+            let Some(picture) = picture else { return };
+            store::with(|store| {
+                store.pictures.insert(id, picture);
+                store.dirty.conversation = true;
+            });
+            store::refresh();
+        });
+    });
 }
 
 fn open_chat() -> Option<i64> {

@@ -6,6 +6,7 @@
 
 mod fonts;
 mod i18n;
+mod images;
 mod platform;
 #[cfg(test)]
 mod screenshots;

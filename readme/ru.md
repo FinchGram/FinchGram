@@ -63,6 +63,7 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 
 ```
 .github/workflows/
+  mpv.yml                # собирает libmpv на чистой машине; публикует теги mpv-* как релизы
   release.yml            # собирает приложение при каждом push в main; публикует теги v* как релизы
   tdlib.yml              # собирает finchgram-tdlib на чистой машине; публикует теги tdlib-* как релизы
 Cargo.toml
@@ -74,11 +75,13 @@ release-signing.pub      # открытые ключи, которым разр�
 scripts/
   bundle.sh              # собирает dist/FinchGram.app (его и запускает процесс релиза)
   fetch-fonts.sh         # зафиксированные шрифты интерфейса в vendor/fonts/
+  fetch-mpv.sh           # зафиксированный релиз libmpv в vendor/mpv/bin/
   fetch-tdlib.sh         # зафиксированный релиз finchgram-tdlib в vendor/tdlib/bin/
   release.sh             # запускает релиз: версия, тег, push; остальное делает GitHub Actions
 src/
   main.rs                # окно, настройки, язык и тема, обновления; запускает Telegram
   fonts.rs               # шрифты интерфейса, скомпилированные в исполняемый файл
+  images.rs              # картинки в сообщениях, декодируются вне потока интерфейса
   telegram/              # единственный код, который общается с finchgram-tdlib
     process.rs           #   запускает программу: JSON TDLib через стандартный ввод и вывод
     api.rs               #   типы TDLib, которые использует FinchGram (td_api.tl зафиксированной версии)
@@ -89,6 +92,7 @@ src/
     conversation.rs      #   открытый чат: сообщения, отправка
     account.rs           #   профиль, выход
     password.rs          #   двухэтапная проверка в настройках
+    files.rs             #   загрузка файлов
   platform/              # то, что отличается от одной операционной системы к другой
   update.rs              # самообновление: GitHub Releases, подпись, замена, перезапуск
   settings.rs            # настройки пользователя (settings.toml)
@@ -109,6 +113,9 @@ ui/
   icons/                 # значки Phosphor (MIT), обычные и двухцветные; их список в icons.slint
   logo/                  # логотип FinchGram (svg, png) и правила его использования
 vendor/fonts/            # не в git: шрифты интерфейса (scripts/fetch-fonts.sh)
+vendor/mpv/              # libmpv: mpv и FFmpeg для воспроизведения видео (пока не в приложении)
+  build.sh               #   собирает её из зафиксированных исходников: версии и SHA-256 в начале
+  bin/                   #   не в git: сама библиотека (scripts/fetch-mpv.sh или build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   собирает его из зафиксированных исходников: коммит TDLib, версия и SHA-256 OpenSSL в начале
   host/                  #   наша небольшая программа-хост (main.cpp) и её CMakeLists.txt

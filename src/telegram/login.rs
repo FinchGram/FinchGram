@@ -7,8 +7,13 @@
 //! A forgotten password is recovered while TDLib waits for it: a code goes to the recovery email
 //! address, and with it a new password logs in. Without that address, the account can only be
 //! reset, which Telegram delays by a week when the account was in use lately.
+//!
+//! A login left half done when the app quit is not resumed at the next start, as in Telegram's own
+//! desktop app: TDLib keeps its progress on disk, and a code already accepted would stay there,
+//! waiting only for the password. It is thrown away ([`discard_unfinished`]) and logging in starts
+//! again at the phone number. Within one run of the app, a restarted finchgram-tdlib carries on.
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 
 use serde_json::json;
 use slint::{ComponentHandle, Image, ModelRc, Rgba8Pixel, SharedPixelBuffer, SharedString, VecModel};
@@ -33,6 +38,56 @@ struct State {
 
 thread_local! {
     static STATE: RefCell<State> = RefCell::new(State::default());
+    /// TDLib has not yet said where logging in is since the app started.
+    static FIRST_STATE: Cell<bool> = const { Cell::new(true) };
+    /// A login left half done is being thrown away: TDLib closes, and a fresh one starts.
+    static DISCARDING: Cell<bool> = const { Cell::new(false) };
+}
+
+/// Called with every authorization state before anything else sees it. The first one since the app
+/// started is a login left half done by an earlier run: TDLib drops it (logOut destroys the keys of
+/// a session that is not logged in, without the network), and true says to show nothing of it.
+pub fn discard_unfinished(state: &AuthorizationState) -> bool {
+    if matches!(
+        state,
+        AuthorizationState::WaitTdlibParameters
+            | AuthorizationState::LoggingOut
+            | AuthorizationState::Closing
+            | AuthorizationState::Closed
+    ) {
+        return false;
+    }
+    // A fresh TDLib says where it is: whatever was thrown away is gone.
+    DISCARDING.with(|discarding| discarding.set(false));
+    if !FIRST_STATE.with(|first| first.replace(false)) || !is_unfinished(state) {
+        return false;
+    }
+    DISCARDING.with(|discarding| discarding.set(true));
+    send(json!({ "@type": "logOut" }), |answer| {
+        if let Err(err @ Error::Telegram { .. }) = answer {
+            eprintln!("telegram: cannot drop the unfinished login: {err}");
+        }
+    });
+    true
+}
+
+/// A login left half done is being thrown away (see [`discard_unfinished`]).
+pub fn discarding() -> bool {
+    DISCARDING.with(Cell::get)
+}
+
+/// Somewhere between the phone number and being logged in.
+fn is_unfinished(state: &AuthorizationState) -> bool {
+    matches!(
+        state,
+        AuthorizationState::WaitCode { .. }
+            | AuthorizationState::WaitPassword { .. }
+            | AuthorizationState::WaitEmailAddress
+            | AuthorizationState::WaitEmailCode { .. }
+            | AuthorizationState::WaitRegistration
+            | AuthorizationState::WaitOtherDeviceConfirmation { .. }
+            | AuthorizationState::WaitPremiumPurchase
+    )
 }
 
 pub fn connect(ui: &MainWindow) {
@@ -430,6 +485,20 @@ mod tests {
         let size = image.size();
         assert_eq!(size.width, size.height);
         assert!(size.width >= (21 + 4) * 8, "at least version 1 with its quiet zone");
+    }
+
+    #[test]
+    fn only_the_steps_between_the_number_and_logged_in_are_unfinished() {
+        let password = AuthorizationState::WaitPassword {
+            password_hint: String::new(),
+            has_recovery_email_address: false,
+            recovery_email_address_pattern: String::new(),
+        };
+        assert!(is_unfinished(&password));
+        assert!(is_unfinished(&AuthorizationState::WaitRegistration));
+        assert!(!is_unfinished(&AuthorizationState::WaitPhoneNumber));
+        assert!(!is_unfinished(&AuthorizationState::Ready));
+        assert!(!is_unfinished(&AuthorizationState::Closed));
     }
 
     #[test]

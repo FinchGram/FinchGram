@@ -153,6 +153,7 @@ fn message(id: &str, sender: &str, time: &str, text: &str) -> MessageRow {
         failed: false,
         seen: true,
         button: SharedString::new(),
+        ..MessageRow::default()
     }
 }
 

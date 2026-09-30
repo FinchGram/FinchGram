@@ -68,6 +68,7 @@ La base de données de TDLib et les fichiers téléchargés se trouvent dans
 
 ```
 .github/workflows/
+  mpv.yml                # compile libmpv sur une machine propre ; publie les tags mpv-* comme releases
   release.yml            # compile l'application à chaque push sur main ; publie les tags v* comme releases
   tdlib.yml              # compile finchgram-tdlib sur une machine propre ; publie les tags tdlib-* comme releases
 Cargo.toml
@@ -79,11 +80,13 @@ release-signing.pub      # les clés publiques autorisées à signer les release
 scripts/
   bundle.sh              # construit dist/FinchGram.app (ce qu'exécute le workflow de release)
   fetch-fonts.sh         # les polices figées de l'interface dans vendor/fonts/
+  fetch-mpv.sh           # la release figée de libmpv dans vendor/mpv/bin/
   fetch-tdlib.sh         # la release figée de finchgram-tdlib dans vendor/tdlib/bin/
   release.sh             # lance une release : version, tag, push ; GitHub Actions fait le reste
 src/
   main.rs                # la fenêtre, les réglages, la langue et le thème, les mises à jour ; démarre Telegram
   fonts.rs               # les polices de l'interface, compilées dans l'exécutable
+  images.rs              # les images des messages, décodées hors du fil de l'interface
   telegram/              # le seul code qui parle à finchgram-tdlib
     process.rs           #   exécute le programme : le JSON de TDLib sur l'entrée et la sortie standard
     api.rs               #   les types TDLib qu'utilise FinchGram (td_api.tl de la version figée)
@@ -94,6 +97,7 @@ src/
     conversation.rs      #   la discussion ouverte : messages, écriture
     account.rs           #   le profil, la déconnexion
     password.rs          #   la validation en deux étapes dans les réglages
+    files.rs             #   le téléchargement des fichiers
   platform/              # ce qui change d'un système d'exploitation à l'autre
   update.rs              # la mise à jour automatique : GitHub Releases, signature, remplacement, relance
   settings.rs            # les préférences de l'utilisateur (settings.toml)
@@ -114,6 +118,9 @@ ui/
   icons/                 # icônes Phosphor (MIT), normales et bicolores ; icons.slint les énumère
   logo/                  # le logo de FinchGram (svg, png) et ses règles
 vendor/fonts/            # hors de git : les polices de l'interface (scripts/fetch-fonts.sh)
+vendor/mpv/              # libmpv : mpv et FFmpeg, pour lire les vidéos (pas encore dans l'application)
+  build.sh               #   la compile à partir de sources figées : versions et SHA-256 en tête
+  bin/                   #   hors de git : la bibliothèque (scripts/fetch-mpv.sh ou build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   le compile à partir de sources figées : commit de TDLib, version et SHA-256 d'OpenSSL en tête
   host/                  #   notre petit programme hôte (main.cpp) et son CMakeLists.txt

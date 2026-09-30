@@ -60,6 +60,7 @@ TDLib의 데이터베이스와 내려받은 파일은 `~/Library/Application Sup
 
 ```
 .github/workflows/
+  mpv.yml                # 깨끗한 머신에서 libmpv를 빌드하고, mpv-* 태그를 릴리스로 공개
   release.yml            # main에 push할 때마다 앱을 빌드하고, v* 태그를 릴리스로 공개
   tdlib.yml              # 깨끗한 머신에서 finchgram-tdlib을 빌드하고, tdlib-* 태그를 릴리스로 공개
 Cargo.toml
@@ -71,11 +72,13 @@ release-signing.pub      # 릴리스에 서명할 수 있는 공개 키; 앱에 
 scripts/
   bundle.sh              # dist/FinchGram.app을 빌드(릴리스 워크플로가 실행하는 것)
   fetch-fonts.sh         # 고정된 UI 글꼴을 vendor/fonts/로
+  fetch-mpv.sh           # 고정된 libmpv 릴리스를 vendor/mpv/bin/으로
   fetch-tdlib.sh         # 고정된 finchgram-tdlib 릴리스를 vendor/tdlib/bin/으로
   release.sh             # 릴리스 시작: 버전, 태그, push; 나머지는 GitHub Actions가 처리
 src/
   main.rs                # 창, 설정, 언어와 테마, 업데이트. Telegram을 시작
   fonts.rs               # UI 글꼴. 실행 파일에 포함됨
+  images.rs              # 메시지의 이미지. UI 스레드 밖에서 디코딩
   telegram/              # finchgram-tdlib과 통신하는 유일한 코드
     process.rs           #   프로그램 실행: 표준 입출력으로 TDLib의 JSON을 주고받음
     api.rs               #   FinchGram이 쓰는 TDLib 타입(고정 버전의 td_api.tl 기준)
@@ -86,6 +89,7 @@ src/
     conversation.rs      #   열린 채팅: 메시지, 보내기
     account.rs           #   프로필, 로그아웃
     password.rs          #   설정의 2단계 인증
+    files.rs             #   파일 다운로드
   platform/              # 운영 체제마다 달라지는 부분
   update.rs              # 자동 업데이트: GitHub Releases, 서명 확인, 교체, 재시작
   settings.rs            # 사용자 설정(settings.toml)
@@ -106,6 +110,9 @@ ui/
   icons/                 # Phosphor 아이콘(MIT), 일반과 듀오톤. icons.slint가 목록
   logo/                  # FinchGram 로고(svg, png)와 사용 규칙
 vendor/fonts/            # git에 없음: UI 글꼴(scripts/fetch-fonts.sh)
+vendor/mpv/              # libmpv: 동영상 재생용 mpv와 FFmpeg(아직 앱에는 없음)
+  build.sh               #   고정된 소스로 빌드: 버전과 SHA-256은 맨 위에 고정
+  bin/                   #   git에 없음: 라이브러리 자체(scripts/fetch-mpv.sh 또는 build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   고정된 소스로 빌드: TDLib 커밋, OpenSSL 버전과 SHA-256은 맨 위에 고정
   host/                  #   작은 호스트 프로그램(main.cpp)과 그 CMakeLists.txt

@@ -20,6 +20,7 @@ mod account;
 mod api;
 mod chats;
 mod conversation;
+mod files;
 mod login;
 mod password;
 mod process;
@@ -239,6 +240,7 @@ fn on_update(update: Update) {
     match update {
         Update::AuthorizationState { authorization_state } => on_authorization_state(authorization_state),
         Update::ConnectionState { state } => with_state(|app| app.set_connection(connection(state))),
+        Update::File { file } => files::updated(&file),
         update => match store::with(|store| store.apply(update)) {
             Some(Followup::LoadFolders) => chats::load_folders(),
             Some(Followup::View { chat_id, message_ids }) => conversation::view(chat_id, message_ids),
@@ -252,6 +254,12 @@ fn on_update(update: Update) {
 }
 
 fn on_authorization_state(state: AuthorizationState) {
+    // A login left half done by an earlier run of the app is thrown away, unseen (login.rs).
+    if login::discard_unfinished(&state) {
+        with_state(|app| app.set_telegram_state(TelegramState::Starting));
+        return;
+    }
+    let discarding = login::discarding();
     login::on_state(&state);
     let shown = match state {
         AuthorizationState::WaitTdlibParameters => {
@@ -279,6 +287,7 @@ fn on_authorization_state(state: AuthorizationState) {
             chats::load_main_list();
             TelegramState::Ready
         }
+        AuthorizationState::LoggingOut | AuthorizationState::Closing if discarding => TelegramState::Starting,
         AuthorizationState::LoggingOut => TelegramState::LoggingOut,
         AuthorizationState::Closing => TelegramState::Closing,
         AuthorizationState::Closed => {
@@ -293,6 +302,7 @@ fn on_authorization_state(state: AuthorizationState) {
             chats::forget();
             account::forget();
             password::forget();
+            files::forget();
             with_state(|app| app.set_page(Page::Chats));
             return;
         }
@@ -388,6 +398,8 @@ fn on_ended() {
     for on_answer in waiting {
         on_answer(Err(Error::Stopped));
     }
+    // Downloads the program had under way end with it; the next one is asked again.
+    files::forget();
     match next {
         Next::Nothing => {}
         Next::StartAgain => launch(),

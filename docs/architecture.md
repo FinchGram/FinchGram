@@ -112,11 +112,13 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   `store.rs` keeps what TDLib has said (chats, users, groups, folders, the messages of the open
   chats) and brings the pages' models up to date after each batch; `login.rs`, `chats.rs`,
   `conversation.rs`, `account.rs` and `password.rs` (two-step verification) do what the pages ask
-  for.
+  for; `files.rs` downloads files.
 - `src/platform/`: the platform layer (so far: what the account's list of sessions calls this
   device, the transparent title bar on macOS, opening links).
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
 - `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
+- `src/images.rs`: pictures (photos, video stills, the tiny previews in messages), decoded off the UI
+  thread, and a cache of them.
 - `src/screenshots.rs`: every page in every theme, light and dark, drawn to a PNG with made-up data
   by Slint's software renderer (`cargo test screenshots -- --ignored`).
 - `ui/`: `app.slint` (the window: its menus and which page shows), `state.slint` and
@@ -148,9 +150,15 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 2. **Where downloaded files go**: next to the database for now. A size limit and a cache folder
    (`~/Library/Caches`) need a design.
 3. **Media playback** (the media center): voice messages (Opus), video, GIFs and animated stickers
-   (WebM, Lottie). Decoding needs an engine of its own, built from pinned sources like TDLib: FFmpeg
-   as a separate program, as in Coova Studio, or a library inside a program of ours. To be decided
-   with the first media page.
+   (WebM, Lottie). Decided on 2026-09-30: mpv. It comes as libmpv, built from pinned sources by
+   `vendor/mpv/build.sh` as finchgram-tdlib is: mpv with FFmpeg, libplacebo and libass (FreeType,
+   FriBidi, HarfBuzz), all static in one library that depends only on macOS. mpv draws into the app's
+   window through its render API (OpenGL) and decodes with VideoToolbox where it can. It is not in the
+   app yet: the pages that show and play media wait for the design. The price: libmpv decodes inside
+   the app's process, so a crafted video that breaks a decoder takes the window with it. FFmpeg is
+   built without network code, encoders or devices, and follows upstream; should that not be enough,
+   playback moves into a sandboxed helper process that hands its picture over (IOSurface on macOS).
+   Lottie stickers need something else (rlottie).
 4. **Rendering**: Slint's default renderer (FemtoVG) for now. The design's typefaces are bundled,
    Chinese included (Noto Sans SC); Japanese, Korean and colour emoji in messages come from the
    system's fonts until the UI speaks those languages. Skia would need building from source: its

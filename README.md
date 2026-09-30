@@ -60,6 +60,7 @@ settings in `~/Library/Application Support/FinchGram/settings.toml`.
 
 ```
 .github/workflows/
+  mpv.yml                # builds libmpv on a clean runner; publishes mpv-* tags as releases
   release.yml            # builds the app on every push to main; publishes v* tags as releases
   tdlib.yml              # builds finchgram-tdlib on a clean runner; publishes tdlib-* tags as releases
 Cargo.toml
@@ -71,11 +72,13 @@ release-signing.pub      # the public keys allowed to sign releases; compiled in
 scripts/
   bundle.sh              # builds dist/FinchGram.app (what the release workflow runs)
   fetch-fonts.sh         # the pinned UI fonts into vendor/fonts/
+  fetch-mpv.sh           # the pinned libmpv release into vendor/mpv/bin/
   fetch-tdlib.sh         # the pinned finchgram-tdlib release into vendor/tdlib/bin/
   release.sh             # starts a release: version, tag, push; GitHub Actions does the rest
 src/
   main.rs                # the window, the settings, the language and theme, updates; starts Telegram
   fonts.rs               # the UI fonts, compiled into the executable
+  images.rs              # pictures in messages, decoded off the UI thread
   telegram/              # the only code that talks to finchgram-tdlib
     process.rs           #   runs the program: TDLib's JSON over standard input and output
     api.rs               #   the TDLib types FinchGram uses (td_api.tl of the pinned version)
@@ -86,6 +89,7 @@ src/
     conversation.rs      #   the open chat: messages, writing
     account.rs           #   the profile, logging out
     password.rs          #   two-step verification in Settings
+    files.rs             #   downloading files
   platform/              # what differs from one operating system to another
   update.rs              # the self-updater: GitHub Releases, signature check, swap, relaunch
   settings.rs            # the user's preferences (settings.toml)
@@ -106,6 +110,9 @@ ui/
   icons/                 # Phosphor icons (MIT), regular and duotone; icons.slint lists them
   logo/                  # the FinchGram logo (svg, png) and its rules
 vendor/fonts/            # not in git: the UI fonts (scripts/fetch-fonts.sh)
+vendor/mpv/              # libmpv: mpv and FFmpeg, for playing video (not in the app yet)
+  build.sh               #   builds it from pinned sources: versions and SHA-256 at the top
+  bin/                   #   not in git: the library (scripts/fetch-mpv.sh, or build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   builds it from pinned sources: TDLib commit, OpenSSL version and SHA-256 at the top
   host/                  #   our small host program (main.cpp) and its CMakeLists.txt

@@ -45,11 +45,18 @@
 SHA-256，`src/fonts.rs` 把它们编译进可执行文件，缺了的时候 `build.rs` 会提前报错。图标是一些很小的 SVG 文件
 （Phosphor，MIT），原样放在 git 的 `ui/icons/` 里，连同它们的许可证，跟酷丸工具箱放图标的做法一样。
 
+libmpv 跟 finchgram-tdlib 一样照这个做：`vendor/mpv/build.sh` 按锁定的版本和 SHA-256 构建 mpv 和它需要的库
+（FFmpeg、libplacebo，以及 libass 和它用的 FreeType、FriBidi、HarfBuzz），全部静态链接进一个只依赖 macOS 的
+`libmpv.2.dylib`；脚本会检查这一点（`otool -L`），并播放一小段原始视频做冒烟测试。CI 从 `mpv-<版本号>-<n>`
+这样的 tag 构建并发布它（`.github/workflows/mpv.yml`），`scripts/fetch-mpv.sh` 把锁定的 release 下载到
+`vendor/mpv/bin/`。
+
 ## 2. 一个仓库
 
 - 源码、vendor 构建（`vendor/`）和发布全在这里，都公开。酷丸工具箱拆成三个仓库，是因为它的源码不公开；
   FinchGram 没有理由这样拆。
-- tag：app 用 `v<版本号>`，finchgram-tdlib 用 `tdlib-<版本号>-<n>`（`<n>` 是同一个 TDLib 版本的第几次构建）。
+- tag：app 用 `v<版本号>`，finchgram-tdlib 用 `tdlib-<版本号>-<n>`，libmpv 用 `mpv-<版本号>-<n>`（`<n>` 是同一个
+  版本的第几次构建）。
 - vendor 的 release 发布时加 `--latest=false`，这样本仓库的 “Latest release” 永远是最新的 app，
   已安装的 app 就靠它来自动更新。
 - 二进制只放在 release 里，永远不进 git 历史：`vendor/*/bin/`、`vendor/*/work/`、`vendor/*/dist/`、

@@ -55,6 +55,7 @@ TDLib 的資料庫和下載的檔案在 `~/Library/Application Support/FinchGram
 
 ```
 .github/workflows/
+  mpv.yml                # 在乾淨的機器上建置 libmpv；mpv-* tag 發佈為 release
   release.yml            # 每次 push 到 main 都建置 app；v* tag 發佈為 release
   tdlib.yml              # 在乾淨的機器上建置 finchgram-tdlib；tdlib-* tag 發佈為 release
 Cargo.toml
@@ -66,11 +67,13 @@ release-signing.pub      # 允許為 release 簽名的公鑰，編譯進 app
 scripts/
   bundle.sh              # 建置 dist/FinchGram.app（release 流程執行的就是它）
   fetch-fonts.sh         # 把鎖定的介面字型下載到 vendor/fonts/
+  fetch-mpv.sh           # 把鎖定的 libmpv release 下載到 vendor/mpv/bin/
   fetch-tdlib.sh         # 把鎖定的 finchgram-tdlib release 下載到 vendor/tdlib/bin/
   release.sh             # 發起一次 release：改版本、打 tag、push，其餘交給 GitHub Actions
 src/
   main.rs                # 視窗、設定、語言和主題、更新；啟動 Telegram
   fonts.rs               # 介面字型，編譯進執行檔
+  images.rs              # 訊息裡的圖片，在介面執行緒之外解碼
   telegram/              # 唯一與 finchgram-tdlib 打交道的程式碼
     process.rs           #   執行這個程式：透過標準輸入輸出傳遞 TDLib 的 JSON
     api.rs               #   FinchGram 用到的 TDLib 型別（依照鎖定版本的 td_api.tl 撰寫）
@@ -81,6 +84,7 @@ src/
     conversation.rs      #   開啟的聊天：訊息、傳送
     account.rs           #   個人資料、登出
     password.rs          #   設定裡的兩步驟驗證
+    files.rs             #   下載檔案
   platform/              # 隨作業系統而不同的部分
   update.rs              # 自動更新：GitHub Releases、驗證簽名、替換、重新啟動
   settings.rs            # 使用者偏好（settings.toml）
@@ -101,6 +105,9 @@ ui/
   icons/                 # Phosphor 圖示（MIT），一般和雙色兩種；icons.slint 列出它們
   logo/                  # FinchGram 的 logo（svg、png）和使用規則
 vendor/fonts/            # 不進 git：介面字型（scripts/fetch-fonts.sh）
+vendor/mpv/              # libmpv：mpv 和 FFmpeg，用來播放影片（還沒接進 app）
+  build.sh               #   從鎖定的原始碼建置它：版本和 SHA-256 都鎖定在腳本開頭
+  bin/                   #   不進 git：函式庫本身（scripts/fetch-mpv.sh 下載，或 build.sh install）
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   從鎖定的原始碼建置它：TDLib commit、OpenSSL 版本和 SHA-256 都鎖定在腳本開頭
   host/                  #   我們的小型外殼程式（main.cpp）和它的 CMakeLists.txt

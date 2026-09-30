@@ -61,6 +61,7 @@ TDLib のデータベースとダウンロードしたファイルは `~/Library
 
 ```
 .github/workflows/
+  mpv.yml                # クリーンなマシンで libmpv をビルドし、mpv-* タグをリリースとして公開
   release.yml            # main への push ごとにアプリをビルドし、v* タグをリリースとして公開
   tdlib.yml              # クリーンなマシンで finchgram-tdlib をビルドし、tdlib-* タグをリリースとして公開
 Cargo.toml
@@ -72,11 +73,13 @@ release-signing.pub      # リリースへの署名を許された公開鍵。�
 scripts/
   bundle.sh              # dist/FinchGram.app をビルド（リリースのワークフローが実行するもの）
   fetch-fonts.sh         # 固定バージョンの UI フォントを vendor/fonts/ へ
+  fetch-mpv.sh           # 固定バージョンの libmpv リリースを vendor/mpv/bin/ へ
   fetch-tdlib.sh         # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ へ
   release.sh             # リリースを開始：バージョン、タグ、push。残りは GitHub Actions が行う
 src/
   main.rs                # ウィンドウ、設定、言語とテーマ、アップデート。Telegram を起動
   fonts.rs               # UI フォント。実行ファイルに組み込まれる
+  images.rs              # メッセージの画像。UI スレッドの外でデコード
   telegram/              # finchgram-tdlib と通信する唯一のコード
     process.rs           #   プログラムを実行：標準入出力で TDLib の JSON をやり取り
     api.rs               #   FinchGram が使う TDLib の型（固定バージョンの td_api.tl に準拠）
@@ -87,6 +90,7 @@ src/
     conversation.rs      #   開いているチャット：メッセージ、送信
     account.rs           #   プロフィール、ログアウト
     password.rs          #   設定の 2 段階認証
+    files.rs             #   ファイルのダウンロード
   platform/              # OS ごとに異なる部分
   update.rs              # 自動アップデート：GitHub Releases、署名の検証、入れ替え、再起動
   settings.rs            # ユーザーの設定（settings.toml）
@@ -107,6 +111,9 @@ ui/
   icons/                 # Phosphor アイコン（MIT）、通常とデュオトーン。icons.slint が一覧
   logo/                  # FinchGram のロゴ（svg、png）と使用ルール
 vendor/fonts/            # git には入らない：UI フォント（scripts/fetch-fonts.sh）
+vendor/mpv/              # libmpv：動画再生用の mpv と FFmpeg（アプリにはまだ組み込んでいない）
+  build.sh               #   固定したソースからビルド：バージョンと SHA-256 は冒頭で固定
+  bin/                   #   git 管理外：ライブラリ本体（scripts/fetch-mpv.sh または build.sh install）
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   固定したソースからビルド：TDLib のコミット、OpenSSL のバージョンと SHA-256 は冒頭で固定
   host/                  #   小さなホストプログラム（main.cpp）とその CMakeLists.txt
