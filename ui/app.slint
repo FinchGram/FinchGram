@@ -1,7 +1,7 @@
 import { AppState, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language } from "state.slint";
 import { Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
-    PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, RowKind, Content, ChatKind, Status, Moment, Day,
-    Viewer, ViewerItem, Words } from "telegram.slint";
+    PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, RowKind, Content, ChatKind, Status, Moment,
+    Day, Viewer, ViewerItem, Words } from "telegram.slint";
 import { Look } from "look.slint";
 import { LoginPage } from "pages/login.slint";
 import { WorkbenchWindow } from "workbench/workbench.slint";
@@ -14,8 +14,8 @@ import { ProfilePage } from "pages/profile.slint";
 // Re-exported so Rust can reach them through slint::include_modules!().
 export { AppState, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language,
     Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
-    PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, RowKind, Content, ChatKind, Status, Moment, Day,
-    Viewer, ViewerItem, Words }
+    PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, RowKind, Content, ChatKind, Status, Moment,
+    Day, Viewer, ViewerItem, Words }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";
@@ -36,6 +36,7 @@ export component MainWindow inherits Window {
                 shortcut: @keys(Control + K);
                 enabled: root.ready;
                 activated => {
+                    AppState.show-window();
                     AppState.page = Page.chats;
                     AppState.search-requests += 1;
                 }
@@ -70,6 +71,7 @@ export component MainWindow inherits Window {
                 title: @tr("Settings…");
                 shortcut: @keys(Control + Comma);
                 activated => {
+                    AppState.show-window();
                     AppState.page = Page.settings;
                 }
             }

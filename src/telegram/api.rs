@@ -740,7 +740,25 @@ pub struct Document {
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Sticker {
+    pub width: i32,
+    pub height: i32,
     pub emoji: String,
+    pub format: StickerFormat,
+    /// A still picture of it, in WebP or JPEG; may be missing.
+    pub thumbnail: Option<Thumbnail>,
+    pub sticker: File,
+}
+
+/// What a sticker's file is: a still WebP picture, a Lottie animation (TGS) or a WebM video.
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum StickerFormat {
+    #[serde(rename = "stickerFormatWebp")]
+    Webp,
+    #[serde(rename = "stickerFormatTgs")]
+    Tgs,
+    #[serde(rename = "stickerFormatWebm")]
+    Webm,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -909,7 +927,7 @@ mod tests {
     }
 
     #[test]
-    fn a_photo_and_a_video_say_what_to_download() {
+    fn a_photo_a_video_and_a_sticker_say_what_to_download() {
         let file = |id: i32, done: bool| {
             format!(
                 r#"{{"@type":"file","id":{id},"size":48213,"expected_size":48213,"local":{{"@type":"localFile","path":"{}","can_be_downloaded":true,"can_be_deleted":{done},"is_downloading_active":false,"is_downloading_completed":{done},"download_offset":0,"downloaded_prefix_size":0,"downloaded_size":0}},"remote":{{"@type":"remoteFile","id":"AgAC","unique_id":"AQAD","is_uploading_active":false,"is_uploading_completed":true,"uploaded_size":48213}}}}"#,
@@ -936,6 +954,17 @@ mod tests {
         let MessageContent::Video { video, caption } = video else { panic!("not a video") };
         assert_eq!((video.duration, video.width, video.height, caption.text.as_str()), (42, 1280, 720, "42 seconds"));
         assert_eq!(video.thumbnail.map(|thumbnail| (thumbnail.format, thumbnail.file.id)), Some((ThumbnailFormat::Jpeg, 8)));
+
+        let sticker: MessageContent = serde_json::from_str(&format!(
+            r#"{{"@type":"messageSticker","sticker":{{"@type":"sticker","id":"5368324170671202286","set_id":"5368324170671202049","width":512,"height":512,"emoji":"😀","format":{{"@type":"stickerFormatTgs"}},"full_type":{{"@type":"stickerFullTypeRegular","premium_animation":null}},"thumbnail":{{"@type":"thumbnail","format":{{"@type":"thumbnailFormatWebp"}},"width":128,"height":128,"file":{}}},"sticker":{}}},"is_premium":false}}"#,
+            file(10, false),
+            file(11, false)
+        ))
+        .unwrap();
+        let MessageContent::Sticker { sticker } = sticker else { panic!("not a sticker") };
+        assert_eq!((sticker.width, sticker.height, sticker.emoji.as_str(), sticker.format), (512, 512, "😀", StickerFormat::Tgs));
+        assert_eq!(sticker.thumbnail.map(|thumbnail| (thumbnail.format, thumbnail.file.id)), Some((ThumbnailFormat::Webp, 10)));
+        assert_eq!(sticker.sticker.id, 11);
     }
 
     #[test]

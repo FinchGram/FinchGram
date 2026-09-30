@@ -94,7 +94,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   分发回复、重新启动和转交更新。`store.rs` 保存 TDLib 告诉我们的东西（聊天、用户、群组、文件夹、打开的聊天的消息），
   每批更新之后把页面用的 model 更新到最新；`login.rs`、`chats.rs`、`conversation.rs`、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`viewer.rs` 给媒体查看器提供内容。
 - `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）。
-- `src/platform/`：平台层（目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接）。
+- `src/platform/`：平台层（目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接，以及 macOS 上
+  关闭窗口后留在 Dock 里，即设计稿的“关闭窗口时：最小化到托盘”：点 Dock 图标重新打开窗口，退出时先让 TDLib 关好）。
 - `src/update.rs`：自动更新（[conventions.md](conventions.zh-Hans.md) 第 3 节）。
 - `src/settings.rs`、`src/i18n.rs`、`src/fonts.rs`（界面字体，编译进可执行文件）。
 - `src/images.rs`：图片（照片、视频封面、消息里自带的小预览图）在界面线程之外解码，并缓存最近的。
@@ -130,7 +131,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
    一张纹理（`src/player/`），能硬解的用 VideoToolbox；媒体查看器显示这张纹理。代价是 libmpv 在 app 的进程里
    解码，一个故意构造的视频如果弄坏了解码器，窗口会跟着一起崩。FFmpeg 构建时
    去掉了网络、编码器和设备，并跟着上游升级；如果还不够，就把播放挪进一个沙箱里的辅助进程，由它把画面交给 app
-   （macOS 上用 IOSurface）。Lottie 贴纸要另想办法（rlottie）。
+   （macOS 上用 IOSurface）。Lottie 贴纸要另想办法（rlottie），WebM 贴纸要能保留透明通道的 VP9 解码（libvpx；
+   FFmpeg 自带的 VP9 解码器会丢掉透明通道）。在那之前，动态贴纸只显示它的静态缩略图；静态贴纸照原样显示。
 4. **渲染**：暂时用 Slint 的默认渲染器（FemtoVG）。设计稿的字体都已打包，中文也在内（Noto Sans SC）；消息里的
    日文、韩文和彩色 emoji 暂时用系统字体，等界面支持这些语言时再说。Skia 得从源码构建才行：它的 Rust 绑定默认会
    下载预编译的库，这是 conventions.md 不允许的。

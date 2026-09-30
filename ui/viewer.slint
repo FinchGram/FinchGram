@@ -102,11 +102,14 @@ component IconButton inherits Rectangle {
     }
 }
 
-// The picture (or the video's frame), fitted into the room there is, zoomed from its middle.
+// The picture (or the video's frame), as large as its room allows, zoomed from its middle.
 component Stage inherits Rectangle {
     in property <ViewerItem> item;
     in property <length> radius;
     in property <float> zoom: 1;
+    in property <length> room;          // the most height the stage may take
+    // What the fitted picture needs, with 16px above and below: the stage's height unless zoomed.
+    out property <length> fitted-height: Math.round(own-height * fit) * 1px + 32px;
     callback activated();       // a click on the picture
     callback dismissed();       // a click beside it
     clip: true;
@@ -114,7 +117,7 @@ component Stage inherits Rectangle {
     property <float> own-width: item.width > 0 ? item.width : item.video ? 16 : 4;
     property <float> own-height: item.height > 0 ? item.height : item.video ? 9 : 3;
     // Room for the arrows on either side.
-    property <float> fit: min((self.width - 160px) / 1px / own-width, (self.height - 32px) / 1px / own-height);
+    property <float> fit: max(0, min((self.width - 160px) / 1px / own-width, (root.room - 32px) / 1px / own-height));
 
     TouchArea {
         clicked => {
@@ -154,6 +157,11 @@ component Stage inherits Rectangle {
 component PictureViewer inherits Rectangle {
     in property <ViewerLook> look;
     background: look.background;
+
+    // The room between the bar and the strip, and what the picture leaves in it for its video
+    // controls and its caption.
+    property <length> room: root.height - root.look.bar-height - strip.height;
+    property <length> below: controls.height + caption.height;
 
     state := ViewerState { }
 
@@ -324,167 +332,181 @@ component PictureViewer inherits Rectangle {
                 }
             }
 
-            stage := Stage {
+            // The picture with its video controls and its caption: one block in the middle of the
+            // room between the bar and the strip, so that the controls stay right under the picture
+            // however wide it is. The picture is as large as the room allows; zoomed in, a photo
+            // takes all the room above its caption.
+            VerticalLayout {
                 vertical-stretch: 1;
-                item: state.item;
-                radius: root.look.radius;
-                zoom: ViewerText.zoom-factor(Viewer.zoom);
-                dismissed => {
-                    Viewer.close();
-                }
-                activated => {
-                    if state.item.video {
-                        Viewer.play-pause();
-                    } else {
-                        root.toggle-zoom();
-                    }
-                }
-
-                if state.item.video && !Viewer.playing: Rectangle {
-                    width: root.look.play-size;
-                    height: root.look.play-size;
-                    border-radius: self.width / 2;
-                    background: #00000080;
-                    if !Viewer.loading: Icon {
-                        name: state.ended ? "arrow-counter-clockwise" : "play";
-                        size: root.look.play-size * 0.44;
-                        color: #ffffff;
-                        duotone: root.look.duotone;
-                    }
-                    if Viewer.loading: Spinner {
-                        size: root.look.play-size * 0.4;
-                        color: #ffffff;
-                    }
-                }
-            }
-
-            if state.item.video: HorizontalLayout {
                 alignment: center;
-                padding-top: 12px;
-                HorizontalLayout {
-                    width: min(1040px, root.width);
-                    padding-left: 24px;
-                    padding-right: 24px;
-                    spacing: 14px;
-                    VerticalLayout {
-                        alignment: center;
-                        Rectangle {
-                            width: root.look.icon-size + 6px;
-                            height: root.look.icon-size + 6px;
-                            Icon {
-                                name: Viewer.playing ? "pause" : state.ended ? "arrow-counter-clockwise" : "play";
-                                size: root.look.icon-size + 3px;
-                                color: #ffffff;
-                                duotone: root.look.duotone;
-                            }
-                            TouchArea {
-                                mouse-cursor: pointer;
-                                clicked => {
-                                    Viewer.play-pause();
-                                }
-                            }
+                stage := Stage {
+                    room: root.room - root.below;
+                    height: Viewer.zoom > 0 && !state.item.video ? self.room : self.fitted-height;
+                    item: state.item;
+                    radius: root.look.radius;
+                    zoom: ViewerText.zoom-factor(Viewer.zoom);
+                    dismissed => {
+                        Viewer.close();
+                    }
+                    activated => {
+                        if state.item.video {
+                            Viewer.play-pause();
+                        } else {
+                            root.toggle-zoom();
                         }
                     }
-                    Text {
-                        text: Fmt.duration(Math.floor(Viewer.position)) + " / " + Fmt.duration(state.item.duration);
-                        color: #c7ccd3;
-                        font-size: root.look.mono-counter ? 12px : 13px;
-                        font-family: root.look.mono-counter ? "IBM Plex Mono" : "";
-                        vertical-alignment: center;
-                    }
-                    seek := Rectangle {
-                        horizontal-stretch: 1;
-                        height: 22px;
-                        Rectangle {
-                            y: (parent.height - self.height) / 2;
-                            height: root.look.track-height;
-                            border-radius: root.look.track-radius;
-                            background: #ffffff33;
-                        }
-                        Rectangle {
-                            x: 0;
-                            y: (parent.height - self.height) / 2;
-                            width: parent.width * state.done;
-                            height: root.look.track-height;
-                            border-radius: root.look.track-radius;
-                            background: root.look.accent;
-                        }
-                        Rectangle {
-                            x: parent.width * state.done - self.width / 2;
-                            y: (parent.height - self.height) / 2;
-                            width: 12px;
-                            height: 12px;
-                            border-radius: 6px;
-                            background: #ffffff;
-                        }
-                        TouchArea {
-                            mouse-cursor: pointer;
-                            clicked => {
-                                Viewer.seek(max(0, min(1, self.mouse-x / self.width)));
-                            }
-                        }
-                    }
-                    Rectangle {
-                        width: speed.preferred-width + 16px;
-                        height: speed.preferred-height + 6px;
-                        y: (parent.height - self.height) / 2;
-                        border-radius: root.look.button-radius;
-                        border-width: 1px;
-                        border-color: #ffffff40;
-                        speed := Text {
-                            text: ViewerText.speed(Viewer.speed);
+
+                    if state.item.video && !Viewer.playing: Rectangle {
+                        width: root.look.play-size;
+                        height: root.look.play-size;
+                        border-radius: self.width / 2;
+                        background: #00000080;
+                        if !Viewer.loading: Icon {
+                            name: state.ended ? "arrow-counter-clockwise" : "play";
+                            size: root.look.play-size * 0.44;
                             color: #ffffff;
-                            font-size: root.look.mono-counter ? 12px : 13px;
-                            font-family: root.look.mono-counter ? "IBM Plex Mono" : "";
+                            duotone: root.look.duotone;
                         }
-                        TouchArea {
-                            mouse-cursor: pointer;
-                            clicked => {
-                                Viewer.next-speed();
-                            }
+                        if Viewer.loading: Spinner {
+                            size: root.look.play-size * 0.4;
+                            color: #ffffff;
                         }
                     }
-                    VerticalLayout {
+                }
+                controls := Rectangle {
+                    visible: state.item.video;
+                    height: state.item.video ? controls-row.preferred-height : 0px;
+                    controls-row := HorizontalLayout {
                         alignment: center;
-                        Rectangle {
-                            width: root.look.icon-size + 4px;
-                            height: root.look.icon-size + 4px;
-                            Icon {
-                                name: Viewer.muted ? "speaker-x" : "speaker-high";
-                                size: root.look.icon-size + 1px;
-                                color: #ffffff;
-                                duotone: root.look.duotone;
+                        padding-top: 12px;
+                        HorizontalLayout {
+                            width: min(1040px, root.width);
+                            padding-left: 24px;
+                            padding-right: 24px;
+                            spacing: 14px;
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle {
+                                    width: root.look.icon-size + 6px;
+                                    height: root.look.icon-size + 6px;
+                                    Icon {
+                                        name: Viewer.playing ? "pause" : state.ended ? "arrow-counter-clockwise" : "play";
+                                        size: root.look.icon-size + 3px;
+                                        color: #ffffff;
+                                        duotone: root.look.duotone;
+                                    }
+                                    TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => {
+                                            Viewer.play-pause();
+                                        }
+                                    }
+                                }
                             }
-                            TouchArea {
-                                mouse-cursor: pointer;
-                                clicked => {
-                                    Viewer.toggle-mute();
+                            Text {
+                                text: Fmt.duration(Math.floor(Viewer.position)) + " / " + Fmt.duration(state.item.duration);
+                                color: #c7ccd3;
+                                font-size: root.look.mono-counter ? 12px : 13px;
+                                font-family: root.look.mono-counter ? "IBM Plex Mono" : "";
+                                vertical-alignment: center;
+                            }
+                            seek := Rectangle {
+                                horizontal-stretch: 1;
+                                height: 22px;
+                                Rectangle {
+                                    y: (parent.height - self.height) / 2;
+                                    height: root.look.track-height;
+                                    border-radius: root.look.track-radius;
+                                    background: #ffffff33;
+                                }
+                                Rectangle {
+                                    x: 0;
+                                    y: (parent.height - self.height) / 2;
+                                    width: parent.width * state.done;
+                                    height: root.look.track-height;
+                                    border-radius: root.look.track-radius;
+                                    background: root.look.accent;
+                                }
+                                Rectangle {
+                                    x: parent.width * state.done - self.width / 2;
+                                    y: (parent.height - self.height) / 2;
+                                    width: 12px;
+                                    height: 12px;
+                                    border-radius: 6px;
+                                    background: #ffffff;
+                                }
+                                TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => {
+                                        Viewer.seek(max(0, min(1, self.mouse-x / self.width)));
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                width: speed.preferred-width + 16px;
+                                height: speed.preferred-height + 6px;
+                                y: (parent.height - self.height) / 2;
+                                border-radius: root.look.button-radius;
+                                border-width: 1px;
+                                border-color: #ffffff40;
+                                speed := Text {
+                                    text: ViewerText.speed(Viewer.speed);
+                                    color: #ffffff;
+                                    font-size: root.look.mono-counter ? 12px : 13px;
+                                    font-family: root.look.mono-counter ? "IBM Plex Mono" : "";
+                                }
+                                TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => {
+                                        Viewer.next-speed();
+                                    }
+                                }
+                            }
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle {
+                                    width: root.look.icon-size + 4px;
+                                    height: root.look.icon-size + 4px;
+                                    Icon {
+                                        name: Viewer.muted ? "speaker-x" : "speaker-high";
+                                        size: root.look.icon-size + 1px;
+                                        color: #ffffff;
+                                        duotone: root.look.duotone;
+                                    }
+                                    TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => {
+                                            Viewer.toggle-mute();
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
                 }
-            }
-
-            if state.item.caption != "": HorizontalLayout {
-                alignment: center;
-                padding-top: 10px;
-                padding-left: 24px;
-                padding-right: 24px;
-                Text {
-                    width: min(720px, root.width - 48px);
-                    text: state.item.caption;
-                    color: root.look.caption-color;
-                    font-size: root.look.caption-size;
-                    wrap: word-wrap;
-                    horizontal-alignment: center;
-                    max-height: 72px;
-                    overflow: elide;
+                caption := Rectangle {
+                    height: state.item.caption == "" ? 0px : caption-row.preferred-height;
+                    caption-row := HorizontalLayout {
+                        alignment: center;
+                        padding-top: 10px;
+                        padding-left: 24px;
+                        padding-right: 24px;
+                        Text {
+                            width: min(720px, root.width - 48px);
+                            text: state.item.caption;
+                            color: root.look.caption-color;
+                            font-size: root.look.caption-size;
+                            wrap: word-wrap;
+                            horizontal-alignment: center;
+                            max-height: 72px;
+                            overflow: elide;
+                        }
+                    }
                 }
             }
 
             // The strip: the media around the one shown.
-            Rectangle {
+            strip := Rectangle {
                 height: 78px;
                 Rectangle {
                     y: 14px;
@@ -538,7 +560,7 @@ component PictureViewer inherits Rectangle {
     // The arrows, over the picture's sides.
     if state.has-previous: Rectangle {
         x: root.look.side-arrows ? 0 : 16px;
-        y: root.look.side-arrows ? root.look.bar-height : root.look.bar-height + (stage.height - self.height) / 2;
+        y: root.look.bar-height + stage.y + (root.look.side-arrows ? 0 : (stage.height - self.height) / 2);
         width: root.look.side-arrows ? 120px : 44px;
         height: root.look.side-arrows ? stage.height : 44px;
         border-radius: root.look.side-arrows ? 0 : 22px;
@@ -559,7 +581,7 @@ component PictureViewer inherits Rectangle {
     }
     if state.has-next: Rectangle {
         x: root.width - self.width - (root.look.side-arrows ? 0 : 16px);
-        y: root.look.side-arrows ? root.look.bar-height : root.look.bar-height + (stage.height - self.height) / 2;
+        y: root.look.bar-height + stage.y + (root.look.side-arrows ? 0 : (stage.height - self.height) / 2);
         width: root.look.side-arrows ? 120px : 44px;
         height: root.look.side-arrows ? stage.height : 44px;
         border-radius: root.look.side-arrows ? 0 : 22px;
@@ -660,6 +682,11 @@ component TextViewer inherits Rectangle {
     property <color> muted: #8a928c;
     background: #080a09;
 
+    // The room between the bar and the strip, and what the picture leaves in it for its video
+    // controls and its caption.
+    property <length> room: root.height - 36px - strip.height;
+    property <length> below: controls.height + caption.height;
+
     state := ViewerState { }
 
     TouchArea { }
@@ -759,91 +786,105 @@ component TextViewer inherits Rectangle {
                 }
             }
 
-            stage := Stage {
+            // The picture with its video controls and its caption: one block in the middle of the
+            // room between the bar and the strip, so that the controls stay right under the picture
+            // however wide it is. The picture is as large as the room allows; zoomed in, a photo
+            // takes all the room above its caption.
+            VerticalLayout {
                 vertical-stretch: 1;
-                item: state.item;
-                radius: 0;
-                zoom: ViewerText.zoom-factor(Viewer.zoom);
-                dismissed => {
-                    Viewer.close();
-                }
-                activated => {
-                    if state.item.video {
-                        Viewer.play-pause();
-                    } else {
-                        Viewer.zoom = Viewer.zoom > 0 ? 0 : 2;
-                    }
-                }
-
-                if state.item.video && !Viewer.playing: Rectangle {
-                    width: play.preferred-width + 36px;
-                    height: play.preferred-height + 20px;
-                    background: #00000099;
-                    play := TermText {
-                        text: Viewer.loading ? "[ … ]" : state.ended ? "[ ↺ ]" : "[ ▶ play ]";
-                        color: #ffffff;
-                        font-size: 18px;
-                        font-weight: 600;
-                    }
-                }
-            }
-
-            if state.item.video: HorizontalLayout {
                 alignment: center;
-                padding-top: 10px;
-                spacing: 12px;
-                TermButton {
-                    text: Viewer.playing ? "[||]" : state.ended ? "[↺]" : "[▶]";
-                    clicked => {
-                        Viewer.play-pause();
+                stage := Stage {
+                    room: root.room - root.below;
+                    height: Viewer.zoom > 0 && !state.item.video ? self.room : self.fitted-height;
+                    item: state.item;
+                    radius: 0;
+                    zoom: ViewerText.zoom-factor(Viewer.zoom);
+                    dismissed => {
+                        Viewer.close();
                     }
-                }
-                TermText {
-                    text: Fmt.duration(Math.floor(Viewer.position));
-                }
-                TermBar {
-                    done: state.done;
-                    accent: root.accent;
-                    TouchArea {
-                        mouse-cursor: pointer;
-                        clicked => {
-                            Viewer.seek(max(0, min(1, self.mouse-x / self.width)));
+                    activated => {
+                        if state.item.video {
+                            Viewer.play-pause();
+                        } else {
+                            Viewer.zoom = Viewer.zoom > 0 ? 0 : 2;
+                        }
+                    }
+
+                    if state.item.video && !Viewer.playing: Rectangle {
+                        width: play.preferred-width + 36px;
+                        height: play.preferred-height + 20px;
+                        background: #00000099;
+                        play := TermText {
+                            text: Viewer.loading ? "[ … ]" : state.ended ? "[ ↺ ]" : "[ ▶ play ]";
+                            color: #ffffff;
+                            font-size: 18px;
+                            font-weight: 600;
                         }
                     }
                 }
-                TermText {
-                    text: Fmt.duration(state.item.duration);
-                }
-                TermButton {
-                    text: "[" + ViewerText.speed(Viewer.speed) + "]";
-                    clicked => {
-                        Viewer.next-speed();
+                controls := Rectangle {
+                    visible: state.item.video;
+                    height: state.item.video ? controls-row.preferred-height : 0px;
+                    controls-row := HorizontalLayout {
+                        alignment: center;
+                        padding-top: 10px;
+                        spacing: 12px;
+                        TermButton {
+                            text: Viewer.playing ? "[||]" : state.ended ? "[↺]" : "[▶]";
+                            clicked => {
+                                Viewer.play-pause();
+                            }
+                        }
+                        TermText {
+                            text: Fmt.duration(Math.floor(Viewer.position));
+                        }
+                        TermBar {
+                            done: state.done;
+                            accent: root.accent;
+                            TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    Viewer.seek(max(0, min(1, self.mouse-x / self.width)));
+                                }
+                            }
+                        }
+                        TermText {
+                            text: Fmt.duration(state.item.duration);
+                        }
+                        TermButton {
+                            text: "[" + ViewerText.speed(Viewer.speed) + "]";
+                            clicked => {
+                                Viewer.next-speed();
+                            }
+                        }
+                        TermButton {
+                            text: Viewer.muted ? "[" + @tr("terminal" => "muted") + "]" : "[" + @tr("terminal" => "sound") + "]";
+                            clicked => {
+                                Viewer.toggle-mute();
+                            }
+                        }
                     }
                 }
-                TermButton {
-                    text: Viewer.muted ? "[" + @tr("terminal" => "muted") + "]" : "[" + @tr("terminal" => "sound") + "]";
-                    clicked => {
-                        Viewer.toggle-mute();
+                caption := Rectangle {
+                    height: state.item.caption == "" ? 0px : caption-row.preferred-height;
+                    caption-row := HorizontalLayout {
+                        alignment: center;
+                        padding-top: 8px;
+                        padding-left: 16px;
+                        padding-right: 16px;
+                        TermText {
+                            width: min(760px, root.width - 32px);
+                            text: "» " + state.item.caption;
+                            wrap: word-wrap;
+                            horizontal-alignment: center;
+                            max-height: 64px;
+                            overflow: elide;
+                        }
                     }
                 }
             }
 
-            if state.item.caption != "": HorizontalLayout {
-                alignment: center;
-                padding-top: 8px;
-                padding-left: 16px;
-                padding-right: 16px;
-                TermText {
-                    width: min(760px, root.width - 32px);
-                    text: "» " + state.item.caption;
-                    wrap: word-wrap;
-                    horizontal-alignment: center;
-                    max-height: 64px;
-                    overflow: elide;
-                }
-            }
-
-            Rectangle {
+            strip := Rectangle {
                 height: 66px;
                 Rectangle {
                     y: 12px;
@@ -892,7 +933,7 @@ component TextViewer inherits Rectangle {
 
     if state.has-previous: TermButton {
         x: 14px;
-        y: 36px + (stage.height - self.height) / 2;
+        y: 36px + stage.y + (stage.height - self.height) / 2;
         text: "[←]";
         font-size: 15px;
         clicked => {
@@ -901,7 +942,7 @@ component TextViewer inherits Rectangle {
     }
     if state.has-next: TermButton {
         x: root.width - self.width - 14px;
-        y: 36px + (stage.height - self.height) / 2;
+        y: 36px + stage.y + (stage.height - self.height) / 2;
         text: "[→]";
         font-size: 15px;
         clicked => {

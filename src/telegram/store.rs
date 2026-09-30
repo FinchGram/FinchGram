@@ -7,7 +7,7 @@
 //! chats.rs, conversation.rs and account.rs add what the pages can do with it.
 
 use std::cell::RefCell;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::rc::Rc;
 use std::time::{Duration, Instant};
@@ -22,7 +22,7 @@ use super::time;
 use crate::images;
 use crate::{
     Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, MainWindow, Media, MessageRow, Moment, RowKind,
-    Status, Tab, TreeRow, Viewer, ViewerItem, Words,
+    Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
 };
 
 /// How long someone counts as typing after TDLib last said so.
@@ -709,6 +709,17 @@ impl Store {
         }
     }
 
+    /// The chats pinned in any of `lists` (All chats and the folders), matching the search words:
+    /// those of All chats first, in Telegram's order, then those of each folder.
+    fn pinned_chats(&self, lists: &[ChatList]) -> Vec<&api::Chat> {
+        let mut seen = HashSet::new();
+        lists
+            .iter()
+            .flat_map(|list| self.chats_in(*list).into_iter().filter(|chat| position(chat, *list).is_some_and(|position| position.is_pinned)))
+            .filter(|chat| seen.insert(chat.id))
+            .collect()
+    }
+
     /// The chat list at `index` of the folder tabs: 0 is All chats (the main list).
     pub fn folder_list(&self, index: usize) -> ChatList {
         match index.checked_sub(1).and_then(|folder| self.folders.get(folder)) {
@@ -745,12 +756,24 @@ impl Store {
         let shown = self.shown_folder.min(lists.len() - 1);
         let list: Vec<ChatRow> = self.chats_in(lists[shown]).iter().map(|chat| self.chat_row(chat, lists[shown], names)).collect();
 
-        // Workbench's tree: the account's folders first, then All chats. Without folders, All chats
-        // is open; with folders, they are open and All chats is closed, until the user says otherwise.
-        let mut tree = Vec::new();
+        // Workbench's tree: the pinned chats on their own at the top, in no folder, then the
+        // account's folders and All chats without them. Without folders, All chats is open; with
+        // folders, they are open and All chats is closed, until the user says otherwise.
+        let pinned = self.pinned_chats(&lists);
+        let at_top: HashSet<i64> = pinned.iter().map(|chat| chat.id).collect();
+        let mut tree: Vec<TreeRow> = pinned
+            .iter()
+            .map(|chat| TreeRow {
+                header: false,
+                folder: -1,
+                expanded: true,
+                count: 0,
+                chat: ChatRow { pinned: true, ..self.chat_row(chat, ChatList::Main, names) },
+            })
+            .collect();
         let order: Vec<usize> = (1..lists.len()).chain(std::iter::once(0)).collect();
         for index in order {
-            let chats = self.chats_in(lists[index]);
+            let chats: Vec<&api::Chat> = self.chats_in(lists[index]).into_iter().filter(|chat| !at_top.contains(&chat.id)).collect();
             if index > 0 && chats.is_empty() && !self.query.is_empty() {
                 continue;
             }
@@ -813,7 +836,7 @@ impl Store {
         conversation.set_kind(kind);
         conversation.set_can_write(self.can_write(chat));
         conversation.set_muted(self.muted(chat));
-        conversation.set_pinned(position(chat, ChatList::Main).is_some_and(|position| position.is_pinned));
+        conversation.set_pinned(!pinned_in(chat).is_empty());
 
         let (status, last_seen, members) = self.status(chat, kind);
         conversation.set_status(status);
@@ -890,6 +913,9 @@ impl Store {
                 duration: picture.duration,
                 name: file_name(&message.content).into(),
             });
+            let sticker = sticker_picture(&message.content)
+                .map(|picture| Sticker { picture: self.picture_image(&picture), width: picture.width.max(1), height: picture.height.max(1) })
+                .unwrap_or_default();
             // An album: its messages after the first join the first one's row, which takes a
             // caption from whichever has one.
             if message.media_album_id != 0
@@ -923,6 +949,7 @@ impl Store {
                 seen: message.is_outgoing && message.id <= chat.last_read_outbox_message_id,
                 button: SharedString::new(),
                 media: ModelRc::default(),
+                sticker,
             });
         }
         self.attach_media(&mut rows, media);
@@ -1050,7 +1077,6 @@ pub enum Followup {
     TypingExpires,
 }
 
-/// Where `chat` is in `list`, if it is in it.
 /// What a message with a photo, a video or a GIF shows before it is played: the file with its
 /// picture (a photo in a suitable size, a video's still frame), its own size and length, and the
 /// tiny preview the message carries.
@@ -1084,6 +1110,19 @@ pub fn picture(content: &M) -> Option<Picture<'_>> {
         )),
         _ => None,
     }
+}
+
+/// What a sticker shows: a still sticker itself, an animated one its still thumbnail (moving
+/// stickers need a player of their own). None: there is only its emoji to show.
+pub fn sticker_picture(content: &M) -> Option<Picture<'_>> {
+    let M::Sticker { sticker } = content else { return None };
+    let file = match sticker.format {
+        api::StickerFormat::Webp => &sticker.sticker,
+        api::StickerFormat::Tgs | api::StickerFormat::Webm => {
+            &sticker.thumbnail.as_ref().filter(|thumbnail| thumbnail.format != api::ThumbnailFormat::Other)?.file
+        }
+    };
+    Some(Picture { file: Some(file), width: sticker.width, height: sticker.height, duration: 0, preview: None })
 }
 
 /// A video's or a GIF's own file name; photos have none.
@@ -1120,6 +1159,12 @@ fn still<'a>(
     Picture { file: thumbnail.map(|thumbnail| &thumbnail.file), width, height, duration, preview }
 }
 
+/// The lists `chat` is pinned in: All chats and folders (the archive does not count).
+pub fn pinned_in(chat: &api::Chat) -> Vec<ChatList> {
+    chat.positions.iter().filter(|position| position.is_pinned && position.list != ChatList::Archive).map(|position| position.list).collect()
+}
+
+/// Where `chat` is in `list`, if it is in it.
 pub fn position(chat: &api::Chat, list: ChatList) -> Option<&api::ChatPosition> {
     chat.positions.iter().find(|position| position.list == list && position.order != 0)
 }
@@ -1180,6 +1225,27 @@ mod tests {
         set_position(&mut chat, api::ChatPosition { list: ChatList::Main, order: 0, is_pinned: false });
         assert!(position(&chat, ChatList::Main).is_none());
         assert_eq!(chat.positions.len(), 1);
+    }
+
+    #[test]
+    fn a_sticker_shows_itself_or_its_still_thumbnail() {
+        let file = |id: i32| api::File { id, size: 0, local: api::LocalFile { path: String::new(), is_downloading_completed: false } };
+        let sticker = |format: api::StickerFormat, thumbnail: Option<api::ThumbnailFormat>| M::Sticker {
+            sticker: api::Sticker {
+                width: 512,
+                height: 480,
+                emoji: "😀".into(),
+                format,
+                thumbnail: thumbnail.map(|format| api::Thumbnail { format, width: 128, height: 120, file: file(1) }),
+                sticker: file(2),
+            },
+        };
+        let shown = |content: &M| sticker_picture(content).map(|picture| (picture.file.map(|file| file.id), picture.width, picture.height));
+        assert_eq!(shown(&sticker(api::StickerFormat::Webp, Some(api::ThumbnailFormat::Webp))), Some((Some(2), 512, 480)));
+        assert_eq!(shown(&sticker(api::StickerFormat::Tgs, Some(api::ThumbnailFormat::Webp))), Some((Some(1), 512, 480)));
+        assert_eq!(shown(&sticker(api::StickerFormat::Webm, Some(api::ThumbnailFormat::Other))), None);
+        assert_eq!(shown(&sticker(api::StickerFormat::Tgs, None)), None);
+        assert!(picture(&sticker(api::StickerFormat::Webp, None)).is_none(), "stickers stay out of the media viewer");
     }
 
     #[test]

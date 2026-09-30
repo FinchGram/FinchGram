@@ -108,6 +108,14 @@ fn main() -> Result<(), slint::PlatformError> {
             }
         }
     });
+    state.on_show_window({
+        let ui = ui.as_weak();
+        move || {
+            if let Some(ui) = ui.upgrade() {
+                platform::show_window(&ui);
+            }
+        }
+    });
     state.on_change_list_width({
         let settings = settings.clone();
         move |theme, width| {
@@ -194,8 +202,22 @@ fn main() -> Result<(), slint::PlatformError> {
     // The window's own appearance (its buttons, its edge) follows the choice in Settings.
     apply_window_appearance_when_ready(ui.as_weak(), settings.borrow().appearance.clone(), 40);
 
-    let result = ui.run();
-    // TDLib writes its database out before finchgram-tdlib ends.
+    // Closing the window stops a video with it; on macOS FinchGram keeps running (src/platform/).
+    ui.window().on_close_requested({
+        let ui = ui.as_weak();
+        move || {
+            if let Some(ui) = ui.upgrade()
+                && ui.global::<Viewer>().get_open()
+            {
+                ui.global::<Viewer>().invoke_close();
+            }
+            slint::CloseRequestResponse::HideWindow
+        }
+    });
+
+    // TDLib writes its database out before finchgram-tdlib ends: when Quit is chosen (on macOS
+    // AppKit ends the process then), and when the event loop ends by itself.
+    let result = platform::run(&ui, telegram::shut_down);
     telegram::shut_down();
     result
 }

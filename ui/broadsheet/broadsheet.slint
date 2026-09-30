@@ -6,7 +6,7 @@ import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, C
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
-import { ChatScroll, MessageInput, Capped, MediaTiles } from "../chat.slint";
+import { ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture } from "../chat.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 
 export enum BroadsheetView { chats, channels, bots, filters, scheduled }
@@ -502,6 +502,7 @@ component Badge inherits Rectangle {
 
 component ChatLine inherits Rectangle {
     in property <ChatRow> chat;
+    callback menu(length, length);          // a right click, where it is in the window
     property <bool> open: chat.id == Conversation.chat-id;
     height: 66px;
     background: open ? P.sel : touch.has-hover ? P.hover : transparent;
@@ -579,11 +580,17 @@ component ChatLine inherits Rectangle {
         clicked => {
             Conversation.open(root.chat.id);
         }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
+        }
     }
 }
 
 component ChannelLine inherits Rectangle {
     in property <ChatRow> chat;
+    callback menu(length, length);          // a right click, where it is in the window
     height: 76px;
     background: touch.has-hover ? P.hover : transparent;
 
@@ -642,11 +649,17 @@ component ChannelLine inherits Rectangle {
         clicked => {
             Conversation.open(root.chat.id);
         }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
+        }
     }
 }
 
 component BotLine inherits Rectangle {
     in property <ChatRow> chat;
+    callback menu(length, length);          // a right click, where it is in the window
     height: 58px;
     background: touch.has-hover ? P.sel : transparent;
 
@@ -714,6 +727,11 @@ component BotLine inherits Rectangle {
         clicked => {
             Conversation.open(root.chat.id);
         }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
+        }
     }
 }
 
@@ -723,10 +741,69 @@ component SectionTitle inherits Text {
     letter-spacing: 0.24px;
 }
 
+component MenuEntry inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <string> keys;
+    callback activated();
+    height: 34px;
+    border-radius: 2px;
+    background: touch.has-hover ? P.hover : transparent;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            DuoIcon {
+                name: root.icon;
+                size: 17px;
+                color: P.accent;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.label;
+            color: P.text;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: root.keys;
+            color: P.faint;
+            font-family: P.mono;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
 component ListColumn inherits Rectangle {
     in-out property <BroadsheetView> view;
     width: max(240px, min(560px, AppState.broadsheet-list-width));
     background: P.bg;
+
+    // A chat's menu, from a right click on it: the chat header's menu, for any chat in the lists.
+    property <ChatRow> menu-chat;
+    property <int> menu-folder;             // where Chats.toggle-pin pins it
+    property <length> menu-x;
+    property <length> menu-y;
+
+    function show-menu(chat: ChatRow, folder: int, left: length, top: length) {
+        root.menu-chat = chat;
+        root.menu-folder = folder;
+        root.menu-x = max(0px, left - root.absolute-position.x);
+        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 146px));
+        chat-menu.show();
+    }
 
     public function focus-search() {
         search.focus-search();
@@ -847,6 +924,9 @@ component ListColumn inherits Rectangle {
             horizontal-scrollbar-policy: always-off;
             for chat in Chats.list: ChatLine {
                 chat: chat;
+                menu(left, top) => {
+                    root.show-menu(chat, Chats.folder, left, top);
+                }
             }
         }
         if root.view == BroadsheetView.channels: ListView {
@@ -855,6 +935,9 @@ component ListColumn inherits Rectangle {
             horizontal-scrollbar-policy: always-off;
             for chat in Chats.channels: ChannelLine {
                 chat: chat;
+                menu(left, top) => {
+                    root.show-menu(chat, 0, left, top);
+                }
             }
         }
         if root.view == BroadsheetView.bots: Flickable {
@@ -872,6 +955,9 @@ component ListColumn inherits Rectangle {
                 }
                 for chat in Chats.official-bots: BotLine {
                     chat: chat;
+                    menu(left, top) => {
+                        root.show-menu(chat, 0, left, top);
+                    }
                 }
                 if Chats.bots.length > 0: HorizontalLayout {
                     padding-left: 20px;
@@ -883,6 +969,9 @@ component ListColumn inherits Rectangle {
                 }
                 for chat in Chats.bots: BotLine {
                     chat: chat;
+                    menu(left, top) => {
+                        root.show-menu(chat, 0, left, top);
+                    }
                 }
                 HorizontalLayout {
                     padding: 20px;
@@ -906,13 +995,66 @@ component ListColumn inherits Rectangle {
             AppState.change-list-width(Theme.broadsheet, width);
         }
     }
+
+    chat-menu := PopupWindow {
+        x: root.menu-x;
+        y: root.menu-y;
+        width: 230px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+
+        Rectangle {
+            border-radius: 4px;
+            background: P.panel;
+            drop-shadow-blur: 32px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: P.shadow;
+            VerticalLayout {
+                padding: 6px;
+                Text {
+                    height: 26px;
+                    x: 10px;
+                    text: root.menu-chat.title;
+                    color: P.faint;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                MenuEntry {
+                    icon: root.menu-chat.muted ? "bell" : "bell-slash";
+                    label: root.menu-chat.muted ? @tr("Unmute") : @tr("Mute");
+                    activated => {
+                        Chats.toggle-mute(root.menu-chat.id);
+                        chat-menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "push-pin";
+                    label: root.menu-chat.pinned ? @tr("Unpin") : @tr("Pin");
+                    activated => {
+                        Chats.toggle-pin(root.menu-chat.id, root.menu-folder);
+                        chat-menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "checks";
+                    label: @tr("Mark as read");
+                    activated => {
+                        Chats.mark-read(root.menu-chat.id);
+                        chat-menu.close();
+                    }
+                }
+            }
+        }
+    }
 }
 
-// A message as a bubble: theirs on the left, ours on the right in the account's tint.
+// A message as a bubble: theirs on the left, ours on the right in the account's tint. A sticker
+// has no bubble behind it.
 component Bubble {
     in property <MessageRow> message;
     property <bool> mine: message.outgoing;
     property <bool> has-media: message.media.length > 0;
+    property <bool> has-sticker: message.content == Content.sticker && message.sticker.width > 0;
     height: bubble.height;
 
     bubble := Rectangle {
@@ -920,7 +1062,7 @@ component Bubble {
         height: content.preferred-height;
         x: root.mine ? root.width - self.width : 0;
         border-radius: 4px;
-        background: root.mine ? P.tint : P.theirs;
+        background: root.has-sticker ? transparent : root.mine ? P.tint : P.theirs;
 
         content := VerticalLayout {
             padding-left: 14px;
@@ -955,7 +1097,14 @@ component Bubble {
                     }
                 }
             }
-            if !root.has-media || root.message.text != "": Paragraph {
+            if root.has-sticker: HorizontalLayout {
+                alignment: start;
+                StickerPicture {
+                    message-id: root.message.id;
+                    sticker: root.message.sticker;
+                }
+            }
+            if !root.has-sticker && (!root.has-media || root.message.text != ""): Paragraph {
                 text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
                 color: root.mine ? P.tint-ink : root.has-media || root.message.content == Content.text ? P.text : P.muted;
                 font-size: 16px;
@@ -1010,6 +1159,7 @@ component Bubble {
 component Post inherits Capped {
     in property <MessageRow> message;
     property <bool> has-media: message.media.length > 0;
+    property <bool> has-sticker: message.content == Content.sticker && message.sticker.width > 0;
     spacing: 6px;
 
     Rectangle { height: 6px; }
@@ -1031,7 +1181,15 @@ component Post inherits Capped {
             }
         }
     }
-    if !root.has-media || root.message.text != "": Paragraph {
+    if root.has-sticker: HorizontalLayout {
+        alignment: start;
+        padding-bottom: 4px;
+        StickerPicture {
+            message-id: root.message.id;
+            sticker: root.message.sticker;
+        }
+    }
+    if !root.has-sticker && (!root.has-media || root.message.text != ""): Paragraph {
         text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
         color: P.text;
         font-size: 16px;
@@ -1135,51 +1293,6 @@ component Line {
         }
         if root.message.kind == RowKind.message && Conversation.kind != ChatKind.channel: Bubble {
             message: root.message;
-        }
-    }
-}
-
-component MenuEntry inherits Rectangle {
-    in property <string> icon;
-    in property <string> label;
-    in property <string> keys;
-    callback activated();
-    height: 34px;
-    border-radius: 2px;
-    background: touch.has-hover ? P.hover : transparent;
-
-    HorizontalLayout {
-        padding-left: 10px;
-        padding-right: 10px;
-        spacing: 10px;
-        VerticalLayout {
-            alignment: center;
-            DuoIcon {
-                name: root.icon;
-                size: 17px;
-                color: P.accent;
-            }
-        }
-        Text {
-            horizontal-stretch: 1;
-            text: root.label;
-            color: P.text;
-            font-size: 14px;
-            vertical-alignment: center;
-        }
-        Text {
-            text: root.keys;
-            color: P.faint;
-            font-family: P.mono;
-            font-size: 11px;
-            vertical-alignment: center;
-        }
-    }
-
-    touch := TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            root.activated();
         }
     }
 }

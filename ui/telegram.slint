@@ -62,7 +62,7 @@ export struct Folder {
 // A line of Workbench's chat tree: a folder's header, or one of its chats while it is expanded.
 export struct TreeRow {
     header: bool,
-    folder: int,            // index into Chats.folders
+    folder: int,            // index into Chats.folders; -1: a pinned chat, at the top in no folder
     expanded: bool,
     count: int,             // a header's number of chats
     chat: ChatRow,
@@ -82,6 +82,11 @@ export global Chats {
     callback show-folder(int);                   // index into folders
     callback toggle-folder(int);                 // Workbench: expand or collapse
     callback search(string);
+    // A chat's menu (a right click on it in a list), by the chat's id.
+    callback toggle-mute(string);
+    callback toggle-pin(string, int);            // in the list of a folder (index into folders); -1:
+                                                 // wherever it is pinned, as Workbench's tree has it
+    callback mark-read(string);
 }
 
 // A tab of Workbench (and what Broadsheet and Terminal remember as open).
@@ -106,6 +111,15 @@ export struct Media {
     name: string,           // a video's or GIF's file name; photos have none
 }
 
+// A sticker message's sticker: its picture (none until Conversation.load-picture has downloaded it;
+// an animated sticker shows its still thumbnail) and its own size for its shape. A width of 0:
+// there is no picture to show, only the emoji.
+export struct Sticker {
+    picture: image,
+    width: int,
+    height: int,
+}
+
 // One line of the open chat: a message, a service message, the day it starts, or a sponsored
 // message (channels show Telegram's own; they are never hidden).
 export struct MessageRow {
@@ -126,6 +140,7 @@ export struct MessageRow {
     seen: bool,             // an outgoing message the other side has read
     button: string,         // a sponsored message's button
     media: [Media],         // its photos, videos and GIFs: one, or an album's
+    sticker: Sticker,
 }
 
 

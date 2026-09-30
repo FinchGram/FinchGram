@@ -1,6 +1,40 @@
 //! The platform layer (docs/architecture.md): the few things the shell does differently on each
 //! operating system. Everything else stays free of platform code.
 
+#[cfg(target_os = "macos")]
+mod macos;
+
+use slint::ComponentHandle;
+
+use crate::MainWindow;
+
+/// Show the window and run until FinchGram quits. On macOS closing the window only hides it, as
+/// the design's "When closing the window: Minimize to tray" (the default) has it: FinchGram stays
+/// in the Dock, a click on the Dock icon shows the window again, and Quit (⌘Q, the Dock's menu)
+/// runs `before_quit` first. Elsewhere there is no tray icon yet to come back from, so closing the
+/// window quits.
+pub fn run(ui: &MainWindow, before_quit: fn()) -> Result<(), slint::PlatformError> {
+    ui.show()?;
+    #[cfg(target_os = "macos")]
+    {
+        macos::stay_in_dock(ui, before_quit);
+        slint::run_event_loop_until_quit()
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = before_quit;
+        slint::run_event_loop()
+    }
+}
+
+/// Bring the window back: shown, not minimized, in front.
+pub fn show_window(ui: &MainWindow) {
+    ui.window().set_minimized(false);
+    if let Err(err) = ui.show() {
+        eprintln!("platform: cannot show the window: {err}");
+    }
+}
+
 /// What the account's list of sessions calls this device (TDLib's device_model, which must not be
 /// empty). TDLib finds the system's version by itself.
 pub fn device_model() -> &'static str {

@@ -11,7 +11,7 @@
 use std::rc::Rc;
 
 use slint::platform::software_renderer::{MinimalSoftwareWindow, RepaintBufferType};
-use slint::platform::{Platform, WindowAdapter};
+use slint::platform::{Key, PointerEventButton, Platform, WindowAdapter, WindowEvent};
 use slint::{ComponentHandle, Image, Model, ModelRc, Rgba8Pixel, SharedPixelBuffer, SharedString, VecModel};
 
 use crate::*;
@@ -47,6 +47,21 @@ fn save(window: &MinimalSoftwareWindow, name: &str) {
     let bytes: Vec<u8> = pixels[(WIDTH * MENU_BAR) as usize..].iter().flat_map(|pixel| [pixel.r, pixel.g, pixel.b]).collect();
     image::save_buffer(directory.join(format!("{name}.png")), &bytes, WIDTH, HEIGHT, image::ColorType::Rgb8)
         .expect("write the screenshot");
+}
+
+/// A right click at `x`, `y` in the picture, where the pointer then stays.
+fn right_click(window: &MinimalSoftwareWindow, x: f32, y: f32) {
+    let position = slint::LogicalPosition::new(x, y + MENU_BAR as f32);
+    window.dispatch_event(WindowEvent::PointerMoved { position });
+    window.dispatch_event(WindowEvent::PointerPressed { position, button: PointerEventButton::Right });
+    window.dispatch_event(WindowEvent::PointerReleased { position, button: PointerEventButton::Right });
+}
+
+/// Escape (closing a menu), and the pointer out of the window, so that nothing stays hovered.
+fn escape(window: &MinimalSoftwareWindow) {
+    window.dispatch_event(WindowEvent::KeyPressed { text: Key::Escape.into() });
+    window.dispatch_event(WindowEvent::KeyReleased { text: Key::Escape.into() });
+    window.dispatch_event(WindowEvent::PointerExited);
 }
 
 fn model<T: Clone + 'static>(rows: Vec<T>) -> ModelRc<T> {
@@ -201,12 +216,39 @@ fn media(id: &str, width: i32, height: i32, hue: f32, video: bool) -> Media {
     }
 }
 
+/// A made-up sticker: a round face cut out with a white edge, on nothing, as stickers are.
+fn sticker() -> Sticker {
+    const SIDE: u32 = 256;
+    let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(SIDE, SIDE);
+    let pixels = buffer.make_mut_slice();
+    let centre = SIDE as f32 / 2.0;
+    for y in 0..SIDE {
+        for x in 0..SIDE {
+            let (dx, dy) = (x as f32 - centre, y as f32 - centre);
+            let distance = (dx * dx + dy * dy).sqrt();
+            let eye = |eye_x: f32| (x as f32 - eye_x).hypot(y as f32 - 104.0) < 14.0;
+            let smile = (distance - 70.0).abs() < 7.0 && dy > 30.0;
+            pixels[(y * SIDE + x) as usize] = if distance > 120.0 {
+                Rgba8Pixel { r: 0, g: 0, b: 0, a: 0 }
+            } else if distance > 110.0 {
+                Rgba8Pixel { r: 255, g: 255, b: 255, a: 255 }
+            } else if eye(96.0) || eye(160.0) || smile {
+                Rgba8Pixel { r: 74, g: 52, b: 32, a: 255 }
+            } else {
+                let t = y as f32 / SIDE as f32;
+                Rgba8Pixel { r: 255, g: (214.0 - 50.0 * t) as u8, b: (92.0 - 40.0 * t) as u8, a: 255 }
+            };
+        }
+    }
+    Sticker { picture: Image::from_rgba8(buffer), width: 512, height: 512 }
+}
+
 /// The album Jie sent: two photos and a video, as in the design.
 fn album() -> Vec<Media> {
     vec![media("6", 400, 300, 25.0, false), media("6a", 300, 400, 200.0, false), media("6b", 640, 360, 290.0, true)]
 }
 
-/// The media viewer open on the album, at `index`.
+/// The media viewer open on the album, and a wide video after it, at `index`.
 fn open_viewer(ui: &MainWindow, index: i32) {
     let viewer = ui.global::<Viewer>();
     let item = |media: Media| ViewerItem {
@@ -222,7 +264,8 @@ fn open_viewer(ui: &MainWindow, index: i32) {
         time: moment(Day::Today, 14, 19),
         caption: "The lubed switch comparison is in the group album, have a look.".into(),
     };
-    viewer.set_items(model(album().into_iter().map(item).collect()));
+    let wide = Media { id: "8".into(), duration: 95, name: "screen-recording.mp4".into(), ..media("8", 1280, 544, 200.0, true) };
+    viewer.set_items(model(album().into_iter().chain(std::iter::once(wide)).map(item).collect()));
     viewer.set_index(index);
     viewer.set_zoom(0);
     viewer.set_playing(false);
@@ -245,7 +288,10 @@ fn fill_chats(ui: &MainWindow) {
     account.set_phone("+86 138 0013 2046".into());
     account.set_bio("Design, and a little code. Shanghai.".into());
 
-    let keyboards = chat("keyboards", "Keyboard Lab", ChatKind::Group, moment(Day::Today, 14, 20), "Jie", "@Zhou Ye do you still sell the dark keycaps?", 42, 486);
+    let keyboards = ChatRow {
+        pinned: true,
+        ..chat("keyboards", "Keyboard Lab", ChatKind::Group, moment(Day::Today, 14, 20), "Jie", "@Zhou Ye do you still sell the dark keycaps?", 42, 486)
+    };
     let alex = chat("alex", "Alex Chen", ChatKind::User, moment(Day::Today, 12, 8), "", "Can we move the call to Thursday?", 1, 0);
     let linxia = chat("linxia", "Lin Xia", ChatKind::User, moment(Day::Today, 13, 52), "", "Is that place open tonight?", 2, 0);
     let news = chat("news", "Tech Morning", ChatKind::Channel, moment(Day::Today, 7, 30), "", "New chip export rules take effect", 12, 82413);
@@ -263,12 +309,15 @@ fn fill_chats(ui: &MainWindow) {
     chats.set_folders(model(vec![folder(0, "All chats", 57), folder(1, "Personal", 44), folder(2, "Work", 1), folder(3, "Channels", 12)]));
     let header = |folder: i32, count: usize, expanded: bool| TreeRow { header: true, folder, expanded, count: count as i32, chat: ChatRow::default() };
     let line = |folder: i32, chat: &ChatRow| TreeRow { header: false, folder, expanded: true, count: 0, chat: chat.clone() };
-    let mut tree = Vec::new();
-    for (index, folder_chats) in [(1, &personal), (2, &work), (3, &channels)] {
-        tree.push(header(index, folder_chats.len(), true));
-        tree.extend(folder_chats.iter().map(|chat| line(index, chat)));
+    // The pinned chats at the top, in no folder, and not again below.
+    let mut tree: Vec<TreeRow> = all.iter().filter(|chat| chat.pinned).map(|chat| line(-1, chat)).collect();
+    for (index, folder_chats) in [(1, &personal), (2, &work), (3, &channels), (0, &all)] {
+        let unpinned: Vec<&ChatRow> = folder_chats.iter().filter(|chat| !chat.pinned).collect();
+        tree.push(header(index, unpinned.len(), index > 0));
+        if index > 0 {
+            tree.extend(unpinned.into_iter().map(|chat| line(index, chat)));
+        }
     }
-    tree.push(header(0, all.len(), false));
     chats.set_tree(model(tree));
     chats.set_list(model(all));
     chats.set_channels(model(channels));
@@ -302,6 +351,7 @@ fn open_keyboards(ui: &MainWindow) {
         message("1", "Mi", "09:12", "Morning! This week's group-buy keycaps arrived; the delivery list is in the pinned post."),
         message("2", "Jie", "10:30", "I'm lubing my 65% today, photos later."),
         message("3", "Zhou Ye", "10:31", "Nice, @ me when it's done."),
+        MessageRow { content: Content::Sticker, detail: "👍".into(), sticker: sticker(), ..message("3a", "Zhou Ye", "10:31", "") },
         message("4", "Mika", "11:02", "I can make the meetup on Thursday, but only after 3pm."),
         message("5", "Mi", "11:05", "Thursday 15:00 at the usual place. Who's coming?"),
         MessageRow {
@@ -422,10 +472,21 @@ fn screenshots() {
             app.set_page(Page::Chats);
             open_keyboards(&ui);
             save(&window, &name("chats"));
+            // A right click on the first chat of the list: its menu.
+            let (x, y) = match theme {
+                Theme::Workbench => (150.0, 91.0),
+                Theme::Broadsheet => (230.0, 265.0),
+                Theme::Terminal => (140.0, 98.0),
+            };
+            right_click(&window, x, y);
+            save(&window, &name("chat-menu"));
+            escape(&window);
             open_viewer(&ui, 1);
             save(&window, &name("viewer-photo"));
             open_viewer(&ui, 2);
             save(&window, &name("viewer-video"));
+            open_viewer(&ui, 3);
+            save(&window, &name("viewer-wide-video"));
             ui.global::<Viewer>().set_open(false);
             open_news(&ui);
             save(&window, &name("channel"));

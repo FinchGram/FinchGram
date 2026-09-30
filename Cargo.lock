@@ -1292,6 +1292,7 @@ dependencies = [
  "glow",
  "hex",
  "image",
+ "objc2 0.6.4",
  "qrcode",
  "semver",
  "serde",

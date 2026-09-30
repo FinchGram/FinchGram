@@ -83,6 +83,7 @@ export global AppState {
     callback change-theme(Theme);
     callback change-check-for-updates-daily(bool);
     callback change-list-width(Theme, length);          // a drag of a list's edge ended there
+    callback show-window();                             // closed, FinchGram keeps running (macOS): open it again
 
     // Our own pages (GitHub) and Telegram's terms of service; anything else is refused by Rust.
     callback open-url(string);

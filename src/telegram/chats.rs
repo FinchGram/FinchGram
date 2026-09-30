@@ -1,5 +1,6 @@
 //! The chat list: loading its chats from TDLib, and what the pages do with it: show a folder
-//! (Broadsheet, Terminal), expand or collapse a folder in the tree (Workbench), search.
+//! (Broadsheet, Terminal), expand or collapse a folder in the tree (Workbench), search, and a
+//! chat's menu (a right click on it: mute, pin, mark as read).
 //!
 //! TDLib sends the chats of a list, with their positions, as updates once the list has been asked
 //! for with loadChats; it says 404 when every chat of the list has been sent.
@@ -11,7 +12,7 @@ use serde_json::json;
 use slint::ComponentHandle;
 
 use super::api::ChatList;
-use super::store;
+use super::{conversation, store};
 use super::{Error, send};
 use crate::{Chats, MainWindow};
 
@@ -41,6 +42,27 @@ pub fn connect(ui: &MainWindow) {
             store.dirty.chats = true;
         });
         store::refresh();
+    });
+    chats.on_toggle_mute(|id| {
+        if let Ok(chat_id) = id.parse() {
+            conversation::toggle_mute(chat_id);
+        }
+    });
+    chats.on_toggle_pin(|id, folder| {
+        let Ok(chat_id) = id.parse() else { return };
+        match usize::try_from(folder) {
+            Ok(index) => {
+                if let Some(list) = store::with(|store| store.folder_list(index)) {
+                    conversation::toggle_pin_in(chat_id, list);
+                }
+            }
+            Err(_) => conversation::toggle_pin(chat_id),
+        }
+    });
+    chats.on_mark_read(|id| {
+        if let Ok(chat_id) = id.parse() {
+            conversation::mark_read(chat_id);
+        }
     });
     chats.on_search(|words| {
         store::with(|store| {

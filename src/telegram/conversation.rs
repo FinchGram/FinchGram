@@ -71,9 +71,21 @@ pub fn connect(ui: &MainWindow) {
             open_sponsored(id);
         }
     });
-    conversation.on_toggle_mute(toggle_mute);
-    conversation.on_toggle_pin(toggle_pin);
-    conversation.on_mark_read(mark_read);
+    conversation.on_toggle_mute(|| {
+        if let Some(chat_id) = open_chat() {
+            toggle_mute(chat_id);
+        }
+    });
+    conversation.on_toggle_pin(|| {
+        if let Some(chat_id) = open_chat() {
+            toggle_pin(chat_id);
+        }
+    });
+    conversation.on_mark_read(|| {
+        if let Some(chat_id) = open_chat() {
+            mark_read(chat_id);
+        }
+    });
     conversation.on_load_picture(|id| {
         if let Ok(id) = id.parse() {
             load_picture(id);
@@ -87,7 +99,7 @@ fn load_picture(message_id: i64) {
     let file = store::with(|store| {
         let chat_id = store.open?;
         let message = store.histories.get(&chat_id)?.messages.get(&message_id)?;
-        store::picture(&message.content)?.file.cloned()
+        store::picture(&message.content).or_else(|| store::sticker_picture(&message.content))?.file.cloned()
     })
     .flatten();
     if let Some(file) = file {
@@ -382,11 +394,12 @@ fn write(text: &str) {
     store::with(|store| store.dirty.scroll_to_end = true);
 }
 
-fn toggle_mute() {
-    let Some((chat_id, settings)) = store::with(|store| {
-        let chat = store.chats.get(&store.open?)?;
+/// Mute a chat for good, or unmute it.
+pub fn toggle_mute(chat_id: i64) {
+    let Some(settings) = store::with(|store| {
+        let chat = store.chats.get(&chat_id)?;
         let mute_for = if store.muted(chat) { 0 } else { MUTE_FOREVER };
-        Some((chat.id, chat.notification_settings.with_mute_for(mute_for)))
+        Some(chat.notification_settings.with_mute_for(mute_for))
     })
     .flatten() else {
         return;
@@ -395,24 +408,41 @@ fn toggle_mute() {
     send(request, |answer| log_error("mute a chat", answer));
 }
 
-fn toggle_pin() {
-    let Some((chat_id, pinned)) = store::with(|store| {
-        let chat = store.chats.get(&store.open?)?;
-        Some((chat.id, store::position(chat, ChatList::Main).is_some_and(|position| position.is_pinned)))
-    })
-    .flatten() else {
+/// Unpin a chat wherever it is pinned, in All chats or in folders, or pin it in All chats: a
+/// pinned chat is at the top of Workbench's tree whichever list it is pinned in.
+pub fn toggle_pin(chat_id: i64) {
+    let Some(pinned_in) = store::with(|store| store.chats.get(&chat_id).map(store::pinned_in)).flatten() else {
         return;
     };
-    let request = json!({
-        "@type": "toggleChatIsPinned", "chat_list": ChatList::Main.to_json(), "chat_id": chat_id, "is_pinned": !pinned,
-    });
+    if pinned_in.is_empty() {
+        pin(chat_id, ChatList::Main, true);
+    }
+    for list in pinned_in {
+        pin(chat_id, list, false);
+    }
+}
+
+/// Pin a chat in one list, or unpin it there: the lists of Broadsheet and Terminal, one folder at
+/// a time.
+pub fn toggle_pin_in(chat_id: i64, list: ChatList) {
+    let Some(pinned) = store::with(|store| store.chats.get(&chat_id).map(|chat| store::position(chat, list).is_some_and(|position| position.is_pinned)))
+        .flatten()
+    else {
+        return;
+    };
+    pin(chat_id, list, !pinned);
+}
+
+fn pin(chat_id: i64, list: ChatList, pinned: bool) {
+    let request = json!({ "@type": "toggleChatIsPinned", "chat_list": list.to_json(), "chat_id": chat_id, "is_pinned": pinned });
     send(request, |answer| log_error("pin a chat", answer));
 }
 
-fn mark_read() {
-    let Some((chat_id, last, marked, mentions)) = store::with(|store| {
-        let chat = store.chats.get(&store.open?)?;
-        Some((chat.id, chat.last_message.as_ref().map(|message| message.id), chat.is_marked_as_unread, chat.unread_mention_count > 0))
+/// Mark a chat as read: its last message seen, its unread mark and its mentions gone.
+pub fn mark_read(chat_id: i64) {
+    let Some((last, marked, mentions)) = store::with(|store| {
+        let chat = store.chats.get(&chat_id)?;
+        Some((chat.last_message.as_ref().map(|message| message.id), chat.is_marked_as_unread, chat.unread_mention_count > 0))
     })
     .flatten() else {
         return;

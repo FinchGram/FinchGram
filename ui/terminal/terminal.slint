@@ -124,6 +124,7 @@ component SideTab {
 
 component ChatLine inherits Rectangle {
     in property <ChatRow> chat;
+    callback menu(length, length);          // a right click, where it is in the window
     property <bool> open: chat.id == Conversation.chat-id;
     height: 29px;
     background: open ? P.sel : touch.has-hover ? P.sel.transparentize(0.5) : transparent;
@@ -158,6 +159,11 @@ component ChatLine inherits Rectangle {
         mouse-cursor: pointer;
         clicked => {
             Conversation.open(root.chat.id);
+        }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
         }
     }
 }
@@ -236,10 +242,53 @@ component Folders {
     }
 }
 
+component MenuEntry inherits Rectangle {
+    in property <string> label;
+    in property <string> command;
+    callback activated();
+    height: 26px;
+    background: touch.has-hover ? P.sel : transparent;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+        T {
+            horizontal-stretch: 1;
+            text: root.label;
+        }
+        T {
+            text: root.command;
+            color: P.accent;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
 component Side inherits Rectangle {
     in-out property <TerminalView> view;
     width: max(220px, min(560px, AppState.terminal-list-width));
     background: P.side;
+
+    // A chat's menu, from a right click on it: the chat header's menu, for any chat in the lists.
+    property <ChatRow> menu-chat;
+    property <int> menu-folder;             // where Chats.toggle-pin pins it
+    property <length> menu-x;
+    property <length> menu-y;
+
+    function show-menu(chat: ChatRow, folder: int, left: length, top: length) {
+        root.menu-chat = chat;
+        root.menu-folder = folder;
+        root.menu-x = max(0px, left - root.absolute-position.x);
+        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 116px));
+        chat-menu.show();
+    }
 
     Rectangle {
         x: parent.width - 1px;
@@ -318,6 +367,9 @@ component Side inherits Rectangle {
             horizontal-scrollbar-policy: always-off;
             for chat in Chats.list: ChatLine {
                 chat: chat;
+                menu(left, top) => {
+                    root.show-menu(chat, Chats.folder, left, top);
+                }
             }
         }
         if root.view == TerminalView.channels: ListView {
@@ -326,6 +378,9 @@ component Side inherits Rectangle {
             horizontal-scrollbar-policy: always-off;
             for chat in Chats.channels: ChatLine {
                 chat: chat;
+                menu(left, top) => {
+                    root.show-menu(chat, 0, left, top);
+                }
             }
         }
         if root.view == TerminalView.bots: Flickable {
@@ -341,6 +396,9 @@ component Side inherits Rectangle {
                 }
                 for chat in Chats.official-bots: ChatLine {
                     chat: chat;
+                    menu(left, top) => {
+                        root.show-menu(chat, 0, left, top);
+                    }
                 }
                 if Chats.bots.length > 0: T {
                     height: 26px;
@@ -350,6 +408,9 @@ component Side inherits Rectangle {
                 }
                 for chat in Chats.bots: ChatLine {
                     chat: chat;
+                    menu(left, top) => {
+                        root.show-menu(chat, 0, left, top);
+                    }
                 }
             }
         }
@@ -412,6 +473,54 @@ component Side inherits Rectangle {
         widest: 560px;
         dropped(width) => {
             AppState.change-list-width(Theme.terminal, width);
+        }
+    }
+
+    chat-menu := PopupWindow {
+        x: root.menu-x;
+        y: root.menu-y;
+        width: 250px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+        Rectangle {
+            border-radius: 4px;
+            background: P.side;
+            border-width: 1px;
+            border-color: P.line;
+            drop-shadow-blur: 30px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: P.shadow;
+            VerticalLayout {
+                padding-top: 4px;
+                padding-bottom: 4px;
+                T {
+                    height: 24px;
+                    x: 12px;
+                    text: "── " + Signs.of(root.menu-chat.kind, false) + root.menu-chat.title + " ──";
+                    color: P.faint;
+                    overflow: elide;
+                }
+                MenuEntry {
+                    label: root.menu-chat.muted ? @tr("Unmute") : @tr("Mute");
+                    activated => {
+                        Chats.toggle-mute(root.menu-chat.id);
+                        chat-menu.close();
+                    }
+                }
+                MenuEntry {
+                    label: root.menu-chat.pinned ? @tr("Unpin") : @tr("Pin");
+                    activated => {
+                        Chats.toggle-pin(root.menu-chat.id, root.menu-folder);
+                        chat-menu.close();
+                    }
+                }
+                MenuEntry {
+                    label: @tr("Mark as read");
+                    activated => {
+                        Chats.mark-read(root.menu-chat.id);
+                        chat-menu.close();
+                    }
+                }
+            }
         }
     }
 }
@@ -528,35 +637,6 @@ component Line {
         }
         if root.message.kind == RowKind.message: LogLine {
             message: root.message;
-        }
-    }
-}
-
-component MenuEntry inherits Rectangle {
-    in property <string> label;
-    in property <string> command;
-    callback activated();
-    height: 26px;
-    background: touch.has-hover ? P.sel : transparent;
-
-    HorizontalLayout {
-        padding-left: 12px;
-        padding-right: 12px;
-        spacing: 8px;
-        T {
-            horizontal-stretch: 1;
-            text: root.label;
-        }
-        T {
-            text: root.command;
-            color: P.accent;
-        }
-    }
-
-    touch := TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            root.activated();
         }
     }
 }

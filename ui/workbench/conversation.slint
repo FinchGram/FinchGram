@@ -4,7 +4,7 @@ import { AppState } from "../state.slint";
 import { Conversation, MessageRow, RowKind, ChatKind, Content, Account, Viewer } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Paragraph } from "../widgets.slint";
-import { ChatScroll, ChatIcons, MessageInput, Capped, MediaTiles } from "../chat.slint";
+import { ChatScroll, ChatIcons, MessageInput, Capped, MediaTiles, StickerPicture } from "../chat.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 
 component TabItem inherits Rectangle {
@@ -78,7 +78,7 @@ component TabItem inherits Rectangle {
     }
 }
 
-component MenuEntry inherits Rectangle {
+export component MenuEntry inherits Rectangle {
     in property <string> icon;
     in property <string> label;
     in property <string> keys;
@@ -318,6 +318,7 @@ component DayRule {
 component MessageLine {
     in property <MessageRow> message;
     property <bool> has-media: message.media.length > 0;
+    property <bool> has-sticker: message.content == Content.sticker && message.sticker.width > 0;
 
     HorizontalLayout {
         spacing: 12px;
@@ -377,7 +378,16 @@ component MessageLine {
                     }
                 }
             }
-            if !root.has-media || root.message.text != "": Paragraph {
+            if root.has-sticker: HorizontalLayout {
+                alignment: start;
+                padding-top: 3px;
+                padding-bottom: 2px;
+                StickerPicture {
+                    message-id: root.message.id;
+                    sticker: root.message.sticker;
+                }
+            }
+            if !root.has-sticker && (!root.has-media || root.message.text != ""): Paragraph {
                 text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
                 color: root.has-media || root.message.content == Content.text ? P.text : P.muted;
                 font-size: 14px;
@@ -418,6 +428,7 @@ component MessageLine {
 component PostLine inherits Capped {
     in property <MessageRow> message;
     property <bool> has-media: message.media.length > 0;
+    property <bool> has-sticker: message.content == Content.sticker && message.sticker.width > 0;
     spacing: 6px;
 
     if root.has-media: HorizontalLayout {
@@ -431,7 +442,14 @@ component PostLine inherits Capped {
             }
         }
     }
-    if !root.has-media || root.message.text != "": Paragraph {
+    if root.has-sticker: HorizontalLayout {
+        alignment: start;
+        StickerPicture {
+            message-id: root.message.id;
+            sticker: root.message.sticker;
+        }
+    }
+    if !root.has-sticker && (!root.has-media || root.message.text != ""): Paragraph {
         text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
         color: P.text;
         font-size: 14px;

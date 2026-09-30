@@ -6,6 +6,7 @@ import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind } from "../tel
 import { Fmt } from "../format.slint";
 import { Icon, ListEdge } from "../widgets.slint";
 import { ChatIcons } from "../chat.slint";
+import { MenuEntry } from "conversation.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 
 export enum WorkbenchView { chats, channels, bots, filters, scheduled }
@@ -95,9 +96,10 @@ component NetworkBanner inherits Rectangle {
     }
 }
 
-// One line of the tree: a folder's header, or a chat in it.
+// One line of the tree: a folder's header, a chat in it, or a pinned chat at the top, in no folder.
 component TreeLine inherits Rectangle {
     in property <TreeRow> item;
+    callback menu(length, length);          // a right click, where it is in the window
     property <bool> open: !item.header && item.chat.id == Conversation.chat-id;
     property <bool> unread: item.chat.unread > 0 || item.chat.mention;
     height: item.header ? 32px : 28px;
@@ -135,7 +137,7 @@ component TreeLine inherits Rectangle {
     }
 
     if !root.item.header: HorizontalLayout {
-        padding-left: 26px;
+        padding-left: root.item.folder < 0 ? 14px : 26px;
         padding-right: 14px;
         spacing: 8px;
         VerticalLayout {
@@ -173,12 +175,18 @@ component TreeLine inherits Rectangle {
                 Conversation.open(root.item.chat.id);
             }
         }
+        pointer-event(event) => {
+            if !root.item.header && event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
+        }
     }
 }
 
 // A channel with its latest post.
 component ChannelLine inherits Rectangle {
     in property <ChatRow> chat;
+    callback menu(length, length);          // a right click, where it is in the window
     property <bool> open: chat.id == Conversation.chat-id;
     height: lines.preferred-height;
     background: open ? P.sel : touch.has-hover ? P.chrome.transparentize(0.4) : transparent;
@@ -241,12 +249,18 @@ component ChannelLine inherits Rectangle {
         clicked => {
             Conversation.open(root.chat.id);
         }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
+        }
     }
 }
 
 // A bot, with Telegram's check mark when it is Telegram's own.
 component BotLine inherits Rectangle {
     in property <ChatRow> chat;
+    callback menu(length, length);          // a right click, where it is in the window
     property <bool> open: chat.id == Conversation.chat-id;
     height: 38px;
     background: open ? P.sel : touch.has-hover ? P.sel.transparentize(0.3) : transparent;
@@ -312,6 +326,11 @@ component BotLine inherits Rectangle {
         clicked => {
             Conversation.open(root.chat.id);
         }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
+        }
     }
 }
 
@@ -360,6 +379,20 @@ export component WorkbenchSidebar inherits Rectangle {
     width: max(200px, min(560px, AppState.workbench-list-width));
     background: P.side;
 
+    // A chat's menu, from a right click on it: the chat header's menu, for any chat in the lists.
+    property <ChatRow> menu-chat;
+    property <int> menu-folder;             // where Chats.toggle-pin pins it
+    property <length> menu-x;
+    property <length> menu-y;
+
+    function show-menu(chat: ChatRow, folder: int, left: length, top: length) {
+        root.menu-chat = chat;
+        root.menu-folder = folder;
+        root.menu-x = max(0px, left - root.absolute-position.x);
+        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 140px));
+        chat-menu.show();
+    }
+
     VerticalLayout {
         SideHeading {
             title: root.view == WorkbenchView.channels ? @tr("Channels") + " · " + Chats.channels.length
@@ -407,6 +440,9 @@ export component WorkbenchSidebar inherits Rectangle {
             horizontal-scrollbar-policy: always-off;
             for row in Chats.tree: TreeLine {
                 item: row;
+                menu(left, top) => {
+                    root.show-menu(row.chat, -1, left, top);
+                }
             }
         }
 
@@ -416,6 +452,9 @@ export component WorkbenchSidebar inherits Rectangle {
             horizontal-scrollbar-policy: always-off;
             for chat in Chats.channels: ChannelLine {
                 chat: chat;
+                menu(left, top) => {
+                    root.show-menu(chat, 0, left, top);
+                }
             }
         }
         if root.view == WorkbenchView.channels: HorizontalLayout {
@@ -436,6 +475,9 @@ export component WorkbenchSidebar inherits Rectangle {
                 }
                 for chat in Chats.official-bots: BotLine {
                     chat: chat;
+                    menu(left, top) => {
+                        root.show-menu(chat, 0, left, top);
+                    }
                 }
                 if Chats.bots.length > 0: BotSection {
                     title: @tr("Other bots");
@@ -443,6 +485,9 @@ export component WorkbenchSidebar inherits Rectangle {
                 }
                 for chat in Chats.bots: BotLine {
                     chat: chat;
+                    menu(left, top) => {
+                        root.show-menu(chat, 0, left, top);
+                    }
                 }
                 HorizontalLayout {
                     padding: 14px;
@@ -462,6 +507,62 @@ export component WorkbenchSidebar inherits Rectangle {
         widest: 560px;
         dropped(width) => {
             AppState.change-list-width(Theme.workbench, width);
+        }
+    }
+
+    chat-menu := PopupWindow {
+        x: root.menu-x;
+        y: root.menu-y;
+        width: 230px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+
+        Rectangle {
+            border-radius: 8px;
+            background: P.bg;
+            border-width: 1px;
+            border-color: P.line;
+            drop-shadow-blur: 32px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: P.shadow;
+
+            VerticalLayout {
+                padding: 6px;
+                Text {
+                    height: 26px;
+                    x: 10px;
+                    text: root.menu-chat.title.to-uppercase();
+                    color: P.faint;
+                    font-size: 11px;
+                    font-weight: 600;
+                    letter-spacing: 0.88px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                MenuEntry {
+                    icon: root.menu-chat.muted ? "bell" : "bell-slash";
+                    label: root.menu-chat.muted ? @tr("Unmute") : @tr("Mute");
+                    activated => {
+                        Chats.toggle-mute(root.menu-chat.id);
+                        chat-menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "push-pin";
+                    label: root.menu-chat.pinned ? @tr("Unpin") : @tr("Pin");
+                    activated => {
+                        Chats.toggle-pin(root.menu-chat.id, root.menu-folder);
+                        chat-menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "checks";
+                    label: @tr("Mark as read");
+                    activated => {
+                        Chats.mark-read(root.menu-chat.id);
+                        chat-menu.close();
+                    }
+                }
+            }
         }
     }
 }

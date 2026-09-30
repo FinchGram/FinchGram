@@ -115,7 +115,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   for; `files.rs` downloads files, `viewer.rs` fills the media viewer.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
 - `src/platform/`: the platform layer (so far: what the account's list of sessions calls this
-  device, the transparent title bar on macOS, opening links).
+  device, the transparent title bar on macOS, opening links, and on macOS staying in the Dock when
+  the window is closed, as the design's "When closing the window: Minimize to tray" has it: the Dock
+  icon shows the window again, and Quit lets TDLib close first).
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
 - `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
 - `src/images.rs`: pictures (photos, video stills, the tiny previews in messages), decoded off the UI
@@ -160,7 +162,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
    process, so a crafted video that breaks a decoder takes the window with it. FFmpeg is
    built without network code, encoders or devices, and follows upstream; should that not be enough,
    playback moves into a sandboxed helper process that hands its picture over (IOSurface on macOS).
-   Lottie stickers need something else (rlottie).
+   Lottie stickers need something else (rlottie), and WebM stickers a VP9 decoder that keeps their
+   transparency (libvpx; FFmpeg's own leaves it out). Until then a moving sticker shows its still
+   thumbnail; still stickers show as they are.
 4. **Rendering**: Slint's default renderer (FemtoVG) for now. The design's typefaces are bundled,
    Chinese included (Noto Sans SC); Japanese, Korean and colour emoji in messages come from the
    system's fonts until the UI speaks those languages. Skia would need building from source: its

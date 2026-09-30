@@ -1,5 +1,5 @@
 // Parts of the chat windows the three themes share.
-import { Conversation, ChatKind, Media } from "telegram.slint";
+import { Conversation, ChatKind, Media, Sticker } from "telegram.slint";
 import { Fmt } from "format.slint";
 import { Icon } from "widgets.slint";
 
@@ -252,5 +252,26 @@ export component MediaTiles {
                 root.open(item.id);
             }
         }
+    }
+}
+
+// A sticker on its own, as stickers are cut out: no frame, no background. Its picture is asked for
+// when it is shown.
+export component StickerPicture {
+    in property <string> message-id;
+    in property <Sticker> sticker;
+    in property <length> size: 160px;
+    property <float> scale: min(root.size / 1px / max(1, root.sticker.width), root.size / 1px / max(1, root.sticker.height));
+    width: Math.round(max(1, root.sticker.width) * root.scale) * 1px;
+    height: Math.round(max(1, root.sticker.height) * root.scale) * 1px;
+    init => {
+        Conversation.load-picture(root.message-id);
+    }
+
+    Image {
+        width: parent.width;
+        height: parent.height;
+        source: root.sticker.picture;
+        image-fit: contain;
     }
 }

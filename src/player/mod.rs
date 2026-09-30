@@ -380,10 +380,12 @@ impl Player {
         unsafe { mpv::mpv_render_context_render(self.render, params.as_mut_ptr()) };
         saved.restore(&gl);
         if replaced {
+            // Unflipped, mpv writes the top of the picture to the texture's first row, and that is
+            // the row Slint draws at the top with TopLeft. (BottomLeft showed videos upside down.)
             // SAFETY: the texture stays alive until it is replaced, and then the image with it.
             let frame = unsafe {
                 BorrowedOpenGLTextureBuilder::new_gl_2d_rgba_texture(target.texture.0, [width as u32, height as u32].into())
-                    .origin(BorrowedOpenGLTextureOrigin::BottomLeft)
+                    .origin(BorrowedOpenGLTextureOrigin::TopLeft)
                     .build()
             };
             self.with_viewer(|viewer| viewer.set_frame(frame));
