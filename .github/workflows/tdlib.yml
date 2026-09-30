@@ -1,0 +1,49 @@
+name: tdlib
+
+# Builds finchgram-tdlib (TDLib and OpenSSL as pinned in vendor/tdlib/build.sh, with our host)
+# on a clean Apple-silicon runner. Pushing a tag such as tdlib-1.8.67-1 also publishes it as a
+# release of this repository, which scripts/fetch-tdlib.sh pins by tag and SHA-256. A manual run
+# only builds.
+on:
+  workflow_dispatch:
+  push:
+    tags: ["tdlib-*"] # tdlib-<TDLib version>-<n>; -<n> counts rebuilds of the same TDLib
+
+jobs:
+  macos-arm64:
+    runs-on: macos-latest # Apple silicon
+    permissions:
+      contents: write # gh release create needs it; the default token is read-only
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install build tools
+        run: brew install gperf ninja # cmake comes with the runner
+
+      - name: Cache source downloads
+        uses: actions/cache@v6
+        with:
+          path: vendor/tdlib/work/downloads
+          key: tdlib-sources-${{ hashFiles('vendor/tdlib/build.sh') }}
+
+      - name: Build
+        run: vendor/tdlib/build.sh
+
+      - name: Upload build output
+        uses: actions/upload-artifact@v7
+        with:
+          name: finchgram-tdlib-macos-arm64
+          path: vendor/tdlib/dist
+
+      # --latest=false: this repository's "Latest release" is always the newest app (v*), which
+      # installed copies of FinchGram look for to update themselves.
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/tdlib-')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --latest=false \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file vendor/tdlib/dist/BUILD-INFO.txt \
+            vendor/tdlib/dist/*.tar.gz vendor/tdlib/dist/SHA256SUMS vendor/tdlib/dist/sources/*

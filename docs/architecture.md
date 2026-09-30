@@ -1,0 +1,132 @@
+# Architecture: the app is a shell, TDLib does Telegram
+
+[中文](architecture.zh-Hans.md)
+
+Status: agreed direction (2026-09-29), after Coova Studio's architecture. The shell and
+finchgram-tdlib run on macOS; the pages follow the design. The decisions still open are listed at
+the end.
+
+## Why
+
+- A Telegram client is two things: the protocol with its local state (MTProto, encryption, the
+  database of chats and messages, files, keeping in step with the servers), and the pages. TDLib,
+  Telegram's own library, does the first completely. FinchGram's work is the second, and the media
+  center.
+- TDLib is C++. Kept in a program of its own, it stays out of the app's code: the app builds with
+  plain `cargo build`, with no C++ toolchain and no foreign function interface, and a crash in TDLib
+  does not take the window down.
+- FinchGram runs on macOS first. Windows and Linux will follow; the rules below keep the door open.
+
+## The idea
+
+```
+FinchGram (the shell: Rust + Slint)
+│  pages · the app's state · settings · updates · notifications
+│  talks to Telegram only through src/telegram/
+▼
+finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Coova Studio:
+                  TDLib (pinned) and a small host that passes TDLib's JSON over standard input
+                  and output
+```
+
+## Terms
+
+- **Shell**: the app itself: the pages, the app's state, settings, updates. It knows what a chat
+  looks like and what the user can do with it, not how Telegram's protocol works.
+- **finchgram-tdlib**: TDLib built from pinned sources by this repository's vendor build, with our
+  host (`vendor/tdlib/host/main.cpp`). The only thing that talks to Telegram.
+- **Adapter**: `src/telegram/`, the only code that talks to finchgram-tdlib.
+- **Platform layer**: the few parts of the shell that differ from one OS to another: notifications,
+  the tray, the dock badge, secure storage, opening links, showing files in the file manager,
+  updates.
+
+## Principles
+
+1. The shell never speaks Telegram's protocol and never links TDLib. Everything goes through
+   finchgram-tdlib and the adapter.
+2. TDLib keeps its own JSON interface, as FFmpeg keeps its command line: requests, answers and
+   updates are TDLib's objects exactly as its td_api.tl defines them, one per line. There is no
+   protocol of our own on top.
+3. One program runs one TDLib client, that is one account. It ends when its standard input closes,
+   after TDLib has closed and written its database out; after a log out it ends by itself.
+4. A crash does not take the window down. When finchgram-tdlib ends unexpectedly, the requests still
+   waiting fail and the adapter starts it again: TDLib's database is on disk, so it carries on. One
+   that ends within 30 seconds of starting is broken, and the app says so instead of starting it
+   over and over.
+5. The version is part of the contract. `src/telegram/api.rs` is written against td_api.tl of one
+   TDLib version, the one pinned in `vendor/tdlib/build.sh`. The adapter's first request asks
+   finchgram-tdlib for its version; anything else is a packaging error. The types are written by
+   hand, only for what FinchGram uses, and fields TDLib adds are ignored.
+6. Files are passed by path. TDLib downloads into its files directory and reports the path; the
+   shell reads from there. Nothing big crosses the pipe.
+7. The development conventions hold ([conventions.md](conventions.md)): everything ships with the
+   app, built from pinned sources by our own CI, and nothing is taken from the user's machine.
+8. Platform code lives only in the platform layer. Everything else is shared Rust.
+9. Telegram's terms for API clients are part of the design (core.telegram.org/api/terms): our own
+   api_id; no "Telegram" in the name and not its logo; the app says that it uses the Telegram API;
+   official sponsored messages in channels are shown; nothing interferes with read receipts, typing,
+   online status or self-destructing messages; nothing obtained from Telegram trains or feeds AI.
+
+## How the shell talks to finchgram-tdlib
+
+- The program is looked for in one place only: next to the executable (`Contents/MacOS/` in the
+  .app; `target/<profile>/` for `cargo run`, where build.rs copies it from `vendor/tdlib/bin/`).
+- Standard input: requests, one JSON object per line. Each carries an `"@extra"` number; TDLib
+  copies it into the answer, which goes to the callback given with the request.
+- Standard output: answers and updates, one per line. A reader thread parses them and wakes the UI
+  thread only when its inbox was empty, so a burst of updates arrives as one batch. Updates nothing
+  follows yet are dropped there.
+- Standard error: TDLib's log (errors only, until the shell asks for more).
+- `finchgram-tdlib --version` prints TDLib's version and commit; the vendor build checks it.
+
+## Threads
+
+- The UI thread runs Slint's event loop and owns the app's state: what TDLib has said about chats,
+  users and messages, and the Slint models the pages show. The state changes there, from updates,
+  in batches, with no locks.
+- Each finchgram-tdlib has a writer thread and a reader thread.
+- Work that takes time (decoding an image, reading a file) runs on a thread of its own and reports
+  back through the event loop, as in Coova Studio. Images are decoded into a `SharedPixelBuffer` off
+  the UI thread and become a `slint::Image` on it.
+- There is no async runtime: TDLib does the networking.
+
+## In the shell's code
+
+- `src/telegram/`: the adapter. `process.rs` runs the program, `api.rs` has TDLib's types that we
+  use, `mod.rs` sends requests, hands out answers, starts the program again, and follows logging in.
+- `src/platform/`: the platform layer (so far: what the account's list of sessions calls this device).
+- `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
+- `src/settings.rs`, `src/i18n.rs`; with the design's typefaces `src/fonts.rs`.
+- `ui/`: `app.slint`, `state.slint` (the globals Rust and the pages share), `theme.slint`, the
+  pages.
+
+## Platforms
+
+| | macOS | Windows | Linux |
+|---|---|---|---|
+| When | now | planned | later |
+| finchgram-tdlib | built by our CI (Apple silicon) | planned | planned |
+| Updates | our updater | our updater | our updater or packages |
+
+## Not now
+
+- **Several accounts.** One finchgram-tdlib per account, each with a database directory of its own,
+  and the shell switching between them. Needs a design first.
+- **Calls.** TDLib only does the signalling; the media part (tgcalls) is a large project of its own.
+- **Plugins by other people.** They first need a trust model: who signs them, what the user
+  approves, how they are sandboxed.
+
+## Open questions
+
+1. **Database encryption**: TDLib can encrypt its database with a key, which would live in the
+   system's secure storage (Keychain). Until then the database is protected by the user's account
+   only.
+2. **Where downloaded files go**: next to the database for now. A size limit and a cache folder
+   (`~/Library/Caches`) need a design.
+3. **Media playback** (the media center): voice messages (Opus), video, GIFs and animated stickers
+   (WebM, Lottie). Decoding needs an engine of its own, built from pinned sources like TDLib: FFmpeg
+   as a separate program, as in Coova Studio, or a library inside a program of ours. To be decided
+   with the first media page.
+4. **Rendering**: Slint's default renderer (FemtoVG) for now; Chinese, Japanese, Korean and colour
+   emoji are to be checked with the design's typefaces. Skia would need building from source: its
+   Rust bindings download a prebuilt library by default, which conventions.md does not allow.

@@ -1,0 +1,33 @@
+[package]
+name = "finchgram"
+version = "0.0.1"
+edition = "2024"
+rust-version = "1.92"
+description = "FinchGram — an open-source Telegram desktop client with a media center"
+license = "GPL-3.0-only"
+repository = "https://github.com/FinchGram/FinchGram"
+publish = false
+default-run = "finchgram"         # src/bin/ has the release signing tool too
+
+[dependencies]
+# ~1.18: minor upgrades are deliberate. Slint's unstable-* features, once we use them, may change in
+# any minor release.
+slint = "~1.18"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "1"                                      # settings file
+dirs = "7"
+sys-locale = "0.3"
+# The self-updater (src/update.rs) and the release signing tool (src/bin/).
+ureq = "3"
+semver = "1"
+sha2 = "0.11"
+ed25519-dalek = "3"
+hex = "0.4"
+
+[build-dependencies]
+slint-build = "~1.18"
+
+[profile.release]
+strip = true
+lto = "thin"

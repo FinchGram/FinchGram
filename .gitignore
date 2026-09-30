@@ -1,0 +1,9 @@
+/target
+/dist
+# vendor/<name>/ keeps its build script in git; what it downloads or builds stays out.
+/vendor/*/bin/
+/vendor/*/work/
+/vendor/*/dist/
+/lang/*.pot
+.DS_Store
+.vscode/

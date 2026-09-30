@@ -1,0 +1,177 @@
+import { Button } from "std-widgets.slint";
+import { Theme } from "theme.slint";
+import { AppState, TelegramState, Connection, UpdateState } from "state.slint";
+
+// Re-exported so Rust can reach them through slint::include_modules!().
+export { AppState, TelegramState, Connection, UpdateState }
+
+// What each state means to the person looking at the window.
+global Describe {
+    public pure function telegram(state: TelegramState) -> string {
+        if state == TelegramState.starting {
+            return @tr("Starting…");
+        }
+        if state == TelegramState.missing-api-id {
+            return @tr("This build has no Telegram API ID.");
+        }
+        if state == TelegramState.wait-phone-number {
+            return @tr("Ready to log in with a phone number.");
+        }
+        if state == TelegramState.wait-code {
+            return @tr("Waiting for the login code.");
+        }
+        if state == TelegramState.wait-password {
+            return @tr("Waiting for the password.");
+        }
+        if state == TelegramState.wait-other-device {
+            return @tr("Confirm the login on a device that is logged in.");
+        }
+        if state == TelegramState.wait-email-address || state == TelegramState.wait-email-code {
+            return @tr("Waiting for the email address.");
+        }
+        if state == TelegramState.wait-registration {
+            return @tr("This phone number has no Telegram account yet.");
+        }
+        if state == TelegramState.wait-premium-purchase {
+            return @tr("Telegram asks for Premium to log in.");
+        }
+        if state == TelegramState.ready {
+            return @tr("Logged in.");
+        }
+        if state == TelegramState.logging-out {
+            return @tr("Logging out…");
+        }
+        if state == TelegramState.closing {
+            return @tr("Closing…");
+        }
+        return @tr("Something went wrong.");
+    }
+
+    public pure function connection(state: Connection) -> string {
+        if state == Connection.waiting-for-network {
+            return @tr("Waiting for network…");
+        }
+        if state == Connection.connecting-to-proxy {
+            return @tr("Connecting to proxy…");
+        }
+        if state == Connection.connecting {
+            return @tr("Connecting…");
+        }
+        if state == Connection.updating {
+            return @tr("Updating…");
+        }
+        return @tr("Connected");
+    }
+
+    public pure function update(state: UpdateState) -> string {
+        if state == UpdateState.checking {
+            return @tr("Checking…");
+        }
+        if state == UpdateState.up-to-date {
+            return @tr("This is the latest version.");
+        }
+        if state == UpdateState.available {
+            return @tr("Version {} is available.", AppState.update-version);
+        }
+        if state == UpdateState.installing {
+            return AppState.update-progress < 1 ? @tr("Downloading… {}%", Math.round(AppState.update-progress * 100)) : @tr("Installing…");
+        }
+        if state == UpdateState.failed {
+            return @tr("Update failed: {}", AppState.update-error);
+        }
+        return "";
+    }
+}
+
+export component MainWindow inherits Window {
+    title: "FinchGram";
+    preferred-width: 1100px;
+    preferred-height: 720px;
+    min-width: 720px;
+    min-height: 480px;
+    background: Theme.bg;
+
+    // The macOS menu bar. Slint adds the application menu (About, Hide, Quit) by itself; these
+    // menus follow it. Once a newer version is known, the Help entry installs it.
+    MenuBar {
+        Menu {
+            title: @tr("Help");
+            MenuItem {
+                title: AppState.update-state == UpdateState.available
+                    ? @tr("Update to {}…", AppState.update-version)
+                    : @tr("Check for Updates…");
+                activated => {
+                    if AppState.update-state == UpdateState.available {
+                        AppState.install-update();
+                    } else {
+                        AppState.check-for-updates();
+                    }
+                }
+            }
+        }
+    }
+
+    // A placeholder until the pages from the design arrive: how far FinchGram is with Telegram.
+    VerticalLayout {
+        alignment: center;
+        padding: 24px;
+        spacing: 10px;
+
+        Text {
+            text: "FinchGram";
+            font-size: 28px;
+            font-weight: 600;
+            color: Theme.fg;
+            horizontal-alignment: center;
+        }
+
+        Text {
+            text: Describe.telegram(AppState.telegram-state);
+            color: Theme.fg;
+            horizontal-alignment: center;
+        }
+
+        if AppState.telegram-state == TelegramState.failed: Text {
+            text: AppState.telegram-error;
+            color: Theme.danger;
+            horizontal-alignment: center;
+            wrap: word-wrap;
+        }
+
+        if AppState.telegram-state != TelegramState.starting && AppState.telegram-state != TelegramState.missing-api-id
+            && AppState.telegram-state != TelegramState.failed: Text {
+            text: Describe.connection(AppState.connection);
+            color: Theme.muted;
+            horizontal-alignment: center;
+        }
+
+        Text {
+            text: AppState.tdlib-version == ""
+                ? "FinchGram " + AppState.app-version
+                : "FinchGram " + AppState.app-version + " · TDLib " + AppState.tdlib-version;
+            color: Theme.muted;
+            font-size: 12px;
+            horizontal-alignment: center;
+        }
+
+        // Updates (src/update.rs), until the design gives them a place.
+        if AppState.update-state != UpdateState.idle: HorizontalLayout {
+            alignment: center;
+            spacing: 10px;
+
+            Text {
+                text: Describe.update(AppState.update-state);
+                color: AppState.update-state == UpdateState.failed ? Theme.danger : Theme.muted;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+
+            if AppState.update-state == UpdateState.available: Button {
+                text: @tr("Update and restart");
+                clicked => {
+                    AppState.install-update();
+                }
+            }
+        }
+    }
+}

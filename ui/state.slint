@@ -1,0 +1,49 @@
+// Application-wide state: one global that every page and the Rust side can reach.
+
+// How far FinchGram is with Telegram (src/telegram/).
+export enum TelegramState {
+    starting,               // finchgram-tdlib is starting, or TDLib is opening its database
+    missing-api-id,         // this build was made without an api_id (README)
+    wait-phone-number,
+    wait-code,
+    wait-password,
+    wait-other-device,      // logging in with a QR code, confirmed on a device that is logged in
+    wait-email-address,
+    wait-email-code,
+    wait-registration,      // the phone number has no account yet
+    wait-premium-purchase,
+    ready,
+    logging-out,
+    closing,
+    failed,                 // AppState.telegram-error says why
+}
+
+// Where the self-updater is (src/update.rs).
+export enum UpdateState { idle, checking, up-to-date, available, installing, failed }
+
+// TDLib's connection to Telegram's servers.
+export enum Connection { waiting-for-network, connecting-to-proxy, connecting, updating, ready }
+
+export global AppState {
+    // Active UI language, a folder name under lang/ ("en" is the source language and has none).
+    in-out property <string> language: "en";
+    // "system", "light" or "dark".
+    in-out property <string> appearance: "system";
+    // This build, e.g. "0.1.0".
+    in-out property <string> app-version;
+
+    // Telegram, through finchgram-tdlib. Set by Rust (src/telegram/).
+    in-out property <TelegramState> telegram-state: TelegramState.starting;
+    in-out property <string> telegram-error;
+    in-out property <Connection> connection: Connection.connecting;
+    in-out property <string> tdlib-version;             // "1.8.67", once finchgram-tdlib has answered
+
+    // Self-update (src/update.rs). Rust asks GitHub Releases once a day and on request.
+    in-out property <UpdateState> update-state: UpdateState.idle;
+    in-out property <string> update-version;            // the newer version, once one is available
+    in-out property <string> update-notes;              // its release notes
+    in-out property <float> update-progress;            // 0..1 while downloading
+    in-out property <string> update-error;              // why the last check or install failed
+    callback check-for-updates();
+    callback install-update();                          // download, install, restart
+}

@@ -1,0 +1,5 @@
+# Public halves of the Ed25519 key pairs allowed to sign FinchGram releases, one hex key per line.
+# Built into the app (src/update.rs); the private half is the RELEASE_SIGNING_KEY secret of the
+# release workflow (src/bin/finchgram-release-sign.rs). To rotate: add the new key, ship a
+# version, then remove the old one.
+9346a2b4e944f9280c5a1f2e88db272e97d249193d9c2346334283348291b464

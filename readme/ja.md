@@ -1,0 +1,125 @@
+# FinchGram
+
+[English](../README.md) · [简体中文](zh-Hans.md) · [繁體中文](zh-Hant.md) · [Español](es.md) · [Português](pt.md) · [Deutsch](de.md) · [Français](fr.md) · [Русский](ru.md) · **日本語** · [한국어](ko.md) · [العربية](ar.md)
+
+メディアセンターを備えた、オープンソースの Telegram デスクトップクライアントです。
+Rust + [Slint](https://slint.dev) で書かれています。まず macOS（Apple silicon）向けで、Windows と Linux は後日対応します。
+
+FinchGram は Telegram API を使っており、Telegram エコシステムの一部です。非公式のクライアントで、
+Telegram が開発したものではありません。
+
+状況：初期段階。シェルは TDLib を起動し、ログインの進み具合を追跡します。次はデザインに沿ってページを作ります。
+
+アプリはシェル（外殻）です。Telegram そのものは Telegram 公式のライブラリ TDLib が担い、実行ファイルの隣で
+独立したプログラムとして動きます。それが `finchgram-tdlib` で、このリポジトリがバージョンを固定したソースから
+ビルドしています（Coova Studio における ffmpeg と同じです）。シェルは `src/telegram/` を通してのみ、TDLib 独自の
+JSON でこれと通信します。詳しくは [docs/architecture.md](../docs/architecture.md) と
+[docs/conventions.md](../docs/conventions.md)（英語）を参照してください。
+
+すべてがここで公開されています：ソースコード、依存関係のビルド（`vendor/`）、リリース。
+
+## 開発
+
+現時点では、開発には Apple silicon の macOS が必要です。finchgram-tdlib はまだそれ向けにしかビルドしていません。
+Linux と Windows は後日対応します。
+
+finchgram-tdlib 本体は git に入っていません。`vendor/tdlib/` にあるのは、それをビルドするスクリプトだけです。
+clone したら、まず一度プログラムを取得してください：
+
+```sh
+scripts/fetch-tdlib.sh    # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ にダウンロードし、SHA-256 を検証
+FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
+```
+
+- 最初の `tdlib-*` リリースが公開されるまでは、`scripts/fetch-tdlib.sh` がその旨を伝えます。その場合は
+  ここで finchgram-tdlib をビルドしてください（数分かかります。Xcode または Command Line Tools と、
+  `brew install cmake ninja gperf` が必要です。いずれもビルド用のツールです）：
+
+  ```sh
+  vendor/tdlib/build.sh && vendor/tdlib/build.sh install
+  ```
+
+- `FINCHGRAM_API_ID` と `FINCHGRAM_API_HASH`：自分のものを
+  [my.telegram.org](https://my.telegram.org) → API development tools で取得します。コンパイル時に読み込まれ、
+  リポジトリには決して入れません。これがなくてもアプリは起動し、API ID がないことを表示します。
+- `FINCHGRAM_TEST_DC=1 cargo run` は Telegram のテストサーバーを使います。テストサーバーには専用のアカウントがあり、
+  アプリはそのために別のデータベースを持ちます。
+
+`build.rs` は `vendor/tdlib/bin/finchgram-tdlib` を、コンパイルされた実行ファイルの隣にコピーします。そのため
+`cargo run` は、パッケージ化されたアプリとまったく同じプログラムを使います。これがないとビルドは、その旨の
+メッセージを出して失敗します。Rust 1.92 以降が必要です。
+
+TDLib のデータベースとダウンロードしたファイルは `~/Library/Application Support/FinchGram/tdlib/` に、
+設定は `~/Library/Application Support/FinchGram/settings.toml` にあります。
+
+## 構成
+
+```
+.github/workflows/
+  release.yml            # main への push ごとにアプリをビルドし、v* タグをリリースとして公開
+  tdlib.yml              # クリーンなマシンで finchgram-tdlib をビルドし、tdlib-* タグをリリースとして公開
+Cargo.toml
+build.rs                 # ui/app.slint をコンパイルし、lang/ を同梱し、vendor/tdlib/bin/ を実行ファイルの隣にコピー
+docs/                    # architecture.md、conventions.md（+ zh-Hans）
+lang/                    # 翻訳：lang/<コード>/LC_MESSAGES/finchgram.po、バイナリに組み込まれる
+readme/                  # この README の他の言語版
+release-signing.pub      # リリースへの署名を許された公開鍵。アプリに組み込まれる
+scripts/
+  bundle.sh              # dist/FinchGram.app をビルド（リリースのワークフローが実行するもの）
+  fetch-tdlib.sh         # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ へ
+  release.sh             # リリースを開始：バージョン、タグ、push。残りは GitHub Actions が行う
+src/
+  main.rs                # ウィンドウ、設定、言語、アップデート。Telegram を起動
+  telegram/              # finchgram-tdlib と通信する唯一のコード
+    process.rs           #   プログラムを実行：標準入出力で TDLib の JSON をやり取り
+    api.rs               #   FinchGram が使う TDLib の型（固定バージョンの td_api.tl に準拠）
+    mod.rs               #   リクエストと応答、再起動、ログイン
+  platform/              # OS ごとに異なる部分
+  update.rs              # 自動アップデート：GitHub Releases、署名の検証、入れ替え、再起動
+  settings.rs            # ユーザーの設定（settings.toml）
+  i18n.rs                # UI の言語：保存された選択、なければシステムの言語、それもなければ英語
+  bin/                   # finchgram-release-sign.rs、リリースを支える Ed25519 署名ツール
+ui/
+  app.slint              # メインウィンドウ
+  state.slint            # Rust とページが共有する global
+  theme.slint            # 色、ライトとダーク
+  logo/                  # FinchGram のロゴ（svg、png）と使用ルール
+vendor/tdlib/            # finchgram-tdlib
+  build.sh               #   固定したソースからビルド：TDLib のコミット、OpenSSL のバージョンと SHA-256 は冒頭で固定
+  host/                  #   小さなホストプログラム（main.cpp）とその CMakeLists.txt
+  bin/                   #   git 管理外：アプリが使うプログラム（scripts/fetch-tdlib.sh または build.sh install）
+  work/, dist/           #   git 管理外：ローカルビルドの中間ファイルとパッケージ
+```
+
+## 翻訳
+
+UI のテキストはすべて `@tr("English text")` と書きます。同じ文字列は、どこに出てきても訳は一つです（build.rs が
+Slint のデフォルトコンテキストを無効にしています）。同じ英文でも別の場所で違う訳が必要なら、コンテキストを付けます：
+`@tr("menu" => "Open")`。公式ツールで抽出し、各言語にマージします：
+
+```sh
+cargo install slint-tr-extractor                                          # 一度だけ
+find ui -name '*.slint' | sort | xargs slint-tr-extractor --no-default-translation-context -o lang/finchgram.pot
+for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finchgram.pot; done   # brew install gettext が必要
+```
+
+その後 `msgstr` を埋めて、もう一度 `cargo build` します。原文の言語は英語で、現在は簡体字中国語を同梱しています。
+
+## リリース
+
+リリースは GitHub Actions だけが、タグの付いたコミットからクリーンなマシンでビルドし
+（`.github/workflows/release.yml`）、このリポジトリで公開します：zip にしたアプリ、`SHA256SUMS`、
+その Ed25519 署名。インストール済みのアプリはここから自動でアップデートし、検証できないものは
+一切インストールしません。メンテナーはコマンド一つでリリースを始めます：
+
+```sh
+scripts/release.sh patch    # 0.1.0 -> 0.1.1。minor、major、または正確なバージョンも可
+```
+
+今のところ署名は ad hoc です。ダウンロードしたアプリを初めて開くとき、macOS が一度だけ確認します
+（システム設定 → プライバシーとセキュリティ）。アプリ自身がインストールしたアップデートは、この手順なしで起動します。
+
+## ライセンス
+
+GPL-3.0（[LICENSE](../LICENSE)）。finchgram-tdlib には TDLib（Boost Software License 1.0）と
+OpenSSL（Apache License 2.0）が含まれており、それぞれのライセンス文が同梱されています。

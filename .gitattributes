@@ -1,0 +1,2 @@
+# Shell scripts keep Unix line endings, also when the repository is cloned on Windows.
+*.sh text eol=lf
