@@ -1,0 +1,60 @@
+// The frame of the pages the three themes share (the design's second round): a title bar with the
+// page's name over two columns, a 480 px SideColumn on the left and the page itself on the right.
+// A page puts both columns into the frame.
+import { Look } from "../look.slint";
+import { WindowButtonsSpace, WindowMover } from "../widgets.slint";
+
+export component PageFrame inherits Rectangle {
+    in property <string> title;
+    background: Look.bg;
+
+    VerticalLayout {
+        Rectangle {
+            height: 40px;
+            background: Look.side;
+
+            WindowMover { }
+
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                WindowButtonsSpace { }
+                Text {
+                    horizontal-stretch: 1;
+                    text: Look.wordmark + " — " + root.title;
+                    color: Look.muted;
+                    font-size: 13px;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                Rectangle { width: 78px; }
+            }
+
+            Rectangle {
+                y: parent.height - 1px;
+                height: 1px;
+                background: Look.line;
+            }
+        }
+
+        HorizontalLayout {
+            vertical-stretch: 1;
+            @children
+        }
+    }
+}
+
+// The left column of a page.
+export component SideColumn inherits Rectangle {
+    width: 480px;
+    background: Look.side;
+
+    @children
+
+    Rectangle {
+        x: parent.width - 1px;
+        width: 1px;
+        background: Look.line;
+    }
+}

@@ -1,0 +1,876 @@
+// Logging in, from the design's second round ("登录引导"): who FinchGram is on the left, the steps
+// on the right. The steps follow TDLib's authorization state (src/telegram/login.rs); until TDLib
+// is ready for them, the right side says what it is doing.
+import { ListView } from "std-widgets.slint";
+import { AppState, TelegramState } from "../state.slint";
+import { Login, LoginStep, CodeDelivery, Country } from "../telegram.slint";
+import { Look } from "../look.slint";
+import { Icon, Logo, Spinner, Field, PrimaryButton, Link, Heading, Paragraph } from "../widgets.slint";
+import { PageFrame, SideColumn } from "frame.slint";
+
+export global LoginText {
+    public pure function tagline() -> string {
+        return @tr("A lighter Telegram client");
+    }
+
+    // TDLib's answer in words, where it is one of the usual ones; otherwise as TDLib wrote it.
+    public pure function error(message: string) -> string {
+        if message == "PHONE_NUMBER_INVALID" {
+            return @tr("This phone number is not valid. Check the country and the number.");
+        }
+        if message == "PHONE_NUMBER_BANNED" {
+            return @tr("This phone number is banned from Telegram.");
+        }
+        if message == "PHONE_CODE_INVALID" || message == "PHONE_CODE_EMPTY" || message == "EMAIL_CODE_INVALID" || message == "CODE_INVALID" {
+            return @tr("Wrong code. Check it and try again.");
+        }
+        if message == "PHONE_CODE_EXPIRED" || message == "CODE_EXPIRED" {
+            return @tr("This code has expired. Go back and ask for a new one.");
+        }
+        if message == "PASSWORD_HASH_INVALID" {
+            return @tr("Incorrect password");
+        }
+        if message == "EMAIL_INVALID" {
+            return @tr("This email address is not valid.");
+        }
+        if message.starts-with("Too Many Requests") || message.starts-with("FLOOD_WAIT") {
+            return @tr("Too many tries. Wait a while, then try again.");
+        }
+        return message;
+    }
+}
+
+component Feature {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> description;
+
+    HorizontalLayout {
+        spacing: 14px;
+        VerticalLayout {
+            alignment: start;
+            Icon {
+                name: root.icon;
+                size: 24px;
+                color: Look.accent;
+            }
+        }
+        VerticalLayout {
+            spacing: 2px;
+            Text {
+                text: root.title;
+                color: Look.text;
+                font-size: 16px;
+                font-weight: 600;
+                wrap: word-wrap;
+            }
+            Text {
+                text: root.description;
+                color: Look.muted;
+                font-size: 14px;
+                wrap: word-wrap;
+            }
+        }
+    }
+}
+
+// Who FinchGram is: the left column.
+component BrandPanel {
+    VerticalLayout {
+        padding-left: 36px;
+        padding-right: 36px;
+        padding-top: 40px;
+        padding-bottom: 40px;
+        spacing: 32px;
+
+        HorizontalLayout {
+            alignment: start;
+            spacing: 12px;
+            Logo {
+                size: 44px;
+                radius: Look.logo-radius;
+            }
+            Text {
+                text: Look.wordmark;
+                color: Look.text;
+                font-size: 22px;
+                font-weight: 600;
+                letter-spacing: -0.22px;
+                vertical-alignment: center;
+            }
+        }
+
+        VerticalLayout {
+            spacing: 16px;
+            Heading {
+                label: LoginText.tagline();
+                size: Look.hero-size;
+                line-height-factor: Look.leading(1.12);
+            }
+            Text {
+                text: @tr("Same accounts and messages, with extra privacy and productivity tools.");
+                color: Look.muted;
+                font-size: 17px;
+                line-height-factor: Look.leading(1.6);
+                wrap: word-wrap;
+            }
+        }
+
+        VerticalLayout {
+            spacing: 22px;
+            Feature {
+                icon: "translate";
+                title: @tr("Auto-translate");
+                description: @tr("Translate foreign-language messages into your UI language");
+            }
+            Feature {
+                icon: "book-open";
+                title: @tr("Reading mode");
+                description: @tr("Long-form layout, reactions hidden");
+            }
+            Feature {
+                icon: "stack";
+                title: @tr("Multiple accounts & folders");
+                description: @tr("Keep work and life apart");
+            }
+        }
+
+        Rectangle { vertical-stretch: 1; }
+
+        VerticalLayout {
+            spacing: 8px;
+            Rectangle {
+                HorizontalLayout {
+                    spacing: 10px;
+                    VerticalLayout {
+                        alignment: start;
+                        padding-top: 1px;
+                        Icon {
+                            name: "github-logo";
+                            size: 20px;
+                            color: Look.accent-ink;
+                            duotone: false;
+                        }
+                    }
+                    VerticalLayout {
+                        spacing: 2px;
+                        Text {
+                            text: @tr("Fully open source — read the code");
+                            color: Look.accent-ink;
+                            font-size: 14px;
+                            font-weight: 600;
+                        }
+                        Text {
+                            text: "https://github.com/FinchGram/FinchGram";
+                            color: Look.faint;
+                            font-size: 13px;
+                        }
+                    }
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        AppState.open-url("https://github.com/FinchGram/FinchGram");
+                    }
+                }
+            }
+            Text {
+                text: @tr("FinchGram is an unofficial client built on the Telegram API. It is not made by Telegram.");
+                color: Look.faint;
+                font-size: 13px;
+                wrap: word-wrap;
+            }
+        }
+    }
+}
+
+component StepTitle {
+    in property <string> title;
+    in property <string> hint;
+
+    VerticalLayout {
+        spacing: 6px;
+        Heading {
+            label: root.title;
+        }
+        Paragraph {
+            visible: root.hint != "";
+            height: root.hint == "" ? 0px : self.preferred-height;
+            text: root.hint;
+            color: Look.muted;
+            font-size: 15px;
+        }
+    }
+}
+
+component Label inherits Text {
+    color: Look.muted;
+    font-size: 13px;
+}
+
+component ErrorLine {
+    in property <string> text;
+
+    HorizontalLayout {
+        spacing: 6px;
+        VerticalLayout {
+            alignment: start;
+            padding-top: 2px;
+            Icon {
+                name: "warning-circle";
+                size: 15px;
+                color: Look.danger;
+                duotone: false;
+            }
+        }
+        Paragraph {
+            horizontal-stretch: 1;
+            text: LoginText.error(root.text);
+            color: Look.danger;
+            font-size: 14px;
+        }
+    }
+}
+
+// The chosen country, with the list to choose from below it.
+component CountryField {
+    VerticalLayout {
+        spacing: 6px;
+        Label {
+            text: @tr("Country");
+        }
+        box := Rectangle {
+            height: 44px;
+            border-radius: Look.radius;
+            background: Look.field;
+            border-width: Look.field-border;
+            border-color: Look.line;
+
+            HorizontalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                spacing: 10px;
+                Text {
+                    text: Login.country.calling-code == "" ? "+" : "+" + Login.country.calling-code;
+                    color: Look.text;
+                    font-size: 16px;
+                    vertical-alignment: center;
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: Login.country.name;
+                    color: Look.muted;
+                    font-size: 16px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "caret-down";
+                        size: 14px;
+                        color: Look.faint;
+                    }
+                }
+            }
+
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Login.search-countries("");
+                    picker.show();
+                }
+            }
+        }
+    }
+
+    picker := PopupWindow {
+        x: box.x;
+        y: box.y + box.height + 6px;
+        width: box.width;
+        height: 320px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+
+        Rectangle {
+            border-radius: Look.radius;
+            background: Look.bg;
+            border-width: 1px;
+            border-color: Look.line-strong;
+            drop-shadow-blur: 24px;
+            drop-shadow-offset-y: 8px;
+            drop-shadow-color: #0000002e;
+            clip: true;
+
+            VerticalLayout {
+                padding: 8px;
+                spacing: 6px;
+                search := Field {
+                    height: 36px;
+                    font-size: 14px;
+                    padding-x: 10px;
+                    placeholder: @tr("Search");
+                    init => {
+                        self.focus-text();
+                    }
+                    edited(words) => {
+                        Login.search-countries(words);
+                    }
+                    accepted => {
+                        if Login.countries.length > 0 {
+                            Login.choose-country(Login.countries[0]);
+                            picker.close();
+                        }
+                    }
+                }
+                ListView {
+                    vertical-stretch: 1;
+                    for country in Login.countries: Rectangle {
+                        height: 34px;
+                        border-radius: Look.radius / 2;
+                        background: row.has-hover ? Look.sel : transparent;
+
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            padding-right: 8px;
+                            spacing: 10px;
+                            Text {
+                                horizontal-stretch: 1;
+                                text: country.name;
+                                color: Look.text;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                            Text {
+                                text: "+" + country.calling-code;
+                                color: Look.faint;
+                                font-size: 13px;
+                                font-family: Look.mono;
+                                vertical-alignment: center;
+                            }
+                        }
+
+                        row := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                Login.choose-country(country);
+                                picker.close();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component PhoneStep {
+    VerticalLayout {
+        spacing: 22px;
+        StepTitle {
+            title: @tr("Sign in with your phone");
+            hint: @tr("We'll send a code to your Telegram app");
+        }
+        CountryField { }
+        VerticalLayout {
+            spacing: 6px;
+            Label {
+                text: @tr("Phone number");
+            }
+            phone := Field {
+                text: Login.phone;
+                enabled: !Login.busy;
+                error: Login.error != "";
+                edited(value) => {
+                    Login.phone = value;
+                }
+                accepted => {
+                    Login.submit-phone(Login.country.calling-code, self.text);
+                }
+                init => {
+                    self.focus-text();
+                }
+            }
+            if Login.error != "": ErrorLine {
+                text: Login.error;
+            }
+        }
+        PrimaryButton {
+            text: @tr("Next");
+            busy: Login.busy;
+            enabled: Login.phone != "";
+            clicked => {
+                Login.submit-phone(Login.country.calling-code, phone.text);
+            }
+        }
+        Link {
+            text: @tr("Sign in with QR code");
+            icon: "qr-code";
+            enabled: !Login.busy;
+            clicked => {
+                Login.use-qr-code();
+            }
+        }
+    }
+}
+
+component QrStep {
+    VerticalLayout {
+        spacing: 22px;
+        StepTitle {
+            title: @tr("Scan to sign in");
+            hint: @tr("On your phone, open Telegram › Settings › Devices › Link Desktop Device");
+        }
+        HorizontalLayout {
+            alignment: start;
+            Rectangle {
+                width: 220px;
+                height: 220px;
+                border-radius: Look.radius;
+                background: #ffffff;
+                border-width: 1px;
+                border-color: Look.line-strong;
+
+                if Login.qr-code.width > 0: Image {
+                    width: 196px;
+                    height: 196px;
+                    source: Login.qr-code;
+                    image-rendering: pixelated;
+                }
+                if Login.qr-code.width == 0: Spinner {
+                    size: 22px;
+                    color: #8b929c;
+                }
+            }
+        }
+        if Login.error != "": ErrorLine {
+            text: Login.error;
+        }
+        Link {
+            text: @tr("Sign in with phone number");
+            icon: "phone";
+            enabled: !Login.busy;
+            clicked => {
+                Login.use-phone-number();
+            }
+        }
+    }
+}
+
+// Digits in one wide box, sent as soon as there are enough of them.
+component CodeField inherits Field {
+    in property <int> length: 5;
+    in property <bool> busy;
+    callback complete(string);
+    height: 60px;
+    font-family: Look.mono;
+    font-size: 28px;
+    letter-spacing: 14px;
+    alignment: center;
+    padding-x: 18px;
+    placeholder: length <= 5 ? "• • • • •" : "• • • • • •";
+    enabled: !busy;
+    edited(value) => {
+        if value.character-count >= root.length {
+            root.complete(value);
+        }
+    }
+    accepted(value) => {
+        root.complete(value);
+    }
+}
+
+component CodeStep {
+    VerticalLayout {
+        spacing: 22px;
+        StepTitle {
+            title: @tr("Enter the code");
+            hint: Login.delivery == CodeDelivery.telegram ? @tr("Sent to Telegram on {0}", Login.code-phone)
+                : Login.delivery == CodeDelivery.sms ? @tr("Sent by SMS to {0}", Login.code-phone)
+                : Login.delivery == CodeDelivery.call ? @tr("You will get a call at {0}", Login.code-phone)
+                : Login.delivery == CodeDelivery.fragment ? @tr("Sent to your anonymous number on Fragment")
+                : @tr("Sent to {0}", Login.code-phone);
+        }
+        code := CodeField {
+            length: Login.code-length;
+            busy: Login.busy;
+            error: Login.error != "";
+            complete(value) => {
+                Login.submit-code(value);
+            }
+            init => {
+                self.focus-text();
+            }
+        }
+        if Login.error != "": ErrorLine {
+            text: Login.error;
+        }
+        if Login.can-resend || Login.resent: Link {
+            text: Login.resent ? @tr("Sent again — check Telegram") : @tr("Didn't get it? Resend");
+            color: Login.resent ? Look.faint : Look.accent-ink;
+            enabled: !Login.resent && !Login.busy;
+            clicked => {
+                Login.resend-code();
+            }
+        }
+        Link {
+            text: @tr("Back");
+            enabled: !Login.busy;
+            clicked => {
+                Login.back();
+            }
+        }
+    }
+}
+
+component PasswordStep {
+    VerticalLayout {
+        spacing: 22px;
+        StepTitle {
+            title: @tr("Two-step verification");
+            hint: @tr("This account has two-step verification on. Enter your password.");
+        }
+        VerticalLayout {
+            spacing: 8px;
+            password := Field {
+                height: 48px;
+                input-type: InputType.password;
+                placeholder: @tr("Password");
+                enabled: !Login.busy;
+                error: Login.error != "";
+                accepted(value) => {
+                    Login.submit-password(value);
+                }
+                init => {
+                    self.focus-text();
+                }
+            }
+            if Login.password-hint != "": Paragraph {
+                text: @tr("Hint: {0}", Login.password-hint);
+                color: Look.faint;
+                font-size: 13px;
+            }
+            if Login.error != "": ErrorLine {
+                text: Login.error;
+            }
+        }
+        PrimaryButton {
+            text: @tr("Next");
+            busy: Login.busy;
+            clicked => {
+                Login.submit-password(password.text);
+            }
+        }
+        Link {
+            text: @tr("Back");
+            enabled: !Login.busy;
+            clicked => {
+                Login.back();
+            }
+        }
+    }
+}
+
+component EmailStep {
+    VerticalLayout {
+        spacing: 22px;
+        StepTitle {
+            title: @tr("Add a login email");
+            hint: @tr("Telegram asks for an email address to send your login codes to.");
+        }
+        VerticalLayout {
+            spacing: 8px;
+            email := Field {
+                placeholder: "name@example.com";
+                enabled: !Login.busy;
+                error: Login.error != "";
+                accepted(value) => {
+                    Login.submit-email(value);
+                }
+                init => {
+                    self.focus-text();
+                }
+            }
+            if Login.error != "": ErrorLine {
+                text: Login.error;
+            }
+        }
+        PrimaryButton {
+            text: @tr("Next");
+            busy: Login.busy;
+            clicked => {
+                Login.submit-email(email.text);
+            }
+        }
+        Link {
+            text: @tr("Back");
+            enabled: !Login.busy;
+            clicked => {
+                Login.back();
+            }
+        }
+    }
+}
+
+component EmailCodeStep {
+    VerticalLayout {
+        spacing: 22px;
+        StepTitle {
+            title: @tr("Enter the code");
+            hint: @tr("Sent to {0}", Login.email-pattern);
+        }
+        CodeField {
+            length: Login.code-length;
+            busy: Login.busy;
+            error: Login.error != "";
+            complete(value) => {
+                Login.submit-email-code(value);
+            }
+            init => {
+                self.focus-text();
+            }
+        }
+        if Login.error != "": ErrorLine {
+            text: Login.error;
+        }
+        Link {
+            text: @tr("Back");
+            enabled: !Login.busy;
+            clicked => {
+                Login.back();
+            }
+        }
+    }
+}
+
+// What cannot be done here: a title, why, and the way back.
+component NoticeStep {
+    in property <string> title;
+    in property <string> hint;
+    in property <string> detail;
+    in property <bool> can-go-back: true;
+
+    VerticalLayout {
+        spacing: 22px;
+        StepTitle {
+            title: root.title;
+            hint: root.hint;
+        }
+        if root.detail != "": Paragraph {
+            text: root.detail;
+            color: Look.faint;
+            font-size: 13px;
+            font-family: Look.mono;
+        }
+        if root.can-go-back: Link {
+            text: @tr("Back");
+            clicked => {
+                Login.back();
+            }
+        }
+    }
+}
+
+// TDLib is busy: starting, logging out, closing.
+component WaitingStep {
+    in property <string> text;
+
+    HorizontalLayout {
+        alignment: start;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Spinner {
+                size: 18px;
+                color: Look.faint;
+            }
+        }
+        Text {
+            text: root.text;
+            color: Look.muted;
+            font-size: 15px;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// The UI language, at the foot of the page, with the list to choose from.
+component LanguagePicker {
+    width: 380px;
+
+    HorizontalLayout {
+        alignment: start;
+        Rectangle {
+            HorizontalLayout {
+                spacing: 8px;
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "globe";
+                        size: 17px;
+                        color: Look.muted;
+                    }
+                }
+                Text {
+                    text: AppState.language-name;
+                    color: Look.muted;
+                    font-size: 14px;
+                    vertical-alignment: center;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "caret-down";
+                        size: 12px;
+                        color: Look.faint;
+                    }
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    list.show();
+                }
+            }
+        }
+    }
+
+    list := PopupWindow {
+        x: 0;
+        y: -self.height - 8px;
+        width: 240px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+
+        Rectangle {
+            border-radius: Look.radius;
+            background: Look.bg;
+            border-width: 1px;
+            border-color: Look.line-strong;
+            drop-shadow-blur: 24px;
+            drop-shadow-offset-y: 8px;
+            drop-shadow-color: #0000002e;
+
+            VerticalLayout {
+                padding: 6px;
+                for language in AppState.languages: Rectangle {
+                    height: 44px;
+                    border-radius: Look.radius / 2;
+                    background: language.code == AppState.language ? Look.sel : entry.has-hover ? Look.side : transparent;
+
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        spacing: 10px;
+                        VerticalLayout {
+                            horizontal-stretch: 1;
+                            alignment: center;
+                            Text {
+                                text: language.native;
+                                color: Look.text;
+                                font-size: 15px;
+                                font-weight: language.code == AppState.language ? 600 : 400;
+                            }
+                            Text {
+                                text: language.english;
+                                color: Look.faint;
+                                font-size: 12px;
+                            }
+                        }
+                        if language.code == AppState.language: VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "check";
+                                size: 16px;
+                                color: Look.accent;
+                            }
+                        }
+                    }
+
+                    entry := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            AppState.change-language(language.code);
+                            list.close();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// The page: who FinchGram is, and the step TDLib is at.
+export component LoginPage inherits PageFrame {
+    title: @tr("Sign in");
+
+    SideColumn {
+        BrandPanel {
+            width: parent.width;
+            height: parent.height;
+        }
+    }
+
+    VerticalLayout {
+        horizontal-stretch: 1;
+        alignment: center;
+        padding: 48px;
+        spacing: 28px;
+
+        HorizontalLayout {
+            alignment: center;
+            VerticalLayout {
+                width: 380px;
+                spacing: 22px;
+
+                if AppState.telegram-state == TelegramState.starting: WaitingStep {
+                    text: @tr("Connecting to Telegram…");
+                }
+                if AppState.telegram-state == TelegramState.logging-out: WaitingStep {
+                    text: @tr("Logging out…");
+                }
+                if AppState.telegram-state == TelegramState.closing: WaitingStep {
+                    text: @tr("Closing…");
+                }
+                if AppState.telegram-state == TelegramState.missing-api-id: NoticeStep {
+                    title: @tr("This build has no Telegram API ID");
+                    hint: @tr("Build FinchGram with FINCHGRAM_API_ID and FINCHGRAM_API_HASH set to your own, from my.telegram.org (see the README).");
+                    can-go-back: false;
+                }
+                if AppState.telegram-state == TelegramState.failed: NoticeStep {
+                    title: @tr("Something went wrong");
+                    hint: @tr("FinchGram cannot reach Telegram through its TDLib.");
+                    detail: AppState.telegram-error;
+                    can-go-back: false;
+                }
+                if AppState.telegram-state == TelegramState.wait-phone-number
+                    || AppState.telegram-state == TelegramState.wait-code
+                    || AppState.telegram-state == TelegramState.wait-password
+                    || AppState.telegram-state == TelegramState.wait-other-device
+                    || AppState.telegram-state == TelegramState.wait-email-address
+                    || AppState.telegram-state == TelegramState.wait-email-code
+                    || AppState.telegram-state == TelegramState.wait-registration
+                    || AppState.telegram-state == TelegramState.wait-premium-purchase: VerticalLayout {
+                    if Login.step == LoginStep.phone: PhoneStep { }
+                    if Login.step == LoginStep.qr: QrStep { }
+                    if Login.step == LoginStep.code: CodeStep { }
+                    if Login.step == LoginStep.password: PasswordStep { }
+                    if Login.step == LoginStep.email-address: EmailStep { }
+                    if Login.step == LoginStep.email-code: EmailCodeStep { }
+                    if Login.step == LoginStep.registration: NoticeStep {
+                        title: @tr("This number has no Telegram account yet");
+                        hint: @tr("Sign up in Telegram's official app first, then sign in here.");
+                    }
+                    if Login.step == LoginStep.premium: NoticeStep {
+                        title: @tr("Telegram asks for Premium to sign in");
+                        hint: @tr("This number can only sign in with Telegram Premium. Get it in Telegram's official app first, then sign in here.");
+                    }
+                }
+            }
+        }
+
+        HorizontalLayout {
+            alignment: center;
+            LanguagePicker { }
+        }
+    }
+}

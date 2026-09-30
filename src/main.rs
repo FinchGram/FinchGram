@@ -4,14 +4,21 @@
 //! through finchgram-tdlib, a separate program next to this executable (src/telegram/,
 //! docs/architecture.md).
 
+mod fonts;
 mod i18n;
 mod platform;
+#[cfg(test)]
+mod screenshots;
 mod settings;
 mod telegram;
 mod update;
 
+use std::cell::RefCell;
+use std::rc::Rc;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
+
+use slint::{ModelRc, VecModel};
 
 use settings::Settings;
 
@@ -22,27 +29,122 @@ slint::include_modules!();
 const UPDATE_SCHEDULE_TICK: Duration = Duration::from_secs(60);
 
 fn main() -> Result<(), slint::PlatformError> {
+    platform::select_backend()?;
+    // Our own fonts, before the first text is laid out.
+    fonts::register();
+
     let ui = MainWindow::new()?;
     let state = ui.global::<AppState>();
-    let mut settings = Settings::load();
+    let settings = Rc::new(RefCell::new(Settings::load()));
 
     // Language: saved choice > system locale > English.
     // (Bundled translations can only be selected once a component exists.)
-    let language = i18n::initial_language(&settings.language);
+    let languages: Vec<Language> = i18n::LANGUAGES
+        .iter()
+        .map(|language| Language { code: language.code.into(), native: language.native.into(), english: language.english.into() })
+        .collect();
+    state.set_languages(ModelRc::new(VecModel::from(languages)));
+    let language = i18n::initial_language(&settings.borrow().language);
     i18n::apply(&language);
     state.set_language(language.clone().into());
-    if settings.language != language {
-        settings.language = language;
-        settings.save();
+    state.set_language_name(i18n::native_name(&language).into());
+    if settings.borrow().language != language {
+        settings.borrow_mut().language = language;
+        settings.borrow().save();
     }
-    state.set_appearance(settings.appearance.clone().into());
+
+    state.set_appearance(settings.borrow().appearance.clone().into());
+    state.set_theme(theme_from_name(&settings.borrow().theme));
+    state.set_check_for_updates_daily(settings.borrow().check_for_updates);
     state.set_app_version(update::CURRENT_VERSION.into());
+
+    state.on_change_language({
+        let ui = ui.as_weak();
+        let settings = settings.clone();
+        move |code| {
+            if !i18n::apply(&code) {
+                return;
+            }
+            settings.borrow_mut().language = code.to_string();
+            settings.borrow().save();
+            if let Some(ui) = ui.upgrade() {
+                let state = ui.global::<AppState>();
+                state.set_language_name(i18n::native_name(&code).into());
+                state.set_language(code);
+            }
+            telegram::language_changed();
+        }
+    });
+    state.on_change_appearance({
+        let ui = ui.as_weak();
+        let settings = settings.clone();
+        move |appearance| {
+            if !matches!(appearance.as_str(), "system" | "light" | "dark") {
+                return;
+            }
+            settings.borrow_mut().appearance = appearance.to_string();
+            settings.borrow().save();
+            if let Some(ui) = ui.upgrade() {
+                ui.global::<AppState>().set_appearance(appearance.clone());
+                apply_window_appearance(&ui, &appearance);
+            }
+        }
+    });
+    // A new theme shows at once: the three share every model and callback, only the pages differ.
+    state.on_change_theme({
+        let ui = ui.as_weak();
+        let settings = settings.clone();
+        move |theme| {
+            settings.borrow_mut().theme = theme_name(theme).to_string();
+            settings.borrow().save();
+            if let Some(ui) = ui.upgrade() {
+                ui.global::<AppState>().set_theme(theme);
+            }
+        }
+    });
+    state.on_change_check_for_updates_daily({
+        let ui = ui.as_weak();
+        let settings = settings.clone();
+        move |daily| {
+            settings.borrow_mut().check_for_updates = daily;
+            settings.borrow().save();
+            if let Some(ui) = ui.upgrade() {
+                ui.global::<AppState>().set_check_for_updates_daily(daily);
+            }
+        }
+    });
+    state.on_open_url(|url| {
+        // Only our own pages are ever opened from here.
+        if url.starts_with("https://github.com/FinchGram/") {
+            platform::open_link(&url);
+        }
+    });
+    state.on_move_window({
+        let ui = ui.as_weak();
+        move || {
+            use slint::winit_030::WinitWindowAccessor;
+            if let Some(ui) = ui.upgrade() {
+                ui.window().with_winit_window(|window| {
+                    let _ = window.drag_window();
+                });
+            }
+        }
+    });
+    state.on_zoom_window({
+        let ui = ui.as_weak();
+        move || {
+            if let Some(ui) = ui.upgrade() {
+                let window = ui.window();
+                window.set_maximized(!window.is_maximized());
+            }
+        }
+    });
 
     telegram::start(&ui);
 
     // Updates: the newest release found by the last check, kept here so "install" knows what
-    // to download. Checked once a day at a random moment (unless check_for_updates is off in
-    // settings.toml), and whenever the user asks (Help menu).
+    // to download. Checked once a day at a random moment (unless switched off in Settings →
+    // About), and whenever the user asks (Help menu, or the button in Settings → About).
     let pending: Arc<Mutex<Option<update::Release>>> = Arc::new(Mutex::new(None));
     state.on_check_for_updates({
         let ui = ui.as_weak();
@@ -55,19 +157,67 @@ fn main() -> Result<(), slint::PlatformError> {
         move || install_update(ui.clone(), pending.clone())
     });
     let update_timer = slint::Timer::default();
-    if settings.check_for_updates {
-        update_timer.start(slint::TimerMode::Repeated, UPDATE_SCHEDULE_TICK, {
-            let ui = ui.as_weak();
-            let pending = pending.clone();
-            move || automatic_update_check(ui.clone(), pending.clone())
-        });
+    update_timer.start(slint::TimerMode::Repeated, UPDATE_SCHEDULE_TICK, {
+        let ui = ui.as_weak();
+        let pending = pending.clone();
+        let settings = settings.clone();
+        move || {
+            if settings.borrow().check_for_updates {
+                automatic_update_check(ui.clone(), pending.clone());
+            }
+        }
+    });
+    if settings.borrow().check_for_updates {
         automatic_update_check(ui.as_weak(), pending);
     }
+
+    // The window's own appearance (its buttons, its edge) follows the choice in Settings.
+    apply_window_appearance_when_ready(ui.as_weak(), settings.borrow().appearance.clone(), 40);
 
     let result = ui.run();
     // TDLib writes its database out before finchgram-tdlib ends.
     telegram::shut_down();
     result
+}
+
+fn theme_from_name(name: &str) -> Theme {
+    match name {
+        "broadsheet" => Theme::Broadsheet,
+        "terminal" => Theme::Terminal,
+        _ => Theme::Workbench,
+    }
+}
+
+fn theme_name(theme: Theme) -> &'static str {
+    match theme {
+        Theme::Workbench => "workbench",
+        Theme::Broadsheet => "broadsheet",
+        Theme::Terminal => "terminal",
+    }
+}
+
+/// The native window exists only once the event loop runs: try every 50 ms until it is there.
+fn apply_window_appearance_when_ready(ui: slint::Weak<MainWindow>, appearance: String, attempts: u32) {
+    let Some(window) = ui.upgrade() else { return };
+    if apply_window_appearance(&window, &appearance) || attempts == 0 {
+        return;
+    }
+    slint::Timer::single_shot(Duration::from_millis(50), move || {
+        apply_window_appearance_when_ready(ui, appearance, attempts - 1)
+    });
+}
+
+/// Light or dark window buttons and edge to match the app; "system" follows macOS. False while
+/// the native window does not exist yet.
+fn apply_window_appearance(ui: &MainWindow, appearance: &str) -> bool {
+    use slint::winit_030::WinitWindowAccessor;
+    use slint::winit_030::winit::window::Theme;
+    let theme = match appearance {
+        "light" => Some(Theme::Light),
+        "dark" => Some(Theme::Dark),
+        _ => None,
+    };
+    ui.window().with_winit_window(|window| window.set_theme(theme)).is_some()
 }
 
 /// The daily check, when its moment has come. Quiet: a newer version only changes the Help menu

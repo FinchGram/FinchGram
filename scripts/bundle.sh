@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Builds a self-contained FinchGram.app in dist/, with finchgram-tdlib inside.
-# Needs vendor/tdlib/bin/ (run scripts/fetch-tdlib.sh once first).
+# Needs vendor/tdlib/bin/ and vendor/fonts/ (run scripts/fetch-tdlib.sh and scripts/fetch-fonts.sh
+# once first).
 #
 # The release workflow runs this on a clean runner (.github/workflows/release.yml); locally it is
 # only for trying the packaged app, never for a release. Without FINCHGRAM_API_ID and
@@ -19,6 +20,7 @@ MIN_MACOS="12.0" # keep in sync with MACOS_MIN in vendor/tdlib/build.sh
 SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 
 TDLIB="$ROOT/vendor/tdlib/bin"
+FONTS="$ROOT/vendor/fonts"
 ICONS="$ROOT/ui/logo/png"
 APP="$ROOT/dist/$APP_NAME.app"
 MACOS="$APP/Contents/MacOS"
@@ -27,6 +29,7 @@ RESOURCES="$APP/Contents/Resources"
 for f in finchgram-tdlib LICENSE-TDLib.txt LICENSE-OpenSSL.txt BUILD-INFO.txt; do
   [ -e "$TDLIB/$f" ] || { echo "missing $TDLIB/$f - run scripts/fetch-tdlib.sh first" >&2; exit 1; }
 done
+ls "$FONTS"/*-OFL.txt >/dev/null 2>&1 || { echo "missing $FONTS - run scripts/fetch-fonts.sh first" >&2; exit 1; }
 
 cargo build --release --manifest-path "$ROOT/Cargo.toml" --bin "$BIN"
 
@@ -35,10 +38,15 @@ mkdir -p "$MACOS" "$RESOURCES"
 cp "$ROOT/target/release/$BIN" "$MACOS/$BIN"
 # The app only ever looks for finchgram-tdlib next to its own executable (src/telegram/process.rs).
 cp "$TDLIB/finchgram-tdlib" "$MACOS/"
-# FinchGram's licence, and those of TDLib and OpenSSL with how finchgram-tdlib was built.
+# FinchGram's licence, and those of TDLib and OpenSSL with how finchgram-tdlib was built; those of
+# the fonts compiled into the executable (SIL OFL 1.1) and of the icons (MIT).
 cp "$ROOT/LICENSE" "$RESOURCES/LICENSE.txt"
 cp "$TDLIB/LICENSE-TDLib.txt" "$TDLIB/LICENSE-OpenSSL.txt" "$RESOURCES/"
 cp "$TDLIB/BUILD-INFO.txt" "$RESOURCES/finchgram-tdlib-BUILD-INFO.txt"
+for licence in "$FONTS"/*-OFL.txt; do
+  cp "$licence" "$RESOURCES/LICENSE-Fonts-$(basename "$licence")"
+done
+cp "$ROOT/ui/icons/LICENSE" "$RESOURCES/LICENSE-Phosphor-Icons.txt"
 
 # The app icon, from the logo's own sizes in ui/logo/png/ (16 px is the silhouette the logo asks
 # for below 20 px). iconutil is part of macOS.

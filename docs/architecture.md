@@ -3,8 +3,8 @@
 [中文](architecture.zh-Hans.md)
 
 Status: agreed direction (2026-09-29), after Coova Studio's architecture. The shell and
-finchgram-tdlib run on macOS; the pages follow the design. The decisions still open are listed at
-the end.
+finchgram-tdlib run on macOS; logging in, the chat list and text messages work, in the design's
+three themes. The decisions still open are listed at the end.
 
 ## Why
 
@@ -90,15 +90,38 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
   the UI thread and become a `slint::Image` on it.
 - There is no async runtime: TDLib does the networking.
 
+## The pages: three themes
+
+The design has three themes: Workbench (the default), Broadsheet and Terminal. Each has a chat
+window of its own (`ui/workbench/`, `ui/broadsheet/`, `ui/terminal/`); logging in, settings and the
+profile are pages the three share (`ui/pages/`), in the theme's colours, type and shapes
+(`ui/look.slint`).
+
+- A theme is only pages. All three read the same globals (`ui/state.slint`, `ui/telegram.slint`)
+  and call the same callbacks, which the same Rust code fills and answers. A feature is written once
+  in Rust and drawn three times; the design's rule is Workbench first, then the other two, so that
+  the themes stay in step.
+- Switching is immediate (Settings → Appearance, or the View menu), with no restart: the window
+  swaps its pages and nothing else changes, not even the open chat.
+- What the design shows but FinchGram does not have yet is greyed out, never left to look working.
+
 ## In the shell's code
 
 - `src/telegram/`: the adapter. `process.rs` runs the program, `api.rs` has TDLib's types that we
-  use, `mod.rs` sends requests, hands out answers, starts the program again, and follows logging in.
-- `src/platform/`: the platform layer (so far: what the account's list of sessions calls this device).
+  use, `mod.rs` sends requests, hands out answers, starts the program again and passes updates on.
+  `store.rs` keeps what TDLib has said (chats, users, groups, folders, the messages of the open
+  chats) and brings the pages' models up to date after each batch; `login.rs`, `chats.rs`,
+  `conversation.rs` and `account.rs` do what the pages ask for.
+- `src/platform/`: the platform layer (so far: what the account's list of sessions calls this
+  device, the transparent title bar on macOS, opening links).
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
-- `src/settings.rs`, `src/i18n.rs`; with the design's typefaces `src/fonts.rs`.
-- `ui/`: `app.slint`, `state.slint` (the globals Rust and the pages share), `theme.slint`, the
-  pages.
+- `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
+- `src/screenshots.rs`: every page in every theme, light and dark, drawn to a PNG with made-up data
+  by Slint's software renderer (`cargo test screenshots -- --ignored`).
+- `ui/`: `app.slint` (the window: its menus and which page shows), `state.slint` and
+  `telegram.slint` (the globals Rust and the pages share), `look.slint`, `format.slint` (dates,
+  counts and kinds of message in the UI language), `widgets.slint` and `chat.slint` (shared parts),
+  `pages/`, and the three themes' folders.
 
 ## Platforms
 
@@ -127,6 +150,7 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
    (WebM, Lottie). Decoding needs an engine of its own, built from pinned sources like TDLib: FFmpeg
    as a separate program, as in Coova Studio, or a library inside a program of ours. To be decided
    with the first media page.
-4. **Rendering**: Slint's default renderer (FemtoVG) for now; Chinese, Japanese, Korean and colour
-   emoji are to be checked with the design's typefaces. Skia would need building from source: its
+4. **Rendering**: Slint's default renderer (FemtoVG) for now. The design's typefaces are bundled,
+   Chinese included (Noto Sans SC); Japanese, Korean and colour emoji in messages come from the
+   system's fonts until the UI speaks those languages. Skia would need building from source: its
    Rust bindings download a prebuilt library by default, which conventions.md does not allow.

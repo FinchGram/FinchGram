@@ -49,6 +49,9 @@ jobs:
       - name: finchgram-tdlib, pinned, from this repository's tdlib-* release
         run: scripts/fetch-tdlib.sh
 
+      - name: The UI fonts, pinned, from google/fonts
+        run: scripts/fetch-fonts.sh
+
       # FinchGram's own api_id and api_hash from my.telegram.org, compiled into the app. They exist
       # only as secrets of this repository (docs/conventions.md, Telegram API credentials).
       - name: Build and bundle
@@ -101,16 +104,15 @@ jobs:
           VERSION: ${{ steps.meta.outputs.version }}
           ZIP: ${{ steps.meta.outputs.zip }}
         run: |
-          # The tag message holds the notes (scripts/release.sh). The app shows only what comes
-          # before the first "---" line (src/update.rs); the footer below is for the release page.
+          # The tag message holds the notes (scripts/release.sh), in English. The app shows only
+          # what comes before the first "---" line (src/update.rs); the footer below is for the
+          # release page.
           git tag -l --format='%(contents)' "$TAG" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > notes.md
           [ -s notes.md ] || echo "$APP_NAME $VERSION." > notes.md
           cat >> notes.md <<NOTES
 
           ---
           **This release contains** \`$ZIP\` (the app, with finchgram-tdlib inside), \`SHA256SUMS\` and \`SHA256SUMS.sig\` (its Ed25519 signature, which the app checks before installing). The "Source code" archives below are this repository at \`$TAG\`.
-
-          **这个版本包含**：\`$ZIP\`（app 本体，内含 finchgram-tdlib）、\`SHA256SUMS\` 和 \`SHA256SUMS.sig\`（它的 Ed25519 签名，app 安装前会校验）。下面的 "Source code" 压缩包就是本仓库在 \`$TAG\` 时的源码。
           NOTES
           cat notes.md
 

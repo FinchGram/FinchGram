@@ -3,7 +3,7 @@
 [English](architecture.md)
 
 状态：方向已确认（2026-09-29），照酷丸工具箱的架构来做。外壳和 finchgram-tdlib 已经在 macOS 上跑起来了，
-页面按设计稿来做。还没定的事列在最后。
+登录、聊天列表和文字消息都能用了，界面是设计稿的三套主题。还没定的事列在最后。
 
 ## 为什么
 
@@ -76,14 +76,31 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   图片在 UI 线程之外解码成 `SharedPixelBuffer`，到 UI 线程上再变成 `slint::Image`。
 - 没有 async 运行时：网络全是 TDLib 在做。
 
+## 页面：三套主题
+
+设计稿有三套主题：工作台（默认）、报纸和终端。每套有自己的聊天窗口（`ui/workbench/`、`ui/broadsheet/`、
+`ui/terminal/`）；登录、设置和个人资料是三套共用的页面（`ui/pages/`），颜色、字体和形状跟着当前主题
+（`ui/look.slint`）。
+
+- 主题只是页面。三套读的是同一组 global（`ui/state.slint`、`ui/telegram.slint`），调用同一组回调，由同一份
+  Rust 代码填充和响应。一个功能在 Rust 里只写一次，画三遍；设计稿的规矩是先做工作台，再同步到另外两套，
+  保证三套始终一致。
+- 切换立即生效（设置 › 外观，或“视图”菜单），不用重启：窗口只是换了页面，别的都不变，连打开的聊天都还在。
+- 设计稿里有、FinchGram 还没做的功能一律灰掉，不装作能用。
+
 ## 外壳里的代码
 
-- `src/telegram/`：适配层。`process.rs` 负责运行那个程序，`api.rs` 是我们用到的 TDLib 类型，
-  `mod.rs` 负责发请求、分发回复、重新启动和跟进登录状态。
-- `src/platform/`：平台层（目前只有一样：账号的会话列表里怎么称呼这台设备）。
+- `src/telegram/`：适配层。`process.rs` 负责运行那个程序，`api.rs` 是我们用到的 TDLib 类型，`mod.rs` 负责发请求、
+  分发回复、重新启动和转交更新。`store.rs` 保存 TDLib 告诉我们的东西（聊天、用户、群组、文件夹、打开的聊天的消息），
+  每批更新之后把页面用的 model 更新到最新；`login.rs`、`chats.rs`、`conversation.rs` 和 `account.rs` 负责页面要做的事。
+- `src/platform/`：平台层（目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接）。
 - `src/update.rs`：自动更新（[conventions.md](conventions.zh-Hans.md) 第 3 节）。
-- `src/settings.rs`、`src/i18n.rs`；定下设计稿的字体后加 `src/fonts.rs`。
-- `ui/`：`app.slint`、`state.slint`（Rust 和页面共用的 global）、`theme.slint`，以及各个页面。
+- `src/settings.rs`、`src/i18n.rs`、`src/fonts.rs`（界面字体，编译进可执行文件）。
+- `src/screenshots.rs`：用 Slint 的软件渲染器和假数据，把每套主题的每个页面（浅色和深色）画成 PNG
+  （`cargo test screenshots -- --ignored`）。
+- `ui/`：`app.slint`（窗口：菜单，以及显示哪个页面）、`state.slint` 和 `telegram.slint`（Rust 和页面共用的 global）、
+  `look.slint`、`format.slint`（按界面语言写出的日期、数量和消息类型）、`widgets.slint` 和 `chat.slint`（共用的部件）、
+  `pages/`，以及三套主题各自的目录。
 
 ## 平台
 
@@ -107,5 +124,6 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 3. **媒体播放**（媒体中心）：语音消息（Opus）、视频、GIF 和动态贴纸（WebM、Lottie）。解码需要一个自己的引擎，
    跟 TDLib 一样从锁定的源码构建：要么像酷丸工具箱那样用独立程序形式的 FFmpeg，要么在我们自己的程序里用一个库。
    做第一个媒体页面时再定。
-4. **渲染**：暂时用 Slint 的默认渲染器（FemtoVG）；中日韩文字和彩色 emoji 要等设计稿的字体定了再验证。
-   Skia 得从源码构建才行：它的 Rust 绑定默认会下载预编译的库，这是 conventions.md 不允许的。
+4. **渲染**：暂时用 Slint 的默认渲染器（FemtoVG）。设计稿的字体都已打包，中文也在内（Noto Sans SC）；消息里的
+   日文、韩文和彩色 emoji 暂时用系统字体，等界面支持这些语言时再说。Skia 得从源码构建才行：它的 Rust 绑定默认会
+   下载预编译的库，这是 conventions.md 不允许的。

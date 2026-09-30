@@ -24,8 +24,8 @@
   就都在同一个版本上；回退也一样。
 - `build.rs` 把 `vendor/tdlib/bin/finchgram-tdlib` 复制到可执行文件旁边（`target/debug/` 或 `target/release/`），
   所以 `cargo run` 和打包出来的 app 用的是完全同一个程序。它不存在时编译直接失败，并提示先跑脚本。
-- 还没有 tdlib-* release 的时候，或者要试改 vendor 构建时，就在本地构建：先 `vendor/tdlib/build.sh`，
-  再 `vendor/tdlib/build.sh install`。发布的版本里永远不会有在开发者机器上编译的程序。
+- 要试改 vendor 构建时，就在本地构建：先 `vendor/tdlib/build.sh`，再 `vendor/tdlib/build.sh install`。
+  发布的版本里永远不会有在开发者机器上编译的程序。
 
 ### 为什么
 
@@ -41,7 +41,9 @@
 构建或下载它，再随 app 一起发布。脚本进 git，它构建或下载出来的东西不进。永远不依赖用户机器上已有的东西，也不在代码里留“自带的没有就用系统的”这种后门。
 受支持的操作系统每一份都自带的东西可以用（比如 macOS 上的 zlib 和系统框架）。
 
-界面字体等设计稿定下来之后也照这个做：跟酷丸工具箱一样，从锁定的 google/fonts commit 下载，编译进可执行文件。
+界面字体就是照这个做的：`scripts/fetch-fonts.sh` 从锁定的 google/fonts commit 下载到 `vendor/fonts/` 并校验
+SHA-256，`src/fonts.rs` 把它们编译进可执行文件，缺了的时候 `build.rs` 会提前报错。图标是一些很小的 SVG 文件
+（Phosphor，MIT），原样放在 git 的 `ui/icons/` 里，连同它们的许可证，跟酷丸工具箱放图标的做法一样。
 
 ## 2. 一个仓库
 

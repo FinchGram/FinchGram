@@ -33,9 +33,9 @@ builds and its releases all live in this one repository.
 - `build.rs` copies `vendor/tdlib/bin/finchgram-tdlib` next to the executable (`target/debug/` or
   `target/release/`), so `cargo run` and the packaged app use exactly the same program. When it is
   missing, the build fails and says to run the script first.
-- Before a tdlib-* release exists, or to try a change to the vendor build, build it locally:
-  `vendor/tdlib/build.sh`, then `vendor/tdlib/build.sh install`. A release never
-  contains a program built on a developer's machine.
+- To try a change to the vendor build, build it locally: `vendor/tdlib/build.sh`, then
+  `vendor/tdlib/build.sh install`. A release never contains a program built on a developer's
+  machine.
 
 ### Why
 
@@ -55,8 +55,10 @@ in git; what it builds or downloads is not. Never depend on anything already
 on the user's machine, and never add a "use the system copy if ours is missing" escape hatch. What
 is part of every copy of a supported OS may be used (zlib and the system frameworks on macOS).
 
-The UI fonts will follow it once the design has chosen them: as in Coova Studio, from a pinned
-google/fonts commit, compiled into the executable.
+The UI fonts follow it: `scripts/fetch-fonts.sh` downloads them from a pinned google/fonts commit
+into `vendor/fonts/` and checks their SHA-256, `src/fonts.rs` compiles them into the executable, and
+`build.rs` stops early when they are missing. The icons are small SVG files (Phosphor, MIT), kept in
+git in `ui/icons/` exactly as they came, with their licence, as Coova Studio keeps its icons.
 
 ## 2. One repository
 

@@ -1,4 +1,5 @@
-// Application-wide state: one global that every page and the Rust side can reach.
+// Application-wide state: the global every page and the Rust side can reach. What Telegram shows
+// (the account, logging in, chats, messages) is in telegram.slint.
 
 // How far FinchGram is with Telegram (src/telegram/).
 export enum TelegramState {
@@ -24,11 +25,35 @@ export enum UpdateState { idle, checking, up-to-date, available, installing, fai
 // TDLib's connection to Telegram's servers.
 export enum Connection { waiting-for-network, connecting-to-proxy, connecting, updating, ready }
 
+// The three themes of the design ("FinchGram Desktop 视觉方向"). Each has a chat window of its own
+// (ui/workbench/, ui/broadsheet/, ui/terminal/); the other pages are shared and take the theme's
+// colours, type and shapes from Look (look.slint). Workbench is the default.
+export enum Theme { workbench, broadsheet, terminal }
+
+// What fills the window. Until Telegram is ready, "chats" shows the login pages instead.
+export enum Page { chats, settings, profile }
+
+// The categories of the settings page, in the design's order. Those without a setting FinchGram
+// has yet are shown greyed out.
+export enum SettingsSection { general, notifications, privacy, chats, folders, finch, appearance, language, data, advanced, about }
+
+// A UI language the app ships (src/i18n.rs).
+export struct Language {
+    code: string,           // a folder name under lang/, or "en"
+    native: string,         // its name in itself
+    english: string,        // its name in English
+}
+
 export global AppState {
     // Active UI language, a folder name under lang/ ("en" is the source language and has none).
     in-out property <string> language: "en";
+    in-out property <string> language-name: "English";     // the active one's name in itself
+    in-out property <[Language]> languages;
     // "system", "light" or "dark".
     in-out property <string> appearance: "system";
+    in-out property <Theme> theme: Theme.workbench;
+    in-out property <Page> page: Page.chats;
+    in-out property <SettingsSection> settings-section: SettingsSection.appearance;
     // This build, e.g. "0.1.0".
     in-out property <string> app-version;
 
@@ -44,6 +69,25 @@ export global AppState {
     in-out property <string> update-notes;              // its release notes
     in-out property <float> update-progress;            // 0..1 while downloading
     in-out property <string> update-error;              // why the last check or install failed
+    in-out property <bool> check-for-updates-daily: true;  // the setting
     callback check-for-updates();
     callback install-update();                          // download, install, restart
+
+    // Settings: each saves itself (src/settings.rs).
+    callback change-language(string);
+    callback change-appearance(string);
+    callback change-theme(Theme);
+    callback change-check-for-updates-daily(bool);
+
+    // Our own pages only (GitHub); anything else is refused by Rust.
+    callback open-url(string);
+
+    // The themes draw their own title bar: pressing on its empty part moves the window, a double
+    // click zooms it (src/main.rs, through winit).
+    callback move-window();
+    callback zoom-window();
+
+    // ⌘K: counted up by the menu; the chat window in front puts the cursor in its search box
+    // (Terminal: its command line).
+    in-out property <int> search-requests;
 }

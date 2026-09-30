@@ -7,6 +7,8 @@
   explanations included, even when the work itself (code, tool output) is in English.
 - Everything that goes into the repository is English: code, comments, commit messages, docs.
   The translations are the exception: `readme/`, `docs/*.zh-Hans.md`, and the UI's `lang/`.
+- Release notes are English only: the tag message `scripts/release.sh` writes, and the GitHub
+  release page the workflow makes from it.
 
 ## What this is
 
@@ -24,8 +26,12 @@ things fit together.
   from the user's machine, and there is no fallback.
 - One public repository holds everything: the source, the vendor builds (`vendor/<name>/`) and the
   releases (`v*` for the app; `tdlib-*` for finchgram-tdlib, published with `--latest=false`).
-- The UI follows the maintainer's design (Claude Design). `ui/` is a placeholder until it arrives;
-  do not invent pages or visual design beyond it.
+- The UI follows the maintainer's design (Claude Design: "FinchGram Desktop 视觉方向" for the chat
+  windows, "FinchGram Desktop 页面" for logging in, settings and the profile). It has three themes:
+  Workbench (the design's 1c, the default), Broadsheet (1a) and Terminal (1b), switched in Settings →
+  Appearance without a restart (docs/architecture.md). Every change to the pages goes into all three,
+  Workbench first. What the design shows but FinchGram cannot do yet is greyed out; never invent
+  pages or visual design beyond the design.
 - Telegram API credentials are never in the repository. Every developer uses their own
   (`FINCHGRAM_API_ID`, `FINCHGRAM_API_HASH` at build time); the release workflow uses secrets.
 
@@ -52,9 +58,10 @@ things fit together.
 - Releases are only ever built by GitHub Actions, and the maintainer tests the installed release, not
   a local build. So FinchGram's own api_id lives only in the repository's Actions secrets
   (`FINCHGRAM_API_ID`, `FINCHGRAM_API_HASH`); never store it on the machine or in a file.
-- Build and check: `vendor/tdlib/build.sh && vendor/tdlib/build.sh install` (until the first
-  tdlib-* release exists; then `scripts/fetch-tdlib.sh`), `cargo build`, `cargo test`,
-  `cargo clippy --all-targets` (keep it free of warnings).
+- Build and check: `scripts/fetch-tdlib.sh` and `scripts/fetch-fonts.sh` once, then `cargo build`,
+  `cargo test`, `cargo clippy --all-targets` (keep it free of warnings). After changing the UI, run
+  `cargo test screenshots -- --ignored` and look at `target/screenshots/`: every page in every theme,
+  light and dark, drawn with made-up data (there is no api_id here to log in with).
 - `FINCHGRAM_TEST_DC=1` uses Telegram's test servers.
 - `scripts/bundle.sh` builds `dist/FinchGram.app` for trying the packaged app; a release only ever
   goes through `scripts/release.sh`, and only when asked.

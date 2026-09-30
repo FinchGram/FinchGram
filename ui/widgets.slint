@@ -1,0 +1,346 @@
+// Small parts every page and theme uses. Colours and shapes come from Look (look.slint) unless a
+// theme's chat window passes its own.
+import { AppState } from "state.slint";
+import { Look } from "look.slint";
+import { Icons } from "icons.slint";
+
+// A Phosphor icon (icons.slint), tinted.
+export component Icon inherits Image {
+    in property <string> name;
+    in property <length> size: 16px;
+    in property <color> color: Look.text;
+    in property <bool> duotone: Look.duotone;
+    source: duotone ? Icons.duotone(name) : Icons.regular(name);
+    colorize: color;
+    width: size;
+    height: size;
+    image-fit: contain;
+}
+
+// The app icon: the white bird on the indigo rounded square (ui/logo/README.md). Never round.
+export component Logo inherits Rectangle {
+    in property <length> size: 40px;
+    in property <length> radius: 10px;
+    width: size;
+    height: size;
+    border-radius: radius;
+    background: #4a5fc1;
+
+    Image {
+        x: root.width * 0.19;
+        y: root.height * 0.24;
+        width: root.width * 0.62;
+        height: root.height * 0.52;
+        source: @image-url("logo/svg/FinchGram-mark.svg");
+        colorize: #ffffff;
+        image-fit: contain;
+    }
+}
+
+// The bird alone, in one colour; the silhouette below 20 px (ui/logo/README.md).
+export component Mark inherits Image {
+    in property <color> color: Look.accent;
+    source: self.height < 20px ? @image-url("logo/svg/FinchGram-mark-16.svg") : @image-url("logo/svg/FinchGram-mark.svg");
+    colorize: color;
+    image-fit: contain;
+}
+
+// A circle turning while something is on its way.
+export component Spinner {
+    in property <length> size: 16px;
+    in property <color> color: Look.faint;
+    width: size;
+    height: size;
+
+    Icon {
+        name: "circle-notch";
+        size: root.size;
+        color: root.color;
+        duotone: false;
+        transform-rotation: Math.mod(animation-tick() / 1ms, 900) / 900 * 360deg;
+    }
+}
+
+// Where macOS draws the window buttons: the title bar is transparent (src/main.rs).
+export component WindowButtonsSpace inherits Rectangle {
+    width: 78px;
+}
+
+// The empty part of a title bar: drag it to move the window, double-click it to zoom.
+export component WindowMover inherits TouchArea {
+    pointer-event(event) => {
+        if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+            AppState.move-window();
+        }
+    }
+    double-clicked => {
+        AppState.zoom-window();
+    }
+}
+
+// An on/off switch: a track with a knob, or "[on ]" / "[off]" in Terminal.
+export component Switch {
+    in property <bool> on;
+    in property <bool> enabled: true;
+    in property <color> accent: Look.accent;
+    in property <color> off-color: Look.off;
+    in property <bool> as-text: Look.text-switches;
+    in property <length> track-width: 38px;
+    in property <length> track-height: 22px;
+    in property <length> knob-size: 16px;
+    in property <length> track-radius: Look.switch-radius;
+    in property <length> knob-radius: Look.knob-radius;
+    callback toggled();
+    width: as-text ? label.preferred-width : track-width;
+    height: as-text ? label.preferred-height : track-height;
+    opacity: enabled ? 1 : 0.4;
+    accessible-role: switch;
+    accessible-checked: on;
+
+    Rectangle {
+        visible: !root.as-text;
+        border-radius: root.track-radius;
+        background: root.on ? root.accent : root.off-color;
+        animate background { duration: 200ms; }
+
+        Rectangle {
+            width: root.knob-size;
+            height: root.knob-size;
+            x: root.on ? parent.width - self.width - 3px : 3px;
+            y: (parent.height - self.height) / 2;
+            border-radius: root.knob-radius;
+            background: #ffffff;
+            drop-shadow-blur: 2px;
+            drop-shadow-offset-y: 1px;
+            drop-shadow-color: #00000033;
+            animate x { duration: 200ms; }
+        }
+    }
+
+    label := Text {
+        visible: root.as-text;
+        text: root.on ? "[on ]" : "[off]";
+        color: root.on ? root.accent : Look.faint;
+        font-family: Look.mono;
+        font-size: 13px;
+    }
+
+    TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.toggled();
+        }
+    }
+}
+
+// A one-line text box on the page's field colour, with a hairline and a placeholder.
+export component Field inherits Rectangle {
+    in-out property <string> text <=> input.text;
+    in property <string> placeholder;
+    in property <InputType> input-type: InputType.text;
+    in property <length> font-size: 16px;
+    in property <string> font-family: Look.font;
+    in property <length> letter-spacing: 0px;
+    in property <TextHorizontalAlignment> alignment: TextHorizontalAlignment.left;
+    in property <length> padding-x: 14px;
+    in property <bool> error;
+    in property <bool> enabled: true;
+    in property <color> text-color: Look.text;
+    in property <color> fill: Look.field;
+    in property <color> ring: Look.line;
+    in property <length> ring-width: Look.field-border;
+    out property <bool> has-focus: input.has-focus;
+    callback accepted(string);
+    callback edited(string);
+    height: 44px;
+    border-radius: Look.radius;
+    background: fill;
+    border-width: error ? 1.5px : ring-width;
+    border-color: error ? Look.danger : ring;
+
+    public function focus-text() {
+        input.focus();
+    }
+
+    public function select-all() {
+        input.select-all();
+    }
+
+    Text {
+        x: root.padding-x;
+        width: parent.width - 2 * root.padding-x;
+        height: parent.height;
+        visible: input.text == "";
+        text: root.placeholder;
+        color: root.text-color;
+        opacity: 0.5;
+        font-family: root.font-family;
+        font-size: root.font-size;
+        letter-spacing: root.letter-spacing;
+        horizontal-alignment: root.alignment;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+
+    input := TextInput {
+        x: root.padding-x;
+        width: parent.width - 2 * root.padding-x;
+        height: parent.height;
+        enabled: root.enabled;
+        single-line: true;
+        input-type: root.input-type;
+        color: root.text-color;
+        font-family: root.font-family;
+        font-size: root.font-size;
+        letter-spacing: root.letter-spacing;
+        horizontal-alignment: root.alignment;
+        vertical-alignment: center;
+        selection-background-color: Look.soft;
+        selection-foreground-color: Look.soft-ink;
+        accepted => {
+            root.accepted(self.text);
+        }
+        edited => {
+            root.edited(self.text);
+        }
+    }
+}
+
+// The main action of a page: accent, full width.
+export component PrimaryButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> enabled: true;
+    in property <bool> busy;
+    in property <length> font-size: 16px;
+    callback clicked();
+    height: 46px;
+    border-radius: Look.button-radius;
+    background: touch.has-hover && enabled && !busy ? Look.accent.mix(Look.text, 0.88) : Look.accent;
+    opacity: enabled ? 1 : 0.5;
+    accessible-role: button;
+    accessible-label: text;
+
+    HorizontalLayout {
+        alignment: center;
+        spacing: 8px;
+        if root.busy: VerticalLayout {
+            alignment: center;
+            Spinner {
+                size: 16px;
+                color: Look.on-accent;
+            }
+        }
+        Text {
+            text: root.text + Look.enter-hint;
+            color: Look.on-accent;
+            font-size: root.font-size;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled && !root.busy;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A quiet action written as a link, with an optional icon before it.
+export component Link {
+    in property <string> text;
+    in property <string> icon;
+    in property <color> color: Look.accent-ink;
+    in property <length> font-size: 14px;
+    in property <int> font-weight: 400;
+    in property <bool> enabled: true;
+    callback clicked();
+    opacity: enabled ? 1 : 0.45;
+    accessible-role: button;
+    accessible-label: text;
+
+    HorizontalLayout {
+        alignment: start;
+        spacing: 6px;
+        if root.icon != "": VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: root.font-size + 2px;
+                color: root.color;
+            }
+        }
+        Text {
+            text: root.text;
+            color: root.color;
+            font-size: root.font-size;
+            font-weight: root.font-weight;
+            vertical-alignment: center;
+        }
+    }
+
+    TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A letter on a coloured square, until chats have their photos.
+export component Avatar inherits Rectangle {
+    in property <string> initial;
+    in property <length> size: 40px;
+    in property <color> fill: Look.soft;
+    in property <color> ink: Look.soft-ink;
+    in property <length> radius: Look.avatar-radius;
+    in property <length> font-size: size * 0.42;
+    in property <string> font-family;
+    width: size;
+    height: size;
+    border-radius: radius;
+    background: fill;
+
+    Text {
+        text: root.initial;
+        color: root.ink;
+        font-size: root.font-size;
+        font-weight: 600;
+        font-family: root.font-family;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// The small label above a group of settings, in the theme's manner: "APPEARANCE", "# appearance".
+export component SectionLabel inherits Text {
+    in property <string> label;
+    text: Look.section-prefix + (Look.workbench ? label.to-uppercase() : Look.terminal ? label.to-lowercase() : label);
+    font-size: Look.section-size;
+    font-weight: Look.section-weight;
+    letter-spacing: AppState.language == "ar" ? 0px : Look.section-spacing;
+    color: Look.faint;
+}
+
+// A heading of the shared pages, a little tighter, with Terminal's prompt before it.
+export component Heading inherits Text {
+    in property <string> label;
+    in property <length> size: Look.heading-size;
+    text: Look.heading-prefix + label;
+    font-size: size;
+    font-weight: 600;
+    letter-spacing: Look.heading-tracking * size;
+    color: Look.text;
+    wrap: word-wrap;
+}
+
+// Text that wraps. Its height is the height it needs at its width, so that the layout around it
+// leaves room for every line (a wrapping Text inside an `if` is otherwise counted as one line).
+export component Paragraph inherits Text {
+    wrap: word-wrap;
+    height: self.preferred-height;
+}

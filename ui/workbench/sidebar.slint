@@ -1,0 +1,452 @@
+// Workbench's side bar: the chat tree (every folder, collapsible, like an editor's files), the
+// channels, the bots. Which one shows is chosen in the activity bar (workbench.slint).
+import { ListView } from "std-widgets.slint";
+import { AppState, Connection } from "../state.slint";
+import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind } from "../telegram.slint";
+import { Fmt } from "../format.slint";
+import { Icon } from "../widgets.slint";
+import { ChatIcons } from "../chat.slint";
+import { WorkbenchPalette as P } from "palette.slint";
+
+export enum WorkbenchView { chats, channels, bots, filters, scheduled }
+
+// An unread count: accent, or grey for a muted chat.
+export component UnreadBadge inherits Rectangle {
+    in property <int> count;
+    in property <bool> muted;
+    height: 17px;
+    width: max(17px, label.preferred-width + 12px);
+    border-radius: 8.5px;
+    background: muted ? P.chrome : P.accent;
+
+    label := Text {
+        text: root.count > 999 ? "999+" : "" + root.count;
+        color: root.muted ? P.muted : P.on-accent;
+        font-size: 11px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// The small uppercase heading above the side bar's list.
+component SideHeading {
+    in property <string> title;
+
+    HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        padding-top: 12px;
+        padding-bottom: 6px;
+        spacing: 6px;
+        Text {
+            horizontal-stretch: 1;
+            text: root.title.to-uppercase();
+            color: P.faint;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.88px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 8px;
+                height: 8px;
+                border-radius: 2px;
+                background: P.accent;
+            }
+        }
+        Text {
+            text: Account.name;
+            color: P.faint;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// TDLib is not connected: say so at the top of the list.
+component NetworkBanner inherits Rectangle {
+    height: row.preferred-height;
+    border-radius: 6px;
+    background: P.warn-soft;
+
+    row := HorizontalLayout {
+        padding: 8px;
+        padding-left: 10px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: AppState.connection == Connection.waiting-for-network ? "wifi-slash" : "circle-notch";
+                size: 15px;
+                color: P.warn;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: Fmt.connection(AppState.connection);
+            color: P.warn;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// One line of the tree: a folder's header, or a chat in it.
+component TreeLine inherits Rectangle {
+    in property <TreeRow> item;
+    property <bool> open: !item.header && item.chat.id == Conversation.chat-id;
+    property <bool> unread: item.chat.unread > 0 || item.chat.mention;
+    height: item.header ? 32px : 28px;
+    background: open ? P.sel : touch.has-hover && !item.header ? P.chrome.transparentize(0.4) : transparent;
+
+    if root.item.header: HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        padding-top: 8px;
+        padding-bottom: 4px;
+        spacing: 6px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.item.expanded ? "caret-down" : "caret-right";
+                size: 11px;
+                color: P.muted;
+            }
+        }
+        Text {
+            text: root.item.folder < Chats.folders.length ? (Chats.folders[root.item.folder].id == 0 ? @tr("All chats") : Chats.folders[root.item.folder].name) : "";
+            color: P.muted;
+            font-size: 12px;
+            font-weight: 600;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.item.count;
+            color: P.faint;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+    }
+
+    if !root.item.header: HorizontalLayout {
+        padding-left: 26px;
+        padding-right: 14px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.item.chat.pinned ? "push-pin" : ChatIcons.kind(root.item.chat.kind);
+                size: 15px;
+                color: P.faint;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.item.chat.title;
+            color: root.open ? P.accent-ink : P.text;
+            font-size: 14px;
+            font-weight: root.open || root.unread ? 600 : 400;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        if root.unread: VerticalLayout {
+            alignment: center;
+            UnreadBadge {
+                count: root.item.chat.unread;
+                muted: root.item.chat.muted;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            if root.item.header {
+                Chats.toggle-folder(root.item.folder);
+            } else {
+                Conversation.open(root.item.chat.id);
+            }
+        }
+    }
+}
+
+// A channel with its latest post.
+component ChannelLine inherits Rectangle {
+    in property <ChatRow> chat;
+    property <bool> open: chat.id == Conversation.chat-id;
+    height: lines.preferred-height;
+    background: open ? P.sel : touch.has-hover ? P.chrome.transparentize(0.4) : transparent;
+
+    lines := VerticalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        padding-top: 9px;
+        padding-bottom: 9px;
+        spacing: 3px;
+        HorizontalLayout {
+            spacing: 8px;
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "megaphone";
+                    size: 14px;
+                    color: P.faint;
+                }
+            }
+            Text {
+                horizontal-stretch: 1;
+                text: root.chat.title;
+                color: root.open ? P.accent-ink : P.text;
+                font-size: 13px;
+                font-weight: 600;
+                overflow: elide;
+                vertical-alignment: center;
+            }
+            if root.chat.unread > 0: VerticalLayout {
+                alignment: center;
+                UnreadBadge {
+                    count: root.chat.unread;
+                    muted: root.chat.muted;
+                }
+            }
+        }
+        Text {
+            x: 22px;
+            width: parent.width - 22px;
+            text: Fmt.body(root.chat.content, root.chat.text, root.chat.detail);
+            color: P.muted;
+            font-size: 12px;
+            overflow: elide;
+        }
+        Text {
+            x: 22px;
+            text: root.chat.members > 0
+                ? (root.chat.unread > 0 ? @tr("{n} subscriber" | "{n} subscribers" % root.chat.members) + " · " + Fmt.unread-posts(root.chat.unread)
+                    : @tr("{n} subscriber" | "{n} subscribers" % root.chat.members))
+                : (root.chat.unread > 0 ? Fmt.unread-posts(root.chat.unread) : "");
+            color: P.faint;
+            font-size: 11px;
+            overflow: elide;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Conversation.open(root.chat.id);
+        }
+    }
+}
+
+// A bot, with Telegram's check mark when it is Telegram's own.
+component BotLine inherits Rectangle {
+    in property <ChatRow> chat;
+    property <bool> open: chat.id == Conversation.chat-id;
+    height: 38px;
+    background: open ? P.sel : touch.has-hover ? P.sel.transparentize(0.3) : transparent;
+
+    HorizontalLayout {
+        padding-left: 26px;
+        padding-right: 14px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 22px;
+                height: 22px;
+                border-radius: 6px;
+                background: root.chat.verified ? P.accent-soft : P.chrome;
+                Text {
+                    text: root.chat.initial;
+                    color: root.chat.verified ? P.accent-ink : P.text;
+                    font-size: 11px;
+                    font-weight: 600;
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            HorizontalLayout {
+                spacing: 3px;
+                alignment: start;
+                Text {
+                    text: root.chat.title;
+                    color: P.text;
+                    font-size: 13px;
+                    overflow: elide;
+                }
+                if root.chat.verified: VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "seal-check";
+                        size: 12px;
+                        color: P.accent;
+                    }
+                }
+            }
+            Text {
+                text: root.chat.username == "" ? "" : "@" + root.chat.username;
+                color: P.faint;
+                font-size: 11px;
+                overflow: elide;
+            }
+        }
+        if root.chat.unread > 0: VerticalLayout {
+            alignment: center;
+            UnreadBadge {
+                count: root.chat.unread;
+                muted: root.chat.muted;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Conversation.open(root.chat.id);
+        }
+    }
+}
+
+component BotSection {
+    in property <string> title;
+    in property <int> count;
+
+    HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        padding-top: 8px;
+        padding-bottom: 4px;
+        spacing: 6px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "caret-down";
+                size: 11px;
+                color: P.muted;
+            }
+        }
+        Text {
+            text: root.title;
+            color: P.muted;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.count;
+            color: P.faint;
+            font-size: 12px;
+        }
+    }
+}
+
+component Footnote inherits Text {
+    color: P.faint;
+    font-size: 11px;
+    wrap: word-wrap;
+    height: self.preferred-height;
+}
+
+export component WorkbenchSidebar inherits Rectangle {
+    in property <WorkbenchView> view;
+    width: 244px;
+    background: P.side;
+
+    VerticalLayout {
+        SideHeading {
+            title: root.view == WorkbenchView.channels ? @tr("Channels") + " · " + Chats.channels.length
+                : root.view == WorkbenchView.bots ? @tr("Bots") + " · " + (Chats.official-bots.length + Chats.bots.length)
+                : @tr("Chats");
+        }
+
+        if AppState.connection != Connection.ready && AppState.connection != Connection.updating: HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 6px;
+            padding-bottom: 4px;
+            NetworkBanner { }
+        }
+
+        if root.view == WorkbenchView.chats && Chats.loaded && Chats.list.length == 0 && Chats.query == "": HorizontalLayout {
+            padding: 12px;
+            Rectangle {
+                border-radius: 8px;
+                background: P.side;
+                border-width: 1px;
+                border-color: P.line;
+                height: empty.preferred-height;
+                empty := VerticalLayout {
+                    padding: 14px;
+                    spacing: 6px;
+                    Text {
+                        text: @tr("No chats yet");
+                        color: P.text;
+                        font-size: 14px;
+                        font-weight: 600;
+                    }
+                    Footnote {
+                        text: @tr("Search for a username or phone number, or open an invite link someone sent you, to start chatting.");
+                        color: P.muted;
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+
+        if root.view == WorkbenchView.chats: ListView {
+            vertical-stretch: 1;
+            for row in Chats.tree: TreeLine {
+                item: row;
+            }
+        }
+
+        if root.view == WorkbenchView.channels: ListView {
+            vertical-stretch: 1;
+            for chat in Chats.channels: ChannelLine {
+                chat: chat;
+            }
+        }
+        if root.view == WorkbenchView.channels: HorizontalLayout {
+            padding: 14px;
+            Footnote {
+                text: Chats.channels.length == 0 ? @tr("This account has no channels.") : @tr("Channels open in reading mode: long posts, set for reading.");
+            }
+        }
+
+        if root.view == WorkbenchView.bots: Flickable {
+            vertical-stretch: 1;
+            mouse-drag-pan-enabled: false;
+            VerticalLayout {
+                alignment: start;
+                if Chats.official-bots.length > 0: BotSection {
+                    title: @tr("Official bots");
+                    count: Chats.official-bots.length;
+                }
+                for chat in Chats.official-bots: BotLine {
+                    chat: chat;
+                }
+                if Chats.bots.length > 0: BotSection {
+                    title: @tr("Other bots");
+                    count: Chats.bots.length;
+                }
+                for chat in Chats.bots: BotLine {
+                    chat: chat;
+                }
+                HorizontalLayout {
+                    padding: 14px;
+                    Footnote {
+                        text: @tr("Bots with a check mark are Telegram's own. Other bots see what you send them.");
+                    }
+                }
+            }
+        }
+    }
+}

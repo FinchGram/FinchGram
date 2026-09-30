@@ -1,0 +1,257 @@
+// Dates, times, counts and what a message holds, in the UI language. Rust takes each time apart
+// (Moment in telegram.slint); the words are here, so that they are translated with everything else.
+import { AppState, Connection } from "state.slint";
+import { Moment, Day, Content, ChatKind, ChatRow, Status } from "telegram.slint";
+
+export global Fmt {
+    public pure function pad2(n: int) -> string {
+        return n < 10 ? "0" + n : "" + n;
+    }
+
+    // "14:20"
+    public pure function clock(m: Moment) -> string {
+        return pad2(m.hour) + ":" + pad2(m.minute);
+    }
+
+    // 82413 → "82,413"
+    public pure function count(n: int) -> string {
+        if n < 1000 {
+            return "" + n;
+        }
+        if n < 1000000 {
+            return "" + Math.floor(n / 1000) + "," + three-digits(Math.mod(n, 1000));
+        }
+        return "" + Math.floor(n / 1000000) + "," + three-digits(Math.mod(Math.floor(n / 1000), 1000)) + ","
+            + three-digits(Math.mod(n, 1000));
+    }
+
+    pure function three-digits(n: int) -> string {
+        return (n < 10 ? "00" : n < 100 ? "0" : "") + n;
+    }
+
+    public pure function weekday-short(n: int) -> string {
+        if n == 1 { return @tr("weekday" => "Mon"); }
+        if n == 2 { return @tr("weekday" => "Tue"); }
+        if n == 3 { return @tr("weekday" => "Wed"); }
+        if n == 4 { return @tr("weekday" => "Thu"); }
+        if n == 5 { return @tr("weekday" => "Fri"); }
+        if n == 6 { return @tr("weekday" => "Sat"); }
+        return @tr("weekday" => "Sun");
+    }
+
+    public pure function weekday-long(n: int) -> string {
+        if n == 1 { return @tr("Monday"); }
+        if n == 2 { return @tr("Tuesday"); }
+        if n == 3 { return @tr("Wednesday"); }
+        if n == 4 { return @tr("Thursday"); }
+        if n == 5 { return @tr("Friday"); }
+        if n == 6 { return @tr("Saturday"); }
+        return @tr("Sunday");
+    }
+
+    public pure function month-short(n: int) -> string {
+        if n == 1 { return @tr("month" => "Jan"); }
+        if n == 2 { return @tr("month" => "Feb"); }
+        if n == 3 { return @tr("month" => "Mar"); }
+        if n == 4 { return @tr("month" => "Apr"); }
+        if n == 5 { return @tr("month" => "May"); }
+        if n == 6 { return @tr("month" => "Jun"); }
+        if n == 7 { return @tr("month" => "Jul"); }
+        if n == 8 { return @tr("month" => "Aug"); }
+        if n == 9 { return @tr("month" => "Sep"); }
+        if n == 10 { return @tr("month" => "Oct"); }
+        if n == 11 { return @tr("month" => "Nov"); }
+        return @tr("month" => "Dec");
+    }
+
+    public pure function month-long(n: int) -> string {
+        if n == 1 { return @tr("January"); }
+        if n == 2 { return @tr("February"); }
+        if n == 3 { return @tr("March"); }
+        if n == 4 { return @tr("April"); }
+        if n == 5 { return @tr("May"); }
+        if n == 6 { return @tr("June"); }
+        if n == 7 { return @tr("July"); }
+        if n == 8 { return @tr("August"); }
+        if n == 9 { return @tr("September"); }
+        if n == 10 { return @tr("October"); }
+        if n == 11 { return @tr("November"); }
+        return @tr("December");
+    }
+
+    // Next to a chat in a list: "14:20", "Yesterday", "Fri", "Sep 20", "Sep 20, 2025".
+    public pure function list-time(m: Moment) -> string {
+        if m.day == Day.today {
+            return clock(m);
+        }
+        if m.day == Day.yesterday {
+            return @tr("Yesterday");
+        }
+        if m.day == Day.this-week {
+            return weekday-short(m.weekday);
+        }
+        if m.day == Day.this-year {
+            return @tr("short date" => "{0} {1}", month-short(m.month), m.date);
+        }
+        return @tr("short date with year" => "{0} {1}, {2}", month-short(m.month), m.date, m.year);
+    }
+
+    // Above the first message of a day: "Today", "Yesterday", "Friday", "September 20",
+    // "September 20, 2025".
+    public pure function day-title(m: Moment) -> string {
+        if m.day == Day.today {
+            return @tr("Today");
+        }
+        if m.day == Day.yesterday {
+            return @tr("Yesterday");
+        }
+        if m.day == Day.this-week {
+            return weekday-long(m.weekday);
+        }
+        if m.day == Day.this-year {
+            return @tr("long date" => "{0} {1}", month-long(m.month), m.date);
+        }
+        return @tr("long date with year" => "{0} {1}, {2}", month-long(m.month), m.date, m.year);
+    }
+
+    // The open chat's header: "online", "last seen at 14:20", "486 members, 32 online", …
+    public pure function status(status: Status, last-seen: Moment, members: int, online: int) -> string {
+        if status == Status.online {
+            return @tr("online");
+        }
+        if status == Status.last-seen {
+            if last-seen.day == Day.today {
+                return @tr("last seen at {0}", clock(last-seen));
+            }
+            if last-seen.day == Day.yesterday {
+                return @tr("last seen yesterday at {0}", clock(last-seen));
+            }
+            return @tr("last seen {0}", list-time(last-seen));
+        }
+        if status == Status.recently {
+            return @tr("last seen recently");
+        }
+        if status == Status.last-week {
+            return @tr("last seen within a week");
+        }
+        if status == Status.last-month {
+            return @tr("last seen within a month");
+        }
+        if status == Status.long-ago {
+            return @tr("last seen a long time ago");
+        }
+        if status == Status.bot {
+            return @tr("bot");
+        }
+        if status == Status.members {
+            if online > 1 {
+                return @tr("{0} members, {1} online", count(members), count(online));
+            }
+            return @tr("{n} member" | "{n} members" % members);
+        }
+        if status == Status.subscribers {
+            return @tr("{n} subscriber" | "{n} subscribers" % members);
+        }
+        if status == Status.saved {
+            return @tr("only you can see it");
+        }
+        return "";
+    }
+
+    // TDLib's connection to Telegram's servers, for status bars.
+    public pure function connection(state: Connection) -> string {
+        if state == Connection.waiting-for-network {
+            return @tr("Waiting for network…");
+        }
+        if state == Connection.connecting-to-proxy {
+            return @tr("Connecting to proxy…");
+        }
+        if state == Connection.connecting {
+            return @tr("Connecting…");
+        }
+        if state == Connection.updating {
+            return @tr("Updating…");
+        }
+        return @tr("Connected");
+    }
+
+    // "12 unread" (posts in a channel, messages elsewhere)
+    public pure function unread-posts(n: int) -> string {
+        return @tr("{n} unread post" | "{n} unread posts" % n);
+    }
+
+    public pure function is-service(c: Content) -> bool {
+        return c == Content.chat-created || c == Content.title-changed || c == Content.photo-changed
+            || c == Content.photo-removed || c == Content.members-added || c == Content.member-joined
+            || c == Content.member-left || c == Content.member-removed || c == Content.message-pinned
+            || c == Content.screenshot-taken || c == Content.contact-joined || c == Content.other-service;
+    }
+
+    // A message that is more than words: "Photo", "Voice message", "report.pdf", …
+    public pure function content(c: Content, detail: string) -> string {
+        if c == Content.photo { return @tr("Photo"); }
+        if c == Content.video { return @tr("Video"); }
+        if c == Content.animation { return @tr("GIF"); }
+        if c == Content.audio { return detail == "" ? @tr("Audio") : detail; }
+        if c == Content.voice-note { return @tr("Voice message"); }
+        if c == Content.video-note { return @tr("Video message"); }
+        if c == Content.document { return detail == "" ? @tr("File") : detail; }
+        if c == Content.sticker { return detail == "" ? @tr("Sticker") : detail + " " + @tr("Sticker"); }
+        if c == Content.location { return @tr("Location"); }
+        if c == Content.venue { return detail == "" ? @tr("Location") : detail; }
+        if c == Content.contact { return @tr("Contact: {0}", detail); }
+        if c == Content.poll { return @tr("Poll: {0}", detail); }
+        if c == Content.dice { return detail; }
+        if c == Content.game { return @tr("Game: {0}", detail); }
+        if c == Content.invoice { return @tr("Invoice"); }
+        if c == Content.call { return @tr("Call"); }
+        if c == Content.story { return @tr("Story"); }
+        if c == Content.gift { return @tr("Gift"); }
+        if c == Content.unsupported { return @tr("A message FinchGram cannot show yet"); }
+        return "";
+    }
+
+    // What happened, and who did it: "Alice joined the group".
+    public pure function service(c: Content, actor: string, detail: string) -> string {
+        if c == Content.chat-created { return @tr("{0} created the group “{1}”", actor, detail); }
+        if c == Content.title-changed { return @tr("{0} changed the name to “{1}”", actor, detail); }
+        if c == Content.photo-changed { return @tr("{0} changed the photo", actor); }
+        if c == Content.photo-removed { return @tr("{0} removed the photo", actor); }
+        if c == Content.members-added { return @tr("{0} added {1}", actor, detail); }
+        if c == Content.member-joined { return @tr("{0} joined", actor); }
+        if c == Content.member-left { return @tr("{0} left", actor); }
+        if c == Content.member-removed { return @tr("{0} removed {1}", actor, detail); }
+        if c == Content.message-pinned { return @tr("{0} pinned a message", actor); }
+        if c == Content.screenshot-taken { return @tr("{0} took a screenshot", actor); }
+        if c == Content.contact-joined { return @tr("{0} joined Telegram", actor); }
+        return @tr("{0} changed something in the chat", actor);
+    }
+
+    // The words of a message: its text, or what it holds and its caption.
+    public pure function body(c: Content, text: string, detail: string) -> string {
+        if c == Content.text {
+            return text;
+        }
+        if text == "" {
+            return content(c, detail);
+        }
+        return @tr("content with caption" => "{0} · {1}", content(c, detail), text);
+    }
+
+    // A chat's last message in a list: "Alice: see you", "You: Photo · the view", …
+    public pure function preview(row: ChatRow) -> string {
+        if !row.has-message {
+            return "";
+        }
+        if is-service(row.content) {
+            return service(row.content, row.outgoing ? @tr("You") : row.sender, row.detail);
+        }
+        if row.outgoing && row.kind != ChatKind.saved && row.kind != ChatKind.channel {
+            return @tr("You: {0}", body(row.content, row.text, row.detail));
+        }
+        if row.sender != "" {
+            return @tr("sender and message" => "{0}: {1}", row.sender, body(row.content, row.text, row.detail));
+        }
+        return body(row.content, row.text, row.detail);
+    }
+}

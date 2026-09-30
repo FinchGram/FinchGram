@@ -1,0 +1,840 @@
+// Terminal (the design's "1b 终端"): monospace and keyboard first. The chat list marks each chat
+// with a sign (# group, » channel, @ person, * saved, ~ bot, ^ pinned); the chat reads as a log;
+// one command line writes messages and runs commands ("/mute", "/pin", …).
+import { ListView } from "std-widgets.slint";
+import { AppState, Page, Connection } from "../state.slint";
+import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content } from "../telegram.slint";
+import { AccountColors } from "../look.slint";
+import { Fmt } from "../format.slint";
+import { Mark, Paragraph, WindowButtonsSpace, WindowMover } from "../widgets.slint";
+import { ChatScroll, MessageInput } from "../chat.slint";
+import { TerminalPalette as P } from "palette.slint";
+
+export enum TerminalView { chats, channels, bots, rules, scheduled }
+
+global Signs {
+    public pure function of(kind: ChatKind, pinned: bool) -> string {
+        if pinned {
+            return "^";
+        }
+        if kind == ChatKind.group {
+            return "#";
+        }
+        if kind == ChatKind.channel {
+            return "»";
+        }
+        if kind == ChatKind.saved {
+            return "*";
+        }
+        if kind == ChatKind.bot {
+            return "~";
+        }
+        return "@";
+    }
+}
+
+component T inherits Text {
+    font-family: P.font;
+    font-size: 13px;
+    color: P.text;
+    vertical-alignment: center;
+}
+
+// A word in brackets that does something: "[dark]", "[⋯]".
+component Action {
+    in property <string> label;
+    in property <color> color: P.muted;
+    in property <bool> enabled: true;
+    callback activated();
+    opacity: enabled ? 1 : 0.4;
+
+    T {
+        text: "[" + root.label + "]";
+        color: touch.has-hover && root.enabled ? P.accent : root.color;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+component TitleBar inherits Rectangle {
+    height: 34px;
+    background: P.side;
+
+    WindowMover { }
+
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: P.line;
+    }
+
+    HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        spacing: 8px;
+        WindowButtonsSpace { }
+        VerticalLayout {
+            alignment: center;
+            Mark {
+                width: 16px;
+                height: 14px;
+                color: P.accent;
+            }
+        }
+        T {
+            horizontal-stretch: 1;
+            text: "FinchGram — " + Account.name;
+            color: P.muted;
+            overflow: elide;
+        }
+        Action {
+            label: P.dark ? @tr("light") : @tr("dark");
+            activated => {
+                AppState.change-appearance(P.dark ? "light" : "dark");
+            }
+        }
+    }
+}
+
+component SideTab {
+    in property <string> label;
+    in property <bool> active;
+    in property <bool> enabled: true;
+    callback activated();
+    opacity: enabled ? 1 : 0.4;
+
+    T {
+        text: root.label;
+        color: root.active ? P.accent : P.faint;
+        font-weight: root.active ? 600 : 400;
+    }
+    TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+component ChatLine inherits Rectangle {
+    in property <ChatRow> chat;
+    property <bool> open: chat.id == Conversation.chat-id;
+    height: 29px;
+    background: open ? P.sel : touch.has-hover ? P.sel.transparentize(0.5) : transparent;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 8px;
+        T {
+            width: 10px;
+            text: root.open ? "▸" : "";
+            color: P.accent;
+        }
+        T {
+            width: 14px;
+            text: Signs.of(root.chat.kind, root.chat.pinned);
+            color: P.faint;
+        }
+        T {
+            horizontal-stretch: 1;
+            text: root.chat.title;
+            color: root.open ? P.text : P.muted;
+            overflow: elide;
+        }
+        T {
+            text: root.chat.unread > 0 ? (root.chat.mention ? root.chat.unread + " @" : "" + root.chat.unread) : "";
+            color: root.chat.muted ? P.faint : P.accent2;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Conversation.open(root.chat.id);
+        }
+    }
+}
+
+component Folders {
+    HorizontalLayout {
+        spacing: 8px;
+        alignment: start;
+        for folder[index] in Chats.folders: Rectangle {
+            visible: index < 4;
+            width: index < 4 ? label.preferred-width : 0px;
+            label := T {
+                x: 0;
+                font-size: 12px;
+                text: (index + 1) + ":" + (folder.id == 0 ? @tr("All") : folder.name);
+                color: index == Chats.folder ? P.accent : P.faint;
+                font-weight: index == Chats.folder ? 600 : 400;
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Chats.show-folder(index);
+                }
+            }
+        }
+        if Chats.folders.length > 4: Rectangle {
+            width: more.preferred-width;
+            more := T {
+                x: 0;
+                font-size: 12px;
+                text: (Chats.folder >= 4 ? (Chats.folder + 1) + ":" + Chats.folders[Chats.folder].name : @tr("more")) + " ▾";
+                color: Chats.folder >= 4 ? P.accent : P.faint;
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    list.show();
+                }
+            }
+            list := PopupWindow {
+                x: 0;
+                y: 20px;
+                width: 180px;
+                close-policy: PopupClosePolicy.close-on-click-outside;
+                Rectangle {
+                    border-radius: 4px;
+                    background: P.bg;
+                    border-width: 1px;
+                    border-color: P.line;
+                    drop-shadow-blur: 30px;
+                    drop-shadow-offset-y: 12px;
+                    drop-shadow-color: P.shadow;
+                    VerticalLayout {
+                        padding-top: 4px;
+                        padding-bottom: 4px;
+                        for folder[index] in Chats.folders: Rectangle {
+                            visible: index >= 4;
+                            height: index >= 4 ? 28px : 0px;
+                            background: index == Chats.folder ? P.sel : entry.has-hover ? P.sel.transparentize(0.5) : transparent;
+                            T {
+                                x: 12px;
+                                text: (index + 1) + ":" + folder.name;
+                                color: index == Chats.folder ? P.accent : P.text;
+                            }
+                            entry := TouchArea {
+                                clicked => {
+                                    Chats.show-folder(index);
+                                    list.close();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component Side inherits Rectangle {
+    in-out property <TerminalView> view;
+    width: 268px;
+    background: P.side;
+
+    Rectangle {
+        x: parent.width - 1px;
+        width: 1px;
+        background: P.line;
+    }
+
+    VerticalLayout {
+        VerticalLayout {
+            vertical-stretch: 0;
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 14px;
+            padding-bottom: 8px;
+            spacing: 8px;
+            HorizontalLayout {
+                spacing: 10px;
+                alignment: start;
+                SideTab {
+                    label: "CHATS";
+                    active: root.view == TerminalView.chats;
+                    activated => {
+                        root.view = TerminalView.chats;
+                    }
+                }
+                SideTab {
+                    label: "CHAN";
+                    active: root.view == TerminalView.channels;
+                    activated => {
+                        root.view = TerminalView.channels;
+                    }
+                }
+                SideTab {
+                    label: "BOTS";
+                    active: root.view == TerminalView.bots;
+                    activated => {
+                        root.view = TerminalView.bots;
+                    }
+                }
+                // Keyword rules and scheduled messages are still to come.
+                SideTab {
+                    label: "RULES";
+                    enabled: false;
+                }
+                SideTab {
+                    label: "SCHED";
+                    enabled: false;
+                }
+            }
+            if root.view == TerminalView.chats: Folders { }
+        }
+
+        if AppState.connection != Connection.ready && AppState.connection != Connection.updating: HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-bottom: 8px;
+            T {
+                text: "-- " + Fmt.connection(AppState.connection) + " --";
+                color: P.accent2;
+            }
+        }
+
+        if root.view == TerminalView.chats && Chats.loaded && Chats.list.length == 0: VerticalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 10px;
+            T {
+                text: Chats.folder == 0 ? "-- " + @tr("No chats yet") + " --" : "-- " + @tr("No chats in this folder") + " --";
+                color: P.faint;
+            }
+        }
+
+        if root.view == TerminalView.chats: ListView {
+            vertical-stretch: 1;
+            for chat in Chats.list: ChatLine {
+                chat: chat;
+            }
+        }
+        if root.view == TerminalView.channels: ListView {
+            vertical-stretch: 1;
+            for chat in Chats.channels: ChatLine {
+                chat: chat;
+            }
+        }
+        if root.view == TerminalView.bots: Flickable {
+            vertical-stretch: 1;
+            mouse-drag-pan-enabled: false;
+            VerticalLayout {
+                alignment: start;
+                if Chats.official-bots.length > 0: T {
+                    height: 26px;
+                    x: 16px;
+                    text: "── " + @tr("Official bots") + " ──";
+                    color: P.faint;
+                }
+                for chat in Chats.official-bots: ChatLine {
+                    chat: chat;
+                }
+                if Chats.bots.length > 0: T {
+                    height: 26px;
+                    x: 16px;
+                    text: "── " + @tr("Other bots") + " ──";
+                    color: P.faint;
+                }
+                for chat in Chats.bots: ChatLine {
+                    chat: chat;
+                }
+            }
+        }
+
+        // The account, at the foot.
+        Rectangle {
+            vertical-stretch: 0;
+            height: account.preferred-height;
+            Rectangle {
+                height: 1px;
+                y: 0;
+                background: P.line;
+            }
+            account := VerticalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                spacing: 6px;
+                HorizontalLayout {
+                    spacing: 10px;
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 10px;
+                            height: 10px;
+                            border-radius: 2px;
+                            background: P.account;
+                        }
+                    }
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        T {
+                            text: @tr("Current account");
+                            color: P.faint;
+                            font-size: 11px;
+                        }
+                        T {
+                            text: Account.phone == "" ? Account.name : Account.name + " · " + Account.phone;
+                            overflow: elide;
+                        }
+                    }
+                    Action {
+                        label: @tr("profile");
+                        color: P.accent;
+                        activated => {
+                            AppState.page = Page.profile;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// One line of the log: time, sender, words.
+component LogLine {
+    in property <MessageRow> message;
+    height: lines.preferred-height;
+
+    lines := HorizontalLayout {
+        spacing: 8px;
+        T {
+            width: 44px;
+            text: root.message.time;
+            color: P.faint;
+            vertical-alignment: top;
+            line-height-factor: P.leading(1.6);
+        }
+        T {
+            width: 64px;
+            text: root.message.outgoing ? Account.first-name : root.message.sender;
+            color: P.sender(root.message.sender-color, root.message.outgoing);
+            overflow: elide;
+            vertical-alignment: top;
+            line-height-factor: P.leading(1.6);
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            Paragraph {
+                text: Fmt.body(root.message.content, root.message.text, root.message.detail)
+                    + (root.message.edited ? " " + @tr("(edited)") : "")
+                    + (root.message.sending ? " …" : "");
+                color: root.message.content == Content.text ? P.text : P.muted;
+                font-family: P.font;
+                font-size: 13px;
+                line-height-factor: P.leading(1.6);
+            }
+            if root.message.failed: Rectangle {
+                height: retry.preferred-height;
+                retry := T {
+                    x: 0;
+                    text: "↳ ✗ " + @tr("Failed to send") + " [" + @tr("retry") + "]";
+                    color: P.accent3;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Conversation.retry(root.message.id);
+                    }
+                }
+            }
+        }
+    }
+}
+
+component Line {
+    in property <MessageRow> message;
+
+    VerticalLayout {
+        if root.message.kind == RowKind.day: T {
+            height: 30px;
+            text: "── " + Fmt.day-title(root.message.day) + " ──";
+            color: P.faint;
+            vertical-alignment: bottom;
+        }
+        if root.message.kind == RowKind.service: Paragraph {
+            text: root.message.time + "  -- " + Fmt.service(root.message.content, root.message.outgoing ? @tr("You") : root.message.sender, root.message.detail) + " --";
+            color: P.faint;
+            font-family: P.font;
+            font-size: 13px;
+        }
+        if root.message.kind == RowKind.sponsored: Rectangle {
+            height: ad.preferred-height;
+            ad := Paragraph {
+                width: parent.width;
+                text: root.message.time + "  [" + @tr("sponsored") + "] " + root.message.sender + " · " + root.message.text
+                    + (root.message.button == "" ? "" : "  [" + root.message.button + " ↗]");
+                color: P.muted;
+                font-family: P.font;
+                font-size: 13px;
+                line-height-factor: P.leading(1.6);
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Conversation.open-sponsored(root.message.id);
+                }
+            }
+        }
+        if root.message.kind == RowKind.message: LogLine {
+            message: root.message;
+        }
+    }
+}
+
+component MenuEntry inherits Rectangle {
+    in property <string> label;
+    in property <string> command;
+    callback activated();
+    height: 26px;
+    background: touch.has-hover ? P.sel : transparent;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+        T {
+            horizontal-stretch: 1;
+            text: root.label;
+        }
+        T {
+            text: root.command;
+            color: P.accent;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+component Pane inherits Rectangle {
+    background: P.bg;
+
+    VerticalLayout {
+        Rectangle {
+            height: 34px;
+            background: P.pane-head;
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                spacing: 10px;
+                T {
+                    text: Signs.of(Conversation.kind, false) + Conversation.title;
+                    color: P.accent;
+                    font-weight: 600;
+                    overflow: elide;
+                }
+                T {
+                    horizontal-stretch: 1;
+                    text: Conversation.typing != "" ? @tr("typing…")
+                        : Fmt.status(Conversation.status, Conversation.last-seen, Conversation.members, Conversation.online-members);
+                    color: P.faint;
+                    overflow: elide;
+                }
+                // Searching and the chat's settings are still to come.
+                Action {
+                    label: @tr("search");
+                    enabled: false;
+                }
+                Action {
+                    label: @tr("chat settings");
+                    enabled: false;
+                }
+                Action {
+                    label: "⋯";
+                    activated => {
+                        menu.show();
+                    }
+                }
+            }
+            menu := PopupWindow {
+                x: parent.width - 262px;
+                y: 34px;
+                width: 250px;
+                close-policy: PopupClosePolicy.close-on-click-outside;
+                Rectangle {
+                    border-radius: 4px;
+                    background: P.side;
+                    border-width: 1px;
+                    border-color: P.line;
+                    drop-shadow-blur: 30px;
+                    drop-shadow-offset-y: 12px;
+                    drop-shadow-color: P.shadow;
+                    VerticalLayout {
+                        padding-top: 4px;
+                        padding-bottom: 4px;
+                        T {
+                            height: 24px;
+                            x: 12px;
+                            text: "── " + Signs.of(Conversation.kind, false) + Conversation.title + " ──";
+                            color: P.faint;
+                            overflow: elide;
+                        }
+                        MenuEntry {
+                            label: Conversation.muted ? @tr("Unmute") : @tr("Mute");
+                            command: "/mute";
+                            activated => {
+                                Conversation.toggle-mute();
+                                menu.close();
+                            }
+                        }
+                        MenuEntry {
+                            label: Conversation.pinned ? @tr("Unpin") : @tr("Pin");
+                            command: "/pin";
+                            activated => {
+                                Conversation.toggle-pin();
+                                menu.close();
+                            }
+                        }
+                        MenuEntry {
+                            label: @tr("Mark as read");
+                            command: "/read";
+                            activated => {
+                                Conversation.mark-read();
+                                menu.close();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        ChatScroll {
+            vertical-stretch: 1;
+            spacing: 3px;
+            margin-left: 16px;
+            margin-right: 16px;
+            margin-top: 10px;
+            margin-bottom: 14px;
+            for row in Conversation.messages: Line {
+                message: row;
+            }
+            if Conversation.typing != "": T {
+                text: "…… " + @tr("{0} is typing…", Conversation.typing);
+                color: P.faint;
+            }
+        }
+    }
+}
+
+// The commands of the command line.
+export struct Command {
+    command: string,
+    description: string,
+}
+
+component CommandLine inherits Rectangle {
+    height: 46px;
+    background: P.cmd;
+    property <[Command]> commands: [
+        { command: "/mute", description: @tr("Mute or unmute this chat") },
+        { command: "/pin", description: @tr("Pin or unpin this chat") },
+        { command: "/read", description: @tr("Mark this chat as read") },
+    ];
+    property <string> typed: input.text;
+
+    public function focus-line() {
+        input.focus-text();
+    }
+
+    function run(line: string) {
+        if line.starts-with("/mute") {
+            Conversation.toggle-mute();
+        } else if line.starts-with("/pin") {
+            Conversation.toggle-pin();
+        } else if line.starts-with("/read") {
+            Conversation.mark-read();
+        } else if !line.starts-with("/") {
+            Conversation.send(line);
+        }
+    }
+
+    Rectangle {
+        height: 1px;
+        y: 0;
+        background: P.line;
+    }
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 10px;
+        T {
+            text: Account.first-name + " ❯";
+            color: P.accent;
+        }
+        T {
+            text: Conversation.chat-id == "" ? "" : "→ " + Signs.of(Conversation.kind, false) + Conversation.title;
+            color: P.faint;
+            max-width: 220px;
+            overflow: elide;
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            input := MessageInput {
+                enabled: Conversation.chat-id != "";
+                placeholder: Conversation.can-write ? @tr("Write a message, or / for commands") : @tr("/ for commands");
+                text-color: P.text;
+                placeholder-color: P.faint;
+                selection-color: P.sel;
+                font-family: P.font;
+                font-size: 13px;
+                padding-x: 0px;
+                padding-y: 4px;
+                base-height: 26px;
+                tallest: 90px;
+                send(words) => {
+                    root.run(words);
+                }
+            }
+        }
+        T {
+            text: "⏎ " + @tr("send");
+            color: P.faint;
+        }
+    }
+
+    // What "/…" can be, above the line.
+    if root.typed.starts-with("/"): Rectangle {
+        x: 16px;
+        y: -self.height - 6px;
+        width: 420px;
+        height: suggestions.preferred-height;
+        border-radius: 4px;
+        background: P.side;
+        border-width: 1px;
+        border-color: P.line;
+        drop-shadow-blur: 30px;
+        drop-shadow-offset-y: 12px;
+        drop-shadow-color: P.shadow;
+        suggestions := VerticalLayout {
+            padding-top: 6px;
+            padding-bottom: 6px;
+            for command in root.commands: Rectangle {
+                visible: command.command.starts-with(root.typed) || root.typed == "/";
+                height: self.visible ? 26px : 0px;
+                background: pick.has-hover ? P.sel : transparent;
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    spacing: 8px;
+                    T {
+                        width: 140px;
+                        text: command.command;
+                        color: P.accent;
+                    }
+                    T {
+                        horizontal-stretch: 1;
+                        text: command.description;
+                        color: P.muted;
+                        overflow: elide;
+                    }
+                }
+                pick := TouchArea {
+                    clicked => {
+                        root.run(command.command);
+                        input.text = "";
+                    }
+                }
+            }
+        }
+    }
+}
+
+component StatusBar inherits Rectangle {
+    height: 26px;
+    background: P.accent;
+    callback command-line();
+
+    HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        spacing: 18px;
+        T {
+            text: "FinchGram";
+            color: P.on-accent;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        Rectangle { horizontal-stretch: 1; }
+        T {
+            text: AppState.connection == Connection.ready ? @tr("connected") : "[" + Fmt.connection(AppState.connection) + "]";
+            color: P.on-accent;
+            font-size: 12px;
+        }
+        Rectangle {
+            width: cmd.preferred-width;
+            cmd := T {
+                x: 0;
+                text: "[⌘K " + @tr("command") + "]";
+                color: P.on-accent;
+                font-size: 12px;
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    root.command-line();
+                }
+            }
+        }
+    }
+}
+
+export component TerminalWindow inherits Rectangle {
+    property <TerminalView> view: TerminalView.chats;
+    background: P.bg;
+
+    // ⌘K, from the menu bar (app.slint): the command line.
+    property <int> search-requests: AppState.search-requests;
+    changed search-requests => {
+        root.focus-search();
+    }
+
+    public function focus-search() {
+        line.focus-line();
+    }
+
+    VerticalLayout {
+        TitleBar { }
+        HorizontalLayout {
+            vertical-stretch: 1;
+            Side {
+                view <=> root.view;
+            }
+            VerticalLayout {
+                horizontal-stretch: 1;
+                if Conversation.chat-id != "": Pane {
+                    vertical-stretch: 1;
+                }
+                if Conversation.chat-id == "": Rectangle {
+                    vertical-stretch: 1;
+                    T {
+                        text: "-- " + @tr("Choose a chat on the left") + " --";
+                        color: P.faint;
+                    }
+                }
+                line := CommandLine { }
+            }
+        }
+        StatusBar {
+            command-line => {
+                line.focus-line();
+            }
+        }
+    }
+}

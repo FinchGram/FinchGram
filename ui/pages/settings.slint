@@ -1,0 +1,748 @@
+// Settings, from the design's second round ("设置"): the categories on the left, one category on
+// the right. The three themes are chosen under Appearance, where the design puts them; the change
+// is immediate. Categories without a setting FinchGram has yet are greyed out.
+import { AppState, Page, SettingsSection, Theme, UpdateState } from "../state.slint";
+import { Look } from "../look.slint";
+import { Icon, Logo, Spinner, Switch, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
+import { PageFrame, SideColumn } from "frame.slint";
+
+component Category inherits Rectangle {
+    in property <SettingsSection> section;
+    in property <string> icon;
+    in property <string> label;
+    in property <bool> enabled;
+    property <bool> active: AppState.settings-section == section;
+    height: 40px;
+    border-radius: Look.radius;
+    background: active ? Look.sel : touch.has-hover && enabled ? Look.sel.transparentize(0.5) : transparent;
+    opacity: enabled ? 1 : 0.4;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 19px;
+                color: root.active && !Look.broadsheet ? Look.accent-ink : Look.text;
+            }
+        }
+        Text {
+            text: root.label;
+            color: root.active && !Look.broadsheet ? Look.accent-ink : Look.text;
+            font-size: 15px;
+            font-weight: root.active ? 600 : 400;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            AppState.settings-section = root.section;
+        }
+    }
+}
+
+component Categories {
+    VerticalLayout {
+        padding-left: 24px;
+        padding-right: 24px;
+        padding-top: 40px;
+        padding-bottom: 40px;
+        spacing: 2px;
+        alignment: start;
+
+        HorizontalLayout {
+            padding-left: 12px;
+            padding-bottom: 14px;
+            spacing: 12px;
+            // Back to the chats (or to logging in).
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 26px;
+                    height: 26px;
+                    border-radius: Look.button-radius;
+                    background: back.has-hover ? Look.sel : transparent;
+                    Icon {
+                        name: "arrow-left";
+                        size: 18px;
+                        color: Look.accent;
+                    }
+                    back := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            AppState.page = Page.chats;
+                        }
+                    }
+                }
+            }
+            Heading {
+                label: @tr("Settings");
+                size: Look.nav-heading-size;
+                vertical-alignment: center;
+            }
+        }
+
+        Category {
+            section: SettingsSection.general;
+            icon: "sliders-horizontal";
+            label: @tr("General");
+        }
+        Category {
+            section: SettingsSection.notifications;
+            icon: "bell";
+            label: @tr("Notifications & sounds");
+        }
+        Category {
+            section: SettingsSection.privacy;
+            icon: "lock-key";
+            label: @tr("Privacy & security");
+        }
+        Category {
+            section: SettingsSection.chats;
+            icon: "chat-circle-text";
+            label: @tr("Chats");
+        }
+        Category {
+            section: SettingsSection.folders;
+            icon: "folders";
+            label: @tr("Folders");
+        }
+        Category {
+            section: SettingsSection.finch;
+            icon: "bird";
+            label: @tr("Finch features");
+        }
+        Category {
+            section: SettingsSection.appearance;
+            icon: "paint-brush";
+            label: @tr("Appearance");
+            enabled: true;
+        }
+        Category {
+            section: SettingsSection.language;
+            icon: "globe";
+            label: @tr("Language");
+            enabled: true;
+        }
+        Category {
+            section: SettingsSection.data;
+            icon: "database";
+            label: @tr("Data & storage");
+        }
+        Category {
+            section: SettingsSection.advanced;
+            icon: "wrench";
+            label: @tr("Advanced");
+        }
+        Category {
+            section: SettingsSection.about;
+            icon: "info";
+            label: @tr("About");
+            enabled: true;
+        }
+    }
+}
+
+// A theme to choose, drawn small in its own colours.
+component ThemeCard {
+    in property <Theme> theme;
+    in property <string> label;
+    in property <color> bg;
+    in property <color> side;
+    in property <color> ink;
+    in property <color> accent;
+    property <bool> active: AppState.theme == theme;
+
+    VerticalLayout {
+        spacing: 8px;
+        Rectangle {
+            width: 160px;
+            height: 100px;
+            border-radius: Look.radius;
+            background: root.bg;
+            clip: true;
+            HorizontalLayout {
+                Rectangle {
+                    width: 40px;
+                    background: root.side;
+                }
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 6px;
+                    alignment: start;
+                    Rectangle {
+                        width: 67px;
+                        height: 8px;
+                        border-radius: 2px;
+                        background: root.ink;
+                    }
+                    Rectangle {
+                        width: 48px;
+                        height: 8px;
+                        border-radius: 2px;
+                        background: root.ink;
+                        opacity: 0.5;
+                    }
+                    Rectangle {
+                        width: 38px;
+                        height: 8px;
+                        border-radius: 2px;
+                        background: root.accent;
+                    }
+                }
+            }
+            Rectangle {
+                border-radius: Look.radius;
+                border-width: root.active ? 2px : 1px;
+                border-color: root.active ? Look.accent : Look.line-strong;
+            }
+        }
+        Text {
+            text: root.label;
+            color: Look.text;
+            font-size: 14px;
+            font-weight: root.active ? 600 : 400;
+        }
+    }
+
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            AppState.change-theme(root.theme);
+        }
+    }
+}
+
+// Light or dark, drawn small in the current theme's colours.
+component AppearanceCard {
+    in property <string> appearance;
+    in property <string> label;
+    in property <color> bg;
+    in property <color> side;
+    in property <color> ink;
+    in property <color> accent;
+    property <bool> active: AppState.appearance == appearance;
+
+    VerticalLayout {
+        spacing: 8px;
+        Rectangle {
+            width: 160px;
+            height: 100px;
+            border-radius: Look.radius;
+            background: root.bg;
+            clip: true;
+            HorizontalLayout {
+                Rectangle {
+                    width: 40px;
+                    background: root.side;
+                }
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 6px;
+                    alignment: start;
+                    Rectangle {
+                        width: 67px;
+                        height: 8px;
+                        border-radius: 2px;
+                        background: root.ink;
+                    }
+                    Rectangle {
+                        width: 48px;
+                        height: 8px;
+                        border-radius: 2px;
+                        background: root.ink;
+                        opacity: 0.5;
+                    }
+                    Rectangle {
+                        width: 38px;
+                        height: 8px;
+                        border-radius: 2px;
+                        background: root.accent;
+                    }
+                }
+            }
+            Rectangle {
+                border-radius: Look.radius;
+                border-width: root.active ? 2px : 1px;
+                border-color: root.active ? Look.accent : Look.line-strong;
+            }
+        }
+        Text {
+            text: root.label;
+            color: Look.text;
+            font-size: 14px;
+            font-weight: root.active ? 600 : 400;
+        }
+    }
+
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            AppState.change-appearance(root.appearance);
+        }
+    }
+}
+
+// A group of settings: rows on the field colour, a hairline between them.
+component Card inherits Rectangle {
+    border-radius: Look.radius;
+    background: Look.field;
+    border-width: Look.field-border;
+    border-color: Look.line;
+    height: rows.preferred-height;
+
+    rows := VerticalLayout {
+        @children
+    }
+}
+
+component Separator inherits Rectangle {
+    height: 1px;
+    background: Look.line;
+}
+
+// One setting: an icon, what it is, and a switch.
+component SwitchRow {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> description;
+    in property <bool> on;
+    callback toggled();
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 20px;
+                color: Look.accent;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.title;
+                color: Look.text;
+                font-size: 15px;
+                font-weight: 500;
+            }
+            if root.description != "": Paragraph {
+                text: root.description;
+                color: Look.muted;
+                font-size: 13px;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Switch {
+                on: root.on;
+                toggled => {
+                    root.toggled();
+                }
+            }
+        }
+    }
+}
+
+component SmallButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> primary;
+    in property <bool> enabled: true;
+    callback clicked();
+    height: 32px;
+    width: label.preferred-width + 28px;
+    border-radius: Look.button-radius;
+    background: primary ? (touch.has-hover ? Look.accent.darker(0.1) : Look.accent) : touch.has-hover ? Look.sel : Look.bg;
+    border-width: primary ? 0px : 1px;
+    border-color: Look.line-strong;
+    opacity: enabled ? 1 : 0.5;
+
+    label := Text {
+        text: root.text;
+        color: root.primary ? Look.on-accent : Look.text;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// Where the self-updater is, and what to do next (src/update.rs).
+component UpdateRow {
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            if AppState.update-state == UpdateState.checking || AppState.update-state == UpdateState.installing: Spinner {
+                size: 20px;
+                color: Look.accent;
+            }
+            if AppState.update-state != UpdateState.checking && AppState.update-state != UpdateState.installing: Icon {
+                name: AppState.update-state == UpdateState.available ? "sparkle"
+                    : AppState.update-state == UpdateState.up-to-date ? "check-circle"
+                    : AppState.update-state == UpdateState.failed ? "warning-circle" : "arrows-clockwise";
+                size: 20px;
+                color: AppState.update-state == UpdateState.failed ? Look.danger : Look.accent;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: AppState.update-state == UpdateState.checking ? @tr("Checking…")
+                    : AppState.update-state == UpdateState.available ? @tr("Version {0} available", AppState.update-version)
+                    : AppState.update-state == UpdateState.installing ? (AppState.update-progress < 1 ? @tr("Downloading {0}%", Math.round(AppState.update-progress * 100)) : @tr("Installing…"))
+                    : AppState.update-state == UpdateState.up-to-date ? @tr("You're up to date")
+                    : AppState.update-state == UpdateState.failed ? @tr("The update failed")
+                    : @tr("Version {0}", AppState.app-version);
+                color: AppState.update-state == UpdateState.failed ? Look.danger : Look.text;
+                font-size: 15px;
+                font-weight: 500;
+            }
+            if AppState.update-state == UpdateState.failed: Paragraph {
+                text: AppState.update-error;
+                color: Look.muted;
+                font-size: 13px;
+            }
+            if AppState.update-state == UpdateState.available && AppState.update-notes != "": Paragraph {
+                text: AppState.update-notes;
+                color: Look.muted;
+                font-size: 13px;
+            }
+            if AppState.update-state == UpdateState.up-to-date: Text {
+                text: @tr("Version {0}", AppState.app-version);
+                color: Look.muted;
+                font-size: 13px;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            if AppState.update-state == UpdateState.available: SmallButton {
+                text: @tr("Install and restart");
+                primary: true;
+                clicked => {
+                    AppState.install-update();
+                }
+            }
+            if AppState.update-state != UpdateState.available && AppState.update-state != UpdateState.installing: SmallButton {
+                text: @tr("Check for updates");
+                enabled: AppState.update-state != UpdateState.checking;
+                clicked => {
+                    AppState.check-for-updates();
+                }
+            }
+        }
+    }
+}
+
+component AppearanceSection {
+    VerticalLayout {
+        spacing: 26px;
+        VerticalLayout {
+            spacing: 12px;
+            SectionLabel {
+                label: @tr("Theme");
+            }
+            HorizontalLayout {
+                spacing: 14px;
+                alignment: start;
+                ThemeCard {
+                    theme: Theme.workbench;
+                    label: @tr("Workbench");
+                    bg: Look.dark ? #17191d : #ffffff;
+                    side: Look.dark ? #1b1e22 : #f3f4f6;
+                    ink: Look.dark ? #e2e5e9 : #1b1f24;
+                    accent: Look.dark ? #8e9ff0 : #4a5fc1;
+                }
+                ThemeCard {
+                    theme: Theme.broadsheet;
+                    label: @tr("Broadsheet");
+                    bg: Look.dark ? #1b1a19 : #f3f2f2;
+                    side: Look.dark ? #151413 : #eae9e9;
+                    ink: Look.dark ? #ecebea : #201e1d;
+                    accent: Look.dark ? #62c5ee : #0088b0;
+                }
+                ThemeCard {
+                    theme: Theme.terminal;
+                    label: @tr("Terminal");
+                    bg: Look.dark ? #0e100f : #f6f7f4;
+                    side: Look.dark ? #131614 : #eceee9;
+                    ink: Look.dark ? #d6dbd7 : #1a1d1b;
+                    accent: Look.dark ? #7ed69b : #1d7a45;
+                }
+            }
+            Paragraph {
+                text: @tr("Workbench is an editor's layout, Broadsheet a newspaper's, Terminal a console's. The same chats and settings in all three.");
+                color: Look.faint;
+                font-size: 13px;
+            }
+        }
+        VerticalLayout {
+            spacing: 12px;
+            SectionLabel {
+                label: @tr("Light and dark");
+            }
+            HorizontalLayout {
+                spacing: 14px;
+                alignment: start;
+                AppearanceCard {
+                    appearance: "light";
+                    label: @tr("Light");
+                    bg: Look.broadsheet ? #f3f2f2 : Look.terminal ? #f6f7f4 : #ffffff;
+                    side: Look.broadsheet ? #eae9e9 : Look.terminal ? #eceee9 : #f7f8fa;
+                    ink: Look.broadsheet ? #201e1d : Look.terminal ? #1a1d1b : #1b1f24;
+                    accent: Look.broadsheet ? #0088b0 : Look.terminal ? #1d7a45 : #4a5fc1;
+                }
+                AppearanceCard {
+                    appearance: "dark";
+                    label: @tr("Dark");
+                    bg: Look.broadsheet ? #1b1a19 : Look.terminal ? #0e100f : #17191d;
+                    side: Look.broadsheet ? #151413 : Look.terminal ? #131614 : #1b1e22;
+                    ink: Look.broadsheet ? #ecebea : Look.terminal ? #d6dbd7 : #e2e5e9;
+                    accent: Look.broadsheet ? #62c5ee : Look.terminal ? #7ed69b : #8e9ff0;
+                }
+            }
+            Card {
+                SwitchRow {
+                    icon: "circle-half";
+                    title: @tr("Match system appearance");
+                    on: AppState.appearance == "system";
+                    toggled => {
+                        AppState.change-appearance(AppState.appearance == "system" ? (Look.dark ? "dark" : "light") : "system");
+                    }
+                }
+            }
+        }
+    }
+}
+
+component LanguageSection {
+    VerticalLayout {
+        spacing: 16px;
+        Paragraph {
+            text: @tr("Changes the interface only — messages aren't translated");
+            color: Look.muted;
+            font-size: 14px;
+        }
+        VerticalLayout {
+            spacing: 4px;
+            for language in AppState.languages: Rectangle {
+                height: 56px;
+                border-radius: Look.radius;
+                background: language.code == AppState.language ? Look.sel : entry.has-hover ? Look.sel.transparentize(0.5) : transparent;
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    spacing: 12px;
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        alignment: center;
+                        spacing: 1px;
+                        Text {
+                            text: language.native;
+                            color: Look.text;
+                            font-size: 16px;
+                            font-weight: language.code == AppState.language ? 600 : 400;
+                        }
+                        Text {
+                            text: language.english;
+                            color: Look.faint;
+                            font-size: 12px;
+                        }
+                    }
+                    if language.code == AppState.language: VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "check";
+                            size: 18px;
+                            color: Look.accent;
+                        }
+                    }
+                }
+                entry := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        AppState.change-language(language.code);
+                    }
+                }
+            }
+        }
+    }
+}
+
+component AboutSection {
+    VerticalLayout {
+        spacing: 26px;
+        HorizontalLayout {
+            spacing: 16px;
+            alignment: start;
+            Logo {
+                size: 64px;
+                radius: Look.logo-radius;
+            }
+            VerticalLayout {
+                alignment: center;
+                spacing: 2px;
+                Text {
+                    text: Look.wordmark;
+                    color: Look.text;
+                    font-size: 20px;
+                    font-weight: 600;
+                }
+                Text {
+                    text: AppState.tdlib-version == "" ? @tr("Version {0}", AppState.app-version)
+                        : @tr("Version {0}", AppState.app-version) + " · TDLib " + AppState.tdlib-version;
+                    color: Look.muted;
+                    font-size: 14px;
+                }
+            }
+        }
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Updates");
+            }
+            Card {
+                UpdateRow { }
+                Separator { }
+                SwitchRow {
+                    icon: "clock-clockwise";
+                    title: @tr("Check for updates automatically");
+                    on: AppState.check-for-updates-daily;
+                    toggled => {
+                        AppState.change-check-for-updates-daily(!AppState.check-for-updates-daily);
+                    }
+                }
+            }
+            Paragraph {
+                text: @tr("Updates come from GitHub Releases and are signature-checked before install.");
+                color: Look.faint;
+                font-size: 12px;
+            }
+        }
+        HorizontalLayout {
+            alignment: start;
+            Rectangle {
+                border-radius: Look.radius;
+                background: source.has-hover ? Look.sel : Look.field;
+                border-width: Look.field-border;
+                border-color: Look.line;
+                height: link.preferred-height;
+                width: link.preferred-width;
+                link := HorizontalLayout {
+                    padding-left: 14px;
+                    padding-right: 14px;
+                    padding-top: 10px;
+                    padding-bottom: 10px;
+                    spacing: 10px;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "github-logo";
+                            size: 22px;
+                            color: Look.text;
+                            duotone: false;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        spacing: 1px;
+                        Text {
+                            text: @tr("Fully open source — read the code");
+                            color: Look.text;
+                            font-size: 14px;
+                            font-weight: 600;
+                        }
+                        Text {
+                            text: "https://github.com/FinchGram/FinchGram";
+                            color: Look.accent-ink;
+                            font-size: 13px;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "arrow-square-out";
+                            size: 16px;
+                            color: Look.faint;
+                        }
+                    }
+                }
+                source := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        AppState.open-url("https://github.com/FinchGram/FinchGram");
+                    }
+                }
+            }
+        }
+        Paragraph {
+            text: @tr("FinchGram is an unofficial client built on the Telegram API. It is not made by Telegram.");
+            color: Look.muted;
+            font-size: 14px;
+            line-height-factor: Look.leading(1.6);
+        }
+    }
+}
+
+export component SettingsPage inherits PageFrame {
+    title: @tr("Settings");
+
+    SideColumn {
+        Categories {
+            width: parent.width;
+            height: parent.height;
+        }
+    }
+
+    Flickable {
+        horizontal-stretch: 1;
+        mouse-drag-pan-enabled: false;
+        content-height: max(self.height, page.preferred-height);
+
+        page := HorizontalLayout {
+            width: parent.width;
+            padding-left: 56px;
+            padding-right: 56px;
+            padding-top: 40px;
+            padding-bottom: 40px;
+            alignment: start;
+            VerticalLayout {
+                max-width: 600px;
+                spacing: 26px;
+                alignment: start;
+                Heading {
+                    label: AppState.settings-section == SettingsSection.language ? @tr("Language")
+                        : AppState.settings-section == SettingsSection.about ? @tr("About") : @tr("Appearance");
+                }
+                if AppState.settings-section == SettingsSection.appearance: AppearanceSection { }
+                if AppState.settings-section == SettingsSection.language: LanguageSection { }
+                if AppState.settings-section == SettingsSection.about: AboutSection { }
+            }
+        }
+    }
+}

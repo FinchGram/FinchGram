@@ -1,0 +1,216 @@
+// What Telegram shows: the account, logging in, the chat list and the open chat. Rust fills these
+// globals from TDLib (src/telegram/); every theme reads the same ones and calls the same callbacks,
+// so the three stay in step. Numbers TDLib keeps as 53-bit integers (chat and message ids) are
+// strings here: a Slint int has 32 bits.
+
+// A moment in local time, taken apart by Rust so that the pages can word it in the UI language
+// (format.slint).
+export enum Day { today, yesterday, this-week, this-year, earlier }
+export struct Moment {
+    day: Day,
+    hour: int,
+    minute: int,
+    weekday: int,           // 1 Monday … 7 Sunday
+    month: int,             // 1 … 12
+    date: int,              // day of the month
+    year: int,
+}
+
+export enum ChatKind { user, bot, saved, group, channel }
+
+// What a message holds, for its row and for the chat list's preview. Its words (text or caption) are
+// separate; `detail` carries what the kind needs: a file name, an emoji, a poll's question, a new
+// title, the names of members added.
+export enum Content {
+    text, photo, video, animation, audio, voice-note, video-note, document, sticker, location, venue,
+    contact, poll, dice, game, invoice, call, story, gift, unsupported,
+    // Service messages: something happened in the chat. The sender is who did it.
+    chat-created, title-changed, photo-changed, photo-removed, members-added, member-joined,
+    member-left, member-removed, message-pinned, screenshot-taken, contact-joined, other-service,
+}
+
+// One chat in a list.
+export struct ChatRow {
+    id: string,
+    title: string,
+    initial: string,
+    kind: ChatKind,
+    has-message: bool,      // false for a chat without messages
+    time: Moment,           // of the last message
+    sender: string,         // of the last message, where the list shows it (groups); "" otherwise
+    outgoing: bool,         // the last message is ours
+    content: Content,
+    text: string,
+    detail: string,
+    unread: int,
+    mention: bool,          // an unread message mentions us
+    muted: bool,
+    pinned: bool,
+    online: bool,           // a user who is online now
+    verified: bool,         // Telegram's check mark (official bots and channels)
+    members: int,           // of a group, subscribers of a channel; 0 when not known
+    username: string,       // without the @
+}
+
+// A folder of chats: 0 is All chats, the others are the account's own Telegram folders.
+export struct Folder {
+    id: int,
+    name: string,
+    unread: int,            // unread messages in its chats
+}
+
+// A line of Workbench's chat tree: a folder's header, or one of its chats while it is expanded.
+export struct TreeRow {
+    header: bool,
+    folder: int,            // index into Chats.folders
+    expanded: bool,
+    count: int,             // a header's number of chats
+    chat: ChatRow,
+}
+
+export global Chats {
+    in-out property <[Folder]> folders;
+    in-out property <int> folder: 0;             // the folder shown by Broadsheet and Terminal
+    in-out property <[ChatRow]> list;            // its chats, in Telegram's order
+    in-out property <[TreeRow]> tree;            // Workbench: every folder, with its chats when expanded
+    in-out property <[ChatRow]> channels;        // every channel, for the Channels view
+    in-out property <int> unread-channels;       // how many of them have unread posts
+    in-out property <[ChatRow]> official-bots;   // chats with Telegram's own bots, for the Bots view
+    in-out property <[ChatRow]> bots;            // chats with every other bot
+    in-out property <bool> loaded;               // TDLib has sent the chat list
+    in-out property <string> query;              // the search box's words; the lists show what matches
+    callback show-folder(int);                   // index into folders
+    callback toggle-folder(int);                 // Workbench: expand or collapse
+    callback search(string);
+}
+
+// A tab of Workbench (and what Broadsheet and Terminal remember as open).
+export struct Tab {
+    id: string,
+    title: string,
+    kind: ChatKind,
+}
+
+export enum RowKind { message, service, day, sponsored }
+
+// One line of the open chat: a message, a service message, the day it starts, or a sponsored
+// message (channels show Telegram's own; they are never hidden).
+export struct MessageRow {
+    kind: RowKind,
+    id: string,
+    outgoing: bool,
+    sender: string,
+    sender-initial: string,
+    sender-color: int,      // 0 … 7, the same for the same sender (Terminal's names)
+    content: Content,
+    text: string,
+    detail: string,
+    time: string,           // "14:20"
+    day: Moment,            // for a day row
+    edited: bool,
+    sending: bool,
+    failed: bool,
+    seen: bool,             // an outgoing message the other side has read
+    button: string,         // a sponsored message's button
+}
+
+// How the open chat's header describes it.
+export enum Status {
+    none, online, last-seen, recently, last-week, last-month, long-ago,
+    bot, members, subscribers, saved,
+}
+
+export global Conversation {
+    in-out property <[Tab]> tabs;
+    in-out property <string> chat-id;            // the open chat, "" for none
+    in-out property <string> title;
+    in-out property <string> initial;
+    in-out property <ChatKind> kind;
+    in-out property <Status> status;
+    in-out property <Moment> last-seen;          // with Status.last-seen
+    in-out property <int> members;               // with Status.members and Status.subscribers
+    in-out property <int> online-members;
+    in-out property <string> typing;             // who is typing now, "" when nobody
+    in-out property <bool> can-write;
+    in-out property <bool> muted;
+    in-out property <bool> pinned;
+    in-out property <[MessageRow]> messages;     // oldest first
+    in-out property <bool> loading;              // the first messages are on their way
+    in-out property <bool> has-older;
+    // Rust counts this up when the view should show the newest message: the chat was opened, or we
+    // sent one.
+    in-out property <int> scroll-to-end;
+    callback open(string);                       // chat id; Workbench opens a tab for it
+    callback close(string);                      // a tab
+    callback close-others();
+    callback send(string);
+    callback load-older();
+    callback retry(string);                      // a message that failed to send
+    callback open-sponsored(string);             // a sponsored message's button
+    callback toggle-mute();
+    callback toggle-pin();
+    callback mark-read();
+}
+
+// The account logged in.
+export global Account {
+    in-out property <string> name;
+    in-out property <string> first-name;
+    in-out property <string> last-name;
+    in-out property <string> username;
+    in-out property <string> phone;              // "+86 138 0013 2046"
+    in-out property <string> bio;
+    in-out property <string> initial;
+    in-out property <bool> saving;
+    in-out property <bool> saved;
+    in-out property <string> save-error;
+    callback save(string, string, string, string);   // first name, last name, username, bio
+    callback log-out();
+}
+
+// Logging in (the design's second round, "登录引导"). Rust follows TDLib's authorization state; the
+// pages can go back a step on their own.
+export enum LoginStep { phone, qr, code, password, email-address, email-code, registration, premium }
+export enum CodeDelivery { telegram, sms, call, flash-call, missed-call, fragment, email, other }
+
+export struct Country {
+    code: string,           // "CN"
+    name: string,           // in its own language
+    calling-code: string,   // "86"
+}
+
+export global Login {
+    in-out property <LoginStep> step: LoginStep.phone;
+    in-out property <bool> busy;                 // a request is on its way
+    in-out property <string> error;              // TDLib's answer to the last request, "" when fine
+    in-out property <Country> country;           // chosen, or guessed from where we are
+    in-out property <[Country]> countries;       // the picker's list, matching its search words
+    in-out property <string> phone;              // as typed
+    in-out property <string> code-phone;         // where the code went, as TDLib writes it
+    in-out property <CodeDelivery> delivery;
+    in-out property <int> code-length: 5;
+    in-out property <bool> can-resend;
+    in-out property <bool> resent;
+    in-out property <string> password-hint;
+    in-out property <string> email-pattern;      // the address the code went to, partly hidden
+    in-out property <image> qr-code;
+    callback search-countries(string);
+    callback choose-country(Country);
+    callback submit-phone(string, string);       // calling code, number
+    callback use-qr-code();
+    callback use-phone-number();
+    callback submit-code(string);
+    callback resend-code();
+    callback submit-password(string);
+    callback submit-email(string);
+    callback submit-email-code(string);
+    callback back();                             // to the phone number
+}
+
+// Words Rust needs in the UI language when it builds rows: names Telegram does not give. Rust reads
+// them, and builds the rows again when the language changes.
+export global Words {
+    out property <string> saved-messages: @tr("Saved Messages");
+    out property <string> deleted-account: @tr("Deleted Account");
+    out property <string> all-chats: @tr("All chats");
+}

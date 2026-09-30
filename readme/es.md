@@ -8,8 +8,10 @@ Un cliente de escritorio de Telegram de código abierto, con un centro multimedi
 FinchGram usa la API de Telegram y forma parte del ecosistema de Telegram. Es un cliente no oficial,
 no desarrollado por Telegram.
 
-Estado: temprano. La carcasa arranca TDLib y sigue el avance del inicio de sesión; las páginas vienen
-después, a partir del diseño.
+Estado: temprano. El inicio de sesión, la lista de chats y los chats con mensajes de texto funcionan,
+en los tres temas del diseño: Workbench (el predeterminado), Broadsheet y Terminal, que se cambian en
+Ajustes › Apariencia. Después vienen fotos y archivos, varias cuentas, filtros por palabras clave y
+mensajes programados.
 
 La app es una carcasa (*shell*). De Telegram en sí se encarga TDLib, la biblioteca oficial de Telegram,
 que se ejecuta como un programa aparte junto al ejecutable: `finchgram-tdlib`, compilado por este
@@ -25,17 +27,17 @@ versiones publicadas.
 Por ahora, el desarrollo requiere macOS en Apple silicon: finchgram-tdlib solo se compila para esa
 plataforma. Linux y Windows llegarán más adelante.
 
-finchgram-tdlib en sí no está en git: `vendor/tdlib/` solo contiene el script que lo compila. Después de
-clonar, obtén el programa una vez:
+Ni finchgram-tdlib ni las fuentes de la interfaz están en git: `vendor/tdlib/` solo contiene el script
+que compila el programa, y las fuentes vienen de Google Fonts. Después de clonar, obtenlos una vez:
 
 ```sh
 scripts/fetch-tdlib.sh    # descarga la release fijada de finchgram-tdlib en vendor/tdlib/bin/ y verifica el SHA-256
+scripts/fetch-fonts.sh    # descarga las fuentes fijadas de la interfaz en vendor/fonts/ y verifica su SHA-256
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
 
-- Hasta que se publique la primera release `tdlib-*`, `scripts/fetch-tdlib.sh` lo avisa; en ese caso,
-  compila finchgram-tdlib aquí (unos minutos; hace falta Xcode o las Command Line Tools, y
-  `brew install cmake ninja gperf`, solo herramientas de compilación):
+- Para cambiar el propio finchgram-tdlib, compílalo aquí (unos minutos; hace falta Xcode o las
+  Command Line Tools, y `brew install cmake ninja gperf`, solo herramientas de compilación):
 
   ```sh
   vendor/tdlib/build.sh && vendor/tdlib/build.sh install
@@ -46,10 +48,13 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   estar en el repositorio. Sin ellos, la app arranca e indica que no tiene API ID.
 - `FINCHGRAM_TEST_DC=1 cargo run` usa los servidores de prueba de Telegram, que tienen sus propias
   cuentas; la app guarda una base de datos aparte para ellos.
+- `cargo test screenshots -- --ignored` dibuja cada página de cada tema, en claro y oscuro, con chats
+  inventados, en `target/screenshots/`: una forma de ver la interfaz sin una cuenta.
 
 `build.rs` copia `vendor/tdlib/bin/finchgram-tdlib` junto al ejecutable compilado, de modo que
-`cargo run` usa exactamente el mismo programa que la app empaquetada; sin él, la compilación falla con
-un mensaje que lo explica. Rust 1.92 o posterior.
+`cargo run` usa exactamente el mismo programa que la app empaquetada, y las fuentes de `vendor/fonts/`
+se compilan dentro del ejecutable; si falta cualquiera de los dos, la compilación falla con un mensaje
+que lo explica. Rust 1.92 o posterior.
 
 La base de datos de TDLib y los archivos descargados están en
 `~/Library/Application Support/FinchGram/tdlib/`; los ajustes, en
@@ -69,24 +74,41 @@ readme/                  # este README en otros idiomas
 release-signing.pub      # las claves públicas que pueden firmar las releases; compiladas en la app
 scripts/
   bundle.sh              # construye dist/FinchGram.app (lo que ejecuta el flujo de release)
+  fetch-fonts.sh         # las fuentes fijadas de la interfaz en vendor/fonts/
   fetch-tdlib.sh         # la release fijada de finchgram-tdlib en vendor/tdlib/bin/
   release.sh             # inicia una release: versión, etiqueta, push; GitHub Actions hace el resto
 src/
-  main.rs                # la ventana, los ajustes, el idioma, las actualizaciones; arranca Telegram
+  main.rs                # la ventana, los ajustes, el idioma y el tema, las actualizaciones; arranca Telegram
+  fonts.rs               # las fuentes de la interfaz, compiladas dentro del ejecutable
   telegram/              # el único código que habla con finchgram-tdlib
     process.rs           #   ejecuta el programa: el JSON de TDLib por la entrada y la salida estándar
     api.rs               #   los tipos de TDLib que usa FinchGram (td_api.tl de la versión fijada)
-    mod.rs               #   peticiones y respuestas, reinicio, inicio de sesión
+    mod.rs               #   peticiones y respuestas, volver a arrancar; las actualizaciones van al store
+    store.rs             #   lo que TDLib dijo de chats, usuarios y mensajes; los modelos de las páginas
+    login.rs             #   el inicio de sesión
+    chats.rs             #   la lista de chats
+    conversation.rs      #   el chat abierto: mensajes, escribir
+    account.rs           #   el perfil, cerrar sesión
   platform/              # lo que cambia de un sistema operativo a otro
   update.rs              # la autoactualización: GitHub Releases, firma, sustitución, reinicio
   settings.rs            # las preferencias del usuario (settings.toml)
   i18n.rs                # idioma de la interfaz: el elegido; si no, el del sistema; si no, inglés
+  screenshots.rs         # cada página dibujada en un PNG (cargo test screenshots -- --ignored)
   bin/                   # finchgram-release-sign.rs, la herramienta de firma Ed25519 de las releases
 ui/
-  app.slint              # la ventana principal
-  state.slint            # los globals que comparten Rust y las páginas
-  theme.slint            # colores, claro y oscuro
+  app.slint              # la ventana principal: los menús y qué página se muestra
+  state.slint            # el estado de la app, compartido por Rust y las páginas
+  telegram.slint         # lo que muestra Telegram: la cuenta, el inicio de sesión, chats, mensajes
+  look.slint             # colores, tipografía y formas del tema, para las páginas compartidas
+  format.slint           # fechas, cantidades y tipos de mensaje en el idioma de la interfaz
+  widgets.slint          # piezas pequeñas compartidas; chat.slint: lo que comparten las ventanas de chat
+  pages/                 # las páginas que comparten los tres temas: inicio de sesión, ajustes, perfil
+  workbench/             # la ventana de chat del tema Workbench (el predeterminado)
+  broadsheet/            # la ventana de chat del tema Broadsheet
+  terminal/              # la ventana de chat del tema Terminal
+  icons/                 # iconos Phosphor (MIT), normales y bicolores; icons.slint los enumera
   logo/                  # el logotipo de FinchGram (svg, png) y sus reglas
+vendor/fonts/            # no está en git: las fuentes de la interfaz (scripts/fetch-fonts.sh)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   lo compila a partir de fuentes fijadas: commit de TDLib, versión de OpenSSL y SHA-256 al principio
   host/                  #   nuestro pequeño programa anfitrión (main.cpp) y su CMakeLists.txt
@@ -128,4 +150,5 @@ arrancan sin ese paso.
 ## Licencia
 
 GPL-3.0 ([LICENSE](../LICENSE)). finchgram-tdlib contiene TDLib (Boost Software License 1.0) y
-OpenSSL (Apache License 2.0); sus textos de licencia se distribuyen con él.
+OpenSSL (Apache License 2.0); las fuentes de la interfaz están bajo la SIL Open Font License 1.1 y los
+iconos bajo la licencia MIT. Sus textos de licencia se distribuyen con la app.

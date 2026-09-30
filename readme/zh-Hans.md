@@ -7,7 +7,8 @@
 
 FinchGram 使用 Telegram API，是 Telegram 生态的一部分。它是非官方客户端，不是 Telegram 出品的。
 
-状态：早期。外壳能启动 TDLib 并跟进登录进度；接下来按设计稿做页面。
+状态：早期。登录、聊天列表和文字消息的收发已经可用，界面是设计稿的三套主题：工作台（默认）、报纸和终端，
+在“设置 › 外观”里切换。接下来做图片和文件、多账号、关键词隐藏和定时消息。
 
 app 是一个外壳。Telegram 本身交给 TDLib（Telegram 官方的库），它作为一个独立程序跑在可执行文件旁边：
 `finchgram-tdlib`，由本仓库从锁定的源码构建（就像酷丸工具箱的 ffmpeg）。外壳只通过 `src/telegram/`
@@ -20,16 +21,17 @@ app 是一个外壳。Telegram 本身交给 TDLib（Telegram 官方的库），�
 
 目前开发需要 Apple silicon 的 macOS：finchgram-tdlib 暂时只为它构建。Linux 和 Windows 以后再支持。
 
-finchgram-tdlib 本身不进 git，`vendor/tdlib/` 里只放构建它的脚本。clone 之后先把程序拿下来一次：
+finchgram-tdlib 和界面字体都不进 git：`vendor/tdlib/` 里只放构建程序的脚本，字体来自 Google Fonts。
+clone 之后先把它们拿下来一次：
 
 ```sh
 scripts/fetch-tdlib.sh    # 把锁定的 finchgram-tdlib release 下载到 vendor/tdlib/bin/ 并校验 SHA-256
+scripts/fetch-fonts.sh    # 把锁定的界面字体下载到 vendor/fonts/ 并校验 SHA-256
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
 
-- 第一个 `tdlib-*` release 发布之前，`scripts/fetch-tdlib.sh` 会提示还没发布；这时在本地构建
-  finchgram-tdlib（几分钟；需要 Xcode 或 Command Line Tools，以及 `brew install cmake ninja gperf`，
-  都只是构建工具）：
+- 要修改 finchgram-tdlib 本身时，在本地构建它（几分钟；需要 Xcode 或 Command Line Tools，以及
+  `brew install cmake ninja gperf`，都只是构建工具）：
 
   ```sh
   vendor/tdlib/build.sh && vendor/tdlib/build.sh install
@@ -38,9 +40,12 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 - `FINCHGRAM_API_ID` 和 `FINCHGRAM_API_HASH`：用你自己的，在 [my.telegram.org](https://my.telegram.org)
   → API development tools 申请。它们在编译时读取，永远不进仓库。没有它们 app 也能启动，会提示没有 API ID。
 - `FINCHGRAM_TEST_DC=1 cargo run` 连 Telegram 的测试服务器，那里有单独的账号；app 会为它另外保存一个数据库。
+- `cargo test screenshots -- --ignored` 用假数据把每套主题的每个页面（浅色和深色）画成图片，存到
+  `target/screenshots/`：不用登录账号也能看界面。
 
 `build.rs` 把 `vendor/tdlib/bin/finchgram-tdlib` 复制到编译出来的可执行文件旁边，所以 `cargo run`
-用的和打包后的 app 是完全同一个程序；缺了它编译会直接失败并说明原因。需要 Rust 1.92 或更新。
+用的和打包后的 app 是完全同一个程序；`vendor/fonts/` 里的字体编译进可执行文件。缺了任何一样，编译都会
+直接失败并说明原因。需要 Rust 1.92 或更新。
 
 TDLib 的数据库和下载的文件在 `~/Library/Application Support/FinchGram/tdlib/`，设置在
 `~/Library/Application Support/FinchGram/settings.toml`。
@@ -59,24 +64,41 @@ readme/                  # 这份 README 的其他语言版本
 release-signing.pub      # 允许给 release 签名的公钥，编译进 app
 scripts/
   bundle.sh              # 构建 dist/FinchGram.app（release 流程跑的就是它）
+  fetch-fonts.sh         # 把锁定的界面字体下载到 vendor/fonts/
   fetch-tdlib.sh         # 把锁定的 finchgram-tdlib release 下载到 vendor/tdlib/bin/
   release.sh             # 发起一次 release：改版本、打 tag、push，其余交给 GitHub Actions
 src/
-  main.rs                # 窗口、设置、语言、更新；启动 Telegram
+  main.rs                # 窗口、设置、语言和主题、更新；启动 Telegram
+  fonts.rs               # 界面字体，编译进可执行文件
   telegram/              # 唯一跟 finchgram-tdlib 打交道的代码
     process.rs           #   运行这个程序：通过标准输入输出传递 TDLib 的 JSON
     api.rs               #   FinchGram 用到的 TDLib 类型（照锁定版本的 td_api.tl 写）
-    mod.rs               #   请求和回复、重新启动、登录
+    mod.rs               #   请求和回复、重新启动；更新交给 store
+    store.rs             #   TDLib 告诉我们的聊天、用户和消息；页面用的 model
+    login.rs             #   登录
+    chats.rs             #   聊天列表
+    conversation.rs      #   打开的聊天：消息、发送
+    account.rs           #   个人资料、退出登录
   platform/              # 随操作系统而不同的部分
   update.rs              # 自动更新：GitHub Releases、校验签名、替换、重启
   settings.rs            # 用户偏好（settings.toml）
   i18n.rs                # 界面语言：保存的选择，否则跟系统，否则英文
+  screenshots.rs         # 把每个页面画成 PNG（cargo test screenshots -- --ignored）
   bin/                   # finchgram-release-sign.rs，release 背后的 Ed25519 签名工具
 ui/
-  app.slint              # 主窗口
-  state.slint            # Rust 和页面共用的 global
-  theme.slint            # 颜色，浅色和深色
+  app.slint              # 主窗口：菜单，以及显示哪个页面
+  state.slint            # app 的状态，Rust 和页面共用
+  telegram.slint         # Telegram 的内容：账号、登录、聊天、消息
+  look.slint             # 当前主题的颜色、字体和形状，给共用页面用
+  format.slint           # 按界面语言写出的日期、数量和消息类型
+  widgets.slint          # 共用的小部件；chat.slint 是聊天窗口共用的部分
+  pages/                 # 三套主题共用的页面：登录、设置、个人资料
+  workbench/             # 工作台主题的聊天窗口（默认）
+  broadsheet/            # 报纸主题的聊天窗口
+  terminal/              # 终端主题的聊天窗口
+  icons/                 # Phosphor 图标（MIT），常规和双色两种；icons.slint 列出它们
   logo/                  # FinchGram 的 logo（svg、png）和使用规则
+vendor/fonts/            # 不进 git：界面字体（scripts/fetch-fonts.sh）
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   从锁定的源码构建它：TDLib commit、OpenSSL 版本和 SHA-256 都锁定在脚本顶部
   host/                  #   我们的小外壳程序（main.cpp）和它的 CMakeLists.txt
@@ -114,4 +136,5 @@ app 自己安装的更新不需要这一步。
 ## 许可证
 
 GPL-3.0（[LICENSE](../LICENSE)）。finchgram-tdlib 包含 TDLib（Boost Software License 1.0）和
-OpenSSL（Apache License 2.0），它们的许可证文本随程序一起分发。
+OpenSSL（Apache License 2.0）；界面字体采用 SIL Open Font License 1.1，图标采用 MIT 许可证。
+它们的许可证文本都随 app 一起分发。

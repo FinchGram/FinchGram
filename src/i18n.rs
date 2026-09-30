@@ -7,13 +7,33 @@
 
 pub const ENGLISH: &str = "en";
 
-/// Every language the app ships.
-pub const SUPPORTED: &[&str] = &["en", "zh_Hans"];
+/// A language the app ships: its folder name under lang/ ("en" has none) and its name, in itself
+/// and in English, for the language list.
+pub struct UiLanguage {
+    pub code: &'static str,
+    pub native: &'static str,
+    pub english: &'static str,
+}
+
+/// Every language the app ships, in the order the language list shows them.
+pub const LANGUAGES: &[UiLanguage] = &[
+    UiLanguage { code: "en", native: "English", english: "English" },
+    UiLanguage { code: "zh_Hans", native: "简体中文", english: "Chinese (Simplified)" },
+];
+
+fn is_supported(code: &str) -> bool {
+    LANGUAGES.iter().any(|language| language.code == code)
+}
+
+/// The language's name in itself, for the language picker's button.
+pub fn native_name(code: &str) -> &'static str {
+    LANGUAGES.iter().find(|language| language.code == code).map_or("English", |language| language.native)
+}
 
 /// The language to start with: the saved choice if it is one we ship, else the system locale,
 /// else English.
 pub fn initial_language(saved: &str) -> String {
-    if SUPPORTED.contains(&saved) {
+    if is_supported(saved) {
         return saved.to_string();
     }
     from_system_locale().unwrap_or_else(|| ENGLISH.to_string())
@@ -22,7 +42,7 @@ pub fn initial_language(saved: &str) -> String {
 /// Switch every `@tr` in the UI to `code`. Returns false, leaving the UI unchanged, if that
 /// language is not bundled.
 pub fn apply(code: &str) -> bool {
-    if !SUPPORTED.contains(&code) {
+    if !is_supported(code) {
         eprintln!("i18n: {code:?} is not a bundled language");
         return false;
     }

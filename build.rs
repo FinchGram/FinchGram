@@ -14,6 +14,22 @@ fn main() {
     slint_build::compile_with_config("ui/app.slint", config).expect("Slint UI failed to compile");
 
     copy_bundled_tdlib();
+    check_bundled_fonts();
+}
+
+/// The UI fonts are compiled into the executable (src/fonts.rs includes them from vendor/fonts/).
+/// Fail with a clear message instead of a bare include_bytes! error when they were never fetched.
+fn check_bundled_fonts() {
+    println!("cargo:rerun-if-changed=vendor/fonts");
+
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR");
+    let probe = Path::new(&manifest_dir).join("vendor").join("fonts").join("NotoSansSC-Variable.ttf");
+    assert!(
+        probe.is_file(),
+        "\n\n{} is missing.\nThe UI fonts ship inside the app. \
+         Run scripts/fetch-fonts.sh once to download them into vendor/fonts/.\n\n",
+        probe.display()
+    );
 }
 
 /// Put vendor/tdlib/bin/finchgram-tdlib next to the executable cargo is about to produce, so

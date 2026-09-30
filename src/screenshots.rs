@@ -1,0 +1,320 @@
+//! Pictures of every page in every theme, light and dark, drawn with Slint's software renderer and
+//! made-up data: a way to look at the UI without Telegram, an account or a window.
+//!
+//! ```sh
+//! cargo test screenshots -- --ignored
+//! ```
+//!
+//! writes them to `target/screenshots/<theme>-<appearance>-<page>.png`. It takes over Slint's
+//! platform for the whole test process, so it only runs when asked for.
+
+use std::rc::Rc;
+
+use slint::platform::software_renderer::{MinimalSoftwareWindow, RepaintBufferType};
+use slint::platform::{Platform, WindowAdapter};
+use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
+
+use crate::*;
+
+const WIDTH: u32 = 1280;
+const HEIGHT: u32 = 800;
+/// The menu bar Slint draws inside the window when there is no native one.
+const MENU_BAR: u32 = 24;
+
+struct Screenshots {
+    window: Rc<MinimalSoftwareWindow>,
+}
+
+impl Platform for Screenshots {
+    fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, slint::PlatformError> {
+        Ok(self.window.clone())
+    }
+}
+
+/// Draw the window as it is now into `name`.png. Without a native menu bar, Slint draws the menu
+/// bar at the top of the window: the window is that much taller, and the picture leaves it out.
+fn save(window: &MinimalSoftwareWindow, name: &str) {
+    let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target").join("screenshots");
+    std::fs::create_dir_all(&directory).expect("target/screenshots");
+    let mut pixels = vec![slint::Rgb8Pixel::default(); (WIDTH * (HEIGHT + MENU_BAR)) as usize];
+    // Twice: text that wraps knows its height only once it has been laid out.
+    for _ in 0..2 {
+        window.request_redraw();
+        window.draw_if_needed(|renderer| {
+            renderer.render(&mut pixels, WIDTH as usize);
+        });
+    }
+    let bytes: Vec<u8> = pixels[(WIDTH * MENU_BAR) as usize..].iter().flat_map(|pixel| [pixel.r, pixel.g, pixel.b]).collect();
+    image::save_buffer(directory.join(format!("{name}.png")), &bytes, WIDTH, HEIGHT, image::ColorType::Rgb8)
+        .expect("write the screenshot");
+}
+
+fn model<T: Clone + 'static>(rows: Vec<T>) -> ModelRc<T> {
+    ModelRc::new(VecModel::from(rows))
+}
+
+fn country(code: &str, name: &str, calling_code: &str) -> Country {
+    Country { code: code.into(), name: name.into(), calling_code: calling_code.into() }
+}
+
+fn languages() -> ModelRc<Language> {
+    model(
+        crate::i18n::LANGUAGES
+            .iter()
+            .map(|language| Language {
+                code: language.code.into(),
+                native: language.native.into(),
+                english: language.english.into(),
+            })
+            .collect(),
+    )
+}
+
+/// The made-up account: someone in a mechanical keyboard club, as in the design.
+fn fill(ui: &MainWindow) {
+    let app = ui.global::<AppState>();
+    app.set_languages(languages());
+    app.set_connection(Connection::Ready);
+    app.set_app_version(crate::update::CURRENT_VERSION.into());
+    app.set_tdlib_version(crate::telegram::TDLIB_VERSION.into());
+
+    let login = ui.global::<Login>();
+    login.set_country(country("CN", "China", "86"));
+    login.set_countries(model(vec![country("CN", "China", "86"), country("DE", "Germany", "49")]));
+    login.set_phone("138 0013 2046".into());
+    login.set_code_phone("+86 138 0013 2046".into());
+    login.set_delivery(CodeDelivery::Telegram);
+    login.set_code_length(5);
+    login.set_can_resend(true);
+    login.set_password_hint("bird".into());
+}
+
+fn moment(day: Day, hour: i32, minute: i32) -> Moment {
+    Moment { day, hour, minute, weekday: 5, month: 9, date: 20, year: 2026 }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn chat(id: &str, title: &str, kind: ChatKind, time: Moment, sender: &str, text: &str, unread: i32, members: i32) -> ChatRow {
+    ChatRow {
+        id: id.into(),
+        title: title.into(),
+        initial: title.chars().next().map(String::from).unwrap_or_default().into(),
+        kind,
+        has_message: true,
+        time,
+        sender: sender.into(),
+        outgoing: false,
+        content: Content::Text,
+        text: text.into(),
+        detail: SharedString::new(),
+        unread,
+        mention: id == "keyboards",
+        muted: id == "news",
+        pinned: false,
+        online: id == "linxia",
+        verified: false,
+        members,
+        username: SharedString::new(),
+    }
+}
+
+fn message(id: &str, sender: &str, time: &str, text: &str) -> MessageRow {
+    MessageRow {
+        kind: RowKind::Message,
+        id: id.into(),
+        outgoing: sender == "Zhou Ye",
+        sender: sender.into(),
+        sender_initial: sender.chars().next().map(String::from).unwrap_or_default().into(),
+        sender_color: (sender.len() % 8) as i32,
+        content: Content::Text,
+        text: text.into(),
+        detail: SharedString::new(),
+        time: time.into(),
+        day: moment(Day::Today, 0, 0),
+        edited: false,
+        sending: false,
+        failed: false,
+        seen: true,
+        button: SharedString::new(),
+    }
+}
+
+fn day_row(day: Day) -> MessageRow {
+    MessageRow { kind: RowKind::Day, day: moment(day, 0, 0), ..message("", "", "", "") }
+}
+
+/// The chats of the design's first round, in English.
+fn fill_chats(ui: &MainWindow) {
+    let account = ui.global::<Account>();
+    account.set_name("Zhou Ye".into());
+    account.set_first_name("Zhou".into());
+    account.set_last_name("Ye".into());
+    account.set_initial("Z".into());
+    account.set_username("zhouye".into());
+    account.set_phone("+86 138 0013 2046".into());
+    account.set_bio("Design, and a little code. Shanghai.".into());
+
+    let keyboards = chat("keyboards", "Keyboard Lab", ChatKind::Group, moment(Day::Today, 14, 20), "Jie", "@Zhou Ye do you still sell the dark keycaps?", 42, 486);
+    let alex = chat("alex", "Alex Chen", ChatKind::User, moment(Day::Today, 12, 8), "", "Can we move the call to Thursday?", 1, 0);
+    let linxia = chat("linxia", "Lin Xia", ChatKind::User, moment(Day::Today, 13, 52), "", "Is that place open tonight?", 2, 0);
+    let news = chat("news", "Tech Morning", ChatKind::Channel, moment(Day::Today, 7, 30), "", "New chip export rules take effect", 12, 82413);
+    let mom = chat("mom", "Mom", ChatKind::User, moment(Day::Yesterday, 18, 32), "", "Never mind, if you are busy don't reply", 0, 0);
+    let finch = chat("finch", "FinchGram Updates", ChatKind::Channel, moment(Day::Yesterday, 20, 0), "", "FinchGram 0.1: the design arrives", 0, 41000);
+    let books = chat("books", "Wednesday Book Club", ChatKind::Group, moment(Day::ThisWeek, 20, 15), "Chen", "Next up: Invisible Cities", 0, 9);
+    let saved = ChatRow { kind: ChatKind::Saved, ..chat("saved", "Saved Messages", ChatKind::Saved, moment(Day::ThisYear, 22, 42), "", "Kyoto, check-in October 3", 0, 0) };
+    let personal = vec![keyboards.clone(), linxia.clone(), mom.clone(), books.clone(), saved.clone()];
+    let work = vec![alex.clone()];
+    let channels = vec![news.clone(), finch.clone()];
+    let all = vec![keyboards.clone(), linxia.clone(), alex.clone(), news.clone(), mom.clone(), finch.clone(), books.clone(), saved.clone()];
+
+    let chats = ui.global::<Chats>();
+    let folder = |id: i32, name: &str, unread: i32| Folder { id, name: name.into(), unread };
+    chats.set_folders(model(vec![folder(0, "All chats", 57), folder(1, "Personal", 44), folder(2, "Work", 1), folder(3, "Channels", 12)]));
+    let header = |folder: i32, count: usize, expanded: bool| TreeRow { header: true, folder, expanded, count: count as i32, chat: ChatRow::default() };
+    let line = |folder: i32, chat: &ChatRow| TreeRow { header: false, folder, expanded: true, count: 0, chat: chat.clone() };
+    let mut tree = Vec::new();
+    for (index, folder_chats) in [(1, &personal), (2, &work), (3, &channels)] {
+        tree.push(header(index, folder_chats.len(), true));
+        tree.extend(folder_chats.iter().map(|chat| line(index, chat)));
+    }
+    tree.push(header(0, all.len(), false));
+    chats.set_tree(model(tree));
+    chats.set_list(model(all));
+    chats.set_channels(model(channels));
+    chats.set_unread_channels(1);
+    let bot = |id: &str, title: &str, username: &str, verified: bool| ChatRow {
+        verified,
+        username: username.into(),
+        ..chat(id, title, ChatKind::Bot, moment(Day::ThisWeek, 13, 2), "", "", 0, 0)
+    };
+    chats.set_official_bots(model(vec![bot("botfather", "BotFather", "BotFather", true), bot("stickers", "Stickers", "Stickers", true)]));
+    chats.set_bots(model(vec![bot("groupbuy", "Group-buy Helper", "keeb_gb_bot", false)]));
+    chats.set_loaded(true);
+
+    let conversation = ui.global::<Conversation>();
+    let tab = |chat: &ChatRow| Tab { id: chat.id.clone(), title: chat.title.clone(), kind: chat.kind };
+    conversation.set_tabs(model(vec![tab(&keyboards), tab(&news), tab(&alex)]));
+}
+
+fn open_keyboards(ui: &MainWindow) {
+    let conversation = ui.global::<Conversation>();
+    conversation.set_chat_id("keyboards".into());
+    conversation.set_title("Keyboard Lab".into());
+    conversation.set_initial("K".into());
+    conversation.set_kind(ChatKind::Group);
+    conversation.set_status(Status::Members);
+    conversation.set_members(486);
+    conversation.set_online_members(32);
+    conversation.set_can_write(true);
+    conversation.set_messages(model(vec![
+        day_row(Day::Today),
+        message("1", "Mi", "09:12", "Morning! This week's group-buy keycaps arrived; the delivery list is in the pinned post."),
+        message("2", "Jie", "10:30", "I'm lubing my 65% today, photos later."),
+        message("3", "Zhou Ye", "10:31", "Nice, @ me when it's done."),
+        message("4", "Mika", "11:02", "I can make the meetup on Thursday, but only after 3pm."),
+        message("5", "Mi", "11:05", "Thursday 15:00 at the usual place. Who's coming?"),
+        message("6", "Jie", "14:19", "The lubed switch comparison is in the group album, have a look."),
+        message("7", "Jie", "14:20", "@Zhou Ye do you still sell the dark keycaps?"),
+    ]));
+}
+
+fn open_news(ui: &MainWindow) {
+    let conversation = ui.global::<Conversation>();
+    conversation.set_chat_id("news".into());
+    conversation.set_title("Tech Morning".into());
+    conversation.set_initial("T".into());
+    conversation.set_kind(ChatKind::Channel);
+    conversation.set_status(Status::Subscribers);
+    conversation.set_members(82413);
+    conversation.set_can_write(false);
+    let post = |id: &str, time: &str, text: &str| MessageRow { sender: "Tech Morning".into(), ..message(id, "Tech Morning", time, text) };
+    conversation.set_messages(model(vec![
+        day_row(Day::Today),
+        post("1", "07:00", "New chip export rules take effect\n\nApprovals for advanced equipment are now split into three tiers by type and end use, with a clear upper limit on how long a review may take. Most orders already in transit are unaffected."),
+        MessageRow {
+            kind: RowKind::Sponsored,
+            sender: "Keyboard Autumn Launch".into(),
+            text: "Telegram's ad slot; it has nothing to do with this channel.".into(),
+            button: "Learn more".into(),
+            ..message("s1", "", "07:15", "")
+        },
+        post("2", "07:30", "Four flagship phones launch this week; cameras and on-device features lead, prices hold."),
+    ]));
+}
+
+#[test]
+#[ignore = "takes over Slint's platform; run with: cargo test screenshots -- --ignored"]
+fn screenshots() {
+    let window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
+    slint::platform::set_platform(Box::new(Screenshots { window: window.clone() })).expect("platform");
+    crate::fonts::register();
+    window.set_size(slint::PhysicalSize::new(WIDTH, HEIGHT + MENU_BAR));
+
+    let ui = MainWindow::new().expect("window");
+    ui.show().expect("show");
+    fill(&ui);
+    fill_chats(&ui);
+    let app = ui.global::<AppState>();
+    let login = ui.global::<Login>();
+
+    for (theme, theme_name) in [(Theme::Workbench, "workbench"), (Theme::Broadsheet, "broadsheet"), (Theme::Terminal, "terminal")] {
+        app.set_theme(theme);
+        for appearance in ["light", "dark"] {
+            app.set_appearance(appearance.into());
+            let name = |page: &str| format!("{theme_name}-{appearance}-{page}");
+
+            app.set_telegram_state(TelegramState::WaitPhoneNumber);
+            login.set_step(LoginStep::Phone);
+            save(&window, &name("login-phone"));
+            login.set_step(LoginStep::Code);
+            save(&window, &name("login-code"));
+            login.set_step(LoginStep::Password);
+            login.set_error("Incorrect password".into());
+            save(&window, &name("login-password"));
+            login.set_error(SharedString::new());
+            login.set_step(LoginStep::Qr);
+            save(&window, &name("login-qr"));
+            app.set_telegram_state(TelegramState::Starting);
+            save(&window, &name("login-starting"));
+
+            app.set_telegram_state(TelegramState::Ready);
+            app.set_page(Page::Chats);
+            open_keyboards(&ui);
+            save(&window, &name("chats"));
+            open_news(&ui);
+            save(&window, &name("channel"));
+            app.set_page(Page::Settings);
+            for (section, section_name) in
+                [(SettingsSection::Appearance, "appearance"), (SettingsSection::Language, "language"), (SettingsSection::About, "about")]
+            {
+                app.set_settings_section(section);
+                save(&window, &name(&format!("settings-{section_name}")));
+            }
+            app.set_page(Page::Profile);
+            save(&window, &name("profile"));
+            app.set_page(Page::Chats);
+        }
+    }
+
+    // The same in Chinese, light: every theme's chat window, and the shared pages in Workbench.
+    slint::select_bundled_translation("zh_Hans").expect("Chinese is bundled");
+    app.set_language("zh_Hans".into());
+    app.set_appearance("light".into());
+    for (theme, theme_name) in [(Theme::Workbench, "workbench"), (Theme::Broadsheet, "broadsheet"), (Theme::Terminal, "terminal")] {
+        app.set_theme(theme);
+        app.set_telegram_state(TelegramState::Ready);
+        app.set_page(Page::Chats);
+        open_keyboards(&ui);
+        save(&window, &format!("zh-{theme_name}-chats"));
+    }
+    app.set_theme(Theme::Workbench);
+    app.set_telegram_state(TelegramState::WaitPhoneNumber);
+    login.set_step(LoginStep::Phone);
+    save(&window, "zh-workbench-login-phone");
+    app.set_telegram_state(TelegramState::Ready);
+    app.set_page(Page::Settings);
+    app.set_settings_section(SettingsSection::Appearance);
+    save(&window, "zh-workbench-settings-appearance");
+    app.set_page(Page::Chats);
+    let _ = login.get_countries().row_count();
+}

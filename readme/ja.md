@@ -8,7 +8,9 @@ Rust + [Slint](https://slint.dev) で書かれています。まず macOS（Appl
 FinchGram は Telegram API を使っており、Telegram エコシステムの一部です。非公式のクライアントで、
 Telegram が開発したものではありません。
 
-状況：初期段階。シェルは TDLib を起動し、ログインの進み具合を追跡します。次はデザインに沿ってページを作ります。
+状況：初期段階。ログイン、チャット一覧、テキストメッセージのやり取りが、デザインの 3 つのテーマで動きます：
+ワークベンチ（既定）、ブロードシート、ターミナル。切り替えは「設定 › 外観」から。次は写真とファイル、
+複数アカウント、キーワードフィルター、予約メッセージです。
 
 アプリはシェル（外殻）です。Telegram そのものは Telegram 公式のライブラリ TDLib が担い、実行ファイルの隣で
 独立したプログラムとして動きます。それが `finchgram-tdlib` で、このリポジトリがバージョンを固定したソースから
@@ -23,17 +25,17 @@ JSON でこれと通信します。詳しくは [docs/architecture.md](../docs/a
 現時点では、開発には Apple silicon の macOS が必要です。finchgram-tdlib はまだそれ向けにしかビルドしていません。
 Linux と Windows は後日対応します。
 
-finchgram-tdlib 本体は git に入っていません。`vendor/tdlib/` にあるのは、それをビルドするスクリプトだけです。
-clone したら、まず一度プログラムを取得してください：
+finchgram-tdlib と UI フォントは git に入っていません。`vendor/tdlib/` にあるのはプログラムをビルドする
+スクリプトだけで、フォントは Google Fonts から取得します。clone したら、まず一度取得してください：
 
 ```sh
 scripts/fetch-tdlib.sh    # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ にダウンロードし、SHA-256 を検証
+scripts/fetch-fonts.sh    # 固定バージョンの UI フォントを vendor/fonts/ にダウンロードし、SHA-256 を検証
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
 
-- 最初の `tdlib-*` リリースが公開されるまでは、`scripts/fetch-tdlib.sh` がその旨を伝えます。その場合は
-  ここで finchgram-tdlib をビルドしてください（数分かかります。Xcode または Command Line Tools と、
-  `brew install cmake ninja gperf` が必要です。いずれもビルド用のツールです）：
+- finchgram-tdlib 自体を変更するときは、ここでビルドしてください（数分かかります。Xcode または
+  Command Line Tools と、`brew install cmake ninja gperf` が必要です。いずれもビルド用のツールです）：
 
   ```sh
   vendor/tdlib/build.sh && vendor/tdlib/build.sh install
@@ -44,10 +46,13 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   リポジトリには決して入れません。これがなくてもアプリは起動し、API ID がないことを表示します。
 - `FINCHGRAM_TEST_DC=1 cargo run` は Telegram のテストサーバーを使います。テストサーバーには専用のアカウントがあり、
   アプリはそのために別のデータベースを持ちます。
+- `cargo test screenshots -- --ignored` は、すべてのテーマのすべてのページを、ライトとダークで、架空の
+  チャットとともに `target/screenshots/` に描き出します。アカウントなしで UI を確認する方法です。
 
 `build.rs` は `vendor/tdlib/bin/finchgram-tdlib` を、コンパイルされた実行ファイルの隣にコピーします。そのため
-`cargo run` は、パッケージ化されたアプリとまったく同じプログラムを使います。これがないとビルドは、その旨の
-メッセージを出して失敗します。Rust 1.92 以降が必要です。
+`cargo run` は、パッケージ化されたアプリとまったく同じプログラムを使います。`vendor/fonts/` のフォントは
+実行ファイルに組み込まれます。どちらかが欠けていると、ビルドはその旨のメッセージを出して失敗します。
+Rust 1.92 以降が必要です。
 
 TDLib のデータベースとダウンロードしたファイルは `~/Library/Application Support/FinchGram/tdlib/` に、
 設定は `~/Library/Application Support/FinchGram/settings.toml` にあります。
@@ -66,24 +71,41 @@ readme/                  # この README の他の言語版
 release-signing.pub      # リリースへの署名を許された公開鍵。アプリに組み込まれる
 scripts/
   bundle.sh              # dist/FinchGram.app をビルド（リリースのワークフローが実行するもの）
+  fetch-fonts.sh         # 固定バージョンの UI フォントを vendor/fonts/ へ
   fetch-tdlib.sh         # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ へ
   release.sh             # リリースを開始：バージョン、タグ、push。残りは GitHub Actions が行う
 src/
-  main.rs                # ウィンドウ、設定、言語、アップデート。Telegram を起動
+  main.rs                # ウィンドウ、設定、言語とテーマ、アップデート。Telegram を起動
+  fonts.rs               # UI フォント。実行ファイルに組み込まれる
   telegram/              # finchgram-tdlib と通信する唯一のコード
     process.rs           #   プログラムを実行：標準入出力で TDLib の JSON をやり取り
     api.rs               #   FinchGram が使う TDLib の型（固定バージョンの td_api.tl に準拠）
-    mod.rs               #   リクエストと応答、再起動、ログイン
+    mod.rs               #   リクエストと応答、再起動。アップデートは store へ
+    store.rs             #   TDLib から届いたチャット・ユーザー・メッセージ。ページのモデル
+    login.rs             #   ログイン
+    chats.rs             #   チャット一覧
+    conversation.rs      #   開いているチャット：メッセージ、送信
+    account.rs           #   プロフィール、ログアウト
   platform/              # OS ごとに異なる部分
   update.rs              # 自動アップデート：GitHub Releases、署名の検証、入れ替え、再起動
   settings.rs            # ユーザーの設定（settings.toml）
   i18n.rs                # UI の言語：保存された選択、なければシステムの言語、それもなければ英語
+  screenshots.rs         # すべてのページを PNG に描画（cargo test screenshots -- --ignored）
   bin/                   # finchgram-release-sign.rs、リリースを支える Ed25519 署名ツール
 ui/
-  app.slint              # メインウィンドウ
-  state.slint            # Rust とページが共有する global
-  theme.slint            # 色、ライトとダーク
+  app.slint              # メインウィンドウ：メニューと、どのページを表示するか
+  state.slint            # アプリの状態。Rust とページで共有
+  telegram.slint         # Telegram の内容：アカウント、ログイン、チャット、メッセージ
+  look.slint             # テーマの色・書体・形。共有ページ用
+  format.slint           # UI の言語で書く日付・数・メッセージの種類
+  widgets.slint          # 共有の小さな部品。chat.slint はチャットウィンドウの共有部分
+  pages/                 # 3 つのテーマで共有するページ：ログイン、設定、プロフィール
+  workbench/             # ワークベンチテーマのチャットウィンドウ（既定）
+  broadsheet/            # ブロードシートテーマのチャットウィンドウ
+  terminal/              # ターミナルテーマのチャットウィンドウ
+  icons/                 # Phosphor アイコン（MIT）、通常とデュオトーン。icons.slint が一覧
   logo/                  # FinchGram のロゴ（svg、png）と使用ルール
+vendor/fonts/            # git には入らない：UI フォント（scripts/fetch-fonts.sh）
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   固定したソースからビルド：TDLib のコミット、OpenSSL のバージョンと SHA-256 は冒頭で固定
   host/                  #   小さなホストプログラム（main.cpp）とその CMakeLists.txt
@@ -122,4 +144,5 @@ scripts/release.sh patch    # 0.1.0 -> 0.1.1。minor、major、または正確�
 ## ライセンス
 
 GPL-3.0（[LICENSE](../LICENSE)）。finchgram-tdlib には TDLib（Boost Software License 1.0）と
-OpenSSL（Apache License 2.0）が含まれており、それぞれのライセンス文が同梱されています。
+OpenSSL（Apache License 2.0）が含まれます。UI フォントは SIL Open Font License 1.1、アイコンは MIT
+ライセンスです。それぞれのライセンス文はアプリに同梱されています。

@@ -4,6 +4,10 @@
 /vendor/*/bin/
 /vendor/*/work/
 /vendor/*/dist/
+# The UI fonts, downloaded by scripts/fetch-fonts.sh.
+/vendor/fonts/
 /lang/*.pot
+# msgmerge --update keeps the previous .po beside the new one.
+*.po~
 .DS_Store
 .vscode/

@@ -1,0 +1,120 @@
+// The current theme's colours, typefaces and shapes, for the pages the three themes share: logging
+// in, settings, the profile. They come from the design's second round ("FinchGram Desktop 页面",
+// PAL and SHAPE). Each theme's chat window has a palette of its own, from the first round
+// (workbench/palette.slint, broadsheet/palette.slint, terminal/palette.slint).
+import { Palette } from "std-widgets.slint";
+import { AppState, Theme } from "state.slint";
+
+export global Look {
+    out property <Theme> theme: AppState.theme;
+    // Light or dark: the settings choice, or macOS's when it is "system".
+    out property <bool> dark: AppState.appearance == "dark"
+        || (AppState.appearance == "system" && Palette.color-scheme == ColorScheme.dark);
+
+    out property <bool> workbench: theme == Theme.workbench;
+    out property <bool> broadsheet: theme == Theme.broadsheet;
+    out property <bool> terminal: theme == Theme.terminal;
+
+    // Colours, in the order Workbench light, dark; Broadsheet light, dark; Terminal light, dark.
+    out property <color> bg: pick(#ffffff, #17191d, #f3f2f2, #1b1a19, #f6f7f4, #0e100f);
+    out property <color> side: pick(#f7f8fa, #1b1e22, #eae9e9, #151413, #eceee9, #131614);
+    out property <color> field: pick(#ffffff, #17191d, #e3e1e1, #2a2827, #eceee9, #131614);
+    out property <color> text: pick(#1b1f24, #e2e5e9, #201e1d, #ecebea, #1a1d1b, #d6dbd7);
+    out property <color> muted: pick(#5f6773, #9aa2ac, #605d5d, #a8a4a4, #5c635e, #8a928c);
+    out property <color> faint: pick(#8b929c, #6d7580, #7d7979, #8a8686, #858c87, #5f6761);
+    out property <color> accent: pick(#4a5fc1, #8e9ff0, #0088b0, #62c5ee, #1d7a45, #7ed69b);
+    out property <color> accent-ink: pick(#2f3f8f, #c3ccf7, #006786, #99e0ff, #1d7a45, #7ed69b);
+    out property <color> on-accent: pick(#ffffff, #17191d, #ffffff, #0a303e, #f6f7f4, #0e100f);
+    out property <color> soft: pick(#eceffc, #252b45, #e2f4fc, #0a303e, #dcefe2, #16261c);
+    out property <color> soft-ink: pick(#2f3f8f, #c3ccf7, #0a303e, #cbeeff, #13502d, #b6ecc6);
+    out property <color> line: pick(#e4e7eb, #2b2f35, transparent, transparent, #d5d9d4, #252a27);
+    out property <color> line-strong: pick(#d5d9df, #3a3f47, #201e1d24, #ffffff24, #c3c8c2, #343a36);
+    out property <color> danger: pick(#b42318, #f97066, #aa0b56, #ff90b1, #a1355c, #ef8fb0);
+    out property <color> off: pick(#d0d5dc, #3a3f47, #bab6b6, #605d5d, #c5cac4, #2f3531);
+    out property <color> sel: pick(#e6eafb, #252b45, #dedcdc, #2d2b2a, #dfe4dd, #1c211e);
+    out property <color> ok: pick(#127a72, #6fd0c4, #1a8a5a, #5fcf95, #1d7a45, #7ed69b);
+
+    // Type. Letters the font lacks (Chinese) come from Noto Sans SC (src/fonts.rs).
+    out property <string> font: terminal ? "JetBrains Mono" : broadsheet ? "Source Sans 3" : "IBM Plex Sans";
+    out property <string> mono: terminal ? "JetBrains Mono" : "IBM Plex Mono";
+    out property <length> heading-size: size(26px, 32px, 22px);
+    out property <length> nav-heading-size: size(18px, 26px, 16px);
+    out property <length> hero-size: size(38px, 44px, 30px);
+    // Headings are set a little tighter: letter spacing = font size × this.
+    out property <float> heading-tracking: terminal ? 0 : broadsheet ? -0.01 : -0.015;
+    // The font's own line height in em (its hhea metrics). Slint's line-height-factor is relative
+    // to it, the design's line heights are in em: line-height-factor: Look.leading(1.55).
+    out property <float> natural-line: terminal ? 1.32 : broadsheet ? 1.424 : 1.3;
+
+    public pure function leading(em: float) -> float {
+        return em / natural-line;
+    }
+    // Section labels: small capitals in Workbench, "# lower case" in Terminal.
+    out property <length> section-size: workbench ? 11px : 12px;
+    out property <int> section-weight: workbench ? 600 : 400;
+    out property <length> section-spacing: workbench ? 0.88px : terminal ? 0.48px : 0px;
+    out property <string> section-prefix: terminal ? "# " : "";
+    out property <string> heading-prefix: terminal ? "❯ " : "";
+    out property <string> enter-hint: terminal ? "  ⏎" : "";
+    out property <string> wordmark: terminal ? "finchgram" : "FinchGram";
+
+    // Shapes.
+    out property <length> radius: size(8px, 4px, 3px);
+    out property <length> button-radius: size(6px, 2px, 3px);
+    out property <length> avatar-radius: size(10px, 4px, 3px);
+    out property <length> logo-radius: size(10px, 10px, 6px);
+    out property <length> row-gap: size(16px, 18px, 12px);
+    // Fields have a hairline around them, except in Broadsheet.
+    out property <length> field-border: broadsheet ? 0px : 1px;
+    // Switches: a track in Workbench and Broadsheet, "[on ]" / "[off]" in Terminal.
+    out property <bool> text-switches: terminal;
+    out property <length> switch-radius: broadsheet ? 2px : 11px;
+    out property <length> knob-radius: broadsheet ? 1px : 8px;
+    // Broadsheet's icons are duotone.
+    out property <bool> duotone: broadsheet;
+
+    pure function pick(workbench-light: color, workbench-dark: color, broadsheet-light: color, broadsheet-dark: color,
+        terminal-light: color, terminal-dark: color) -> color {
+        if broadsheet {
+            return dark ? broadsheet-dark : broadsheet-light;
+        }
+        if terminal {
+            return dark ? terminal-dark : terminal-light;
+        }
+        return dark ? workbench-dark : workbench-light;
+    }
+
+    pure function size(workbench-size: length, broadsheet-size: length, terminal-size: length) -> length {
+        return broadsheet ? broadsheet-size : terminal ? terminal-size : workbench-size;
+    }
+}
+
+// Every account has a colour and a key (⌘1 … ⌘0), so that it is recognised in lists, windows and
+// notifications. The design's ten hues, in oklch, converted to sRGB. Workbench shows the first
+// account in the brand's indigo.
+export global AccountColors {
+    public pure function accent(index: int, dark: bool) -> color {
+        return dark ? [#55c6f4, #f496bb, #73ce95, #efa464, #bda8fc, #fb9890, #3ed0c8, #92b6ff, #adc367, #e39bdc][Math.mod(index, 10)]
+            : [#0082b4, #b14c79, #008b4e, #ae5c00, #7c60bd, #b84d49, #008d87, #4b70c6, #6b7f00, #a1529b][Math.mod(index, 10)];
+    }
+
+    public pure function accent-ink(index: int, dark: bool) -> color {
+        return dark ? [#98dcfb, #fcbcd4, #a7e1ba, #f9c59c, #d4c7ff, #ffbdb7, #91e2dc, #b7d1ff, #cad99e, #f0bfea][Math.mod(index, 10)]
+            : [#006089, #863359, #006836, #844100, #5b4590, #8c3432, #006964, #345197, #4d5e00, #793974][Math.mod(index, 10)];
+    }
+
+    public pure function tint(index: int, dark: bool) -> color {
+        return dark ? [#003345, #45202f, #0f3620, #43260a, #302749, #47211e, #003734, #1f2d4c, #2a320b, #3e223c][Math.mod(index, 10)]
+            : [#dbf3ff, #ffe7ef, #e0f5e6, #feeadb, #efebff, #ffe7e4, #d9f5f3, #e5efff, #ecf2dc, #fbe8f8][Math.mod(index, 10)];
+    }
+
+    public pure function tint-ink(index: int, dark: bool) -> color {
+        return dark ? [#d4ecf8, #f9e0e9, #d9eedf, #f8e4d4, #e9e4fa, #fce1de, #d2efec, #dee8fd, #e5ebd5, #f4e1f2][Math.mod(index, 10)]
+            : [#002e44, #42182b, #003319, #411f00, #2c2047, #451816, #003330, #18274b, #252d00, #3b1a39][Math.mod(index, 10)];
+    }
+
+    // "⌘1" … "⌘9", "⌘0"
+    public pure function key(index: int) -> string {
+        return "⌘" + (index == 9 ? 0 : index + 1);
+    }
+}

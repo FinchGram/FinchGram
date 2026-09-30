@@ -1,0 +1,1360 @@
+// Broadsheet (the design's "1a 报纸"): a newspaper's calm. A rail with the accounts, the chat list
+// with its folders as tabs, and the conversation in bubbles. The accent is the account's colour.
+import { ListView } from "std-widgets.slint";
+import { AppState, Page, Connection } from "../state.slint";
+import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status } from "../telegram.slint";
+import { AccountColors } from "../look.slint";
+import { Fmt } from "../format.slint";
+import { Icon, Logo, Paragraph, WindowButtonsSpace, WindowMover } from "../widgets.slint";
+import { ChatScroll, MessageInput, Capped } from "../chat.slint";
+import { BroadsheetPalette as P } from "palette.slint";
+
+export enum BroadsheetView { chats, channels, bots, filters, scheduled }
+
+component DuoIcon inherits Icon {
+    duotone: true;
+}
+
+component TitleBar inherits Rectangle {
+    height: 40px;
+    background: P.rail;
+
+    WindowMover { }
+
+    Rectangle {
+        y: parent.height - 2px;
+        height: 2px;
+        background: P.accent;
+    }
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 8px;
+        WindowButtonsSpace { }
+        HorizontalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 8px;
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 9px;
+                    height: 9px;
+                    border-radius: 2px;
+                    background: P.accent;
+                }
+            }
+            Text {
+                text: Account.name;
+                color: P.text;
+                font-size: 14px;
+                font-weight: 600;
+                vertical-alignment: center;
+            }
+            Text {
+                text: AccountColors.key(0);
+                color: P.accent-ink;
+                font-family: P.mono;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+            Text {
+                text: "— FinchGram";
+                color: P.faint;
+                font-size: 14px;
+                vertical-alignment: center;
+            }
+        }
+        Rectangle {
+            HorizontalLayout {
+                spacing: 6px;
+                VerticalLayout {
+                    alignment: center;
+                    DuoIcon {
+                        name: P.dark ? "sun" : "moon";
+                        size: 16px;
+                        color: P.muted;
+                    }
+                }
+                Text {
+                    text: P.dark ? @tr("Light") : @tr("Dark");
+                    color: P.muted;
+                    font-size: 13px;
+                    vertical-alignment: center;
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    AppState.change-appearance(P.dark ? "light" : "dark");
+                }
+            }
+        }
+    }
+}
+
+// The accounts, each in its colour with its key; settings at the foot.
+component Rail inherits Rectangle {
+    width: 80px;
+    background: P.rail;
+
+    VerticalLayout {
+        padding-top: 12px;
+        padding-bottom: 14px;
+        spacing: 14px;
+        alignment: start;
+        HorizontalLayout {
+            alignment: center;
+            Logo {
+                size: 40px;
+                radius: 10px;
+            }
+        }
+        Text {
+            text: @tr("Accounts") + " 1/10";
+            color: P.faint;
+            font-size: 11px;
+            horizontal-alignment: center;
+        }
+        VerticalLayout {
+            spacing: 4px;
+            HorizontalLayout {
+                alignment: center;
+                // The account in front: its colour, ringed.
+                Rectangle {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 7px;
+                    border-width: 2px;
+                    border-color: P.accent;
+                    Rectangle {
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 4px;
+                        background: P.accent;
+                        Text {
+                            text: Account.initial;
+                            color: P.on-accent;
+                            font-size: 14px;
+                            font-weight: 600;
+                        }
+                    }
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            AppState.page = Page.profile;
+                        }
+                    }
+                }
+            }
+            Text {
+                text: AccountColors.key(0);
+                color: P.accent-ink;
+                font-family: P.mono;
+                font-size: 10px;
+                font-weight: 600;
+                horizontal-alignment: center;
+            }
+        }
+    }
+
+    VerticalLayout {
+        padding-bottom: 16px;
+        alignment: end;
+        HorizontalLayout {
+            alignment: center;
+            DuoIcon {
+                name: "gear-six";
+                size: 22px;
+                color: P.muted;
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        AppState.page = Page.settings;
+                    }
+                }
+            }
+        }
+    }
+}
+
+component ViewButton inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <bool> active;
+    in property <bool> enabled: true;
+    callback activated();
+    height: 44px;
+    border-radius: 4px;
+    background: active ? P.tint : touch.has-hover && enabled ? P.hover : transparent;
+    opacity: enabled ? 1 : 0.4;
+
+    VerticalLayout {
+        alignment: center;
+        spacing: 2px;
+        HorizontalLayout {
+            alignment: center;
+            DuoIcon {
+                name: root.icon;
+                size: 18px;
+                color: root.active ? P.tint-ink : P.muted;
+            }
+        }
+        Text {
+            text: root.label;
+            color: root.active ? P.tint-ink : P.muted;
+            font-size: 11px;
+            horizontal-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+component Views {
+    in-out property <BroadsheetView> view;
+
+    HorizontalLayout {
+        spacing: 4px;
+        ViewButton {
+            icon: "chats";
+            label: @tr("Chats");
+            active: root.view == BroadsheetView.chats;
+            activated => {
+                root.view = BroadsheetView.chats;
+            }
+        }
+        ViewButton {
+            icon: "megaphone";
+            label: @tr("Channels");
+            active: root.view == BroadsheetView.channels;
+            activated => {
+                root.view = BroadsheetView.channels;
+            }
+        }
+        ViewButton {
+            icon: "robot";
+            label: @tr("Bots");
+            active: root.view == BroadsheetView.bots;
+            activated => {
+                root.view = BroadsheetView.bots;
+            }
+        }
+        // Keyword filters and scheduled messages are still to come.
+        ViewButton {
+            icon: "funnel-simple";
+            label: @tr("Filters");
+            enabled: false;
+        }
+        ViewButton {
+            icon: "clock";
+            label: @tr("Scheduled");
+            enabled: false;
+        }
+    }
+}
+
+component SearchField inherits Rectangle {
+    height: 34px;
+    border-radius: 4px;
+    background: P.surface;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            DuoIcon {
+                name: "magnifying-glass";
+                size: 15px;
+                color: P.faint;
+            }
+        }
+        Rectangle {
+            horizontal-stretch: 1;
+            Text {
+                width: parent.width;
+                visible: input.text == "";
+                text: @tr("Search");
+                color: P.faint;
+                font-size: 14px;
+                vertical-alignment: center;
+            }
+            input := TextInput {
+                width: parent.width;
+                height: parent.height;
+                text: Chats.query;
+                color: P.text;
+                font-size: 14px;
+                vertical-alignment: center;
+                selection-background-color: P.tint;
+                edited => {
+                    Chats.search(self.text);
+                }
+                accepted => {
+                    if Chats.list.length > 0 {
+                        Conversation.open(Chats.list[0].id);
+                    }
+                }
+                key-pressed(event) => {
+                    if event.text == Key.Escape {
+                        self.text = "";
+                        Chats.search("");
+                        return accept;
+                    }
+                    return reject;
+                }
+            }
+        }
+        Text {
+            text: "⌘K";
+            color: P.faint;
+            font-family: P.mono;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+
+    property <int> search-requests: AppState.search-requests;
+    changed search-requests => {
+        root.focus-search();
+    }
+
+    public function focus-search() {
+        input.focus();
+        input.select-all();
+    }
+}
+
+component FolderTab {
+    in property <int> index;
+    property <bool> active: index == Chats.folder;
+
+    VerticalLayout {
+        spacing: 4px;
+        HorizontalLayout {
+            spacing: 4px;
+            Text {
+                text: root.index < Chats.folders.length ? (Chats.folders[root.index].id == 0 ? @tr("All") : Chats.folders[root.index].name) : "";
+                color: root.active ? P.text : P.muted;
+                font-size: 14px;
+                font-weight: root.active ? 600 : 400;
+            }
+            if root.index < Chats.folders.length && Chats.folders[root.index].unread > 0: Text {
+                text: Chats.folders[root.index].unread > 99 ? "99+" : "" + Chats.folders[root.index].unread;
+                color: P.accent-ink;
+                font-size: 11px;
+                font-weight: 600;
+                vertical-alignment: bottom;
+            }
+        }
+        Rectangle {
+            height: 2px;
+            background: root.active ? P.accent : transparent;
+        }
+    }
+
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Chats.show-folder(root.index);
+        }
+    }
+}
+
+// The folders as tabs: the first four, the rest behind "More".
+component Folders {
+    HorizontalLayout {
+        for folder[index] in Chats.folders: Rectangle {
+            visible: index < 4;
+            width: index < 4 ? tab.preferred-width + 14px : 0px;
+            tab := FolderTab {
+                x: 0;
+                width: self.preferred-width;
+                index: index;
+            }
+        }
+        Rectangle { horizontal-stretch: 1; }
+        if Chats.folders.length > 4: Rectangle {
+            HorizontalLayout {
+                spacing: 4px;
+                Text {
+                    text: Chats.folder >= 4 ? Chats.folders[Chats.folder].name : @tr("More");
+                    color: Chats.folder >= 4 ? P.text : P.muted;
+                    font-size: 14px;
+                    font-weight: Chats.folder >= 4 ? 600 : 400;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    DuoIcon {
+                        name: "caret-down";
+                        size: 12px;
+                        color: P.muted;
+                    }
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    list.show();
+                }
+            }
+            list := PopupWindow {
+                x: 0;
+                y: 26px;
+                width: 180px;
+                close-policy: PopupClosePolicy.close-on-click-outside;
+                Rectangle {
+                    border-radius: 4px;
+                    background: P.panel;
+                    drop-shadow-blur: 32px;
+                    drop-shadow-offset-y: 12px;
+                    drop-shadow-color: P.shadow;
+                    VerticalLayout {
+                        padding: 6px;
+                        for folder[index] in Chats.folders: Rectangle {
+                            visible: index >= 4;
+                            height: index >= 4 ? 34px : 0px;
+                            border-radius: 2px;
+                            background: index == Chats.folder ? P.sel : entry.has-hover ? P.hover : transparent;
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                Text {
+                                    horizontal-stretch: 1;
+                                    text: folder.name;
+                                    color: P.text;
+                                    font-size: 14px;
+                                    font-weight: index == Chats.folder ? 600 : 400;
+                                    vertical-alignment: center;
+                                }
+                                if folder.unread > 0: Text {
+                                    text: folder.unread;
+                                    color: P.accent-ink;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            entry := TouchArea {
+                                clicked => {
+                                    Chats.show-folder(index);
+                                    list.close();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Letter squares by kind of chat (the design's avA).
+global Avatars {
+    public pure function fill(kind: ChatKind) -> color {
+        if kind == ChatKind.group || kind == ChatKind.bot || kind == ChatKind.saved {
+            return P.tint;
+        }
+        if kind == ChatKind.channel {
+            return P.channel;
+        }
+        return P.surface;
+    }
+
+    public pure function ink(kind: ChatKind) -> color {
+        if kind == ChatKind.group || kind == ChatKind.bot {
+            return P.tint-ink;
+        }
+        if kind == ChatKind.saved {
+            return P.accent-ink;
+        }
+        if kind == ChatKind.channel {
+            return P.channel-ink;
+        }
+        return P.text;
+    }
+}
+
+component Badge inherits Rectangle {
+    in property <int> count;
+    in property <bool> muted;
+    height: 20px;
+    width: max(20px, label.preferred-width + 10px);
+    border-radius: 2px;
+    background: muted ? P.off : P.accent;
+
+    label := Text {
+        text: root.count > 999 ? "999+" : "" + root.count;
+        color: P.on-accent;
+        font-size: 12px;
+        font-weight: 600;
+    }
+}
+
+component ChatLine inherits Rectangle {
+    in property <ChatRow> chat;
+    property <bool> open: chat.id == Conversation.chat-id;
+    height: 66px;
+    background: open ? P.sel : touch.has-hover ? P.hover : transparent;
+
+    HorizontalLayout {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 11px;
+        padding-bottom: 11px;
+        spacing: 12px;
+        Rectangle {
+            width: 44px;
+            height: 44px;
+            border-radius: 4px;
+            background: Avatars.fill(root.chat.kind);
+            Text {
+                text: root.chat.initial;
+                color: Avatars.ink(root.chat.kind);
+                font-size: 18px;
+                font-weight: 600;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            alignment: center;
+            HorizontalLayout {
+                spacing: 6px;
+                if root.chat.pinned: VerticalLayout {
+                    alignment: center;
+                    DuoIcon {
+                        name: "push-pin";
+                        size: 14px;
+                        color: P.accent;
+                    }
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: root.chat.title;
+                    color: P.text;
+                    font-size: 15px;
+                    font-weight: 600;
+                    overflow: elide;
+                }
+                Text {
+                    text: root.chat.has-message ? Fmt.list-time(root.chat.time) : "";
+                    color: P.faint;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                }
+            }
+            HorizontalLayout {
+                spacing: 6px;
+                Text {
+                    horizontal-stretch: 1;
+                    text: Fmt.preview(root.chat);
+                    color: P.muted;
+                    font-size: 14px;
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+                if root.chat.unread > 0: VerticalLayout {
+                    alignment: center;
+                    Badge {
+                        count: root.chat.unread;
+                        muted: root.chat.muted;
+                    }
+                }
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Conversation.open(root.chat.id);
+        }
+    }
+}
+
+component ChannelLine inherits Rectangle {
+    in property <ChatRow> chat;
+    height: 76px;
+    background: touch.has-hover ? P.hover : transparent;
+
+    HorizontalLayout {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 11px;
+        padding-bottom: 11px;
+        spacing: 12px;
+        Rectangle {
+            width: 44px;
+            height: 44px;
+            border-radius: 4px;
+            background: P.surface;
+            Text {
+                text: root.chat.initial;
+                color: P.text;
+                font-size: 18px;
+                font-weight: 600;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            HorizontalLayout {
+                spacing: 6px;
+                Text {
+                    horizontal-stretch: 1;
+                    text: root.chat.title;
+                    color: P.text;
+                    font-size: 15px;
+                    font-weight: 600;
+                    overflow: elide;
+                }
+                if root.chat.unread > 0: Badge {
+                    count: root.chat.unread;
+                    muted: true;
+                }
+            }
+            Text {
+                text: Fmt.body(root.chat.content, root.chat.text, root.chat.detail);
+                color: P.muted;
+                font-size: 14px;
+                overflow: elide;
+            }
+            Text {
+                text: root.chat.members > 0 ? @tr("{n} subscriber" | "{n} subscribers" % root.chat.members) : "";
+                color: P.faint;
+                font-size: 12px;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Conversation.open(root.chat.id);
+        }
+    }
+}
+
+component BotLine inherits Rectangle {
+    in property <ChatRow> chat;
+    height: 58px;
+    background: touch.has-hover ? P.sel : transparent;
+
+    HorizontalLayout {
+        padding-left: 20px;
+        padding-right: 20px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 40px;
+                height: 40px;
+                border-radius: 4px;
+                background: root.chat.verified ? P.tint : P.surface;
+                Text {
+                    text: root.chat.initial;
+                    color: root.chat.verified ? P.tint-ink : P.text;
+                    font-size: 16px;
+                    font-weight: 600;
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 1px;
+            HorizontalLayout {
+                spacing: 4px;
+                alignment: start;
+                Text {
+                    text: root.chat.title;
+                    color: P.text;
+                    font-size: 15px;
+                    font-weight: 600;
+                    overflow: elide;
+                }
+                if root.chat.verified: VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "seal-check";
+                        size: 14px;
+                        color: P.accent;
+                        duotone: false;
+                    }
+                }
+            }
+            Text {
+                text: root.chat.username == "" ? Fmt.preview(root.chat) : "@" + root.chat.username + " · " + Fmt.preview(root.chat);
+                color: P.muted;
+                font-size: 13px;
+                overflow: elide;
+            }
+        }
+        if root.chat.unread > 0: VerticalLayout {
+            alignment: center;
+            Badge {
+                count: root.chat.unread;
+                muted: root.chat.muted;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Conversation.open(root.chat.id);
+        }
+    }
+}
+
+component SectionTitle inherits Text {
+    color: P.faint;
+    font-size: 12px;
+    letter-spacing: 0.24px;
+}
+
+component ListColumn inherits Rectangle {
+    in-out property <BroadsheetView> view;
+    width: 300px;
+    background: P.bg;
+
+    public function focus-search() {
+        search.focus-search();
+    }
+
+    VerticalLayout {
+        VerticalLayout {
+            vertical-stretch: 0;
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 20px;
+            padding-bottom: 10px;
+            spacing: 6px;
+            HorizontalLayout {
+                spacing: 8px;
+                Text {
+                    horizontal-stretch: 1;
+                    text: root.view == BroadsheetView.channels ? @tr("Channels")
+                        : root.view == BroadsheetView.bots ? @tr("Bots") : Account.name;
+                    color: P.text;
+                    font-size: 28px;
+                    font-weight: 600;
+                    line-height-factor: P.leading(1.2);
+                    overflow: elide;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    if root.view == BroadsheetView.chats: DuoIcon {
+                        // Writing to someone new is still to come.
+                        name: "note-pencil";
+                        size: 20px;
+                        color: P.accent;
+                        opacity: 0.4;
+                    }
+                    if root.view != BroadsheetView.chats: DuoIcon {
+                        name: "x";
+                        size: 18px;
+                        color: P.muted;
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.view = BroadsheetView.chats;
+                            }
+                        }
+                    }
+                }
+            }
+            Text {
+                text: root.view == BroadsheetView.bots ? @tr("Telegram bots") : Account.phone;
+                color: P.accent-ink;
+                font-size: 13px;
+            }
+            Views {
+                view <=> root.view;
+            }
+            search := SearchField {
+                visible: root.view == BroadsheetView.chats;
+                height: root.view == BroadsheetView.chats ? 34px : 0px;
+            }
+            if root.view == BroadsheetView.chats: VerticalLayout {
+                padding-top: 6px;
+                Folders { }
+            }
+        }
+
+        if AppState.connection != Connection.ready && AppState.connection != Connection.updating: HorizontalLayout {
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 8px;
+            Rectangle {
+                height: 36px;
+                border-radius: 4px;
+                background: P.surface;
+                HorizontalLayout {
+                    padding-left: 12px;
+                    spacing: 8px;
+                    VerticalLayout {
+                        alignment: center;
+                        DuoIcon {
+                            name: AppState.connection == Connection.waiting-for-network ? "wifi-slash" : "circle-notch";
+                            size: 16px;
+                            color: P.accent2-ink;
+                        }
+                    }
+                    Text {
+                        text: Fmt.connection(AppState.connection);
+                        color: P.accent2-ink;
+                        font-size: 13px;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+
+        if root.view == BroadsheetView.chats && Chats.loaded && Chats.list.length == 0: VerticalLayout {
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 28px;
+            spacing: 8px;
+            Text {
+                text: Chats.folder == 0 ? @tr("No chats yet") : @tr("No chats in this folder");
+                color: P.text;
+                font-size: 18px;
+                font-weight: 600;
+            }
+            Paragraph {
+                text: Chats.folder == 0 ? @tr("Search for a username or phone number, or open an invite link someone sent you, to start chatting.")
+                    : @tr("Chats you add to this folder in Telegram show up here.");
+                color: P.muted;
+                font-size: 14px;
+                line-height-factor: P.leading(1.55);
+            }
+        }
+
+        if root.view == BroadsheetView.chats: ListView {
+            vertical-stretch: 1;
+            for chat in Chats.list: ChatLine {
+                chat: chat;
+            }
+        }
+        if root.view == BroadsheetView.channels: ListView {
+            vertical-stretch: 1;
+            for chat in Chats.channels: ChannelLine {
+                chat: chat;
+            }
+        }
+        if root.view == BroadsheetView.bots: Flickable {
+            vertical-stretch: 1;
+            mouse-drag-pan-enabled: false;
+            VerticalLayout {
+                alignment: start;
+                if Chats.official-bots.length > 0: HorizontalLayout {
+                    padding-left: 20px;
+                    padding-top: 12px;
+                    padding-bottom: 4px;
+                    SectionTitle {
+                        text: @tr("Official bots");
+                    }
+                }
+                for chat in Chats.official-bots: BotLine {
+                    chat: chat;
+                }
+                if Chats.bots.length > 0: HorizontalLayout {
+                    padding-left: 20px;
+                    padding-top: 12px;
+                    padding-bottom: 4px;
+                    SectionTitle {
+                        text: @tr("Other bots");
+                    }
+                }
+                for chat in Chats.bots: BotLine {
+                    chat: chat;
+                }
+                HorizontalLayout {
+                    padding: 20px;
+                    Paragraph {
+                        text: @tr("Bots with a check mark are Telegram's own. Other bots see what you send them.");
+                        color: P.faint;
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// A message as a bubble: theirs on the left, ours on the right in the account's tint.
+component Bubble {
+    in property <MessageRow> message;
+    property <bool> mine: message.outgoing;
+    height: bubble.height;
+
+    bubble := Rectangle {
+        width: min(content.preferred-width, root.width * 0.72);
+        height: content.preferred-height;
+        x: root.mine ? root.width - self.width : 0;
+        border-radius: 4px;
+        background: root.mine ? P.tint : P.theirs;
+
+        content := VerticalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            spacing: 4px;
+            if !root.mine && Conversation.kind == ChatKind.group: Text {
+                text: root.message.sender;
+                color: P.accent-ink;
+                font-size: 13px;
+                font-weight: 600;
+                overflow: elide;
+            }
+            Paragraph {
+                text: Fmt.body(root.message.content, root.message.text, root.message.detail);
+                color: root.mine ? P.tint-ink : root.message.content == Content.text ? P.text : P.muted;
+                font-size: 16px;
+                line-height-factor: P.leading(1.45);
+            }
+            if root.message.failed: Rectangle {
+                HorizontalLayout {
+                    spacing: 4px;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "warning-circle";
+                            size: 13px;
+                            color: P.accent2-ink;
+                            duotone: false;
+                        }
+                    }
+                    Text {
+                        text: @tr("Failed to send · Tap to retry");
+                        color: P.accent2-ink;
+                        font-size: 12px;
+                    }
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Conversation.retry(root.message.id);
+                    }
+                }
+            }
+            HorizontalLayout {
+                alignment: root.mine ? end : start;
+                spacing: 4px;
+                Text {
+                    text: root.message.edited ? @tr("edited") + " " + root.message.time : root.message.time;
+                    color: root.mine ? P.accent-ink : P.faint;
+                    font-size: 12px;
+                }
+                if root.mine: VerticalLayout {
+                    alignment: center;
+                    DuoIcon {
+                        name: root.message.sending ? "clock" : root.message.seen ? "checks" : "check";
+                        size: 13px;
+                        color: P.accent-ink;
+                    }
+                }
+            }
+        }
+    }
+}
+
+component Post inherits Capped {
+    in property <MessageRow> message;
+    spacing: 6px;
+
+    Rectangle { height: 6px; }
+    Paragraph {
+        text: Fmt.body(root.message.content, root.message.text, root.message.detail);
+        color: P.text;
+        font-size: 16px;
+        line-height-factor: P.leading(1.6);
+    }
+    Text {
+        text: root.message.edited ? @tr("edited") + " " + root.message.time : root.message.time;
+        color: P.faint;
+        font-size: 12px;
+    }
+    Rectangle { height: 4px; }
+}
+
+component Sponsored inherits Rectangle {
+    in property <MessageRow> message;
+    height: card.preferred-height;
+    border-radius: 4px;
+    background: P.surface;
+
+    card := VerticalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        spacing: 4px;
+        Text {
+            text: @tr("Sponsored · placed by Telegram · Premium users can turn these off");
+            color: P.faint;
+            font-size: 12px;
+            overflow: elide;
+        }
+        Text {
+            text: root.message.sender;
+            color: P.text;
+            font-size: 15px;
+            font-weight: 600;
+        }
+        Paragraph {
+            text: root.message.text;
+            color: P.muted;
+            font-size: 14px;
+        }
+        if root.message.button != "": HorizontalLayout {
+            alignment: start;
+            padding-top: 4px;
+            Rectangle {
+                height: 28px;
+                width: action.preferred-width + 20px;
+                border-radius: 2px;
+                background: P.tint;
+                action := Text {
+                    text: root.message.button;
+                    color: P.tint-ink;
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Conversation.open-sponsored(root.message.id);
+                    }
+                }
+            }
+        }
+    }
+}
+
+component Line {
+    in property <MessageRow> message;
+
+    VerticalLayout {
+        if root.message.kind == RowKind.day: Text {
+            height: 30px;
+            text: Fmt.day-title(root.message.day);
+            color: P.faint;
+            font-size: 13px;
+            horizontal-alignment: center;
+            vertical-alignment: bottom;
+        }
+        if root.message.kind == RowKind.service: Paragraph {
+            text: Fmt.service(root.message.content, root.message.outgoing ? @tr("You") : root.message.sender, root.message.detail);
+            color: P.faint;
+            font-size: 13px;
+            horizontal-alignment: center;
+        }
+        if root.message.kind == RowKind.sponsored: Capped {
+            Sponsored {
+                message: root.message;
+            }
+        }
+        if root.message.kind == RowKind.message && Conversation.kind == ChatKind.channel: Post {
+            message: root.message;
+        }
+        if root.message.kind == RowKind.message && Conversation.kind != ChatKind.channel: Bubble {
+            message: root.message;
+        }
+    }
+}
+
+component MenuEntry inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <string> keys;
+    callback activated();
+    height: 34px;
+    border-radius: 2px;
+    background: touch.has-hover ? P.hover : transparent;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            DuoIcon {
+                name: root.icon;
+                size: 17px;
+                color: P.accent;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.label;
+            color: P.text;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: root.keys;
+            color: P.faint;
+            font-family: P.mono;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+component ConversationPane inherits Rectangle {
+    background: P.panel;
+
+    if Conversation.chat-id == "": Text {
+        text: @tr("Choose a chat on the left");
+        color: P.faint;
+        font-size: 15px;
+    }
+
+    if Conversation.chat-id != "": VerticalLayout {
+        HorizontalLayout {
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-top: 16px;
+            padding-bottom: 12px;
+            spacing: 14px;
+            VerticalLayout {
+                horizontal-stretch: 1;
+                spacing: 2px;
+                Text {
+                    text: Conversation.title;
+                    color: P.text;
+                    font-size: 20px;
+                    font-weight: 600;
+                    overflow: elide;
+                }
+                Text {
+                    text: Conversation.typing != "" ? @tr("typing…")
+                        : Fmt.status(Conversation.status, Conversation.last-seen, Conversation.members, Conversation.online-members);
+                    color: Conversation.typing != "" || Conversation.status == Status.online ? P.accent-ink : P.faint;
+                    font-italic: Conversation.typing != "";
+                    font-size: 13px;
+                    overflow: elide;
+                }
+            }
+            // Searching, calls and the chat's settings panel are still to come.
+            for name in ["magnifying-glass", "phone", "sidebar-simple"]: VerticalLayout {
+                alignment: center;
+                DuoIcon {
+                    name: name;
+                    size: 20px;
+                    color: P.muted;
+                    opacity: 0.4;
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                more := DuoIcon {
+                    name: "dots-three";
+                    size: 22px;
+                    color: P.muted;
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            menu.show();
+                        }
+                    }
+                }
+            }
+        }
+
+        ChatScroll {
+            vertical-stretch: 1;
+            spacing: 10px;
+            margin-left: 24px;
+            margin-right: 24px;
+            margin-top: 4px;
+            margin-bottom: 16px;
+            for row in Conversation.messages: Line {
+                message: row;
+            }
+            if Conversation.typing != "": Text {
+                text: @tr("{0} is typing…", Conversation.typing);
+                color: P.faint;
+                font-size: 13px;
+            }
+        }
+
+        if Conversation.can-write: VerticalLayout {
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-top: 8px;
+            padding-bottom: 20px;
+            spacing: 10px;
+            HorizontalLayout {
+                spacing: 6px;
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 2px;
+                        background: P.accent;
+                    }
+                }
+                Text {
+                    text: @tr("Sending as {0}", Account.name);
+                    color: P.accent-ink;
+                    font-size: 12px;
+                }
+            }
+            HorizontalLayout {
+                spacing: 10px;
+                alignment: stretch;
+                Rectangle {
+                    horizontal-stretch: 1;
+                    border-radius: 4px;
+                    background: P.surface;
+                    height: input.height;
+                    input := MessageInput {
+                        placeholder: @tr("Write a message…");
+                        text-color: P.text;
+                        placeholder-color: P.faint;
+                        selection-color: P.tint;
+                        font-family: P.font;
+                        font-size: 16px;
+                        padding-x: 14px;
+                        padding-y: 9px;
+                        base-height: 40px;
+                        send(words) => {
+                            Conversation.send(words);
+                        }
+                    }
+                }
+                // Attachments and scheduling are still to come.
+                for name in ["paperclip", "clock"]: VerticalLayout {
+                    alignment: end;
+                    padding-bottom: 9px;
+                    DuoIcon {
+                        name: name;
+                        size: 22px;
+                        color: P.muted;
+                        opacity: 0.4;
+                    }
+                }
+                VerticalLayout {
+                    alignment: end;
+                    Rectangle {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 2px;
+                        background: send.has-hover ? P.accent.darker(0.1) : P.accent;
+                        DuoIcon {
+                            name: "paper-plane-tilt";
+                            size: 20px;
+                            color: P.on-accent;
+                        }
+                        send := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                input.send-now();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    menu := PopupWindow {
+        x: root.width - 254px;
+        y: 50px;
+        width: 230px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+
+        Rectangle {
+            border-radius: 4px;
+            background: P.panel;
+            drop-shadow-blur: 32px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: P.shadow;
+            VerticalLayout {
+                padding: 6px;
+                Text {
+                    height: 26px;
+                    x: 10px;
+                    text: Conversation.title;
+                    color: P.faint;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                MenuEntry {
+                    icon: Conversation.muted ? "bell" : "bell-slash";
+                    label: Conversation.muted ? @tr("Unmute") : @tr("Mute");
+                    keys: "⌘⇧M";
+                    activated => {
+                        Conversation.toggle-mute();
+                        menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "push-pin";
+                    label: Conversation.pinned ? @tr("Unpin") : @tr("Pin");
+                    activated => {
+                        Conversation.toggle-pin();
+                        menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "checks";
+                    label: @tr("Mark as read");
+                    keys: "⌘⇧R";
+                    activated => {
+                        Conversation.mark-read();
+                        menu.close();
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component BroadsheetWindow inherits Rectangle {
+    property <BroadsheetView> view: BroadsheetView.chats;
+    background: P.bg;
+
+    // ⌘K, from the menu bar (app.slint).
+    public function focus-search() {
+        root.view = BroadsheetView.chats;
+        list.focus-search();
+    }
+
+    VerticalLayout {
+        TitleBar { }
+        HorizontalLayout {
+            vertical-stretch: 1;
+            Rail { }
+            list := ListColumn {
+                view <=> root.view;
+            }
+            ConversationPane {
+                horizontal-stretch: 1;
+            }
+        }
+    }
+}

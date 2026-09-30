@@ -1,0 +1,35 @@
+// Workbench's colours (the design's first round, "1c 工作台": TC). Its chat window only; the shared
+// pages use Look.
+import { Look } from "../look.slint";
+
+export global WorkbenchPalette {
+    out property <bool> dark: Look.dark;
+    out property <color> bg: dark ? #17191d : #ffffff;
+    out property <color> chrome: dark ? #1e2126 : #f3f4f6;
+    out property <color> side: dark ? #1b1e22 : #f7f8fa;
+    out property <color> text: dark ? #e2e5e9 : #1b1f24;
+    out property <color> muted: dark ? #9aa2ac : #5f6773;
+    out property <color> faint: dark ? #6d7580 : #8b929c;
+    out property <color> accent: dark ? #8e9ff0 : #4a5fc1;
+    out property <color> accent-soft: dark ? #252b45 : #eceffc;
+    out property <color> accent-ink: dark ? #c3ccf7 : #2f3f8f;
+    out property <color> teal: dark ? #6fd0c4 : #127a72;
+    out property <color> teal-soft: dark ? #17332f : #e3f4f1;
+    out property <color> warn: dark ? #f0a37a : #a34a1c;
+    out property <color> warn-soft: dark ? #3a261c : #fbeee6;
+    out property <color> line: dark ? #2b2f35 : #e4e7eb;
+    out property <color> sel: dark ? #252b45 : #e6eafb;
+    out property <color> tab: dark ? #1e2126 : #f3f4f6;
+    out property <color> tab-active: dark ? #17191d : #ffffff;
+    out property <color> on-accent: dark ? #17191d : #ffffff;
+    out property <color> off: dark ? #3a3f47 : #c9ced6;
+    out property <color> shadow: dark ? #00000066 : #1b1f2433;
+
+    out property <string> font: "IBM Plex Sans";
+    out property <string> mono: "IBM Plex Mono";
+
+    // Line height in em → Slint's factor (IBM Plex Sans's own is 1.3 em).
+    public pure function leading(em: float) -> float {
+        return em / 1.3;
+    }
+}

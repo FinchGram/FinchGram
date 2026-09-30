@@ -1,0 +1,997 @@
+//! What TDLib has told us about the account: its chats, the users and groups in them, its folders,
+//! and the messages of the chats that are open. It lives on the UI thread and changes there, from
+//! updates, in batches (docs/architecture.md). After each batch, and after each change the pages
+//! ask for, [`refresh`] brings the pages' models up to date; a model whose rows did not change is
+//! left alone, so lists keep their scroll position.
+//!
+//! chats.rs, conversation.rs and account.rs add what the pages can do with it.
+
+use std::cell::RefCell;
+use std::collections::{BTreeMap, HashMap};
+use std::rc::Rc;
+use std::time::{Duration, Instant};
+
+use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
+
+use super::api::{
+    self, ChatList, ChatMemberStatus, ChatType, MessageContent as M, MessageSender, MessageSendingState,
+    NotificationSettingsScope, Update, UserStatus, UserType,
+};
+use super::time;
+use crate::{
+    Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, MainWindow, MessageRow, Moment, RowKind,
+    Status, Tab, TreeRow, Words,
+};
+
+/// How long someone counts as typing after TDLib last said so.
+pub const TYPING_LASTS: Duration = Duration::from_secs(6);
+
+/// The messages of an open chat that TDLib has given us, by id (oldest first).
+#[derive(Default)]
+pub struct History {
+    pub messages: BTreeMap<i64, api::Message>,
+    /// TDLib may have older messages than the oldest here.
+    pub has_older: bool,
+    /// A getChatHistory request is on its way.
+    pub loading: bool,
+}
+
+/// Which models need building again at the next refresh.
+#[derive(Default)]
+pub struct Dirty {
+    pub chats: bool,
+    pub conversation: bool,
+    pub account: bool,
+    /// The open chat should show its newest message.
+    pub scroll_to_end: bool,
+}
+
+/// The models the pages show, kept so that they can be updated in place.
+struct Models {
+    folders: Rc<VecModel<Folder>>,
+    list: Rc<VecModel<ChatRow>>,
+    tree: Rc<VecModel<TreeRow>>,
+    channels: Rc<VecModel<ChatRow>>,
+    official_bots: Rc<VecModel<ChatRow>>,
+    bots: Rc<VecModel<ChatRow>>,
+    tabs: Rc<VecModel<Tab>>,
+    messages: Rc<VecModel<MessageRow>>,
+}
+
+pub struct Store {
+    ui: slint::Weak<MainWindow>,
+    pub my_id: i64,
+    pub my_bio: String,
+    pub chats: HashMap<i64, api::Chat>,
+    pub users: HashMap<i64, api::User>,
+    pub basic_groups: HashMap<i64, api::BasicGroup>,
+    pub supergroups: HashMap<i64, api::Supergroup>,
+    /// Members of supergroups and channels from their full info: the supergroup itself often says 0.
+    pub supergroup_members: HashMap<i64, i32>,
+    pub online_members: HashMap<i64, i32>,
+    /// Whether chats that follow the default are muted, by kind of chat.
+    pub muted_by_default: HashMap<NotificationSettingsScope, bool>,
+    pub folders: Vec<api::ChatFolderInfo>,
+
+    /// The folder Broadsheet and Terminal show: 0 is All chats, then the account's folders.
+    pub shown_folder: usize,
+    /// Workbench's tree: folders the user expanded or collapsed, by folder id (0 for All chats).
+    pub expanded: HashMap<i32, bool>,
+    /// The search box's words, lower case.
+    pub query: String,
+
+    /// Workbench's tabs, in order; the others show only the front one.
+    pub tabs: Vec<i64>,
+    pub open: Option<i64>,
+    pub histories: HashMap<i64, History>,
+    /// Who is typing where, and since when.
+    pub typing: HashMap<i64, Vec<(MessageSender, Instant)>>,
+    pub sponsored: HashMap<i64, Vec<api::SponsoredMessage>>,
+
+    pub dirty: Dirty,
+    models: Models,
+}
+
+thread_local! {
+    static STORE: RefCell<Option<Store>> = const { RefCell::new(None) };
+}
+
+/// Set the store up for `ui` and give the pages its models. Call once, on the UI thread.
+pub fn install(ui: &MainWindow) {
+    let models = Models {
+        folders: Rc::new(VecModel::default()),
+        list: Rc::new(VecModel::default()),
+        tree: Rc::new(VecModel::default()),
+        channels: Rc::new(VecModel::default()),
+        official_bots: Rc::new(VecModel::default()),
+        bots: Rc::new(VecModel::default()),
+        tabs: Rc::new(VecModel::default()),
+        messages: Rc::new(VecModel::default()),
+    };
+    let chats = ui.global::<Chats>();
+    chats.set_folders(ModelRc::from(models.folders.clone()));
+    chats.set_list(ModelRc::from(models.list.clone()));
+    chats.set_tree(ModelRc::from(models.tree.clone()));
+    chats.set_channels(ModelRc::from(models.channels.clone()));
+    chats.set_official_bots(ModelRc::from(models.official_bots.clone()));
+    chats.set_bots(ModelRc::from(models.bots.clone()));
+    let conversation = ui.global::<Conversation>();
+    conversation.set_tabs(ModelRc::from(models.tabs.clone()));
+    conversation.set_messages(ModelRc::from(models.messages.clone()));
+
+    STORE.with(|store| {
+        *store.borrow_mut() = Some(Store {
+            ui: ui.as_weak(),
+            my_id: 0,
+            my_bio: String::new(),
+            chats: HashMap::new(),
+            users: HashMap::new(),
+            basic_groups: HashMap::new(),
+            supergroups: HashMap::new(),
+            supergroup_members: HashMap::new(),
+            online_members: HashMap::new(),
+            muted_by_default: HashMap::new(),
+            folders: Vec::new(),
+            shown_folder: 0,
+            expanded: HashMap::new(),
+            query: String::new(),
+            tabs: Vec::new(),
+            open: None,
+            histories: HashMap::new(),
+            typing: HashMap::new(),
+            sponsored: HashMap::new(),
+            dirty: Dirty::default(),
+            models,
+        })
+    });
+}
+
+/// Run `change` with the store, if it is installed.
+pub fn with<R>(change: impl FnOnce(&mut Store) -> R) -> Option<R> {
+    STORE.with(|store| store.borrow_mut().as_mut().map(change))
+}
+
+/// Forget the account (it logged out): every chat, user and message, and what the pages show.
+pub fn clear() {
+    with(|store| {
+        store.my_id = 0;
+        store.my_bio.clear();
+        store.chats.clear();
+        store.users.clear();
+        store.basic_groups.clear();
+        store.supergroups.clear();
+        store.supergroup_members.clear();
+        store.online_members.clear();
+        store.folders.clear();
+        store.shown_folder = 0;
+        store.expanded.clear();
+        store.query.clear();
+        store.tabs.clear();
+        store.open = None;
+        store.histories.clear();
+        store.typing.clear();
+        store.sponsored.clear();
+        store.dirty = Dirty { chats: true, conversation: true, account: true, scroll_to_end: false };
+    });
+    refresh();
+}
+
+/// Bring the pages' models up to date with what changed.
+pub fn refresh() {
+    let Some(ui) = STORE.with(|store| store.borrow().as_ref().and_then(|store| store.ui.upgrade())) else {
+        return;
+    };
+    let words = Names::from(&ui);
+    with(|store| {
+        let dirty = std::mem::take(&mut store.dirty);
+        if dirty.chats {
+            store.refresh_chats(&ui, &words);
+        }
+        if dirty.chats || dirty.conversation {
+            store.refresh_conversation(&ui, &words, dirty.scroll_to_end);
+        }
+        if dirty.account {
+            store.refresh_account(&ui);
+        }
+    });
+}
+
+/// Build everything again: the UI language changed, and with it the names Rust puts in rows.
+pub fn refresh_all() {
+    with(|store| {
+        store.dirty.chats = true;
+        store.dirty.conversation = true;
+        store.dirty.account = true;
+    });
+    refresh();
+}
+
+/// The names Telegram does not give, in the UI language (the Words global).
+pub struct Names {
+    saved_messages: String,
+    deleted_account: String,
+    all_chats: String,
+}
+
+impl Names {
+    fn from(ui: &MainWindow) -> Names {
+        let words = ui.global::<Words>();
+        Names {
+            saved_messages: words.get_saved_messages().into(),
+            deleted_account: words.get_deleted_account().into(),
+            all_chats: words.get_all_chats().into(),
+        }
+    }
+}
+
+/// Replace the rows of `model` with `rows`, touching only the rows that changed when the number of
+/// rows stays the same.
+fn sync<T: Clone + PartialEq + 'static>(model: &VecModel<T>, rows: Vec<T>) {
+    if model.row_count() != rows.len() {
+        model.set_vec(rows);
+        return;
+    }
+    for (index, row) in rows.into_iter().enumerate() {
+        if model.row_data(index).as_ref() != Some(&row) {
+            model.set_row_data(index, row);
+        }
+    }
+}
+
+/// The first letter of a name, for its letter square.
+pub fn initial(name: &str) -> SharedString {
+    name.chars().find(|c| !c.is_whitespace()).map(|c| c.to_uppercase().collect::<String>()).unwrap_or_default().into()
+}
+
+/// A colour for a sender, the same every time (Terminal's names).
+fn colour_of(sender: &MessageSender) -> i32 {
+    let id = match sender {
+        MessageSender::User { user_id } => *user_id,
+        MessageSender::Chat { chat_id } => *chat_id,
+    };
+    id.rem_euclid(8) as i32
+}
+
+impl Store {
+    // ---- updates ------------------------------------------------------------------------------
+
+    /// Take in an update. Returns what it asks for beyond the store: see [`Followup`].
+    pub fn apply(&mut self, update: Update) -> Followup {
+        let mut followup = Followup::None;
+        match update {
+            Update::Option { name, value } => {
+                if name == "my_id"
+                    && let api::OptionValue::Integer { value } = value
+                {
+                    self.my_id = value;
+                    self.dirty.chats = true;
+                }
+            }
+            Update::User { user } => {
+                if user.id == self.my_id {
+                    self.dirty.account = true;
+                }
+                self.users.insert(user.id, user);
+                self.dirty.chats = true;
+            }
+            Update::UserStatus { user_id, status } => {
+                if let Some(user) = self.users.get_mut(&user_id) {
+                    user.status = status;
+                    self.dirty.chats = true;
+                }
+            }
+            Update::UserFullInfo { user_id, user_full_info } => {
+                if user_id == self.my_id {
+                    self.my_bio = user_full_info.bio.map(|bio| bio.text).unwrap_or_default();
+                    self.dirty.account = true;
+                }
+            }
+            Update::BasicGroup { basic_group } => {
+                self.basic_groups.insert(basic_group.id, basic_group);
+                self.dirty.chats = true;
+            }
+            Update::Supergroup { supergroup } => {
+                self.supergroups.insert(supergroup.id, supergroup);
+                self.dirty.chats = true;
+            }
+            Update::SupergroupFullInfo { supergroup_id, supergroup_full_info } => {
+                self.supergroup_members.insert(supergroup_id, supergroup_full_info.member_count);
+                self.dirty.chats = true;
+            }
+            Update::NewChat { chat } => {
+                self.chats.insert(chat.id, *chat);
+                self.dirty.chats = true;
+            }
+            Update::ChatTitle { chat_id, title } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.title = title;
+                    self.dirty.chats = true;
+                }
+            }
+            Update::ChatPermissions { chat_id, permissions } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.permissions = permissions;
+                    self.dirty.conversation = true;
+                }
+            }
+            Update::ChatLastMessage { chat_id, last_message, positions } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.last_message = last_message;
+                    for position in positions {
+                        set_position(chat, position);
+                    }
+                    self.dirty.chats = true;
+                }
+            }
+            Update::ChatPosition { chat_id, position } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    set_position(chat, position);
+                    self.dirty.chats = true;
+                }
+            }
+            Update::ChatDraftMessage { chat_id, positions } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    for position in positions {
+                        set_position(chat, position);
+                    }
+                    self.dirty.chats = true;
+                }
+            }
+            Update::ChatReadInbox { chat_id, last_read_inbox_message_id, unread_count } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.last_read_inbox_message_id = last_read_inbox_message_id;
+                    chat.unread_count = unread_count;
+                    self.dirty.chats = true;
+                }
+            }
+            Update::ChatReadOutbox { chat_id, last_read_outbox_message_id } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.last_read_outbox_message_id = last_read_outbox_message_id;
+                    self.dirty.conversation = true;
+                }
+            }
+            Update::ChatUnreadMentionCount { chat_id, unread_mention_count }
+            | Update::MessageMentionRead { chat_id, unread_mention_count } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.unread_mention_count = unread_mention_count;
+                    self.dirty.chats = true;
+                }
+            }
+            Update::ChatNotificationSettings { chat_id, notification_settings } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.notification_settings = notification_settings;
+                    self.dirty.chats = true;
+                }
+            }
+            Update::ScopeNotificationSettings { scope, notification_settings } => {
+                self.muted_by_default.insert(scope, notification_settings.mute_for > 0);
+                self.dirty.chats = true;
+            }
+            Update::ChatIsMarkedAsUnread { chat_id, is_marked_as_unread } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.is_marked_as_unread = is_marked_as_unread;
+                    self.dirty.chats = true;
+                }
+            }
+            Update::ChatFolders { chat_folders } => {
+                self.folders = chat_folders;
+                if self.shown_folder > self.folders.len() {
+                    self.shown_folder = 0;
+                }
+                self.dirty.chats = true;
+                followup = Followup::LoadFolders;
+            }
+            Update::ChatOnlineMemberCount { chat_id, online_member_count } => {
+                self.online_members.insert(chat_id, online_member_count);
+                self.dirty.conversation = true;
+            }
+            Update::ChatAction { chat_id, sender_id, action } => {
+                let typing = self.typing.entry(chat_id).or_default();
+                typing.retain(|(sender, _)| *sender != sender_id);
+                if action == api::ChatAction::Typing {
+                    typing.push((sender_id, Instant::now()));
+                    followup = Followup::TypingExpires;
+                }
+                if self.open == Some(chat_id) {
+                    self.dirty.conversation = true;
+                }
+            }
+            Update::NewMessage { message } => {
+                let chat_id = message.chat_id;
+                // Someone who sends a message has stopped typing.
+                if let Some(typing) = self.typing.get_mut(&chat_id) {
+                    typing.retain(|(sender, _)| *sender != message.sender_id);
+                }
+                if let Some(history) = self.histories.get_mut(&chat_id) {
+                    let outgoing = message.is_outgoing;
+                    let id = message.id;
+                    history.messages.insert(id, *message);
+                    if self.open == Some(chat_id) {
+                        self.dirty.conversation = true;
+                        if outgoing {
+                            self.dirty.scroll_to_end = true;
+                        } else {
+                            followup = Followup::View { chat_id, message_ids: vec![id] };
+                        }
+                    }
+                }
+            }
+            Update::MessageSendSucceeded { message, old_message_id } | Update::MessageSendFailed { message, old_message_id } => {
+                let chat_id = message.chat_id;
+                if let Some(history) = self.histories.get_mut(&chat_id) {
+                    history.messages.remove(&old_message_id);
+                    history.messages.insert(message.id, *message);
+                    self.dirty.conversation |= self.open == Some(chat_id);
+                }
+            }
+            Update::MessageContent { chat_id, message_id, new_content } => {
+                if let Some(message) = self.histories.get_mut(&chat_id).and_then(|history| history.messages.get_mut(&message_id)) {
+                    message.content = new_content;
+                    self.dirty.conversation |= self.open == Some(chat_id);
+                }
+            }
+            Update::MessageEdited { chat_id, message_id, edit_date } => {
+                if let Some(message) = self.histories.get_mut(&chat_id).and_then(|history| history.messages.get_mut(&message_id)) {
+                    message.edit_date = edit_date;
+                    self.dirty.conversation |= self.open == Some(chat_id);
+                }
+            }
+            Update::DeleteMessages { chat_id, message_ids, is_permanent } => {
+                if is_permanent && let Some(history) = self.histories.get_mut(&chat_id) {
+                    for id in message_ids {
+                        history.messages.remove(&id);
+                    }
+                    self.dirty.conversation |= self.open == Some(chat_id);
+                }
+            }
+            Update::AuthorizationState { .. } | Update::ConnectionState { .. } | Update::Other => {}
+        }
+        followup
+    }
+
+    // ---- what a chat is -----------------------------------------------------------------------
+
+    pub fn kind(&self, chat: &api::Chat) -> ChatKind {
+        match chat.kind {
+            ChatType::Private { user_id } | ChatType::Secret { user_id } => {
+                if user_id == self.my_id {
+                    ChatKind::Saved
+                } else if self.users.get(&user_id).is_some_and(|user| user.kind == UserType::Bot) {
+                    ChatKind::Bot
+                } else {
+                    ChatKind::User
+                }
+            }
+            ChatType::BasicGroup { .. } | ChatType::Supergroup { is_channel: false, .. } => ChatKind::Group,
+            ChatType::Supergroup { is_channel: true, .. } => ChatKind::Channel,
+        }
+    }
+
+    /// The chat's name as the pages show it.
+    pub fn title(&self, chat: &api::Chat, names: &Names) -> String {
+        match chat.kind {
+            ChatType::Private { user_id } | ChatType::Secret { user_id } => {
+                if user_id == self.my_id {
+                    return names.saved_messages.clone();
+                }
+                if self.users.get(&user_id).is_some_and(|user| user.kind == UserType::Deleted) {
+                    return names.deleted_account.clone();
+                }
+                chat.title.clone()
+            }
+            _ => chat.title.clone(),
+        }
+    }
+
+    fn user_of(&self, chat: &api::Chat) -> Option<&api::User> {
+        match chat.kind {
+            ChatType::Private { user_id } | ChatType::Secret { user_id } => self.users.get(&user_id),
+            _ => None,
+        }
+    }
+
+    fn supergroup_of(&self, chat: &api::Chat) -> Option<&api::Supergroup> {
+        match chat.kind {
+            ChatType::Supergroup { supergroup_id, .. } => self.supergroups.get(&supergroup_id),
+            _ => None,
+        }
+    }
+
+    pub fn muted(&self, chat: &api::Chat) -> bool {
+        let settings = &chat.notification_settings;
+        if !settings.use_default_mute_for {
+            return settings.mute_for > 0;
+        }
+        let scope = match chat.kind {
+            ChatType::Private { .. } | ChatType::Secret { .. } => NotificationSettingsScope::Private,
+            ChatType::BasicGroup { .. } | ChatType::Supergroup { is_channel: false, .. } => NotificationSettingsScope::Group,
+            ChatType::Supergroup { is_channel: true, .. } => NotificationSettingsScope::Channel,
+        };
+        self.muted_by_default.get(&scope).copied().unwrap_or(false)
+    }
+
+    pub fn members(&self, chat: &api::Chat) -> i32 {
+        match chat.kind {
+            ChatType::BasicGroup { basic_group_id } => self.basic_groups.get(&basic_group_id).map_or(0, |group| group.member_count),
+            ChatType::Supergroup { supergroup_id, .. } => self
+                .supergroup_members
+                .get(&supergroup_id)
+                .copied()
+                .filter(|count| *count > 0)
+                .or_else(|| self.supergroups.get(&supergroup_id).map(|group| group.member_count))
+                .unwrap_or(0),
+            _ => 0,
+        }
+    }
+
+    /// Whether we may write in the chat.
+    pub fn can_write(&self, chat: &api::Chat) -> bool {
+        match chat.kind {
+            ChatType::Private { user_id } | ChatType::Secret { user_id } => {
+                self.users.get(&user_id).is_none_or(|user| user.kind != UserType::Deleted)
+            }
+            ChatType::BasicGroup { basic_group_id } => match self.basic_groups.get(&basic_group_id).map(|group| &group.status) {
+                Some(ChatMemberStatus::Creator | ChatMemberStatus::Administrator { .. }) => true,
+                Some(ChatMemberStatus::Member) => chat.permissions.can_send_basic_messages,
+                _ => false,
+            },
+            ChatType::Supergroup { supergroup_id, is_channel } => {
+                match self.supergroups.get(&supergroup_id).map(|group| &group.status) {
+                    Some(ChatMemberStatus::Creator) => true,
+                    Some(ChatMemberStatus::Administrator { rights }) => !is_channel || rights.can_post_messages,
+                    Some(ChatMemberStatus::Member) => !is_channel && chat.permissions.can_send_basic_messages,
+                    Some(ChatMemberStatus::Restricted { is_member, permissions }) => {
+                        !is_channel && *is_member && permissions.can_send_basic_messages
+                    }
+                    _ => false,
+                }
+            }
+        }
+    }
+
+    /// Who sent a message: a user's full name, or the chat's title.
+    pub fn sender_name(&self, sender: &MessageSender, names: &Names) -> String {
+        match sender {
+            MessageSender::User { user_id } => self.user_name(*user_id, names),
+            MessageSender::Chat { chat_id } => {
+                self.chats.get(chat_id).map(|chat| self.title(chat, names)).unwrap_or_default()
+            }
+        }
+    }
+
+    pub fn user_name(&self, user_id: i64, names: &Names) -> String {
+        match self.users.get(&user_id) {
+            Some(user) if user.kind == UserType::Deleted => names.deleted_account.clone(),
+            Some(user) => format!("{} {}", user.first_name, user.last_name).trim().to_string(),
+            None => String::new(),
+        }
+    }
+
+    /// The short name the chat list puts before a group's last message.
+    fn sender_first_name(&self, sender: &MessageSender, names: &Names) -> String {
+        match sender {
+            MessageSender::User { user_id } => match self.users.get(user_id) {
+                Some(user) if !user.first_name.is_empty() => user.first_name.clone(),
+                _ => self.user_name(*user_id, names),
+            },
+            MessageSender::Chat { .. } => self.sender_name(sender, names),
+        }
+    }
+
+    /// What a message holds: its kind, its words, and the detail the kind needs.
+    pub fn content(&self, message: &api::Message, names: &Names) -> (Content, String, String) {
+        let none = String::new;
+        match &message.content {
+            M::Text { text } => (Content::Text, text.text.clone(), none()),
+            M::AnimatedEmoji { emoji } => (Content::Text, emoji.clone(), none()),
+            M::Photo { caption } => (Content::Photo, caption.text.clone(), none()),
+            M::Video { caption } => (Content::Video, caption.text.clone(), none()),
+            M::Animation { caption } => (Content::Animation, caption.text.clone(), none()),
+            M::Audio { audio, caption } => {
+                let name = match (audio.performer.is_empty(), audio.title.is_empty()) {
+                    (false, false) => format!("{} – {}", audio.performer, audio.title),
+                    (_, false) => audio.title.clone(),
+                    _ => audio.file_name.clone(),
+                };
+                (Content::Audio, caption.text.clone(), name)
+            }
+            M::Document { document, caption } => (Content::Document, caption.text.clone(), document.file_name.clone()),
+            M::VoiceNote { caption } => (Content::VoiceNote, caption.text.clone(), none()),
+            M::VideoNote {} => (Content::VideoNote, none(), none()),
+            M::Sticker { sticker } => (Content::Sticker, none(), sticker.emoji.clone()),
+            M::Dice { emoji } => (Content::Dice, none(), emoji.clone()),
+            M::Location {} => (Content::Location, none(), none()),
+            M::Venue { venue } => (Content::Venue, none(), venue.title.clone()),
+            M::Contact { contact } => {
+                (Content::Contact, none(), format!("{} {}", contact.first_name, contact.last_name).trim().to_string())
+            }
+            M::Poll { poll } => (Content::Poll, none(), poll.question.text.clone()),
+            M::Game { game } => (Content::Game, none(), game.title.clone()),
+            M::Invoice {} => (Content::Invoice, none(), none()),
+            M::Call {} => (Content::Call, none(), none()),
+            M::Story {} => (Content::Story, none(), none()),
+            M::Gift {} => (Content::Gift, none(), none()),
+            M::BasicGroupChatCreate { title } | M::SupergroupChatCreate { title } => (Content::ChatCreated, none(), title.clone()),
+            M::ChatChangeTitle { title } => (Content::TitleChanged, none(), title.clone()),
+            M::ChatChangePhoto {} => (Content::PhotoChanged, none(), none()),
+            M::ChatDeletePhoto {} => (Content::PhotoRemoved, none(), none()),
+            M::ChatAddMembers { member_user_ids } => {
+                if matches!(message.sender_id, MessageSender::User { user_id } if member_user_ids == &[user_id]) {
+                    (Content::MemberJoined, none(), none())
+                } else {
+                    let added: Vec<String> = member_user_ids.iter().map(|id| self.user_name(*id, names)).collect();
+                    (Content::MembersAdded, none(), added.join(", "))
+                }
+            }
+            M::ChatJoinByLink {} | M::ChatJoinByRequest {} => (Content::MemberJoined, none(), none()),
+            M::ChatDeleteMember { user_id } => {
+                if matches!(message.sender_id, MessageSender::User { user_id: sender } if sender == *user_id) {
+                    (Content::MemberLeft, none(), none())
+                } else {
+                    (Content::MemberRemoved, none(), self.user_name(*user_id, names))
+                }
+            }
+            M::PinMessage {} => (Content::MessagePinned, none(), none()),
+            M::ScreenshotTaken {} => (Content::ScreenshotTaken, none(), none()),
+            M::ContactRegistered {} => (Content::ContactJoined, none(), none()),
+            M::Other => (Content::Unsupported, none(), none()),
+        }
+    }
+
+    // ---- rows ---------------------------------------------------------------------------------
+
+    /// A chat as a row of a list, `list` being the list it is shown in (for its pin).
+    pub fn chat_row(&self, chat: &api::Chat, list: ChatList, names: &Names) -> ChatRow {
+        let kind = self.kind(chat);
+        let title = self.title(chat, names);
+        let last = chat.last_message.as_deref();
+        let (content, text, detail) = last.map(|message| self.content(message, names)).unwrap_or((Content::Text, String::new(), String::new()));
+        let service = is_service(content);
+        let sender = match last {
+            Some(message) if service => self.sender_first_name(&message.sender_id, names),
+            Some(message) if kind == ChatKind::Group && !message.is_outgoing => self.sender_first_name(&message.sender_id, names),
+            _ => String::new(),
+        };
+        let user = self.user_of(chat);
+        let supergroup = self.supergroup_of(chat);
+        let usernames = user.and_then(|user| user.usernames.as_ref()).or_else(|| supergroup.and_then(|group| group.usernames.as_ref()));
+        let verification = user.and_then(|user| user.verification_status.as_ref()).or_else(|| supergroup.and_then(|group| group.verification_status.as_ref()));
+        ChatRow {
+            id: chat.id.to_string().into(),
+            initial: initial(&title),
+            title: title.into(),
+            kind,
+            has_message: last.is_some(),
+            time: last.map(|message| time::moment(message.date)).unwrap_or_default(),
+            sender: sender.into(),
+            outgoing: last.is_some_and(|message| message.is_outgoing),
+            content,
+            text: first_line(&text).into(),
+            detail: detail.into(),
+            unread: if chat.unread_count == 0 && chat.is_marked_as_unread { 1 } else { chat.unread_count },
+            mention: chat.unread_mention_count > 0,
+            muted: self.muted(chat),
+            pinned: position(chat, list).is_some_and(|position| position.is_pinned),
+            online: kind == ChatKind::User && user.is_some_and(|user| matches!(user.status, UserStatus::Online { .. })),
+            verified: verification.is_some_and(|status| status.is_verified),
+            members: self.members(chat),
+            username: usernames.and_then(|names| names.active_usernames.first()).cloned().unwrap_or_default().into(),
+        }
+    }
+
+    /// The chat list at `index` of the folder tabs: 0 is All chats (the main list).
+    pub fn folder_list(&self, index: usize) -> ChatList {
+        match index.checked_sub(1).and_then(|folder| self.folders.get(folder)) {
+            Some(folder) => ChatList::Folder { chat_folder_id: folder.id },
+            None => ChatList::Main,
+        }
+    }
+
+    /// The chats of `list`, in Telegram's order, matching the search words.
+    pub fn chats_in(&self, list: ChatList) -> Vec<&api::Chat> {
+        let mut chats: Vec<(&api::Chat, i64)> = self
+            .chats
+            .values()
+            .filter_map(|chat| position(chat, list).map(|position| (chat, position.order)))
+            .filter(|(chat, _)| self.query.is_empty() || chat.title.to_lowercase().contains(&self.query))
+            .collect();
+        chats.sort_by(|(a, a_order), (b, b_order)| b_order.cmp(a_order).then(b.id.cmp(&a.id)));
+        chats.into_iter().map(|(chat, _)| chat).collect()
+    }
+
+    fn refresh_chats(&mut self, ui: &MainWindow, names: &Names) {
+        let lists: Vec<ChatList> = (0..=self.folders.len()).map(|index| self.folder_list(index)).collect();
+
+        let folders: Vec<Folder> = lists
+            .iter()
+            .enumerate()
+            .map(|(index, list)| Folder {
+                id: if index == 0 { 0 } else { self.folders[index - 1].id },
+                name: if index == 0 { names.all_chats.clone() } else { self.folders[index - 1].name.text.text.clone() }.into(),
+                unread: self.chats_in(*list).iter().map(|chat| chat.unread_count).sum(),
+            })
+            .collect();
+
+        let shown = self.shown_folder.min(lists.len() - 1);
+        let list: Vec<ChatRow> = self.chats_in(lists[shown]).iter().map(|chat| self.chat_row(chat, lists[shown], names)).collect();
+
+        // Workbench's tree: the account's folders first, then All chats. Without folders, All chats
+        // is open; with folders, they are open and All chats is closed, until the user says otherwise.
+        let mut tree = Vec::new();
+        let order: Vec<usize> = (1..lists.len()).chain(std::iter::once(0)).collect();
+        for index in order {
+            let chats = self.chats_in(lists[index]);
+            if index > 0 && chats.is_empty() && !self.query.is_empty() {
+                continue;
+            }
+            let id = folders[index].id;
+            let expanded = !self.query.is_empty() || self.expanded.get(&id).copied().unwrap_or(index > 0 || self.folders.is_empty());
+            tree.push(TreeRow { header: true, folder: index as i32, expanded, count: chats.len() as i32, chat: ChatRow::default() });
+            if expanded {
+                tree.extend(chats.iter().map(|chat| TreeRow {
+                    header: false,
+                    folder: index as i32,
+                    expanded,
+                    count: 0,
+                    chat: self.chat_row(chat, lists[index], names),
+                }));
+            }
+        }
+
+        let main = self.chats_in(ChatList::Main);
+        let channels: Vec<ChatRow> = main
+            .iter()
+            .filter(|chat| self.kind(chat) == ChatKind::Channel)
+            .map(|chat| self.chat_row(chat, ChatList::Main, names))
+            .collect();
+        let bots: Vec<ChatRow> =
+            main.iter().filter(|chat| self.kind(chat) == ChatKind::Bot).map(|chat| self.chat_row(chat, ChatList::Main, names)).collect();
+        let (official_bots, bots): (Vec<ChatRow>, Vec<ChatRow>) = bots.into_iter().partition(|bot| bot.verified);
+
+        let chats = ui.global::<Chats>();
+        chats.set_unread_channels(channels.iter().filter(|channel| channel.unread > 0).count() as i32);
+        chats.set_folder(shown as i32);
+        sync(&self.models.folders, folders);
+        sync(&self.models.list, list);
+        sync(&self.models.tree, tree);
+        sync(&self.models.channels, channels);
+        sync(&self.models.official_bots, official_bots);
+        sync(&self.models.bots, bots);
+
+        // The tabs' names follow the chats'.
+        let tabs: Vec<Tab> = self
+            .tabs
+            .iter()
+            .filter_map(|id| self.chats.get(id))
+            .map(|chat| Tab { id: chat.id.to_string().into(), title: self.title(chat, names).into(), kind: self.kind(chat) })
+            .collect();
+        sync(&self.models.tabs, tabs);
+    }
+
+    fn refresh_conversation(&mut self, ui: &MainWindow, names: &Names, scroll_to_end: bool) {
+        let conversation = ui.global::<Conversation>();
+        let Some(chat) = self.open.and_then(|id| self.chats.get(&id)) else {
+            conversation.set_chat_id(SharedString::new());
+            sync(&self.models.messages, Vec::new());
+            return;
+        };
+        let kind = self.kind(chat);
+        let title = self.title(chat, names);
+        conversation.set_chat_id(chat.id.to_string().into());
+        conversation.set_initial(initial(&title));
+        conversation.set_title(title.into());
+        conversation.set_kind(kind);
+        conversation.set_can_write(self.can_write(chat));
+        conversation.set_muted(self.muted(chat));
+        conversation.set_pinned(position(chat, ChatList::Main).is_some_and(|position| position.is_pinned));
+
+        let (status, last_seen, members) = self.status(chat, kind);
+        conversation.set_status(status);
+        conversation.set_last_seen(last_seen);
+        conversation.set_members(members);
+        conversation.set_online_members(self.online_members.get(&chat.id).copied().unwrap_or(0));
+
+        let typing: Vec<String> = self
+            .typing
+            .get(&chat.id)
+            .map(|typing| {
+                typing
+                    .iter()
+                    .filter(|(_, since)| since.elapsed() < TYPING_LASTS)
+                    .map(|(sender, _)| self.sender_first_name(sender, names))
+                    .collect()
+            })
+            .unwrap_or_default();
+        conversation.set_typing(typing.join(", ").into());
+
+        let history = self.histories.get(&chat.id);
+        conversation.set_loading(history.is_none_or(|history| history.loading && history.messages.is_empty()));
+        conversation.set_has_older(history.is_some_and(|history| history.has_older));
+        let rows = self.message_rows(chat, names);
+        sync(&self.models.messages, rows);
+        if scroll_to_end {
+            conversation.set_scroll_to_end(conversation.get_scroll_to_end() + 1);
+        }
+    }
+
+    /// How the header describes the chat.
+    fn status(&self, chat: &api::Chat, kind: ChatKind) -> (Status, Moment, i32) {
+        match kind {
+            ChatKind::Saved => (Status::Saved, Moment::default(), 0),
+            ChatKind::Bot => (Status::Bot, Moment::default(), 0),
+            ChatKind::User => match self.user_of(chat).map(|user| user.status) {
+                Some(UserStatus::Online { .. }) => (Status::Online, Moment::default(), 0),
+                Some(UserStatus::Offline { was_online }) => (Status::LastSeen, time::moment(was_online), 0),
+                Some(UserStatus::Recently) => (Status::Recently, Moment::default(), 0),
+                Some(UserStatus::LastWeek) => (Status::LastWeek, Moment::default(), 0),
+                Some(UserStatus::LastMonth) => (Status::LastMonth, Moment::default(), 0),
+                Some(UserStatus::Empty) => (Status::LongAgo, Moment::default(), 0),
+                None => (Status::None, Moment::default(), 0),
+            },
+            ChatKind::Group => (Status::Members, Moment::default(), self.members(chat)),
+            ChatKind::Channel => (Status::Subscribers, Moment::default(), self.members(chat)),
+        }
+    }
+
+    fn message_rows(&self, chat: &api::Chat, names: &Names) -> Vec<MessageRow> {
+        let Some(history) = self.histories.get(&chat.id) else { return Vec::new() };
+        let me = self.user_name(self.my_id, names);
+        let mut rows = Vec::with_capacity(history.messages.len() + 8);
+        let mut previous_day = None;
+        for message in history.messages.values() {
+            let day = time::day(message.date);
+            if day != previous_day {
+                rows.push(MessageRow { kind: RowKind::Day, day: time::moment(message.date), ..MessageRow::default() });
+                previous_day = day;
+            }
+            let (content, text, detail) = self.content(message, names);
+            let sender = if message.is_outgoing && !me.is_empty() { me.clone() } else { self.sender_name(&message.sender_id, names) };
+            rows.push(MessageRow {
+                kind: if is_service(content) { RowKind::Service } else { RowKind::Message },
+                id: message.id.to_string().into(),
+                outgoing: message.is_outgoing,
+                sender_initial: initial(&sender),
+                sender: sender.into(),
+                sender_color: colour_of(&message.sender_id),
+                content,
+                text: text.into(),
+                detail: detail.into(),
+                time: time::clock(message.date).into(),
+                day: Moment::default(),
+                edited: message.edit_date > 0,
+                sending: matches!(message.sending_state, Some(MessageSendingState::Pending)),
+                failed: matches!(message.sending_state, Some(MessageSendingState::Failed { .. })),
+                seen: message.is_outgoing && message.id <= chat.last_read_outbox_message_id,
+                button: SharedString::new(),
+            });
+        }
+        // Telegram's sponsored message, after the newest post of a channel.
+        if let Some(sponsored) = self.sponsored.get(&chat.id).and_then(|sponsored| sponsored.first()) {
+            let text = match &sponsored.content {
+                M::Text { text } => text.text.clone(),
+                other => {
+                    let message = api::Message {
+                        id: 0,
+                        sender_id: MessageSender::Chat { chat_id: chat.id },
+                        chat_id: chat.id,
+                        sending_state: None,
+                        is_outgoing: false,
+                        date: 0,
+                        edit_date: 0,
+                        content: other.clone(),
+                    };
+                    self.content(&message, names).1
+                }
+            };
+            rows.push(MessageRow {
+                kind: RowKind::Sponsored,
+                id: sponsored.message_id.to_string().into(),
+                sender: sponsored.title.clone().into(),
+                text: text.into(),
+                button: sponsored.button_text.clone().into(),
+                ..MessageRow::default()
+            });
+        }
+        rows
+    }
+
+    fn refresh_account(&mut self, ui: &MainWindow) {
+        let account = ui.global::<Account>();
+        let Some(me) = self.users.get(&self.my_id) else {
+            account.set_name(SharedString::new());
+            account.set_initial(SharedString::new());
+            return;
+        };
+        let name = format!("{} {}", me.first_name, me.last_name).trim().to_string();
+        account.set_initial(initial(&name));
+        account.set_name(name.into());
+        account.set_first_name(me.first_name.clone().into());
+        account.set_last_name(me.last_name.clone().into());
+        account.set_username(me.usernames.as_ref().map(|names| names.editable_username.clone()).unwrap_or_default().into());
+        account.set_bio(self.my_bio.clone().into());
+        if account.get_phone().is_empty() {
+            account.set_phone(format!("+{}", me.phone_number).into());
+        }
+    }
+}
+
+/// What an update asks for beyond the store; telegram/mod.rs sends it.
+pub enum Followup {
+    None,
+    /// The folders changed: load their chats.
+    LoadFolders,
+    /// New messages in the open chat: they are seen.
+    View { chat_id: i64, message_ids: Vec<i64> },
+    /// Someone is typing: look again once it may have stopped.
+    TypingExpires,
+}
+
+/// Where `chat` is in `list`, if it is in it.
+pub fn position(chat: &api::Chat, list: ChatList) -> Option<&api::ChatPosition> {
+    chat.positions.iter().find(|position| position.list == list && position.order != 0)
+}
+
+fn set_position(chat: &mut api::Chat, position: api::ChatPosition) {
+    chat.positions.retain(|known| known.list != position.list);
+    if position.order != 0 {
+        chat.positions.push(position);
+    }
+}
+
+pub fn is_service(content: Content) -> bool {
+    matches!(
+        content,
+        Content::ChatCreated
+            | Content::TitleChanged
+            | Content::PhotoChanged
+            | Content::PhotoRemoved
+            | Content::MembersAdded
+            | Content::MemberJoined
+            | Content::MemberLeft
+            | Content::MemberRemoved
+            | Content::MessagePinned
+            | Content::ScreenshotTaken
+            | Content::ContactJoined
+            | Content::OtherService
+    )
+}
+
+/// The first line of a message, for a list's preview.
+fn first_line(text: &str) -> &str {
+    text.lines().find(|line| !line.trim().is_empty()).unwrap_or("").trim()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn chat(id: i64, order: i64) -> api::Chat {
+        serde_json::from_value(serde_json::json!({
+            "@type": "chat", "id": id, "type": { "@type": "chatTypeBasicGroup", "basic_group_id": id },
+            "title": format!("chat {id}"), "permissions": { "@type": "chatPermissions", "can_send_basic_messages": true },
+            "positions": [{ "@type": "chatPosition", "list": { "@type": "chatListMain" }, "order": order.to_string(), "is_pinned": false }],
+            "is_marked_as_unread": false, "unread_count": 0, "last_read_inbox_message_id": 0,
+            "last_read_outbox_message_id": 0, "unread_mention_count": 0,
+            "notification_settings": { "@type": "chatNotificationSettings", "use_default_mute_for": true, "mute_for": 0 }
+        }))
+        .expect("a chat")
+    }
+
+    #[test]
+    fn positions_are_replaced_per_list_and_removed_at_zero() {
+        let mut chat = chat(1, 10);
+        set_position(&mut chat, api::ChatPosition { list: ChatList::Main, order: 20, is_pinned: true });
+        assert_eq!(position(&chat, ChatList::Main).map(|position| position.order), Some(20));
+        set_position(&mut chat, api::ChatPosition { list: ChatList::Folder { chat_folder_id: 2 }, order: 5, is_pinned: false });
+        assert_eq!(chat.positions.len(), 2);
+        set_position(&mut chat, api::ChatPosition { list: ChatList::Main, order: 0, is_pinned: false });
+        assert!(position(&chat, ChatList::Main).is_none());
+        assert_eq!(chat.positions.len(), 1);
+    }
+
+    #[test]
+    fn the_first_line_is_the_preview() {
+        assert_eq!(first_line("\n  New rules\n\nThe details"), "New rules");
+        assert_eq!(first_line(""), "");
+    }
+}

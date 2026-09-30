@@ -16,13 +16,20 @@ pub struct Settings {
     pub language: String,
     /// "system", "light" or "dark".
     pub appearance: String,
+    /// One of the design's three themes: "workbench" (the default), "broadsheet" or "terminal".
+    pub theme: String,
     /// The once-a-day update check (src/update.rs).
     pub check_for_updates: bool,
 }
 
 impl Default for Settings {
     fn default() -> Self {
-        Settings { language: String::new(), appearance: "system".to_string(), check_for_updates: true }
+        Settings {
+            language: String::new(),
+            appearance: "system".to_string(),
+            theme: "workbench".to_string(),
+            check_for_updates: true,
+        }
     }
 }
 
@@ -41,6 +48,9 @@ impl Settings {
             .unwrap_or_default();
         if !matches!(settings.appearance.as_str(), "system" | "light" | "dark") {
             settings.appearance = "system".to_string();
+        }
+        if !matches!(settings.theme.as_str(), "workbench" | "broadsheet" | "terminal") {
+            settings.theme = "workbench".to_string();
         }
         settings
     }

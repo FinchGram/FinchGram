@@ -10,20 +10,26 @@ publish = false
 default-run = "finchgram"         # src/bin/ has the release signing tool too
 
 [dependencies]
-# ~1.18: minor upgrades are deliberate. Slint's unstable-* features, once we use them, may change in
-# any minor release.
-slint = "~1.18"
+# ~1.18: minor upgrades are deliberate. The unstable-* features (the transparent title bar, the
+# bundled fonts, src/main.rs and src/fonts.rs) may change in any minor release.
+slint = { version = "~1.18", features = ["unstable-winit-030", "unstable-fontique-011"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "1"                                      # settings file
 dirs = "7"
 sys-locale = "0.3"
+chrono = "0.4"                                  # local times of messages (Slint uses it already)
+qrcode = { version = "0.14", default-features = false }   # the QR code for logging in
 # The self-updater (src/update.rs) and the release signing tool (src/bin/).
 ureq = "3"
 semver = "1"
 sha2 = "0.11"
 ed25519-dalek = "3"
 hex = "0.4"
+
+[dev-dependencies]
+# The screenshots of every page (src/screenshots.rs) are written as PNG.
+image = { version = "0.25", default-features = false, features = ["png"] }
 
 [build-dependencies]
 slint-build = "~1.18"

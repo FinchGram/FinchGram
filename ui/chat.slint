@@ -1,0 +1,161 @@
+// Parts of the chat windows the three themes share.
+import { Conversation, ChatKind } from "telegram.slint";
+
+// The open chat's messages, scrolled. New messages are followed while the view is at the end;
+// messages loading above do not move what is being read (the distance from the end is kept); near
+// the top it asks for older messages. With few messages they sit at the bottom, as in any chat.
+export component ChatScroll inherits Flickable {
+    in property <length> spacing;
+    in property <length> margin-top;
+    in property <length> margin-bottom;
+    in property <length> margin-left;
+    in property <length> margin-right;
+    // How far the bottom of the view is above the end of the chat; 0 at the end.
+    property <length> from-bottom: 0px;
+    mouse-drag-pan-enabled: false;
+    content-width: self.width;
+    content-height: max(self.height, messages.preferred-height);
+
+    function keep-place() {
+        self.content-y = min(0px, max(self.height - self.content-height, self.from-bottom + self.height - self.content-height));
+    }
+
+    changed content-height => {
+        self.keep-place();
+    }
+    changed height => {
+        self.keep-place();
+    }
+    property <int> scroll-to-end: Conversation.scroll-to-end;
+    changed scroll-to-end => {
+        self.from-bottom = 0px;
+        self.keep-place();
+    }
+    flicked => {
+        self.from-bottom = max(0px, self.content-height + self.content-y - self.height);
+        if self.content-y > -400px && Conversation.has-older && !Conversation.loading {
+            Conversation.load-older();
+        }
+    }
+
+    messages := VerticalLayout {
+        width: root.width;
+        alignment: end;
+        spacing: root.spacing;
+        padding-top: root.margin-top;
+        padding-bottom: root.margin-bottom;
+        padding-left: root.margin-left;
+        padding-right: root.margin-right;
+        @children
+    }
+}
+
+// The icon for a kind of chat (Workbench's tree and tabs).
+export global ChatIcons {
+    public pure function kind(kind: ChatKind) -> string {
+        if kind == ChatKind.group {
+            return "users-three";
+        }
+        if kind == ChatKind.channel {
+            return "megaphone";
+        }
+        if kind == ChatKind.saved {
+            return "bookmark-simple";
+        }
+        if kind == ChatKind.bot {
+            return "robot";
+        }
+        return "user";
+    }
+}
+
+// Where a message is written: Enter sends it, Shift+Enter starts a new line; while an input method
+// is still composing, Enter is the input method's. Grows with the text up to `tallest`.
+export component MessageInput inherits Rectangle {
+    in property <string> placeholder;
+    in property <color> text-color;
+    in property <color> placeholder-color;
+    in property <color> selection-color;
+    in property <string> font-family;
+    in property <length> font-size: 14px;
+    in property <float> line-height-factor: 1;
+    in property <length> base-height: 40px;
+    in property <length> tallest: 140px;
+    in property <length> padding-x: 12px;
+    in property <length> padding-y: 10px;
+    in property <bool> enabled: true;
+    in-out property <string> text <=> input.text;
+    out property <bool> has-focus: input.has-focus;
+    // The words to send; the box empties itself.
+    callback send(string);
+    height: clamp(input.preferred-height + 2 * padding-y, base-height, tallest);
+
+    public function focus-text() {
+        input.focus();
+    }
+
+    public function send-now() {
+        if input.text != "" {
+            root.send(input.text);
+            input.text = "";
+        }
+    }
+
+    Text {
+        x: root.padding-x;
+        y: root.padding-y;
+        width: parent.width - 2 * root.padding-x;
+        visible: input.text == "" && input.preedit-text == "";
+        text: root.placeholder;
+        color: root.placeholder-color;
+        font-family: root.font-family;
+        font-size: root.font-size;
+        line-height-factor: root.line-height-factor;
+        overflow: elide;
+    }
+
+    Flickable {
+        x: root.padding-x;
+        y: root.padding-y;
+        width: parent.width - 2 * root.padding-x;
+        height: parent.height - 2 * root.padding-y;
+        mouse-drag-pan-enabled: false;
+        content-height: max(self.height, input.preferred-height);
+        // Follow the cursor to the end while typing past the box's height.
+        content-y: min(0px, self.height - self.content-height);
+
+        input := TextInput {
+            width: parent.width;
+            single-line: false;
+            wrap: word-wrap;
+            enabled: root.enabled;
+            color: root.text-color;
+            font-family: root.font-family;
+            font-size: root.font-size;
+            line-height-factor: root.line-height-factor;
+            selection-background-color: root.selection-color;
+            key-pressed(event) => {
+                if event.text == Key.Return && !event.modifiers.shift && !event.modifiers.alt && self.preedit-text == "" {
+                    root.send-now();
+                    return accept;
+                }
+                return reject;
+            }
+        }
+    }
+}
+
+// Content at most `cap` wide, at the start of a row that takes the whole width: a max-width on a
+// message would otherwise narrow the chat and everything around it.
+export component Capped {
+    in property <length> cap: 560px;
+    in property <length> spacing;
+    height: content.preferred-height;
+
+    content := VerticalLayout {
+        x: 0;
+        width: min(root.width, root.cap);
+        spacing: root.spacing;
+        @children
+    }
+}

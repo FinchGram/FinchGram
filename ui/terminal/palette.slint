@@ -1,0 +1,38 @@
+// Terminal's colours (the design's first round, "1b 终端": TB). The chat window only; the shared
+// pages use Look.
+import { Look, AccountColors } from "../look.slint";
+
+export global TerminalPalette {
+    out property <bool> dark: Look.dark;
+    out property <color> bg: dark ? #0e100f : #f6f7f4;
+    out property <color> side: dark ? #131614 : #eceee9;
+    out property <color> text: dark ? #d6dbd7 : #1a1d1b;
+    out property <color> muted: dark ? #8a928c : #5c635e;
+    out property <color> faint: dark ? #5f6761 : #858c87;
+    out property <color> accent: dark ? #7ed69b : #1d7a45;
+    out property <color> accent2: dark ? #e3b45b : #8f5b00;
+    out property <color> accent3: dark ? #ef8fb0 : #a1355c;
+    out property <color> line: dark ? #252a27 : #d5d9d4;
+    out property <color> sel: dark ? #1c211e : #dfe4dd;
+    out property <color> pane-head: dark ? #161a17 : #e6e9e3;
+    out property <color> cmd: dark ? #121513 : #eceee9;
+    out property <color> on-accent: dark ? #0e100f : #f6f7f4;
+    out property <color> shadow: #00000059;
+    // The account's colour (several accounts are still to come: the first).
+    out property <color> account: AccountColors.accent(0, dark);
+
+    out property <string> font: "JetBrains Mono";
+
+    // Line height in em → Slint's factor (JetBrains Mono's own is 1.32 em).
+    public pure function leading(em: float) -> float {
+        return em / 1.32;
+    }
+
+    // Senders' names take one of three colours, ours the accent (the design's nameColB).
+    public pure function sender(index: int, outgoing: bool) -> color {
+        if outgoing {
+            return accent;
+        }
+        return [accent2, accent3, muted][Math.mod(index, 3)];
+    }
+}

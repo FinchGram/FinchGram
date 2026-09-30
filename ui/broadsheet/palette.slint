@@ -1,0 +1,40 @@
+// Broadsheet's colours (the design's first round, "1a 报纸": TA). The accent is the account's own
+// colour (AccountColors), as in the design; the chat window only, the shared pages use Look.
+import { Look, AccountColors } from "../look.slint";
+
+export global BroadsheetPalette {
+    out property <bool> dark: Look.dark;
+    // Which account's colour (several accounts are still to come: the first).
+    out property <int> account: 0;
+
+    out property <color> bg: dark ? #1b1a19 : #f3f2f2;
+    out property <color> rail: dark ? #151413 : #eae9e9;
+    out property <color> surface: dark ? #2a2827 : #e6e4e4;
+    out property <color> panel: dark ? #201f1e : #f7f6f6;
+    out property <color> text: dark ? #ecebea : #201e1d;
+    out property <color> muted: dark ? #a8a4a4 : #605d5d;
+    out property <color> faint: dark ? #8a8686 : #7d7979;
+    out property <color> accent: AccountColors.accent(account, dark);
+    out property <color> accent-ink: AccountColors.accent-ink(account, dark);
+    out property <color> tint: AccountColors.tint(account, dark);
+    out property <color> tint-ink: AccountColors.tint-ink(account, dark);
+    out property <color> accent2: dark ? #ff90b1 : #d6006c;
+    out property <color> accent2-ink: dark ? #ffc0d0 : #aa0b56;
+    out property <color> theirs: dark ? #2d2b2a : #ecebeb;
+    out property <color> sel: dark ? #2d2b2a : #e2e0e0;
+    out property <color> off: dark ? #605d5d : #bab6b6;
+    out property <color> on-accent: dark ? #1b1a19 : #ffffff;
+    out property <color> hover: #80787820;
+    out property <color> shadow: dark ? #00000066 : #2d2b2b38;
+    // Channels' letter squares.
+    out property <color> channel: dark ? #4b1528 : #ffdee6;
+    out property <color> channel-ink: dark ? #ffc0d0 : #790e3d;
+
+    out property <string> font: "Source Sans 3";
+    out property <string> mono: "IBM Plex Mono";
+
+    // Line height in em → Slint's factor (Source Sans 3's own is 1.424 em).
+    public pure function leading(em: float) -> float {
+        return em / 1.424;
+    }
+}

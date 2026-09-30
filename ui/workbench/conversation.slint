@@ -1,0 +1,687 @@
+// Workbench's main area: the tabs of the open chats, and the chat in front — its header, the
+// messages as rows (a letter, the sender and time, the text), and where to write.
+import { AppState } from "../state.slint";
+import { Conversation, MessageRow, RowKind, ChatKind, Content, Account } from "../telegram.slint";
+import { Fmt } from "../format.slint";
+import { Icon, Paragraph } from "../widgets.slint";
+import { ChatScroll, ChatIcons, MessageInput, Capped } from "../chat.slint";
+import { WorkbenchPalette as P } from "palette.slint";
+
+component TabItem inherits Rectangle {
+    in property <string> id;
+    in property <string> title;
+    in property <ChatKind> kind;
+    property <bool> active: id == Conversation.chat-id;
+    width: row.preferred-width;
+    background: active ? P.tab-active : touch.has-hover ? P.tab-active.transparentize(0.5) : transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Conversation.open(root.id);
+        }
+    }
+
+    row := HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: ChatIcons.kind(root.kind);
+                size: 14px;
+                color: root.active ? P.text : P.muted;
+            }
+        }
+        Text {
+            text: root.title;
+            color: root.active ? P.text : P.muted;
+            font-size: 13px;
+            vertical-alignment: center;
+            max-width: 180px;
+            overflow: elide;
+        }
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: 3px;
+                background: close.has-hover ? P.line : transparent;
+                Icon {
+                    name: "x";
+                    size: 12px;
+                    color: P.faint;
+                }
+                close := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Conversation.close(root.id);
+                    }
+                }
+            }
+        }
+    }
+
+    // The front tab: a line of accent on top.
+    Rectangle {
+        y: 0;
+        height: 2px;
+        background: root.active ? P.accent : transparent;
+    }
+
+    Rectangle {
+        x: parent.width - 1px;
+        width: 1px;
+        background: P.line;
+    }
+}
+
+component MenuEntry inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <string> keys;
+    callback activated();
+    height: 32px;
+    border-radius: 6px;
+    background: touch.has-hover ? P.side : transparent;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 16px;
+                color: P.text;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.label;
+            color: P.text;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: root.keys;
+            color: P.faint;
+            font-family: P.mono;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+component TabBar inherits Rectangle {
+    height: 38px;
+    background: P.tab;
+
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: P.line;
+    }
+
+    HorizontalLayout {
+        Flickable {
+            horizontal-stretch: 1;
+            mouse-drag-pan-enabled: false;
+            content-width: tabs.preferred-width;
+            tabs := HorizontalLayout {
+                alignment: start;
+                for tab in Conversation.tabs: TabItem {
+                    id: tab.id;
+                    title: tab.title;
+                    kind: tab.kind;
+                }
+            }
+        }
+
+        HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            spacing: 12px;
+            // The chat's settings panel is still to come.
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "sidebar-simple";
+                    size: 17px;
+                    color: P.muted;
+                    opacity: 0.4;
+                }
+            }
+            more := VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 22px;
+                    height: 22px;
+                    border-radius: 4px;
+                    background: more-touch.has-hover ? P.line : transparent;
+                    Icon {
+                        name: "dots-three";
+                        size: 17px;
+                        color: Conversation.chat-id == "" ? P.faint : P.muted;
+                    }
+                    more-touch := TouchArea {
+                        enabled: Conversation.chat-id != "";
+                        mouse-cursor: pointer;
+                        clicked => {
+                            menu.show();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    menu := PopupWindow {
+        x: root.width - 244px;
+        y: root.height - 4px;
+        width: 230px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+
+        Rectangle {
+            border-radius: 8px;
+            background: P.bg;
+            border-width: 1px;
+            border-color: P.line;
+            drop-shadow-blur: 32px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: P.shadow;
+
+            VerticalLayout {
+                padding: 6px;
+                Text {
+                    height: 26px;
+                    x: 10px;
+                    text: Conversation.title.to-uppercase();
+                    color: P.faint;
+                    font-size: 11px;
+                    font-weight: 600;
+                    letter-spacing: 0.88px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                MenuEntry {
+                    icon: Conversation.muted ? "bell" : "bell-slash";
+                    label: Conversation.muted ? @tr("Unmute") : @tr("Mute");
+                    keys: "⌘⇧M";
+                    activated => {
+                        Conversation.toggle-mute();
+                        menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "push-pin";
+                    label: Conversation.pinned ? @tr("Unpin") : @tr("Pin");
+                    activated => {
+                        Conversation.toggle-pin();
+                        menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "checks";
+                    label: @tr("Mark as read");
+                    keys: "⌘⇧R";
+                    activated => {
+                        Conversation.mark-read();
+                        menu.close();
+                    }
+                }
+                Rectangle {
+                    height: 9px;
+                    Rectangle {
+                        height: 1px;
+                        background: P.line;
+                    }
+                }
+                MenuEntry {
+                    icon: "x-square";
+                    label: @tr("Close other tabs");
+                    keys: "⌘⌥W";
+                    activated => {
+                        Conversation.close-others();
+                        menu.close();
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Colours of the letter squares, by kind of chat and sender (the design's avC).
+global Avatars {
+    public pure function fill(row: MessageRow, kind: ChatKind) -> color {
+        if row.outgoing || kind == ChatKind.bot {
+            return P.accent-soft;
+        }
+        if kind == ChatKind.saved {
+            return P.teal-soft;
+        }
+        return P.chrome;
+    }
+
+    public pure function ink(row: MessageRow, kind: ChatKind) -> color {
+        if row.outgoing || kind == ChatKind.bot {
+            return P.accent-ink;
+        }
+        if kind == ChatKind.saved {
+            return P.teal;
+        }
+        return P.text;
+    }
+}
+
+component DayRule {
+    in property <string> text;
+
+    HorizontalLayout {
+        spacing: 10px;
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            Rectangle {
+                height: 1px;
+                background: P.line;
+            }
+        }
+        Text {
+            text: root.text;
+            color: P.faint;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            Rectangle {
+                height: 1px;
+                background: P.line;
+            }
+        }
+    }
+}
+
+// A message in a chat: letter, sender, time, words.
+component MessageLine {
+    in property <MessageRow> message;
+
+    HorizontalLayout {
+        spacing: 12px;
+        VerticalLayout {
+            alignment: start;
+            Rectangle {
+                width: 30px;
+                height: 30px;
+                border-radius: 6px;
+                background: Avatars.fill(root.message, Conversation.kind);
+                Text {
+                    text: root.message.sender-initial;
+                    color: Avatars.ink(root.message, Conversation.kind);
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 3px;
+            HorizontalLayout {
+                alignment: start;
+                spacing: 8px;
+                Text {
+                    text: root.message.sender;
+                    color: P.text;
+                    font-size: 14px;
+                    font-weight: 600;
+                    overflow: elide;
+                }
+                Text {
+                    text: root.message.edited ? root.message.time + " · " + @tr("edited") : root.message.time;
+                    color: P.faint;
+                    font-size: 12px;
+                    vertical-alignment: bottom;
+                }
+                if root.message.sending: VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "clock";
+                        size: 12px;
+                        color: P.faint;
+                    }
+                }
+            }
+            Paragraph {
+                text: Fmt.body(root.message.content, root.message.text, root.message.detail);
+                color: root.message.content == Content.text ? P.text : P.muted;
+                font-size: 14px;
+                line-height-factor: P.leading(1.55);
+            }
+            if root.message.failed: HorizontalLayout {
+                alignment: start;
+                Rectangle {
+                    HorizontalLayout {
+                        spacing: 4px;
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "warning-circle";
+                                size: 13px;
+                                color: P.warn;
+                            }
+                        }
+                        Text {
+                            text: @tr("Failed to send · Tap to retry");
+                            color: P.warn;
+                            font-size: 12px;
+                        }
+                    }
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Conversation.retry(root.message.id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// A channel's post, set for reading.
+component PostLine inherits Capped {
+    in property <MessageRow> message;
+    spacing: 6px;
+
+    Paragraph {
+        text: Fmt.body(root.message.content, root.message.text, root.message.detail);
+        color: P.text;
+        font-size: 14px;
+        line-height-factor: P.leading(1.7);
+    }
+    Text {
+        text: root.message.edited ? root.message.time + " · " + @tr("edited") : root.message.time;
+        color: P.faint;
+        font-size: 12px;
+    }
+}
+
+// A sponsored message: Telegram's own, shown as it comes, never hidden.
+component SponsoredCard inherits Rectangle {
+    in property <MessageRow> message;
+    height: card.preferred-height;
+    border-radius: 8px;
+    background: P.side;
+    border-width: 1px;
+    border-color: P.line;
+
+    card := VerticalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 6px;
+        HorizontalLayout {
+            spacing: 8px;
+            Text {
+                horizontal-stretch: 1;
+                text: @tr("Sponsored").to-uppercase();
+                color: P.faint;
+                font-size: 11px;
+                font-weight: 600;
+                letter-spacing: 0.44px;
+            }
+            Text {
+                text: @tr("Premium users can turn these off");
+                color: P.accent-ink;
+                font-size: 11px;
+            }
+        }
+        Text {
+            text: root.message.sender;
+            color: P.text;
+            font-size: 14px;
+            font-weight: 600;
+            overflow: elide;
+        }
+        Paragraph {
+            text: root.message.text;
+            color: P.muted;
+            font-size: 13px;
+            line-height-factor: P.leading(1.5);
+        }
+        if root.message.button != "": HorizontalLayout {
+            alignment: start;
+            Rectangle {
+                height: 28px;
+                width: action.preferred-width + 24px;
+                border-radius: 6px;
+                background: action-touch.has-hover ? P.accent-soft.darker(0.05) : P.accent-soft;
+                action := Text {
+                    text: root.message.button;
+                    color: P.accent-ink;
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+                action-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Conversation.open-sponsored(root.message.id);
+                    }
+                }
+            }
+        }
+        Text {
+            text: @tr("Telegram's sponsored message · FinchGram shows it as it is");
+            color: P.faint;
+            font-size: 11px;
+        }
+    }
+}
+
+component Line {
+    in property <MessageRow> message;
+
+    VerticalLayout {
+        if root.message.kind == RowKind.day: DayRule {
+            text: Fmt.day-title(root.message.day);
+        }
+        if root.message.kind == RowKind.service: Paragraph {
+            text: Fmt.service(root.message.content, root.message.outgoing ? @tr("You") : root.message.sender, root.message.detail);
+            color: P.faint;
+            font-size: 12px;
+            horizontal-alignment: center;
+        }
+        if root.message.kind == RowKind.sponsored: Capped {
+            SponsoredCard {
+                message: root.message;
+            }
+        }
+        if root.message.kind == RowKind.message && Conversation.kind == ChatKind.channel: PostLine {
+            message: root.message;
+        }
+        if root.message.kind == RowKind.message && Conversation.kind != ChatKind.channel: MessageLine {
+            message: root.message;
+        }
+    }
+}
+
+component Chip inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <color> fill;
+    in property <color> ink;
+    height: 20px;
+    width: chip.preferred-width;
+    border-radius: 10px;
+    background: fill;
+
+    chip := HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 4px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 12px;
+                color: root.ink;
+            }
+        }
+        Text {
+            text: root.label;
+            color: root.ink;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+    }
+}
+
+component Pane {
+    VerticalLayout {
+        HorizontalLayout {
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-top: 12px;
+            padding-bottom: 12px;
+            spacing: 10px;
+            Text {
+                text: Conversation.title;
+                color: P.text;
+                font-size: 16px;
+                font-weight: 600;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            Text {
+                horizontal-stretch: 1;
+                text: Conversation.typing != "" ? @tr("typing…")
+                    : Fmt.status(Conversation.status, Conversation.last-seen, Conversation.members, Conversation.online-members);
+                color: Conversation.typing != "" ? P.accent-ink : P.faint;
+                font-size: 12px;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            if Conversation.kind == ChatKind.channel: VerticalLayout {
+                alignment: center;
+                Chip {
+                    icon: "book-open";
+                    label: @tr("Reading mode");
+                    fill: P.teal-soft;
+                    ink: P.teal;
+                }
+            }
+            // Searching in the chat is still to come.
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "magnifying-glass";
+                    size: 17px;
+                    color: P.muted;
+                    opacity: 0.4;
+                }
+            }
+        }
+
+        ChatScroll {
+            vertical-stretch: 1;
+            spacing: 14px;
+            margin-left: 20px;
+            margin-right: 20px;
+            margin-top: 4px;
+            margin-bottom: 18px;
+            for row in Conversation.messages: Line {
+                message: row;
+            }
+            if Conversation.typing != "": Text {
+                text: @tr("{0} is typing…", Conversation.typing);
+                color: P.faint;
+                font-size: 13px;
+            }
+        }
+
+        if Conversation.can-write: HorizontalLayout {
+            padding-left: 20px;
+            padding-right: 20px;
+            padding-bottom: 16px;
+            Rectangle {
+                border-radius: 8px;
+                background: P.bg;
+                border-width: 1px;
+                border-color: input.has-focus ? P.accent.transparentize(0.4) : P.line;
+                height: box.preferred-height;
+
+                box := VerticalLayout {
+                    input := MessageInput {
+                        placeholder: @tr("Send to {0}", Conversation.title);
+                        text-color: P.text;
+                        placeholder-color: P.faint;
+                        selection-color: P.sel;
+                        font-family: P.font;
+                        font-size: 14px;
+                        base-height: 40px;
+                        send(words) => {
+                            Conversation.send(words);
+                        }
+                    }
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        padding-top: 6px;
+                        padding-bottom: 8px;
+                        spacing: 12px;
+                        // Attachments, quick replies and scheduling are still to come.
+                        for name in ["paperclip", "lightning", "clock"]: VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: name;
+                                size: 16px;
+                                color: P.faint;
+                                opacity: 0.45;
+                            }
+                        }
+                        Rectangle { horizontal-stretch: 1; }
+                        Text {
+                            text: @tr("⏎ send · ⇧⏎ new line");
+                            color: P.faint;
+                            font-family: P.mono;
+                            font-size: 12px;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component WorkbenchMain inherits Rectangle {
+    background: P.bg;
+
+    VerticalLayout {
+        TabBar { }
+        if Conversation.chat-id != "": Pane {
+            vertical-stretch: 1;
+        }
+        if Conversation.chat-id == "": Rectangle {
+            vertical-stretch: 1;
+            Text {
+                text: @tr("Choose a chat on the left");
+                color: P.faint;
+                font-size: 14px;
+            }
+        }
+    }
+}

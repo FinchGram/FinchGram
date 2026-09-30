@@ -211,7 +211,7 @@ mod tests {
 
     #[test]
     fn other_updates_and_unreadable_lines_are_dropped() {
-        assert!(parse(r#"{"@type":"updateNewMessage","message":{"@type":"message","id":1},"@client_id":1}"#).is_none());
+        assert!(parse(r#"{"@type":"updateFile","file":{"@type":"file","id":1},"@client_id":1}"#).is_none());
         assert!(parse("not json").is_none());
     }
 

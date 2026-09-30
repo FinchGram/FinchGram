@@ -5,9 +5,10 @@
 //!
 //! Requests are TDLib's own JSON objects ([`send`]). Each gets an "@extra" number, which TDLib
 //! copies into its answer, and the answer goes to the callback given with the request. Updates are
-//! parsed on the reader thread and reach the UI thread in batches, where they change the app's
-//! state: for now how far logging in is and the connection; chats and messages follow with the
-//! pages.
+//! parsed on the reader thread and reach the UI thread in batches: logging in follows the
+//! authorization state (login.rs), everything else goes into the store (store.rs), and after each
+//! batch the pages are brought up to date. chats.rs, conversation.rs and account.rs do what the
+//! pages ask for.
 //!
 //! When finchgram-tdlib ends unexpectedly, the requests still waiting fail and it is started
 //! again: TDLib's database is on disk, so it carries on where it was. After a log out TDLib closes
@@ -15,8 +16,14 @@
 //!
 //! Everything here runs on the UI thread.
 
+mod account;
 mod api;
+mod chats;
+mod conversation;
+mod login;
 mod process;
+mod store;
+mod time;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -26,8 +33,9 @@ use std::time::{Duration, Instant};
 use serde_json::{Value, json};
 use slint::ComponentHandle;
 
-use crate::{AppState, Connection, MainWindow, TelegramState};
+use crate::{AppState, Connection, MainWindow, Page, TelegramState};
 use api::{AuthorizationState, ConnectionState, OptionValue, Update};
+use store::Followup;
 use process::{Inbox, Output, Process};
 
 /// The TDLib version api.rs is written for. finchgram-tdlib must be exactly this version, or the
@@ -90,8 +98,23 @@ thread_local! {
     static CLIENT: RefCell<Option<Client>> = const { RefCell::new(None) };
 }
 
-/// Start finchgram-tdlib and show how far it is in `ui`. Call once.
+/// Start finchgram-tdlib and show how far it is in `ui`; connect the pages that show Telegram.
+/// Call once.
 pub fn start(ui: &MainWindow) {
+    store::install(ui);
+    login::connect(ui);
+    chats::connect(ui);
+    conversation::connect(ui);
+    account::connect(ui);
+    {
+        use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
+        ui.window().on_winit_window_event(|_, event| {
+            if let WindowEvent::Focused(true) = event {
+                conversation::window_came_to_front();
+            }
+            EventResult::Propagate
+        });
+    }
     CLIENT.with(|client| {
         *client.borrow_mut() = Some(Client {
             ui: ui.as_weak(),
@@ -108,6 +131,11 @@ pub fn start(ui: &MainWindow) {
         })
     });
     launch();
+}
+
+/// The UI language changed: the names Rust puts in rows ("Saved Messages") change with it.
+pub fn language_changed() {
+    store::refresh_all();
 }
 
 /// The app is quitting: let TDLib write its database out and finchgram-tdlib end, for at most
@@ -143,8 +171,10 @@ pub fn send(mut request: Value, on_answer: impl FnOnce(Result<Value, Error>) + '
             process.send(request.to_string());
         }
     });
+    // Not running: the answer comes later all the same, so that no caller is called back while it
+    // is still in the middle of sending.
     if let Some(on_answer) = on_answer {
-        on_answer(Err(Error::Stopped));
+        slint::Timer::single_shot(Duration::ZERO, move || on_answer(Err(Error::Stopped)));
     }
 }
 
@@ -200,17 +230,27 @@ fn deliver(run: u64, batch: Vec<Output>) {
             Output::Ended => on_ended(),
         }
     }
+    store::refresh();
 }
 
 fn on_update(update: Update) {
     match update {
         Update::AuthorizationState { authorization_state } => on_authorization_state(authorization_state),
         Update::ConnectionState { state } => with_state(|app| app.set_connection(connection(state))),
-        Update::Other => {}
+        update => match store::with(|store| store.apply(update)) {
+            Some(Followup::LoadFolders) => chats::load_folders(),
+            Some(Followup::View { chat_id, message_ids }) => conversation::view(chat_id, message_ids),
+            Some(Followup::TypingExpires) => slint::Timer::single_shot(store::TYPING_LASTS, || {
+                store::with(|store| store.dirty.conversation = true);
+                store::refresh();
+            }),
+            Some(Followup::None) | None => {}
+        },
     }
 }
 
 fn on_authorization_state(state: AuthorizationState) {
+    login::on_state(&state);
     let shown = match state {
         AuthorizationState::WaitTdlibParameters => {
             let checked = CLIENT.with(|client| {
@@ -227,21 +267,30 @@ fn on_authorization_state(state: AuthorizationState) {
         AuthorizationState::WaitPhoneNumber => TelegramState::WaitPhoneNumber,
         AuthorizationState::WaitPremiumPurchase => TelegramState::WaitPremiumPurchase,
         AuthorizationState::WaitEmailAddress => TelegramState::WaitEmailAddress,
-        AuthorizationState::WaitEmailCode => TelegramState::WaitEmailCode,
-        AuthorizationState::WaitCode => TelegramState::WaitCode,
+        AuthorizationState::WaitEmailCode { .. } => TelegramState::WaitEmailCode,
+        AuthorizationState::WaitCode { .. } => TelegramState::WaitCode,
         AuthorizationState::WaitOtherDeviceConfirmation { .. } => TelegramState::WaitOtherDevice,
         AuthorizationState::WaitRegistration => TelegramState::WaitRegistration,
         AuthorizationState::WaitPassword { .. } => TelegramState::WaitPassword,
-        AuthorizationState::Ready => TelegramState::Ready,
+        AuthorizationState::Ready => {
+            account::load();
+            chats::load_main_list();
+            TelegramState::Ready
+        }
         AuthorizationState::LoggingOut => TelegramState::LoggingOut,
         AuthorizationState::Closing => TelegramState::Closing,
         AuthorizationState::Closed => {
-            // finchgram-tdlib ends right after this; on_ended decides what follows.
+            // finchgram-tdlib ends right after this; on_ended decides what follows. The account
+            // is gone (a log out): forget it.
             CLIENT.with(|client| {
                 if let Some(client) = client.borrow_mut().as_mut() {
                     client.closed = true;
                 }
             });
+            store::clear();
+            chats::forget();
+            account::forget();
+            with_state(|app| app.set_page(Page::Chats));
             return;
         }
     };
@@ -373,9 +422,27 @@ fn fail(message: String) {
 
 /// Change the app's state, when the window still exists.
 fn with_state(change: impl FnOnce(&AppState)) {
+    with_ui(|ui| change(&ui.global::<AppState>()));
+}
+
+/// Whether the window is in front, so that what it shows is being seen. True when that cannot be
+/// told (no native window, as in the screenshots).
+fn window_is_in_front() -> bool {
+    use slint::winit_030::WinitWindowAccessor;
+    let mut in_front = true;
+    with_ui(|ui| {
+        if let Some(focused) = ui.window().with_winit_window(|window| window.has_focus()) {
+            in_front = focused;
+        }
+    });
+    in_front
+}
+
+/// Reach the window, when it still exists.
+fn with_ui(change: impl FnOnce(&MainWindow)) {
     let ui = CLIENT.with(|client| client.borrow().as_ref().and_then(|client| client.ui.upgrade()));
     if let Some(ui) = ui {
-        change(&ui.global::<AppState>());
+        change(&ui);
     }
 }
 
