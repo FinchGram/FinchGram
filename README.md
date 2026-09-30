@@ -10,8 +10,9 @@ not made by Telegram.
 
 Status: early. Signing up and logging in, the chat list and chats with text messages work, in the
 design's three themes: Workbench (the default), Broadsheet and Terminal, switched in Settings →
-Appearance. Two-step verification is managed in Settings → Privacy & security. Photos and files,
-several accounts, keyword filters and scheduled messages come next.
+Appearance. Photos and videos show in the chats and open in a viewer that plays video through mpv.
+Two-step verification is managed in Settings → Privacy & security. Files, several accounts, keyword
+filters and scheduled messages come next.
 
 The app is a shell. Telegram itself is done by TDLib, Telegram's own library, running as a separate
 program next to the executable: `finchgram-tdlib`, built from pinned sources by this repository (as
@@ -25,11 +26,12 @@ Everything is here, in public: the source, the vendor builds (`vendor/`) and the
 Development needs macOS on Apple silicon for now: finchgram-tdlib is only built for it. Linux and
 Windows will follow.
 
-finchgram-tdlib and the UI fonts are not in git: `vendor/tdlib/` only holds the script that builds the
-program, and the fonts come from Google Fonts. After cloning, get them once:
+finchgram-tdlib, libmpv and the UI fonts are not in git: `vendor/tdlib/` and `vendor/mpv/` only hold
+the scripts that build them, and the fonts come from Google Fonts. After cloning, get them once:
 
 ```sh
 scripts/fetch-tdlib.sh    # downloads the pinned finchgram-tdlib release into vendor/tdlib/bin/ and verifies the SHA-256
+scripts/fetch-mpv.sh      # downloads the pinned libmpv release into vendor/mpv/bin/ and verifies the SHA-256
 scripts/fetch-fonts.sh    # downloads the pinned UI fonts into vendor/fonts/ and verifies their SHA-256
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -50,8 +52,9 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   chats, into `target/screenshots/`: a way to look at the UI without an account.
 
 `build.rs` copies `vendor/tdlib/bin/finchgram-tdlib` next to the compiled executable, so `cargo run`
-uses exactly the same program as the packaged app, and the fonts in `vendor/fonts/` are compiled into
-the executable; without either the build fails with a message saying so. Rust 1.92 or newer.
+uses exactly the same program as the packaged app; it links libmpv from `vendor/mpv/bin/` and copies it
+there too, and the fonts in `vendor/fonts/` are compiled into the executable. Without any of them the
+build fails with a message saying so. Rust 1.92 or newer.
 
 TDLib's database and downloaded files are in `~/Library/Application Support/FinchGram/tdlib/`, the
 settings in `~/Library/Application Support/FinchGram/settings.toml`.
@@ -90,7 +93,9 @@ src/
     account.rs           #   the profile, logging out
     password.rs          #   two-step verification in Settings
     files.rs             #   downloading files
+    viewer.rs            #   the media viewer: photos, videos, saving to Downloads
   platform/              # what differs from one operating system to another
+  player/                # video through libmpv, drawn into the window with OpenGL
   update.rs              # the self-updater: GitHub Releases, signature check, swap, relaunch
   settings.rs            # the user's preferences (settings.toml)
   i18n.rs                # UI language: saved choice, else the system's, else English
@@ -103,6 +108,7 @@ ui/
   look.slint             # the theme's colours, type and shapes, for the shared pages
   format.slint           # dates, counts and kinds of message in the UI language
   widgets.slint          # small shared parts; chat.slint: the chat windows' shared parts
+  viewer.slint           # the media viewer over the whole window, in each theme's manner
   pages/                 # the pages the three themes share: logging in, settings, the profile
   workbench/             # the Workbench theme's chat window (the default)
   broadsheet/            # the Broadsheet theme's chat window
@@ -110,7 +116,7 @@ ui/
   icons/                 # Phosphor icons (MIT), regular and duotone; icons.slint lists them
   logo/                  # the FinchGram logo (svg, png) and its rules
 vendor/fonts/            # not in git: the UI fonts (scripts/fetch-fonts.sh)
-vendor/mpv/              # libmpv: mpv and FFmpeg, for playing video (not in the app yet)
+vendor/mpv/              # libmpv: mpv and FFmpeg, which play video
   build.sh               #   builds it from pinned sources: versions and SHA-256 at the top
   bin/                   #   not in git: the library (scripts/fetch-mpv.sh, or build.sh install)
 vendor/tdlib/            # finchgram-tdlib

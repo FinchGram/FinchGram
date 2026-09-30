@@ -14,7 +14,42 @@ fn main() {
     slint_build::compile_with_config("ui/app.slint", config).expect("Slint UI failed to compile");
 
     copy_bundled_tdlib();
+    link_bundled_mpv();
     check_bundled_fonts();
+}
+
+/// libmpv plays video (src/player/). The app links vendor/mpv/bin/libmpv.2.dylib and finds it at
+/// run time through its run paths: next to the executable (`cargo run`: it is copied there), one
+/// folder up (the test executables in target/<profile>/deps/), and in the bundle's Frameworks
+/// folder (scripts/bundle.sh). Like finchgram-tdlib, it is never looked for anywhere else.
+fn link_bundled_mpv() {
+    println!("cargo:rerun-if-changed=vendor/mpv/bin");
+
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR");
+    let library = Path::new(&manifest_dir).join("vendor").join("mpv").join("bin").join("libmpv.2.dylib");
+    assert!(
+        library.is_file(),
+        "\n\n{} is missing.\nFinchGram plays video with its own libmpv. \
+         Run scripts/fetch-mpv.sh once to download it into vendor/mpv/bin/.\n\n",
+        library.display()
+    );
+
+    // src/player/mpv.rs links "mpv": a libmpv.dylib here stands for the versioned file.
+    let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR"));
+    let link_dir = out_dir.join("mpv");
+    std::fs::create_dir_all(&link_dir).expect("OUT_DIR/mpv");
+    let link = link_dir.join("libmpv.dylib");
+    let _ = std::fs::remove_file(&link);
+    std::os::unix::fs::symlink(&library, &link).unwrap_or_else(|err| panic!("cannot link {}: {err}", link.display()));
+    println!("cargo:rustc-link-search=native={}", link_dir.display());
+    for path in ["@executable_path", "@executable_path/..", "@executable_path/../Frameworks"] {
+        println!("cargo:rustc-link-arg=-Wl,-rpath,{path}");
+    }
+
+    let exe_dir = out_dir.ancestors().nth(3).expect("unexpected OUT_DIR layout").to_path_buf();
+    let dest = exe_dir.join("libmpv.2.dylib");
+    std::fs::copy(&library, &dest)
+        .unwrap_or_else(|err| panic!("cannot copy {} to {}: {err}", library.display(), dest.display()));
 }
 
 /// The UI fonts are compiled into the executable (src/fonts.rs includes them from vendor/fonts/).

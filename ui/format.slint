@@ -13,6 +13,11 @@ export global Fmt {
         return pad2(m.hour) + ":" + pad2(m.minute);
     }
 
+    // A video's length or where it is: 42 → "0:42", 3725 → "62:05"
+    public pure function duration(seconds: int) -> string {
+        return Math.floor(max(0, seconds) / 60) + ":" + pad2(Math.mod(max(0, seconds), 60));
+    }
+
     // 82413 → "82,413"
     public pure function count(n: int) -> string {
         if n < 1000 {

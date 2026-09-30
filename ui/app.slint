@@ -1,20 +1,21 @@
 import { AppState, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language } from "state.slint";
 import { Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
-    PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, RowKind, Content, ChatKind, Status, Moment, Day,
-    Words } from "telegram.slint";
+    PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, RowKind, Content, ChatKind, Status, Moment, Day,
+    Viewer, ViewerItem, Words } from "telegram.slint";
 import { Look } from "look.slint";
 import { LoginPage } from "pages/login.slint";
 import { WorkbenchWindow } from "workbench/workbench.slint";
 import { BroadsheetWindow } from "broadsheet/broadsheet.slint";
 import { TerminalWindow } from "terminal/terminal.slint";
 import { SettingsPage } from "pages/settings.slint";
+import { MediaViewer } from "viewer.slint";
 import { ProfilePage } from "pages/profile.slint";
 
 // Re-exported so Rust can reach them through slint::include_modules!().
 export { AppState, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language,
     Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
-    PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, RowKind, Content, ChatKind, Status, Moment, Day,
-    Words }
+    PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, RowKind, Content, ChatKind, Status, Moment, Day,
+    Viewer, ViewerItem, Words }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";
@@ -99,4 +100,6 @@ export component MainWindow inherits Window {
     if root.ready && AppState.page == Page.chats && AppState.theme == Theme.terminal: TerminalWindow { }
     if AppState.page == Page.settings: SettingsPage { }
     if root.ready && AppState.page == Page.profile: ProfilePage { }
+    // The media viewer, over everything while it is open.
+    if root.ready && AppState.page == Page.chats && Viewer.open: MediaViewer { }
 }

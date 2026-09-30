@@ -65,7 +65,8 @@ libmpv follows it as finchgram-tdlib does: `vendor/mpv/build.sh` builds mpv and 
 SHA-256, statically into one `libmpv.2.dylib` that depends only on macOS; the script checks that
 (`otool -L`) and plays a short raw video as a smoke test. CI publishes it from an `mpv-<version>-<n>`
 tag (`.github/workflows/mpv.yml`), and `scripts/fetch-mpv.sh` downloads the pinned release into
-`vendor/mpv/bin/`.
+`vendor/mpv/bin/`. `build.rs` links it from there and copies it next to the executable; the bundle
+carries it in `Contents/Frameworks/`, where the executable's run path finds it and nowhere else.
 
 ## 2. One repository
 

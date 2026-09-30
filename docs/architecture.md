@@ -2,9 +2,9 @@
 
 [中文](architecture.zh-Hans.md)
 
-Status: agreed direction (2026-09-29), after Coova Studio's architecture. The shell and
-finchgram-tdlib run on macOS; logging in, the chat list and text messages work, in the design's
-three themes. The decisions still open are listed at the end.
+Status: agreed direction (2026-09-29), after Coova Studio's architecture. The shell,
+finchgram-tdlib and libmpv run on macOS; logging in, the chat list, text messages, photos and videos
+work, in the design's three themes. The decisions still open are listed at the end.
 
 ## Why
 
@@ -112,7 +112,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   `store.rs` keeps what TDLib has said (chats, users, groups, folders, the messages of the open
   chats) and brings the pages' models up to date after each batch; `login.rs`, `chats.rs`,
   `conversation.rs`, `account.rs` and `password.rs` (two-step verification) do what the pages ask
-  for; `files.rs` downloads files.
+  for; `files.rs` downloads files, `viewer.rs` fills the media viewer.
+- `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
 - `src/platform/`: the platform layer (so far: what the account's list of sessions calls this
   device, the transparent title bar on macOS, opening links).
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
@@ -124,7 +125,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 - `ui/`: `app.slint` (the window: its menus and which page shows), `state.slint` and
   `telegram.slint` (the globals Rust and the pages share), `look.slint`, `format.slint` (dates,
   counts and kinds of message in the UI language), `widgets.slint` and `chat.slint` (shared parts),
-  `pages/`, and the three themes' folders.
+  `viewer.slint` (the media viewer, over the whole window), `pages/`, and the three themes' folders.
 
 ## Platforms
 
@@ -152,10 +153,11 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 3. **Media playback** (the media center): voice messages (Opus), video, GIFs and animated stickers
    (WebM, Lottie). Decided on 2026-09-30: mpv. It comes as libmpv, built from pinned sources by
    `vendor/mpv/build.sh` as finchgram-tdlib is: mpv with FFmpeg, libplacebo and libass (FreeType,
-   FriBidi, HarfBuzz), all static in one library that depends only on macOS. mpv draws into the app's
-   window through its render API (OpenGL) and decodes with VideoToolbox where it can. It is not in the
-   app yet: the pages that show and play media wait for the design. The price: libmpv decodes inside
-   the app's process, so a crafted video that breaks a decoder takes the window with it. FFmpeg is
+   FriBidi, HarfBuzz), all static in one library that depends only on macOS; the app links it and
+   carries it in its bundle's Frameworks folder. Each time the window renders, mpv draws the frame into
+   an OpenGL texture of ours inside Slint's own context (`src/player/`), and decodes with VideoToolbox
+   where it can; the media viewer shows the texture. The price: libmpv decodes inside the app's
+   process, so a crafted video that breaks a decoder takes the window with it. FFmpeg is
    built without network code, encoders or devices, and follows upstream; should that not be enough,
    playback moves into a sandboxed helper process that hands its picture over (IOSurface on macOS).
    Lottie stickers need something else (rlottie).

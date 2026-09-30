@@ -3,7 +3,7 @@
 // one command line writes messages and runs commands ("/mute", "/pin", …).
 import { ListView } from "std-widgets.slint";
 import { AppState, Page, Connection } from "../state.slint";
-import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content } from "../telegram.slint";
+import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer } from "../telegram.slint";
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Paragraph, WindowButtonsSpace, WindowMover } from "../widgets.slint";
@@ -404,6 +404,7 @@ component Side inherits Rectangle {
 // One line of the log: time, sender, words.
 component LogLine {
     in property <MessageRow> message;
+    property <bool> has-media: message.media.length > 0;
     height: lines.preferred-height;
 
     lines := HorizontalLayout {
@@ -425,14 +426,30 @@ component LogLine {
         }
         VerticalLayout {
             horizontal-stretch: 1;
-            Paragraph {
-                text: Fmt.body(root.message.content, root.message.text, root.message.detail)
+            if !root.has-media || root.message.text != "": Paragraph {
+                text: (root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail))
                     + (root.message.edited ? " " + @tr("(edited)") : "")
                     + (root.message.sending ? " …" : "");
-                color: root.message.content == Content.text ? P.text : P.muted;
+                color: root.has-media || root.message.content == Content.text ? P.text : P.muted;
                 font-family: P.font;
                 font-size: 13px;
                 line-height-factor: P.leading(1.6);
+            }
+            // Its photos and videos, a line each: "↳ [vid 0:42] clip.mp4".
+            for item in root.message.media: Rectangle {
+                height: tag.preferred-height;
+                tag := T {
+                    x: 0;
+                    text: "↳ [" + (item.video ? "vid " + Fmt.duration(item.duration) : "img") + "]" + (item.name == "" ? "" : " " + item.name);
+                    color: P.accent;
+                    overflow: elide;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Viewer.view(item.id, true);
+                    }
+                }
             }
             if root.message.failed: Rectangle {
                 height: retry.preferred-height;
@@ -454,6 +471,14 @@ component LogLine {
 
 component Line {
     in property <MessageRow> message;
+    // Conversation.reveal names this row: the list scrolls to it.
+    callback reveal(length, length);
+    property <bool> wanted: message.id != "" && Conversation.reveal == message.id;
+    changed wanted => {
+        if self.wanted {
+            root.reveal(root.y, root.y + root.height);
+        }
+    }
 
     VerticalLayout {
         if root.message.kind == RowKind.day: T {
@@ -613,7 +638,7 @@ component Pane inherits Rectangle {
             }
         }
 
-        ChatScroll {
+        scroll := ChatScroll {
             vertical-stretch: 1;
             spacing: 3px;
             margin-left: 16px;
@@ -622,6 +647,9 @@ component Pane inherits Rectangle {
             margin-bottom: 14px;
             for row in Conversation.messages: Line {
                 message: row;
+                reveal(top, bottom) => {
+                    scroll.reveal(top, bottom);
+                }
             }
             if Conversation.typing != "": T {
                 text: "…… " + @tr("{0} is typing…", Conversation.typing);

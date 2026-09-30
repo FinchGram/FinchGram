@@ -12,7 +12,7 @@ use std::rc::Rc;
 
 use slint::platform::software_renderer::{MinimalSoftwareWindow, RepaintBufferType};
 use slint::platform::{Platform, WindowAdapter};
-use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
+use slint::{ComponentHandle, Image, Model, ModelRc, Rgba8Pixel, SharedPixelBuffer, SharedString, VecModel};
 
 use crate::*;
 
@@ -157,6 +157,79 @@ fn message(id: &str, sender: &str, time: &str, text: &str) -> MessageRow {
     }
 }
 
+/// A made-up picture: a diagonal gradient around `hue`, as the design draws its placeholders.
+fn gradient(width: u32, height: u32, hue: f32) -> Image {
+    fn colour(hue: f32, lightness: f32) -> [f32; 3] {
+        // A soft colour of that hue: HSL with a little saturation.
+        let hue = hue.rem_euclid(360.0) / 60.0;
+        let chroma = 0.35 * (1.0 - (2.0 * lightness - 1.0).abs());
+        let second = chroma * (1.0 - (hue % 2.0 - 1.0).abs());
+        let (r, g, b) = match hue as u32 {
+            0 => (chroma, second, 0.0),
+            1 => (second, chroma, 0.0),
+            2 => (0.0, chroma, second),
+            3 => (0.0, second, chroma),
+            4 => (second, 0.0, chroma),
+            _ => (chroma, 0.0, second),
+        };
+        let m = lightness - chroma / 2.0;
+        [r + m, g + m, b + m]
+    }
+    let (light, middle, dark) = (colour(hue, 0.80), colour(hue + 50.0, 0.62), colour(hue + 90.0, 0.44));
+    let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(width, height);
+    let pixels = buffer.make_mut_slice();
+    for y in 0..height {
+        for x in 0..width {
+            let t = (x as f32 / width as f32) * 0.6 + (y as f32 / height as f32) * 0.4;
+            let (from, to, part) = if t < 0.55 { (light, middle, t / 0.55) } else { (middle, dark, (t - 0.55) / 0.45) };
+            let channel = |i: usize| ((from[i] + (to[i] - from[i]) * part) * 255.0) as u8;
+            pixels[(y * width + x) as usize] = Rgba8Pixel { r: channel(0), g: channel(1), b: channel(2), a: 255 };
+        }
+    }
+    Image::from_rgba8(buffer)
+}
+
+fn media(id: &str, width: i32, height: i32, hue: f32, video: bool) -> Media {
+    Media {
+        id: id.into(),
+        picture: gradient(width as u32, height as u32, hue),
+        width,
+        height,
+        video,
+        duration: if video { 42 } else { 0 },
+        name: if video { "typing-sound-test.mp4".into() } else { SharedString::new() },
+    }
+}
+
+/// The album Jie sent: two photos and a video, as in the design.
+fn album() -> Vec<Media> {
+    vec![media("6", 400, 300, 25.0, false), media("6a", 300, 400, 200.0, false), media("6b", 640, 360, 290.0, true)]
+}
+
+/// The media viewer open on the album, at `index`.
+fn open_viewer(ui: &MainWindow, index: i32) {
+    let viewer = ui.global::<Viewer>();
+    let item = |media: Media| ViewerItem {
+        id: media.id,
+        picture: media.picture,
+        width: media.width,
+        height: media.height,
+        video: media.video,
+        duration: media.duration,
+        name: media.name,
+        sender: "Jie".into(),
+        sender_initial: "J".into(),
+        time: moment(Day::Today, 14, 19),
+        caption: "The lubed switch comparison is in the group album, have a look.".into(),
+    };
+    viewer.set_items(model(album().into_iter().map(item).collect()));
+    viewer.set_index(index);
+    viewer.set_zoom(0);
+    viewer.set_playing(false);
+    viewer.set_position(0.0);
+    viewer.set_open(true);
+}
+
 fn day_row(day: Day) -> MessageRow {
     MessageRow { kind: RowKind::Day, day: moment(day, 0, 0), ..message("", "", "", "") }
 }
@@ -231,7 +304,11 @@ fn open_keyboards(ui: &MainWindow) {
         message("3", "Zhou Ye", "10:31", "Nice, @ me when it's done."),
         message("4", "Mika", "11:02", "I can make the meetup on Thursday, but only after 3pm."),
         message("5", "Mi", "11:05", "Thursday 15:00 at the usual place. Who's coming?"),
-        message("6", "Jie", "14:19", "The lubed switch comparison is in the group album, have a look."),
+        MessageRow {
+            content: Content::Photo,
+            media: model(album()),
+            ..message("6", "Jie", "14:19", "The lubed switch comparison is in the group album, have a look.")
+        },
         message("7", "Jie", "14:20", "@Zhou Ye do you still sell the dark keycaps?"),
     ]));
 }
@@ -256,7 +333,11 @@ fn open_news(ui: &MainWindow) {
             button: "Learn more".into(),
             ..message("s1", "", "07:15", "")
         },
-        post("2", "07:30", "Four flagship phones launch this week; cameras and on-device features lead, prices hold."),
+        MessageRow {
+            content: Content::Photo,
+            media: model(vec![media("2", 1280, 720, 150.0, false)]),
+            ..post("2", "07:30", "Four flagship phones launch this week; cameras and on-device features lead, prices hold.")
+        },
     ]));
 }
 
@@ -341,6 +422,11 @@ fn screenshots() {
             app.set_page(Page::Chats);
             open_keyboards(&ui);
             save(&window, &name("chats"));
+            open_viewer(&ui, 1);
+            save(&window, &name("viewer-photo"));
+            open_viewer(&ui, 2);
+            save(&window, &name("viewer-video"));
+            ui.global::<Viewer>().set_open(false);
             open_news(&ui);
             save(&window, &name("channel"));
             app.set_page(Page::Settings);

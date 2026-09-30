@@ -1,0 +1,956 @@
+// The media viewer, from the design's media-viewer.js: the open chat's photos and videos over the
+// whole window, one at a time, always dark. Workbench and Broadsheet share its shape and differ in
+// their details; Terminal draws it in text. Rust fills Viewer (src/telegram/viewer.rs); zooming is
+// the page's own.
+import { AppState, Theme } from "state.slint";
+import { Viewer, ViewerItem } from "telegram.slint";
+import { AccountColors } from "look.slint";
+import { Fmt } from "format.slint";
+import { Icon, Spinner, WindowButtonsSpace, WindowMover } from "widgets.slint";
+
+global ViewerText {
+    public pure function speed(index: int) -> string {
+        return index == 1 ? "1.5×" : index == 2 ? "2×" : index == 3 ? "0.5×" : "1×";
+    }
+
+    public pure function zoom(index: int) -> string {
+        return index == 0 ? @tr("zoom" => "Fit") : index == 1 ? "150%" : index == 2 ? "200%" : "300%";
+    }
+
+    public pure function zoom-factor(index: int) -> float {
+        return index == 1 ? 1.5 : index == 2 ? 2 : index == 3 ? 3 : 1;
+    }
+
+    // Under the sender: when, and a video's file name.
+    public pure function meta(item: ViewerItem) -> string {
+        return item.name == "" ? Fmt.list-time(item.time) : Fmt.list-time(item.time) + " · " + item.name;
+    }
+
+    public pure function saved(name: string) -> string {
+        return @tr("Saved to Downloads · {0}", name);
+    }
+
+    public pure function keys() -> string {
+        return @tr("← → Switch · Space Play · Esc Close");
+    }
+}
+
+// What the three themes change.
+struct ViewerLook {
+    background: color,
+    text: color,
+    muted: color,
+    toast: color,
+    accent: color,
+    radius: length,             // the picture's corners
+    button-radius: length,
+    bar-height: length,
+    avatar-size: length,
+    avatar-radius: length,
+    name-size: length,
+    meta-size: length,
+    icon-size: length,
+    mono-counter: bool,         // the counter and times in a monospaced face
+    duotone: bool,
+    side-arrows: bool,          // Broadsheet: the whole side is the arrow
+    caption-size: length,
+    caption-color: color,
+    track-height: length,
+    track-radius: length,
+    play-size: length,
+}
+
+// The item shown, and what can be done with it: shared by the three looks.
+component ViewerState {
+    out property <ViewerItem> item: Viewer.items[Viewer.index];
+    out property <int> count: Viewer.items.length;
+    out property <bool> has-previous: Viewer.index > 0;
+    out property <bool> has-next: Viewer.index < count - 1;
+    out property <bool> ended: item.video && Viewer.ended;
+    out property <float> done: item.video && item.duration > 0 ? min(1, Viewer.position / item.duration) : 0;
+    // The strip below: eleven around the one shown.
+    out property <int> strip-start: max(0, min(Viewer.index - 5, count - 11));
+    out property <int> strip-end: min(count, strip-start + 11);
+}
+
+// A dark round button with an icon (Workbench's and Broadsheet's controls).
+component IconButton inherits Rectangle {
+    in property <string> icon;
+    in property <length> size: 19px;
+    in property <bool> duotone;
+    in property <bool> enabled: true;
+    in property <length> radius: 6px;
+    callback clicked();
+    width: size + 16px;
+    height: size + 16px;
+    border-radius: radius;
+    background: touch.has-hover && enabled ? #ffffff14 : transparent;
+    opacity: enabled ? 1 : 0.35;
+
+    Icon {
+        name: root.icon;
+        size: root.size;
+        color: #ffffff;
+        duotone: root.duotone;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// The picture (or the video's frame), fitted into the room there is, zoomed from its middle.
+component Stage inherits Rectangle {
+    in property <ViewerItem> item;
+    in property <length> radius;
+    in property <float> zoom: 1;
+    callback activated();       // a click on the picture
+    callback dismissed();       // a click beside it
+    clip: true;
+
+    property <float> own-width: item.width > 0 ? item.width : item.video ? 16 : 4;
+    property <float> own-height: item.height > 0 ? item.height : item.video ? 9 : 3;
+    // Room for the arrows on either side.
+    property <float> fit: min((self.width - 160px) / 1px / own-width, (self.height - 32px) / 1px / own-height);
+
+    TouchArea {
+        clicked => {
+            root.dismissed();
+        }
+    }
+    picture := Rectangle {
+        width: max(0, root.own-width * root.fit * root.zoom) * 1px;
+        height: max(0, root.own-height * root.fit * root.zoom) * 1px;
+        x: (root.width - self.width) / 2;
+        y: (root.height - self.height) / 2;
+        border-radius: root.radius;
+        clip: true;
+        background: #ffffff0d;
+        drop-shadow-blur: 48px;
+        drop-shadow-offset-y: 16px;
+        drop-shadow-color: #00000073;
+
+        Image {
+            width: parent.width;
+            height: parent.height;
+            // The video's frame once it plays (also paused); its still before.
+            source: root.item.video && Viewer.frame.width > 0 ? Viewer.frame : root.item.picture;
+            image-fit: fill;
+        }
+        @children
+        TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                root.activated();
+            }
+        }
+    }
+}
+
+// Workbench and Broadsheet.
+component PictureViewer inherits Rectangle {
+    in property <ViewerLook> look;
+    background: look.background;
+
+    state := ViewerState { }
+
+    function toggle-zoom() {
+        Viewer.zoom = Viewer.zoom > 0 ? 0 : 2;
+    }
+
+    // Everything below takes the clicks: nothing reaches the chat underneath.
+    TouchArea { }
+
+    keys := FocusScope {
+        init => {
+            self.focus();
+        }
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                Viewer.close();
+                return accept;
+            }
+            if event.text == Key.LeftArrow && state.has-previous {
+                Viewer.show(Viewer.index - 1);
+                return accept;
+            }
+            if event.text == Key.RightArrow && state.has-next {
+                Viewer.show(Viewer.index + 1);
+                return accept;
+            }
+            if event.text == " " && state.item.video {
+                Viewer.play-pause();
+                return accept;
+            }
+            return reject;
+        }
+
+        VerticalLayout {
+            // The bar: who sent it, when, where in the chat's media, and what can be done.
+            Rectangle {
+                height: root.look.bar-height;
+                WindowMover { }
+                HorizontalLayout {
+                    padding-right: 12px;
+                    spacing: 12px;
+                    WindowButtonsSpace { }
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: root.look.avatar-size;
+                            height: root.look.avatar-size;
+                            border-radius: root.look.avatar-radius;
+                            background: #ffffff1a;
+                            Text {
+                                text: state.item.sender-initial;
+                                color: root.look.text;
+                                font-size: root.look.avatar-size * 0.4;
+                                font-weight: 600;
+                            }
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        horizontal-stretch: 1;
+                        spacing: 1px;
+                        Text {
+                            text: state.item.sender;
+                            color: root.look.text;
+                            font-size: root.look.name-size;
+                            font-weight: 600;
+                            overflow: elide;
+                        }
+                        Text {
+                            text: ViewerText.meta(state.item);
+                            color: root.look.muted;
+                            font-size: root.look.meta-size;
+                            overflow: elide;
+                        }
+                    }
+                    Text {
+                        text: (Viewer.index + 1) + " / " + state.count;
+                        color: root.look.muted;
+                        font-size: root.look.mono-counter ? 12px : 14px;
+                        font-family: root.look.mono-counter ? "IBM Plex Mono" : "";
+                        vertical-alignment: center;
+                    }
+                    if !state.item.video: HorizontalLayout {
+                        spacing: 2px;
+                        // Set apart by hairlines on either side.
+                        Rectangle {
+                            width: 1px;
+                            height: 32px;
+                            y: (parent.height - self.height) / 2;
+                            background: #ffffff1f;
+                        }
+                        Rectangle { width: 6px; }
+                        IconButton {
+                            y: (parent.height - self.height) / 2;
+                            icon: "magnifying-glass-minus";
+                            size: root.look.icon-size - 1px;
+                            duotone: root.look.duotone;
+                            radius: root.look.button-radius;
+                            enabled: Viewer.zoom > 0;
+                            clicked => {
+                                Viewer.zoom = max(0, Viewer.zoom - 1);
+                            }
+                        }
+                        Text {
+                            width: 46px;
+                            text: ViewerText.zoom(Viewer.zoom);
+                            color: root.look.text;
+                            font-size: root.look.mono-counter ? 12px : 13px;
+                            font-family: root.look.mono-counter ? "IBM Plex Mono" : "";
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                        IconButton {
+                            y: (parent.height - self.height) / 2;
+                            icon: "magnifying-glass-plus";
+                            size: root.look.icon-size - 1px;
+                            duotone: root.look.duotone;
+                            radius: root.look.button-radius;
+                            enabled: Viewer.zoom < 3;
+                            clicked => {
+                                Viewer.zoom = min(3, Viewer.zoom + 1);
+                            }
+                        }
+                        Rectangle { width: 6px; }
+                        Rectangle {
+                            width: 1px;
+                            height: 32px;
+                            y: (parent.height - self.height) / 2;
+                            background: #ffffff1f;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        IconButton {
+                            icon: "chat-circle-text";
+                            size: root.look.icon-size;
+                            duotone: root.look.duotone;
+                            radius: root.look.button-radius;
+                            clicked => {
+                                Viewer.locate();
+                            }
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        IconButton {
+                            icon: "download-simple";
+                            size: root.look.icon-size;
+                            duotone: root.look.duotone;
+                            radius: root.look.button-radius;
+                            clicked => {
+                                Viewer.download();
+                            }
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        IconButton {
+                            icon: "x";
+                            size: root.look.icon-size;
+                            radius: root.look.button-radius;
+                            clicked => {
+                                Viewer.close();
+                            }
+                        }
+                    }
+                }
+            }
+
+            stage := Stage {
+                vertical-stretch: 1;
+                item: state.item;
+                radius: root.look.radius;
+                zoom: ViewerText.zoom-factor(Viewer.zoom);
+                dismissed => {
+                    Viewer.close();
+                }
+                activated => {
+                    if state.item.video {
+                        Viewer.play-pause();
+                    } else {
+                        root.toggle-zoom();
+                    }
+                }
+
+                if state.item.video && !Viewer.playing: Rectangle {
+                    width: root.look.play-size;
+                    height: root.look.play-size;
+                    border-radius: self.width / 2;
+                    background: #00000080;
+                    if !Viewer.loading: Icon {
+                        name: state.ended ? "arrow-counter-clockwise" : "play";
+                        size: root.look.play-size * 0.44;
+                        color: #ffffff;
+                        duotone: root.look.duotone;
+                    }
+                    if Viewer.loading: Spinner {
+                        size: root.look.play-size * 0.4;
+                        color: #ffffff;
+                    }
+                }
+            }
+
+            if state.item.video: HorizontalLayout {
+                alignment: center;
+                padding-top: 12px;
+                HorizontalLayout {
+                    width: min(1040px, root.width);
+                    padding-left: 24px;
+                    padding-right: 24px;
+                    spacing: 14px;
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: root.look.icon-size + 6px;
+                            height: root.look.icon-size + 6px;
+                            Icon {
+                                name: Viewer.playing ? "pause" : state.ended ? "arrow-counter-clockwise" : "play";
+                                size: root.look.icon-size + 3px;
+                                color: #ffffff;
+                                duotone: root.look.duotone;
+                            }
+                            TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    Viewer.play-pause();
+                                }
+                            }
+                        }
+                    }
+                    Text {
+                        text: Fmt.duration(Math.floor(Viewer.position)) + " / " + Fmt.duration(state.item.duration);
+                        color: #c7ccd3;
+                        font-size: root.look.mono-counter ? 12px : 13px;
+                        font-family: root.look.mono-counter ? "IBM Plex Mono" : "";
+                        vertical-alignment: center;
+                    }
+                    seek := Rectangle {
+                        horizontal-stretch: 1;
+                        height: 22px;
+                        Rectangle {
+                            y: (parent.height - self.height) / 2;
+                            height: root.look.track-height;
+                            border-radius: root.look.track-radius;
+                            background: #ffffff33;
+                        }
+                        Rectangle {
+                            x: 0;
+                            y: (parent.height - self.height) / 2;
+                            width: parent.width * state.done;
+                            height: root.look.track-height;
+                            border-radius: root.look.track-radius;
+                            background: root.look.accent;
+                        }
+                        Rectangle {
+                            x: parent.width * state.done - self.width / 2;
+                            y: (parent.height - self.height) / 2;
+                            width: 12px;
+                            height: 12px;
+                            border-radius: 6px;
+                            background: #ffffff;
+                        }
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                Viewer.seek(max(0, min(1, self.mouse-x / self.width)));
+                            }
+                        }
+                    }
+                    Rectangle {
+                        width: speed.preferred-width + 16px;
+                        height: speed.preferred-height + 6px;
+                        y: (parent.height - self.height) / 2;
+                        border-radius: root.look.button-radius;
+                        border-width: 1px;
+                        border-color: #ffffff40;
+                        speed := Text {
+                            text: ViewerText.speed(Viewer.speed);
+                            color: #ffffff;
+                            font-size: root.look.mono-counter ? 12px : 13px;
+                            font-family: root.look.mono-counter ? "IBM Plex Mono" : "";
+                        }
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                Viewer.next-speed();
+                            }
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: root.look.icon-size + 4px;
+                            height: root.look.icon-size + 4px;
+                            Icon {
+                                name: Viewer.muted ? "speaker-x" : "speaker-high";
+                                size: root.look.icon-size + 1px;
+                                color: #ffffff;
+                                duotone: root.look.duotone;
+                            }
+                            TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    Viewer.toggle-mute();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if state.item.caption != "": HorizontalLayout {
+                alignment: center;
+                padding-top: 10px;
+                padding-left: 24px;
+                padding-right: 24px;
+                Text {
+                    width: min(720px, root.width - 48px);
+                    text: state.item.caption;
+                    color: root.look.caption-color;
+                    font-size: root.look.caption-size;
+                    wrap: word-wrap;
+                    horizontal-alignment: center;
+                    max-height: 72px;
+                    overflow: elide;
+                }
+            }
+
+            // The strip: the media around the one shown.
+            Rectangle {
+                height: 78px;
+                Rectangle {
+                    y: 14px;
+                    width: (state.strip-end - state.strip-start) * 54px - 6px;
+                    height: 48px;
+                    for item[index] in Viewer.items: Rectangle {
+                        visible: index >= state.strip-start && index < state.strip-end;
+                        x: (index - state.strip-start) * 54px;
+                        width: 48px;
+                        height: 48px;
+                        border-radius: root.look.radius;
+                        clip: true;
+                        opacity: index == Viewer.index ? 1 : 0.5;
+                        Image {
+                            width: parent.width;
+                            height: parent.height;
+                            source: item.picture;
+                            image-fit: cover;
+                        }
+                        if item.video: Icon {
+                            name: "play";
+                            size: 15px;
+                            color: #ffffff;
+                            duotone: false;
+                        }
+                        Rectangle {
+                            border-radius: root.look.radius;
+                            border-width: index == Viewer.index ? 2px : 0;
+                            border-color: root.look.accent;
+                        }
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                Viewer.show(index);
+                            }
+                        }
+                    }
+                }
+                Text {
+                    x: parent.width - self.width - 20px;
+                    y: parent.height - self.height - 30px;
+                    text: ViewerText.keys();
+                    color: #8b929c;
+                    font-size: root.look.mono-counter ? 11px : 12px;
+                    font-family: root.look.mono-counter ? "IBM Plex Mono" : "";
+                }
+            }
+        }
+    }
+
+    // The arrows, over the picture's sides.
+    if state.has-previous: Rectangle {
+        x: root.look.side-arrows ? 0 : 16px;
+        y: root.look.side-arrows ? root.look.bar-height : root.look.bar-height + (stage.height - self.height) / 2;
+        width: root.look.side-arrows ? 120px : 44px;
+        height: root.look.side-arrows ? stage.height : 44px;
+        border-radius: root.look.side-arrows ? 0 : 22px;
+        background: root.look.side-arrows ? (previous.has-hover ? #ffffff0f : transparent) : previous.has-hover ? #ffffff33 : #ffffff1a;
+        Icon {
+            x: root.look.side-arrows ? 20px : (parent.width - self.width) / 2;
+            name: "caret-left";
+            size: root.look.side-arrows ? 28px : 20px;
+            color: #ffffff;
+            duotone: false;
+        }
+        previous := TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                Viewer.show(Viewer.index - 1);
+            }
+        }
+    }
+    if state.has-next: Rectangle {
+        x: root.width - self.width - (root.look.side-arrows ? 0 : 16px);
+        y: root.look.side-arrows ? root.look.bar-height : root.look.bar-height + (stage.height - self.height) / 2;
+        width: root.look.side-arrows ? 120px : 44px;
+        height: root.look.side-arrows ? stage.height : 44px;
+        border-radius: root.look.side-arrows ? 0 : 22px;
+        background: root.look.side-arrows ? (next.has-hover ? #ffffff0f : transparent) : next.has-hover ? #ffffff33 : #ffffff1a;
+        Icon {
+            x: root.look.side-arrows ? parent.width - self.width - 20px : (parent.width - self.width) / 2;
+            name: "caret-right";
+            size: root.look.side-arrows ? 28px : 20px;
+            color: #ffffff;
+            duotone: false;
+        }
+        next := TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                Viewer.show(Viewer.index + 1);
+            }
+        }
+    }
+
+    // "Saved to Downloads", for a moment.
+    if Viewer.saved != "": Rectangle {
+        x: (root.width - self.width) / 2;
+        y: root.look.bar-height + 12px;
+        width: saved.preferred-width + 28px;
+        height: saved.preferred-height + 14px;
+        border-radius: root.look.button-radius;
+        background: root.look.toast;
+        saved := HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            spacing: 6px;
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "check-circle";
+                    size: 15px;
+                    color: root.look.accent;
+                    duotone: root.look.duotone;
+                }
+            }
+            Text {
+                text: ViewerText.saved(Viewer.saved);
+                color: root.look.text;
+                font-size: root.look.meta-size + 1px;
+                vertical-alignment: center;
+            }
+        }
+    }
+}
+
+component TermText inherits Text {
+    color: #d6dbd7;
+    font-family: "JetBrains Mono";
+    font-size: 13px;
+    vertical-alignment: center;
+}
+
+component TermButton inherits TermText {
+    callback clicked();
+    color: #7ed69b;
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// Terminal's progress bar: forty dashes, the part played in the accent over the rest.
+component TermBar inherits Rectangle {
+    in property <float> done;
+    in property <color> accent;
+    width: rest.preferred-width;
+    height: rest.preferred-height;
+    rest := TermText {
+        x: 0;
+        text: "────────────────────────────────────────";
+        color: #3d443f;
+        letter-spacing: -1px;
+    }
+    Rectangle {
+        x: 0;
+        width: parent.width * Math.round(max(0, min(1, root.done)) * 40) / 40;
+        clip: true;
+        TermText {
+            x: 0;
+            text: "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+            color: root.accent;
+            letter-spacing: -1px;
+        }
+    }
+}
+
+// Terminal: the same viewer in text.
+component TextViewer inherits Rectangle {
+    property <color> accent: #7ed69b;
+    property <color> text: #d6dbd7;
+    property <color> muted: #8a928c;
+    background: #080a09;
+
+    state := ViewerState { }
+
+    TouchArea { }
+
+    FocusScope {
+        init => {
+            self.focus();
+        }
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                Viewer.close();
+                return accept;
+            }
+            if event.text == Key.LeftArrow && state.has-previous {
+                Viewer.show(Viewer.index - 1);
+                return accept;
+            }
+            if event.text == Key.RightArrow && state.has-next {
+                Viewer.show(Viewer.index + 1);
+                return accept;
+            }
+            if event.text == " " && state.item.video {
+                Viewer.play-pause();
+                return accept;
+            }
+            return reject;
+        }
+
+        VerticalLayout {
+            Rectangle {
+                height: 36px;
+                background: #161a17;
+                WindowMover { }
+                HorizontalLayout {
+                    padding-right: 16px;
+                    spacing: 14px;
+                    WindowButtonsSpace { }
+                    TermText {
+                        text: "media";
+                        color: root.accent;
+                        font-weight: 600;
+                    }
+                    TermText {
+                        text: state.item.sender;
+                    }
+                    TermText {
+                        horizontal-stretch: 1;
+                        text: ViewerText.meta(state.item);
+                        color: root.muted;
+                        overflow: elide;
+                    }
+                    TermText {
+                        text: (Viewer.index + 1) + " / " + state.count;
+                        color: root.muted;
+                    }
+                    if !state.item.video: HorizontalLayout {
+                        spacing: 6px;
+                        TermButton {
+                            text: "[-]";
+                            opacity: Viewer.zoom > 0 ? 1 : 0.35;
+                            clicked => {
+                                Viewer.zoom = max(0, Viewer.zoom - 1);
+                            }
+                        }
+                        TermText {
+                            min-width: 40px;
+                            text: ViewerText.zoom(Viewer.zoom);
+                            horizontal-alignment: center;
+                        }
+                        TermButton {
+                            text: "[+]";
+                            opacity: Viewer.zoom < 3 ? 1 : 0.35;
+                            clicked => {
+                                Viewer.zoom = min(3, Viewer.zoom + 1);
+                            }
+                        }
+                    }
+                    TermButton {
+                        text: "[" + @tr("terminal" => "locate") + "]";
+                        clicked => {
+                            Viewer.locate();
+                        }
+                    }
+                    TermButton {
+                        text: "[" + @tr("terminal" => "download") + "]";
+                        clicked => {
+                            Viewer.download();
+                        }
+                    }
+                    TermButton {
+                        text: "[esc]";
+                        color: root.muted;
+                        clicked => {
+                            Viewer.close();
+                        }
+                    }
+                }
+            }
+
+            stage := Stage {
+                vertical-stretch: 1;
+                item: state.item;
+                radius: 0;
+                zoom: ViewerText.zoom-factor(Viewer.zoom);
+                dismissed => {
+                    Viewer.close();
+                }
+                activated => {
+                    if state.item.video {
+                        Viewer.play-pause();
+                    } else {
+                        Viewer.zoom = Viewer.zoom > 0 ? 0 : 2;
+                    }
+                }
+
+                if state.item.video && !Viewer.playing: Rectangle {
+                    width: play.preferred-width + 36px;
+                    height: play.preferred-height + 20px;
+                    background: #00000099;
+                    play := TermText {
+                        text: Viewer.loading ? "[ … ]" : state.ended ? "[ ↺ ]" : "[ ▶ play ]";
+                        color: #ffffff;
+                        font-size: 18px;
+                        font-weight: 600;
+                    }
+                }
+            }
+
+            if state.item.video: HorizontalLayout {
+                alignment: center;
+                padding-top: 10px;
+                spacing: 12px;
+                TermButton {
+                    text: Viewer.playing ? "[||]" : state.ended ? "[↺]" : "[▶]";
+                    clicked => {
+                        Viewer.play-pause();
+                    }
+                }
+                TermText {
+                    text: Fmt.duration(Math.floor(Viewer.position));
+                }
+                TermBar {
+                    done: state.done;
+                    accent: root.accent;
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Viewer.seek(max(0, min(1, self.mouse-x / self.width)));
+                        }
+                    }
+                }
+                TermText {
+                    text: Fmt.duration(state.item.duration);
+                }
+                TermButton {
+                    text: "[" + ViewerText.speed(Viewer.speed) + "]";
+                    clicked => {
+                        Viewer.next-speed();
+                    }
+                }
+                TermButton {
+                    text: Viewer.muted ? "[" + @tr("terminal" => "muted") + "]" : "[" + @tr("terminal" => "sound") + "]";
+                    clicked => {
+                        Viewer.toggle-mute();
+                    }
+                }
+            }
+
+            if state.item.caption != "": HorizontalLayout {
+                alignment: center;
+                padding-top: 8px;
+                padding-left: 16px;
+                padding-right: 16px;
+                TermText {
+                    width: min(760px, root.width - 32px);
+                    text: "» " + state.item.caption;
+                    wrap: word-wrap;
+                    horizontal-alignment: center;
+                    max-height: 64px;
+                    overflow: elide;
+                }
+            }
+
+            Rectangle {
+                height: 66px;
+                Rectangle {
+                    y: 12px;
+                    width: (state.strip-end - state.strip-start) * 46px - 6px;
+                    height: 40px;
+                    for item[index] in Viewer.items: Rectangle {
+                        visible: index >= state.strip-start && index < state.strip-end;
+                        x: (index - state.strip-start) * 46px;
+                        width: 40px;
+                        height: 40px;
+                        clip: true;
+                        opacity: index == Viewer.index ? 1 : 0.5;
+                        Image {
+                            width: parent.width;
+                            height: parent.height;
+                            source: item.picture;
+                            image-fit: cover;
+                        }
+                        if item.video: TermText {
+                            text: "▶";
+                            color: #ffffff;
+                            font-size: 11px;
+                        }
+                        Rectangle {
+                            border-width: 1px;
+                            border-color: index == Viewer.index ? root.accent : transparent;
+                        }
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                Viewer.show(index);
+                            }
+                        }
+                    }
+                }
+                TermText {
+                    x: parent.width - self.width - 16px;
+                    y: parent.height - self.height - 24px;
+                    text: @tr("terminal" => "←/→ switch · space play · esc close");
+                    color: root.muted;
+                    font-size: 11px;
+                }
+            }
+        }
+    }
+
+    if state.has-previous: TermButton {
+        x: 14px;
+        y: 36px + (stage.height - self.height) / 2;
+        text: "[←]";
+        font-size: 15px;
+        clicked => {
+            Viewer.show(Viewer.index - 1);
+        }
+    }
+    if state.has-next: TermButton {
+        x: root.width - self.width - 14px;
+        y: 36px + (stage.height - self.height) / 2;
+        text: "[→]";
+        font-size: 15px;
+        clicked => {
+            Viewer.show(Viewer.index + 1);
+        }
+    }
+
+    if Viewer.saved != "": Rectangle {
+        x: (root.width - self.width) / 2;
+        y: 36px + 10px;
+        width: saved.preferred-width + 24px;
+        height: saved.preferred-height + 10px;
+        background: #161a17;
+        border-width: 1px;
+        border-color: #252a27;
+        saved := HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            TermText {
+                text: "✓ ";
+                color: root.accent;
+            }
+            TermText {
+                text: ViewerText.saved(Viewer.saved);
+            }
+        }
+    }
+}
+
+// The viewer in the theme's manner, over the whole window while it is open.
+export component MediaViewer inherits Rectangle {
+    if AppState.theme == Theme.workbench: PictureViewer {
+        look: {
+            background: #0d0f13, text: #eef0f3, muted: #a3aab4, toast: #2a2f37, accent: #8e9ff0,
+            radius: 4px, button-radius: 6px, bar-height: 56px, avatar-size: 32px, avatar-radius: 6px,
+            name-size: 14px, meta-size: 12px, icon-size: 19px, mono-counter: true, duotone: false,
+            side-arrows: false, caption-size: 14px, caption-color: #dfe3e8, track-height: 4px,
+            track-radius: 2px, play-size: 72px,
+        };
+    }
+    if AppState.theme == Theme.broadsheet: PictureViewer {
+        look: {
+            background: #161514, text: #f3f2f2, muted: #a8a4a4, toast: #2d2b2a,
+            accent: AccountColors.accent(0, true),
+            radius: 2px, button-radius: 4px, bar-height: 60px, avatar-size: 34px, avatar-radius: 17px,
+            name-size: 15px, meta-size: 13px, icon-size: 21px, mono-counter: false, duotone: true,
+            side-arrows: true, caption-size: 16px, caption-color: #e6e4e4, track-height: 3px,
+            track-radius: 0, play-size: 76px,
+        };
+    }
+    if AppState.theme == Theme.terminal: TextViewer { }
+}

@@ -9,8 +9,9 @@ FinchGram は Telegram API を使っており、Telegram エコシステムの�
 Telegram が開発したものではありません。
 
 状況：初期段階。新規登録とログイン、チャット一覧、テキストメッセージのやり取りが、デザインの 3 つのテーマで動きます：
-ワークベンチ（既定）、ブロードシート、ターミナル。切り替えは「設定 › 外観」から。2 段階認証は「設定 › プライバシーと
-セキュリティ」で管理できます。次は写真とファイル、複数アカウント、キーワードフィルター、予約メッセージです。
+ワークベンチ（既定）、ブロードシート、ターミナル。切り替えは「設定 › 外観」から。写真と動画はチャットに表示され、
+ビューアで開けます（動画は mpv で再生）。2 段階認証は「設定 › プライバシーとセキュリティ」で管理できます。
+次はファイル、複数アカウント、キーワードフィルター、予約メッセージです。
 
 アプリはシェル（外殻）です。Telegram そのものは Telegram 公式のライブラリ TDLib が担い、実行ファイルの隣で
 独立したプログラムとして動きます。それが `finchgram-tdlib` で、このリポジトリがバージョンを固定したソースから
@@ -25,11 +26,12 @@ JSON でこれと通信します。詳しくは [docs/architecture.md](../docs/a
 現時点では、開発には Apple silicon の macOS が必要です。finchgram-tdlib はまだそれ向けにしかビルドしていません。
 Linux と Windows は後日対応します。
 
-finchgram-tdlib と UI フォントは git に入っていません。`vendor/tdlib/` にあるのはプログラムをビルドする
-スクリプトだけで、フォントは Google Fonts から取得します。clone したら、まず一度取得してください：
+finchgram-tdlib、libmpv、UI フォントは git に入っていません。`vendor/tdlib/` と `vendor/mpv/` にあるのは
+それらをビルドするスクリプトだけで、フォントは Google Fonts から取得します。clone したら、まず一度取得してください：
 
 ```sh
 scripts/fetch-tdlib.sh    # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ にダウンロードし、SHA-256 を検証
+scripts/fetch-mpv.sh      # 固定バージョンの libmpv リリースを vendor/mpv/bin/ にダウンロードし、SHA-256 を検証
 scripts/fetch-fonts.sh    # 固定バージョンの UI フォントを vendor/fonts/ にダウンロードし、SHA-256 を検証
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -50,9 +52,9 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   チャットとともに `target/screenshots/` に描き出します。アカウントなしで UI を確認する方法です。
 
 `build.rs` は `vendor/tdlib/bin/finchgram-tdlib` を、コンパイルされた実行ファイルの隣にコピーします。そのため
-`cargo run` は、パッケージ化されたアプリとまったく同じプログラムを使います。`vendor/fonts/` のフォントは
-実行ファイルに組み込まれます。どちらかが欠けていると、ビルドはその旨のメッセージを出して失敗します。
-Rust 1.92 以降が必要です。
+`cargo run` は、パッケージ化されたアプリとまったく同じプログラムを使います。libmpv は `vendor/mpv/bin/` から
+リンクし、同じく隣にコピーします。`vendor/fonts/` のフォントは実行ファイルに組み込まれます。どれかが欠けていると、
+ビルドはその旨のメッセージを出して失敗します。Rust 1.92 以降が必要です。
 
 TDLib のデータベースとダウンロードしたファイルは `~/Library/Application Support/FinchGram/tdlib/` に、
 設定は `~/Library/Application Support/FinchGram/settings.toml` にあります。
@@ -91,7 +93,9 @@ src/
     account.rs           #   プロフィール、ログアウト
     password.rs          #   設定の 2 段階認証
     files.rs             #   ファイルのダウンロード
+    viewer.rs            #   メディアビューア：写真、動画、「ダウンロード」への保存
   platform/              # OS ごとに異なる部分
+  player/                # libmpv による動画再生。OpenGL でウィンドウに描画
   update.rs              # 自動アップデート：GitHub Releases、署名の検証、入れ替え、再起動
   settings.rs            # ユーザーの設定（settings.toml）
   i18n.rs                # UI の言語：保存された選択、なければシステムの言語、それもなければ英語
@@ -104,6 +108,7 @@ ui/
   look.slint             # テーマの色・書体・形。共有ページ用
   format.slint           # UI の言語で書く日付・数・メッセージの種類
   widgets.slint          # 共有の小さな部品。chat.slint はチャットウィンドウの共有部分
+  viewer.slint           # ウィンドウ全体を覆うメディアビューア。テーマごとのスタイル
   pages/                 # 3 つのテーマで共有するページ：ログイン、設定、プロフィール
   workbench/             # ワークベンチテーマのチャットウィンドウ（既定）
   broadsheet/            # ブロードシートテーマのチャットウィンドウ
@@ -111,7 +116,7 @@ ui/
   icons/                 # Phosphor アイコン（MIT）、通常とデュオトーン。icons.slint が一覧
   logo/                  # FinchGram のロゴ（svg、png）と使用ルール
 vendor/fonts/            # git には入らない：UI フォント（scripts/fetch-fonts.sh）
-vendor/mpv/              # libmpv：動画再生用の mpv と FFmpeg（アプリにはまだ組み込んでいない）
+vendor/mpv/              # libmpv：動画再生用の mpv と FFmpeg
   build.sh               #   固定したソースからビルド：バージョンと SHA-256 は冒頭で固定
   bin/                   #   git 管理外：ライブラリ本体（scripts/fetch-mpv.sh または build.sh install）
 vendor/tdlib/            # finchgram-tdlib

@@ -1,10 +1,10 @@
 // Workbench's main area: the tabs of the open chats, and the chat in front — its header, the
 // messages as rows (a letter, the sender and time, the text), and where to write.
 import { AppState } from "../state.slint";
-import { Conversation, MessageRow, RowKind, ChatKind, Content, Account } from "../telegram.slint";
+import { Conversation, MessageRow, RowKind, ChatKind, Content, Account, Viewer } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Paragraph } from "../widgets.slint";
-import { ChatScroll, ChatIcons, MessageInput, Capped } from "../chat.slint";
+import { ChatScroll, ChatIcons, MessageInput, Capped, MediaTiles } from "../chat.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 
 component TabItem inherits Rectangle {
@@ -314,9 +314,10 @@ component DayRule {
     }
 }
 
-// A message in a chat: letter, sender, time, words.
+// A message in a chat: letter, sender, time, its photos and videos, words.
 component MessageLine {
     in property <MessageRow> message;
+    property <bool> has-media: message.media.length > 0;
 
     HorizontalLayout {
         spacing: 12px;
@@ -363,9 +364,22 @@ component MessageLine {
                     }
                 }
             }
-            Paragraph {
-                text: Fmt.body(root.message.content, root.message.text, root.message.detail);
-                color: root.message.content == Content.text ? P.text : P.muted;
+            if root.has-media: HorizontalLayout {
+                alignment: start;
+                padding-top: 3px;
+                padding-bottom: 2px;
+                MediaTiles {
+                    media: root.message.media;
+                    width-limit: 360px;
+                    badge-font: P.mono;
+                    open(id) => {
+                        Viewer.view(id, true);
+                    }
+                }
+            }
+            if !root.has-media || root.message.text != "": Paragraph {
+                text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
+                color: root.has-media || root.message.content == Content.text ? P.text : P.muted;
                 font-size: 14px;
                 line-height-factor: P.leading(1.55);
             }
@@ -400,13 +414,25 @@ component MessageLine {
     }
 }
 
-// A channel's post, set for reading.
+// A channel's post, set for reading: its photos and videos first.
 component PostLine inherits Capped {
     in property <MessageRow> message;
+    property <bool> has-media: message.media.length > 0;
     spacing: 6px;
 
-    Paragraph {
-        text: Fmt.body(root.message.content, root.message.text, root.message.detail);
+    if root.has-media: HorizontalLayout {
+        alignment: start;
+        MediaTiles {
+            media: root.message.media;
+            width-limit: 520px;
+            badge-font: P.mono;
+            open(id) => {
+                Viewer.view(id, true);
+            }
+        }
+    }
+    if !root.has-media || root.message.text != "": Paragraph {
+        text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
         color: P.text;
         font-size: 14px;
         line-height-factor: P.leading(1.7);
@@ -493,6 +519,14 @@ component SponsoredCard inherits Rectangle {
 
 component Line {
     in property <MessageRow> message;
+    // Conversation.reveal names this row: the list scrolls to it.
+    callback reveal(length, length);
+    property <bool> wanted: message.id != "" && Conversation.reveal == message.id;
+    changed wanted => {
+        if self.wanted {
+            root.reveal(root.y, root.y + root.height);
+        }
+    }
 
     VerticalLayout {
         if root.message.kind == RowKind.day: DayRule {
@@ -595,7 +629,7 @@ component Pane {
             }
         }
 
-        ChatScroll {
+        scroll := ChatScroll {
             vertical-stretch: 1;
             spacing: 14px;
             margin-left: 20px;
@@ -604,6 +638,9 @@ component Pane {
             margin-bottom: 18px;
             for row in Conversation.messages: Line {
                 message: row;
+                reveal(top, bottom) => {
+                    scroll.reveal(top, bottom);
+                }
             }
             if Conversation.typing != "": Text {
                 text: @tr("{0} is typing…", Conversation.typing);

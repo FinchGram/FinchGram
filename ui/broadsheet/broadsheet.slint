@@ -2,11 +2,11 @@
 // with its folders as tabs, and the conversation in bubbles. The accent is the account's colour.
 import { ListView } from "std-widgets.slint";
 import { AppState, Page, Connection } from "../state.slint";
-import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status } from "../telegram.slint";
+import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer } from "../telegram.slint";
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Paragraph, WindowButtonsSpace, WindowMover } from "../widgets.slint";
-import { ChatScroll, MessageInput, Capped } from "../chat.slint";
+import { ChatScroll, MessageInput, Capped, MediaTiles } from "../chat.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 
 export enum BroadsheetView { chats, channels, bots, filters, scheduled }
@@ -897,6 +897,7 @@ component ListColumn inherits Rectangle {
 component Bubble {
     in property <MessageRow> message;
     property <bool> mine: message.outgoing;
+    property <bool> has-media: message.media.length > 0;
     height: bubble.height;
 
     bubble := Rectangle {
@@ -919,9 +920,29 @@ component Bubble {
                 font-weight: 600;
                 overflow: elide;
             }
-            Paragraph {
-                text: Fmt.body(root.message.content, root.message.text, root.message.detail);
-                color: root.mine ? P.tint-ink : root.message.content == Content.text ? P.text : P.muted;
+            if root.has-media: HorizontalLayout {
+                alignment: start;
+                padding-top: 2px;
+                padding-bottom: 2px;
+                MediaTiles {
+                    media: root.message.media;
+                    width-limit: 380px;
+                    radius: 2px;
+                    gap: 3px;
+                    play-size: 46px;
+                    play-icon-size: 22px;
+                    inset: 6px;
+                    badge-radius: 2px;
+                    badge-font-size: 12px;
+                    duotone: true;
+                    open(id) => {
+                        Viewer.view(id, true);
+                    }
+                }
+            }
+            if !root.has-media || root.message.text != "": Paragraph {
+                text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
+                color: root.mine ? P.tint-ink : root.has-media || root.message.content == Content.text ? P.text : P.muted;
                 font-size: 16px;
                 line-height-factor: P.leading(1.45);
             }
@@ -973,11 +994,30 @@ component Bubble {
 
 component Post inherits Capped {
     in property <MessageRow> message;
+    property <bool> has-media: message.media.length > 0;
     spacing: 6px;
 
     Rectangle { height: 6px; }
-    Paragraph {
-        text: Fmt.body(root.message.content, root.message.text, root.message.detail);
+    if root.has-media: HorizontalLayout {
+        alignment: start;
+        padding-bottom: 4px;
+        MediaTiles {
+            media: root.message.media;
+            width-limit: 520px;
+            radius: 2px;
+            gap: 3px;
+            play-size: 50px;
+            play-icon-size: 24px;
+            badge-radius: 2px;
+            badge-font-size: 12px;
+            duotone: true;
+            open(id) => {
+                Viewer.view(id, true);
+            }
+        }
+    }
+    if !root.has-media || root.message.text != "": Paragraph {
+        text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
         color: P.text;
         font-size: 16px;
         line-height-factor: P.leading(1.6);
@@ -1046,6 +1086,14 @@ component Sponsored inherits Rectangle {
 
 component Line {
     in property <MessageRow> message;
+    // Conversation.reveal names this row: the list scrolls to it.
+    callback reveal(length, length);
+    property <bool> wanted: message.id != "" && Conversation.reveal == message.id;
+    changed wanted => {
+        if self.wanted {
+            root.reveal(root.y, root.y + root.height);
+        }
+    }
 
     VerticalLayout {
         if root.message.kind == RowKind.day: Text {
@@ -1182,7 +1230,7 @@ component ConversationPane inherits Rectangle {
             }
         }
 
-        ChatScroll {
+        scroll := ChatScroll {
             vertical-stretch: 1;
             spacing: 10px;
             margin-left: 24px;
@@ -1191,6 +1239,9 @@ component ConversationPane inherits Rectangle {
             margin-bottom: 16px;
             for row in Conversation.messages: Line {
                 message: row;
+                reveal(top, bottom) => {
+                    scroll.reveal(top, bottom);
+                }
             }
             if Conversation.typing != "": Text {
                 text: @tr("{0} is typing…", Conversation.typing);

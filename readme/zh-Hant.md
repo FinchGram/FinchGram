@@ -8,8 +8,8 @@
 FinchGram 使用 Telegram API，是 Telegram 生態系的一部分。它是非官方用戶端，並非 Telegram 出品。
 
 狀態：早期。註冊和登入、聊天列表和文字訊息的收發已經可用，介面是設計稿的三套主題：工作台（預設）、報紙和
-終端，在「設定 › 外觀」裡切換。兩步驟驗證在「設定 › 隱私與安全」裡管理。接下來做圖片和檔案、多帳號、關鍵字隱藏
-和定時訊息。
+終端，在「設定 › 外觀」裡切換。聊天裡的圖片和影片可以直接看，點開後在檢視器裡瀏覽，影片用 mpv 播放。兩步驟
+驗證在「設定 › 隱私與安全」裡管理。接下來做檔案、多帳號、關鍵字隱藏和定時訊息。
 
 app 是一個外殼。Telegram 本身交給 TDLib（Telegram 官方的程式庫），它以獨立程式的形式在執行檔旁邊執行：
 `finchgram-tdlib`，由本儲存庫從鎖定版本的原始碼建置（就像 Coova Studio 的 ffmpeg）。外殼只透過 `src/telegram/`
@@ -22,11 +22,12 @@ app 是一個外殼。Telegram 本身交給 TDLib（Telegram 官方的程式庫�
 
 目前開發需要 Apple silicon 的 macOS：finchgram-tdlib 暫時只為它建置。Linux 和 Windows 之後再支援。
 
-finchgram-tdlib 和介面字型都不進 git：`vendor/tdlib/` 裡只放建置程式的腳本，字型來自 Google Fonts。
-clone 之後先把它們下載一次：
+finchgram-tdlib、libmpv 和介面字型都不進 git：`vendor/tdlib/` 和 `vendor/mpv/` 裡只放建置它們的腳本，
+字型來自 Google Fonts。clone 之後先把它們下載一次：
 
 ```sh
 scripts/fetch-tdlib.sh    # 把鎖定的 finchgram-tdlib release 下載到 vendor/tdlib/bin/ 並驗證 SHA-256
+scripts/fetch-mpv.sh      # 把鎖定的 libmpv release 下載到 vendor/mpv/bin/ 並驗證 SHA-256
 scripts/fetch-fonts.sh    # 把鎖定的介面字型下載到 vendor/fonts/ 並驗證 SHA-256
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -45,8 +46,8 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   `target/screenshots/`：不用登入帳號也能看介面。
 
 `build.rs` 把 `vendor/tdlib/bin/finchgram-tdlib` 複製到編譯出來的執行檔旁邊，所以 `cargo run`
-用的和打包後的 app 是完全相同的程式；`vendor/fonts/` 裡的字型則編譯進執行檔。缺少任何一樣，編譯都會
-直接失敗並說明原因。需要 Rust 1.92 或更新版本。
+用的和打包後的 app 是完全相同的程式；它也從 `vendor/mpv/bin/` 連結 libmpv 並同樣複製過去，`vendor/fonts/`
+裡的字型則編譯進執行檔。缺少任何一樣，編譯都會直接失敗並說明原因。需要 Rust 1.92 或更新版本。
 
 TDLib 的資料庫和下載的檔案在 `~/Library/Application Support/FinchGram/tdlib/`，設定在
 `~/Library/Application Support/FinchGram/settings.toml`。
@@ -85,7 +86,9 @@ src/
     account.rs           #   個人資料、登出
     password.rs          #   設定裡的兩步驟驗證
     files.rs             #   下載檔案
+    viewer.rs            #   媒體檢視器：照片、影片、儲存到「下載」
   platform/              # 隨作業系統而不同的部分
+  player/                # 用 libmpv 播放影片，經 OpenGL 畫進視窗
   update.rs              # 自動更新：GitHub Releases、驗證簽名、替換、重新啟動
   settings.rs            # 使用者偏好（settings.toml）
   i18n.rs                # 介面語言：已儲存的選擇，否則跟隨系統，否則英文
@@ -98,6 +101,7 @@ ui/
   look.slint             # 目前主題的顏色、字型和形狀，給共用頁面用
   format.slint           # 依介面語言寫出的日期、數量和訊息類型
   widgets.slint          # 共用的小元件；chat.slint 是聊天視窗共用的部分
+  viewer.slint           # 覆蓋整個視窗的媒體檢視器，三套主題各有樣式
   pages/                 # 三套主題共用的頁面：登入、設定、個人資料
   workbench/             # 工作台主題的聊天視窗（預設）
   broadsheet/            # 報紙主題的聊天視窗
@@ -105,7 +109,7 @@ ui/
   icons/                 # Phosphor 圖示（MIT），一般和雙色兩種；icons.slint 列出它們
   logo/                  # FinchGram 的 logo（svg、png）和使用規則
 vendor/fonts/            # 不進 git：介面字型（scripts/fetch-fonts.sh）
-vendor/mpv/              # libmpv：mpv 和 FFmpeg，用來播放影片（還沒接進 app）
+vendor/mpv/              # libmpv：mpv 和 FFmpeg，用來播放影片
   build.sh               #   從鎖定的原始碼建置它：版本和 SHA-256 都鎖定在腳本開頭
   bin/                   #   不進 git：函式庫本身（scripts/fetch-mpv.sh 下載，或 build.sh install）
 vendor/tdlib/            # finchgram-tdlib

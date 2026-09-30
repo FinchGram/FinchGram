@@ -1,5 +1,7 @@
 // Parts of the chat windows the three themes share.
-import { Conversation, ChatKind } from "telegram.slint";
+import { Conversation, ChatKind, Media } from "telegram.slint";
+import { Fmt } from "format.slint";
+import { Icon } from "widgets.slint";
 
 // The open chat's messages, scrolled. New messages are followed while the view is at the end;
 // messages loading above do not move what is being read (the distance from the end is kept); near
@@ -31,6 +33,13 @@ export component ChatScroll inherits Flickable {
         self.from-bottom = 0px;
         self.keep-place();
     }
+    // Bring what lies from `top` to `bottom` in the chat into sight, a third down the view: a
+    // message the media viewer located.
+    public function reveal(top: length, bottom: length) {
+        self.content-y = min(0px, max(self.height - self.content-height, -(top - max(0px, (self.height - (bottom - top)) / 3))));
+        self.from-bottom = max(0px, self.content-height + self.content-y - self.height);
+    }
+
     flicked => {
         self.from-bottom = max(0px, self.content-height + self.content-y - self.height);
         if self.content-y > -400px && Conversation.has-older && !Conversation.loading {
@@ -157,5 +166,91 @@ export component Capped {
         width: min(root.width, root.cap);
         spacing: root.spacing;
         @children
+    }
+}
+
+// A message's photos and videos, from the design's media-viewer.js: one in its own shape, within
+// width-limit × height-limit; several (an album) as square tiles, two across for two or four, else
+// three. A video has a play button and its length. Each asks for its sharp picture once it is
+// there (Conversation.load-picture); a click opens the media viewer. The themes set the shapes.
+export component MediaTiles {
+    in property <[Media]> media;
+    in property <length> width-limit: 360px;
+    in property <length> height-limit: 280px;
+    in property <length> radius: 8px;
+    in property <length> gap: 4px;
+    in property <length> play-size: 48px;
+    in property <length> play-icon-size: 22px;
+    in property <length> inset: 8px;
+    in property <length> badge-radius: 4px;
+    in property <string> badge-font;
+    in property <length> badge-font-size: 11px;
+    in property <bool> duotone;
+    callback open(string);                  // a tile's message
+
+    property <int> count: media.length;
+    property <int> columns: count == 2 || count == 4 ? 2 : 3;
+    property <int> rows: Math.ceil(count / columns);
+    property <length> cell: Math.floor((width-limit - gap * (columns - 1)) / 1px / columns) * 1px;
+    // One: its own shape (unknown sizes count as 16:9 for a video, 4:3 for a photo).
+    property <float> own-width: count == 1 && media[0].width > 0 ? media[0].width : count == 1 && media[0].video ? 16 : 4;
+    property <float> own-height: count == 1 && media[0].height > 0 ? media[0].height : count == 1 && media[0].video ? 9 : 3;
+    property <float> scale: min(width-limit / 1px / own-width, height-limit / 1px / own-height);
+    width: count == 1 ? Math.round(own-width * scale) * 1px : cell * columns + gap * (columns - 1);
+    height: count == 1 ? Math.round(own-height * scale) * 1px : cell * rows + gap * (rows - 1);
+
+    for item[index] in root.media: Rectangle {
+        x: root.count == 1 ? 0 : Math.mod(index, root.columns) * (root.cell + root.gap);
+        y: root.count == 1 ? 0 : Math.floor(index / root.columns) * (root.cell + root.gap);
+        width: root.count == 1 ? root.width : root.cell;
+        height: root.count == 1 ? root.height : root.cell;
+        border-radius: root.radius;
+        clip: true;
+        background: #80808033;
+        init => {
+            Conversation.load-picture(item.id);
+        }
+
+        Image {
+            width: parent.width;
+            height: parent.height;
+            source: item.picture;
+            image-fit: cover;
+        }
+        Rectangle {
+            background: touch.has-hover ? #ffffff10 : transparent;
+        }
+        if item.video: Rectangle {
+            width: root.play-size;
+            height: root.play-size;
+            border-radius: self.width / 2;
+            background: #00000080;
+            Icon {
+                name: "play";
+                size: root.play-icon-size;
+                color: #ffffff;
+                duotone: root.duotone;
+            }
+        }
+        if item.video && item.duration > 0: Rectangle {
+            x: root.inset;
+            y: root.inset;
+            width: length.preferred-width + 12px;
+            height: length.preferred-height + 2px;
+            border-radius: root.badge-radius;
+            background: #00000080;
+            length := Text {
+                text: Fmt.duration(item.duration);
+                color: #ffffff;
+                font-family: root.badge-font;
+                font-size: root.badge-font-size;
+            }
+        }
+        touch := TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                root.open(item.id);
+            }
+        }
     }
 }

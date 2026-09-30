@@ -3,54 +3,54 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-09-30 08:18+0000\n"
+"POT-Creation-Date: 2026-09-30 09:39+0000\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ui/app.slint:32
+#: ui/app.slint:33
 msgid "View"
 msgstr "视图"
 
-#: ui/app.slint:34 ui/broadsheet/broadsheet.slint:286 ui/pages/login.slint:316
+#: ui/app.slint:35 ui/broadsheet/broadsheet.slint:286 ui/pages/login.slint:316
 msgid "Search"
 msgstr "搜索"
 
-#: ui/app.slint:44 ui/pages/settings.slint:541
+#: ui/app.slint:45 ui/pages/settings.slint:548
 msgid "Workbench"
 msgstr "工作台"
 
-#: ui/app.slint:52 ui/pages/settings.slint:549
+#: ui/app.slint:53 ui/pages/settings.slint:556
 msgid "Broadsheet"
 msgstr "报纸"
 
-#: ui/app.slint:60 ui/pages/settings.slint:557
+#: ui/app.slint:61 ui/pages/settings.slint:564
 msgid "Terminal"
 msgstr "终端"
 
-#: ui/app.slint:69
+#: ui/app.slint:70
 msgid "Settings…"
 msgstr "设置…"
 
-#: ui/app.slint:77
+#: ui/app.slint:78
 msgid "Help"
 msgstr "帮助"
 
-#: ui/app.slint:80
+#: ui/app.slint:81
 msgid "Update to {}…"
 msgstr "更新到 {}…"
 
-#: ui/app.slint:81
+#: ui/app.slint:82
 msgid "Check for Updates…"
 msgstr "检查更新…"
 
-#: ui/broadsheet/broadsheet.slint:81 ui/pages/settings.slint:580
+#: ui/broadsheet/broadsheet.slint:81 ui/pages/settings.slint:587
 msgid "Light"
 msgstr "浅色"
 
-#: ui/broadsheet/broadsheet.slint:81 ui/pages/settings.slint:588
+#: ui/broadsheet/broadsheet.slint:81 ui/pages/settings.slint:595
 msgid "Dark"
 msgstr "深色"
 
@@ -58,7 +58,7 @@ msgstr "深色"
 msgid "Accounts"
 msgstr "账号"
 
-#: ui/broadsheet/broadsheet.slint:228 ui/pages/settings.slint:116
+#: ui/broadsheet/broadsheet.slint:228 ui/pages/settings.slint:123
 msgid "Chats"
 msgstr "聊天"
 
@@ -86,7 +86,7 @@ msgstr "全部"
 msgid "More"
 msgstr "更多"
 
-#: ui/broadsheet/broadsheet.slint:633 ui/format.slint:158
+#: ui/broadsheet/broadsheet.slint:633 ui/format.slint:163
 #: ui/workbench/sidebar.slint:231
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
@@ -127,468 +127,468 @@ msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr "带认证标记的是 Telegram 官方机器人。其他机器人能看到你发给它的消息。"
 
-#: ui/broadsheet/broadsheet.slint:941 ui/workbench/conversation.slint:386
+#: ui/broadsheet/broadsheet.slint:962 ui/workbench/conversation.slint:400
 msgid "Failed to send · Tap to retry"
 msgstr "发送失败 · 点击重试"
 
-#: ui/broadsheet/broadsheet.slint:957 ui/broadsheet/broadsheet.slint:986
-#: ui/workbench/conversation.slint:415
+#: ui/broadsheet/broadsheet.slint:978 ui/broadsheet/broadsheet.slint:1026
+#: ui/workbench/conversation.slint:441
 msgid "edited"
 msgstr "已编辑"
 
-#: ui/broadsheet/broadsheet.slint:1006
+#: ui/broadsheet/broadsheet.slint:1046
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr "赞助消息 · Telegram 官方投放 · Premium 用户可关闭"
 
-#: ui/broadsheet/broadsheet.slint:1060 ui/format.slint:252
-#: ui/workbench/conversation.slint:502
+#: ui/broadsheet/broadsheet.slint:1108 ui/format.slint:257
+#: ui/workbench/conversation.slint:536
 msgid "You"
 msgstr "你"
 
-#: ui/broadsheet/broadsheet.slint:1128 ui/terminal/terminal.slint:827
+#: ui/broadsheet/broadsheet.slint:1176 ui/terminal/terminal.slint:855
 msgid "Choose a chat on the left"
 msgstr "在左侧选择一个聊天"
 
-#: ui/broadsheet/broadsheet.slint:1151 ui/terminal/terminal.slint:543
+#: ui/broadsheet/broadsheet.slint:1199 ui/terminal/terminal.slint:568
 msgid "typing…"
 msgstr "正在输入…"
 
-#: ui/broadsheet/broadsheet.slint:1196 ui/terminal/terminal.slint:627
+#: ui/broadsheet/broadsheet.slint:1247 ui/terminal/terminal.slint:655
 msgid "{0} is typing…"
 msgstr "{0} 正在输入…"
 
-#: ui/broadsheet/broadsheet.slint:1220
+#: ui/broadsheet/broadsheet.slint:1271
 msgid "Sending as {0}"
 msgstr "以 {0} 发送"
 
-#: ui/broadsheet/broadsheet.slint:1234
+#: ui/broadsheet/broadsheet.slint:1285
 msgid "Write a message…"
 msgstr "写点什么…"
 
-#: ui/broadsheet/broadsheet.slint:1308 ui/terminal/terminal.slint:588
+#: ui/broadsheet/broadsheet.slint:1359 ui/terminal/terminal.slint:613
 msgid "Unmute"
 msgstr "取消静音"
 
-#: ui/broadsheet/broadsheet.slint:1308 ui/terminal/terminal.slint:588
+#: ui/broadsheet/broadsheet.slint:1359 ui/terminal/terminal.slint:613
 msgid "Mute"
 msgstr "静音"
 
-#: ui/broadsheet/broadsheet.slint:1317 ui/terminal/terminal.slint:596
+#: ui/broadsheet/broadsheet.slint:1368 ui/terminal/terminal.slint:621
 msgid "Unpin"
 msgstr "取消置顶"
 
-#: ui/broadsheet/broadsheet.slint:1317 ui/terminal/terminal.slint:596
+#: ui/broadsheet/broadsheet.slint:1368 ui/terminal/terminal.slint:621
 msgid "Pin"
 msgstr "置顶"
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/terminal/terminal.slint:604
+#: ui/broadsheet/broadsheet.slint:1376 ui/terminal/terminal.slint:629
 msgid "Mark as read"
 msgstr "标为已读"
 
-#: ui/format.slint:33
+#: ui/format.slint:38
 msgctxt "weekday"
 msgid "Mon"
 msgstr "周一"
 
-#: ui/format.slint:34
+#: ui/format.slint:39
 msgctxt "weekday"
 msgid "Tue"
 msgstr "周二"
 
-#: ui/format.slint:35
+#: ui/format.slint:40
 msgctxt "weekday"
 msgid "Wed"
 msgstr "周三"
 
-#: ui/format.slint:36
+#: ui/format.slint:41
 msgctxt "weekday"
 msgid "Thu"
 msgstr "周四"
 
-#: ui/format.slint:37
+#: ui/format.slint:42
 msgctxt "weekday"
 msgid "Fri"
 msgstr "周五"
 
-#: ui/format.slint:38
+#: ui/format.slint:43
 msgctxt "weekday"
 msgid "Sat"
 msgstr "周六"
 
-#: ui/format.slint:39
+#: ui/format.slint:44
 msgctxt "weekday"
 msgid "Sun"
 msgstr "周日"
 
-#: ui/format.slint:43
+#: ui/format.slint:48
 msgid "Monday"
 msgstr "星期一"
 
-#: ui/format.slint:44
+#: ui/format.slint:49
 msgid "Tuesday"
 msgstr "星期二"
 
-#: ui/format.slint:45
+#: ui/format.slint:50
 msgid "Wednesday"
 msgstr "星期三"
 
-#: ui/format.slint:46
+#: ui/format.slint:51
 msgid "Thursday"
 msgstr "星期四"
 
-#: ui/format.slint:47
+#: ui/format.slint:52
 msgid "Friday"
 msgstr "星期五"
 
-#: ui/format.slint:48
+#: ui/format.slint:53
 msgid "Saturday"
 msgstr "星期六"
 
-#: ui/format.slint:49
+#: ui/format.slint:54
 msgid "Sunday"
 msgstr "星期日"
 
-#: ui/format.slint:53
+#: ui/format.slint:58
 msgctxt "month"
 msgid "Jan"
 msgstr "1月"
 
-#: ui/format.slint:54
+#: ui/format.slint:59
 msgctxt "month"
 msgid "Feb"
 msgstr "2月"
 
-#: ui/format.slint:55
+#: ui/format.slint:60
 msgctxt "month"
 msgid "Mar"
 msgstr "3月"
 
-#: ui/format.slint:56
+#: ui/format.slint:61
 msgctxt "month"
 msgid "Apr"
 msgstr "4月"
 
-#: ui/format.slint:57
+#: ui/format.slint:62
 msgctxt "month"
 msgid "May"
 msgstr "5月"
 
-#: ui/format.slint:58
+#: ui/format.slint:63
 msgctxt "month"
 msgid "Jun"
 msgstr "6月"
 
-#: ui/format.slint:59
+#: ui/format.slint:64
 msgctxt "month"
 msgid "Jul"
 msgstr "7月"
 
-#: ui/format.slint:60
+#: ui/format.slint:65
 msgctxt "month"
 msgid "Aug"
 msgstr "8月"
 
-#: ui/format.slint:61
+#: ui/format.slint:66
 msgctxt "month"
 msgid "Sep"
 msgstr "9月"
 
-#: ui/format.slint:62
+#: ui/format.slint:67
 msgctxt "month"
 msgid "Oct"
 msgstr "10月"
 
-#: ui/format.slint:63
+#: ui/format.slint:68
 msgctxt "month"
 msgid "Nov"
 msgstr "11月"
 
-#: ui/format.slint:64
+#: ui/format.slint:69
 msgctxt "month"
 msgid "Dec"
 msgstr "12月"
 
-#: ui/format.slint:68
+#: ui/format.slint:73
 msgid "January"
 msgstr "1月"
 
-#: ui/format.slint:69
+#: ui/format.slint:74
 msgid "February"
 msgstr "2月"
 
-#: ui/format.slint:70
+#: ui/format.slint:75
 msgid "March"
 msgstr "3月"
 
-#: ui/format.slint:71
+#: ui/format.slint:76
 msgid "April"
 msgstr "4月"
 
-#: ui/format.slint:72
+#: ui/format.slint:77
 msgid "May"
 msgstr "5月"
 
-#: ui/format.slint:73
+#: ui/format.slint:78
 msgid "June"
 msgstr "6月"
 
-#: ui/format.slint:74
+#: ui/format.slint:79
 msgid "July"
 msgstr "7月"
 
-#: ui/format.slint:75
+#: ui/format.slint:80
 msgid "August"
 msgstr "8月"
 
-#: ui/format.slint:76
+#: ui/format.slint:81
 msgid "September"
 msgstr "9月"
 
-#: ui/format.slint:77
+#: ui/format.slint:82
 msgid "October"
 msgstr "10月"
 
-#: ui/format.slint:78
+#: ui/format.slint:83
 msgid "November"
 msgstr "11月"
 
-#: ui/format.slint:79
+#: ui/format.slint:84
 msgid "December"
 msgstr "12月"
 
-#: ui/format.slint:88 ui/format.slint:106
+#: ui/format.slint:93 ui/format.slint:111
 msgid "Yesterday"
 msgstr "昨天"
 
-#: ui/format.slint:94
+#: ui/format.slint:99
 msgctxt "short date"
 msgid "{0} {1}"
 msgstr "{0}{1}日"
 
-#: ui/format.slint:96
+#: ui/format.slint:101
 msgctxt "short date with year"
 msgid "{0} {1}, {2}"
 msgstr "{2}年{0}{1}日"
 
-#: ui/format.slint:103
+#: ui/format.slint:108
 msgid "Today"
 msgstr "今天"
 
-#: ui/format.slint:112
+#: ui/format.slint:117
 msgctxt "long date"
 msgid "{0} {1}"
 msgstr "{0}{1}日"
 
-#: ui/format.slint:114 ui/format.slint:119
+#: ui/format.slint:119 ui/format.slint:124
 msgctxt "long date with year"
 msgid "{0} {1}, {2}"
 msgstr "{2}年{0}{1}日"
 
-#: ui/format.slint:119
+#: ui/format.slint:124
 msgctxt "date and time"
 msgid "{0}, {1}"
 msgstr "{0} {1}"
 
-#: ui/format.slint:125
+#: ui/format.slint:130
 msgid "online"
 msgstr "在线"
 
-#: ui/format.slint:129
+#: ui/format.slint:134
 msgid "last seen at {0}"
 msgstr "今天 {0} 在线"
 
-#: ui/format.slint:132
+#: ui/format.slint:137
 msgid "last seen yesterday at {0}"
 msgstr "昨天 {0} 在线"
 
-#: ui/format.slint:134
+#: ui/format.slint:139
 msgid "last seen {0}"
 msgstr "{0} 在线"
 
-#: ui/format.slint:137
+#: ui/format.slint:142
 msgid "last seen recently"
 msgstr "最近在线"
 
-#: ui/format.slint:140
+#: ui/format.slint:145
 msgid "last seen within a week"
 msgstr "一周内在线"
 
-#: ui/format.slint:143
+#: ui/format.slint:148
 msgid "last seen within a month"
 msgstr "一个月内在线"
 
-#: ui/format.slint:146
+#: ui/format.slint:151
 msgid "last seen a long time ago"
 msgstr "很久没有上线"
 
-#: ui/format.slint:149
+#: ui/format.slint:154
 msgid "bot"
 msgstr "机器人"
 
-#: ui/format.slint:153
+#: ui/format.slint:158
 msgid "{0} members, {1} online"
 msgstr "{0} 位成员 · {1} 人在线"
 
-#: ui/format.slint:155
+#: ui/format.slint:160
 msgid "{n} member"
 msgid_plural "{n} members"
 msgstr[0] "{n} 位成员"
 
-#: ui/format.slint:161
+#: ui/format.slint:166
 msgid "only you can see it"
 msgstr "仅你可见"
 
-#: ui/format.slint:169
+#: ui/format.slint:174
 msgid "Waiting for network…"
 msgstr "等待网络…"
 
-#: ui/format.slint:172
+#: ui/format.slint:177
 msgid "Connecting to proxy…"
 msgstr "正在连接代理…"
 
-#: ui/format.slint:175
+#: ui/format.slint:180
 msgid "Connecting…"
 msgstr "正在连接…"
 
-#: ui/format.slint:178
+#: ui/format.slint:183
 msgid "Updating…"
 msgstr "正在更新…"
 
-#: ui/format.slint:180
+#: ui/format.slint:185
 msgid "Connected"
 msgstr "已连接"
 
-#: ui/format.slint:185
+#: ui/format.slint:190
 msgid "{n} unread post"
 msgid_plural "{n} unread posts"
 msgstr[0] "{n} 篇未读"
 
-#: ui/format.slint:197
+#: ui/format.slint:202
 msgid "Photo"
 msgstr "图片"
 
-#: ui/format.slint:198
+#: ui/format.slint:203
 msgid "Video"
 msgstr "视频"
 
-#: ui/format.slint:199
+#: ui/format.slint:204
 msgid "GIF"
 msgstr "GIF"
 
-#: ui/format.slint:200
+#: ui/format.slint:205
 msgid "Audio"
 msgstr "音频"
 
-#: ui/format.slint:201
+#: ui/format.slint:206
 msgid "Voice message"
 msgstr "语音消息"
 
-#: ui/format.slint:202
+#: ui/format.slint:207
 msgid "Video message"
 msgstr "视频消息"
 
-#: ui/format.slint:203
+#: ui/format.slint:208
 msgid "File"
 msgstr "文件"
 
-#: ui/format.slint:204
+#: ui/format.slint:209
 msgid "Sticker"
 msgstr "贴纸"
 
-#: ui/format.slint:205 ui/format.slint:206
+#: ui/format.slint:210 ui/format.slint:211
 msgid "Location"
 msgstr "位置"
 
-#: ui/format.slint:207
+#: ui/format.slint:212
 msgid "Contact: {0}"
 msgstr "联系人：{0}"
 
-#: ui/format.slint:208
+#: ui/format.slint:213
 msgid "Poll: {0}"
 msgstr "投票：{0}"
 
-#: ui/format.slint:210
+#: ui/format.slint:215
 msgid "Game: {0}"
 msgstr "游戏：{0}"
 
-#: ui/format.slint:211
+#: ui/format.slint:216
 msgid "Invoice"
 msgstr "账单"
 
-#: ui/format.slint:212
+#: ui/format.slint:217
 msgid "Call"
 msgstr "通话"
 
-#: ui/format.slint:213
+#: ui/format.slint:218
 msgid "Story"
 msgstr "动态"
 
-#: ui/format.slint:214
+#: ui/format.slint:219
 msgid "Gift"
 msgstr "礼物"
 
-#: ui/format.slint:215
+#: ui/format.slint:220
 msgid "A message FinchGram cannot show yet"
 msgstr "FinchGram 暂时还不能显示这条消息"
 
-#: ui/format.slint:221
+#: ui/format.slint:226
 msgid "{0} created the group “{1}”"
 msgstr "{0} 创建了群组「{1}」"
 
-#: ui/format.slint:222
+#: ui/format.slint:227
 msgid "{0} changed the name to “{1}”"
 msgstr "{0} 把名称改为「{1}」"
 
-#: ui/format.slint:223
+#: ui/format.slint:228
 msgid "{0} changed the photo"
 msgstr "{0} 更换了头像"
 
-#: ui/format.slint:224
+#: ui/format.slint:229
 msgid "{0} removed the photo"
 msgstr "{0} 删除了头像"
 
-#: ui/format.slint:225
+#: ui/format.slint:230
 msgid "{0} added {1}"
 msgstr "{0} 添加了 {1}"
 
-#: ui/format.slint:226
+#: ui/format.slint:231
 msgid "{0} joined"
 msgstr "{0} 加入了"
 
-#: ui/format.slint:227
+#: ui/format.slint:232
 msgid "{0} left"
 msgstr "{0} 退出了"
 
-#: ui/format.slint:228
+#: ui/format.slint:233
 msgid "{0} removed {1}"
 msgstr "{0} 移除了 {1}"
 
-#: ui/format.slint:229
+#: ui/format.slint:234
 msgid "{0} pinned a message"
 msgstr "{0} 置顶了一条消息"
 
-#: ui/format.slint:230
+#: ui/format.slint:235
 msgid "{0} took a screenshot"
 msgstr "{0} 截了屏"
 
-#: ui/format.slint:231
+#: ui/format.slint:236
 msgid "{0} joined Telegram"
 msgstr "{0} 加入了 Telegram"
 
-#: ui/format.slint:232
+#: ui/format.slint:237
 msgid "{0} changed something in the chat"
 msgstr "{0} 更改了聊天设置"
 
-#: ui/format.slint:243
+#: ui/format.slint:248
 msgctxt "content with caption"
 msgid "{0} · {1}"
 msgstr "{0} · {1}"
 
-#: ui/format.slint:255
+#: ui/format.slint:260
 msgid "You: {0}"
 msgstr "你：{0}"
 
-#: ui/format.slint:258
+#: ui/format.slint:263
 msgctxt "sender and message"
 msgid "{0}: {1}"
 msgstr "{0}：{1}"
@@ -641,7 +641,7 @@ msgstr "自动翻译"
 msgid "Translate foreign-language messages into your UI language"
 msgstr "外语消息自动译为界面语言"
 
-#: ui/pages/login.slint:133 ui/workbench/conversation.slint:581
+#: ui/pages/login.slint:133 ui/workbench/conversation.slint:615
 msgid "Reading mode"
 msgstr "阅读模式"
 
@@ -657,11 +657,11 @@ msgstr "多账号与文件夹"
 msgid "Keep work and life apart"
 msgstr "工作与生活分开放"
 
-#: ui/pages/login.slint:163 ui/pages/settings.slint:741
+#: ui/pages/login.slint:163 ui/pages/settings.slint:748
 msgid "Fully open source — read the code"
 msgstr "完全开源，代码公开可查"
 
-#: ui/pages/login.slint:183 ui/pages/settings.slint:770
+#: ui/pages/login.slint:183 ui/pages/settings.slint:777
 msgid ""
 "FinchGram is an unofficial client built on the Telegram API. It is not made "
 "by Telegram."
@@ -685,7 +685,7 @@ msgid "Phone number"
 msgstr "手机号"
 
 #: ui/pages/login.slint:404 ui/pages/login.slint:563 ui/pages/login.slint:611
-#: ui/pages/settings.slint:1061 ui/pages/settings.slint:1258
+#: ui/pages/settings.slint:1069 ui/pages/settings.slint:1266
 msgid "Next"
 msgstr "下一步"
 
@@ -739,11 +739,11 @@ msgstr "没收到？重新发送"
 
 #: ui/pages/login.slint:522 ui/pages/login.slint:577 ui/pages/login.slint:627
 #: ui/pages/login.slint:693 ui/pages/login.slint:798 ui/pages/login.slint:870
-#: ui/pages/login.slint:899 ui/pages/settings.slint:1274
+#: ui/pages/login.slint:899 ui/pages/settings.slint:1282
 msgid "Back"
 msgstr "返回"
 
-#: ui/pages/login.slint:535 ui/pages/settings.slint:843
+#: ui/pages/login.slint:535 ui/pages/settings.slint:850
 msgid "Two-step verification"
 msgstr "两步验证"
 
@@ -751,7 +751,7 @@ msgstr "两步验证"
 msgid "This account has two-step verification on. Enter your password."
 msgstr "这个账号开启了两步验证，请输入你设置的密码。"
 
-#: ui/pages/login.slint:543 ui/pages/settings.slint:1043
+#: ui/pages/login.slint:543 ui/pages/settings.slint:1051
 msgid "Password"
 msgstr "密码"
 
@@ -759,27 +759,27 @@ msgstr "密码"
 msgid "Hint: {0}"
 msgstr "密码提示：{0}"
 
-#: ui/pages/login.slint:570 ui/pages/settings.slint:1069
+#: ui/pages/login.slint:570 ui/pages/settings.slint:1077
 msgid "Forgot password?"
 msgstr "忘记密码？"
 
-#: ui/pages/login.slint:591 ui/pages/settings.slint:1237
+#: ui/pages/login.slint:591 ui/pages/settings.slint:1245
 msgid "Recover via email"
 msgstr "通过邮箱找回密码"
 
-#: ui/pages/login.slint:592 ui/pages/settings.slint:1238
+#: ui/pages/login.slint:592 ui/pages/settings.slint:1246
 msgid "A recovery code was sent to {0}. Enter it to set a new password."
 msgstr "恢复码已发送至 {0}，验证后即可设置新密码。"
 
-#: ui/pages/login.slint:619 ui/pages/settings.slint:1266
+#: ui/pages/login.slint:619 ui/pages/settings.slint:1274
 msgid "Can't access this email?"
 msgstr "无法访问这个邮箱？"
 
-#: ui/pages/login.slint:641 ui/pages/settings.slint:1081
+#: ui/pages/login.slint:641 ui/pages/settings.slint:1089
 msgid "Set a new password"
 msgstr "设置新密码"
 
-#: ui/pages/login.slint:642 ui/pages/settings.slint:1082
+#: ui/pages/login.slint:642 ui/pages/settings.slint:1090
 msgid "You'll need this password when signing in on a new device."
 msgstr "以后在新设备上登录时，需要输入这个密码。"
 
@@ -932,11 +932,11 @@ msgstr "新密码"
 msgid "Re-enter new password"
 msgstr "再次输入新密码"
 
-#: ui/pages/password.slint:182 ui/pages/settings.slint:1108
+#: ui/pages/password.slint:182 ui/pages/settings.slint:1116
 msgid "Password hint (optional)"
 msgstr "密码提示（可选）"
 
-#: ui/pages/password.slint:192 ui/pages/settings.slint:1100
+#: ui/pages/password.slint:192 ui/pages/settings.slint:1108
 msgid ""
 "The hint is shown on the sign-in screen to anyone who knows your number. "
 "Don't write the password itself."
@@ -966,7 +966,7 @@ msgstr ""
 "FinchGram 会在这台 Mac 上忘掉这个账号。聊天记录仍在 Telegram 上，重新登录就能"
 "看到。"
 
-#: ui/pages/profile.slint:184 ui/pages/settings.slint:1025
+#: ui/pages/profile.slint:184 ui/pages/settings.slint:1033
 msgid "Cancel"
 msgstr "取消"
 
@@ -990,7 +990,7 @@ msgstr "没有用户名时，别人只能通过手机号找到你。"
 msgid "Bio"
 msgstr "个人简介"
 
-#: ui/pages/profile.slint:394 ui/pages/settings.slint:1085
+#: ui/pages/profile.slint:394 ui/pages/settings.slint:1093
 msgid "Save"
 msgstr "保存"
 
@@ -998,92 +998,92 @@ msgstr "保存"
 msgid "Profile"
 msgstr "个人资料"
 
-#: ui/pages/settings.slint:90 ui/pages/settings.slint:1331
+#: ui/pages/settings.slint:97 ui/pages/settings.slint:1339
 msgid "Settings"
 msgstr "设置"
 
-#: ui/pages/settings.slint:99
+#: ui/pages/settings.slint:106
 msgid "General"
 msgstr "通用"
 
-#: ui/pages/settings.slint:104
+#: ui/pages/settings.slint:111
 msgid "Notifications & sounds"
 msgstr "通知与声音"
 
-#: ui/pages/settings.slint:109 ui/pages/settings.slint:1363
+#: ui/pages/settings.slint:116 ui/pages/settings.slint:1371
 msgid "Privacy & security"
 msgstr "隐私与安全"
 
-#: ui/pages/settings.slint:121
+#: ui/pages/settings.slint:128
 msgid "Folders"
 msgstr "文件夹"
 
-#: ui/pages/settings.slint:126
+#: ui/pages/settings.slint:133
 msgid "Finch features"
 msgstr "Finch 功能"
 
-#: ui/pages/settings.slint:131 ui/pages/settings.slint:1374
+#: ui/pages/settings.slint:138 ui/pages/settings.slint:1382
 msgid "Appearance"
 msgstr "外观"
 
-#: ui/pages/settings.slint:137 ui/pages/settings.slint:1372
+#: ui/pages/settings.slint:144 ui/pages/settings.slint:1380
 msgid "Language"
 msgstr "语言"
 
-#: ui/pages/settings.slint:143
+#: ui/pages/settings.slint:150
 msgid "Data & storage"
 msgstr "数据与存储"
 
-#: ui/pages/settings.slint:148
+#: ui/pages/settings.slint:155
 msgid "Advanced"
 msgstr "高级"
 
-#: ui/pages/settings.slint:153 ui/pages/settings.slint:1374
+#: ui/pages/settings.slint:160 ui/pages/settings.slint:1382
 msgid "About"
 msgstr "关于"
 
-#: ui/pages/settings.slint:482
+#: ui/pages/settings.slint:489
 msgid "Checking…"
 msgstr "正在检查…"
 
-#: ui/pages/settings.slint:483
+#: ui/pages/settings.slint:490
 msgid "Version {0} available"
 msgstr "发现新版本 {0}"
 
-#: ui/pages/settings.slint:484
+#: ui/pages/settings.slint:491
 msgid "Downloading {0}%"
 msgstr "正在下载 {0}%"
 
-#: ui/pages/settings.slint:484
+#: ui/pages/settings.slint:491
 msgid "Installing…"
 msgstr "安装中…"
 
-#: ui/pages/settings.slint:485
+#: ui/pages/settings.slint:492
 msgid "You're up to date"
 msgstr "已是最新版本"
 
-#: ui/pages/settings.slint:486
+#: ui/pages/settings.slint:493
 msgid "The update failed"
 msgstr "更新失败"
 
-#: ui/pages/settings.slint:487 ui/pages/settings.slint:503
-#: ui/pages/settings.slint:684
+#: ui/pages/settings.slint:494 ui/pages/settings.slint:510
+#: ui/pages/settings.slint:691
 msgid "Version {0}"
 msgstr "版本 {0}"
 
-#: ui/pages/settings.slint:511
+#: ui/pages/settings.slint:518
 msgid "Install and restart"
 msgstr "安装并重启"
 
-#: ui/pages/settings.slint:518
+#: ui/pages/settings.slint:525
 msgid "Check for updates"
 msgstr "检查更新"
 
-#: ui/pages/settings.slint:534
+#: ui/pages/settings.slint:541
 msgid "Theme"
 msgstr "主题"
 
-#: ui/pages/settings.slint:565
+#: ui/pages/settings.slint:572
 msgid ""
 "Workbench is an editor's layout, Broadsheet a newspaper's, Terminal a "
 "console's. The same chats and settings in all three."
@@ -1091,192 +1091,192 @@ msgstr ""
 "工作台像编辑器，报纸像一份报纸，终端像控制台。三套主题里的聊天和设置完全相"
 "同。"
 
-#: ui/pages/settings.slint:573
+#: ui/pages/settings.slint:580
 msgid "Light and dark"
 msgstr "浅色与深色"
 
-#: ui/pages/settings.slint:598
+#: ui/pages/settings.slint:605
 msgid "Match system appearance"
 msgstr "跟随系统明暗"
 
-#: ui/pages/settings.slint:613
+#: ui/pages/settings.slint:620
 msgid "Changes the interface only — messages aren't translated"
 msgstr "只影响界面，不会翻译消息内容"
 
-#: ui/pages/settings.slint:693
+#: ui/pages/settings.slint:700
 msgid "Updates"
 msgstr "更新"
 
-#: ui/pages/settings.slint:700
+#: ui/pages/settings.slint:707
 msgid "Check for updates automatically"
 msgstr "自动检查更新"
 
-#: ui/pages/settings.slint:708
+#: ui/pages/settings.slint:715
 msgid ""
 "Updates come from GitHub Releases and are signature-checked before install."
 msgstr "更新包从 GitHub Releases 下载，安装前校验签名。"
 
-#: ui/pages/settings.slint:790
+#: ui/pages/settings.slint:797
 msgid "Who can see"
 msgstr "谁可以看到"
 
-#: ui/pages/settings.slint:801
+#: ui/pages/settings.slint:808
 msgid "Last seen"
 msgstr "最后上线时间"
 
-#: ui/pages/settings.slint:807
+#: ui/pages/settings.slint:814
 msgid "Profile photos"
 msgstr "头像"
 
-#: ui/pages/settings.slint:813
+#: ui/pages/settings.slint:820
 msgid "Forwarded messages"
 msgstr "转发消息"
 
-#: ui/pages/settings.slint:819
+#: ui/pages/settings.slint:826
 msgid "Calls"
 msgstr "通话"
 
-#: ui/pages/settings.slint:825
+#: ui/pages/settings.slint:832
 msgid "Invites to groups"
 msgstr "邀请我进群"
 
-#: ui/pages/settings.slint:830
+#: ui/pages/settings.slint:837
 msgid "Stored on Telegram servers and synced across all your apps."
 msgstr "这些设置保存在 Telegram 服务器上，所有客户端同步。"
 
-#: ui/pages/settings.slint:838
+#: ui/pages/settings.slint:845
 msgid "Security"
 msgstr "安全"
 
-#: ui/pages/settings.slint:844
+#: ui/pages/settings.slint:851
 msgid "On"
 msgstr "已开启"
 
-#: ui/pages/settings.slint:844
+#: ui/pages/settings.slint:851
 msgid "Off"
 msgstr "关"
 
-#: ui/pages/settings.slint:855
+#: ui/pages/settings.slint:863
 msgid "Local passcode"
 msgstr "本地密码锁"
 
-#: ui/pages/settings.slint:861
+#: ui/pages/settings.slint:869
 msgid "Active sessions"
 msgstr "活跃设备"
 
-#: ui/pages/settings.slint:867
+#: ui/pages/settings.slint:875
 msgid "Blocked users"
 msgstr "已屏蔽的用户"
 
-#: ui/pages/settings.slint:873
+#: ui/pages/settings.slint:881
 msgid "Delete my account"
 msgstr "账号自动注销"
 
-#: ui/pages/settings.slint:906
+#: ui/pages/settings.slint:914
 msgid "Two-step verification is on"
 msgstr "两步验证已开启"
 
-#: ui/pages/settings.slint:906
+#: ui/pages/settings.slint:914
 msgid "Two-step verification is off"
 msgstr "两步验证已关闭"
 
-#: ui/pages/settings.slint:913
+#: ui/pages/settings.slint:921
 msgid ""
 "When you sign in on a new device, you'll need this password in addition to "
 "the code."
 msgstr "在新设备上登录时，除了验证码，还需要输入这个密码。"
 
-#: ui/pages/settings.slint:914
+#: ui/pages/settings.slint:922
 msgid ""
 "Turn it on to require an extra password when signing in on a new device."
 msgstr "开启后，在新设备上登录需要额外输入密码。"
 
-#: ui/pages/settings.slint:943
+#: ui/pages/settings.slint:951
 msgid "Password will reset on {0}"
 msgstr "密码将于 {0} 重置"
 
-#: ui/pages/settings.slint:949
+#: ui/pages/settings.slint:957
 msgid "Come back then to set a new password. If this wasn't you, cancel now."
 msgstr "到时回到这里设置新密码。如果不是你本人操作，请立即取消。"
 
-#: ui/pages/settings.slint:958
+#: ui/pages/settings.slint:966
 msgid "Cancel reset"
 msgstr "取消重置"
 
-#: ui/pages/settings.slint:970
+#: ui/pages/settings.slint:978
 msgid "Change password"
 msgstr "修改密码"
 
-#: ui/pages/settings.slint:978
+#: ui/pages/settings.slint:986
 msgid "Password hint"
 msgstr "密码提示"
 
-#: ui/pages/settings.slint:987
+#: ui/pages/settings.slint:995
 msgid "Recovery email"
 msgstr "恢复邮箱"
 
-#: ui/pages/settings.slint:996
+#: ui/pages/settings.slint:1004
 msgid "Turn off two-step verification"
 msgstr "关闭两步验证"
 
-#: ui/pages/settings.slint:1006 ui/pages/settings.slint:1081
+#: ui/pages/settings.slint:1014 ui/pages/settings.slint:1089
 msgid "Set password"
 msgstr "设置密码"
 
-#: ui/pages/settings.slint:1034
+#: ui/pages/settings.slint:1042
 msgid "Enter your current password"
 msgstr "输入当前密码"
 
-#: ui/pages/settings.slint:1035
+#: ui/pages/settings.slint:1043
 msgid "Confirm it's you before changing two-step verification settings."
 msgstr "修改两步验证设置前，需要先确认是你本人。"
 
-#: ui/pages/settings.slint:1099
+#: ui/pages/settings.slint:1107
 msgid "Change password hint"
 msgstr "修改密码提示"
 
-#: ui/pages/settings.slint:1136
+#: ui/pages/settings.slint:1144
 msgid "Change recovery email"
 msgstr "修改恢复邮箱"
 
-#: ui/pages/settings.slint:1137
+#: ui/pages/settings.slint:1145
 msgid ""
 "If you forget your password, a recovery code will be sent to this address."
 msgstr "忘记密码时，恢复码会发到这个邮箱。"
 
-#: ui/pages/settings.slint:1145
+#: ui/pages/settings.slint:1153
 msgid "Email address"
 msgstr "邮箱地址"
 
-#: ui/pages/settings.slint:1160
+#: ui/pages/settings.slint:1168
 msgid "Send code"
 msgstr "发送验证码"
 
-#: ui/pages/settings.slint:1173
+#: ui/pages/settings.slint:1181
 msgid "Enter the email code"
 msgstr "输入邮箱验证码"
 
-#: ui/pages/settings.slint:1174
+#: ui/pages/settings.slint:1182
 msgid "Code sent to {0}"
 msgstr "验证码已发送至 {0}"
 
-#: ui/pages/settings.slint:1215
+#: ui/pages/settings.slint:1223
 msgid "Turn off two-step verification?"
 msgstr "关闭两步验证？"
 
-#: ui/pages/settings.slint:1216
+#: ui/pages/settings.slint:1224
 msgid "Anyone who gets your sign-in code will be able to access your account."
 msgstr "关闭后，只要拿到发给你的登录验证码，别人就能登录你的账号。"
 
-#: ui/pages/settings.slint:1223
+#: ui/pages/settings.slint:1231
 msgid "Turn off"
 msgstr "关闭"
 
-#: ui/pages/settings.slint:1286
+#: ui/pages/settings.slint:1294
 msgid "Request password reset"
 msgstr "申请重置密码"
 
-#: ui/pages/settings.slint:1287
+#: ui/pages/settings.slint:1295
 msgid ""
 "If you can't get the recovery email, you can request a reset. To protect "
 "your account it takes 7 days, and you can cancel any time before then."
@@ -1284,31 +1284,31 @@ msgstr ""
 "如果收不到恢复邮件，可以申请重置密码。为防止他人盗用，需要等待 7 天，期间可以"
 "随时取消。"
 
-#: ui/pages/settings.slint:1294
+#: ui/pages/settings.slint:1302
 msgid "Request reset"
 msgstr "申请重置"
 
-#: ui/pages/settings.slint:1388
+#: ui/pages/settings.slint:1396
 msgid "Password updated"
 msgstr "密码已更新"
 
-#: ui/pages/settings.slint:1389
+#: ui/pages/settings.slint:1397
 msgid "Password hint updated"
 msgstr "密码提示已更新"
 
-#: ui/pages/settings.slint:1389
+#: ui/pages/settings.slint:1397
 msgid "Recovery email updated"
 msgstr "恢复邮箱已更新"
 
-#: ui/telegram.slint:267
+#: ui/telegram.slint:325
 msgid "Saved Messages"
 msgstr "收藏夹"
 
-#: ui/telegram.slint:268
+#: ui/telegram.slint:326
 msgid "Deleted Account"
 msgstr "已注销账号"
 
-#: ui/telegram.slint:269 ui/workbench/sidebar.slint:121
+#: ui/telegram.slint:327 ui/workbench/sidebar.slint:121
 msgid "All chats"
 msgstr "全部聊天"
 
@@ -1332,83 +1332,121 @@ msgstr "当前账号"
 msgid "profile"
 msgstr "资料"
 
-#: ui/terminal/terminal.slint:430
+#: ui/terminal/terminal.slint:431
 msgid "(edited)"
 msgstr "（已编辑）"
 
-#: ui/terminal/terminal.slint:441
+#: ui/terminal/terminal.slint:458
 msgid "Failed to send"
 msgstr "发送失败"
 
-#: ui/terminal/terminal.slint:441
+#: ui/terminal/terminal.slint:458
 msgid "retry"
 msgstr "重试"
 
-#: ui/terminal/terminal.slint:475
+#: ui/terminal/terminal.slint:500
 msgid "sponsored"
 msgstr "赞助"
 
-#: ui/terminal/terminal.slint:550
+#: ui/terminal/terminal.slint:575
 msgid "search"
 msgstr "搜索"
 
-#: ui/terminal/terminal.slint:554
+#: ui/terminal/terminal.slint:579
 msgid "chat settings"
 msgstr "聊天设置"
 
-#: ui/terminal/terminal.slint:644
+#: ui/terminal/terminal.slint:672
 msgid "Mute or unmute this chat"
 msgstr "静音或取消静音当前聊天"
 
-#: ui/terminal/terminal.slint:645
+#: ui/terminal/terminal.slint:673
 msgid "Pin or unpin this chat"
 msgstr "置顶或取消置顶当前聊天"
 
-#: ui/terminal/terminal.slint:646
+#: ui/terminal/terminal.slint:674
 msgid "Mark this chat as read"
 msgstr "把当前聊天标为已读"
 
-#: ui/terminal/terminal.slint:691
+#: ui/terminal/terminal.slint:719
 msgid "Write a message, or / for commands"
 msgstr "输入消息，或 / 调出命令"
 
-#: ui/terminal/terminal.slint:691
+#: ui/terminal/terminal.slint:719
 msgid "/ for commands"
 msgstr "/ 调出命令"
 
-#: ui/terminal/terminal.slint:707
+#: ui/terminal/terminal.slint:735
 msgid "send"
 msgstr "发送"
 
-#: ui/terminal/terminal.slint:776
+#: ui/terminal/terminal.slint:804
 msgid "connected"
 msgstr "已连接"
 
-#: ui/terminal/terminal.slint:784
+#: ui/terminal/terminal.slint:812
 msgid "command"
 msgstr "命令"
+
+#: ui/viewer.slint:17
+msgctxt "zoom"
+msgid "Fit"
+msgstr "适应"
+
+#: ui/viewer.slint:30
+msgid "Saved to Downloads · {0}"
+msgstr "已保存到「下载」 · {0}"
+
+#: ui/viewer.slint:34
+msgid "← → Switch · Space Play · Esc Close"
+msgstr "← → 切换 · 空格 播放 · Esc 关闭"
+
+#: ui/viewer.slint:741
+msgctxt "terminal"
+msgid "locate"
+msgstr "定位"
+
+#: ui/viewer.slint:747
+msgctxt "terminal"
+msgid "download"
+msgstr "下载"
+
+#: ui/viewer.slint:824
+msgctxt "terminal"
+msgid "muted"
+msgstr "静音"
+
+#: ui/viewer.slint:824
+msgctxt "terminal"
+msgid "sound"
+msgstr "音量"
+
+#: ui/viewer.slint:885
+msgctxt "terminal"
+msgid "←/→ switch · space play · esc close"
+msgstr "←/→ 切换 · space 播放 · esc 关闭"
 
 #: ui/workbench/conversation.slint:252
 msgid "Close other tabs"
 msgstr "关闭其他标签"
 
-#: ui/workbench/conversation.slint:440
+#: ui/workbench/conversation.slint:466
 msgid "Sponsored"
 msgstr "赞助消息"
 
-#: ui/workbench/conversation.slint:447
+#: ui/workbench/conversation.slint:473
 msgid "Premium users can turn these off"
 msgstr "Premium 用户可关闭"
 
-#: ui/workbench/conversation.slint:487
+#: ui/workbench/conversation.slint:513
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
 msgstr "官方赞助消息 · FinchGram 照常显示，不做屏蔽"
 
-#: ui/workbench/conversation.slint:628
+#: ui/workbench/conversation.slint:665
 msgid "Send to {0}"
 msgstr "发送到 {0}"
 
-#: ui/workbench/conversation.slint:657
+#: ui/workbench/conversation.slint:694
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ 发送 · ⇧⏎ 换行"
 

@@ -1289,6 +1289,7 @@ dependencies = [
  "chrono",
  "dirs",
  "ed25519-dalek",
+ "glow",
  "hex",
  "image",
  "qrcode",

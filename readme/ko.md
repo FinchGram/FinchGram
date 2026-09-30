@@ -9,8 +9,9 @@ FinchGram은 Telegram API를 사용하며 Telegram 생태계의 일부입니다.
 Telegram이 만든 것이 아닙니다.
 
 상태: 초기 단계. 가입과 로그인, 채팅 목록, 텍스트 메시지 주고받기가 디자인의 세 가지 테마에서 동작합니다:
-워크벤치(기본), 브로드시트, 터미널이며, 설정 › 화면에서 바꿉니다. 2단계 인증은 설정 › 개인정보 및 보안에서
-관리합니다. 다음은 사진과 파일, 여러 계정, 키워드 필터, 예약 메시지입니다.
+워크벤치(기본), 브로드시트, 터미널이며, 설정 › 화면에서 바꿉니다. 사진과 동영상은 채팅에 보이고 뷰어로 열 수
+있으며, 동영상은 mpv로 재생합니다. 2단계 인증은 설정 › 개인정보 및 보안에서 관리합니다. 다음은 파일, 여러
+계정, 키워드 필터, 예약 메시지입니다.
 
 앱은 셸(껍데기)입니다. Telegram 자체는 Telegram 공식 라이브러리인 TDLib이 맡으며, 실행 파일 옆에서
 별도의 프로그램으로 실행됩니다. 그 프로그램이 `finchgram-tdlib`이고, 이 저장소가 버전을 고정한 소스로
@@ -25,11 +26,12 @@ Telegram이 만든 것이 아닙니다.
 지금은 개발에 Apple silicon macOS가 필요합니다. finchgram-tdlib을 아직 그 플랫폼용으로만 빌드하기 때문입니다.
 Linux와 Windows는 나중에 지원합니다.
 
-finchgram-tdlib과 UI 글꼴은 git에 들어 있지 않습니다. `vendor/tdlib/`에는 프로그램을 빌드하는 스크립트만
-있고, 글꼴은 Google Fonts에서 받습니다. clone한 뒤 한 번 받아 오세요:
+finchgram-tdlib, libmpv, UI 글꼴은 git에 들어 있지 않습니다. `vendor/tdlib/`와 `vendor/mpv/`에는 그것들을
+빌드하는 스크립트만 있고, 글꼴은 Google Fonts에서 받습니다. clone한 뒤 한 번 받아 오세요:
 
 ```sh
 scripts/fetch-tdlib.sh    # 고정된 finchgram-tdlib 릴리스를 vendor/tdlib/bin/에 내려받고 SHA-256을 검증
+scripts/fetch-mpv.sh      # 고정된 libmpv 릴리스를 vendor/mpv/bin/에 내려받고 SHA-256을 검증
 scripts/fetch-fonts.sh    # 고정된 UI 글꼴을 vendor/fonts/에 내려받고 SHA-256을 검증
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -50,8 +52,9 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   `target/screenshots/`에 그립니다. 계정 없이 UI를 볼 수 있는 방법입니다.
 
 `build.rs`는 `vendor/tdlib/bin/finchgram-tdlib`을 컴파일된 실행 파일 옆에 복사합니다. 그래서 `cargo run`은
-패키징된 앱과 정확히 같은 프로그램을 사용합니다. `vendor/fonts/`의 글꼴은 실행 파일에 포함됩니다. 둘 중
-하나라도 없으면 빌드가 그 이유를 알리는 메시지와 함께 실패합니다. Rust 1.92 이상이 필요합니다.
+패키징된 앱과 정확히 같은 프로그램을 사용합니다. libmpv는 `vendor/mpv/bin/`에서 링크하고 마찬가지로 옆에
+복사합니다. `vendor/fonts/`의 글꼴은 실행 파일에 포함됩니다. 하나라도 없으면 빌드가 그 이유를 알리는 메시지와
+함께 실패합니다. Rust 1.92 이상이 필요합니다.
 
 TDLib의 데이터베이스와 내려받은 파일은 `~/Library/Application Support/FinchGram/tdlib/`에,
 설정은 `~/Library/Application Support/FinchGram/settings.toml`에 있습니다.
@@ -90,7 +93,9 @@ src/
     account.rs           #   프로필, 로그아웃
     password.rs          #   설정의 2단계 인증
     files.rs             #   파일 다운로드
+    viewer.rs            #   미디어 뷰어: 사진, 동영상, ‘다운로드’에 저장
   platform/              # 운영 체제마다 달라지는 부분
+  player/                # libmpv로 동영상 재생. OpenGL로 창에 그림
   update.rs              # 자동 업데이트: GitHub Releases, 서명 확인, 교체, 재시작
   settings.rs            # 사용자 설정(settings.toml)
   i18n.rs                # UI 언어: 저장된 선택, 없으면 시스템 언어, 그것도 없으면 영어
@@ -103,6 +108,7 @@ ui/
   look.slint             # 테마의 색·글꼴·모양. 공유 페이지용
   format.slint           # UI 언어로 쓴 날짜·수·메시지 종류
   widgets.slint          # 작은 공유 부품. chat.slint는 채팅 창의 공유 부분
+  viewer.slint           # 창 전체를 덮는 미디어 뷰어. 테마마다 다른 모양
   pages/                 # 세 테마가 함께 쓰는 페이지: 로그인, 설정, 프로필
   workbench/             # 워크벤치 테마의 채팅 창(기본)
   broadsheet/            # 브로드시트 테마의 채팅 창
@@ -110,7 +116,7 @@ ui/
   icons/                 # Phosphor 아이콘(MIT), 일반과 듀오톤. icons.slint가 목록
   logo/                  # FinchGram 로고(svg, png)와 사용 규칙
 vendor/fonts/            # git에 없음: UI 글꼴(scripts/fetch-fonts.sh)
-vendor/mpv/              # libmpv: 동영상 재생용 mpv와 FFmpeg(아직 앱에는 없음)
+vendor/mpv/              # libmpv: 동영상 재생용 mpv와 FFmpeg
   build.sh               #   고정된 소스로 빌드: 버전과 SHA-256은 맨 위에 고정
   bin/                   #   git에 없음: 라이브러리 자체(scripts/fetch-mpv.sh 또는 build.sh install)
 vendor/tdlib/            # finchgram-tdlib

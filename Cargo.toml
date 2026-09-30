@@ -23,6 +23,7 @@ qrcode = { version = "0.14", default-features = false }   # the QR code for logg
 # Pictures in messages, decoded off the UI thread (src/images.rs); Slint uses the same crates.
 image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
 base64 = "0.23"                                 # TDLib's bytes (a photo's tiny preview)
+glow = "0.18"                                   # the video's OpenGL texture (src/player/); Slint's renderer uses it too
 # The self-updater (src/update.rs) and the release signing tool (src/bin/).
 ureq = "3"
 semver = "1"

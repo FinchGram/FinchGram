@@ -26,6 +26,7 @@ mod password;
 mod process;
 mod store;
 mod time;
+mod viewer;
 
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -109,6 +110,7 @@ pub fn start(ui: &MainWindow) {
     conversation::connect(ui);
     account::connect(ui);
     password::connect(ui);
+    viewer::connect(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {

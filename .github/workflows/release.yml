@@ -49,6 +49,9 @@ jobs:
       - name: finchgram-tdlib, pinned, from this repository's tdlib-* release
         run: scripts/fetch-tdlib.sh
 
+      - name: libmpv, pinned, from this repository's mpv-* release
+        run: scripts/fetch-mpv.sh
+
       - name: The UI fonts, pinned, from google/fonts
         run: scripts/fetch-fonts.sh
 

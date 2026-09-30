@@ -8,6 +8,7 @@ mod fonts;
 mod i18n;
 mod images;
 mod platform;
+mod player;
 #[cfg(test)]
 mod screenshots;
 mod settings;
@@ -141,6 +142,7 @@ fn main() -> Result<(), slint::PlatformError> {
         }
     });
 
+    player::install(&ui);
     telegram::start(&ui);
 
     // Updates: the newest release found by the last check, kept here so "install" knows what

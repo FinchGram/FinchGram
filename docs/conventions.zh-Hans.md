@@ -49,7 +49,8 @@ libmpv 跟 finchgram-tdlib 一样照这个做：`vendor/mpv/build.sh` 按锁定�
 （FFmpeg、libplacebo，以及 libass 和它用的 FreeType、FriBidi、HarfBuzz），全部静态链接进一个只依赖 macOS 的
 `libmpv.2.dylib`；脚本会检查这一点（`otool -L`），并播放一小段原始视频做冒烟测试。CI 从 `mpv-<版本号>-<n>`
 这样的 tag 构建并发布它（`.github/workflows/mpv.yml`），`scripts/fetch-mpv.sh` 把锁定的 release 下载到
-`vendor/mpv/bin/`。
+`vendor/mpv/bin/`。`build.rs` 从那里链接它，并把它复制到可执行文件旁边；app 包把它放在 `Contents/Frameworks/`
+里，可执行文件的 run path 只在那里找它。
 
 ## 2. 一个仓库
 

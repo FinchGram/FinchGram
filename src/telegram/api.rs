@@ -533,6 +533,9 @@ pub struct Message {
     pub is_outgoing: bool,
     pub date: i32,
     pub edit_date: i32,
+    /// The messages of an album (photos and videos sent together) share it; 0 for none.
+    #[serde(default, with = "int64")]
+    pub media_album_id: i64,
     pub content: MessageContent,
 }
 
@@ -700,6 +703,8 @@ pub struct Video {
     pub width: i32,
     pub height: i32,
     #[serde(default)]
+    pub file_name: String,
+    #[serde(default)]
     pub minithumbnail: Option<Minithumbnail>,
     #[serde(default)]
     pub thumbnail: Option<Thumbnail>,
@@ -712,6 +717,8 @@ pub struct Animation {
     pub duration: i32,
     pub width: i32,
     pub height: i32,
+    #[serde(default)]
+    pub file_name: String,
     #[serde(default)]
     pub minithumbnail: Option<Minithumbnail>,
     #[serde(default)]

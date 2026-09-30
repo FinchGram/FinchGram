@@ -21,8 +21,8 @@ use super::api::{
 use super::time;
 use crate::images;
 use crate::{
-    Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, MainWindow, MessageRow, Moment, RowKind,
-    Status, Tab, TreeRow, Words,
+    Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, MainWindow, Media, MessageRow, Moment, RowKind,
+    Status, Tab, TreeRow, Viewer, ViewerItem, Words,
 };
 
 /// How long someone counts as typing after TDLib last said so.
@@ -51,6 +51,8 @@ pub struct Dirty {
     pub chats: bool,
     pub conversation: bool,
     pub account: bool,
+    /// The media viewer's pictures (while it is open).
+    pub viewer: bool,
     /// The open chat should show its newest message.
     pub scroll_to_end: bool,
 }
@@ -100,6 +102,9 @@ pub struct Store {
     pub pictures: images::Cache<i32>,
     /// The tiny previews in messages, decoded once, by their bytes.
     previews: RefCell<images::Cache<u64>>,
+    /// The media list of each message row, by row id: the same model from one refresh to the next,
+    /// so that a row changes only when its media do.
+    media_models: RefCell<HashMap<SharedString, Rc<VecModel<Media>>>>,
 
     pub dirty: Dirty,
     models: Models,
@@ -155,6 +160,7 @@ pub fn install(ui: &MainWindow) {
             sponsored: HashMap::new(),
             pictures: images::Cache::new(PICTURES_KEPT),
             previews: RefCell::new(images::Cache::new(PREVIEWS_KEPT)),
+            media_models: RefCell::new(HashMap::new()),
             dirty: Dirty::default(),
             models,
         })
@@ -188,7 +194,8 @@ pub fn clear() {
         store.sponsored.clear();
         store.pictures.clear();
         store.previews.borrow_mut().clear();
-        store.dirty = Dirty { chats: true, conversation: true, account: true, scroll_to_end: false };
+        store.media_models.borrow_mut().clear();
+        store.dirty = Dirty { chats: true, conversation: true, account: true, viewer: true, scroll_to_end: false };
     });
     refresh();
 }
@@ -209,6 +216,12 @@ pub fn refresh() {
         }
         if dirty.account {
             store.refresh_account(&ui);
+        }
+        if dirty.viewer || dirty.conversation {
+            let viewer = ui.global::<Viewer>();
+            if viewer.get_open() {
+                viewer.set_items(ModelRc::new(VecModel::from(store.viewer_items(&words))));
+            }
         }
     });
 }
@@ -231,7 +244,7 @@ pub struct Names {
 }
 
 impl Names {
-    fn from(ui: &MainWindow) -> Names {
+    pub fn from(ui: &MainWindow) -> Names {
         let words = ui.global::<Words>();
         Names {
             saved_messages: words.get_saved_messages().into(),
@@ -854,19 +867,44 @@ impl Store {
         let Some(history) = self.histories.get(&chat.id) else { return Vec::new() };
         let me = self.user_name(self.my_id, names);
         let mut rows = Vec::with_capacity(history.messages.len() + 8);
+        // Each row's media, turned into its model once every row is known.
+        let mut media: Vec<Vec<Media>> = Vec::with_capacity(rows.capacity());
         let mut previous_day = None;
+        // The album of the row before, whose next messages join it.
+        let mut album = 0;
         for message in history.messages.values() {
             let day = time::day(message.date);
             if day != previous_day {
                 rows.push(MessageRow { kind: RowKind::Day, day: time::moment(message.date), ..MessageRow::default() });
+                media.push(Vec::new());
                 previous_day = day;
+                album = 0;
             }
             let (content, text, detail) = self.content(message, names);
+            let item = picture(&message.content).map(|picture| Media {
+                id: message.id.to_string().into(),
+                picture: self.picture_image(&picture),
+                width: picture.width,
+                height: picture.height,
+                video: !matches!(message.content, M::Photo { .. }),
+                duration: picture.duration,
+                name: file_name(&message.content).into(),
+            });
+            // An album: its messages after the first join the first one's row, which takes a
+            // caption from whichever has one.
+            if message.media_album_id != 0
+                && message.media_album_id == album
+                && let (Some(row), Some(list)) = (rows.last_mut(), media.last_mut())
+            {
+                list.extend(item);
+                if row.text.is_empty() {
+                    row.text = text.into();
+                }
+                continue;
+            }
+            album = message.media_album_id;
+            media.push(item.into_iter().collect());
             let sender = if message.is_outgoing && !me.is_empty() { me.clone() } else { self.sender_name(&message.sender_id, names) };
-            let (image, width, height, duration) = match picture(&message.content) {
-                Some(picture) => (self.picture_image(&picture), picture.width, picture.height, picture.duration),
-                None => (Image::default(), 0, 0, 0),
-            };
             rows.push(MessageRow {
                 kind: if is_service(content) { RowKind::Service } else { RowKind::Message },
                 id: message.id.to_string().into(),
@@ -884,12 +922,10 @@ impl Store {
                 failed: matches!(message.sending_state, Some(MessageSendingState::Failed { .. })),
                 seen: message.is_outgoing && message.id <= chat.last_read_outbox_message_id,
                 button: SharedString::new(),
-                picture: image,
-                picture_width: width,
-                picture_height: height,
-                duration,
+                media: ModelRc::default(),
             });
         }
+        self.attach_media(&mut rows, media);
         // Telegram's sponsored message, after the newest post of a channel.
         if let Some(sponsored) = self.sponsored.get(&chat.id).and_then(|sponsored| sponsored.first()) {
             let text = match &sponsored.content {
@@ -903,6 +939,7 @@ impl Store {
                         is_outgoing: false,
                         date: 0,
                         edit_date: 0,
+                        media_album_id: 0,
                         content: other.clone(),
                     };
                     self.content(&message, names).1
@@ -918,6 +955,50 @@ impl Store {
             });
         }
         rows
+    }
+
+    /// The open chat's photos, videos and GIFs for the media viewer, oldest first.
+    pub fn viewer_items(&self, names: &Names) -> Vec<ViewerItem> {
+        let Some(history) = self.open.and_then(|chat_id| self.histories.get(&chat_id)) else { return Vec::new() };
+        let me = self.user_name(self.my_id, names);
+        history
+            .messages
+            .values()
+            .filter_map(|message| {
+                let picture = picture(&message.content)?;
+                let sender = if message.is_outgoing && !me.is_empty() { me.clone() } else { self.sender_name(&message.sender_id, names) };
+                let image = original(&message.content).and_then(|file| self.pictures.get(&file.id)).unwrap_or_else(|| self.picture_image(&picture));
+                Some(ViewerItem {
+                    id: message.id.to_string().into(),
+                    picture: image,
+                    width: picture.width,
+                    height: picture.height,
+                    video: !matches!(message.content, M::Photo { .. }),
+                    duration: picture.duration,
+                    name: file_name(&message.content).into(),
+                    sender_initial: initial(&sender),
+                    sender: sender.into(),
+                    time: time::moment(message.date),
+                    caption: self.content(message, names).1.into(),
+                })
+            })
+            .collect()
+    }
+
+    /// Give each row the model of its media, the same one as last time, brought up to date.
+    fn attach_media(&self, rows: &mut [MessageRow], media: Vec<Vec<Media>>) {
+        let mut models = self.media_models.borrow_mut();
+        let mut kept = HashMap::new();
+        for (row, list) in rows.iter_mut().zip(media) {
+            if list.is_empty() {
+                continue;
+            }
+            let model = models.remove(&row.id).unwrap_or_else(|| Rc::new(VecModel::default()));
+            sync(&model, list);
+            row.media = ModelRc::from(model.clone());
+            kept.insert(row.id.clone(), model);
+        }
+        *models = kept;
     }
 
     /// The best picture there is so far: the downloaded one, else the message's tiny preview.
@@ -1001,6 +1082,25 @@ pub fn picture(content: &M) -> Option<Picture<'_>> {
             animation.duration,
             animation.minithumbnail.as_ref(),
         )),
+        _ => None,
+    }
+}
+
+/// A video's or a GIF's own file name; photos have none.
+pub fn file_name(content: &M) -> &str {
+    match content {
+        M::Video { video, .. } => video.file_name.trim(),
+        M::Animation { animation, .. } => animation.file_name.trim(),
+        _ => "",
+    }
+}
+
+/// The file itself: a photo's largest size, the video, the GIF.
+pub fn original(content: &M) -> Option<&api::File> {
+    match content {
+        M::Photo { photo, .. } => photo.sizes.last().map(|size| &size.photo),
+        M::Video { video, .. } => Some(&video.video),
+        M::Animation { animation, .. } => Some(&animation.animation),
         _ => None,
     }
 }

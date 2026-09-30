@@ -93,6 +93,19 @@ export struct Tab {
 
 export enum RowKind { message, service, day, sponsored }
 
+// A photo, video or GIF in a message: the best picture there is so far (the message's tiny preview
+// until Conversation.load-picture has downloaded a sharp one), its own size for its shape, and a
+// video's length.
+export struct Media {
+    id: string,             // the message it is in
+    picture: image,
+    width: int,
+    height: int,
+    video: bool,            // a video or a GIF: it plays
+    duration: int,          // seconds
+    name: string,           // a video's or GIF's file name; photos have none
+}
+
 // One line of the open chat: a message, a service message, the day it starts, or a sponsored
 // message (channels show Telegram's own; they are never hidden).
 export struct MessageRow {
@@ -112,15 +125,9 @@ export struct MessageRow {
     failed: bool,
     seen: bool,             // an outgoing message the other side has read
     button: string,         // a sponsored message's button
-    // A photo, video or GIF (content says which): the best picture there is so far (the message's
-    // tiny preview until Conversation.load-picture has downloaded a sharp one), its own size, for
-    // its shape, and a video's or GIF's length in seconds. The pages do not draw them yet: the
-    // design comes first.
-    picture: image,
-    picture-width: int,
-    picture-height: int,
-    duration: int,
+    media: [Media],         // its photos, videos and GIFs: one, or an album's
 }
+
 
 // How the open chat's header describes it.
 export enum Status {
@@ -148,6 +155,8 @@ export global Conversation {
     // Rust counts this up when the view should show the newest message: the chat was opened, or we
     // sent one.
     in-out property <int> scroll-to-end;
+    // A message the view should bring into sight (the media viewer's "locate"), "" for none.
+    in-out property <string> reveal;
     callback open(string);                       // chat id; Workbench opens a tab for it
     callback close(string);                      // a tab
     callback close-others();
@@ -159,6 +168,46 @@ export global Conversation {
     callback toggle-mute();
     callback toggle-pin();
     callback mark-read();
+}
+
+// The media viewer (the design's media-viewer.js): the open chat's photos and videos, one at a time,
+// over the whole window. Rust fills it (src/telegram/viewer.rs); zoom is the page's own.
+export struct ViewerItem {
+    id: string,             // the message
+    picture: image,
+    width: int,
+    height: int,
+    video: bool,
+    duration: int,          // seconds
+    name: string,           // a video's or GIF's file name; photos have none
+    sender: string,
+    sender-initial: string,
+    time: Moment,
+    caption: string,
+}
+
+export global Viewer {
+    in-out property <bool> open;
+    in-out property <[ViewerItem]> items;        // the open chat's media, oldest first
+    in-out property <int> index;                 // the one shown
+    in-out property <int> zoom;                  // 0 … 3: fit, 150 %, 200 %, 300 %
+    in-out property <bool> playing;
+    in-out property <bool> loading;              // the video is downloading before it plays
+    in-out property <bool> ended;                // played to its end
+    in-out property <float> position;            // seconds into the video
+    in-out property <int> speed;                 // 0 … 3: 1×, 1.5×, 2×, 0.5×
+    in-out property <bool> muted;
+    in-out property <image> frame;               // the video's picture while it plays
+    in-out property <string> saved;              // a file just saved to Downloads, "" otherwise
+    callback view(string, bool);                 // a message's media; true: a video starts playing
+    callback close();
+    callback show(int);                          // another item
+    callback play-pause();
+    callback seek(float);                        // 0 … 1 of the video
+    callback next-speed();
+    callback toggle-mute();
+    callback download();                         // the one shown, to the Downloads folder
+    callback locate();                           // close, and scroll the chat to its message
 }
 
 // The account logged in.

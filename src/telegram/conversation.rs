@@ -87,18 +87,28 @@ fn load_picture(message_id: i64) {
     let file = store::with(|store| {
         let chat_id = store.open?;
         let message = store.histories.get(&chat_id)?.messages.get(&message_id)?;
-        let file = store::picture(&message.content)?.file?.clone();
-        (!store.pictures.contains(&file.id)).then_some(file)
+        store::picture(&message.content)?.file.cloned()
     })
     .flatten();
-    let Some(file) = file else { return };
+    if let Some(file) = file {
+        fetch_picture(file, files::ON_SCREEN);
+    }
+}
+
+/// Download a picture and decode it into the store, unless it is there already; the rows and the
+/// media viewer then show it.
+pub fn fetch_picture(file: super::api::File, priority: i32) {
+    if store::with(|store| store.pictures.contains(&file.id)).unwrap_or(true) {
+        return;
+    }
     let id = file.id;
-    files::download(&file, files::ON_SCREEN, move |path| {
+    files::download(&file, priority, move |path| {
         images::load(path, move |picture| {
             let Some(picture) = picture else { return };
             store::with(|store| {
                 store.pictures.insert(id, picture);
                 store.dirty.conversation = true;
+                store.dirty.viewer = true;
             });
             store::refresh();
         });
