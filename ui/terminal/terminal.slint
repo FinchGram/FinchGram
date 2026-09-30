@@ -827,7 +827,7 @@ component CommandLine inherits Rectangle {
             }
         }
         T {
-            text: "⏎ " + @tr("send");
+            text: (AppState.send-with-enter ? "⏎ " : "⌘⏎ ") + @tr("send");
             color: P.faint;
         }
     }

@@ -114,10 +114,11 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   `conversation.rs`, `account.rs` and `password.rs` (two-step verification) do what the pages ask
   for; `files.rs` downloads files, `viewer.rs` fills the media viewer.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
-- `src/platform/`: the platform layer (so far: what the account's list of sessions calls this
-  device, the transparent title bar on macOS, opening links, and on macOS staying in the Dock when
-  the window is closed, as the design's "When closing the window: Minimize to tray" has it: the Dock
-  icon shows the window again, and Quit lets TDLib close first).
+- `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
+  device, the transparent title bar on macOS, opening links; and on macOS (Settings → General)
+  staying in the Dock when the window is closed, as the design's "When closing the window: Minimize
+  to tray" has it (the Dock icon shows the window again, and Quit lets TDLib close first), the icon
+  in the menu bar, and launching at login (SMAppService, macOS 13 and later).
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
 - `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
 - `src/images.rs`: pictures (photos, video stills, the tiny previews in messages), decoded off the UI

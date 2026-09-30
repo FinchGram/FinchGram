@@ -77,6 +77,10 @@ fn main() -> Result<(), slint::PlatformError> {
                 let state = ui.global::<AppState>();
                 state.set_language_name(i18n::native_name(&code).into());
                 state.set_language(code);
+                // The menu bar icon's menu, in the new language.
+                if settings.borrow().show_in_menu_bar {
+                    platform::set_menu_bar_icon(&ui, true);
+                }
             }
             telegram::language_changed();
         }
@@ -108,6 +112,75 @@ fn main() -> Result<(), slint::PlatformError> {
             }
         }
     });
+    // Settings → General.
+    state.set_keeps_running_available(cfg!(target_os = "macos"));
+    state.set_menu_bar_available(cfg!(target_os = "macos"));
+    state.set_quit_on_close(settings.borrow().quit_on_close);
+    state.set_show_in_menu_bar(settings.borrow().show_in_menu_bar);
+    state.set_send_with_enter(settings.borrow().send_with_enter);
+    show_launch_at_login(&state);
+    state.on_check_launch_at_login({
+        let ui = ui.as_weak();
+        move || {
+            if let Some(ui) = ui.upgrade() {
+                show_launch_at_login(&ui.global::<AppState>());
+            }
+        }
+    });
+    state.on_change_launch_at_login({
+        let ui = ui.as_weak();
+        move |on| {
+            if let Err(err) = platform::set_launch_at_login(on) {
+                eprintln!("settings: cannot change launching at login: {err}");
+            }
+            if let Some(ui) = ui.upgrade() {
+                show_launch_at_login(&ui.global::<AppState>());
+            }
+        }
+    });
+    state.on_change_show_in_menu_bar({
+        let ui = ui.as_weak();
+        let settings = settings.clone();
+        move |shown| {
+            settings.borrow_mut().show_in_menu_bar = shown;
+            settings.borrow().save();
+            if let Some(ui) = ui.upgrade() {
+                ui.global::<AppState>().set_show_in_menu_bar(shown);
+                platform::set_menu_bar_icon(&ui, shown);
+            }
+        }
+    });
+    state.on_change_quit_on_close({
+        let ui = ui.as_weak();
+        let settings = settings.clone();
+        move |quit| {
+            settings.borrow_mut().quit_on_close = quit;
+            settings.borrow().save();
+            if let Some(ui) = ui.upgrade() {
+                ui.global::<AppState>().set_quit_on_close(quit);
+            }
+        }
+    });
+    state.on_change_send_with_enter({
+        let ui = ui.as_weak();
+        let settings = settings.clone();
+        move |send| {
+            settings.borrow_mut().send_with_enter = send;
+            settings.borrow().save();
+            if let Some(ui) = ui.upgrade() {
+                ui.global::<AppState>().set_send_with_enter(send);
+            }
+        }
+    });
+    if settings.borrow().show_in_menu_bar {
+        // Once the event loop runs, when the application is set up.
+        let ui = ui.as_weak();
+        slint::Timer::single_shot(std::time::Duration::ZERO, move || {
+            if let Some(ui) = ui.upgrade() {
+                platform::set_menu_bar_icon(&ui, true);
+            }
+        });
+    }
     state.on_show_window({
         let ui = ui.as_weak();
         move || {
@@ -202,14 +275,19 @@ fn main() -> Result<(), slint::PlatformError> {
     // The window's own appearance (its buttons, its edge) follows the choice in Settings.
     apply_window_appearance_when_ready(ui.as_weak(), settings.borrow().appearance.clone(), 40);
 
-    // Closing the window stops a video with it; on macOS FinchGram keeps running (src/platform/).
+    // Closing the window stops a video with it. On macOS FinchGram keeps running (src/platform/)
+    // unless Settings → General says to quit.
     ui.window().on_close_requested({
         let ui = ui.as_weak();
+        let settings = settings.clone();
         move || {
             if let Some(ui) = ui.upgrade()
                 && ui.global::<Viewer>().get_open()
             {
                 ui.global::<Viewer>().invoke_close();
+            }
+            if settings.borrow().quit_on_close {
+                let _ = slint::quit_event_loop();
             }
             slint::CloseRequestResponse::HideWindow
         }
@@ -220,6 +298,14 @@ fn main() -> Result<(), slint::PlatformError> {
     let result = platform::run(&ui, telegram::shut_down);
     telegram::shut_down();
     result
+}
+
+/// Launching at login, as the system's list of login items has it (it can change in System
+/// Settings too).
+fn show_launch_at_login(state: &AppState) {
+    let launch = platform::launch_at_login();
+    state.set_launch_at_login_available(launch.is_some());
+    state.set_launch_at_login(launch.unwrap_or(false));
 }
 
 fn theme_from_name(name: &str) -> Theme {

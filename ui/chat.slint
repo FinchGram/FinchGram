@@ -1,4 +1,5 @@
 // Parts of the chat windows the three themes share.
+import { AppState } from "state.slint";
 import { Conversation, ChatKind, Media, Sticker } from "telegram.slint";
 import { Fmt } from "format.slint";
 import { Icon } from "widgets.slint";
@@ -143,8 +144,13 @@ export component MessageInput inherits Rectangle {
             font-size: root.font-size;
             line-height-factor: root.line-height-factor;
             selection-background-color: root.selection-color;
+            // Enter sends, and with Shift or Option makes a new line; without Send with Enter
+            // (Settings → General), ⌘Enter sends and Enter makes a new line. (Slint reports ⌘ as
+            // control on macOS.)
             key-pressed(event) => {
-                if event.text == Key.Return && !event.modifiers.shift && !event.modifiers.alt && self.preedit-text == "" {
+                if event.text == Key.Return && !event.modifiers.shift && !event.modifiers.alt && self.preedit-text == ""
+                    && event.modifiers.control != AppState.send-with-enter
+                {
                     root.send-now();
                     return accept;
                 }

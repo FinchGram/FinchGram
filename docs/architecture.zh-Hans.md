@@ -94,8 +94,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   分发回复、重新启动和转交更新。`store.rs` 保存 TDLib 告诉我们的东西（聊天、用户、群组、文件夹、打开的聊天的消息），
   每批更新之后把页面用的 model 更新到最新；`login.rs`、`chats.rs`、`conversation.rs`、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`viewer.rs` 给媒体查看器提供内容。
 - `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）。
-- `src/platform/`：平台层（目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接，以及 macOS 上
-  关闭窗口后留在 Dock 里，即设计稿的“关闭窗口时：最小化到托盘”：点 Dock 图标重新打开窗口，退出时先让 TDLib 关好）。
+- `src/platform/`：平台层。目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接；以及 macOS 上
+  （设置 → 通用）关闭窗口后留在 Dock 里，即设计稿的“关闭窗口时：最小化到托盘”（点 Dock 图标重新打开窗口，退出时先让
+  TDLib 关好）、菜单栏图标、开机时启动（SMAppService，macOS 13 及以上）。
 - `src/update.rs`：自动更新（[conventions.md](conventions.zh-Hans.md) 第 3 节）。
 - `src/settings.rs`、`src/i18n.rs`、`src/fonts.rs`（界面字体，编译进可执行文件）。
 - `src/images.rs`：图片（照片、视频封面、消息里自带的小预览图）在界面线程之外解码，并缓存最近的。

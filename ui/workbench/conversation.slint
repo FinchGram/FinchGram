@@ -709,7 +709,7 @@ component Pane {
                         }
                         Rectangle { horizontal-stretch: 1; }
                         Text {
-                            text: @tr("⏎ send · ⇧⏎ new line");
+                            text: AppState.send-with-enter ? @tr("⏎ send · ⇧⏎ new line") : @tr("⌘⏎ send · ⏎ new line");
                             color: P.faint;
                             font-family: P.mono;
                             font-size: 12px;

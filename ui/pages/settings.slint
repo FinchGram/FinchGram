@@ -104,6 +104,7 @@ component Categories {
             section: SettingsSection.general;
             icon: "sliders-horizontal";
             label: @tr("General");
+            enabled: true;
         }
         Category {
             section: SettingsSection.notifications;
@@ -327,7 +328,9 @@ component SwitchRow {
     in property <string> title;
     in property <string> description;
     in property <bool> on;
+    in property <bool> enabled: true;
     callback toggled();
+    opacity: enabled ? 1 : 0.4;
 
     HorizontalLayout {
         padding-left: 16px;
@@ -363,6 +366,7 @@ component SwitchRow {
             alignment: center;
             Switch {
                 on: root.on;
+                enabled: root.enabled;
                 toggled => {
                     root.toggled();
                 }
@@ -371,11 +375,13 @@ component SwitchRow {
     }
 }
 
-// One setting that opens more: an icon, what it is, its value, and a caret.
+// One setting that opens more: an icon, what it is, its value, and a caret. A choice between a few
+// values (the caret up and down) takes the next one when clicked.
 component NavRow inherits Rectangle {
     in property <string> icon;
     in property <string> title;
     in property <string> value;
+    in property <string> caret: "caret-right";
     in property <bool> enabled: true;
     in property <bool> danger;
     callback clicked();
@@ -414,7 +420,7 @@ component NavRow inherits Rectangle {
         VerticalLayout {
             alignment: center;
             Icon {
-                name: "caret-right";
+                name: root.caret;
                 size: 14px;
                 color: Look.faint;
             }
@@ -607,6 +613,97 @@ component AppearanceSection {
                     toggled => {
                         AppState.change-appearance(AppState.appearance == "system" ? (Look.dark ? "dark" : "light") : "system");
                     }
+                }
+            }
+        }
+    }
+}
+
+// General, from the design: starting FinchGram and closing its window, typing, shortcuts.
+component GeneralSection {
+    init => {
+        AppState.check-launch-at-login();
+    }
+
+    VerticalLayout {
+        spacing: 26px;
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Startup & window");
+            }
+            Card {
+                SwitchRow {
+                    icon: "power";
+                    title: @tr("Launch at login");
+                    on: AppState.launch-at-login;
+                    enabled: AppState.launch-at-login-available;
+                    toggled => {
+                        AppState.change-launch-at-login(!AppState.launch-at-login);
+                    }
+                }
+                Separator { }
+                SwitchRow {
+                    icon: "app-window";
+                    title: @tr("Show in menu bar");
+                    on: AppState.show-in-menu-bar;
+                    enabled: AppState.menu-bar-available;
+                    toggled => {
+                        AppState.change-show-in-menu-bar(!AppState.show-in-menu-bar);
+                    }
+                }
+                Separator { }
+                NavRow {
+                    icon: "x-square";
+                    title: @tr("When closing the window");
+                    value: AppState.quit-on-close ? @tr("Quit") : @tr("Minimize to tray");
+                    caret: "caret-up-down";
+                    enabled: AppState.keeps-running-available;
+                    clicked => {
+                        AppState.change-quit-on-close(!AppState.quit-on-close);
+                    }
+                }
+            }
+        }
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Input");
+            }
+            Card {
+                SwitchRow {
+                    icon: "keyboard";
+                    title: @tr("Send with Enter");
+                    on: AppState.send-with-enter;
+                    toggled => {
+                        AppState.change-send-with-enter(!AppState.send-with-enter);
+                    }
+                }
+                Separator { }
+                SwitchRow {
+                    icon: "text-aa";
+                    title: @tr("Spell check");
+                    enabled: false;
+                }
+                Separator { }
+                SwitchRow {
+                    icon: "smiley";
+                    title: @tr("Replace emoji automatically");
+                    enabled: false;
+                }
+            }
+        }
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Shortcuts");
+            }
+            Card {
+                NavRow {
+                    icon: "command";
+                    title: @tr("Keyboard shortcuts");
+                    value: @tr("shortcuts" => "View");
+                    enabled: false;
                 }
             }
         }
@@ -1377,6 +1474,7 @@ export component SettingsPage inherits PageFrame {
                     }
                     Heading {
                         label: root.two-step ? @tr("Two-step verification")
+                            : AppState.settings-section == SettingsSection.general ? @tr("General")
                             : AppState.settings-section == SettingsSection.language ? @tr("Language")
                             : AppState.settings-section == SettingsSection.privacy ? @tr("Privacy & security")
                             : AppState.settings-section == SettingsSection.about ? @tr("About") : @tr("Appearance");
@@ -1401,6 +1499,7 @@ export component SettingsPage inherits PageFrame {
                         }
                     }
                 }
+                if AppState.settings-section == SettingsSection.general: GeneralSection { }
                 if AppState.settings-section == SettingsSection.appearance: AppearanceSection { }
                 if AppState.settings-section == SettingsSection.language: LanguageSection { }
                 if AppState.settings-section == SettingsSection.privacy && !root.two-step: PrivacySection { }

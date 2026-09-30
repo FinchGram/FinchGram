@@ -20,6 +20,11 @@ pub struct Settings {
     pub theme: String,
     /// The once-a-day update check (src/update.rs).
     pub check_for_updates: bool,
+    /// Settings → General: closing the window quits FinchGram (else, on macOS, it stays in the
+    /// Dock), its icon is in the menu bar, and Enter sends a message (else ⌘Enter does).
+    pub quit_on_close: bool,
+    pub show_in_menu_bar: bool,
+    pub send_with_enter: bool,
     /// How wide each theme's chat list is, as the user last dragged its edge. (A table: it has to
     /// come after the plain values in the file.)
     pub list_widths: ListWidths,
@@ -62,6 +67,9 @@ impl Default for Settings {
             appearance: "system".to_string(),
             theme: "workbench".to_string(),
             check_for_updates: true,
+            quit_on_close: false,
+            show_in_menu_bar: false,
+            send_with_enter: true,
             list_widths: ListWidths::default(),
         }
     }
@@ -115,6 +123,13 @@ fn file() -> Option<PathBuf> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_file_from_an_older_version_gets_the_defaults() {
+        let read: Settings = toml::from_str("theme = \"terminal\"\ncheck_for_updates = false\n").expect("read");
+        assert_eq!((read.theme.as_str(), read.check_for_updates), ("terminal", false));
+        assert!(!read.quit_on_close && !read.show_in_menu_bar && read.send_with_enter);
+    }
 
     #[test]
     fn list_widths_are_written_after_the_plain_values_and_read_back() {

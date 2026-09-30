@@ -1,4 +1,4 @@
-import { AppState, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language } from "state.slint";
+import { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language } from "state.slint";
 import { Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, RowKind, Content, ChatKind, Status, Moment,
     Day, Viewer, ViewerItem, Words } from "telegram.slint";
@@ -12,7 +12,7 @@ import { MediaViewer } from "viewer.slint";
 import { ProfilePage } from "pages/profile.slint";
 
 // Re-exported so Rust can reach them through slint::include_modules!().
-export { AppState, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language,
+export { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language,
     Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, RowKind, Content, ChatKind, Status, Moment,
     Day, Viewer, ViewerItem, Words }

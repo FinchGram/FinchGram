@@ -44,6 +44,13 @@ export struct Language {
     english: string,        // its name in English
 }
 
+// What FinchGram shows outside its window, in the system's own menus: the menu of its icon in the
+// menu bar (src/platform/).
+export global PlatformWords {
+    out property <string> open: @tr("Open FinchGram");
+    out property <string> quit: @tr("Quit FinchGram");
+}
+
 export global AppState {
     // Active UI language, a folder name under lang/ ("en" is the source language and has none).
     in-out property <string> language: "en";
@@ -77,6 +84,16 @@ export global AppState {
     callback check-for-updates();
     callback install-update();                          // download, install, restart
 
+    // Settings → General. Launching at login is the system's list of login items (src/platform/);
+    // what is not available on this system is greyed out.
+    in-out property <bool> launch-at-login;
+    in-out property <bool> launch-at-login-available;   // macOS 13 and later
+    in-out property <bool> show-in-menu-bar;            // FinchGram's icon in the menu bar
+    in-out property <bool> menu-bar-available;          // macOS
+    in-out property <bool> quit-on-close;               // closing the window quits FinchGram
+    in-out property <bool> keeps-running-available;     // macOS: closing the window can leave it running
+    in-out property <bool> send-with-enter: true;       // else ⌘⏎ sends and ⏎ starts a new line
+
     // Settings: each saves itself (src/settings.rs).
     callback change-language(string);
     callback change-appearance(string);
@@ -84,6 +101,11 @@ export global AppState {
     callback change-check-for-updates-daily(bool);
     callback change-list-width(Theme, length);          // a drag of a list's edge ended there
     callback show-window();                             // closed, FinchGram keeps running (macOS): open it again
+    callback change-launch-at-login(bool);
+    callback check-launch-at-login();                   // the list may have changed in System Settings
+    callback change-show-in-menu-bar(bool);
+    callback change-quit-on-close(bool);
+    callback change-send-with-enter(bool);
 
     // Our own pages (GitHub) and Telegram's terms of service; anything else is refused by Rust.
     callback open-url(string);

@@ -92,6 +92,11 @@ fn fill(ui: &MainWindow) {
     app.set_connection(Connection::Ready);
     app.set_app_version(crate::update::CURRENT_VERSION.into());
     app.set_tdlib_version(crate::telegram::TDLIB_VERSION.into());
+    // Settings → General as on a Mac: launching at login on, the rest as it comes.
+    app.set_launch_at_login_available(true);
+    app.set_launch_at_login(true);
+    app.set_menu_bar_available(true);
+    app.set_keeps_running_available(true);
 
     let login = ui.global::<Login>();
     login.set_country(country("CN", "China", "86"));
@@ -492,7 +497,7 @@ fn screenshots() {
             save(&window, &name("channel"));
             app.set_page(Page::Settings);
             for (section, section_name) in
-                [(SettingsSection::Appearance, "appearance"), (SettingsSection::Language, "language"), (SettingsSection::About, "about")]
+                [(SettingsSection::General, "general"), (SettingsSection::Appearance, "appearance"), (SettingsSection::Language, "language"), (SettingsSection::About, "about")]
             {
                 app.set_settings_section(section);
                 save(&window, &name(&format!("settings-{section_name}")));
@@ -526,6 +531,8 @@ fn screenshots() {
     save(&window, "zh-workbench-login-sign-up");
     app.set_telegram_state(TelegramState::Ready);
     app.set_page(Page::Settings);
+    app.set_settings_section(SettingsSection::General);
+    save(&window, "zh-workbench-settings-general");
     app.set_settings_section(SettingsSection::Appearance);
     save(&window, "zh-workbench-settings-appearance");
     let password = ui.global::<PasswordSettings>();

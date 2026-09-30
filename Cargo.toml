@@ -32,8 +32,15 @@ ed25519-dalek = "3"
 hex = "0.4"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-# The Dock and Quit (src/platform/macos.rs); Slint's winit backend uses the same crate.
+# The Dock, Quit, the menu bar icon and launching at login (src/platform/macos.rs); Slint's winit
+# backend uses the same crates, and resvg draws its SVG images.
 objc2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = ["std", "objc2-core-foundation", "NSData", "NSError", "NSGeometry", "NSString"] }
+objc2-app-kit = { version = "0.3", default-features = false, features = [
+    "std", "objc2-core-foundation", "NSApplication", "NSButton", "NSControl", "NSImage", "NSMenu", "NSMenuItem",
+    "NSResponder", "NSStatusBar", "NSStatusBarButton", "NSStatusItem", "NSView",
+] }
+resvg = { version = "0.48", default-features = false }
 
 [build-dependencies]
 slint-build = "~1.18"
