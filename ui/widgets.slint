@@ -78,6 +78,27 @@ export component WindowMover inherits TouchArea {
     }
 }
 
+// The right edge of a chat window's list: drag it to make the list wider or narrower. It shows only
+// as the pointer (↔) over it.
+export component ListEdge inherits TouchArea {
+    in-out property <length> list-width;
+    in property <length> narrowest;
+    in property <length> widest;
+    callback dropped(length);           // where a drag ended
+    width: 6px;
+    mouse-cursor: col-resize;
+    moved => {
+        if self.pressed {
+            root.list-width = max(root.narrowest, min(root.widest, root.list-width + (self.mouse-x - self.pressed-x)));
+        }
+    }
+    pointer-event(event) => {
+        if event.kind == PointerEventKind.up && event.button == PointerEventButton.left {
+            root.dropped(root.list-width);
+        }
+    }
+}
+
 // An on/off switch: a track with a knob, or "[on ]" / "[off]" in Terminal.
 export component Switch {
     in property <bool> on;

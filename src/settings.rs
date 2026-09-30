@@ -20,6 +20,39 @@ pub struct Settings {
     pub theme: String,
     /// The once-a-day update check (src/update.rs).
     pub check_for_updates: bool,
+    /// How wide each theme's chat list is, as the user last dragged its edge. (A table: it has to
+    /// come after the plain values in the file.)
+    pub list_widths: ListWidths,
+}
+
+/// The width of the chat list in each theme, in logical pixels: the design's until the user drags
+/// the list's edge.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ListWidths {
+    pub workbench: f32,
+    pub broadsheet: f32,
+    pub terminal: f32,
+}
+
+impl Default for ListWidths {
+    fn default() -> Self {
+        ListWidths { workbench: 244.0, broadsheet: 300.0, terminal: 268.0 }
+    }
+}
+
+impl ListWidths {
+    /// A width that makes no sense (edited by hand) is the design's again. The pages keep a
+    /// dragged width within their own limits.
+    fn sanitized(self) -> ListWidths {
+        let design = ListWidths::default();
+        let sane = |width: f32, fallback: f32| if width.is_finite() && (120.0..=1200.0).contains(&width) { width } else { fallback };
+        ListWidths {
+            workbench: sane(self.workbench, design.workbench),
+            broadsheet: sane(self.broadsheet, design.broadsheet),
+            terminal: sane(self.terminal, design.terminal),
+        }
+    }
 }
 
 impl Default for Settings {
@@ -29,6 +62,7 @@ impl Default for Settings {
             appearance: "system".to_string(),
             theme: "workbench".to_string(),
             check_for_updates: true,
+            list_widths: ListWidths::default(),
         }
     }
 }
@@ -52,6 +86,7 @@ impl Settings {
         if !matches!(settings.theme.as_str(), "workbench" | "broadsheet" | "terminal") {
             settings.theme = "workbench".to_string();
         }
+        settings.list_widths = settings.list_widths.sanitized();
         settings
     }
 
@@ -75,4 +110,18 @@ impl Settings {
 
 fn file() -> Option<PathBuf> {
     Some(dirs::config_dir()?.join("FinchGram").join("settings.toml"))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn list_widths_are_written_after_the_plain_values_and_read_back() {
+        let settings = Settings { list_widths: ListWidths { workbench: 320.0, ..ListWidths::default() }, ..Settings::default() };
+        let text = toml::to_string_pretty(&settings).expect("TOML");
+        let read: Settings = toml::from_str(&text).expect("read back");
+        assert_eq!(read.list_widths.workbench, 320.0);
+        assert_eq!(ListWidths { terminal: f32::NAN, ..ListWidths::default() }.sanitized().terminal, 268.0);
+    }
 }

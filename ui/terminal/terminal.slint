@@ -2,11 +2,11 @@
 // with a sign (# group, » channel, @ person, * saved, ~ bot, ^ pinned); the chat reads as a log;
 // one command line writes messages and runs commands ("/mute", "/pin", …).
 import { ListView } from "std-widgets.slint";
-import { AppState, Page, Connection } from "../state.slint";
+import { AppState, Page, Connection, Theme } from "../state.slint";
 import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer } from "../telegram.slint";
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
-import { Mark, Paragraph, WindowButtonsSpace, WindowMover } from "../widgets.slint";
+import { Mark, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput } from "../chat.slint";
 import { TerminalPalette as P } from "palette.slint";
 
@@ -238,7 +238,7 @@ component Folders {
 
 component Side inherits Rectangle {
     in-out property <TerminalView> view;
-    width: 268px;
+    width: max(220px, min(560px, AppState.terminal-list-width));
     background: P.side;
 
     Rectangle {
@@ -314,12 +314,16 @@ component Side inherits Rectangle {
 
         if root.view == TerminalView.chats: ListView {
             vertical-stretch: 1;
+            vertical-scrollbar-policy: always-off;
+            horizontal-scrollbar-policy: always-off;
             for chat in Chats.list: ChatLine {
                 chat: chat;
             }
         }
         if root.view == TerminalView.channels: ListView {
             vertical-stretch: 1;
+            vertical-scrollbar-policy: always-off;
+            horizontal-scrollbar-policy: always-off;
             for chat in Chats.channels: ChatLine {
                 chat: chat;
             }
@@ -397,6 +401,17 @@ component Side inherits Rectangle {
                     }
                 }
             }
+        }
+    }
+
+    ListEdge {
+        x: parent.width - self.width;
+        height: parent.height;
+        list-width <=> AppState.terminal-list-width;
+        narrowest: 220px;
+        widest: 560px;
+        dropped(width) => {
+            AppState.change-list-width(Theme.terminal, width);
         }
     }
 }

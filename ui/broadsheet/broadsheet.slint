@@ -1,11 +1,11 @@
 // Broadsheet (the design's "1a 报纸"): a newspaper's calm. A rail with the accounts, the chat list
 // with its folders as tabs, and the conversation in bubbles. The accent is the account's colour.
 import { ListView } from "std-widgets.slint";
-import { AppState, Page, Connection } from "../state.slint";
+import { AppState, Page, Connection, Theme } from "../state.slint";
 import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer } from "../telegram.slint";
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
-import { Icon, Logo, Paragraph, WindowButtonsSpace, WindowMover } from "../widgets.slint";
+import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, Capped, MediaTiles } from "../chat.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 
@@ -725,7 +725,7 @@ component SectionTitle inherits Text {
 
 component ListColumn inherits Rectangle {
     in-out property <BroadsheetView> view;
-    width: 300px;
+    width: max(240px, min(560px, AppState.broadsheet-list-width));
     background: P.bg;
 
     public function focus-search() {
@@ -843,12 +843,16 @@ component ListColumn inherits Rectangle {
 
         if root.view == BroadsheetView.chats: ListView {
             vertical-stretch: 1;
+            vertical-scrollbar-policy: always-off;
+            horizontal-scrollbar-policy: always-off;
             for chat in Chats.list: ChatLine {
                 chat: chat;
             }
         }
         if root.view == BroadsheetView.channels: ListView {
             vertical-stretch: 1;
+            vertical-scrollbar-policy: always-off;
+            horizontal-scrollbar-policy: always-off;
             for chat in Chats.channels: ChannelLine {
                 chat: chat;
             }
@@ -889,6 +893,17 @@ component ListColumn inherits Rectangle {
                     }
                 }
             }
+        }
+    }
+
+    ListEdge {
+        x: parent.width - self.width;
+        height: parent.height;
+        list-width <=> AppState.broadsheet-list-width;
+        narrowest: 240px;
+        widest: 560px;
+        dropped(width) => {
+            AppState.change-list-width(Theme.broadsheet, width);
         }
     }
 }

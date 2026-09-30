@@ -57,6 +57,10 @@ fn main() -> Result<(), slint::PlatformError> {
 
     state.set_appearance(settings.borrow().appearance.clone().into());
     state.set_theme(theme_from_name(&settings.borrow().theme));
+    let widths = settings.borrow().list_widths;
+    state.set_workbench_list_width(widths.workbench);
+    state.set_broadsheet_list_width(widths.broadsheet);
+    state.set_terminal_list_width(widths.terminal);
     state.set_check_for_updates_daily(settings.borrow().check_for_updates);
     state.set_app_version(update::CURRENT_VERSION.into());
 
@@ -102,6 +106,19 @@ fn main() -> Result<(), slint::PlatformError> {
             if let Some(ui) = ui.upgrade() {
                 ui.global::<AppState>().set_theme(theme);
             }
+        }
+    });
+    state.on_change_list_width({
+        let settings = settings.clone();
+        move |theme, width| {
+            let mut settings = settings.borrow_mut();
+            let widths = &mut settings.list_widths;
+            match theme {
+                Theme::Workbench => widths.workbench = width,
+                Theme::Broadsheet => widths.broadsheet = width,
+                Theme::Terminal => widths.terminal = width,
+            }
+            settings.save();
         }
     });
     state.on_change_check_for_updates_daily({

@@ -52,6 +52,10 @@ export global AppState {
     // "system", "light" or "dark".
     in-out property <string> appearance: "system";
     in-out property <Theme> theme: Theme.workbench;
+    // How wide each theme's chat list is (settings.toml): the user drags its edge (ListEdge).
+    in-out property <length> workbench-list-width: 244px;
+    in-out property <length> broadsheet-list-width: 300px;
+    in-out property <length> terminal-list-width: 268px;
     in-out property <Page> page: Page.chats;
     in-out property <SettingsSection> settings-section: SettingsSection.appearance;
     // This build, e.g. "0.1.0".
@@ -78,6 +82,7 @@ export global AppState {
     callback change-appearance(string);
     callback change-theme(Theme);
     callback change-check-for-updates-daily(bool);
+    callback change-list-width(Theme, length);          // a drag of a list's edge ended there
 
     // Our own pages (GitHub) and Telegram's terms of service; anything else is refused by Rust.
     callback open-url(string);

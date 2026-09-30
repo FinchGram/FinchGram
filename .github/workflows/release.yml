@@ -115,7 +115,7 @@ jobs:
           cat >> notes.md <<NOTES
 
           ---
-          **This release contains** \`$ZIP\` (the app, with finchgram-tdlib inside), \`SHA256SUMS\` and \`SHA256SUMS.sig\` (its Ed25519 signature, which the app checks before installing). The "Source code" archives below are this repository at \`$TAG\`.
+          **This release contains** \`$ZIP\` (the app, with finchgram-tdlib and libmpv inside), \`SHA256SUMS\` and \`SHA256SUMS.sig\` (its Ed25519 signature, which the app checks before installing). The "Source code" archives below are this repository at \`$TAG\`.
           NOTES
           cat notes.md
 

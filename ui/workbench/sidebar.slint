@@ -1,10 +1,10 @@
 // Workbench's side bar: the chat tree (every folder, collapsible, like an editor's files), the
 // channels, the bots. Which one shows is chosen in the activity bar (workbench.slint).
 import { ListView } from "std-widgets.slint";
-import { AppState, Connection } from "../state.slint";
+import { AppState, Connection, Theme } from "../state.slint";
 import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind } from "../telegram.slint";
 import { Fmt } from "../format.slint";
-import { Icon } from "../widgets.slint";
+import { Icon, ListEdge } from "../widgets.slint";
 import { ChatIcons } from "../chat.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 
@@ -357,7 +357,7 @@ component Footnote inherits Text {
 
 export component WorkbenchSidebar inherits Rectangle {
     in property <WorkbenchView> view;
-    width: 244px;
+    width: max(200px, min(560px, AppState.workbench-list-width));
     background: P.side;
 
     VerticalLayout {
@@ -403,6 +403,8 @@ export component WorkbenchSidebar inherits Rectangle {
 
         if root.view == WorkbenchView.chats: ListView {
             vertical-stretch: 1;
+            vertical-scrollbar-policy: always-off;
+            horizontal-scrollbar-policy: always-off;
             for row in Chats.tree: TreeLine {
                 item: row;
             }
@@ -410,6 +412,8 @@ export component WorkbenchSidebar inherits Rectangle {
 
         if root.view == WorkbenchView.channels: ListView {
             vertical-stretch: 1;
+            vertical-scrollbar-policy: always-off;
+            horizontal-scrollbar-policy: always-off;
             for chat in Chats.channels: ChannelLine {
                 chat: chat;
             }
@@ -447,6 +451,17 @@ export component WorkbenchSidebar inherits Rectangle {
                     }
                 }
             }
+        }
+    }
+
+    ListEdge {
+        x: parent.width - self.width;
+        height: parent.height;
+        list-width <=> AppState.workbench-list-width;
+        narrowest: 200px;
+        widest: 560px;
+        dropped(width) => {
+            AppState.change-list-width(Theme.workbench, width);
         }
     }
 }

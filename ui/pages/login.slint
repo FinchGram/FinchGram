@@ -329,6 +329,8 @@ component CountryField {
                 }
                 ListView {
                     vertical-stretch: 1;
+                    vertical-scrollbar-policy: always-off;
+                    horizontal-scrollbar-policy: always-off;
                     for country in Login.countries: Rectangle {
                         height: 34px;
                         border-radius: Look.radius / 2;
