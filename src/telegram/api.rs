@@ -536,7 +536,106 @@ pub struct Message {
     /// The messages of an album (photos and videos sent together) share it; 0 for none.
     #[serde(default, with = "int64")]
     pub media_album_id: i64,
+    /// Who first wrote it, when it was forwarded.
+    #[serde(default)]
+    pub forward_info: Option<MessageForwardInfo>,
+    /// The message it replies to.
+    #[serde(default)]
+    pub reply_to: Option<MessageReplyTo>,
     pub content: MessageContent,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct MessageForwardInfo {
+    pub origin: MessageOrigin,
+}
+
+/// Who first wrote a message that was forwarded, or that a reply from another chat quotes.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum MessageOrigin {
+    #[serde(rename = "messageOriginUser")]
+    User { sender_user_id: i64 },
+    /// Someone whose privacy settings hide who they are: only their name.
+    #[serde(rename = "messageOriginHiddenUser")]
+    HiddenUser { sender_name: String },
+    #[serde(rename = "messageOriginChat")]
+    Chat { sender_chat_id: i64 },
+    #[serde(rename = "messageOriginChannel")]
+    Channel { chat_id: i64 },
+}
+
+/// What a message replies to: a message (in this chat, or quoted from another one), or a story.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum MessageReplyTo {
+    #[serde(rename = "messageReplyToMessage")]
+    Message {
+        /// 0 when the message is in a chat we do not know.
+        chat_id: i64,
+        message_id: i64,
+        /// The part of it the reply quotes.
+        #[serde(default)]
+        quote: Option<TextQuote>,
+        /// Who wrote it, when it is in another chat.
+        #[serde(default)]
+        origin: Option<MessageOrigin>,
+        /// Its photo, video, … when it is in another chat.
+        #[serde(default)]
+        content: Option<Box<MessageContent>>,
+    },
+    #[serde(other)]
+    Other,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct TextQuote {
+    pub text: FormattedText,
+}
+
+/// What can be done with a message (getMessageProperties), as TDLib decides it: what Telegram's own
+/// apps offer.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct MessageProperties {
+    pub can_be_deleted_only_for_self: bool,
+    pub can_be_deleted_for_all_users: bool,
+    pub can_be_edited: bool,
+    pub can_be_forwarded: bool,
+    pub can_be_replied: bool,
+    /// False where the chat restricts saving content: then it cannot be copied either.
+    pub can_be_saved: bool,
+    pub can_get_link: bool,
+    pub can_report_chat: bool,
+}
+
+/// A message's link (getMessageLink).
+#[derive(Debug, Clone, Deserialize)]
+pub struct MessageLink {
+    pub link: String,
+}
+
+/// Where a report is (reportChat). Telegram's servers lead it: a choice of reasons, maybe another
+/// one under it, maybe words to add.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum ReportChatResult {
+    #[serde(rename = "reportChatResultOk")]
+    Ok,
+    #[serde(rename = "reportChatResultOptionRequired")]
+    OptionRequired { title: String, options: Vec<ReportOption> },
+    /// `option_id` goes with the words; they may be left out when `is_optional`.
+    #[serde(rename = "reportChatResultTextRequired")]
+    TextRequired { option_id: String, is_optional: bool },
+    #[serde(rename = "reportChatResultMessagesRequired")]
+    MessagesRequired,
+}
+
+/// One reason to choose; its id is TDLib's bytes, which its JSON writes in base64.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct ReportOption {
+    pub id: String,
+    pub text: String,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Deserialize)]
@@ -1118,6 +1217,41 @@ mod tests {
         let Update::MessageSendFailed { message, old_message_id } = update else { panic!("not a failure") };
         assert_eq!(old_message_id, 1);
         assert_eq!(message.sending_state, Some(MessageSendingState::Failed { can_retry: true }));
+    }
+
+    #[test]
+    fn a_reply_and_a_forward_say_where_they_come_from() {
+        let message: Message = serde_json::from_str(
+            r#"{"@type":"message","id":5242880,"sender_id":{"@type":"messageSenderUser","user_id":7},"chat_id":-1001234567890,"is_outgoing":false,"date":1790000000,"edit_date":0,"forward_info":{"@type":"messageForwardInfo","origin":{"@type":"messageOriginChannel","chat_id":-1009876543210,"message_id":42,"author_signature":""},"date":1789990000,"source":null,"public_service_announcement_type":""},"reply_to":{"@type":"messageReplyToMessage","chat_id":-1001234567890,"message_id":4194304,"quote":null,"checklist_task_id":0,"poll_option_id":"","origin":null,"origin_send_date":0,"content":null},"media_album_id":"0","content":{"@type":"messageText","text":{"@type":"formattedText","text":"ok","entities":[]}}}"#,
+        )
+        .unwrap();
+        assert_eq!(message.forward_info.map(|info| info.origin), Some(MessageOrigin::Channel { chat_id: -1_009_876_543_210 }));
+        let Some(MessageReplyTo::Message { chat_id, message_id, origin, quote, .. }) = message.reply_to else { panic!("not a reply") };
+        assert_eq!((chat_id, message_id), (-1_001_234_567_890, 4_194_304));
+        assert!(origin.is_none() && quote.is_none());
+        let story: MessageReplyTo =
+            serde_json::from_str(r#"{"@type":"messageReplyToStory","story_poster_chat_id":7,"story_id":3}"#).unwrap();
+        assert_eq!(story, MessageReplyTo::Other);
+    }
+
+    #[test]
+    fn a_report_is_led_by_the_server() {
+        let result: ReportChatResult = serde_json::from_str(
+            r#"{"@type":"reportChatResultOptionRequired","title":"Report","options":[{"@type":"reportOption","id":"AQ==","text":"Spam"}]}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            result,
+            ReportChatResult::OptionRequired { title: "Report".into(), options: vec![ReportOption { id: "AQ==".into(), text: "Spam".into() }] }
+        );
+        let result: ReportChatResult =
+            serde_json::from_str(r#"{"@type":"reportChatResultTextRequired","option_id":"Ag==","is_optional":true}"#).unwrap();
+        assert_eq!(result, ReportChatResult::TextRequired { option_id: "Ag==".into(), is_optional: true });
+        let properties: MessageProperties = serde_json::from_str(
+            r#"{"@type":"messageProperties","can_add_offer":false,"can_be_copied":true,"can_be_deleted_only_for_self":false,"can_be_deleted_for_all_users":true,"can_be_edited":true,"can_be_forwarded":true,"can_be_replied":true,"can_be_saved":true,"can_get_link":true,"can_report_chat":false}"#,
+        )
+        .unwrap();
+        assert!(properties.can_be_edited && properties.can_get_link && !properties.can_report_chat);
     }
 
     #[test]

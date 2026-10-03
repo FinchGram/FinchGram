@@ -1,8 +1,9 @@
 import { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language } from "state.slint";
 import { Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, LinkPreview, RowKind, Content, ChatKind, Status, Moment,
-    Day, Viewer, ViewerItem, Words } from "telegram.slint";
+    Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice } from "telegram.slint";
 import { Look } from "look.slint";
+import { Fmt } from "format.slint";
 import { LoginPage } from "pages/login.slint";
 import { WorkbenchWindow } from "workbench/workbench.slint";
 import { BroadsheetWindow } from "broadsheet/broadsheet.slint";
@@ -15,7 +16,7 @@ import { ProfilePage } from "pages/profile.slint";
 export { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language,
     Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, LinkPreview, RowKind, Content, ChatKind, Status, Moment,
-    Day, Viewer, ViewerItem, Words }
+    Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice, Fmt }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";

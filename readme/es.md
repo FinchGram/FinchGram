@@ -8,11 +8,13 @@ Un cliente de escritorio de Telegram de código abierto, con un centro multimedi
 FinchGram usa la API de Telegram y forma parte del ecosistema de Telegram. Es un cliente no oficial,
 no desarrollado por Telegram.
 
-Estado: temprano. El registro y el inicio de sesión, la lista de chats y los chats con mensajes de texto
-funcionan, en los tres temas del diseño: Workbench (el predeterminado), Broadsheet y Terminal, que se
-cambian en Ajustes › Apariencia. Las fotos y los vídeos se ven en los chats y se abren en un visor que
-reproduce el vídeo con mpv. La verificación en dos pasos se gestiona en Ajustes › Privacidad y
-seguridad. Después vienen archivos, varias cuentas, filtros por palabras clave y mensajes programados.
+Estado: temprano. El registro y el inicio de sesión, la lista de chats y los chats con mensajes de
+texto funcionan, en los tres temas del diseño: Workbench (el predeterminado), Broadsheet y Terminal,
+que se cambian en Ajustes › Apariencia. Las fotos y los vídeos se ven en los chats y se abren en un
+visor que reproduce el vídeo con mpv. Con un clic derecho en un mensaje se abre su menú: responder,
+editar, copiar, copiar su enlace, reenviar, reportar, eliminar o seleccionar varios mensajes. La
+verificación en dos pasos se gestiona en Ajustes › Privacidad y seguridad. Después vienen archivos,
+varias cuentas, filtros por palabras clave y mensajes programados.
 
 La app es una carcasa (*shell*). De Telegram en sí se encarga TDLib, la biblioteca oficial de Telegram,
 que se ejecuta como un programa aparte junto al ejecutable: `finchgram-tdlib`, compilado por este
@@ -95,6 +97,7 @@ src/
     login.rs             #   el inicio de sesión, el registro
     chats.rs             #   la lista de chats
     conversation.rs      #   el chat abierto: mensajes, escribir
+    actions.rs           #   lo que se puede hacer con un mensaje: su menú, responder, reenviar…
     account.rs           #   el perfil, cerrar sesión
     password.rs          #   la verificación en dos pasos en Ajustes
     files.rs             #   la descarga de archivos

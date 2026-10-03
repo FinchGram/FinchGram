@@ -1,0 +1,562 @@
+// Terminal's message actions over the window (the design's fourth round, 1b): a message's menu, with
+// its commands, where it was right-clicked, and the dialogs for forwarding, reporting and deleting.
+import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment } from "../telegram.slint";
+import { Fmt } from "../format.slint";
+import { Spinner } from "../widgets.slint";
+import { ActionWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
+import { TerminalPalette as P } from "palette.slint";
+import { Signs } from "signs.slint";
+
+component T inherits Text {
+    font-family: P.font;
+    font-size: 13px;
+    color: P.text;
+    vertical-alignment: center;
+}
+
+// What a chat to forward to says after its name: its members, its subscribers, online.
+global PickerLine {
+    property <Moment> never;
+    public pure function of(chat: ChatRow) -> string {
+        if chat.kind == ChatKind.group && chat.members > 0 {
+            return Fmt.status(Status.members, never, chat.members, 0);
+        }
+        if chat.kind == ChatKind.channel && chat.members > 0 {
+            return Fmt.status(Status.subscribers, never, chat.members, 0);
+        }
+        return chat.online ? Fmt.status(Status.online, never, 0, 0) : "";
+    }
+}
+
+// A word in brackets that does something: "[esc]", "[Cancel]".
+component Word {
+    in property <string> label;
+    in property <color> color: P.faint;
+    in property <bool> enabled: true;
+    callback activated();
+
+    T {
+        text: "[" + root.label + "]";
+        color: !root.enabled ? P.faint : touch.has-hover ? P.accent : root.color;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+// A dialog's box over the darkened window; a click beside it closes it.
+component Dialog inherits Rectangle {
+    in property <length> box-width;
+    in property <length> box-height;
+    callback close();
+    background: #00000073;
+
+    TouchArea {
+        clicked => {
+            root.close();
+        }
+    }
+
+    Rectangle {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        width: root.box-width;
+        height: root.box-height;
+        border-radius: 4px;
+        background: P.side;
+        border-width: 1px;
+        border-color: P.line;
+        drop-shadow-blur: 50px;
+        drop-shadow-offset-y: 20px;
+        drop-shadow-color: #00000066;
+        clip: true;
+
+        // Clicks inside stay inside.
+        TouchArea { }
+        @children
+    }
+}
+
+// A dialog's heading: "── Report ──", with "[esc]" at its end.
+component Heading inherits HorizontalLayout {
+    in property <string> title;
+    callback close();
+    spacing: 8px;
+    HorizontalLayout {
+        horizontal-stretch: 1;
+        T {
+            text: "── ";
+            color: P.faint;
+        }
+        T {
+            text: root.title;
+            overflow: elide;
+        }
+        T {
+            text: " ──";
+            color: P.faint;
+        }
+        Rectangle { horizontal-stretch: 1; }
+    }
+    Word {
+        label: "esc";
+        activated => {
+            root.close();
+        }
+    }
+}
+
+component ListLine inherits Rectangle {
+    callback clicked();
+    background: touch.has-hover ? P.sel : transparent;
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+    @children
+}
+
+component ForwardPicker inherits Dialog {
+    box-width: 440px;
+    box-height: 480px;
+    close => {
+        Actions.close-picker();
+    }
+
+    VerticalLayout {
+        Heading {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 12px;
+            padding-bottom: 6px;
+            title: @tr("Choose recipient…");
+            close => {
+                Actions.close-picker();
+            }
+        }
+        HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 4px;
+            padding-bottom: 8px;
+            Rectangle {
+                height: 30px;
+                border-radius: 3px;
+                background: P.bg;
+                border-width: 1px;
+                border-color: P.line;
+                HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    spacing: 8px;
+                    T {
+                        text: "❯";
+                        color: P.accent;
+                    }
+                    SearchInput {
+                        horizontal-stretch: 1;
+                        placeholder: @tr("Search");
+                        text-color: P.text;
+                        placeholder-color: P.faint;
+                        selection-color: P.sel;
+                        font-family: P.font;
+                        font-size: 13px;
+                        edited(words) => {
+                            Actions.search-picker(words);
+                        }
+                        accepted => {
+                            Actions.pick-first();
+                        }
+                        escape => {
+                            Actions.close-picker();
+                        }
+                    }
+                }
+            }
+        }
+        Flickable {
+            vertical-stretch: 1;
+            mouse-drag-pan-enabled: false;
+            content-width: self.width;
+            content-height: chats.preferred-height;
+            chats := VerticalLayout {
+                width: parent.width;
+                alignment: start;
+                padding-top: 2px;
+                padding-bottom: 10px;
+                if Actions.picker-saved: ListLine {
+                    height: 28px;
+                    clicked => {
+                        Actions.pick("saved");
+                    }
+                    HorizontalLayout {
+                        padding-left: 16px;
+                        padding-right: 16px;
+                        spacing: 10px;
+                        T {
+                            width: 12px;
+                            text: "*";
+                            color: P.accent2;
+                        }
+                        T {
+                            horizontal-stretch: 1;
+                            text: @tr("Saved Messages");
+                            font-weight: 600;
+                        }
+                    }
+                }
+                if Actions.picker-chats.length > 0: HorizontalLayout {
+                    padding-left: 16px;
+                    padding-top: 8px;
+                    padding-bottom: 2px;
+                    T {
+                        text: "── " + @tr("Recent") + " ──";
+                        color: P.faint;
+                    }
+                }
+                for chat in Actions.picker-chats: ListLine {
+                    height: 28px;
+                    clicked => {
+                        Actions.pick(chat.id);
+                    }
+                    HorizontalLayout {
+                        padding-left: 16px;
+                        padding-right: 16px;
+                        spacing: 10px;
+                        T {
+                            width: 12px;
+                            text: Signs.of(chat.kind, false);
+                            color: P.accent;
+                        }
+                        T {
+                            horizontal-stretch: 1;
+                            text: chat.title;
+                            overflow: elide;
+                        }
+                        T {
+                            text: PickerLine.of(chat);
+                            color: P.faint;
+                        }
+                    }
+                }
+                if !Actions.picker-saved && Actions.picker-chats.length == 0: HorizontalLayout {
+                    padding-left: 16px;
+                    padding-top: 10px;
+                    padding-bottom: 10px;
+                    T {
+                        text: @tr("No chats found");
+                        color: P.faint;
+                    }
+                }
+            }
+        }
+    }
+}
+
+component ReportDialog inherits Dialog {
+    box-width: 460px;
+    box-height: min(520px, body.preferred-height);
+    close => {
+        Actions.close-report();
+    }
+
+    if !Actions.report-comment: KeyScope {
+        width: 0;
+        height: 0;
+        escape => {
+            Actions.close-report();
+        }
+    }
+
+    body := VerticalLayout {
+        HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 12px;
+            padding-bottom: 8px;
+            spacing: 10px;
+            if !Actions.report-first: Word {
+                label: "← " + @tr("Back");
+                color: P.accent;
+                activated => {
+                    Actions.report-back();
+                }
+            }
+            Heading {
+                horizontal-stretch: 1;
+                title: ActionWords.report-title();
+                close => {
+                    Actions.close-report();
+                }
+            }
+        }
+
+        if !Actions.report-comment: Flickable {
+            height: min(460px, reasons.preferred-height);
+            mouse-drag-pan-enabled: false;
+            content-width: self.width;
+            content-height: reasons.preferred-height;
+            reasons := VerticalLayout {
+                width: parent.width;
+                alignment: start;
+                padding-bottom: 10px;
+                if Actions.report-busy && Actions.report-options.length == 0: HorizontalLayout {
+                    padding-left: 16px;
+                    padding-top: 6px;
+                    padding-bottom: 6px;
+                    T {
+                        text: "……";
+                        color: P.faint;
+                    }
+                }
+                for reason[index] in Actions.report-options: ListLine {
+                    height: 31px;
+                    clicked => {
+                        if !Actions.report-busy {
+                            Actions.report-choose(index);
+                        }
+                    }
+                    HorizontalLayout {
+                        padding-left: 16px;
+                        padding-right: 16px;
+                        spacing: 8px;
+                        T {
+                            width: 24px;
+                            text: index + 1;
+                            color: P.accent2;
+                        }
+                        T {
+                            horizontal-stretch: 1;
+                            text: reason;
+                            overflow: elide;
+                        }
+                    }
+                }
+            }
+        }
+
+        if Actions.report-comment: VerticalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 2px;
+            padding-bottom: 14px;
+            spacing: 8px;
+            Rectangle {
+                height: 120px;
+                border-radius: 3px;
+                background: P.bg;
+                border-width: 1px;
+                border-color: P.line;
+                comment := CommentInput {
+                    placeholder: Actions.report-comment-required ? @tr("Add a comment") : @tr("Add a comment (optional)");
+                    text-color: P.text;
+                    placeholder-color: P.faint;
+                    selection-color: P.sel;
+                    font-family: P.font;
+                    font-size: 13px;
+                    line-height-factor: P.leading(1.6);
+                    padding-x: 10px;
+                    padding-y: 8px;
+                    submit => {
+                        if !Actions.report-busy && (!Actions.report-comment-required || self.text != "") {
+                            Actions.report-submit(self.text);
+                        }
+                    }
+                    escape => {
+                        Actions.close-report();
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 12px;
+                T {
+                    horizontal-stretch: 1;
+                    text: comment.text.character-count + " / 1024";
+                    color: P.faint;
+                }
+                Word {
+                    label: @tr("Cancel");
+                    color: P.muted;
+                    activated => {
+                        Actions.close-report();
+                    }
+                }
+                Word {
+                    label: @tr("Report") + " ⏎";
+                    color: P.accent;
+                    enabled: !Actions.report-busy && (!Actions.report-comment-required || comment.text != "");
+                    activated => {
+                        Actions.report-submit(comment.text);
+                    }
+                }
+            }
+        }
+    }
+}
+
+component DeleteDialog inherits Dialog {
+    box-width: 400px;
+    box-height: body.preferred-height;
+    close => {
+        Actions.close-delete();
+    }
+
+    KeyScope {
+        width: 0;
+        height: 0;
+        escape => {
+            Actions.close-delete();
+        }
+        enter => {
+            Actions.confirm-delete();
+        }
+    }
+
+    body := VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 14px;
+        padding-bottom: 14px;
+        spacing: 12px;
+        HorizontalLayout {
+            T {
+                text: "── ";
+                color: P.faint;
+            }
+            T {
+                horizontal-stretch: 1;
+                text: ActionWords.delete-title();
+                wrap: word-wrap;
+            }
+        }
+        if Actions.delete-choice != DeleteChoice.none: Rectangle {
+            height: choice.preferred-height;
+            choice := HorizontalLayout {
+                T {
+                    text: Actions.revoke ? "[x]" : "[ ]";
+                    color: P.accent;
+                }
+                T {
+                    horizontal-stretch: 1;
+                    text: " " + ActionWords.delete-choice();
+                    overflow: elide;
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Actions.revoke = !Actions.revoke;
+                }
+            }
+        }
+        HorizontalLayout {
+            alignment: end;
+            spacing: 12px;
+            Word {
+                label: @tr("Cancel");
+                color: P.muted;
+                activated => {
+                    Actions.close-delete();
+                }
+            }
+            Word {
+                label: @tr("Delete") + " ⏎";
+                color: P.accent3;
+                activated => {
+                    Actions.confirm-delete();
+                }
+            }
+        }
+    }
+}
+
+// An item of a message's menu, with its command.
+component ActionEntry inherits Rectangle {
+    in property <MessageAction> action;
+    height: 30px;
+    background: touch.has-hover ? P.sel : transparent;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+        T {
+            horizontal-stretch: 1;
+            text: ActionWords.label(root.action);
+            color: root.action == MessageAction.delete ? P.accent3 : P.text;
+            overflow: elide;
+        }
+        T {
+            text: ActionWords.command(root.action);
+            color: P.accent;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Actions.choose(root.action);
+        }
+    }
+}
+
+export component TerminalActions inherits Rectangle {
+    // A message's menu, where it was clicked; a click anywhere else closes it.
+    if Actions.menu-open: TouchArea {
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                Actions.close-menu();
+            }
+        }
+    }
+    if Actions.menu-open: Rectangle {
+        x: MenuPlace.x(Actions.menu-x, self.width, root.width);
+        y: MenuPlace.y(Actions.menu-y, self.height, root.height);
+        width: 250px;
+        height: entries.preferred-height;
+        border-radius: 4px;
+        background: P.side;
+        border-width: 1px;
+        border-color: P.line;
+        drop-shadow-blur: 30px;
+        drop-shadow-offset-y: 12px;
+        drop-shadow-color: P.shadow;
+
+        KeyScope {
+            width: 0;
+            height: 0;
+            escape => {
+                Actions.close-menu();
+            }
+        }
+        entries := VerticalLayout {
+            padding-top: 4px;
+            padding-bottom: 4px;
+            HorizontalLayout {
+                height: 26px;
+                padding-left: 12px;
+                padding-right: 12px;
+                padding-top: 5px;
+                T {
+                    text: "── " + Actions.menu-head + " ──";
+                    color: P.faint;
+                    vertical-alignment: top;
+                    overflow: elide;
+                }
+            }
+            for item in Actions.menu-items: ActionEntry {
+                action: item;
+            }
+        }
+    }
+
+    if Actions.picker-open: ForwardPicker { }
+    if Actions.report-open: ReportDialog { }
+    if Actions.delete-open: DeleteDialog { }
+}

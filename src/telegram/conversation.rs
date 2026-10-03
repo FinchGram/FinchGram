@@ -9,14 +9,14 @@
 //! when a page shows their message.
 
 use std::cell::RefCell;
+use std::time::Duration;
 
 use serde_json::json;
 use slint::ComponentHandle;
 
-use super::api::{ChatList, ChatType, Messages, SponsoredMessages, SupergroupFullInfo};
-use super::files;
+use super::api::{self, ChatList, ChatType, Messages, SponsoredMessages, SupergroupFullInfo};
 use super::store::{self, History};
-use super::{Error, send};
+use super::{Error, actions, files, send};
 use crate::images;
 use crate::{Conversation, MainWindow};
 
@@ -158,6 +158,7 @@ pub fn open(chat_id: i64) {
     };
 
     if previous != Some(chat_id) {
+        actions::chat_changed(Some(chat_id));
         if let Some(previous) = previous {
             send(json!({ "@type": "closeChat", "chat_id": previous }), |_| {});
         }
@@ -168,7 +169,7 @@ pub fn open(chat_id: i64) {
         store::with(|store| {
             store.histories.insert(chat_id, History { has_older: true, ..History::default() });
         });
-        load_history(chat_id, 0);
+        load_history(chat_id, 0, None);
     } else {
         view_newest(chat_id);
     }
@@ -218,7 +219,11 @@ fn close(chat_id: i64) {
     }
     match then {
         Then::Open(next) => open(next),
-        Then::Nothing | Then::ShowNone => store::refresh(),
+        Then::ShowNone => {
+            actions::chat_changed(None);
+            store::refresh();
+        }
+        Then::Nothing => store::refresh(),
     }
 }
 
@@ -237,9 +242,10 @@ fn close_others() {
     store::refresh();
 }
 
-/// Ask for messages before `from_message_id` (0: the newest). A first page that comes back short
-/// (TDLib answers from its database first) asks again until the chat has enough to fill the view.
-fn load_history(chat_id: i64, from_message_id: i64) {
+/// Ask for messages before `from_message_id` (0: the newest), then `then`. A first page that comes
+/// back short (TDLib answers from its database first) asks again until the chat has enough to fill
+/// the view.
+fn load_history(chat_id: i64, from_message_id: i64, then: Option<Box<dyn FnOnce()>>) {
     let asked = store::with(|store| {
         let history = store.histories.get_mut(&chat_id)?;
         if history.loading {
@@ -288,12 +294,15 @@ fn load_history(chat_id: i64, from_message_id: i64) {
         })
         .flatten();
         store::refresh();
+        if let Some(then) = then {
+            then();
+        }
         let Some((open, more)) = next else { return };
         if open && from_message_id == 0 && !ids.is_empty() {
             view(chat_id, ids);
         }
         if let Some(oldest) = more {
-            load_history(chat_id, oldest);
+            load_history(chat_id, oldest, None);
         }
     });
 }
@@ -311,7 +320,59 @@ fn load_older() {
     .flatten() else {
         return;
     };
-    load_history(chat_id, oldest);
+    load_history(chat_id, oldest, None);
+}
+
+/// Load the page before the oldest message loaded, then `then` (a reply's original is looked for).
+pub fn load_older_then(chat_id: i64, then: impl FnOnce() + 'static) {
+    let state = store::with(|store| {
+        let history = store.histories.get(&chat_id)?;
+        Some((history.loading, history.has_older, *history.messages.keys().next()?))
+    })
+    .flatten();
+    match state {
+        // A page is on its way already: after it.
+        Some((true, _, _)) => slint::Timer::single_shot(Duration::from_millis(200), move || load_older_then(chat_id, then)),
+        Some((false, true, oldest)) => load_history(chat_id, oldest, Some(Box::new(then))),
+        _ => {}
+    }
+}
+
+/// Fetch the messages replies answer that are not in the history, by chat and message, once each;
+/// a reply to one that was deleted then says so.
+pub fn load_replied(missing: Vec<(i64, i64)>) {
+    for key in missing {
+        let new = store::with(|store| store.asking_replies.insert(key)).unwrap_or(false);
+        if !new {
+            continue;
+        }
+        let (chat_id, message_id) = key;
+        send(json!({ "@type": "getMessage", "chat_id": chat_id, "message_id": message_id }), move |answer| {
+            let found = match answer {
+                Ok(message) => match serde_json::from_value::<api::Message>(message) {
+                    Ok(message) => Some(Some(message)),
+                    Err(err) => {
+                        eprintln!("telegram: cannot read a replied message: {err}");
+                        None
+                    }
+                },
+                Err(Error::Telegram { code: 404, .. }) => Some(None),
+                Err(Error::Telegram { .. }) => None,
+                Err(Error::Stopped) => {
+                    // Asked again at the next refresh.
+                    store::with(|store| store.asking_replies.remove(&key));
+                    None
+                }
+            };
+            if let Some(found) = found {
+                store::with(|store| {
+                    store.replied.insert(key, found);
+                    store.dirty.conversation = store.open == Some(chat_id);
+                });
+                store::refresh();
+            }
+        });
+    }
 }
 
 /// The chat came back to the front: what arrived meanwhile is seen now.
@@ -373,16 +434,25 @@ fn open_sponsored(message_id: i64) {
     crate::platform::open_link(&url);
 }
 
-/// Send `text` to the open chat. The message shows itself as TDLib sends it back (updateNewMessage),
-/// first as being sent.
+/// Send `text` to the open chat, or with the strip above the composer: a reply, an edit, messages
+/// to forward after it (actions.rs).
 fn write(text: &str) {
     let text = text.trim();
     let Some(chat_id) = open_chat() else { return };
-    if text.is_empty() {
+    if actions::send_with_bar(chat_id, text) || text.is_empty() {
         return;
     }
+    send_text(chat_id, text, None);
+}
+
+/// Send `text` to a chat, as a reply to `reply_to` when given. The message shows itself as TDLib
+/// sends it back (updateNewMessage), first as being sent.
+pub fn send_text(chat_id: i64, text: &str, reply_to: Option<i64>) {
+    let reply_to = reply_to.map(|message_id| {
+        json!({ "@type": "inputMessageReplyToMessage", "message_id": message_id, "quote": null, "checklist_task_id": 0, "poll_option_id": "" })
+    });
     let request = json!({
-        "@type": "sendMessage", "chat_id": chat_id, "topic_id": null, "reply_to": null,
+        "@type": "sendMessage", "chat_id": chat_id, "topic_id": null, "reply_to": reply_to,
         "options": null, "reply_markup": null,
         "input_message_content": {
             "@type": "inputMessageText",

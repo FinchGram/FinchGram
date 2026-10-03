@@ -3,8 +3,10 @@
 [中文](architecture.zh-Hans.md)
 
 Status: agreed direction (2026-09-29), after Coova Studio's architecture. The shell,
-finchgram-tdlib and libmpv run on macOS; logging in, the chat list, text messages, photos and videos
-work, in the design's three themes. The decisions still open are listed at the end.
+finchgram-tdlib and libmpv run on macOS; logging in, the chat list, text messages, photos and videos,
+and what can be done with a message (its menu: replying, editing, copying, forwarding, reporting,
+deleting, choosing several) work, in the design's three themes. The decisions still open are listed
+at the end.
 
 ## Why
 
@@ -111,12 +113,18 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   use, `mod.rs` sends requests, hands out answers, starts the program again and passes updates on.
   `store.rs` keeps what TDLib has said (chats, users, groups, folders, the messages of the open
   chats) and brings the pages' models up to date after each batch; `login.rs`, `chats.rs`,
-  `conversation.rs`, `account.rs` and `password.rs` (two-step verification) do what the pages ask
-  for; `files.rs` downloads files, `viewer.rs` fills the media viewer, and `rich_text.rs` turns
-  a message's formatted text (bold, links, …) into Slint's styled text.
+  `conversation.rs`, `actions.rs` (what can be done with a message), `account.rs` and
+  `password.rs` (two-step verification) do what the pages ask for; `files.rs` downloads files,
+  `viewer.rs` fills the media viewer, and `rich_text.rs` turns a message's formatted text (bold,
+  links, …) into Slint's styled text.
+- A message's menu opens on a right click anywhere on the message. Its formatted words (Slint's
+  StyledText) keep every click to themselves, so the right click is seen in the window's own events
+  (`mod.rs`, through winit), counted in a global, and the row under the pointer asks for its menu.
+  What the menu offers is what TDLib says can be done with the message (getMessageProperties).
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
-  device, the transparent title bar on macOS, opening links; and on macOS (Settings → General)
+  device, the transparent title bar on macOS, opening links, the clipboard (words and pictures);
+  and on macOS (Settings → General)
   staying in the Dock when the window is closed, as the design's "When closing the window: Minimize
   to tray" has it (the Dock icon shows the window again, and Quit lets TDLib close first), the icon
   in the menu bar, and launching at login (SMAppService, macOS 13 and later).

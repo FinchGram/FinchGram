@@ -1,0 +1,23 @@
+// Terminal's signs for kinds of chat: # group, » channel, @ person, * saved, ~ bot, ^ pinned.
+import { ChatKind } from "../telegram.slint";
+
+export global Signs {
+    public pure function of(kind: ChatKind, pinned: bool) -> string {
+        if pinned {
+            return "^";
+        }
+        if kind == ChatKind.group {
+            return "#";
+        }
+        if kind == ChatKind.channel {
+            return "»";
+        }
+        if kind == ChatKind.saved {
+            return "*";
+        }
+        if kind == ChatKind.bot {
+            return "~";
+        }
+        return "@";
+    }
+}

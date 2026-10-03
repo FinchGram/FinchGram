@@ -68,6 +68,28 @@ pub fn set_launch_at_login(on: bool) -> Result<(), String> {
     }
 }
 
+/// Put `text` on the clipboard.
+pub fn copy_text(text: &str) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    return macos::copy_text(text);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = text;
+        Err("copying is not built for this system".into())
+    }
+}
+
+/// Put a picture on the clipboard: the contents of an image file (JPEG, PNG, WebP).
+pub fn copy_image(contents: &[u8]) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    return macos::copy_image(contents);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = contents;
+        Err("copying pictures is not built for this system".into())
+    }
+}
+
 /// What the account's list of sessions calls this device (TDLib's device_model, which must not be
 /// empty). TDLib finds the system's version by itself.
 pub fn device_model() -> &'static str {

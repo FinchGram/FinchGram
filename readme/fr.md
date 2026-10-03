@@ -11,9 +11,10 @@ qui n'est pas développé par Telegram.
 État : débuts. L'inscription et la connexion, la liste des discussions et les discussions avec messages
 texte fonctionnent, dans les trois thèmes de la maquette : Workbench (par défaut), Broadsheet et
 Terminal, qu'on change dans Réglages › Apparence. Les photos et vidéos s'affichent dans les discussions
-et s'ouvrent dans une visionneuse qui lit la vidéo avec mpv. La validation en deux étapes se gère dans
-Réglages › Confidentialité et sécurité. Viennent ensuite les fichiers, plusieurs comptes, les filtres
-par mots-clés et les messages programmés.
+et s'ouvrent dans une visionneuse qui lit la vidéo avec mpv. Un clic droit sur un message ouvre son menu
+: répondre, modifier, copier, copier le lien, transférer, signaler, supprimer ou sélectionner plusieurs
+messages. La validation en deux étapes se gère dans Réglages › Confidentialité et sécurité. Viennent
+ensuite les fichiers, plusieurs comptes, les filtres par mots-clés et les messages programmés.
 
 L'application est une enveloppe (*shell*). Telegram lui-même est pris en charge par TDLib, la
 bibliothèque officielle de Telegram, qui tourne comme un programme séparé à côté de l'exécutable :
@@ -97,6 +98,7 @@ src/
     login.rs             #   la connexion, l'inscription
     chats.rs             #   la liste des discussions
     conversation.rs      #   la discussion ouverte : messages, écriture
+    actions.rs           #   ce qu'on peut faire d'un message : son menu, répondre, transférer…
     account.rs           #   le profil, la déconnexion
     password.rs          #   la validation en deux étapes dans les réglages
     files.rs             #   le téléchargement des fichiers

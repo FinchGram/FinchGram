@@ -1,5 +1,5 @@
 //! macOS: FinchGram stays in the Dock when its window is closed, can have an icon in the menu bar,
-//! and can be one of the user's login items.
+//! can be one of the user's login items, and copies to the clipboard.
 //!
 //! winit 0.30 owns the application's delegate and has nothing for a click on the Dock icon, for
 //! Quit or for our own menu, so methods are added to its delegate class at run time, the way Slint
@@ -11,7 +11,10 @@ use std::ffi::CStr;
 use objc2::rc::Retained;
 use objc2::runtime::{AnyClass, AnyObject, Bool, Imp, Sel};
 use objc2::{AnyThread, MainThreadMarker, MainThreadOnly, msg_send, sel};
-use objc2_app_kit::{NSApplication, NSImage, NSMenu, NSMenuItem, NSStatusBar, NSStatusItem, NSVariableStatusItemLength};
+use objc2_app_kit::{
+    NSApplication, NSImage, NSMenu, NSMenuItem, NSPasteboard, NSPasteboardTypeString, NSPasteboardTypeTIFF, NSStatusBar,
+    NSStatusItem, NSVariableStatusItemLength,
+};
 use objc2_foundation::{NSData, NSError, NSSize, NSString};
 use slint::ComponentHandle;
 
@@ -206,6 +209,27 @@ pub fn set_launch_at_login(on: bool) -> Result<(), String> {
     result.map_err(|error| error.localizedDescription().to_string())
 }
 
+/// Put `text` on the clipboard.
+pub fn copy_text(text: &str) -> Result<(), String> {
+    let pasteboard = NSPasteboard::generalPasteboard();
+    pasteboard.clearContents();
+    // SAFETY: an AppKit constant, there for the life of the process.
+    let kind = unsafe { NSPasteboardTypeString };
+    if pasteboard.setString_forType(&NSString::from_str(text), kind) { Ok(()) } else { Err("the clipboard refused the text".into()) }
+}
+
+/// Put a picture on the clipboard: an image file's contents (JPEG, PNG, WebP), as TIFF, which
+/// every app that pastes pictures reads.
+pub fn copy_image(contents: &[u8]) -> Result<(), String> {
+    let image = NSImage::initWithData(NSImage::alloc(), &NSData::with_bytes(contents)).ok_or("not a picture macOS can read")?;
+    let tiff = image.TIFFRepresentation().ok_or("the picture cannot be converted")?;
+    let pasteboard = NSPasteboard::generalPasteboard();
+    pasteboard.clearContents();
+    // SAFETY: an AppKit constant, there for the life of the process.
+    let kind = unsafe { NSPasteboardTypeTIFF };
+    if pasteboard.setData_forType(Some(&tiff), kind) { Ok(()) } else { Err("the clipboard refused the picture".into()) }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -221,3 +245,4 @@ mod tests {
         assert!((150..1000).contains(&covered), "the bird covers part of the square, not {covered} pixels");
     }
 }
+

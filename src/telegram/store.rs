@@ -15,15 +15,15 @@ use std::time::{Duration, Instant};
 use slint::{ComponentHandle, Image, Model, ModelRc, SharedString, VecModel};
 
 use super::api::{
-    self, ChatList, ChatMemberStatus, ChatType, MessageContent as M, MessageSender, MessageSendingState,
-    NotificationSettingsScope, Update, UserStatus, UserType,
+    self, ChatList, ChatMemberStatus, ChatType, MessageContent as M, MessageOrigin, MessageReplyTo, MessageSender,
+    MessageSendingState, NotificationSettingsScope, Update, UserStatus, UserType,
 };
 use super::rich_text;
 use super::time;
 use crate::images;
 use crate::{
     Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, LinkPreview, MainWindow, Media, MessageRow, Moment,
-    RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
+    ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
 };
 
 /// How long someone counts as typing after TDLib last said so.
@@ -107,6 +107,19 @@ pub struct Store {
     /// so that a row changes only when its media do.
     media_models: RefCell<HashMap<SharedString, Rc<VecModel<Media>>>>,
 
+    /// The open chat's message rows as last shown, in order: each row's id (its first message) and
+    /// its messages (several for an album).
+    pub rows: Vec<(i64, Vec<i64>)>,
+    /// The rows chosen while choosing messages (actions.rs).
+    pub selected: HashSet<i64>,
+    /// Messages replies answer that are not in the history, by chat and message: fetched once
+    /// (conversation.rs); None, it was deleted.
+    pub replied: HashMap<(i64, i64), Option<api::Message>>,
+    /// Such messages the last refresh found missing, to fetch.
+    pub missing_replies: Vec<(i64, i64)>,
+    /// Such messages asked for.
+    pub asking_replies: HashSet<(i64, i64)>,
+
     pub dirty: Dirty,
     models: Models,
 }
@@ -162,6 +175,11 @@ pub fn install(ui: &MainWindow) {
             pictures: images::Cache::new(PICTURES_KEPT),
             previews: RefCell::new(images::Cache::new(PREVIEWS_KEPT)),
             media_models: RefCell::new(HashMap::new()),
+            rows: Vec::new(),
+            selected: HashSet::new(),
+            replied: HashMap::new(),
+            missing_replies: Vec::new(),
+            asking_replies: HashSet::new(),
             dirty: Dirty::default(),
             models,
         })
@@ -196,6 +214,11 @@ pub fn clear() {
         store.pictures.clear();
         store.previews.borrow_mut().clear();
         store.media_models.borrow_mut().clear();
+        store.rows.clear();
+        store.selected.clear();
+        store.replied.clear();
+        store.missing_replies.clear();
+        store.asking_replies.clear();
         store.dirty = Dirty { chats: true, conversation: true, account: true, viewer: true, scroll_to_end: false };
     });
     refresh();
@@ -207,7 +230,7 @@ pub fn refresh() {
         return;
     };
     let words = Names::from(&ui);
-    with(|store| {
+    let missing = with(|store| {
         let dirty = std::mem::take(&mut store.dirty);
         if dirty.chats {
             store.refresh_chats(&ui, &words);
@@ -224,7 +247,12 @@ pub fn refresh() {
                 viewer.set_items(ModelRc::new(VecModel::from(store.viewer_items(&words))));
             }
         }
-    });
+        std::mem::take(&mut store.missing_replies)
+    })
+    .unwrap_or_default();
+    if !missing.is_empty() {
+        super::conversation::load_replied(missing);
+    }
 }
 
 /// Build everything again: the UI language changed, and with it the names Rust puts in rows.
@@ -239,9 +267,10 @@ pub fn refresh_all() {
 
 /// The names Telegram does not give, in the UI language (the Words global).
 pub struct Names {
-    saved_messages: String,
+    pub saved_messages: String,
     deleted_account: String,
     all_chats: String,
+    pub list_separator: String,
 }
 
 impl Names {
@@ -251,6 +280,7 @@ impl Names {
             saved_messages: words.get_saved_messages().into(),
             deleted_account: words.get_deleted_account().into(),
             all_chats: words.get_all_chats().into(),
+            list_separator: words.get_list_separator().into(),
         }
     }
 }
@@ -468,11 +498,18 @@ impl Store {
                 }
             }
             Update::DeleteMessages { chat_id, message_ids, is_permanent } => {
-                if is_permanent && let Some(history) = self.histories.get_mut(&chat_id) {
-                    for id in message_ids {
-                        history.messages.remove(&id);
+                if is_permanent {
+                    if let Some(history) = self.histories.get_mut(&chat_id) {
+                        for id in &message_ids {
+                            history.messages.remove(id);
+                        }
+                        self.dirty.conversation |= self.open == Some(chat_id);
                     }
-                    self.dirty.conversation |= self.open == Some(chat_id);
+                    // Replies to them say so.
+                    for id in &message_ids {
+                        self.replied.insert((chat_id, *id), None);
+                    }
+                    followup = Followup::Deleted { chat_id, message_ids };
                 }
             }
             Update::AuthorizationState { .. } | Update::ConnectionState { .. } | Update::File { .. } | Update::Other => {}
@@ -611,8 +648,13 @@ impl Store {
 
     /// What a message holds: its kind, its words, and the detail the kind needs.
     pub fn content(&self, message: &api::Message, names: &Names) -> (Content, String, String) {
+        self.content_of(&message.content, &message.sender_id, names)
+    }
+
+    /// The same for a message's content alone; `sender` is who sent it (who joined, who left).
+    fn content_of(&self, content: &M, sender: &MessageSender, names: &Names) -> (Content, String, String) {
         let none = String::new;
-        match &message.content {
+        match content {
             M::Text { text, .. } => (Content::Text, text.text.clone(), none()),
             M::AnimatedEmoji { emoji } => (Content::Text, emoji.clone(), none()),
             M::Photo { caption, .. } => (Content::Photo, caption.text.clone(), none()),
@@ -647,7 +689,7 @@ impl Store {
             M::ChatChangePhoto {} => (Content::PhotoChanged, none(), none()),
             M::ChatDeletePhoto {} => (Content::PhotoRemoved, none(), none()),
             M::ChatAddMembers { member_user_ids } => {
-                if matches!(message.sender_id, MessageSender::User { user_id } if member_user_ids == &[user_id]) {
+                if matches!(sender, MessageSender::User { user_id } if member_user_ids == &[*user_id]) {
                     (Content::MemberJoined, none(), none())
                 } else {
                     let added: Vec<String> = member_user_ids.iter().map(|id| self.user_name(*id, names)).collect();
@@ -656,7 +698,7 @@ impl Store {
             }
             M::ChatJoinByLink {} | M::ChatJoinByRequest {} => (Content::MemberJoined, none(), none()),
             M::ChatDeleteMember { user_id } => {
-                if matches!(message.sender_id, MessageSender::User { user_id: sender } if sender == *user_id) {
+                if matches!(sender, MessageSender::User { user_id: sender } if sender == user_id) {
                     (Content::MemberLeft, none(), none())
                 } else {
                     (Content::MemberRemoved, none(), self.user_name(*user_id, names))
@@ -861,7 +903,9 @@ impl Store {
         let history = self.histories.get(&chat.id);
         conversation.set_loading(history.is_none_or(|history| history.loading && history.messages.is_empty()));
         conversation.set_has_older(history.is_some_and(|history| history.has_older));
-        let rows = self.message_rows(chat, names);
+        let (rows, members, missing) = self.message_rows(chat, names);
+        self.rows = members;
+        self.missing_replies = missing;
         sync(&self.models.messages, rows);
         if scroll_to_end {
             conversation.set_scroll_to_end(conversation.get_scroll_to_end() + 1);
@@ -887,10 +931,15 @@ impl Store {
         }
     }
 
-    fn message_rows(&self, chat: &api::Chat, names: &Names) -> Vec<MessageRow> {
-        let Some(history) = self.histories.get(&chat.id) else { return Vec::new() };
+    /// The open chat's rows; the messages of each message row (several for an album); and the
+    /// messages replies answer that are still to be fetched.
+    #[allow(clippy::type_complexity)]
+    fn message_rows(&self, chat: &api::Chat, names: &Names) -> (Vec<MessageRow>, Vec<(i64, Vec<i64>)>, Vec<(i64, i64)>) {
+        let Some(history) = self.histories.get(&chat.id) else { return (Vec::new(), Vec::new(), Vec::new()) };
         let me = self.user_name(self.my_id, names);
         let mut rows = Vec::with_capacity(history.messages.len() + 8);
+        let mut members: Vec<(i64, Vec<i64>)> = Vec::with_capacity(history.messages.len());
+        let mut missing = Vec::new();
         // Each row's media, turned into its model once every row is known.
         let mut media: Vec<Vec<Media>> = Vec::with_capacity(rows.capacity());
         let mut previous_day = None;
@@ -930,13 +979,20 @@ impl Store {
                     row.rich = rich_text.is_some();
                     row.rich_text = rich_text.unwrap_or_default();
                 }
+                if let Some((_, ids)) = members.last_mut() {
+                    ids.push(message.id);
+                }
                 continue;
             }
             album = message.media_album_id;
             media.push(item.into_iter().collect());
             let sender = if message.is_outgoing && !me.is_empty() { me.clone() } else { self.sender_name(&message.sender_id, names) };
+            let service = is_service(content);
+            if !service {
+                members.push((message.id, vec![message.id]));
+            }
             rows.push(MessageRow {
-                kind: if is_service(content) { RowKind::Service } else { RowKind::Message },
+                kind: if service { RowKind::Service } else { RowKind::Message },
                 id: message.id.to_string().into(),
                 outgoing: message.is_outgoing,
                 sender_initial: initial(&sender),
@@ -957,6 +1013,9 @@ impl Store {
                 rich: rich_text.is_some(),
                 rich_text: rich_text.unwrap_or_default(),
                 preview: link_preview(&message.content),
+                forwarded_from: message.forward_info.as_ref().map(|info| self.origin_name(&info.origin, names)).unwrap_or_default().into(),
+                reply: self.reply_quote(message, &me, names, &mut missing),
+                selected: self.selected.contains(&message.id),
             });
         }
         self.attach_media(&mut rows, media);
@@ -964,20 +1023,7 @@ impl Store {
         if let Some(sponsored) = self.sponsored.get(&chat.id).and_then(|sponsored| sponsored.first()) {
             let text = match &sponsored.content {
                 M::Text { text, .. } => text.text.clone(),
-                other => {
-                    let message = api::Message {
-                        id: 0,
-                        sender_id: MessageSender::Chat { chat_id: chat.id },
-                        chat_id: chat.id,
-                        sending_state: None,
-                        is_outgoing: false,
-                        date: 0,
-                        edit_date: 0,
-                        media_album_id: 0,
-                        content: other.clone(),
-                    };
-                    self.content(&message, names).1
-                }
+                other => self.content_of(other, &MessageSender::Chat { chat_id: chat.id }, names).1,
             };
             rows.push(MessageRow {
                 kind: RowKind::Sponsored,
@@ -988,7 +1034,88 @@ impl Store {
                 ..MessageRow::default()
             });
         }
-        rows
+        (rows, members, missing)
+    }
+
+    /// Who first wrote a forwarded message, or one a reply from another chat answers.
+    pub fn origin_name(&self, origin: &MessageOrigin, names: &Names) -> String {
+        match origin {
+            MessageOrigin::User { sender_user_id } => self.user_name(*sender_user_id, names),
+            MessageOrigin::HiddenUser { sender_name } => sender_name.clone(),
+            MessageOrigin::Chat { sender_chat_id: chat_id } | MessageOrigin::Channel { chat_id } => {
+                self.chats.get(chat_id).map(|chat| self.title(chat, names)).unwrap_or_default()
+            }
+        }
+    }
+
+    /// What a reply shows of the message it answers. One in this chat that is not in the history
+    /// is added to `missing`, to fetch; until then the reply shows none.
+    fn reply_quote(&self, message: &api::Message, me: &str, names: &Names, missing: &mut Vec<(i64, i64)>) -> ReplyQuote {
+        let Some(MessageReplyTo::Message { chat_id, message_id, quote, origin, content }) = &message.reply_to else {
+            return ReplyQuote::default();
+        };
+        let quoted = quote.as_ref().map(|quote| first_line(&quote.text.text).to_string()).filter(|text| !text.is_empty());
+        // From another chat: the reply itself says who wrote it and what it holds.
+        if let Some(origin) = origin {
+            let (kind, text, detail) = content
+                .as_deref()
+                .map(|content| self.content_of(content, &MessageSender::Chat { chat_id: *chat_id }, names))
+                .unwrap_or((Content::Text, String::new(), String::new()));
+            let picture = content.as_deref().and_then(picture).map(|picture| self.picture_image(&picture));
+            return ReplyQuote {
+                shown: true,
+                id: SharedString::new(),
+                sender: self.origin_name(origin, names).into(),
+                content: kind,
+                text: quoted.unwrap_or_else(|| first_line(&text).to_string()).into(),
+                detail: detail.into(),
+                gone: false,
+                has_picture: picture.is_some(),
+                picture: picture.unwrap_or_default(),
+            };
+        }
+        if *message_id == 0 {
+            return ReplyQuote::default();
+        }
+        let chat_id = if *chat_id == 0 { message.chat_id } else { *chat_id };
+        let original = match self.histories.get(&chat_id).and_then(|history| history.messages.get(message_id)) {
+            Some(original) => original,
+            None => match self.replied.get(&(chat_id, *message_id)) {
+                Some(Some(original)) => original,
+                Some(None) => return ReplyQuote { shown: true, gone: true, ..ReplyQuote::default() },
+                None => {
+                    if !self.asking_replies.contains(&(chat_id, *message_id)) {
+                        missing.push((chat_id, *message_id));
+                    }
+                    return ReplyQuote::default();
+                }
+            },
+        };
+        let shown = self.quote(original, me, names);
+        ReplyQuote {
+            id: if chat_id == message.chat_id { shown.id } else { SharedString::new() },
+            text: quoted.map(SharedString::from).unwrap_or(shown.text),
+            ..shown
+        }
+    }
+
+    /// A message as a reply shows it, and the strip above the composer: who wrote it (`me` for
+    /// ours), its first line, its picture.
+    pub fn quote(&self, message: &api::Message, me: &str, names: &Names) -> ReplyQuote {
+        let (kind, text, detail) = self.content(message, names);
+        let sender = if message.is_outgoing && !me.is_empty() { me.to_string() } else { self.sender_name(&message.sender_id, names) };
+        let picture = picture(&message.content).map(|picture| self.picture_image(&picture));
+        ReplyQuote {
+            shown: true,
+            id: message.id.to_string().into(),
+            sender: sender.into(),
+            content: kind,
+            text: first_line(&text).into(),
+            detail: detail.into(),
+            gone: false,
+            has_picture: picture.is_some(),
+            picture: picture.unwrap_or_default(),
+        }
     }
 
     /// The open chat's photos, videos and GIFs for the media viewer, oldest first.
@@ -1082,6 +1209,8 @@ pub enum Followup {
     View { chat_id: i64, message_ids: Vec<i64> },
     /// Someone is typing: look again once it may have stopped.
     TypingExpires,
+    /// Messages were deleted: what was being done with them stops (actions.rs).
+    Deleted { chat_id: i64, message_ids: Vec<i64> },
 }
 
 /// What a message with a photo, a video or a GIF shows before it is played: the file with its
@@ -1121,7 +1250,7 @@ pub fn picture(content: &M) -> Option<Picture<'_>> {
 
 /// A message's own words with their formatting: a text, or the caption of a photo, video, GIF,
 /// audio file, file or voice message.
-fn formatted(content: &M) -> Option<&api::FormattedText> {
+pub fn formatted(content: &M) -> Option<&api::FormattedText> {
     match content {
         M::Text { text, .. } => Some(text),
         M::Photo { caption, .. }

@@ -11,8 +11,9 @@ not made by Telegram.
 Status: early. Signing up and logging in, the chat list and chats with text messages work, in the
 design's three themes: Workbench (the default), Broadsheet and Terminal, switched in Settings →
 Appearance. Photos and videos show in the chats and open in a viewer that plays video through mpv.
-Two-step verification is managed in Settings → Privacy & security. Files, several accounts, keyword
-filters and scheduled messages come next.
+A right click on a message gives its menu: reply, edit, copy, copy its link, forward, report,
+delete, or choose several messages. Two-step verification is managed in Settings → Privacy &
+security. Files, several accounts, keyword filters and scheduled messages come next.
 
 The app is a shell. Telegram itself is done by TDLib, Telegram's own library, running as a separate
 program next to the executable: `finchgram-tdlib`, built from pinned sources by this repository (as
@@ -90,6 +91,7 @@ src/
     login.rs             #   logging in, signing up
     chats.rs             #   the chat list
     conversation.rs      #   the open chat: messages, writing
+    actions.rs           #   what can be done with a message: its menu, replies, forwarding, …
     account.rs           #   the profile, logging out
     password.rs          #   two-step verification in Settings
     files.rs             #   downloading files

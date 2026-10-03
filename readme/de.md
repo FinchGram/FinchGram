@@ -11,9 +11,10 @@ und stammt nicht von Telegram.
 Stand: früh. Registrieren und Anmelden, die Chatliste und Chats mit Textnachrichten funktionieren, in
 den drei Designs des Entwurfs: Workbench (Standard), Broadsheet und Terminal, umschaltbar unter
 Einstellungen › Darstellung. Fotos und Videos erscheinen in den Chats und öffnen sich in einem Viewer,
-der Videos mit mpv abspielt. Die zweistufige Bestätigung wird unter Einstellungen › Datenschutz &
-Sicherheit verwaltet. Als Nächstes kommen Dateien, mehrere Konten, Stichwortfilter und geplante
-Nachrichten.
+der Videos mit mpv abspielt. Ein Rechtsklick auf eine Nachricht öffnet ihr Menü: antworten,
+bearbeiten, kopieren, Link kopieren, weiterleiten, melden, löschen oder mehrere Nachrichten auswählen.
+Die zweistufige Bestätigung wird unter Einstellungen › Datenschutz & Sicherheit verwaltet. Als
+Nächstes kommen Dateien, mehrere Konten, Stichwortfilter und geplante Nachrichten.
 
 Die App ist eine Hülle (Shell). Telegram selbst übernimmt TDLib, die offizielle Bibliothek von Telegram,
 die als eigenes Programm neben der ausführbaren Datei läuft: `finchgram-tdlib`, von diesem Repository
@@ -95,6 +96,7 @@ src/
     login.rs             #   die Anmeldung, die Registrierung
     chats.rs             #   die Chatliste
     conversation.rs      #   der offene Chat: Nachrichten, Schreiben
+    actions.rs           #   was man mit einer Nachricht tun kann: Menü, Antworten, Weiterleiten, …
     account.rs           #   das Profil, Abmelden
     password.rs          #   die zweistufige Bestätigung in den Einstellungen
     files.rs             #   das Herunterladen von Dateien

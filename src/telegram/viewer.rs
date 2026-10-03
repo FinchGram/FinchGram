@@ -199,19 +199,13 @@ fn locate() {
 /// The file of the item shown, whole, into the Downloads folder.
 fn download() {
     let Some(message_id) = shown_id().and_then(|id| id.parse::<i64>().ok()) else { return };
-    let Some((file, name)) = message_content(message_id, |content| {
-        let file = store::original(content)?.clone();
-        Some((file, content_file_name(content)))
-    }) else {
+    let Some((file, name)) = store::with(|store| {
+        let message = store.histories.get(&store.open?)?.messages.get(&message_id)?;
+        Some((store::original(&message.content)?.clone(), download_name(&message.content, message.date)))
+    })
+    .flatten() else {
         return;
     };
-    let date = store::with(|store| {
-        let chat_id = store.open?;
-        store.histories.get(&chat_id)?.messages.get(&message_id).map(|message| message.date)
-    })
-    .flatten()
-    .unwrap_or_default();
-    let name = name.unwrap_or_else(|| photo_name(date));
     download_file(&file, name);
 }
 
@@ -231,6 +225,12 @@ fn content_file_name(content: &MessageContent) -> Option<String> {
     (!name.is_empty()).then(|| name.to_string())
 }
 
+/// What a message's photo, video or GIF is called in the Downloads folder: its own file name, or
+/// for a photo when it was sent (`date`).
+pub fn download_name(content: &MessageContent, date: i32) -> String {
+    content_file_name(content).unwrap_or_else(|| photo_name(date))
+}
+
 /// A photo's name, from when it was sent, as Telegram's desktop app names them:
 /// "photo_2026-09-30_14-19-05.jpg".
 fn photo_name(unix: i32) -> String {
@@ -242,7 +242,7 @@ fn photo_name(unix: i32) -> String {
 
 /// Copy `from` into the Downloads folder as `name`, or as "name (2).ext" … when that is taken.
 /// Returns the name it got.
-fn save_to_downloads(from: &Path, name: &str) -> std::io::Result<String> {
+pub fn save_to_downloads(from: &Path, name: &str) -> std::io::Result<String> {
     let folder = dirs::download_dir().ok_or_else(|| std::io::Error::other("no Downloads folder"))?;
     let target = free_path(&folder, name);
     std::fs::copy(from, &target)?;

@@ -1,6 +1,9 @@
 // Parts of the chat windows the three themes share.
 import { AppState } from "state.slint";
-import { Conversation, ChatKind, Media, Sticker } from "telegram.slint";
+import {
+    Conversation, ChatKind, Media, Sticker, MessageRow, RowKind, Actions, MessageAction, ActionNotice, ComposeBar, ReplyQuote,
+    DeleteChoice,
+} from "telegram.slint";
 import { Fmt } from "format.slint";
 import { Icon } from "widgets.slint";
 
@@ -80,7 +83,8 @@ export global ChatIcons {
 }
 
 // Where a message is written: Enter sends it, Shift+Enter starts a new line; while an input method
-// is still composing, Enter is the input method's. Grows with the text up to `tallest`.
+// is still composing, Enter is the input method's. Grows with the text up to `tallest`. Esc closes
+// what is open over it (Actions.escape); ↑ in an empty box edits our last message.
 export component MessageInput inherits Rectangle {
     in property <string> placeholder;
     in property <color> text-color;
@@ -94,6 +98,8 @@ export component MessageInput inherits Rectangle {
     in property <length> padding-x: 12px;
     in property <length> padding-y: 10px;
     in property <bool> enabled: true;
+    // Sending with nothing written: forwarding sends the messages alone.
+    in property <bool> allow-empty;
     in-out property <string> text <=> input.text;
     out property <bool> has-focus: input.has-focus;
     // The words to send; the box empties itself.
@@ -105,9 +111,12 @@ export component MessageInput inherits Rectangle {
     }
 
     public function send-now() {
-        if input.text != "" {
-            root.send(input.text);
+        if input.text != "" || root.allow-empty {
+            // Emptied first: sending may put words back (an edit gives back what was written
+            // before it).
+            let words = input.text;
             input.text = "";
+            root.send(words);
         }
     }
 
@@ -152,6 +161,13 @@ export component MessageInput inherits Rectangle {
                     && event.modifiers.control != AppState.send-with-enter
                 {
                     root.send-now();
+                    return accept;
+                }
+                if event.text == Key.Escape && self.preedit-text == "" && Actions.escape() {
+                    return accept;
+                }
+                if event.text == Key.UpArrow && self.text == "" && self.preedit-text == "" && Actions.bar == ComposeBar.none {
+                    Actions.edit-last();
                     return accept;
                 }
                 return reject;
@@ -257,6 +273,14 @@ export component MediaTiles {
             clicked => {
                 root.open(item.id);
             }
+            // A right click on it is for this photo or video (Actions.hovered-media).
+            changed has-hover => {
+                if self.has-hover {
+                    Actions.hovered-media = item.id;
+                } else if Actions.hovered-media == item.id {
+                    Actions.hovered-media = "";
+                }
+            }
         }
     }
 }
@@ -289,4 +313,290 @@ export component RichText inherits StyledText {
     link-clicked(url) => {
         Conversation.open-link(url);
     }
+}
+
+// A message row's own area, around everything the row shows. When a right click comes
+// (Actions.right-clicks, counted by Rust from the window's own events, since formatted words keep
+// clicks to themselves), the row under the pointer asks for its menu there, with the photo or video
+// under it. While messages are being chosen, a click on the row chooses it (with shift, every row
+// from the one clicked last), whatever is under the pointer.
+export component MessageArea inherits TouchArea {
+    in property <MessageRow> message;
+    property <bool> choosable: message.kind == RowKind.message;
+    property <int> right-clicks: Actions.right-clicks;
+    changed right-clicks => {
+        if self.has-hover && root.choosable && !Actions.selecting && !Actions.menu-open {
+            Actions.menu-x = self.absolute-position.x + self.mouse-x;
+            Actions.menu-y = self.absolute-position.y + self.mouse-y;
+            Actions.ask-menu(root.message.id, Actions.hovered-media);
+        }
+    }
+
+    @children
+
+    if Actions.selecting && root.choosable: TouchArea {
+        property <bool> shift;
+        mouse-cursor: pointer;
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                self.shift = event.modifiers.shift;
+            }
+        }
+        clicked => {
+            Actions.toggle(root.message.id, self.shift);
+        }
+    }
+}
+
+// The keyboard for a menu or a dialog while it is open: Esc closes it, ⏎ does its main thing.
+export component KeyScope inherits FocusScope {
+    callback enter();
+    callback escape();
+    init => {
+        self.focus();
+    }
+    key-pressed(event) => {
+        if event.text == Key.Escape {
+            root.escape();
+            return accept;
+        }
+        if event.text == Key.Return {
+            root.enter();
+            return accept;
+        }
+        return reject;
+    }
+}
+
+// What the message actions are called, their icons and Terminal's commands; what a notice says
+// (the design's message-actions.js).
+export global ActionWords {
+    public pure function label(action: MessageAction) -> string {
+        if action == MessageAction.reply { return @tr("Reply"); }
+        if action == MessageAction.edit { return @tr("Edit"); }
+        if action == MessageAction.copy-image { return @tr("Copy Image"); }
+        if action == MessageAction.save-image { return @tr("Save Image"); }
+        if action == MessageAction.save-video { return @tr("Save Video"); }
+        if action == MessageAction.copy { return copy(); }
+        if action == MessageAction.copy-text { return @tr("words of a photo or video" => "Copy Text"); }
+        if action == MessageAction.copy-link { return @tr("Copy Message Link"); }
+        if action == MessageAction.forward { return @tr("Forward"); }
+        if action == MessageAction.report { return @tr("Report"); }
+        if action == MessageAction.delete { return @tr("Delete"); }
+        return @tr("Select");
+    }
+
+    // Copying a message's words.
+    public pure function copy() -> string {
+        return @tr("words of a message" => "Copy Text");
+    }
+
+    public pure function icon(action: MessageAction) -> string {
+        if action == MessageAction.reply { return "arrow-bend-up-left"; }
+        if action == MessageAction.edit { return "pencil-simple"; }
+        if action == MessageAction.copy-image { return "image"; }
+        if action == MessageAction.save-image || action == MessageAction.save-video { return "download-simple"; }
+        if action == MessageAction.copy || action == MessageAction.copy-text { return "copy"; }
+        if action == MessageAction.copy-link { return "link"; }
+        if action == MessageAction.forward { return "arrow-bend-up-right"; }
+        if action == MessageAction.report { return "flag"; }
+        if action == MessageAction.delete { return "trash"; }
+        return "check-circle";
+    }
+
+    public pure function command(action: MessageAction) -> string {
+        if action == MessageAction.reply { return "/reply"; }
+        if action == MessageAction.edit { return "/edit"; }
+        if action == MessageAction.copy-image { return "/copyimg"; }
+        if action == MessageAction.save-image || action == MessageAction.save-video { return "/save"; }
+        if action == MessageAction.copy || action == MessageAction.copy-text { return "/copy"; }
+        if action == MessageAction.copy-link { return "/link"; }
+        if action == MessageAction.forward { return "/fwd"; }
+        if action == MessageAction.report { return "/report"; }
+        if action == MessageAction.delete { return "/del"; }
+        return "/select";
+    }
+
+    public pure function notice(notice: ActionNotice) -> string {
+        if notice == ActionNotice.copied { return @tr("Text copied to clipboard."); }
+        if notice == ActionNotice.link-copied { return @tr("Link copied to clipboard."); }
+        if notice == ActionNotice.image-copied { return @tr("Image copied to clipboard."); }
+        if notice == ActionNotice.saved { return @tr("Saved to Downloads"); }
+        if notice == ActionNotice.reported { return @tr("Reported"); }
+        return "";
+    }
+
+    // The strip above the composer: what it does, and to what.
+    public pure function bar-title() -> string {
+        if Actions.bar == ComposeBar.reply { return @tr("Reply to {0}", Actions.bar-name); }
+        if Actions.bar == ComposeBar.edit { return @tr("Edit message"); }
+        return @tr("Forward {n} message" | "Forward {n} messages" % Actions.bar-count);
+    }
+
+    public pure function bar-line() -> string {
+        if Actions.bar == ComposeBar.forward { return @tr("From: {0}", Actions.bar-name); }
+        return Fmt.body(Actions.bar-content, Actions.bar-text, Actions.bar-detail);
+    }
+
+    // A reply's quote: the first line of the message it answers.
+    public pure function quote-line(quote: ReplyQuote) -> string {
+        if quote.gone { return @tr("Deleted message"); }
+        return Fmt.body(quote.content, quote.text, quote.detail);
+    }
+
+    public pure function selected() -> string {
+        return @tr("{0} selected", Actions.selected-count);
+    }
+
+    public pure function delete-title() -> string {
+        if Actions.delete-count == 1 { return @tr("Delete this message?"); }
+        return @tr("Delete {0} messages?", Actions.delete-count);
+    }
+
+    public pure function delete-choice() -> string {
+        if Actions.delete-choice == DeleteChoice.for-them { return @tr("Also delete for {0}", Actions.delete-name); }
+        return @tr("Also delete for everyone");
+    }
+
+    public pure function report-title() -> string {
+        return Actions.report-title == "" ? @tr("Report") : Actions.report-title;
+    }
+}
+
+// Where a menu w × h opens for a click at x, y in a window of width × height: right of and below the
+// click, else to its left and above it (the design's openMenu).
+export global MenuPlace {
+    public pure function x(click: length, w: length, width: length) -> length {
+        return max(8px, min(click + w > width - 8px ? click - w : click, width - w - 8px));
+    }
+
+    public pure function y(click: length, h: length, height: length) -> length {
+        return click + h > height - 8px ? max(8px, click - h) : click;
+    }
+}
+
+// A one-line box for searching in a dialog: it takes the keyboard when shown; ⏎ picks the first
+// result, Esc closes the dialog.
+export component SearchInput inherits Rectangle {
+    in property <string> placeholder;
+    in property <color> text-color;
+    in property <color> placeholder-color;
+    in property <color> selection-color;
+    in property <string> font-family;
+    in property <length> font-size: 14px;
+    callback edited(string);
+    callback accepted();
+    callback escape();
+
+    Text {
+        width: parent.width;
+        height: parent.height;
+        visible: input.text == "" && input.preedit-text == "";
+        text: root.placeholder;
+        color: root.placeholder-color;
+        font-family: root.font-family;
+        font-size: root.font-size;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+
+    input := TextInput {
+        width: parent.width;
+        height: parent.height;
+        single-line: true;
+        color: root.text-color;
+        font-family: root.font-family;
+        font-size: root.font-size;
+        vertical-alignment: center;
+        selection-background-color: root.selection-color;
+        init => {
+            self.focus();
+        }
+        edited => {
+            root.edited(self.text);
+        }
+        accepted => {
+            root.accepted();
+        }
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.escape();
+                return accept;
+            }
+            return reject;
+        }
+    }
+}
+
+// Words to add to a report: several lines, at most 1024 characters. ⏎ sends them (⇧⏎ starts a new
+// line), Esc closes the dialog.
+export component CommentInput inherits Rectangle {
+    in property <string> placeholder;
+    in property <color> text-color;
+    in property <color> placeholder-color;
+    in property <color> selection-color;
+    in property <string> font-family;
+    in property <length> font-size: 14px;
+    in property <float> line-height-factor: 1;
+    in property <length> padding-x: 12px;
+    in property <length> padding-y: 10px;
+    out property <string> text: input.text;
+    callback submit();
+    callback escape();
+
+    Text {
+        x: root.padding-x;
+        y: root.padding-y;
+        width: parent.width - 2 * root.padding-x;
+        visible: input.text == "" && input.preedit-text == "";
+        text: root.placeholder;
+        color: root.placeholder-color;
+        font-family: root.font-family;
+        font-size: root.font-size;
+        line-height-factor: root.line-height-factor;
+        wrap: word-wrap;
+    }
+
+    Flickable {
+        x: root.padding-x;
+        y: root.padding-y;
+        width: parent.width - 2 * root.padding-x;
+        height: parent.height - 2 * root.padding-y;
+        mouse-drag-pan-enabled: false;
+        content-height: max(self.height, input.preferred-height);
+        content-y: min(0px, self.height - self.content-height);
+
+        input := TextInput {
+            width: parent.width;
+            single-line: false;
+            wrap: word-wrap;
+            color: root.text-color;
+            font-family: root.font-family;
+            font-size: root.font-size;
+            line-height-factor: root.line-height-factor;
+            selection-background-color: root.selection-color;
+            init => {
+                self.focus();
+            }
+            edited => {
+                if self.text.character-count > 1024 {
+                    self.text = root.text-before;
+                }
+                root.text-before = self.text;
+            }
+            key-pressed(event) => {
+                if event.text == Key.Return && !event.modifiers.shift && self.preedit-text == "" {
+                    root.submit();
+                    return accept;
+                }
+                if event.text == Key.Escape {
+                    root.escape();
+                    return accept;
+                }
+                return reject;
+            }
+        }
+    }
+
+    property <string> text-before;
 }

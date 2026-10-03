@@ -130,6 +130,21 @@ export struct LinkPreview {
     instant-view: bool,
 }
 
+// The message a reply answers, shown above the reply's words: who wrote it and its first line (its
+// content and words, as Fmt.body says them). Gone: it was deleted. Its id is where a click on it
+// goes; "" for a message in another chat.
+export struct ReplyQuote {
+    shown: bool,
+    id: string,
+    sender: string,
+    content: Content,
+    text: string,
+    detail: string,
+    gone: bool,
+    picture: image,
+    has-picture: bool,
+}
+
 // One line of the open chat: a message, a service message, the day it starts, or a sponsored
 // message (channels show Telegram's own; they are never hidden).
 export struct MessageRow {
@@ -154,6 +169,9 @@ export struct MessageRow {
     rich: bool,             // its words have formatting or links: rich-text shows them
     rich-text: styled-text,
     preview: LinkPreview,
+    forwarded-from: string, // who first wrote it, when it was forwarded; "" otherwise
+    reply: ReplyQuote,      // the message it replies to
+    selected: bool,         // chosen, while choosing messages (Actions.selecting)
 }
 
 
@@ -185,6 +203,8 @@ export global Conversation {
     in-out property <int> scroll-to-end;
     // A message the view should bring into sight (the media viewer's "locate"), "" for none.
     in-out property <string> reveal;
+    // What is being written, whichever theme shows it: Rust puts a message's words here to edit it.
+    in-out property <string> draft;
     callback open(string);                       // chat id; Workbench opens a tab for it
     callback close(string);                      // a tab
     callback close-others();
@@ -239,6 +259,111 @@ export global Viewer {
     callback toggle-mute();
     callback download();                         // the one shown, to the Downloads folder
     callback locate();                           // close, and scroll the chat to its message
+}
+
+// What can be done with a message (the design's fourth round, "FinchGram Desktop 消息操作", and its
+// message-actions.js). A right click on a message gives its menu; as in Telegram's own apps, what
+// cannot be done with it is left out, as TDLib says. Rust fills this global (src/telegram/actions.rs)
+// and each theme draws it in its own way.
+export enum MessageAction { reply, edit, copy-image, save-image, save-video, copy, copy-text, copy-link, forward, report, delete, select }
+
+// The strip above where a message is written: replying to a message, editing one of ours, or
+// forwarding messages to this chat.
+export enum ComposeBar { none, reply, edit, forward }
+
+// What was just done, said for a moment.
+export enum ActionNotice { none, copied, link-copied, image-copied, saved, reported }
+
+// Deleting: whether the messages can go for the others too (a box to tick), and who they are.
+export enum DeleteChoice { none, for-them, for-everyone }
+
+export global Actions {
+    // Counted up by Rust at each right click in the window. A message's formatted words keep clicks
+    // to themselves, so the row under the pointer learns of it this way and asks for its menu.
+    in-out property <int> right-clicks;
+
+    // A message's menu, where it was clicked (in the window).
+    in-out property <bool> menu-open;
+    in-out property <string> menu-row;              // the row it is for, marked while it is open
+    in-out property <[MessageAction]> menu-items;
+    in-out property <string> menu-head;             // Terminal's heading: "Jie · 14:20"
+    in-out property <length> menu-x;
+    in-out property <length> menu-y;
+    callback ask-menu(string, string);              // a row; the message of the photo or video clicked, or ""
+    callback choose(MessageAction);
+    callback close-menu();
+    // The message of the photo or video under the pointer, "" for none: a right click on it gives the
+    // photo's or video's own items too.
+    in-out property <string> hovered-media;
+
+    // The strip above the composer.
+    in-out property <ComposeBar> bar;
+    in-out property <string> bar-name;              // reply: who wrote the message; forward: who wrote them
+    in-out property <int> bar-count;                // forward: how many messages
+    in-out property <Content> bar-content;          // the message's first line, as Fmt.body says it
+    in-out property <string> bar-text;
+    in-out property <string> bar-detail;
+    in-out property <image> bar-picture;
+    in-out property <bool> bar-has-picture;
+    in-out property <bool> hide-sender;             // forward without saying who first wrote them
+    callback cancel-bar();
+    callback edit-last();                           // ↑ in an empty composer: edit our last message
+    // Rust counts this up when the composer should take the keyboard: a reply or an edit begins.
+    in-out property <int> focus-requests;
+
+    // Choosing messages. Rust marks the rows chosen (MessageRow.selected).
+    in-out property <bool> selecting;
+    in-out property <int> selected-count;
+    in-out property <bool> can-forward;             // every message chosen can be forwarded, …
+    in-out property <bool> can-copy;
+    in-out property <bool> can-delete;
+    in-out property <bool> can-report;
+    in-out property <bool> report-offered;          // groups and channels can be reported
+    callback toggle(string, bool);                  // a row; true: shift-click, everything up to it
+    callback forward-selected();
+    callback copy-selected();
+    callback delete-selected();
+    callback report-selected();
+    callback cancel-selection();
+
+    // Forwarding: where to.
+    in-out property <bool> picker-open;
+    in-out property <bool> picker-saved;            // Saved Messages matches the search
+    in-out property <[ChatRow]> picker-chats;       // the chats we can write in that match it
+    callback search-picker(string);
+    callback pick(string);                          // a chat's id, or "saved"
+    callback pick-first();                          // ⏎: the first one shown
+    callback close-picker();
+
+    // Reporting, step by step, as Telegram's servers lead it.
+    in-out property <bool> report-open;
+    in-out property <bool> report-first;            // the first step: there is no step back
+    in-out property <string> report-title;
+    in-out property <[string]> report-options;      // the reasons to choose from
+    in-out property <bool> report-comment;          // the last step: words to add
+    in-out property <bool> report-comment-required;
+    in-out property <bool> report-busy;
+    callback report-choose(int);
+    callback report-back();
+    callback report-submit(string);
+    callback close-report();
+
+    // Deleting.
+    in-out property <bool> delete-open;
+    in-out property <int> delete-count;
+    in-out property <DeleteChoice> delete-choice;
+    in-out property <string> delete-name;           // for-them: the other person
+    in-out property <bool> revoke;                  // the box ticked: for them too
+    callback confirm-delete();
+    callback close-delete();
+
+    in-out property <ActionNotice> notice;
+    // A row lit up for a moment: the message a reply answers, jumped to.
+    in-out property <string> flash;
+    callback jump(string);                          // to a message: a reply's original
+
+    // Esc: close the topmost of the menu, a dialog, the strip and choosing. False: none was open.
+    callback escape() -> bool;
 }
 
 // The account logged in.
@@ -356,4 +481,6 @@ export global Words {
     out property <string> saved-messages: @tr("Saved Messages");
     out property <string> deleted-account: @tr("Deleted Account");
     out property <string> all-chats: @tr("All chats");
+    // Between names in a list: "Jie, Mika".
+    out property <string> list-separator: @tr("list separator" => ", ");
 }

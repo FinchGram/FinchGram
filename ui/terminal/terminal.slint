@@ -3,35 +3,18 @@
 // one command line writes messages and runs commands ("/mute", "/pin", …).
 import { ListView } from "std-widgets.slint";
 import { AppState, Page, Connection, Theme } from "../state.slint";
-import { Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer } from "../telegram.slint";
+import {
+    Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice,
+} from "../telegram.slint";
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
-import { ChatScroll, MessageInput, RichText } from "../chat.slint";
+import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope } from "../chat.slint";
 import { TerminalPalette as P } from "palette.slint";
+import { Signs } from "signs.slint";
+import { TerminalActions } from "actions.slint";
 
 export enum TerminalView { chats, channels, bots, rules, scheduled }
-
-global Signs {
-    public pure function of(kind: ChatKind, pinned: bool) -> string {
-        if pinned {
-            return "^";
-        }
-        if kind == ChatKind.group {
-            return "#";
-        }
-        if kind == ChatKind.channel {
-            return "»";
-        }
-        if kind == ChatKind.saved {
-            return "*";
-        }
-        if kind == ChatKind.bot {
-            return "~";
-        }
-        return "@";
-    }
-}
 
 component T inherits Text {
     font-family: P.font;
@@ -91,6 +74,11 @@ component TitleBar inherits Rectangle {
             text: "FinchGram — " + Account.name;
             color: P.muted;
             overflow: elide;
+        }
+        // What was just done (copied, saved, reported).
+        if Actions.notice != ActionNotice.none: T {
+            text: "» " + ActionWords.notice(Actions.notice);
+            color: P.accent2;
         }
         Action {
             label: P.dark ? @tr("light") : @tr("dark");
@@ -525,14 +513,22 @@ component Side inherits Rectangle {
     }
 }
 
-// One line of the log: time, sender, words.
+// One line of the log: time, sender, words. While messages are being chosen, "[x]" in front.
 component LogLine {
     in property <MessageRow> message;
     property <bool> has-media: message.media.length > 0;
+    property <bool> reachable: !message.reply.gone && message.reply.id != "";
     height: lines.preferred-height;
 
     lines := HorizontalLayout {
         spacing: 8px;
+        if Actions.selecting: T {
+            width: 24px;
+            text: root.message.selected ? "[x]" : "[ ]";
+            color: root.message.selected ? P.accent : P.faint;
+            vertical-alignment: top;
+            line-height-factor: P.leading(1.6);
+        }
         T {
             width: 44px;
             text: root.message.time;
@@ -550,6 +546,46 @@ component LogLine {
         }
         VerticalLayout {
             horizontal-stretch: 1;
+            if root.message.forwarded-from != "": T {
+                text: "↪ " + @tr("Forwarded from {0}", root.message.forwarded-from);
+                color: P.muted;
+                vertical-alignment: top;
+                line-height-factor: P.leading(1.6);
+                overflow: elide;
+            }
+            // The message it replies to: "↱ Jie: I'm lubing my 65% today"; a click goes to it.
+            if root.message.reply.shown: Rectangle {
+                height: quote.preferred-height;
+                quote := HorizontalLayout {
+                    alignment: start;
+                    T {
+                        text: "↱ ";
+                        color: P.faint;
+                        line-height-factor: P.leading(1.6);
+                    }
+                    if root.message.reply.sender != "": T {
+                        text: root.message.reply.sender + ": ";
+                        color: P.accent;
+                        line-height-factor: P.leading(1.6);
+                    }
+                    T {
+                        horizontal-stretch: 1;
+                        text: ActionWords.quote-line(root.message.reply);
+                        color: P.faint;
+                        font-italic: root.message.reply.gone;
+                        line-height-factor: P.leading(1.6);
+                        overflow: elide;
+                    }
+                }
+                TouchArea {
+                    mouse-cursor: root.reachable ? pointer : default;
+                    clicked => {
+                        if root.reachable {
+                            Actions.jump(root.message.reply.id);
+                        }
+                    }
+                }
+            }
             if root.message.rich: RichText {
                 text: root.message.rich-text;
                 default-color: P.text;
@@ -583,6 +619,14 @@ component LogLine {
                     mouse-cursor: pointer;
                     clicked => {
                         Viewer.view(item.id, true);
+                    }
+                    // A right click on it is for this photo or video (Actions.hovered-media).
+                    changed has-hover => {
+                        if self.has-hover {
+                            Actions.hovered-media = item.id;
+                        } else if Actions.hovered-media == item.id {
+                            Actions.hovered-media = "";
+                        }
                     }
                 }
             }
@@ -664,8 +708,26 @@ component Line {
                 }
             }
         }
-        if root.message.kind == RowKind.message: LogLine {
-            message: root.message;
+        // A message's row: lit while chosen or while its menu is open, ringed when jumped to.
+        if root.message.kind == RowKind.message: Rectangle {
+            height: log.preferred-height;
+            area := MessageArea {
+                message: root.message;
+                Rectangle {
+                    x: -6px;
+                    width: parent.width + 12px;
+                    border-radius: 2px;
+                    background: root.message.selected || Actions.menu-row == root.message.id ? P.sel : transparent;
+                    border-width: Actions.flash == root.message.id ? 1px : 0;
+                    border-color: P.accent;
+                    animate background { duration: 250ms; }
+                }
+                log := LogLine {
+                    x: 0;
+                    width: parent.width;
+                    message: root.message;
+                }
+            }
         }
     }
 }
@@ -789,9 +851,108 @@ export struct Command {
     description: string,
 }
 
-component CommandLine inherits Rectangle {
-    height: 46px;
+// What to do with the messages chosen, in place of the command line (the design's 1b): "[Forward]",
+// in the faint colour where they do not all allow it.
+component BarAction {
+    in property <string> label;
+    in property <bool> enabled: true;
+    in property <color> color: P.text;
+    callback activated();
+
+    T {
+        text: "[" + root.label + "]";
+        color: !root.enabled ? P.faint : touch.has-hover ? P.accent : root.color;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+component SelectionLine inherits Rectangle {
     background: P.cmd;
+
+    Rectangle {
+        height: 1px;
+        y: 0;
+        background: P.line;
+    }
+
+    KeyScope {
+        width: 0;
+        height: 0;
+        escape => {
+            Actions.cancel-selection();
+        }
+    }
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 12px;
+        T {
+            text: "── " + ActionWords.selected() + " ──";
+            color: P.accent;
+        }
+        BarAction {
+            label: @tr("Forward");
+            enabled: Actions.can-forward;
+            activated => {
+                Actions.forward-selected();
+            }
+        }
+        BarAction {
+            label: ActionWords.copy();
+            enabled: Actions.can-copy;
+            activated => {
+                Actions.copy-selected();
+            }
+        }
+        BarAction {
+            label: @tr("Delete");
+            enabled: Actions.can-delete;
+            color: P.accent3;
+            activated => {
+                Actions.delete-selected();
+            }
+        }
+        if Actions.report-offered: BarAction {
+            label: @tr("Report");
+            enabled: Actions.can-report;
+            activated => {
+                Actions.report-selected();
+            }
+        }
+        BarAction {
+            label: @tr("Cancel");
+            color: P.muted;
+            activated => {
+                Actions.cancel-selection();
+            }
+        }
+        T {
+            horizontal-stretch: 1;
+            text: @tr("Shift-click to select a range");
+            color: P.faint;
+            horizontal-alignment: right;
+            overflow: elide;
+        }
+    }
+}
+
+component CommandLine inherits Rectangle {
+    // The strip above the prompt: replying, editing, forwarding (the design's 1b).
+    property <bool> strip: Actions.bar != ComposeBar.none && !Actions.selecting && Conversation.chat-id != "";
+    height: root.strip ? 74px : 46px;
+    background: P.cmd;
+    // A reply or an edit begins, a menu or dialog closed: the keyboard comes back here.
+    property <int> focus-requests: Actions.focus-requests;
+    changed focus-requests => {
+        input.focus-text();
+    }
     property <[Command]> commands: [
         { command: "/mute", description: @tr("Mute or unmute this chat") },
         { command: "/pin", description: @tr("Pin or unpin this chat") },
@@ -821,7 +982,54 @@ component CommandLine inherits Rectangle {
         background: P.line;
     }
 
+    if root.strip: HorizontalLayout {
+        y: 0;
+        height: 28px;
+        padding-top: 7px;
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 10px;
+        T {
+            text: (Actions.bar == ComposeBar.reply ? "↱ " : Actions.bar == ComposeBar.edit ? "✎ " : "↪ ") + ActionWords.bar-title();
+            color: P.accent;
+        }
+        T {
+            horizontal-stretch: 1;
+            text: "── " + ActionWords.bar-line();
+            color: P.muted;
+            overflow: elide;
+        }
+        if Actions.bar == ComposeBar.forward: Rectangle {
+            width: hide.preferred-width;
+            hide := HorizontalLayout {
+                T {
+                    text: Actions.hide-sender ? "[x]" : "[ ]";
+                    color: P.accent;
+                }
+                T {
+                    text: " " + @tr("Hide sender's name");
+                    color: P.muted;
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Actions.hide-sender = !Actions.hide-sender;
+                }
+            }
+        }
+        Action {
+            label: "esc";
+            color: P.faint;
+            activated => {
+                Actions.cancel-bar();
+            }
+        }
+    }
+
     HorizontalLayout {
+        y: root.strip ? 28px : 0;
+        height: 46px;
         padding-left: 16px;
         padding-right: 16px;
         spacing: 10px;
@@ -839,7 +1047,9 @@ component CommandLine inherits Rectangle {
             horizontal-stretch: 1;
             alignment: center;
             input := MessageInput {
-                enabled: Conversation.chat-id != "";
+                text <=> Conversation.draft;
+                allow-empty: Actions.bar == ComposeBar.forward;
+                enabled: Conversation.chat-id != "" && !Actions.selecting;
                 placeholder: Conversation.can-write ? @tr("Write a message, or / for commands") : @tr("/ for commands");
                 text-color: P.text;
                 placeholder-color: P.faint;
@@ -856,10 +1066,12 @@ component CommandLine inherits Rectangle {
             }
         }
         T {
-            text: (AppState.send-with-enter ? "⏎ " : "⌘⏎ ") + @tr("send");
+            text: (AppState.send-with-enter ? "⏎ " : "⌘⏎ ") + (Actions.bar == ComposeBar.edit ? @tr("save") : @tr("send"));
             color: P.faint;
         }
     }
+
+    if Actions.selecting: SelectionLine { }
 
     // What "/…" can be, above the line.
     if root.typed.starts-with("/"): Rectangle {
@@ -989,4 +1201,7 @@ export component TerminalWindow inherits Rectangle {
             }
         }
     }
+
+    // A message's menu and the dialogs of its actions, over everything.
+    TerminalActions { }
 }

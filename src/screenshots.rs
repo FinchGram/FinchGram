@@ -25,9 +25,19 @@ struct Screenshots {
     window: Rc<MinimalSoftwareWindow>,
 }
 
+thread_local! {
+    /// The pictures' own clock: each picture is a second after the one before, so that what moves
+    /// (a colour fading in) has arrived.
+    static CLOCK: std::cell::Cell<std::time::Duration> = const { std::cell::Cell::new(std::time::Duration::ZERO) };
+}
+
 impl Platform for Screenshots {
     fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, slint::PlatformError> {
         Ok(self.window.clone())
+    }
+
+    fn duration_since_start(&self) -> std::time::Duration {
+        CLOCK.get()
     }
 }
 
@@ -37,6 +47,8 @@ fn save(window: &MinimalSoftwareWindow, name: &str) {
     let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target").join("screenshots");
     std::fs::create_dir_all(&directory).expect("target/screenshots");
     let mut pixels = vec![slint::Rgb8Pixel::default(); (WIDTH * (HEIGHT + MENU_BAR)) as usize];
+    CLOCK.set(CLOCK.get() + std::time::Duration::from_secs(1));
+    slint::platform::update_timers_and_animations();
     // Twice: text that wraps knows its height only once it has been laid out.
     for _ in 0..2 {
         window.request_redraw();
@@ -278,6 +290,11 @@ fn open_viewer(ui: &MainWindow, index: i32) {
     viewer.set_open(true);
 }
 
+/// A reply's quote of message `id`.
+fn quote(id: &str, sender: &str, text: &str) -> ReplyQuote {
+    ReplyQuote { shown: true, id: id.into(), sender: sender.into(), content: Content::Text, text: text.into(), ..ReplyQuote::default() }
+}
+
 fn day_row(day: Day) -> MessageRow {
     MessageRow { kind: RowKind::Day, day: moment(day, 0, 0), ..message("", "", "", "") }
 }
@@ -363,10 +380,18 @@ fn open_keyboards(ui: &MainWindow) {
             ..message("1", "Mi", "09:12", "Morning! This week's group-buy keycaps arrived; the delivery list is in the pinned post.")
         },
         message("2", "Jie", "10:30", "I'm lubing my 65% today, photos later."),
-        message("3", "Zhou Ye", "10:31", "Nice, @ me when it's done."),
+        MessageRow { reply: quote("2", "Jie", "I'm lubing my 65% today, photos later."), ..message("3", "Zhou Ye", "10:31", "Nice, @ me when it's done.") },
         MessageRow { content: Content::Sticker, detail: "👍".into(), sticker: sticker(), ..message("3a", "Zhou Ye", "10:31", "") },
         message("4", "Mika", "11:02", "I can make the meetup on Thursday, but only after 3pm."),
         message("5", "Mi", "11:05", "Thursday 15:00 at the usual place. Who's coming?"),
+        MessageRow {
+            forwarded_from: "Keyboard Lab Notices".into(),
+            ..message("5a", "Mi", "11:40", "October group buy: dark PBT keycaps, orders close October 8.")
+        },
+        MessageRow {
+            reply: ReplyQuote { shown: true, gone: true, ..ReplyQuote::default() },
+            ..message("5b", "Mika", "14:05", "Saw it before it was deleted, looks great.")
+        },
         MessageRow {
             content: Content::Photo,
             media: model(album()),
@@ -427,6 +452,115 @@ fn open_news(ui: &MainWindow) {
             ..post("2", "07:30", "Four flagship phones launch this week; cameras and on-device features lead, prices hold.")
         },
     ]));
+}
+
+/// What can be done with a message (the design's fourth round): its menu (someone else's message,
+/// ours, a photo), replying, editing, forwarding, reporting, choosing, deleting, and a notice.
+fn message_actions(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    use MessageAction as A;
+    let actions = ui.global::<Actions>();
+    let conversation = ui.global::<Conversation>();
+    let menu = |row: &str, items: Vec<MessageAction>, head: &str| {
+        actions.set_menu_row(row.into());
+        actions.set_menu_items(model(items));
+        actions.set_menu_head(head.into());
+        actions.set_menu_x(640.0);
+        actions.set_menu_y(430.0);
+        actions.set_menu_open(true);
+    };
+    menu("7", vec![A::Reply, A::Copy, A::CopyLink, A::Forward, A::Report, A::Select], "Jie · 14:20");
+    save(window, &name("message-menu"));
+    menu("3", vec![A::Reply, A::Edit, A::Copy, A::CopyLink, A::Forward, A::Delete, A::Select], "Zhou Ye · 10:31");
+    save(window, &name("message-menu-own"));
+    menu("6", vec![A::Reply, A::CopyImage, A::SaveImage, A::CopyText, A::CopyLink, A::Forward, A::Report, A::Select], "Jie · 14:19");
+    save(window, &name("message-menu-photo"));
+    actions.set_menu_open(false);
+    actions.set_menu_row(SharedString::new());
+
+    let bar = |kind: ComposeBar, name: &str, text: &str, picture: Option<Image>| {
+        actions.set_bar_name(name.into());
+        actions.set_bar_count(1);
+        actions.set_bar_content(if picture.is_some() { Content::Photo } else { Content::Text });
+        actions.set_bar_text(text.into());
+        actions.set_bar_detail(SharedString::new());
+        actions.set_bar_has_picture(picture.is_some());
+        actions.set_bar_picture(picture.unwrap_or_default());
+        actions.set_bar(kind);
+    };
+    bar(ComposeBar::Reply, "Jie", "@Zhou Ye do you still sell the dark keycaps?", None);
+    save(window, &name("reply"));
+    bar(ComposeBar::Edit, "Zhou Ye", "Nice, @ me when it's done.", None);
+    conversation.set_draft("Nice, @ me when it's done, I'll bring the 75%.".into());
+    save(window, &name("edit"));
+    conversation.set_draft(SharedString::new());
+
+    actions.set_picker_saved(true);
+    actions.set_picker_chats(model(vec![
+        chat("keyboards", "Keyboard Lab", ChatKind::Group, moment(Day::Today, 14, 20), "", "", 0, 486),
+        chat("linxia", "Lin Xia", ChatKind::User, moment(Day::Today, 13, 52), "", "", 0, 0),
+        chat("mika", "Mika", ChatKind::User, moment(Day::Today, 11, 3), "", "", 0, 0),
+        chat("books", "Wednesday Book Club", ChatKind::Group, moment(Day::ThisWeek, 20, 15), "", "", 0, 12),
+        chat("mom", "Mom", ChatKind::User, moment(Day::Yesterday, 18, 32), "", "", 0, 0),
+        chat("alex", "Alex Chen", ChatKind::User, moment(Day::Today, 12, 8), "", "", 0, 0),
+    ]));
+    actions.set_bar(ComposeBar::None);
+    actions.set_picker_open(true);
+    save(window, &name("forward-picker"));
+    actions.set_picker_open(false);
+    bar(ComposeBar::Forward, "Jie", "", Some(gradient(80, 60, 25.0)));
+    actions.set_bar_count(3);
+    save(window, &name("forward"));
+    actions.set_bar(ComposeBar::None);
+
+    let reasons = ["I don't like it", "Child abuse", "Violence", "Illegal goods", "Personal data", "Scam or spam", "Copyright", "Other"];
+    actions.set_report_first(true);
+    actions.set_report_title("Report".into());
+    actions.set_report_options(model(reasons.iter().map(|reason| SharedString::from(*reason)).collect()));
+    actions.set_report_comment(false);
+    actions.set_report_open(true);
+    save(window, &name("report"));
+    actions.set_report_first(false);
+    actions.set_report_title("Copyright".into());
+    actions.set_report_comment(true);
+    actions.set_report_comment_required(true);
+    save(window, &name("report-comment"));
+    actions.set_report_open(false);
+
+    // Choosing: three messages, the album among them.
+    let messages = conversation.get_messages();
+    let chosen = ["4", "5", "6"];
+    let marked = |on: bool| {
+        for index in 0..messages.row_count() {
+            if let Some(row) = messages.row_data(index) {
+                let selected = on && chosen.contains(&row.id.as_str());
+                messages.set_row_data(index, MessageRow { selected, ..row });
+            }
+        }
+    };
+    marked(true);
+    actions.set_selected_count(5);
+    actions.set_can_forward(true);
+    actions.set_can_copy(true);
+    actions.set_can_delete(false);
+    actions.set_can_report(true);
+    actions.set_report_offered(true);
+    actions.set_selecting(true);
+    save(window, &name("select"));
+    actions.set_selecting(false);
+    marked(false);
+
+    actions.set_delete_count(1);
+    actions.set_delete_choice(DeleteChoice::ForEveryone);
+    actions.set_revoke(true);
+    actions.set_delete_open(true);
+    save(window, &name("delete"));
+    actions.set_delete_open(false);
+
+    actions.set_flash("3".into());
+    actions.set_notice(ActionNotice::LinkCopied);
+    save(window, &name("notice"));
+    actions.set_notice(ActionNotice::None);
+    actions.set_flash(SharedString::new());
 }
 
 /// Settings → Privacy & security, and two-step verification: on, with a reset on its way and a
@@ -519,6 +653,7 @@ fn screenshots() {
             right_click(&window, x, y);
             save(&window, &name("chat-menu"));
             escape(&window);
+            message_actions(&ui, &window, &name);
             open_viewer(&ui, 1);
             save(&window, &name("viewer-photo"));
             open_viewer(&ui, 2);
@@ -552,6 +687,7 @@ fn screenshots() {
         app.set_page(Page::Chats);
         open_keyboards(&ui);
         save(&window, &format!("zh-{theme_name}-chats"));
+        message_actions(&ui, &window, &|page: &str| format!("zh-{theme_name}-{page}"));
     }
     app.set_theme(Theme::Workbench);
     app.set_telegram_state(TelegramState::WaitPhoneNumber);

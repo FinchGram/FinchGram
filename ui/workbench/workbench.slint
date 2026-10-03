@@ -8,6 +8,7 @@ import { Icon, Logo, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 import { WorkbenchSidebar, WorkbenchView } from "sidebar.slint";
 import { WorkbenchMain } from "conversation.slint";
+import { WorkbenchActions } from "actions.slint";
 
 component SearchBox inherits Rectangle {
     width: 420px;
@@ -568,4 +569,7 @@ export component WorkbenchWindow inherits Rectangle {
         }
         StatusBar { }
     }
+
+    // A message's menu and the dialogs of its actions, over everything.
+    WorkbenchActions { }
 }

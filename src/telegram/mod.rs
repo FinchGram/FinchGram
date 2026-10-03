@@ -7,8 +7,8 @@
 //! copies into its answer, and the answer goes to the callback given with the request. Updates are
 //! parsed on the reader thread and reach the UI thread in batches: logging in follows the
 //! authorization state (login.rs), everything else goes into the store (store.rs), and after each
-//! batch the pages are brought up to date. chats.rs, conversation.rs, account.rs and password.rs
-//! do what the pages ask for.
+//! batch the pages are brought up to date. chats.rs, conversation.rs, actions.rs, account.rs and
+//! password.rs do what the pages ask for.
 //!
 //! When finchgram-tdlib ends unexpectedly, the requests still waiting fail and it is started
 //! again: TDLib's database is on disk, so it carries on where it was. After a log out TDLib closes
@@ -17,6 +17,7 @@
 //! Everything here runs on the UI thread.
 
 mod account;
+mod actions;
 mod api;
 mod chats;
 mod conversation;
@@ -109,6 +110,7 @@ pub fn start(ui: &MainWindow) {
     login::connect(ui);
     chats::connect(ui);
     conversation::connect(ui);
+    actions::connect(ui);
     account::connect(ui);
     password::connect(ui);
     viewer::connect(ui);
@@ -118,6 +120,9 @@ pub fn start(ui: &MainWindow) {
             if let WindowEvent::Focused(true) = event {
                 conversation::window_came_to_front();
             }
+            // Right clicks are seen here, before the pages: a message's menu opens wherever on it
+            // the click was, even on its formatted words, which keep clicks to themselves.
+            actions::window_event(event);
             EventResult::Propagate
         });
     }
@@ -251,6 +256,7 @@ fn on_update(update: Update) {
                 store::with(|store| store.dirty.conversation = true);
                 store::refresh();
             }),
+            Some(Followup::Deleted { chat_id, message_ids }) => actions::deleted(chat_id, &message_ids),
             Some(Followup::None) | None => {}
         },
     }
