@@ -422,6 +422,11 @@ fn edit_last() {
     });
 }
 
+/// Whether a message of `chat_id` is being edited: writing then is no typing.
+pub fn editing(chat_id: i64) -> bool {
+    STATE.with(|state| matches!(state.borrow().bar, Some((bar_chat, Bar::Edit { .. })) if bar_chat == chat_id))
+}
+
 /// When an edit is under way, it ends: what was being written before it.
 fn ending_edit_draft() -> Option<String> {
     STATE.with(|state| match state.borrow().bar.as_ref() {

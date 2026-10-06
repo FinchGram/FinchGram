@@ -3,13 +3,14 @@
 //!
 //! TDLib is told which chat is open (openChat, closeChat): supergroups and channels send their
 //! updates only while open. The messages of the open chat are marked as seen as they arrive
-//! (viewMessages), which is what marks them read; that is what Telegram's own apps do, and
-//! FinchGram does not do otherwise (Telegram's API terms). Channels show Telegram's sponsored
-//! messages, marked as seen once shown. The pictures of photos, videos and GIFs are downloaded
-//! when a page shows their message.
+//! (viewMessages), which is what marks them read, and while the user writes, the chat sees that we
+//! are typing (sendChatAction); that is what Telegram's own apps do, and FinchGram does not do
+//! otherwise (Telegram's API terms). Channels show Telegram's sponsored messages, marked as seen
+//! once shown. The pictures of photos, videos and GIFs are downloaded when a page shows their
+//! message.
 
-use std::cell::RefCell;
-use std::time::Duration;
+use std::cell::{Cell, RefCell};
+use std::time::{Duration, Instant};
 
 use serde_json::json;
 use slint::ComponentHandle;
@@ -23,6 +24,8 @@ use crate::{Conversation, MainWindow};
 thread_local! {
     /// Messages that arrived in the open chat while the window was in the background.
     static UNSEEN: RefCell<Vec<(i64, Vec<i64>)>> = const { RefCell::new(Vec::new()) };
+    /// The chat last told that we are typing, and when.
+    static TYPING: Cell<Option<(i64, Instant)>> = const { Cell::new(None) };
 }
 
 /// The window came to the front: what arrived in the open chat meanwhile is seen now. Messages of
@@ -44,6 +47,9 @@ const ENOUGH: usize = 30;
 const TABS: usize = 12;
 /// Muting "forever": TDLib takes any time longer than a year as that.
 const MUTE_FOREVER: i32 = i32::MAX;
+/// Others see that we are typing for a few seconds after they are told (store::TYPING_LASTS);
+/// while the user goes on writing, they are told again after this long, as Telegram's own apps do.
+const TYPING_SAID_EVERY: Duration = Duration::from_secs(5);
 
 pub fn connect(ui: &MainWindow) {
     let conversation = ui.global::<Conversation>();
@@ -59,6 +65,7 @@ pub fn connect(ui: &MainWindow) {
     });
     conversation.on_close_others(close_others);
     conversation.on_send(|text| write(&text));
+    conversation.on_edited(|words| edited(&words));
     conversation.on_load_older(load_older);
     conversation.on_retry(|id| {
         if let (Ok(id), Some(chat_id)) = (id.parse::<i64>(), open_chat()) {
@@ -439,10 +446,38 @@ fn open_sponsored(message_id: i64) {
 fn write(text: &str) {
     let text = text.trim();
     let Some(chat_id) = open_chat() else { return };
+    // The message ends the typing; the next words say it again at once.
+    TYPING.set(None);
     if actions::send_with_bar(chat_id, text) || text.is_empty() {
         return;
     }
     send_text(chat_id, text, None);
+}
+
+/// What the user writes changed: the open chat sees that we are typing, or that we stopped when
+/// the words are gone. Editing a message is no typing.
+fn edited(words: &str) {
+    let Some(chat_id) = open_chat() else { return };
+    if actions::editing(chat_id) {
+        return;
+    }
+    let said = TYPING.get().and_then(|(chat, at)| (chat == chat_id).then(|| at.elapsed()));
+    let Some(typing) = typing_now(!words.trim().is_empty(), said) else { return };
+    TYPING.set(typing.then(|| (chat_id, Instant::now())));
+    let action = if typing { json!({ "@type": "chatActionTyping" }) } else { json!({ "@type": "chatActionCancel" }) };
+    let request = json!({ "@type": "sendChatAction", "chat_id": chat_id, "topic_id": null, "business_connection_id": "", "action": action });
+    send(request, |answer| log_error("say that we are typing", answer));
+}
+
+/// What to tell a chat, `said` being how long ago it was last told that we are typing: that we are
+/// (true), that we stopped (false), or nothing.
+fn typing_now(has_words: bool, said: Option<Duration>) -> Option<bool> {
+    if has_words {
+        said.is_none_or(|said| said >= TYPING_SAID_EVERY).then_some(true)
+    } else {
+        // Only while the others may still see it.
+        said.is_some_and(|said| said < store::TYPING_LASTS).then_some(false)
+    }
 }
 
 /// Send `text` to a chat, as a reply to `reply_to` when given. The message shows itself as TDLib
@@ -584,6 +619,17 @@ fn log_error(what: &str, answer: Result<serde_json::Value, Error>) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn typing_is_said_again_while_writing_and_taken_back_when_the_words_are_gone() {
+        let seconds = Duration::from_secs;
+        assert_eq!(typing_now(true, None), Some(true));
+        assert_eq!(typing_now(true, Some(seconds(2))), None);
+        assert_eq!(typing_now(true, Some(seconds(5))), Some(true));
+        assert_eq!(typing_now(false, Some(seconds(2))), Some(false));
+        assert_eq!(typing_now(false, Some(seconds(9))), None, "seen as stopped already");
+        assert_eq!(typing_now(false, None), None);
+    }
 
     #[test]
     fn links_that_name_a_chat() {

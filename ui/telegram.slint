@@ -209,6 +209,9 @@ export global Conversation {
     callback close(string);                      // a tab
     callback close-others();
     callback send(string);
+    // The user changed what is being written: Rust tells the chat that we are typing, or that we
+    // stopped (the words are gone).
+    callback edited(string);
     callback load-older();
     callback retry(string);                      // a message that failed to send
     callback open-sponsored(string);             // a sponsored message's button

@@ -98,8 +98,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   该不该通知由 TDLib 决定。它遵循每个聊天的免打扰和每类聊天的设置（Telegram 自己的、跟着账号走的设置），
   账号的另一台设备正在用时会稍等一下，消息在任何地方读过之后会把通知收回。外壳只负责显示 TDLib 加的通知
   （用户正看着的不显示：窗口在前台时打开着的那个聊天），收回 TDLib 去掉的通知；点通知会打开那个聊天。
-  窗口在前台并且有人在用时，账号是在线状态（`online.rs`，TDLib 的 `online` 选项），和 Telegram 官方应用一样：
-  Telegram 据此压下用户其他设备上的通知，TDLib 据此决定 FinchGram 的通知什么时候出。
+- Telegram 官方应用让别人看到的，FinchGram 也一样（API 条款）：消息看到了才算已读（`conversation.rs`，viewMessages），
+  用户写字时对方能看到“正在输入”（sendChatAction），窗口在前台并且有人在用时账号是在线状态（`online.rs`，
+  TDLib 的 `online` 选项）。Telegram 据在线状态压下用户其他设备上的通知，TDLib 据此决定 FinchGram 的通知什么时候出。
 - 在消息上任何地方点右键都会弹出它的菜单。消息里带格式的文字（Slint 的 StyledText）会把所有点击留给自己，
   所以右键是在窗口自己的事件里看到的（`mod.rs`，通过 winit），记进一个全局属性，再由指针下的那一行去要菜单。
   菜单里有哪些项，看 TDLib 说这条消息能做什么（getMessageProperties）。

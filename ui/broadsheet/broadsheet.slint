@@ -1929,6 +1929,9 @@ component ConversationPane inherits Rectangle {
                         send(words) => {
                             Conversation.send(words);
                         }
+                        edited(words) => {
+                            Conversation.edited(words);
+                        }
                     }
                 }
                 // Attachments and scheduling are still to come.

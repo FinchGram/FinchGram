@@ -122,10 +122,12 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   chats' mutes and each kind of chat's setting (Telegram's own, for the account), waits a moment while
   another of the account's devices is in use, and takes a notification back once its message is
   read anywhere. The shell shows what TDLib adds (not what the user is looking at: the open chat
-  while the window is in front) and takes back what TDLib removes; a click opens the chat. The
-  account is online while the window is in front and in use (`online.rs`, TDLib's `online`
-  option), as in Telegram's own apps: Telegram goes by it to hold back the notifications of the
-  user's other devices, and TDLib to time FinchGram's.
+  while the window is in front) and takes back what TDLib removes; a click opens the chat.
+- What Telegram's own apps let others see, FinchGram does too (the API terms): a message is read
+  once it is seen (`conversation.rs`, viewMessages), the chat sees that the user is typing while
+  they write (sendChatAction), and the account is online while the window is in front and in use
+  (`online.rs`, TDLib's `online` option). Telegram goes by the last to hold back the notifications
+  of the user's other devices, and TDLib to time FinchGram's.
 - A message's menu opens on a right click anywhere on the message. Its formatted words (Slint's
   StyledText) keep every click to themselves, so the right click is seen in the window's own events
   (`mod.rs`, through winit), counted in a global, and the row under the pointer asks for its menu.

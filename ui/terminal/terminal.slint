@@ -1063,6 +1063,12 @@ component CommandLine inherits Rectangle {
                 send(words) => {
                     root.run(words);
                 }
+                // A command is no message: writing one is no typing.
+                edited(words) => {
+                    if !words.starts-with("/") {
+                        Conversation.edited(words);
+                    }
+                }
             }
         }
         T {

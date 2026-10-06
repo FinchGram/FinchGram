@@ -84,7 +84,8 @@ export global ChatIcons {
 
 // Where a message is written: Enter sends it, Shift+Enter starts a new line; while an input method
 // is still composing, Enter is the input method's. Grows with the text up to `tallest`. Esc closes
-// what is open over it (Actions.escape); ↑ in an empty box edits our last message.
+// what is open over it (Actions.escape); ↑ in an empty box edits our last message. Each change the
+// user makes is reported (`edited`): the chat sees that we are typing.
 export component MessageInput inherits Rectangle {
     in property <string> placeholder;
     in property <color> text-color;
@@ -104,6 +105,8 @@ export component MessageInput inherits Rectangle {
     out property <bool> has-focus: input.has-focus;
     // The words to send; the box empties itself.
     callback send(string);
+    // The user changed the words (not Rust, not sending).
+    callback edited(string);
     height: clamp(input.preferred-height + 2 * padding-y, base-height, tallest);
 
     public function focus-text() {
@@ -153,6 +156,9 @@ export component MessageInput inherits Rectangle {
             font-size: root.font-size;
             line-height-factor: root.line-height-factor;
             selection-background-color: root.selection-color;
+            edited => {
+                root.edited(self.text);
+            }
             // Enter sends, and with Shift or Option makes a new line; without Send with Enter
             // (Settings → General), ⌘Enter sends and Enter makes a new line. (Slint reports ⌘ as
             // control on macOS.)
