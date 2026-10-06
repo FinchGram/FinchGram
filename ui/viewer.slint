@@ -484,6 +484,9 @@ component PictureViewer inherits Rectangle {
                         }
                     }
                 }
+                // The caption: a few lines at most, the rest elided. Its height is what it shows:
+                // counted whole, a long caption (a channel post's) would push the picture up and
+                // leave the rest of its lines as a blank below.
                 caption := Rectangle {
                     height: state.item.caption == "" ? 0px : caption-row.preferred-height;
                     caption-row := HorizontalLayout {
@@ -493,12 +496,12 @@ component PictureViewer inherits Rectangle {
                         padding-right: 24px;
                         Text {
                             width: min(720px, root.width - 48px);
+                            height: min(self.preferred-height, 72px);
                             text: state.item.caption;
                             color: root.look.caption-color;
                             font-size: root.look.caption-size;
                             wrap: word-wrap;
                             horizontal-alignment: center;
-                            max-height: 72px;
                             overflow: elide;
                         }
                     }
@@ -865,6 +868,7 @@ component TextViewer inherits Rectangle {
                         }
                     }
                 }
+                // The caption, a few lines at most (see PictureViewer's).
                 caption := Rectangle {
                     height: state.item.caption == "" ? 0px : caption-row.preferred-height;
                     caption-row := HorizontalLayout {
@@ -874,10 +878,11 @@ component TextViewer inherits Rectangle {
                         padding-right: 16px;
                         TermText {
                             width: min(760px, root.width - 32px);
+                            height: min(self.preferred-height, 64px);
                             text: "» " + state.item.caption;
                             wrap: word-wrap;
                             horizontal-alignment: center;
-                            max-height: 64px;
+                            vertical-alignment: top;
                             overflow: elide;
                         }
                     }

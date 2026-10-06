@@ -286,7 +286,18 @@ fn open_viewer(ui: &MainWindow, index: i32) {
         caption: "The lubed switch comparison is in the group album, have a look.".into(),
     };
     let wide = Media { id: "8".into(), duration: 95, name: "screen-recording.mp4".into(), ..media("8", 1280, 544, 200.0, true) };
-    viewer.set_items(model(album().into_iter().chain(std::iter::once(wide)).map(item).collect()));
+    // The wide video has a long caption, as a channel's posts do: the viewer shows a few lines of
+    // it and keeps the room for the picture.
+    let mut items: Vec<ViewerItem> = album().into_iter().map(item).collect();
+    items.push(ViewerItem {
+        caption: "Switch comparison, part two: the same five linear switches, lubed with Krytox 205g0 this time. \
+            Recorded on the plate with the case open, then closed, so you can hear what the foam does. \
+            Timestamps for each switch are in the pinned message, and the spreadsheet with the force \
+            curves is in the files tab of the group."
+            .into(),
+        ..item(wide)
+    });
+    viewer.set_items(model(items));
     viewer.set_index(index);
     viewer.set_zoom(0);
     viewer.set_playing(false);
