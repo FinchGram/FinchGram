@@ -1177,21 +1177,31 @@ fn jump(message_id: i64) {
 fn jump_looking(message_id: i64, pages_left: u32) {
     enum Found {
         Row(i64),
+        /// Here, but above the rows shown.
+        Hidden(i64),
         Older(i64),
         Nowhere,
     }
-    let found = store::with(|store| {
+    let look = |store: &mut store::Store| {
         let Some(chat_id) = store.open else { return Found::Nowhere };
         if let Some((row, _)) = store.rows.iter().find(|(_, ids)| ids.contains(&message_id)) {
             return Found::Row(*row);
         }
-        let history = store.histories.get(&chat_id);
-        let older = history.is_some_and(|history| history.has_older && history.messages.keys().next().is_some_and(|oldest| *oldest > message_id));
+        let Some(history) = store.histories.get(&chat_id) else { return Found::Nowhere };
+        if history.messages.contains_key(&message_id) {
+            return Found::Hidden(chat_id);
+        }
+        let older = history.has_older && history.messages.keys().next().is_some_and(|oldest| *oldest > message_id);
         if older { Found::Older(chat_id) } else { Found::Nowhere }
-    })
-    .unwrap_or(Found::Nowhere);
-    match found {
+    };
+    match store::with(look).unwrap_or(Found::Nowhere) {
         Found::Row(row) => reveal(row),
+        Found::Hidden(chat_id) => {
+            conversation::show_from(chat_id, message_id);
+            if let Some(Found::Row(row)) = store::with(look) {
+                reveal(row);
+            }
+        }
         Found::Older(chat_id) if pages_left > 0 => {
             conversation::load_older_then(chat_id, move || jump_looking(message_id, pages_left - 1));
         }

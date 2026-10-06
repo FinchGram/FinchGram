@@ -28,15 +28,17 @@ thread_local! {
     static TYPING: Cell<Option<(i64, Instant)>> = const { Cell::new(None) };
 }
 
-/// The window came to the front: what arrived in the open chat meanwhile is seen now. Messages of
-/// a chat that is no longer open stay unread.
+/// The window came to the front: what arrived in the open chat meanwhile is seen now, in one
+/// request (a busy chat gathers thousands of messages in a day). Messages of a chat that is no
+/// longer open stay unread.
 pub fn window_came_to_front() {
     let unseen = UNSEEN.with(|unseen| std::mem::take(&mut *unseen.borrow_mut()));
-    let open = open_chat();
-    for (chat_id, message_ids) in unseen {
-        if Some(chat_id) == open {
-            view(chat_id, message_ids);
-        }
+    let Some(open) = open_chat() else { return };
+    let mut seen: Vec<i64> = unseen.into_iter().filter(|(chat_id, _)| *chat_id == open).flat_map(|(_, ids)| ids).collect();
+    seen.sort_unstable();
+    seen.dedup();
+    if !seen.is_empty() {
+        view(open, seen);
     }
 }
 
@@ -72,6 +74,7 @@ pub fn connect(ui: &MainWindow) {
     conversation.on_send(|text| write(&text));
     conversation.on_edited(|words| edited(&words));
     conversation.on_load_older(load_older);
+    conversation.on_reached_end(reached_end);
     conversation.on_retry(|id| {
         if let (Ok(id), Some(chat_id)) = (id.parse::<i64>(), open_chat()) {
             let request = json!({ "@type": "resendMessages", "chat_id": chat_id, "message_ids": [id], "quote": null, "paid_message_star_count": 0 });
@@ -159,7 +162,14 @@ pub fn open(chat_id: i64) {
                 store.sponsored.remove(&oldest);
             }
         }
-        let needs_history = !store.histories.contains_key(&chat_id);
+        // The chat opens at its end, with the newest messages.
+        let needs_history = match store.histories.get_mut(&chat_id) {
+            Some(history) => {
+                history.shown = store::SHOWN;
+                false
+            }
+            None => true,
+        };
         store.dirty.chats = true;
         store.dirty.conversation = true;
         store.dirty.scroll_to_end = true;
@@ -327,6 +337,10 @@ fn load_history(chat_id: i64, from_message_id: i64, then: Option<Box<dyn FnOnce(
             for message in messages {
                 history.messages.insert(message.id, message);
             }
+            // A page asked for from the top of the view is shown; the first page is shown anyway.
+            if from_message_id != 0 {
+                history.shown += older;
+            }
             let oldest = history.messages.keys().next().copied();
             let more = from_message_id == 0 && history.has_older && history.messages.len() < ENOUGH;
             store.dirty.conversation = open;
@@ -348,20 +362,71 @@ fn load_history(chat_id: i64, from_message_id: i64, then: Option<Box<dyn FnOnce(
     });
 }
 
-/// The view reached the top: older messages.
+/// The view reached the top: older messages. Those here already but not shown (the rows show
+/// [`store::SHOWN`] at the end) come first, a page at a time and at once; then TDLib's.
 fn load_older() {
-    let Some((chat_id, oldest)) = store::with(|store| {
-        let chat_id = store.open?;
-        let history = store.histories.get(&chat_id)?;
+    enum Then {
+        Nothing,
+        Shown,
+        Load(i64, i64),
+    }
+    let then = store::with(|store| {
+        let Some(chat_id) = store.open else { return Then::Nothing };
+        let Some(history) = store.histories.get_mut(&chat_id) else { return Then::Nothing };
+        if history.hides_older() {
+            history.shown += PAGE as usize;
+            store.dirty.conversation = true;
+            return Then::Shown;
+        }
         if !history.has_older || history.loading {
+            return Then::Nothing;
+        }
+        match history.messages.keys().next() {
+            Some(oldest) => Then::Load(chat_id, *oldest),
+            None => Then::Nothing,
+        }
+    })
+    .unwrap_or(Then::Nothing);
+    match then {
+        Then::Shown => store::refresh(),
+        Then::Load(chat_id, oldest) => load_history(chat_id, oldest, None),
+        Then::Nothing => {}
+    }
+}
+
+/// The view is back at the end of the chat: the rows go back to the newest messages alone, so that
+/// what follows (new messages, pictures) costs as little as at the start. Nothing on screen moves.
+fn reached_end() {
+    let shrunk = store::with(|store| {
+        let history = store.histories.get_mut(&store.open?)?;
+        if history.shown <= store::SHOWN {
             return None;
         }
-        Some((chat_id, *history.messages.keys().next()?))
+        history.shown = store::SHOWN;
+        store.dirty.conversation = true;
+        Some(())
     })
-    .flatten() else {
-        return;
-    };
-    load_history(chat_id, oldest, None);
+    .flatten();
+    if shrunk.is_some() {
+        store::refresh();
+    }
+}
+
+/// Let the rows of `chat_id` reach back to `message_id`, when it is here (a reply's original, a
+/// picture the media viewer locates). True when the rows changed for it, and are laid out anew.
+pub fn show_from(chat_id: i64, message_id: i64) -> bool {
+    let extended = store::with(|store| {
+        let history = store.histories.get_mut(&chat_id)?;
+        let extended = history.show_from(message_id);
+        store.dirty.conversation |= extended && store.open == Some(chat_id);
+        Some(extended)
+    })
+    .flatten()
+    .unwrap_or(false);
+    if extended {
+        store::refresh();
+    }
+    extended
 }
 
 /// Load the page before the oldest message loaded, then `then` (a reply's original is looked for).

@@ -93,7 +93,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 
 - `src/telegram/`：适配层。`process.rs` 负责运行那个程序，`api.rs` 是我们用到的 TDLib 类型，`mod.rs` 负责发请求、
   分发回复、重新启动和转交更新。`store.rs` 保存 TDLib 告诉我们的东西（聊天、用户、群组、文件夹、打开的聊天的消息），
-  每批更新之后把页面用的 model 更新到最新；`login.rs`、`chats.rs`、`conversation.rs`、`actions.rs`（消息操作）、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`viewer.rs` 给媒体查看器提供内容，`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
+  每批更新之后把页面用的 model 更新到最新，只动真正变了的行。打开的聊天只显示最新的 100 条消息，往上翻时再增加：
+  页面会把每一行都排出来，其中任何一行一变就要把所有行重新量一遍，所以行数就是每条新消息的代价。
+  `login.rs`、`chats.rs`、`conversation.rs`、`actions.rs`（消息操作）、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`viewer.rs` 给媒体查看器提供内容，`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
 - 通知（`notifications.rs`，设置 → 通知与声音）用的是 TDLib 自己的：用它的 `notification_group_count_max` 选项打开后，
   该不该通知由 TDLib 决定。它遵循每个聊天的免打扰和每类聊天的设置（Telegram 自己的、跟着账号走的设置），
   账号的另一台设备正在用时会稍等一下，消息在任何地方读过之后会把通知收回。外壳只负责显示 TDLib 加的通知
@@ -114,6 +116,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - `src/images.rs`：图片（照片、视频封面、消息里自带的小预览图）在界面线程之外解码，并缓存最近的。
 - `src/screenshots.rs`：用 Slint 的软件渲染器和假数据，把每套主题的每个页面（浅色和深色）画成 PNG
   （`cargo test screenshots -- --ignored`）。
+- `src/telegram/timing.rs`：用同样的方式、很多假聊天和假消息，量页面跟上 store 要多久
+  （`cargo test --release refresh_timing -- --ignored --nocapture`）。
 - `ui/`：`app.slint`（窗口：菜单，以及显示哪个页面）、`state.slint` 和 `telegram.slint`（Rust 和页面共用的 global）、
   `look.slint`、`format.slint`（按界面语言写出的日期、数量和消息类型）、`widgets.slint` 和 `chat.slint`（共用的部件）、
   `viewer.slint`（覆盖整个窗口的媒体查看器）、`pages/`，以及三套主题各自的目录。

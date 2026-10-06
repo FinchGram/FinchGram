@@ -12,7 +12,7 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
-use slint::{ComponentHandle, Image, Model, ModelRc, SharedString, VecModel};
+use slint::{ComponentHandle, Image, Model, ModelRc, SharedPixelBuffer, SharedString, VecModel};
 
 use super::api::{
     self, ChatList, ChatMemberStatus, ChatType, MessageContent as M, MessageOrigin, MessageReplyTo, MessageSender,
@@ -36,21 +36,65 @@ const PREVIEWS_KEPT: usize = 1000;
 /// still sharp at the size a chat shows it.
 const PICTURE_SIDE: i32 = 640;
 
+/// How many of the open chat's newest messages its rows show while the view is at the end. Older
+/// ones join as the view nears the top (conversation.rs), and go again once it is back at the end.
+/// The pages lay the rows out whole and measure every one of them again at each change among them,
+/// so their number is what each new message, picture or edit costs.
+pub const SHOWN: usize = 100;
+
 /// The messages of an open chat that TDLib has given us, by id (oldest first).
-#[derive(Default)]
 pub struct History {
     pub messages: BTreeMap<i64, api::Message>,
     /// TDLib may have older messages than the oldest here.
     pub has_older: bool,
     /// A getChatHistory request is on its way.
     pub loading: bool,
+    /// How many of the newest messages the rows show ([`SHOWN`] at the end).
+    pub shown: usize,
+}
+
+impl Default for History {
+    fn default() -> History {
+        History { messages: BTreeMap::new(), has_older: false, loading: false, shown: SHOWN }
+    }
+}
+
+impl History {
+    /// The messages the rows show, oldest first: the newest `shown`, an album among them whole.
+    pub fn shown_messages(&self) -> impl Iterator<Item = &api::Message> {
+        let all: Vec<&api::Message> = self.messages.values().collect();
+        let mut start = all.len().saturating_sub(self.shown);
+        while start > 0 && all[start].media_album_id != 0 && all[start - 1].media_album_id == all[start].media_album_id {
+            start -= 1;
+        }
+        self.messages.values().skip(start)
+    }
+
+    /// Messages older than the rows show are here already.
+    pub fn hides_older(&self) -> bool {
+        self.messages.len() > self.shown
+    }
+
+    /// Let the rows reach back to `message_id`; true when they did not before.
+    pub fn show_from(&mut self, message_id: i64) -> bool {
+        let needed = self.messages.range(message_id..).count();
+        if needed > self.shown {
+            self.shown = needed;
+            true
+        } else {
+            false
+        }
+    }
 }
 
 /// Which models need building again at the next refresh.
 #[derive(Default)]
 pub struct Dirty {
     pub chats: bool,
+    /// The open chat's messages (and its header with them).
     pub conversation: bool,
+    /// The open chat's header alone: who is typing, how many are online, whether we may write.
+    pub header: bool,
     pub account: bool,
     /// The media viewer's pictures (while it is open).
     pub viewer: bool,
@@ -109,6 +153,10 @@ pub struct Store {
     /// The media list of each message row, by row id: the same model from one refresh to the next,
     /// so that a row changes only when its media do.
     media_models: RefCell<HashMap<SharedString, Rc<VecModel<Media>>>>,
+    /// No picture: one empty image for every row without one. Slint's default image never equals
+    /// another, not even itself, and a row that never compares equal is set again at each refresh,
+    /// which lays the whole chat out again.
+    blank: Image,
 
     /// The open chat's message rows as last shown, in order: each row's id (its first message) and
     /// its messages (several for an album).
@@ -178,6 +226,7 @@ pub fn install(ui: &MainWindow) {
             pictures: images::Cache::new(PICTURES_KEPT),
             previews: RefCell::new(images::Cache::new(PREVIEWS_KEPT)),
             media_models: RefCell::new(HashMap::new()),
+            blank: Image::from_rgba8(SharedPixelBuffer::new(1, 1)),
             rows: Vec::new(),
             selected: HashSet::new(),
             replied: HashMap::new(),
@@ -223,8 +272,15 @@ pub fn clear() {
         store.replied.clear();
         store.missing_replies.clear();
         store.asking_replies.clear();
-        store.dirty =
-            Dirty { chats: true, conversation: true, account: true, viewer: true, notification_scopes: true, scroll_to_end: false };
+        store.dirty = Dirty {
+            chats: true,
+            conversation: true,
+            header: true,
+            account: true,
+            viewer: true,
+            notification_scopes: true,
+            scroll_to_end: false,
+        };
     });
     refresh();
 }
@@ -240,8 +296,10 @@ pub fn refresh() {
         if dirty.chats {
             store.refresh_chats(&ui, &words);
         }
-        if dirty.chats || dirty.conversation {
-            store.refresh_conversation(&ui, &words, dirty.scroll_to_end);
+        // The header shows the chat as the lists do (its name, its mute, who is online): it follows
+        // them; the message rows only follow the messages.
+        if dirty.chats || dirty.header || dirty.conversation {
+            store.refresh_conversation(&ui, &words, dirty.conversation, dirty.scroll_to_end);
         }
         if dirty.account {
             store.refresh_account(&ui);
@@ -294,7 +352,8 @@ impl Names {
 }
 
 /// Replace the rows of `model` with `rows`, touching only the rows that changed when the number of
-/// rows stays the same.
+/// rows stays the same. For the chat lists, which are ListViews: when the number changes they make
+/// their visible rows again, and that is cheap.
 fn sync<T: Clone + PartialEq + 'static>(model: &VecModel<T>, rows: Vec<T>) {
     if model.row_count() != rows.len() {
         model.set_vec(rows);
@@ -304,6 +363,62 @@ fn sync<T: Clone + PartialEq + 'static>(model: &VecModel<T>, rows: Vec<T>) {
         if model.row_data(index).as_ref() != Some(&row) {
             model.set_row_data(index, row);
         }
+    }
+}
+
+/// Replace the rows of `model` with `rows` by their keys, which both have in the same order: a row
+/// whose key stayed is kept (set again only when it changed), one whose key went is taken out, and
+/// one with a new key is put in where it belongs. For the messages and the tabs, which the pages
+/// lay out whole, every row an item of its own: a reset would make every item again at each new
+/// message, and a message's item is a large one (its words, pictures, quote, preview, menu).
+fn sync_keyed<T: Clone + PartialEq + 'static, K: Eq + Hash>(model: &VecModel<T>, rows: Vec<T>, key: impl Fn(&T) -> K) {
+    let old: Vec<T> = model.iter().collect();
+    if old.is_empty() || rows.is_empty() {
+        model.set_vec(rows);
+        return;
+    }
+    let old_keys: Vec<K> = old.iter().map(&key).collect();
+    let new_keys: Vec<K> = rows.iter().map(&key).collect();
+    let wanted: HashSet<&K> = new_keys.iter().collect();
+    // New rows put in so far: an old row with one of their keys has moved, and goes.
+    let mut placed: HashSet<&K> = HashSet::new();
+    let mut next_old = 0;
+    let mut at = 0;
+    for (row, new_key) in rows.into_iter().zip(&new_keys) {
+        while next_old < old.len() && (!wanted.contains(&old_keys[next_old]) || placed.contains(&old_keys[next_old])) {
+            model.remove(at);
+            next_old += 1;
+        }
+        if next_old < old.len() && old_keys[next_old] == *new_key {
+            if old[next_old] != row {
+                model.set_row_data(at, row);
+            }
+            next_old += 1;
+        } else {
+            model.insert(at, row);
+        }
+        placed.insert(new_key);
+        at += 1;
+    }
+    while next_old < old.len() {
+        model.remove(at);
+        next_old += 1;
+    }
+}
+
+/// What tells a message row from the others, from one refresh to the next.
+#[derive(PartialEq, Eq, Hash)]
+enum RowKey {
+    Day(i32, i32, i32),
+    Message(SharedString),
+    Sponsored(SharedString),
+}
+
+fn row_key(row: &MessageRow) -> RowKey {
+    match row.kind {
+        RowKind::Day => RowKey::Day(row.day.year, row.day.month, row.day.date),
+        RowKind::Sponsored => RowKey::Sponsored(row.id.clone()),
+        RowKind::Message | RowKind::Service => RowKey::Message(row.id.clone()),
     }
 }
 
@@ -340,8 +455,13 @@ impl Store {
                 if user.id == self.my_id {
                     self.dirty.account = true;
                 }
+                // The message rows name their senders: a name that changed shows in them.
+                let renamed = self.users.get(&user.id).is_none_or(|known| {
+                    known.first_name != user.first_name || known.last_name != user.last_name || known.kind != user.kind
+                });
                 self.users.insert(user.id, user);
                 self.dirty.chats = true;
+                self.dirty.conversation |= renamed && self.open.is_some();
             }
             Update::UserStatus { user_id, status } => {
                 if let Some(user) = self.users.get_mut(&user_id) {
@@ -370,17 +490,20 @@ impl Store {
             Update::NewChat { chat } => {
                 self.chats.insert(chat.id, *chat);
                 self.dirty.chats = true;
+                // A forwarded message names the chat it came from.
+                self.dirty.conversation |= self.open.is_some();
             }
             Update::ChatTitle { chat_id, title } => {
                 if let Some(chat) = self.chats.get_mut(&chat_id) {
                     chat.title = title;
                     self.dirty.chats = true;
+                    self.dirty.conversation |= self.open.is_some();
                 }
             }
             Update::ChatPermissions { chat_id, permissions } => {
                 if let Some(chat) = self.chats.get_mut(&chat_id) {
                     chat.permissions = permissions;
-                    self.dirty.conversation = true;
+                    self.dirty.header = true;
                 }
             }
             Update::ChatLastMessage { chat_id, last_message, positions } => {
@@ -453,7 +576,7 @@ impl Store {
             }
             Update::ChatOnlineMemberCount { chat_id, online_member_count } => {
                 self.online_members.insert(chat_id, online_member_count);
-                self.dirty.conversation = true;
+                self.dirty.header = true;
             }
             Update::ChatAction { chat_id, sender_id, action } => {
                 let typing = self.typing.entry(chat_id).or_default();
@@ -463,7 +586,7 @@ impl Store {
                     followup = Followup::TypingExpires;
                 }
                 if self.open == Some(chat_id) {
-                    self.dirty.conversation = true;
+                    self.dirty.header = true;
                 }
             }
             Update::NewMessage { message } => {
@@ -475,7 +598,10 @@ impl Store {
                 if let Some(history) = self.histories.get_mut(&chat_id) {
                     let outgoing = message.is_outgoing;
                     let id = message.id;
-                    history.messages.insert(id, *message);
+                    if history.messages.insert(id, *message).is_none() && history.shown > SHOWN {
+                        // The view is up among older messages: the rows it shows stay.
+                        history.shown += 1;
+                    }
                     if self.open == Some(chat_id) {
                         self.dirty.conversation = true;
                         if outgoing {
@@ -881,14 +1007,16 @@ impl Store {
                 muted: self.muted(chat),
             })
             .collect();
-        sync(&self.models.tabs, tabs);
+        sync_keyed(&self.models.tabs, tabs, |tab| tab.id.clone());
     }
 
-    fn refresh_conversation(&mut self, ui: &MainWindow, names: &Names, scroll_to_end: bool) {
+    /// The open chat's header, and its message rows when `rows` (they take the longest: every row
+    /// is made again and compared, so only what changed reaches the pages).
+    fn refresh_conversation(&mut self, ui: &MainWindow, names: &Names, rows: bool, scroll_to_end: bool) {
         let conversation = ui.global::<Conversation>();
         let Some(chat) = self.open.and_then(|id| self.chats.get(&id)) else {
             conversation.set_chat_id(SharedString::new());
-            sync(&self.models.messages, Vec::new());
+            self.models.messages.set_vec(Vec::new());
             return;
         };
         let kind = self.kind(chat);
@@ -919,14 +1047,17 @@ impl Store {
             })
             .unwrap_or_default();
         conversation.set_typing(typing.join(", ").into());
+        if !rows {
+            return;
+        }
 
         let history = self.histories.get(&chat.id);
         conversation.set_loading(history.is_none_or(|history| history.loading && history.messages.is_empty()));
-        conversation.set_has_older(history.is_some_and(|history| history.has_older));
+        conversation.set_has_older(history.is_some_and(|history| history.has_older || history.hides_older()));
         let (rows, members, missing) = self.message_rows(chat, names);
         self.rows = members;
         self.missing_replies = missing;
-        sync(&self.models.messages, rows);
+        sync_keyed(&self.models.messages, rows, row_key);
         if scroll_to_end {
             conversation.set_scroll_to_end(conversation.get_scroll_to_end() + 1);
         }
@@ -957,18 +1088,19 @@ impl Store {
     fn message_rows(&self, chat: &api::Chat, names: &Names) -> (Vec<MessageRow>, Vec<(i64, Vec<i64>)>, Vec<(i64, i64)>) {
         let Some(history) = self.histories.get(&chat.id) else { return (Vec::new(), Vec::new(), Vec::new()) };
         let me = self.user_name(self.my_id, names);
-        let mut rows = Vec::with_capacity(history.messages.len() + 8);
-        let mut members: Vec<(i64, Vec<i64>)> = Vec::with_capacity(history.messages.len());
+        let shown = history.messages.len().min(history.shown);
+        let mut rows = Vec::with_capacity(shown + 8);
+        let mut members: Vec<(i64, Vec<i64>)> = Vec::with_capacity(shown);
         let mut missing = Vec::new();
         // Each row's media, turned into its model once every row is known.
         let mut media: Vec<Vec<Media>> = Vec::with_capacity(rows.capacity());
         let mut previous_day = None;
         // The album of the row before, whose next messages join it.
         let mut album = 0;
-        for message in history.messages.values() {
+        for message in history.shown_messages() {
             let day = time::day(message.date);
             if day != previous_day {
-                rows.push(MessageRow { kind: RowKind::Day, day: time::moment(message.date), ..MessageRow::default() });
+                rows.push(MessageRow { kind: RowKind::Day, day: time::moment(message.date), ..self.blank_row() });
                 media.push(Vec::new());
                 previous_day = day;
                 album = 0;
@@ -986,7 +1118,7 @@ impl Store {
             let rich_text = formatted(&message.content).and_then(rich_text::styled_text);
             let sticker = sticker_picture(&message.content)
                 .map(|picture| Sticker { picture: self.picture_image(&picture), width: picture.width.max(1), height: picture.height.max(1) })
-                .unwrap_or_default();
+                .unwrap_or_else(|| self.no_sticker());
             // An album: its messages after the first join the first one's row, which takes a
             // caption from whichever has one.
             if message.media_album_id != 0
@@ -1051,7 +1183,7 @@ impl Store {
                 sender: sponsored.title.clone().into(),
                 text: text.into(),
                 button: sponsored.button_text.clone().into(),
-                ..MessageRow::default()
+                ..self.blank_row()
             });
         }
         (rows, members, missing)
@@ -1072,7 +1204,7 @@ impl Store {
     /// is added to `missing`, to fetch; until then the reply shows none.
     fn reply_quote(&self, message: &api::Message, me: &str, names: &Names, missing: &mut Vec<(i64, i64)>) -> ReplyQuote {
         let Some(MessageReplyTo::Message { chat_id, message_id, quote, origin, content }) = &message.reply_to else {
-            return ReplyQuote::default();
+            return self.no_quote();
         };
         let quoted = quote.as_ref().map(|quote| first_line(&quote.text.text).to_string()).filter(|text| !text.is_empty());
         // From another chat: the reply itself says who wrote it and what it holds.
@@ -1091,23 +1223,23 @@ impl Store {
                 detail: detail.into(),
                 gone: false,
                 has_picture: picture.is_some(),
-                picture: picture.unwrap_or_default(),
+                picture: picture.unwrap_or_else(|| self.blank.clone()),
             };
         }
         if *message_id == 0 {
-            return ReplyQuote::default();
+            return self.no_quote();
         }
         let chat_id = if *chat_id == 0 { message.chat_id } else { *chat_id };
         let original = match self.histories.get(&chat_id).and_then(|history| history.messages.get(message_id)) {
             Some(original) => original,
             None => match self.replied.get(&(chat_id, *message_id)) {
                 Some(Some(original)) => original,
-                Some(None) => return ReplyQuote { shown: true, gone: true, ..ReplyQuote::default() },
+                Some(None) => return ReplyQuote { shown: true, gone: true, ..self.no_quote() },
                 None => {
                     if !self.asking_replies.contains(&(chat_id, *message_id)) {
                         missing.push((chat_id, *message_id));
                     }
-                    return ReplyQuote::default();
+                    return self.no_quote();
                 }
             },
         };
@@ -1134,7 +1266,7 @@ impl Store {
             detail: detail.into(),
             gone: false,
             has_picture: picture.is_some(),
-            picture: picture.unwrap_or_default(),
+            picture: picture.unwrap_or_else(|| self.blank.clone()),
         }
     }
 
@@ -1182,12 +1314,25 @@ impl Store {
         *models = kept;
     }
 
+    /// A row with no pictures anywhere, to build the others from.
+    fn blank_row(&self) -> MessageRow {
+        MessageRow { sticker: self.no_sticker(), reply: self.no_quote(), ..MessageRow::default() }
+    }
+
+    fn no_sticker(&self) -> Sticker {
+        Sticker { picture: self.blank.clone(), ..Sticker::default() }
+    }
+
+    fn no_quote(&self) -> ReplyQuote {
+        ReplyQuote { picture: self.blank.clone(), ..ReplyQuote::default() }
+    }
+
     /// The best picture there is so far: the downloaded one, else the message's tiny preview.
     fn picture_image(&self, picture: &Picture) -> Image {
         if let Some(image) = picture.file.and_then(|file| self.pictures.get(&file.id)) {
             return image;
         }
-        let Some(preview) = picture.preview else { return Image::default() };
+        let Some(preview) = picture.preview else { return self.blank.clone() };
         let mut hasher = DefaultHasher::new();
         preview.data.hash(&mut hasher);
         let key = hasher.finish();
@@ -1195,7 +1340,7 @@ impl Store {
         if let Some(image) = previews.get(&key) {
             return image;
         }
-        let image = images::preview(&preview.data).unwrap_or_default();
+        let image = images::preview(&preview.data).unwrap_or_else(|| self.blank.clone());
         previews.insert(key, image.clone());
         image
     }

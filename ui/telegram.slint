@@ -215,6 +215,8 @@ export global Conversation {
     // stopped (the words are gone).
     callback edited(string);
     callback load-older();
+    // The view is back at the end of the chat: Rust lets the rows above go again.
+    callback reached-end();
     callback retry(string);                      // a message that failed to send
     callback open-sponsored(string);             // a sponsored message's button
     callback load-picture(string);               // a message with a photo, video or GIF is in view

@@ -112,7 +112,10 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 - `src/telegram/`: the adapter. `process.rs` runs the program, `api.rs` has TDLib's types that we
   use, `mod.rs` sends requests, hands out answers, starts the program again and passes updates on.
   `store.rs` keeps what TDLib has said (chats, users, groups, folders, the messages of the open
-  chats) and brings the pages' models up to date after each batch; `login.rs`, `chats.rs`,
+  chats) and brings the pages' models up to date after each batch, touching only the rows that
+  changed. The open chat's rows are its newest 100 messages, more as the view goes up: the pages
+  lay every row out and measure it again at each change among them, so their number is what each
+  new message costs. `login.rs`, `chats.rs`,
   `conversation.rs`, `actions.rs` (what can be done with a message), `account.rs` and
   `password.rs` (two-step verification) do what the pages ask for; `files.rs` downloads files,
   `viewer.rs` fills the media viewer, and `rich_text.rs` turns a message's formatted text (bold,
@@ -147,6 +150,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   thread, and a cache of them.
 - `src/screenshots.rs`: every page in every theme, light and dark, drawn to a PNG with made-up data
   by Slint's software renderer (`cargo test screenshots -- --ignored`).
+- `src/telegram/timing.rs`: how long the pages take to follow the store, with many made-up chats and
+  messages, drawn the same way (`cargo test --release refresh_timing -- --ignored --nocapture`).
 - `ui/`: `app.slint` (the window: its menus and which page shows), `state.slint` and
   `telegram.slint` (the globals Rust and the pages share), `look.slint`, `format.slint` (dates,
   counts and kinds of message in the UI language), `widgets.slint` and `chat.slint` (shared parts),

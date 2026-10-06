@@ -9,7 +9,9 @@ import { Icon } from "widgets.slint";
 
 // The open chat's messages, scrolled. New messages are followed while the view is at the end;
 // messages loading above do not move what is being read (the distance from the end is kept); near
-// the top it asks for older messages. With few messages they sit at the bottom, as in any chat.
+// the top it asks for older messages, and back at the end it says so (Rust then shows the newest
+// alone again: every row here is laid out and measured at each change). With few messages they sit
+// at the bottom, as in any chat.
 export component ChatScroll inherits Flickable {
     in property <length> spacing;
     in property <length> margin-top;
@@ -24,6 +26,12 @@ export component ChatScroll inherits Flickable {
 
     function keep-place() {
         self.content-y = min(0px, max(self.height - self.content-height, self.from-bottom + self.height - self.content-height));
+    }
+
+    changed from-bottom => {
+        if self.from-bottom == 0px {
+            Conversation.reached-end();
+        }
     }
 
     changed content-height => {

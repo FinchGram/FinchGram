@@ -31,6 +31,8 @@ mod process;
 mod rich_text;
 mod store;
 mod time;
+#[cfg(test)]
+mod timing;
 mod viewer;
 
 use std::cell::RefCell;
@@ -295,7 +297,7 @@ fn on_update(update: Update) {
             Some(Followup::LoadFolders) => chats::load_folders(),
             Some(Followup::View { chat_id, message_ids }) => conversation::view(chat_id, message_ids),
             Some(Followup::TypingExpires) => slint::Timer::single_shot(store::TYPING_LASTS, || {
-                store::with(|store| store.dirty.conversation = true);
+                store::with(|store| store.dirty.header = true);
                 store::refresh();
             }),
             Some(Followup::Deleted { chat_id, message_ids }) => actions::deleted(chat_id, &message_ids),

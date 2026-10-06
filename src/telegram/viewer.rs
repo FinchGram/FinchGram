@@ -180,20 +180,27 @@ fn fetch_original(message_id: i64) {
 /// album's first message names.
 fn locate() {
     let Some(message_id) = shown_id().and_then(|id| id.parse::<i64>().ok()) else { return };
-    let id = store::with(|store| {
-        let messages = &store.histories.get(&store.open?)?.messages;
+    let Some((chat_id, row)) = store::with(|store| {
+        let chat_id = store.open?;
+        let messages = &store.histories.get(&chat_id)?.messages;
         let album = messages.get(&message_id)?.media_album_id;
-        (album != 0).then(|| messages.values().find(|message| message.media_album_id == album).map(|message| message.id)).flatten()
+        let first = (album != 0).then(|| messages.values().find(|message| message.media_album_id == album).map(|message| message.id)).flatten();
+        Some((chat_id, first.unwrap_or(message_id)))
     })
-    .flatten()
-    .unwrap_or(message_id)
-    .to_string();
+    .flatten() else {
+        return;
+    };
+    // The row may be above those shown: rows made just now are given a moment to be laid out.
+    let extended = conversation::show_from(chat_id, row);
     close();
-    with_ui(|ui| ui.global::<Conversation>().set_reveal(id.into()));
-    // Cleared right after, so that locating the same message again scrolls again.
-    slint::Timer::single_shot(Duration::from_millis(100), || {
-        with_ui(|ui| ui.global::<Conversation>().set_reveal(SharedString::new()));
-    });
+    let show = move || {
+        with_ui(|ui| ui.global::<Conversation>().set_reveal(row.to_string().into()));
+        // Cleared right after, so that locating the same message again scrolls again.
+        slint::Timer::single_shot(Duration::from_millis(100), || {
+            with_ui(|ui| ui.global::<Conversation>().set_reveal(SharedString::new()));
+        });
+    };
+    if extended { slint::Timer::single_shot(Duration::from_millis(50), show) } else { show() }
 }
 
 /// The file of the item shown, whole, into the Downloads folder.
