@@ -63,10 +63,29 @@ fn save(window: &MinimalSoftwareWindow, name: &str) {
 
 /// A right click at `x`, `y` in the picture, where the pointer then stays.
 fn right_click(window: &MinimalSoftwareWindow, x: f32, y: f32) {
+    click_with(window, x, y, PointerEventButton::Right);
+}
+
+/// A click at `x`, `y` in the picture, where the pointer then stays.
+fn click(window: &MinimalSoftwareWindow, x: f32, y: f32) {
+    click_with(window, x, y, PointerEventButton::Left);
+}
+
+fn click_with(window: &MinimalSoftwareWindow, x: f32, y: f32, button: PointerEventButton) {
     let position = slint::LogicalPosition::new(x, y + MENU_BAR as f32);
     window.dispatch_event(WindowEvent::PointerMoved { position });
-    window.dispatch_event(WindowEvent::PointerPressed { position, button: PointerEventButton::Right });
-    window.dispatch_event(WindowEvent::PointerReleased { position, button: PointerEventButton::Right });
+    window.dispatch_event(WindowEvent::PointerPressed { position, button });
+    window.dispatch_event(WindowEvent::PointerReleased { position, button });
+}
+
+/// How far under a chat menu's top its fourth entry, Add to folder, is: the menu's padding and
+/// heading, then three entries and a half.
+fn add_to_folder(theme: Theme) -> f32 {
+    match theme {
+        Theme::Workbench => 32.0 + 3.5 * 32.0,
+        Theme::Broadsheet => 32.0 + 3.5 * 34.0,
+        Theme::Terminal => 28.0 + 3.5 * 26.0,
+    }
 }
 
 /// Escape (closing a menu), and the pointer out of the window, so that nothing stays hovered.
@@ -344,6 +363,9 @@ fn fill_chats(ui: &MainWindow) {
     let chats = ui.global::<Chats>();
     let folder = |id: i32, name: &str, unread: i32| Folder { id, name: name.into(), unread };
     chats.set_folders(model(vec![folder(0, "All chats", 57), folder(1, "Personal", 44), folder(2, "Work", 1), folder(3, "Channels", 12)]));
+    // A chat's menu, Add to folder: Keyboard Lab, which is in Personal.
+    let choice = |folder: i32, name: &str, inside: bool| FolderChoice { folder, name: name.into(), inside };
+    chats.set_menu_folders(model(vec![choice(1, "Personal", true), choice(2, "Work", false), choice(3, "Channels", false)]));
     let header = |folder: i32, count: usize, expanded: bool| TreeRow { header: true, folder, expanded, count: count as i32, chat: ChatRow::default() };
     let line = |folder: i32, chat: &ChatRow| TreeRow { header: false, folder, expanded: true, count: 0, chat: chat.clone() };
     // The pinned chats at the top, in no folder, and not again below.
@@ -662,11 +684,14 @@ fn screenshots() {
             // A right click on the first chat of the list: its menu.
             let (x, y) = match theme {
                 Theme::Workbench => (150.0, 91.0),
-                Theme::Broadsheet => (230.0, 265.0),
+                Theme::Broadsheet => (230.0, 310.0),
                 Theme::Terminal => (140.0, 98.0),
             };
             right_click(&window, x, y);
             save(&window, &name("chat-menu"));
+            // Its fourth entry, Add to folder: the menu's second page.
+            click(&window, x + 40.0, y + add_to_folder(theme));
+            save(&window, &name("chat-menu-folders"));
             escape(&window);
             // Workbench's tabs: a right click on the second one, Tech Morning.
             if theme == Theme::Workbench {
@@ -711,6 +736,10 @@ fn screenshots() {
         if theme == Theme::Workbench {
             right_click(&window, 520.0, 59.0);
             save(&window, "zh-workbench-tab-menu");
+            escape(&window);
+            right_click(&window, 150.0, 91.0);
+            click(&window, 190.0, 91.0 + add_to_folder(theme));
+            save(&window, "zh-workbench-chat-menu-folders");
             escape(&window);
         }
         message_actions(&ui, &window, &|page: &str| format!("zh-{theme_name}-{page}"));

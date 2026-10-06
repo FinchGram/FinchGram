@@ -1234,7 +1234,7 @@ fn reveal(row: i64) {
     });
 }
 
-fn show_notice(notice: ActionNotice) {
+pub(super) fn show_notice(notice: ActionNotice) {
     let notices = STATE.with(|state| {
         let mut state = state.borrow_mut();
         state.notices += 1;
@@ -1246,6 +1246,12 @@ fn show_notice(notice: ActionNotice) {
             with_actions(|actions| actions.set_notice(ActionNotice::None));
         }
     });
+}
+
+/// Telegram refused something: say so, in its words.
+pub(super) fn show_failure(message: &str) {
+    with_actions(|actions| actions.set_failure(message.into()));
+    show_notice(ActionNotice::Failed);
 }
 
 /// Esc closes the topmost of the menu, a dialog, the strip and choosing; false when none is open.

@@ -135,6 +135,11 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   StyledText) keep every click to themselves, so the right click is seen in the window's own events
   (`mod.rs`, through winit), counted in a global, and the row under the pointer asks for its menu.
   What the menu offers is what TDLib says can be done with the message (getMessageProperties).
+- A chat's menu (a right click on it in the lists, `chats.rs`) mutes or pins it, marks it as read,
+  and puts it into one of the account's folders or takes it out. TDLib has no request for the
+  last: the folder is fetched whole (getChatFolder), its chosen chats are changed and it is sent
+  back (editChatFolder). A folder that takes chats by kind (contacts, groups, …) would keep a chat
+  taken out, so there the chat is excluded by name as well.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
   device, the transparent title bar on macOS, opening links, the clipboard (words and pictures);

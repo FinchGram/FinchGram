@@ -437,6 +437,8 @@ export global ActionWords {
         if notice == ActionNotice.image-copied { return @tr("Image copied to clipboard."); }
         if notice == ActionNotice.saved { return @tr("Saved to Downloads"); }
         if notice == ActionNotice.reported { return @tr("Reported"); }
+        if notice == ActionNotice.folder-empty { return @tr("A folder must keep at least one chat."); }
+        if notice == ActionNotice.failed { return Actions.failure; }
         return "";
     }
 

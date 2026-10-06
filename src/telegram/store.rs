@@ -22,8 +22,8 @@ use super::rich_text;
 use super::time;
 use crate::images;
 use crate::{
-    Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, LinkPreview, MainWindow, Media, MessageRow, Moment,
-    NotificationScopes, ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
+    Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, FolderChoice, LinkPreview, MainWindow, Media, MessageRow,
+    Moment, NotificationScopes, ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
 };
 
 /// How long someone counts as typing after TDLib last said so.
@@ -910,6 +910,20 @@ impl Store {
             Some(folder) => ChatList::Folder { chat_folder_id: folder.id },
             None => ChatList::Main,
         }
+    }
+
+    /// The account's own folders for a chat's menu: whether `chat_id` is in each.
+    pub fn folder_choices(&self, chat_id: i64) -> Vec<FolderChoice> {
+        let chat = self.chats.get(&chat_id);
+        self.folders
+            .iter()
+            .enumerate()
+            .map(|(index, folder)| FolderChoice {
+                folder: index as i32 + 1,
+                name: folder.name.text.text.clone().into(),
+                inside: chat.is_some_and(|chat| position(chat, ChatList::Folder { chat_folder_id: folder.id }).is_some()),
+            })
+            .collect()
     }
 
     /// The chats of `list`, in Telegram's order, matching the search words.

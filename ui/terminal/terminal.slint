@@ -265,16 +265,21 @@ component Side inherits Rectangle {
     background: P.side;
 
     // A chat's menu, from a right click on it: the chat header's menu, for any chat in the lists.
+    // Its second page, Add to folder: the account's folders, those the chat is in ticked.
     property <ChatRow> menu-chat;
     property <int> menu-folder;             // where Chats.toggle-pin pins it
+    property <bool> menu-folders;           // the second page is showing
     property <length> menu-x;
     property <length> menu-y;
 
     function show-menu(chat: ChatRow, folder: int, left: length, top: length) {
         root.menu-chat = chat;
         root.menu-folder = folder;
+        root.menu-folders = false;
+        Chats.open-menu(chat.id);
         root.menu-x = max(0px, left - root.absolute-position.x);
-        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 116px));
+        // Within the list, whichever of the two pages is the taller.
+        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 38px - 26px * max(Chats.folders.length > 1 ? 4 : 3, Chats.menu-folders.length + 1)));
         chat-menu.show();
     }
 
@@ -487,25 +492,46 @@ component Side inherits Rectangle {
                     color: P.faint;
                     overflow: elide;
                 }
-                MenuEntry {
+                if !root.menu-folders: MenuEntry {
                     label: root.menu-chat.muted ? @tr("Unmute") : @tr("Mute");
                     activated => {
                         Chats.toggle-mute(root.menu-chat.id);
                         chat-menu.close();
                     }
                 }
-                MenuEntry {
+                if !root.menu-folders: MenuEntry {
                     label: root.menu-chat.pinned ? @tr("Unpin") : @tr("Pin");
                     activated => {
                         Chats.toggle-pin(root.menu-chat.id, root.menu-folder);
                         chat-menu.close();
                     }
                 }
-                MenuEntry {
+                if !root.menu-folders: MenuEntry {
                     label: @tr("Mark as read");
                     activated => {
                         Chats.mark-read(root.menu-chat.id);
                         chat-menu.close();
+                    }
+                }
+                if !root.menu-folders && Chats.folders.length > 1: MenuEntry {
+                    label: @tr("Add to folder");
+                    activated => {
+                        root.menu-folders = true;
+                    }
+                }
+                if root.menu-folders: MenuEntry {
+                    label: @tr("Back");
+                    activated => {
+                        root.menu-folders = false;
+                    }
+                }
+                if root.menu-folders: VerticalLayout {
+                    for choice in Chats.menu-folders: MenuEntry {
+                        label: (choice.inside ? "[x] " : "[ ] ") + choice.name;
+                        activated => {
+                            Chats.toggle-in-folder(root.menu-chat.id, choice.folder);
+                            chat-menu.close();
+                        }
                     }
                 }
             }

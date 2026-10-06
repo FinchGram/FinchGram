@@ -95,7 +95,7 @@ component TabItem inherits Rectangle {
 }
 
 export component MenuEntry inherits Rectangle {
-    in property <string> icon;
+    in property <string> icon;                // "": no icon, its place kept (a choice not ticked)
     in property <string> label;
     in property <string> keys;
     in property <bool> danger;                // deleting: in the danger colour
@@ -112,10 +112,14 @@ export component MenuEntry inherits Rectangle {
         spacing: 10px;
         VerticalLayout {
             alignment: center;
-            Icon {
-                name: root.icon;
-                size: 16px;
-                color: root.danger ? P.danger : P.text;
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                if root.icon != "": Icon {
+                    name: root.icon;
+                    size: 16px;
+                    color: root.danger ? P.danger : P.text;
+                }
             }
         }
         Text {
