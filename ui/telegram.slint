@@ -82,7 +82,7 @@ export global Chats {
     callback show-folder(int);                   // index into folders
     callback toggle-folder(int);                 // Workbench: expand or collapse
     callback search(string);
-    // A chat's menu (a right click on it in a list), by the chat's id.
+    // A chat's menu (a right click on it in a list, or on its tab in Workbench), by the chat's id.
     callback toggle-mute(string);
     callback toggle-pin(string, int);            // in the list of a folder (index into folders); -1:
                                                  // wherever it is pinned, as Workbench's tree has it
@@ -94,6 +94,7 @@ export struct Tab {
     id: string,
     title: string,
     kind: ChatKind,
+    muted: bool,
 }
 
 export enum RowKind { message, service, day, sponsored }

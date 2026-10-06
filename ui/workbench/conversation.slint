@@ -3,7 +3,7 @@
 import { AppState } from "../state.slint";
 import {
     Conversation, MessageRow, RowKind, ChatKind, Content, Account, Viewer, LinkPreview, ReplyQuote, Actions, ComposeBar,
-    ActionNotice, Tab,
+    ActionNotice, Tab, Chats,
 } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Paragraph } from "../widgets.slint";
@@ -147,7 +147,8 @@ component TabBar inherits Rectangle {
     height: 38px;
     background: P.tab;
 
-    // A tab's menu, from a right click on it: closing it, the others, or all of them.
+    // A tab's menu, from a right click on it: muting its chat, and closing it, the others, or all of
+    // them.
     property <Tab> menu-tab;
     property <length> menu-x;
     property <length> menu-y;
@@ -323,6 +324,21 @@ component TabBar inherits Rectangle {
                     letter-spacing: 0.88px;
                     vertical-alignment: center;
                     overflow: elide;
+                }
+                MenuEntry {
+                    icon: root.menu-tab.muted ? "bell" : "bell-slash";
+                    label: root.menu-tab.muted ? @tr("Unmute") : @tr("Mute");
+                    activated => {
+                        Chats.toggle-mute(root.menu-tab.id);
+                        tab-menu.close();
+                    }
+                }
+                Rectangle {
+                    height: 9px;
+                    Rectangle {
+                        height: 1px;
+                        background: P.line;
+                    }
                 }
                 MenuEntry {
                     icon: "x";

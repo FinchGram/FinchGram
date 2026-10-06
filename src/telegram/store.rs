@@ -869,12 +869,17 @@ impl Store {
         sync(&self.models.official_bots, official_bots);
         sync(&self.models.bots, bots);
 
-        // The tabs' names follow the chats'.
+        // The tabs' names follow the chats', and their menus say whether the chat is muted.
         let tabs: Vec<Tab> = self
             .tabs
             .iter()
             .filter_map(|id| self.chats.get(id))
-            .map(|chat| Tab { id: chat.id.to_string().into(), title: self.title(chat, names).into(), kind: self.kind(chat) })
+            .map(|chat| Tab {
+                id: chat.id.to_string().into(),
+                title: self.title(chat, names).into(),
+                kind: self.kind(chat),
+                muted: self.muted(chat),
+            })
             .collect();
         sync(&self.models.tabs, tabs);
     }

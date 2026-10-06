@@ -369,7 +369,7 @@ fn fill_chats(ui: &MainWindow) {
     chats.set_loaded(true);
 
     let conversation = ui.global::<Conversation>();
-    let tab = |chat: &ChatRow| Tab { id: chat.id.clone(), title: chat.title.clone(), kind: chat.kind };
+    let tab = |chat: &ChatRow| Tab { id: chat.id.clone(), title: chat.title.clone(), kind: chat.kind, muted: chat.muted };
     conversation.set_tabs(model(vec![tab(&keyboards), tab(&news), tab(&alex)]));
 }
 
