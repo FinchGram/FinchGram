@@ -207,7 +207,8 @@ export global Conversation {
     in-out property <string> draft;
     callback open(string);                       // chat id; Workbench opens a tab for it
     callback close(string);                      // a tab
-    callback close-others();
+    callback close-others(string);               // every tab but this one, which comes to the front
+    callback close-all();                        // every tab: no chat is open
     callback send(string);
     // The user changed what is being written: Rust tells the chat that we are typing, or that we
     // stopped (the words are gone).

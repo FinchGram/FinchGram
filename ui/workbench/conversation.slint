@@ -3,7 +3,7 @@
 import { AppState } from "../state.slint";
 import {
     Conversation, MessageRow, RowKind, ChatKind, Content, Account, Viewer, LinkPreview, ReplyQuote, Actions, ComposeBar,
-    ActionNotice,
+    ActionNotice, Tab,
 } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Paragraph } from "../widgets.slint";
@@ -16,6 +16,7 @@ component TabItem inherits Rectangle {
     in property <string> id;
     in property <string> title;
     in property <ChatKind> kind;
+    callback menu(length, length);          // a right click, where it is in the window
     property <bool> active: id == Conversation.chat-id;
     width: row.preferred-width;
     background: active ? P.tab-active : touch.has-hover ? P.tab-active.transparentize(0.5) : transparent;
@@ -24,6 +25,11 @@ component TabItem inherits Rectangle {
         mouse-cursor: pointer;
         clicked => {
             Conversation.open(root.id);
+        }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
         }
     }
 
@@ -64,6 +70,11 @@ component TabItem inherits Rectangle {
                     clicked => {
                         Conversation.close(root.id);
                     }
+                    pointer-event(event) => {
+                        if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                            root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+                        }
+                    }
                 }
             }
         }
@@ -88,10 +99,12 @@ export component MenuEntry inherits Rectangle {
     in property <string> label;
     in property <string> keys;
     in property <bool> danger;                // deleting: in the danger colour
+    in property <bool> enabled: true;
     callback activated();
     height: 32px;
     border-radius: 6px;
-    background: touch.has-hover ? P.side : transparent;
+    background: touch.has-hover && enabled ? P.side : transparent;
+    opacity: enabled ? 1 : 0.4;
 
     HorizontalLayout {
         padding-left: 10px;
@@ -122,6 +135,7 @@ export component MenuEntry inherits Rectangle {
     }
 
     touch := TouchArea {
+        enabled: root.enabled;
         mouse-cursor: pointer;
         clicked => {
             root.activated();
@@ -132,6 +146,18 @@ export component MenuEntry inherits Rectangle {
 component TabBar inherits Rectangle {
     height: 38px;
     background: P.tab;
+
+    // A tab's menu, from a right click on it: closing it, the others, or all of them.
+    property <Tab> menu-tab;
+    property <length> menu-x;
+    property <length> menu-y;
+
+    function show-tab-menu(tab: Tab, left: length, top: length) {
+        root.menu-tab = tab;
+        root.menu-x = max(0px, min(left - root.absolute-position.x, root.width - 230px));
+        root.menu-y = top - root.absolute-position.y;
+        tab-menu.show();
+    }
 
     Rectangle {
         y: parent.height - 1px;
@@ -150,6 +176,9 @@ component TabBar inherits Rectangle {
                     id: tab.id;
                     title: tab.title;
                     kind: tab.kind;
+                    menu(left, top) => {
+                        root.show-tab-menu(tab, left, top);
+                    }
                 }
             }
         }
@@ -257,9 +286,67 @@ component TabBar inherits Rectangle {
                     icon: "x-square";
                     label: @tr("Close other tabs");
                     keys: "⌘⌥W";
+                    enabled: Conversation.tabs.length > 1;
                     activated => {
-                        Conversation.close-others();
+                        Conversation.close-others(Conversation.chat-id);
                         menu.close();
+                    }
+                }
+            }
+        }
+    }
+
+    tab-menu := PopupWindow {
+        x: root.menu-x;
+        y: root.menu-y;
+        width: 230px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+
+        Rectangle {
+            border-radius: 8px;
+            background: P.bg;
+            border-width: 1px;
+            border-color: P.line;
+            drop-shadow-blur: 32px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: P.shadow;
+
+            VerticalLayout {
+                padding: 6px;
+                Text {
+                    height: 26px;
+                    x: 10px;
+                    text: root.menu-tab.title.to-uppercase();
+                    color: P.faint;
+                    font-size: 11px;
+                    font-weight: 600;
+                    letter-spacing: 0.88px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                MenuEntry {
+                    icon: "x";
+                    label: @tr("Close tab");
+                    activated => {
+                        Conversation.close(root.menu-tab.id);
+                        tab-menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "x-square";
+                    label: @tr("Close other tabs");
+                    enabled: Conversation.tabs.length > 1;
+                    activated => {
+                        Conversation.close-others(root.menu-tab.id);
+                        tab-menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "x-circle";
+                    label: @tr("Close all tabs");
+                    activated => {
+                        Conversation.close-all();
+                        tab-menu.close();
                     }
                 }
             }

@@ -657,6 +657,12 @@ fn screenshots() {
             right_click(&window, x, y);
             save(&window, &name("chat-menu"));
             escape(&window);
+            // Workbench's tabs: a right click on the second one, Tech Morning.
+            if theme == Theme::Workbench {
+                right_click(&window, 520.0, 59.0);
+                save(&window, &name("tab-menu"));
+                escape(&window);
+            }
             message_actions(&ui, &window, &name);
             open_viewer(&ui, 1);
             save(&window, &name("viewer-photo"));
@@ -691,6 +697,11 @@ fn screenshots() {
         app.set_page(Page::Chats);
         open_keyboards(&ui);
         save(&window, &format!("zh-{theme_name}-chats"));
+        if theme == Theme::Workbench {
+            right_click(&window, 520.0, 59.0);
+            save(&window, "zh-workbench-tab-menu");
+            escape(&window);
+        }
         message_actions(&ui, &window, &|page: &str| format!("zh-{theme_name}-{page}"));
     }
     app.set_theme(Theme::Workbench);

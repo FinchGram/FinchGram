@@ -63,7 +63,12 @@ pub fn connect(ui: &MainWindow) {
             close(id);
         }
     });
-    conversation.on_close_others(close_others);
+    conversation.on_close_others(|id| {
+        if let Ok(id) = id.parse() {
+            close_others(id);
+        }
+    });
+    conversation.on_close_all(close_all);
     conversation.on_send(|text| write(&text));
     conversation.on_edited(|words| edited(&words));
     conversation.on_load_older(load_older);
@@ -234,18 +239,47 @@ fn close(chat_id: i64) {
     }
 }
 
-/// Keep only the front tab. The others are not open in TDLib, so they just go.
-fn close_others() {
-    store::with(|store| {
-        let open = store.open;
-        let closed: Vec<i64> = store.tabs.iter().copied().filter(|id| Some(*id) != open).collect();
-        store.tabs.retain(|id| Some(*id) == open);
+/// Keep only the tab of `keep`, which comes to the front. The others just go: only the front one is
+/// open in TDLib, and bringing `keep` to the front closes it there.
+fn close_others(keep: i64) {
+    let front = store::with(|store| {
+        if !store.tabs.contains(&keep) {
+            return None;
+        }
+        let closed: Vec<i64> = store.tabs.iter().copied().filter(|id| *id != keep).collect();
+        store.tabs.retain(|id| *id == keep);
         for id in closed {
             store.histories.remove(&id);
             store.sponsored.remove(&id);
         }
         store.dirty.chats = true;
-    });
+        Some(store.open)
+    })
+    .flatten();
+    match front {
+        Some(Some(front_chat)) if front_chat == keep => store::refresh(),
+        Some(_) => open(keep),
+        None => {}
+    }
+}
+
+/// Close every tab: no chat is open.
+fn close_all() {
+    let Some(front) = store::with(|store| {
+        for id in std::mem::take(&mut store.tabs) {
+            store.histories.remove(&id);
+            store.sponsored.remove(&id);
+        }
+        store.dirty.chats = true;
+        store.dirty.conversation = true;
+        store.open.take()
+    }) else {
+        return;
+    };
+    if let Some(chat_id) = front {
+        send(json!({ "@type": "closeChat", "chat_id": chat_id }), |_| {});
+    }
+    actions::chat_changed(None);
     store::refresh();
 }
 
