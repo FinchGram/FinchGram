@@ -3,7 +3,7 @@
 [English](architecture.md)
 
 状态：方向已确认（2026-09-29），照酷丸工具箱的架构来做。外壳、finchgram-tdlib 和 libmpv 已经在 macOS 上跑起来了，
-登录、聊天列表、文字消息、图片和视频，以及消息操作（右键菜单：回复、编辑、拷贝、转发、举报、删除、多选）都能用了，
+登录、聊天列表、文字消息、图片和视频、消息操作（右键菜单：回复、编辑、拷贝、转发、举报、删除、多选），以及新消息通知都能用了，
 界面是设计稿的三套主题。还没定的事列在最后。
 
 ## 为什么
@@ -94,13 +94,20 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - `src/telegram/`：适配层。`process.rs` 负责运行那个程序，`api.rs` 是我们用到的 TDLib 类型，`mod.rs` 负责发请求、
   分发回复、重新启动和转交更新。`store.rs` 保存 TDLib 告诉我们的东西（聊天、用户、群组、文件夹、打开的聊天的消息），
   每批更新之后把页面用的 model 更新到最新；`login.rs`、`chats.rs`、`conversation.rs`、`actions.rs`（消息操作）、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`viewer.rs` 给媒体查看器提供内容，`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
+- 通知（`notifications.rs`，设置 → 通知与声音）用的是 TDLib 自己的：用它的 `notification_group_count_max` 选项打开后，
+  该不该通知由 TDLib 决定。它遵循每个聊天的免打扰和每类聊天的设置（Telegram 自己的、跟着账号走的设置），
+  账号的另一台设备正在用时会稍等一下，消息在任何地方读过之后会把通知收回。外壳只负责显示 TDLib 加的通知
+  （用户正看着的不显示：窗口在前台时打开着的那个聊天），收回 TDLib 去掉的通知；点通知会打开那个聊天。
+  窗口在前台并且有人在用时，账号是在线状态（`online.rs`，TDLib 的 `online` 选项），和 Telegram 官方应用一样：
+  Telegram 据此压下用户其他设备上的通知，TDLib 据此决定 FinchGram 的通知什么时候出。
 - 在消息上任何地方点右键都会弹出它的菜单。消息里带格式的文字（Slint 的 StyledText）会把所有点击留给自己，
   所以右键是在窗口自己的事件里看到的（`mod.rs`，通过 winit），记进一个全局属性，再由指针下的那一行去要菜单。
   菜单里有哪些项，看 TDLib 说这条消息能做什么（getMessageProperties）。
 - `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）。
 - `src/platform/`：平台层。目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接、剪贴板（文字和图片）；以及 macOS 上
   （设置 → 通用）关闭窗口后留在 Dock 里，即设计稿的“关闭窗口时：最小化到托盘”（点 Dock 图标重新打开窗口，退出时先让
-  TDLib 关好）、菜单栏图标、开机时启动（SMAppService，macOS 13 及以上）。
+  TDLib 关好）、菜单栏图标、开机时启动（SMAppService，macOS 13 及以上）；通过系统的 UserNotifications 框架发通知
+  （只有打包成 .app 才有，`cargo run` 时没有）、Dock 图标上的未读数，以及让 Dock 图标跳一下（设置 → 通知与声音）。
 - `src/update.rs`：自动更新（[conventions.md](conventions.zh-Hans.md) 第 3 节）。
 - `src/settings.rs`、`src/i18n.rs`、`src/fonts.rs`（界面字体，编译进可执行文件）。
 - `src/images.rs`：图片（照片、视频封面、消息里自带的小预览图）在界面线程之外解码，并缓存最近的。

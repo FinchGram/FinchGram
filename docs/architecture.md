@@ -4,9 +4,9 @@
 
 Status: agreed direction (2026-09-29), after Coova Studio's architecture. The shell,
 finchgram-tdlib and libmpv run on macOS; logging in, the chat list, text messages, photos and videos,
-and what can be done with a message (its menu: replying, editing, copying, forwarding, reporting,
-deleting, choosing several) work, in the design's three themes. The decisions still open are listed
-at the end.
+what can be done with a message (its menu: replying, editing, copying, forwarding, reporting,
+deleting, choosing several) and notifications of new messages work, in the design's three themes.
+The decisions still open are listed at the end.
 
 ## Why
 
@@ -117,6 +117,15 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   `password.rs` (two-step verification) do what the pages ask for; `files.rs` downloads files,
   `viewer.rs` fills the media viewer, and `rich_text.rs` turns a message's formatted text (bold,
   links, …) into Slint's styled text.
+- Notifications (`notifications.rs`, Settings → Notifications & sounds) are TDLib's: switched on
+  with its `notification_group_count_max` option, TDLib decides what is worth one. It follows the
+  chats' mutes and each kind of chat's setting (Telegram's own, for the account), waits a moment while
+  another of the account's devices is in use, and takes a notification back once its message is
+  read anywhere. The shell shows what TDLib adds (not what the user is looking at: the open chat
+  while the window is in front) and takes back what TDLib removes; a click opens the chat. The
+  account is online while the window is in front and in use (`online.rs`, TDLib's `online`
+  option), as in Telegram's own apps: Telegram goes by it to hold back the notifications of the
+  user's other devices, and TDLib to time FinchGram's.
 - A message's menu opens on a right click anywhere on the message. Its formatted words (Slint's
   StyledText) keep every click to themselves, so the right click is seen in the window's own events
   (`mod.rs`, through winit), counted in a global, and the row under the pointer asks for its menu.
@@ -127,7 +136,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   and on macOS (Settings → General)
   staying in the Dock when the window is closed, as the design's "When closing the window: Minimize
   to tray" has it (the Dock icon shows the window again, and Quit lets TDLib close first), the icon
-  in the menu bar, and launching at login (SMAppService, macOS 13 and later).
+  in the menu bar, and launching at login (SMAppService, macOS 13 and later); notifications through
+  the system's UserNotifications framework (only for the app as a bundle, so not from `cargo run`),
+  the unread count on the Dock icon, and its bounce (Settings → Notifications & sounds).
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
 - `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
 - `src/images.rs`: pictures (photos, video stills, the tiny previews in messages), decoded off the UI

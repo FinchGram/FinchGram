@@ -382,6 +382,19 @@ export global Account {
     callback log-out();
 }
 
+// Settings → Notifications & sounds → By chat type: whether the chats of each kind notify, those
+// that do not say otherwise (a chat's own mute is in its menu). Telegram keeps this for the
+// account, the same in all its apps.
+export enum NotificationScope { private-chats, groups, channels }
+
+export global NotificationScopes {
+    in-out property <bool> loaded;               // TDLib has said, for all three
+    in-out property <bool> private-chats: true;  // they notify
+    in-out property <bool> groups: true;
+    in-out property <bool> channels: true;
+    callback toggle(NotificationScope);
+}
+
 // Logging in (the design's second round, "登录引导"). Rust follows TDLib's authorization state; the
 // pages can go back a step on their own.
 // The steps of logging in. After the password come the ways to recover a forgotten one: a code sent

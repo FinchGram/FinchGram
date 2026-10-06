@@ -23,7 +23,7 @@ use super::time;
 use crate::images;
 use crate::{
     Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, LinkPreview, MainWindow, Media, MessageRow, Moment,
-    ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
+    NotificationScopes, ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
 };
 
 /// How long someone counts as typing after TDLib last said so.
@@ -54,6 +54,8 @@ pub struct Dirty {
     pub account: bool,
     /// The media viewer's pictures (while it is open).
     pub viewer: bool,
+    /// Settings → Notifications & sounds: whether each kind of chat notifies.
+    pub notification_scopes: bool,
     /// The open chat should show its newest message.
     pub scroll_to_end: bool,
 }
@@ -81,8 +83,9 @@ pub struct Store {
     /// Members of supergroups and channels from their full info: the supergroup itself often says 0.
     pub supergroup_members: HashMap<i64, i32>,
     pub online_members: HashMap<i64, i32>,
-    /// Whether chats that follow the default are muted, by kind of chat.
-    pub muted_by_default: HashMap<NotificationSettingsScope, bool>,
+    /// The notification settings of each kind of chat, which chats follow unless they say
+    /// otherwise.
+    pub scope_settings: HashMap<NotificationSettingsScope, api::ScopeNotificationSettings>,
     pub folders: Vec<api::ChatFolderInfo>,
 
     /// The folder Broadsheet and Terminal show: 0 is All chats, then the account's folders.
@@ -162,7 +165,7 @@ pub fn install(ui: &MainWindow) {
             supergroups: HashMap::new(),
             supergroup_members: HashMap::new(),
             online_members: HashMap::new(),
-            muted_by_default: HashMap::new(),
+            scope_settings: HashMap::new(),
             folders: Vec::new(),
             shown_folder: 0,
             expanded: HashMap::new(),
@@ -202,6 +205,7 @@ pub fn clear() {
         store.supergroups.clear();
         store.supergroup_members.clear();
         store.online_members.clear();
+        store.scope_settings.clear();
         store.folders.clear();
         store.shown_folder = 0;
         store.expanded.clear();
@@ -219,7 +223,8 @@ pub fn clear() {
         store.replied.clear();
         store.missing_replies.clear();
         store.asking_replies.clear();
-        store.dirty = Dirty { chats: true, conversation: true, account: true, viewer: true, scroll_to_end: false };
+        store.dirty =
+            Dirty { chats: true, conversation: true, account: true, viewer: true, notification_scopes: true, scroll_to_end: false };
     });
     refresh();
 }
@@ -240,6 +245,9 @@ pub fn refresh() {
         }
         if dirty.account {
             store.refresh_account(&ui);
+        }
+        if dirty.notification_scopes {
+            store.refresh_notification_scopes(&ui);
         }
         if dirty.viewer || dirty.conversation {
             let viewer = ui.global::<Viewer>();
@@ -425,8 +433,9 @@ impl Store {
                 }
             }
             Update::ScopeNotificationSettings { scope, notification_settings } => {
-                self.muted_by_default.insert(scope, notification_settings.mute_for > 0);
+                self.scope_settings.insert(scope, notification_settings);
                 self.dirty.chats = true;
+                self.dirty.notification_scopes = true;
             }
             Update::ChatIsMarkedAsUnread { chat_id, is_marked_as_unread } => {
                 if let Some(chat) = self.chats.get_mut(&chat_id) {
@@ -512,7 +521,13 @@ impl Store {
                     followup = Followup::Deleted { chat_id, message_ids };
                 }
             }
-            Update::AuthorizationState { .. } | Update::ConnectionState { .. } | Update::File { .. } | Update::Other => {}
+            Update::AuthorizationState { .. }
+            | Update::ConnectionState { .. }
+            | Update::File { .. }
+            | Update::NotificationGroup { .. }
+            | Update::ActiveNotifications { .. }
+            | Update::UnreadMessageCount { .. }
+            | Update::Other => {}
         }
         followup
     }
@@ -570,12 +585,12 @@ impl Store {
         if !settings.use_default_mute_for {
             return settings.mute_for > 0;
         }
-        let scope = match chat.kind {
-            ChatType::Private { .. } | ChatType::Secret { .. } => NotificationSettingsScope::Private,
-            ChatType::BasicGroup { .. } | ChatType::Supergroup { is_channel: false, .. } => NotificationSettingsScope::Group,
-            ChatType::Supergroup { is_channel: true, .. } => NotificationSettingsScope::Channel,
-        };
-        self.muted_by_default.get(&scope).copied().unwrap_or(false)
+        self.scope_muted(scope_of(chat))
+    }
+
+    /// Whether the chats of a kind are muted, those that do not say otherwise.
+    pub fn scope_muted(&self, scope: NotificationSettingsScope) -> bool {
+        self.scope_settings.get(&scope).is_some_and(|settings| settings.mute_for > 0)
     }
 
     pub fn members(&self, chat: &api::Chat) -> i32 {
@@ -1180,6 +1195,18 @@ impl Store {
         image
     }
 
+    /// Settings → Notifications & sounds → By chat type, once TDLib has said all three.
+    fn refresh_notification_scopes(&self, ui: &MainWindow) {
+        let scopes = ui.global::<NotificationScopes>();
+        let known = |scope| self.scope_settings.contains_key(&scope);
+        scopes.set_loaded(
+            known(NotificationSettingsScope::Private) && known(NotificationSettingsScope::Group) && known(NotificationSettingsScope::Channel),
+        );
+        scopes.set_private_chats(!self.scope_muted(NotificationSettingsScope::Private));
+        scopes.set_groups(!self.scope_muted(NotificationSettingsScope::Group));
+        scopes.set_channels(!self.scope_muted(NotificationSettingsScope::Channel));
+    }
+
     fn refresh_account(&mut self, ui: &MainWindow) {
         let account = ui.global::<Account>();
         let Some(me) = self.users.get(&self.my_id) else {
@@ -1333,6 +1360,15 @@ pub fn pinned_in(chat: &api::Chat) -> Vec<ChatList> {
 /// Where `chat` is in `list`, if it is in it.
 pub fn position(chat: &api::Chat, list: ChatList) -> Option<&api::ChatPosition> {
     chat.positions.iter().find(|position| position.list == list && position.order != 0)
+}
+
+/// The kind of chat whose notification settings `chat` follows unless it says otherwise.
+fn scope_of(chat: &api::Chat) -> NotificationSettingsScope {
+    match chat.kind {
+        ChatType::Private { .. } | ChatType::Secret { .. } => NotificationSettingsScope::Private,
+        ChatType::BasicGroup { .. } | ChatType::Supergroup { is_channel: false, .. } => NotificationSettingsScope::Group,
+        ChatType::Supergroup { is_channel: true, .. } => NotificationSettingsScope::Channel,
+    }
 }
 
 fn set_position(chat: &mut api::Chat, position: api::ChatPosition) {

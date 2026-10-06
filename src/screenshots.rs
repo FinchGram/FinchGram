@@ -109,6 +109,10 @@ fn fill(ui: &MainWindow) {
     app.set_launch_at_login(true);
     app.set_menu_bar_available(true);
     app.set_keeps_running_available(true);
+    // Settings → Notifications & sounds as in the design: channels switched off for the account.
+    let scopes = ui.global::<NotificationScopes>();
+    scopes.set_loaded(true);
+    scopes.set_channels(false);
 
     let login = ui.global::<Login>();
     login.set_country(country("CN", "China", "86"));
@@ -665,7 +669,7 @@ fn screenshots() {
             save(&window, &name("channel"));
             app.set_page(Page::Settings);
             for (section, section_name) in
-                [(SettingsSection::General, "general"), (SettingsSection::Appearance, "appearance"), (SettingsSection::Language, "language"), (SettingsSection::About, "about")]
+                [(SettingsSection::General, "general"), (SettingsSection::Notifications, "notifications"), (SettingsSection::Appearance, "appearance"), (SettingsSection::Language, "language"), (SettingsSection::About, "about")]
             {
                 app.set_settings_section(section);
                 save(&window, &name(&format!("settings-{section_name}")));
@@ -702,6 +706,8 @@ fn screenshots() {
     app.set_page(Page::Settings);
     app.set_settings_section(SettingsSection::General);
     save(&window, "zh-workbench-settings-general");
+    app.set_settings_section(SettingsSection::Notifications);
+    save(&window, "zh-workbench-settings-notifications");
     app.set_settings_section(SettingsSection::Appearance);
     save(&window, "zh-workbench-settings-appearance");
     let password = ui.global::<PasswordSettings>();

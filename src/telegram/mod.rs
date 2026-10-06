@@ -6,9 +6,10 @@
 //! Requests are TDLib's own JSON objects ([`send`]). Each gets an "@extra" number, which TDLib
 //! copies into its answer, and the answer goes to the callback given with the request. Updates are
 //! parsed on the reader thread and reach the UI thread in batches: logging in follows the
-//! authorization state (login.rs), everything else goes into the store (store.rs), and after each
-//! batch the pages are brought up to date. chats.rs, conversation.rs, actions.rs, account.rs and
-//! password.rs do what the pages ask for.
+//! authorization state (login.rs), notifications and the unread count go to notifications.rs,
+//! everything else goes into the store (store.rs), and after each batch the pages are brought up to
+//! date. chats.rs, conversation.rs, actions.rs, account.rs and password.rs do what the pages ask
+//! for; online.rs tells TDLib whether the account is online.
 //!
 //! When finchgram-tdlib ends unexpectedly, the requests still waiting fail and it is started
 //! again: TDLib's database is on disk, so it carries on where it was. After a log out TDLib closes
@@ -23,6 +24,8 @@ mod chats;
 mod conversation;
 mod files;
 mod login;
+mod notifications;
+mod online;
 mod password;
 mod process;
 mod rich_text;
@@ -114,11 +117,22 @@ pub fn start(ui: &MainWindow) {
     account::connect(ui);
     password::connect(ui);
     viewer::connect(ui);
+    notifications::connect(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {
-            if let WindowEvent::Focused(true) = event {
-                conversation::window_came_to_front();
+            match event {
+                WindowEvent::Focused(in_front) => {
+                    online::window_in_front(*in_front);
+                    if *in_front {
+                        conversation::window_came_to_front();
+                    }
+                }
+                WindowEvent::KeyboardInput { .. }
+                | WindowEvent::MouseInput { .. }
+                | WindowEvent::MouseWheel { .. }
+                | WindowEvent::CursorMoved { .. } => online::input(),
+                _ => {}
             }
             // Right clicks are seen here, before the pages: a message's menu opens wherever on it
             // the click was, even on its formatted words, which keep clicks to themselves.
@@ -147,6 +161,12 @@ pub fn start(ui: &MainWindow) {
 /// The UI language changed: the names Rust puts in rows ("Saved Messages") change with it.
 pub fn language_changed() {
     store::refresh_all();
+}
+
+/// Settings → Notifications & sounds changed (main.rs saves them; notifications.rs reads them from
+/// AppState).
+pub fn notification_settings_changed(desktop_turned_on: bool) {
+    notifications::settings_changed(desktop_turned_on);
 }
 
 /// The app is quitting: let TDLib write its database out and finchgram-tdlib end, for at most
@@ -215,6 +235,8 @@ fn launch() {
     });
     match started {
         Ok(()) => {
+            // A new finchgram-tdlib begins offline, without an account until it says it has one.
+            online::set_ready(false);
             with_state(|app| app.set_telegram_state(TelegramState::Starting));
             check_version();
         }
@@ -242,6 +264,7 @@ fn deliver(run: u64, batch: Vec<Output>) {
         }
     }
     store::refresh();
+    notifications::open_wanted();
 }
 
 fn on_update(update: Update) {
@@ -249,6 +272,25 @@ fn on_update(update: Update) {
         Update::AuthorizationState { authorization_state } => on_authorization_state(authorization_state),
         Update::ConnectionState { state } => with_state(|app| app.set_connection(connection(state))),
         Update::File { file } => files::updated(&file),
+        Update::NotificationGroup {
+            notification_group_id,
+            chat_id,
+            notification_settings_chat_id,
+            notification_sound_id,
+            added_notifications,
+            removed_notification_ids,
+        } => notifications::group_changed(
+            notification_group_id,
+            chat_id,
+            notification_settings_chat_id,
+            notification_sound_id,
+            added_notifications,
+            removed_notification_ids,
+        ),
+        Update::ActiveNotifications { groups } => notifications::active(groups),
+        Update::UnreadMessageCount { chat_list, unread_count, unread_unmuted_count } => {
+            notifications::unread_changed(chat_list, unread_count, unread_unmuted_count)
+        }
         update => match store::with(|store| store.apply(update)) {
             Some(Followup::LoadFolders) => chats::load_folders(),
             Some(Followup::View { chat_id, message_ids }) => conversation::view(chat_id, message_ids),
@@ -294,6 +336,8 @@ fn on_authorization_state(state: AuthorizationState) {
         AuthorizationState::Ready => {
             account::load();
             chats::load_main_list();
+            notifications::start();
+            online::set_ready(true);
             TelegramState::Ready
         }
         AuthorizationState::LoggingOut | AuthorizationState::Closing if discarding => TelegramState::Starting,
@@ -312,6 +356,8 @@ fn on_authorization_state(state: AuthorizationState) {
             account::forget();
             password::forget();
             files::forget();
+            notifications::forget();
+            online::set_ready(false);
             with_state(|app| app.set_page(Page::Chats));
             return;
         }

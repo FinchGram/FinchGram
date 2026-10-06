@@ -172,6 +172,31 @@ fn main() -> Result<(), slint::PlatformError> {
             }
         }
     });
+    // Settings → Notifications & sounds: src/telegram/notifications.rs reads them from AppState.
+    show_notification_settings(&state, &settings.borrow().notifications);
+    state.on_change_notification_setting({
+        let ui = ui.as_weak();
+        let settings = settings.clone();
+        move |setting, on| {
+            let notifications = {
+                let mut settings = settings.borrow_mut();
+                let notifications = &mut settings.notifications;
+                match setting {
+                    NotificationSetting::DesktopNotifications => notifications.desktop = on,
+                    NotificationSetting::MessagePreviews => notifications.previews = on,
+                    NotificationSetting::NotificationSounds => notifications.sounds = on,
+                    NotificationSetting::FlashTaskbar => notifications.flash_taskbar = on,
+                    NotificationSetting::CountMutedChats => notifications.count_muted_chats = on,
+                }
+                settings.save();
+                settings.notifications
+            };
+            if let Some(ui) = ui.upgrade() {
+                show_notification_settings(&ui.global::<AppState>(), &notifications);
+            }
+            telegram::notification_settings_changed(setting == NotificationSetting::DesktopNotifications && on);
+        }
+    });
     if settings.borrow().show_in_menu_bar {
         // Once the event loop runs, when the application is set up.
         let ui = ui.as_weak();
@@ -298,6 +323,14 @@ fn main() -> Result<(), slint::PlatformError> {
     let result = platform::run(&ui, telegram::shut_down);
     telegram::shut_down();
     result
+}
+
+fn show_notification_settings(state: &AppState, notifications: &settings::Notifications) {
+    state.set_desktop_notifications(notifications.desktop);
+    state.set_message_previews(notifications.previews);
+    state.set_notification_sounds(notifications.sounds);
+    state.set_flash_taskbar(notifications.flash_taskbar);
+    state.set_count_muted_chats(notifications.count_muted_chats);
 }
 
 /// Launching at login, as the system's list of login items has it (it can change in System

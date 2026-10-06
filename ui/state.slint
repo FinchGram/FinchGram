@@ -37,6 +37,9 @@ export enum Page { chats, settings, profile }
 // has yet are shown greyed out.
 export enum SettingsSection { general, notifications, privacy, chats, folders, finch, appearance, language, data, advanced, about }
 
+// The settings of Settings → Notifications & sounds that are FinchGram's own (src/settings.rs).
+export enum NotificationSetting { desktop-notifications, message-previews, notification-sounds, flash-taskbar, count-muted-chats }
+
 // A UI language the app ships (src/i18n.rs).
 export struct Language {
     code: string,           // a folder name under lang/, or "en"
@@ -44,11 +47,13 @@ export struct Language {
     english: string,        // its name in English
 }
 
-// What FinchGram shows outside its window, in the system's own menus: the menu of its icon in the
-// menu bar (src/platform/).
+// What FinchGram shows outside its window, in the system's own places: the menu of its icon in the
+// menu bar (src/platform/), and notifications (src/telegram/notifications.rs).
 export global PlatformWords {
     out property <string> open: @tr("Open FinchGram");
     out property <string> quit: @tr("Quit FinchGram");
+    // A notification that does not show its message.
+    out property <string> new-message: @tr("New message");
 }
 
 export global AppState {
@@ -94,6 +99,15 @@ export global AppState {
     in-out property <bool> keeps-running-available;     // macOS: closing the window can leave it running
     in-out property <bool> send-with-enter: true;       // else ⌘⏎ sends and ⏎ starts a new line
 
+    // Settings → Notifications & sounds: what FinchGram does when a message arrives
+    // (src/telegram/notifications.rs). The notifications are the system's, which asks the user
+    // once whether FinchGram may show them.
+    in-out property <bool> desktop-notifications: true; // a notification for each new message
+    in-out property <bool> message-previews: true;      // it shows the message, else only that one came
+    in-out property <bool> notification-sounds;         // it plays the system's sound
+    in-out property <bool> flash-taskbar: true;         // the Dock icon bounces while FinchGram is not in front
+    in-out property <bool> count-muted-chats;           // the unread count on the Dock icon counts muted chats
+
     // Settings: each saves itself (src/settings.rs).
     callback change-language(string);
     callback change-appearance(string);
@@ -106,6 +120,7 @@ export global AppState {
     callback change-show-in-menu-bar(bool);
     callback change-quit-on-close(bool);
     callback change-send-with-enter(bool);
+    callback change-notification-setting(NotificationSetting, bool);
 
     // Our own pages (GitHub) and Telegram's terms of service; anything else is refused by Rust.
     callback open-url(string);

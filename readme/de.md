@@ -13,8 +13,10 @@ den drei Designs des Entwurfs: Workbench (Standard), Broadsheet und Terminal, um
 Einstellungen › Darstellung. Fotos und Videos erscheinen in den Chats und öffnen sich in einem Viewer,
 der Videos mit mpv abspielt. Ein Rechtsklick auf eine Nachricht öffnet ihr Menü: antworten,
 bearbeiten, kopieren, Link kopieren, weiterleiten, melden, löschen oder mehrere Nachrichten auswählen.
-Die zweistufige Bestätigung wird unter Einstellungen › Datenschutz & Sicherheit verwaltet. Als
-Nächstes kommen Dateien, mehrere Konten, Stichwortfilter und geplante Nachrichten.
+Die zweistufige Bestätigung wird unter Einstellungen › Datenschutz & Sicherheit verwaltet. Neue
+Nachrichten kommen als macOS-Mitteilungen, ihre Zahl steht am Dock-Symbol (Einstellungen ›
+Mitteilungen & Töne). Als Nächstes kommen Dateien, mehrere Konten, Stichwortfilter und geplante
+Nachrichten.
 
 Die App ist eine Hülle (Shell). Telegram selbst übernimmt TDLib, die offizielle Bibliothek von Telegram,
 die als eigenes Programm neben der ausführbaren Datei läuft: `finchgram-tdlib`, von diesem Repository
@@ -102,6 +104,8 @@ src/
     files.rs             #   das Herunterladen von Dateien
     viewer.rs            #   der Viewer: Fotos, Videos, in „Downloads“ sichern
     rich_text.rs         #   formatierter Text: fett, kursiv, Links …
+    notifications.rs     #   Mitteilungen über neue Nachrichten, die Zahl der ungelesenen im Dock
+    online.rs            #   das Konto ist online, solange das Fenster vorne ist und benutzt wird
   platform/              # was sich von Betriebssystem zu Betriebssystem unterscheidet
   player/                # Video mit libmpv, per OpenGL ins Fenster gezeichnet
   update.rs              # die Selbstaktualisierung: GitHub Releases, Signatur, Austausch, Neustart

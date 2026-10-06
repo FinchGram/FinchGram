@@ -25,9 +25,35 @@ pub struct Settings {
     pub quit_on_close: bool,
     pub show_in_menu_bar: bool,
     pub send_with_enter: bool,
-    /// How wide each theme's chat list is, as the user last dragged its edge. (A table: it has to
-    /// come after the plain values in the file.)
+    /// Settings → Notifications & sounds, FinchGram's own part of it. (Tables, this and the next,
+    /// have to come after the plain values in the file.)
+    pub notifications: Notifications,
+    /// How wide each theme's chat list is, as the user last dragged its edge.
     pub list_widths: ListWidths,
+}
+
+/// What FinchGram does when a message arrives (src/telegram/notifications.rs), as the design has it
+/// by default. Which kinds of chat notify is Telegram's own setting, kept for the account.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Notifications {
+    /// A notification for each new message, in the system's notification centre.
+    pub desktop: bool,
+    /// The notification shows the message, else only that one came.
+    pub previews: bool,
+    /// The notification plays the system's sound.
+    pub sounds: bool,
+    /// FinchGram's icon draws the eye while FinchGram is not in front: on macOS the Dock icon
+    /// bounces once.
+    pub flash_taskbar: bool,
+    /// The unread count on FinchGram's icon counts the messages of muted chats too.
+    pub count_muted_chats: bool,
+}
+
+impl Default for Notifications {
+    fn default() -> Self {
+        Notifications { desktop: true, previews: true, sounds: false, flash_taskbar: true, count_muted_chats: false }
+    }
 }
 
 /// The width of the chat list in each theme, in logical pixels: the design's until the user drags
@@ -70,6 +96,7 @@ impl Default for Settings {
             quit_on_close: false,
             show_in_menu_bar: false,
             send_with_enter: true,
+            notifications: Notifications::default(),
             list_widths: ListWidths::default(),
         }
     }
@@ -129,6 +156,18 @@ mod tests {
         let read: Settings = toml::from_str("theme = \"terminal\"\ncheck_for_updates = false\n").expect("read");
         assert_eq!((read.theme.as_str(), read.check_for_updates), ("terminal", false));
         assert!(!read.quit_on_close && !read.show_in_menu_bar && read.send_with_enter);
+        assert_eq!(read.notifications, Notifications::default());
+    }
+
+    #[test]
+    fn notifications_are_a_table_of_their_own() {
+        let settings = Settings { notifications: Notifications { sounds: true, ..Notifications::default() }, ..Settings::default() };
+        let text = toml::to_string_pretty(&settings).expect("TOML");
+        assert!(text.contains("[notifications]\ndesktop = true\npreviews = true\nsounds = true\n"), "{text}");
+        let read: Settings = toml::from_str(&text).expect("read back");
+        assert_eq!(read.notifications, settings.notifications);
+        let read: Settings = toml::from_str("[notifications]\nflash_taskbar = false\n").expect("read");
+        assert!(!read.notifications.flash_taskbar && read.notifications.desktop);
     }
 
     #[test]

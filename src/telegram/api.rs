@@ -93,6 +93,27 @@ pub enum Update {
     #[serde(rename = "updateFile")]
     File { file: File },
 
+    /// Notifications (notifications.rs): TDLib added some to a chat's group of them, or took some
+    /// back. `notification_settings_chat_id` is 0 when the added ones are not new but show again
+    /// (a group that had made room for others comes back); `notification_sound_id` is 0 when they
+    /// make no sound, -1 for the default sound.
+    #[serde(rename = "updateNotificationGroup")]
+    NotificationGroup {
+        notification_group_id: i32,
+        chat_id: i64,
+        notification_settings_chat_id: i64,
+        #[serde(with = "int64")]
+        notification_sound_id: i64,
+        added_notifications: Vec<Notification>,
+        removed_notification_ids: Vec<i32>,
+    },
+    /// The notifications still shown from before TDLib started, once, before any other.
+    #[serde(rename = "updateActiveNotifications")]
+    ActiveNotifications { groups: Vec<NotificationGroup> },
+    /// Unread messages in a chat list: all of them, and those in chats that are not muted.
+    #[serde(rename = "updateUnreadMessageCount")]
+    UnreadMessageCount { chat_list: ChatList, unread_count: i32, unread_unmuted_count: i32 },
+
     #[serde(other)]
     Other,
 }
@@ -494,9 +515,52 @@ pub enum NotificationSettingsScope {
     Channel,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+/// The notification settings of a kind of chat, which its chats follow unless they say otherwise.
+/// All of them are read, so that switching a kind off or on sends them back unchanged but for the
+/// mute.
+#[derive(Debug, Clone, PartialEq, Default, Deserialize)]
+#[serde(default)]
 pub struct ScopeNotificationSettings {
     pub mute_for: i32,
+    #[serde(with = "int64")]
+    pub sound_id: i64,
+    pub show_preview: bool,
+    pub use_default_mute_stories: bool,
+    pub mute_stories: bool,
+    #[serde(with = "int64")]
+    pub story_sound_id: i64,
+    pub show_story_poster: bool,
+    pub disable_pinned_message_notifications: bool,
+    pub disable_mention_notifications: bool,
+}
+
+impl ScopeNotificationSettings {
+    /// These settings with `mute_for`, as TDLib takes them (setScopeNotificationSettings).
+    pub fn with_mute_for(&self, mute_for: i32) -> serde_json::Value {
+        serde_json::json!({
+            "@type": "scopeNotificationSettings",
+            "mute_for": mute_for,
+            "sound_id": self.sound_id.to_string(),
+            "show_preview": self.show_preview,
+            "use_default_mute_stories": self.use_default_mute_stories,
+            "mute_stories": self.mute_stories,
+            "story_sound_id": self.story_sound_id.to_string(),
+            "show_story_poster": self.show_story_poster,
+            "disable_pinned_message_notifications": self.disable_pinned_message_notifications,
+            "disable_mention_notifications": self.disable_mention_notifications,
+        })
+    }
+}
+
+impl NotificationSettingsScope {
+    /// The scope as TDLib takes it in a request.
+    pub fn to_json(self) -> serde_json::Value {
+        match self {
+            NotificationSettingsScope::Private => serde_json::json!({ "@type": "notificationSettingsScopePrivateChats" }),
+            NotificationSettingsScope::Group => serde_json::json!({ "@type": "notificationSettingsScopeGroupChats" }),
+            NotificationSettingsScope::Channel => serde_json::json!({ "@type": "notificationSettingsScopeChannelChats" }),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -982,6 +1046,38 @@ pub struct AdvertisementSponsor {
 #[derive(Debug, Clone, Deserialize)]
 pub struct SponsoredMessages {
     pub messages: Vec<SponsoredMessage>,
+}
+
+// ---- notifications ----------------------------------------------------------------------------
+
+/// A notification TDLib made, with an id that stays the same across starts.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Notification {
+    pub id: i32,
+    /// Sent without sound by its sender.
+    pub is_silent: bool,
+    #[serde(rename = "type")]
+    pub kind: NotificationType,
+}
+
+/// What a notification is about. FinchGram shows those about messages; new secret chats and
+/// calls are `Other`.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "@type")]
+pub enum NotificationType {
+    /// `show_preview` is false when the chat's settings say its messages are not shown in
+    /// notifications.
+    #[serde(rename = "notificationTypeNewMessage")]
+    NewMessage { message: Box<Message>, show_preview: bool },
+    #[serde(other)]
+    Other,
+}
+
+/// A chat's notifications that TDLib still shows.
+#[derive(Debug, Clone, Deserialize)]
+pub struct NotificationGroup {
+    pub id: i32,
+    pub notifications: Vec<Notification>,
 }
 
 // ---- logging in -------------------------------------------------------------------------------

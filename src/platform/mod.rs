@@ -90,6 +90,81 @@ pub fn copy_image(contents: &[u8]) -> Result<(), String> {
     }
 }
 
+/// A notification of a new message, as the system shows it (on macOS in Notification Center).
+/// Systems without notifications in FinchGram yet show none, and have no badge either.
+pub struct Notification {
+    /// Its name, by which it is taken back.
+    pub id: String,
+    /// The chat it is from: the system keeps a chat's notifications together, and a click on one
+    /// opens the chat.
+    pub chat_id: i64,
+    pub title: String,
+    /// Who wrote it, in a group; else empty.
+    pub subtitle: String,
+    pub body: String,
+    /// It plays the system's sound.
+    pub sound: bool,
+}
+
+/// Clicks on FinchGram's notifications show the window and hand their chat to `open_chat`. Call
+/// before the event loop runs, so that the click that started FinchGram counts too.
+pub fn handle_notification_clicks(open_chat: fn(i64)) {
+    #[cfg(target_os = "macos")]
+    macos::handle_notification_clicks(open_chat);
+    #[cfg(not(target_os = "macos"))]
+    let _ = open_chat;
+}
+
+/// Ask the user whether FinchGram may show notifications. The system asks only once and remembers
+/// the answer, which the user can change in its settings.
+pub fn ask_to_notify() {
+    #[cfg(target_os = "macos")]
+    macos::ask_to_notify();
+}
+
+pub fn show_notification(notification: &Notification) {
+    #[cfg(target_os = "macos")]
+    macos::show_notification(notification);
+    #[cfg(not(target_os = "macos"))]
+    let _ = notification;
+}
+
+/// Take back the notifications with these ids, where they are still shown.
+pub fn remove_notifications(ids: &[String]) {
+    #[cfg(target_os = "macos")]
+    macos::remove_notifications(ids);
+    #[cfg(not(target_os = "macos"))]
+    let _ = ids;
+}
+
+/// Take back every notification shown so far but those with these ids.
+pub fn keep_only_notifications(ids: Vec<String>) {
+    #[cfg(target_os = "macos")]
+    macos::keep_only_notifications(ids);
+    #[cfg(not(target_os = "macos"))]
+    let _ = ids;
+}
+
+pub fn remove_all_notifications() {
+    #[cfg(target_os = "macos")]
+    macos::remove_all_notifications();
+}
+
+/// The number on FinchGram's icon (the Dock's on macOS); none for 0.
+pub fn set_badge(count: i32) {
+    #[cfg(target_os = "macos")]
+    macos::set_badge(count);
+    #[cfg(not(target_os = "macos"))]
+    let _ = count;
+}
+
+/// Draw the eye to FinchGram's icon: on macOS the Dock icon bounces once. Nothing happens while
+/// FinchGram is in front.
+pub fn flash_icon() {
+    #[cfg(target_os = "macos")]
+    macos::flash_icon();
+}
+
 /// What the account's list of sessions calls this device (TDLib's device_model, which must not be
 /// empty). TDLib finds the system's version by itself.
 pub fn device_model() -> &'static str {

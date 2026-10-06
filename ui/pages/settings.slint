@@ -2,8 +2,8 @@
 // the right. The three themes are chosen under Appearance, where the design puts them; the change
 // is immediate. Categories without a setting FinchGram has yet are greyed out, and so are such
 // settings in the categories that have some.
-import { AppState, Page, SettingsSection, TelegramState, Theme, UpdateState } from "../state.slint";
-import { PasswordSettings, PasswordStep, PasswordChange } from "../telegram.slint";
+import { AppState, NotificationSetting, Page, SettingsSection, TelegramState, Theme, UpdateState } from "../state.slint";
+import { NotificationScope, NotificationScopes, PasswordSettings, PasswordStep, PasswordChange } from "../telegram.slint";
 import { Look } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Spinner, Switch, Field, PrimaryButton, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
@@ -110,6 +110,7 @@ component Categories {
             section: SettingsSection.notifications;
             icon: "bell";
             label: @tr("Notifications & sounds");
+            enabled: true;
         }
         Category {
             section: SettingsSection.privacy;
@@ -704,6 +705,119 @@ component GeneralSection {
                     title: @tr("Keyboard shortcuts");
                     value: @tr("shortcuts" => "View");
                     enabled: false;
+                }
+            }
+        }
+    }
+}
+
+// Notifications & sounds, from the design: what FinchGram does when a message arrives
+// (src/telegram/notifications.rs), and whether each kind of chat notifies, which is Telegram's own
+// setting for the account. A notification's preview and sound come with the notification, so they
+// are greyed out without it; there is only one account, so far.
+component NotificationsSection {
+    VerticalLayout {
+        spacing: 26px;
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Desktop notifications");
+            }
+            Card {
+                SwitchRow {
+                    icon: "bell-ringing";
+                    title: @tr("Desktop notifications");
+                    on: AppState.desktop-notifications;
+                    toggled => {
+                        AppState.change-notification-setting(NotificationSetting.desktop-notifications, !AppState.desktop-notifications);
+                    }
+                }
+                Separator { }
+                SwitchRow {
+                    icon: "eye";
+                    title: @tr("Message previews");
+                    on: AppState.message-previews;
+                    enabled: AppState.desktop-notifications;
+                    toggled => {
+                        AppState.change-notification-setting(NotificationSetting.message-previews, !AppState.message-previews);
+                    }
+                }
+                Separator { }
+                SwitchRow {
+                    icon: "speaker-high";
+                    title: @tr("Sounds");
+                    on: AppState.notification-sounds;
+                    enabled: AppState.desktop-notifications;
+                    toggled => {
+                        AppState.change-notification-setting(NotificationSetting.notification-sounds, !AppState.notification-sounds);
+                    }
+                }
+                Separator { }
+                SwitchRow {
+                    icon: "lightning";
+                    title: @tr("Flash taskbar");
+                    on: AppState.flash-taskbar;
+                    toggled => {
+                        AppState.change-notification-setting(NotificationSetting.flash-taskbar, !AppState.flash-taskbar);
+                    }
+                }
+                Separator { }
+                SwitchRow {
+                    icon: "bell-slash";
+                    title: @tr("Count muted chats in badge");
+                    on: AppState.count-muted-chats;
+                    toggled => {
+                        AppState.change-notification-setting(NotificationSetting.count-muted-chats, !AppState.count-muted-chats);
+                    }
+                }
+                Separator { }
+                SwitchRow {
+                    icon: "users";
+                    title: @tr("Notifications from other accounts");
+                    description: @tr("When off, only the current account notifies you");
+                    enabled: false;
+                }
+            }
+        }
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("By chat type");
+            }
+            // Telegram's settings: there once TDLib has said them. A click switches the kind on or
+            // off, as a choice between values does elsewhere.
+            Card {
+                NavRow {
+                    icon: "user";
+                    title: @tr("Private chats");
+                    value: !NotificationScopes.loaded ? "" : NotificationScopes.private-chats ? @tr("On") : @tr("Off");
+                    caret: "caret-up-down";
+                    enabled: NotificationScopes.loaded;
+                    clicked => {
+                        NotificationScopes.toggle(NotificationScope.private-chats);
+                    }
+                }
+                Separator { }
+                NavRow {
+                    icon: "users-three";
+                    title: @tr("Groups");
+                    value: !NotificationScopes.loaded ? "" : NotificationScopes.groups ? @tr("On") : @tr("Off");
+                    caret: "caret-up-down";
+                    enabled: NotificationScopes.loaded;
+                    clicked => {
+                        NotificationScopes.toggle(NotificationScope.groups);
+                    }
+                }
+                Separator { }
+                NavRow {
+                    icon: "megaphone";
+                    title: @tr("Channels");
+                    value: !NotificationScopes.loaded ? "" : NotificationScopes.channels ? @tr("On") : @tr("Off");
+                    caret: "caret-up-down";
+                    enabled: NotificationScopes.loaded;
+                    clicked => {
+                        NotificationScopes.toggle(NotificationScope.channels);
+                    }
                 }
             }
         }
@@ -1475,6 +1589,7 @@ export component SettingsPage inherits PageFrame {
                     Heading {
                         label: root.two-step ? @tr("Two-step verification")
                             : AppState.settings-section == SettingsSection.general ? @tr("General")
+                            : AppState.settings-section == SettingsSection.notifications ? @tr("Notifications & sounds")
                             : AppState.settings-section == SettingsSection.language ? @tr("Language")
                             : AppState.settings-section == SettingsSection.privacy ? @tr("Privacy & security")
                             : AppState.settings-section == SettingsSection.about ? @tr("About") : @tr("Appearance");
@@ -1500,6 +1615,7 @@ export component SettingsPage inherits PageFrame {
                     }
                 }
                 if AppState.settings-section == SettingsSection.general: GeneralSection { }
+                if AppState.settings-section == SettingsSection.notifications: NotificationsSection { }
                 if AppState.settings-section == SettingsSection.appearance: AppearanceSection { }
                 if AppState.settings-section == SettingsSection.language: LanguageSection { }
                 if AppState.settings-section == SettingsSection.privacy && !root.two-step: PrivacySection { }

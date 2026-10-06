@@ -13,8 +13,9 @@ texto funcionam, nos três temas do design: Workbench (o padrão), Broadsheet e 
 Configurações › Aparência. Fotos e vídeos aparecem nas conversas e abrem num visualizador que
 reproduz o vídeo com o mpv. Um clique direito numa mensagem abre o menu dela: responder, editar,
 copiar, copiar o link, encaminhar, denunciar, apagar ou selecionar várias mensagens. A verificação
-em duas etapas é gerenciada em Configurações › Privacidade e segurança. Em seguida vêm arquivos,
-várias contas, filtros por palavras-chave e mensagens agendadas.
+em duas etapas é gerenciada em Configurações › Privacidade e segurança. Mensagens novas chegam como
+notificações do macOS, com o número delas no ícone do Dock (Configurações › Notificações e sons).
+Em seguida vêm arquivos, várias contas, filtros por palavras-chave e mensagens agendadas.
 
 O app é uma casca (*shell*). O Telegram em si fica a cargo do TDLib, a biblioteca oficial do Telegram,
 que roda como um programa separado ao lado do executável: `finchgram-tdlib`, compilado por este
@@ -103,6 +104,8 @@ src/
     files.rs             #   o download de arquivos
     viewer.rs            #   o visualizador: fotos, vídeos, salvar em Downloads
     rich_text.rs         #   texto formatado: negrito, itálico, links…
+    notifications.rs     #   notificações de mensagens novas, o número de não lidas no Dock
+    online.rs            #   a conta fica online enquanto a janela está na frente e em uso
   platform/              # o que muda de um sistema operacional para outro
   player/                # o vídeo com a libmpv, desenhado na janela com OpenGL
   update.rs              # a atualização automática: GitHub Releases, assinatura, troca, reinício

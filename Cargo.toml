@@ -32,13 +32,20 @@ ed25519-dalek = "3"
 hex = "0.4"
 
 [target.'cfg(target_os = "macos")'.dependencies]
-# The Dock, Quit, the menu bar icon, launching at login and the clipboard (src/platform/macos.rs);
-# Slint's winit backend uses the same crates, and resvg draws its SVG images.
+# The Dock, Quit, the menu bar icon, launching at login, the clipboard and notifications
+# (src/platform/macos.rs); Slint's winit backend uses the same crates, and resvg draws its SVG images.
 objc2 = "0.6"
-objc2-foundation = { version = "0.3", default-features = false, features = ["std", "objc2-core-foundation", "NSData", "NSError", "NSGeometry", "NSString"] }
+block2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = [
+    "std", "objc2-core-foundation", "NSArray", "NSBundle", "NSData", "NSDate", "NSError", "NSGeometry", "NSString",
+] }
 objc2-app-kit = { version = "0.3", default-features = false, features = [
-    "std", "objc2-core-foundation", "NSApplication", "NSButton", "NSControl", "NSImage", "NSMenu", "NSMenuItem",
-    "NSPasteboard", "NSResponder", "NSStatusBar", "NSStatusBarButton", "NSStatusItem", "NSView",
+    "std", "objc2-core-foundation", "NSApplication", "NSButton", "NSControl", "NSDockTile", "NSImage", "NSMenu",
+    "NSMenuItem", "NSPasteboard", "NSResponder", "NSStatusBar", "NSStatusBarButton", "NSStatusItem", "NSView",
+] }
+objc2-user-notifications = { version = "0.3", default-features = false, features = [
+    "std", "bitflags", "block2", "UNNotification", "UNNotificationContent", "UNNotificationRequest",
+    "UNNotificationResponse", "UNNotificationSound", "UNNotificationTrigger", "UNUserNotificationCenter",
 ] }
 resvg = { version = "0.48", default-features = false }
 

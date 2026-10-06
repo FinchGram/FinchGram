@@ -3,47 +3,47 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-03 07:26+0000\n"
+"POT-Creation-Date: 2026-10-06 06:52+0000\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ui/app.slint:34
+#: ui/app.slint:36
 msgid "View"
 msgstr "视图"
 
-#: ui/app.slint:36 ui/broadsheet/actions.slint:169 ui/pages/login.slint:316
+#: ui/app.slint:38 ui/broadsheet/actions.slint:169 ui/pages/login.slint:316
 #: ui/workbench/actions.slint:171
 msgid "Search"
 msgstr "搜索"
 
-#: ui/app.slint:47 ui/pages/settings.slint:554
+#: ui/app.slint:49 ui/pages/settings.slint:555
 msgid "Workbench"
 msgstr "工作台"
 
-#: ui/app.slint:55 ui/pages/settings.slint:562
+#: ui/app.slint:57 ui/pages/settings.slint:563
 msgid "Broadsheet"
 msgstr "报纸"
 
-#: ui/app.slint:63 ui/pages/settings.slint:570
+#: ui/app.slint:65 ui/pages/settings.slint:571
 msgid "Terminal"
 msgstr "终端"
 
-#: ui/app.slint:72
+#: ui/app.slint:74
 msgid "Settings…"
 msgstr "设置…"
 
-#: ui/app.slint:81
+#: ui/app.slint:83
 msgid "Help"
 msgstr "帮助"
 
-#: ui/app.slint:84
+#: ui/app.slint:86
 msgid "Update to {}…"
 msgstr "更新到 {}…"
 
-#: ui/app.slint:85
+#: ui/app.slint:87
 msgid "Check for Updates…"
 msgstr "检查更新…"
 
@@ -51,7 +51,7 @@ msgstr "检查更新…"
 msgid "Choose recipient…"
 msgstr "转发到…"
 
-#: ui/broadsheet/actions.slint:225 ui/telegram.slint:481
+#: ui/broadsheet/actions.slint:225 ui/telegram.slint:494
 #: ui/workbench/actions.slint:227
 msgid "Saved Messages"
 msgstr "收藏夹"
@@ -89,11 +89,11 @@ msgstr "举报"
 msgid "Delete"
 msgstr "删除"
 
-#: ui/broadsheet/broadsheet.slint:93 ui/pages/settings.slint:593
+#: ui/broadsheet/broadsheet.slint:93 ui/pages/settings.slint:594
 msgid "Light"
 msgstr "浅色"
 
-#: ui/broadsheet/broadsheet.slint:93 ui/pages/settings.slint:601
+#: ui/broadsheet/broadsheet.slint:93 ui/pages/settings.slint:602
 msgid "Dark"
 msgstr "深色"
 
@@ -101,11 +101,12 @@ msgstr "深色"
 msgid "Accounts"
 msgstr "账号"
 
-#: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:124
+#: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:125
 msgid "Chats"
 msgstr "聊天"
 
 #: ui/broadsheet/broadsheet.slint:248 ui/broadsheet/broadsheet.slint:838
+#: ui/workbench/sidebar.slint:398
 msgid "Channels"
 msgstr "频道"
 
@@ -827,11 +828,11 @@ msgstr "多账号与文件夹"
 msgid "Keep work and life apart"
 msgstr "工作与生活分开放"
 
-#: ui/pages/login.slint:163 ui/pages/settings.slint:845
+#: ui/pages/login.slint:163 ui/pages/settings.slint:959
 msgid "Fully open source — read the code"
 msgstr "完全开源，代码公开可查"
 
-#: ui/pages/login.slint:183 ui/pages/settings.slint:874
+#: ui/pages/login.slint:183 ui/pages/settings.slint:988
 msgid ""
 "FinchGram is an unofficial client built on the Telegram API. It is not made "
 "by Telegram."
@@ -855,7 +856,7 @@ msgid "Phone number"
 msgstr "手机号"
 
 #: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613
-#: ui/pages/settings.slint:1166 ui/pages/settings.slint:1363
+#: ui/pages/settings.slint:1280 ui/pages/settings.slint:1477
 msgid "Next"
 msgstr "下一步"
 
@@ -909,12 +910,12 @@ msgstr "没收到？重新发送"
 
 #: ui/pages/login.slint:524 ui/pages/login.slint:579 ui/pages/login.slint:629
 #: ui/pages/login.slint:695 ui/pages/login.slint:800 ui/pages/login.slint:872
-#: ui/pages/login.slint:901 ui/pages/settings.slint:1379
+#: ui/pages/login.slint:901 ui/pages/settings.slint:1493
 #: ui/terminal/actions.slint:285
 msgid "Back"
 msgstr "返回"
 
-#: ui/pages/login.slint:537 ui/pages/settings.slint:947
+#: ui/pages/login.slint:537 ui/pages/settings.slint:1061
 msgid "Two-step verification"
 msgstr "两步验证"
 
@@ -922,7 +923,7 @@ msgstr "两步验证"
 msgid "This account has two-step verification on. Enter your password."
 msgstr "这个账号开启了两步验证，请输入你设置的密码。"
 
-#: ui/pages/login.slint:545 ui/pages/settings.slint:1148
+#: ui/pages/login.slint:545 ui/pages/settings.slint:1262
 msgid "Password"
 msgstr "密码"
 
@@ -930,27 +931,27 @@ msgstr "密码"
 msgid "Hint: {0}"
 msgstr "密码提示：{0}"
 
-#: ui/pages/login.slint:572 ui/pages/settings.slint:1174
+#: ui/pages/login.slint:572 ui/pages/settings.slint:1288
 msgid "Forgot password?"
 msgstr "忘记密码？"
 
-#: ui/pages/login.slint:593 ui/pages/settings.slint:1342
+#: ui/pages/login.slint:593 ui/pages/settings.slint:1456
 msgid "Recover via email"
 msgstr "通过邮箱找回密码"
 
-#: ui/pages/login.slint:594 ui/pages/settings.slint:1343
+#: ui/pages/login.slint:594 ui/pages/settings.slint:1457
 msgid "A recovery code was sent to {0}. Enter it to set a new password."
 msgstr "恢复码已发送至 {0}，验证后即可设置新密码。"
 
-#: ui/pages/login.slint:621 ui/pages/settings.slint:1371
+#: ui/pages/login.slint:621 ui/pages/settings.slint:1485
 msgid "Can't access this email?"
 msgstr "无法访问这个邮箱？"
 
-#: ui/pages/login.slint:643 ui/pages/settings.slint:1186
+#: ui/pages/login.slint:643 ui/pages/settings.slint:1300
 msgid "Set a new password"
 msgstr "设置新密码"
 
-#: ui/pages/login.slint:644 ui/pages/settings.slint:1187
+#: ui/pages/login.slint:644 ui/pages/settings.slint:1301
 msgid "You'll need this password when signing in on a new device."
 msgstr "以后在新设备上登录时，需要输入这个密码。"
 
@@ -1103,11 +1104,11 @@ msgstr "新密码"
 msgid "Re-enter new password"
 msgstr "再次输入新密码"
 
-#: ui/pages/password.slint:182 ui/pages/settings.slint:1213
+#: ui/pages/password.slint:182 ui/pages/settings.slint:1327
 msgid "Password hint (optional)"
 msgstr "密码提示（可选）"
 
-#: ui/pages/password.slint:192 ui/pages/settings.slint:1205
+#: ui/pages/password.slint:192 ui/pages/settings.slint:1319
 msgid ""
 "The hint is shown on the sign-in screen to anyone who knows your number. "
 "Don't write the password itself."
@@ -1157,7 +1158,7 @@ msgstr "没有用户名时，别人只能通过手机号找到你。"
 msgid "Bio"
 msgstr "个人简介"
 
-#: ui/pages/profile.slint:394 ui/pages/settings.slint:1190
+#: ui/pages/profile.slint:394 ui/pages/settings.slint:1304
 msgid "Save"
 msgstr "保存"
 
@@ -1165,92 +1166,92 @@ msgstr "保存"
 msgid "Profile"
 msgstr "个人资料"
 
-#: ui/pages/settings.slint:97 ui/pages/settings.slint:1436
+#: ui/pages/settings.slint:97 ui/pages/settings.slint:1550
 msgid "Settings"
 msgstr "设置"
 
-#: ui/pages/settings.slint:106 ui/pages/settings.slint:1477
+#: ui/pages/settings.slint:106 ui/pages/settings.slint:1591
 msgid "General"
 msgstr "通用"
 
-#: ui/pages/settings.slint:112
+#: ui/pages/settings.slint:112 ui/pages/settings.slint:1592
 msgid "Notifications & sounds"
 msgstr "通知与声音"
 
-#: ui/pages/settings.slint:117 ui/pages/settings.slint:1468
+#: ui/pages/settings.slint:118 ui/pages/settings.slint:1582
 msgid "Privacy & security"
 msgstr "隐私与安全"
 
-#: ui/pages/settings.slint:129
+#: ui/pages/settings.slint:130
 msgid "Folders"
 msgstr "文件夹"
 
-#: ui/pages/settings.slint:134
+#: ui/pages/settings.slint:135
 msgid "Finch features"
 msgstr "Finch 功能"
 
-#: ui/pages/settings.slint:139 ui/pages/settings.slint:1480
+#: ui/pages/settings.slint:140 ui/pages/settings.slint:1595
 msgid "Appearance"
 msgstr "外观"
 
-#: ui/pages/settings.slint:145 ui/pages/settings.slint:1478
+#: ui/pages/settings.slint:146 ui/pages/settings.slint:1593
 msgid "Language"
 msgstr "语言"
 
-#: ui/pages/settings.slint:151
+#: ui/pages/settings.slint:152
 msgid "Data & storage"
 msgstr "数据与存储"
 
-#: ui/pages/settings.slint:156
+#: ui/pages/settings.slint:157
 msgid "Advanced"
 msgstr "高级"
 
-#: ui/pages/settings.slint:161 ui/pages/settings.slint:1480
+#: ui/pages/settings.slint:162 ui/pages/settings.slint:1595
 msgid "About"
 msgstr "关于"
 
-#: ui/pages/settings.slint:495
+#: ui/pages/settings.slint:496
 msgid "Checking…"
 msgstr "正在检查…"
 
-#: ui/pages/settings.slint:496
+#: ui/pages/settings.slint:497
 msgid "Version {0} available"
 msgstr "发现新版本 {0}"
 
-#: ui/pages/settings.slint:497
+#: ui/pages/settings.slint:498
 msgid "Downloading {0}%"
 msgstr "正在下载 {0}%"
 
-#: ui/pages/settings.slint:497
+#: ui/pages/settings.slint:498
 msgid "Installing…"
 msgstr "安装中…"
 
-#: ui/pages/settings.slint:498
+#: ui/pages/settings.slint:499
 msgid "You're up to date"
 msgstr "已是最新版本"
 
-#: ui/pages/settings.slint:499
+#: ui/pages/settings.slint:500
 msgid "The update failed"
 msgstr "更新失败"
 
-#: ui/pages/settings.slint:500 ui/pages/settings.slint:516
-#: ui/pages/settings.slint:788
+#: ui/pages/settings.slint:501 ui/pages/settings.slint:517
+#: ui/pages/settings.slint:902
 msgid "Version {0}"
 msgstr "版本 {0}"
 
-#: ui/pages/settings.slint:524
+#: ui/pages/settings.slint:525
 msgid "Install and restart"
 msgstr "安装并重启"
 
-#: ui/pages/settings.slint:531
+#: ui/pages/settings.slint:532
 msgid "Check for updates"
 msgstr "检查更新"
 
-#: ui/pages/settings.slint:547
+#: ui/pages/settings.slint:548
 msgid "Theme"
 msgstr "主题"
 
-#: ui/pages/settings.slint:578
+#: ui/pages/settings.slint:579
 msgid ""
 "Workbench is an editor's layout, Broadsheet a newspaper's, Terminal a "
 "console's. The same chats and settings in all three."
@@ -1258,245 +1259,287 @@ msgstr ""
 "工作台像编辑器，报纸像一份报纸，终端像控制台。三套主题里的聊天和设置完全相"
 "同。"
 
-#: ui/pages/settings.slint:586
+#: ui/pages/settings.slint:587
 msgid "Light and dark"
 msgstr "浅色与深色"
 
-#: ui/pages/settings.slint:611
+#: ui/pages/settings.slint:612
 msgid "Match system appearance"
 msgstr "跟随系统明暗"
 
-#: ui/pages/settings.slint:633
+#: ui/pages/settings.slint:634
 msgid "Startup & window"
 msgstr "启动与窗口"
 
-#: ui/pages/settings.slint:638
+#: ui/pages/settings.slint:639
 msgid "Launch at login"
 msgstr "开机时启动"
 
-#: ui/pages/settings.slint:648
+#: ui/pages/settings.slint:649
 msgid "Show in menu bar"
 msgstr "在菜单栏显示图标"
 
-#: ui/pages/settings.slint:658
+#: ui/pages/settings.slint:659
 msgid "When closing the window"
 msgstr "关闭窗口时"
 
-#: ui/pages/settings.slint:659
+#: ui/pages/settings.slint:660
 msgid "Quit"
 msgstr "退出程序"
 
-#: ui/pages/settings.slint:659
+#: ui/pages/settings.slint:660
 msgid "Minimize to tray"
 msgstr "最小化到托盘"
 
-#: ui/pages/settings.slint:671
+#: ui/pages/settings.slint:672
 msgid "Input"
 msgstr "输入"
 
-#: ui/pages/settings.slint:676
+#: ui/pages/settings.slint:677
 msgid "Send with Enter"
 msgstr "按 Enter 发送消息"
 
-#: ui/pages/settings.slint:685
+#: ui/pages/settings.slint:686
 msgid "Spell check"
 msgstr "拼写检查"
 
-#: ui/pages/settings.slint:691
+#: ui/pages/settings.slint:692
 msgid "Replace emoji automatically"
 msgstr "自动替换表情"
 
-#: ui/pages/settings.slint:699
+#: ui/pages/settings.slint:700
 msgid "Shortcuts"
 msgstr "快捷键"
 
-#: ui/pages/settings.slint:704
+#: ui/pages/settings.slint:705
 msgid "Keyboard shortcuts"
 msgstr "键盘快捷键"
 
-#: ui/pages/settings.slint:705
+#: ui/pages/settings.slint:706
 msgctxt "shortcuts"
 msgid "View"
 msgstr "查看"
 
-#: ui/pages/settings.slint:717
+#: ui/pages/settings.slint:724 ui/pages/settings.slint:729
+msgid "Desktop notifications"
+msgstr "桌面通知"
+
+#: ui/pages/settings.slint:738
+msgid "Message previews"
+msgstr "显示消息预览"
+
+#: ui/pages/settings.slint:748
+msgid "Sounds"
+msgstr "提示音"
+
+#: ui/pages/settings.slint:758
+msgid "Flash taskbar"
+msgstr "任务栏闪烁提醒"
+
+#: ui/pages/settings.slint:767
+msgid "Count muted chats in badge"
+msgstr "未读数包含静音聊天"
+
+#: ui/pages/settings.slint:776
+msgid "Notifications from other accounts"
+msgstr "其他账号的通知"
+
+#: ui/pages/settings.slint:777
+msgid "When off, only the current account notifies you"
+msgstr "关闭后只有当前账号会弹通知"
+
+#: ui/pages/settings.slint:785
+msgid "By chat type"
+msgstr "按聊天类型"
+
+#: ui/pages/settings.slint:792
+msgid "Private chats"
+msgstr "私聊"
+
+#: ui/pages/settings.slint:793 ui/pages/settings.slint:804
+#: ui/pages/settings.slint:1062
+msgid "On"
+msgstr "已开启"
+
+#: ui/pages/settings.slint:793 ui/pages/settings.slint:804
+#: ui/pages/settings.slint:1062
+msgid "Off"
+msgstr "关"
+
+#: ui/pages/settings.slint:803
+msgid "Groups"
+msgstr "群组"
+
+#: ui/pages/settings.slint:831
 msgid "Changes the interface only — messages aren't translated"
 msgstr "只影响界面，不会翻译消息内容"
 
-#: ui/pages/settings.slint:797
+#: ui/pages/settings.slint:911
 msgid "Updates"
 msgstr "更新"
 
-#: ui/pages/settings.slint:804
+#: ui/pages/settings.slint:918
 msgid "Check for updates automatically"
 msgstr "自动检查更新"
 
-#: ui/pages/settings.slint:812
+#: ui/pages/settings.slint:926
 msgid ""
 "Updates come from GitHub Releases and are signature-checked before install."
 msgstr "更新包从 GitHub Releases 下载，安装前校验签名。"
 
-#: ui/pages/settings.slint:894
+#: ui/pages/settings.slint:1008
 msgid "Who can see"
 msgstr "谁可以看到"
 
-#: ui/pages/settings.slint:905
+#: ui/pages/settings.slint:1019
 msgid "Last seen"
 msgstr "最后上线时间"
 
-#: ui/pages/settings.slint:911
+#: ui/pages/settings.slint:1025
 msgid "Profile photos"
 msgstr "头像"
 
-#: ui/pages/settings.slint:917
+#: ui/pages/settings.slint:1031
 msgid "Forwarded messages"
 msgstr "转发消息"
 
-#: ui/pages/settings.slint:923
+#: ui/pages/settings.slint:1037
 msgid "Calls"
 msgstr "通话"
 
-#: ui/pages/settings.slint:929
+#: ui/pages/settings.slint:1043
 msgid "Invites to groups"
 msgstr "邀请我进群"
 
-#: ui/pages/settings.slint:934
+#: ui/pages/settings.slint:1048
 msgid "Stored on Telegram servers and synced across all your apps."
 msgstr "这些设置保存在 Telegram 服务器上，所有客户端同步。"
 
-#: ui/pages/settings.slint:942
+#: ui/pages/settings.slint:1056
 msgid "Security"
 msgstr "安全"
 
-#: ui/pages/settings.slint:948
-msgid "On"
-msgstr "已开启"
-
-#: ui/pages/settings.slint:948
-msgid "Off"
-msgstr "关"
-
-#: ui/pages/settings.slint:960
+#: ui/pages/settings.slint:1074
 msgid "Local passcode"
 msgstr "本地密码锁"
 
-#: ui/pages/settings.slint:966
+#: ui/pages/settings.slint:1080
 msgid "Active sessions"
 msgstr "活跃设备"
 
-#: ui/pages/settings.slint:972
+#: ui/pages/settings.slint:1086
 msgid "Blocked users"
 msgstr "已屏蔽的用户"
 
-#: ui/pages/settings.slint:978
+#: ui/pages/settings.slint:1092
 msgid "Delete my account"
 msgstr "账号自动注销"
 
-#: ui/pages/settings.slint:1011
+#: ui/pages/settings.slint:1125
 msgid "Two-step verification is on"
 msgstr "两步验证已开启"
 
-#: ui/pages/settings.slint:1011
+#: ui/pages/settings.slint:1125
 msgid "Two-step verification is off"
 msgstr "两步验证已关闭"
 
-#: ui/pages/settings.slint:1018
+#: ui/pages/settings.slint:1132
 msgid ""
 "When you sign in on a new device, you'll need this password in addition to "
 "the code."
 msgstr "在新设备上登录时，除了验证码，还需要输入这个密码。"
 
-#: ui/pages/settings.slint:1019
+#: ui/pages/settings.slint:1133
 msgid ""
 "Turn it on to require an extra password when signing in on a new device."
 msgstr "开启后，在新设备上登录需要额外输入密码。"
 
-#: ui/pages/settings.slint:1048
+#: ui/pages/settings.slint:1162
 msgid "Password will reset on {0}"
 msgstr "密码将于 {0} 重置"
 
-#: ui/pages/settings.slint:1054
+#: ui/pages/settings.slint:1168
 msgid "Come back then to set a new password. If this wasn't you, cancel now."
 msgstr "到时回到这里设置新密码。如果不是你本人操作，请立即取消。"
 
-#: ui/pages/settings.slint:1063
+#: ui/pages/settings.slint:1177
 msgid "Cancel reset"
 msgstr "取消重置"
 
-#: ui/pages/settings.slint:1075
+#: ui/pages/settings.slint:1189
 msgid "Change password"
 msgstr "修改密码"
 
-#: ui/pages/settings.slint:1083
+#: ui/pages/settings.slint:1197
 msgid "Password hint"
 msgstr "密码提示"
 
-#: ui/pages/settings.slint:1092
+#: ui/pages/settings.slint:1206
 msgid "Recovery email"
 msgstr "恢复邮箱"
 
-#: ui/pages/settings.slint:1101
+#: ui/pages/settings.slint:1215
 msgid "Turn off two-step verification"
 msgstr "关闭两步验证"
 
-#: ui/pages/settings.slint:1111 ui/pages/settings.slint:1186
+#: ui/pages/settings.slint:1225 ui/pages/settings.slint:1300
 msgid "Set password"
 msgstr "设置密码"
 
-#: ui/pages/settings.slint:1139
+#: ui/pages/settings.slint:1253
 msgid "Enter your current password"
 msgstr "输入当前密码"
 
-#: ui/pages/settings.slint:1140
+#: ui/pages/settings.slint:1254
 msgid "Confirm it's you before changing two-step verification settings."
 msgstr "修改两步验证设置前，需要先确认是你本人。"
 
-#: ui/pages/settings.slint:1204
+#: ui/pages/settings.slint:1318
 msgid "Change password hint"
 msgstr "修改密码提示"
 
-#: ui/pages/settings.slint:1241
+#: ui/pages/settings.slint:1355
 msgid "Change recovery email"
 msgstr "修改恢复邮箱"
 
-#: ui/pages/settings.slint:1242
+#: ui/pages/settings.slint:1356
 msgid ""
 "If you forget your password, a recovery code will be sent to this address."
 msgstr "忘记密码时，恢复码会发到这个邮箱。"
 
-#: ui/pages/settings.slint:1250
+#: ui/pages/settings.slint:1364
 msgid "Email address"
 msgstr "邮箱地址"
 
-#: ui/pages/settings.slint:1265
+#: ui/pages/settings.slint:1379
 msgid "Send code"
 msgstr "发送验证码"
 
-#: ui/pages/settings.slint:1278
+#: ui/pages/settings.slint:1392
 msgid "Enter the email code"
 msgstr "输入邮箱验证码"
 
-#: ui/pages/settings.slint:1279
+#: ui/pages/settings.slint:1393
 msgid "Code sent to {0}"
 msgstr "验证码已发送至 {0}"
 
-#: ui/pages/settings.slint:1320
+#: ui/pages/settings.slint:1434
 msgid "Turn off two-step verification?"
 msgstr "关闭两步验证？"
 
-#: ui/pages/settings.slint:1321
+#: ui/pages/settings.slint:1435
 msgid "Anyone who gets your sign-in code will be able to access your account."
 msgstr "关闭后，只要拿到发给你的登录验证码，别人就能登录你的账号。"
 
-#: ui/pages/settings.slint:1328
+#: ui/pages/settings.slint:1442
 msgid "Turn off"
 msgstr "关闭"
 
-#: ui/pages/settings.slint:1391
+#: ui/pages/settings.slint:1505
 msgid "Request password reset"
 msgstr "申请重置密码"
 
-#: ui/pages/settings.slint:1392
+#: ui/pages/settings.slint:1506
 msgid ""
 "If you can't get the recovery email, you can request a reset. To protect "
 "your account it takes 7 days, and you can cancel any time before then."
@@ -1504,40 +1547,45 @@ msgstr ""
 "如果收不到恢复邮件，可以申请重置密码。为防止他人盗用，需要等待 7 天，期间可以"
 "随时取消。"
 
-#: ui/pages/settings.slint:1399
+#: ui/pages/settings.slint:1513
 msgid "Request reset"
 msgstr "申请重置"
 
-#: ui/pages/settings.slint:1494
+#: ui/pages/settings.slint:1609
 msgid "Password updated"
 msgstr "密码已更新"
 
-#: ui/pages/settings.slint:1495
+#: ui/pages/settings.slint:1610
 msgid "Password hint updated"
 msgstr "密码提示已更新"
 
-#: ui/pages/settings.slint:1495
+#: ui/pages/settings.slint:1610
 msgid "Recovery email updated"
 msgstr "恢复邮箱已更新"
 
-#: ui/state.slint:50
+#: ui/state.slint:53
 msgid "Open FinchGram"
 msgstr "打开 FinchGram"
 
-#: ui/state.slint:51
+#: ui/state.slint:54
 msgid "Quit FinchGram"
 msgstr "退出 FinchGram"
 
-#: ui/telegram.slint:482
+#. A notification that does not show its message.
+#: ui/state.slint:56
+msgid "New message"
+msgstr "新消息"
+
+#: ui/telegram.slint:495
 msgid "Deleted Account"
 msgstr "已注销账号"
 
-#: ui/telegram.slint:483 ui/workbench/sidebar.slint:123
+#: ui/telegram.slint:496 ui/workbench/sidebar.slint:123
 msgid "All chats"
 msgstr "全部聊天"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:485
+#: ui/telegram.slint:498
 msgctxt "list separator"
 msgid ", "
 msgstr "、"

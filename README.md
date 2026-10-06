@@ -13,7 +13,8 @@ design's three themes: Workbench (the default), Broadsheet and Terminal, switche
 Appearance. Photos and videos show in the chats and open in a viewer that plays video through mpv.
 A right click on a message gives its menu: reply, edit, copy, copy its link, forward, report,
 delete, or choose several messages. Two-step verification is managed in Settings → Privacy &
-security. Files, several accounts, keyword filters and scheduled messages come next.
+security. New messages show as macOS notifications, and their number on the Dock icon (Settings →
+Notifications & sounds). Files, several accounts, keyword filters and scheduled messages come next.
 
 The app is a shell. Telegram itself is done by TDLib, Telegram's own library, running as a separate
 program next to the executable: `finchgram-tdlib`, built from pinned sources by this repository (as
@@ -97,6 +98,8 @@ src/
     files.rs             #   downloading files
     viewer.rs            #   the media viewer: photos, videos, saving to Downloads
     rich_text.rs         #   formatted text: bold, italic, links, …
+    notifications.rs     #   notifications of new messages, the unread count on the Dock icon
+    online.rs            #   the account is online while the window is in front and in use
   platform/              # what differs from one operating system to another
   player/                # video through libmpv, drawn into the window with OpenGL
   update.rs              # the self-updater: GitHub Releases, signature check, swap, relaunch

@@ -13,8 +13,10 @@ texte fonctionnent, dans les trois thèmes de la maquette : Workbench (par défa
 Terminal, qu'on change dans Réglages › Apparence. Les photos et vidéos s'affichent dans les discussions
 et s'ouvrent dans une visionneuse qui lit la vidéo avec mpv. Un clic droit sur un message ouvre son menu
 : répondre, modifier, copier, copier le lien, transférer, signaler, supprimer ou sélectionner plusieurs
-messages. La validation en deux étapes se gère dans Réglages › Confidentialité et sécurité. Viennent
-ensuite les fichiers, plusieurs comptes, les filtres par mots-clés et les messages programmés.
+messages. La validation en deux étapes se gère dans Réglages › Confidentialité et sécurité. Les
+nouveaux messages arrivent en notifications macOS, et leur nombre s'affiche sur l'icône du Dock
+(Réglages › Notifications et sons). Viennent ensuite les fichiers, plusieurs comptes, les filtres par
+mots-clés et les messages programmés.
 
 L'application est une enveloppe (*shell*). Telegram lui-même est pris en charge par TDLib, la
 bibliothèque officielle de Telegram, qui tourne comme un programme séparé à côté de l'exécutable :
@@ -104,6 +106,8 @@ src/
     files.rs             #   le téléchargement des fichiers
     viewer.rs            #   la visionneuse : photos, vidéos, enregistrer dans Téléchargements
     rich_text.rs         #   texte mis en forme : gras, italique, liens…
+    notifications.rs     #   notifications des nouveaux messages, le nombre de non-lus dans le Dock
+    online.rs            #   le compte est en ligne tant que la fenêtre est devant et utilisée
   platform/              # ce qui change d'un système d'exploitation à l'autre
   player/                # la vidéo avec libmpv, dessinée dans la fenêtre par OpenGL
   update.rs              # la mise à jour automatique : GitHub Releases, signature, remplacement, relance

@@ -1,21 +1,34 @@
 //! macOS: FinchGram stays in the Dock when its window is closed, can have an icon in the menu bar,
-//! can be one of the user's login items, and copies to the clipboard.
+//! can be one of the user's login items, copies to the clipboard, and shows notifications, the
+//! unread count on its Dock icon, and a bounce of it.
 //!
 //! winit 0.30 owns the application's delegate and has nothing for a click on the Dock icon, for
 //! Quit or for our own menu, so methods are added to its delegate class at run time, the way Slint
 //! adds one of its own (i-slint-backend-winit's disable_macos_automatic_shortcut_localization).
+//!
+//! Notifications go through the system's UserNotifications framework, which serves apps only:
+//! FinchGram run by `cargo run` has no bundle, and so no notifications.
 
 use std::cell::{Cell, RefCell};
+use std::collections::HashSet;
 use std::ffi::CStr;
+use std::ptr::NonNull;
+use std::sync::OnceLock;
 
+use block2::RcBlock;
 use objc2::rc::Retained;
-use objc2::runtime::{AnyClass, AnyObject, Bool, Imp, Sel};
-use objc2::{AnyThread, MainThreadMarker, MainThreadOnly, msg_send, sel};
+use objc2::runtime::{AnyClass, AnyObject, Bool, Imp, NSObject, NSObjectProtocol, ProtocolObject, Sel};
+use objc2::{AnyThread, MainThreadMarker, MainThreadOnly, define_class, msg_send, sel};
 use objc2_app_kit::{
-    NSApplication, NSImage, NSMenu, NSMenuItem, NSPasteboard, NSPasteboardTypeString, NSPasteboardTypeTIFF, NSStatusBar,
-    NSStatusItem, NSVariableStatusItemLength,
+    NSApplication, NSImage, NSMenu, NSMenuItem, NSPasteboard, NSPasteboardTypeString, NSPasteboardTypeTIFF,
+    NSRequestUserAttentionType, NSStatusBar, NSStatusItem, NSVariableStatusItemLength,
 };
-use objc2_foundation::{NSData, NSError, NSSize, NSString};
+use objc2_foundation::{NSArray, NSBundle, NSData, NSDate, NSError, NSSize, NSString};
+use objc2_user_notifications::{
+    UNAuthorizationOptions, UNMutableNotificationContent, UNNotification, UNNotificationDefaultActionIdentifier,
+    UNNotificationPresentationOptions, UNNotificationRequest, UNNotificationResponse, UNNotificationSound,
+    UNUserNotificationCenter, UNUserNotificationCenterDelegate,
+};
 use slint::ComponentHandle;
 
 use crate::MainWindow;
@@ -36,7 +49,12 @@ thread_local! {
     static WINDOW: RefCell<Option<slint::Weak<MainWindow>>> = const { RefCell::new(None) };
     static BEFORE_QUIT: Cell<Option<fn()>> = const { Cell::new(None) };
     static STATUS_ITEM: RefCell<Option<Retained<NSStatusItem>>> = const { RefCell::new(None) };
+    /// The notification centre only keeps a weak reference to its delegate.
+    static NOTIFICATION_DELEGATE: RefCell<Option<Retained<NotificationDelegate>>> = const { RefCell::new(None) };
 }
+
+/// What a click on a notification opens (`handle_notification_clicks`).
+static OPEN_CHAT: OnceLock<fn(i64)> = OnceLock::new();
 
 pub fn install(ui: &MainWindow, before_quit: fn()) {
     WINDOW.with(|window| *window.borrow_mut() = Some(ui.as_weak()));
@@ -230,6 +248,160 @@ pub fn copy_image(contents: &[u8]) -> Result<(), String> {
     if pasteboard.setData_forType(Some(&tiff), kind) { Ok(()) } else { Err("the clipboard refused the picture".into()) }
 }
 
+// ---- notifications --------------------------------------------------------------------------
+
+define_class!(
+    // SAFETY: NSObject has no subclassing requirements, and NotificationDelegate does not implement
+    // Drop.
+    #[unsafe(super(NSObject))]
+    #[name = "FinchGramNotificationDelegate"]
+    struct NotificationDelegate;
+
+    unsafe impl NSObjectProtocol for NotificationDelegate {}
+
+    unsafe impl UNUserNotificationCenterDelegate for NotificationDelegate {
+        /// A notification while FinchGram is in front: shown all the same. Those of the chat the
+        /// user is looking at never get here (src/telegram/notifications.rs).
+        #[unsafe(method(userNotificationCenter:willPresentNotification:withCompletionHandler:))]
+        fn will_present(
+            &self,
+            _center: &UNUserNotificationCenter,
+            _notification: &UNNotification,
+            completion_handler: &block2::DynBlock<dyn Fn(UNNotificationPresentationOptions)>,
+        ) {
+            completion_handler.call((UNNotificationPresentationOptions::Banner
+                | UNNotificationPresentationOptions::List
+                | UNNotificationPresentationOptions::Sound,));
+        }
+
+        /// A click on a notification: the window, with the notification's chat. The system may
+        /// call this on a thread of its own.
+        #[unsafe(method(userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:))]
+        fn did_receive_response(
+            &self,
+            _center: &UNUserNotificationCenter,
+            response: &UNNotificationResponse,
+            completion_handler: &block2::DynBlock<dyn Fn()>,
+        ) {
+            // SAFETY: a constant of the framework, there for the life of the process.
+            let clicked = response.actionIdentifier().isEqualToString(unsafe { UNNotificationDefaultActionIdentifier });
+            let chat_id = response.notification().request().content().threadIdentifier().to_string().parse::<i64>();
+            if clicked && let Ok(chat_id) = chat_id {
+                let _ = slint::invoke_from_event_loop(move || {
+                    if let Some(ui) = WINDOW.with(|window| window.borrow().as_ref().and_then(slint::Weak::upgrade)) {
+                        super::show_window(&ui);
+                    }
+                    if let Some(open_chat) = OPEN_CHAT.get() {
+                        open_chat(chat_id);
+                    }
+                });
+            }
+            completion_handler.call(());
+        }
+    }
+);
+
+impl NotificationDelegate {
+    fn new() -> Retained<Self> {
+        let this = Self::alloc().set_ivars(());
+        // SAFETY: NSObject's init, which takes nothing.
+        unsafe { msg_send![super(this), init] }
+    }
+}
+
+/// The system's notification centre. Only an app has one: asked for without a bundle, it would
+/// raise an exception.
+fn notification_center() -> Option<Retained<UNUserNotificationCenter>> {
+    NSBundle::mainBundle().bundleIdentifier()?;
+    Some(UNUserNotificationCenter::currentNotificationCenter())
+}
+
+pub fn handle_notification_clicks(open_chat: fn(i64)) {
+    let _ = OPEN_CHAT.set(open_chat);
+    let Some(center) = notification_center() else { return };
+    let delegate = NotificationDelegate::new();
+    center.setDelegate(Some(ProtocolObject::from_ref(&*delegate)));
+    NOTIFICATION_DELEGATE.with(|kept| *kept.borrow_mut() = Some(delegate));
+}
+
+pub fn ask_to_notify() {
+    let Some(center) = notification_center() else { return };
+    let answer = RcBlock::new(|allowed: Bool, error: *mut NSError| {
+        if !allowed.as_bool() {
+            // SAFETY: the system passes a valid error or none, for the length of the call.
+            let reason = unsafe { error.as_ref() }.map(|error| format!(": {}", error.localizedDescription())).unwrap_or_default();
+            eprintln!("platform: notifications are not allowed{reason}");
+        }
+    });
+    let options = UNAuthorizationOptions::Alert | UNAuthorizationOptions::Sound | UNAuthorizationOptions::Badge;
+    center.requestAuthorizationWithOptions_completionHandler(options, &answer);
+}
+
+pub fn show_notification(notification: &super::Notification) {
+    let Some(center) = notification_center() else { return };
+    let content = UNMutableNotificationContent::new();
+    content.setTitle(&NSString::from_str(&notification.title));
+    content.setSubtitle(&NSString::from_str(&notification.subtitle));
+    content.setBody(&NSString::from_str(&notification.body));
+    content.setThreadIdentifier(&NSString::from_str(&notification.chat_id.to_string()));
+    if notification.sound {
+        content.setSound(Some(&UNNotificationSound::defaultSound()));
+    }
+    let request = UNNotificationRequest::requestWithIdentifier_content_trigger(&NSString::from_str(&notification.id), &content, None);
+    let shown = RcBlock::new(|error: *mut NSError| {
+        // SAFETY: the system passes a valid error or none, for the length of the call.
+        if let Some(error) = unsafe { error.as_ref() } {
+            eprintln!("platform: cannot show a notification: {}", error.localizedDescription());
+        }
+    });
+    center.addNotificationRequest_withCompletionHandler(&request, Some(&shown));
+}
+
+pub fn remove_notifications(ids: &[String]) {
+    let Some(center) = notification_center() else { return };
+    let ids: Vec<Retained<NSString>> = ids.iter().map(|id| NSString::from_str(id)).collect();
+    center.removeDeliveredNotificationsWithIdentifiers(&NSArray::from_retained_slice(&ids));
+}
+
+pub fn keep_only_notifications(ids: Vec<String>) {
+    let Some(center) = notification_center() else { return };
+    let keep: HashSet<String> = ids.into_iter().collect();
+    // The system answers later: notifications shown meanwhile are new, and stay.
+    let asked = NSDate::now();
+    let remover = center.clone();
+    let delivered = RcBlock::new(move |notifications: NonNull<NSArray<UNNotification>>| {
+        // SAFETY: the system passes a valid array, for the length of the call.
+        let notifications = unsafe { notifications.as_ref() };
+        let stale: Vec<Retained<NSString>> = notifications
+            .iter()
+            .filter(|notification| notification.date().timeIntervalSinceDate(&asked) < 0.0)
+            .map(|notification| notification.request().identifier())
+            .filter(|id| !keep.contains(&id.to_string()))
+            .collect();
+        if !stale.is_empty() {
+            remover.removeDeliveredNotificationsWithIdentifiers(&NSArray::from_retained_slice(&stale));
+        }
+    });
+    center.getDeliveredNotificationsWithCompletionHandler(&delivered);
+}
+
+pub fn remove_all_notifications() {
+    if let Some(center) = notification_center() {
+        center.removeAllDeliveredNotifications();
+    }
+}
+
+pub fn set_badge(count: i32) {
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    let label = (count > 0).then(|| NSString::from_str(&count.to_string()));
+    NSApplication::sharedApplication(mtm).dockTile().setBadgeLabel(label.as_deref());
+}
+
+pub fn flash_icon() {
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    NSApplication::sharedApplication(mtm).requestUserAttention(NSRequestUserAttentionType::InformationalRequest);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -244,5 +416,16 @@ mod tests {
         let covered = picture.pixels().filter(|pixel| pixel[3] > 128).count();
         assert!((150..1000).contains(&covered), "the bird covers part of the square, not {covered} pixels");
     }
-}
 
+    /// The delegate is only made inside an app; here its class is checked against the framework's
+    /// protocol (objc2 compares the methods' types when it registers a class in a debug build).
+    #[test]
+    fn the_notification_delegate_answers_the_notification_centre() {
+        let delegate = NotificationDelegate::new();
+        let delegate: &ProtocolObject<dyn UNUserNotificationCenterDelegate> = ProtocolObject::from_ref(&*delegate);
+        assert!(delegate.respondsToSelector(sel!(userNotificationCenter:willPresentNotification:withCompletionHandler:)));
+        assert!(delegate.respondsToSelector(sel!(userNotificationCenter:didReceiveNotificationResponse:withCompletionHandler:)));
+        // A test executable is no app: no notification centre, and no exception for asking.
+        assert!(notification_center().is_none());
+    }
+}
