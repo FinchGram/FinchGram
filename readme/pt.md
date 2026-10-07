@@ -40,7 +40,7 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
 - **Configurações.** Abrir ao iniciar a sessão, enviar com Enter, o atalho da captura, sons e prévias
   das notificações, verificação em duas etapas, o idioma da interface e as atualizações: o app se
   atualiza sozinho a partir do GitHub Releases e não instala nada que não consiga verificar.
-- **Idiomas.** A interface em inglês e chinês simplificado; este README em onze idiomas.
+- **Idiomas.** A interface e este README em onze idiomas.
 
 Ainda não: chats secretos, mensagens de voz e chamadas, várias contas, enquetes e mensagens
 agendadas, filtros por palavra-chave, Windows e Linux. Veja
@@ -227,8 +227,8 @@ find ui -name '*.slint' | sort | xargs slint-tr-extractor --no-default-translati
 for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finchgram.pot; done   # requer brew install gettext
 ```
 
-Depois preencha as entradas `msgstr` e rode `cargo build` de novo. O inglês é o idioma de origem; por
-enquanto vem incluído o chinês simplificado.
+Depois preencha as entradas `msgstr` e rode `cargo build` de novo. O inglês é o idioma de origem; os
+outros dez vêm incluídos.
 
 ## Versões
 

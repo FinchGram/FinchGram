@@ -45,7 +45,7 @@ un client non officiel, qui n'est pas fait par Telegram.
 - **Réglages.** Ouvrir à la connexion, envoyer avec Entrée, le raccourci de capture, sons et aperçus
   des notifications, validation en deux étapes, langue de l'interface, et mises à jour : l'application
   se met à jour elle-même depuis GitHub Releases et n'installe rien qu'elle ne puisse vérifier.
-- **Langues.** L'interface en anglais et en chinois simplifié ; ce README en onze langues.
+- **Langues.** L'interface et ce README en onze langues.
 
 Pas encore : discussions secrètes, messages vocaux et appels, plusieurs comptes, sondages et messages
 programmés, filtres par mots-clés, Windows et Linux. Voir
@@ -236,8 +236,8 @@ find ui -name '*.slint' | sort | xargs slint-tr-extractor --no-default-translati
 for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finchgram.pot; done   # nécessite brew install gettext
 ```
 
-Remplissez ensuite les entrées `msgstr` et relancez `cargo build`. L'anglais est la langue source ; le
-chinois simplifié est fourni pour l'instant.
+Remplissez ensuite les entrées `msgstr` et relancez `cargo build`. L'anglais est la langue source ; les
+dix autres sont fournies.
 
 ## Versions publiées
 

@@ -95,7 +95,7 @@ fn svg(w: u32, h: u32, scale: f32, rect: Rect, annotations: &[Annotation]) -> St
             Shape::Text { at, text } => {
                 let size = annotation.font_size();
                 out += &format!(
-                    r#"<text x="{}" y="{}" font-family="IBM Plex Sans, Noto Sans SC" font-weight="600" font-size="{size}" paint-order="stroke" stroke="{halo}" stroke-width="2" stroke-linejoin="round" fill="{color}">{}</text>"#,
+                    r#"<text x="{}" y="{}" font-family="IBM Plex Sans, Noto Sans SC, Noto Sans JP, Noto Sans KR, Noto Sans Arabic" font-weight="600" font-size="{size}" paint-order="stroke" stroke="{halo}" stroke-width="2" stroke-linejoin="round" fill="{color}">{}</text>"#,
                     at.0,
                     at.1 + size * 0.95,
                     escape(text)

@@ -1,10 +1,10 @@
-# Simplified Chinese translation for FinchGram.
+# Korean translation for FinchGram.
 # English is the source language (the @tr("...") texts in ui/).
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-07 16:21+0000\n"
-"Language: zh_Hans\n"
+"POT-Creation-Date: 2026-10-07 07:32+0000\n"
+"Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
@@ -12,876 +12,909 @@ msgstr ""
 
 #: ui/app.slint:38
 msgid "View"
-msgstr "视图"
+msgstr "보기"
 
+#: ui/app.slint:40 ui/broadsheet/actions.slint:170
 #: ui/app.slint:40 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
-#: ui/workbench/actions.slint:172
+#: ui/app.slint:40 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316 ui/workbench/actions.slint:172
 msgid "Search"
-msgstr "搜索"
+msgstr "검색"
 
 #: ui/app.slint:51 ui/pages/settings.slint:557
 msgid "Workbench"
-msgstr "工作台"
+msgstr "워크벤치"
 
 #: ui/app.slint:59 ui/pages/settings.slint:565
 msgid "Broadsheet"
-msgstr "报纸"
+msgstr "브로드시트"
 
 #: ui/app.slint:67 ui/pages/settings.slint:573
 msgid "Terminal"
-msgstr "终端"
+msgstr "터미널"
 
 #: ui/app.slint:76
 msgid "Settings…"
-msgstr "设置…"
+msgstr "설정…"
 
 #: ui/app.slint:85
 msgid "Help"
-msgstr "帮助"
+msgstr "도움말"
 
 #: ui/app.slint:88
 msgid "Update to {}…"
-msgstr "更新到 {}…"
+msgstr "{} 버전으로 업데이트…"
 
 #: ui/app.slint:89
 msgid "Check for Updates…"
-msgstr "检查更新…"
+msgstr "업데이트 확인…"
 
 #: ui/broadsheet/actions.slint:133 ui/terminal/actions.slint:139
+#: ui/broadsheet/actions.slint:133 ui/terminal/actions.slint:139
 msgid "Choose recipient…"
-msgstr "转发到…"
+msgstr "받는 사람 선택…"
 
 #: ui/broadsheet/actions.slint:226 ui/telegram.slint:650
-#: ui/workbench/actions.slint:228
+#: ui/broadsheet/actions.slint:226 ui/telegram.slint:650 ui/workbench/actions.slint:228
 msgid "Saved Messages"
-msgstr "收藏夹"
+msgstr "저장된 메시지"
 
 #: ui/broadsheet/actions.slint:239 ui/terminal/actions.slint:220
+#: ui/broadsheet/actions.slint:239 ui/terminal/actions.slint:220
 msgid "Recent"
-msgstr "最近聊天"
+msgstr "최근"
 
 #: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:254
+#: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:254
 msgid "No chats found"
-msgstr "没有找到聊天"
+msgstr "채팅을 찾을 수 없음"
 
+#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 #: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 msgid "Add a comment"
-msgstr "补充说明（必填）"
+msgstr "설명 추가 (필수)"
 
 #: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
+#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 msgid "Add a comment (optional)"
-msgstr "补充说明（可选）"
+msgstr "설명 추가 (선택 사항)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174
-#: ui/pages/settings.slint:1369 ui/terminal/actions.slint:385
-#: ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
-#: ui/workbench/actions.slint:720
+#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941
+#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369
+#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385
+#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638
+#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
+#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457 ui/workbench/actions.slint:720
+#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457 ui/workbench/actions.slint:720
 msgid "Cancel"
-msgstr "取消"
+msgstr "취소"
 
 #: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932
-#: ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033
-#: ui/workbench/conversation.slint:1278
+#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857
+#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033
+#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033 ui/workbench/conversation.slint:1278
 msgid "Report"
-msgstr "举报"
+msgstr "신고"
 
 #: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923
-#: ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025
-#: ui/workbench/conversation.slint:1266
+#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778
+#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025
+#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025 ui/workbench/conversation.slint:1266
 msgid "Delete"
-msgstr "删除"
+msgstr "삭제"
 
 #: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:596
+#: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:596
 msgid "Light"
-msgstr "浅色"
+msgstr "라이트"
 
 #: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:604
+#: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:604
 msgid "Dark"
-msgstr "深色"
+msgstr "다크"
 
 #: ui/broadsheet/broadsheet.slint:129 ui/pages/profile.slint:72
+#: ui/broadsheet/broadsheet.slint:129 ui/pages/profile.slint:72
 msgid "Accounts"
-msgstr "账号"
+msgstr "계정"
 
 #: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:125
+#: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:125
 msgid "Chats"
-msgstr "聊天"
+msgstr "채팅"
 
 #: ui/broadsheet/broadsheet.slint:248 ui/broadsheet/broadsheet.slint:841
-#: ui/workbench/sidebar.slint:401
+#: ui/broadsheet/broadsheet.slint:248 ui/broadsheet/broadsheet.slint:841 ui/workbench/sidebar.slint:401
 msgid "Channels"
-msgstr "频道"
+msgstr "채널"
 
 #: ui/broadsheet/broadsheet.slint:256 ui/broadsheet/broadsheet.slint:842
+#: ui/broadsheet/broadsheet.slint:256 ui/broadsheet/broadsheet.slint:842
 msgid "Bots"
-msgstr "机器人"
+msgstr "봇"
 
 #: ui/broadsheet/broadsheet.slint:265
 msgid "Filters"
-msgstr "过滤"
+msgstr "필터"
 
 #: ui/broadsheet/broadsheet.slint:270
 msgid "Scheduled"
-msgstr "定时"
+msgstr "예약됨"
 
 #: ui/broadsheet/broadsheet.slint:358 ui/terminal/terminal.slint:169
 msgid "All"
-msgstr "全部"
+msgstr "전체"
 
 #: ui/broadsheet/broadsheet.slint:404
 msgid "More"
-msgstr "更多"
+msgstr "더 보기"
 
 #: ui/broadsheet/broadsheet.slint:650 ui/format.slint:163
-#: ui/workbench/sidebar.slint:239
+#: ui/broadsheet/broadsheet.slint:650 ui/format.slint:163 ui/workbench/sidebar.slint:239
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
-msgstr[0] "{n} 位订阅者"
+msgstr[0] "구독자 {n}명"
 
 #: ui/broadsheet/broadsheet.slint:872
 msgid "Telegram bots"
-msgstr "Telegram 机器人"
+msgstr "Telegram 봇"
 
 #: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
+#: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
 msgid "No chats yet"
-msgstr "还没有聊天"
+msgstr "아직 채팅이 없습니다"
 
 #: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
 msgid "No chats in this folder"
-msgstr "这个文件夹里没有聊天"
+msgstr "이 폴더에는 채팅이 없습니다"
 
 #: ui/broadsheet/broadsheet.slint:937 ui/workbench/sidebar.slint:432
 msgid ""
 "Search for a username or phone number, or open an invite link someone sent "
 "you, to start chatting."
-msgstr "搜索用户名或手机号，或者打开别人发来的邀请链接，就能开始聊天。"
+msgstr "사용자 이름이나 전화번호를 검색하거나, 받은 초대 링크를 열어 채팅을 시작하세요."
 
 #: ui/broadsheet/broadsheet.slint:938
 msgid "Chats you add to this folder in Telegram show up here."
-msgstr "在 Telegram 的文件夹设置里添加聊天，会自动同步到这里。"
+msgstr "Telegram에서 이 폴더에 추가한 채팅이 여기에 표시됩니다."
 
 #: ui/broadsheet/broadsheet.slint:977 ui/terminal/terminal.slint:387
+#: ui/broadsheet/broadsheet.slint:977 ui/terminal/terminal.slint:387
 msgid "Official bots"
-msgstr "官方机器人"
+msgstr "공식 봇"
 
 #: ui/broadsheet/broadsheet.slint:991 ui/terminal/terminal.slint:399
+#: ui/broadsheet/broadsheet.slint:991 ui/terminal/terminal.slint:399
 msgid "Other bots"
-msgstr "其他机器人"
+msgstr "기타 봇"
 
 #: ui/broadsheet/broadsheet.slint:1003 ui/workbench/sidebar.slint:498
 msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
-msgstr "带认证标记的是 Telegram 官方机器人。其他机器人能看到你发给它的消息。"
+msgstr "체크 표시가 있는 봇은 Telegram 공식 봇입니다. 다른 봇은 내가 보낸 내용을 볼 수 있습니다."
 
 #: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260
-#: ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
-#: ui/workbench/conversation.slint:1593
+#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496
+#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
+#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
+#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
 msgid "Unmute"
-msgstr "取消静音"
+msgstr "음소거 해제"
 
 #: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260
-#: ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
-#: ui/workbench/conversation.slint:1593
+#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496
+#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
+#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
+#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
 msgid "Mute"
-msgstr "静音"
+msgstr "음소거"
 
 #: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311
-#: ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
+#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917
+#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
 msgid "Unpin"
-msgstr "取消置顶"
+msgstr "고정 해제"
 
 #: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311
-#: ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
+#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917
+#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
 msgid "Pin"
-msgstr "置顶"
+msgstr "고정"
 
 #: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319
-#: ui/terminal/terminal.slint:925 ui/workbench/sidebar.slint:562
+#: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319 ui/terminal/terminal.slint:925
+#: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319 ui/terminal/terminal.slint:925 ui/workbench/sidebar.slint:562
 msgid "Mark as read"
-msgstr "标为已读"
+msgstr "읽음으로 표시"
 
 #: ui/broadsheet/broadsheet.slint:1072 ui/terminal/terminal.slint:517
+#: ui/broadsheet/broadsheet.slint:1072 ui/terminal/terminal.slint:517
 msgid "Add to folder"
-msgstr "加入文件夹"
+msgstr "폴더에 추가"
 
 #: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524
-#: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
-#: ui/pages/login.slint:841 ui/pages/login.slint:901
-#: ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
-#: ui/workbench/sidebar.slint:619
+#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676
+#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841
+#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901
+#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618
+#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
+#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618 ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:619
 msgid "Back"
-msgstr "返回"
+msgstr "뒤로"
 
 #: ui/broadsheet/broadsheet.slint:1197 ui/workbench/conversation.slint:621
 msgid "Instant View"
-msgstr "Instant View"
+msgstr "인스턴트 뷰"
 
 #: ui/broadsheet/broadsheet.slint:1229 ui/terminal/terminal.slint:612
+#: ui/broadsheet/broadsheet.slint:1229 ui/terminal/terminal.slint:612
 msgid "Forwarded from {0}"
-msgstr "转发自 {0}"
+msgstr "{0}님으로부터 전달됨"
 
 #: ui/broadsheet/broadsheet.slint:1491 ui/broadsheet/broadsheet.slint:1598
-#: ui/workbench/conversation.slint:881
+#: ui/broadsheet/broadsheet.slint:1491 ui/broadsheet/broadsheet.slint:1598 ui/workbench/conversation.slint:881
 msgid "edited"
-msgstr "已编辑"
+msgstr "편집됨"
 
 #: ui/broadsheet/broadsheet.slint:1618
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
-msgstr "赞助消息 · Telegram 官方投放 · Premium 用户可关闭"
+msgstr "스폰서 메시지 · Telegram 게재 · Premium 사용자는 끌 수 있음"
 
 #: ui/broadsheet/broadsheet.slint:1684 ui/format.slint:261
-#: ui/workbench/conversation.slint:979
+#: ui/broadsheet/broadsheet.slint:1684 ui/format.slint:261 ui/workbench/conversation.slint:979
 msgid "You"
-msgstr "你"
+msgstr "나"
 
 #: ui/broadsheet/broadsheet.slint:1795 ui/terminal/terminal.slint:1126
+#: ui/broadsheet/broadsheet.slint:1795 ui/terminal/terminal.slint:1126
 msgid "Hide sender's name"
-msgstr "隐藏发送者"
+msgstr "보낸 사람 이름 숨기기"
 
 #: ui/broadsheet/broadsheet.slint:1899 ui/terminal/terminal.slint:1048
+#: ui/broadsheet/broadsheet.slint:1899 ui/terminal/terminal.slint:1048
 msgid "Shift-click to select a range"
-msgstr "Shift + 点击：选中一段"
+msgstr "Shift-클릭으로 범위 선택"
 
 #: ui/broadsheet/broadsheet.slint:1907 ui/chat.slint:776
-#: ui/workbench/conversation.slint:1244
+#: ui/broadsheet/broadsheet.slint:1907 ui/chat.slint:776 ui/workbench/conversation.slint:1244
 msgid "Forward"
-msgstr "转发"
+msgstr "전달"
 
 #: ui/broadsheet/broadsheet.slint:1961 ui/terminal/terminal.slint:1362
+#: ui/broadsheet/broadsheet.slint:1961 ui/terminal/terminal.slint:1362
 msgid "Choose a chat on the left"
-msgstr "在左侧选择一个聊天"
+msgstr "왼쪽에서 채팅을 선택하세요"
 
 #: ui/broadsheet/broadsheet.slint:1984 ui/terminal/terminal.slint:864
+#: ui/broadsheet/broadsheet.slint:1984 ui/terminal/terminal.slint:864
 msgid "typing…"
-msgstr "正在输入…"
+msgstr "입력 중…"
 
 #: ui/broadsheet/broadsheet.slint:2033 ui/terminal/terminal.slint:951
+#: ui/broadsheet/broadsheet.slint:2033 ui/terminal/terminal.slint:951
 msgid "{0} is typing…"
-msgstr "{0} 正在输入…"
+msgstr "{0}님이 입력 중…"
 
 #: ui/broadsheet/broadsheet.slint:2065
 msgid "Sending as {0}"
-msgstr "以 {0} 发送"
+msgstr "보내는 사람: {0}"
 
 #: ui/broadsheet/broadsheet.slint:2082
 msgid "Write a message…"
-msgstr "写点什么…"
+msgstr "메시지 입력…"
 
 #: ui/chat.slint:251
 msgid "Unblock bot"
-msgstr "取消拉黑机器人"
+msgstr "봇 차단 해제"
 
 #: ui/chat.slint:251
 msgid "Block bot"
-msgstr "拉黑机器人"
+msgstr "봇 차단"
 
 #: ui/chat.slint:252
 msgid "Unblock user"
-msgstr "取消拉黑"
+msgstr "사용자 차단 해제"
 
 #: ui/chat.slint:252
 msgid "Block user"
-msgstr "拉黑用户"
+msgstr "사용자 차단"
 
 #: ui/chat.slint:255
 msgid "Leave channel"
-msgstr "退出频道"
+msgstr "채널 나가기"
 
 #: ui/chat.slint:255
 msgid "Leave group"
-msgstr "退出群组"
+msgstr "그룹 나가기"
 
 #: ui/chat.slint:256
 msgid "Delete chat"
-msgstr "删除聊天"
+msgstr "채팅 삭제"
 
 #: ui/chat.slint:258
 msgid "Block {0}?"
-msgstr "拉黑 {0}？"
+msgstr "{0}님을 차단하시겠습니까?"
 
 #: ui/chat.slint:259
 msgid "Leave the channel {0}?"
-msgstr "退出频道 {0}？"
+msgstr "{0} 채널에서 나가시겠습니까?"
 
 #: ui/chat.slint:259
 msgid "Leave the group {0}?"
-msgstr "退出群组 {0}？"
+msgstr "{0} 그룹에서 나가시겠습니까?"
 
 #: ui/chat.slint:260
 msgid "Delete the chat with {0}?"
-msgstr "删除与 {0} 的聊天？"
+msgstr "{0}님과의 채팅을 삭제하시겠습니까?"
 
 #: ui/chat.slint:263
 msgid ""
 "They will not be able to send you messages. You can unblock them from this "
 "menu."
-msgstr "对方将无法给你发消息。可以在这个菜单里取消拉黑。"
+msgstr "상대방이 나에게 메시지를 보낼 수 없게 됩니다. 이 메뉴에서 차단을 해제할 수 있습니다."
 
 #: ui/chat.slint:264
 msgid "You will stop getting its posts."
-msgstr "你将不再收到它的帖子。"
+msgstr "더 이상 이 채널의 게시물을 받지 않습니다."
 
 #: ui/chat.slint:264
 msgid "You will stop getting its messages."
-msgstr "你将不再收到它的消息。"
+msgstr "더 이상 이 그룹의 메시지를 받지 않습니다."
 
 #: ui/chat.slint:265
 msgid "The chat and its messages go from your list."
-msgstr "这个聊天和它的消息将从你的列表里移除。"
+msgstr "채팅과 메시지가 목록에서 사라집니다."
 
 #: ui/chat.slint:267 ui/chat.slint:852
 msgid "Also delete for {0}"
-msgstr "同时为 {0} 删除"
+msgstr "{0}님에게서도 삭제"
 
 #: ui/chat.slint:269
 msgid "Block"
-msgstr "拉黑"
+msgstr "차단"
 
 #: ui/chat.slint:270
 msgid "Leave"
-msgstr "退出"
+msgstr "나가기"
 
 #: ui/chat.slint:276
 msgid "Attach"
-msgstr "附件"
+msgstr "첨부"
 
 #: ui/chat.slint:277
 msgid "Photo or Video"
-msgstr "照片或视频"
+msgstr "사진 또는 비디오"
 
 #: ui/chat.slint:278 ui/format.slint:212
 msgid "File"
-msgstr "文件"
+msgstr "파일"
 
 #: ui/chat.slint:279
 msgid "Poll"
-msgstr "投票"
+msgstr "투표"
 
 #: ui/chat.slint:280
 msgid "Not available yet"
-msgstr "暂不可用"
+msgstr "아직 사용할 수 없음"
 
 #: ui/chat.slint:281 ui/chat.slint:284
 msgid "Not allowed in this group"
-msgstr "本群不允许"
+msgstr "이 그룹에서는 허용되지 않음"
 
 #: ui/chat.slint:282
 msgid "You can't send messages in this group"
-msgstr "你不能在本群发消息"
+msgstr "이 그룹에서는 메시지를 보낼 수 없습니다"
 
 #: ui/chat.slint:283
 msgid "Screenshot"
-msgstr "截图"
+msgstr "스크린샷"
 
 #. The card shown when the system has not let FinchGram see the screen.
 #: ui/chat.slint:286
 msgid "Screen Recording is off for FinchGram"
-msgstr "FinchGram 没有“屏幕录制”权限"
+msgstr "FinchGram의 화면 기록 권한이 꺼져 있습니다"
 
 #: ui/chat.slint:287
 msgid ""
 "Screenshots need Screen Recording in System Settings → Privacy & Security. "
 "If FinchGram is already in the list, turn it off and on again."
-msgstr ""
-"截图需要在“系统设置 › 隐私与安全性”里允许屏幕录制。如果列表里已经有 "
-"FinchGram，把它关掉再打开一次。"
+msgstr "스크린샷을 찍으려면 시스템 설정 → 개인정보 보호 및 보안에서 화면 기록을 허용해야 합니다. FinchGram이 이미 목록에 있다면 껐다가 다시 켜세요."
 
 #: ui/chat.slint:288
 msgid "Open System Settings"
-msgstr "打开系统设置"
+msgstr "시스템 설정 열기"
 
 #: ui/chat.slint:289
 msgid "Not now"
-msgstr "暂不"
+msgstr "나중에"
 
 #: ui/chat.slint:290
 msgid "↑↓ Choose · Return Open · Esc Close"
-msgstr "↑↓ 选择 · 回车 打开 · Esc 关闭"
+msgstr "↑↓ 선택 · Return 열기 · Esc 닫기"
 
 #: ui/chat.slint:296
 msgid "Send Screenshot"
-msgstr "发送截图"
+msgstr "스크린샷 보내기"
 
 #: ui/chat.slint:299
 msgid "Send File"
-msgstr "发送文件"
+msgstr "파일 보내기"
 
 #: ui/chat.slint:299
 msgid "Send {n} Files"
 msgid_plural "Send {n} Files"
-msgstr[0] "发送 {n} 个文件"
+msgstr[0] "파일 {n}개 보내기"
 
 #: ui/chat.slint:302
 msgid "Send Video"
-msgstr "发送视频"
+msgstr "비디오 보내기"
 
 #: ui/chat.slint:302
 msgid "Send {n} Videos"
 msgid_plural "Send {n} Videos"
-msgstr[0] "发送 {n} 个视频"
+msgstr[0] "비디오 {n}개 보내기"
 
 #: ui/chat.slint:304
 msgid "Send Photo"
-msgstr "发送照片"
+msgstr "사진 보내기"
 
 #: ui/chat.slint:304
 msgid "Send {n} Photos"
 msgid_plural "Send {n} Photos"
-msgstr[0] "发送 {n} 张照片"
+msgstr[0] "사진 {n}장 보내기"
 
 #: ui/chat.slint:306
 msgid "Will be sent as {n} albums"
 msgid_plural "Will be sent as {n} albums"
-msgstr[0] "将分成 {n} 组相册发送"
+msgstr[0] "앨범 {n}개로 나누어 보냅니다"
 
 #: ui/chat.slint:307
 msgid "Album {0} · {1}"
-msgstr "相册 {0} · {1}"
+msgstr "앨범 {0} · {1}"
 
 #: ui/chat.slint:308
 msgid "Add more"
-msgstr "再添加"
+msgstr "더 추가"
 
 #: ui/chat.slint:309
 msgid "Remove"
-msgstr "移除"
+msgstr "제거"
 
 #: ui/chat.slint:310
 msgid "Add a caption…"
-msgstr "添加说明…"
+msgstr "캡션 추가…"
 
 #: ui/chat.slint:311
 msgid "Send as photo"
-msgstr "按照片发送"
+msgstr "사진으로 보내기"
 
 #: ui/chat.slint:312
 msgid "Send as video"
-msgstr "按视频发送"
+msgstr "비디오로 보내기"
 
 #: ui/chat.slint:313
 msgid "Send as file"
-msgstr "按文件发送"
+msgstr "파일로 보내기"
 
 #: ui/chat.slint:314
 msgid "Group items"
-msgstr "合并为相册"
+msgstr "앨범으로 묶기"
 
 #: ui/chat.slint:315
 msgid "Self-destruct timer"
-msgstr "自毁计时器"
+msgstr "자동 삭제 타이머"
 
 #: ui/chat.slint:316
 msgid "Disappears after it's opened."
-msgstr "对方打开后销毁。"
+msgstr "열어 본 후에 사라집니다."
 
 #: ui/chat.slint:318 ui/pages/settings.slint:918 ui/pages/settings.slint:929
-#: ui/pages/settings.slint:1187
+#: ui/chat.slint:318 ui/pages/settings.slint:918 ui/pages/settings.slint:929 ui/pages/settings.slint:1187
 msgid "Off"
-msgstr "关"
+msgstr "끔"
 
 #: ui/chat.slint:319
 msgid "View once"
-msgstr "看一次"
+msgstr "한 번 보기"
 
 #: ui/chat.slint:320
 msgid "{0} s"
-msgstr "{0} 秒"
+msgstr "{0}초"
 
 #: ui/chat.slint:322
 msgid "Hide with spoiler"
-msgstr "剧透遮罩"
+msgstr "스포일러로 가리기"
 
 #: ui/chat.slint:324
 msgid "Send"
-msgstr "发送"
+msgstr "보내기"
 
 #: ui/chat.slint:325
 msgid "More send options"
-msgstr "更多发送选项"
+msgstr "추가 전송 옵션"
 
 #: ui/chat.slint:326
 msgid "Send without sound"
-msgstr "静默发送"
+msgstr "소리 없이 보내기"
 
 #: ui/chat.slint:327
 msgid "Schedule message"
-msgstr "定时发送"
+msgstr "메시지 예약"
 
 #: ui/chat.slint:330
 msgid "Return to send · Esc to cancel"
-msgstr "回车 发送 · Esc 取消"
+msgstr "Return 보내기 · Esc 취소"
 
 #: ui/chat.slint:330
 msgid "⌘Return to send · Return for a new line · Esc to cancel"
-msgstr "⌘回车 发送 · 回车 换行 · Esc 取消"
+msgstr "⌘Return 보내기 · Return 줄 바꿈 · Esc 취소"
 
 #: ui/chat.slint:332
 msgid "Remove the marked items to send"
-msgstr "移除标红的项目后才能发送"
+msgstr "표시된 항목을 제거해야 보낼 수 있습니다"
 
 #: ui/chat.slint:333
 msgid "Caption is too long"
-msgstr "说明文字太长"
+msgstr "캡션이 너무 깁니다"
 
 #: ui/chat.slint:337 ui/chat.slint:338
 msgid "Files over {0} GB can't be sent"
-msgstr "超过 {0} GB 的文件无法发送"
+msgstr "{0} GB가 넘는 파일은 보낼 수 없습니다"
 
 #: ui/chat.slint:339
 msgid "Can't read this file"
-msgstr "无法读取这个文件"
+msgstr "이 파일을 읽을 수 없습니다"
 
 #: ui/chat.slint:343
 msgid "Drop to send as photos"
-msgstr "松手按照片发送"
+msgstr "놓으면 사진으로 보냅니다"
 
 #: ui/chat.slint:344
 msgid "Drop to send as files"
-msgstr "松手按文件发送"
+msgstr "놓으면 파일로 보냅니다"
 
 #: ui/chat.slint:345
 msgid "Compressed"
-msgstr "压缩"
+msgstr "압축됨"
 
 #: ui/chat.slint:346
 msgid "Original quality"
-msgstr "原始质量"
+msgstr "원본 화질"
 
 #: ui/chat.slint:347
 msgid "Cancel upload"
-msgstr "取消上传"
+msgstr "업로드 취소"
 
 #: ui/chat.slint:348
 msgid "Not sent"
-msgstr "未发送"
+msgstr "전송되지 않음"
 
 #: ui/chat.slint:349
 msgid "Retry"
-msgstr "重试"
+msgstr "다시 시도"
 
 #: ui/chat.slint:351
 msgid "Download"
-msgstr "下载"
+msgstr "다운로드"
 
 #: ui/chat.slint:352
 msgid "Cancel download"
-msgstr "取消下载"
+msgstr "다운로드 취소"
 
 #: ui/chat.slint:353
 msgid "Show in Finder"
-msgstr "在访达中显示"
+msgstr "Finder에서 보기"
 
 #. "0.4 MB of 1.2 MB"
 #: ui/chat.slint:355
 msgid "{0} of {1}"
-msgstr "{0} / {1}"
+msgstr "{1} 중 {0}"
 
 #: ui/chat.slint:655 ui/terminal/terminal.slint:677
 msgid "Tap to view"
-msgstr "点击查看"
+msgstr "클릭하여 보기"
 
 #: ui/chat.slint:768
 msgid "Reply"
-msgstr "回复"
+msgstr "답장"
 
 #: ui/chat.slint:769
 msgid "Edit"
-msgstr "编辑"
+msgstr "편집"
 
 #: ui/chat.slint:770
 msgid "Copy Image"
-msgstr "拷贝图片"
+msgstr "이미지 복사"
 
 #: ui/chat.slint:771
 msgid "Save Image"
-msgstr "保存图片"
+msgstr "이미지 저장"
 
 #: ui/chat.slint:772
 msgid "Save Video"
-msgstr "保存视频"
+msgstr "비디오 저장"
 
 #: ui/chat.slint:774
 msgctxt "words of a photo or video"
 msgid "Copy Text"
-msgstr "拷贝文字"
+msgstr "텍스트 복사"
 
 #: ui/chat.slint:775
 msgid "Copy Message Link"
-msgstr "拷贝链接"
+msgstr "메시지 링크 복사"
 
 #: ui/chat.slint:779
 msgid "Select"
-msgstr "选择"
+msgstr "선택"
 
 #: ui/chat.slint:784
 msgctxt "words of a message"
 msgid "Copy Text"
-msgstr "拷贝"
+msgstr "텍스트 복사"
 
 #: ui/chat.slint:814
 msgid "Text copied to clipboard."
-msgstr "已拷贝"
+msgstr "텍스트를 복사했습니다."
 
 #: ui/chat.slint:815
 msgid "Link copied to clipboard."
-msgstr "链接已拷贝"
+msgstr "링크를 복사했습니다."
 
 #: ui/chat.slint:816
 msgid "Image copied to clipboard."
-msgstr "图片已拷贝"
+msgstr "이미지를 복사했습니다."
 
 #: ui/chat.slint:817
 msgid "Saved to Downloads"
-msgstr "已保存到「下载」"
+msgstr "다운로드 폴더에 저장됨"
 
 #: ui/chat.slint:817 ui/viewer.slint:30
 msgid "Saved to Downloads · {0}"
-msgstr "已存到“下载” · {0}"
+msgstr "다운로드 폴더에 저장됨 · {0}"
 
 #: ui/chat.slint:818
 msgid "Reported"
-msgstr "已举报"
+msgstr "신고됨"
 
 #: ui/chat.slint:819
 msgid "A folder must keep at least one chat."
-msgstr "文件夹里至少要留一个聊天。"
+msgstr "폴더에는 채팅이 하나 이상 있어야 합니다."
 
 #: ui/chat.slint:826
 msgid "Reply to {0}"
-msgstr "回复 {0}"
+msgstr "{0}님에게 답장"
 
 #: ui/chat.slint:827
 msgid "Edit message"
-msgstr "编辑消息"
+msgstr "메시지 편집"
 
 #: ui/chat.slint:828
 msgid "Forward {n} message"
 msgid_plural "Forward {n} messages"
-msgstr[0] "转发 {n} 条消息"
+msgstr[0] "메시지 {n}개 전달"
 
 #: ui/chat.slint:832
 msgid "From: {0}"
-msgstr "来自 {0}"
+msgstr "보낸 사람: {0}"
 
 #: ui/chat.slint:838
 msgid "Deleted message"
-msgstr "消息已删除"
+msgstr "삭제된 메시지"
 
 #: ui/chat.slint:843
 msgid "{0} selected"
-msgstr "已选 {0} 条"
+msgstr "{0}개 선택됨"
 
 #: ui/chat.slint:847
 msgid "Delete this message?"
-msgstr "删除这条消息？"
+msgstr "이 메시지를 삭제하시겠습니까?"
 
 #: ui/chat.slint:848
 msgid "Delete {0} messages?"
-msgstr "删除 {0} 条消息？"
+msgstr "메시지 {0}개를 삭제하시겠습니까?"
 
 #: ui/chat.slint:853
 msgid "Also delete for everyone"
-msgstr "同时为所有人删除"
+msgstr "모두에게서도 삭제"
 
 #: ui/format.slint:38
 msgctxt "weekday"
 msgid "Mon"
-msgstr "周一"
+msgstr "월요일"
 
 #: ui/format.slint:39
 msgctxt "weekday"
 msgid "Tue"
-msgstr "周二"
+msgstr "화요일"
 
 #: ui/format.slint:40
 msgctxt "weekday"
 msgid "Wed"
-msgstr "周三"
+msgstr "수요일"
 
 #: ui/format.slint:41
 msgctxt "weekday"
 msgid "Thu"
-msgstr "周四"
+msgstr "목요일"
 
 #: ui/format.slint:42
 msgctxt "weekday"
 msgid "Fri"
-msgstr "周五"
+msgstr "금요일"
 
 #: ui/format.slint:43
 msgctxt "weekday"
 msgid "Sat"
-msgstr "周六"
+msgstr "토요일"
 
 #: ui/format.slint:44
 msgctxt "weekday"
 msgid "Sun"
-msgstr "周日"
+msgstr "일요일"
 
 #: ui/format.slint:48
 msgid "Monday"
-msgstr "星期一"
+msgstr "월요일"
 
 #: ui/format.slint:49
 msgid "Tuesday"
-msgstr "星期二"
+msgstr "화요일"
 
 #: ui/format.slint:50
 msgid "Wednesday"
-msgstr "星期三"
+msgstr "수요일"
 
 #: ui/format.slint:51
 msgid "Thursday"
-msgstr "星期四"
+msgstr "목요일"
 
 #: ui/format.slint:52
 msgid "Friday"
-msgstr "星期五"
+msgstr "금요일"
 
 #: ui/format.slint:53
 msgid "Saturday"
-msgstr "星期六"
+msgstr "토요일"
 
 #: ui/format.slint:54
 msgid "Sunday"
-msgstr "星期日"
+msgstr "일요일"
 
 #: ui/format.slint:58
 msgctxt "month"
 msgid "Jan"
-msgstr "1月"
+msgstr "1월"
 
 #: ui/format.slint:59
 msgctxt "month"
 msgid "Feb"
-msgstr "2月"
+msgstr "2월"
 
 #: ui/format.slint:60
 msgctxt "month"
 msgid "Mar"
-msgstr "3月"
+msgstr "3월"
 
 #: ui/format.slint:61
 msgctxt "month"
 msgid "Apr"
-msgstr "4月"
+msgstr "4월"
 
 #: ui/format.slint:62
 msgctxt "month"
 msgid "May"
-msgstr "5月"
+msgstr "5월"
 
 #: ui/format.slint:63
 msgctxt "month"
 msgid "Jun"
-msgstr "6月"
+msgstr "6월"
 
 #: ui/format.slint:64
 msgctxt "month"
 msgid "Jul"
-msgstr "7月"
+msgstr "7월"
 
 #: ui/format.slint:65
 msgctxt "month"
 msgid "Aug"
-msgstr "8月"
+msgstr "8월"
 
 #: ui/format.slint:66
 msgctxt "month"
 msgid "Sep"
-msgstr "9月"
+msgstr "9월"
 
 #: ui/format.slint:67
 msgctxt "month"
 msgid "Oct"
-msgstr "10月"
+msgstr "10월"
 
 #: ui/format.slint:68
 msgctxt "month"
 msgid "Nov"
-msgstr "11月"
+msgstr "11월"
 
 #: ui/format.slint:69
 msgctxt "month"
 msgid "Dec"
-msgstr "12月"
+msgstr "12월"
 
 #: ui/format.slint:73
 msgid "January"
-msgstr "1月"
+msgstr "1월"
 
 #: ui/format.slint:74
 msgid "February"
-msgstr "2月"
+msgstr "2월"
 
 #: ui/format.slint:75
 msgid "March"
-msgstr "3月"
+msgstr "3월"
 
 #: ui/format.slint:76
 msgid "April"
-msgstr "4月"
+msgstr "4월"
 
 #: ui/format.slint:77
 msgid "May"
-msgstr "5月"
+msgstr "5월"
 
 #: ui/format.slint:78
 msgid "June"
-msgstr "6月"
+msgstr "6월"
 
 #: ui/format.slint:79
 msgid "July"
-msgstr "7月"
+msgstr "7월"
 
 #: ui/format.slint:80
 msgid "August"
-msgstr "8月"
+msgstr "8월"
 
 #: ui/format.slint:81
 msgid "September"
-msgstr "9月"
+msgstr "9월"
 
 #: ui/format.slint:82
 msgid "October"
-msgstr "10月"
+msgstr "10월"
 
 #: ui/format.slint:83
 msgid "November"
-msgstr "11月"
+msgstr "11월"
 
 #: ui/format.slint:84
 msgid "December"
-msgstr "12月"
+msgstr "12월"
 
 #: ui/format.slint:93 ui/format.slint:111
 msgid "Yesterday"
-msgstr "昨天"
+msgstr "어제"
 
 #: ui/format.slint:99
 msgctxt "short date"
 msgid "{0} {1}"
-msgstr "{0}{1}日"
+msgstr "{0} {1}일"
 
 #: ui/format.slint:101
 msgctxt "short date with year"
 msgid "{0} {1}, {2}"
-msgstr "{2}年{0}{1}日"
+msgstr "{2}년 {0} {1}일"
 
 #: ui/format.slint:108
 msgid "Today"
-msgstr "今天"
+msgstr "오늘"
 
 #: ui/format.slint:117
 msgctxt "long date"
 msgid "{0} {1}"
-msgstr "{0}{1}日"
+msgstr "{0} {1}일"
 
 #: ui/format.slint:119 ui/format.slint:124
 msgctxt "long date with year"
 msgid "{0} {1}, {2}"
-msgstr "{2}年{0}{1}日"
+msgstr "{2}년 {0} {1}일"
 
 #: ui/format.slint:124
 msgctxt "date and time"
@@ -890,85 +923,85 @@ msgstr "{0} {1}"
 
 #: ui/format.slint:130
 msgid "online"
-msgstr "在线"
+msgstr "온라인"
 
 #: ui/format.slint:134
 msgid "last seen at {0}"
-msgstr "今天 {0} 在线"
+msgstr "마지막 접속: 오늘 {0}"
 
 #: ui/format.slint:137
 msgid "last seen yesterday at {0}"
-msgstr "昨天 {0} 在线"
+msgstr "마지막 접속: 어제 {0}"
 
 #: ui/format.slint:139
 msgid "last seen {0}"
-msgstr "{0} 在线"
+msgstr "마지막 접속: {0}"
 
 #: ui/format.slint:142
 msgid "last seen recently"
-msgstr "最近在线"
+msgstr "최근 접속"
 
 #: ui/format.slint:145
 msgid "last seen within a week"
-msgstr "一周内在线"
+msgstr "일주일 이내 접속"
 
 #: ui/format.slint:148
 msgid "last seen within a month"
-msgstr "一个月内在线"
+msgstr "한 달 이내 접속"
 
 #: ui/format.slint:151
 msgid "last seen a long time ago"
-msgstr "很久没有上线"
+msgstr "오래전 접속"
 
 #: ui/format.slint:154
 msgid "bot"
-msgstr "机器人"
+msgstr "봇"
 
 #: ui/format.slint:158
 msgid "{0} members, {1} online"
-msgstr "{0} 位成员 · {1} 人在线"
+msgstr "멤버 {0}명, 온라인 {1}명"
 
 #: ui/format.slint:160
 msgid "{n} member"
 msgid_plural "{n} members"
-msgstr[0] "{n} 位成员"
+msgstr[0] "멤버 {n}명"
 
 #: ui/format.slint:166
 msgid "only you can see it"
-msgstr "仅你可见"
+msgstr "나만 볼 수 있음"
 
 #: ui/format.slint:174
 msgid "Waiting for network…"
-msgstr "等待网络…"
+msgstr "네트워크 대기 중…"
 
 #: ui/format.slint:177
 msgid "Connecting to proxy…"
-msgstr "正在连接代理…"
+msgstr "프록시에 연결 중…"
 
 #: ui/format.slint:180
 msgid "Connecting…"
-msgstr "正在连接…"
+msgstr "연결 중…"
 
 #: ui/format.slint:183
 msgid "Updating…"
-msgstr "正在更新…"
+msgstr "업데이트 중…"
 
 #: ui/format.slint:185
 msgid "Connected"
-msgstr "已连接"
+msgstr "연결됨"
 
 #: ui/format.slint:190
 msgid "{n} unread post"
 msgid_plural "{n} unread posts"
-msgstr[0] "{n} 篇未读"
+msgstr[0] "읽지 않은 게시물 {n}개"
 
 #: ui/format.slint:202
 msgid "Photo"
-msgstr "图片"
+msgstr "사진"
 
 #: ui/format.slint:203
 msgid "Video"
-msgstr "视频"
+msgstr "비디오"
 
 #: ui/format.slint:204
 msgid "GIF"
@@ -976,119 +1009,119 @@ msgstr "GIF"
 
 #: ui/format.slint:205
 msgid "Audio"
-msgstr "音频"
+msgstr "오디오"
 
 #: ui/format.slint:206
 msgid "Voice message"
-msgstr "语音消息"
+msgstr "음성 메시지"
 
 #: ui/format.slint:207
 msgid "Video message"
-msgstr "视频消息"
+msgstr "비디오 메시지"
 
 #: ui/format.slint:208
 msgid "Photo has expired"
-msgstr "照片已自毁"
+msgstr "만료된 사진"
 
 #: ui/format.slint:209
 msgid "Video has expired"
-msgstr "视频已自毁"
+msgstr "만료된 비디오"
 
 #: ui/format.slint:210
 msgid "Video message has expired"
-msgstr "视频消息已自毁"
+msgstr "만료된 비디오 메시지"
 
 #: ui/format.slint:211
 msgid "Voice message has expired"
-msgstr "语音消息已自毁"
+msgstr "만료된 음성 메시지"
 
 #: ui/format.slint:213
 msgid "Sticker"
-msgstr "贴纸"
+msgstr "스티커"
 
 #: ui/format.slint:214 ui/format.slint:215
 msgid "Location"
-msgstr "位置"
+msgstr "위치"
 
 #: ui/format.slint:216
 msgid "Contact: {0}"
-msgstr "联系人：{0}"
+msgstr "연락처: {0}"
 
 #: ui/format.slint:217
 msgid "Poll: {0}"
-msgstr "投票：{0}"
+msgstr "투표: {0}"
 
 #: ui/format.slint:219
 msgid "Game: {0}"
-msgstr "游戏：{0}"
+msgstr "게임: {0}"
 
 #: ui/format.slint:220
 msgid "Invoice"
-msgstr "账单"
+msgstr "청구서"
 
 #: ui/format.slint:221
 msgid "Call"
-msgstr "通话"
+msgstr "통화"
 
 #: ui/format.slint:222
 msgid "Story"
-msgstr "动态"
+msgstr "스토리"
 
 #: ui/format.slint:223
 msgid "Gift"
-msgstr "礼物"
+msgstr "선물"
 
 #: ui/format.slint:224
 msgid "A message FinchGram cannot show yet"
-msgstr "FinchGram 暂时还不能显示这条消息"
+msgstr "FinchGram에서 아직 표시할 수 없는 메시지"
 
 #: ui/format.slint:230
 msgid "{0} created the group “{1}”"
-msgstr "{0} 创建了群组「{1}」"
+msgstr "{0}님이 “{1}” 그룹을 만들었습니다"
 
 #: ui/format.slint:231
 msgid "{0} changed the name to “{1}”"
-msgstr "{0} 把名称改为「{1}」"
+msgstr "{0}님이 이름을 “{1}”(으)로 변경했습니다"
 
 #: ui/format.slint:232
 msgid "{0} changed the photo"
-msgstr "{0} 更换了头像"
+msgstr "{0}님이 사진을 변경했습니다"
 
 #: ui/format.slint:233
 msgid "{0} removed the photo"
-msgstr "{0} 删除了头像"
+msgstr "{0}님이 사진을 삭제했습니다"
 
 #: ui/format.slint:234
 msgid "{0} added {1}"
-msgstr "{0} 添加了 {1}"
+msgstr "{0}님이 {1}님을 추가했습니다"
 
 #: ui/format.slint:235
 msgid "{0} joined"
-msgstr "{0} 加入了"
+msgstr "{0}님이 참여했습니다"
 
 #: ui/format.slint:236
 msgid "{0} left"
-msgstr "{0} 退出了"
+msgstr "{0}님이 나갔습니다"
 
 #: ui/format.slint:237
 msgid "{0} removed {1}"
-msgstr "{0} 移除了 {1}"
+msgstr "{0}님이 {1}님을 내보냈습니다"
 
 #: ui/format.slint:238
 msgid "{0} pinned a message"
-msgstr "{0} 置顶了一条消息"
+msgstr "{0}님이 메시지를 고정했습니다"
 
 #: ui/format.slint:239
 msgid "{0} took a screenshot"
-msgstr "{0} 截了屏"
+msgstr "{0}님이 스크린샷을 찍었습니다"
 
 #: ui/format.slint:240
 msgid "{0} joined Telegram"
-msgstr "{0} 加入了 Telegram"
+msgstr "{0}님이 Telegram에 가입했습니다"
 
 #: ui/format.slint:241
 msgid "{0} changed something in the chat"
-msgstr "{0} 更改了聊天设置"
+msgstr "{0}님이 채팅 설정을 변경했습니다"
 
 #: ui/format.slint:252
 msgctxt "content with caption"
@@ -1097,855 +1130,846 @@ msgstr "{0} · {1}"
 
 #: ui/format.slint:264
 msgid "You: {0}"
-msgstr "你：{0}"
+msgstr "나: {0}"
 
 #: ui/format.slint:267
 msgctxt "sender and message"
 msgid "{0}: {1}"
-msgstr "{0}：{1}"
+msgstr "{0}: {1}"
 
 #: ui/pages/login.slint:15
 msgid "A lighter Telegram client"
-msgstr "更轻的 Telegram 客户端"
+msgstr "더 가벼운 Telegram 클라이언트"
 
 #: ui/pages/login.slint:21
 msgid "This phone number is not valid. Check the country and the number."
-msgstr "手机号无效，请检查国家/地区和号码。"
+msgstr "유효하지 않은 전화번호입니다. 국가와 번호를 확인하세요."
 
 #: ui/pages/login.slint:24
 msgid "This phone number is banned from Telegram."
-msgstr "这个手机号已被 Telegram 封禁。"
+msgstr "이 전화번호는 Telegram에서 차단되었습니다."
 
 #: ui/pages/login.slint:27
 msgid "Wrong code. Check it and try again."
-msgstr "验证码不正确，请检查后重试。"
+msgstr "코드가 올바르지 않습니다. 확인한 후 다시 시도하세요."
 
 #: ui/pages/login.slint:30 ui/pages/password.slint:18
 msgid "This code has expired. Go back and ask for a new one."
-msgstr "验证码已过期，请返回重新获取。"
+msgstr "코드가 만료되었습니다. 돌아가서 새 코드를 요청하세요."
 
 #: ui/pages/login.slint:33 ui/pages/password.slint:11
 msgid "Incorrect password"
-msgstr "密码不正确"
+msgstr "암호가 올바르지 않습니다"
 
 #: ui/pages/login.slint:36
 msgid "This email address is not valid."
-msgstr "邮箱地址无效。"
+msgstr "유효하지 않은 이메일 주소입니다."
 
 #: ui/pages/login.slint:39
 msgid "Enter your first name"
-msgstr "请输入名字"
+msgstr "이름을 입력하세요"
 
 #: ui/pages/login.slint:42 ui/pages/password.slint:33
 msgid "Too many tries. Wait a while, then try again."
-msgstr "尝试次数太多，请稍后再试。"
+msgstr "시도 횟수가 너무 많습니다. 잠시 후 다시 시도하세요."
 
 #: ui/pages/login.slint:116
 msgid "Same accounts and messages, with extra privacy and productivity tools."
-msgstr "同一套账号与消息，多一层隐私与效率工具。"
+msgstr "같은 계정, 같은 메시지에 개인정보 보호와 생산성 도구를 더했습니다."
 
 #: ui/pages/login.slint:128
 msgid "Auto-translate"
-msgstr "自动翻译"
+msgstr "자동 번역"
 
 #: ui/pages/login.slint:129
 msgid "Translate foreign-language messages into your UI language"
-msgstr "外语消息自动译为界面语言"
+msgstr "외국어 메시지를 인터페이스 언어로 번역합니다"
 
 #: ui/pages/login.slint:133 ui/workbench/conversation.slint:1348
 msgid "Reading mode"
-msgstr "阅读模式"
+msgstr "읽기 모드"
 
 #: ui/pages/login.slint:134
 msgid "Long-form layout, reactions hidden"
-msgstr "长文排版，隐藏表情回应"
+msgstr "긴 글에 맞춘 레이아웃, 반응은 숨김"
 
 #: ui/pages/login.slint:138
 msgid "Multiple accounts & folders"
-msgstr "多账号与文件夹"
+msgstr "다중 계정 및 폴더"
 
 #: ui/pages/login.slint:139
 msgid "Keep work and life apart"
-msgstr "工作与生活分开放"
+msgstr "일과 생활을 분리하세요"
 
 #: ui/pages/login.slint:163 ui/pages/settings.slint:1084
 msgid "Fully open source — read the code"
-msgstr "完全开源，代码公开可查"
+msgstr "완전한 오픈 소스 — 코드를 직접 확인하세요"
 
 #: ui/pages/login.slint:183 ui/pages/settings.slint:1113
 msgid ""
 "FinchGram is an unofficial client built on the Telegram API. It is not made "
 "by Telegram."
-msgstr ""
-"FinchGram 是基于 Telegram API 开发的第三方客户端，非 Telegram 官方出品。"
+msgstr "FinchGram은 Telegram API로 만든 비공식 클라이언트이며, Telegram이 만든 것이 아닙니다."
 
 #: ui/pages/login.slint:245
 msgid "Country"
-msgstr "国家/地区"
+msgstr "국가"
 
 #: ui/pages/login.slint:378
 msgid "Sign in with your phone"
-msgstr "用手机号登录"
+msgstr "전화번호로 로그인"
 
 #: ui/pages/login.slint:379
 msgid "We'll send a code to your Telegram app"
-msgstr "验证码将发送到你的 Telegram 应用"
+msgstr "Telegram 앱으로 코드를 보내 드립니다"
 
 #: ui/pages/login.slint:385 ui/pages/profile.slint:342
+#: ui/pages/login.slint:385 ui/pages/profile.slint:342
 msgid "Phone number"
-msgstr "手机号"
+msgstr "전화번호"
 
 #: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613
-#: ui/pages/settings.slint:1405 ui/pages/settings.slint:1602
+#: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613 ui/pages/settings.slint:1405
+#: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613 ui/pages/settings.slint:1405 ui/pages/settings.slint:1602
 msgid "Next"
-msgstr "下一步"
+msgstr "다음"
 
 #: ui/pages/login.slint:414
 msgid "Sign in with QR code"
-msgstr "改用二维码登录"
+msgstr "QR 코드로 로그인"
 
 #: ui/pages/login.slint:428
 msgid "Scan to sign in"
-msgstr "扫码登录"
+msgstr "스캔하여 로그인"
 
 #: ui/pages/login.slint:429
 msgid "On your phone, open Telegram › Settings › Devices › Link Desktop Device"
-msgstr "在手机上打开 Telegram › 设置 › 设备 › 连接桌面设备"
+msgstr "휴대폰에서 Telegram › 설정 › 기기 › 데스크탑 기기 연결을 여세요"
 
 #: ui/pages/login.slint:457
 msgid "Sign in with phone number"
-msgstr "改用手机号登录"
+msgstr "전화번호로 로그인"
 
 #: ui/pages/login.slint:494 ui/pages/login.slint:854
 msgid "Enter the code"
-msgstr "输入验证码"
+msgstr "코드 입력"
 
 #: ui/pages/login.slint:495
 msgid "Sent to Telegram on {0}"
-msgstr "已发送至 {0} 的 Telegram"
+msgstr "{0} 번호의 Telegram으로 보냈습니다"
 
 #: ui/pages/login.slint:496
 msgid "Code sent by SMS to {0}"
-msgstr "验证码已通过短信发送至 {0}"
+msgstr "{0} 번호로 SMS 코드를 보냈습니다"
 
 #: ui/pages/login.slint:497
 msgid "You will get a call at {0}"
-msgstr "我们将致电 {0}"
+msgstr "{0} 번호로 전화를 드립니다"
 
 #: ui/pages/login.slint:498
 msgid "Sent to your anonymous number on Fragment"
-msgstr "已发送至你在 Fragment 上的匿名号码"
+msgstr "Fragment의 익명 번호로 보냈습니다"
 
 #: ui/pages/login.slint:499 ui/pages/login.slint:855
 msgid "Sent to {0}"
-msgstr "已发送至 {0}"
+msgstr "{0}에 보냈습니다"
 
 #: ui/pages/login.slint:516
 msgid "Sent again — check Telegram"
-msgstr "已重新发送，请查看 Telegram"
+msgstr "다시 보냈습니다 — Telegram을 확인하세요"
 
 #: ui/pages/login.slint:516
 msgid "Didn't get it? Resend"
-msgstr "没收到？重新发送"
+msgstr "받지 못하셨습니까? 다시 보내기"
 
 #: ui/pages/login.slint:537 ui/pages/settings.slint:1186
+#: ui/pages/login.slint:537 ui/pages/settings.slint:1186
 msgid "Two-step verification"
-msgstr "两步验证"
+msgstr "2단계 인증"
 
 #: ui/pages/login.slint:538
 msgid "This account has two-step verification on. Enter your password."
-msgstr "这个账号开启了两步验证，请输入你设置的密码。"
+msgstr "이 계정은 2단계 인증이 켜져 있습니다. 암호를 입력하세요."
 
 #: ui/pages/login.slint:545 ui/pages/settings.slint:1387
 msgid "Password"
-msgstr "密码"
+msgstr "암호"
 
 #: ui/pages/login.slint:556 ui/pages/password.slint:114
 msgid "Hint: {0}"
-msgstr "密码提示：{0}"
+msgstr "힌트: {0}"
 
 #: ui/pages/login.slint:572 ui/pages/settings.slint:1413
 msgid "Forgot password?"
-msgstr "忘记密码？"
+msgstr "암호를 잊으셨습니까?"
 
 #: ui/pages/login.slint:593 ui/pages/settings.slint:1581
 msgid "Recover via email"
-msgstr "通过邮箱找回密码"
+msgstr "이메일로 복구"
 
 #: ui/pages/login.slint:594 ui/pages/settings.slint:1582
 msgid "A recovery code was sent to {0}. Enter it to set a new password."
-msgstr "恢复码已发送至 {0}，验证后即可设置新密码。"
+msgstr "{0}에 복구 코드를 보냈습니다. 코드를 입력하여 새 암호를 설정하세요."
 
 #: ui/pages/login.slint:621 ui/pages/settings.slint:1610
 msgid "Can't access this email?"
-msgstr "无法访问这个邮箱？"
+msgstr "이 이메일에 접근할 수 없습니까?"
 
 #: ui/pages/login.slint:643 ui/pages/settings.slint:1425
 msgid "Set a new password"
-msgstr "设置新密码"
+msgstr "새 암호 설정"
 
 #: ui/pages/login.slint:644 ui/pages/settings.slint:1426
 msgid "You'll need this password when signing in on a new device."
-msgstr "以后在新设备上登录时，需要输入这个密码。"
+msgstr "새 기기에서 로그인할 때 이 암호가 필요합니다."
 
 #: ui/pages/login.slint:645
 msgid "Save and sign in"
-msgstr "保存并登录"
+msgstr "저장하고 로그인"
 
 #: ui/pages/login.slint:660
 msgid "Can't access your recovery email"
-msgstr "无法访问恢复邮箱"
+msgstr "복구 이메일에 접근할 수 없음"
 
 #: ui/pages/login.slint:661
 msgid ""
 "The only option is to reset your account: chats, contacts, groups and "
 "channels will be deleted. Your number stays the same. If the account was "
 "active recently, this takes 7 days."
-msgstr ""
-"只能重置账号：聊天记录、联系人和已加入的群组与频道都会被删除，手机号不变。如"
-"果账号最近很活跃，需要等待 7 天。"
+msgstr "계정을 재설정하는 방법밖에 없습니다. 채팅, 연락처, 그룹, 채널이 삭제되며 전화번호는 그대로 유지됩니다. 최근에 사용한 계정이라면 7일이 걸립니다."
 
 #: ui/pages/login.slint:667
 msgid "Reset account"
-msgstr "重置账号"
+msgstr "계정 재설정"
 
 #: ui/pages/login.slint:691
 msgid "Account reset requested"
-msgstr "已申请重置账号"
+msgstr "계정 재설정이 요청되었습니다"
 
 #: ui/pages/login.slint:692
 msgid ""
 "Your account will be reset on {0}. You can cancel from any signed-in device "
 "before then."
-msgstr "账号将于 {0} 重置。在此之前，可以在任意已登录的设备上取消。"
+msgstr "{0}에 계정이 재설정됩니다. 그전까지는 로그인된 어느 기기에서든 취소할 수 있습니다."
 
 #: ui/pages/login.slint:710
 msgid "Create your account"
-msgstr "注册新账号"
+msgstr "계정 만들기"
 
 #: ui/pages/login.slint:711
 msgid ""
-"This number isn't registered yet. Enter your name to sign up — you can add a "
-"photo later."
-msgstr "这个手机号还没有账号。填写名字即可注册，头像可以稍后再加。"
+"This number isn't registered yet. Enter your name to sign up — you can add "
+"a photo later."
+msgstr "아직 등록되지 않은 번호입니다. 이름을 입력하여 가입하세요. 사진은 나중에 추가할 수 있습니다."
 
 #: ui/pages/login.slint:744
 msgid "Add photo"
-msgstr "添加头像"
+msgstr "사진 추가"
 
 #: ui/pages/login.slint:753 ui/pages/profile.slint:260
 msgid "First name"
-msgstr "名字"
+msgstr "이름"
 
 #: ui/pages/login.slint:765
 msgid "Last name (optional)"
-msgstr "姓氏（可选）"
+msgstr "성 (선택 사항)"
 
 #: ui/pages/login.slint:776
 msgid "Sign up"
-msgstr "注册"
+msgstr "가입"
 
 #: ui/pages/login.slint:785
 msgid "By signing up, you agree to the Telegram Terms of Service."
-msgstr "注册即表示你同意 Telegram 服务条款。"
+msgstr "가입하면 Telegram 서비스 약관에 동의하는 것입니다."
 
 #: ui/pages/login.slint:791
 msgid "View Terms of Service"
-msgstr "查看服务条款"
+msgstr "서비스 약관 보기"
 
 #: ui/pages/login.slint:813
 msgid "Add a login email"
-msgstr "添加登录邮箱"
+msgstr "로그인 이메일 추가"
 
 #: ui/pages/login.slint:814
 msgid "Telegram asks for an email address to send your login codes to."
-msgstr "Telegram 需要一个邮箱地址，用来接收登录验证码。"
+msgstr "Telegram이 로그인 코드를 보낼 이메일 주소를 요청합니다."
 
 #: ui/pages/login.slint:1039
 msgid "Sign in"
-msgstr "登录"
+msgstr "로그인"
 
 #: ui/pages/login.slint:1061
 msgid "Connecting to Telegram…"
-msgstr "正在连接 Telegram…"
+msgstr "Telegram에 연결 중…"
 
 #: ui/pages/login.slint:1064
 msgid "Logging out…"
-msgstr "正在退出登录…"
+msgstr "로그아웃 중…"
 
 #: ui/pages/login.slint:1067
 msgid "Closing…"
-msgstr "正在关闭…"
+msgstr "닫는 중…"
 
 #: ui/pages/login.slint:1070
 msgid "This build has no Telegram API ID"
-msgstr "这个版本没有 Telegram API ID"
+msgstr "이 빌드에는 Telegram API ID가 없습니다"
 
 #: ui/pages/login.slint:1071
 msgid ""
 "Build FinchGram with FINCHGRAM_API_ID and FINCHGRAM_API_HASH set to your "
 "own, from my.telegram.org (see the README)."
-msgstr ""
-"构建 FinchGram 时，请把 FINCHGRAM_API_ID 和 FINCHGRAM_API_HASH 设为你自己在 "
-"my.telegram.org 申请的值（见 README）。"
+msgstr "my.telegram.org에서 발급받은 자신의 값으로 FINCHGRAM_API_ID와 FINCHGRAM_API_HASH를 설정하여 FinchGram을 빌드하세요 (README 참조)."
 
 #: ui/pages/login.slint:1075
 msgid "Something went wrong"
-msgstr "出了点问题"
+msgstr "문제가 발생했습니다"
 
 #: ui/pages/login.slint:1076
 msgid "FinchGram cannot reach Telegram through its TDLib."
-msgstr "FinchGram 无法通过自带的 TDLib 连接 Telegram。"
+msgstr "FinchGram이 내장 TDLib를 통해 Telegram에 연결할 수 없습니다."
 
 #: ui/pages/login.slint:1100
 msgid "Telegram asks for Premium to sign in"
-msgstr "Telegram 要求开通 Premium 才能登录"
+msgstr "Telegram에서 로그인에 Premium을 요구합니다"
 
 #: ui/pages/login.slint:1101
 msgid ""
 "This number can only sign in with Telegram Premium. Get it in Telegram's "
 "official app first, then sign in here."
-msgstr ""
-"这个号码需要 Telegram Premium 才能登录。请先在 Telegram 官方应用里开通，再回"
-"到这里登录。"
+msgstr "이 번호는 Telegram Premium으로만 로그인할 수 있습니다. 먼저 Telegram 공식 앱에서 Premium을 구독한 다음 여기서 로그인하세요."
 
 #: ui/pages/password.slint:15
 msgid "Incorrect code"
-msgstr "验证码不正确"
+msgstr "코드가 올바르지 않습니다"
 
 #: ui/pages/password.slint:21
 msgid "Invalid email address"
-msgstr "邮箱格式不正确"
+msgstr "유효하지 않은 이메일 주소"
 
 #: ui/pages/password.slint:24
 msgid "Enter a new password"
-msgstr "请输入新密码"
+msgstr "새 암호를 입력하세요"
 
 #: ui/pages/password.slint:27
 msgid "Passwords don't match"
-msgstr "两次输入的密码不一致"
+msgstr "암호가 일치하지 않습니다"
 
 #: ui/pages/password.slint:30
 msgid "The hint can't be the same as the password"
-msgstr "提示不能和密码相同"
+msgstr "힌트는 암호와 같을 수 없습니다"
 
 #: ui/pages/password.slint:160
 msgid "New password"
-msgstr "新密码"
+msgstr "새 암호"
 
 #: ui/pages/password.slint:173
 msgid "Re-enter new password"
-msgstr "再次输入新密码"
+msgstr "새 암호 재입력"
 
 #: ui/pages/password.slint:182 ui/pages/settings.slint:1452
 msgid "Password hint (optional)"
-msgstr "密码提示（可选）"
+msgstr "암호 힌트 (선택 사항)"
 
 #: ui/pages/password.slint:192 ui/pages/settings.slint:1444
 msgid ""
 "The hint is shown on the sign-in screen to anyone who knows your number. "
 "Don't write the password itself."
-msgstr "提示会显示在登录页，任何知道你手机号的人都能看到，不要直接写出密码。"
+msgstr "힌트는 내 번호를 아는 누구에게나 로그인 화면에 표시됩니다. 암호 자체를 적지 마세요."
 
 #: ui/pages/profile.slint:110
 msgid "Current"
-msgstr "当前"
+msgstr "현재"
 
 #: ui/pages/profile.slint:119 ui/workbench/workbench.slint:314
 msgid "Add account"
-msgstr "添加账号"
+msgstr "계정 추가"
 
 #: ui/pages/profile.slint:128 ui/pages/profile.slint:192
 msgid "Log out"
-msgstr "退出登录"
+msgstr "로그아웃"
 
 #: ui/pages/profile.slint:155
 msgid "Log out of this account?"
-msgstr "要退出这个账号吗？"
+msgstr "이 계정에서 로그아웃하시겠습니까?"
 
 #: ui/pages/profile.slint:161
 msgid ""
 "FinchGram forgets this account on this Mac. Your chats stay on Telegram; "
 "sign in again to see them."
-msgstr ""
-"FinchGram 会在这台 Mac 上忘掉这个账号。聊天记录仍在 Telegram 上，重新登录就能"
-"看到。"
+msgstr "이 Mac의 FinchGram에서 이 계정을 지웁니다. 채팅은 Telegram에 그대로 남아 있으며, 다시 로그인하면 볼 수 있습니다."
 
 #: ui/pages/profile.slint:252
 msgid "Edit profile"
-msgstr "编辑资料"
+msgstr "프로필 편집"
 
 #: ui/pages/profile.slint:274
 msgid "Last name"
-msgstr "姓氏"
+msgstr "성"
 
 #: ui/pages/profile.slint:288
 msgid "Username"
-msgstr "用户名"
+msgstr "사용자 이름"
 
 #: ui/pages/profile.slint:320
 msgid "Without a username, people find you by your phone number."
-msgstr "没有用户名时，别人只能通过手机号找到你。"
+msgstr "사용자 이름이 없으면 다른 사람이 전화번호로만 나를 찾을 수 있습니다."
 
 #: ui/pages/profile.slint:328
 msgid "Bio"
-msgstr "个人简介"
+msgstr "소개"
 
+#: ui/pages/profile.slint:384 ui/pages/settings.slint:1429
 #: ui/pages/profile.slint:384 ui/pages/settings.slint:1429 ui/shot.slint:129
 msgid "Save"
-msgstr "保存"
+msgstr "저장"
 
 #: ui/pages/profile.slint:405
 msgid "Profile"
-msgstr "个人资料"
+msgstr "프로필"
 
 #: ui/pages/settings.slint:97 ui/pages/settings.slint:1675
 msgid "Settings"
-msgstr "设置"
+msgstr "설정"
 
 #: ui/pages/settings.slint:106 ui/pages/settings.slint:1716
 msgid "General"
-msgstr "通用"
+msgstr "일반"
 
 #: ui/pages/settings.slint:112 ui/pages/settings.slint:1717
 msgid "Notifications & sounds"
-msgstr "通知与声音"
+msgstr "알림 및 소리"
 
 #: ui/pages/settings.slint:118 ui/pages/settings.slint:1707
+#: ui/pages/settings.slint:118 ui/pages/settings.slint:1707
 msgid "Privacy & security"
-msgstr "隐私与安全"
+msgstr "개인정보 보호 및 보안"
 
 #: ui/pages/settings.slint:130
 msgid "Folders"
-msgstr "文件夹"
+msgstr "폴더"
 
 #: ui/pages/settings.slint:135
 msgid "Finch features"
-msgstr "Finch 功能"
+msgstr "Finch 기능"
 
 #: ui/pages/settings.slint:140 ui/pages/settings.slint:1720
 msgid "Appearance"
-msgstr "外观"
+msgstr "화면 모드"
 
 #: ui/pages/settings.slint:146 ui/pages/settings.slint:1718
 msgid "Language"
-msgstr "语言"
+msgstr "언어"
 
 #: ui/pages/settings.slint:152
 msgid "Data & storage"
-msgstr "数据与存储"
+msgstr "데이터 및 저장 공간"
 
 #: ui/pages/settings.slint:157
 msgid "Advanced"
-msgstr "高级"
+msgstr "고급"
 
 #: ui/pages/settings.slint:162 ui/pages/settings.slint:1720
 msgid "About"
-msgstr "关于"
+msgstr "정보"
 
 #: ui/pages/settings.slint:496
 msgid "Checking…"
-msgstr "正在检查…"
+msgstr "확인 중…"
 
 #: ui/pages/settings.slint:497
 msgid "Version {0} available"
-msgstr "发现新版本 {0}"
+msgstr "{0} 버전 사용 가능"
 
 #: ui/pages/settings.slint:499
 msgid "Downloading {0}% · {1} of {2}"
-msgstr "正在下载 {0}% · {1} / {2}"
+msgstr "다운로드 중 {0}% · {2} 중 {1}"
 
 #: ui/pages/settings.slint:500
 msgid "Installing…"
-msgstr "安装中…"
+msgstr "설치 중…"
 
 #: ui/pages/settings.slint:501
 msgid "You're up to date"
-msgstr "已是最新版本"
+msgstr "최신 버전입니다"
 
 #: ui/pages/settings.slint:502
 msgid "The update failed"
-msgstr "更新失败"
+msgstr "업데이트에 실패했습니다"
 
 #: ui/pages/settings.slint:503 ui/pages/settings.slint:519
-#: ui/pages/settings.slint:1027
+#: ui/pages/settings.slint:503 ui/pages/settings.slint:519 ui/pages/settings.slint:1027
 msgid "Version {0}"
-msgstr "版本 {0}"
+msgstr "버전 {0}"
 
 #: ui/pages/settings.slint:527
 msgid "Install and restart"
-msgstr "安装并重启"
+msgstr "설치하고 다시 실행"
 
 #: ui/pages/settings.slint:534
 msgid "Check for updates"
-msgstr "检查更新"
+msgstr "업데이트 확인"
 
 #: ui/pages/settings.slint:550
 msgid "Theme"
-msgstr "主题"
+msgstr "테마"
 
 #: ui/pages/settings.slint:581
 msgid ""
 "Workbench is an editor's layout, Broadsheet a newspaper's, Terminal a "
 "console's. The same chats and settings in all three."
-msgstr ""
-"工作台像编辑器，报纸像一份报纸，终端像控制台。三套主题里的聊天和设置完全相"
-"同。"
+msgstr "워크벤치는 편집기, 브로드시트는 신문, 터미널은 콘솔의 레이아웃입니다. 세 가지 모두 같은 채팅과 설정을 사용합니다."
 
 #: ui/pages/settings.slint:589
 msgid "Light and dark"
-msgstr "浅色与深色"
+msgstr "라이트 및 다크"
 
 #: ui/pages/settings.slint:614
 msgid "Match system appearance"
-msgstr "跟随系统明暗"
+msgstr "시스템 화면 모드에 맞춤"
 
 #: ui/pages/settings.slint:645
 msgid "Screenshot shortcut"
-msgstr "截图快捷键"
+msgstr "스크린샷 단축키"
 
 #: ui/pages/settings.slint:662
 msgid "Type a new shortcut…"
-msgstr "按下新的快捷键…"
+msgstr "새 단축키를 누르세요…"
 
 #: ui/pages/settings.slint:705
 msgid "Reset"
-msgstr "重置"
+msgstr "재설정"
 
 #: ui/pages/settings.slint:734
 msgid "Startup & window"
-msgstr "启动与窗口"
+msgstr "시작 및 윈도우"
 
 #: ui/pages/settings.slint:739
 msgid "Launch at login"
-msgstr "开机时启动"
+msgstr "로그인 시 실행"
 
 #: ui/pages/settings.slint:749
 msgid "Show in menu bar"
-msgstr "在菜单栏显示图标"
+msgstr "메뉴 막대에 표시"
 
 #: ui/pages/settings.slint:759
 msgid "When closing the window"
-msgstr "关闭窗口时"
+msgstr "윈도우를 닫을 때"
 
 #: ui/pages/settings.slint:760
 msgid "Quit"
-msgstr "退出程序"
+msgstr "종료"
 
 #: ui/pages/settings.slint:760
 msgid "Minimize to tray"
-msgstr "最小化到托盘"
+msgstr "트레이로 최소화"
 
 #: ui/pages/settings.slint:772
 msgid "Input"
-msgstr "输入"
+msgstr "입력"
 
 #: ui/pages/settings.slint:777
 msgid "Send with Enter"
-msgstr "按 Enter 发送消息"
+msgstr "Enter 키로 보내기"
 
 #: ui/pages/settings.slint:786
 msgid "Spell check"
-msgstr "拼写检查"
+msgstr "맞춤법 검사"
 
 #: ui/pages/settings.slint:792
 msgid "Replace emoji automatically"
-msgstr "自动替换表情"
+msgstr "이모티콘 자동 대치"
 
 #: ui/pages/settings.slint:800
 msgid "Shortcuts"
-msgstr "快捷键"
+msgstr "단축키"
 
 #: ui/pages/settings.slint:805
 msgid "Keyboard shortcuts"
-msgstr "键盘快捷键"
+msgstr "키보드 단축키"
 
 #: ui/pages/settings.slint:806
 msgctxt "shortcuts"
 msgid "View"
-msgstr "查看"
+msgstr "보기"
 
 #: ui/pages/settings.slint:814
 msgid "Screenshots"
-msgstr "截图"
+msgstr "스크린샷"
 
 #: ui/pages/settings.slint:821
 msgid "Hide the FinchGram window while taking a screenshot"
-msgstr "截图时隐藏 FinchGram 窗口"
+msgstr "스크린샷을 찍는 동안 FinchGram 윈도우 가리기"
 
 #: ui/pages/settings.slint:830
 msgid "Also when FinchGram is in the background"
-msgstr "FinchGram 在后台时也可以用"
+msgstr "FinchGram이 백그라운드에 있을 때도"
 
 #: ui/pages/settings.slint:849 ui/pages/settings.slint:854
 msgid "Desktop notifications"
-msgstr "桌面通知"
+msgstr "데스크탑 알림"
 
 #: ui/pages/settings.slint:863
 msgid "Message previews"
-msgstr "显示消息预览"
+msgstr "메시지 미리보기"
 
 #: ui/pages/settings.slint:873
 msgid "Sounds"
-msgstr "提示音"
+msgstr "소리"
 
 #: ui/pages/settings.slint:883
 msgid "Flash taskbar"
-msgstr "任务栏闪烁提醒"
+msgstr "작업 표시줄 깜박임"
 
 #: ui/pages/settings.slint:892
 msgid "Count muted chats in badge"
-msgstr "未读数包含静音聊天"
+msgstr "배지에 음소거된 채팅 포함"
 
 #: ui/pages/settings.slint:901
 msgid "Notifications from other accounts"
-msgstr "其他账号的通知"
+msgstr "다른 계정의 알림"
 
 #: ui/pages/settings.slint:902
 msgid "When off, only the current account notifies you"
-msgstr "关闭后只有当前账号会弹通知"
+msgstr "끄면 현재 계정의 알림만 받습니다"
 
 #: ui/pages/settings.slint:910
 msgid "By chat type"
-msgstr "按聊天类型"
+msgstr "채팅 유형별"
 
 #: ui/pages/settings.slint:917
 msgid "Private chats"
-msgstr "私聊"
+msgstr "개인 채팅"
 
 #: ui/pages/settings.slint:918 ui/pages/settings.slint:929
-#: ui/pages/settings.slint:1187
+#: ui/pages/settings.slint:918 ui/pages/settings.slint:929 ui/pages/settings.slint:1187
 msgid "On"
-msgstr "已开启"
+msgstr "켬"
 
 #: ui/pages/settings.slint:928
 msgid "Groups"
-msgstr "群组"
+msgstr "그룹"
 
 #: ui/pages/settings.slint:956
 msgid "Changes the interface only — messages aren't translated"
-msgstr "只影响界面，不会翻译消息内容"
+msgstr "인터페이스에만 적용되며 메시지는 번역되지 않습니다"
 
 #: ui/pages/settings.slint:1036
 msgid "Updates"
-msgstr "更新"
+msgstr "업데이트"
 
 #: ui/pages/settings.slint:1043
 msgid "Check for updates automatically"
-msgstr "自动检查更新"
+msgstr "자동으로 업데이트 확인"
 
 #: ui/pages/settings.slint:1051
 msgid ""
 "Updates come from GitHub Releases and are signature-checked before install."
-msgstr "更新包从 GitHub Releases 下载，安装前校验签名。"
+msgstr "업데이트는 GitHub Releases에서 받으며 설치 전에 서명을 검증합니다."
 
 #: ui/pages/settings.slint:1133
 msgid "Who can see"
-msgstr "谁可以看到"
+msgstr "공개 범위"
 
 #: ui/pages/settings.slint:1144
 msgid "Last seen"
-msgstr "最后上线时间"
+msgstr "마지막 접속"
 
 #: ui/pages/settings.slint:1150
 msgid "Profile photos"
-msgstr "头像"
+msgstr "프로필 사진"
 
 #: ui/pages/settings.slint:1156
 msgid "Forwarded messages"
-msgstr "转发消息"
+msgstr "전달된 메시지"
 
 #: ui/pages/settings.slint:1162
 msgid "Calls"
-msgstr "通话"
+msgstr "통화"
 
 #: ui/pages/settings.slint:1168
 msgid "Invites to groups"
-msgstr "邀请我进群"
+msgstr "그룹 초대"
 
 #: ui/pages/settings.slint:1173
 msgid "Stored on Telegram servers and synced across all your apps."
-msgstr "这些设置保存在 Telegram 服务器上，所有客户端同步。"
+msgstr "Telegram 서버에 저장되어 모든 앱에서 동기화됩니다."
 
 #: ui/pages/settings.slint:1181
 msgid "Security"
-msgstr "安全"
+msgstr "보안"
 
 #: ui/pages/settings.slint:1199
 msgid "Local passcode"
-msgstr "本地密码锁"
+msgstr "로컬 잠금 암호"
 
 #: ui/pages/settings.slint:1205
 msgid "Active sessions"
-msgstr "活跃设备"
+msgstr "활성 세션"
 
 #: ui/pages/settings.slint:1211
 msgid "Blocked users"
-msgstr "已屏蔽的用户"
+msgstr "차단된 사용자"
 
 #: ui/pages/settings.slint:1217
 msgid "Delete my account"
-msgstr "账号自动注销"
+msgstr "내 계정 삭제"
 
 #: ui/pages/settings.slint:1250
 msgid "Two-step verification is on"
-msgstr "两步验证已开启"
+msgstr "2단계 인증 켜짐"
 
 #: ui/pages/settings.slint:1250
 msgid "Two-step verification is off"
-msgstr "两步验证已关闭"
+msgstr "2단계 인증 꺼짐"
 
 #: ui/pages/settings.slint:1257
 msgid ""
 "When you sign in on a new device, you'll need this password in addition to "
 "the code."
-msgstr "在新设备上登录时，除了验证码，还需要输入这个密码。"
+msgstr "새 기기에서 로그인할 때 코드와 함께 이 암호가 필요합니다."
 
 #: ui/pages/settings.slint:1258
-msgid ""
-"Turn it on to require an extra password when signing in on a new device."
-msgstr "开启后，在新设备上登录需要额外输入密码。"
+msgid "Turn it on to require an extra password when signing in on a new device."
+msgstr "켜면 새 기기에서 로그인할 때 추가 암호를 요구합니다."
 
 #: ui/pages/settings.slint:1287
 msgid "Password will reset on {0}"
-msgstr "密码将于 {0} 重置"
+msgstr "{0}에 암호가 재설정됩니다"
 
 #: ui/pages/settings.slint:1293
 msgid "Come back then to set a new password. If this wasn't you, cancel now."
-msgstr "到时回到这里设置新密码。如果不是你本人操作，请立即取消。"
+msgstr "그때 돌아와서 새 암호를 설정하세요. 본인이 요청한 것이 아니라면 지금 취소하세요."
 
 #: ui/pages/settings.slint:1302
 msgid "Cancel reset"
-msgstr "取消重置"
+msgstr "재설정 취소"
 
 #: ui/pages/settings.slint:1314
 msgid "Change password"
-msgstr "修改密码"
+msgstr "암호 변경"
 
 #: ui/pages/settings.slint:1322
 msgid "Password hint"
-msgstr "密码提示"
+msgstr "암호 힌트"
 
 #: ui/pages/settings.slint:1331
 msgid "Recovery email"
-msgstr "恢复邮箱"
+msgstr "복구 이메일"
 
 #: ui/pages/settings.slint:1340
 msgid "Turn off two-step verification"
-msgstr "关闭两步验证"
+msgstr "2단계 인증 끄기"
 
 #: ui/pages/settings.slint:1350 ui/pages/settings.slint:1425
 msgid "Set password"
-msgstr "设置密码"
+msgstr "암호 설정"
 
 #: ui/pages/settings.slint:1378
 msgid "Enter your current password"
-msgstr "输入当前密码"
+msgstr "현재 암호 입력"
 
 #: ui/pages/settings.slint:1379
 msgid "Confirm it's you before changing two-step verification settings."
-msgstr "修改两步验证设置前，需要先确认是你本人。"
+msgstr "2단계 인증 설정을 변경하기 전에 본인 확인이 필요합니다."
 
 #: ui/pages/settings.slint:1443
 msgid "Change password hint"
-msgstr "修改密码提示"
+msgstr "암호 힌트 변경"
 
 #: ui/pages/settings.slint:1480
 msgid "Change recovery email"
-msgstr "修改恢复邮箱"
+msgstr "복구 이메일 변경"
 
 #: ui/pages/settings.slint:1481
 msgid ""
 "If you forget your password, a recovery code will be sent to this address."
-msgstr "忘记密码时，恢复码会发到这个邮箱。"
+msgstr "암호를 잊은 경우 이 주소로 복구 코드가 전송됩니다."
 
 #: ui/pages/settings.slint:1489
 msgid "Email address"
-msgstr "邮箱地址"
+msgstr "이메일 주소"
 
 #: ui/pages/settings.slint:1504
 msgid "Send code"
-msgstr "发送验证码"
+msgstr "코드 보내기"
 
 #: ui/pages/settings.slint:1517
 msgid "Enter the email code"
-msgstr "输入邮箱验证码"
+msgstr "이메일 코드 입력"
 
 #: ui/pages/settings.slint:1518
 msgid "Code sent to {0}"
-msgstr "验证码已发送至 {0}"
+msgstr "{0}에 코드를 보냈습니다"
 
 #: ui/pages/settings.slint:1559
 msgid "Turn off two-step verification?"
-msgstr "关闭两步验证？"
+msgstr "2단계 인증을 끄시겠습니까?"
 
 #: ui/pages/settings.slint:1560
 msgid "Anyone who gets your sign-in code will be able to access your account."
-msgstr "关闭后，只要拿到发给你的登录验证码，别人就能登录你的账号。"
+msgstr "로그인 코드를 얻은 사람은 누구나 내 계정에 접근할 수 있게 됩니다."
 
 #: ui/pages/settings.slint:1567
 msgid "Turn off"
-msgstr "关闭"
+msgstr "끄기"
 
 #: ui/pages/settings.slint:1630
 msgid "Request password reset"
-msgstr "申请重置密码"
+msgstr "암호 재설정 요청"
 
 #: ui/pages/settings.slint:1631
 msgid ""
 "If you can't get the recovery email, you can request a reset. To protect "
 "your account it takes 7 days, and you can cancel any time before then."
-msgstr ""
-"如果收不到恢复邮件，可以申请重置密码。为防止他人盗用，需要等待 7 天，期间可以"
-"随时取消。"
+msgstr "복구 이메일을 받을 수 없다면 재설정을 요청할 수 있습니다. 계정 보호를 위해 7일이 걸리며, 그전에는 언제든지 취소할 수 있습니다."
 
 #: ui/pages/settings.slint:1638
 msgid "Request reset"
-msgstr "申请重置"
+msgstr "재설정 요청"
 
 #: ui/pages/settings.slint:1734
 msgid "Password updated"
-msgstr "密码已更新"
+msgstr "암호가 업데이트되었습니다"
 
 #: ui/pages/settings.slint:1735
 msgid "Password hint updated"
-msgstr "密码提示已更新"
+msgstr "암호 힌트가 업데이트되었습니다"
 
 #: ui/pages/settings.slint:1735
 msgid "Recovery email updated"
-msgstr "恢复邮箱已更新"
+msgstr "복구 이메일이 업데이트되었습니다"
 
 #: ui/shot.slint:112
 msgid "Rectangle"
-msgstr "矩形"
+msgstr "사각형"
 
 #: ui/shot.slint:113
 msgid "Ellipse"
-msgstr "椭圆"
+msgstr "타원"
 
 #: ui/shot.slint:114
 msgid "Arrow"
-msgstr "箭头"
+msgstr "화살표"
 
 #: ui/shot.slint:115
 msgid "Pen"
-msgstr "画笔"
+msgstr "펜"
 
 #: ui/shot.slint:116
 msgid "Text"
-msgstr "文字"
+msgstr "텍스트"
 
 #: ui/shot.slint:117
 msgid "Mosaic"
-msgstr "马赛克"
+msgstr "모자이크"
 
 #: ui/shot.slint:121
 msgid "⇧ Square"
-msgstr "⇧ 正方形"
+msgstr "⇧ 정사각형"
 
 #: ui/shot.slint:122
 msgid "⇧ Circle"
-msgstr "⇧ 正圆"
+msgstr "⇧ 원"
 
 #: ui/shot.slint:123
 msgid "⇧ 45°"
@@ -1953,270 +1977,261 @@ msgstr "⇧ 45°"
 
 #: ui/shot.slint:126
 msgid "Undo"
-msgstr "撤销"
+msgstr "실행 취소"
 
 #: ui/shot.slint:127
 msgid "Redo"
-msgstr "重做"
+msgstr "실행 복귀"
 
 #: ui/shot.slint:128
 msgid "Copy"
-msgstr "复制"
+msgstr "복사"
 
 #: ui/shot.slint:131
 msgid "Done"
-msgstr "完成"
+msgstr "완료"
 
 #: ui/shot.slint:133
 msgid "Small"
-msgstr "小"
+msgstr "작게"
 
 #: ui/shot.slint:134
 msgid "Large"
-msgstr "大"
+msgstr "크게"
 
 #: ui/shot.slint:135
 msgid "Medium"
-msgstr "中"
+msgstr "중간"
 
 #: ui/shot.slint:137
 msgid "Line width"
-msgstr "线条粗细"
+msgstr "선 굵기"
 
 #: ui/shot.slint:138
 msgid "Text size"
-msgstr "文字大小"
+msgstr "텍스트 크기"
 
 #: ui/shot.slint:139
 msgid "Brush size"
-msgstr "画笔大小"
+msgstr "브러시 크기"
 
 #: ui/shot.slint:141
 msgid "Red"
-msgstr "红色"
+msgstr "빨강"
 
 #: ui/shot.slint:142
 msgid "White"
-msgstr "白色"
+msgstr "흰색"
 
 #: ui/shot.slint:143
 msgid "Black"
-msgstr "黑色"
+msgstr "검정"
 
 #: ui/shot.slint:144
 msgid "Yellow"
-msgstr "黄色"
+msgstr "노랑"
 
 #: ui/shot.slint:145
 msgid "Blue"
-msgstr "蓝色"
+msgstr "파랑"
 
 #: ui/shot.slint:146
 msgid "Green"
-msgstr "绿色"
+msgstr "초록"
 
 #: ui/state.slint:53
 msgid "Open FinchGram"
-msgstr "打开 FinchGram"
+msgstr "FinchGram 열기"
 
 #: ui/state.slint:54
 msgid "Quit FinchGram"
-msgstr "退出 FinchGram"
+msgstr "FinchGram 종료"
 
 #. A notification that does not show its message.
 #: ui/state.slint:56
 msgid "New message"
-msgstr "新消息"
+msgstr "새 메시지"
 
 #: ui/telegram.slint:651
 msgid "Deleted Account"
-msgstr "已注销账号"
+msgstr "삭제된 계정"
 
 #: ui/telegram.slint:652 ui/workbench/sidebar.slint:123
 msgid "All chats"
-msgstr "全部聊天"
+msgstr "모든 채팅"
 
 #. Between names in a list: "Jie, Mika".
 #: ui/telegram.slint:654
 msgctxt "list separator"
 msgid ", "
-msgstr "、"
+msgstr ", "
 
 #: ui/terminal/terminal.slint:84
 msgid "light"
-msgstr "浅色"
+msgstr "라이트"
 
 #: ui/terminal/terminal.slint:84
 msgid "dark"
-msgstr "深色"
+msgstr "다크"
 
 #: ui/terminal/terminal.slint:185
 msgid "more"
-msgstr "更多"
+msgstr "더 보기"
 
 #: ui/terminal/terminal.slint:440
 msgid "Current account"
-msgstr "当前账号"
+msgstr "현재 계정"
 
 #: ui/terminal/terminal.slint:450
 msgid "profile"
-msgstr "资料"
+msgstr "프로필"
 
 #: ui/terminal/terminal.slint:659 ui/terminal/terminal.slint:664
 msgid "(edited)"
-msgstr "（已编辑）"
+msgstr "(편집됨)"
 
 #: ui/terminal/terminal.slint:807
 msgid "sponsored"
-msgstr "赞助"
+msgstr "스폰서"
 
 #: ui/terminal/terminal.slint:871
 msgid "search"
-msgstr "搜索"
+msgstr "검색"
 
 #: ui/terminal/terminal.slint:875
 msgid "chat settings"
-msgstr "聊天设置"
+msgstr "채팅 설정"
 
 #: ui/terminal/terminal.slint:1069
 msgid "Mute or unmute this chat"
-msgstr "静音或取消静音当前聊天"
+msgstr "이 채팅을 음소거하거나 해제"
 
 #: ui/terminal/terminal.slint:1070
 msgid "Pin or unpin this chat"
-msgstr "置顶或取消置顶当前聊天"
+msgstr "이 채팅을 고정하거나 해제"
 
 #: ui/terminal/terminal.slint:1071
 msgid "Mark this chat as read"
-msgstr "把当前聊天标为已读"
+msgstr "이 채팅을 읽음으로 표시"
 
 #: ui/terminal/terminal.slint:1218
 msgid "Write a message, or / for commands"
-msgstr "输入消息，或 / 调出命令"
+msgstr "메시지를 입력하거나 /로 명령을 사용하세요"
 
 #: ui/terminal/terminal.slint:1218
 msgid "/ for commands"
-msgstr "/ 调出命令"
+msgstr "/로 명령 사용"
 
 #: ui/terminal/terminal.slint:1240
 msgid "save"
-msgstr "保存"
+msgstr "저장"
 
 #: ui/terminal/terminal.slint:1240
 msgid "send"
-msgstr "发送"
+msgstr "보내기"
 
 #: ui/terminal/terminal.slint:1311
 msgid "connected"
-msgstr "已连接"
+msgstr "연결됨"
 
 #: ui/terminal/terminal.slint:1319
 msgid "command"
-msgstr "命令"
+msgstr "명령"
 
 #: ui/viewer.slint:17
 msgctxt "zoom"
 msgid "Fit"
-msgstr "适应"
+msgstr "맞춤"
 
 #: ui/viewer.slint:34
 msgid "← → Switch · Space Play · Esc Close"
-msgstr "← → 切换 · 空格 播放 · Esc 关闭"
+msgstr "← → 전환 · Space 재생 · Esc 닫기"
 
 #: ui/viewer.slint:769
 msgctxt "terminal"
 msgid "locate"
-msgstr "定位"
+msgstr "위치"
 
 #: ui/viewer.slint:775
 msgctxt "terminal"
 msgid "download"
-msgstr "下载"
+msgstr "다운로드"
 
 #: ui/viewer.slint:862
 msgctxt "terminal"
 msgid "muted"
-msgstr "静音"
+msgstr "음소거"
 
 #: ui/viewer.slint:862
 msgctxt "terminal"
 msgid "sound"
-msgstr "音量"
+msgstr "소리"
 
 #: ui/viewer.slint:929
 msgctxt "terminal"
 msgid "←/→ switch · space play · esc close"
-msgstr "←/→ 切换 · space 播放 · esc 关闭"
+msgstr "←/→ 전환 · space 재생 · esc 닫기"
 
 #: ui/workbench/conversation.slint:293 ui/workbench/conversation.slint:358
 msgid "Close other tabs"
-msgstr "关闭其他标签"
+msgstr "다른 탭 닫기"
 
 #: ui/workbench/conversation.slint:350
 msgid "Close tab"
-msgstr "关闭标签"
+msgstr "탭 닫기"
 
 #: ui/workbench/conversation.slint:367
 msgid "Close all tabs"
-msgstr "关闭所有标签"
+msgstr "모든 탭 닫기"
 
 #: ui/workbench/conversation.slint:906
 msgid "Sponsored"
-msgstr "赞助消息"
+msgstr "스폰서"
 
 #: ui/workbench/conversation.slint:913
 msgid "Premium users can turn these off"
-msgstr "Premium 用户可关闭"
+msgstr "Premium 사용자는 끌 수 있습니다"
 
 #: ui/workbench/conversation.slint:953
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
-msgstr "官方赞助消息 · FinchGram 照常显示，不做屏蔽"
+msgstr "Telegram 스폰서 메시지 · FinchGram은 있는 그대로 표시합니다"
 
 #: ui/workbench/conversation.slint:1410
 msgid "Send to {0}"
-msgstr "发送到 {0}"
+msgstr "{0}에게 보내기"
 
 #: ui/workbench/conversation.slint:1543
 msgid "Esc to cancel"
-msgstr "Esc 取消"
+msgstr "Esc 취소"
 
 #: ui/workbench/conversation.slint:1551
 msgid "⏎ save · ⇧⏎ new line"
-msgstr "⏎ 保存 · ⇧⏎ 换行"
+msgstr "⏎ 저장 · ⇧⏎ 줄 바꿈"
 
 #: ui/workbench/conversation.slint:1551
 msgid "⌘⏎ save · ⏎ new line"
-msgstr "⌘⏎ 保存 · ⏎ 换行"
+msgstr "⌘⏎ 저장 · ⏎ 줄 바꿈"
 
 #: ui/workbench/conversation.slint:1552
 msgid "⏎ send · ⇧⏎ new line"
-msgstr "⏎ 发送 · ⇧⏎ 换行"
+msgstr "⏎ 보내기 · ⇧⏎ 줄 바꿈"
 
 #: ui/workbench/conversation.slint:1552
 msgid "⌘⏎ send · ⏎ new line"
-msgstr "⌘⏎ 发送 · ⏎ 换行"
+msgstr "⌘⏎ 보내기 · ⏎ 줄 바꿈"
 
 #: ui/workbench/sidebar.slint:466
 msgid "This account has no channels."
-msgstr "这个账号没有订阅频道"
+msgstr "이 계정에는 채널이 없습니다."
 
 #: ui/workbench/sidebar.slint:466
 msgid "Channels open in reading mode: long posts, set for reading."
-msgstr "频道默认以阅读模式打开：长文排版，方便阅读。"
+msgstr "채널은 읽기 모드로 열립니다. 긴 게시물을 읽기 좋게 보여 줍니다."
 
 #: ui/workbench/workbench.slint:39
 msgid "Search chats"
-msgstr "搜索聊天"
+msgstr "채팅 검색"
 
 #: ui/workbench/workbench.slint:338
 msgid "Manage accounts"
-msgstr "管理账号"
-
-#~ msgid "Failed to send · Tap to retry"
-#~ msgstr "发送失败 · 点击重试"
-
-#~ msgid "Failed to send"
-#~ msgstr "发送失败"
-
-#~ msgid "retry"
-#~ msgstr "重试"
+msgstr "계정 관리"

@@ -39,7 +39,7 @@ client, not made by Telegram.
 - **Settings.** Launch at login, Send with Enter, the screenshot shortcut, notification sounds and
   previews, two-step verification, the interface language, and updates: the app updates itself from
   GitHub Releases and installs nothing it cannot verify.
-- **Languages.** The interface in English and Simplified Chinese; this README in eleven languages.
+- **Languages.** The interface and this README in eleven languages.
 
 Not there yet: secret chats, voice messages and calls, several accounts, polls and scheduled
 messages, keyword filters, Windows and Linux. See [what comes next](docs/architecture.md#not-now).
@@ -223,8 +223,8 @@ find ui -name '*.slint' | sort | xargs slint-tr-extractor --no-default-translati
 for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finchgram.pot; done   # needs brew install gettext
 ```
 
-Then fill in the `msgstr` entries and `cargo build` again. English is the source language;
-Simplified Chinese ships now.
+Then fill in the `msgstr` entries and `cargo build` again. English is the source language; the
+other ten ship with it.
 
 ## Releases
 

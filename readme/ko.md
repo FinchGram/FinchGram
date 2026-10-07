@@ -32,7 +32,7 @@ FinchGram은 Telegram 공식 라이브러리 [TDLib](https://core.telegram.org/t
 - **세 가지 테마.** Workbench, Broadsheet, Terminal. 각각 라이트와 다크가 있고, 다시 시작하지 않고 바꿀 수 있습니다.
 - **설정.** 로그인 시 실행, Enter로 보내기, 스크린샷 단축키, 알림 소리와 미리보기, 2단계 인증, 인터페이스 언어, 그리고
   업데이트: 앱은 GitHub Releases에서 스스로 업데이트하며 검증할 수 없는 것은 설치하지 않습니다.
-- **언어.** 인터페이스는 영어와 중국어 간체, 이 README는 11개 언어.
+- **언어.** 인터페이스와 이 README는 11개 언어.
 
 아직 없는 것: 비밀 채팅, 음성 메시지와 통화, 여러 계정, 투표와 예약 메시지, 키워드 필터, Windows와 Linux.
 [다음에 올 것](../docs/architecture.md#not-now)도 보세요.
@@ -210,7 +210,7 @@ find ui -name '*.slint' | sort | xargs slint-tr-extractor --no-default-translati
 for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finchgram.pot; done   # brew install gettext 필요
 ```
 
-그런 다음 `msgstr` 항목을 채우고 다시 `cargo build`를 실행하세요. 원본 언어는 영어이며, 현재 중국어 간체가
+그런 다음 `msgstr` 항목을 채우고 다시 `cargo build`를 실행하세요. 원본 언어는 영어이며, 나머지 10개 언어가
 포함되어 있습니다.
 
 ## 릴리스

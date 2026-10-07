@@ -30,7 +30,7 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
 - **三套主题。** 工作台、报纸和终端，各有浅色和深色，切换不用重启。
 - **设置。** 开机启动、按 Enter 发送、截图快捷键、通知的声音和预览、两步验证、界面语言，还有更新：app 从
   GitHub Releases 自动更新，验证不过的一律不装。
-- **语言。** 界面有英文和简体中文；这份 README 有十一种语言。
+- **语言。** 界面和这份 README 都有十一种语言。
 
 还没有的：秘密聊天、语音消息和通话、多账号、投票和定时消息、关键词过滤、Windows 和 Linux。见
 [接下来做什么](../docs/architecture.zh-Hans.md#现在不做)。
@@ -201,7 +201,7 @@ find ui -name '*.slint' | sort | xargs slint-tr-extractor --no-default-translati
 for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finchgram.pot; done   # 需要 brew install gettext
 ```
 
-然后填好 `msgstr`，重新 `cargo build`。英文是源语言；现在带简体中文。
+然后填好 `msgstr`，重新 `cargo build`。英文是源语言；其余十种都带着。
 
 ## 发布
 

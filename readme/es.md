@@ -41,7 +41,7 @@ Es un cliente no oficial, no hecho por Telegram.
 - **Ajustes.** Abrir al iniciar sesión, enviar con Intro, el atajo de captura, sonidos y vistas previas
   de las notificaciones, verificación en dos pasos, el idioma de la interfaz y las actualizaciones: la
   app se actualiza sola desde GitHub Releases y no instala nada que no pueda verificar.
-- **Idiomas.** La interfaz en inglés y chino simplificado; este README en once idiomas.
+- **Idiomas.** La interfaz y este README en once idiomas.
 
 Todavía no: chats secretos, mensajes de voz y llamadas, varias cuentas, encuestas y mensajes
 programados, filtros por palabras clave, Windows y Linux. Mira
@@ -230,7 +230,7 @@ for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finch
 ```
 
 Después rellena las entradas `msgstr` y vuelve a ejecutar `cargo build`. El inglés es el idioma de
-origen; por ahora se incluye el chino simplificado.
+origen; los otros diez se incluyen.
 
 ## Versiones
 

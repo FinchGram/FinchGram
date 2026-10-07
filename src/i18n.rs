@@ -15,10 +15,20 @@ pub struct UiLanguage {
     pub english: &'static str,
 }
 
-/// Every language the app ships, in the order the language list shows them.
+/// Every language the app ships, in the order the language list shows them: the source language
+/// first, then the design's order.
 pub const LANGUAGES: &[UiLanguage] = &[
     UiLanguage { code: "en", native: "English", english: "English" },
     UiLanguage { code: "zh_Hans", native: "简体中文", english: "Chinese (Simplified)" },
+    UiLanguage { code: "zh_Hant", native: "繁體中文", english: "Chinese (Traditional)" },
+    UiLanguage { code: "ja", native: "日本語", english: "Japanese" },
+    UiLanguage { code: "ko", native: "한국어", english: "Korean" },
+    UiLanguage { code: "fr", native: "Français", english: "French" },
+    UiLanguage { code: "de", native: "Deutsch", english: "German" },
+    UiLanguage { code: "es", native: "Español", english: "Spanish" },
+    UiLanguage { code: "pt", native: "Português", english: "Portuguese" },
+    UiLanguage { code: "ru", native: "Русский", english: "Russian" },
+    UiLanguage { code: "ar", native: "العربية", english: "Arabic" },
 ];
 
 fn is_supported(code: &str) -> bool {
@@ -47,7 +57,10 @@ pub fn apply(code: &str) -> bool {
         return false;
     }
     match slint::select_bundled_translation(code) {
-        Ok(()) => true,
+        Ok(()) => {
+            crate::fonts::prefer(code);
+            true
+        }
         Err(err) => {
             eprintln!("i18n: cannot select language {code:?}: {err:?}");
             false
@@ -55,14 +68,17 @@ pub fn apply(code: &str) -> bool {
     }
 }
 
-/// Map the system locale (e.g. "zh-Hans-CN", "en-US") onto a supported language. Until there is
-/// a Traditional Chinese translation, every Chinese locale gets Simplified Chinese.
+/// Map the system locale (e.g. "zh-Hans-CN", "zh-TW", "pt-BR", "en-US") onto a language we ship:
+/// Chinese by its script (Taiwan, Hong Kong and Macau write Traditional), the rest by language.
 fn from_system_locale() -> Option<String> {
     let locale = sys_locale::get_locale()?.to_ascii_lowercase();
-    let language = locale.split(['-', '_']).next()?;
+    let mut parts = locale.split(['-', '_']);
+    let language = parts.next()?;
+    let traditional = parts.any(|part| matches!(part, "hant" | "tw" | "hk" | "mo"));
     let code = match language {
+        "zh" if traditional => "zh_Hant",
         "zh" => "zh_Hans",
-        _ => return None,
+        other => other,
     };
-    Some(code.to_string())
+    is_supported(code).then(|| code.to_string())
 }

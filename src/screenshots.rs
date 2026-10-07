@@ -1211,5 +1211,20 @@ fn screenshots() {
     save(&window, "zh-workbench-settings-two-step");
     password.set_open(false);
     app.set_page(Page::Chats);
+
+    // The other languages, light, Workbench: the chat window and Settings → General, every script
+    // set in the bundled fonts.
+    for code in ["zh_Hant", "ja", "ko", "fr", "de", "es", "pt", "ru", "ar"] {
+        slint::select_bundled_translation(code).expect("every language is bundled");
+        app.set_language(code.into());
+        app.set_telegram_state(TelegramState::Ready);
+        app.set_page(Page::Chats);
+        open_keyboards(&ui);
+        save(&window, &format!("{code}-workbench-chats"));
+        app.set_page(Page::Settings);
+        app.set_settings_section(SettingsSection::General);
+        save(&window, &format!("{code}-workbench-settings-general"));
+        app.set_page(Page::Chats);
+    }
     let _ = login.get_countries().row_count();
 }

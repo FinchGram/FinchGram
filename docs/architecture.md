@@ -234,6 +234,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
    transparency (libvpx; FFmpeg's own leaves it out). Until then a moving sticker shows its still
    thumbnail; still stickers show as they are.
 4. **Rendering**: Slint's default renderer (FemtoVG) for now. The design's typefaces are bundled,
-   Chinese included (Noto Sans SC); Japanese, Korean and colour emoji in messages come from the
-   system's fonts until the UI speaks those languages. Skia would need building from source: its
+   with Noto Sans SC, JP, KR and Arabic for the UI's Chinese, Japanese, Korean and Arabic (the UI
+   language's own first among the fallbacks, `fonts.rs`); colour emoji and other scripts in
+   messages come from the system's fonts. Skia would need building from source: its
    Rust bindings download a prebuilt library by default, which conventions.md does not allow.
