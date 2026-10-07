@@ -4,7 +4,7 @@
 import { AppState, Page, Connection } from "../state.slint";
 import { Chats, Conversation, Account } from "../telegram.slint";
 import { Fmt } from "../format.slint";
-import { Icon, Logo, WindowButtonsSpace, WindowMover } from "../widgets.slint";
+import { Icon, Logo, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 import { WorkbenchSidebar, WorkbenchView } from "sidebar.slint";
 import { WorkbenchMain } from "conversation.slint";
@@ -237,17 +237,15 @@ component AccountMenu inherits Rectangle {
                 spacing: 10px;
                 VerticalLayout {
                     alignment: center;
-                    Rectangle {
-                        width: 26px;
-                        height: 26px;
-                        border-radius: 6px;
-                        background: P.accent;
-                        Text {
-                            text: Account.initial;
-                            color: #ffffff;
-                            font-size: 12px;
-                            font-weight: 600;
-                        }
+                    Avatar {
+                        size: 26px;
+                        radius: 6px;
+                        fill: P.accent;
+                        ink: #ffffff;
+                        initial: Account.initial;
+                        picture: Account.picture;
+                        has-picture: Account.has-picture;
+                        font-size: 12px;
                     }
                 }
                 VerticalLayout {
@@ -444,13 +442,15 @@ component ActivityBar inherits Rectangle {
             avatar := Rectangle {
                 width: 32px;
                 height: 32px;
-                border-radius: 8px;
-                background: P.accent;
-                Text {
-                    text: Account.initial;
-                    color: P.on-accent;
+                Avatar {
+                    size: 32px;
+                    radius: 8px;
+                    fill: P.accent;
+                    ink: P.on-accent;
+                    initial: Account.initial;
+                    picture: Account.picture;
+                    has-picture: Account.has-picture;
                     font-size: 13px;
-                    font-weight: 600;
                 }
                 TouchArea {
                     mouse-cursor: pointer;

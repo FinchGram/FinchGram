@@ -42,6 +42,12 @@ pub enum Update {
     NewChat { chat: Box<Chat> },
     #[serde(rename = "updateChatTitle")]
     ChatTitle { chat_id: i64, title: String },
+    #[serde(rename = "updateChatPhoto")]
+    ChatPhoto {
+        chat_id: i64,
+        #[serde(default)]
+        photo: Option<ChatPhoto>,
+    },
     #[serde(rename = "updateChatPermissions")]
     ChatPermissions { chat_id: i64, permissions: ChatPermissions },
     #[serde(rename = "updateChatLastMessage")]
@@ -280,6 +286,8 @@ pub struct User {
     #[serde(default)]
     pub usernames: Option<Usernames>,
     pub phone_number: String,
+    #[serde(default)]
+    pub profile_photo: Option<ChatPhoto>,
     pub status: UserStatus,
     #[serde(default)]
     pub verification_status: Option<VerificationStatus>,
@@ -393,6 +401,8 @@ pub struct Chat {
     #[serde(rename = "type")]
     pub kind: ChatType,
     pub title: String,
+    #[serde(default)]
+    pub photo: Option<ChatPhoto>,
     pub permissions: ChatPermissions,
     #[serde(default)]
     pub last_message: Option<Box<Message>>,
@@ -416,6 +426,17 @@ pub enum ChatType {
     Supergroup { supergroup_id: i64, is_channel: bool },
     #[serde(rename = "chatTypeSecret")]
     Secret { user_id: i64 },
+}
+
+/// The photo of a chat or of a person (TDLib's chatPhotoInfo and profilePhoto): a square in two
+/// sizes, 160 and 640 pixels, with a tiny preview of a few pixels. Downloaded like any file
+/// (avatars.rs).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct ChatPhoto {
+    pub small: File,
+    pub big: File,
+    #[serde(default)]
+    pub minithumbnail: Option<Minithumbnail>,
 }
 
 /// A chat list: the main one, the archive, or one of the account's folders.
@@ -1261,6 +1282,31 @@ mod tests {
         assert_eq!(user.kind, UserType::Bot);
         assert!(user.verification_status.is_some_and(|status| status.is_verified));
         assert_eq!(user.usernames.map(|names| names.active_usernames), Some(vec!["BotFather".to_string()]));
+        assert!(user.profile_photo.is_none(), "a user without a photo");
+    }
+
+    #[test]
+    fn a_chat_photo_is_read_in_its_two_sizes_and_taken_away() {
+        let update: Update = serde_json::from_str(
+            r#"{"@type":"updateChatPhoto","chat_id":-1001234567890,"photo":{"@type":"chatPhotoInfo","small":{"@type":"file","id":31,"size":4096,"expected_size":4096,"local":{"@type":"localFile","path":"","can_be_downloaded":true,"can_be_deleted":false,"is_downloading_active":false,"is_downloading_completed":false,"download_offset":0,"downloaded_prefix_size":0,"downloaded_size":0},"remote":{"@type":"remoteFile","id":"AQAD","unique_id":"AQAD","is_uploading_active":false,"is_uploading_completed":true,"uploaded_size":4096}},"big":{"@type":"file","id":32,"size":40960,"expected_size":40960,"local":{"@type":"localFile","path":"","can_be_downloaded":true,"can_be_deleted":false,"is_downloading_active":false,"is_downloading_completed":false,"download_offset":0,"downloaded_prefix_size":0,"downloaded_size":0},"remote":{"@type":"remoteFile","id":"AQAE","unique_id":"AQAE","is_uploading_active":false,"is_uploading_completed":true,"uploaded_size":40960}},"minithumbnail":{"@type":"minithumbnail","width":8,"height":8,"data":"/9j/4AAQ"},"has_animation":false,"is_personal":false}}"#,
+        )
+        .unwrap();
+        let Update::ChatPhoto { chat_id, photo: Some(photo) } = update else { panic!("not a chat photo") };
+        assert_eq!(chat_id, -1_001_234_567_890);
+        assert_eq!((photo.small.id, photo.big.id), (31, 32));
+        assert_eq!(photo.minithumbnail.map(|preview| (preview.width, preview.height)), Some((8, 8)));
+
+        let update: Update = serde_json::from_str(r#"{"@type":"updateChatPhoto","chat_id":42,"photo":null}"#).unwrap();
+        assert!(matches!(update, Update::ChatPhoto { chat_id: 42, photo: None }));
+
+        // A person's photo has the same shape, and an id of its own that we leave aside.
+        let user: User = serde_json::from_str(
+            r#"{"@type":"user","id":7,"first_name":"Lin","last_name":"Xia","phone_number":"","profile_photo":{"@type":"profilePhoto","id":"123456789","small":{"@type":"file","id":41,"size":0,"local":{"@type":"localFile","path":"/tdlib/profile_photos/41.jpg","is_downloading_completed":true}},"big":{"@type":"file","id":42,"size":0,"local":{"@type":"localFile","path":"","is_downloading_completed":false}},"minithumbnail":null,"has_animation":false,"is_personal":false},"status":{"@type":"userStatusRecently"},"type":{"@type":"userTypeRegular"}}"#,
+        )
+        .unwrap();
+        let photo = user.profile_photo.expect("a photo");
+        assert_eq!(photo.small.id, 41);
+        assert!(photo.small.local.is_downloading_completed && photo.minithumbnail.is_none());
     }
 
     #[test]

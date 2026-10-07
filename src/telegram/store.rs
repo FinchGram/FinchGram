@@ -18,6 +18,7 @@ use super::api::{
     self, ChatList, ChatMemberStatus, ChatType, MessageContent as M, MessageOrigin, MessageReplyTo, MessageSender,
     MessageSendingState, NotificationSettingsScope, Update, UserStatus, UserType,
 };
+use super::avatars;
 use super::rich_text;
 use super::time;
 use crate::images;
@@ -32,6 +33,9 @@ pub const TYPING_LASTS: Duration = Duration::from_secs(6);
 /// Decoded pictures kept: those of the open chats and some more.
 const PICTURES_KEPT: usize = 200;
 const PREVIEWS_KEPT: usize = 1000;
+/// The photos of chats and people kept (avatars.rs): every chat in the lists has one, a square of
+/// 160 pixels, so enough for every chat an account is likely to have.
+const AVATARS_KEPT: usize = 2048;
 /// A photo is downloaded in the smallest size that is at least this large on its longer side:
 /// still sharp at the size a chat shows it.
 const PICTURE_SIDE: i32 = 640;
@@ -148,8 +152,15 @@ pub struct Store {
     pub sponsored: HashMap<i64, Vec<api::SponsoredMessage>>,
     /// Pictures of photos, videos and GIFs, downloaded and decoded, by file id.
     pub pictures: images::Cache<i32>,
-    /// The tiny previews in messages, decoded once, by their bytes.
+    /// The tiny previews in messages and in photos of chats, decoded once, by their bytes.
     previews: RefCell<images::Cache<u64>>,
+    /// The photos of chats and people, downloaded and decoded, by file id (avatars.rs).
+    pub avatars: images::Cache<i32>,
+    /// Those asked for, each once: a photo that changes is a new file.
+    avatars_asked: HashSet<i32>,
+    /// Photos the rows wanted and did not have, to download after the refresh
+    /// ([`fetch_wanted_photos`]).
+    wanted_photos: RefCell<Vec<api::File>>,
     /// The media list of each message row, by row id: the same model from one refresh to the next,
     /// so that a row changes only when its media do.
     media_models: RefCell<HashMap<SharedString, Rc<VecModel<Media>>>>,
@@ -225,6 +236,9 @@ pub fn install(ui: &MainWindow) {
             sponsored: HashMap::new(),
             pictures: images::Cache::new(PICTURES_KEPT),
             previews: RefCell::new(images::Cache::new(PREVIEWS_KEPT)),
+            avatars: images::Cache::new(AVATARS_KEPT),
+            avatars_asked: HashSet::new(),
+            wanted_photos: RefCell::new(Vec::new()),
             media_models: RefCell::new(HashMap::new()),
             blank: Image::from_rgba8(SharedPixelBuffer::new(1, 1)),
             rows: Vec::new(),
@@ -266,6 +280,9 @@ pub fn clear() {
         store.sponsored.clear();
         store.pictures.clear();
         store.previews.borrow_mut().clear();
+        store.avatars.clear();
+        store.avatars_asked.clear();
+        store.wanted_photos.borrow_mut().clear();
         store.media_models.borrow_mut().clear();
         store.rows.clear();
         store.selected.clear();
@@ -291,7 +308,7 @@ pub fn refresh() {
         return;
     };
     let words = Names::from(&ui);
-    let missing = with(|store| {
+    let followups = with(|store| {
         let dirty = std::mem::take(&mut store.dirty);
         if dirty.chats {
             store.refresh_chats(&ui, &words);
@@ -313,11 +330,22 @@ pub fn refresh() {
                 viewer.set_items(ModelRc::new(VecModel::from(store.viewer_items(&words))));
             }
         }
-        std::mem::take(&mut store.missing_replies)
-    })
-    .unwrap_or_default();
+        (std::mem::take(&mut store.missing_replies), store.take_wanted_photos())
+    });
+    let (missing, wanted) = followups.unwrap_or_default();
     if !missing.is_empty() {
         super::conversation::load_replied(missing);
+    }
+    if !wanted.is_empty() {
+        avatars::fetch(wanted);
+    }
+}
+
+/// Download the photos that rows built outside a refresh wanted (the forward picker's chats).
+pub fn fetch_wanted_photos() {
+    let wanted = with(|store| store.take_wanted_photos()).unwrap_or_default();
+    if !wanted.is_empty() {
+        avatars::fetch(wanted);
     }
 }
 
@@ -427,6 +455,11 @@ pub fn initial(name: &str) -> SharedString {
     name.chars().find(|c| !c.is_whitespace()).map(|c| c.to_uppercase().collect::<String>()).unwrap_or_default().into()
 }
 
+/// Which file a photo is, to tell a changed photo from the same one.
+fn photo_file(photo: Option<&api::ChatPhoto>) -> Option<i32> {
+    photo.map(|photo| photo.small.id)
+}
+
 /// A colour for a sender, the same every time (Terminal's names).
 fn colour_of(sender: &MessageSender) -> i32 {
     let id = match sender {
@@ -455,13 +488,17 @@ impl Store {
                 if user.id == self.my_id {
                     self.dirty.account = true;
                 }
-                // The message rows name their senders: a name that changed shows in them.
-                let renamed = self.users.get(&user.id).is_none_or(|known| {
-                    known.first_name != user.first_name || known.last_name != user.last_name || known.kind != user.kind
+                // The message rows name their senders and show their photos: a name or a photo
+                // that changed shows in them.
+                let changed = self.users.get(&user.id).is_none_or(|known| {
+                    known.first_name != user.first_name
+                        || known.last_name != user.last_name
+                        || known.kind != user.kind
+                        || photo_file(known.profile_photo.as_ref()) != photo_file(user.profile_photo.as_ref())
                 });
                 self.users.insert(user.id, user);
                 self.dirty.chats = true;
-                self.dirty.conversation |= renamed && self.open.is_some();
+                self.dirty.conversation |= changed && self.open.is_some();
             }
             Update::UserStatus { user_id, status } => {
                 if let Some(user) = self.users.get_mut(&user_id) {
@@ -497,6 +534,16 @@ impl Store {
                 if let Some(chat) = self.chats.get_mut(&chat_id) {
                     chat.title = title;
                     self.dirty.chats = true;
+                    self.dirty.conversation |= self.open.is_some();
+                }
+            }
+            Update::ChatPhoto { chat_id, photo } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.photo = photo;
+                    self.dirty.chats = true;
+                    self.dirty.account |= chat_id == self.my_id;
+                    // A message sent in the chat's name (a channel's post, an anonymous admin's)
+                    // shows the chat's photo.
                     self.dirty.conversation |= self.open.is_some();
                 }
             }
@@ -870,9 +917,12 @@ impl Store {
         let supergroup = self.supergroup_of(chat);
         let usernames = user.and_then(|user| user.usernames.as_ref()).or_else(|| supergroup.and_then(|group| group.usernames.as_ref()));
         let verification = user.and_then(|user| user.verification_status.as_ref()).or_else(|| supergroup.and_then(|group| group.verification_status.as_ref()));
+        let (picture, has_picture) = self.avatar(chat.photo.as_ref(), false);
         ChatRow {
             id: chat.id.to_string().into(),
             initial: initial(&title),
+            picture,
+            has_picture,
             title: title.into(),
             kind,
             has_message: last.is_some(),
@@ -977,7 +1027,7 @@ impl Store {
             }
             let id = folders[index].id;
             let expanded = !self.query.is_empty() || self.expanded.get(&id).copied().unwrap_or(index > 0 || self.folders.is_empty());
-            tree.push(TreeRow { header: true, folder: index as i32, expanded, count: chats.len() as i32, chat: ChatRow::default() });
+            tree.push(TreeRow { header: true, folder: index as i32, expanded, count: chats.len() as i32, chat: self.blank_chat() });
             if expanded {
                 tree.extend(chats.iter().map(|chat| TreeRow {
                     header: false,
@@ -1153,6 +1203,7 @@ impl Store {
             album = message.media_album_id;
             media.push(item.into_iter().collect());
             let sender = if message.is_outgoing && !me.is_empty() { me.clone() } else { self.sender_name(&message.sender_id, names) };
+            let (sender_picture, has_sender_picture) = self.sender_avatar(&message.sender_id);
             let service = is_service(content);
             if !service {
                 members.push((message.id, vec![message.id]));
@@ -1162,6 +1213,8 @@ impl Store {
                 id: message.id.to_string().into(),
                 outgoing: message.is_outgoing,
                 sender_initial: initial(&sender),
+                sender_picture,
+                has_sender_picture,
                 sender: sender.into(),
                 sender_color: colour_of(&message.sender_id),
                 content,
@@ -1295,6 +1348,7 @@ impl Store {
                 let picture = picture(&message.content)?;
                 let sender = if message.is_outgoing && !me.is_empty() { me.clone() } else { self.sender_name(&message.sender_id, names) };
                 let image = original(&message.content).and_then(|file| self.pictures.get(&file.id)).unwrap_or_else(|| self.picture_image(&picture));
+                let (sender_picture, has_sender_picture) = self.sender_avatar(&message.sender_id);
                 Some(ViewerItem {
                     id: message.id.to_string().into(),
                     picture: image,
@@ -1304,6 +1358,8 @@ impl Store {
                     duration: picture.duration,
                     name: file_name(&message.content).into(),
                     sender_initial: initial(&sender),
+                    sender_picture,
+                    has_sender_picture,
                     sender: sender.into(),
                     time: time::moment(message.date),
                     caption: self.content(message, names).1.into(),
@@ -1330,7 +1386,55 @@ impl Store {
 
     /// A row with no pictures anywhere, to build the others from.
     fn blank_row(&self) -> MessageRow {
-        MessageRow { sticker: self.no_sticker(), reply: self.no_quote(), ..MessageRow::default() }
+        MessageRow { sender_picture: self.blank.clone(), sticker: self.no_sticker(), reply: self.no_quote(), ..MessageRow::default() }
+    }
+
+    /// A chat row with no picture (a folder's header).
+    fn blank_chat(&self) -> ChatRow {
+        ChatRow { picture: self.blank.clone(), ..ChatRow::default() }
+    }
+
+    /// The photo of a chat or a person as far as it is here, and whether there is one to show
+    /// (else its letter): the photo once downloaded, until then its tiny preview. `large`: in its
+    /// big size, for the profile page, the small one until that is here. A photo not here yet is
+    /// noted, to download after the refresh (avatars.rs).
+    fn avatar(&self, photo: Option<&api::ChatPhoto>, large: bool) -> (Image, bool) {
+        let Some(photo) = photo else { return (self.blank.clone(), false) };
+        let file = if large { &photo.big } else { &photo.small };
+        if let Some(image) = self.avatars.get(&file.id) {
+            return (image, true);
+        }
+        if !self.avatars_asked.contains(&file.id) {
+            self.wanted_photos.borrow_mut().push(file.clone());
+        }
+        if let Some(image) = large.then(|| self.avatars.get(&photo.small.id)).flatten() {
+            return (image, true);
+        }
+        match &photo.minithumbnail {
+            Some(preview) => (self.preview_image(preview), true),
+            None => (self.blank.clone(), false),
+        }
+    }
+
+    /// The photo of a message's sender: the person's, or the chat's for a message sent in its name.
+    fn sender_avatar(&self, sender: &MessageSender) -> (Image, bool) {
+        let photo = match sender {
+            MessageSender::User { user_id } => self.users.get(user_id).and_then(|user| user.profile_photo.as_ref()),
+            MessageSender::Chat { chat_id } => self.chats.get(chat_id).and_then(|chat| chat.photo.as_ref()),
+        };
+        self.avatar(photo, false)
+    }
+
+    /// The photos the rows built since the last time wanted and did not have, each once, to
+    /// download.
+    pub fn take_wanted_photos(&mut self) -> Vec<api::File> {
+        let wanted = self.wanted_photos.take();
+        wanted.into_iter().filter(|file| self.avatars_asked.insert(file.id)).collect()
+    }
+
+    /// Photos asked for and not here will not come (finchgram-tdlib ended): the rows ask again.
+    pub fn ask_photos_again(&mut self) {
+        self.avatars_asked.clear();
     }
 
     fn no_sticker(&self) -> Sticker {
@@ -1346,7 +1450,14 @@ impl Store {
         if let Some(image) = picture.file.and_then(|file| self.pictures.get(&file.id)) {
             return image;
         }
-        let Some(preview) = picture.preview else { return self.blank.clone() };
+        match picture.preview {
+            Some(preview) => self.preview_image(preview),
+            None => self.blank.clone(),
+        }
+    }
+
+    /// A tiny preview as a picture, decoded the first time it is seen.
+    fn preview_image(&self, preview: &api::Minithumbnail) -> Image {
         let mut hasher = DefaultHasher::new();
         preview.data.hash(&mut hasher);
         let key = hasher.finish();
@@ -1376,10 +1487,18 @@ impl Store {
         let Some(me) = self.users.get(&self.my_id) else {
             account.set_name(SharedString::new());
             account.set_initial(SharedString::new());
+            account.set_picture(self.blank.clone());
+            account.set_large_picture(self.blank.clone());
+            account.set_has_picture(false);
             return;
         };
         let name = format!("{} {}", me.first_name, me.last_name).trim().to_string();
         account.set_initial(initial(&name));
+        let (picture, has_picture) = self.avatar(me.profile_photo.as_ref(), false);
+        let (large_picture, _) = self.avatar(me.profile_photo.as_ref(), true);
+        account.set_picture(picture);
+        account.set_large_picture(large_picture);
+        account.set_has_picture(has_picture);
         account.set_name(name.into());
         account.set_first_name(me.first_name.clone().into());
         account.set_last_name(me.last_name.clone().into());

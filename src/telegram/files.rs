@@ -10,8 +10,10 @@ use serde_json::json;
 use super::api::File;
 use super::{Error, send};
 
-/// How soon a download starts among the others, 1 … 32: what is on screen goes first.
+/// How soon a download starts among the others, 1 … 32: what is on screen goes first, then the
+/// photos of the chats and people in the lists, wanted all at once.
 pub const ON_SCREEN: i32 = 16;
+pub const IN_LISTS: i32 = 8;
 
 type Ready = Box<dyn FnOnce(String)>;
 

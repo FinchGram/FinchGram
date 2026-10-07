@@ -6,7 +6,7 @@ import { AppState, Theme } from "state.slint";
 import { Viewer, ViewerItem } from "telegram.slint";
 import { AccountColors } from "look.slint";
 import { Fmt } from "format.slint";
-import { Icon, Spinner, WindowButtonsSpace, WindowMover } from "widgets.slint";
+import { Icon, Spinner, WindowButtonsSpace, WindowMover, Avatar } from "widgets.slint";
 
 global ViewerText {
     public pure function speed(index: int) -> string {
@@ -207,17 +207,15 @@ component PictureViewer inherits Rectangle {
                     WindowButtonsSpace { }
                     VerticalLayout {
                         alignment: center;
-                        Rectangle {
-                            width: root.look.avatar-size;
-                            height: root.look.avatar-size;
-                            border-radius: root.look.avatar-radius;
-                            background: #ffffff1a;
-                            Text {
-                                text: state.item.sender-initial;
-                                color: root.look.text;
-                                font-size: root.look.avatar-size * 0.4;
-                                font-weight: 600;
-                            }
+                        Avatar {
+                            size: root.look.avatar-size;
+                            radius: root.look.avatar-radius;
+                            fill: #ffffff1a;
+                            ink: root.look.text;
+                            initial: state.item.sender-initial;
+                            picture: state.item.sender-picture;
+                            has-picture: state.item.has-sender-picture;
+                            font-size: root.look.avatar-size * 0.4;
                         }
                     }
                     VerticalLayout {

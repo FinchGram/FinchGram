@@ -102,6 +102,7 @@ src/
     account.rs           #   das Profil, Abmelden
     password.rs          #   die zweistufige Bestätigung in den Einstellungen
     files.rs             #   das Herunterladen von Dateien
+    avatars.rs           #   die Fotos von Chats und Personen, statt ihrer Initialen
     viewer.rs            #   der Viewer: Fotos, Videos, in „Downloads“ sichern
     rich_text.rs         #   formatierter Text: fett, kursiv, Links …
     notifications.rs     #   Mitteilungen über neue Nachrichten, die Zahl der ungelesenen im Dock

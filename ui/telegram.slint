@@ -33,7 +33,9 @@ export enum Content {
 export struct ChatRow {
     id: string,
     title: string,
-    initial: string,
+    initial: string,        // for its letter square, while it has no picture
+    picture: image,         // its photo once downloaded, its tiny preview until then
+    has-picture: bool,      // false: the letter square
     kind: ChatKind,
     has-message: bool,      // false for a chat without messages
     time: Moment,           // of the last message
@@ -164,6 +166,8 @@ export struct MessageRow {
     outgoing: bool,
     sender: string,
     sender-initial: string,
+    sender-picture: image,  // the sender's photo, as ChatRow.picture
+    has-sender-picture: bool,
     sender-color: int,      // 0 … 7, the same for the same sender (Terminal's names)
     content: Content,
     text: string,
@@ -250,6 +254,8 @@ export struct ViewerItem {
     name: string,           // a video's or GIF's file name; photos have none
     sender: string,
     sender-initial: string,
+    sender-picture: image,  // the sender's photo, as ChatRow.picture
+    has-sender-picture: bool,
     time: Moment,
     caption: string,
 }
@@ -394,6 +400,9 @@ export global Account {
     in-out property <string> phone;              // "+86 138 0013 2046"
     in-out property <string> bio;
     in-out property <string> initial;
+    in-out property <image> picture;             // the account's photo, as ChatRow.picture
+    in-out property <image> large-picture;       // the same in its big size, for the profile page
+    in-out property <bool> has-picture;
     in-out property <bool> saving;
     in-out property <bool> saved;
     in-out property <string> save-error;

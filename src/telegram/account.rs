@@ -66,6 +66,7 @@ pub fn forget() {
         account.set_phone(SharedString::new());
         account.set_bio(SharedString::new());
         account.set_initial(SharedString::new());
+        account.set_has_picture(false);
         account.set_saved(false);
         account.set_save_error(SharedString::new());
     });

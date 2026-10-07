@@ -6,7 +6,7 @@ import {
     ActionNotice, Tab, Chats,
 } from "../telegram.slint";
 import { Fmt } from "../format.slint";
-import { Icon, Paragraph } from "../widgets.slint";
+import { Icon, Paragraph, Avatar } from "../widgets.slint";
 import {
     ChatScroll, ChatIcons, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope,
 } from "../chat.slint";
@@ -645,17 +645,15 @@ component MessageLine {
         spacing: 12px;
         VerticalLayout {
             alignment: start;
-            Rectangle {
-                width: 30px;
-                height: 30px;
-                border-radius: 6px;
-                background: Avatars.fill(root.message, Conversation.kind);
-                Text {
-                    text: root.message.sender-initial;
-                    color: Avatars.ink(root.message, Conversation.kind);
-                    font-size: 13px;
-                    font-weight: 600;
-                }
+            Avatar {
+                size: 30px;
+                radius: 6px;
+                fill: Avatars.fill(root.message, Conversation.kind);
+                ink: Avatars.ink(root.message, Conversation.kind);
+                initial: root.message.sender-initial;
+                picture: root.message.sender-picture;
+                has-picture: root.message.has-sender-picture;
+                font-size: 13px;
             }
         }
         VerticalLayout {

@@ -104,6 +104,7 @@ src/
     account.rs           #   le profil, la déconnexion
     password.rs          #   la validation en deux étapes dans les réglages
     files.rs             #   le téléchargement des fichiers
+    avatars.rs           #   les photos des discussions et des personnes, à la place de leurs initiales
     viewer.rs            #   la visionneuse : photos, vidéos, enregistrer dans Téléchargements
     rich_text.rs         #   texte mis en forme : gras, italique, liens…
     notifications.rs     #   notifications des nouveaux messages, le nombre de non-lus dans le Dock

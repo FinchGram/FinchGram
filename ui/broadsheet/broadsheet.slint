@@ -8,7 +8,7 @@ import {
 } from "../telegram.slint";
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
-import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
+import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import { ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope } from "../chat.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 import { BroadsheetActions } from "actions.slint";
@@ -140,17 +140,15 @@ component Rail inherits Rectangle {
                     border-radius: 7px;
                     border-width: 2px;
                     border-color: P.accent;
-                    Rectangle {
-                        width: 32px;
-                        height: 32px;
-                        border-radius: 4px;
-                        background: P.accent;
-                        Text {
-                            text: Account.initial;
-                            color: P.on-accent;
-                            font-size: 14px;
-                            font-weight: 600;
-                        }
+                    Avatar {
+                        size: 32px;
+                        radius: 4px;
+                        fill: P.accent;
+                        ink: P.on-accent;
+                        initial: Account.initial;
+                        picture: Account.picture;
+                        has-picture: Account.has-picture;
+                        font-size: 14px;
                     }
                     TouchArea {
                         mouse-cursor: pointer;
@@ -527,17 +525,15 @@ component ChatLine inherits Rectangle {
         padding-top: 11px;
         padding-bottom: 11px;
         spacing: 12px;
-        Rectangle {
-            width: 44px;
-            height: 44px;
-            border-radius: 4px;
-            background: Avatars.fill(root.chat.kind);
-            Text {
-                text: root.chat.initial;
-                color: Avatars.ink(root.chat.kind);
-                font-size: 18px;
-                font-weight: 600;
-            }
+        Avatar {
+            size: 44px;
+            radius: 4px;
+            fill: Avatars.fill(root.chat.kind);
+            ink: Avatars.ink(root.chat.kind);
+            initial: root.chat.initial;
+            picture: root.chat.picture;
+            has-picture: root.chat.has-picture;
+            font-size: 18px;
         }
         VerticalLayout {
             horizontal-stretch: 1;
@@ -614,17 +610,15 @@ component ChannelLine inherits Rectangle {
         padding-top: 11px;
         padding-bottom: 11px;
         spacing: 12px;
-        Rectangle {
-            width: 44px;
-            height: 44px;
-            border-radius: 4px;
-            background: P.surface;
-            Text {
-                text: root.chat.initial;
-                color: P.text;
-                font-size: 18px;
-                font-weight: 600;
-            }
+        Avatar {
+            size: 44px;
+            radius: 4px;
+            fill: P.surface;
+            ink: P.text;
+            initial: root.chat.initial;
+            picture: root.chat.picture;
+            has-picture: root.chat.has-picture;
+            font-size: 18px;
         }
         VerticalLayout {
             horizontal-stretch: 1;
@@ -683,17 +677,15 @@ component BotLine inherits Rectangle {
         spacing: 12px;
         VerticalLayout {
             alignment: center;
-            Rectangle {
-                width: 40px;
-                height: 40px;
-                border-radius: 4px;
-                background: root.chat.verified ? P.tint : P.surface;
-                Text {
-                    text: root.chat.initial;
-                    color: root.chat.verified ? P.tint-ink : P.text;
-                    font-size: 16px;
-                    font-weight: 600;
-                }
+            Avatar {
+                size: 40px;
+                radius: 4px;
+                fill: root.chat.verified ? P.tint : P.surface;
+                ink: root.chat.verified ? P.tint-ink : P.text;
+                initial: root.chat.initial;
+                picture: root.chat.picture;
+                has-picture: root.chat.has-picture;
+                font-size: 16px;
             }
         }
         VerticalLayout {

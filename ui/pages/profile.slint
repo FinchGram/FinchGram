@@ -4,7 +4,7 @@
 import { AppState, Page } from "../state.slint";
 import { Account } from "../telegram.slint";
 import { Look } from "../look.slint";
-import { Icon, Field, Heading, SectionLabel, Paragraph, Link, Spinner } from "../widgets.slint";
+import { Icon, Field, Heading, SectionLabel, Paragraph, Link, Spinner, Avatar } from "../widgets.slint";
 import { PageFrame, SideColumn } from "frame.slint";
 
 component Label inherits Text {
@@ -45,17 +45,12 @@ component Summary {
             spacing: 14px;
             HorizontalLayout {
                 alignment: start;
-                Rectangle {
-                    width: 104px;
-                    height: 104px;
-                    border-radius: Look.avatar-radius;
-                    background: Look.soft;
-                    Text {
-                        text: Account.initial;
-                        color: Look.soft-ink;
-                        font-size: 44px;
-                        font-weight: 600;
-                    }
+                Avatar {
+                    size: 104px;
+                    initial: Account.initial;
+                    picture: Account.large-picture;
+                    has-picture: Account.has-picture;
+                    font-size: 44px;
                 }
             }
             VerticalLayout {
@@ -80,17 +75,12 @@ component Summary {
                 spacing: 12px;
                 VerticalLayout {
                     alignment: center;
-                    Rectangle {
-                        width: 36px;
-                        height: 36px;
-                        border-radius: Look.avatar-radius;
-                        background: Look.soft;
-                        Text {
-                            text: Account.initial;
-                            color: Look.soft-ink;
-                            font-size: 15px;
-                            font-weight: 600;
-                        }
+                    Avatar {
+                        size: 36px;
+                        initial: Account.initial;
+                        picture: Account.picture;
+                        has-picture: Account.has-picture;
+                        font-size: 15px;
                     }
                 }
                 VerticalLayout {

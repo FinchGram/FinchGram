@@ -171,6 +171,8 @@ fn chat(id: &str, title: &str, kind: ChatKind, time: Moment, sender: &str, text:
         id: id.into(),
         title: title.into(),
         initial: title.chars().next().map(String::from).unwrap_or_default().into(),
+        picture: Image::default(),
+        has_picture: false,
         kind,
         has_message: true,
         time,
@@ -190,13 +192,32 @@ fn chat(id: &str, title: &str, kind: ChatKind, time: Moment, sender: &str, text:
     }
 }
 
+/// The chat with its photo: a made-up one around `hue`.
+fn with_portrait(chat: ChatRow, hue: f32) -> ChatRow {
+    ChatRow { picture: portrait(hue), has_picture: true, ..chat }
+}
+
+/// A made-up photo of a chat or a person: a square gradient around `hue`, 160 pixels as TDLib's
+/// small chat photos are.
+fn portrait(hue: f32) -> Image {
+    gradient(160, 160, hue)
+}
+
 fn message(id: &str, sender: &str, time: &str, text: &str) -> MessageRow {
+    // Zhou Ye (the account) and Jie have photos; the others show their letters.
+    let picture = match sender {
+        "Zhou Ye" => Some(portrait(330.0)),
+        "Jie" => Some(portrait(80.0)),
+        _ => None,
+    };
     MessageRow {
         kind: RowKind::Message,
         id: id.into(),
         outgoing: sender == "Zhou Ye",
         sender: sender.into(),
         sender_initial: sender.chars().next().map(String::from).unwrap_or_default().into(),
+        has_sender_picture: picture.is_some(),
+        sender_picture: picture.unwrap_or_default(),
         sender_color: (sender.len() % 8) as i32,
         content: Content::Text,
         text: text.into(),
@@ -301,6 +322,8 @@ fn open_viewer(ui: &MainWindow, index: i32) {
         name: media.name,
         sender: "Jie".into(),
         sender_initial: "J".into(),
+        sender_picture: portrait(80.0),
+        has_sender_picture: true,
         time: moment(Day::Today, 14, 19),
         caption: "The lubed switch comparison is in the group album, have a look.".into(),
     };
@@ -340,19 +363,23 @@ fn fill_chats(ui: &MainWindow) {
     account.set_first_name("Zhou".into());
     account.set_last_name("Ye".into());
     account.set_initial("Z".into());
+    account.set_picture(portrait(330.0));
+    account.set_large_picture(portrait(330.0));
+    account.set_has_picture(true);
     account.set_username("zhouye".into());
     account.set_phone("+86 138 0013 2046".into());
     account.set_bio("Design, and a little code. Shanghai.".into());
 
+    // Some chats have photos, the others their letters, as in any account.
     let keyboards = ChatRow {
         pinned: true,
         ..chat("keyboards", "Keyboard Lab", ChatKind::Group, moment(Day::Today, 14, 20), "Jie", "@Zhou Ye do you still sell the dark keycaps?", 42, 486)
     };
-    let alex = chat("alex", "Alex Chen", ChatKind::User, moment(Day::Today, 12, 8), "", "Can we move the call to Thursday?", 1, 0);
-    let linxia = chat("linxia", "Lin Xia", ChatKind::User, moment(Day::Today, 13, 52), "", "Is that place open tonight?", 2, 0);
-    let news = chat("news", "Tech Morning", ChatKind::Channel, moment(Day::Today, 7, 30), "", "New chip export rules take effect", 12, 82413);
+    let alex = with_portrait(chat("alex", "Alex Chen", ChatKind::User, moment(Day::Today, 12, 8), "", "Can we move the call to Thursday?", 1, 0), 120.0);
+    let linxia = with_portrait(chat("linxia", "Lin Xia", ChatKind::User, moment(Day::Today, 13, 52), "", "Is that place open tonight?", 2, 0), 200.0);
+    let news = with_portrait(chat("news", "Tech Morning", ChatKind::Channel, moment(Day::Today, 7, 30), "", "New chip export rules take effect", 12, 82413), 25.0);
     let mom = chat("mom", "Mom", ChatKind::User, moment(Day::Yesterday, 18, 32), "", "Never mind, if you are busy don't reply", 0, 0);
-    let finch = chat("finch", "FinchGram Updates", ChatKind::Channel, moment(Day::Yesterday, 20, 0), "", "FinchGram 0.1: the design arrives", 0, 41000);
+    let finch = with_portrait(chat("finch", "FinchGram Updates", ChatKind::Channel, moment(Day::Yesterday, 20, 0), "", "FinchGram 0.1: the design arrives", 0, 41000), 260.0);
     let books = chat("books", "Wednesday Book Club", ChatKind::Group, moment(Day::ThisWeek, 20, 15), "Chen", "Next up: Invisible Cities", 0, 9);
     let saved = ChatRow { kind: ChatKind::Saved, ..chat("saved", "Saved Messages", ChatKind::Saved, moment(Day::ThisYear, 22, 42), "", "Kyoto, check-in October 3", 0, 0) };
     let personal = vec![keyboards.clone(), linxia.clone(), mom.clone(), books.clone(), saved.clone()];
@@ -387,7 +414,7 @@ fn fill_chats(ui: &MainWindow) {
         ..chat(id, title, ChatKind::Bot, moment(Day::ThisWeek, 13, 2), "", "", 0, 0)
     };
     chats.set_official_bots(model(vec![bot("botfather", "BotFather", "BotFather", true), bot("stickers", "Stickers", "Stickers", true)]));
-    chats.set_bots(model(vec![bot("groupbuy", "Group-buy Helper", "keeb_gb_bot", false)]));
+    chats.set_bots(model(vec![with_portrait(bot("groupbuy", "Group-buy Helper", "keeb_gb_bot", false), 45.0)]));
     chats.set_loaded(true);
 
     let conversation = ui.global::<Conversation>();
@@ -534,11 +561,11 @@ fn message_actions(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn F
     actions.set_picker_saved(true);
     actions.set_picker_chats(model(vec![
         chat("keyboards", "Keyboard Lab", ChatKind::Group, moment(Day::Today, 14, 20), "", "", 0, 486),
-        chat("linxia", "Lin Xia", ChatKind::User, moment(Day::Today, 13, 52), "", "", 0, 0),
+        with_portrait(chat("linxia", "Lin Xia", ChatKind::User, moment(Day::Today, 13, 52), "", "", 0, 0), 200.0),
         chat("mika", "Mika", ChatKind::User, moment(Day::Today, 11, 3), "", "", 0, 0),
         chat("books", "Wednesday Book Club", ChatKind::Group, moment(Day::ThisWeek, 20, 15), "", "", 0, 12),
         chat("mom", "Mom", ChatKind::User, moment(Day::Yesterday, 18, 32), "", "", 0, 0),
-        chat("alex", "Alex Chen", ChatKind::User, moment(Day::Today, 12, 8), "", "", 0, 0),
+        with_portrait(chat("alex", "Alex Chen", ChatKind::User, moment(Day::Today, 12, 8), "", "", 0, 0), 120.0),
     ]));
     actions.set_bar(ComposeBar::None);
     actions.set_picker_open(true);

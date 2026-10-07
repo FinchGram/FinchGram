@@ -96,6 +96,7 @@ src/
     account.rs           #   프로필, 로그아웃
     password.rs          #   설정의 2단계 인증
     files.rs             #   파일 다운로드
+    avatars.rs           #   채팅과 사람의 사진. 이니셜 대신 표시
     viewer.rs            #   미디어 뷰어: 사진, 동영상, ‘다운로드’에 저장
     rich_text.rs         #   서식 있는 텍스트: 굵게, 기울임, 링크 등
     notifications.rs     #   새 메시지 알림, Dock 아이콘의 읽지 않은 수

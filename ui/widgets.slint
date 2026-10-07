@@ -327,9 +327,12 @@ export component Link {
     }
 }
 
-// A letter on a coloured square, until chats have their photos.
+// A chat's or a person's photo on a square with the theme's corners; a letter on a coloured
+// square for one without a photo.
 export component Avatar inherits Rectangle {
     in property <string> initial;
+    in property <image> picture;
+    in property <bool> has-picture;
     in property <length> size: 40px;
     in property <color> fill: Look.soft;
     in property <color> ink: Look.soft-ink;
@@ -340,8 +343,17 @@ export component Avatar inherits Rectangle {
     height: size;
     border-radius: radius;
     background: fill;
+    // The photo takes the corners of the square. (Slint's software renderer, which draws the
+    // screenshots, clips to the square only; the app's renderer clips to the corners.)
+    clip: has-picture;
 
-    Text {
+    if root.has-picture: Image {
+        width: root.width;
+        height: root.height;
+        source: root.picture;
+        image-fit: cover;
+    }
+    if !root.has-picture: Text {
         text: root.initial;
         color: root.ink;
         font-size: root.font-size;

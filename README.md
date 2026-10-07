@@ -96,6 +96,7 @@ src/
     account.rs           #   the profile, logging out
     password.rs          #   two-step verification in Settings
     files.rs             #   downloading files
+    avatars.rs           #   the photos of chats and people, shown instead of their letters
     viewer.rs            #   the media viewer: photos, videos, saving to Downloads
     rich_text.rs         #   formatted text: bold, italic, links, …
     notifications.rs     #   notifications of new messages, the unread count on the Dock icon

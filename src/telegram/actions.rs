@@ -858,6 +858,16 @@ fn fill_picker() {
         actions.set_picker_saved(saved);
         actions.set_picker_chats(ModelRc::new(VecModel::from(chats)));
     });
+    // The rows are built outside a refresh: their photos are downloaded here.
+    store::fetch_wanted_photos();
+}
+
+/// Photos of chats arrived (avatars.rs): the picker's rows, which are not the store's models,
+/// show them too.
+pub fn photos_arrived() {
+    if STATE.with(|state| state.borrow().picking.is_some()) {
+        fill_picker();
+    }
 }
 
 /// Forward to a chat: it opens with the strip that forwards there.

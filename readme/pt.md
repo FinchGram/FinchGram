@@ -102,6 +102,7 @@ src/
     account.rs           #   o perfil, sair
     password.rs          #   a verificação em duas etapas nas Configurações
     files.rs             #   o download de arquivos
+    avatars.rs           #   as fotos de chats e pessoas, no lugar das iniciais
     viewer.rs            #   o visualizador: fotos, vídeos, salvar em Downloads
     rich_text.rs         #   texto formatado: negrito, itálico, links…
     notifications.rs     #   notificações de mensagens novas, o número de não lidas no Dock

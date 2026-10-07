@@ -4,7 +4,7 @@ import { ListView } from "std-widgets.slint";
 import { AppState, Connection, Theme } from "../state.slint";
 import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind } from "../telegram.slint";
 import { Fmt } from "../format.slint";
-import { Icon, ListEdge } from "../widgets.slint";
+import { Icon, ListEdge, Avatar } from "../widgets.slint";
 import { ChatIcons } from "../chat.slint";
 import { MenuEntry } from "conversation.slint";
 import { WorkbenchPalette as P } from "palette.slint";
@@ -271,17 +271,15 @@ component BotLine inherits Rectangle {
         spacing: 8px;
         VerticalLayout {
             alignment: center;
-            Rectangle {
-                width: 22px;
-                height: 22px;
-                border-radius: 6px;
-                background: root.chat.verified ? P.accent-soft : P.chrome;
-                Text {
-                    text: root.chat.initial;
-                    color: root.chat.verified ? P.accent-ink : P.text;
-                    font-size: 11px;
-                    font-weight: 600;
-                }
+            Avatar {
+                size: 22px;
+                radius: 6px;
+                fill: root.chat.verified ? P.accent-soft : P.chrome;
+                ink: root.chat.verified ? P.accent-ink : P.text;
+                initial: root.chat.initial;
+                picture: root.chat.picture;
+                has-picture: root.chat.has-picture;
+                font-size: 11px;
             }
         }
         VerticalLayout {

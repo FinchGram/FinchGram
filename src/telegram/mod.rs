@@ -9,7 +9,8 @@
 //! authorization state (login.rs), notifications and the unread count go to notifications.rs,
 //! everything else goes into the store (store.rs), and after each batch the pages are brought up to
 //! date. chats.rs, conversation.rs, actions.rs, account.rs and password.rs do what the pages ask
-//! for; online.rs tells TDLib whether the account is online.
+//! for; avatars.rs fetches the photos of chats and people; online.rs tells TDLib whether the
+//! account is online.
 //!
 //! When finchgram-tdlib ends unexpectedly, the requests still waiting fail and it is started
 //! again: TDLib's database is on disk, so it carries on where it was. After a log out TDLib closes
@@ -20,6 +21,7 @@
 mod account;
 mod actions;
 mod api;
+mod avatars;
 mod chats;
 mod conversation;
 mod files;
@@ -457,6 +459,7 @@ fn on_ended() {
     }
     // Downloads the program had under way end with it; the next one is asked again.
     files::forget();
+    avatars::forget();
     match next {
         Next::Nothing => {}
         Next::StartAgain => launch(),

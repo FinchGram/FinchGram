@@ -2,7 +2,7 @@
 // where it was right-clicked, and the dialogs for forwarding, reporting and deleting.
 import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment } from "../telegram.slint";
 import { Fmt } from "../format.slint";
-import { Icon, Spinner } from "../widgets.slint";
+import { Icon, Spinner, Avatar } from "../widgets.slint";
 import { ActionWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 
@@ -252,17 +252,15 @@ component ForwardPicker inherits Dialog {
                         spacing: 12px;
                         VerticalLayout {
                             alignment: center;
-                            Rectangle {
-                                width: 40px;
-                                height: 40px;
-                                border-radius: 4px;
-                                background: P.surface;
-                                Text {
-                                    text: chat.initial;
-                                    color: P.accent-ink;
-                                    font-size: 16px;
-                                    font-weight: 600;
-                                }
+                            Avatar {
+                                size: 40px;
+                                radius: 4px;
+                                fill: P.surface;
+                                ink: P.accent-ink;
+                                initial: chat.initial;
+                                picture: chat.picture;
+                                has-picture: chat.has-picture;
+                                font-size: 16px;
                             }
                         }
                         VerticalLayout {

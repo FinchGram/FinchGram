@@ -96,6 +96,7 @@ src/
     account.rs           #   プロフィール、ログアウト
     password.rs          #   設定の 2 段階認証
     files.rs             #   ファイルのダウンロード
+    avatars.rs           #   チャットと相手の写真。頭文字の代わりに表示
     viewer.rs            #   メディアビューア：写真、動画、「ダウンロード」への保存
     rich_text.rs         #   書式付きテキスト：太字、斜体、リンクなど
     notifications.rs     #   新着メッセージの通知、Dock アイコンの未読数

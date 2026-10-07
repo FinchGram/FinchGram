@@ -89,6 +89,7 @@ src/
     account.rs           #   个人资料、退出登录
     password.rs          #   设置里的两步验证
     files.rs             #   下载文件
+    avatars.rs           #   聊天和联系人的头像，代替首字母色块
     viewer.rs            #   媒体查看器：照片、视频、保存到“下载”
     rich_text.rs         #   带格式的文字：粗体、斜体、链接……
     notifications.rs     #   新消息通知、Dock 图标上的未读数
