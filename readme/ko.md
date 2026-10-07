@@ -224,8 +224,8 @@ for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finch
 scripts/release.sh patch    # 0.1.0 -> 0.1.1; minor, major 또는 정확한 버전도 가능
 ```
 
-지금은 ad hoc 서명이라, 내려받은 앱을 처음 열 때 macOS가 한 번 확인을 요청합니다
-(시스템 설정 → 개인정보 보호 및 보안). 앱이 직접 설치한 업데이트는 이 단계 없이 실행됩니다.
+서명은 Apple Developer ID가 아니라 프로젝트 자체 인증서로 하므로, 내려받은 앱을 처음 열 때 macOS가 한 번
+확인을 요청합니다 (시스템 설정 → 개인정보 보호 및 보안). 앱이 직접 설치한 업데이트는 이 단계 없이 실행됩니다.
 
 ## 기여
 

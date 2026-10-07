@@ -213,8 +213,8 @@ release 只由 GitHub Actions 在乾淨的機器上、從打了 tag 的 commit �
 scripts/release.sh patch    # 0.1.0 -> 0.1.1；也可以是 minor、major 或一個具體版本號
 ```
 
-目前是 ad-hoc 簽名：下載的 app 第一次開啟時，macOS 會攔一次（系統設定 → 隱私權與安全性）。
-app 自己安裝的更新不需要這一步。
+app 用專案自己的憑證簽名，不是 Apple Developer ID，所以下載的 app 第一次開啟時，macOS 會攔一次
+（系統設定 → 隱私權與安全性）。app 自己安裝的更新不需要這一步。
 
 ## 參與
 

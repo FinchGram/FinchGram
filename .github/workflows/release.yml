@@ -55,18 +55,60 @@ jobs:
       - name: The UI fonts, pinned, from google/fonts
         run: scripts/fetch-fonts.sh
 
+      # The app is signed with the project's own certificate, the same for every release, so that
+      # macOS keeps what the user allowed the app (Screen Recording, for the screenshot tool) across
+      # updates: it ties a permission to the code signature, and an ad-hoc signature is new with
+      # every build. The certificate and its key exist only as secrets of this repository
+      # (docs/conventions.md, Release first). Without them (a fork) the app is signed ad hoc.
+      - name: Signing identity
+        id: identity
+        env:
+          CODESIGN_CERTIFICATE: ${{ secrets.CODESIGN_CERTIFICATE }}
+          CODESIGN_CERTIFICATE_PASSWORD: ${{ secrets.CODESIGN_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -z "$CODESIGN_CERTIFICATE" ]; then
+            echo "::warning::secret CODESIGN_CERTIFICATE is missing: the app is signed ad hoc, and macOS forgets its permissions at every update (docs/conventions.md)"
+            echo "identity=-" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          KEYCHAIN="$RUNNER_TEMP/finchgram.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          echo "$CODESIGN_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/finchgram.p12"
+          security import "$RUNNER_TEMP/finchgram.p12" -k "$KEYCHAIN" -P "$CODESIGN_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
+          rm "$RUNNER_TEMP/finchgram.p12"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '" ')
+          # A certificate of our own is trusted for code signing only once the machine is told so.
+          security find-certificate -c FinchGram -p "$KEYCHAIN" > "$RUNNER_TEMP/finchgram.pem"
+          sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain "$RUNNER_TEMP/finchgram.pem"
+          security find-identity -v -p codesigning "$KEYCHAIN"
+          if ! security find-identity -v -p codesigning "$KEYCHAIN" | grep -q '1 valid identities found'; then
+            echo "::error::the signing certificate cannot be used"
+            exit 1
+          fi
+          echo "identity=FinchGram" >> "$GITHUB_OUTPUT"
+
       # FinchGram's own api_id and api_hash from my.telegram.org, compiled into the app. They exist
       # only as secrets of this repository (docs/conventions.md, Telegram API credentials).
       - name: Build and bundle
         env:
           FINCHGRAM_API_ID: ${{ secrets.FINCHGRAM_API_ID }}
           FINCHGRAM_API_HASH: ${{ secrets.FINCHGRAM_API_HASH }}
+          SIGN_IDENTITY: ${{ steps.identity.outputs.identity }}
         run: |
           if [ -z "$FINCHGRAM_API_ID" ] || [ -z "$FINCHGRAM_API_HASH" ]; then
             echo "::error::secrets FINCHGRAM_API_ID and FINCHGRAM_API_HASH are missing (docs/conventions.md)"
             exit 1
           fi
           scripts/bundle.sh
+          # Signed with the certificate, the app's designated requirement names it, not this build.
+          if [ "$SIGN_IDENTITY" != "-" ] && codesign -d -r- "dist/$APP_NAME.app" 2>&1 | grep -q cdhash; then
+            echo "::error::the app is signed per build (cdhash), not with the certificate"
+            exit 1
+          fi
 
       - name: Archive
         env:

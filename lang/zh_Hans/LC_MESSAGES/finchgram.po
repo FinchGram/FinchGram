@@ -381,8 +381,9 @@ msgstr "FinchGram 没有“屏幕录制”权限"
 
 #: ui/chat.slint:287
 msgid ""
-"Screenshots need Screen Recording in System Settings → Privacy & Security."
-msgstr "截图需要在“系统设置 › 隐私与安全性”里允许屏幕录制。"
+"Screenshots need Screen Recording in System Settings → Privacy & Security. "
+"If FinchGram is already in the list, turn it off and on again."
+msgstr "截图需要在“系统设置 › 隐私与安全性”里允许屏幕录制。如果列表里已经有 FinchGram，把它关掉再打开一次。"
 
 #: ui/chat.slint:288
 msgid "Open System Settings"

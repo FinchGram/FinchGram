@@ -243,9 +243,9 @@ nada que no puedan verificar. Un mantenedor inicia una release con un solo coman
 scripts/release.sh patch    # 0.1.0 -> 0.1.1; también minor, major o una versión exacta
 ```
 
-Por ahora la firma es ad hoc: la primera vez que se abre una copia descargada, macOS pide permiso una
-vez (Ajustes del Sistema → Privacidad y seguridad). Las actualizaciones que instala la propia app
-arrancan sin ese paso.
+La app está firmada con el certificado propio del proyecto, no con un Apple Developer ID, así que la
+primera vez que se abre una copia descargada, macOS pide permiso una vez (Ajustes del Sistema →
+Privacidad y seguridad). Las actualizaciones que instala la propia app arrancan sin ese paso.
 
 ## Contribuir
 

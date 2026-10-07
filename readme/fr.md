@@ -251,9 +251,9 @@ commande :
 scripts/release.sh patch    # 0.1.0 -> 0.1.1 ; aussi minor, major ou une version précise
 ```
 
-La signature est ad hoc pour l'instant : au premier lancement d'une copie téléchargée, macOS demande
-une fois (Réglages Système → Confidentialité et sécurité). Les mises à jour installées par
-l'application elle-même démarrent sans cette étape.
+L'application est signée avec le certificat du projet, pas avec un Apple Developer ID : au premier
+lancement d'une copie téléchargée, macOS demande donc une fois (Réglages Système → Confidentialité et
+sécurité). Les mises à jour installées par l'application elle-même démarrent sans cette étape.
 
 ## Contribuer
 

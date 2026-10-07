@@ -105,7 +105,15 @@ As in Coova Studio.
 - The update path is part of the product and must keep working from every released version to the
   next. Never change the asset names, the `SHA256SUMS` format, the signing key or the repository
   without first shipping a version that understands the new layout.
-- Signing is ad-hoc for now, so Gatekeeper stops a downloaded copy on its first launch (System
+- CI signs the app with the project's own certificate ("FinchGram", self-signed, valid until
+  2056), the same for every release. macOS ties what the user allowed an app (Screen Recording,
+  for the screenshot tool) to its code signature; an ad-hoc signature is new with every build, so
+  every update lost the permission while System Settings still showed it on. The certificate and
+  its key exist only as the secrets `CODESIGN_CERTIFICATE` (a base64 .p12) and
+  `CODESIGN_CERTIFICATE_PASSWORD`, backed up in the release manager's keychain as "FinchGram";
+  without them (a fork) the workflow signs ad hoc and says so. Replacing the certificate costs
+  every user that permission once.
+- It is not a Developer ID, so Gatekeeper stops a downloaded copy on its first launch (System
   Settings → Privacy & Security → "Open Anyway"); updates installed by the app itself carry no
   quarantine flag. A Developer ID signature with notarization removes that step:
   `SIGN_IDENTITY="Developer ID Application: …" scripts/bundle.sh`.

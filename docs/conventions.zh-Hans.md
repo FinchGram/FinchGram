@@ -83,7 +83,12 @@ libmpv 跟 finchgram-tdlib 一样照这个做：`vendor/mpv/build.sh` 按锁定�
   它要找的 zip 名字由版本号推出来，所以旧的签名清单没法挪到新 tag 上冒充。
 - 更新流程是产品的一部分，必须保证从每一个发布过的版本都能更新到下一个版本。改 asset 名字、`SHA256SUMS`
   格式、签名密钥或仓库之前，必须先发一个能认新布局的版本。
-- 目前是 ad-hoc 签名，下载的 app 第一次打开会被 Gatekeeper 拦下（系统设置 → 隐私与安全性 → “仍要打开”）；
+- CI 用项目自己的证书（"FinchGram"，自签名，有效期到 2056 年）给 app 签名，每个版本都用同一张。macOS 把用户
+  给 app 的权限（截图工具要的“屏幕录制”）绑在代码签名上；ad-hoc 签名每次构建都不一样，所以以前每次更新都会丢掉
+  这个权限，而系统设置里还显示着已允许。证书和私钥只存在于 secrets `CODESIGN_CERTIFICATE`（base64 的 .p12）和
+  `CODESIGN_CERTIFICATE_PASSWORD` 里，另在发布负责人的钥匙串里以 "FinchGram" 备份一份；没有这两个 secret
+  （比如 fork）时流程退回 ad-hoc 签名并给出警告。换证书会让每个用户重新授权一次。
+- 这不是 Developer ID，所以下载的 app 第一次打开仍会被 Gatekeeper 拦下（系统设置 → 隐私与安全性 → “仍要打开”）；
   app 自己安装的更新没有隔离标记，不受影响。用 Developer ID 签名并公证后就没有这一步：
   `SIGN_IDENTITY="Developer ID Application: …" scripts/bundle.sh`。
 

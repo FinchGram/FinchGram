@@ -241,9 +241,9 @@ nada que não consigam verificar. Um mantenedor inicia uma release com um único
 scripts/release.sh patch    # 0.1.0 -> 0.1.1; também minor, major ou uma versão exata
 ```
 
-Por enquanto a assinatura é ad hoc: na primeira vez que uma cópia baixada é aberta, o macOS pede
-permissão uma vez (Ajustes do Sistema → Privacidade e Segurança). As atualizações instaladas pelo
-próprio app abrem sem esse passo.
+O app é assinado com o certificado do próprio projeto, não com um Apple Developer ID, por isso na
+primeira vez que uma cópia baixada é aberta, o macOS pede permissão uma vez (Ajustes do Sistema →
+Privacidade e Segurança). As atualizações instaladas pelo próprio app abrem sem esse passo.
 
 ## Contribuir
 

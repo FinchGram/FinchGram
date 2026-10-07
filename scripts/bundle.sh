@@ -7,7 +7,11 @@
 # only for trying the packaged app, never for a release. Without FINCHGRAM_API_ID and
 # FINCHGRAM_API_HASH in the environment the app has no Telegram API credentials (docs/conventions.md).
 #
-# Signing is ad-hoc by default (runs on this machine only). For distribution:
+# Signing is ad hoc by default (a bundle for this machine only). The release workflow signs with
+# the project's own certificate, the same for every release, so that macOS keeps what the user
+# allowed the app across updates (docs/conventions.md, Release first):
+#   SIGN_IDENTITY=FinchGram scripts/bundle.sh
+# A Developer ID gets the hardened runtime and a timestamp too, for notarization:
 #   SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" scripts/bundle.sh
 set -euo pipefail
 
@@ -91,9 +95,11 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 # Sign the helper and the library first, then the app. Hardened runtime + timestamp only for a
-# real identity.
+# Developer ID: they are for notarization.
 SIGN_OPTS=()
-[ "$SIGN_IDENTITY" != "-" ] && SIGN_OPTS=(--options runtime --timestamp)
+case "$SIGN_IDENTITY" in
+  "Developer ID Application:"*) SIGN_OPTS=(--options runtime --timestamp) ;;
+esac
 codesign --force --sign "$SIGN_IDENTITY" "${SIGN_OPTS[@]+"${SIGN_OPTS[@]}"}" "$MACOS/finchgram-tdlib"
 codesign --force --sign "$SIGN_IDENTITY" "${SIGN_OPTS[@]+"${SIGN_OPTS[@]}"}" "$FRAMEWORKS/libmpv.2.dylib"
 codesign --force --sign "$SIGN_IDENTITY" "${SIGN_OPTS[@]+"${SIGN_OPTS[@]}"}" "$APP"
@@ -101,3 +107,4 @@ codesign --verify --deep --strict "$APP"
 
 echo
 echo "built: $APP ($(du -sh "$APP" | cut -f1))"
+echo "signed with $SIGN_IDENTITY; designated requirement: $(codesign -d -r- "$APP" 2>/dev/null | sed -n 's/^designated => //p')"

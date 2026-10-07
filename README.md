@@ -237,9 +237,9 @@ nothing they cannot verify. A maintainer starts a release with one command:
 scripts/release.sh patch    # 0.1.0 -> 0.1.1; also minor, major, or an exact version
 ```
 
-Signing is ad-hoc for now: on the first launch of a downloaded copy, macOS asks once (System
-Settings → Privacy & Security → "Open Anyway"). Updates installed by the app itself start without
-that step.
+The app is signed with the project's own certificate, not an Apple Developer ID, so on the first
+launch of a downloaded copy macOS asks once (System Settings → Privacy & Security → "Open Anyway").
+Updates installed by the app itself start without that step.
 
 ## Contributing
 

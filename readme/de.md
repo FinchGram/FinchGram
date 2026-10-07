@@ -245,9 +245,9 @@ installieren nichts, was sie nicht prüfen können. Ein Maintainer startet ein R
 scripts/release.sh patch    # 0.1.0 -> 0.1.1; auch minor, major oder eine genaue Version
 ```
 
-Signiert wird vorerst ad hoc: Beim ersten Start einer heruntergeladenen Kopie fragt macOS einmal nach
-(Systemeinstellungen → Datenschutz & Sicherheit). Updates, die die App selbst installiert, starten
-ohne diesen Schritt.
+Signiert wird mit dem eigenen Zertifikat des Projekts, nicht mit einer Apple Developer ID: Beim ersten
+Start einer heruntergeladenen Kopie fragt macOS deshalb einmal nach (Systemeinstellungen →
+Datenschutz & Sicherheit). Updates, die die App selbst installiert, starten ohne diesen Schritt.
 
 ## Mitmachen
 
