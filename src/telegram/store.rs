@@ -23,8 +23,9 @@ use super::rich_text;
 use super::time;
 use crate::images;
 use crate::{
-    Account, ChatKind, ChatRow, Chats, Content, Conversation, Folder, FolderChoice, LinkPreview, MainWindow, Media, MessageRow,
-    Moment, NotificationScopes, ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
+    Account, ChatKind, ChatRow, Chats, Content, Conversation, FileCard, FileState, FileType, Folder, FolderChoice, LinkPreview,
+    MainWindow, Media, MessageRow, Moment, NotificationScopes, ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem,
+    Words,
 };
 
 /// How long someone counts as typing after TDLib last said so.
@@ -161,6 +162,14 @@ pub struct Store {
     /// Photos the rows wanted and did not have, to download after the refresh
     /// ([`fetch_wanted_photos`]).
     wanted_photos: RefCell<Vec<api::File>>,
+    /// The account has Telegram Premium (TDLib's `is_premium` option): larger files may be sent.
+    pub is_premium: bool,
+    /// Telegram's limit on a caption (TDLib's `message_caption_length_max` option).
+    pub caption_length_max: i32,
+    /// Files on their way up or down, by file id: how much has moved, and how much there is.
+    transfers: HashMap<i32, (i64, i64)>,
+    /// The files the rows shown hold, by id: a change to one of them redraws the rows.
+    row_files: RefCell<HashSet<i32>>,
     /// The media list of each message row, by row id: the same model from one refresh to the next,
     /// so that a row changes only when its media do.
     media_models: RefCell<HashMap<SharedString, Rc<VecModel<Media>>>>,
@@ -239,6 +248,10 @@ pub fn install(ui: &MainWindow) {
             avatars: images::Cache::new(AVATARS_KEPT),
             avatars_asked: HashSet::new(),
             wanted_photos: RefCell::new(Vec::new()),
+            is_premium: false,
+            caption_length_max: 1024,
+            transfers: HashMap::new(),
+            row_files: RefCell::new(HashSet::new()),
             media_models: RefCell::new(HashMap::new()),
             blank: Image::from_rgba8(SharedPixelBuffer::new(1, 1)),
             rows: Vec::new(),
@@ -486,14 +499,17 @@ impl Store {
     pub fn apply(&mut self, update: Update) -> Followup {
         let mut followup = Followup::None;
         match update {
-            Update::Option { name, value } => {
-                if name == "my_id"
-                    && let api::OptionValue::Integer { value } = value
-                {
+            Update::Option { name, value } => match (name.as_str(), value) {
+                ("my_id", api::OptionValue::Integer { value }) => {
                     self.my_id = value;
                     self.dirty.chats = true;
                 }
-            }
+                ("is_premium", api::OptionValue::Boolean { value }) => self.is_premium = value,
+                ("message_caption_length_max", api::OptionValue::Integer { value }) => {
+                    self.caption_length_max = i32::try_from(value).unwrap_or(1024);
+                }
+                _ => {}
+            },
             Update::User { user } => {
                 if user.id == self.my_id {
                     self.dirty.account = true;
@@ -787,6 +803,56 @@ impl Store {
                 .or_else(|| self.supergroups.get(&supergroup_id).map(|group| group.member_count))
                 .unwrap_or(0),
             _ => 0,
+        }
+    }
+
+    /// What the chat lets us send besides words: its permissions, and ours in it when we are
+    /// restricted. Channels take posts from their administrators only.
+    pub fn send_rights(&self, chat: &api::Chat) -> SendRights {
+        let of = |permissions: &api::ChatPermissions| SendRights {
+            photos: permissions.can_send_photos,
+            videos: permissions.can_send_videos,
+            documents: permissions.can_send_documents,
+        };
+        let everything = SendRights { photos: true, videos: true, documents: true };
+        let nothing = SendRights::default();
+        if !self.can_write(chat) {
+            return nothing;
+        }
+        match chat.kind {
+            ChatType::Private { .. } | ChatType::Secret { .. } => everything,
+            ChatType::BasicGroup { basic_group_id } => match self.basic_groups.get(&basic_group_id).map(|group| &group.status) {
+                Some(ChatMemberStatus::Creator | ChatMemberStatus::Administrator { .. }) => everything,
+                Some(ChatMemberStatus::Member) => of(&chat.permissions),
+                Some(ChatMemberStatus::Restricted { permissions, .. }) => of(permissions).and(&of(&chat.permissions)),
+                _ => nothing,
+            },
+            ChatType::Supergroup { supergroup_id, is_channel } => {
+                match self.supergroups.get(&supergroup_id).map(|group| &group.status) {
+                    Some(ChatMemberStatus::Creator | ChatMemberStatus::Administrator { .. }) => everything,
+                    Some(ChatMemberStatus::Member) if !is_channel => of(&chat.permissions),
+                    Some(ChatMemberStatus::Restricted { permissions, .. }) if !is_channel => of(permissions).and(&of(&chat.permissions)),
+                    _ => nothing,
+                }
+            }
+        }
+    }
+
+    /// A file moved (updateFile): what the rows show of it follows.
+    pub fn file_progress(&mut self, file: &api::File) {
+        let moving = if file.remote.is_uploading_active && !file.remote.is_uploading_completed {
+            Some((file.remote.uploaded_size, file.size_or_expected()))
+        } else if file.local.is_downloading_active && !file.local.is_downloading_completed {
+            Some((file.local.downloaded_size, file.size_or_expected()))
+        } else {
+            None
+        };
+        let changed = match moving {
+            Some(progress) => self.transfers.insert(file.id, progress) != Some(progress),
+            None => self.transfers.remove(&file.id).is_some(),
+        };
+        if changed && self.row_files.borrow().contains(&file.id) {
+            self.dirty.conversation = true;
         }
     }
 
@@ -1104,6 +1170,10 @@ impl Store {
         conversation.set_title(title.into());
         conversation.set_kind(kind);
         conversation.set_can_write(self.can_write(chat));
+        let rights = self.send_rights(chat);
+        conversation.set_can_send_photos(rights.photos);
+        conversation.set_can_send_videos(rights.videos);
+        conversation.set_can_send_files(rights.documents);
         conversation.set_muted(self.muted(chat));
         conversation.set_pinned(!pinned_in(chat).is_empty());
 
@@ -1175,7 +1245,10 @@ impl Store {
         let mut previous_day = None;
         // The album of the row before, whose next messages join it.
         let mut album = 0;
+        let mut row_files = HashSet::new();
         for message in history.shown_messages() {
+            let pending = matches!(message.sending_state, Some(MessageSendingState::Pending));
+            row_files.extend(message_files(&message.content));
             let day = time::day(message.date);
             if day != previous_day {
                 rows.push(MessageRow { kind: RowKind::Day, day: time::moment(message.date), ..self.blank_row() });
@@ -1193,7 +1266,15 @@ impl Store {
                 duration: picture.duration,
                 name: file_name(&message.content).into(),
                 secret: is_secret(&message.content),
+                uploading: pending && self.transfer_of(original(&message.content)).is_some(),
+                progress: self.transfer_of(original(&message.content)).map_or(0.0, |(moved, total)| part(moved, total)),
+                size: self.transfer_of(original(&message.content)).map_or(SharedString::new(), |(_, total)| size_text(total).into()),
+                moved: self.transfer_of(original(&message.content)).map_or(SharedString::new(), |(moved, _)| size_text(moved).into()),
             });
+            let files: Vec<FileCard> = match &message.content {
+                M::Document { document, .. } => vec![self.file_card(message, document, pending)],
+                _ => Vec::new(),
+            };
             let rich_text = formatted(&message.content).and_then(rich_text::styled_text);
             let sticker = sticker_picture(&message.content)
                 .map(|picture| Sticker { picture: self.picture_image(&picture), width: picture.width.max(1), height: picture.height.max(1) })
@@ -1243,6 +1324,7 @@ impl Store {
                 seen: message.is_outgoing && message.id <= chat.last_read_outbox_message_id,
                 button: SharedString::new(),
                 media: ModelRc::default(),
+                files: ModelRc::new(VecModel::from(files)),
                 sticker,
                 rich: rich_text.is_some(),
                 rich_text: rich_text.unwrap_or_default(),
@@ -1253,6 +1335,7 @@ impl Store {
             });
         }
         self.attach_media(&mut rows, media);
+        *self.row_files.borrow_mut() = row_files;
         // Telegram's sponsored message, after the newest post of a channel.
         if let Some(sponsored) = self.sponsored.get(&chat.id).and_then(|sponsored| sponsored.first()) {
             let text = match &sponsored.content {
@@ -1416,6 +1499,36 @@ impl Store {
             kept.insert(row.id.clone(), model);
         }
         *models = kept;
+    }
+
+    /// How much of a file has moved, and how much there is, while it is on its way (updateFile).
+    fn transfer_of(&self, file: Option<&api::File>) -> Option<(i64, i64)> {
+        self.transfers.get(&file?.id).copied()
+    }
+
+    /// A message's file as the design's card: where it is, and how far it has got.
+    fn file_card(&self, message: &api::Message, document: &api::Document, pending: bool) -> FileCard {
+        let file = &document.document;
+        let transfer = self.transfer_of(Some(file));
+        let state = if pending && !file.remote.is_uploading_completed {
+            FileState::Uploading
+        } else if file.local.is_downloading_completed && !file.local.path.is_empty() {
+            FileState::Done
+        } else if transfer.is_some() || file.local.is_downloading_active {
+            FileState::Downloading
+        } else {
+            FileState::Remote
+        };
+        let (moved, total) = transfer.unwrap_or((0, file.size_or_expected()));
+        FileCard {
+            id: message.id.to_string().into(),
+            name: document.file_name.clone().into(),
+            size: size_text(file.size_or_expected()).into(),
+            file_type: file_type_of(&document.file_name),
+            state,
+            progress: if matches!(state, FileState::Uploading | FileState::Downloading) { part(moved, total) } else { 0.0 },
+            moved: size_text(moved).into(),
+        }
     }
 
     /// A row with no pictures anywhere, to build the others from.
@@ -1665,6 +1778,63 @@ pub fn is_expired(content: &M) -> bool {
     matches!(content, M::ExpiredPhoto {} | M::ExpiredVideo {} | M::ExpiredVideoNote {} | M::ExpiredVoiceNote {})
 }
 
+/// What the chat lets us send besides words.
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
+pub struct SendRights {
+    pub photos: bool,
+    pub videos: bool,
+    pub documents: bool,
+}
+
+impl SendRights {
+    pub fn any(&self) -> bool {
+        self.photos || self.videos || self.documents
+    }
+
+    fn and(&self, other: &SendRights) -> SendRights {
+        SendRights { photos: self.photos && other.photos, videos: self.videos && other.videos, documents: self.documents && other.documents }
+    }
+}
+
+/// The files a message's content holds that move (up or down): its photo's largest size, its video,
+/// its GIF, its document.
+fn message_files(content: &M) -> Vec<i32> {
+    match content {
+        M::Document { document, .. } => vec![document.document.id],
+        other => original(other).map(|file| vec![file.id]).unwrap_or_default(),
+    }
+}
+
+/// `moved` of `total`, 0 … 1.
+fn part(moved: i64, total: i64) -> f32 {
+    if total <= 0 { 0.0 } else { (moved as f64 / total as f64).clamp(0.0, 1.0) as f32 }
+}
+
+/// A size in the units the Finder uses: "640 KB", "2.1 MB", "2.6 GB".
+pub fn size_text(bytes: i64) -> String {
+    let bytes = bytes.max(0) as f64;
+    if bytes < 1000.0 {
+        format!("{} B", bytes as i64)
+    } else if bytes < 1_000_000.0 {
+        format!("{:.0} KB", bytes / 1000.0)
+    } else if bytes < 1_000_000_000.0 {
+        format!("{:.1} MB", bytes / 1_000_000.0)
+    } else {
+        format!("{:.1} GB", bytes / 1_000_000_000.0)
+    }
+}
+
+/// A file's kind for its icon, by its name's extension.
+pub fn file_type_of(name: &str) -> FileType {
+    let extension = name.rsplit_once('.').map(|(_, extension)| extension.to_ascii_lowercase()).unwrap_or_default();
+    match extension.as_str() {
+        "jpg" | "jpeg" | "png" | "gif" | "webp" | "heic" | "heif" | "tif" | "tiff" | "bmp" | "svg" | "avif" => FileType::Image,
+        "zip" | "rar" | "7z" | "tar" | "gz" | "tgz" | "bz2" | "xz" | "zst" | "dmg" | "iso" => FileType::Archive,
+        "pdf" => FileType::Pdf,
+        _ => FileType::Other,
+    }
+}
+
 /// A video's or a GIF's still frame, when it is a picture (not a moving one).
 fn still<'a>(
     thumbnail: Option<&'a api::Thumbnail>,
@@ -1759,7 +1929,7 @@ mod tests {
 
     #[test]
     fn a_sticker_shows_itself_or_its_still_thumbnail() {
-        let file = |id: i32| api::File { id, size: 0, local: api::LocalFile { path: String::new(), is_downloading_completed: false } };
+        let file = |id: i32| api::File { id, size: 0, expected_size: 0, local: api::LocalFile::default(), remote: api::RemoteFile::default() };
         let sticker = |format: api::StickerFormat, thumbnail: Option<api::ThumbnailFormat>| M::Sticker {
             sticker: api::Sticker {
                 width: 512,

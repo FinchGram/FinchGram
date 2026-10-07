@@ -4,15 +4,15 @@
 import { ListView } from "std-widgets.slint";
 import { AppState, Page, Connection, Theme } from "../state.slint";
 import {
-    Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice,
-} from "../telegram.slint";
+    Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState } from "../telegram.slint";
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
-import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope } from "../chat.slint";
+import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords } from "../chat.slint";
 import { TerminalPalette as P } from "palette.slint";
 import { Signs } from "signs.slint";
 import { TerminalActions } from "actions.slint";
+import { TerminalAttachments } from "attachments.slint";
 
 export enum TerminalView { chats, channels, bots, rules, scheduled }
 
@@ -542,7 +542,7 @@ component Side inherits Rectangle {
 // One line of the log: time, sender, words. While messages are being chosen, "[x]" in front.
 component LogLine {
     in property <MessageRow> message;
-    property <bool> has-media: message.media.length > 0;
+    property <bool> has-media: message.media.length > 0 || message.files.length > 0;
     property <bool> reachable: !message.reply.gone && message.reply.id != "";
     height: lines.preferred-height;
 
@@ -632,20 +632,26 @@ component LogLine {
                 font-size: 13px;
                 line-height-factor: P.leading(1.6);
             }
-            // Its photos and videos, a line each: "↳ [vid 0:42] clip.mp4".
+            // Its photos and videos, a line each: "↳ [vid 0:42] clip.mp4"; on its way up, with
+            // its progress and "[x]" to stop it.
             for item in root.message.media: Rectangle {
                 height: tag.preferred-height;
                 tag := T {
                     x: 0;
                     text: "↳ [" + (item.video ? "vid " + Fmt.duration(item.duration) : "img") + (item.secret ? " · " + @tr("Tap to view") : "") + "]"
-                        + (item.name == "" ? "" : " " + item.name);
-                    color: P.accent;
+                        + (item.name == "" ? "" : " " + item.name)
+                        + (item.uploading && !root.message.failed ? "  " + AttachWords.bar(item.progress) + " " + Math.round(item.progress * 100) + "%  [x]" : "");
+                    color: root.message.failed ? P.faint : item.uploading ? P.muted : P.accent;
                     overflow: elide;
                 }
                 TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
-                        Viewer.view(item.id, true);
+                        if item.uploading && !root.message.failed {
+                            Conversation.cancel-upload(item.id);
+                        } else {
+                            Viewer.view(item.id, true);
+                        }
                     }
                     // A right click on it is for this photo or video (Actions.hovered-media).
                     changed has-hover => {
@@ -675,17 +681,58 @@ component LogLine {
                     }
                 }
             }
-            if root.message.failed: Rectangle {
-                height: retry.preferred-height;
-                retry := T {
+            // Its file: "↳ [pdf] October screenings.pdf  1.2 MB  [▼ download]".
+            for file in root.message.files: file-line := Rectangle {
+                height: line.preferred-height;
+                property <bool> moving: file.state == FileState.uploading || file.state == FileState.downloading;
+                line := T {
                     x: 0;
-                    text: "↳ ✗ " + @tr("Failed to send") + " [" + @tr("retry") + "]";
-                    color: P.accent3;
+                    text: "↳ [" + AttachWords.file-sign(file.file-type) + "] " + file.name + "  "
+                        + (file-line.moving ? AttachWords.progress(file.moved, file.size) + "  " + AttachWords.bar(file.progress) + "  [x]"
+                            : file.size + (file.state == FileState.remote ? "  [▼ " + AttachWords.download().to-lowercase() + "]"
+                                : file-touch.has-hover ? "  [" + AttachWords.show-in-finder().to-lowercase() + "]" : ""));
+                    color: root.message.failed ? P.faint : P.accent;
+                    overflow: elide;
                 }
-                TouchArea {
+                file-touch := TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
-                        Conversation.retry(root.message.id);
+                        Conversation.file-action(file.id);
+                    }
+                }
+            }
+            // Not sent: "↳ ✗ not sent [retry] [delete]".
+            if root.message.failed: HorizontalLayout {
+                alignment: start;
+                spacing: 8px;
+                T {
+                    text: "↳ ✗ " + AttachWords.not-sent().to-lowercase();
+                    color: P.accent3;
+                }
+                Rectangle {
+                    width: retry.preferred-width;
+                    retry := T {
+                        text: "[" + AttachWords.retry().to-lowercase() + "]";
+                        color: retry-touch.has-hover ? P.accent : P.accent3;
+                    }
+                    retry-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Conversation.retry(root.message.id);
+                        }
+                    }
+                }
+                Rectangle {
+                    width: discard.preferred-width;
+                    discard := T {
+                        text: "[" + AttachWords.delete().to-lowercase() + "]";
+                        color: discard-touch.has-hover ? P.accent : P.accent3;
+                    }
+                    discard-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Conversation.discard(root.message.id);
+                        }
                     }
                 }
             }
@@ -981,6 +1028,8 @@ component CommandLine inherits Rectangle {
         input.focus-text();
     }
     property <[Command]> commands: [
+        { command: "/photo", description: AttachWords.photo-or-video() },
+        { command: "/file", description: AttachWords.file() },
         { command: "/mute", description: @tr("Mute or unmute this chat") },
         { command: "/pin", description: @tr("Pin or unpin this chat") },
         { command: "/read", description: @tr("Mark this chat as read") },
@@ -992,7 +1041,11 @@ component CommandLine inherits Rectangle {
     }
 
     function run(line: string) {
-        if line.starts-with("/mute") {
+        if line.starts-with("/photo") {
+            Attachments.choose(AttachKind.photo);
+        } else if line.starts-with("/file") {
+            Attachments.choose(AttachKind.file);
+        } else if line.starts-with("/mute") {
             Conversation.toggle-mute();
         } else if line.starts-with("/pin") {
             Conversation.toggle-pin();
@@ -1069,6 +1122,32 @@ component CommandLine inherits Rectangle {
             color: P.faint;
             max-width: 220px;
             overflow: elide;
+        }
+        // "[+]": photos, videos and files (attachments.slint).
+        if Conversation.chat-id != "" && Conversation.can-write: VerticalLayout {
+            alignment: center;
+            plus := Rectangle {
+                property <bool> allowed: Conversation.can-send-photos || Conversation.can-send-videos || Conversation.can-send-files;
+                width: plus-word.preferred-width;
+                height: plus-word.preferred-height;
+                plus-word := T {
+                    text: Attachments.menu-open ? "[+ ▴]" : "[+]";
+                    color: !plus.allowed ? P.faint : Attachments.menu-open ? P.accent : plus-touch.has-hover ? P.text : P.faint;
+                    opacity: plus.allowed ? 1 : 0.4;
+                }
+                plus-touch := TouchArea {
+                    mouse-cursor: plus.allowed ? pointer : not-allowed;
+                    clicked => {
+                        if plus.allowed {
+                            Attachments.menu-x = self.absolute-position.x;
+                            Attachments.menu-y = self.absolute-position.y;
+                            Attachments.menu-focus = -1;
+                            Attachments.menu-keyboard = false;
+                            Attachments.menu-open = !Attachments.menu-open;
+                        }
+                    }
+                }
+            }
         }
         VerticalLayout {
             horizontal-stretch: 1;
@@ -1237,4 +1316,5 @@ export component TerminalWindow inherits Rectangle {
 
     // A message's menu and the dialogs of its actions, over everything.
     TerminalActions { }
+    TerminalAttachments { }
 }

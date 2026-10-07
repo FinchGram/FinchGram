@@ -35,6 +35,7 @@ mod store;
 mod time;
 #[cfg(test)]
 mod timing;
+mod attachments;
 mod viewer;
 
 use std::cell::RefCell;
@@ -122,6 +123,7 @@ pub fn start(ui: &MainWindow) {
     password::connect(ui);
     viewer::connect(ui);
     notifications::connect(ui);
+    attachments::connect(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {
@@ -136,6 +138,10 @@ pub fn start(ui: &MainWindow) {
                 | WindowEvent::MouseInput { .. }
                 | WindowEvent::MouseWheel { .. }
                 | WindowEvent::CursorMoved { .. } => online::input(),
+                // Files dragged from the Finder (docs/drag-and-drop.md): one event per file.
+                WindowEvent::HoveredFile(path) => attachments::hovering(path.clone()),
+                WindowEvent::HoveredFileCancelled => attachments::hover_ended(),
+                WindowEvent::DroppedFile(path) => attachments::dropped(path.clone()),
                 _ => {}
             }
             // Right clicks are seen here, before the pages: a message's menu opens wherever on it
@@ -275,7 +281,11 @@ fn on_update(update: Update) {
     match update {
         Update::AuthorizationState { authorization_state } => on_authorization_state(authorization_state),
         Update::ConnectionState { state } => with_state(|app| app.set_connection(connection(state))),
-        Update::File { file } => files::updated(&file),
+        Update::File { file } => {
+            files::updated(&file);
+            store::with(|store| store.file_progress(&file));
+            store::refresh();
+        }
         Update::NotificationGroup {
             notification_group_id,
             chat_id,

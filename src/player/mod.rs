@@ -7,6 +7,7 @@
 //! Everything runs on the UI thread; mpv's own threads only ask the event loop to look.
 
 mod mpv;
+pub mod probe;
 
 use std::cell::RefCell;
 use std::ffi::{CStr, CString, c_char, c_int, c_void};

@@ -2,8 +2,7 @@
 import { AppState } from "state.slint";
 import {
     Conversation, ChatKind, Media, Sticker, MessageRow, RowKind, Actions, MessageAction, ActionNotice, ComposeBar, ReplyQuote,
-    DeleteChoice,
-} from "telegram.slint";
+    DeleteChoice, Attachments, AttachKind, AttachProblem, AttachHint, FileCard, FileState, FileType } from "telegram.slint";
 import { Fmt } from "format.slint";
 import { Icon } from "widgets.slint";
 
@@ -180,6 +179,10 @@ export component MessageInput inherits Rectangle {
                 if event.text == Key.Escape && self.preedit-text == "" && Actions.escape() {
                     return accept;
                 }
+                // ⌘V with a picture or files on the clipboard: they go to the chat, not into the words.
+                if (event.text == "v" || event.text == "V") && event.modifiers.control && !event.modifiers.shift && Attachments.paste() {
+                    return accept;
+                }
                 if event.text == Key.UpArrow && self.text == "" && self.preedit-text == "" && Actions.bar == ComposeBar.none {
                     Actions.edit-last();
                     return accept;
@@ -205,6 +208,255 @@ export component Capped {
     }
 }
 
+// How far a file has got, as an arc around a circle (the design's progress ring): `progress` of
+// it, 0 … 1, in `color` over a `track`.
+export component ProgressRing inherits Rectangle {
+    in property <float> progress;
+    in property <length> size: 40px;
+    in property <length> thickness: 3px;
+    in property <color> ring-color;
+    in property <color> track;
+    width: size;
+    height: size;
+    border-radius: size / 2;
+    border-width: thickness;
+    border-color: track;
+
+    property <float> angle: clamp(root.progress, 0, 0.9999) * 360;
+    Path {
+        width: parent.width;
+        height: parent.height;
+        viewbox-width: 100;
+        viewbox-height: 100;
+        stroke: root.ring-color;
+        stroke-width: root.thickness;
+        fill: transparent;
+        MoveTo { x: 50; y: 50 - 50 + root.thickness / root.size * 50; }
+        ArcTo {
+            x: 50 + (50 - root.thickness / root.size * 50) * sin(root.angle * 1deg);
+            y: 50 - (50 - root.thickness / root.size * 50) * cos(root.angle * 1deg);
+            radius-x: 50 - root.thickness / root.size * 50;
+            radius-y: 50 - root.thickness / root.size * 50;
+            sweep: true;
+            large-arc: root.angle > 180;
+        }
+    }
+}
+
+// What the attachments pages say (the design's sixth round, its copy list).
+export global AttachWords {
+    public pure function attach() -> string { return @tr("Attach"); }
+    public pure function photo-or-video() -> string { return @tr("Photo or Video"); }
+    public pure function file() -> string { return @tr("File"); }
+    public pure function poll() -> string { return @tr("Poll"); }
+    public pure function not-available() -> string { return @tr("Not available yet"); }
+    public pure function not-allowed() -> string { return @tr("Not allowed in this group"); }
+    public pure function cant-send() -> string { return @tr("You can't send messages in this group"); }
+    public pure function menu-keys() -> string { return @tr("↑↓ Choose · Return Open · Esc Close"); }
+
+    // The card's title: "Send Photo", "Send 3 Photos", "Send 2 Files", …
+    public pure function title(count: int, videos: int, as-files: bool) -> string {
+        if as-files {
+            return count == 1 ? @tr("Send File") : @tr("Send {n} Files" | "Send {n} Files" % count);
+        }
+        if videos == count {
+            return count == 1 ? @tr("Send Video") : @tr("Send {n} Videos" | "Send {n} Videos" % count);
+        }
+        return count == 1 ? @tr("Send Photo") : @tr("Send {n} Photos" | "Send {n} Photos" % count);
+    }
+    public pure function albums(n: int) -> string { return @tr("Will be sent as {n} albums" | "Will be sent as {n} albums" % n); }
+    public pure function album(i: int, n: int) -> string { return @tr("Album {0} · {1}", i, n); }
+    public pure function add-more() -> string { return @tr("Add more"); }
+    public pure function remove() -> string { return @tr("Remove"); }
+    public pure function caption-placeholder() -> string { return @tr("Add a caption…"); }
+    public pure function as-photo() -> string { return @tr("Send as photo"); }
+    public pure function as-video() -> string { return @tr("Send as video"); }
+    public pure function as-file() -> string { return @tr("Send as file"); }
+    public pure function group-items() -> string { return @tr("Group items"); }
+    public pure function timer() -> string { return @tr("Self-destruct timer"); }
+    public pure function timer-sub() -> string { return @tr("Disappears after it's opened."); }
+    public pure function timer-label(seconds: int) -> string {
+        if seconds == 0 { return @tr("Off"); }
+        if seconds < 0 { return @tr("View once"); }
+        return @tr("{0} s", seconds);
+    }
+    public pure function spoiler() -> string { return @tr("Hide with spoiler"); }
+    public pure function cancel() -> string { return @tr("Cancel"); }
+    public pure function send() -> string { return @tr("Send"); }
+    public pure function more-send() -> string { return @tr("More send options"); }
+    public pure function silent() -> string { return @tr("Send without sound"); }
+    public pure function schedule() -> string { return @tr("Schedule message"); }
+    public pure function hint(hint: AttachHint) -> string {
+        if hint == AttachHint.keys {
+            return AppState.send-with-enter ? @tr("Return to send · Esc to cancel") : @tr("⌘Return to send · Return for a new line · Esc to cancel");
+        }
+        if hint == AttachHint.remove-marked { return @tr("Remove the marked items to send"); }
+        if hint == AttachHint.caption-long { return @tr("Caption is too long"); }
+        return "";
+    }
+    public pure function problem(problem: AttachProblem) -> string {
+        if problem == AttachProblem.too-big { return @tr("Files over {0} GB can't be sent", 2); }
+        if problem == AttachProblem.too-big-premium { return @tr("Files over {0} GB can't be sent", 4); }
+        if problem == AttachProblem.unreadable { return @tr("Can't read this file"); }
+        if problem == AttachProblem.not-allowed { return not-allowed(); }
+        return "";
+    }
+    public pure function drop-photos() -> string { return @tr("Drop to send as photos"); }
+    public pure function drop-files() -> string { return @tr("Drop to send as files"); }
+    public pure function compressed() -> string { return @tr("Compressed"); }
+    public pure function original() -> string { return @tr("Original quality"); }
+    public pure function cancel-upload() -> string { return @tr("Cancel upload"); }
+    public pure function not-sent() -> string { return @tr("Not sent"); }
+    public pure function retry() -> string { return @tr("Retry"); }
+    public pure function delete() -> string { return @tr("Delete"); }
+    public pure function download() -> string { return @tr("Download"); }
+    public pure function cancel-download() -> string { return @tr("Cancel download"); }
+    public pure function show-in-finder() -> string { return @tr("Show in Finder"); }
+    // "0.4 MB of 1.2 MB"
+    public pure function progress(moved: string, size: string) -> string { return @tr("{0} of {1}", moved, size); }
+    // Terminal's progress bar: "[▓▓▓░░░░░]" at 42 %.
+    public pure function bar(progress: float) -> string {
+        return ["[░░░░░░░░]", "[▓░░░░░░░]", "[▓▓░░░░░░]", "[▓▓▓░░░░░]", "[▓▓▓▓░░░░]", "[▓▓▓▓▓░░░]", "[▓▓▓▓▓▓░░]", "[▓▓▓▓▓▓▓░]", "[▓▓▓▓▓▓▓▓]"][clamp(Math.round(progress * 8), 0, 8)];
+    }
+    // Terminal's sign for a file's kind: "[pdf]".
+    public pure function file-sign(kind: FileType) -> string {
+        if kind == FileType.image { return "img"; }
+        if kind == FileType.archive { return "zip"; }
+        if kind == FileType.pdf { return "pdf"; }
+        return "doc";
+    }
+    public pure function file-icon(kind: FileType) -> string {
+        if kind == FileType.image { return "file-image"; }
+        if kind == FileType.archive { return "file-zip"; }
+        if kind == FileType.pdf { return "file-pdf"; }
+        return "file-text";
+    }
+    // What a click on a file card does, for its tooltip.
+    public pure function file-tip(state: FileState) -> string {
+        if state == FileState.remote { return download(); }
+        if state == FileState.downloading { return cancel-download(); }
+        if state == FileState.uploading { return cancel-upload(); }
+        return show-in-finder();
+    }
+}
+
+// A file in a message, as the design's card: its kind's icon (a ring while it moves, an arrow
+// while it is on Telegram's servers only), its name and size; a click does what the file's state
+// allows (Conversation.file-action). The themes set the colours and shapes.
+export component FileCardView inherits Rectangle {
+    in property <FileCard> file;
+    in property <length> radius: 8px;
+    in property <length> inner-radius: 6px;
+    in property <length> padding-x: 12px;
+    in property <length> padding-y: 10px;
+    in property <length> name-size: 14px;
+    in property <string> font-family;
+    in property <color> text;
+    in property <color> muted;
+    in property <color> line;
+    in property <color> hover;
+    in property <color> accent;
+    in property <color> accent-ink;
+    in property <color> on-accent;
+    in property <color> soft;
+    in property <color> track;
+    in property <color> pdf;
+    in property <color> zip;
+    in property <color> picture;
+    in property <bool> duotone;
+    property <bool> moving: file.state == FileState.uploading || file.state == FileState.downloading;
+    width: 300px;
+    height: row.preferred-height;
+    border-radius: radius;
+    border-width: 1px;
+    border-color: line;
+    background: touch.has-hover ? hover : transparent;
+
+    row := HorizontalLayout {
+        padding-left: root.padding-x;
+        padding-right: root.padding-x;
+        padding-top: root.padding-y;
+        padding-bottom: root.padding-y;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 40px;
+                height: 40px;
+                border-radius: root.moving || root.file.state == FileState.remote ? 20px : root.inner-radius;
+                background: root.moving ? root.soft
+                    : root.file.state == FileState.remote ? root.accent
+                    : root.file.file-type == FileType.pdf ? root.pdf
+                    : root.file.file-type == FileType.archive ? root.zip
+                    : root.file.file-type == FileType.image ? root.picture : root.accent;
+                if root.moving: ProgressRing {
+                    progress: root.file.progress;
+                    size: 40px;
+                    thickness: 3px;
+                    ring-color: root.accent;
+                    track: root.track;
+                }
+                Icon {
+                    name: root.moving ? "x" : root.file.state == FileState.remote ? "arrow-down" : AttachWords.file-icon(root.file.file-type);
+                    size: root.moving ? 16px : root.file.state == FileState.remote ? 18px : 22px;
+                    color: root.moving ? root.accent-ink : root.on-accent;
+                    duotone: root.duotone && !root.moving && root.file.state != FileState.remote;
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 1px;
+            Text {
+                text: root.file.name;
+                color: root.text;
+                font-family: root.font-family;
+                font-size: root.name-size;
+                font-weight: 500;
+                overflow: elide;
+            }
+            Text {
+                text: root.moving ? AttachWords.progress(root.file.moved, root.file.size) : root.file.size;
+                color: root.muted;
+                font-family: root.font-family;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        if touch.has-hover && root.file.state == FileState.done: VerticalLayout {
+            alignment: center;
+            HorizontalLayout {
+                spacing: 4px;
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "folder-open";
+                        size: 14px;
+                        color: root.accent-ink;
+                        duotone: root.duotone;
+                    }
+                }
+                Text {
+                    text: AttachWords.show-in-finder();
+                    color: root.accent-ink;
+                    font-family: root.font-family;
+                    font-size: 12px;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Conversation.file-action(root.file.id);
+        }
+    }
+}
+
 // A message's photos and videos, from the design's media-viewer.js: one in its own shape, within
 // width-limit × height-limit; several (an album) as square tiles, two across for two or four, else
 // three. A video has a play button and its length. Each asks for its sharp picture once it is
@@ -213,6 +465,9 @@ export component Capped {
 // set the shapes.
 export component MediaTiles {
     in property <[Media]> media;
+    in property <bool> failed;              // the message was not sent: its tiles are dimmed
+    in property <string> mono-font;         // the sizes while a tile goes up
+    callback cancel(string);                // × on a tile's ring: its message is dropped
     in property <length> width-limit: 360px;
     in property <length> height-limit: 280px;
     in property <length> radius: 8px;
@@ -260,7 +515,7 @@ export component MediaTiles {
         Rectangle {
             background: touch.has-hover ? #ffffff10 : transparent;
         }
-        if item.video && !item.secret: Rectangle {
+        if item.video && !item.secret && !item.uploading && !root.failed: Rectangle {
             width: root.play-size;
             height: root.play-size;
             border-radius: self.width / 2;
@@ -270,6 +525,55 @@ export component MediaTiles {
                 size: root.play-icon-size;
                 color: #ffffff;
                 duotone: root.duotone;
+            }
+        }
+        // Not sent: dimmed, with a warning in the middle.
+        if root.failed: Rectangle {
+            background: #00000066;
+            Icon {
+                name: "warning-circle";
+                size: 30px;
+                color: #ffffff;
+                duotone: root.duotone;
+            }
+        }
+        // On its way up: how far, and × to stop it.
+        if item.uploading && !root.failed: Rectangle {
+            width: 44px;
+            height: 44px;
+            border-radius: 22px;
+            background: #00000080;
+            ProgressRing {
+                progress: item.progress;
+                size: 38px;
+                thickness: 3px;
+                ring-color: #ffffff;
+                track: #ffffff40;
+            }
+            Icon {
+                name: "x";
+                size: 18px;
+                color: #ffffff;
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    root.cancel(item.id);
+                }
+            }
+        }
+        if item.uploading && !root.failed && root.count == 1 && item.size != "": Rectangle {
+            x: root.inset;
+            y: parent.height - self.height - root.inset;
+            width: sent.preferred-width + 12px;
+            height: sent.preferred-height + 2px;
+            border-radius: root.badge-radius;
+            background: #00000080;
+            sent := Text {
+                text: AttachWords.progress(item.moved, item.size);
+                color: #ffffff;
+                font-family: root.mono-font;
+                font-size: root.badge-font-size;
             }
         }
         if item.video && item.duration > 0: Rectangle {

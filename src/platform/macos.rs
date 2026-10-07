@@ -20,10 +20,11 @@ use objc2::rc::Retained;
 use objc2::runtime::{AnyClass, AnyObject, Bool, Imp, NSObject, NSObjectProtocol, ProtocolObject, Sel};
 use objc2::{AnyThread, MainThreadMarker, MainThreadOnly, define_class, msg_send, sel};
 use objc2_app_kit::{
-    NSApplication, NSImage, NSMenu, NSMenuItem, NSPasteboard, NSPasteboardTypeString, NSPasteboardTypeTIFF,
-    NSRequestUserAttentionType, NSStatusBar, NSStatusItem, NSVariableStatusItemLength,
+    NSApplication, NSBitmapImageFileType, NSBitmapImageRep, NSImage, NSMenu, NSMenuItem, NSModalResponse, NSOpenPanel, NSPasteboard,
+    NSPasteboardTypeFileURL, NSPasteboardTypePNG, NSPasteboardTypeString, NSPasteboardTypeTIFF, NSRequestUserAttentionType,
+    NSStatusBar, NSStatusItem, NSVariableStatusItemLength, NSWorkspace,
 };
-use objc2_foundation::{NSArray, NSBundle, NSData, NSDate, NSError, NSSize, NSString};
+use objc2_foundation::{NSArray, NSBundle, NSData, NSDate, NSDictionary, NSError, NSSize, NSString, NSURL};
 use objc2_user_notifications::{
     UNAuthorizationOptions, UNMutableNotificationContent, UNNotification, UNNotificationDefaultActionIdentifier,
     UNNotificationPresentationOptions, UNNotificationRequest, UNNotificationResponse, UNNotificationSound,
@@ -51,7 +52,14 @@ thread_local! {
     static STATUS_ITEM: RefCell<Option<Retained<NSStatusItem>>> = const { RefCell::new(None) };
     /// The notification centre only keeps a weak reference to its delegate.
     static NOTIFICATION_DELEGATE: RefCell<Option<Retained<NotificationDelegate>>> = const { RefCell::new(None) };
+    /// The open panel while it is shown: it must live until its completion handler has run.
+    static OPEN_PANEL: RefCell<Option<Retained<NSOpenPanel>>> = const { RefCell::new(None) };
 }
+
+/// NSModalResponseOK.
+const MODAL_OK: NSModalResponse = 1;
+/// What the open panel offers for "Photo or Video": what Telegram sends as photos and videos.
+const MEDIA_EXTENSIONS: [&str; 7] = ["jpg", "jpeg", "png", "webp", "mp4", "m4v", "mov"];
 
 /// What a click on a notification opens (`handle_notification_clicks`).
 static OPEN_CHAT: OnceLock<fn(i64)> = OnceLock::new();
@@ -246,6 +254,75 @@ pub fn copy_image(contents: &[u8]) -> Result<(), String> {
     // SAFETY: an AppKit constant, there for the life of the process.
     let kind = unsafe { NSPasteboardTypeTIFF };
     if pasteboard.setData_forType(Some(&tiff), kind) { Ok(()) } else { Err("the clipboard refused the picture".into()) }
+}
+
+// ---- files ----------------------------------------------------------------------------------
+
+/// The open panel, for several files at once; `media`: pictures and videos only. `chosen` runs on
+/// the UI thread once the panel closes, with nothing when it was cancelled.
+pub fn choose_files(media: bool, chosen: impl FnOnce(Vec<std::path::PathBuf>) + 'static) {
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    let panel = NSOpenPanel::openPanel(mtm);
+    panel.setCanChooseFiles(true);
+    panel.setCanChooseDirectories(false);
+    panel.setAllowsMultipleSelection(true);
+    if media {
+        let kinds: Vec<Retained<NSString>> = MEDIA_EXTENSIONS.iter().map(|extension| NSString::from_str(extension)).collect();
+        // The panel's newer way takes UTTypes, another framework for the same list.
+        #[allow(deprecated)]
+        panel.setAllowedFileTypes(Some(&NSArray::from_retained_slice(&kinds)));
+    }
+    let chosen = RefCell::new(Some(chosen));
+    let read_from = panel.clone();
+    let handler = RcBlock::new(move |response: NSModalResponse| {
+        let paths: Vec<std::path::PathBuf> = if response == MODAL_OK {
+            read_from.URLs().iter().filter_map(|url| url.path()).map(|path| std::path::PathBuf::from(path.to_string())).collect()
+        } else {
+            Vec::new()
+        };
+        if let Some(chosen) = chosen.borrow_mut().take() {
+            chosen(paths);
+        }
+    });
+    OPEN_PANEL.with(|open| *open.borrow_mut() = Some(panel.clone()));
+    panel.beginWithCompletionHandler(&handler);
+}
+
+/// Show a file in the Finder, selected.
+pub fn reveal_file(path: &str) {
+    let url = NSURL::fileURLWithPath(&NSString::from_str(path));
+    NSWorkspace::sharedWorkspace().activateFileViewerSelectingURLs(&NSArray::from_retained_slice(&[url]));
+}
+
+/// The files on the clipboard: what the Finder puts there when files are copied.
+pub fn pasteboard_files() -> Vec<std::path::PathBuf> {
+    let pasteboard = NSPasteboard::generalPasteboard();
+    let Some(items) = pasteboard.pasteboardItems() else { return Vec::new() };
+    // SAFETY: an AppKit constant, there for the life of the process.
+    let kind = unsafe { NSPasteboardTypeFileURL };
+    items
+        .iter()
+        .filter_map(|item| item.stringForType(kind))
+        .filter_map(|url| NSURL::URLWithString(&url))
+        .filter_map(|url| url.path())
+        .map(|path| std::path::PathBuf::from(path.to_string()))
+        .collect()
+}
+
+/// The picture on the clipboard, as PNG: as it is when it is one, else made from its TIFF, which
+/// every app that copies pictures puts there.
+pub fn pasteboard_image() -> Option<Vec<u8>> {
+    let pasteboard = NSPasteboard::generalPasteboard();
+    // SAFETY: AppKit constants, there for the life of the process.
+    let (png, tiff) = unsafe { (NSPasteboardTypePNG, NSPasteboardTypeTIFF) };
+    if let Some(data) = pasteboard.dataForType(png) {
+        return Some(data.to_vec());
+    }
+    let tiff = pasteboard.dataForType(tiff)?;
+    let bitmap = NSBitmapImageRep::initWithData(NSBitmapImageRep::alloc(), &tiff)?;
+    // SAFETY: an empty dictionary is a correct set of properties.
+    let data = unsafe { bitmap.representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new()) }?;
+    Some(data.to_vec())
 }
 
 // ---- notifications --------------------------------------------------------------------------

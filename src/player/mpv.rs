@@ -24,6 +24,7 @@ pub type mpv_event_id = c_int;
 pub const MPV_EVENT_NONE: mpv_event_id = 0;
 pub const MPV_EVENT_SHUTDOWN: mpv_event_id = 1;
 pub const MPV_EVENT_END_FILE: mpv_event_id = 7;
+pub const MPV_EVENT_FILE_LOADED: mpv_event_id = 8;
 pub const MPV_EVENT_PROPERTY_CHANGE: mpv_event_id = 22;
 
 pub const MPV_END_FILE_REASON_ERROR: c_int = 4;

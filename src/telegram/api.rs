@@ -391,6 +391,12 @@ pub struct AdministratorRights {
 #[derive(Debug, Clone, PartialEq, Default, Deserialize)]
 pub struct ChatPermissions {
     pub can_send_basic_messages: bool,
+    #[serde(default)]
+    pub can_send_photos: bool,
+    #[serde(default)]
+    pub can_send_videos: bool,
+    #[serde(default)]
+    pub can_send_documents: bool,
 }
 
 // ---- chats ------------------------------------------------------------------------------------
@@ -935,13 +941,26 @@ pub enum MessageContent {
     Other,
 }
 
-/// A file TDLib knows of: on Telegram's servers, and on disk once downloaded (files.rs).
+/// A file TDLib knows of: on Telegram's servers, and on disk once downloaded (files.rs); one of
+/// ours on its way up (attachments.rs).
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct File {
     pub id: i32,
+    /// 0 until known; `expected_size` is TDLib's guess meanwhile.
     #[serde(default)]
     pub size: i64,
+    #[serde(default)]
+    pub expected_size: i64,
     pub local: LocalFile,
+    #[serde(default)]
+    pub remote: RemoteFile,
+}
+
+impl File {
+    /// Its size, or TDLib's guess of it.
+    pub fn size_or_expected(&self) -> i64 {
+        if self.size > 0 { self.size } else { self.expected_size }
+    }
 }
 
 #[derive(Debug, Clone, Default, PartialEq, Deserialize)]
@@ -949,7 +968,22 @@ pub struct LocalFile {
     #[serde(default)]
     pub path: String,
     #[serde(default)]
+    pub is_downloading_active: bool,
+    #[serde(default)]
     pub is_downloading_completed: bool,
+    #[serde(default)]
+    pub downloaded_size: i64,
+}
+
+/// The file on Telegram's servers: how much of ours has reached them.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+pub struct RemoteFile {
+    #[serde(default)]
+    pub is_uploading_active: bool,
+    #[serde(default)]
+    pub is_uploading_completed: bool,
+    #[serde(default)]
+    pub uploaded_size: i64,
 }
 
 /// A photo in several sizes, smallest first, with a tiny preview in the message itself.
@@ -1037,6 +1071,9 @@ pub struct Audio {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Document {
     pub file_name: String,
+    #[serde(default)]
+    pub mime_type: String,
+    pub document: File,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]

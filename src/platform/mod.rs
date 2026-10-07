@@ -90,6 +90,42 @@ pub fn copy_image(contents: &[u8]) -> Result<(), String> {
     }
 }
 
+/// Show the system's open panel for files (`media`: pictures and videos only), and hand `chosen`
+/// the files picked, on the UI thread once the panel closes; none when it was cancelled.
+pub fn choose_files(media: bool, chosen: impl FnOnce(Vec<std::path::PathBuf>) + 'static) {
+    #[cfg(target_os = "macos")]
+    macos::choose_files(media, chosen);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = media;
+        chosen(Vec::new());
+    }
+}
+
+/// Show a file in the system's file manager (the Finder).
+pub fn reveal_file(path: &str) {
+    #[cfg(target_os = "macos")]
+    macos::reveal_file(path);
+    #[cfg(not(target_os = "macos"))]
+    let _ = path;
+}
+
+/// The files on the clipboard (copied in the Finder), if any.
+pub fn pasteboard_files() -> Vec<std::path::PathBuf> {
+    #[cfg(target_os = "macos")]
+    return macos::pasteboard_files();
+    #[cfg(not(target_os = "macos"))]
+    Vec::new()
+}
+
+/// The picture on the clipboard as PNG, if there is one.
+pub fn pasteboard_image() -> Option<Vec<u8>> {
+    #[cfg(target_os = "macos")]
+    return macos::pasteboard_image();
+    #[cfg(not(target_os = "macos"))]
+    None
+}
+
 /// A notification of a new message, as the system shows it (on macOS in Notification Center).
 /// Systems without notifications in FinchGram yet show none, and have no badge either.
 pub struct Notification {

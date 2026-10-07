@@ -3,8 +3,8 @@
 [English](architecture.md)
 
 状态：方向已确认（2026-09-29），照酷丸工具箱的架构来做。外壳、finchgram-tdlib 和 libmpv 已经在 macOS 上跑起来了，
-登录、聊天列表、文字消息、图片和视频、消息操作（右键菜单：回复、编辑、拷贝、转发、举报、删除、多选），以及新消息通知都能用了，
-界面是设计稿的三套主题。还没定的事列在最后。
+登录、聊天列表、文字消息、图片和视频、发送照片视频和文件、消息操作（右键菜单：回复、编辑、拷贝、转发、举报、删除、多选），
+以及新消息通知都能用了，界面是设计稿的三套主题。还没定的事列在最后。
 
 ## 为什么
 
@@ -106,6 +106,14 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   阅后即焚的照片和视频（看一次，或限时）在聊天里只显示模糊的小图，用户在媒体查看器里打开它时才告诉
   TDLib（`viewer.rs`，openMessageContent），之后它按 Telegram 官方应用的做法失效。查看器只在 TDLib 说内容
   可以保存时才提供保存（聊天可以限制保存）。
+- 发送照片、视频和文件（`attachments.rs`，设计稿第六轮）：回形针菜单打开系统的打开面板；拖到窗口上的文件（`mod.rs`，
+  winit 的 HoveredFile 和 DroppedFile，[drag-and-drop.zh-Hans.md](drag-and-drop.zh-Hans.md)）和 ⌘V 粘贴的图片或文件走同一条路。
+  发出去之前先在一张卡片里显示，可以加说明文字，选项和 Telegram 官方应用一样：按照片发还是按文件发、多个合成最多十个一组的相册、
+  私聊里的自毁计时器、静默发送。只有 Telegram 认作照片和视频的文件（JPEG、PNG、WebP；MP4、M4V、MOV）才按照片和视频发，
+  其他一律按文件原样发。视频的时长、尺寸和封面由另一个线程上独立的 libmpv 读出来（`player/probe.rs`）。发送用的是 TDLib 的
+  sendMessage 和 sendMessageAlbum；消息根据 updateFile 显示进度（`store.rs`），文件消息不论是谁发的都显示成设计稿里的卡片，
+  点一下下载，或在访达中显示。能发什么由聊天的权限和我们在其中的权限决定（`store.rs`，send_rights）。说明文字的长度和文件大小
+  遵守 Telegram 的限制（TDLib 的 `message_caption_length_max` 和 `is_premium` 选项）。
 - 在消息上任何地方点右键都会弹出它的菜单。消息里带格式的文字（Slint 的 StyledText）会把所有点击留给自己，
   所以右键是在窗口自己的事件里看到的（`mod.rs`，通过 winit），记进一个全局属性，再由指针下的那一行去要菜单。
   菜单里有哪些项，看 TDLib 说这条消息能做什么（getMessageProperties）。

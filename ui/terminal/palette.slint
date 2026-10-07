@@ -17,6 +17,15 @@ export global TerminalPalette {
     out property <color> pane-head: dark ? #161a17 : #e6e9e3;
     out property <color> cmd: dark ? #121513 : #eceee9;
     out property <color> on-accent: dark ? #0e100f : #f6f7f4;
+    out property <color> danger: dark ? #ef8fb0 : #a1355c;
+    out property <color> danger-soft: dark ? #2a1a20 : #f1e2e8;
+    // A self-destruct timer that is set (the fifth round's enc).
+    out property <color> enc: dark ? #5fd0dc : #0a7383;
+    out property <color> enc-soft: dark ? #10292c : #d9edf0;
+    // The files' type colours (sixth round).
+    out property <color> file-pdf: dark ? #f2897e : #c44039;
+    out property <color> file-zip: dark ? #e7b369 : #bb731b;
+    out property <color> file-image: dark ? #78c89e : #29885e;
     out property <color> shadow: #00000059;
     // The account's colour (several accounts are still to come: the first).
     out property <color> account: AccountColors.accent(0, dark);

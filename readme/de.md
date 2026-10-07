@@ -11,7 +11,7 @@ und stammt nicht von Telegram.
 Stand: früh. Registrieren und Anmelden, die Chatliste und Chats mit Textnachrichten funktionieren, in
 den drei Designs des Entwurfs: Workbench (Standard), Broadsheet und Terminal, umschaltbar unter
 Einstellungen › Darstellung. Fotos und Videos erscheinen in den Chats und öffnen sich in einem Viewer,
-der Videos mit mpv abspielt. Ein Rechtsklick auf eine Nachricht öffnet ihr Menü: antworten,
+der Videos mit mpv abspielt. Fotos, Videos und Dateien lassen sich über die Büroklammer senden, in das Fenster ziehen oder einfügen. Ein Rechtsklick auf eine Nachricht öffnet ihr Menü: antworten,
 bearbeiten, kopieren, Link kopieren, weiterleiten, melden, löschen oder mehrere Nachrichten auswählen.
 Die zweistufige Bestätigung wird unter Einstellungen › Datenschutz & Sicherheit verwaltet. Neue
 Nachrichten kommen als macOS-Mitteilungen, ihre Zahl steht am Dock-Symbol (Einstellungen ›

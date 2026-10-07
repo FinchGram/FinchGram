@@ -125,6 +125,29 @@ export struct Media {
     duration: int,          // seconds
     name: string,           // a video's or GIF's file name; photos have none
     secret: bool,           // sent to self-destruct: blurred, to be opened once (viewer.rs)
+    uploading: bool,        // ours, on its way to Telegram: a progress ring, and × to stop it
+    progress: float,        // 0 … 1 of it sent
+    size: string,           // "2.1 MB", while it goes up
+    moved: string,          // "0.9 MB": how much has
+}
+
+// The icon of a file in a message, by its name (the design's sixth round colours them).
+export enum FileType { image, archive, pdf, other }
+
+// Where a file in a message is: on Telegram's servers only, on its way down, on its way up (ours),
+// or on disk.
+export enum FileState { remote, downloading, uploading, done }
+
+// A file in a message (a document), as the design's card: its icon, name and size; its progress
+// while it moves; once on disk, a click shows it in the Finder.
+export struct FileCard {
+    id: string,             // the message it is in
+    name: string,
+    size: string,           // "1.2 MB", or "0.4 MB of 1.2 MB" while it moves
+    file-type: FileType,
+    state: FileState,
+    progress: float,        // 0 … 1 while it moves
+    moved: string,          // "0.4 MB": how much has, while it moves
 }
 
 // A sticker message's sticker: its picture (none until Conversation.load-picture has downloaded it;
@@ -183,6 +206,7 @@ export struct MessageRow {
     seen: bool,             // an outgoing message the other side has read
     button: string,         // a sponsored message's button
     media: [Media],         // its photos, videos and GIFs: one, or an album's
+    files: [FileCard],      // its file (a document)
     sticker: Sticker,
     rich: bool,             // its words have formatting or links: rich-text shows them
     rich-text: styled-text,
@@ -211,6 +235,10 @@ export global Conversation {
     in-out property <int> online-members;
     in-out property <string> typing;             // who is typing now, "" when nobody
     in-out property <bool> can-write;
+    // What the chat lets us send besides words (its permissions, and ours in it).
+    in-out property <bool> can-send-photos;
+    in-out property <bool> can-send-videos;
+    in-out property <bool> can-send-files;
     in-out property <bool> muted;
     in-out property <bool> pinned;
     in-out property <[MessageRow]> messages;     // oldest first
@@ -235,6 +263,10 @@ export global Conversation {
     // The view is back at the end of the chat: Rust lets the rows above go again.
     callback reached-end();
     callback retry(string);                      // a message that failed to send
+    callback discard(string);                    // a message that failed to send: delete it
+    callback cancel-upload(string);              // a message of ours still on its way: delete it
+    // A click on a message's file card: download it, stop its download, or show it in the Finder.
+    callback file-action(string);
     callback open-sponsored(string);             // a sponsored message's button
     callback load-picture(string);               // a message with a photo, video or GIF is in view
     // A link in a message or its preview: the browser, or FinchGram for a chat by its username
@@ -287,6 +319,76 @@ export global Viewer {
     callback toggle-mute();
     callback download();                         // the one shown, to the Downloads folder
     callback locate();                           // close, and scroll the chat to its message
+}
+
+// Sending photos, videos and files (the design's sixth round, "FinchGram Desktop 发送附件"): the
+// paperclip's menu, the card that shows what was chosen, dropped or pasted before it goes, and the
+// files dragged over the window. Rust fills this global (src/telegram/attachments.rs).
+
+// What a file goes as: a photo or a video, as Telegram's apps send pictures and videos (made
+// smaller), or a file as it is.
+export enum AttachKind { photo, video, file }
+
+// Why a file in the card cannot be sent.
+export enum AttachProblem { none, too-big, too-big-premium, unreadable, not-allowed }
+
+// What the line under the card's buttons says.
+export enum AttachHint { none, keys, remove-marked, caption-long }
+
+// A file chosen, dropped or pasted, in the card before it is sent.
+export struct Attachment {
+    id: int,
+    kind: AttachKind,       // what it goes as
+    media: bool,            // its file is a picture or a video: it has a preview and may go as one
+    name: string,
+    size: string,           // "2.1 MB"
+    picture: image,         // a picture's or a video's preview, once there
+    has-picture: bool,
+    width: int,
+    height: int,
+    duration: int,          // a video's seconds
+    file-type: FileType,
+    problem: AttachProblem, // why it cannot be sent, if it cannot
+}
+
+export global Attachments {
+    in-out property <bool> menu-open;            // the paperclip's menu
+    in-out property <length> menu-x;             // where the paperclip is (in the window): the menu opens above it
+    in-out property <length> menu-y;
+    in-out property <bool> menu-keyboard;        // the keyboard is used in it: its key hints show
+    in-out property <int> menu-focus;            // the item the keyboard is on: 0 photos and videos, 1 files; -1 none
+    in-out property <bool> card-open;
+    in-out property <[Attachment]> items;
+    in-out property <int> count;                 // how many items
+    in-out property <int> videos;                // how many of them are videos
+    in-out property <int> albums;                // how many albums they make when more than one; else 0
+    in-out property <bool> all-media;            // every item is a picture or a video: the choices show
+    in-out property <bool> as-file;              // they go as files, as they are
+    in-out property <bool> grouped;              // several go together, as an album
+    in-out property <bool> timer-allowed;        // a private chat: photos and videos can self-destruct
+    in-out property <int> timer;                 // seconds; 0: off; -1: view once
+    in-out property <bool> timer-open;           // its choices are shown
+    in-out property <string> caption;
+    in-out property <int> caption-max;           // Telegram's limit on it
+    in-out property <bool> can-send;
+    in-out property <AttachHint> hint;           // under the card's buttons
+    in-out property <bool> send-menu-open;       // the arrow by Send: without sound, scheduled (not yet)
+    in-out property <bool> busy;                 // sending: the card closes once TDLib has the messages
+    // Files dragged over the window: whether dropping them would send them, and as what.
+    in-out property <bool> dropping;
+    in-out property <bool> drop-allowed;
+    in-out property <bool> drop-photos;          // every file dragged is a picture or a video: they go as such
+    callback choose(AttachKind);                 // the open panel: photos and videos, or files
+    callback add-more();                         // the open panel again, for more of the same
+    callback remove(int);
+    callback set-as-file(bool);
+    callback set-grouped(bool);
+    callback set-timer(int);
+    callback caption-edited(string);
+    callback send(bool);                         // true: without sound
+    callback cancel();
+    // ⌘V in the composer: a picture or files on the clipboard open the card. False: there were none.
+    callback paste() -> bool;
 }
 
 // What can be done with a message (the design's fourth round, "FinchGram Desktop 消息操作", and its

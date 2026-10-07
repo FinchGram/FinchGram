@@ -11,7 +11,7 @@ não feito pelo Telegram.
 Status: fase inicial. O cadastro e o login, a lista de conversas e as conversas com mensagens de
 texto funcionam, nos três temas do design: Workbench (o padrão), Broadsheet e Terminal, trocados em
 Configurações › Aparência. Fotos e vídeos aparecem nas conversas e abrem num visualizador que
-reproduz o vídeo com o mpv. Um clique direito numa mensagem abre o menu dela: responder, editar,
+reproduz o vídeo com o mpv. Fotos, vídeos e arquivos podem ser enviados pelo clipe, arrastando-os para a janela ou colando-os. Um clique direito numa mensagem abre o menu dela: responder, editar,
 copiar, copiar o link, encaminhar, denunciar, apagar ou selecionar várias mensagens. A verificação
 em duas etapas é gerenciada em Configurações › Privacidade e segurança. Mensagens novas chegam como
 notificações do macOS, com o número delas no ícone do Dock (Configurações › Notificações e sons).

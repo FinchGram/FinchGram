@@ -4,8 +4,9 @@
 
 Status: agreed direction (2026-09-29), after Coova Studio's architecture. The shell,
 finchgram-tdlib and libmpv run on macOS; logging in, the chat list, text messages, photos and videos,
-what can be done with a message (its menu: replying, editing, copying, forwarding, reporting,
-deleting, choosing several) and notifications of new messages work, in the design's three themes.
+sending photos, videos and files, what can be done with a message (its menu: replying, editing,
+copying, forwarding, reporting, deleting, choosing several) and notifications of new messages work,
+in the design's three themes.
 The decisions still open are listed at the end.
 
 ## Why
@@ -135,6 +136,19 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   (to be seen once, or for a time) is shown blurred until the user opens it in the media viewer,
   which tells TDLib (`viewer.rs`, openMessageContent); it then expires as Telegram's own apps let it.
   The viewer offers saving only where TDLib says the content may be saved (the chat may restrict it).
+- Sending photos, videos and files (`attachments.rs`, the design's sixth round): the paperclip's
+  menu opens the system's open panel; files dragged onto the window (`mod.rs`, winit's HoveredFile
+  and DroppedFile, [drag-and-drop.md](drag-and-drop.md)) and pictures or files pasted with ⌘V come
+  the same way. A card shows them before they go, with a caption and the choices Telegram's own
+  apps give: as a photo or as a file, together as an album of up to ten, a self-destruct timer in a
+  private chat, without sound. A picture goes as a photo and a video as a video only when its file
+  is one Telegram takes as such (JPEG, PNG, WebP; MP4, M4V, MOV); anything else goes as a file, as it
+  is. A video's length, size and still come from a libmpv of its own on another thread
+  (`player/probe.rs`). The sending is TDLib's sendMessage and sendMessageAlbum; the messages show how
+  far they have got from updateFile (`store.rs`), and a file, ours or theirs, as the design's card,
+  which downloads it or shows it in the Finder. What may be sent follows the chat's permissions and
+  ours in it (`store.rs`, send_rights). Caption length and file size follow Telegram's limits
+  (TDLib's `message_caption_length_max` and `is_premium` options).
 - A message's menu opens on a right click anywhere on the message. Its formatted words (Slint's
   StyledText) keep every click to themselves, so the right click is seen in the window's own events
   (`mod.rs`, through winit), counted in a global, and the row under the pointer asks for its menu.

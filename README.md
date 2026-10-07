@@ -10,7 +10,7 @@ not made by Telegram.
 
 Status: early. Signing up and logging in, the chat list and chats with text messages work, in the
 design's three themes: Workbench (the default), Broadsheet and Terminal, switched in Settings →
-Appearance. Photos and videos show in the chats and open in a viewer that plays video through mpv.
+Appearance. Photos and videos show in the chats and open in a viewer that plays video through mpv. Photos, videos and files can be sent from the paperclip, by dragging them onto the window, or by pasting them.
 A right click on a message gives its menu: reply, edit, copy, copy its link, forward, report,
 delete, or choose several messages. Two-step verification is managed in Settings → Privacy &
 security. New messages show as macOS notifications, and their number on the Dock icon (Settings →

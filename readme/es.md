@@ -11,7 +11,7 @@ no desarrollado por Telegram.
 Estado: temprano. El registro y el inicio de sesión, la lista de chats y los chats con mensajes de
 texto funcionan, en los tres temas del diseño: Workbench (el predeterminado), Broadsheet y Terminal,
 que se cambian en Ajustes › Apariencia. Las fotos y los vídeos se ven en los chats y se abren en un
-visor que reproduce el vídeo con mpv. Con un clic derecho en un mensaje se abre su menú: responder,
+visor que reproduce el vídeo con mpv. Las fotos, los vídeos y los archivos se envían desde el clip, arrastrándolos a la ventana o pegándolos. Con un clic derecho en un mensaje se abre su menú: responder,
 editar, copiar, copiar su enlace, reenviar, reportar, eliminar o seleccionar varios mensajes. La
 verificación en dos pasos se gestiona en Ajustes › Privacidad y seguridad. Los mensajes nuevos llegan
 como notificaciones de macOS, con su número en el icono del Dock (Ajustes › Notificaciones y

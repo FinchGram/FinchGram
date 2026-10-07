@@ -11,7 +11,7 @@ qui n'est pas développé par Telegram.
 État : débuts. L'inscription et la connexion, la liste des discussions et les discussions avec messages
 texte fonctionnent, dans les trois thèmes de la maquette : Workbench (par défaut), Broadsheet et
 Terminal, qu'on change dans Réglages › Apparence. Les photos et vidéos s'affichent dans les discussions
-et s'ouvrent dans une visionneuse qui lit la vidéo avec mpv. Un clic droit sur un message ouvre son menu
+et s'ouvrent dans une visionneuse qui lit la vidéo avec mpv. Photos, vidéos et fichiers s'envoient depuis le trombone, en les glissant dans la fenêtre ou en les collant. Un clic droit sur un message ouvre son menu
 : répondre, modifier, copier, copier le lien, transférer, signaler, supprimer ou sélectionner plusieurs
 messages. La validation en deux étapes se gère dans Réglages › Confidentialité et sécurité. Les
 nouveaux messages arrivent en notifications macOS, et leur nombre s'affiche sur l'icône du Dock

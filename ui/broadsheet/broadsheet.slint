@@ -4,14 +4,16 @@ import { ListView } from "std-widgets.slint";
 import { AppState, Page, Connection, Theme } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer, LinkPreview, ReplyQuote,
-    Actions, ComposeBar, ActionNotice,
-} from "../telegram.slint";
+    Actions, ComposeBar, ActionNotice, Attachments } from "../telegram.slint";
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
-import { ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope } from "../chat.slint";
+import {
+    ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope, AttachWords, FileCardView,
+} from "../chat.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 import { BroadsheetActions } from "actions.slint";
+import { BroadsheetAttachments } from "attachments.slint";
 
 export enum BroadsheetView { chats, channels, bots, filters, scheduled }
 
@@ -1276,7 +1278,8 @@ component Choice inherits Rectangle {
 component Bubble {
     in property <MessageRow> message;
     property <bool> mine: message.outgoing;
-    property <bool> has-media: message.media.length > 0;
+    property <bool> has-tiles: message.media.length > 0;
+    property <bool> has-media: has-tiles || message.files.length > 0;
     property <bool> has-sticker: message.content == Content.sticker && message.sticker.width > 0;
     height: bubble.height;
 
@@ -1309,7 +1312,7 @@ component Bubble {
             if root.message.reply.shown: ReplyQuoteBox {
                 quote: root.message.reply;
             }
-            if root.has-media: HorizontalLayout {
+            if root.has-tiles: HorizontalLayout {
                 alignment: start;
                 padding-top: 2px;
                 padding-bottom: 2px;
@@ -1324,9 +1327,41 @@ component Bubble {
                     badge-radius: 2px;
                     badge-font-size: 12px;
                     duotone: true;
+                    mono-font: P.mono;
+                    failed: root.message.failed;
                     open(id) => {
                         Viewer.view(id, true);
                     }
+                    cancel(id) => {
+                        Conversation.cancel-upload(id);
+                    }
+                }
+            }
+            for file in root.message.files: HorizontalLayout {
+                alignment: start;
+                padding-top: 2px;
+                padding-bottom: 2px;
+                FileCardView {
+                    file: file;
+                    radius: 4px;
+                    inner-radius: 2px;
+                    padding-x: 10px;
+                    padding-y: 8px;
+                    name-size: 15px;
+                    font-family: P.font;
+                    text: P.text;
+                    muted: P.muted;
+                    line: P.line;
+                    hover: P.hover;
+                    accent: P.accent;
+                    accent-ink: P.accent-ink;
+                    on-accent: P.on-accent;
+                    soft: P.tint;
+                    track: P.track;
+                    pdf: P.file-pdf;
+                    zip: P.file-zip;
+                    picture: P.file-image;
+                    duotone: true;
                 }
             }
             if root.has-sticker: HorizontalLayout {
@@ -1354,28 +1389,58 @@ component Bubble {
                     preview: root.message.preview;
                 }
             }
-            if root.message.failed: Rectangle {
+            // Not sent: say so, with Retry and Delete (the design's sixth round).
+            if root.message.failed: HorizontalLayout {
+                alignment: start;
+                spacing: 12px;
                 HorizontalLayout {
                     spacing: 4px;
                     VerticalLayout {
                         alignment: center;
                         Icon {
                             name: "warning-circle";
-                            size: 13px;
-                            color: P.accent2-ink;
+                            size: 14px;
+                            color: P.danger;
                             duotone: false;
                         }
                     }
                     Text {
-                        text: @tr("Failed to send · Tap to retry");
-                        color: P.accent2-ink;
+                        text: AttachWords.not-sent();
+                        color: P.danger;
                         font-size: 12px;
+                        vertical-alignment: center;
                     }
                 }
-                TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => {
-                        Conversation.retry(root.message.id);
+                Rectangle {
+                    width: retry.preferred-width;
+                    retry := Text {
+                        text: AttachWords.retry();
+                        color: P.accent-ink;
+                        font-size: 12px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Conversation.retry(root.message.id);
+                        }
+                    }
+                }
+                Rectangle {
+                    width: discard.preferred-width;
+                    discard := Text {
+                        text: AttachWords.delete();
+                        color: P.danger;
+                        font-size: 12px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Conversation.discard(root.message.id);
+                        }
                     }
                 }
             }
@@ -1402,7 +1467,8 @@ component Bubble {
 
 component Post inherits Capped {
     in property <MessageRow> message;
-    property <bool> has-media: message.media.length > 0;
+    property <bool> has-tiles: message.media.length > 0;
+    property <bool> has-media: has-tiles || message.files.length > 0;
     property <bool> has-sticker: message.content == Content.sticker && message.sticker.width > 0;
     spacing: 6px;
 
@@ -1413,7 +1479,7 @@ component Post inherits Capped {
     if root.message.reply.shown: ReplyQuoteBox {
         quote: root.message.reply;
     }
-    if root.has-media: HorizontalLayout {
+    if root.has-tiles: HorizontalLayout {
         alignment: start;
         padding-bottom: 4px;
         MediaTiles {
@@ -1426,10 +1492,41 @@ component Post inherits Capped {
             badge-radius: 2px;
             badge-font-size: 12px;
             duotone: true;
+            mono-font: P.mono;
+            failed: root.message.failed;
             open(id) => {
                 Viewer.view(id, true);
             }
+            cancel(id) => {
+                Conversation.cancel-upload(id);
+            }
         }
+    }
+    for file in root.message.files: HorizontalLayout {
+        alignment: start;
+        padding-bottom: 4px;
+        FileCardView {
+                    file: file;
+                    radius: 4px;
+                    inner-radius: 2px;
+                    padding-x: 10px;
+                    padding-y: 8px;
+                    name-size: 15px;
+                    font-family: P.font;
+                    text: P.text;
+                    muted: P.muted;
+                    line: P.line;
+                    hover: P.hover;
+                    accent: P.accent;
+                    accent-ink: P.accent-ink;
+                    on-accent: P.on-accent;
+                    soft: P.tint;
+                    track: P.track;
+                    pdf: P.file-pdf;
+                    zip: P.file-zip;
+                    picture: P.file-image;
+                    duotone: true;
+                }
     }
     if root.has-sticker: HorizontalLayout {
         alignment: start;
@@ -1959,12 +2056,58 @@ component ConversationPane inherits Rectangle {
                         }
                     }
                 }
-                // Attachments and scheduling are still to come.
-                for name in ["paperclip", "clock"]: VerticalLayout {
+                // The paperclip: photos, videos and files (attachments.slint); scheduling is still
+                // to come.
+                VerticalLayout {
+                    alignment: end;
+                    padding-bottom: 2px;
+                    clip := Rectangle {
+                        property <bool> allowed: Conversation.can-send-photos || Conversation.can-send-videos || Conversation.can-send-files;
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 2px;
+                        background: Attachments.menu-open || (clip-touch.has-hover && self.allowed) ? P.hover : transparent;
+                        DuoIcon {
+                            name: "paperclip";
+                            size: 22px;
+                            color: Attachments.menu-open ? P.accent : clip-touch.has-hover && clip.allowed ? P.text : P.muted;
+                            opacity: clip.allowed ? 1 : 0.4;
+                        }
+                        clip-touch := TouchArea {
+                            mouse-cursor: clip.allowed ? pointer : not-allowed;
+                            clicked => {
+                                if clip.allowed {
+                                    Attachments.menu-x = self.absolute-position.x;
+                                    Attachments.menu-y = self.absolute-position.y;
+                                    Attachments.menu-focus = -1;
+                                    Attachments.menu-keyboard = false;
+                                    Attachments.menu-open = !Attachments.menu-open;
+                                }
+                            }
+                        }
+                        if clip-touch.has-hover && !Attachments.menu-open: Rectangle {
+                            x: parent.width - self.width;
+                            y: -self.height - 8px;
+                            width: tip.preferred-width + 20px;
+                            height: tip.preferred-height + 12px;
+                            border-radius: 2px;
+                            background: P.text;
+                            drop-shadow-blur: 20px;
+                            drop-shadow-offset-y: 6px;
+                            drop-shadow-color: #00000033;
+                            tip := Text {
+                                text: clip.allowed ? AttachWords.attach() : AttachWords.cant-send();
+                                color: P.bg;
+                                font-size: 12px;
+                            }
+                        }
+                    }
+                }
+                VerticalLayout {
                     alignment: end;
                     padding-bottom: 9px;
                     DuoIcon {
-                        name: name;
+                        name: "clock";
                         size: 22px;
                         color: P.muted;
                         opacity: 0.4;
@@ -2114,4 +2257,5 @@ export component BroadsheetWindow inherits Rectangle {
 
     // A message's menu and the dialogs of its actions, over everything.
     BroadsheetActions { }
+    BroadsheetAttachments { }
 }

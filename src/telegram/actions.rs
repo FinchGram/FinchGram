@@ -508,6 +508,23 @@ fn cancel_bar() {
 
 /// Send what was written in `chat_id` the strip's way: a reply, the edit, or the messages to
 /// forward after the words. False: there is no strip, and the words are sent as they are.
+/// The message a reply is being written to in `chat_id`, taken: what is sent now answers it, and
+/// the strip goes. None when the strip is for something else, or there is none.
+pub fn take_reply(chat_id: i64) -> Option<i64> {
+    let message_id = STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        match state.bar.take() {
+            Some((bar_chat, Bar::Reply { message_id })) if bar_chat == chat_id => Some(message_id),
+            other => {
+                state.bar = other;
+                None
+            }
+        }
+    })?;
+    with_actions(|actions| actions.set_bar(ComposeBar::None));
+    Some(message_id)
+}
+
 pub fn send_with_bar(chat_id: i64, text: &str) -> bool {
     let bar = STATE.with(|state| {
         let mut state = state.borrow_mut();
@@ -607,7 +624,7 @@ fn set_draft(text: &str) {
     with_ui(|ui| ui.global::<Conversation>().set_draft(text.into()));
 }
 
-fn focus_composer() {
+pub(super) fn focus_composer() {
     with_actions(|actions| actions.set_focus_requests(actions.get_focus_requests() + 1));
 }
 
@@ -1266,6 +1283,9 @@ pub(super) fn show_failure(message: &str) {
 
 /// Esc closes the topmost of the menu, a dialog, the strip and choosing; false when none is open.
 fn escape() -> bool {
+    if super::attachments::escape() {
+        return true;
+    }
     let (menu, deleting, report, picking, bar, selection) = STATE.with(|state| {
         let state = state.borrow();
         (state.menu.is_some(), state.deleting.is_some(), state.report.is_some(), state.picking.is_some(), state.bar.is_some(), state.selection.is_some())

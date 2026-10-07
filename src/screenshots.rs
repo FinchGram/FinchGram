@@ -275,6 +275,38 @@ fn media(id: &str, width: i32, height: i32, hue: f32, video: bool) -> Media {
         duration: if video { 42 } else { 0 },
         name: if video { "typing-sound-test.mp4".into() } else { SharedString::new() },
         secret: false,
+        uploading: false,
+        progress: 0.0,
+        size: SharedString::new(),
+        moved: SharedString::new(),
+    }
+}
+
+/// A made-up file in a message, as the design's card.
+fn file_card(id: &str, name: &str, size: &str, kind: FileType, state: FileState, progress: f32, moved: &str) -> FileCard {
+    FileCard { id: id.into(), name: name.into(), size: size.into(), file_type: kind, state, progress, moved: moved.into() }
+}
+
+/// A made-up file in the card before sending.
+fn attachment(id: i32, name: &str, size: &str, kind: AttachKind, hue: Option<f32>, problem: AttachProblem) -> Attachment {
+    Attachment {
+        id,
+        kind,
+        media: hue.is_some(),
+        name: name.into(),
+        size: size.into(),
+        picture: hue.map(|hue| gradient(400, 300, hue)).unwrap_or_default(),
+        has_picture: hue.is_some(),
+        width: 400,
+        height: 300,
+        duration: if kind == AttachKind::Video { 42 } else { 0 },
+        file_type: match name.rsplit_once('.').map(|(_, extension)| extension) {
+            Some("pdf") => FileType::Pdf,
+            Some("zip") => FileType::Archive,
+            Some("jpg" | "png") => FileType::Image,
+            _ => FileType::Other,
+        },
+        problem,
     }
 }
 
@@ -435,6 +467,9 @@ fn open_keyboards(ui: &MainWindow) {
     conversation.set_members(486);
     conversation.set_online_members(32);
     conversation.set_can_write(true);
+    conversation.set_can_send_photos(true);
+    conversation.set_can_send_videos(true);
+    conversation.set_can_send_files(true);
     conversation.set_messages(model(vec![
         day_row(Day::Today),
         // Formatting and a link.
@@ -637,6 +672,122 @@ fn message_actions(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn F
     actions.set_flash(SharedString::new());
 }
 
+/// Sending attachments (the design's sixth round): the paperclip's menu, the card with photos,
+/// with one photo and a timer, with files (one too big), the drop zone, and the messages' states on
+/// their way (uploading, a file received, failed).
+fn attachments(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: &dyn Fn(&str) -> String) {
+    let attachments = ui.global::<Attachments>();
+    let conversation = ui.global::<Conversation>();
+    // The paperclip's menu, above the paperclip of each theme's composer.
+    let (x, y) = match theme {
+        Theme::Workbench => (330.0, 732.0),
+        Theme::Broadsheet => (1148.0, 740.0),
+        Theme::Terminal => (300.0, 752.0),
+    };
+    attachments.set_menu_x(x);
+    attachments.set_menu_y(y);
+    attachments.set_menu_open(true);
+    save(window, &name("attach-menu"));
+    attachments.set_menu_keyboard(true);
+    attachments.set_menu_focus(1);
+    save(window, &name("attach-menu-keys"));
+    attachments.set_menu_open(false);
+    attachments.set_menu_keyboard(false);
+    attachments.set_menu_focus(-1);
+
+    let photos = |n: i32| -> Vec<Attachment> {
+        (0..n).map(|i| attachment(i, &format!("IMG_{}.jpg", 2041 + i), "2.1 MB", AttachKind::Photo, Some(30.0 + 70.0 * i as f32), AttachProblem::None)).collect()
+    };
+    attachments.set_caption_max(1024);
+    attachments.set_hint(AttachHint::Keys);
+    attachments.set_can_send(true);
+    attachments.set_grouped(true);
+    // Three photos, as an album, in a group (no timer there).
+    attachments.set_items(model(photos(3)));
+    attachments.set_count(3);
+    attachments.set_videos(0);
+    attachments.set_all_media(true);
+    attachments.set_as_file(false);
+    attachments.set_timer_allowed(false);
+    attachments.set_card_open(true);
+    save(window, &name("send-card"));
+    // One photo, in a private chat, to be seen once; the timer's choices open.
+    attachments.set_items(model(photos(1)));
+    attachments.set_count(1);
+    attachments.set_timer_allowed(true);
+    attachments.set_timer(-1);
+    attachments.set_caption("Meetup photos".into());
+    attachments.set_timer_open(true);
+    save(window, &name("send-card-timer"));
+    attachments.set_timer_open(false);
+    attachments.set_timer(0);
+    attachments.set_caption(SharedString::new());
+    // Two files, one too big: it is marked, and Send waits.
+    attachments.set_items(model(vec![
+        attachment(0, "October screenings.pdf", "1.2 MB", AttachKind::File, None, AttachProblem::None),
+        attachment(1, "club-archive-2025.zip", "2.6 GB", AttachKind::File, None, AttachProblem::TooBig),
+    ]));
+    attachments.set_count(2);
+    attachments.set_all_media(false);
+    attachments.set_as_file(true);
+    attachments.set_timer_allowed(false);
+    attachments.set_hint(AttachHint::RemoveMarked);
+    attachments.set_can_send(false);
+    save(window, &name("send-card-files"));
+    attachments.set_card_open(false);
+    attachments.set_items(model(Vec::new()));
+    attachments.set_hint(AttachHint::None);
+
+    // Files dragged over the window: pictures.
+    attachments.set_dropping(true);
+    attachments.set_drop_allowed(true);
+    attachments.set_drop_photos(true);
+    save(window, &name("drop-zone"));
+    attachments.set_dropping(false);
+
+    // Messages on their way: a photo and a file going up, a file received (not downloaded, coming
+    // down, on disk), and one that was not sent.
+    let before = conversation.get_messages();
+    let mut up = media("u1", 400, 300, 25.0, false);
+    up.uploading = true;
+    up.progress = 0.42;
+    up.size = "2.1 MB".into();
+    up.moved = "0.9 MB".into();
+    conversation.set_messages(model(vec![
+        day_row(Day::Today),
+        message("1", "Mi", "18:40", "Poster draft for Saturday is up."),
+        MessageRow {
+            content: Content::Document,
+            files: model(vec![file_card("2", "October screenings.pdf", "1.2 MB", FileType::Pdf, FileState::Remote, 0.0, "")]),
+            ..message("2", "Jie", "18:44", "Here’s the schedule.")
+        },
+        MessageRow {
+            content: Content::Document,
+            files: model(vec![file_card("3", "subtitles-pack.zip", "640 KB", FileType::Archive, FileState::Downloading, 0.6, "384 KB")]),
+            ..message("3", "Mika", "18:46", "")
+        },
+        MessageRow {
+            content: Content::Document,
+            files: model(vec![file_card("4", "cover-art.png", "3.4 MB", FileType::Image, FileState::Done, 0.0, "")]),
+            ..message("4", "Zhou Ye", "18:50", "")
+        },
+        MessageRow {
+            content: Content::Document,
+            files: model(vec![file_card("6", "notes.txt", "12 KB", FileType::Other, FileState::Uploading, 0.35, "4 KB")]),
+            ..message("6", "Zhou Ye", "18:53", "")
+        },
+    ]));
+    save(window, &name("files"));
+    conversation.set_messages(model(vec![
+        day_row(Day::Today),
+        message("1", "Mi", "18:40", "Poster draft for Saturday is up."),
+        MessageRow { content: Content::Photo, media: model(vec![up]), ..message("5", "Zhou Ye", "18:52", "") },
+        MessageRow { failed: true, content: Content::Photo, media: model(vec![media("7", 400, 300, 200.0, false)]), ..message("7", "Zhou Ye", "18:54", "") },
+    ]));
+    save(window, &name("uploading"));
+    conversation.set_messages(before);
+}
+
 /// Settings → Privacy & security, and two-step verification: on, with a reset on its way and a
 /// change just made; off; asking for the password; a new password.
 fn two_step(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
@@ -737,6 +888,7 @@ fn screenshots() {
                 escape(&window);
             }
             message_actions(&ui, &window, &name);
+            attachments(&ui, &window, theme, &name);
             open_viewer(&ui, 1);
             save(&window, &name("viewer-photo"));
             open_viewer(&ui, 2);

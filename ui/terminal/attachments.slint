@@ -1,0 +1,770 @@
+// Terminal's attachments (the design's sixth round, "FinchGram Desktop 发送附件", 1b): the "[+]"
+// menu with its commands, the card before sending in the terminal's words, and the drop zone.
+import { AppState } from "../state.slint";
+import {
+    Attachments, Attachment, AttachKind, AttachProblem, AttachHint, Conversation, ChatKind, Actions, FileType,
+} from "../telegram.slint";
+import { Fmt } from "../format.slint";
+import { AttachWords, MessageInput } from "../chat.slint";
+import { TerminalPalette as P } from "palette.slint";
+
+component T inherits Text {
+    font-family: P.font;
+    font-size: 13px;
+    color: P.text;
+    vertical-alignment: center;
+}
+
+// A word in brackets that does something: "[Cancel]", "[Send ⏎]".
+component Word {
+    in property <string> label;
+    in property <color> color: P.faint;
+    in property <bool> enabled: true;
+    callback activated();
+    width: word.preferred-width;
+    height: word.preferred-height;
+    word := T {
+        text: "[" + root.label + "]";
+        color: !root.enabled ? P.faint : touch.has-hover ? P.accent : root.color;
+        opacity: root.enabled ? 1 : 0.5;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+// A line of the "[+]" menu: what it is, and its command.
+component AttachItem inherits Rectangle {
+    in property <string> label;
+    in property <string> command;
+    in property <bool> enabled: true;
+    in property <bool> focused;
+    in property <string> badge;
+    callback activated();
+    height: 28px;
+    background: root.focused ? P.sel : touch.has-hover && root.enabled ? P.sel : transparent;
+    border-width: root.focused ? 1px : 0;
+    border-color: P.accent;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+        T {
+            horizontal-stretch: 1;
+            text: (root.focused ? "> " : "") + root.label;
+            color: root.enabled ? P.text : P.faint;
+            overflow: elide;
+        }
+        if root.badge != "": T {
+            text: "(" + root.badge + ")";
+            color: P.faint;
+        }
+        T {
+            text: root.command;
+            color: root.enabled ? P.accent : P.faint;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: root.enabled ? pointer : not-allowed;
+        clicked => {
+            if root.enabled {
+                root.activated();
+            }
+        }
+    }
+    if touch.has-hover && !root.enabled && root.badge == "": Rectangle {
+        x: parent.width + 10px;
+        y: (parent.height - self.height) / 2;
+        width: why.preferred-width + 20px;
+        height: why.preferred-height + 12px;
+        border-radius: 4px;
+        background: P.side;
+        border-width: 1px;
+        border-color: P.line;
+        why := T {
+            text: AttachWords.not-allowed();
+            font-size: 12px;
+        }
+    }
+}
+
+component AttachMenu inherits Rectangle {
+    property <bool> group: Conversation.kind == ChatKind.group;
+    property <bool> media: Conversation.can-send-photos || Conversation.can-send-videos;
+    property <bool> files: Conversation.can-send-files;
+    width: 330px;
+    height: entries.preferred-height;
+    border-radius: 4px;
+    background: P.side;
+    border-width: 1px;
+    border-color: P.line;
+    drop-shadow-blur: 30px;
+    drop-shadow-offset-y: 12px;
+    drop-shadow-color: P.shadow;
+
+    function close() {
+        Attachments.menu-open = false;
+        Attachments.menu-keyboard = false;
+        Attachments.menu-focus = -1;
+        Actions.focus-requests += 1;
+    }
+    function pick(kind: AttachKind) {
+        root.close();
+        Attachments.choose(kind);
+    }
+    function move(down: bool) {
+        Attachments.menu-keyboard = true;
+        if Attachments.menu-focus < 0 {
+            Attachments.menu-focus = root.media ? 0 : 1;
+        } else if down && Attachments.menu-focus == 0 && root.files {
+            Attachments.menu-focus = 1;
+        } else if !down && Attachments.menu-focus == 1 && root.media {
+            Attachments.menu-focus = 0;
+        }
+    }
+
+    FocusScope {
+        width: 0;
+        height: 0;
+        init => {
+            self.focus();
+        }
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                root.close();
+                return accept;
+            }
+            if event.text == Key.DownArrow {
+                root.move(true);
+                return accept;
+            }
+            if event.text == Key.UpArrow {
+                root.move(false);
+                return accept;
+            }
+            if event.text == Key.Return {
+                if Attachments.menu-focus == 0 && root.media {
+                    root.pick(AttachKind.photo);
+                } else if Attachments.menu-focus == 1 && root.files {
+                    root.pick(AttachKind.file);
+                }
+                return accept;
+            }
+            return reject;
+        }
+    }
+
+    entries := VerticalLayout {
+        padding-top: 4px;
+        padding-bottom: 4px;
+        HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            height: 24px;
+            T {
+                text: "── " + AttachWords.attach().to-lowercase() + " ──";
+                color: P.faint;
+                font-size: 12px;
+            }
+        }
+        AttachItem {
+            label: AttachWords.photo-or-video();
+            command: "/photo";
+            enabled: root.media;
+            focused: Attachments.menu-focus == 0;
+            activated => {
+                root.pick(AttachKind.photo);
+            }
+        }
+        AttachItem {
+            label: AttachWords.file();
+            command: "/file";
+            enabled: root.files;
+            focused: Attachments.menu-focus == 1;
+            activated => {
+                root.pick(AttachKind.file);
+            }
+        }
+        if root.group: AttachItem {
+            label: AttachWords.poll();
+            command: "/poll";
+            enabled: false;
+            badge: AttachWords.not-available();
+        }
+        if Attachments.menu-keyboard: Rectangle {
+            height: hint.preferred-height + 10px;
+            Rectangle {
+                x: 4px;
+                width: parent.width - 8px;
+                height: 1px;
+                background: P.line;
+            }
+            hint := T {
+                x: 12px;
+                y: 7px;
+                text: AttachWords.menu-keys();
+                color: P.faint;
+                font-size: 11px;
+            }
+        }
+    }
+}
+
+component GridTile inherits Rectangle {
+    in property <Attachment> item;
+    border-radius: 2px;
+    clip: true;
+    background: P.sel;
+    border-width: root.item.problem != AttachProblem.none ? 2px : 0;
+    border-color: P.danger;
+
+    if root.item.has-picture: Image {
+        width: parent.width;
+        height: parent.height;
+        source: root.item.picture;
+        image-fit: cover;
+    }
+    if root.item.kind == AttachKind.video && root.item.duration > 0: Rectangle {
+        x: 4px;
+        y: parent.height - self.height - 4px;
+        width: length.preferred-width + 10px;
+        height: length.preferred-height + 2px;
+        border-radius: 3px;
+        background: #0000008c;
+        length := T {
+            text: Fmt.duration(root.item.duration);
+            color: #ffffff;
+            font-size: 10px;
+        }
+    }
+    Rectangle {
+        x: parent.width - self.width - 4px;
+        y: 4px;
+        width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        background: remove-touch.has-hover ? P.danger : #0000008c;
+        T {
+            text: "x";
+            color: #ffffff;
+            font-size: 11px;
+        }
+        remove-touch := TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                Attachments.remove(root.item.id);
+            }
+        }
+    }
+}
+
+component AddTile inherits Rectangle {
+    border-radius: 2px;
+    border-width: 1px;
+    border-color: touch.has-hover ? P.accent : P.line;
+    background: touch.has-hover ? P.sel : transparent;
+    T {
+        text: "+";
+        color: touch.has-hover ? P.accent : P.faint;
+        font-size: 22px;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Attachments.add-more();
+        }
+    }
+}
+
+component FileLine inherits Rectangle {
+    in property <Attachment> item;
+    property <bool> wrong: item.problem != AttachProblem.none;
+    height: line.preferred-height;
+    border-radius: 2px;
+    background: root.wrong ? P.danger-soft : touch.has-hover ? P.sel : transparent;
+
+    line := HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        spacing: 10px;
+        if root.item.has-picture: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 36px;
+                height: 36px;
+                border-radius: 2px;
+                clip: true;
+                background: P.sel;
+                Image {
+                    width: parent.width;
+                    height: parent.height;
+                    source: root.item.picture;
+                    image-fit: cover;
+                }
+            }
+        }
+        if !root.item.has-picture: VerticalLayout {
+            alignment: center;
+            T {
+                text: "[" + AttachWords.file-sign(root.item.file-type) + "]";
+                color: root.item.file-type == FileType.pdf ? P.file-pdf
+                    : root.item.file-type == FileType.archive ? P.file-zip
+                    : root.item.file-type == FileType.image ? P.file-image : P.accent;
+                font-size: 12px;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 1px;
+            T {
+                text: root.item.name;
+                color: root.wrong ? P.danger : P.text;
+                overflow: elide;
+            }
+            T {
+                text: (root.wrong ? "! " + AttachWords.problem(root.item.problem) : root.item.size);
+                color: root.wrong ? P.danger : P.muted;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Word {
+                label: "x";
+                activated => {
+                    Attachments.remove(root.item.id);
+                }
+            }
+        }
+    }
+    touch := TouchArea { }
+}
+
+component TimerChoice inherits Rectangle {
+    in property <int> seconds;
+    property <bool> on: Attachments.timer == seconds;
+    height: 28px;
+    border-radius: 2px;
+    border-width: 1px;
+    border-color: root.on ? P.accent : P.line;
+    T {
+        text: AttachWords.timer-label(root.seconds);
+        color: root.on ? P.accent : P.text;
+        font-size: 12px;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Attachments.set-timer(root.seconds);
+            Attachments.timer-open = false;
+        }
+    }
+}
+
+component SendCard inherits Rectangle {
+    background: #00000073;
+    property <int> count: Attachments.count;
+    property <bool> as-files: Attachments.as-file || !Attachments.all-media;
+    property <int> cols: count <= 4 ? 4 : 5;
+    property <length> grid-width: 480px - 32px;
+    property <length> cell: (grid-width - 6px * (cols - 1)) / cols;
+    property <bool> labelled: Attachments.albums > 1;
+    property <length> label-height: labelled ? 22px : 0;
+    property <int> per-album: 10;
+    property <int> album-rows: Math.ceil(per-album / cols);
+    pure function tile-x(index: int) -> length {
+        return Math.mod(index, cols) * (cell + 6px);
+    }
+    pure function tile-y(index: int) -> length {
+        return Math.floor(index / per-album) * (album-rows * (cell + 6px) + label-height + (labelled ? 6px : 0))
+            + label-height + Math.floor(Math.mod(index, per-album) / cols) * (cell + 6px);
+    }
+    property <length> grid-height: tile-y(count) + cell;
+
+    TouchArea { }
+
+    card := Rectangle {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        width: 480px;
+        height: min(parent.height - 32px, body.preferred-height);
+        border-radius: 4px;
+        background: P.side;
+        border-width: 1px;
+        border-color: P.line;
+        drop-shadow-blur: 50px;
+        drop-shadow-offset-y: 20px;
+        drop-shadow-color: #00000066;
+        TouchArea {
+            clicked => {
+                Attachments.timer-open = false;
+                Attachments.send-menu-open = false;
+            }
+        }
+
+        body := VerticalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 14px;
+            padding-bottom: 14px;
+            spacing: 12px;
+            T {
+                text: "── " + AttachWords.title(root.count, Attachments.videos, root.as-files) + " ──";
+                font-size: 14px;
+            }
+            if Attachments.albums > 1: T {
+                text: "» " + AttachWords.albums(Attachments.albums);
+                color: P.muted;
+                font-size: 12px;
+            }
+
+            if !root.as-files && root.count == 1: Rectangle {
+                height: Attachments.items[0].kind == AttachKind.video ? 236px : 260px;
+                border-radius: 2px;
+                clip: true;
+                background: P.sel;
+                border-width: Attachments.items[0].problem != AttachProblem.none ? 2px : 0;
+                border-color: P.danger;
+                if Attachments.items[0].has-picture: Image {
+                    width: parent.width;
+                    height: parent.height;
+                    source: Attachments.items[0].picture;
+                    image-fit: cover;
+                }
+                Rectangle {
+                    x: 8px;
+                    y: parent.height - self.height - 8px;
+                    width: min(parent.width - 16px, meta.preferred-width + 14px);
+                    height: meta.preferred-height + 4px;
+                    border-radius: 4px;
+                    background: #00000080;
+                    meta := T {
+                        width: parent.width - 14px;
+                        text: (Attachments.items[0].kind == AttachKind.video ? "[vid " + Fmt.duration(Attachments.items[0].duration) + "] " : "")
+                            + Attachments.items[0].name + " · " + Attachments.items[0].size;
+                        color: #ffffff;
+                        font-size: 11px;
+                        overflow: elide;
+                    }
+                }
+            }
+
+            if !root.as-files && root.count > 1: Rectangle {
+                height: root.grid-height;
+                for album in Attachments.albums: T {
+                    visible: root.labelled;
+                    x: 0;
+                    y: album * (root.album-rows * (root.cell + 6px) + root.label-height + 6px);
+                    text: AttachWords.album(album + 1, min(root.per-album, root.count - album * root.per-album));
+                    color: P.faint;
+                    font-size: 12px;
+                }
+                for item[index] in Attachments.items: GridTile {
+                    x: root.tile-x(index);
+                    y: root.tile-y(index);
+                    width: root.cell;
+                    height: root.cell;
+                    item: item;
+                }
+                AddTile {
+                    x: root.tile-x(root.count);
+                    y: root.tile-y(root.count);
+                    width: root.cell;
+                    height: root.cell;
+                }
+            }
+
+            if root.as-files: VerticalLayout {
+                spacing: 2px;
+                for item in Attachments.items: FileLine {
+                    item: item;
+                }
+            }
+
+            if !root.as-files: VerticalLayout {
+                spacing: 2px;
+                for item in Attachments.items: T {
+                    visible: item.problem != AttachProblem.none;
+                    height: item.problem != AttachProblem.none ? self.preferred-height : 0;
+                    text: "! " + item.name + " · " + AttachWords.problem(item.problem);
+                    color: P.danger;
+                    font-size: 12px;
+                    overflow: elide;
+                }
+            }
+
+            caption-box := Rectangle {
+                background: P.bg;
+                border-width: 1px;
+                border-color: caption.has-focus ? P.accent : P.line;
+                height: caption.height;
+                HorizontalLayout {
+                    padding-left: 10px;
+                    spacing: 6px;
+                    VerticalLayout {
+                        alignment: start;
+                        padding-top: 7px;
+                        T {
+                            text: "caption ❯";
+                            color: P.accent;
+                        }
+                    }
+                    caption := MessageInput {
+                        text <=> Attachments.caption;
+                        allow-empty: true;
+                        placeholder: AttachWords.caption-placeholder();
+                        text-color: P.text;
+                        placeholder-color: P.faint;
+                        selection-color: P.sel;
+                        font-family: P.font;
+                        font-size: 13px;
+                        base-height: 34px;
+                        tallest: 80px;
+                        padding-x: 4px;
+                        padding-y: 8px;
+                        init => {
+                            self.focus-text();
+                        }
+                        send(words) => {
+                            Attachments.caption = words;
+                            Attachments.caption-edited(words);
+                            if Attachments.can-send {
+                                Attachments.send(false);
+                            }
+                        }
+                        edited(words) => {
+                            Attachments.caption-edited(words);
+                        }
+                    }
+                }
+                property <int> left: Attachments.caption-max - Attachments.caption.character-count;
+                if caption-box.left <= 50: T {
+                    x: parent.width - self.width - 9px;
+                    y: parent.height - self.height - 7px;
+                    text: caption-box.left < 0 ? "−" + (-caption-box.left) : caption-box.left;
+                    color: caption-box.left < 0 ? P.danger : P.faint;
+                    font-size: 11px;
+                }
+            }
+
+            if Attachments.all-media: HorizontalLayout {
+                spacing: 16px;
+                alignment: start;
+                Word {
+                    label: (!Attachments.as-file ? "(•) " : "( ) ") + (Attachments.videos == root.count ? AttachWords.as-video() : AttachWords.as-photo());
+                    color: !Attachments.as-file ? P.text : P.muted;
+                    activated => {
+                        Attachments.set-as-file(false);
+                    }
+                }
+                Word {
+                    label: (Attachments.as-file ? "(•) " : "( ) ") + AttachWords.as-file();
+                    color: Attachments.as-file ? P.text : P.muted;
+                    activated => {
+                        Attachments.set-as-file(true);
+                    }
+                }
+                if root.count > 1: Word {
+                    label: (Attachments.grouped ? "[x] " : "[ ] ") + AttachWords.group-items();
+                    color: P.text;
+                    activated => {
+                        Attachments.set-grouped(!Attachments.grouped);
+                    }
+                }
+            }
+            if Attachments.all-media && !Attachments.as-file: HorizontalLayout {
+                spacing: 16px;
+                alignment: start;
+                if Attachments.timer-allowed: Rectangle {
+                    width: ttl.preferred-width;
+                    height: ttl.preferred-height;
+                    ttl := Word {
+                        label: "ttl: " + AttachWords.timer-label(Attachments.timer).to-lowercase();
+                        color: Attachments.timer != 0 ? P.enc : P.muted;
+                        activated => {
+                            Attachments.timer-open = !Attachments.timer-open;
+                            Attachments.send-menu-open = false;
+                        }
+                    }
+                    if Attachments.timer-open: Rectangle {
+                        x: 0;
+                        y: -self.height - 8px;
+                        width: 256px;
+                        height: choices.preferred-height;
+                        border-radius: 4px;
+                        background: P.side;
+                        border-width: 1px;
+                        border-color: P.line;
+                        drop-shadow-blur: 30px;
+                        drop-shadow-offset-y: 12px;
+                        drop-shadow-color: P.shadow;
+                        TouchArea { }
+                        choices := VerticalLayout {
+                            padding: 12px;
+                            spacing: 6px;
+                            T {
+                                text: "── " + AttachWords.timer() + " ──";
+                            }
+                            T {
+                                text: AttachWords.timer-sub();
+                                color: P.muted;
+                                font-size: 12px;
+                                wrap: word-wrap;
+                            }
+                            Rectangle {
+                                height: 3 * 28px + 2 * 4px;
+                                for seconds[index] in [0, -1, 3, 5, 10, 15, 30, 45, 60]: TimerChoice {
+                                    x: Math.mod(index, 3) * ((parent.width - 8px) / 3 + 4px);
+                                    y: Math.floor(index / 3) * 32px;
+                                    width: (parent.width - 8px) / 3;
+                                    seconds: seconds;
+                                }
+                            }
+                        }
+                    }
+                }
+                Word {
+                    label: AttachWords.spoiler().to-lowercase() + " · " + AttachWords.not-available().to-lowercase();
+                    enabled: false;
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 14px;
+                padding-top: 2px;
+                T {
+                    horizontal-stretch: 1;
+                    text: AttachWords.hint(Attachments.hint);
+                    color: Attachments.hint == AttachHint.keys ? P.faint : P.danger;
+                    font-size: 12px;
+                    wrap: word-wrap;
+                }
+                Word {
+                    label: AttachWords.cancel();
+                    color: P.muted;
+                    activated => {
+                        Attachments.cancel();
+                    }
+                }
+                Word {
+                    label: AttachWords.send() + " ⏎";
+                    color: P.accent;
+                    enabled: Attachments.can-send;
+                    activated => {
+                        Attachments.send(false);
+                    }
+                }
+                Rectangle {
+                    width: more.preferred-width;
+                    height: more.preferred-height;
+                    more := Word {
+                        label: "▾";
+                        color: P.accent;
+                        enabled: Attachments.can-send;
+                        activated => {
+                            Attachments.send-menu-open = !Attachments.send-menu-open;
+                            Attachments.timer-open = false;
+                        }
+                    }
+                    if Attachments.send-menu-open: Rectangle {
+                        x: parent.width - self.width;
+                        y: -self.height - 6px;
+                        width: 300px;
+                        height: send-menu.preferred-height;
+                        border-radius: 4px;
+                        background: P.side;
+                        border-width: 1px;
+                        border-color: P.line;
+                        drop-shadow-blur: 30px;
+                        drop-shadow-offset-y: 12px;
+                        drop-shadow-color: P.shadow;
+                        TouchArea { }
+                        send-menu := VerticalLayout {
+                            padding-top: 4px;
+                            padding-bottom: 4px;
+                            AttachItem {
+                                label: AttachWords.silent();
+                                command: "/silent";
+                                activated => {
+                                    Attachments.send-menu-open = false;
+                                    Attachments.send(true);
+                                }
+                            }
+                            AttachItem {
+                                label: AttachWords.schedule();
+                                command: "/later";
+                                enabled: false;
+                                badge: AttachWords.not-available();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+component DropZone inherits Rectangle {
+    background: P.bg.transparentize(0.06);
+    property <bool> allowed: Attachments.drop-allowed;
+    property <bool> photos: Attachments.drop-photos;
+    Rectangle {
+        x: 16px;
+        y: 16px;
+        width: parent.width - 32px;
+        height: parent.height - 32px;
+        border-radius: 4px;
+        border-width: 1px;
+        border-color: root.allowed ? P.accent : P.danger;
+        background: root.allowed ? P.sel : P.danger-soft;
+        VerticalLayout {
+            alignment: center;
+            spacing: 8px;
+            T {
+                text: !root.allowed ? "[ ⊘ ]" : root.photos ? "[ img ]" : "[ file ]";
+                color: root.allowed ? P.accent : P.danger;
+                font-size: 16px;
+                horizontal-alignment: center;
+            }
+            T {
+                text: !root.allowed ? AttachWords.not-allowed() : root.photos ? AttachWords.drop-photos() : AttachWords.drop-files();
+                color: root.allowed ? P.accent : P.danger;
+                font-size: 14px;
+                horizontal-alignment: center;
+            }
+            if root.allowed: T {
+                text: root.photos ? AttachWords.compressed() : AttachWords.original();
+                color: P.muted;
+                font-size: 12px;
+                horizontal-alignment: center;
+            }
+        }
+    }
+}
+
+export component TerminalAttachments inherits Rectangle {
+    if Attachments.menu-open: TouchArea {
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                Attachments.menu-open = false;
+                Attachments.menu-keyboard = false;
+                Attachments.menu-focus = -1;
+            }
+        }
+    }
+    if Attachments.menu-open: AttachMenu {
+        x: max(8px, min(Attachments.menu-x, root.width - self.width - 8px));
+        y: max(8px, Attachments.menu-y - self.height - 6px);
+    }
+    if Attachments.card-open: SendCard { }
+    if Attachments.dropping: DropZone { }
+}

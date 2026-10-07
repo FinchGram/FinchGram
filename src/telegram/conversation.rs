@@ -86,6 +86,14 @@ pub fn connect(ui: &MainWindow) {
             open_sponsored(id);
         }
     });
+    // A message of ours that failed, or one still on its way: deleted, which also stops its upload.
+    conversation.on_discard(|id| delete_own(&id));
+    conversation.on_cancel_upload(|id| delete_own(&id));
+    conversation.on_file_action(|id| {
+        if let Ok(id) = id.parse() {
+            file_action(id);
+        }
+    });
     conversation.on_toggle_mute(|| {
         if let Some(chat_id) = open_chat() {
             toggle_mute(chat_id);
@@ -601,6 +609,39 @@ pub fn send_text(chat_id: i64, text: &str, reply_to: Option<i64>) {
     });
     send(request, |answer| log_error("send a message", answer));
     store::with(|store| store.dirty.scroll_to_end = true);
+}
+
+/// Delete a message of ours that was not sent, or is still being sent: for us only, as it never
+/// reached anyone.
+fn delete_own(id: &str) {
+    let (Ok(id), Some(chat_id)) = (id.parse::<i64>(), open_chat()) else { return };
+    let request = json!({ "@type": "deleteMessages", "chat_id": chat_id, "message_ids": [id], "revoke": false });
+    send(request, |answer| log_error("delete a message", answer));
+}
+
+/// A click on a message's file card: a downloaded file is shown in the Finder, one on its way down
+/// is stopped, one on Telegram's servers is downloaded.
+fn file_action(message_id: i64) {
+    let Some(file) = store::with(|store| {
+        let message = store.histories.get(&store.open?)?.messages.get(&message_id)?;
+        match &message.content {
+            api::MessageContent::Document { document, .. } => Some(document.document.clone()),
+            _ => None,
+        }
+    })
+    .flatten() else {
+        return;
+    };
+    if file.local.is_downloading_completed && !file.local.path.is_empty() {
+        crate::platform::reveal_file(&file.local.path);
+    } else if file.local.is_downloading_active {
+        let request = json!({ "@type": "cancelDownloadFile", "file_id": file.id, "only_if_pending": false });
+        send(request, |answer| log_error("stop a download", answer));
+    } else if !file.remote.is_uploading_active {
+        files::download(&file, files::ON_SCREEN, |_| {});
+        store::with(|store| store.dirty.conversation = true);
+        store::refresh();
+    }
 }
 
 /// Mute a chat for good, or unmute it.
