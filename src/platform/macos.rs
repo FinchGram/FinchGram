@@ -18,13 +18,13 @@ use std::sync::OnceLock;
 use block2::RcBlock;
 use objc2::rc::Retained;
 use objc2::runtime::{AnyClass, AnyObject, Bool, Imp, NSObject, NSObjectProtocol, ProtocolObject, Sel};
-use objc2::{AnyThread, MainThreadMarker, MainThreadOnly, define_class, msg_send, sel};
+use objc2::{AnyThread, ClassType, MainThreadMarker, MainThreadOnly, define_class, msg_send, sel};
 use objc2_app_kit::{
     NSApplication, NSBitmapImageFileType, NSBitmapImageRep, NSImage, NSMenu, NSMenuItem, NSModalResponse, NSOpenPanel, NSPasteboard,
     NSPasteboardTypeFileURL, NSPasteboardTypePNG, NSPasteboardTypeString, NSPasteboardTypeTIFF, NSRequestUserAttentionType,
-    NSCursor, NSStatusBar, NSStatusItem, NSVariableStatusItemLength, NSView, NSWindowCollectionBehavior, NSWorkspace,
+    NSCursor, NSStatusBar, NSStatusItem, NSVariableStatusItemLength, NSView, NSWindow, NSWindowCollectionBehavior, NSWorkspace,
 };
-use objc2_foundation::{NSArray, NSBundle, NSData, NSDate, NSDictionary, NSError, NSNumber, NSSize, NSString, NSURL};
+use objc2_foundation::{NSArray, NSBundle, NSData, NSDate, NSDictionary, NSError, NSNumber, NSRect, NSSize, NSString, NSURL};
 use objc2_user_notifications::{
     UNAuthorizationOptions, UNMutableNotificationContent, UNNotification, UNNotificationDefaultActionIdentifier,
     UNNotificationPresentationOptions, UNNotificationRequest, UNNotificationResponse, UNNotificationSound,
@@ -67,6 +67,8 @@ thread_local! {
     static NOTIFICATION_DELEGATE: RefCell<Option<Retained<NotificationDelegate>>> = const { RefCell::new(None) };
     /// The open panel while it is shown: it must live until its completion handler has run.
     static OPEN_PANEL: RefCell<Option<Retained<NSOpenPanel>>> = const { RefCell::new(None) };
+    /// Whether winit's window class has been taught to keep an overlay's frame (keep_overlay_frames).
+    static OVERLAY_FRAMES_KEPT: Cell<bool> = const { Cell::new(false) };
 }
 
 /// NSModalResponseOK.
@@ -114,8 +116,18 @@ pub fn install(ui: &MainWindow, before_quit: fn()) {
 unsafe fn add_method(class: &AnyClass, name: Sel, implementation: Imp, types: &CStr) {
     if class.instance_method(name).is_none() {
         // SAFETY: the caller vouches for the implementation and its type encoding.
-        unsafe { objc2::ffi::class_addMethod((class as *const AnyClass).cast_mut(), name, implementation, types.as_ptr()) };
+        unsafe { override_method(class, name, implementation, types) };
     }
+}
+
+/// Add a method to `class` in front of the one it inherits (nothing happens when the class has
+/// one of its own).
+///
+/// # Safety
+/// `implementation` must have the signature `types` describes.
+unsafe fn override_method(class: &AnyClass, name: Sel, implementation: Imp, types: &CStr) {
+    // SAFETY: the caller vouches for the implementation and its type encoding.
+    unsafe { objc2::ffi::class_addMethod((class as *const AnyClass).cast_mut(), name, implementation, types.as_ptr()) };
 }
 
 /// A click on the Dock icon, or FinchGram opened again, while its window is closed: show it.
@@ -416,6 +428,9 @@ pub fn windows_on_screen() -> Vec<super::ScreenWindow> {
 
 /// The overlay above everything on its display, in every Space and over full-screen apps, over
 /// the whole display, menu bar included, in front with the keyboard, and under a crosshair.
+///
+/// Called at the window's first winit event: Slint makes the window when the event loop next
+/// runs, not when it is shown, and before that there is nothing here to raise.
 pub fn raise_overlay(window: &slint::Window) {
     use slint::winit_030::WinitWindowAccessor;
     use slint::winit_030::winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
@@ -428,8 +443,9 @@ pub fn raise_overlay(window: &slint::Window) {
         let Some(ns_window) = view.window() else { return };
         ns_window.setLevel(OVERLAY_LEVEL);
         ns_window.setCollectionBehavior(NSWindowCollectionBehavior::CanJoinAllSpaces | NSWindowCollectionBehavior::FullScreenAuxiliary);
-        // Shown at the normal level, the window was kept out from under the menu bar; at this
-        // level it may have the whole display.
+        keep_overlay_frames(&ns_window);
+        // The whole display, should AppKit have pressed the window down from under the menu bar
+        // before the level was raised (keep_overlay_frames).
         if let Some(screen) = ns_window.screen() {
             ns_window.setFrame_display(screen.frame(), true);
         }
@@ -440,6 +456,53 @@ pub fn raise_overlay(window: &slint::Window) {
         NSCursor::crosshairCursor().set();
     });
     bring_to_front();
+}
+
+/// Teach winit's window class, once, to leave a window at the overlay level where it is put
+/// (`constrain_frame`).
+///
+/// AppKit keeps every titled window's top edge under the menu bar (NSWindow's
+/// constrainFrameRect:toScreen:), whatever its level. The overlay has no title bar, but Slint
+/// asks winit whether the window is maximized at every change of its properties, and winit
+/// answers that for a borderless window by giving it a title bar for a moment (`is_zoomed`): the
+/// frame grows by the title bar, AppKit presses it down under the menu bar, and when the title
+/// bar goes the window stays there, short of the top of the display by the menu bar and a title
+/// bar (65 pt on a MacBook Pro).
+fn keep_overlay_frames(window: &NSWindow) {
+    if OVERLAY_FRAMES_KEPT.replace(true) {
+        return;
+    }
+    // winit's own class, under any subclass AppKit made for key-value observing.
+    let mut class = window.class();
+    while let Some(superclass) = class.superclass() {
+        if superclass == NSWindow::class() {
+            break;
+        }
+        class = superclass;
+    }
+    // SAFETY: the implementation has the signature the type encoding describes.
+    unsafe {
+        override_method(
+            class,
+            sel!(constrainFrameRect:toScreen:),
+            std::mem::transmute::<unsafe extern "C-unwind" fn(*mut AnyObject, Sel, NSRect, *mut AnyObject) -> NSRect, Imp>(constrain_frame),
+            c"{CGRect={CGPoint=dd}{CGSize=dd}}@:{CGRect={CGPoint=dd}{CGSize=dd}}@",
+        );
+    }
+}
+
+/// NSWindow's constrainFrameRect:toScreen:, for winit's window class: a window at the overlay
+/// level keeps the frame it is given; any other is constrained as AppKit does it.
+unsafe extern "C-unwind" fn constrain_frame(this: *mut AnyObject, _cmd: Sel, frame: NSRect, screen: *mut AnyObject) -> NSRect {
+    // SAFETY: `this` is the window the message was sent to; level takes nothing and returns an
+    // NSInteger, and NSWindow's own method takes and returns what this one does.
+    unsafe {
+        let level: isize = msg_send![&*this, level];
+        if level >= OVERLAY_LEVEL {
+            return frame;
+        }
+        msg_send![super(&*this, NSWindow::class()), constrainFrameRect: frame, toScreen: screen]
+    }
 }
 
 // ---- notifications --------------------------------------------------------------------------

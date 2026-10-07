@@ -535,10 +535,22 @@ fn open(ui: slint::Weak<MainWindow>, monitors: Vec<Monitor>, captured: Vec<Captu
         shot.on_text_done(|text| with_session(|session| session.text_done(&text)));
         window.window().set_position(slint::PhysicalPosition::new(monitor.position.0, monitor.position.1));
         window.window().set_size(slint::PhysicalSize::new(monitor.size.0, monitor.size.1));
+        {
+            use slint::winit_030::{EventResult, WinitWindowAccessor};
+            // Slint makes the window when the event loop next runs, not here: it is raised at
+            // its first event, as soon as it exists.
+            let mut raised = false;
+            window.window().on_winit_window_event(move |window, _| {
+                if !raised {
+                    raised = true;
+                    platform::raise_overlay(window);
+                }
+                EventResult::Propagate
+            });
+        }
         if window.show().is_err() {
             break;
         }
-        platform::raise_overlay(window.window());
         windows.push(window);
     }
     // One overlay per display, or none: the pointer's display and its window must agree.
