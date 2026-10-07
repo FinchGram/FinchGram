@@ -2,29 +2,105 @@
 
 [English](../README.md) · [简体中文](zh-Hans.md) · [繁體中文](zh-Hant.md) · [Español](es.md) · [Português](pt.md) · **Deutsch** · [Français](fr.md) · [Русский](ru.md) · [日本語](ja.md) · [한국어](ko.md) · [العربية](ar.md)
 
-Ein quelloffener Telegram-Desktop-Client mit Medienzentrale, geschrieben in Rust +
-[Slint](https://slint.dev). Zuerst für macOS (Apple Silicon); Windows und Linux folgen später.
+<p align="center"><img src="../ui/logo/png/FinchGram-icon-128.png" width="96" alt="FinchGram"></p>
 
-FinchGram nutzt die Telegram-API und ist Teil des Telegram-Ökosystems. Es ist ein inoffizieller Client
-und stammt nicht von Telegram.
+**Ein Telegram-Desktop-Client mit Mediencenter, in Rust und [Slint](https://slint.dev).** Open Source
+unter der GPL-3.0. Heute für macOS auf Apple Silicon; Windows und Linux später.
 
-Stand: früh. Registrieren und Anmelden, die Chatliste und Chats mit Textnachrichten funktionieren, in
-den drei Designs des Entwurfs: Workbench (Standard), Broadsheet und Terminal, umschaltbar unter
-Einstellungen › Darstellung. Fotos und Videos erscheinen in den Chats und öffnen sich in einem Viewer,
-der Videos mit mpv abspielt. Fotos, Videos und Dateien lassen sich über die Büroklammer senden, in das Fenster ziehen oder einfügen. Die Schere im Eingabefeld oder ⌘⇧A nimmt einen Ausschnitt des Bildschirms auf, mit Rechtecken, Pfeilen, Text und Mosaik darauf, und sendet ihn. Ein Rechtsklick auf eine Nachricht öffnet ihr Menü: antworten,
-bearbeiten, kopieren, Link kopieren, weiterleiten, melden, löschen oder mehrere Nachrichten auswählen. Ein Rechtsklick auf einen Chat schaltet ihn stumm oder heftet ihn an, blockiert die Person, meldet ihn, verlässt die Gruppe oder den Kanal oder löscht den Chat.
-Die zweistufige Bestätigung wird unter Einstellungen › Datenschutz & Sicherheit verwaltet. Neue
-Nachrichten kommen als macOS-Mitteilungen, ihre Zahl steht am Dock-Symbol (Einstellungen ›
-Mitteilungen & Töne). Als Nächstes kommen Dateien, mehrere Konten, Stichwortfilter und geplante
-Nachrichten.
+FinchGram spricht mit Telegram über [TDLib](https://core.telegram.org/tdlib), Telegrams eigene
+Bibliothek, und hält sich an die [Telegram-API-Bedingungen](https://core.telegram.org/api/terms). Es ist
+ein inoffizieller Client, nicht von Telegram gemacht.
 
-Die App ist eine Hülle (Shell). Telegram selbst übernimmt TDLib, die offizielle Bibliothek von Telegram,
-die als eigenes Programm neben der ausführbaren Datei läuft: `finchgram-tdlib`, von diesem Repository
-aus Quellen mit festgelegten Versionen gebaut (so wie ffmpeg bei Coova Studio). Die Hülle spricht mit ihm
-nur über `src/telegram/`, im TDLib-eigenen JSON. Siehe [docs/architecture.md](../docs/architecture.md) und
-[docs/conventions.md](../docs/conventions.md) (auf Englisch).
+<p align="center"><img src="../docs/screenshots/workbench-light-chats.png" width="800" alt="Das Chatfenster im Thema Workbench"></p>
 
-Alles ist hier, öffentlich: der Quellcode, die Builds der Abhängigkeiten (`vendor/`) und die Releases.
+## Was es kann
+
+- **Chats.** Anmelden mit Telefonnummer, Code und dem Passwort der zweistufigen Bestätigung oder durch
+  Scannen eines QR-Codes; oder ein neues Konto anlegen. Die Chatliste mit Telegrams Ordnern,
+  angehefteten Chats, Ungelesen-Zählern und Erwähnungen; ein Suchfeld (⌘K); eine Ansicht der Kanäle
+  und eine der Bots.
+- **Nachrichten.** Text mit Formatierung (fett, kursiv, Code, Links), Antworten und Weiterleitungen,
+  Fotos, Videos, GIFs, Sticker, Dateien und eine Karte mit der Linkvorschau. Ein Rechtsklick auf eine
+  Nachricht öffnet ihr Menü: antworten, bearbeiten, kopieren, Link kopieren, weiterleiten, melden,
+  löschen oder mehrere auswählen. Fotos und Videos, die sich selbst zerstören, werden verschwommen
+  gezeigt und einmal geöffnet, wie in Telegrams eigenen Apps.
+- **Medien.** Fotos und Videos öffnen sich in einem Betrachter über dem Fenster, mit dem Rest ihres
+  Albums; Video läuft über mpv, aus den Quellen gebaut. Speichern in Downloads, wo der Chat es erlaubt.
+- **Senden.** Fotos, Videos und Dateien über die Büroklammer, per Ziehen ins Fenster oder per
+  Einfügen. Eine Karte zeigt sie vor dem Senden: mit Bildunterschrift, als Foto oder als Datei,
+  zusammen als Album von bis zu zehn, mit Selbstzerstörungs-Timer in einem privaten Chat, ohne Ton.
+- **Bildschirmfotos.** Die Schere im Eingabefeld oder ⌘⇧A friert den Bildschirm ein: ein Fenster
+  nehmen oder eine Auswahl ziehen, Rechtecke, Ellipsen, Pfeile, Stiftstriche, Text und Mosaik
+  darauf zeichnen, dann senden, kopieren oder speichern. Wie in WeChat, aus jedem Chat heraus.
+- **Das Menü eines Chats.** Stummschalten, anheften, als gelesen markieren, in einen Ordner legen;
+  eine Person blockieren oder entblocken, melden, eine Gruppe oder einen Kanal verlassen, einen Chat
+  löschen.
+- **Mitteilungen.** Neue Nachrichten kommen als macOS-Mitteilungen, ihre Zahl steht auf dem
+  Dock-Symbol; FinchGram bleibt im Dock, wenn sein Fenster schließt, und kann in der Menüleiste wohnen.
+- **Drei Themen.** Workbench, Broadsheet und Terminal, jedes hell und dunkel, ohne Neustart gewechselt.
+- **Einstellungen.** Beim Anmelden starten, Senden mit Enter, das Bildschirmfoto-Kürzel, Töne und
+  Vorschauen der Mitteilungen, zweistufige Bestätigung, die Sprache der Oberfläche und Updates: die App
+  aktualisiert sich selbst aus GitHub Releases und installiert nichts, was sie nicht prüfen kann.
+- **Sprachen.** Die Oberfläche auf Englisch und vereinfachtem Chinesisch; dieses README in elf Sprachen.
+
+Noch nicht da: geheime Chats, Sprachnachrichten und Anrufe, mehrere Konten, Umfragen und geplante
+Nachrichten, Schlüsselwortfilter, Windows und Linux. Siehe
+[was als Nächstes kommt](../docs/architecture.md#not-now).
+
+## Download
+
+Hole `FinchGram-<Version>-macos-arm64.zip` aus dem [neuesten Release](https://github.com/FinchGram/FinchGram/releases/latest),
+entpacke es und lege FinchGram in Programme. Es braucht macOS 12 oder neuer auf Apple Silicon. Die App
+ist noch nicht notarisiert, also fragt macOS beim ersten Start einmal: Systemeinstellungen →
+Datenschutz & Sicherheit → „Trotzdem öffnen“. Danach aktualisiert sie sich selbst.
+
+Jedes Release kommt mit `SHA256SUMS` und dessen Ed25519-Signatur. Die App prüft beides, bevor sie ein
+Update installiert; das kannst du auch, mit dem öffentlichen Schlüssel in
+[release-signing.pub](../release-signing.pub).
+
+## Drei Themen
+
+| Workbench | Broadsheet | Terminal |
+|---|---|---|
+| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-light-chats.png) |
+
+Workbench, die Voreinstellung, ist ein Arbeitsfenster mit Tabs. Broadsheet liest sich wie eine
+Zeitung, mit einer Akzentfarbe je Konto. Terminal ist ein Bildschirm in Festbreitenschrift mit
+Befehlen. Jedes hat eine helle und eine dunkle Seite, dem System folgend oder nach Wahl, in
+Einstellungen → Erscheinungsbild.
+
+<p align="center"><img src="../docs/screenshots/workbench-dark-chats.png" width="800" alt="Workbench, dunkel"></p>
+
+## Das Bildschirmfoto-Werkzeug
+
+<p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="Das Overlay für Bildschirmfotos, mit Anmerkungen"></p>
+
+Drücke ⌘⇧A oder die Schere neben der Büroklammer. Der Bildschirm friert unter einem Overlay ein: das
+Fenster unter dem Zeiger wird angeboten, oder du ziehst eine Auswahl, mit Lupe und der Größe in
+Pixeln. Die Werkzeugleiste zeichnet Rechtecke, Ellipsen, Pfeile, Stiftstriche, Text und Mosaik, in
+drei Größen und sechs Farben, mit Rückgängig. Done legt das Bild in die Sendekarte, wo eine
+Bildunterschrift dazukommen kann; ⌘C kopiert es; ⌘S speichert es in Downloads. Einstellungen →
+Allgemein → Bildschirmfotos hält das Kürzel und ob das FinchGram-Fenster sich derweil versteckt.
+
+<p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="Die Sendekarte mit einem Bildschirmfoto"></p>
+
+## Wie es gebaut ist
+
+Die App ist eine Hülle. Telegram selbst erledigt TDLib, das als eigenes Programm neben der
+ausführbaren Datei läuft, `finchgram-tdlib`, das dieses Repository aus festgelegten Quellen baut; die
+Hülle spricht mit ihm nur über `src/telegram/`, in TDLibs eigenem JSON. Video läuft über libmpv, auf
+dieselbe Art gebaut. Nichts wird vom Rechner des Nutzers genommen, und ein Build lädt nichts herunter
+außer diesen festgelegten, mit Prüfsummen versehenen Builds. Alles ist öffentlich: der Quellcode, die
+Builds in `vendor/` und die Releases. Siehe [docs/architecture.md](../docs/architecture.md) und
+[docs/conventions.md](../docs/conventions.md).
+
+## Telegrams Regeln
+
+FinchGram tut, was Telegrams eigene Apps tun, und nichts, was sie verbieten. Eine Nachricht gilt als
+gelesen, wenn du sie siehst, die Gegenseite sieht dich tippen und online wie in jeder Telegram-App,
+gesponserte Nachrichten in Kanälen werden gezeigt, selbstzerstörende Medien öffnen sich einmal, und
+nichts von Telegram geht an irgendeine KI. Nichts verlässt deinen Rechner außer zu Telegram, und zu
+GitHub für Updates.
 
 ## Entwicklung
 
@@ -77,6 +153,7 @@ Die Datenbank von TDLib und die heruntergeladenen Dateien liegen in
 Cargo.toml
 build.rs                 # kompiliert ui/app.slint, bündelt lang/, kopiert vendor/tdlib/bin/ neben die ausführbare Datei
 docs/                    # architecture.md, conventions.md, drag-and-drop.md (+ zh-Hans)
+  screenshots/           #   die Bilder, die die READMEs zeigen, aus dem Bildschirmfoto-Test (scripts/readme-pictures.sh)
 lang/                    # Übersetzungen: lang/<Code>/LC_MESSAGES/finchgram.po, in die Binärdatei kompiliert
 readme/                  # diese README in anderen Sprachen
 release-signing.pub      # die öffentlichen Schlüssel, die Releases signieren dürfen; in die App kompiliert
@@ -85,6 +162,7 @@ scripts/
   fetch-fonts.sh         # die festgelegten Schriften der Oberfläche nach vendor/fonts/
   fetch-mpv.sh           # das festgelegte libmpv-Release nach vendor/mpv/bin/
   fetch-tdlib.sh         # das festgelegte finchgram-tdlib-Release nach vendor/tdlib/bin/
+  readme-pictures.sh     # kopiert die Bilder der READMEs von target/screenshots/ nach docs/screenshots/
   release.sh             # startet ein Release: Version, Tag, Push; den Rest erledigt GitHub Actions
 src/
   main.rs                # das Fenster, die Einstellungen, Sprache und Design, Updates; startet Telegram
@@ -170,6 +248,16 @@ scripts/release.sh patch    # 0.1.0 -> 0.1.1; auch minor, major oder eine genaue
 Signiert wird vorerst ad hoc: Beim ersten Start einer heruntergeladenen Kopie fragt macOS einmal nach
 (Systemeinstellungen → Datenschutz & Sicherheit). Updates, die die App selbst installiert, starten
 ohne diesen Schritt.
+
+## Mitmachen
+
+Issues und Pull Requests sind willkommen. Bevor du änderst, wie die Teile zusammenpassen, lies
+[docs/architecture.md](../docs/architecture.md) und [docs/conventions.md](../docs/conventions.md): jede
+Abhängigkeit baut dieses Repository aus festgelegten Quellen, die Oberfläche folgt dem Design in allen
+drei Themen, und nichts in der App verstößt gegen die Telegram-API-Bedingungen. Halte `cargo test`,
+`cargo clippy --all-targets` und `cargo test screenshots -- --ignored` sauber, und sieh dir die Bilder
+an. Die Bilder der READMEs stammen ebenfalls aus diesem Test: `scripts/readme-pictures.sh` erneuert
+`docs/screenshots/`.
 
 ## Lizenz
 

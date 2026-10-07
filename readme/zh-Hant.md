@@ -2,23 +2,83 @@
 
 [English](../README.md) · [简体中文](zh-Hans.md) · **繁體中文** · [Español](es.md) · [Português](pt.md) · [Deutsch](de.md) · [Français](fr.md) · [Русский](ru.md) · [日本語](ja.md) · [한국어](ko.md) · [العربية](ar.md)
 
-一個開源的 Telegram 桌面用戶端，附帶媒體中心，以 Rust + [Slint](https://slint.dev) 編寫。
-先做 macOS（Apple silicon），之後再做 Windows 和 Linux。
+<p align="center"><img src="../ui/logo/png/FinchGram-icon-128.png" width="96" alt="FinchGram"></p>
 
-FinchGram 使用 Telegram API，是 Telegram 生態系的一部分。它是非官方用戶端，並非 Telegram 出品。
+**一個帶媒體中心的 Telegram 桌面客戶端，用 Rust 和 [Slint](https://slint.dev) 寫成。** 開源，GPL-3.0 授權。
+現在支援 Apple silicon 的 macOS，Windows 和 Linux 之後再做。
 
-狀態：早期。註冊和登入、聊天列表和文字訊息的收發已經可用，介面是設計稿的三套主題：工作台（預設）、報紙和
-終端，在「設定 › 外觀」裡切換。聊天裡的圖片和影片可以直接看，點開後在檢視器裡瀏覽，影片用 mpv 播放。照片、影片和檔案可以從迴紋針選單傳送，也可以拖進視窗或直接貼上。輸入列裡的剪刀（或 ⌘⇧A）可以截取螢幕的一部分，畫上方框、箭頭、文字和馬賽克後直接傳送。
-在訊息上按右鍵可以回覆、編輯、複製、複製連結、轉傳、檢舉、刪除，或選取多則訊息。在聊天上按右鍵可以靜音、置頂、封鎖對方、檢舉、退出群組或頻道、刪除聊天。兩步驟
-驗證在「設定 › 隱私與安全」裡管理。新訊息會以 macOS 通知提醒，未讀數顯示在 Dock 圖示上（「設定 › 通知與音效」）。
-接下來做檔案、多帳號、關鍵字隱藏和定時訊息。
+FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/tdlib) 和 Telegram 通訊，並遵守
+[Telegram API 條款](https://core.telegram.org/api/terms)。它是非官方客戶端，不是 Telegram 出品的。
 
-app 是一個外殼。Telegram 本身交給 TDLib（Telegram 官方的程式庫），它以獨立程式的形式在執行檔旁邊執行：
-`finchgram-tdlib`，由本儲存庫從鎖定版本的原始碼建置（就像 Coova Studio 的 ffmpeg）。外殼只透過 `src/telegram/`
-與它溝通，使用的是 TDLib 自己的 JSON。請見 [docs/architecture.zh-Hans.md](../docs/architecture.zh-Hans.md) 和
-[docs/conventions.zh-Hans.md](../docs/conventions.zh-Hans.md)（簡體中文）。
+<p align="center"><img src="../docs/screenshots/workbench-light-chats.png" width="800" alt="工作台主題的聊天視窗"></p>
 
-所有東西都在這裡、全部公開：原始碼、vendor 建置（`vendor/`）和發佈版本。
+## 能做什麼
+
+- **聊天。** 用手機號碼、驗證碼和兩步驟驗證密碼登入，或者掃 QR code 登入；也可以註冊新帳號。聊天列表帶 Telegram
+  的資料夾、置頂、未讀數和 @ 提醒；有搜尋框（⌘K）；還有頻道檢視和機器人檢視。
+- **訊息。** 帶格式的文字（粗體、斜體、程式碼、連結）、回覆和轉傳、照片、影片、GIF、貼圖、檔案，以及連結預覽卡片。
+  在訊息上按右鍵打開它的選單：回覆、編輯、複製、複製連結、轉傳、檢舉、刪除，或選取多則。設為自毀的照片和影片
+  以模糊顯示、只能打開一次，和 Telegram 官方應用程式一樣。
+- **媒體。** 照片和影片在蓋住整個視窗的檢視器裡打開，可以翻看同一相簿的其他圖片；影片用從原始碼建置的 mpv
+  播放。聊天允許時可以儲存到「下載項目」。
+- **傳送。** 照片、影片和檔案可以從迴紋針選單傳送，也可以拖進視窗或直接貼上。送出之前先在一張卡片裡顯示：
+  可以加說明文字，按照片傳或按檔案傳，最多十個合成一個相簿，私訊裡可以設自毀計時器，也可以靜音傳送。
+- **截圖。** 輸入列裡的剪刀或 ⌘⇧A 會定住螢幕：取一個視窗或拖一個選取範圍，畫上方框、橢圓、箭頭、畫筆、文字和馬賽克，
+  然後直接傳送、複製或儲存。和微信一樣，每個聊天裡都有。
+- **聊天選單。** 靜音、置頂、標為已讀、放進資料夾；封鎖或解除封鎖對方、檢舉、退出群組或頻道、刪除聊天。
+- **通知。** 新訊息以 macOS 通知提醒，未讀數顯示在 Dock 圖示上；關閉視窗後 FinchGram 留在 Dock 裡，也可以住進選單列。
+- **三套主題。** 工作台、報紙和終端，各有淺色和深色，切換不用重新啟動。
+- **設定。** 開機時啟動、按 Enter 傳送、截圖快捷鍵、通知的聲音和預覽、兩步驟驗證、介面語言，還有更新：app 從
+  GitHub Releases 自動更新，驗證不過的一律不裝。
+- **語言。** 介面有英文和簡體中文；這份 README 有十一種語言。
+
+還沒有的：秘密聊天、語音訊息和通話、多帳號、投票和排程訊息、關鍵字過濾、Windows 和 Linux。見
+[接下來做什麼](../docs/architecture.md#not-now)。
+
+## 下載
+
+從[最新的 release](https://github.com/FinchGram/FinchGram/releases/latest) 下載
+`FinchGram-<版本>-macos-arm64.zip`，解壓縮後把 FinchGram 拖進「應用程式」。需要 Apple silicon 的 macOS 12
+或更新。app 還沒有公證，所以第一次打開時 macOS 會攔一次：系統設定 → 隱私權與安全性 → 「強制打開」。之後它會自動更新。
+
+每個 release 都帶 `SHA256SUMS` 和它的 Ed25519 簽章。app 安裝更新之前會先驗證這兩樣；你也可以自己驗證，公鑰在
+[release-signing.pub](../release-signing.pub)。
+
+## 三套主題
+
+| 工作台 | 報紙 | 終端 |
+|---|---|---|
+| ![工作台](../docs/screenshots/workbench-light-chats.png) | ![報紙](../docs/screenshots/broadsheet-light-chats.png) | ![終端](../docs/screenshots/terminal-light-chats.png) |
+
+工作台是預設主題，一個帶分頁的工作視窗。報紙讀起來像報紙，每個帳號有自己的強調色。終端是等寬字型的畫面，
+帶指令。每套都有淺色和深色，跟隨系統或自己選，在「設定 › 外觀」裡。
+
+<p align="center"><img src="../docs/screenshots/workbench-dark-chats.png" width="800" alt="工作台，深色"></p>
+
+## 截圖工具
+
+<p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="截圖覆蓋層，帶標註"></p>
+
+按 ⌘⇧A，或者點迴紋針旁邊的剪刀。螢幕定住，蓋上一層：指標下的視窗會被標示出來，可以直接取；也可以拖一個選取範圍，
+帶放大鏡和像素尺寸。工具列可以畫方框、橢圓、箭頭、畫筆、文字和馬賽克，三種粗細、六種顏色，可以復原。
+按 Done 把圖放進傳送卡片，可以配上說明文字；⌘C 複製；⌘S 存到「下載項目」。「設定 › 一般 › 截圖」裡可以改快捷鍵，
+也可以決定截圖時要不要先把 FinchGram 的視窗藏起來。
+
+<p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="帶截圖的傳送卡片"></p>
+
+## 怎麼做的
+
+app 是一個外殼。Telegram 本身交給 TDLib，它作為一個獨立程式跑在執行檔旁邊：`finchgram-tdlib`，由本倉庫從鎖定的
+原始碼建置；外殼只透過 `src/telegram/` 跟它通訊，用的是 TDLib 自己的 JSON。影片用同樣方式建置的 libmpv 播放。
+不從使用者的機器上拿任何東西，建置時除了這些鎖定且帶校驗和的產物之外什麼也不下載。所有東西都公開：原始碼、vendor 建置
+（`vendor/`）和發佈。見 [docs/architecture.md](../docs/architecture.md) 和
+[docs/conventions.md](../docs/conventions.md)。
+
+## Telegram 的規矩
+
+FinchGram 只做 Telegram 官方應用程式做的事，不做它們禁止的事。訊息在你看到時標為已讀，對方像在任何 Telegram 應用程式裡一樣
+能看到你正在輸入和在線上，頻道裡的贊助訊息照常顯示，自毀媒體只能打開一次，來自 Telegram 的內容不會交給任何 AI。
+除了 Telegram 和用來更新的 GitHub，什麼都不會離開你的機器。
 
 ## 開發
 
@@ -64,6 +124,7 @@ TDLib 的資料庫和下載的檔案在 `~/Library/Application Support/FinchGram
 Cargo.toml
 build.rs                 # 編譯 ui/app.slint，打包 lang/，把 vendor/tdlib/bin/ 複製到執行檔旁邊
 docs/                    # architecture.md、conventions.md、drag-and-drop.md（以及簡體中文版）
+  screenshots/           #   README 裡的圖，來自截圖測試（scripts/readme-pictures.sh）
 lang/                    # 翻譯：lang/<代碼>/LC_MESSAGES/finchgram.po，編譯進二進位檔
 readme/                  # 這份 README 的其他語言版本
 release-signing.pub      # 允許為 release 簽名的公鑰，編譯進 app
@@ -72,6 +133,7 @@ scripts/
   fetch-fonts.sh         # 把鎖定的介面字型下載到 vendor/fonts/
   fetch-mpv.sh           # 把鎖定的 libmpv release 下載到 vendor/mpv/bin/
   fetch-tdlib.sh         # 把鎖定的 finchgram-tdlib release 下載到 vendor/tdlib/bin/
+  readme-pictures.sh     # 把 README 用的圖從 target/screenshots/ 複製到 docs/screenshots/
   release.sh             # 發起一次 release：改版本、打 tag、push，其餘交給 GitHub Actions
 src/
   main.rs                # 視窗、設定、語言和主題、更新；啟動 Telegram
@@ -153,6 +215,14 @@ scripts/release.sh patch    # 0.1.0 -> 0.1.1；也可以是 minor、major 或一
 
 目前是 ad-hoc 簽名：下載的 app 第一次開啟時，macOS 會攔一次（系統設定 → 隱私權與安全性）。
 app 自己安裝的更新不需要這一步。
+
+## 參與
+
+歡迎提 issue 和 pull request。改動東西之間的關係之前，先讀 [docs/architecture.md](../docs/architecture.md)
+和 [docs/conventions.md](../docs/conventions.md)：每個依賴都由本倉庫從鎖定的原始碼建置，介面在三套主題裡
+都照設計稿做，app 裡沒有任何違反 Telegram API 條款的東西。保持 `cargo test`、`cargo clippy --all-targets` 和
+`cargo test screenshots -- --ignored` 乾淨，並且看一眼畫出來的圖。README 裡的圖也來自這個測試：
+`scripts/readme-pictures.sh` 會更新 `docs/screenshots/`。
 
 ## 授權條款
 

@@ -2,26 +2,91 @@
 
 [English](../README.md) · [简体中文](zh-Hans.md) · [繁體中文](zh-Hant.md) · [Español](es.md) · [Português](pt.md) · [Deutsch](de.md) · [Français](fr.md) · [Русский](ru.md) · **日本語** · [한국어](ko.md) · [العربية](ar.md)
 
-メディアセンターを備えた、オープンソースの Telegram デスクトップクライアントです。
-Rust + [Slint](https://slint.dev) で書かれています。まず macOS（Apple silicon）向けで、Windows と Linux は後日対応します。
+<p align="center"><img src="../ui/logo/png/FinchGram-icon-128.png" width="96" alt="FinchGram"></p>
 
-FinchGram は Telegram API を使っており、Telegram エコシステムの一部です。非公式のクライアントで、
-Telegram が開発したものではありません。
+**メディアセンターを備えた Telegram デスクトップクライアント。Rust と [Slint](https://slint.dev) 製。** GPL-3.0 の
+オープンソースです。いまは Apple silicon の macOS 向け、Windows と Linux は後から。
 
-状況：初期段階。新規登録とログイン、チャット一覧、テキストメッセージのやり取りが、デザインの 3 つのテーマで動きます：
-ワークベンチ（既定）、ブロードシート、ターミナル。切り替えは「設定 › 外観」から。写真と動画はチャットに表示され、
-ビューアで開けます（動画は mpv で再生）。写真、動画、ファイルはクリップから送信できるほか、ウィンドウにドラッグするか貼り付けても送れます。入力欄のはさみ（または ⌘⇧A）で画面の一部を撮り、四角・矢印・文字・モザイクを描き込んで送れます。メッセージを右クリックすると、返信・編集・コピー・リンクのコピー・転送・
-報告・削除、複数メッセージの選択ができます。チャットを右クリックすると、ミュート・ピン留め・相手のブロック・報告・グループやチャンネルからの退出・チャットの削除ができます。2 段階認証は「設定 › プライバシーとセキュリティ」で管理できます。
-新着メッセージは macOS の通知で届き、その数は Dock アイコンに表示されます（「設定 › 通知とサウンド」）。
-次はファイル、複数アカウント、キーワードフィルター、予約メッセージです。
+FinchGram は Telegram 公式のライブラリ [TDLib](https://core.telegram.org/tdlib) を通して Telegram と通信し、
+[Telegram API 利用規約](https://core.telegram.org/api/terms)を守ります。非公式クライアントであり、Telegram 製ではありません。
 
-アプリはシェル（外殻）です。Telegram そのものは Telegram 公式のライブラリ TDLib が担い、実行ファイルの隣で
-独立したプログラムとして動きます。それが `finchgram-tdlib` で、このリポジトリがバージョンを固定したソースから
-ビルドしています（Coova Studio における ffmpeg と同じです）。シェルは `src/telegram/` を通してのみ、TDLib 独自の
-JSON でこれと通信します。詳しくは [docs/architecture.md](../docs/architecture.md) と
-[docs/conventions.md](../docs/conventions.md)（英語）を参照してください。
+<p align="center"><img src="../docs/screenshots/workbench-light-chats.png" width="800" alt="Workbench テーマのチャットウィンドウ"></p>
 
-すべてがここで公開されています：ソースコード、依存関係のビルド（`vendor/`）、リリース。
+## できること
+
+- **チャット。** 電話番号、認証コード、2 段階認証のパスワードでログイン、または QR コードをスキャンしてログイン。新規登録も
+  できます。チャット一覧には Telegram のフォルダ、ピン留め、未読数、メンションが表示され、検索ボックス（⌘K）、チャンネル
+  一覧、ボット一覧があります。
+- **メッセージ。** 書式付きテキスト（太字、斜体、コード、リンク）、返信と転送、写真、動画、GIF、ステッカー、ファイル、
+  リンクのプレビューカード。メッセージを右クリックするとメニューが開きます：返信、編集、コピー、リンクのコピー、転送、報告、
+  削除、複数選択。自動消滅の写真と動画はぼかして表示され、一度だけ開けます。Telegram 公式アプリと同じです。
+- **メディア。** 写真と動画はウィンドウ全体のビューアで開き、同じアルバムの他の写真も見られます。動画はソースから
+  ビルドした mpv で再生します。チャットが許可していれば「ダウンロード」に保存できます。
+- **送信。** 写真、動画、ファイルはクリップから送信できるほか、ウィンドウにドラッグするか貼り付けても送れます。送る前に
+  カードで確認：キャプションを付ける、写真として送るかファイルとして送るか、最大 10 個をアルバムにまとめる、個人チャットでは
+  自動消滅タイマー、サイレント送信。
+- **スクリーンショット。** 入力欄のはさみ、または ⌘⇧A で画面を固定：ウィンドウを選ぶかドラッグで範囲を指定し、四角、楕円、
+  矢印、ペン、文字、モザイクを描き込んで、そのまま送信、コピー、保存できます。WeChat と同じように、どのチャットからでも。
+- **チャットのメニュー。** ミュート、ピン留め、既読にする、フォルダに入れる。相手のブロックと解除、報告、グループや
+  チャンネルからの退出、チャットの削除。
+- **通知。** 新着メッセージは macOS の通知で届き、その数が Dock アイコンに表示されます。ウィンドウを閉じても FinchGram は
+  Dock に残り、メニューバーに置くこともできます。
+- **3 つのテーマ。** Workbench、Broadsheet、Terminal。それぞれライトとダークがあり、再起動なしで切り替えられます。
+- **設定。** ログイン時に起動、Enter で送信、スクリーンショットのショートカット、通知のサウンドとプレビュー、2 段階認証、
+  表示言語、そして更新：アプリは GitHub Releases から自動更新し、検証できないものは一切インストールしません。
+- **言語。** インターフェースは英語と簡体字中国語、この README は 11 言語。
+
+まだないもの：秘密のチャット、音声メッセージと通話、複数アカウント、投票と予約送信、キーワードフィルター、Windows と Linux。
+[次に来るもの](../docs/architecture.md#not-now)も参照してください。
+
+## ダウンロード
+
+[最新のリリース](https://github.com/FinchGram/FinchGram/releases/latest)から `FinchGram-<バージョン>-macos-arm64.zip` を
+取得し、解凍して FinchGram を「アプリケーション」に移動します。Apple silicon の macOS 12 以降が必要です。アプリはまだ公証
+されていないため、初回起動時に macOS が一度確認します：システム設定 → プライバシーとセキュリティ → 「このまま開く」。
+以降は自動で更新されます。
+
+すべてのリリースに `SHA256SUMS` とその Ed25519 署名が付きます。アプリは更新をインストールする前に両方を検証します。
+[release-signing.pub](../release-signing.pub) の公開鍵で自分でも検証できます。
+
+## 3 つのテーマ
+
+| Workbench | Broadsheet | Terminal |
+|---|---|---|
+| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-light-chats.png) |
+
+デフォルトの Workbench はタブ付きの作業ウィンドウ。Broadsheet は新聞のような読み心地で、アカウントごとのアクセントカラー。
+Terminal は等幅フォントの画面でコマンドが使えます。どれもライトとダークがあり、システムに従うか自分で選べます
+（設定 › 外観）。
+
+<p align="center"><img src="../docs/screenshots/workbench-dark-chats.png" width="800" alt="Workbench、ダーク"></p>
+
+## スクリーンショット機能
+
+<p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="書き込み付きのスクリーンショットオーバーレイ"></p>
+
+⌘⇧A を押すか、クリップの隣のはさみをクリックします。画面がオーバーレイの下で固定され、ポインタの下のウィンドウがそのまま
+選べるほか、ドラッグで範囲を指定できます。拡大鏡とピクセル単位のサイズ付き。ツールバーで四角、楕円、矢印、ペン、文字、
+モザイクを 3 種類の太さと 6 色で描け、取り消しもできます。Done で画像が送信カードに入り、キャプションを添えられます。
+⌘C でコピー、⌘S で「ダウンロード」に保存。設定 › 一般 › スクリーンショットでショートカットと、撮影中に FinchGram の
+ウィンドウを隠すかどうかを変えられます。
+
+<p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="スクリーンショットを載せた送信カード"></p>
+
+## 仕組み
+
+アプリはシェルです。Telegram そのものは TDLib が担い、実行ファイルの隣で別プログラム `finchgram-tdlib` として動きます。
+これはこのリポジトリがピン留めしたソースからビルドします。シェルは `src/telegram/` を通してのみ、TDLib 自身の JSON で
+やり取りします。動画は同じ方法でビルドした libmpv で再生します。利用者のマシンから何も取らず、ビルド時にはこのピン留め済み・
+チェックサム付きの成果物以外は何もダウンロードしません。ソース、vendor ビルド（`vendor/`）、リリース、すべてが公開です。
+[docs/architecture.md](../docs/architecture.md) と [docs/conventions.md](../docs/conventions.md) を参照してください。
+
+## Telegram のルール
+
+FinchGram は Telegram 公式アプリがすることだけをし、禁じられていることはしません。メッセージは見た時点で既読になり、
+相手には他の Telegram アプリと同じように入力中やオンラインが見え、チャンネルのスポンサーメッセージは表示され、自動消滅の
+メディアは一度だけ開け、Telegram から得たものはどの AI にも渡しません。Telegram と、更新のための GitHub 以外に、
+あなたのマシンから出ていくものはありません。
 
 ## 開発
 
@@ -71,6 +136,7 @@ TDLib のデータベースとダウンロードしたファイルは `~/Library
 Cargo.toml
 build.rs                 # ui/app.slint をコンパイルし、lang/ を同梱し、vendor/tdlib/bin/ を実行ファイルの隣にコピー
 docs/                    # architecture.md、conventions.md、drag-and-drop.md（+ zh-Hans）
+  screenshots/           #   README に載せる画像。スクリーンショットテストから（scripts/readme-pictures.sh）
 lang/                    # 翻訳：lang/<コード>/LC_MESSAGES/finchgram.po、バイナリに組み込まれる
 readme/                  # この README の他の言語版
 release-signing.pub      # リリースへの署名を許された公開鍵。アプリに組み込まれる
@@ -79,6 +145,7 @@ scripts/
   fetch-fonts.sh         # 固定バージョンの UI フォントを vendor/fonts/ へ
   fetch-mpv.sh           # 固定バージョンの libmpv リリースを vendor/mpv/bin/ へ
   fetch-tdlib.sh         # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ へ
+  readme-pictures.sh     # README の画像を target/screenshots/ から docs/screenshots/ にコピー
   release.sh             # リリースを開始：バージョン、タグ、push。残りは GitHub Actions が行う
 src/
   main.rs                # ウィンドウ、設定、言語とテーマ、アップデート。Telegram を起動
@@ -161,6 +228,14 @@ scripts/release.sh patch    # 0.1.0 -> 0.1.1。minor、major、または正確�
 
 今のところ署名は ad hoc です。ダウンロードしたアプリを初めて開くとき、macOS が一度だけ確認します
 （システム設定 → プライバシーとセキュリティ）。アプリ自身がインストールしたアップデートは、この手順なしで起動します。
+
+## 貢献
+
+Issue と pull request を歓迎します。構造に関わる変更の前に [docs/architecture.md](../docs/architecture.md) と
+[docs/conventions.md](../docs/conventions.md) を読んでください：すべての依存はこのリポジトリがピン留めしたソースから
+ビルドし、UI は 3 つのテーマすべてでデザインに従い、アプリに Telegram API 利用規約に反するものは入れません。`cargo test`、
+`cargo clippy --all-targets`、`cargo test screenshots -- --ignored` をクリーンに保ち、描かれた画像を確認してください。
+README の画像もこのテストから来ています：`scripts/readme-pictures.sh` が `docs/screenshots/` を更新します。
 
 ## ライセンス
 
