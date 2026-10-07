@@ -169,7 +169,8 @@ pub struct ScreenWindow {
     pub height: f32,
 }
 
-/// The other apps' windows on the screen, front to back, for the screenshot tool to offer.
+/// The windows on the screen, front to back, for the screenshot tool to offer: FinchGram's own
+/// among them, unless it hid for the capture.
 pub fn windows_on_screen() -> Vec<ScreenWindow> {
     #[cfg(target_os = "macos")]
     return macos::windows_on_screen();

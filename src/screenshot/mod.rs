@@ -1,12 +1,13 @@
 //! The screenshot tool (the design's seventh round, "FinchGram Desktop 截图"): the scissors in the
 //! composer, or its shortcut (⌘⇧A, Settings → General → Screenshots), freeze the screen under an
-//! overlay per display (ui/shot.slint). The user takes a window (highlighted under the pointer) or
-//! drags a selection, adjusts it by its handles, draws on it with the toolbar's tools, and Done
+//! overlay per display (ui/shot.slint). The user clicks a window (lit under the pointer) or drags
+//! a selection, adjusts it by its handles, draws on it with the toolbar's tools, and Done
 //! hands the picture to the card before sending (telegram/attachments.rs), Copy puts it on the
 //! clipboard, Save writes it to the Downloads folder.
 //!
 //! The screen is captured by the system (platform::capture_display) once FinchGram's own window
-//! has hidden, when the setting says so; then one borderless window per display covers it, above
+//! has hidden, when the setting says so (off by default: then FinchGram is in the picture like any
+//! other window, and can be taken); then one borderless window per display covers it, above
 //! everything, with the frozen picture. All the overlay shows comes from here: it only reports the
 //! pointer and the keys. The picture itself is made in export.rs.
 
@@ -45,6 +46,9 @@ const BLOCK: f32 = 8.0;
 const HANDLE_REACH: f32 = 7.0;
 /// A selection smaller than this is a click, not a selection.
 const SMALLEST: f32 = 2.0;
+/// A press that moves less than this before it is released is a click, which takes the window it
+/// was on; further, it is a drag, which makes a selection.
+const DRAG_START: f32 = 4.0;
 
 #[derive(Clone, Copy, PartialEq, Debug, Default)]
 pub struct Rect {
@@ -132,7 +136,9 @@ impl Annotation {
 enum Phase {
     /// No selection yet: the window under the pointer is offered.
     Waiting,
-    Selecting { start: (f32, f32) },
+    /// The button is down since `start`: a drag makes a selection; a click takes `window`, the one
+    /// lit when the button went down, if any.
+    Selecting { start: (f32, f32), window: Option<Rect> },
     Settled,
     Moving { grab: (f32, f32), from: Rect },
     Resizing { handle: usize, from: Rect },
@@ -144,7 +150,8 @@ struct Session {
     ui: slint::Weak<MainWindow>,
     displays: Vec<Display>,
     windows: Vec<ShotWindow>,
-    /// The other apps' windows, front to back, in global points.
+    /// The windows on the screen, front to back, in global points: FinchGram's own among them,
+    /// unless it hid.
     others: Vec<platform::ScreenWindow>,
     phase: Phase,
     /// The display the selection is on (or the pointer was last seen on).
@@ -238,13 +245,13 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
             }
         }
     });
-    screenshot.on_set_hide_window({
+    screenshot.on_set_hide_own_window({
         let ui = ui.as_weak();
         move |hide| {
-            settings.borrow_mut().screenshots.hide_window = hide;
+            settings.borrow_mut().screenshots.hide_own_window = hide;
             settings.borrow().save();
             if let Some(ui) = ui.upgrade() {
-                ui.global::<Screenshot>().set_hide_window(hide);
+                ui.global::<Screenshot>().set_hide_own_window(hide);
             }
         }
     });
@@ -254,7 +261,7 @@ fn show_settings(screenshot: &Screenshot, settings: &Screenshots) {
     let shortcut = Shortcut::parse(&settings.shortcut).unwrap_or_default();
     screenshot.set_shortcut_label(shortcut.label().into());
     screenshot.set_custom_shortcut(shortcut.to_string() != Screenshots::default().shortcut);
-    screenshot.set_hide_window(settings.hide_window);
+    screenshot.set_hide_own_window(settings.hide_own_window);
     screenshot.set_background(settings.global);
 }
 
@@ -376,7 +383,7 @@ pub fn start(ui: &MainWindow) {
     if monitors.is_empty() {
         return;
     }
-    let hide = ui.global::<Screenshot>().get_hide_window();
+    let hide = ui.global::<Screenshot>().get_hide_own_window();
     if hide {
         ui.window().hide().ok();
     }
@@ -617,22 +624,17 @@ impl Session {
                 return;
             }
         }
-        // A new selection, on this display: whatever was drawn goes with the old one.
+        // A new selection, on this display: whatever was drawn goes with the old one. The button
+        // down over a lit window takes nothing yet: a drag from there makes a selection of its
+        // own, and only a click (released) takes the window.
         self.display = display;
         self.annotations.clear();
         self.redo.clear();
         self.draft = None;
         self.tool = Tool::None;
-        match self.hover.take() {
-            Some(hover) if self.pointer.0 == display => {
-                self.selection = Some(hover);
-                self.phase = Phase::Settled;
-            }
-            _ => {
-                self.selection = None;
-                self.phase = Phase::Selecting { start: p };
-            }
-        }
+        self.selection = None;
+        let window = self.hover.filter(|_| self.pointer.0 == display);
+        self.phase = Phase::Selecting { start: p, window };
     }
 
     fn moved(&mut self, display: usize, p: (f32, f32), shift: bool) {
@@ -642,7 +644,12 @@ impl Session {
                 self.hover = self.window_under(display, p);
                 self.display = display;
             }
-            Phase::Selecting { start } if display == self.display => {
+            Phase::Selecting { start, .. } if display == self.display => {
+                // Not a drag yet: the window stays lit, and a click still takes it.
+                if self.selection.is_none() && (p.0 - start.0).abs() < DRAG_START && (p.1 - start.1).abs() < DRAG_START {
+                    return;
+                }
+                self.hover = None;
                 let size = self.display().size;
                 let mut rect = Rect::between(start, p);
                 rect.x = rect.x.max(0.0);
@@ -665,12 +672,18 @@ impl Session {
 
     fn released(&mut self, _display: usize, _p: (f32, f32)) {
         match self.phase {
-            Phase::Selecting { .. } => {
-                if self.selection.is_some_and(|selection| selection.w >= SMALLEST && selection.h >= SMALLEST) {
+            Phase::Selecting { window, .. } => {
+                // A click takes the window that was lit when the button went down; a drag, what
+                // it drew, if that is anything.
+                let clicked = self.selection.is_none();
+                let drawn = self.selection.filter(|drawn| drawn.w >= SMALLEST && drawn.h >= SMALLEST);
+                self.selection = if clicked { window } else { drawn };
+                if self.selection.is_some() {
+                    self.hover = None;
                     self.phase = Phase::Settled;
                 } else {
-                    self.selection = None;
                     self.phase = Phase::Waiting;
+                    self.hover = self.window_under(self.pointer.0, self.pointer.1);
                 }
             }
             Phase::Moving { .. } | Phase::Resizing { .. } => self.phase = Phase::Settled,
@@ -911,7 +924,7 @@ impl Session {
         handles(selection).iter().position(|handle| (handle.0 - p.0).abs() <= HANDLE_REACH && (handle.1 - p.1).abs() <= HANDLE_REACH)
     }
 
-    /// The other apps' window under the pointer, as a rectangle of this display, if any.
+    /// The window under the pointer, as a rectangle of this display, if any.
     fn window_under(&self, display: usize, p: (f32, f32)) -> Option<Rect> {
         let screen = self.displays.get(display)?;
         let global = (screen.origin.0 + p.0, screen.origin.1 + p.1);
@@ -983,7 +996,7 @@ impl Session {
                     .unwrap_or_default()
                     .into(),
             );
-            let magnifying = index == pointer_display && matches!(self.phase, Phase::Selecting { .. });
+            let magnifying = index == pointer_display && matches!(self.phase, Phase::Selecting { .. }) && self.selection.is_some();
             shot.set_show_magnifier(magnifying);
             if index == pointer_display {
                 shot.set_pointer_x(pointer.0);
@@ -1223,6 +1236,88 @@ mod tests {
         assert_eq!(Shortcut::from_keys("S", false, true, false, true).unwrap().label(), "⌃⇧S");
         assert!(Shortcut::from_keys("a", false, false, false, true).is_none());
         assert!(Shortcut::parse("cmd+").is_none());
+    }
+
+    /// A session over one display of 1000 × 800 points, with one window on the screen and no
+    /// overlays (nothing is shown).
+    fn session() -> Session {
+        let (width, height) = (1000, 800);
+        Session {
+            ui: slint::Weak::default(),
+            displays: vec![Display {
+                origin: (0.0, 0.0),
+                size: (width as f32, height as f32),
+                scale: 1.0,
+                px: (width, height),
+                rgba: vec![0; (width * height * 4) as usize],
+                image: Image::default(),
+            }],
+            windows: Vec::new(),
+            others: vec![platform::ScreenWindow { x: 100.0, y: 100.0, width: 400.0, height: 300.0 }],
+            phase: Phase::Waiting,
+            display: 0,
+            selection: None,
+            hover: None,
+            pointer: (0, (0.0, 0.0)),
+            tool: Tool::None,
+            size: 1,
+            color: 0,
+            annotations: Vec::new(),
+            redo: Vec::new(),
+            draft: None,
+            last_point: (0.0, 0.0),
+            stroke_cells: HashSet::new(),
+            text_at: (0.0, 0.0),
+            hid_window: false,
+            boxes: Rc::new(VecModel::default()),
+            paths: Rc::new(VecModel::default()),
+            texts: Rc::new(VecModel::default()),
+            cells: Rc::new(VecModel::default()),
+        }
+    }
+
+    #[test]
+    fn a_click_takes_the_lit_window() {
+        let window = Rect { x: 100.0, y: 100.0, w: 400.0, h: 300.0 };
+        let mut session = session();
+        session.moved(0, (200.0, 200.0), false);
+        assert_eq!(session.hover, Some(window));
+        // The button down takes nothing yet, and the window stays lit through a steady hand.
+        session.pressed(0, (200.0, 200.0), false, false);
+        session.moved(0, (201.0, 202.0), false);
+        assert_eq!(session.selection, None);
+        assert_eq!(session.hover, Some(window));
+        session.released(0, (201.0, 202.0));
+        assert_eq!(session.selection, Some(window));
+        assert_eq!(session.phase, Phase::Settled);
+    }
+
+    #[test]
+    fn a_drag_makes_a_selection_even_from_a_lit_window() {
+        let mut session = session();
+        session.moved(0, (200.0, 200.0), false);
+        session.pressed(0, (200.0, 200.0), false, false);
+        session.moved(0, (260.0, 250.0), false);
+        assert_eq!(session.hover, None);
+        session.released(0, (260.0, 250.0));
+        assert_eq!(session.selection, Some(Rect { x: 200.0, y: 200.0, w: 60.0, h: 50.0 }));
+        assert_eq!(session.phase, Phase::Settled);
+    }
+
+    #[test]
+    fn a_click_on_nothing_keeps_waiting() {
+        let mut session = session();
+        session.moved(0, (800.0, 700.0), false);
+        assert_eq!(session.hover, None);
+        session.pressed(0, (800.0, 700.0), false, false);
+        session.released(0, (800.0, 700.0));
+        assert_eq!(session.selection, None);
+        assert_eq!(session.phase, Phase::Waiting);
+        // Back over the window, it is lit again and a click takes it.
+        session.moved(0, (150.0, 150.0), false);
+        session.pressed(0, (150.0, 150.0), false, false);
+        session.released(0, (150.0, 150.0));
+        assert_eq!(session.selection, Some(Rect { x: 100.0, y: 100.0, w: 400.0, h: 300.0 }));
     }
 
     #[test]

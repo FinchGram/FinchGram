@@ -43,14 +43,17 @@ pub struct Screenshots {
     /// The keys, as "cmd+shift+a": "cmd", "ctrl", "alt", "shift" and a letter or digit, joined with
     /// "+" in that order.
     pub shortcut: String,
-    pub hide_window: bool,
+    /// FinchGram's own window hides while the screen is captured, to stay out of the picture; off,
+    /// it is in the picture like any other window, and can be taken. (Named afresh: v0.3.0 wrote
+    /// `hide_window = true`, then the default, into every settings file.)
+    pub hide_own_window: bool,
     /// The shortcut works while FinchGram is in the background too (still to come).
     pub global: bool,
 }
 
 impl Default for Screenshots {
     fn default() -> Self {
-        Screenshots { shortcut: "cmd+shift+a".to_string(), hide_window: true, global: false }
+        Screenshots { shortcut: "cmd+shift+a".to_string(), hide_own_window: false, global: false }
     }
 }
 

@@ -817,9 +817,9 @@ component GeneralSection {
                 SwitchRow {
                     icon: "app-window";
                     title: @tr("Hide the FinchGram window while taking a screenshot");
-                    on: Screenshot.hide-window;
+                    on: Screenshot.hide-own-window;
                     toggled => {
-                        Screenshot.set-hide-window(!Screenshot.hide-window);
+                        Screenshot.set-hide-own-window(!Screenshot.hide-own-window);
                     }
                 }
                 Separator { }

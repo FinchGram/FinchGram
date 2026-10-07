@@ -369,11 +369,11 @@ pub fn capture_display(number: usize, path: &std::path::Path) -> bool {
         .unwrap_or(false)
 }
 
-/// The windows on the screen, front to back: the normal ones (layer 0) of other apps, large
-/// enough to mean something.
+/// The windows on the screen, front to back: the normal ones (layer 0), large enough to mean
+/// something. FinchGram's own window is among them unless it hid for the capture; the screenshot
+/// tool asks before it opens its overlays, which are above layer 0 in any case.
 pub fn windows_on_screen() -> Vec<super::ScreenWindow> {
     type Info = NSDictionary<AnyObject, AnyObject>;
-    let ours = f64::from(std::process::id());
     // SAFETY: a copy of the window list (an array of dictionaries), which we own and release.
     let list = unsafe {
         let raw = CGWindowListCopyWindowInfo(WINDOWS_ON_SCREEN, 0);
@@ -390,7 +390,7 @@ pub fn windows_on_screen() -> Vec<super::ScreenWindow> {
     let mut windows = Vec::new();
     for window in list.iter() {
         let window: &Info = &window;
-        if number(window, "kCGWindowLayer").unwrap_or(1.0) != 0.0 || number(window, "kCGWindowOwnerPID").unwrap_or(0.0) == ours {
+        if number(window, "kCGWindowLayer").unwrap_or(1.0) != 0.0 {
             continue;
         }
         if number(window, "kCGWindowAlpha").unwrap_or(1.0) <= 0.0 {

@@ -63,13 +63,13 @@ export global Screenshot {
     in-out property <string> shortcut-label: "⌘⇧A";   // the shortcut, as macOS writes keys
     in-out property <bool> recording;                  // the shortcut's field is taking a new one
     in-out property <bool> custom-shortcut;            // it is not the default: Reset applies
-    in-out property <bool> hide-window: true;          // FinchGram's window hides while the screen is captured
+    in-out property <bool> hide-own-window;            // FinchGram's window hides while the screen is captured
     in-out property <bool> background;                 // the shortcut works in the background too (not yet)
     in-out property <bool> permission-card;            // Screen Recording is off for FinchGram: the card shows
     callback start();                                  // the scissors, or the shortcut
     callback record-shortcut(string, bool, bool, bool, bool);  // a key pressed in the field: key, ⌘, ⌃, ⌥, ⇧
     callback reset-shortcut();
-    callback set-hide-window(bool);
+    callback set-hide-own-window(bool);
     callback open-system-settings();
     callback dismiss-permission();
 }
