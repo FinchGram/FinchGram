@@ -70,7 +70,7 @@ TDLib のデータベースとダウンロードしたファイルは `~/Library
   tdlib.yml              # クリーンなマシンで finchgram-tdlib をビルドし、tdlib-* タグをリリースとして公開
 Cargo.toml
 build.rs                 # ui/app.slint をコンパイルし、lang/ を同梱し、vendor/tdlib/bin/ を実行ファイルの隣にコピー
-docs/                    # architecture.md、conventions.md（+ zh-Hans）
+docs/                    # architecture.md、conventions.md、drag-and-drop.md（+ zh-Hans）
 lang/                    # 翻訳：lang/<コード>/LC_MESSAGES/finchgram.po、バイナリに組み込まれる
 readme/                  # この README の他の言語版
 release-signing.pub      # リリースへの署名を許された公開鍵。アプリに組み込まれる

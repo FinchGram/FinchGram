@@ -76,7 +76,7 @@ La base de datos de TDLib y los archivos descargados están en
   tdlib.yml              # compila finchgram-tdlib en una máquina limpia; publica las etiquetas tdlib-* como releases
 Cargo.toml
 build.rs                 # compila ui/app.slint, empaqueta lang/, copia vendor/tdlib/bin/ junto al ejecutable
-docs/                    # architecture.md, conventions.md (+ zh-Hans)
+docs/                    # architecture.md, conventions.md, drag-and-drop.md (+ zh-Hans)
 lang/                    # traducciones: lang/<código>/LC_MESSAGES/finchgram.po, compiladas en el binario
 readme/                  # este README en otros idiomas
 release-signing.pub      # las claves públicas que pueden firmar las releases; compiladas en la app

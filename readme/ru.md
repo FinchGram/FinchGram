@@ -74,7 +74,7 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   tdlib.yml              # собирает finchgram-tdlib на чистой машине; публикует теги tdlib-* как релизы
 Cargo.toml
 build.rs                 # компилирует ui/app.slint, встраивает lang/, копирует vendor/tdlib/bin/ рядом с исполняемым файлом
-docs/                    # architecture.md, conventions.md (+ zh-Hans)
+docs/                    # architecture.md, conventions.md, drag-and-drop.md (+ zh-Hans)
 lang/                    # переводы: lang/<код>/LC_MESSAGES/finchgram.po, вкомпилированы в бинарный файл
 readme/                  # этот README на других языках
 release-signing.pub      # открытые ключи, которым разрешено подписывать релизы; вкомпилированы в приложение
