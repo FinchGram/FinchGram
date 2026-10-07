@@ -21,7 +21,8 @@ pub struct Settings {
     /// The once-a-day update check (src/update.rs).
     pub check_for_updates: bool,
     /// Settings → General: closing the window quits FinchGram (else, on macOS, it stays in the
-    /// Dock), its icon is in the menu bar, and Enter sends a message (else ⌘Enter does).
+    /// Dock), its icon is in the menu bar (it is, unless the user says otherwise), and Enter sends
+    /// a message (else ⌘Enter does).
     pub quit_on_close: bool,
     pub show_in_menu_bar: bool,
     pub send_with_enter: bool,
@@ -94,7 +95,7 @@ impl Default for Settings {
             theme: "workbench".to_string(),
             check_for_updates: true,
             quit_on_close: false,
-            show_in_menu_bar: false,
+            show_in_menu_bar: true,
             send_with_enter: true,
             notifications: Notifications::default(),
             list_widths: ListWidths::default(),
@@ -155,7 +156,7 @@ mod tests {
     fn a_file_from_an_older_version_gets_the_defaults() {
         let read: Settings = toml::from_str("theme = \"terminal\"\ncheck_for_updates = false\n").expect("read");
         assert_eq!((read.theme.as_str(), read.check_for_updates), ("terminal", false));
-        assert!(!read.quit_on_close && !read.show_in_menu_bar && read.send_with_enter);
+        assert!(!read.quit_on_close && read.show_in_menu_bar && read.send_with_enter);
         assert_eq!(read.notifications, Notifications::default());
     }
 
