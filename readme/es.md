@@ -73,12 +73,12 @@ Cada uno tiene un lado claro y otro oscuro, según el sistema o tu elección, en
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="La capa de captura, con anotaciones"></p>
 
-Pulsa ⌘⇧A, o las tijeras junto al clip. La pantalla se congela bajo una capa: se ofrece la ventana que
-hay bajo el puntero, o arrastras una selección, con una lupa y el tamaño en píxeles. La barra de
-herramientas dibuja rectángulos, elipses, flechas, trazos, texto y mosaico, en tres tamaños y seis
-colores, con deshacer. Done pone la imagen en la tarjeta de envío, donde puede llevar un pie; ⌘C la
-copia; ⌘S la guarda en Descargas. En Ajustes → General → Capturas de pantalla están el atajo y si la
-ventana de FinchGram se oculta mientras tanto.
+Pulsa ⌘⇧A, o las tijeras junto al clip. La pantalla se congela, oscurecida, bajo una capa: arrastras
+una selección, con una lupa y el tamaño en píxeles, o haces clic en una ventana para tomarla entera.
+La barra de herramientas dibuja rectángulos, elipses, flechas, trazos, texto y mosaico, en tres
+tamaños y seis colores, con deshacer. Done pone la imagen en la tarjeta de envío, donde puede llevar
+un pie; ⌘C la copia; ⌘S la guarda en Descargas. En Ajustes → General → Capturas de pantalla están el
+atajo y si la ventana de FinchGram se oculta mientras tanto.
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="La tarjeta de envío con una captura"></p>
 

@@ -22,7 +22,7 @@ use objc2::{AnyThread, MainThreadMarker, MainThreadOnly, define_class, msg_send,
 use objc2_app_kit::{
     NSApplication, NSBitmapImageFileType, NSBitmapImageRep, NSImage, NSMenu, NSMenuItem, NSModalResponse, NSOpenPanel, NSPasteboard,
     NSPasteboardTypeFileURL, NSPasteboardTypePNG, NSPasteboardTypeString, NSPasteboardTypeTIFF, NSRequestUserAttentionType,
-    NSStatusBar, NSStatusItem, NSVariableStatusItemLength, NSView, NSWindowCollectionBehavior, NSWorkspace,
+    NSCursor, NSStatusBar, NSStatusItem, NSVariableStatusItemLength, NSView, NSWindowCollectionBehavior, NSWorkspace,
 };
 use objc2_foundation::{NSArray, NSBundle, NSData, NSDate, NSDictionary, NSError, NSNumber, NSSize, NSString, NSURL};
 use objc2_user_notifications::{
@@ -356,11 +356,14 @@ pub fn open_screen_capture_settings() {
         .spawn();
 }
 
-/// The system's own screencapture, for one display, without a sound: the picture it writes is
-/// in device pixels.
-pub fn capture_display(number: usize, path: &std::path::Path) -> bool {
+/// The system's own screencapture, for one display, without a sound, as a picture of `format`
+/// (a BMP has nothing to compress, so it is ready sooner than a PNG): what it writes is in device
+/// pixels.
+pub fn capture_display(number: usize, path: &std::path::Path, format: &str) -> bool {
     std::process::Command::new("/usr/sbin/screencapture")
         .arg("-x")
+        .arg("-t")
+        .arg(format)
         .arg("-D")
         .arg(number.to_string())
         .arg(path)
@@ -411,11 +414,12 @@ pub fn windows_on_screen() -> Vec<super::ScreenWindow> {
     windows
 }
 
-/// The overlay above everything on its display, in every Space and over full-screen apps, and in
-/// front with the keyboard.
+/// The overlay above everything on its display, in every Space and over full-screen apps, over
+/// the whole display, menu bar included, in front with the keyboard, and under a crosshair.
 pub fn raise_overlay(window: &slint::Window) {
     use slint::winit_030::WinitWindowAccessor;
     use slint::winit_030::winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    use slint::winit_030::winit::window::CursorIcon;
     window.with_winit_window(|winit_window| {
         let Ok(handle) = winit_window.window_handle() else { return };
         let RawWindowHandle::AppKit(handle) = handle.as_raw() else { return };
@@ -424,7 +428,16 @@ pub fn raise_overlay(window: &slint::Window) {
         let Some(ns_window) = view.window() else { return };
         ns_window.setLevel(OVERLAY_LEVEL);
         ns_window.setCollectionBehavior(NSWindowCollectionBehavior::CanJoinAllSpaces | NSWindowCollectionBehavior::FullScreenAuxiliary);
+        // Shown at the normal level, the window was kept out from under the menu bar; at this
+        // level it may have the whole display.
+        if let Some(screen) = ns_window.screen() {
+            ns_window.setFrame_display(screen.frame(), true);
+        }
         ns_window.makeKeyAndOrderFront(None);
+        // The pointer has not moved yet, so nothing has asked for the crosshair: ask now, and
+        // tell winit, which sets the cursor again when the pointer enters.
+        winit_window.set_cursor(CursorIcon::Crosshair);
+        NSCursor::crosshairCursor().set();
     });
     bring_to_front();
 }

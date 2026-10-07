@@ -75,12 +75,12 @@ Einstellungen → Erscheinungsbild.
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="Das Overlay für Bildschirmfotos, mit Anmerkungen"></p>
 
-Drücke ⌘⇧A oder die Schere neben der Büroklammer. Der Bildschirm friert unter einem Overlay ein: das
-Fenster unter dem Zeiger wird angeboten, oder du ziehst eine Auswahl, mit Lupe und der Größe in
-Pixeln. Die Werkzeugleiste zeichnet Rechtecke, Ellipsen, Pfeile, Stiftstriche, Text und Mosaik, in
-drei Größen und sechs Farben, mit Rückgängig. Done legt das Bild in die Sendekarte, wo eine
-Bildunterschrift dazukommen kann; ⌘C kopiert es; ⌘S speichert es in Downloads. Einstellungen →
-Allgemein → Bildschirmfotos hält das Kürzel und ob das FinchGram-Fenster sich derweil versteckt.
+Drücke ⌘⇧A oder die Schere neben der Büroklammer. Der Bildschirm friert abgedunkelt unter einem
+Overlay ein: du ziehst eine Auswahl, mit Lupe und der Größe in Pixeln, oder klickst ein Fenster an,
+um es ganz zu nehmen. Die Werkzeugleiste zeichnet Rechtecke, Ellipsen, Pfeile, Stiftstriche, Text
+und Mosaik, in drei Größen und sechs Farben, mit Rückgängig. Done legt das Bild in die Sendekarte,
+wo eine Bildunterschrift dazukommen kann; ⌘C kopiert es; ⌘S speichert es in Downloads. Einstellungen
+→ Allgemein → Bildschirmfotos hält das Kürzel und ob das FinchGram-Fenster sich derweil versteckt.
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="Die Sendekarte mit einem Bildschirmfoto"></p>
 

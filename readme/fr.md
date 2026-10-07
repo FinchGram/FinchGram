@@ -80,12 +80,12 @@ Apparence.
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="Le calque de capture, avec des annotations"></p>
 
-Appuyez sur ⌘⇧A, ou sur les ciseaux à côté du trombone. L'écran se fige sous un calque : la fenêtre
-sous le pointeur est proposée, ou vous tracez une sélection, avec une loupe et la taille en pixels. La
-barre d'outils dessine rectangles, ellipses, flèches, traits, texte et mosaïque, en trois tailles et
-six couleurs, avec annulation. Done met l'image dans la carte d'envoi, où une légende peut
-l'accompagner ; ⌘C la copie ; ⌘S l'enregistre dans Téléchargements. Réglages → Général → Captures
-d'écran tient le raccourci et dit si la fenêtre de FinchGram se cache pendant ce temps.
+Appuyez sur ⌘⇧A, ou sur les ciseaux à côté du trombone. L'écran se fige, assombri, sous un calque :
+vous tracez une sélection, avec une loupe et la taille en pixels, ou cliquez une fenêtre pour la
+prendre entière. La barre d'outils dessine rectangles, ellipses, flèches, traits, texte et mosaïque,
+en trois tailles et six couleurs, avec annulation. Done met l'image dans la carte d'envoi, où une
+légende peut l'accompagner ; ⌘C la copie ; ⌘S l'enregistre dans Téléchargements. Réglages → Général
+→ Captures d'écran tient le raccourci et dit si la fenêtre de FinchGram se cache pendant ce temps.
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="La carte d'envoi avec une capture"></p>
 

@@ -71,8 +71,8 @@ side, following the system or your choice, in Settings → Appearance.
 
 <p align="center"><img src="docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="The screenshot overlay, with annotations"></p>
 
-Press ⌘⇧A, or the scissors next to the paperclip. The screen freezes under an overlay: the window
-under the pointer is offered, or you drag a selection, with a magnifier and the size in pixels. The
+Press ⌘⇧A, or the scissors next to the paperclip. The screen freezes, dimmed, under an overlay: you
+drag a selection, with a magnifier and the size in pixels, or click a window to take it whole. The
 toolbar draws rectangles, ellipses, arrows, pen strokes, text and mosaic, in three sizes and six
 colours, with undo. Done puts the picture into the send card, where a caption can go with it; ⌘C
 copies it; ⌘S saves it to Downloads. Settings → General → Screenshots holds the shortcut and

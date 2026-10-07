@@ -72,12 +72,12 @@ e um escuro, seguindo o sistema ou a sua escolha, em Configurações → Aparên
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="A camada de captura, com anotações"></p>
 
-Pressione ⌘⇧A, ou a tesoura ao lado do clipe. A tela congela sob uma camada: a janela sob o ponteiro é
-oferecida, ou você arrasta uma seleção, com uma lupa e o tamanho em pixels. A barra de ferramentas
-desenha retângulos, elipses, setas, traços, texto e mosaico, em três tamanhos e seis cores, com
-desfazer. Done põe a imagem no cartão de envio, onde pode levar uma legenda; ⌘C a copia; ⌘S a salva em
-Downloads. Configurações → Geral → Capturas de tela guarda o atalho e se a janela do FinchGram se
-esconde enquanto isso.
+Pressione ⌘⇧A, ou a tesoura ao lado do clipe. A tela congela, escurecida, sob uma camada: você arrasta
+uma seleção, com uma lupa e o tamanho em pixels, ou clica numa janela para tomá-la inteira. A barra de
+ferramentas desenha retângulos, elipses, setas, traços, texto e mosaico, em três tamanhos e seis
+cores, com desfazer. Done põe a imagem no cartão de envio, onde pode levar uma legenda; ⌘C a copia; ⌘S
+a salva em Downloads. Configurações → Geral → Capturas de tela guarda o atalho e se a janela do
+FinchGram se esconde enquanto isso.
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="O cartão de envio com uma captura"></p>
 

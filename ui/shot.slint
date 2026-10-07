@@ -56,11 +56,6 @@ export global Shot {
     in-out property <float> scale: 2;            // device pixels per point
     in-out property <int> display;               // which display this window covers
     // The window under the pointer before a selection is made: highlighted, a click takes it.
-    in-out property <bool> hover-window;
-    in-out property <length> hover-x;
-    in-out property <length> hover-y;
-    in-out property <length> hover-w;
-    in-out property <length> hover-h;
     in-out property <bool> has-selection;
     in-out property <length> sel-x;
     in-out property <length> sel-y;
@@ -187,13 +182,15 @@ component ToolTip inherits Rectangle {
     }
 }
 
-// A button of the toolbar: an icon (a character in Terminal), lit when it is the tool in use.
+// A button of the toolbar: an icon (a character in Terminal), lit when it is the tool in use, or
+// in the accent colour when it is the main action (Done: a check mark, no word).
 component ToolButton inherits Rectangle {
     in property <string> icon;
     in property <string> sign;                // Terminal's character
     in property <string> tip;
     in property <string> keys;
     in property <bool> on;
+    in property <bool> accent;
     in property <bool> enabled: true;
     in property <length> size: 30px;
     callback activated();
@@ -207,14 +204,15 @@ component ToolButton inherits Rectangle {
 
     if !Look.terminal: Icon {
         name: root.icon;
-        size: Look.broadsheet ? 19px : 18px;
-        color: root.on ? Look.accent : Look.text;
+        size: root.accent ? 20px : Look.broadsheet ? 19px : 18px;
+        color: root.on || root.accent ? Look.accent : Look.text;
     }
     if Look.terminal: Text {
         text: root.sign;
-        color: root.on ? Look.accent : Look.text;
+        color: root.on || root.accent ? Look.accent : Look.text;
         font-family: Look.font;
-        font-size: 13px;
+        font-size: root.accent ? 15px : 13px;
+        font-weight: root.accent ? 700 : 400;
     }
     touch := TouchArea {
         enabled: root.enabled;
@@ -228,50 +226,6 @@ component ToolButton inherits Rectangle {
         y: -self.height - 9px;
         text: root.tip;
         keys: root.keys;
-    }
-}
-
-// The toolbar's Done: the main action, filled with the accent (outlined in Terminal).
-component DoneButton inherits Rectangle {
-    in property <length> size: 30px;
-    callback activated();
-    width: label.preferred-width + (Look.terminal ? 12px : 24px);
-    height: size;
-    border-radius: Look.workbench ? 6px : Look.broadsheet ? 2px : 0;
-    background: Look.terminal ? transparent : Look.accent;
-    border-width: Look.terminal ? 1px : 0;
-    border-color: Look.accent;
-    label := HorizontalLayout {
-        alignment: center;
-        spacing: 5px;
-        if !Look.terminal: VerticalLayout {
-            alignment: center;
-            Icon {
-                name: "check";
-                size: 16px;
-                color: Look.on-accent;
-            }
-        }
-        Text {
-            text: Look.terminal ? "✓ " + ShotWords.done().to-lowercase() : ShotWords.done();
-            color: Look.terminal ? Look.accent : Look.on-accent;
-            font-family: Look.font;
-            font-size: Look.broadsheet ? 15px : 13px;
-            font-weight: 600;
-            vertical-alignment: center;
-        }
-    }
-    touch := TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            root.activated();
-        }
-    }
-    if touch.has-hover: ToolTip {
-        x: (parent.width - self.width) / 2;
-        y: -self.height - 9px;
-        text: ShotWords.done();
-        keys: "↩ · double-click";
     }
 }
 
@@ -433,51 +387,6 @@ export component ShotWindow inherits Window {
         }
         Rectangle {
             background: #00000066;
-        }
-
-        // The window under the pointer, before a selection: lit, and ringed.
-        if Shot.hover-window && !Shot.has-selection: Rectangle {
-            x: Shot.hover-x;
-            y: Shot.hover-y;
-            width: Shot.hover-w;
-            height: Shot.hover-h;
-            border-radius: 10px;
-            clip: true;
-            Image {
-                x: -Shot.hover-x;
-                y: -Shot.hover-y;
-                width: root.width;
-                height: root.height;
-                source: Shot.frame;
-                image-fit: fill;
-            }
-        }
-        if Shot.hover-window && !Shot.has-selection: Rectangle {
-            x: Shot.hover-x - 4px;
-            y: Shot.hover-y - 4px;
-            width: Shot.hover-w + 8px;
-            height: Shot.hover-h + 8px;
-            border-radius: 14px;
-            border-width: 1px;
-            border-color: #00000059;
-            Rectangle {
-                x: 1px;
-                y: 1px;
-                width: parent.width - 2px;
-                height: parent.height - 2px;
-                border-radius: 13px;
-                border-width: 2px;
-                border-color: Look.accent;
-            }
-            Rectangle {
-                x: 3px;
-                y: 3px;
-                width: parent.width - 6px;
-                height: parent.height - 6px;
-                border-radius: 11px;
-                border-width: 1px;
-                border-color: #ffffffe6;
-            }
         }
 
         // The selection: the picture as it was, with the annotations on it, ringed.
@@ -664,11 +573,11 @@ export component ShotWindow inherits Window {
             }
         }
 
-        // The size, by the selection (or by the window about to be taken).
-        if Shot.label != "" && (Shot.has-selection || Shot.hover-window): Rectangle {
-            property <length> ax: Shot.has-selection ? Shot.sel-x : Shot.hover-x;
-            property <length> ay: Shot.has-selection ? Shot.sel-y : Shot.hover-y;
-            property <bool> inside: Shot.has-selection ? root.label-inside : self.ay < 28px;
+        // The size, by the selection.
+        if Shot.label != "" && Shot.has-selection: Rectangle {
+            property <length> ax: Shot.sel-x;
+            property <length> ay: Shot.sel-y;
+            property <bool> inside: root.label-inside;
             x: max(4px, self.inside ? self.ax + 6px : self.ax);
             y: self.inside ? self.ay + 6px : self.ay - 24px;
             width: label-text.preferred-width + 12px;
@@ -899,8 +808,13 @@ export component ShotWindow inherits Window {
                     }
                 }
                 Rectangle { horizontal-stretch: 1; }
-                DoneButton {
+                ToolButton {
                     size: root.btn;
+                    icon: "check";
+                    sign: "✓";
+                    accent: true;
+                    tip: ShotWords.done();
+                    keys: "↩ · double-click";
                     activated => {
                         Shot.done();
                     }

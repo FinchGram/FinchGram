@@ -147,14 +147,14 @@ pub fn open_screen_capture_settings() {
     macos::open_screen_capture_settings();
 }
 
-/// Capture one display (counted from 1, as the system counts them) into a PNG at `path`; false
-/// when the system refused.
-pub fn capture_display(number: usize, path: &std::path::Path) -> bool {
+/// Capture one display (counted from 1, as the system counts them) into a picture of `format`
+/// ("bmp" or "png") at `path`; false when the system refused.
+pub fn capture_display(number: usize, path: &std::path::Path, format: &str) -> bool {
     #[cfg(target_os = "macos")]
-    return macos::capture_display(number, path);
+    return macos::capture_display(number, path, format);
     #[cfg(not(target_os = "macos"))]
     {
-        let _ = (number, path);
+        let _ = (number, path, format);
         false
     }
 }

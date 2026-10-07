@@ -1,8 +1,9 @@
 //! The screenshot tool (the design's seventh round, "FinchGram Desktop 截图"): the scissors in the
 //! composer, or its shortcut (⌘⇧A, Settings → General → Screenshots), freeze the screen under an
-//! overlay per display (ui/shot.slint). The user clicks a window (lit under the pointer) or drags
-//! a selection, adjusts it by its handles, draws on it with the toolbar's tools, and Done
-//! hands the picture to the card before sending (telegram/attachments.rs), Copy puts it on the
+//! overlay per display (ui/shot.slint), dimmed all over. The user drags a selection, which shows
+//! undimmed, or clicks a window to take it whole, adjusts it by its handles, draws on it with the
+//! toolbar's tools, and Done hands the picture to the card before sending
+//! (telegram/attachments.rs), Copy puts it on the
 //! clipboard, Save writes it to the Downloads folder.
 //!
 //! The screen is captured by the system (platform::capture_display) once FinchGram's own window
@@ -136,10 +137,10 @@ impl Annotation {
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum Phase {
-    /// No selection yet: the window under the pointer is offered.
+    /// No selection yet: the screen is dimmed all over.
     Waiting,
     /// The button is down since `start`: a drag makes a selection; a click takes `window`, the one
-    /// lit when the button went down, if any.
+    /// under the pointer when the button went down, if any.
     Selecting { start: (f32, f32), window: Option<Rect> },
     Settled,
     Moving { grab: (f32, f32), from: Rect },
@@ -159,7 +160,6 @@ struct Session {
     /// The display the selection is on (or the pointer was last seen on).
     display: usize,
     selection: Option<Rect>,
-    hover: Option<Rect>,
     pointer: (usize, (f32, f32)),
     tool: Tool,
     size: usize,
@@ -416,26 +416,20 @@ fn monitors(ui: &MainWindow) -> Vec<Monitor> {
         .unwrap_or_default()
 }
 
-/// Capture every display on another thread (the system takes a moment for each), then open the
-/// overlays.
+/// Capture every display at once, each on a thread of its own (the system takes a moment for
+/// each), then open the overlays.
 fn capture(ui: slint::Weak<MainWindow>, monitors: Vec<Monitor>, hid: bool) {
     let folder = scratch_dir();
     let _ = std::fs::create_dir_all(&folder);
     let main = ui.clone();
     let spawned = std::thread::Builder::new().name("screenshot".into()).spawn(move || {
-        let mut captured = Vec::new();
-        for index in 0..monitors.len() {
-            let path = folder.join(format!("display-{index}.png"));
-            let picture = platform::capture_display(index + 1, &path).then(|| image::open(&path).ok()).flatten();
-            let _ = std::fs::remove_file(&path);
-            match picture {
-                Some(picture) => {
-                    let rgba = picture.into_rgba8();
-                    captured.push(Some((rgba.width(), rgba.height(), rgba.into_raw())));
-                }
-                None => captured.push(None),
-            }
-        }
+        let takers: Vec<_> = (0..monitors.len())
+            .map(|index| {
+                let folder = folder.clone();
+                std::thread::spawn(move || take_display(index, &folder))
+            })
+            .collect();
+        let captured: Vec<Captured> = takers.into_iter().map(|taker| taker.join().unwrap_or(None)).collect();
         let _ = slint::invoke_from_event_loop(move || open(ui, monitors, captured, hid));
     });
     if let Err(err) = spawned {
@@ -447,6 +441,21 @@ fn capture(ui: slint::Weak<MainWindow>, monitors: Vec<Monitor>, hid: bool) {
 }
 
 type Captured = Option<(u32, u32, Vec<u8>)>;
+
+/// The picture of display `index` (the system counts from 1), RGBA in device pixels: as a BMP,
+/// which has nothing to compress or decompress, or as a PNG should the system not write one.
+fn take_display(index: usize, folder: &std::path::Path) -> Captured {
+    for format in ["bmp", "png"] {
+        let path = folder.join(format!("display-{index}.{format}"));
+        let picture = platform::capture_display(index + 1, &path, format).then(|| image::open(&path).ok()).flatten();
+        let _ = std::fs::remove_file(&path);
+        if let Some(picture) = picture {
+            let rgba = picture.into_rgba8();
+            return Some((rgba.width(), rgba.height(), rgba.into_raw()));
+        }
+    }
+    None
+}
 
 /// The pictures in the monitors' order: the system numbers displays its own way, so each monitor
 /// takes the picture of its size, and only then the one of its number.
@@ -552,7 +561,6 @@ fn open(ui: slint::Weak<MainWindow>, monitors: Vec<Monitor>, captured: Vec<Captu
             phase: Phase::Waiting,
             display: 0,
             selection: None,
-            hover: None,
             pointer: (0, (0.0, 0.0)),
             tool: Tool::None,
             size: 1,
@@ -627,31 +635,27 @@ impl Session {
             }
         }
         // A new selection, on this display: whatever was drawn goes with the old one. The button
-        // down over a lit window takes nothing yet: a drag from there makes a selection of its
-        // own, and only a click (released) takes the window.
+        // down takes nothing yet: a drag makes a selection, and only a click (released) takes
+        // the window under the pointer.
         self.display = display;
         self.annotations.clear();
         self.redo.clear();
         self.draft = None;
         self.tool = Tool::None;
         self.selection = None;
-        let window = self.hover.filter(|_| self.pointer.0 == display);
+        let window = self.window_under(display, p);
         self.phase = Phase::Selecting { start: p, window };
     }
 
     fn moved(&mut self, display: usize, p: (f32, f32), shift: bool) {
         self.pointer = (display, p);
         match self.phase {
-            Phase::Waiting | Phase::Settled if self.selection.is_none() => {
-                self.hover = self.window_under(display, p);
-                self.display = display;
-            }
+            Phase::Waiting | Phase::Settled if self.selection.is_none() => self.display = display,
             Phase::Selecting { start, .. } if display == self.display => {
-                // Not a drag yet: the window stays lit, and a click still takes it.
+                // Not a drag yet: a click still takes the window.
                 if self.selection.is_none() && (p.0 - start.0).abs() < DRAG_START && (p.1 - start.1).abs() < DRAG_START {
                     return;
                 }
-                self.hover = None;
                 let size = self.display().size;
                 let mut rect = Rect::between(start, p);
                 rect.x = rect.x.max(0.0);
@@ -675,18 +679,12 @@ impl Session {
     fn released(&mut self, _display: usize, _p: (f32, f32)) {
         match self.phase {
             Phase::Selecting { window, .. } => {
-                // A click takes the window that was lit when the button went down; a drag, what
-                // it drew, if that is anything.
+                // A click takes the window that was under the pointer when the button went down;
+                // a drag, what it drew, if that is anything.
                 let clicked = self.selection.is_none();
                 let drawn = self.selection.filter(|drawn| drawn.w >= SMALLEST && drawn.h >= SMALLEST);
                 self.selection = if clicked { window } else { drawn };
-                if self.selection.is_some() {
-                    self.hover = None;
-                    self.phase = Phase::Settled;
-                } else {
-                    self.phase = Phase::Waiting;
-                    self.hover = self.window_under(self.pointer.0, self.pointer.1);
-                }
+                self.phase = if self.selection.is_some() { Phase::Settled } else { Phase::Waiting };
             }
             Phase::Moving { .. } | Phase::Resizing { .. } => self.phase = Phase::Settled,
             Phase::Drawing { .. } => {
@@ -983,17 +981,8 @@ impl Session {
             }
             shot.set_settled(settled && here);
             shot.set_adjusting(adjusting);
-            let hover = self.hover.filter(|_| index == pointer_display && self.selection.is_none());
-            shot.set_hover_window(hover.is_some());
-            if let Some(hover) = hover {
-                shot.set_hover_x(hover.x);
-                shot.set_hover_y(hover.y);
-                shot.set_hover_w(hover.w);
-                shot.set_hover_h(hover.h);
-            }
-            let labelled = selection.or(hover);
             shot.set_label(
-                labelled
+                selection
                     .map(|rect| format!("{} × {}", (rect.w * display.scale).round() as i32, (rect.h * display.scale).round() as i32))
                     .unwrap_or_default()
                     .into(),
@@ -1259,7 +1248,6 @@ mod tests {
             phase: Phase::Waiting,
             display: 0,
             selection: None,
-            hover: None,
             pointer: (0, (0.0, 0.0)),
             tool: Tool::None,
             size: 1,
@@ -1279,28 +1267,25 @@ mod tests {
     }
 
     #[test]
-    fn a_click_takes_the_lit_window() {
+    fn a_click_takes_the_window_under_the_pointer() {
         let window = Rect { x: 100.0, y: 100.0, w: 400.0, h: 300.0 };
         let mut session = session();
         session.moved(0, (200.0, 200.0), false);
-        assert_eq!(session.hover, Some(window));
-        // The button down takes nothing yet, and the window stays lit through a steady hand.
+        // The button down takes nothing yet, nor does a steady hand.
         session.pressed(0, (200.0, 200.0), false, false);
         session.moved(0, (201.0, 202.0), false);
         assert_eq!(session.selection, None);
-        assert_eq!(session.hover, Some(window));
         session.released(0, (201.0, 202.0));
         assert_eq!(session.selection, Some(window));
         assert_eq!(session.phase, Phase::Settled);
     }
 
     #[test]
-    fn a_drag_makes_a_selection_even_from_a_lit_window() {
+    fn a_drag_makes_a_selection_even_over_a_window() {
         let mut session = session();
         session.moved(0, (200.0, 200.0), false);
         session.pressed(0, (200.0, 200.0), false, false);
         session.moved(0, (260.0, 250.0), false);
-        assert_eq!(session.hover, None);
         session.released(0, (260.0, 250.0));
         assert_eq!(session.selection, Some(Rect { x: 200.0, y: 200.0, w: 60.0, h: 50.0 }));
         assert_eq!(session.phase, Phase::Settled);
@@ -1310,12 +1295,11 @@ mod tests {
     fn a_click_on_nothing_keeps_waiting() {
         let mut session = session();
         session.moved(0, (800.0, 700.0), false);
-        assert_eq!(session.hover, None);
         session.pressed(0, (800.0, 700.0), false, false);
         session.released(0, (800.0, 700.0));
         assert_eq!(session.selection, None);
         assert_eq!(session.phase, Phase::Waiting);
-        // Back over the window, it is lit again and a click takes it.
+        // Over the window, a click takes it.
         session.moved(0, (150.0, 150.0), false);
         session.pressed(0, (150.0, 150.0), false, false);
         session.released(0, (150.0, 150.0));

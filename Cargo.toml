@@ -21,7 +21,7 @@ sys-locale = "0.3"
 chrono = "0.4"                                  # local times of messages (Slint uses it already)
 qrcode = { version = "0.14", default-features = false }   # the QR code for logging in
 # Pictures in messages, decoded off the UI thread (src/images.rs); Slint uses the same crates.
-image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
+image = { version = "0.25", default-features = false, features = ["bmp", "jpeg", "png", "webp"] }
 base64 = "0.23"                                 # TDLib's bytes (a photo's tiny preview)
 glow = "0.18"                                   # the video's OpenGL texture (src/player/); Slint's renderer uses it too
 # The self-updater (src/update.rs) and the release signing tool (src/bin/).
@@ -41,7 +41,7 @@ objc2-foundation = { version = "0.3", default-features = false, features = [
     "NSString", "NSURL", "NSValue",
 ] }
 objc2-app-kit = { version = "0.3", default-features = false, features = [
-    "std", "block2", "objc2-core-foundation", "NSApplication", "NSBitmapImageRep", "NSButton", "NSControl", "NSDockTile",
+    "std", "block2", "objc2-core-foundation", "NSApplication", "NSBitmapImageRep", "NSButton", "NSControl", "NSCursor", "NSDockTile",
     "NSImage", "NSImageRep", "NSMenu", "NSMenuItem", "NSOpenPanel", "NSPanel", "NSPasteboard", "NSPasteboardItem",
     "NSResponder", "NSSavePanel", "NSScreen", "NSStatusBar", "NSStatusBarButton", "NSStatusItem", "NSView", "NSWindow",
     "NSWorkspace",

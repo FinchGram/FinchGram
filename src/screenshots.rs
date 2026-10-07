@@ -787,18 +787,12 @@ fn screenshot_tool(ui: &MainWindow, window: &MinimalSoftwareWindow, overlay: &Sh
     shot.set_paths(model(Vec::new()));
     shot.set_texts(model(Vec::new()));
     shot.set_cells(model(Vec::new()));
-    // Waiting: the light window is under the pointer.
-    shot.set_hover_window(true);
-    shot.set_hover_x(60.0);
-    shot.set_hover_y(80.0);
-    shot.set_hover_w(560.0);
-    shot.set_hover_h(420.0);
-    shot.set_label("560 × 420".into());
+    // Waiting: the screen dimmed all over, nothing chosen yet.
+    shot.set_label(SharedString::new());
     shot.set_pointer_x(300.0);
     shot.set_pointer_y(300.0);
     save_overlay(overlay_window, &name("shot-waiting"));
     // Dragging a selection: the magnifier by the pointer.
-    shot.set_hover_window(false);
     shot.set_has_selection(true);
     shot.set_sel_x(120.0);
     shot.set_sel_y(140.0);
