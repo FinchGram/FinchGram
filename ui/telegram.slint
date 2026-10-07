@@ -24,6 +24,8 @@ export enum ChatKind { user, bot, saved, group, channel }
 export enum Content {
     text, photo, video, animation, audio, voice-note, video-note, document, sticker, location, venue,
     contact, poll, dice, game, invoice, call, story, gift, unsupported,
+    // Self-destructing content that is gone: it was opened once, or its time ran out.
+    expired-photo, expired-video, expired-video-note, expired-voice-note,
     // Service messages: something happened in the chat. The sender is who did it.
     chat-created, title-changed, photo-changed, photo-removed, members-added, member-joined,
     member-left, member-removed, message-pinned, screenshot-taken, contact-joined, other-service,
@@ -122,6 +124,7 @@ export struct Media {
     video: bool,            // a video or a GIF: it plays
     duration: int,          // seconds
     name: string,           // a video's or GIF's file name; photos have none
+    secret: bool,           // sent to self-destruct: blurred, to be opened once (viewer.rs)
 }
 
 // A sticker message's sticker: its picture (none until Conversation.load-picture has downloaded it;
@@ -258,6 +261,7 @@ export struct ViewerItem {
     has-sender-picture: bool,
     time: Moment,
     caption: string,
+    secret: bool,           // sent to self-destruct: shown on its own until closed (viewer.rs)
 }
 
 export global Viewer {
@@ -273,6 +277,7 @@ export global Viewer {
     in-out property <bool> muted;
     in-out property <image> frame;               // the video's picture while it plays
     in-out property <string> saved;              // a file just saved to Downloads, "" otherwise
+    in-out property <bool> can-save;             // the item shown may be saved: TDLib's word (the chat may restrict it); false until it has said
     callback view(string, bool);                 // a message's media; true: a video starts playing
     callback close();
     callback show(int);                          // another item

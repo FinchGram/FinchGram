@@ -637,7 +637,8 @@ component LogLine {
                 height: tag.preferred-height;
                 tag := T {
                     x: 0;
-                    text: "↳ [" + (item.video ? "vid " + Fmt.duration(item.duration) : "img") + "]" + (item.name == "" ? "" : " " + item.name);
+                    text: "↳ [" + (item.video ? "vid " + Fmt.duration(item.duration) : "img") + (item.secret ? " · " + @tr("Tap to view") : "") + "]"
+                        + (item.name == "" ? "" : " " + item.name);
                     color: P.accent;
                     overflow: elide;
                 }

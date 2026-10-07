@@ -131,7 +131,10 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   once it is seen (`conversation.rs`, viewMessages), the chat sees that the user is typing while
   they write (sendChatAction), and the account is online while the window is in front and in use
   (`online.rs`, TDLib's `online` option). Telegram goes by the last to hold back the notifications
-  of the user's other devices, and TDLib to time FinchGram's.
+  of the user's other devices, and TDLib to time FinchGram's. A photo or video sent to self-destruct
+  (to be seen once, or for a time) is shown blurred until the user opens it in the media viewer,
+  which tells TDLib (`viewer.rs`, openMessageContent); it then expires as Telegram's own apps let it.
+  The viewer offers saving only where TDLib says the content may be saved (the chat may restrict it).
 - A message's menu opens on a right click anywhere on the message. Its formatted words (Slint's
   StyledText) keep every click to themselves, so the right click is seen in the window's own events
   (`mod.rs`, through winit), counted in a global, and the row under the pointer asks for its menu.

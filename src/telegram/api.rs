@@ -627,7 +627,21 @@ pub struct Message {
     /// The message it replies to.
     #[serde(default)]
     pub reply_to: Option<MessageReplyTo>,
+    /// Its content self-destructs: the moment it is opened, or so long after.
+    #[serde(default)]
+    pub self_destruct_type: Option<MessageSelfDestructType>,
     pub content: MessageContent,
+}
+
+/// How a message's content self-destructs once the user opens it: at once (it can be seen only
+/// once, and stays only while it is open), or after `self_destruct_time` seconds.
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum MessageSelfDestructType {
+    #[serde(rename = "messageSelfDestructTypeTimer")]
+    Timer { self_destruct_time: i32 },
+    #[serde(rename = "messageSelfDestructTypeImmediately")]
+    Immediately,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
@@ -829,12 +843,29 @@ pub enum MessageContent {
         #[serde(default)]
         link_preview: Option<LinkPreview>,
     },
+    /// `is_secret`: sent to self-destruct (seen once, or for a time): TDLib asks that it be shown
+    /// blurred, and only once the user opens it (openMessageContent), which starts its end.
     #[serde(rename = "messagePhoto")]
-    Photo { photo: Photo, caption: FormattedText },
+    Photo {
+        photo: Photo,
+        caption: FormattedText,
+        #[serde(default)]
+        is_secret: bool,
+    },
     #[serde(rename = "messageVideo")]
-    Video { video: Video, caption: FormattedText },
+    Video {
+        video: Video,
+        caption: FormattedText,
+        #[serde(default)]
+        is_secret: bool,
+    },
     #[serde(rename = "messageAnimation")]
-    Animation { animation: Animation, caption: FormattedText },
+    Animation {
+        animation: Animation,
+        caption: FormattedText,
+        #[serde(default)]
+        is_secret: bool,
+    },
     #[serde(rename = "messageAudio")]
     Audio { audio: Audio, caption: FormattedText },
     #[serde(rename = "messageDocument")]
@@ -843,6 +874,15 @@ pub enum MessageContent {
     VoiceNote { caption: FormattedText },
     #[serde(rename = "messageVideoNote")]
     VideoNote {},
+    /// Self-destructing content that is gone: it was opened once, or its time ran out.
+    #[serde(rename = "messageExpiredPhoto")]
+    ExpiredPhoto {},
+    #[serde(rename = "messageExpiredVideo")]
+    ExpiredVideo {},
+    #[serde(rename = "messageExpiredVideoNote")]
+    ExpiredVideoNote {},
+    #[serde(rename = "messageExpiredVoiceNote")]
+    ExpiredVoiceNote {},
     #[serde(rename = "messageSticker")]
     Sticker { sticker: Sticker },
     #[serde(rename = "messageAnimatedEmoji")]
@@ -1215,8 +1255,25 @@ mod tests {
             MessageContent::Photo {
                 photo: Photo { minithumbnail: None, sizes: Vec::new() },
                 caption: FormattedText { text: "the view".into(), entities: Vec::new() },
+                is_secret: false,
             }
         );
+    }
+
+    #[test]
+    fn self_destructing_content_says_so_and_expired_content_is_known() {
+        let photo: MessageContent = serde_json::from_str(
+            r#"{"@type":"messagePhoto","photo":{"@type":"photo","sizes":[]},"caption":{"@type":"formattedText","text":"","entities":[]},"has_spoiler":false,"is_secret":true}"#,
+        )
+        .unwrap();
+        assert!(matches!(photo, MessageContent::Photo { is_secret: true, .. }));
+        let expired: MessageContent = serde_json::from_str(r#"{"@type":"messageExpiredPhoto"}"#).unwrap();
+        assert_eq!(expired, MessageContent::ExpiredPhoto {});
+        let message: Message = serde_json::from_str(
+            r#"{"@type":"message","id":42,"sender_id":{"@type":"messageSenderUser","user_id":5},"chat_id":5,"is_outgoing":false,"date":1,"edit_date":0,"content":{"@type":"messageExpiredPhoto"},"self_destruct_type":{"@type":"messageSelfDestructTypeTimer","self_destruct_time":10}}"#,
+        )
+        .unwrap();
+        assert_eq!(message.self_destruct_type, Some(MessageSelfDestructType::Timer { self_destruct_time: 10 }));
     }
 
     #[test]
@@ -1244,7 +1301,7 @@ mod tests {
             file(9, false)
         ))
         .unwrap();
-        let MessageContent::Video { video, caption } = video else { panic!("not a video") };
+        let MessageContent::Video { video, caption, .. } = video else { panic!("not a video") };
         assert_eq!((video.duration, video.width, video.height, caption.text.as_str()), (42, 1280, 720, "42 seconds"));
         assert_eq!(video.thumbnail.map(|thumbnail| (thumbnail.format, thumbnail.file.id)), Some((ThumbnailFormat::Jpeg, 8)));
 

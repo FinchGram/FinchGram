@@ -103,6 +103,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - Telegram 官方应用让别人看到的，FinchGram 也一样（API 条款）：消息看到了才算已读（`conversation.rs`，viewMessages），
   用户写字时对方能看到“正在输入”（sendChatAction），窗口在前台并且有人在用时账号是在线状态（`online.rs`，
   TDLib 的 `online` 选项）。Telegram 据在线状态压下用户其他设备上的通知，TDLib 据此决定 FinchGram 的通知什么时候出。
+  阅后即焚的照片和视频（看一次，或限时）在聊天里只显示模糊的小图，用户在媒体查看器里打开它时才告诉
+  TDLib（`viewer.rs`，openMessageContent），之后它按 Telegram 官方应用的做法失效。查看器只在 TDLib 说内容
+  可以保存时才提供保存（聊天可以限制保存）。
 - 在消息上任何地方点右键都会弹出它的菜单。消息里带格式的文字（Slint 的 StyledText）会把所有点击留给自己，
   所以右键是在窗口自己的事件里看到的（`mod.rs`，通过 winit），记进一个全局属性，再由指针下的那一行去要菜单。
   菜单里有哪些项，看 TDLib 说这条消息能做什么（getMessageProperties）。

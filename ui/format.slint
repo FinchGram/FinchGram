@@ -205,6 +205,10 @@ export global Fmt {
         if c == Content.audio { return detail == "" ? @tr("Audio") : detail; }
         if c == Content.voice-note { return @tr("Voice message"); }
         if c == Content.video-note { return @tr("Video message"); }
+        if c == Content.expired-photo { return @tr("Photo has expired"); }
+        if c == Content.expired-video { return @tr("Video has expired"); }
+        if c == Content.expired-video-note { return @tr("Video message has expired"); }
+        if c == Content.expired-voice-note { return @tr("Voice message has expired"); }
         if c == Content.document { return detail == "" ? @tr("File") : detail; }
         if c == Content.sticker { return detail == "" ? @tr("Sticker") : detail + " " + @tr("Sticker"); }
         if c == Content.location { return @tr("Location"); }

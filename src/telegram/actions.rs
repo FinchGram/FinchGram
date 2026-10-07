@@ -312,7 +312,7 @@ fn hide_menu() {
 }
 
 /// What can be done with a message, from what TDLib said before or asked now, for `then`.
-fn properties(chat_id: i64, message_id: i64, then: impl FnOnce(MessageProperties) + 'static) {
+pub(super) fn properties(chat_id: i64, message_id: i64, then: impl FnOnce(MessageProperties) + 'static) {
     let key = (chat_id, message_id);
     let known = STATE.with(|state| state.borrow().properties.get(&key).copied());
     if let Some(known) = known {
@@ -1337,6 +1337,7 @@ mod tests {
         let photo = MessageContent::Photo {
             photo: api::Photo { minithumbnail: None, sizes: Vec::new() },
             caption: api::FormattedText { text: "the view".into(), entities: Vec::new() },
+            is_secret: false,
         };
         let saved = MessageProperties { can_be_saved: true, can_be_forwarded: true, ..MessageProperties::default() };
         assert_eq!(

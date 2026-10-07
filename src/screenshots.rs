@@ -274,6 +274,7 @@ fn media(id: &str, width: i32, height: i32, hue: f32, video: bool) -> Media {
         video,
         duration: if video { 42 } else { 0 },
         name: if video { "typing-sound-test.mp4".into() } else { SharedString::new() },
+        secret: false,
     }
 }
 
@@ -326,6 +327,7 @@ fn open_viewer(ui: &MainWindow, index: i32) {
         has_sender_picture: true,
         time: moment(Day::Today, 14, 19),
         caption: "The lubed switch comparison is in the group album, have a look.".into(),
+        secret: false,
     };
     let wide = Media { id: "8".into(), duration: 95, name: "screen-recording.mp4".into(), ..media("8", 1280, 544, 200.0, true) };
     // The wide video has a long caption, as a channel's posts do: the viewer shows a few lines of
@@ -340,6 +342,7 @@ fn open_viewer(ui: &MainWindow, index: i32) {
         ..item(wide)
     });
     viewer.set_items(model(items));
+    viewer.set_can_save(true);
     viewer.set_index(index);
     viewer.set_zoom(0);
     viewer.set_playing(false);
@@ -461,6 +464,13 @@ fn open_keyboards(ui: &MainWindow) {
             media: model(album()),
             ..message("6", "Jie", "14:19", "The lubed switch comparison is in the group album, have a look.")
         },
+        // A photo sent to be seen once: its blurred preview until it is opened, then gone.
+        MessageRow {
+            content: Content::Photo,
+            media: model(vec![Media { secret: true, picture: gradient(12, 9, 120.0), ..media("6c", 400, 300, 120.0, false) }]),
+            ..message("6c", "Mika", "14:21", "")
+        },
+        MessageRow { content: Content::ExpiredPhoto, ..message("6d", "Jie", "14:22", "") },
         // A mention, a link and its preview.
         MessageRow {
             rich: true,

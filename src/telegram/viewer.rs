@@ -1,20 +1,23 @@
 //! The media viewer (the design's media-viewer.js): the open chat's photos, videos and GIFs over the
 //! whole window, one at a time. A photo is shown in its largest size, downloaded when it is shown,
 //! so that it can be zoomed into. A video is downloaded whole, then plays through mpv
-//! (src/player/); a GIF loops. "Download" copies the file into the Downloads folder; "locate"
-//! closes the viewer and brings its message into sight.
+//! (src/player/); a GIF loops. "Download" copies the file into the Downloads folder, where TDLib
+//! says the content may be saved (the chat may restrict it); "locate" closes the viewer and brings
+//! its message into sight. A photo or video sent to self-destruct is shown on its own, and TDLib
+//! is told it was opened, which starts its end (view_secret).
 
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use chrono::{Local, TimeZone};
-use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
+use serde_json::json;
+use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
 
 use super::api::{File, MessageContent};
 use super::store::{self, Names};
-use super::{conversation, files, with_ui};
-use crate::player;
-use crate::{Conversation, MainWindow, Viewer};
+use super::{actions, conversation, files, send, with_ui};
+use crate::{Conversation, MainWindow, Viewer, ViewerItem};
+use crate::{images, player};
 
 /// How long "Saved to Downloads" stays.
 const SAVED_SHOWN: Duration = Duration::from_millis(2200);
@@ -54,8 +57,13 @@ pub fn connect(ui: &MainWindow) {
     viewer.on_locate(locate);
 }
 
-/// Open the viewer at a message's photo or video; a video starts playing when `autoplay`.
+/// Open the viewer at a message's photo or video; a video starts playing when `autoplay`. One sent
+/// to self-destruct opens its own way.
 fn view(message_id: i64, autoplay: bool) {
+    if message_content(message_id, |content| Some(store::is_secret(content))).unwrap_or(false) {
+        view_secret(message_id);
+        return;
+    }
     with_ui(|ui| {
         let names = Names::from(ui);
         let items = store::with(|store| store.viewer_items(&names)).unwrap_or_default();
@@ -79,6 +87,106 @@ fn view(message_id: i64, autoplay: bool) {
         }
     });
     fetch_original(message_id);
+    ask_can_save(message_id);
+}
+
+/// Whether the item shown may be saved, as TDLib says (the chat may restrict saving its content):
+/// not until it has said.
+fn ask_can_save(message_id: i64) {
+    with_viewer(|viewer| viewer.set_can_save(false));
+    let Some(chat_id) = store::with(|store| store.open).flatten() else { return };
+    actions::properties(chat_id, message_id, move |properties| {
+        if shown_id().as_deref() == Some(message_id.to_string().as_str()) {
+            with_viewer(|viewer| viewer.set_can_save(properties.can_be_saved));
+        }
+    });
+}
+
+/// A photo or video sent to self-destruct (seen once, or for a time), as TDLib asks: shown on its
+/// own, its blurred preview until its file is here, then told to TDLib as opened
+/// (openMessageContent), which starts its end. One to be seen once expires at that moment and stays
+/// until the viewer is closed; a timed one goes when its time runs out (store.rs closes the
+/// viewer). Its sharp picture stays out of the store: the chat shows nothing but the blur, and it
+/// is never saved.
+fn view_secret(message_id: i64) {
+    let Some((file, video, looping)) = message_content(message_id, |content| {
+        let file = store::original(content)?.clone();
+        Some((file, !matches!(content, MessageContent::Photo { .. }), matches!(content, MessageContent::Animation { .. })))
+    }) else {
+        return;
+    };
+    let mut opened = false;
+    with_ui(|ui| {
+        let names = Names::from(ui);
+        let Some(item) = store::with(|store| store.secret_viewer_item(message_id, &names)).flatten() else { return };
+        let viewer = ui.global::<Viewer>();
+        viewer.set_items(ModelRc::new(VecModel::from(vec![item])));
+        viewer.set_index(0);
+        viewer.set_zoom(0);
+        viewer.set_position(0.0);
+        viewer.set_speed(0);
+        viewer.set_muted(false);
+        viewer.set_saved(SharedString::new());
+        viewer.set_playing(false);
+        viewer.set_loading(true);
+        viewer.set_ended(false);
+        viewer.set_can_save(false);
+        viewer.set_open(true);
+        opened = true;
+    });
+    if !opened {
+        return;
+    }
+    files::download(&file, ASKED, move |path| {
+        if !secret_shown(message_id) {
+            return;
+        }
+        if video {
+            let (mut speed, mut muted) = (0, false);
+            with_viewer(|viewer| {
+                viewer.set_loading(false);
+                speed = viewer.get_speed();
+                muted = viewer.get_muted();
+            });
+            player::play(&path, looping, SPEEDS[speed as usize], muted);
+            open_content(message_id);
+        } else {
+            images::load(path, move |picture| {
+                with_viewer(|viewer| viewer.set_loading(false));
+                let Some(picture) = picture else { return };
+                if !secret_shown(message_id) {
+                    return;
+                }
+                with_viewer(|viewer| {
+                    let items = viewer.get_items();
+                    if let Some(item) = items.row_data(0) {
+                        items.set_row_data(0, ViewerItem { picture, ..item });
+                    }
+                });
+                open_content(message_id);
+            });
+        }
+    });
+}
+
+/// The viewer is open on that self-destructing message.
+fn secret_shown(message_id: i64) -> bool {
+    let mut shown = false;
+    with_viewer(|viewer| {
+        let item = usize::try_from(viewer.get_index()).ok().and_then(|index| viewer.get_items().row_data(index));
+        shown = viewer.get_open() && item.is_some_and(|item| item.secret && item.id == message_id.to_string().as_str());
+    });
+    shown
+}
+
+/// Tell TDLib the user has opened the content: a self-destructing message starts its end.
+fn open_content(message_id: i64) {
+    let Some(chat_id) = store::with(|store| store.open).flatten() else { return };
+    send(json!({ "@type": "openMessageContent", "chat_id": chat_id, "message_id": message_id }), |answer| {
+        if let Err(err) = answer {
+            eprintln!("viewer: cannot open a self-destructing message: {err}");
+        }
+    });
 }
 
 /// Download the video shown, whole, then play it: unless something else is shown by then.
@@ -124,7 +232,7 @@ fn seek(part: f32) {
     let mut duration = 0;
     with_viewer(|viewer| {
         let index = usize::try_from(viewer.get_index()).ok();
-        duration = index.and_then(|index| slint::Model::row_data(&viewer.get_items(), index)).map_or(0, |item| item.duration);
+        duration = index.and_then(|index| viewer.get_items().row_data(index)).map_or(0, |item| item.duration);
     });
     if player::is_loaded() && duration > 0 {
         player::seek(f64::from(part) * f64::from(duration));
@@ -137,7 +245,7 @@ fn show(index: i32) {
     let mut keep_playing = false;
     with_viewer(|viewer| {
         let items = viewer.get_items();
-        let Some(item) = usize::try_from(index).ok().and_then(|index| slint::Model::row_data(&items, index)) else { return };
+        let Some(item) = usize::try_from(index).ok().and_then(|index| items.row_data(index)) else { return };
         keep_playing = item.video && viewer.get_playing();
         viewer.set_index(index);
         viewer.set_zoom(0);
@@ -151,10 +259,11 @@ fn show(index: i32) {
             start_video(message_id);
         }
         fetch_original(message_id);
+        ask_can_save(message_id);
     }
 }
 
-fn close() {
+pub(super) fn close() {
     player::stop();
     with_viewer(|viewer| {
         viewer.set_open(false);
@@ -203,8 +312,13 @@ fn locate() {
     if extended { slint::Timer::single_shot(Duration::from_millis(50), show) } else { show() }
 }
 
-/// The file of the item shown, whole, into the Downloads folder.
+/// The file of the item shown, whole, into the Downloads folder: where TDLib says it may be saved.
 fn download() {
+    let mut allowed = false;
+    with_viewer(|viewer| allowed = viewer.get_can_save());
+    if !allowed {
+        return;
+    }
     let Some(message_id) = shown_id().and_then(|id| id.parse::<i64>().ok()) else { return };
     let Some((file, name)) = store::with(|store| {
         let message = store.histories.get(&store.open?)?.messages.get(&message_id)?;
@@ -277,7 +391,7 @@ fn shown_id() -> Option<String> {
     let mut id = None;
     with_viewer(|viewer| {
         let index = usize::try_from(viewer.get_index()).ok();
-        id = index.and_then(|index| slint::Model::row_data(&viewer.get_items(), index)).map(|item| item.id.to_string());
+        id = index.and_then(|index| viewer.get_items().row_data(index)).map(|item| item.id.to_string());
     });
     id
 }

@@ -115,6 +115,10 @@ fn load_picture(message_id: i64) {
     let file = store::with(|store| {
         let chat_id = store.open?;
         let message = store.histories.get(&chat_id)?.messages.get(&message_id)?;
+        // A self-destructing one keeps its blur until the user opens it (viewer.rs).
+        if store::is_secret(&message.content) {
+            return None;
+        }
         store::picture(&message.content).or_else(|| store::sticker_picture(&message.content))?.file.cloned()
     })
     .flatten();

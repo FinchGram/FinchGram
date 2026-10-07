@@ -304,7 +304,7 @@ component PictureViewer inherits Rectangle {
                             }
                         }
                     }
-                    VerticalLayout {
+                    if Viewer.can-save: VerticalLayout {
                         alignment: center;
                         IconButton {
                             icon: "download-simple";

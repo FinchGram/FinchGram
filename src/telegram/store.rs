@@ -324,15 +324,25 @@ pub fn refresh() {
         if dirty.notification_scopes {
             store.refresh_notification_scopes(&ui);
         }
+        let mut close_viewer = false;
         if dirty.viewer || dirty.conversation {
             let viewer = ui.global::<Viewer>();
             if viewer.get_open() {
-                viewer.set_items(ModelRc::new(VecModel::from(store.viewer_items(&words))));
+                let shown = usize::try_from(viewer.get_index()).ok().and_then(|index| viewer.get_items().row_data(index));
+                match shown {
+                    // A self-destructing photo or video is shown on its own until the viewer is
+                    // closed (viewer.rs), or until its time runs out.
+                    Some(item) if item.secret => close_viewer = store.secret_timed_out(&item.id),
+                    _ => viewer.set_items(ModelRc::new(VecModel::from(store.viewer_items(&words)))),
+                }
             }
         }
-        (std::mem::take(&mut store.missing_replies), store.take_wanted_photos())
+        (std::mem::take(&mut store.missing_replies), store.take_wanted_photos(), close_viewer)
     });
-    let (missing, wanted) = followups.unwrap_or_default();
+    let (missing, wanted, close_viewer) = followups.unwrap_or_default();
+    if close_viewer {
+        super::viewer::close();
+    }
     if !missing.is_empty() {
         super::conversation::load_replied(missing);
     }
@@ -859,6 +869,10 @@ impl Store {
             M::Document { document, caption } => (Content::Document, caption.text.clone(), document.file_name.clone()),
             M::VoiceNote { caption } => (Content::VoiceNote, caption.text.clone(), none()),
             M::VideoNote {} => (Content::VideoNote, none(), none()),
+            M::ExpiredPhoto {} => (Content::ExpiredPhoto, none(), none()),
+            M::ExpiredVideo {} => (Content::ExpiredVideo, none(), none()),
+            M::ExpiredVideoNote {} => (Content::ExpiredVideoNote, none(), none()),
+            M::ExpiredVoiceNote {} => (Content::ExpiredVoiceNote, none(), none()),
             M::Sticker { sticker } => (Content::Sticker, none(), sticker.emoji.clone()),
             M::Dice { emoji } => (Content::Dice, none(), emoji.clone()),
             M::Location {} => (Content::Location, none(), none()),
@@ -1178,6 +1192,7 @@ impl Store {
                 video: !matches!(message.content, M::Photo { .. }),
                 duration: picture.duration,
                 name: file_name(&message.content).into(),
+                secret: is_secret(&message.content),
             });
             let rich_text = formatted(&message.content).and_then(rich_text::styled_text);
             let sticker = sticker_picture(&message.content)
@@ -1340,32 +1355,51 @@ impl Store {
     /// The open chat's photos, videos and GIFs for the media viewer, oldest first.
     pub fn viewer_items(&self, names: &Names) -> Vec<ViewerItem> {
         let Some(history) = self.open.and_then(|chat_id| self.histories.get(&chat_id)) else { return Vec::new() };
+        // A self-destructing photo or video is not among them: the viewer shows it on its own, once
+        // the user opens it from the chat (secret_viewer_item).
+        history.messages.values().filter(|message| !is_secret(&message.content)).filter_map(|message| self.viewer_item(message, names)).collect()
+    }
+
+    /// The viewer's item for a self-destructing photo or video of the open chat (viewer.rs): its
+    /// blurred preview, until the viewer has its file.
+    pub fn secret_viewer_item(&self, message_id: i64, names: &Names) -> Option<ViewerItem> {
+        let message = self.histories.get(&self.open?)?.messages.get(&message_id)?;
+        if !is_secret(&message.content) {
+            return None;
+        }
+        self.viewer_item(message, names)
+    }
+
+    fn viewer_item(&self, message: &api::Message, names: &Names) -> Option<ViewerItem> {
+        let picture = picture(&message.content)?;
         let me = self.user_name(self.my_id, names);
-        history
-            .messages
-            .values()
-            .filter_map(|message| {
-                let picture = picture(&message.content)?;
-                let sender = if message.is_outgoing && !me.is_empty() { me.clone() } else { self.sender_name(&message.sender_id, names) };
-                let image = original(&message.content).and_then(|file| self.pictures.get(&file.id)).unwrap_or_else(|| self.picture_image(&picture));
-                let (sender_picture, has_sender_picture) = self.sender_avatar(&message.sender_id);
-                Some(ViewerItem {
-                    id: message.id.to_string().into(),
-                    picture: image,
-                    width: picture.width,
-                    height: picture.height,
-                    video: !matches!(message.content, M::Photo { .. }),
-                    duration: picture.duration,
-                    name: file_name(&message.content).into(),
-                    sender_initial: initial(&sender),
-                    sender_picture,
-                    has_sender_picture,
-                    sender: sender.into(),
-                    time: time::moment(message.date),
-                    caption: self.content(message, names).1.into(),
-                })
-            })
-            .collect()
+        let sender = if message.is_outgoing && !me.is_empty() { me } else { self.sender_name(&message.sender_id, names) };
+        let image = original(&message.content).and_then(|file| self.pictures.get(&file.id)).unwrap_or_else(|| self.picture_image(&picture));
+        let (sender_picture, has_sender_picture) = self.sender_avatar(&message.sender_id);
+        Some(ViewerItem {
+            id: message.id.to_string().into(),
+            picture: image,
+            width: picture.width,
+            height: picture.height,
+            video: !matches!(message.content, M::Photo { .. }),
+            duration: picture.duration,
+            name: file_name(&message.content).into(),
+            sender_initial: initial(&sender),
+            sender_picture,
+            has_sender_picture,
+            sender: sender.into(),
+            time: time::moment(message.date),
+            caption: self.content(message, names).1.into(),
+            secret: is_secret(&message.content),
+        })
+    }
+
+    /// The self-destructing message the viewer shows has run out its time: its content expired
+    /// after it was opened. One to be seen once expires the moment it is opened, and stays until
+    /// the viewer is closed.
+    fn secret_timed_out(&self, message_id: &str) -> bool {
+        let Some(message) = message_id.parse().ok().and_then(|id| self.histories.get(&self.open?)?.messages.get(&id)) else { return false };
+        is_expired(&message.content) && matches!(message.self_destruct_type, Some(api::MessageSelfDestructType::Timer { .. }))
     }
 
     /// Give each row the model of its media, the same one as last time, brought up to date.
@@ -1618,6 +1652,17 @@ pub fn original(content: &M) -> Option<&api::File> {
         M::Animation { animation, .. } => Some(&animation.animation),
         _ => None,
     }
+}
+
+/// Sent to self-destruct (seen once, or for a time): shown blurred, and only once opened, as TDLib
+/// asks (`is_secret`); the viewer opens it (viewer.rs).
+pub fn is_secret(content: &M) -> bool {
+    matches!(content, M::Photo { is_secret: true, .. } | M::Video { is_secret: true, .. } | M::Animation { is_secret: true, .. })
+}
+
+/// Self-destructing content that is gone.
+pub fn is_expired(content: &M) -> bool {
+    matches!(content, M::ExpiredPhoto {} | M::ExpiredVideo {} | M::ExpiredVideoNote {} | M::ExpiredVoiceNote {})
 }
 
 /// A video's or a GIF's still frame, when it is a picture (not a moving one).

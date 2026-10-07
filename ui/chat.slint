@@ -208,7 +208,9 @@ export component Capped {
 // A message's photos and videos, from the design's media-viewer.js: one in its own shape, within
 // width-limit × height-limit; several (an album) as square tiles, two across for two or four, else
 // three. A video has a play button and its length. Each asks for its sharp picture once it is
-// there (Conversation.load-picture); a click opens the media viewer. The themes set the shapes.
+// there (Conversation.load-picture); a click opens the media viewer. One sent to self-destruct
+// (Media.secret) keeps its blurred preview and says to tap: the viewer opens it once. The themes
+// set the shapes.
 export component MediaTiles {
     in property <[Media]> media;
     in property <length> width-limit: 360px;
@@ -244,7 +246,9 @@ export component MediaTiles {
         clip: true;
         background: #80808033;
         init => {
-            Conversation.load-picture(item.id);
+            if !item.secret {
+                Conversation.load-picture(item.id);
+            }
         }
 
         Image {
@@ -256,7 +260,7 @@ export component MediaTiles {
         Rectangle {
             background: touch.has-hover ? #ffffff10 : transparent;
         }
-        if item.video: Rectangle {
+        if item.video && !item.secret: Rectangle {
             width: root.play-size;
             height: root.play-size;
             border-radius: self.width / 2;
@@ -280,6 +284,38 @@ export component MediaTiles {
                 color: #ffffff;
                 font-family: root.badge-font;
                 font-size: root.badge-font-size;
+            }
+        }
+        if item.secret: Rectangle {
+            background: #00000066;
+            Rectangle {
+                width: tap.preferred-width;
+                height: tap.preferred-height;
+                border-radius: self.height / 2;
+                background: #000000a0;
+                tap := HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    padding-top: 6px;
+                    padding-bottom: 6px;
+                    spacing: 6px;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "timer";
+                            size: 14px;
+                            color: #ffffff;
+                            duotone: root.duotone;
+                        }
+                    }
+                    Text {
+                        text: @tr("Tap to view");
+                        color: #ffffff;
+                        font-family: root.badge-font;
+                        font-size: root.badge-font-size + 1px;
+                        vertical-alignment: center;
+                    }
+                }
             }
         }
         touch := TouchArea {
