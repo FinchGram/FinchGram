@@ -40,8 +40,10 @@ const LINE_WIDTH: [f32; 3] = [2.0, 4.0, 8.0];
 const ARROW_HEAD: [(f32, f32); 3] = [(12.0, 10.0), (18.0, 15.0), (28.0, 24.0)];
 const FONT_SIZE: [f32; 3] = [14.0, 20.0, 28.0];
 const BRUSH: [f32; 3] = [12.0, 24.0, 40.0];
-/// A mosaic block, in points, on a grid of the display.
-const BLOCK: f32 = 8.0;
+/// A mosaic block, in points, on a grid of the display: 4 pt (8 px on a Retina display), fine
+/// enough to read as a mosaic rather than a few squares (the design said 8; the maintainer found
+/// that coarse).
+const BLOCK: f32 = 4.0;
 /// How near a handle the pointer counts as on it.
 const HANDLE_REACH: f32 = 7.0;
 /// A selection smaller than this is a click, not a selection.

@@ -843,10 +843,10 @@ fn screenshot_tool(ui: &MainWindow, window: &MinimalSoftwareWindow, overlay: &Sh
     ]));
     shot.set_texts(model(vec![ShotText { x: 160.0, y: 290.0, text: "Check this".into(), color: yellow, halo: dark, size: 20.0 }]));
     let greys = [[0xd6, 0xd8, 0xdc], [0xff, 0xff, 0xff], [0xe6, 0xe8, 0xeb], [0xf3, 0xf4, 0xf6]];
-    let cells: Vec<ShotCell> = (0..30)
+    let cells: Vec<ShotCell> = (0..120)
         .map(|i| {
             let [r, g, b] = greys[(i * 7 % 4) as usize];
-            ShotCell { x: 400.0 + (i % 6) as f32 * 8.0, y: 336.0 + (i / 6) as f32 * 8.0, size: 8.0, color: slint::Color::from_rgb_u8(r, g, b) }
+            ShotCell { x: 400.0 + (i % 12) as f32 * 4.0, y: 336.0 + (i / 12) as f32 * 4.0, size: 4.0, color: slint::Color::from_rgb_u8(r, g, b) }
         })
         .collect();
     shot.set_cells(model(cells));

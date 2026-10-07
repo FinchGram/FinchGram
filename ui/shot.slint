@@ -253,7 +253,7 @@ component DoneButton inherits Rectangle {
             }
         }
         Text {
-            text: Look.terminal ? "✓ " + ShotWords.done() : ShotWords.done();
+            text: Look.terminal ? "✓ " + ShotWords.done().to-lowercase() : ShotWords.done();
             color: Look.terminal ? Look.accent : Look.on-accent;
             font-family: Look.font;
             font-size: Look.broadsheet ? 15px : 13px;
@@ -385,15 +385,17 @@ export component ShotWindow inherits Window {
     background: #000000;
     default-font-family: Look.font;
 
-    // The toolbar and its options row, by theme (the design's spec).
-    property <length> tb-w: Look.terminal ? 388px : 460px;
+    // The toolbar and its options row, by theme (the design's spec). Their widths are the
+    // design's, or what their buttons need when that is more: Done's label is as wide as the
+    // language makes it.
+    property <length> tb-w: max(Look.terminal ? 388px : 460px, bar.preferred-width);
     property <length> tb-h: Look.terminal ? 30px : 38px;
     property <length> tb-pad: Look.terminal ? 3px : 4px;
     property <length> btn: Look.terminal ? 24px : 30px;
     property <length> tb-r: Look.workbench ? 10px : Look.broadsheet ? 4px : 3px;
     property <length> opt-h: 34px;
     property <bool> has-options: Shot.tool != ShotTool.none;
-    property <length> opt-w: Shot.tool == ShotTool.mosaic ? 90px : 258px;
+    property <length> opt-w: max(Shot.tool == ShotTool.mosaic ? 90px : 258px, options-row.preferred-width);
     // Where the toolbar goes: under the selection, else above it, else inside at its bottom right.
     property <length> stack: tb-h + (has-options ? opt-h + 6px : 0);
     property <bool> below: Shot.sel-y + Shot.sel-h + 8px + stack <= root.height - 6px;
@@ -800,8 +802,11 @@ export component ShotWindow inherits Window {
             }
         }
 
-        // The toolbar.
-        if root.show-toolbar: Rectangle {
+        // The toolbar: hidden rather than absent while there is no selection, so that its width
+        // (tb-w) can be asked of its contents at any time. The design's stroke is two lines: a
+        // dark one outside, a light one inside (the other way round in the dark appearance).
+        toolbar := Rectangle {
+            visible: root.show-toolbar;
             x: root.tb-x;
             y: root.tb-y;
             width: root.tb-w;
@@ -814,7 +819,16 @@ export component ShotWindow inherits Window {
             drop-shadow-offset-y: 10px;
             drop-shadow-color: Look.dark ? #00000073 : #00000059;
             TouchArea { }
-            HorizontalLayout {
+            Rectangle {
+                x: 1px;
+                y: 1px;
+                width: parent.width - 2px;
+                height: parent.height - 2px;
+                border-radius: max(0px, root.tb-r - 1px);
+                border-width: 1px;
+                border-color: Look.dark ? #0000008c : #ffffff80;
+            }
+            bar := HorizontalLayout {
                 padding: root.tb-pad;
                 spacing: 2px;
                 for tool in [ShotTool.rect, ShotTool.ellipse, ShotTool.arrow, ShotTool.pen, ShotTool.text, ShotTool.mosaic]: ToolButton {
@@ -895,7 +909,8 @@ export component ShotWindow inherits Window {
         }
 
         // The options of the tool in use: sizes, and colours for all but the mosaic.
-        if root.show-toolbar && root.has-options: Rectangle {
+        options := Rectangle {
+            visible: root.show-toolbar && root.has-options;
             x: root.opt-x;
             y: root.opt-y;
             width: root.opt-w;
@@ -908,7 +923,16 @@ export component ShotWindow inherits Window {
             drop-shadow-offset-y: 10px;
             drop-shadow-color: Look.dark ? #00000073 : #00000059;
             TouchArea { }
-            HorizontalLayout {
+            Rectangle {
+                x: 1px;
+                y: 1px;
+                width: parent.width - 2px;
+                height: parent.height - 2px;
+                border-radius: max(0px, root.tb-r - 1px);
+                border-width: 1px;
+                border-color: Look.dark ? #0000008c : #ffffff80;
+            }
+            options-row := HorizontalLayout {
                 padding: 4px;
                 spacing: 2px;
                 for index in 3: SizeChoice {
