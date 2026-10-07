@@ -9,7 +9,7 @@ import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import {
-    ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope, AttachWords, FileCardView,
+    ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope, AttachWords, FileCardView, ChatMenuWords
 } from "../chat.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 import { BroadsheetActions } from "actions.slint";
@@ -818,7 +818,7 @@ component ListColumn inherits Rectangle {
         Chats.open-menu(chat.id);
         root.menu-x = max(0px, left - root.absolute-position.x);
         // Within the list, whichever of the two pages is the taller.
-        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 44px - 34px * max(Chats.folders.length > 1 ? 4 : 3, Chats.menu-folders.length + 1)));
+        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 44px - 34px * max((Chats.folders.length > 1 ? 4 : 3) + 4, Chats.menu-folders.length + 1)));
         chat-menu.show();
     }
 
@@ -1072,6 +1072,46 @@ component ListColumn inherits Rectangle {
                     label: @tr("Add to folder");
                     activated => {
                         root.menu-folders = true;
+                    }
+                }
+                // Telegram's own actions on the chat (chats.rs); the ones that cannot be undone ask first.
+                if !root.menu-folders && root.menu-chat.kind != ChatKind.saved: Rectangle {
+                    height: 9px;
+                    Rectangle {
+                        height: 1px;
+                        background: P.line;
+                    }
+                }
+                if !root.menu-folders && (root.menu-chat.kind == ChatKind.user || root.menu-chat.kind == ChatKind.bot): MenuEntry {
+                    icon: "prohibit";
+                    label: ChatMenuWords.block(root.menu-chat.kind, root.menu-chat.blocked);
+                    activated => {
+                        Chats.toggle-block(root.menu-chat.id);
+                        chat-menu.close();
+                    }
+                }
+                if !root.menu-folders && root.menu-chat.reportable: MenuEntry {
+                    icon: "flag";
+                    label: ChatMenuWords.report();
+                    activated => {
+                        Chats.report(root.menu-chat.id);
+                        chat-menu.close();
+                    }
+                }
+                if !root.menu-folders && (root.menu-chat.kind == ChatKind.group || root.menu-chat.kind == ChatKind.channel): MenuEntry {
+                    icon: "sign-out";
+                    label: ChatMenuWords.leave(root.menu-chat.kind);
+                    activated => {
+                        Chats.leave(root.menu-chat.id);
+                        chat-menu.close();
+                    }
+                }
+                if !root.menu-folders && root.menu-chat.deletable && (root.menu-chat.kind == ChatKind.user || root.menu-chat.kind == ChatKind.bot): MenuEntry {
+                    icon: "trash";
+                    label: ChatMenuWords.delete();
+                    activated => {
+                        Chats.delete-chat(root.menu-chat.id);
+                        chat-menu.close();
                     }
                 }
                 if root.menu-folders: MenuEntry {

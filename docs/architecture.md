@@ -169,7 +169,11 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   and puts it into one of the account's folders or takes it out. TDLib has no request for the
   last: the folder is fetched whole (getChatFolder), its chosen chats are changed and it is sent
   back (editChatFolder). A folder that takes chats by kind (contacts, groups, …) would keep a chat
-  taken out, so there the chat is excluded by name as well.
+  taken out, so there the chat is excluded by name as well. The menu also does what Telegram's own
+  apps do with a chat: block or unblock a user (setMessageSenderBlockList), report the chat
+  (reportChat, the steps a message's report goes through), leave a group or channel (leaveChat),
+  delete a chat with a user or a bot (deleteChatHistory, for the other side too when TDLib says it
+  can be); blocking, leaving and deleting ask first, and a chat left or deleted closes its tab.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
   device, the transparent title bar on macOS, opening links, the clipboard (words and pictures);

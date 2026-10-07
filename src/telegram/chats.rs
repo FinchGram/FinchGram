@@ -76,6 +76,28 @@ pub fn connect(ui: &MainWindow) {
             toggle_in_folder(chat_id, chat_folder_id);
         }
     });
+    chats.on_toggle_block(|id| {
+        if let Ok(chat_id) = id.parse() {
+            toggle_block(chat_id);
+        }
+    });
+    chats.on_report(|id| {
+        if let Ok(chat_id) = id.parse() {
+            super::actions::start_report(chat_id, Vec::new());
+        }
+    });
+    chats.on_leave(|id| {
+        if let Ok(chat_id) = id.parse() {
+            ask(chat_id, crate::ChatConfirm::Leave);
+        }
+    });
+    chats.on_delete_chat(|id| {
+        if let Ok(chat_id) = id.parse() {
+            ask(chat_id, crate::ChatConfirm::Delete);
+        }
+    });
+    chats.on_confirm(confirm);
+    chats.on_cancel_confirm(close_question);
     chats.on_search(|words| {
         store::with(|store| {
             store.query = words.trim().to_lowercase();
@@ -84,6 +106,113 @@ pub fn connect(ui: &MainWindow) {
         store::refresh();
         super::with_ui(|ui| ui.global::<Chats>().set_query(words));
     });
+}
+
+// ---- Telegram's own actions on a chat ---------------------------------------------------------------
+
+thread_local! {
+    /// The question open (the chat, and what for), until it is answered or closed.
+    static QUESTION: std::cell::RefCell<Option<(i64, crate::ChatConfirm)>> = const { std::cell::RefCell::new(None) };
+}
+
+/// Block the user of a chat, after a question; or unblock them at once.
+fn toggle_block(chat_id: i64) {
+    let Some((user_id, blocked)) = store::with(|store| {
+        let chat = store.chats.get(&chat_id)?;
+        let super::api::ChatType::Private { user_id } = chat.kind else { return None };
+        Some((user_id, chat.block_list == Some(super::api::BlockList::Main)))
+    })
+    .flatten() else {
+        return;
+    };
+    if blocked {
+        set_blocked(user_id, false);
+    } else {
+        ask(chat_id, crate::ChatConfirm::Block);
+    }
+}
+
+fn set_blocked(user_id: i64, blocked: bool) {
+    let block_list = if blocked { serde_json::json!({ "@type": "blockListMain" }) } else { serde_json::Value::Null };
+    let request = serde_json::json!({
+        "@type": "setMessageSenderBlockList",
+        "sender_id": { "@type": "messageSenderUser", "user_id": user_id },
+        "block_list": block_list,
+    });
+    super::send(request, |answer| log_error("block a user", answer));
+}
+
+/// The question before something that cannot be undone: the chat's name, its kind, and for a
+/// deletion whether the messages can go for the other side too.
+fn ask(chat_id: i64, what: crate::ChatConfirm) {
+    super::with_ui(|ui| {
+        let names = store::Names::from(ui);
+        let Some((title, kind, revoke_choice)) = store::with(|store| {
+            let chat = store.chats.get(&chat_id)?;
+            Some((store.title(chat, &names), store.kind(chat), chat.can_be_deleted_for_all_users))
+        })
+        .flatten() else {
+            return;
+        };
+        QUESTION.with(|question| *question.borrow_mut() = Some((chat_id, what)));
+        let chats = ui.global::<Chats>();
+        chats.set_confirm_title(title.into());
+        chats.set_confirm_kind(kind);
+        chats.set_confirm_revoke_choice(what == crate::ChatConfirm::Delete && revoke_choice);
+        chats.set_confirm_revoke(false);
+        chats.set_question(what);
+    });
+}
+
+/// The question answered: do it. A chat left or deleted goes from the lists when TDLib says so,
+/// and its tab closes now.
+fn confirm() {
+    let Some((chat_id, what)) = QUESTION.with(|question| question.borrow_mut().take()) else { return };
+    let mut revoke = false;
+    super::with_ui(|ui| revoke = ui.global::<Chats>().get_confirm_revoke());
+    close_question();
+    match what {
+        crate::ChatConfirm::Block => {
+            let user_id = store::with(|store| match store.chats.get(&chat_id).map(|chat| chat.kind) {
+                Some(super::api::ChatType::Private { user_id }) => Some(user_id),
+                _ => None,
+            })
+            .flatten();
+            if let Some(user_id) = user_id {
+                set_blocked(user_id, true);
+            }
+        }
+        crate::ChatConfirm::Leave => {
+            super::send(serde_json::json!({ "@type": "leaveChat", "chat_id": chat_id }), |answer| log_error("leave a chat", answer));
+            conversation::close(chat_id);
+        }
+        crate::ChatConfirm::Delete => {
+            let request = serde_json::json!({ "@type": "deleteChatHistory", "chat_id": chat_id, "remove_from_chat_list": true, "revoke": revoke });
+            super::send(request, |answer| log_error("delete a chat", answer));
+            conversation::close(chat_id);
+        }
+        crate::ChatConfirm::None => {}
+    }
+}
+
+fn close_question() {
+    QUESTION.with(|question| question.borrow_mut().take());
+    super::with_ui(|ui| ui.global::<Chats>().set_question(crate::ChatConfirm::None));
+}
+
+/// Esc: close the question, if one is open.
+pub(super) fn escape() -> bool {
+    let open = QUESTION.with(|question| question.borrow().is_some());
+    if open {
+        close_question();
+    }
+    open
+}
+
+fn log_error(what: &str, answer: Result<serde_json::Value, super::Error>) {
+    if let Err(err) = answer {
+        eprintln!("telegram: cannot {what}: {err}");
+    }
 }
 
 /// Logged in, or finchgram-tdlib started again: ask for the main list anew (the folders follow when

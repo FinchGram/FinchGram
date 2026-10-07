@@ -75,6 +75,12 @@ pub enum Update {
     ScopeNotificationSettings { scope: NotificationSettingsScope, notification_settings: ScopeNotificationSettings },
     #[serde(rename = "updateChatIsMarkedAsUnread")]
     ChatIsMarkedAsUnread { chat_id: i64, is_marked_as_unread: bool },
+    #[serde(rename = "updateChatBlockList")]
+    ChatBlockList {
+        chat_id: i64,
+        #[serde(default)]
+        block_list: Option<BlockList>,
+    },
     #[serde(rename = "updateChatFolders")]
     ChatFolders { chat_folders: Vec<ChatFolderInfo> },
     #[serde(rename = "updateChatOnlineMemberCount")]
@@ -419,6 +425,25 @@ pub struct Chat {
     pub last_read_outbox_message_id: i64,
     pub unread_mention_count: i32,
     pub notification_settings: ChatNotificationSettings,
+    /// A user we have blocked, from messages or only from stories; none otherwise.
+    #[serde(default)]
+    pub block_list: Option<BlockList>,
+    #[serde(default)]
+    pub can_be_deleted_only_for_self: bool,
+    #[serde(default)]
+    pub can_be_deleted_for_all_users: bool,
+    #[serde(default)]
+    pub can_be_reported: bool,
+}
+
+/// Where a user is blocked (TDLib's BlockList): from sending us messages, or only from our stories.
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum BlockList {
+    #[serde(rename = "blockListMain")]
+    Main,
+    #[serde(rename = "blockListStories")]
+    Stories,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Deserialize)]

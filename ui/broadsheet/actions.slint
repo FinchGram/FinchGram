@@ -1,9 +1,9 @@
 // Broadsheet's message actions over the window (the design's fourth round, 1a): a message's menu,
 // where it was right-clicked, and the dialogs for forwarding, reporting and deleting.
-import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment } from "../telegram.slint";
+import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment, Chats, ChatConfirm } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Spinner, Avatar } from "../widgets.slint";
-import { ActionWords, AttachWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
+import { ActionWords, AttachWords, ChatMenuWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
 import { Screenshot } from "../state.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 
@@ -666,6 +666,103 @@ component PermissionCard inherits Dialog {
     }
 }
 
+// A chat's menu asked before something that cannot be undone: blocking a user, leaving a group or
+// channel, deleting a chat (chats.rs).
+component ChatQuestion inherits Dialog {
+    box-width: 380px;
+    box-height: body.preferred-height;
+    close => {
+        Chats.cancel-confirm();
+    }
+
+    KeyScope {
+        width: 0;
+        height: 0;
+        escape => {
+            Chats.cancel-confirm();
+        }
+        enter => {
+            Chats.confirm();
+        }
+    }
+
+    body := VerticalLayout {
+        padding-left: 22px;
+        padding-right: 22px;
+        padding-top: 22px;
+        padding-bottom: 18px;
+        spacing: 18px;
+        Text {
+            text: ChatMenuWords.title(Chats.question, Chats.confirm-kind, Chats.confirm-title);
+            color: P.text;
+            font-size: 20px;
+            font-weight: 600;
+            wrap: word-wrap;
+        }
+        Text {
+            text: ChatMenuWords.lead(Chats.question, Chats.confirm-kind);
+            color: P.muted;
+            font-size: 15px;
+            wrap: word-wrap;
+        }
+        if Chats.confirm-revoke-choice: Rectangle {
+            height: 22px;
+            HorizontalLayout {
+                spacing: 10px;
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 20px;
+                        height: 20px;
+                        border-radius: 2px;
+                        background: Chats.confirm-revoke ? P.accent : transparent;
+                        border-width: Chats.confirm-revoke ? 0 : 1.5px;
+                        border-color: P.faint;
+                        if Chats.confirm-revoke: Icon {
+                            name: "check";
+                            size: 13px;
+                            color: P.on-accent;
+                            duotone: false;
+                        }
+                    }
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: ChatMenuWords.revoke(Chats.confirm-title);
+                    color: P.text;
+                    font-size: 16px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Chats.confirm-revoke = !Chats.confirm-revoke;
+                }
+            }
+        }
+        HorizontalLayout {
+            alignment: end;
+            spacing: 16px;
+            DialogButton {
+                label: @tr("Cancel");
+                clicked => {
+                    Chats.cancel-confirm();
+                }
+            }
+            DialogButton {
+                label: ChatMenuWords.action(Chats.question);
+                filled: true;
+                fill: P.accent2-ink;
+                clicked => {
+                    Chats.confirm();
+                }
+            }
+        }
+    }
+}
+
 export component BroadsheetActions inherits Rectangle {
     // A message's menu, where it was clicked; a click anywhere else closes it.
     if Actions.menu-open: TouchArea {
@@ -705,4 +802,5 @@ export component BroadsheetActions inherits Rectangle {
     if Actions.report-open: ReportDialog { }
     if Actions.delete-open: DeleteDialog { }
     if Screenshot.permission-card: PermissionCard { }
+    if Chats.question != ChatConfirm.none: ChatQuestion { }
 }

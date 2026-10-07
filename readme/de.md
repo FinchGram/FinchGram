@@ -12,7 +12,7 @@ Stand: früh. Registrieren und Anmelden, die Chatliste und Chats mit Textnachric
 den drei Designs des Entwurfs: Workbench (Standard), Broadsheet und Terminal, umschaltbar unter
 Einstellungen › Darstellung. Fotos und Videos erscheinen in den Chats und öffnen sich in einem Viewer,
 der Videos mit mpv abspielt. Fotos, Videos und Dateien lassen sich über die Büroklammer senden, in das Fenster ziehen oder einfügen. Die Schere im Eingabefeld oder ⌘⇧A nimmt einen Ausschnitt des Bildschirms auf, mit Rechtecken, Pfeilen, Text und Mosaik darauf, und sendet ihn. Ein Rechtsklick auf eine Nachricht öffnet ihr Menü: antworten,
-bearbeiten, kopieren, Link kopieren, weiterleiten, melden, löschen oder mehrere Nachrichten auswählen.
+bearbeiten, kopieren, Link kopieren, weiterleiten, melden, löschen oder mehrere Nachrichten auswählen. Ein Rechtsklick auf einen Chat schaltet ihn stumm oder heftet ihn an, blockiert die Person, meldet ihn, verlässt die Gruppe oder den Kanal oder löscht den Chat.
 Die zweistufige Bestätigung wird unter Einstellungen › Datenschutz & Sicherheit verwaltet. Neue
 Nachrichten kommen als macOS-Mitteilungen, ihre Zahl steht am Dock-Symbol (Einstellungen ›
 Mitteilungen & Töne). Als Nächstes kommen Dateien, mehrere Konten, Stichwortfilter und geplante

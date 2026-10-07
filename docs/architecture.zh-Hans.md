@@ -96,6 +96,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   每批更新之后把页面用的 model 更新到最新，只动真正变了的行。打开的聊天只显示最新的 100 条消息，往上翻时再增加：
   页面会把每一行都排出来，其中任何一行一变就要把所有行重新量一遍，所以行数就是每条新消息的代价。
   `login.rs`、`chats.rs`、`conversation.rs`、`actions.rs`（消息操作）、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`avatars.rs` 负责给要显示头像的行取来聊天和联系人的头像（取到之前是首字母色块，没有头像的一直是色块），`viewer.rs` 给媒体查看器提供内容，`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
+  菜单也能做 Telegram 官方应用对聊天能做的事：拉黑或取消拉黑用户（setMessageSenderBlockList）、举报聊天（reportChat，和举报消息走同样的步骤）、
+  退出群组或频道（leaveChat）、删除和某个用户或机器人的聊天（deleteChatHistory，TDLib 允许时也可以同时删掉对方那边的）；
+  拉黑、退出和删除都会先问一句，退出或删除后聊天的标签页随即关闭。
 - 通知（`notifications.rs`，设置 → 通知与声音）用的是 TDLib 自己的：用它的 `notification_group_count_max` 选项打开后，
   该不该通知由 TDLib 决定。它遵循每个聊天的免打扰和每类聊天的设置（Telegram 自己的、跟着账号走的设置），
   账号的另一台设备正在用时会稍等一下，消息在任何地方读过之后会把通知收回。外壳只负责显示 TDLib 加的通知

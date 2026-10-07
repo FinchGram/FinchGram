@@ -2,7 +2,7 @@
 import { AppState } from "state.slint";
 import {
     Conversation, ChatKind, Media, Sticker, MessageRow, RowKind, Actions, MessageAction, ActionNotice, ComposeBar, ReplyQuote,
-    DeleteChoice, Attachments, AttachKind, AttachProblem, AttachHint, FileCard, FileState, FileType } from "telegram.slint";
+    DeleteChoice, Attachments, AttachKind, AttachProblem, AttachHint, FileCard, FileState, FileType, ChatConfirm } from "telegram.slint";
 import { Fmt } from "format.slint";
 import { Icon } from "widgets.slint";
 
@@ -244,6 +244,34 @@ export component ProgressRing inherits Rectangle {
 }
 
 // What the attachments pages say (the design's sixth round, its copy list).
+// A chat's menu in the lists (chats.rs): Telegram's own actions on a chat, and the questions asked
+// before those that cannot be undone.
+export global ChatMenuWords {
+    public pure function block(kind: ChatKind, blocked: bool) -> string {
+        if kind == ChatKind.bot { return blocked ? @tr("Unblock bot") : @tr("Block bot"); }
+        return blocked ? @tr("Unblock user") : @tr("Block user");
+    }
+    public pure function report() -> string { return @tr("Report"); }
+    public pure function leave(kind: ChatKind) -> string { return kind == ChatKind.channel ? @tr("Leave channel") : @tr("Leave group"); }
+    public pure function delete() -> string { return @tr("Delete chat"); }
+    public pure function title(what: ChatConfirm, kind: ChatKind, name: string) -> string {
+        if what == ChatConfirm.block { return @tr("Block {0}?", name); }
+        if what == ChatConfirm.leave { return kind == ChatKind.channel ? @tr("Leave the channel {0}?", name) : @tr("Leave the group {0}?", name); }
+        return @tr("Delete the chat with {0}?", name);
+    }
+    public pure function lead(what: ChatConfirm, kind: ChatKind) -> string {
+        if what == ChatConfirm.block { return @tr("They will not be able to send you messages. You can unblock them from this menu."); }
+        if what == ChatConfirm.leave { return kind == ChatKind.channel ? @tr("You will stop getting its posts.") : @tr("You will stop getting its messages."); }
+        return @tr("The chat and its messages go from your list.");
+    }
+    public pure function revoke(name: string) -> string { return @tr("Also delete for {0}", name); }
+    public pure function action(what: ChatConfirm) -> string {
+        if what == ChatConfirm.block { return @tr("Block"); }
+        if what == ChatConfirm.leave { return @tr("Leave"); }
+        return @tr("Delete");
+    }
+}
+
 export global AttachWords {
     public pure function attach() -> string { return @tr("Attach"); }
     public pure function photo-or-video() -> string { return @tr("Photo or Video"); }

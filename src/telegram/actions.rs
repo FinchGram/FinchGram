@@ -946,7 +946,8 @@ fn close_picker() {
 
 // ---- reporting -----------------------------------------------------------------------------------
 
-fn start_report(chat_id: i64, message_ids: Vec<i64>) {
+/// Report a chat (no messages), or messages of it: Telegram's steps follow in the dialog.
+pub(super) fn start_report(chat_id: i64, message_ids: Vec<i64>) {
     STATE.with(|state| {
         state.borrow_mut().report = Some(Report { chat_id, message_ids, steps: Vec::new(), comment: None, chosen: String::new() });
     });
@@ -1292,7 +1293,7 @@ pub(super) fn show_failure(message: &str) {
 
 /// Esc closes the topmost of the menu, a dialog, the strip and choosing; false when none is open.
 fn escape() -> bool {
-    if super::attachments::escape() {
+    if super::attachments::escape() || super::chats::escape() {
         return true;
     }
     let (menu, deleting, report, picking, bar, selection) = STATE.with(|state| {

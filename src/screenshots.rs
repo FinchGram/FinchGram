@@ -217,6 +217,9 @@ fn chat(id: &str, title: &str, kind: ChatKind, time: Moment, sender: &str, text:
         verified: false,
         members,
         username: SharedString::new(),
+        blocked: false,
+        reportable: kind != ChatKind::Saved,
+        deletable: kind != ChatKind::Saved,
     }
 }
 
@@ -1100,6 +1103,29 @@ fn screenshots() {
             click(&window, x + 40.0, y + add_to_folder(theme));
             save(&window, &name("chat-menu-folders"));
             escape(&window);
+            // The menu of a chat with a person: blocking, reporting, deleting.
+            let (ux, uy) = match theme {
+                Theme::Workbench => (150.0, 149.0),
+                Theme::Broadsheet => (230.0, 376.0),
+                Theme::Terminal => (140.0, 127.0),
+            };
+            right_click(&window, ux, uy);
+            save(&window, &name("chat-menu-user"));
+            escape(&window);
+            // The questions asked before leaving a group and before deleting a chat.
+            let chats = ui.global::<Chats>();
+            chats.set_confirm_title("Keyboard Lab".into());
+            chats.set_confirm_kind(ChatKind::Group);
+            chats.set_confirm_revoke_choice(false);
+            chats.set_question(ChatConfirm::Leave);
+            save(&window, &name("chat-leave"));
+            chats.set_confirm_title("Lin Xia".into());
+            chats.set_confirm_kind(ChatKind::User);
+            chats.set_confirm_revoke_choice(true);
+            chats.set_confirm_revoke(true);
+            chats.set_question(ChatConfirm::Delete);
+            save(&window, &name("chat-delete"));
+            chats.set_question(ChatConfirm::None);
             // Workbench's tabs: a right click on the second one, Tech Morning.
             if theme == Theme::Workbench {
                 right_click(&window, 520.0, 59.0);

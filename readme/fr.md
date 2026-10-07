@@ -13,7 +13,7 @@ texte fonctionnent, dans les trois thèmes de la maquette : Workbench (par défa
 Terminal, qu'on change dans Réglages › Apparence. Les photos et vidéos s'affichent dans les discussions
 et s'ouvrent dans une visionneuse qui lit la vidéo avec mpv. Photos, vidéos et fichiers s'envoient depuis le trombone, en les glissant dans la fenêtre ou en les collant. Les ciseaux du champ de saisie, ou ⌘⇧A, capturent une partie de l'écran, avec rectangles, flèches, texte et mosaïque dessinés dessus, et l'envoient. Un clic droit sur un message ouvre son menu
 : répondre, modifier, copier, copier le lien, transférer, signaler, supprimer ou sélectionner plusieurs
-messages. La validation en deux étapes se gère dans Réglages › Confidentialité et sécurité. Les
+messages. Un clic droit sur une discussion la met en sourdine ou l'épingle, bloque la personne, la signale, quitte le groupe ou la chaîne, ou supprime la discussion. La validation en deux étapes se gère dans Réglages › Confidentialité et sécurité. Les
 nouveaux messages arrivent en notifications macOS, et leur nombre s'affiche sur l'icône du Dock
 (Réglages › Notifications et sons). Viennent ensuite les fichiers, plusieurs comptes, les filtres par
 mots-clés et les messages programmés.

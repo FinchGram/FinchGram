@@ -1,9 +1,9 @@
 // Terminal's message actions over the window (the design's fourth round, 1b): a message's menu, with
 // its commands, where it was right-clicked, and the dialogs for forwarding, reporting and deleting.
-import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment } from "../telegram.slint";
+import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment, Chats, ChatConfirm } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Spinner } from "../widgets.slint";
-import { ActionWords, AttachWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
+import { ActionWords, AttachWords, ChatMenuWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
 import { Screenshot } from "../state.slint";
 import { TerminalPalette as P } from "palette.slint";
 import { Signs } from "signs.slint";
@@ -569,6 +569,89 @@ component PermissionCard inherits Dialog {
     }
 }
 
+// A chat's menu asked before something that cannot be undone: blocking a user, leaving a group or
+// channel, deleting a chat (chats.rs).
+component ChatQuestion inherits Dialog {
+    box-width: 400px;
+    box-height: body.preferred-height;
+    close => {
+        Chats.cancel-confirm();
+    }
+
+    KeyScope {
+        width: 0;
+        height: 0;
+        escape => {
+            Chats.cancel-confirm();
+        }
+        enter => {
+            Chats.confirm();
+        }
+    }
+
+    body := VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 14px;
+        padding-bottom: 14px;
+        spacing: 12px;
+        HorizontalLayout {
+            T {
+                text: "── ";
+                color: P.faint;
+            }
+            T {
+                horizontal-stretch: 1;
+                text: ChatMenuWords.title(Chats.question, Chats.confirm-kind, Chats.confirm-title);
+                wrap: word-wrap;
+            }
+        }
+        T {
+            text: ChatMenuWords.lead(Chats.question, Chats.confirm-kind);
+            color: P.muted;
+            wrap: word-wrap;
+        }
+        if Chats.confirm-revoke-choice: Rectangle {
+            height: choice.preferred-height;
+            choice := HorizontalLayout {
+                T {
+                    text: Chats.confirm-revoke ? "[x]" : "[ ]";
+                    color: P.accent;
+                }
+                T {
+                    horizontal-stretch: 1;
+                    text: " " + ChatMenuWords.revoke(Chats.confirm-title);
+                    overflow: elide;
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Chats.confirm-revoke = !Chats.confirm-revoke;
+                }
+            }
+        }
+        HorizontalLayout {
+            alignment: end;
+            spacing: 12px;
+            Word {
+                label: @tr("Cancel");
+                color: P.muted;
+                activated => {
+                    Chats.cancel-confirm();
+                }
+            }
+            Word {
+                label: ChatMenuWords.action(Chats.question) + " ⏎";
+                color: P.accent3;
+                activated => {
+                    Chats.confirm();
+                }
+            }
+        }
+    }
+}
+
 export component TerminalActions inherits Rectangle {
     // A message's menu, where it was clicked; a click anywhere else closes it.
     if Actions.menu-open: TouchArea {
@@ -623,4 +706,5 @@ export component TerminalActions inherits Rectangle {
     if Actions.report-open: ReportDialog { }
     if Actions.delete-open: DeleteDialog { }
     if Screenshot.permission-card: PermissionCard { }
+    if Chats.question != ChatConfirm.none: ChatQuestion { }
 }

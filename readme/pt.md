@@ -12,7 +12,7 @@ Status: fase inicial. O cadastro e o login, a lista de conversas e as conversas 
 texto funcionam, nos três temas do design: Workbench (o padrão), Broadsheet e Terminal, trocados em
 Configurações › Aparência. Fotos e vídeos aparecem nas conversas e abrem num visualizador que
 reproduz o vídeo com o mpv. Fotos, vídeos e arquivos podem ser enviados pelo clipe, arrastando-os para a janela ou colando-os. A tesoura na caixa de escrita, ou ⌘⇧A, captura uma parte da tela, com retângulos, setas, texto e mosaico desenhados por cima, e a envia. Um clique direito numa mensagem abre o menu dela: responder, editar,
-copiar, copiar o link, encaminhar, denunciar, apagar ou selecionar várias mensagens. A verificação
+copiar, copiar o link, encaminhar, denunciar, apagar ou selecionar várias mensagens. Um clique direito num chat silencia ou fixa, bloqueia a pessoa, denuncia, sai do grupo ou canal, ou apaga o chat. A verificação
 em duas etapas é gerenciada em Configurações › Privacidade e segurança. Mensagens novas chegam como
 notificações do macOS, com o número delas no ícone do Dock (Configurações › Notificações e sons).
 Em seguida vêm arquivos, várias contas, filtros por palavras-chave e mensagens agendadas.

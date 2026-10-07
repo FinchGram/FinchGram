@@ -54,7 +54,14 @@ export struct ChatRow {
     verified: bool,         // Telegram's check mark (official bots and channels)
     members: int,           // of a group, subscribers of a channel; 0 when not known
     username: string,       // without the @
+    blocked: bool,          // a user we have blocked: the menu offers Unblock
+    reportable: bool,       // Telegram takes reports of it
+    deletable: bool,        // the chat can be deleted for us (for the other side too, when Telegram says so)
 }
+
+// What a chat's menu asks before doing: blocking a user, leaving a group or channel, deleting a
+// chat (chats.rs).
+export enum ChatConfirm { none, block, leave, delete }
 
 // A folder of chats: 0 is All chats, the others are the account's own Telegram folders.
 export struct Folder {
@@ -101,6 +108,18 @@ export global Chats {
                                                  // wherever it is pinned, as Workbench's tree has it
     callback mark-read(string);
     callback toggle-in-folder(string, int);      // put the chat into a folder (index into folders), or take it out
+    // Telegram's own actions on a chat, with a question first where they cannot be undone.
+    callback toggle-block(string);               // block the user (after the question), or unblock them at once
+    callback report(string);                     // Telegram's report flow, as for a message (Actions.report-open)
+    callback leave(string);                      // a group or a channel
+    callback delete-chat(string);                // a chat with a user or a bot
+    in-out property <ChatConfirm> question;      // the question open, if any
+    in-out property <string> confirm-title;      // the chat it is about
+    in-out property <ChatKind> confirm-kind;
+    in-out property <bool> confirm-revoke-choice;  // deleting: the messages can go for the other side too
+    in-out property <bool> confirm-revoke;         // and the box is ticked
+    callback confirm();                          // the answer: do it
+    callback cancel-confirm();
 }
 
 // A tab of Workbench (and what Broadsheet and Terminal remember as open).

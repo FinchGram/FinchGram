@@ -639,6 +639,12 @@ impl Store {
                     self.dirty.chats = true;
                 }
             }
+            Update::ChatBlockList { chat_id, block_list } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.block_list = block_list;
+                    self.dirty.chats = true;
+                }
+            }
             Update::ChatFolders { chat_folders } => {
                 self.folders = chat_folders;
                 if self.shown_folder > self.folders.len() {
@@ -1020,6 +1026,9 @@ impl Store {
             verified: verification.is_some_and(|status| status.is_verified),
             members: self.members(chat),
             username: usernames.and_then(|names| names.active_usernames.first()).cloned().unwrap_or_default().into(),
+            blocked: chat.block_list == Some(api::BlockList::Main),
+            reportable: chat.can_be_reported,
+            deletable: chat.can_be_deleted_only_for_self || chat.can_be_deleted_for_all_users,
         }
     }
 

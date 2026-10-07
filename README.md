@@ -12,7 +12,7 @@ Status: early. Signing up and logging in, the chat list and chats with text mess
 design's three themes: Workbench (the default), Broadsheet and Terminal, switched in Settings →
 Appearance. Photos and videos show in the chats and open in a viewer that plays video through mpv. Photos, videos and files can be sent from the paperclip, by dragging them onto the window, or by pasting them. The scissors in the composer, or ⌘⇧A, take a screenshot of part of the screen, with rectangles, arrows, text and mosaic drawn on it, and send it.
 A right click on a message gives its menu: reply, edit, copy, copy its link, forward, report,
-delete, or choose several messages. Two-step verification is managed in Settings → Privacy &
+delete, or choose several messages. A right click on a chat mutes or pins it, blocks the person, reports it, leaves the group or channel, or deletes the chat. Two-step verification is managed in Settings → Privacy &
 security. New messages show as macOS notifications, and their number on the Dock icon (Settings →
 Notifications & sounds). Files, several accounts, keyword filters and scheduled messages come next.
 

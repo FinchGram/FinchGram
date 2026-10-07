@@ -225,7 +225,7 @@ pub fn open(chat_id: i64) {
 }
 
 /// Close a tab. When it was the front one, the tab next to it comes to the front.
-fn close(chat_id: i64) {
+pub(super) fn close(chat_id: i64) {
     enum Then {
         Nothing,
         Open(i64),
