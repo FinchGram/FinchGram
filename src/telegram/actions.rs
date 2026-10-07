@@ -1267,12 +1267,21 @@ pub(super) fn show_notice(notice: ActionNotice) {
         state.notices += 1;
         state.notices
     });
-    with_actions(|actions| actions.set_notice(notice));
+    with_actions(|actions| {
+        actions.set_saved_name(SharedString::new());
+        actions.set_notice(notice);
+    });
     slint::Timer::single_shot(NOTICE_SHOWN, move || {
         if STATE.with(|state| state.borrow().notices) == notices {
             with_actions(|actions| actions.set_notice(ActionNotice::None));
         }
     });
+}
+
+/// Something was saved into the Downloads folder as `name`: say so, with the name.
+pub(super) fn show_saved(name: &str) {
+    show_notice(ActionNotice::Saved);
+    with_actions(|actions| actions.set_saved_name(name.into()));
 }
 
 /// Telegram refused something: say so, in its words.

@@ -364,6 +364,7 @@ export global Attachments {
     in-out property <int> albums;                // how many albums they make when more than one; else 0
     in-out property <bool> all-media;            // every item is a picture or a video: the choices show
     in-out property <bool> as-file;              // they go as files, as they are
+    in-out property <bool> screenshot;           // the only item is a screenshot just taken: "Send Screenshot"
     in-out property <bool> grouped;              // several go together, as an album
     in-out property <bool> timer-allowed;        // a private chat: photos and videos can self-destruct
     in-out property <int> timer;                 // seconds; 0: off; -1: view once
@@ -490,6 +491,7 @@ export global Actions {
 
     in-out property <ActionNotice> notice;
     in-out property <string> failure;               // what Telegram said, for the failed notice
+    in-out property <string> saved-name;            // what the saved notice names, if anything: a screenshot's file
     // A row lit up for a moment: the message a reply answers, jumped to.
     in-out property <string> flash;
     callback jump(string);                          // to a message: a reply's original

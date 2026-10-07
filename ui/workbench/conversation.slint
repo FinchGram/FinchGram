@@ -1,6 +1,6 @@
 // Workbench's main area: the tabs of the open chats, and the chat in front — its header, the
 // messages as rows (a letter, the sender and time, the text), and where to write.
-import { AppState } from "../state.slint";
+import { AppState, Screenshot } from "../state.slint";
 import {
     Conversation, MessageRow, RowKind, ChatKind, Content, Account, Viewer, LinkPreview, ReplyQuote, Actions, ComposeBar,
     ActionNotice, Tab, Chats, Attachments,
@@ -1469,6 +1469,62 @@ component Pane {
                                         text: clip.allowed ? AttachWords.attach() : AttachWords.cant-send();
                                         color: P.bg;
                                         font-size: 12px;
+                                    }
+                                }
+                            }
+                        }
+                        // The scissors: a screenshot into the card (src/screenshot/), as its
+                        // shortcut does; greyed where the chat takes no photos.
+                        VerticalLayout {
+                            alignment: center;
+                            scissors := Rectangle {
+                                property <bool> allowed: Conversation.can-send-photos;
+                                width: 28px;
+                                height: 28px;
+                                border-radius: 6px;
+                                background: scissors-touch.has-hover && self.allowed ? P.side : transparent;
+                                Icon {
+                                    name: "scissors";
+                                    size: 17px;
+                                    transform-rotation: -90deg;
+                                    color: scissors-touch.has-hover && scissors.allowed ? P.text : P.faint;
+                                    opacity: scissors.allowed ? 1 : 0.4;
+                                }
+                                scissors-touch := TouchArea {
+                                    mouse-cursor: scissors.allowed ? pointer : not-allowed;
+                                    clicked => {
+                                        if scissors.allowed {
+                                            Screenshot.start();
+                                        }
+                                    }
+                                }
+                                if scissors-touch.has-hover: Rectangle {
+                                    x: 0;
+                                    y: -self.height - 8px;
+                                    width: scissors-tip.preferred-width;
+                                    height: scissors-tip.preferred-height;
+                                    border-radius: 6px;
+                                    background: P.text;
+                                    drop-shadow-blur: 20px;
+                                    drop-shadow-offset-y: 6px;
+                                    drop-shadow-color: #00000033;
+                                    scissors-tip := HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        padding-top: 6px;
+                                        padding-bottom: 6px;
+                                        spacing: 8px;
+                                        Text {
+                                            text: scissors.allowed ? AttachWords.screenshot() : AttachWords.screenshot-off();
+                                            color: P.bg;
+                                            font-size: 12px;
+                                        }
+                                        if scissors.allowed: Text {
+                                            text: Screenshot.shortcut-label;
+                                            color: P.bg;
+                                            font-size: 12px;
+                                            opacity: 0.7;
+                                        }
                                     }
                                 }
                             }

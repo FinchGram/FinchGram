@@ -149,6 +149,18 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   which downloads it or shows it in the Finder. What may be sent follows the chat's permissions and
   ours in it (`store.rs`, send_rights). Caption length and file size follow Telegram's limits
   (TDLib's `message_caption_length_max` and `is_premium` options).
+- The screenshot tool (`screenshot/`, the design's seventh round): the scissors in the composer,
+  or ⌘⇧A (Settings → General → Screenshots, where the keys can be changed), hide the window if the
+  setting says so, have the system take every display (`platform/`, macOS's own screencapture,
+  once Screen Recording is allowed; a card says where to allow it), and cover each display with a
+  borderless window of its own (`ui/shot.slint`) showing the frozen screen. The user takes a window
+  (the system's list of them, lit under the pointer) or drags a selection, adjusts it by its
+  handles and the arrow keys, and draws on it: rectangle, ellipse, arrow, pen, text and mosaic, in
+  three sizes and six colours, with undo. Rust owns the state and the annotations; the overlay only
+  draws them and reports the pointer and the keys. Done draws the annotations into the picture with
+  resvg (`screenshot/export.rs`, in the bundled fonts, the same in every theme) and opens the send
+  card with it as "Send Screenshot"; Copy puts it on the clipboard; Save writes it to the Downloads
+  folder, named as macOS names screenshots.
 - A message's menu opens on a right click anywhere on the message. Its formatted words (Slint's
   StyledText) keep every click to themselves, so the right click is seen in the window's own events
   (`mod.rs`, through winit), counted in a global, and the row under the pointer asks for its menu.

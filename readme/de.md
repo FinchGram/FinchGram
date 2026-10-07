@@ -11,7 +11,7 @@ und stammt nicht von Telegram.
 Stand: früh. Registrieren und Anmelden, die Chatliste und Chats mit Textnachrichten funktionieren, in
 den drei Designs des Entwurfs: Workbench (Standard), Broadsheet und Terminal, umschaltbar unter
 Einstellungen › Darstellung. Fotos und Videos erscheinen in den Chats und öffnen sich in einem Viewer,
-der Videos mit mpv abspielt. Fotos, Videos und Dateien lassen sich über die Büroklammer senden, in das Fenster ziehen oder einfügen. Ein Rechtsklick auf eine Nachricht öffnet ihr Menü: antworten,
+der Videos mit mpv abspielt. Fotos, Videos und Dateien lassen sich über die Büroklammer senden, in das Fenster ziehen oder einfügen. Die Schere im Eingabefeld oder ⌘⇧A nimmt einen Ausschnitt des Bildschirms auf, mit Rechtecken, Pfeilen, Text und Mosaik darauf, und sendet ihn. Ein Rechtsklick auf eine Nachricht öffnet ihr Menü: antworten,
 bearbeiten, kopieren, Link kopieren, weiterleiten, melden, löschen oder mehrere Nachrichten auswählen.
 Die zweistufige Bestätigung wird unter Einstellungen › Datenschutz & Sicherheit verwaltet. Neue
 Nachrichten kommen als macOS-Mitteilungen, ihre Zahl steht am Dock-Symbol (Einstellungen ›
@@ -109,6 +109,7 @@ src/
     online.rs            #   das Konto ist online, solange das Fenster vorne ist und benutzt wird
   platform/              # was sich von Betriebssystem zu Betriebssystem unterscheidet
   player/                # Video mit libmpv, per OpenGL ins Fenster gezeichnet
+  screenshot/            # das Bildschirmfoto-Werkzeug: Aufnahme, Overlay, Anmerkungen, das Bild
   update.rs              # die Selbstaktualisierung: GitHub Releases, Signatur, Austausch, Neustart
   settings.rs            # die Einstellungen des Nutzers (settings.toml)
   i18n.rs                # Sprache der Oberfläche: gespeicherte Wahl, sonst die des Systems, sonst Englisch

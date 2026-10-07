@@ -31,6 +31,27 @@ pub struct Settings {
     pub notifications: Notifications,
     /// How wide each theme's chat list is, as the user last dragged its edge.
     pub list_widths: ListWidths,
+    /// Settings → General → Screenshots (src/screenshot/).
+    pub screenshots: Screenshots,
+}
+
+/// The screenshot tool: its shortcut, and whether FinchGram's own window hides while the screen is
+/// captured.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Screenshots {
+    /// The keys, as "cmd+shift+a": "cmd", "ctrl", "alt", "shift" and a letter or digit, joined with
+    /// "+" in that order.
+    pub shortcut: String,
+    pub hide_window: bool,
+    /// The shortcut works while FinchGram is in the background too (still to come).
+    pub global: bool,
+}
+
+impl Default for Screenshots {
+    fn default() -> Self {
+        Screenshots { shortcut: "cmd+shift+a".to_string(), hide_window: true, global: false }
+    }
 }
 
 /// What FinchGram does when a message arrives (src/telegram/notifications.rs), as the design has it
@@ -99,6 +120,7 @@ impl Default for Settings {
             send_with_enter: true,
             notifications: Notifications::default(),
             list_widths: ListWidths::default(),
+            screenshots: Screenshots::default(),
         }
     }
 }

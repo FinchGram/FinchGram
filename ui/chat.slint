@@ -252,10 +252,21 @@ export global AttachWords {
     public pure function not-available() -> string { return @tr("Not available yet"); }
     public pure function not-allowed() -> string { return @tr("Not allowed in this group"); }
     public pure function cant-send() -> string { return @tr("You can't send messages in this group"); }
+    public pure function screenshot() -> string { return @tr("Screenshot"); }
+    public pure function screenshot-off() -> string { return @tr("Not allowed in this group"); }
+    // The card shown when the system has not let FinchGram see the screen.
+    public pure function permission-title() -> string { return @tr("Screen Recording is off for FinchGram"); }
+    public pure function permission-lead() -> string { return @tr("Screenshots need Screen Recording in System Settings → Privacy & Security."); }
+    public pure function open-system-settings() -> string { return @tr("Open System Settings"); }
+    public pure function not-now() -> string { return @tr("Not now"); }
     public pure function menu-keys() -> string { return @tr("↑↓ Choose · Return Open · Esc Close"); }
 
-    // The card's title: "Send Photo", "Send 3 Photos", "Send 2 Files", …
+    // The card's title: "Send Photo", "Send 3 Photos", "Send 2 Files", …; "Send Screenshot" for one
+    // just taken.
     public pure function title(count: int, videos: int, as-files: bool) -> string {
+        if Attachments.screenshot && count == 1 && !as-files {
+            return @tr("Send Screenshot");
+        }
         if as-files {
             return count == 1 ? @tr("Send File") : @tr("Send {n} Files" | "Send {n} Files" % count);
         }
@@ -775,7 +786,7 @@ export global ActionWords {
         if notice == ActionNotice.copied { return @tr("Text copied to clipboard."); }
         if notice == ActionNotice.link-copied { return @tr("Link copied to clipboard."); }
         if notice == ActionNotice.image-copied { return @tr("Image copied to clipboard."); }
-        if notice == ActionNotice.saved { return @tr("Saved to Downloads"); }
+        if notice == ActionNotice.saved { return Actions.saved-name == "" ? @tr("Saved to Downloads") : @tr("Saved to Downloads · {0}", Actions.saved-name); }
         if notice == ActionNotice.reported { return @tr("Reported"); }
         if notice == ActionNotice.folder-empty { return @tr("A folder must keep at least one chat."); }
         if notice == ActionNotice.failed { return Actions.failure; }

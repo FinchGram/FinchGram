@@ -68,6 +68,9 @@ struct State {
     /// Seconds; 0 off; -1 view once.
     timer: i32,
     caption: String,
+    /// The card opened for a screenshot just taken (src/screenshot/): while it is the only item,
+    /// the card is titled "Send Screenshot".
+    screenshot: bool,
     /// Files dragged over the window, as winit names them one by one; and dropped.
     hovering: Vec<PathBuf>,
     dropped: Vec<PathBuf>,
@@ -179,6 +182,20 @@ fn add(paths: Vec<PathBuf>, as_files: bool) {
             Kind::File => {}
         }
     }
+}
+
+/// A screenshot just taken (src/screenshot/): into the card as a photo, which opens for the chat
+/// in front with it alone, titled "Send Screenshot"; the caption takes the keyboard.
+pub(super) fn add_screenshot(path: PathBuf) {
+    if open_chat().is_none() {
+        return;
+    }
+    add(vec![path], false);
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        state.screenshot = state.items.len() == 1;
+    });
+    refresh();
 }
 
 fn set_picture(id: i32, picture: Option<Image>) {
@@ -386,6 +403,7 @@ fn refresh() {
             attachments.set_albums(albums);
             attachments.set_all_media(all_media);
             attachments.set_as_file(as_file);
+            attachments.set_screenshot(state.screenshot && state.items.len() == 1);
             attachments.set_grouped(state.grouped);
             attachments.set_timer_allowed(private && !as_file);
             attachments.set_timer(state.timer);

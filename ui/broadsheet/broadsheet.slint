@@ -1,7 +1,7 @@
 // Broadsheet (the design's "1a 报纸"): a newspaper's calm. A rail with the accounts, the chat list
 // with its folders as tabs, and the conversation in bubbles. The accent is the account's colour.
 import { ListView } from "std-widgets.slint";
-import { AppState, Page, Connection, Theme } from "../state.slint";
+import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer, LinkPreview, ReplyQuote,
     Actions, ComposeBar, ActionNotice, Attachments } from "../telegram.slint";
@@ -2099,6 +2099,63 @@ component ConversationPane inherits Rectangle {
                                 text: clip.allowed ? AttachWords.attach() : AttachWords.cant-send();
                                 color: P.bg;
                                 font-size: 12px;
+                            }
+                        }
+                    }
+                }
+                // The scissors: a screenshot into the card (src/screenshot/), as its shortcut
+                // does; greyed where the chat takes no photos.
+                VerticalLayout {
+                    alignment: end;
+                    padding-bottom: 2px;
+                    scissors := Rectangle {
+                        property <bool> allowed: Conversation.can-send-photos;
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 2px;
+                        background: scissors-touch.has-hover && self.allowed ? P.hover : transparent;
+                        DuoIcon {
+                            name: "scissors";
+                            size: 22px;
+                            transform-rotation: -90deg;
+                            color: scissors-touch.has-hover && scissors.allowed ? P.text : P.muted;
+                            opacity: scissors.allowed ? 1 : 0.4;
+                        }
+                        scissors-touch := TouchArea {
+                            mouse-cursor: scissors.allowed ? pointer : not-allowed;
+                            clicked => {
+                                if scissors.allowed {
+                                    Screenshot.start();
+                                }
+                            }
+                        }
+                        if scissors-touch.has-hover: Rectangle {
+                            x: parent.width - self.width;
+                            y: -self.height - 8px;
+                            width: scissors-tip.preferred-width;
+                            height: scissors-tip.preferred-height;
+                            border-radius: 2px;
+                            background: P.text;
+                            drop-shadow-blur: 20px;
+                            drop-shadow-offset-y: 6px;
+                            drop-shadow-color: #00000033;
+                            scissors-tip := HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                padding-top: 6px;
+                                padding-bottom: 6px;
+                                spacing: 8px;
+                                Text {
+                                    text: scissors.allowed ? AttachWords.screenshot() : AttachWords.screenshot-off();
+                                    color: P.bg;
+                                    font-size: 12px;
+                                }
+                                if scissors.allowed: Text {
+                                    text: Screenshot.shortcut-label;
+                                    color: P.bg;
+                                    font-size: 12px;
+                                    opacity: 0.7;
+                                }
                             }
                         }
                     }

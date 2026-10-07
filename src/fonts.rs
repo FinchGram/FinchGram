@@ -30,6 +30,12 @@ const LATIN: &[&[u8]] = &[
 ];
 const SIMPLIFIED_CHINESE: &[&[u8]] = &[font!("NotoSansSC-Variable.ttf")];
 
+/// The fonts the screenshot tool draws its words with, into the picture (src/screenshot/export.rs):
+/// IBM Plex Sans, and Noto Sans SC for Chinese.
+pub fn annotation_fonts() -> [&'static [u8]; 2] {
+    [LATIN[0], SIMPLIFIED_CHINESE[0]]
+}
+
 /// Register the bundled fonts with Slint and make them the fallbacks. Needs the Slint platform
 /// (after the backend is selected) and must run before the first text is laid out.
 pub fn register() {

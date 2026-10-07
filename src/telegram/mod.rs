@@ -147,6 +147,7 @@ pub fn start(ui: &MainWindow) {
             // Right clicks are seen here, before the pages: a message's menu opens wherever on it
             // the click was, even on its formatted words, which keep clicks to themselves.
             actions::window_event(event);
+            crate::screenshot::window_event(event);
             EventResult::Propagate
         });
     }
@@ -554,4 +555,37 @@ fn database_directory(test_dc: bool) -> Result<PathBuf, String> {
     let database = base.join("FinchGram").join(if test_dc { "tdlib-test" } else { "tdlib" });
     std::fs::create_dir_all(&database).map_err(|err| format!("cannot create {}: {err}", database.display()))?;
     Ok(database)
+}
+
+// ---- the screenshot tool's side (src/screenshot/) -------------------------------------------
+
+/// Whether the chat in front takes photos: the scissors and their shortcut work only then.
+pub fn can_send_photos() -> bool {
+    store::with(|store| {
+        let chat = store.chats.get(&store.open?)?;
+        Some(store.send_rights(chat).photos)
+    })
+    .flatten()
+    .unwrap_or(false)
+}
+
+/// A screenshot just taken, into the card before sending, under the title "Send Screenshot".
+pub fn add_screenshot(path: std::path::PathBuf) {
+    attachments::add_screenshot(path);
+}
+
+/// A screenshot copied to the clipboard: say so.
+pub fn screenshot_copied() {
+    actions::show_notice(crate::ActionNotice::ImageCopied);
+}
+
+/// A screenshot saved into the Downloads folder as `name`: say so, with the name.
+pub fn screenshot_saved(name: &str) {
+    actions::show_saved(name);
+}
+
+/// Copy `from` into the Downloads folder as `name`, or as "name (2).png" … when that is taken;
+/// the name it got.
+pub fn save_to_downloads(from: &std::path::Path, name: &str) -> std::io::Result<String> {
+    viewer::save_to_downloads(from, name)
 }

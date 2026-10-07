@@ -9,6 +9,7 @@ mod i18n;
 mod images;
 mod platform;
 mod player;
+mod screenshot;
 #[cfg(test)]
 mod screenshots;
 mod settings;
@@ -119,6 +120,7 @@ fn main() -> Result<(), slint::PlatformError> {
     state.set_show_in_menu_bar(settings.borrow().show_in_menu_bar);
     state.set_send_with_enter(settings.borrow().send_with_enter);
     show_launch_at_login(&state);
+    screenshot::connect(&ui, settings.clone());
     state.on_check_launch_at_login({
         let ui = ui.as_weak();
         move || {

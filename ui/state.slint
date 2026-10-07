@@ -56,6 +56,24 @@ export global PlatformWords {
     out property <string> new-message: @tr("New message");
 }
 
+// The screenshot tool (the design's seventh round, "FinchGram Desktop 截图"; src/screenshot/): the
+// scissors in the composer and its shortcut take a picture of the screen through an overlay with
+// annotations, into the card before sending. Settings → General → Screenshots.
+export global Screenshot {
+    in-out property <string> shortcut-label: "⌘⇧A";   // the shortcut, as macOS writes keys
+    in-out property <bool> recording;                  // the shortcut's field is taking a new one
+    in-out property <bool> custom-shortcut;            // it is not the default: Reset applies
+    in-out property <bool> hide-window: true;          // FinchGram's window hides while the screen is captured
+    in-out property <bool> background;                 // the shortcut works in the background too (not yet)
+    in-out property <bool> permission-card;            // Screen Recording is off for FinchGram: the card shows
+    callback start();                                  // the scissors, or the shortcut
+    callback record-shortcut(string, bool, bool, bool, bool);  // a key pressed in the field: key, ⌘, ⌃, ⌥, ⇧
+    callback reset-shortcut();
+    callback set-hide-window(bool);
+    callback open-system-settings();
+    callback dismiss-permission();
+}
+
 export global AppState {
     // Active UI language, a folder name under lang/ ("en" is the source language and has none).
     in-out property <string> language: "en";

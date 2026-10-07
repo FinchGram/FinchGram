@@ -3,7 +3,8 @@
 import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Spinner } from "../widgets.slint";
-import { ActionWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
+import { ActionWords, AttachWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
+import { Screenshot } from "../state.slint";
 import { TerminalPalette as P } from "palette.slint";
 import { Signs } from "signs.slint";
 
@@ -506,6 +507,68 @@ component ActionEntry inherits Rectangle {
     }
 }
 
+// The screenshot tool has no leave to see the screen (src/screenshot/): where to give it.
+component PermissionCard inherits Dialog {
+    box-width: 400px;
+    box-height: body.preferred-height;
+    close => {
+        Screenshot.dismiss-permission();
+    }
+
+    KeyScope {
+        width: 0;
+        height: 0;
+        escape => {
+            Screenshot.dismiss-permission();
+        }
+        enter => {
+            Screenshot.open-system-settings();
+        }
+    }
+
+    body := VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 14px;
+        padding-bottom: 14px;
+        spacing: 12px;
+        HorizontalLayout {
+            T {
+                text: "── ";
+                color: P.faint;
+            }
+            T {
+                horizontal-stretch: 1;
+                text: AttachWords.permission-title();
+                wrap: word-wrap;
+            }
+        }
+        T {
+            text: AttachWords.permission-lead();
+            color: P.muted;
+            wrap: word-wrap;
+        }
+        HorizontalLayout {
+            alignment: end;
+            spacing: 12px;
+            Word {
+                label: AttachWords.not-now();
+                color: P.muted;
+                activated => {
+                    Screenshot.dismiss-permission();
+                }
+            }
+            Word {
+                label: AttachWords.open-system-settings() + " ⏎";
+                color: P.accent;
+                activated => {
+                    Screenshot.open-system-settings();
+                }
+            }
+        }
+    }
+}
+
 export component TerminalActions inherits Rectangle {
     // A message's menu, where it was clicked; a click anywhere else closes it.
     if Actions.menu-open: TouchArea {
@@ -559,4 +622,5 @@ export component TerminalActions inherits Rectangle {
     if Actions.picker-open: ForwardPicker { }
     if Actions.report-open: ReportDialog { }
     if Actions.delete-open: DeleteDialog { }
+    if Screenshot.permission-card: PermissionCard { }
 }

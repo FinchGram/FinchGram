@@ -114,6 +114,13 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   sendMessage 和 sendMessageAlbum；消息根据 updateFile 显示进度（`store.rs`），文件消息不论是谁发的都显示成设计稿里的卡片，
   点一下下载，或在访达中显示。能发什么由聊天的权限和我们在其中的权限决定（`store.rs`，send_rights）。说明文字的长度和文件大小
   遵守 Telegram 的限制（TDLib 的 `message_caption_length_max` 和 `is_premium` 选项）。
+- 截图工具（`screenshot/`，设计稿第七轮）：输入栏里的剪刀或 ⌘⇧A（设置 › 通用 › 截图，可以改按键）先按设置把窗口藏起来，
+  让系统截下每个显示器（`platform/`，macOS 自带的 screencapture，前提是已允许“屏幕录制”；没允许时弹一张卡片说明去哪里允许），
+  再用一个无边框窗口（`ui/shot.slint`）盖住每个显示器，显示定住的屏幕。用户可以直接取一个窗口（系统列出的窗口，指针悬停时高亮），
+  也可以拖一个选区，用把手和方向键调整，然后在上面画：方框、椭圆、箭头、画笔、文字、马赛克，三种粗细、六种颜色，可以撤销。
+  状态和标注都在 Rust 里，覆盖层只负责画出来并上报指针和按键。Done 用 resvg 把标注画进图里（`screenshot/export.rs`，
+  用内置字体，三套主题画出来的图一样），然后打开发送卡片，标题是 “Send Screenshot”；Copy 复制到剪贴板；Save 存到“下载”文件夹，
+  文件名和 macOS 自己的截图一样。
 - 在消息上任何地方点右键都会弹出它的菜单。消息里带格式的文字（Slint 的 StyledText）会把所有点击留给自己，
   所以右键是在窗口自己的事件里看到的（`mod.rs`，通过 winit），记进一个全局属性，再由指针下的那一行去要菜单。
   菜单里有哪些项，看 TDLib 说这条消息能做什么（getMessageProperties）。

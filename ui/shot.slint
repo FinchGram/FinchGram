@@ -1,0 +1,933 @@
+// The screenshot tool's overlay (the design's seventh round, "FinchGram Desktop 截图"): one window
+// per display, covering it, showing the screen as it was frozen. The user drags a selection (or
+// clicks a window, which is highlighted under the pointer), adjusts it by its handles, draws on it
+// with the toolbar's tools, and finishes with Done, Copy or Save. Rust (src/screenshot/) owns the
+// state and the annotations; this file draws them and reports the pointer and the keys.
+//
+// What is burned into the picture (the annotations' colours, widths, fonts) is the same in every
+// theme; the theme gives only the selection's accent, the toolbar's shapes and the font.
+import { AppState, Theme } from "state.slint";
+import { Look } from "look.slint";
+import { Icon } from "widgets.slint";
+
+export enum ShotTool { none, rect, ellipse, arrow, pen, text, mosaic }
+export enum ShotCursor { cross, move, nwse, nesw, ns, ew, brush }
+
+// A rectangle or an ellipse drawn on the picture, in the display's points.
+export struct ShotBox {
+    x: length,
+    y: length,
+    w: length,
+    h: length,
+    color: color,
+    halo: color,
+    width: length,
+    ellipse: bool,
+}
+
+// A pen stroke or an arrow: SVG path commands, stroked; an arrow's head is a second, filled path.
+export struct ShotPath {
+    commands: string,
+    color: color,
+    halo: color,
+    width: length,
+    fill: bool,
+}
+
+export struct ShotText {
+    x: length,
+    y: length,
+    text: string,
+    color: color,
+    halo: color,
+    size: length,
+}
+
+// One block of mosaic: the average colour of the picture under it.
+export struct ShotCell {
+    x: length,
+    y: length,
+    size: length,
+    color: color,
+}
+
+export global Shot {
+    in-out property <image> frame;               // the display, frozen, in device pixels
+    in-out property <float> scale: 2;            // device pixels per point
+    in-out property <int> display;               // which display this window covers
+    // The window under the pointer before a selection is made: highlighted, a click takes it.
+    in-out property <bool> hover-window;
+    in-out property <length> hover-x;
+    in-out property <length> hover-y;
+    in-out property <length> hover-w;
+    in-out property <length> hover-h;
+    in-out property <bool> has-selection;
+    in-out property <length> sel-x;
+    in-out property <length> sel-y;
+    in-out property <length> sel-w;
+    in-out property <length> sel-h;
+    in-out property <bool> settled;              // the selection is made: handles and the toolbar show
+    in-out property <bool> adjusting;            // it is being dragged or resized: the toolbar hides
+    in-out property <string> label;              // "1280 × 720", the selection in device pixels
+    in-out property <bool> show-magnifier;
+    in-out property <length> pointer-x;
+    in-out property <length> pointer-y;
+    in-out property <string> mag-pos;            // "x 1200  y 640"
+    in-out property <string> mag-hex;            // "#4A5FC1"
+    in-out property <color> mag-color;
+    in-out property <ShotCursor> cursor;
+    in-out property <length> brush: 24px;        // the mosaic brush, for its ring under the pointer
+    in-out property <ShotTool> tool;
+    in-out property <int> size: 1;               // 0 small, 1 medium, 2 large
+    in-out property <int> color-index;           // into the six colours
+    in-out property <bool> can-undo;
+    in-out property <bool> can-redo;
+    in-out property <[ShotBox]> boxes;
+    in-out property <[ShotPath]> paths;
+    in-out property <[ShotText]> texts;
+    in-out property <[ShotCell]> cells;
+    // The text tool's box while words are typed into it.
+    in-out property <bool> editing;
+    in-out property <length> text-x;
+    in-out property <length> text-y;
+    in-out property <length> text-size: 20px;
+    in-out property <color> text-color: #F2352B;
+    in-out property <color> text-halo: #ffffffd9;
+    in-out property <string> text-draft;
+    callback pressed(length, length, bool, bool);  // where; the right button; shift
+    callback moved(length, length, bool);
+    callback released(length, length);
+    callback double-clicked();
+    callback key(string, bool, bool);              // the key; ⌘; shift
+    callback choose-tool(ShotTool);
+    callback choose-size(int);
+    callback choose-color(int);
+    callback undo();
+    callback redo();
+    callback copy();
+    callback save();
+    callback cancel();
+    callback done();
+    callback text-done(string);                    // the text tool's words, "" for none
+}
+
+// What the overlay says (the design's copy list).
+export global ShotWords {
+    public pure function tool(tool: ShotTool) -> string {
+        if tool == ShotTool.rect { return @tr("Rectangle"); }
+        if tool == ShotTool.ellipse { return @tr("Ellipse"); }
+        if tool == ShotTool.arrow { return @tr("Arrow"); }
+        if tool == ShotTool.pen { return @tr("Pen"); }
+        if tool == ShotTool.text { return @tr("Text"); }
+        if tool == ShotTool.mosaic { return @tr("Mosaic"); }
+        return "";
+    }
+    public pure function tool-key(tool: ShotTool) -> string {
+        if tool == ShotTool.rect { return @tr("⇧ Square"); }
+        if tool == ShotTool.ellipse { return @tr("⇧ Circle"); }
+        if tool == ShotTool.arrow { return @tr("⇧ 45°"); }
+        return "";
+    }
+    public pure function undo() -> string { return @tr("Undo"); }
+    public pure function redo() -> string { return @tr("Redo"); }
+    public pure function copy() -> string { return @tr("Copy"); }
+    public pure function save() -> string { return @tr("Save"); }
+    public pure function cancel() -> string { return @tr("Cancel"); }
+    public pure function done() -> string { return @tr("Done"); }
+    public pure function size-name(size: int) -> string {
+        if size == 0 { return @tr("Small"); }
+        if size == 2 { return @tr("Large"); }
+        return @tr("Medium");
+    }
+    public pure function line-width() -> string { return @tr("Line width"); }
+    public pure function text-size() -> string { return @tr("Text size"); }
+    public pure function brush-size() -> string { return @tr("Brush size"); }
+    public pure function color-name(index: int) -> string {
+        if index == 0 { return @tr("Red"); }
+        if index == 1 { return @tr("White"); }
+        if index == 2 { return @tr("Black"); }
+        if index == 3 { return @tr("Yellow"); }
+        if index == 4 { return @tr("Blue"); }
+        return @tr("Green");
+    }
+    // The six colours, and the halo each line gets: light colours a dark one, dark colours a light one.
+    public pure function color(index: int) -> color {
+        return [#F2352B, #FFFFFF, #16171A, #FFCC00, #1F7BFF, #1FA855][clamp(index, 0, 5)];
+    }
+}
+
+// A small label over the toolbar: what a button does, and its key.
+component ToolTip inherits Rectangle {
+    in property <string> text;
+    in property <string> keys;
+    width: words.preferred-width + 18px;
+    height: words.preferred-height + 10px;
+    border-radius: Look.terminal ? 2px : 6px;
+    background: Look.terminal ? Look.side : Look.text;
+    border-width: 1px;
+    border-color: #ffffff38;
+    drop-shadow-blur: 20px;
+    drop-shadow-offset-y: 6px;
+    drop-shadow-color: #0000004d;
+    words := HorizontalLayout {
+        spacing: 8px;
+        Text {
+            text: root.text;
+            color: Look.terminal ? Look.text : Look.bg;
+            font-family: Look.font;
+            font-size: 12px;
+        }
+        if root.keys != "": Text {
+            text: root.keys;
+            color: Look.terminal ? Look.text : Look.bg;
+            font-family: Look.font;
+            font-size: 12px;
+            opacity: 0.7;
+        }
+    }
+}
+
+// A button of the toolbar: an icon (a character in Terminal), lit when it is the tool in use.
+component ToolButton inherits Rectangle {
+    in property <string> icon;
+    in property <string> sign;                // Terminal's character
+    in property <string> tip;
+    in property <string> keys;
+    in property <bool> on;
+    in property <bool> enabled: true;
+    in property <length> size: 30px;
+    callback activated();
+    width: size;
+    height: size;
+    border-radius: Look.workbench ? 6px : Look.broadsheet ? 2px : 0;
+    background: root.on && !Look.terminal ? Look.sel : touch.has-hover && root.enabled ? Look.sel.transparentize(0.5) : transparent;
+    border-width: root.on && Look.terminal ? 1px : 0;
+    border-color: Look.accent;
+    opacity: root.enabled ? 1 : 0.35;
+
+    if !Look.terminal: Icon {
+        name: root.icon;
+        size: Look.broadsheet ? 19px : 18px;
+        color: root.on ? Look.accent : Look.text;
+    }
+    if Look.terminal: Text {
+        text: root.sign;
+        color: root.on ? Look.accent : Look.text;
+        font-family: Look.font;
+        font-size: 13px;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+    if touch.has-hover: ToolTip {
+        x: (parent.width - self.width) / 2;
+        y: -self.height - 9px;
+        text: root.tip;
+        keys: root.keys;
+    }
+}
+
+// The toolbar's Done: the main action, filled with the accent (outlined in Terminal).
+component DoneButton inherits Rectangle {
+    in property <length> size: 30px;
+    callback activated();
+    width: label.preferred-width + (Look.terminal ? 12px : 24px);
+    height: size;
+    border-radius: Look.workbench ? 6px : Look.broadsheet ? 2px : 0;
+    background: Look.terminal ? transparent : Look.accent;
+    border-width: Look.terminal ? 1px : 0;
+    border-color: Look.accent;
+    label := HorizontalLayout {
+        alignment: center;
+        spacing: 5px;
+        if !Look.terminal: VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "check";
+                size: 16px;
+                color: Look.on-accent;
+            }
+        }
+        Text {
+            text: Look.terminal ? "✓ " + ShotWords.done() : ShotWords.done();
+            color: Look.terminal ? Look.accent : Look.on-accent;
+            font-family: Look.font;
+            font-size: Look.broadsheet ? 15px : 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+    if touch.has-hover: ToolTip {
+        x: (parent.width - self.width) / 2;
+        y: -self.height - 9px;
+        text: ShotWords.done();
+        keys: "↩ · double-click";
+    }
+}
+
+component Separator inherits Rectangle {
+    in property <length> tall: 18px;
+    width: 11px;
+    Rectangle {
+        width: 1px;
+        height: root.tall;
+        background: Look.line-strong;
+    }
+}
+
+// A size to choose, as a dot (a square for the mosaic's brush, "A" for the text's size).
+component SizeChoice inherits Rectangle {
+    in property <int> index;
+    in property <length> dot;
+    in property <bool> square;
+    in property <bool> letter;
+    in property <length> letter-size;
+    in property <string> tip;
+    property <bool> on: Shot.size == index;
+    width: 26px;
+    height: 26px;
+    border-radius: Look.workbench ? 6px : Look.broadsheet ? 2px : 0;
+    background: root.on && !Look.terminal ? Look.sel : transparent;
+    border-width: root.on && Look.terminal ? 1px : 0;
+    border-color: Look.accent;
+    if !root.letter: Rectangle {
+        width: root.dot;
+        height: root.dot;
+        border-radius: root.square ? 1px : root.dot / 2;
+        background: root.on ? Look.accent : Look.text;
+    }
+    if root.letter: Text {
+        text: "A";
+        color: root.on ? Look.accent : Look.text;
+        font-size: root.letter-size;
+        font-weight: 600;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Shot.choose-size(root.index);
+        }
+    }
+    if touch.has-hover: ToolTip {
+        x: (parent.width - self.width) / 2;
+        y: -self.height - 9px;
+        text: root.tip;
+    }
+}
+
+component Swatch inherits Rectangle {
+    in property <int> index;
+    property <bool> on: Shot.color-index == index;
+    width: 22px;
+    height: 22px;
+    border-radius: Look.workbench ? 11px : Look.broadsheet ? 2px : 0;
+    border-width: root.on ? 1.5px : 0;
+    border-color: Look.text;
+    Rectangle {
+        width: 16px;
+        height: 16px;
+        border-radius: Look.workbench ? 8px : Look.broadsheet ? 2px : 0;
+        background: ShotWords.color(root.index);
+        border-width: root.index == 1 || (root.index == 2 && Look.dark) ? 1px : 0;
+        border-color: root.index == 1 ? #00000040 : #ffffff4d;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Shot.choose-color(root.index);
+        }
+    }
+    if touch.has-hover: ToolTip {
+        x: (parent.width - self.width) / 2;
+        y: -self.height - 9px;
+        text: ShotWords.color-name(root.index);
+    }
+}
+
+// Words on the picture, with a halo so that they read on anything: the halo is the same text
+// drawn around it.
+component HaloText {
+    in property <string> text;
+    in property <color> color;
+    in property <color> halo;
+    in property <length> size;
+    width: words.preferred-width;
+    height: words.preferred-height;
+    for offset in [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, -1], [0, 1], [-1, 0], [1, 0]]: Text {
+        x: offset[0] * 1px;
+        y: offset[1] * 1px;
+        text: root.text;
+        color: root.halo;
+        font-size: root.size;
+        font-weight: 600;
+    }
+    words := Text {
+        text: root.text;
+        color: root.color;
+        font-size: root.size;
+        font-weight: 600;
+    }
+}
+
+export component ShotWindow inherits Window {
+    no-frame: true;
+    title: "FinchGram Screenshot";
+    background: #000000;
+    default-font-family: Look.font;
+
+    // The toolbar and its options row, by theme (the design's spec).
+    property <length> tb-w: Look.terminal ? 388px : 460px;
+    property <length> tb-h: Look.terminal ? 30px : 38px;
+    property <length> tb-pad: Look.terminal ? 3px : 4px;
+    property <length> btn: Look.terminal ? 24px : 30px;
+    property <length> tb-r: Look.workbench ? 10px : Look.broadsheet ? 4px : 3px;
+    property <length> opt-h: 34px;
+    property <bool> has-options: Shot.tool != ShotTool.none;
+    property <length> opt-w: Shot.tool == ShotTool.mosaic ? 90px : 258px;
+    // Where the toolbar goes: under the selection, else above it, else inside at its bottom right.
+    property <length> stack: tb-h + (has-options ? opt-h + 6px : 0);
+    property <bool> below: Shot.sel-y + Shot.sel-h + 8px + stack <= root.height - 6px;
+    property <bool> above: !below && Shot.sel-y - 8px - stack >= 6px;
+    property <bool> inside: !below && !above;
+    property <length> tb-y: below ? Shot.sel-y + Shot.sel-h + 8px : above ? Shot.sel-y - 8px - tb-h : Shot.sel-y + Shot.sel-h - 8px - tb-h;
+    property <bool> right-aligned: inside || Shot.sel-x + tb-w > root.width - 6px;
+    property <length> tb-x: max(6px, right-aligned ? min(Shot.sel-x + Shot.sel-w, inside ? root.width - 8px : root.width - 6px) - tb-w : Shot.sel-x);
+    property <length> opt-x: right-aligned ? tb-x + tb-w - opt-w : tb-x;
+    property <length> opt-y: below ? tb-y + tb-h + 6px : tb-y - 6px - opt-h;
+    property <bool> show-toolbar: Shot.settled && !Shot.adjusting;
+    property <length> handle: Look.workbench ? 9px : 8px;
+    property <length> chip-r: Look.workbench ? 4px : Look.broadsheet ? 2px : 0;
+    // The size label: above the selection's top left corner, inside it when there is no room
+    // there, or the toolbar is.
+    property <bool> label-inside: Shot.sel-y < 28px || (root.show-toolbar && root.above);
+    property <length> mag-x: Shot.pointer-x + 20px + 117px > root.width ? Shot.pointer-x - 20px - 117px : Shot.pointer-x + 20px;
+    property <length> mag-y: Shot.pointer-y + 20px + 152px > root.height ? Shot.pointer-y - 20px - 152px : Shot.pointer-y + 20px;
+
+    keys := FocusScope {
+        init => {
+            self.focus();
+        }
+        key-pressed(event) => {
+            Shot.key(event.text, event.modifiers.meta || event.modifiers.control, event.modifiers.shift);
+            return accept;
+        }
+
+        // The screen as it was, under a dimming that the selection lifts.
+        Image {
+            width: root.width;
+            height: root.height;
+            source: Shot.frame;
+            image-fit: fill;
+        }
+        Rectangle {
+            background: #00000066;
+        }
+
+        // The window under the pointer, before a selection: lit, and ringed.
+        if Shot.hover-window && !Shot.has-selection: Rectangle {
+            x: Shot.hover-x;
+            y: Shot.hover-y;
+            width: Shot.hover-w;
+            height: Shot.hover-h;
+            border-radius: 10px;
+            clip: true;
+            Image {
+                x: -Shot.hover-x;
+                y: -Shot.hover-y;
+                width: root.width;
+                height: root.height;
+                source: Shot.frame;
+                image-fit: fill;
+            }
+        }
+        if Shot.hover-window && !Shot.has-selection: Rectangle {
+            x: Shot.hover-x - 4px;
+            y: Shot.hover-y - 4px;
+            width: Shot.hover-w + 8px;
+            height: Shot.hover-h + 8px;
+            border-radius: 14px;
+            border-width: 1px;
+            border-color: #00000059;
+            Rectangle {
+                x: 1px;
+                y: 1px;
+                width: parent.width - 2px;
+                height: parent.height - 2px;
+                border-radius: 13px;
+                border-width: 2px;
+                border-color: Look.accent;
+            }
+            Rectangle {
+                x: 3px;
+                y: 3px;
+                width: parent.width - 6px;
+                height: parent.height - 6px;
+                border-radius: 11px;
+                border-width: 1px;
+                border-color: #ffffffe6;
+            }
+        }
+
+        // The selection: the picture as it was, with the annotations on it, ringed.
+        if Shot.has-selection: Rectangle {
+            x: Shot.sel-x;
+            y: Shot.sel-y;
+            width: Shot.sel-w;
+            height: Shot.sel-h;
+            clip: true;
+            Image {
+                x: -Shot.sel-x;
+                y: -Shot.sel-y;
+                width: root.width;
+                height: root.height;
+                source: Shot.frame;
+                image-fit: fill;
+            }
+            // Mosaic first: it hides what is under the other marks.
+            for cell in Shot.cells: Rectangle {
+                x: cell.x - Shot.sel-x;
+                y: cell.y - Shot.sel-y;
+                width: cell.size;
+                height: cell.size;
+                background: cell.color;
+            }
+            for box in Shot.boxes: Rectangle {
+                x: box.x - Shot.sel-x - box.width / 2 - 1px;
+                y: box.y - Shot.sel-y - box.width / 2 - 1px;
+                width: box.w + box.width + 2px;
+                height: box.h + box.width + 2px;
+                border-radius: box.ellipse ? self.width / 2 : 0;
+                border-width: box.width + 2px;
+                border-color: box.halo;
+                Rectangle {
+                    x: 1px;
+                    y: 1px;
+                    width: parent.width - 2px;
+                    height: parent.height - 2px;
+                    border-radius: box.ellipse ? self.width / 2 : 0;
+                    border-width: box.width;
+                    border-color: box.color;
+                }
+            }
+            for path in Shot.paths: Path {
+                x: -Shot.sel-x;
+                y: -Shot.sel-y;
+                width: root.width;
+                height: root.height;
+                viewbox-width: root.width / 1px;
+                viewbox-height: root.height / 1px;
+                commands: path.commands;
+                stroke: path.halo;
+                stroke-width: path.width + 2px;
+                stroke-line-cap: round;
+                fill: path.fill ? path.halo : transparent;
+            }
+            for path in Shot.paths: Path {
+                x: -Shot.sel-x;
+                y: -Shot.sel-y;
+                width: root.width;
+                height: root.height;
+                viewbox-width: root.width / 1px;
+                viewbox-height: root.height / 1px;
+                commands: path.commands;
+                stroke: path.color;
+                stroke-width: path.width;
+                stroke-line-cap: round;
+                fill: path.fill ? path.color : transparent;
+            }
+            for words in Shot.texts: HaloText {
+                x: words.x - Shot.sel-x;
+                y: words.y - Shot.sel-y;
+                text: words.text;
+                color: words.color;
+                halo: words.halo;
+                size: words.size;
+            }
+        }
+        if Shot.has-selection: Rectangle {
+            x: Shot.sel-x - 3.5px;
+            y: Shot.sel-y - 3.5px;
+            width: Shot.sel-w + 7px;
+            height: Shot.sel-h + 7px;
+            border-width: 1px;
+            border-color: #00000059;
+            Rectangle {
+                x: 1px;
+                y: 1px;
+                width: parent.width - 2px;
+                height: parent.height - 2px;
+                border-width: 1px;
+                border-color: #ffffffcc;
+            }
+            Rectangle {
+                x: 2px;
+                y: 2px;
+                width: parent.width - 4px;
+                height: parent.height - 4px;
+                border-width: 1.5px;
+                border-color: Look.accent;
+            }
+        }
+        // The words being typed, where they will be.
+        if Shot.editing: Rectangle {
+            x: Shot.text-x - 6px;
+            y: Shot.text-y - 3px;
+            width: text-input.preferred-width + 12px;
+            height: text-input.preferred-height + 6px;
+            border-width: 1px;
+            border-color: #ffffff;
+            Rectangle {
+                x: -1px;
+                y: -1px;
+                width: parent.width + 2px;
+                height: parent.height + 2px;
+                border-width: 1px;
+                border-color: #00000099;
+            }
+            text-input := TextInput {
+                x: 6px;
+                y: 3px;
+                init => {
+                    self.focus();
+                }
+                text <=> Shot.text-draft;
+                color: Shot.text-color;
+                font-size: Shot.text-size;
+                font-weight: 600;
+                single-line: true;
+                accepted => {
+                    Shot.text-done(self.text);
+                }
+                key-pressed(event) => {
+                    if event.text == Key.Escape {
+                        Shot.text-done("");
+                        return accept;
+                    }
+                    return reject;
+                }
+            }
+        }
+
+        // The pointer: the whole window, with the cursor the state asks for.
+        touch := TouchArea {
+            mouse-cursor: Shot.cursor == ShotCursor.move ? MouseCursor.move
+                : Shot.cursor == ShotCursor.nwse ? MouseCursor.nwse-resize
+                : Shot.cursor == ShotCursor.nesw ? MouseCursor.nesw-resize
+                : Shot.cursor == ShotCursor.ns ? MouseCursor.ns-resize
+                : Shot.cursor == ShotCursor.ew ? MouseCursor.ew-resize
+                : Shot.cursor == ShotCursor.brush ? MouseCursor.none : MouseCursor.crosshair;
+            pointer-event(event) => {
+                if event.kind == PointerEventKind.down {
+                    Shot.pressed(self.mouse-x, self.mouse-y, event.button == PointerEventButton.right, event.modifiers.shift);
+                } else if event.kind == PointerEventKind.up {
+                    Shot.released(self.mouse-x, self.mouse-y);
+                } else if event.kind == PointerEventKind.move {
+                    Shot.moved(self.mouse-x, self.mouse-y, event.modifiers.shift);
+                }
+            }
+            double-clicked => {
+                Shot.double-clicked();
+            }
+        }
+
+        // The handles, once the selection is made.
+        if Shot.settled: Rectangle {
+            for corner in [[0.0, 0.0], [0.5, 0.0], [1.0, 0.0], [0.0, 0.5], [1.0, 0.5], [0.0, 1.0], [0.5, 1.0], [1.0, 1.0]]: Rectangle {
+                x: Shot.sel-x + Shot.sel-w * corner[0] - root.handle / 2 - 1px;
+                y: Shot.sel-y + Shot.sel-h * corner[1] - root.handle / 2 - 1px;
+                width: root.handle + 2px;
+                height: root.handle + 2px;
+                border-radius: Look.workbench ? self.width / 2 : 0;
+                background: #00000066;
+                Rectangle {
+                    x: 1px;
+                    y: 1px;
+                    width: root.handle;
+                    height: root.handle;
+                    border-radius: Look.workbench ? self.width / 2 : 0;
+                    background: #ffffff;
+                    border-width: 1.5px;
+                    border-color: Look.accent;
+                }
+            }
+        }
+
+        // The size, by the selection (or by the window about to be taken).
+        if Shot.label != "" && (Shot.has-selection || Shot.hover-window): Rectangle {
+            property <length> ax: Shot.has-selection ? Shot.sel-x : Shot.hover-x;
+            property <length> ay: Shot.has-selection ? Shot.sel-y : Shot.hover-y;
+            property <bool> inside: Shot.has-selection ? root.label-inside : self.ay < 28px;
+            x: max(4px, self.inside ? self.ax + 6px : self.ax);
+            y: self.inside ? self.ay + 6px : self.ay - 24px;
+            width: label-text.preferred-width + 12px;
+            height: 20px;
+            border-radius: root.chip-r;
+            background: #101113db;
+            border-width: 1px;
+            border-color: #ffffff3d;
+            label-text := Text {
+                text: Shot.label;
+                color: #ffffff;
+                font-family: Look.font;
+                font-size: 11px;
+            }
+        }
+
+        // The magnifier while the selection is dragged: 13 × 13 pixels around the pointer.
+        if Shot.show-magnifier: Rectangle {
+            x: root.mag-x;
+            y: root.mag-y;
+            width: 117px;
+            height: 152px;
+            border-radius: root.chip-r;
+            background: #101113e6;
+            border-width: 1px;
+            border-color: #ffffff52;
+            drop-shadow-blur: 18px;
+            drop-shadow-offset-y: 6px;
+            drop-shadow-color: #00000066;
+            clip: true;
+            Rectangle {
+                x: 0;
+                y: 0;
+                width: 117px;
+                height: 117px;
+                clip: true;
+                Image {
+                    width: 117px;
+                    height: 117px;
+                    source: Shot.frame;
+                    image-fit: fill;
+                    image-rendering: pixelated;
+                    source-clip-x: Math.round(Shot.pointer-x * Shot.scale / 1px) - 6;
+                    source-clip-y: Math.round(Shot.pointer-y * Shot.scale / 1px) - 6;
+                    source-clip-width: 13;
+                    source-clip-height: 13;
+                }
+                Rectangle {
+                    x: 54px;
+                    width: 9px;
+                    height: 117px;
+                    background: Look.accent.transparentize(0.65);
+                }
+                Rectangle {
+                    y: 54px;
+                    width: 117px;
+                    height: 9px;
+                    background: Look.accent.transparentize(0.65);
+                }
+                Rectangle {
+                    x: 53px;
+                    y: 53px;
+                    width: 11px;
+                    height: 11px;
+                    border-width: 1.5px;
+                    border-color: #ffffff;
+                    Rectangle {
+                        x: -1px;
+                        y: -1px;
+                        width: 13px;
+                        height: 13px;
+                        border-width: 1px;
+                        border-color: #000000;
+                    }
+                }
+            }
+            VerticalLayout {
+                y: 117px;
+                height: 35px;
+                alignment: start;
+                padding-left: 7px;
+                padding-right: 7px;
+                padding-top: 5px;
+                spacing: 1px;
+                Text {
+                    text: Shot.mag-pos;
+                    color: #ffffff;
+                    font-family: Look.mono;
+                    font-size: 11px;
+                }
+                HorizontalLayout {
+                    spacing: 5px;
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 9px;
+                            height: 9px;
+                            background: Shot.mag-color;
+                            border-width: 1px;
+                            border-color: #ffffff80;
+                        }
+                    }
+                    Text {
+                        text: Shot.mag-hex;
+                        color: #ffffff;
+                        font-family: Look.mono;
+                        font-size: 11px;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+
+        // The mosaic's brush under the pointer.
+        if Shot.cursor == ShotCursor.brush: Rectangle {
+            x: Shot.pointer-x - Shot.brush / 2;
+            y: Shot.pointer-y - Shot.brush / 2;
+            width: Shot.brush;
+            height: Shot.brush;
+            border-radius: self.width / 2;
+            border-width: 1px;
+            border-color: #ffffff;
+            Rectangle {
+                x: -1px;
+                y: -1px;
+                width: parent.width + 2px;
+                height: parent.height + 2px;
+                border-radius: self.width / 2;
+                border-width: 1px;
+                border-color: #00000099;
+            }
+        }
+
+        // The toolbar.
+        if root.show-toolbar: Rectangle {
+            x: root.tb-x;
+            y: root.tb-y;
+            width: root.tb-w;
+            height: root.tb-h;
+            border-radius: root.tb-r;
+            background: Look.bg;
+            border-width: 1px;
+            border-color: Look.dark ? #ffffff29 : #00000029;
+            drop-shadow-blur: 28px;
+            drop-shadow-offset-y: 10px;
+            drop-shadow-color: Look.dark ? #00000073 : #00000059;
+            TouchArea { }
+            HorizontalLayout {
+                padding: root.tb-pad;
+                spacing: 2px;
+                for tool in [ShotTool.rect, ShotTool.ellipse, ShotTool.arrow, ShotTool.pen, ShotTool.text, ShotTool.mosaic]: ToolButton {
+                    size: root.btn;
+                    icon: tool == ShotTool.rect ? "square" : tool == ShotTool.ellipse ? "circle" : tool == ShotTool.arrow ? "arrow-up-right"
+                        : tool == ShotTool.pen ? "pencil-simple" : tool == ShotTool.text ? "text-t" : "checkerboard";
+                    sign: tool == ShotTool.rect ? "□" : tool == ShotTool.ellipse ? "○" : tool == ShotTool.arrow ? "↗"
+                        : tool == ShotTool.pen ? "~" : tool == ShotTool.text ? "T" : "▦";
+                    tip: ShotWords.tool(tool);
+                    keys: ShotWords.tool-key(tool);
+                    on: Shot.tool == tool;
+                    activated => {
+                        Shot.choose-tool(Shot.tool == tool ? ShotTool.none : tool);
+                    }
+                }
+                Separator { }
+                ToolButton {
+                    size: root.btn;
+                    icon: "arrow-u-up-left";
+                    sign: "↶";
+                    tip: ShotWords.undo();
+                    keys: "⌘Z";
+                    enabled: Shot.can-undo;
+                    activated => {
+                        Shot.undo();
+                    }
+                }
+                ToolButton {
+                    size: root.btn;
+                    icon: "arrow-u-up-right";
+                    sign: "↷";
+                    tip: ShotWords.redo();
+                    keys: "⌘⇧Z";
+                    enabled: Shot.can-redo;
+                    activated => {
+                        Shot.redo();
+                    }
+                }
+                Separator { }
+                ToolButton {
+                    size: root.btn;
+                    icon: "copy";
+                    sign: "▣";
+                    tip: ShotWords.copy();
+                    keys: "⌘C";
+                    activated => {
+                        Shot.copy();
+                    }
+                }
+                ToolButton {
+                    size: root.btn;
+                    icon: "download-simple";
+                    sign: "⤓";
+                    tip: ShotWords.save();
+                    keys: "⌘S";
+                    activated => {
+                        Shot.save();
+                    }
+                }
+                ToolButton {
+                    size: root.btn;
+                    icon: "x";
+                    sign: "✕";
+                    tip: ShotWords.cancel();
+                    keys: "Esc";
+                    activated => {
+                        Shot.cancel();
+                    }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                DoneButton {
+                    size: root.btn;
+                    activated => {
+                        Shot.done();
+                    }
+                }
+            }
+        }
+
+        // The options of the tool in use: sizes, and colours for all but the mosaic.
+        if root.show-toolbar && root.has-options: Rectangle {
+            x: root.opt-x;
+            y: root.opt-y;
+            width: root.opt-w;
+            height: root.opt-h;
+            border-radius: root.tb-r;
+            background: Look.bg;
+            border-width: 1px;
+            border-color: Look.dark ? #ffffff29 : #00000029;
+            drop-shadow-blur: 28px;
+            drop-shadow-offset-y: 10px;
+            drop-shadow-color: Look.dark ? #00000073 : #00000059;
+            TouchArea { }
+            HorizontalLayout {
+                padding: 4px;
+                spacing: 2px;
+                for index in 3: SizeChoice {
+                    index: index;
+                    letter: Shot.tool == ShotTool.text;
+                    square: Shot.tool == ShotTool.mosaic;
+                    dot: Shot.tool == ShotTool.mosaic ? [5px, 8px, 12px][index] : [4px, 7px, 11px][index];
+                    letter-size: [11px, 14px, 18px][index];
+                    tip: (Shot.tool == ShotTool.text ? ShotWords.text-size() : Shot.tool == ShotTool.mosaic ? ShotWords.brush-size() : ShotWords.line-width())
+                        + " · " + ShotWords.size-name(index);
+                }
+                if Shot.tool != ShotTool.mosaic: Separator { tall: 16px; }
+                if Shot.tool != ShotTool.mosaic: HorizontalLayout {
+                    spacing: 2px;
+                    for index in 6: Swatch {
+                        index: index;
+                    }
+                }
+            }
+        }
+    }
+}

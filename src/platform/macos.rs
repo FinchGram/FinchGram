@@ -22,9 +22,9 @@ use objc2::{AnyThread, MainThreadMarker, MainThreadOnly, define_class, msg_send,
 use objc2_app_kit::{
     NSApplication, NSBitmapImageFileType, NSBitmapImageRep, NSImage, NSMenu, NSMenuItem, NSModalResponse, NSOpenPanel, NSPasteboard,
     NSPasteboardTypeFileURL, NSPasteboardTypePNG, NSPasteboardTypeString, NSPasteboardTypeTIFF, NSRequestUserAttentionType,
-    NSStatusBar, NSStatusItem, NSVariableStatusItemLength, NSWorkspace,
+    NSStatusBar, NSStatusItem, NSVariableStatusItemLength, NSView, NSWindowCollectionBehavior, NSWorkspace,
 };
-use objc2_foundation::{NSArray, NSBundle, NSData, NSDate, NSDictionary, NSError, NSSize, NSString, NSURL};
+use objc2_foundation::{NSArray, NSBundle, NSData, NSDate, NSDictionary, NSError, NSNumber, NSSize, NSString, NSURL};
 use objc2_user_notifications::{
     UNAuthorizationOptions, UNMutableNotificationContent, UNNotification, UNNotificationDefaultActionIdentifier,
     UNNotificationPresentationOptions, UNNotificationRequest, UNNotificationResponse, UNNotificationSound,
@@ -45,6 +45,19 @@ const MARK: &[u8] = include_bytes!("../../ui/logo/svg/FinchGram-mark-16.svg");
 // SMAppService (macOS 13 and later) lives in ServiceManagement.
 #[link(name = "ServiceManagement", kind = "framework")]
 unsafe extern "C" {}
+
+// Screen capture leave and the window list live in CoreGraphics (Quartz Window Services).
+#[link(name = "CoreGraphics", kind = "framework")]
+unsafe extern "C" {
+    fn CGPreflightScreenCaptureAccess() -> bool;
+    fn CGRequestScreenCaptureAccess() -> bool;
+    /// A CFArray of CFDictionaries, one per window, which the caller owns.
+    fn CGWindowListCopyWindowInfo(option: u32, relative_to_window: u32) -> *mut AnyObject;
+}
+/// kCGWindowListOptionOnScreenOnly | kCGWindowListExcludeDesktopElements.
+const WINDOWS_ON_SCREEN: u32 = (1 << 0) | (1 << 4);
+/// NSScreenSaverWindowLevel: above the menu bar and the Dock.
+const OVERLAY_LEVEL: isize = 1000;
 
 thread_local! {
     static WINDOW: RefCell<Option<slint::Weak<MainWindow>>> = const { RefCell::new(None) };
@@ -323,6 +336,97 @@ pub fn pasteboard_image() -> Option<Vec<u8>> {
     // SAFETY: an empty dictionary is a correct set of properties.
     let data = unsafe { bitmap.representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new()) }?;
     Some(data.to_vec())
+}
+
+// ---- the screen -----------------------------------------------------------------------------
+
+pub fn screen_capture_allowed() -> bool {
+    // SAFETY: a plain query, no arguments.
+    unsafe { CGPreflightScreenCaptureAccess() }
+}
+
+pub fn request_screen_capture() {
+    // SAFETY: a plain call, no arguments; the answer (leave given earlier) does not matter here.
+    let _ = unsafe { CGRequestScreenCaptureAccess() };
+}
+
+pub fn open_screen_capture_settings() {
+    let _ = std::process::Command::new("/usr/bin/open")
+        .arg("x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture")
+        .spawn();
+}
+
+/// The system's own screencapture, for one display, without a sound: the picture it writes is
+/// in device pixels.
+pub fn capture_display(number: usize, path: &std::path::Path) -> bool {
+    std::process::Command::new("/usr/sbin/screencapture")
+        .arg("-x")
+        .arg("-D")
+        .arg(number.to_string())
+        .arg(path)
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+
+/// The windows on the screen, front to back: the normal ones (layer 0) of other apps, large
+/// enough to mean something.
+pub fn windows_on_screen() -> Vec<super::ScreenWindow> {
+    type Info = NSDictionary<AnyObject, AnyObject>;
+    let ours = f64::from(std::process::id());
+    // SAFETY: a copy of the window list (an array of dictionaries), which we own and release.
+    let list = unsafe {
+        let raw = CGWindowListCopyWindowInfo(WINDOWS_ON_SCREEN, 0);
+        if raw.is_null() {
+            return Vec::new();
+        }
+        Retained::<NSArray<Info>>::from_raw(raw.cast())
+    };
+    let Some(list) = list else { return Vec::new() };
+    let number = |dictionary: &Info, key: &str| -> Option<f64> {
+        let value = dictionary.objectForKey(&NSString::from_str(key))?;
+        value.downcast_ref::<NSNumber>().map(|number| number.doubleValue())
+    };
+    let mut windows = Vec::new();
+    for window in list.iter() {
+        let window: &Info = &window;
+        if number(window, "kCGWindowLayer").unwrap_or(1.0) != 0.0 || number(window, "kCGWindowOwnerPID").unwrap_or(0.0) == ours {
+            continue;
+        }
+        if number(window, "kCGWindowAlpha").unwrap_or(1.0) <= 0.0 {
+            continue;
+        }
+        let Some(bounds) = window.objectForKey(&NSString::from_str("kCGWindowBounds")) else { continue };
+        let Some(bounds) = bounds.downcast_ref::<Info>() else { continue };
+        let (Some(x), Some(y), Some(width), Some(height)) =
+            (number(bounds, "X"), number(bounds, "Y"), number(bounds, "Width"), number(bounds, "Height"))
+        else {
+            continue;
+        };
+        if width < 40.0 || height < 40.0 {
+            continue;
+        }
+        windows.push(super::ScreenWindow { x: x as f32, y: y as f32, width: width as f32, height: height as f32 });
+    }
+    windows
+}
+
+/// The overlay above everything on its display, in every Space and over full-screen apps, and in
+/// front with the keyboard.
+pub fn raise_overlay(window: &slint::Window) {
+    use slint::winit_030::WinitWindowAccessor;
+    use slint::winit_030::winit::raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    window.with_winit_window(|winit_window| {
+        let Ok(handle) = winit_window.window_handle() else { return };
+        let RawWindowHandle::AppKit(handle) = handle.as_raw() else { return };
+        // SAFETY: winit's AppKit handle is the NSView of a window that exists.
+        let view: &NSView = unsafe { handle.ns_view.cast::<NSView>().as_ref() };
+        let Some(ns_window) = view.window() else { return };
+        ns_window.setLevel(OVERLAY_LEVEL);
+        ns_window.setCollectionBehavior(NSWindowCollectionBehavior::CanJoinAllSpaces | NSWindowCollectionBehavior::FullScreenAuxiliary);
+        ns_window.makeKeyAndOrderFront(None);
+    });
+    bring_to_front();
 }
 
 // ---- notifications --------------------------------------------------------------------------

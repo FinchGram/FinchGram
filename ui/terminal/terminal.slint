@@ -2,7 +2,7 @@
 // with a sign (# group, » channel, @ person, * saved, ~ bot, ^ pinned); the chat reads as a log;
 // one command line writes messages and runs commands ("/mute", "/pin", …).
 import { ListView } from "std-widgets.slint";
-import { AppState, Page, Connection, Theme } from "../state.slint";
+import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState } from "../telegram.slint";
 import { AccountColors } from "../look.slint";
@@ -1144,6 +1144,29 @@ component CommandLine inherits Rectangle {
                             Attachments.menu-focus = -1;
                             Attachments.menu-keyboard = false;
                             Attachments.menu-open = !Attachments.menu-open;
+                        }
+                    }
+                }
+            }
+        }
+        // "[✂]": a screenshot into the card (src/screenshot/), as its shortcut does; greyed where
+        // the chat takes no photos.
+        if Conversation.chat-id != "" && Conversation.can-write: VerticalLayout {
+            alignment: center;
+            scissors := Rectangle {
+                property <bool> allowed: Conversation.can-send-photos;
+                width: scissors-word.preferred-width;
+                height: scissors-word.preferred-height;
+                scissors-word := T {
+                    text: "[✂]";
+                    color: !scissors.allowed ? P.faint : scissors-touch.has-hover ? P.text : P.faint;
+                    opacity: scissors.allowed ? 1 : 0.4;
+                }
+                scissors-touch := TouchArea {
+                    mouse-cursor: scissors.allowed ? pointer : not-allowed;
+                    clicked => {
+                        if scissors.allowed {
+                            Screenshot.start();
                         }
                     }
                 }

@@ -10,7 +10,7 @@ not made by Telegram.
 
 Status: early. Signing up and logging in, the chat list and chats with text messages work, in the
 design's three themes: Workbench (the default), Broadsheet and Terminal, switched in Settings →
-Appearance. Photos and videos show in the chats and open in a viewer that plays video through mpv. Photos, videos and files can be sent from the paperclip, by dragging them onto the window, or by pasting them.
+Appearance. Photos and videos show in the chats and open in a viewer that plays video through mpv. Photos, videos and files can be sent from the paperclip, by dragging them onto the window, or by pasting them. The scissors in the composer, or ⌘⇧A, take a screenshot of part of the screen, with rectangles, arrows, text and mosaic drawn on it, and send it.
 A right click on a message gives its menu: reply, edit, copy, copy its link, forward, report,
 delete, or choose several messages. Two-step verification is managed in Settings → Privacy &
 security. New messages show as macOS notifications, and their number on the Dock icon (Settings →
@@ -103,6 +103,7 @@ src/
     online.rs            #   the account is online while the window is in front and in use
   platform/              # what differs from one operating system to another
   player/                # video through libmpv, drawn into the window with OpenGL
+  screenshot/            # the screenshot tool: capture, the overlay, annotations, the picture
   update.rs              # the self-updater: GitHub Releases, signature check, swap, relaunch
   settings.rs            # the user's preferences (settings.toml)
   i18n.rs                # UI language: saved choice, else the system's, else English

@@ -11,7 +11,7 @@ qui n'est pas développé par Telegram.
 État : débuts. L'inscription et la connexion, la liste des discussions et les discussions avec messages
 texte fonctionnent, dans les trois thèmes de la maquette : Workbench (par défaut), Broadsheet et
 Terminal, qu'on change dans Réglages › Apparence. Les photos et vidéos s'affichent dans les discussions
-et s'ouvrent dans une visionneuse qui lit la vidéo avec mpv. Photos, vidéos et fichiers s'envoient depuis le trombone, en les glissant dans la fenêtre ou en les collant. Un clic droit sur un message ouvre son menu
+et s'ouvrent dans une visionneuse qui lit la vidéo avec mpv. Photos, vidéos et fichiers s'envoient depuis le trombone, en les glissant dans la fenêtre ou en les collant. Les ciseaux du champ de saisie, ou ⌘⇧A, capturent une partie de l'écran, avec rectangles, flèches, texte et mosaïque dessinés dessus, et l'envoient. Un clic droit sur un message ouvre son menu
 : répondre, modifier, copier, copier le lien, transférer, signaler, supprimer ou sélectionner plusieurs
 messages. La validation en deux étapes se gère dans Réglages › Confidentialité et sécurité. Les
 nouveaux messages arrivent en notifications macOS, et leur nombre s'affiche sur l'icône du Dock
@@ -111,6 +111,7 @@ src/
     online.rs            #   le compte est en ligne tant que la fenêtre est devant et utilisée
   platform/              # ce qui change d'un système d'exploitation à l'autre
   player/                # la vidéo avec libmpv, dessinée dans la fenêtre par OpenGL
+  screenshot/            # l'outil de capture : la capture, le calque, les annotations, l'image
   update.rs              # la mise à jour automatique : GitHub Releases, signature, remplacement, relance
   settings.rs            # les préférences de l'utilisateur (settings.toml)
   i18n.rs                # langue de l'interface : le choix enregistré, sinon celle du système, sinon l'anglais

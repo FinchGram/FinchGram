@@ -11,7 +11,7 @@ não feito pelo Telegram.
 Status: fase inicial. O cadastro e o login, a lista de conversas e as conversas com mensagens de
 texto funcionam, nos três temas do design: Workbench (o padrão), Broadsheet e Terminal, trocados em
 Configurações › Aparência. Fotos e vídeos aparecem nas conversas e abrem num visualizador que
-reproduz o vídeo com o mpv. Fotos, vídeos e arquivos podem ser enviados pelo clipe, arrastando-os para a janela ou colando-os. Um clique direito numa mensagem abre o menu dela: responder, editar,
+reproduz o vídeo com o mpv. Fotos, vídeos e arquivos podem ser enviados pelo clipe, arrastando-os para a janela ou colando-os. A tesoura na caixa de escrita, ou ⌘⇧A, captura uma parte da tela, com retângulos, setas, texto e mosaico desenhados por cima, e a envia. Um clique direito numa mensagem abre o menu dela: responder, editar,
 copiar, copiar o link, encaminhar, denunciar, apagar ou selecionar várias mensagens. A verificação
 em duas etapas é gerenciada em Configurações › Privacidade e segurança. Mensagens novas chegam como
 notificações do macOS, com o número delas no ícone do Dock (Configurações › Notificações e sons).
@@ -109,6 +109,7 @@ src/
     online.rs            #   a conta fica online enquanto a janela está na frente e em uso
   platform/              # o que muda de um sistema operacional para outro
   player/                # o vídeo com a libmpv, desenhado na janela com OpenGL
+  screenshot/            # a ferramenta de captura: a captura, a camada, as anotações, a imagem
   update.rs              # a atualização automática: GitHub Releases, assinatura, troca, reinício
   settings.rs            # as preferências do usuário (settings.toml)
   i18n.rs                # idioma da interface: o escolhido; senão, o do sistema; senão, inglês

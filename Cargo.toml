@@ -38,18 +38,19 @@ objc2 = "0.6"
 block2 = "0.6"
 objc2-foundation = { version = "0.3", default-features = false, features = [
     "std", "objc2-core-foundation", "NSArray", "NSBundle", "NSData", "NSDate", "NSDictionary", "NSError", "NSGeometry",
-    "NSString", "NSURL",
+    "NSString", "NSURL", "NSValue",
 ] }
 objc2-app-kit = { version = "0.3", default-features = false, features = [
     "std", "block2", "objc2-core-foundation", "NSApplication", "NSBitmapImageRep", "NSButton", "NSControl", "NSDockTile",
     "NSImage", "NSImageRep", "NSMenu", "NSMenuItem", "NSOpenPanel", "NSPanel", "NSPasteboard", "NSPasteboardItem",
-    "NSResponder", "NSSavePanel", "NSStatusBar", "NSStatusBarButton", "NSStatusItem", "NSView", "NSWindow", "NSWorkspace",
+    "NSResponder", "NSSavePanel", "NSScreen", "NSStatusBar", "NSStatusBarButton", "NSStatusItem", "NSView", "NSWindow",
+    "NSWorkspace",
 ] }
 objc2-user-notifications = { version = "0.3", default-features = false, features = [
     "std", "bitflags", "block2", "UNNotification", "UNNotificationContent", "UNNotificationRequest",
     "UNNotificationResponse", "UNNotificationSound", "UNNotificationTrigger", "UNUserNotificationCenter",
 ] }
-resvg = { version = "0.48", default-features = false }
+resvg = { version = "0.48", default-features = false, features = ["text"] }   # also draws the screenshot tool's annotations into the picture
 
 [build-dependencies]
 slint-build = "~1.18"

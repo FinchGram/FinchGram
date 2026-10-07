@@ -1,4 +1,5 @@
-import { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language, NotificationSetting } from "state.slint";
+import { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language, NotificationSetting, Screenshot } from "state.slint";
+import { ShotWindow, Shot, ShotTool, ShotCursor, ShotBox, ShotPath, ShotText, ShotCell } from "shot.slint";
 import { Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, LinkPreview, RowKind, Content, ChatKind, Status, Moment,
     Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice, NotificationScope,
@@ -14,6 +15,7 @@ import { MediaViewer } from "viewer.slint";
 import { ProfilePage } from "pages/profile.slint";
 
 // Re-exported so Rust can reach them through slint::include_modules!().
+export { ShotWindow, Shot, ShotTool, ShotCursor, ShotBox, ShotPath, ShotText, ShotCell, Screenshot }
 export { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language,
     NotificationSetting, Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, LinkPreview, RowKind, Content, ChatKind, Status, Moment,

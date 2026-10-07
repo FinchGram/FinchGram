@@ -29,11 +29,21 @@ thread_local! {
     /// The pictures' own clock: each picture is a second after the one before, so that what moves
     /// (a colour fading in) has arrived.
     static CLOCK: std::cell::Cell<std::time::Duration> = const { std::cell::Cell::new(std::time::Duration::ZERO) };
+    /// The main window has its adapter; the screenshot tool's overlay (a second window) gets one of
+    /// its own, kept here for the test to draw.
+    static OVERLAY: std::cell::RefCell<Option<Rc<MinimalSoftwareWindow>>> = const { std::cell::RefCell::new(None) };
+    /// The main window has been given its adapter.
+    static HANDED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
 
 impl Platform for Screenshots {
     fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, slint::PlatformError> {
-        Ok(self.window.clone())
+        if !HANDED.replace(true) {
+            return Ok(self.window.clone());
+        }
+        let overlay = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
+        OVERLAY.with(|slot| *slot.borrow_mut() = Some(overlay.clone()));
+        Ok(overlay)
     }
 
     fn duration_since_start(&self) -> std::time::Duration {
@@ -57,6 +67,24 @@ fn save(window: &MinimalSoftwareWindow, name: &str) {
         });
     }
     let bytes: Vec<u8> = pixels[(WIDTH * MENU_BAR) as usize..].iter().flat_map(|pixel| [pixel.r, pixel.g, pixel.b]).collect();
+    image::save_buffer(directory.join(format!("{name}.png")), &bytes, WIDTH, HEIGHT, image::ColorType::Rgb8)
+        .expect("write the screenshot");
+}
+
+/// Draw the screenshot tool's overlay, which has no menu bar, into `name`.png.
+fn save_overlay(window: &MinimalSoftwareWindow, name: &str) {
+    let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target").join("screenshots");
+    std::fs::create_dir_all(&directory).expect("target/screenshots");
+    let mut pixels = vec![slint::Rgb8Pixel::default(); (WIDTH * HEIGHT) as usize];
+    CLOCK.set(CLOCK.get() + std::time::Duration::from_secs(1));
+    slint::platform::update_timers_and_animations();
+    for _ in 0..2 {
+        window.request_redraw();
+        window.draw_if_needed(|renderer| {
+            renderer.render(&mut pixels, WIDTH as usize);
+        });
+    }
+    let bytes: Vec<u8> = pixels.iter().flat_map(|pixel| [pixel.r, pixel.g, pixel.b]).collect();
     image::save_buffer(directory.join(format!("{name}.png")), &bytes, WIDTH, HEIGHT, image::ColorType::Rgb8)
         .expect("write the screenshot");
 }
@@ -308,6 +336,39 @@ fn attachment(id: i32, name: &str, size: &str, kind: AttachKind, hue: Option<f32
         },
         problem,
     }
+}
+
+/// A made-up screen for the screenshot tool to freeze: a wallpaper, a light window with grey lines
+/// of text, a dark one with coloured lines (an editor), as the design shows it.
+fn desktop() -> Image {
+    let mut buffer = SharedPixelBuffer::<Rgba8Pixel>::new(WIDTH, HEIGHT);
+    let pixels = buffer.make_mut_slice();
+    for y in 0..HEIGHT {
+        for x in 0..WIDTH {
+            let (t, u) = (x as f32 / WIDTH as f32, y as f32 / HEIGHT as f32);
+            pixels[(y * WIDTH + x) as usize] =
+                Rgba8Pixel { r: (46.0 + 70.0 * t) as u8, g: (96.0 + 50.0 * u) as u8, b: (150.0 + 70.0 * (1.0 - t)) as u8, a: 255 };
+        }
+    }
+    let mut fill = |x: u32, y: u32, w: u32, h: u32, [r, g, b]: [u8; 3]| {
+        for row in y..(y + h).min(HEIGHT) {
+            for column in x..(x + w).min(WIDTH) {
+                pixels[(row * WIDTH + column) as usize] = Rgba8Pixel { r, g, b, a: 255 };
+            }
+        }
+    };
+    fill(60, 80, 560, 420, [255, 255, 255]);
+    fill(60, 80, 560, 34, [243, 244, 246]);
+    for (i, width) in [420, 380, 440, 300, 460, 340, 400].into_iter().enumerate() {
+        fill(84, 134 + i as u32 * 40, width, 10, [214, 216, 220]);
+    }
+    fill(660, 120, 560, 420, [17, 18, 20]);
+    fill(660, 120, 560, 34, [30, 33, 38]);
+    let colours = [[122, 162, 247], [158, 206, 106], [224, 175, 104], [187, 154, 247], [86, 95, 137], [192, 202, 245], [158, 206, 106]];
+    for (i, (width, colour)) in [360, 420, 300, 460, 320, 400, 280].into_iter().zip(colours).enumerate() {
+        fill(684 + (i as u32 % 3) * 14, 174 + i as u32 * 40, width, 10, colour);
+    }
+    Image::from_rgba8(buffer)
 }
 
 /// A made-up sticker: a round face cut out with a white edge, on nothing, as stickers are.
@@ -672,6 +733,158 @@ fn message_actions(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn F
     actions.set_flash(SharedString::new());
 }
 
+/// The screenshot tool (the design's seventh round): in the window, the card when the system has
+/// not let FinchGram see the screen, the send card with a screenshot and the notice after saving
+/// one; on the overlay, each step from the window under the pointer to the annotations.
+fn screenshot_tool(ui: &MainWindow, window: &MinimalSoftwareWindow, overlay: &ShotWindow, overlay_window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    let screenshot = ui.global::<Screenshot>();
+    let attachments = ui.global::<Attachments>();
+    let actions = ui.global::<Actions>();
+    screenshot.set_permission_card(true);
+    save(window, &name("shot-permission"));
+    screenshot.set_permission_card(false);
+
+    attachments.set_items(model(vec![attachment(0, "Screenshot 2026-10-07 at 11.02.15.png", "412 KB", AttachKind::Photo, Some(200.0), AttachProblem::None)]));
+    attachments.set_count(1);
+    attachments.set_videos(0);
+    attachments.set_all_media(true);
+    attachments.set_as_file(false);
+    attachments.set_screenshot(true);
+    attachments.set_timer_allowed(true);
+    attachments.set_caption_max(1024);
+    attachments.set_hint(AttachHint::Keys);
+    attachments.set_can_send(true);
+    attachments.set_card_open(true);
+    save(window, &name("shot-send-card"));
+    attachments.set_card_open(false);
+    attachments.set_screenshot(false);
+    attachments.set_items(model(Vec::new()));
+    attachments.set_hint(AttachHint::None);
+
+    actions.set_saved_name("Screenshot 2026-10-07 at 11.02.15.png".into());
+    actions.set_notice(ActionNotice::Saved);
+    save(window, &name("shot-saved"));
+    actions.set_notice(ActionNotice::None);
+    actions.set_saved_name(SharedString::new());
+
+    // The overlay: the same theme and appearance, in its own window.
+    let app = ui.global::<AppState>();
+    overlay.global::<AppState>().set_theme(app.get_theme());
+    overlay.global::<AppState>().set_appearance(app.get_appearance());
+    let shot = overlay.global::<Shot>();
+    shot.set_scale(1.0);
+    shot.set_has_selection(false);
+    shot.set_settled(false);
+    shot.set_adjusting(false);
+    shot.set_show_magnifier(false);
+    shot.set_editing(false);
+    shot.set_tool(ShotTool::None);
+    shot.set_cursor(ShotCursor::Cross);
+    shot.set_boxes(model(Vec::new()));
+    shot.set_paths(model(Vec::new()));
+    shot.set_texts(model(Vec::new()));
+    shot.set_cells(model(Vec::new()));
+    // Waiting: the light window is under the pointer.
+    shot.set_hover_window(true);
+    shot.set_hover_x(60.0);
+    shot.set_hover_y(80.0);
+    shot.set_hover_w(560.0);
+    shot.set_hover_h(420.0);
+    shot.set_label("560 × 420".into());
+    shot.set_pointer_x(300.0);
+    shot.set_pointer_y(300.0);
+    save_overlay(overlay_window, &name("shot-waiting"));
+    // Dragging a selection: the magnifier by the pointer.
+    shot.set_hover_window(false);
+    shot.set_has_selection(true);
+    shot.set_sel_x(120.0);
+    shot.set_sel_y(140.0);
+    shot.set_sel_w(300.0);
+    shot.set_sel_h(200.0);
+    shot.set_adjusting(true);
+    shot.set_label("300 × 200".into());
+    shot.set_show_magnifier(true);
+    shot.set_pointer_x(420.0);
+    shot.set_pointer_y(340.0);
+    shot.set_mag_pos("x 420  y 340".into());
+    shot.set_mag_hex("#D6D8DC".into());
+    shot.set_mag_color(slint::Color::from_rgb_u8(0xd6, 0xd8, 0xdc));
+    save_overlay(overlay_window, &name("shot-dragging"));
+    // Selected: handles, and the toolbar under the selection.
+    shot.set_show_magnifier(false);
+    shot.set_adjusting(false);
+    shot.set_settled(true);
+    shot.set_sel_w(440.0);
+    shot.set_sel_h(300.0);
+    shot.set_label("440 × 300".into());
+    shot.set_pointer_x(700.0);
+    shot.set_pointer_y(600.0);
+    save_overlay(overlay_window, &name("shot-selected"));
+    // Annotating with the arrow: its options, and marks of every kind on the picture.
+    shot.set_tool(ShotTool::Arrow);
+    shot.set_size(1);
+    shot.set_color_index(0);
+    shot.set_can_undo(true);
+    let red = slint::Color::from_rgb_u8(0xf2, 0x35, 0x2b);
+    let blue = slint::Color::from_rgb_u8(0x1f, 0x7b, 0xff);
+    let yellow = slint::Color::from_rgb_u8(0xff, 0xcc, 0x00);
+    let light = slint::Color::from_argb_u8(217, 255, 255, 255);
+    let dark = slint::Color::from_argb_u8(153, 0, 0, 0);
+    shot.set_boxes(model(vec![
+        ShotBox { x: 150.0, y: 170.0, w: 160.0, h: 90.0, color: red, halo: light, width: 4.0, ellipse: false },
+        ShotBox { x: 340.0, y: 180.0, w: 110.0, h: 110.0, color: blue, halo: light, width: 4.0, ellipse: true },
+    ]));
+    shot.set_paths(model(vec![
+        ShotPath { commands: "M 170 400 L 332 322".into(), color: red, halo: light, width: 4.0, fill: false },
+        ShotPath { commands: "M 350 314 L 332 329 L 326 316 Z".into(), color: red, halo: light, width: 1.0, fill: true },
+    ]));
+    shot.set_texts(model(vec![ShotText { x: 160.0, y: 290.0, text: "Check this".into(), color: yellow, halo: dark, size: 20.0 }]));
+    let greys = [[0xd6, 0xd8, 0xdc], [0xff, 0xff, 0xff], [0xe6, 0xe8, 0xeb], [0xf3, 0xf4, 0xf6]];
+    let cells: Vec<ShotCell> = (0..30)
+        .map(|i| {
+            let [r, g, b] = greys[(i * 7 % 4) as usize];
+            ShotCell { x: 400.0 + (i % 6) as f32 * 8.0, y: 336.0 + (i / 6) as f32 * 8.0, size: 8.0, color: slint::Color::from_rgb_u8(r, g, b) }
+        })
+        .collect();
+    shot.set_cells(model(cells));
+    save_overlay(overlay_window, &name("shot-annotated"));
+    // Writing on the picture: the text tool's box, with its words so far.
+    shot.set_tool(ShotTool::Text);
+    shot.set_editing(true);
+    shot.set_text_x(200.0);
+    shot.set_text_y(380.0);
+    shot.set_text_size(20.0);
+    shot.set_text_color(red);
+    shot.set_text_halo(light);
+    shot.set_text_draft("Meet here".into());
+    save_overlay(overlay_window, &name("shot-text"));
+    shot.set_editing(false);
+    shot.set_text_draft(SharedString::new());
+    // The mosaic: its brush under the pointer, and its own options.
+    shot.set_tool(ShotTool::Mosaic);
+    shot.set_cursor(ShotCursor::Brush);
+    shot.set_brush(24.0);
+    shot.set_pointer_x(470.0);
+    shot.set_pointer_y(360.0);
+    save_overlay(overlay_window, &name("shot-mosaic"));
+    shot.set_cursor(ShotCursor::Cross);
+    // A selection at the bottom of the screen: the toolbar goes above it.
+    shot.set_tool(ShotTool::None);
+    shot.set_can_undo(false);
+    shot.set_boxes(model(Vec::new()));
+    shot.set_paths(model(Vec::new()));
+    shot.set_texts(model(Vec::new()));
+    shot.set_cells(model(Vec::new()));
+    shot.set_sel_x(120.0);
+    shot.set_sel_y(560.0);
+    shot.set_sel_w(500.0);
+    shot.set_sel_h(200.0);
+    shot.set_label("500 × 200".into());
+    save_overlay(overlay_window, &name("shot-toolbar-above"));
+    shot.set_has_selection(false);
+    shot.set_settled(false);
+}
+
 /// Sending attachments (the design's sixth round): the paperclip's menu, the card with photos,
 /// with one photo and a timer, with files (one too big), the drop zone, and the messages' states on
 /// their way (uploading, a file received, failed).
@@ -828,6 +1041,12 @@ fn screenshots() {
     ui.show().expect("show");
     fill(&ui);
     fill_chats(&ui);
+    // The screenshot tool's overlay: a window of its own, over a made-up screen.
+    let overlay = ShotWindow::new().expect("overlay window");
+    let overlay_window = OVERLAY.with(|slot| slot.borrow().clone()).expect("the overlay's window");
+    overlay_window.set_size(slint::PhysicalSize::new(WIDTH, HEIGHT));
+    overlay.global::<Shot>().set_frame(desktop());
+    overlay.show().expect("show the overlay");
     let app = ui.global::<AppState>();
     let login = ui.global::<Login>();
 
@@ -889,6 +1108,7 @@ fn screenshots() {
             }
             message_actions(&ui, &window, &name);
             attachments(&ui, &window, theme, &name);
+            screenshot_tool(&ui, &window, &overlay, &overlay_window, &name);
             open_viewer(&ui, 1);
             save(&window, &name("viewer-photo"));
             open_viewer(&ui, 2);
@@ -905,6 +1125,11 @@ fn screenshots() {
                 app.set_settings_section(section);
                 save(&window, &name(&format!("settings-{section_name}")));
             }
+            // Settings → General → Screenshots: the shortcut's box taking new keys.
+            app.set_settings_section(SettingsSection::General);
+            ui.global::<Screenshot>().set_recording(true);
+            save(&window, &name("settings-screenshot-shortcut"));
+            ui.global::<Screenshot>().set_recording(false);
             two_step(&ui, &window, &name);
             app.set_page(Page::Profile);
             save(&window, &name("profile"));

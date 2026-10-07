@@ -126,6 +126,66 @@ pub fn pasteboard_image() -> Option<Vec<u8>> {
     None
 }
 
+/// Whether the system lets FinchGram capture the screen (macOS: Screen Recording, in System
+/// Settings → Privacy & Security). Systems without the screenshot tool say no.
+pub fn screen_capture_allowed() -> bool {
+    #[cfg(target_os = "macos")]
+    return macos::screen_capture_allowed();
+    #[cfg(not(target_os = "macos"))]
+    false
+}
+
+/// Ask the system for leave to capture the screen: macOS shows its dialog once.
+pub fn request_screen_capture() {
+    #[cfg(target_os = "macos")]
+    macos::request_screen_capture();
+}
+
+/// Open the system's settings where screen capture is allowed.
+pub fn open_screen_capture_settings() {
+    #[cfg(target_os = "macos")]
+    macos::open_screen_capture_settings();
+}
+
+/// Capture one display (counted from 1, as the system counts them) into a PNG at `path`; false
+/// when the system refused.
+pub fn capture_display(number: usize, path: &std::path::Path) -> bool {
+    #[cfg(target_os = "macos")]
+    return macos::capture_display(number, path);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (number, path);
+        false
+    }
+}
+
+/// A window on the screen, as the system lists them: where it is, in points of the global
+/// coordinate space (the main display's top left corner is its origin), front to back.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ScreenWindow {
+    pub x: f32,
+    pub y: f32,
+    pub width: f32,
+    pub height: f32,
+}
+
+/// The other apps' windows on the screen, front to back, for the screenshot tool to offer.
+pub fn windows_on_screen() -> Vec<ScreenWindow> {
+    #[cfg(target_os = "macos")]
+    return macos::windows_on_screen();
+    #[cfg(not(target_os = "macos"))]
+    Vec::new()
+}
+
+/// Put the screenshot tool's overlay above everything else on its display, and give it the
+/// keyboard.
+pub fn raise_overlay(window: &slint::Window) {
+    #[cfg(target_os = "macos")]
+    macos::raise_overlay(window);
+    #[cfg(not(target_os = "macos"))]
+    let _ = window;
+}
+
 /// A notification of a new message, as the system shows it (on macOS in Notification Center).
 /// Systems without notifications in FinchGram yet show none, and have no badge either.
 pub struct Notification {

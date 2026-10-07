@@ -3,7 +3,8 @@
 import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Spinner, Avatar } from "../widgets.slint";
-import { ActionWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
+import { ActionWords, AttachWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
+import { Screenshot } from "../state.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 
 component DuoIcon inherits Icon {
@@ -588,6 +589,83 @@ component ActionEntry inherits Rectangle {
     }
 }
 
+// The screenshot tool has no leave to see the screen (src/screenshot/): where to give it.
+component PermissionCard inherits Dialog {
+    box-width: 380px;
+    box-height: body.preferred-height;
+    close => {
+        Screenshot.dismiss-permission();
+    }
+
+    KeyScope {
+        width: 0;
+        height: 0;
+        escape => {
+            Screenshot.dismiss-permission();
+        }
+        enter => {
+            Screenshot.open-system-settings();
+        }
+    }
+
+    body := VerticalLayout {
+        padding-left: 22px;
+        padding-right: 22px;
+        padding-top: 22px;
+        padding-bottom: 18px;
+        spacing: 16px;
+        HorizontalLayout {
+            spacing: 10px;
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 34px;
+                    height: 34px;
+                    border-radius: 2px;
+                    background: P.danger-soft;
+                    DuoIcon {
+                        name: "monitor";
+                        size: 19px;
+                        color: P.danger;
+                    }
+                }
+            }
+            Text {
+                horizontal-stretch: 1;
+                text: AttachWords.permission-title();
+                color: P.text;
+                font-size: 18px;
+                font-weight: 600;
+                wrap: word-wrap;
+                vertical-alignment: center;
+            }
+        }
+        Text {
+            text: AttachWords.permission-lead();
+            color: P.muted;
+            font-size: 15px;
+            wrap: word-wrap;
+        }
+        HorizontalLayout {
+            alignment: end;
+            spacing: 16px;
+            DialogButton {
+                label: AttachWords.not-now();
+                clicked => {
+                    Screenshot.dismiss-permission();
+                }
+            }
+            DialogButton {
+                label: AttachWords.open-system-settings();
+                filled: true;
+                clicked => {
+                    Screenshot.open-system-settings();
+                }
+            }
+        }
+    }
+}
+
 export component BroadsheetActions inherits Rectangle {
     // A message's menu, where it was clicked; a click anywhere else closes it.
     if Actions.menu-open: TouchArea {
@@ -626,4 +704,5 @@ export component BroadsheetActions inherits Rectangle {
     if Actions.picker-open: ForwardPicker { }
     if Actions.report-open: ReportDialog { }
     if Actions.delete-open: DeleteDialog { }
+    if Screenshot.permission-card: PermissionCard { }
 }
