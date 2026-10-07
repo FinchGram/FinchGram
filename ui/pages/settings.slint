@@ -495,7 +495,9 @@ component UpdateRow {
             Text {
                 text: AppState.update-state == UpdateState.checking ? @tr("Checking…")
                     : AppState.update-state == UpdateState.available ? @tr("Version {0} available", AppState.update-version)
-                    : AppState.update-state == UpdateState.installing ? (AppState.update-progress < 1 ? @tr("Downloading {0}%", Math.round(AppState.update-progress * 100)) : @tr("Installing…"))
+                    : AppState.update-state == UpdateState.installing ? (AppState.update-progress < 1
+                        ? @tr("Downloading {0}% · {1} of {2}", Math.round(AppState.update-progress * 100), AppState.update-downloaded, AppState.update-total)
+                        : @tr("Installing…"))
                     : AppState.update-state == UpdateState.up-to-date ? @tr("You're up to date")
                     : AppState.update-state == UpdateState.failed ? @tr("The update failed")
                     : @tr("Version {0}", AppState.app-version);

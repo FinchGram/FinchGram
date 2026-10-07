@@ -1151,6 +1151,13 @@ fn screenshots() {
                 app.set_settings_section(section);
                 save(&window, &name(&format!("settings-{section_name}")));
             }
+            // Settings → About while an update downloads: how far, in per cent and megabytes.
+            app.set_update_state(crate::UpdateState::Installing);
+            app.set_update_progress(0.42);
+            app.set_update_downloaded("26.8 MB".into());
+            app.set_update_total("63.8 MB".into());
+            save(&window, &name("settings-about-downloading"));
+            app.set_update_state(crate::UpdateState::Idle);
             // Settings → General → Screenshots: the shortcut's box taking new keys.
             app.set_settings_section(SettingsSection::General);
             ui.global::<Screenshot>().set_recording(true);

@@ -61,6 +61,13 @@ pub struct Release {
     sig_url: String,
 }
 
+impl Release {
+    /// The size of the download, as the release lists it.
+    pub fn size(&self) -> u64 {
+        self.zip_size
+    }
+}
+
 #[derive(Debug)]
 pub enum Check {
     UpToDate,
@@ -210,9 +217,10 @@ pub fn installed_bundle() -> Result<PathBuf, String> {
 }
 
 /// Download `release`, verify it, swap it in for the running bundle and arrange the relaunch.
-/// `progress` is called with 0..1 while downloading. On success the caller must quit the event
-/// loop: the new copy starts as soon as this process has exited.
-pub fn install(release: &Release, progress: &dyn Fn(f32)) -> Result<(), String> {
+/// `progress` is called with the bytes downloaded so far and the bytes in all, while
+/// downloading. On success the caller must quit the event loop: the new copy starts as soon as
+/// this process has exited.
+pub fn install(release: &Release, progress: &dyn Fn(u64, u64)) -> Result<(), String> {
     let app = installed_bundle()?;
 
     let work = dirs::cache_dir()
@@ -244,7 +252,7 @@ pub fn install(release: &Release, progress: &dyn Fn(f32)) -> Result<(), String> 
     Ok(())
 }
 
-fn download(url: &str, dest: &Path, expected_size: u64, progress: &dyn Fn(f32)) -> Result<(), String> {
+fn download(url: &str, dest: &Path, expected_size: u64, progress: &dyn Fn(u64, u64)) -> Result<(), String> {
     let mut response = agent(None)
         .get(url)
         .call()
@@ -263,14 +271,20 @@ fn download(url: &str, dest: &Path, expected_size: u64, progress: &dyn Fn(f32)) 
         }
         file.write_all(&buf[..n]).map_err(|err| format!("cannot write {}: {err}", dest.display()))?;
         done += n as u64;
+        // Every per cent: a hundred reports for the whole download, whatever its size.
         let fraction = (done as f32 / total as f32).min(1.0);
         if fraction - reported >= 0.01 {
             reported = fraction;
-            progress(fraction);
+            progress(done.min(total), total);
         }
     }
-    progress(1.0);
+    progress(total, total);
     Ok(())
+}
+
+/// Bytes as the Finder writes them: "63.8 MB" (a megabyte being a million bytes).
+pub fn megabytes(bytes: u64) -> String {
+    format!("{:.1} MB", bytes as f64 / 1_000_000.0)
 }
 
 fn fetch_text(url: &str) -> Result<String, String> {
@@ -534,6 +548,13 @@ mod tests {
             .map(|name| format!(r#"{{"name":"{name}","size":1,"browser_download_url":"https://example.org/{name}"}}"#))
             .collect();
         format!(r#"{{"tag_name":"{tag}","body":"Notes.\n---\nfooter","assets":[{}]}}"#, assets.join(","))
+    }
+
+    #[test]
+    fn sizes_are_written_in_megabytes() {
+        assert_eq!(megabytes(0), "0.0 MB");
+        assert_eq!(megabytes(1_234_567), "1.2 MB");
+        assert_eq!(megabytes(63_850_000), "63.9 MB");
     }
 
     #[test]

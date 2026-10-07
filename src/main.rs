@@ -446,14 +446,21 @@ fn install_update(ui: slint::Weak<MainWindow>, pending: Arc<Mutex<Option<update:
         return;
     }
     state.set_update_progress(0.0);
+    state.set_update_downloaded(update::megabytes(0).into());
+    state.set_update_total(update::megabytes(release.size()).into());
     state.set_update_state(UpdateState::Installing);
 
     std::thread::spawn(move || {
         let progress = {
             let ui = ui.clone();
-            move |fraction: f32| {
+            move |done: u64, total: u64| {
+                let fraction = (done as f32 / total.max(1) as f32).min(1.0);
+                let (downloaded, whole) = (update::megabytes(done), update::megabytes(total));
                 let _ = ui.upgrade_in_event_loop(move |ui| {
-                    ui.global::<AppState>().set_update_progress(fraction);
+                    let state = ui.global::<AppState>();
+                    state.set_update_progress(fraction);
+                    state.set_update_downloaded(downloaded.into());
+                    state.set_update_total(whole.into());
                 });
             }
         };

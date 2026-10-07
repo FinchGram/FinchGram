@@ -102,6 +102,8 @@ export global AppState {
     in-out property <string> update-version;            // the newer version, once one is available
     in-out property <string> update-notes;              // its release notes
     in-out property <float> update-progress;            // 0..1 while downloading
+    in-out property <string> update-downloaded;         // "12.4 MB" so far, while downloading
+    in-out property <string> update-total;              // "63.8 MB", the whole download
     in-out property <string> update-error;              // why the last check or install failed
     in-out property <bool> check-for-updates-daily: true;  // the setting
     callback check-for-updates();

@@ -1550,8 +1550,8 @@ msgid "Version {0} available"
 msgstr "发现新版本 {0}"
 
 #: ui/pages/settings.slint:498
-msgid "Downloading {0}%"
-msgstr "正在下载 {0}%"
+msgid "Downloading {0}% · {1} of {2}"
+msgstr "正在下载 {0}% · {1} / {2}"
 
 #: ui/pages/settings.slint:498
 msgid "Installing…"
