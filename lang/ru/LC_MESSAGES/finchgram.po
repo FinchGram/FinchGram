@@ -3,20 +3,20 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-07 07:32+0000\n"
+"POT-Creation-Date: 2026-10-08 01:27+0000\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: ui/app.slint:38
 msgid "View"
 msgstr "Вид"
 
-#: ui/app.slint:40 ui/broadsheet/actions.slint:170
 #: ui/app.slint:40 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
-#: ui/app.slint:40 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316 ui/workbench/actions.slint:172
+#: ui/workbench/actions.slint:172
 msgid "Search"
 msgstr "Поиск"
 
@@ -49,86 +49,71 @@ msgid "Check for Updates…"
 msgstr "Проверить обновления…"
 
 #: ui/broadsheet/actions.slint:133 ui/terminal/actions.slint:139
-#: ui/broadsheet/actions.slint:133 ui/terminal/actions.slint:139
 msgid "Choose recipient…"
 msgstr "Выберите получателя…"
 
 #: ui/broadsheet/actions.slint:226 ui/telegram.slint:650
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:650 ui/workbench/actions.slint:228
+#: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "Избранное"
 
-#: ui/broadsheet/actions.slint:239 ui/terminal/actions.slint:220
 #: ui/broadsheet/actions.slint:239 ui/terminal/actions.slint:220
 msgid "Recent"
 msgstr "Недавние"
 
 #: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:254
-#: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:254
 msgid "No chats found"
 msgstr "Чаты не найдены"
 
-#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 #: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 msgid "Add a comment"
 msgstr "Добавьте комментарий"
 
 #: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
-#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 msgid "Add a comment (optional)"
 msgstr "Добавьте комментарий (необязательно)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457 ui/workbench/actions.slint:720
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457 ui/workbench/actions.slint:720
+#: ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174
+#: ui/pages/settings.slint:1369 ui/terminal/actions.slint:463
+#: ui/terminal/terminal.slint:1040 ui/workbench/actions.slint:547
+#: ui/workbench/conversation.slint:1303
 msgid "Cancel"
 msgstr "Отменить"
 
 #: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033 ui/workbench/conversation.slint:1278
+#: ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033
+#: ui/workbench/conversation.slint:1278
 msgid "Report"
 msgstr "Пожаловаться"
 
 #: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025 ui/workbench/conversation.slint:1266
+#: ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025
+#: ui/workbench/conversation.slint:1266
 msgid "Delete"
 msgstr "Удалить"
 
-#: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:596
 #: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:596
 msgid "Light"
 msgstr "Светлая"
 
 #: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:604
-#: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:604
 msgid "Dark"
 msgstr "Тёмная"
 
-#: ui/broadsheet/broadsheet.slint:129 ui/pages/profile.slint:72
 #: ui/broadsheet/broadsheet.slint:129 ui/pages/profile.slint:72
 msgid "Accounts"
 msgstr "Аккаунты"
 
 #: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:125
-#: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:125
 msgid "Chats"
 msgstr "Чаты"
 
 #: ui/broadsheet/broadsheet.slint:248 ui/broadsheet/broadsheet.slint:841
-#: ui/broadsheet/broadsheet.slint:248 ui/broadsheet/broadsheet.slint:841 ui/workbench/sidebar.slint:401
+#: ui/workbench/sidebar.slint:401
 msgid "Channels"
 msgstr "Каналы"
 
-#: ui/broadsheet/broadsheet.slint:256 ui/broadsheet/broadsheet.slint:842
 #: ui/broadsheet/broadsheet.slint:256 ui/broadsheet/broadsheet.slint:842
 msgid "Bots"
 msgstr "Боты"
@@ -150,7 +135,7 @@ msgid "More"
 msgstr "Ещё"
 
 #: ui/broadsheet/broadsheet.slint:650 ui/format.slint:163
-#: ui/broadsheet/broadsheet.slint:650 ui/format.slint:163 ui/workbench/sidebar.slint:239
+#: ui/workbench/sidebar.slint:239
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
 msgstr[0] "{n} подписчик"
@@ -161,7 +146,6 @@ msgstr[2] "{n} подписчиков"
 msgid "Telegram bots"
 msgstr "Боты Telegram"
 
-#: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
 #: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
 msgid "No chats yet"
 msgstr "Чатов пока нет"
@@ -183,11 +167,9 @@ msgid "Chats you add to this folder in Telegram show up here."
 msgstr "Чаты, которые вы добавите в эту папку в Telegram, появятся здесь."
 
 #: ui/broadsheet/broadsheet.slint:977 ui/terminal/terminal.slint:387
-#: ui/broadsheet/broadsheet.slint:977 ui/terminal/terminal.slint:387
 msgid "Official bots"
 msgstr "Официальные боты"
 
-#: ui/broadsheet/broadsheet.slint:991 ui/terminal/terminal.slint:399
 #: ui/broadsheet/broadsheet.slint:991 ui/terminal/terminal.slint:399
 msgid "Other bots"
 msgstr "Другие боты"
@@ -200,51 +182,41 @@ msgstr ""
 "отправляете."
 
 #: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
+#: ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
+#: ui/workbench/conversation.slint:1593
 msgid "Unmute"
 msgstr "Включить уведомления"
 
 #: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
+#: ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
+#: ui/workbench/conversation.slint:1593
 msgid "Mute"
 msgstr "Выключить уведомления"
 
 #: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
+#: ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
 msgid "Unpin"
 msgstr "Открепить"
 
 #: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
+#: ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
 msgid "Pin"
 msgstr "Закрепить"
 
 #: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319
-#: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319 ui/terminal/terminal.slint:925
-#: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319 ui/terminal/terminal.slint:925 ui/workbench/sidebar.slint:562
+#: ui/terminal/terminal.slint:925 ui/workbench/sidebar.slint:562
 msgid "Mark as read"
 msgstr "Отметить прочитанным"
 
-#: ui/broadsheet/broadsheet.slint:1072 ui/terminal/terminal.slint:517
 #: ui/broadsheet/broadsheet.slint:1072 ui/terminal/terminal.slint:517
 msgid "Add to folder"
 msgstr "Добавить в папку"
 
 #: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618 ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:619
+#: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
+#: ui/pages/login.slint:841 ui/pages/login.slint:901
+#: ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
+#: ui/workbench/sidebar.slint:619
 msgid "Back"
 msgstr "Назад"
 
@@ -253,12 +225,11 @@ msgid "Instant View"
 msgstr "Instant View"
 
 #: ui/broadsheet/broadsheet.slint:1229 ui/terminal/terminal.slint:612
-#: ui/broadsheet/broadsheet.slint:1229 ui/terminal/terminal.slint:612
 msgid "Forwarded from {0}"
 msgstr "Переслано от {0}"
 
 #: ui/broadsheet/broadsheet.slint:1491 ui/broadsheet/broadsheet.slint:1598
-#: ui/broadsheet/broadsheet.slint:1491 ui/broadsheet/broadsheet.slint:1598 ui/workbench/conversation.slint:881
+#: ui/workbench/conversation.slint:881
 msgid "edited"
 msgstr "изменено"
 
@@ -267,36 +238,31 @@ msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr "Реклама · размещена Telegram · пользователи Premium могут её отключить"
 
 #: ui/broadsheet/broadsheet.slint:1684 ui/format.slint:261
-#: ui/broadsheet/broadsheet.slint:1684 ui/format.slint:261 ui/workbench/conversation.slint:979
+#: ui/workbench/conversation.slint:979
 msgid "You"
 msgstr "Вы"
 
-#: ui/broadsheet/broadsheet.slint:1795 ui/terminal/terminal.slint:1126
 #: ui/broadsheet/broadsheet.slint:1795 ui/terminal/terminal.slint:1126
 msgid "Hide sender's name"
 msgstr "Скрыть имя отправителя"
 
 #: ui/broadsheet/broadsheet.slint:1899 ui/terminal/terminal.slint:1048
-#: ui/broadsheet/broadsheet.slint:1899 ui/terminal/terminal.slint:1048
 msgid "Shift-click to select a range"
 msgstr "Щёлкните с Shift, чтобы выделить диапазон"
 
 #: ui/broadsheet/broadsheet.slint:1907 ui/chat.slint:776
-#: ui/broadsheet/broadsheet.slint:1907 ui/chat.slint:776 ui/workbench/conversation.slint:1244
+#: ui/workbench/conversation.slint:1244
 msgid "Forward"
 msgstr "Переслать"
 
-#: ui/broadsheet/broadsheet.slint:1961 ui/terminal/terminal.slint:1362
 #: ui/broadsheet/broadsheet.slint:1961 ui/terminal/terminal.slint:1362
 msgid "Choose a chat on the left"
 msgstr "Выберите чат слева"
 
 #: ui/broadsheet/broadsheet.slint:1984 ui/terminal/terminal.slint:864
-#: ui/broadsheet/broadsheet.slint:1984 ui/terminal/terminal.slint:864
 msgid "typing…"
 msgstr "печатает…"
 
-#: ui/broadsheet/broadsheet.slint:2033 ui/terminal/terminal.slint:951
 #: ui/broadsheet/broadsheet.slint:2033 ui/terminal/terminal.slint:951
 msgid "{0} is typing…"
 msgstr "{0} печатает…"
@@ -526,7 +492,7 @@ msgid "Disappears after it's opened."
 msgstr "Исчезнет после просмотра."
 
 #: ui/chat.slint:318 ui/pages/settings.slint:918 ui/pages/settings.slint:929
-#: ui/chat.slint:318 ui/pages/settings.slint:918 ui/pages/settings.slint:929 ui/pages/settings.slint:1187
+#: ui/pages/settings.slint:1187
 msgid "Off"
 msgstr "Выкл."
 
@@ -1251,13 +1217,11 @@ msgid "We'll send a code to your Telegram app"
 msgstr "Мы отправим код в ваше приложение Telegram"
 
 #: ui/pages/login.slint:385 ui/pages/profile.slint:342
-#: ui/pages/login.slint:385 ui/pages/profile.slint:342
 msgid "Phone number"
 msgstr "Номер телефона"
 
 #: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613
-#: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613 ui/pages/settings.slint:1405
-#: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613 ui/pages/settings.slint:1405 ui/pages/settings.slint:1602
+#: ui/pages/settings.slint:1405 ui/pages/settings.slint:1602
 msgid "Next"
 msgstr "Далее"
 
@@ -1311,7 +1275,6 @@ msgstr "Отправлен снова — проверьте Telegram"
 msgid "Didn't get it? Resend"
 msgstr "Не пришёл? Отправить снова"
 
-#: ui/pages/login.slint:537 ui/pages/settings.slint:1186
 #: ui/pages/login.slint:537 ui/pages/settings.slint:1186
 msgid "Two-step verification"
 msgstr "Двухэтапная аутентификация"
@@ -1393,8 +1356,8 @@ msgstr "Создайте аккаунт"
 
 #: ui/pages/login.slint:711
 msgid ""
-"This number isn't registered yet. Enter your name to sign up — you can add "
-"a photo later."
+"This number isn't registered yet. Enter your name to sign up — you can add a "
+"photo later."
 msgstr ""
 "Этот номер ещё не зарегистрирован. Введите имя, чтобы зарегистрироваться, — "
 "фото можно добавить позже."
@@ -1566,7 +1529,6 @@ msgid "Bio"
 msgstr "О себе"
 
 #: ui/pages/profile.slint:384 ui/pages/settings.slint:1429
-#: ui/pages/profile.slint:384 ui/pages/settings.slint:1429 ui/shot.slint:129
 msgid "Save"
 msgstr "Сохранить"
 
@@ -1586,7 +1548,6 @@ msgstr "Основные"
 msgid "Notifications & sounds"
 msgstr "Уведомления и звуки"
 
-#: ui/pages/settings.slint:118 ui/pages/settings.slint:1707
 #: ui/pages/settings.slint:118 ui/pages/settings.slint:1707
 msgid "Privacy & security"
 msgstr "Конфиденциальность и безопасность"
@@ -1644,7 +1605,7 @@ msgid "The update failed"
 msgstr "Не удалось обновить"
 
 #: ui/pages/settings.slint:503 ui/pages/settings.slint:519
-#: ui/pages/settings.slint:503 ui/pages/settings.slint:519 ui/pages/settings.slint:1027
+#: ui/pages/settings.slint:1027
 msgid "Version {0}"
 msgstr "Версия {0}"
 
@@ -1790,7 +1751,7 @@ msgid "Private chats"
 msgstr "Личные чаты"
 
 #: ui/pages/settings.slint:918 ui/pages/settings.slint:929
-#: ui/pages/settings.slint:918 ui/pages/settings.slint:929 ui/pages/settings.slint:1187
+#: ui/pages/settings.slint:1187
 msgid "On"
 msgstr "Вкл."
 
@@ -1882,7 +1843,8 @@ msgid ""
 msgstr "При входе с нового устройства помимо кода понадобится этот пароль."
 
 #: ui/pages/settings.slint:1258
-msgid "Turn it on to require an extra password when signing in on a new device."
+msgid ""
+"Turn it on to require an extra password when signing in on a new device."
 msgstr ""
 "Включите, чтобы при входе с нового устройства требовался дополнительный "
 "пароль."
@@ -1999,106 +1961,6 @@ msgstr "Подсказка к паролю обновлена"
 #: ui/pages/settings.slint:1735
 msgid "Recovery email updated"
 msgstr "Почта для восстановления обновлена"
-
-#: ui/shot.slint:112
-msgid "Rectangle"
-msgstr "Прямоугольник"
-
-#: ui/shot.slint:113
-msgid "Ellipse"
-msgstr "Эллипс"
-
-#: ui/shot.slint:114
-msgid "Arrow"
-msgstr "Стрелка"
-
-#: ui/shot.slint:115
-msgid "Pen"
-msgstr "Кисть"
-
-#: ui/shot.slint:116
-msgid "Text"
-msgstr "Текст"
-
-#: ui/shot.slint:117
-msgid "Mosaic"
-msgstr "Мозаика"
-
-#: ui/shot.slint:121
-msgid "⇧ Square"
-msgstr "⇧ Квадрат"
-
-#: ui/shot.slint:122
-msgid "⇧ Circle"
-msgstr "⇧ Круг"
-
-#: ui/shot.slint:123
-msgid "⇧ 45°"
-msgstr "⇧ 45°"
-
-#: ui/shot.slint:126
-msgid "Undo"
-msgstr "Отменить действие"
-
-#: ui/shot.slint:127
-msgid "Redo"
-msgstr "Повторить действие"
-
-#: ui/shot.slint:128
-msgid "Copy"
-msgstr "Скопировать"
-
-#: ui/shot.slint:131
-msgid "Done"
-msgstr "Готово"
-
-#: ui/shot.slint:133
-msgid "Small"
-msgstr "Маленький"
-
-#: ui/shot.slint:134
-msgid "Large"
-msgstr "Большой"
-
-#: ui/shot.slint:135
-msgid "Medium"
-msgstr "Средний"
-
-#: ui/shot.slint:137
-msgid "Line width"
-msgstr "Толщина линии"
-
-#: ui/shot.slint:138
-msgid "Text size"
-msgstr "Размер текста"
-
-#: ui/shot.slint:139
-msgid "Brush size"
-msgstr "Размер кисти"
-
-#: ui/shot.slint:141
-msgid "Red"
-msgstr "Красный"
-
-#: ui/shot.slint:142
-msgid "White"
-msgstr "Белый"
-
-#: ui/shot.slint:143
-msgid "Black"
-msgstr "Чёрный"
-
-#: ui/shot.slint:144
-msgid "Yellow"
-msgstr "Жёлтый"
-
-#: ui/shot.slint:145
-msgid "Blue"
-msgstr "Синий"
-
-#: ui/shot.slint:146
-msgid "Green"
-msgstr "Зелёный"
 
 #: ui/state.slint:53
 msgid "Open FinchGram"

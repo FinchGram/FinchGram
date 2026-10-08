@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-07 07:32+0000\n"
+"POT-Creation-Date: 2026-10-08 01:27+0000\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,9 +14,8 @@ msgstr ""
 msgid "View"
 msgstr "Présentation"
 
-#: ui/app.slint:40 ui/broadsheet/actions.slint:170
 #: ui/app.slint:40 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
-#: ui/app.slint:40 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316 ui/workbench/actions.slint:172
+#: ui/workbench/actions.slint:172
 msgid "Search"
 msgstr "Rechercher"
 
@@ -49,86 +48,71 @@ msgid "Check for Updates…"
 msgstr "Rechercher des mises à jour…"
 
 #: ui/broadsheet/actions.slint:133 ui/terminal/actions.slint:139
-#: ui/broadsheet/actions.slint:133 ui/terminal/actions.slint:139
 msgid "Choose recipient…"
 msgstr "Choisir un destinataire…"
 
 #: ui/broadsheet/actions.slint:226 ui/telegram.slint:650
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:650 ui/workbench/actions.slint:228
+#: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "Messages enregistrés"
 
-#: ui/broadsheet/actions.slint:239 ui/terminal/actions.slint:220
 #: ui/broadsheet/actions.slint:239 ui/terminal/actions.slint:220
 msgid "Recent"
 msgstr "Récents"
 
 #: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:254
-#: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:254
 msgid "No chats found"
 msgstr "Aucune discussion trouvée"
 
-#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 #: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 msgid "Add a comment"
 msgstr "Ajouter un commentaire"
 
 #: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
-#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 msgid "Add a comment (optional)"
 msgstr "Ajouter un commentaire (facultatif)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457 ui/workbench/actions.slint:720
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457 ui/workbench/actions.slint:720
+#: ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174
+#: ui/pages/settings.slint:1369 ui/terminal/actions.slint:463
+#: ui/terminal/terminal.slint:1040 ui/workbench/actions.slint:547
+#: ui/workbench/conversation.slint:1303
 msgid "Cancel"
 msgstr "Annuler"
 
 #: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033 ui/workbench/conversation.slint:1278
+#: ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033
+#: ui/workbench/conversation.slint:1278
 msgid "Report"
 msgstr "Signaler"
 
 #: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025 ui/workbench/conversation.slint:1266
+#: ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025
+#: ui/workbench/conversation.slint:1266
 msgid "Delete"
 msgstr "Supprimer"
 
-#: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:596
 #: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:596
 msgid "Light"
 msgstr "Clair"
 
 #: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:604
-#: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:604
 msgid "Dark"
 msgstr "Sombre"
 
-#: ui/broadsheet/broadsheet.slint:129 ui/pages/profile.slint:72
 #: ui/broadsheet/broadsheet.slint:129 ui/pages/profile.slint:72
 msgid "Accounts"
 msgstr "Comptes"
 
 #: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:125
-#: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:125
 msgid "Chats"
 msgstr "Discussions"
 
 #: ui/broadsheet/broadsheet.slint:248 ui/broadsheet/broadsheet.slint:841
-#: ui/broadsheet/broadsheet.slint:248 ui/broadsheet/broadsheet.slint:841 ui/workbench/sidebar.slint:401
+#: ui/workbench/sidebar.slint:401
 msgid "Channels"
 msgstr "Canaux"
 
-#: ui/broadsheet/broadsheet.slint:256 ui/broadsheet/broadsheet.slint:842
 #: ui/broadsheet/broadsheet.slint:256 ui/broadsheet/broadsheet.slint:842
 msgid "Bots"
 msgstr "Bots"
@@ -150,7 +134,7 @@ msgid "More"
 msgstr "Plus"
 
 #: ui/broadsheet/broadsheet.slint:650 ui/format.slint:163
-#: ui/broadsheet/broadsheet.slint:650 ui/format.slint:163 ui/workbench/sidebar.slint:239
+#: ui/workbench/sidebar.slint:239
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
 msgstr[0] "{n} abonné"
@@ -160,7 +144,6 @@ msgstr[1] "{n} abonnés"
 msgid "Telegram bots"
 msgstr "Bots Telegram"
 
-#: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
 #: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
 msgid "No chats yet"
 msgstr "Aucune discussion pour l'instant"
@@ -183,11 +166,9 @@ msgstr ""
 "Les discussions que vous ajoutez à ce dossier dans Telegram apparaissent ici."
 
 #: ui/broadsheet/broadsheet.slint:977 ui/terminal/terminal.slint:387
-#: ui/broadsheet/broadsheet.slint:977 ui/terminal/terminal.slint:387
 msgid "Official bots"
 msgstr "Bots officiels"
 
-#: ui/broadsheet/broadsheet.slint:991 ui/terminal/terminal.slint:399
 #: ui/broadsheet/broadsheet.slint:991 ui/terminal/terminal.slint:399
 msgid "Other bots"
 msgstr "Autres bots"
@@ -200,51 +181,41 @@ msgstr ""
 "ce que vous leur envoyez."
 
 #: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
+#: ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
+#: ui/workbench/conversation.slint:1593
 msgid "Unmute"
 msgstr "Réactiver les notifications"
 
 #: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
+#: ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
+#: ui/workbench/conversation.slint:1593
 msgid "Mute"
 msgstr "Mettre en sourdine"
 
 #: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
+#: ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
 msgid "Unpin"
 msgstr "Désépingler"
 
 #: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
+#: ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
 msgid "Pin"
 msgstr "Épingler"
 
 #: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319
-#: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319 ui/terminal/terminal.slint:925
-#: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319 ui/terminal/terminal.slint:925 ui/workbench/sidebar.slint:562
+#: ui/terminal/terminal.slint:925 ui/workbench/sidebar.slint:562
 msgid "Mark as read"
 msgstr "Marquer comme lu"
 
-#: ui/broadsheet/broadsheet.slint:1072 ui/terminal/terminal.slint:517
 #: ui/broadsheet/broadsheet.slint:1072 ui/terminal/terminal.slint:517
 msgid "Add to folder"
 msgstr "Ajouter à un dossier"
 
 #: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618 ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:619
+#: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
+#: ui/pages/login.slint:841 ui/pages/login.slint:901
+#: ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
+#: ui/workbench/sidebar.slint:619
 msgid "Back"
 msgstr "Retour"
 
@@ -253,12 +224,11 @@ msgid "Instant View"
 msgstr "Instant View"
 
 #: ui/broadsheet/broadsheet.slint:1229 ui/terminal/terminal.slint:612
-#: ui/broadsheet/broadsheet.slint:1229 ui/terminal/terminal.slint:612
 msgid "Forwarded from {0}"
 msgstr "Transféré de {0}"
 
 #: ui/broadsheet/broadsheet.slint:1491 ui/broadsheet/broadsheet.slint:1598
-#: ui/broadsheet/broadsheet.slint:1491 ui/broadsheet/broadsheet.slint:1598 ui/workbench/conversation.slint:881
+#: ui/workbench/conversation.slint:881
 msgid "edited"
 msgstr "modifié"
 
@@ -269,36 +239,31 @@ msgstr ""
 "désactiver"
 
 #: ui/broadsheet/broadsheet.slint:1684 ui/format.slint:261
-#: ui/broadsheet/broadsheet.slint:1684 ui/format.slint:261 ui/workbench/conversation.slint:979
+#: ui/workbench/conversation.slint:979
 msgid "You"
 msgstr "Vous"
 
-#: ui/broadsheet/broadsheet.slint:1795 ui/terminal/terminal.slint:1126
 #: ui/broadsheet/broadsheet.slint:1795 ui/terminal/terminal.slint:1126
 msgid "Hide sender's name"
 msgstr "Masquer le nom de l'expéditeur"
 
 #: ui/broadsheet/broadsheet.slint:1899 ui/terminal/terminal.slint:1048
-#: ui/broadsheet/broadsheet.slint:1899 ui/terminal/terminal.slint:1048
 msgid "Shift-click to select a range"
 msgstr "Maj + clic pour sélectionner une plage"
 
 #: ui/broadsheet/broadsheet.slint:1907 ui/chat.slint:776
-#: ui/broadsheet/broadsheet.slint:1907 ui/chat.slint:776 ui/workbench/conversation.slint:1244
+#: ui/workbench/conversation.slint:1244
 msgid "Forward"
 msgstr "Transférer"
 
-#: ui/broadsheet/broadsheet.slint:1961 ui/terminal/terminal.slint:1362
 #: ui/broadsheet/broadsheet.slint:1961 ui/terminal/terminal.slint:1362
 msgid "Choose a chat on the left"
 msgstr "Choisissez une discussion à gauche"
 
 #: ui/broadsheet/broadsheet.slint:1984 ui/terminal/terminal.slint:864
-#: ui/broadsheet/broadsheet.slint:1984 ui/terminal/terminal.slint:864
 msgid "typing…"
 msgstr "écrit…"
 
-#: ui/broadsheet/broadsheet.slint:2033 ui/terminal/terminal.slint:951
 #: ui/broadsheet/broadsheet.slint:2033 ui/terminal/terminal.slint:951
 msgid "{0} is typing…"
 msgstr "{0} écrit…"
@@ -526,7 +491,7 @@ msgid "Disappears after it's opened."
 msgstr "Disparaît une fois ouvert."
 
 #: ui/chat.slint:318 ui/pages/settings.slint:918 ui/pages/settings.slint:929
-#: ui/chat.slint:318 ui/pages/settings.slint:918 ui/pages/settings.slint:929 ui/pages/settings.slint:1187
+#: ui/pages/settings.slint:1187
 msgid "Off"
 msgstr "Désactivé"
 
@@ -1251,13 +1216,11 @@ msgid "We'll send a code to your Telegram app"
 msgstr "Nous enverrons un code à votre app Telegram"
 
 #: ui/pages/login.slint:385 ui/pages/profile.slint:342
-#: ui/pages/login.slint:385 ui/pages/profile.slint:342
 msgid "Phone number"
 msgstr "Numéro de téléphone"
 
 #: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613
-#: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613 ui/pages/settings.slint:1405
-#: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613 ui/pages/settings.slint:1405 ui/pages/settings.slint:1602
+#: ui/pages/settings.slint:1405 ui/pages/settings.slint:1602
 msgid "Next"
 msgstr "Suivant"
 
@@ -1311,7 +1274,6 @@ msgstr "Renvoyé — regardez dans Telegram"
 msgid "Didn't get it? Resend"
 msgstr "Rien reçu ? Renvoyer"
 
-#: ui/pages/login.slint:537 ui/pages/settings.slint:1186
 #: ui/pages/login.slint:537 ui/pages/settings.slint:1186
 msgid "Two-step verification"
 msgstr "Validation en deux étapes"
@@ -1397,8 +1359,8 @@ msgstr "Créez votre compte"
 
 #: ui/pages/login.slint:711
 msgid ""
-"This number isn't registered yet. Enter your name to sign up — you can add "
-"a photo later."
+"This number isn't registered yet. Enter your name to sign up — you can add a "
+"photo later."
 msgstr ""
 "Ce numéro n'est pas encore inscrit. Saisissez votre nom pour créer un compte "
 "— vous pourrez ajouter une photo plus tard."
@@ -1569,7 +1531,6 @@ msgid "Bio"
 msgstr "Bio"
 
 #: ui/pages/profile.slint:384 ui/pages/settings.slint:1429
-#: ui/pages/profile.slint:384 ui/pages/settings.slint:1429 ui/shot.slint:129
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -1589,7 +1550,6 @@ msgstr "Général"
 msgid "Notifications & sounds"
 msgstr "Notifications et sons"
 
-#: ui/pages/settings.slint:118 ui/pages/settings.slint:1707
 #: ui/pages/settings.slint:118 ui/pages/settings.slint:1707
 msgid "Privacy & security"
 msgstr "Confidentialité et sécurité"
@@ -1647,7 +1607,7 @@ msgid "The update failed"
 msgstr "La mise à jour a échoué"
 
 #: ui/pages/settings.slint:503 ui/pages/settings.slint:519
-#: ui/pages/settings.slint:503 ui/pages/settings.slint:519 ui/pages/settings.slint:1027
+#: ui/pages/settings.slint:1027
 msgid "Version {0}"
 msgstr "Version {0}"
 
@@ -1794,7 +1754,7 @@ msgid "Private chats"
 msgstr "Discussions privées"
 
 #: ui/pages/settings.slint:918 ui/pages/settings.slint:929
-#: ui/pages/settings.slint:918 ui/pages/settings.slint:929 ui/pages/settings.slint:1187
+#: ui/pages/settings.slint:1187
 msgid "On"
 msgstr "Activé"
 
@@ -1887,7 +1847,8 @@ msgstr ""
 "demandé en plus du code."
 
 #: ui/pages/settings.slint:1258
-msgid "Turn it on to require an extra password when signing in on a new device."
+msgid ""
+"Turn it on to require an extra password when signing in on a new device."
 msgstr ""
 "Activez-la pour exiger un mot de passe supplémentaire lors de la connexion "
 "sur un nouvel appareil."
@@ -2008,106 +1969,6 @@ msgstr "Indice du mot de passe mis à jour"
 #: ui/pages/settings.slint:1735
 msgid "Recovery email updated"
 msgstr "E-mail de récupération mis à jour"
-
-#: ui/shot.slint:112
-msgid "Rectangle"
-msgstr "Rectangle"
-
-#: ui/shot.slint:113
-msgid "Ellipse"
-msgstr "Ellipse"
-
-#: ui/shot.slint:114
-msgid "Arrow"
-msgstr "Flèche"
-
-#: ui/shot.slint:115
-msgid "Pen"
-msgstr "Crayon"
-
-#: ui/shot.slint:116
-msgid "Text"
-msgstr "Texte"
-
-#: ui/shot.slint:117
-msgid "Mosaic"
-msgstr "Mosaïque"
-
-#: ui/shot.slint:121
-msgid "⇧ Square"
-msgstr "⇧ Carré"
-
-#: ui/shot.slint:122
-msgid "⇧ Circle"
-msgstr "⇧ Cercle"
-
-#: ui/shot.slint:123
-msgid "⇧ 45°"
-msgstr "⇧ 45°"
-
-#: ui/shot.slint:126
-msgid "Undo"
-msgstr "Annuler"
-
-#: ui/shot.slint:127
-msgid "Redo"
-msgstr "Rétablir"
-
-#: ui/shot.slint:128
-msgid "Copy"
-msgstr "Copier"
-
-#: ui/shot.slint:131
-msgid "Done"
-msgstr "Terminé"
-
-#: ui/shot.slint:133
-msgid "Small"
-msgstr "Petit"
-
-#: ui/shot.slint:134
-msgid "Large"
-msgstr "Grand"
-
-#: ui/shot.slint:135
-msgid "Medium"
-msgstr "Moyen"
-
-#: ui/shot.slint:137
-msgid "Line width"
-msgstr "Épaisseur du trait"
-
-#: ui/shot.slint:138
-msgid "Text size"
-msgstr "Taille du texte"
-
-#: ui/shot.slint:139
-msgid "Brush size"
-msgstr "Taille du pinceau"
-
-#: ui/shot.slint:141
-msgid "Red"
-msgstr "Rouge"
-
-#: ui/shot.slint:142
-msgid "White"
-msgstr "Blanc"
-
-#: ui/shot.slint:143
-msgid "Black"
-msgstr "Noir"
-
-#: ui/shot.slint:144
-msgid "Yellow"
-msgstr "Jaune"
-
-#: ui/shot.slint:145
-msgid "Blue"
-msgstr "Bleu"
-
-#: ui/shot.slint:146
-msgid "Green"
-msgstr "Vert"
 
 #: ui/state.slint:53
 msgid "Open FinchGram"

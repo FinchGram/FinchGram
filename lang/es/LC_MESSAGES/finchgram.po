@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-07 07:32+0000\n"
+"POT-Creation-Date: 2026-10-08 01:27+0000\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -74,9 +74,9 @@ msgstr "Añade un comentario (opcional)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
 #: ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174
-#: ui/pages/settings.slint:1369 ui/terminal/actions.slint:385
-#: ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
-#: ui/workbench/actions.slint:720
+#: ui/pages/settings.slint:1369 ui/terminal/actions.slint:463
+#: ui/terminal/terminal.slint:1040 ui/workbench/actions.slint:547
+#: ui/workbench/conversation.slint:1303
 msgid "Cancel"
 msgstr "Cancelar"
 
@@ -1525,7 +1525,7 @@ msgstr ""
 msgid "Bio"
 msgstr "Biografía"
 
-#: ui/pages/profile.slint:384 ui/pages/settings.slint:1429 ui/shot.slint:129
+#: ui/pages/profile.slint:384 ui/pages/settings.slint:1429
 msgid "Save"
 msgstr "Guardar"
 
@@ -1964,106 +1964,6 @@ msgstr "Pista de la contraseña actualizada"
 #: ui/pages/settings.slint:1735
 msgid "Recovery email updated"
 msgstr "Correo de recuperación actualizado"
-
-#: ui/shot.slint:112
-msgid "Rectangle"
-msgstr "Rectángulo"
-
-#: ui/shot.slint:113
-msgid "Ellipse"
-msgstr "Elipse"
-
-#: ui/shot.slint:114
-msgid "Arrow"
-msgstr "Flecha"
-
-#: ui/shot.slint:115
-msgid "Pen"
-msgstr "Lápiz"
-
-#: ui/shot.slint:116
-msgid "Text"
-msgstr "Texto"
-
-#: ui/shot.slint:117
-msgid "Mosaic"
-msgstr "Mosaico"
-
-#: ui/shot.slint:121
-msgid "⇧ Square"
-msgstr "⇧ Cuadrado"
-
-#: ui/shot.slint:122
-msgid "⇧ Circle"
-msgstr "⇧ Círculo"
-
-#: ui/shot.slint:123
-msgid "⇧ 45°"
-msgstr "⇧ 45°"
-
-#: ui/shot.slint:126
-msgid "Undo"
-msgstr "Deshacer"
-
-#: ui/shot.slint:127
-msgid "Redo"
-msgstr "Rehacer"
-
-#: ui/shot.slint:128
-msgid "Copy"
-msgstr "Copiar"
-
-#: ui/shot.slint:131
-msgid "Done"
-msgstr "Listo"
-
-#: ui/shot.slint:133
-msgid "Small"
-msgstr "Pequeño"
-
-#: ui/shot.slint:134
-msgid "Large"
-msgstr "Grande"
-
-#: ui/shot.slint:135
-msgid "Medium"
-msgstr "Mediano"
-
-#: ui/shot.slint:137
-msgid "Line width"
-msgstr "Grosor de línea"
-
-#: ui/shot.slint:138
-msgid "Text size"
-msgstr "Tamaño del texto"
-
-#: ui/shot.slint:139
-msgid "Brush size"
-msgstr "Tamaño del pincel"
-
-#: ui/shot.slint:141
-msgid "Red"
-msgstr "Rojo"
-
-#: ui/shot.slint:142
-msgid "White"
-msgstr "Blanco"
-
-#: ui/shot.slint:143
-msgid "Black"
-msgstr "Negro"
-
-#: ui/shot.slint:144
-msgid "Yellow"
-msgstr "Amarillo"
-
-#: ui/shot.slint:145
-msgid "Blue"
-msgstr "Azul"
-
-#: ui/shot.slint:146
-msgid "Green"
-msgstr "Verde"
 
 #: ui/state.slint:53
 msgid "Open FinchGram"

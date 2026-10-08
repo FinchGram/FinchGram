@@ -178,6 +178,15 @@ pub fn windows_on_screen() -> Vec<ScreenWindow> {
     Vec::new()
 }
 
+/// Before the first overlay of the screenshot tool is made: what the system has to be told about
+/// overlay windows, once; `window` is any window of FinchGram's.
+pub fn prepare_overlays(window: &slint::Window) {
+    #[cfg(target_os = "macos")]
+    macos::prepare_overlays(window);
+    #[cfg(not(target_os = "macos"))]
+    let _ = window;
+}
+
 /// Put the screenshot tool's overlay above everything else on its display, and give it the
 /// keyboard.
 pub fn raise_overlay(window: &slint::Window) {

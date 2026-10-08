@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-07 07:32+0000\n"
+"POT-Creation-Date: 2026-10-08 01:27+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,9 +14,8 @@ msgstr ""
 msgid "View"
 msgstr "表示"
 
-#: ui/app.slint:40 ui/broadsheet/actions.slint:170
 #: ui/app.slint:40 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
-#: ui/app.slint:40 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316 ui/workbench/actions.slint:172
+#: ui/workbench/actions.slint:172
 msgid "Search"
 msgstr "検索"
 
@@ -49,86 +48,71 @@ msgid "Check for Updates…"
 msgstr "アップデートを確認…"
 
 #: ui/broadsheet/actions.slint:133 ui/terminal/actions.slint:139
-#: ui/broadsheet/actions.slint:133 ui/terminal/actions.slint:139
 msgid "Choose recipient…"
 msgstr "転送先を選択…"
 
 #: ui/broadsheet/actions.slint:226 ui/telegram.slint:650
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:650 ui/workbench/actions.slint:228
+#: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "保存済みメッセージ"
 
-#: ui/broadsheet/actions.slint:239 ui/terminal/actions.slint:220
 #: ui/broadsheet/actions.slint:239 ui/terminal/actions.slint:220
 msgid "Recent"
 msgstr "最近のチャット"
 
 #: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:254
-#: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:254
 msgid "No chats found"
 msgstr "チャットが見つかりません"
 
-#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 #: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 msgid "Add a comment"
 msgstr "コメントを入力（必須）"
 
 #: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
-#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
 msgid "Add a comment (optional)"
 msgstr "コメントを入力（任意）"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457 ui/workbench/actions.slint:720
-#: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538 ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174 ui/pages/settings.slint:1369 ui/terminal/actions.slint:385 ui/terminal/actions.slint:638 ui/workbench/actions.slint:457 ui/workbench/actions.slint:720
+#: ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174
+#: ui/pages/settings.slint:1369 ui/terminal/actions.slint:463
+#: ui/terminal/terminal.slint:1040 ui/workbench/actions.slint:547
+#: ui/workbench/conversation.slint:1303
 msgid "Cancel"
 msgstr "キャンセル"
 
 #: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932 ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033 ui/workbench/conversation.slint:1278
+#: ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033
+#: ui/workbench/conversation.slint:1278
 msgid "Report"
 msgstr "報告"
 
 #: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923 ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025 ui/workbench/conversation.slint:1266
+#: ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025
+#: ui/workbench/conversation.slint:1266
 msgid "Delete"
 msgstr "削除"
 
-#: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:596
 #: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:596
 msgid "Light"
 msgstr "ライト"
 
 #: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:604
-#: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:604
 msgid "Dark"
 msgstr "ダーク"
 
-#: ui/broadsheet/broadsheet.slint:129 ui/pages/profile.slint:72
 #: ui/broadsheet/broadsheet.slint:129 ui/pages/profile.slint:72
 msgid "Accounts"
 msgstr "アカウント"
 
 #: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:125
-#: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:125
 msgid "Chats"
 msgstr "チャット"
 
 #: ui/broadsheet/broadsheet.slint:248 ui/broadsheet/broadsheet.slint:841
-#: ui/broadsheet/broadsheet.slint:248 ui/broadsheet/broadsheet.slint:841 ui/workbench/sidebar.slint:401
+#: ui/workbench/sidebar.slint:401
 msgid "Channels"
 msgstr "チャンネル"
 
-#: ui/broadsheet/broadsheet.slint:256 ui/broadsheet/broadsheet.slint:842
 #: ui/broadsheet/broadsheet.slint:256 ui/broadsheet/broadsheet.slint:842
 msgid "Bots"
 msgstr "ボット"
@@ -150,7 +134,7 @@ msgid "More"
 msgstr "その他"
 
 #: ui/broadsheet/broadsheet.slint:650 ui/format.slint:163
-#: ui/broadsheet/broadsheet.slint:650 ui/format.slint:163 ui/workbench/sidebar.slint:239
+#: ui/workbench/sidebar.slint:239
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
 msgstr[0] "{n}人の登録者"
@@ -159,7 +143,6 @@ msgstr[0] "{n}人の登録者"
 msgid "Telegram bots"
 msgstr "Telegram のボット"
 
-#: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
 #: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
 msgid "No chats yet"
 msgstr "チャットはまだありません"
@@ -173,19 +156,17 @@ msgid ""
 "Search for a username or phone number, or open an invite link someone sent "
 "you, to start chatting."
 msgstr ""
-"ユーザー名や電話番号で検索するか、誰かから送られた招待リンクを開くと、チャットを始められます。"
+"ユーザー名や電話番号で検索するか、誰かから送られた招待リンクを開くと、チャッ"
+"トを始められます。"
 
 #: ui/broadsheet/broadsheet.slint:938
 msgid "Chats you add to this folder in Telegram show up here."
-msgstr ""
-"Telegram でこのフォルダに追加したチャットがここに表示されます。"
+msgstr "Telegram でこのフォルダに追加したチャットがここに表示されます。"
 
-#: ui/broadsheet/broadsheet.slint:977 ui/terminal/terminal.slint:387
 #: ui/broadsheet/broadsheet.slint:977 ui/terminal/terminal.slint:387
 msgid "Official bots"
 msgstr "公式ボット"
 
-#: ui/broadsheet/broadsheet.slint:991 ui/terminal/terminal.slint:399
 #: ui/broadsheet/broadsheet.slint:991 ui/terminal/terminal.slint:399
 msgid "Other bots"
 msgstr "その他のボット"
@@ -194,54 +175,45 @@ msgstr "その他のボット"
 msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr ""
-"チェックマークの付いたボットは Telegram 公式のものです。それ以外のボットは、送信した内容を読むことができます。"
+"チェックマークの付いたボットは Telegram 公式のものです。それ以外のボットは、"
+"送信した内容を読むことができます。"
 
 #: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
+#: ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
+#: ui/workbench/conversation.slint:1593
 msgid "Unmute"
 msgstr "ミュート解除"
 
 #: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260 ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260 ui/workbench/conversation.slint:1593
+#: ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
+#: ui/workbench/conversation.slint:1593
 msgid "Mute"
 msgstr "ミュート"
 
 #: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
+#: ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
 msgid "Unpin"
 msgstr "ピン留めを解除"
 
 #: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311 ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
+#: ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
 msgid "Pin"
 msgstr "ピン留め"
 
 #: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319
-#: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319 ui/terminal/terminal.slint:925
-#: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319 ui/terminal/terminal.slint:925 ui/workbench/sidebar.slint:562
+#: ui/terminal/terminal.slint:925 ui/workbench/sidebar.slint:562
 msgid "Mark as read"
 msgstr "既読にする"
 
-#: ui/broadsheet/broadsheet.slint:1072 ui/terminal/terminal.slint:517
 #: ui/broadsheet/broadsheet.slint:1072 ui/terminal/terminal.slint:517
 msgid "Add to folder"
 msgstr "フォルダに追加"
 
 #: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524 ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800 ui/pages/login.slint:841 ui/pages/login.slint:901 ui/pages/settings.slint:1618 ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:619
+#: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
+#: ui/pages/login.slint:841 ui/pages/login.slint:901
+#: ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
+#: ui/workbench/sidebar.slint:619
 msgid "Back"
 msgstr "戻る"
 
@@ -250,51 +222,44 @@ msgid "Instant View"
 msgstr "Instant View"
 
 #: ui/broadsheet/broadsheet.slint:1229 ui/terminal/terminal.slint:612
-#: ui/broadsheet/broadsheet.slint:1229 ui/terminal/terminal.slint:612
 msgid "Forwarded from {0}"
 msgstr "転送元：{0}"
 
 #: ui/broadsheet/broadsheet.slint:1491 ui/broadsheet/broadsheet.slint:1598
-#: ui/broadsheet/broadsheet.slint:1491 ui/broadsheet/broadsheet.slint:1598 ui/workbench/conversation.slint:881
+#: ui/workbench/conversation.slint:881
 msgid "edited"
 msgstr "編集済み"
 
 #: ui/broadsheet/broadsheet.slint:1618
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
-msgstr ""
-"スポンサー · Telegram による掲載 · Premium ユーザーは非表示にできます"
+msgstr "スポンサー · Telegram による掲載 · Premium ユーザーは非表示にできます"
 
 #: ui/broadsheet/broadsheet.slint:1684 ui/format.slint:261
-#: ui/broadsheet/broadsheet.slint:1684 ui/format.slint:261 ui/workbench/conversation.slint:979
+#: ui/workbench/conversation.slint:979
 msgid "You"
 msgstr "自分"
 
-#: ui/broadsheet/broadsheet.slint:1795 ui/terminal/terminal.slint:1126
 #: ui/broadsheet/broadsheet.slint:1795 ui/terminal/terminal.slint:1126
 msgid "Hide sender's name"
 msgstr "送信者名を非表示"
 
 #: ui/broadsheet/broadsheet.slint:1899 ui/terminal/terminal.slint:1048
-#: ui/broadsheet/broadsheet.slint:1899 ui/terminal/terminal.slint:1048
 msgid "Shift-click to select a range"
 msgstr "Shift を押しながらクリックで範囲を選択"
 
 #: ui/broadsheet/broadsheet.slint:1907 ui/chat.slint:776
-#: ui/broadsheet/broadsheet.slint:1907 ui/chat.slint:776 ui/workbench/conversation.slint:1244
+#: ui/workbench/conversation.slint:1244
 msgid "Forward"
 msgstr "転送"
 
-#: ui/broadsheet/broadsheet.slint:1961 ui/terminal/terminal.slint:1362
 #: ui/broadsheet/broadsheet.slint:1961 ui/terminal/terminal.slint:1362
 msgid "Choose a chat on the left"
 msgstr "左のリストからチャットを選択してください"
 
 #: ui/broadsheet/broadsheet.slint:1984 ui/terminal/terminal.slint:864
-#: ui/broadsheet/broadsheet.slint:1984 ui/terminal/terminal.slint:864
 msgid "typing…"
 msgstr "入力中…"
 
-#: ui/broadsheet/broadsheet.slint:2033 ui/terminal/terminal.slint:951
 #: ui/broadsheet/broadsheet.slint:2033 ui/terminal/terminal.slint:951
 msgid "{0} is typing…"
 msgstr "{0} が入力中…"
@@ -356,7 +321,8 @@ msgid ""
 "They will not be able to send you messages. You can unblock them from this "
 "menu."
 msgstr ""
-"相手はあなたにメッセージを送れなくなります。ブロックはこのメニューから解除できます。"
+"相手はあなたにメッセージを送れなくなります。ブロックはこのメニューから解除で"
+"きます。"
 
 #: ui/chat.slint:264
 msgid "You will stop getting its posts."
@@ -368,8 +334,7 @@ msgstr "このグループのメッセージは届かなくなります。"
 
 #: ui/chat.slint:265
 msgid "The chat and its messages go from your list."
-msgstr ""
-"このチャットとメッセージがリストから削除されます。"
+msgstr "このチャットとメッセージがリストから削除されます。"
 
 #: ui/chat.slint:267 ui/chat.slint:852
 msgid "Also delete for {0}"
@@ -425,7 +390,9 @@ msgid ""
 "Screenshots need Screen Recording in System Settings → Privacy & Security. "
 "If FinchGram is already in the list, turn it off and on again."
 msgstr ""
-"スクリーンショットには「システム設定 → プライバシーとセキュリティ」で画面収録を許可する必要があります。FinchGram がすでにリストにある場合は、いったんオフにしてからもう一度オンにしてください。"
+"スクリーンショットには「システム設定 → プライバシーとセキュリティ」で画面収録"
+"を許可する必要があります。FinchGram がすでにリストにある場合は、いったんオフ"
+"にしてからもう一度オンにしてください。"
 
 #: ui/chat.slint:288
 msgid "Open System Settings"
@@ -516,7 +483,7 @@ msgid "Disappears after it's opened."
 msgstr "開封後に消えます。"
 
 #: ui/chat.slint:318 ui/pages/settings.slint:918 ui/pages/settings.slint:929
-#: ui/chat.slint:318 ui/pages/settings.slint:918 ui/pages/settings.slint:929 ui/pages/settings.slint:1187
+#: ui/pages/settings.slint:1187
 msgid "Off"
 msgstr "オフ"
 
@@ -1150,23 +1117,19 @@ msgstr "より軽い Telegram クライアント"
 
 #: ui/pages/login.slint:21
 msgid "This phone number is not valid. Check the country and the number."
-msgstr ""
-"この電話番号は無効です。国と番号を確認してください。"
+msgstr "この電話番号は無効です。国と番号を確認してください。"
 
 #: ui/pages/login.slint:24
 msgid "This phone number is banned from Telegram."
-msgstr ""
-"この電話番号は Telegram から利用を禁止されています。"
+msgstr "この電話番号は Telegram から利用を禁止されています。"
 
 #: ui/pages/login.slint:27
 msgid "Wrong code. Check it and try again."
-msgstr ""
-"コードが正しくありません。確認してもう一度お試しください。"
+msgstr "コードが正しくありません。確認してもう一度お試しください。"
 
 #: ui/pages/login.slint:30 ui/pages/password.slint:18
 msgid "This code has expired. Go back and ask for a new one."
-msgstr ""
-"このコードは期限切れです。戻って新しいコードを取得してください。"
+msgstr "このコードは期限切れです。戻って新しいコードを取得してください。"
 
 #: ui/pages/login.slint:33 ui/pages/password.slint:11
 msgid "Incorrect password"
@@ -1182,13 +1145,13 @@ msgstr "名前を入力してください"
 
 #: ui/pages/login.slint:42 ui/pages/password.slint:33
 msgid "Too many tries. Wait a while, then try again."
-msgstr ""
-"試行回数が多すぎます。しばらく待ってからもう一度お試しください。"
+msgstr "試行回数が多すぎます。しばらく待ってからもう一度お試しください。"
 
 #: ui/pages/login.slint:116
 msgid "Same accounts and messages, with extra privacy and productivity tools."
 msgstr ""
-"アカウントもメッセージもそのままに、プライバシーと生産性のためのツールをプラス。"
+"アカウントもメッセージもそのままに、プライバシーと生産性のためのツールをプラ"
+"ス。"
 
 #: ui/pages/login.slint:128
 msgid "Auto-translate"
@@ -1223,7 +1186,8 @@ msgid ""
 "FinchGram is an unofficial client built on the Telegram API. It is not made "
 "by Telegram."
 msgstr ""
-"FinchGram は Telegram API を利用した非公式クライアントです。Telegram が開発したものではありません。"
+"FinchGram は Telegram API を利用した非公式クライアントです。Telegram が開発し"
+"たものではありません。"
 
 #: ui/pages/login.slint:245
 msgid "Country"
@@ -1238,13 +1202,11 @@ msgid "We'll send a code to your Telegram app"
 msgstr "Telegram アプリにコードを送信します"
 
 #: ui/pages/login.slint:385 ui/pages/profile.slint:342
-#: ui/pages/login.slint:385 ui/pages/profile.slint:342
 msgid "Phone number"
 msgstr "電話番号"
 
 #: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613
-#: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613 ui/pages/settings.slint:1405
-#: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613 ui/pages/settings.slint:1405 ui/pages/settings.slint:1602
+#: ui/pages/settings.slint:1405 ui/pages/settings.slint:1602
 msgid "Next"
 msgstr "次へ"
 
@@ -1259,7 +1221,8 @@ msgstr "スキャンしてサインイン"
 #: ui/pages/login.slint:429
 msgid "On your phone, open Telegram › Settings › Devices › Link Desktop Device"
 msgstr ""
-"スマートフォンの Telegram で「設定 › デバイス › デスクトップデバイスをリンク」を開いてください"
+"スマートフォンの Telegram で「設定 › デバイス › デスクトップデバイスをリン"
+"ク」を開いてください"
 
 #: ui/pages/login.slint:457
 msgid "Sign in with phone number"
@@ -1298,14 +1261,12 @@ msgid "Didn't get it? Resend"
 msgstr "届きませんか？再送信"
 
 #: ui/pages/login.slint:537 ui/pages/settings.slint:1186
-#: ui/pages/login.slint:537 ui/pages/settings.slint:1186
 msgid "Two-step verification"
 msgstr "2段階認証"
 
 #: ui/pages/login.slint:538
 msgid "This account has two-step verification on. Enter your password."
-msgstr ""
-"このアカウントは2段階認証が有効です。パスワードを入力してください。"
+msgstr "このアカウントは2段階認証が有効です。パスワードを入力してください。"
 
 #: ui/pages/login.slint:545 ui/pages/settings.slint:1387
 msgid "Password"
@@ -1338,8 +1299,7 @@ msgstr "新しいパスワードを設定"
 
 #: ui/pages/login.slint:644 ui/pages/settings.slint:1426
 msgid "You'll need this password when signing in on a new device."
-msgstr ""
-"新しいデバイスでサインインするとき、このパスワードが必要になります。"
+msgstr "新しいデバイスでサインインするとき、このパスワードが必要になります。"
 
 #: ui/pages/login.slint:645
 msgid "Save and sign in"
@@ -1355,7 +1315,9 @@ msgid ""
 "channels will be deleted. Your number stays the same. If the account was "
 "active recently, this takes 7 days."
 msgstr ""
-"残された方法はアカウントのリセットだけです。チャット、連絡先、グループ、チャンネルが削除されます。電話番号はそのままです。最近使用したアカウントの場合、リセットには7日かかります。"
+"残された方法はアカウントのリセットだけです。チャット、連絡先、グループ、チャ"
+"ンネルが削除されます。電話番号はそのままです。最近使用したアカウントの場合、"
+"リセットには7日かかります。"
 
 #: ui/pages/login.slint:667
 msgid "Reset account"
@@ -1370,7 +1332,8 @@ msgid ""
 "Your account will be reset on {0}. You can cancel from any signed-in device "
 "before then."
 msgstr ""
-"アカウントは {0} にリセットされます。それまでは、サインイン中のどのデバイスからでもキャンセルできます。"
+"アカウントは {0} にリセットされます。それまでは、サインイン中のどのデバイスか"
+"らでもキャンセルできます。"
 
 #: ui/pages/login.slint:710
 msgid "Create your account"
@@ -1378,10 +1341,11 @@ msgstr "アカウントを作成"
 
 #: ui/pages/login.slint:711
 msgid ""
-"This number isn't registered yet. Enter your name to sign up — you can add "
-"a photo later."
+"This number isn't registered yet. Enter your name to sign up — you can add a "
+"photo later."
 msgstr ""
-"この番号はまだ登録されていません。名前を入力して登録してください。写真は後から追加できます。"
+"この番号はまだ登録されていません。名前を入力して登録してください。写真は後か"
+"ら追加できます。"
 
 #: ui/pages/login.slint:744
 msgid "Add photo"
@@ -1401,8 +1365,7 @@ msgstr "登録"
 
 #: ui/pages/login.slint:785
 msgid "By signing up, you agree to the Telegram Terms of Service."
-msgstr ""
-"登録すると、Telegram の利用規約に同意したことになります。"
+msgstr "登録すると、Telegram の利用規約に同意したことになります。"
 
 #: ui/pages/login.slint:791
 msgid "View Terms of Service"
@@ -1414,8 +1377,7 @@ msgstr "ログイン用メールを追加"
 
 #: ui/pages/login.slint:814
 msgid "Telegram asks for an email address to send your login codes to."
-msgstr ""
-"Telegram はログインコードの送信先となるメールアドレスを求めています。"
+msgstr "Telegram はログインコードの送信先となるメールアドレスを求めています。"
 
 #: ui/pages/login.slint:1039
 msgid "Sign in"
@@ -1442,7 +1404,8 @@ msgid ""
 "Build FinchGram with FINCHGRAM_API_ID and FINCHGRAM_API_HASH set to your "
 "own, from my.telegram.org (see the README)."
 msgstr ""
-"my.telegram.org で取得した自分の値を FINCHGRAM_API_ID と FINCHGRAM_API_HASH に設定して FinchGram をビルドしてください（README を参照）。"
+"my.telegram.org で取得した自分の値を FINCHGRAM_API_ID と FINCHGRAM_API_HASH "
+"に設定して FinchGram をビルドしてください（README を参照）。"
 
 #: ui/pages/login.slint:1075
 msgid "Something went wrong"
@@ -1450,8 +1413,7 @@ msgstr "問題が発生しました"
 
 #: ui/pages/login.slint:1076
 msgid "FinchGram cannot reach Telegram through its TDLib."
-msgstr ""
-"FinchGram は内蔵の TDLib 経由で Telegram に接続できません。"
+msgstr "FinchGram は内蔵の TDLib 経由で Telegram に接続できません。"
 
 #: ui/pages/login.slint:1100
 msgid "Telegram asks for Premium to sign in"
@@ -1462,7 +1424,8 @@ msgid ""
 "This number can only sign in with Telegram Premium. Get it in Telegram's "
 "official app first, then sign in here."
 msgstr ""
-"この番号は Telegram Premium がないとサインインできません。先に Telegram の公式アプリで Premium を購入してから、ここでサインインしてください。"
+"この番号は Telegram Premium がないとサインインできません。先に Telegram の公"
+"式アプリで Premium を購入してから、ここでサインインしてください。"
 
 #: ui/pages/password.slint:15
 msgid "Incorrect code"
@@ -1501,7 +1464,8 @@ msgid ""
 "The hint is shown on the sign-in screen to anyone who knows your number. "
 "Don't write the password itself."
 msgstr ""
-"ヒントは、あなたの番号を知っている人ならだれでもサインイン画面で見ることができます。パスワードそのものは書かないでください。"
+"ヒントは、あなたの番号を知っている人ならだれでもサインイン画面で見ることがで"
+"きます。パスワードそのものは書かないでください。"
 
 #: ui/pages/profile.slint:110
 msgid "Current"
@@ -1524,7 +1488,8 @@ msgid ""
 "FinchGram forgets this account on this Mac. Your chats stay on Telegram; "
 "sign in again to see them."
 msgstr ""
-"この Mac 上の FinchGram からこのアカウントが削除されます。チャットは Telegram に残っているので、もう一度サインインすれば表示されます。"
+"この Mac 上の FinchGram からこのアカウントが削除されます。チャットは "
+"Telegram に残っているので、もう一度サインインすれば表示されます。"
 
 #: ui/pages/profile.slint:252
 msgid "Edit profile"
@@ -1540,15 +1505,13 @@ msgstr "ユーザー名"
 
 #: ui/pages/profile.slint:320
 msgid "Without a username, people find you by your phone number."
-msgstr ""
-"ユーザー名がないと、ほかの人は電話番号でしかあなたを見つけられません。"
+msgstr "ユーザー名がないと、ほかの人は電話番号でしかあなたを見つけられません。"
 
 #: ui/pages/profile.slint:328
 msgid "Bio"
 msgstr "自己紹介"
 
 #: ui/pages/profile.slint:384 ui/pages/settings.slint:1429
-#: ui/pages/profile.slint:384 ui/pages/settings.slint:1429 ui/shot.slint:129
 msgid "Save"
 msgstr "保存"
 
@@ -1568,7 +1531,6 @@ msgstr "一般"
 msgid "Notifications & sounds"
 msgstr "通知とサウンド"
 
-#: ui/pages/settings.slint:118 ui/pages/settings.slint:1707
 #: ui/pages/settings.slint:118 ui/pages/settings.slint:1707
 msgid "Privacy & security"
 msgstr "プライバシーとセキュリティ"
@@ -1626,7 +1588,7 @@ msgid "The update failed"
 msgstr "アップデートに失敗しました"
 
 #: ui/pages/settings.slint:503 ui/pages/settings.slint:519
-#: ui/pages/settings.slint:503 ui/pages/settings.slint:519 ui/pages/settings.slint:1027
+#: ui/pages/settings.slint:1027
 msgid "Version {0}"
 msgstr "バージョン {0}"
 
@@ -1647,7 +1609,8 @@ msgid ""
 "Workbench is an editor's layout, Broadsheet a newspaper's, Terminal a "
 "console's. The same chats and settings in all three."
 msgstr ""
-"ワークベンチはエディタ風、ブロードシートは新聞風、ターミナルはコンソール風のレイアウトです。チャットと設定は3つとも共通です。"
+"ワークベンチはエディタ風、ブロードシートは新聞風、ターミナルはコンソール風の"
+"レイアウトです。チャットと設定は3つとも共通です。"
 
 #: ui/pages/settings.slint:589
 msgid "Light and dark"
@@ -1728,8 +1691,7 @@ msgstr "スクリーンショット"
 
 #: ui/pages/settings.slint:821
 msgid "Hide the FinchGram window while taking a screenshot"
-msgstr ""
-"スクリーンショットの撮影中は FinchGram のウインドウを隠す"
+msgstr "スクリーンショットの撮影中は FinchGram のウインドウを隠す"
 
 #: ui/pages/settings.slint:830
 msgid "Also when FinchGram is in the background"
@@ -1761,8 +1723,7 @@ msgstr "他のアカウントからの通知"
 
 #: ui/pages/settings.slint:902
 msgid "When off, only the current account notifies you"
-msgstr ""
-"オフにすると、現在のアカウントの通知だけが届きます"
+msgstr "オフにすると、現在のアカウントの通知だけが届きます"
 
 #: ui/pages/settings.slint:910
 msgid "By chat type"
@@ -1773,7 +1734,7 @@ msgid "Private chats"
 msgstr "個人チャット"
 
 #: ui/pages/settings.slint:918 ui/pages/settings.slint:929
-#: ui/pages/settings.slint:918 ui/pages/settings.slint:929 ui/pages/settings.slint:1187
+#: ui/pages/settings.slint:1187
 msgid "On"
 msgstr "オン"
 
@@ -1783,8 +1744,7 @@ msgstr "グループ"
 
 #: ui/pages/settings.slint:956
 msgid "Changes the interface only — messages aren't translated"
-msgstr ""
-"画面の表示言語だけが変わります。メッセージは翻訳されません"
+msgstr "画面の表示言語だけが変わります。メッセージは翻訳されません"
 
 #: ui/pages/settings.slint:1036
 msgid "Updates"
@@ -1826,8 +1786,7 @@ msgstr "グループへの招待"
 
 #: ui/pages/settings.slint:1173
 msgid "Stored on Telegram servers and synced across all your apps."
-msgstr ""
-"Telegram のサーバーに保存され、すべてのアプリで同期されます。"
+msgstr "Telegram のサーバーに保存され、すべてのアプリで同期されます。"
 
 #: ui/pages/settings.slint:1181
 msgid "Security"
@@ -1862,12 +1821,15 @@ msgid ""
 "When you sign in on a new device, you'll need this password in addition to "
 "the code."
 msgstr ""
-"新しいデバイスでサインインするときは、コードに加えてこのパスワードが必要になります。"
+"新しいデバイスでサインインするときは、コードに加えてこのパスワードが必要にな"
+"ります。"
 
 #: ui/pages/settings.slint:1258
-msgid "Turn it on to require an extra password when signing in on a new device."
+msgid ""
+"Turn it on to require an extra password when signing in on a new device."
 msgstr ""
-"オンにすると、新しいデバイスでのサインイン時に追加のパスワードが必要になります。"
+"オンにすると、新しいデバイスでのサインイン時に追加のパスワードが必要になりま"
+"す。"
 
 #: ui/pages/settings.slint:1287
 msgid "Password will reset on {0}"
@@ -1876,7 +1838,8 @@ msgstr "パスワードは {0} にリセットされます"
 #: ui/pages/settings.slint:1293
 msgid "Come back then to set a new password. If this wasn't you, cancel now."
 msgstr ""
-"その日になったら、ここで新しいパスワードを設定してください。心当たりがない場合は、今すぐキャンセルしてください。"
+"その日になったら、ここで新しいパスワードを設定してください。心当たりがない場"
+"合は、今すぐキャンセルしてください。"
 
 #: ui/pages/settings.slint:1302
 msgid "Cancel reset"
@@ -1908,8 +1871,7 @@ msgstr "現在のパスワードを入力"
 
 #: ui/pages/settings.slint:1379
 msgid "Confirm it's you before changing two-step verification settings."
-msgstr ""
-"2段階認証の設定を変更する前に、本人確認を行います。"
+msgstr "2段階認証の設定を変更する前に、本人確認を行います。"
 
 #: ui/pages/settings.slint:1443
 msgid "Change password hint"
@@ -1922,8 +1884,7 @@ msgstr "復旧用メールを変更"
 #: ui/pages/settings.slint:1481
 msgid ""
 "If you forget your password, a recovery code will be sent to this address."
-msgstr ""
-"パスワードを忘れた場合、このアドレスに復旧コードが送信されます。"
+msgstr "パスワードを忘れた場合、このアドレスに復旧コードが送信されます。"
 
 #: ui/pages/settings.slint:1489
 msgid "Email address"
@@ -1948,7 +1909,8 @@ msgstr "2段階認証をオフにしますか？"
 #: ui/pages/settings.slint:1560
 msgid "Anyone who gets your sign-in code will be able to access your account."
 msgstr ""
-"サインインコードを手に入れた人はだれでも、あなたのアカウントにアクセスできるようになります。"
+"サインインコードを手に入れた人はだれでも、あなたのアカウントにアクセスできる"
+"ようになります。"
 
 #: ui/pages/settings.slint:1567
 msgid "Turn off"
@@ -1963,7 +1925,8 @@ msgid ""
 "If you can't get the recovery email, you can request a reset. To protect "
 "your account it takes 7 days, and you can cancel any time before then."
 msgstr ""
-"復旧用メールを受け取れない場合は、リセットを申請できます。アカウント保護のため7日かかり、それまではいつでもキャンセルできます。"
+"復旧用メールを受け取れない場合は、リセットを申請できます。アカウント保護のた"
+"め7日かかり、それまではいつでもキャンセルできます。"
 
 #: ui/pages/settings.slint:1638
 msgid "Request reset"
@@ -1980,106 +1943,6 @@ msgstr "パスワードのヒントを更新しました"
 #: ui/pages/settings.slint:1735
 msgid "Recovery email updated"
 msgstr "復旧用メールを更新しました"
-
-#: ui/shot.slint:112
-msgid "Rectangle"
-msgstr "長方形"
-
-#: ui/shot.slint:113
-msgid "Ellipse"
-msgstr "楕円"
-
-#: ui/shot.slint:114
-msgid "Arrow"
-msgstr "矢印"
-
-#: ui/shot.slint:115
-msgid "Pen"
-msgstr "ペン"
-
-#: ui/shot.slint:116
-msgid "Text"
-msgstr "テキスト"
-
-#: ui/shot.slint:117
-msgid "Mosaic"
-msgstr "モザイク"
-
-#: ui/shot.slint:121
-msgid "⇧ Square"
-msgstr "⇧ 正方形"
-
-#: ui/shot.slint:122
-msgid "⇧ Circle"
-msgstr "⇧ 正円"
-
-#: ui/shot.slint:123
-msgid "⇧ 45°"
-msgstr "⇧ 45°"
-
-#: ui/shot.slint:126
-msgid "Undo"
-msgstr "取り消す"
-
-#: ui/shot.slint:127
-msgid "Redo"
-msgstr "やり直す"
-
-#: ui/shot.slint:128
-msgid "Copy"
-msgstr "コピー"
-
-#: ui/shot.slint:131
-msgid "Done"
-msgstr "完了"
-
-#: ui/shot.slint:133
-msgid "Small"
-msgstr "小"
-
-#: ui/shot.slint:134
-msgid "Large"
-msgstr "大"
-
-#: ui/shot.slint:135
-msgid "Medium"
-msgstr "中"
-
-#: ui/shot.slint:137
-msgid "Line width"
-msgstr "線の太さ"
-
-#: ui/shot.slint:138
-msgid "Text size"
-msgstr "文字サイズ"
-
-#: ui/shot.slint:139
-msgid "Brush size"
-msgstr "ブラシサイズ"
-
-#: ui/shot.slint:141
-msgid "Red"
-msgstr "赤"
-
-#: ui/shot.slint:142
-msgid "White"
-msgstr "白"
-
-#: ui/shot.slint:143
-msgid "Black"
-msgstr "黒"
-
-#: ui/shot.slint:144
-msgid "Yellow"
-msgstr "黄"
-
-#: ui/shot.slint:145
-msgid "Blue"
-msgstr "青"
-
-#: ui/shot.slint:146
-msgid "Green"
-msgstr "緑"
 
 #: ui/state.slint:53
 msgid "Open FinchGram"
@@ -2236,8 +2099,7 @@ msgstr "Premium ユーザーは非表示にできます"
 
 #: ui/workbench/conversation.slint:953
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
-msgstr ""
-"Telegram のスポンサーメッセージ · FinchGram はそのまま表示します"
+msgstr "Telegram のスポンサーメッセージ · FinchGram はそのまま表示します"
 
 #: ui/workbench/conversation.slint:1410
 msgid "Send to {0}"
@@ -2269,8 +2131,7 @@ msgstr "このアカウントにはチャンネルがありません。"
 
 #: ui/workbench/sidebar.slint:466
 msgid "Channels open in reading mode: long posts, set for reading."
-msgstr ""
-"チャンネルはリーダーモードで開きます。長い投稿を読むための表示です。"
+msgstr "チャンネルはリーダーモードで開きます。長い投稿を読むための表示です。"
 
 #: ui/workbench/workbench.slint:39
 msgid "Search chats"

@@ -499,6 +499,7 @@ fn open(ui: slint::Weak<MainWindow>, monitors: Vec<Monitor>, captured: Vec<Captu
         return;
     }
     let others = platform::windows_on_screen();
+    platform::prepare_overlays(main.window());
     let theme = main.global::<AppState>().get_theme();
     let appearance = main.global::<AppState>().get_appearance();
     let mut windows = Vec::new();
@@ -534,11 +535,13 @@ fn open(ui: slint::Weak<MainWindow>, monitors: Vec<Monitor>, captured: Vec<Captu
         shot.on_done(|| with_session(|session| session.done()));
         shot.on_text_done(|text| with_session(|session| session.text_done(&text)));
         window.window().set_position(slint::PhysicalPosition::new(monitor.position.0, monitor.position.1));
-        window.window().set_size(slint::PhysicalSize::new(monitor.size.0, monitor.size.1));
+        // In points, not pixels: Slint lays the first frame out before it knows the display's
+        // scale, and in pixels that frame would be drawn twice too large, then snap.
+        window.window().set_size(slint::LogicalSize::new(display.size.0, display.size.1));
         {
             use slint::winit_030::{EventResult, WinitWindowAccessor};
             // Slint makes the window when the event loop next runs, not here: it is raised at
-            // its first event, as soon as it exists.
+            // its first event, as soon as it exists (platform::raise_overlay).
             let mut raised = false;
             window.window().on_winit_window_event(move |window, _| {
                 if !raised {

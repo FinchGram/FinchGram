@@ -106,89 +106,20 @@ export global Shot {
     callback text-done(string);                    // the text tool's words, "" for none
 }
 
-// What the overlay says (the design's copy list).
+// The overlay's palette (the design's six colours).
 export global ShotWords {
-    public pure function tool(tool: ShotTool) -> string {
-        if tool == ShotTool.rect { return @tr("Rectangle"); }
-        if tool == ShotTool.ellipse { return @tr("Ellipse"); }
-        if tool == ShotTool.arrow { return @tr("Arrow"); }
-        if tool == ShotTool.pen { return @tr("Pen"); }
-        if tool == ShotTool.text { return @tr("Text"); }
-        if tool == ShotTool.mosaic { return @tr("Mosaic"); }
-        return "";
-    }
-    public pure function tool-key(tool: ShotTool) -> string {
-        if tool == ShotTool.rect { return @tr("⇧ Square"); }
-        if tool == ShotTool.ellipse { return @tr("⇧ Circle"); }
-        if tool == ShotTool.arrow { return @tr("⇧ 45°"); }
-        return "";
-    }
-    public pure function undo() -> string { return @tr("Undo"); }
-    public pure function redo() -> string { return @tr("Redo"); }
-    public pure function copy() -> string { return @tr("Copy"); }
-    public pure function save() -> string { return @tr("Save"); }
-    public pure function cancel() -> string { return @tr("Cancel"); }
-    public pure function done() -> string { return @tr("Done"); }
-    public pure function size-name(size: int) -> string {
-        if size == 0 { return @tr("Small"); }
-        if size == 2 { return @tr("Large"); }
-        return @tr("Medium");
-    }
-    public pure function line-width() -> string { return @tr("Line width"); }
-    public pure function text-size() -> string { return @tr("Text size"); }
-    public pure function brush-size() -> string { return @tr("Brush size"); }
-    public pure function color-name(index: int) -> string {
-        if index == 0 { return @tr("Red"); }
-        if index == 1 { return @tr("White"); }
-        if index == 2 { return @tr("Black"); }
-        if index == 3 { return @tr("Yellow"); }
-        if index == 4 { return @tr("Blue"); }
-        return @tr("Green");
-    }
     // The six colours, and the halo each line gets: light colours a dark one, dark colours a light one.
     public pure function color(index: int) -> color {
         return [#F2352B, #FFFFFF, #16171A, #FFCC00, #1F7BFF, #1FA855][clamp(index, 0, 5)];
     }
 }
 
-// A small label over the toolbar: what a button does, and its key.
-component ToolTip inherits Rectangle {
-    in property <string> text;
-    in property <string> keys;
-    width: words.preferred-width + 18px;
-    height: words.preferred-height + 10px;
-    border-radius: Look.terminal ? 2px : 6px;
-    background: Look.terminal ? Look.side : Look.text;
-    border-width: 1px;
-    border-color: #ffffff38;
-    drop-shadow-blur: 20px;
-    drop-shadow-offset-y: 6px;
-    drop-shadow-color: #0000004d;
-    words := HorizontalLayout {
-        spacing: 8px;
-        Text {
-            text: root.text;
-            color: Look.terminal ? Look.text : Look.bg;
-            font-family: Look.font;
-            font-size: 12px;
-        }
-        if root.keys != "": Text {
-            text: root.keys;
-            color: Look.terminal ? Look.text : Look.bg;
-            font-family: Look.font;
-            font-size: 12px;
-            opacity: 0.7;
-        }
-    }
-}
-
 // A button of the toolbar: an icon (a character in Terminal), lit when it is the tool in use, or
-// in the accent colour when it is the main action (Done: a check mark, no word).
+// in the accent colour when it is the main action (Done: a check mark, no word), and shaded under
+// the pointer.
 component ToolButton inherits Rectangle {
     in property <string> icon;
     in property <string> sign;                // Terminal's character
-    in property <string> tip;
-    in property <string> keys;
     in property <bool> on;
     in property <bool> accent;
     in property <bool> enabled: true;
@@ -221,12 +152,6 @@ component ToolButton inherits Rectangle {
             root.activated();
         }
     }
-    if touch.has-hover: ToolTip {
-        x: (parent.width - self.width) / 2;
-        y: -self.height - 9px;
-        text: root.tip;
-        keys: root.keys;
-    }
 }
 
 component Separator inherits Rectangle {
@@ -246,12 +171,11 @@ component SizeChoice inherits Rectangle {
     in property <bool> square;
     in property <bool> letter;
     in property <length> letter-size;
-    in property <string> tip;
     property <bool> on: Shot.size == index;
     width: 26px;
     height: 26px;
     border-radius: Look.workbench ? 6px : Look.broadsheet ? 2px : 0;
-    background: root.on && !Look.terminal ? Look.sel : transparent;
+    background: root.on && !Look.terminal ? Look.sel : touch.has-hover ? Look.sel.transparentize(0.5) : transparent;
     border-width: root.on && Look.terminal ? 1px : 0;
     border-color: Look.accent;
     if !root.letter: Rectangle {
@@ -272,11 +196,6 @@ component SizeChoice inherits Rectangle {
             Shot.choose-size(root.index);
         }
     }
-    if touch.has-hover: ToolTip {
-        x: (parent.width - self.width) / 2;
-        y: -self.height - 9px;
-        text: root.tip;
-    }
 }
 
 component Swatch inherits Rectangle {
@@ -285,6 +204,7 @@ component Swatch inherits Rectangle {
     width: 22px;
     height: 22px;
     border-radius: Look.workbench ? 11px : Look.broadsheet ? 2px : 0;
+    background: touch.has-hover ? Look.sel.transparentize(0.5) : transparent;
     border-width: root.on ? 1.5px : 0;
     border-color: Look.text;
     Rectangle {
@@ -300,11 +220,6 @@ component Swatch inherits Rectangle {
         clicked => {
             Shot.choose-color(root.index);
         }
-    }
-    if touch.has-hover: ToolTip {
-        x: (parent.width - self.width) / 2;
-        y: -self.height - 9px;
-        text: ShotWords.color-name(root.index);
     }
 }
 
@@ -335,7 +250,7 @@ component HaloText {
 
 export component ShotWindow inherits Window {
     no-frame: true;
-    title: "FinchGram Screenshot";
+    title: "FinchGram Screenshot";   // platform::OVERLAY_TITLE: macOS knows the overlay's windows by it
     background: #000000;
     default-font-family: Look.font;
 
@@ -746,8 +661,6 @@ export component ShotWindow inherits Window {
                         : tool == ShotTool.pen ? "pencil-simple" : tool == ShotTool.text ? "text-t" : "checkerboard";
                     sign: tool == ShotTool.rect ? "□" : tool == ShotTool.ellipse ? "○" : tool == ShotTool.arrow ? "↗"
                         : tool == ShotTool.pen ? "~" : tool == ShotTool.text ? "T" : "▦";
-                    tip: ShotWords.tool(tool);
-                    keys: ShotWords.tool-key(tool);
                     on: Shot.tool == tool;
                     activated => {
                         Shot.choose-tool(Shot.tool == tool ? ShotTool.none : tool);
@@ -758,8 +671,6 @@ export component ShotWindow inherits Window {
                     size: root.btn;
                     icon: "arrow-u-up-left";
                     sign: "↶";
-                    tip: ShotWords.undo();
-                    keys: "⌘Z";
                     enabled: Shot.can-undo;
                     activated => {
                         Shot.undo();
@@ -769,8 +680,6 @@ export component ShotWindow inherits Window {
                     size: root.btn;
                     icon: "arrow-u-up-right";
                     sign: "↷";
-                    tip: ShotWords.redo();
-                    keys: "⌘⇧Z";
                     enabled: Shot.can-redo;
                     activated => {
                         Shot.redo();
@@ -781,8 +690,6 @@ export component ShotWindow inherits Window {
                     size: root.btn;
                     icon: "copy";
                     sign: "▣";
-                    tip: ShotWords.copy();
-                    keys: "⌘C";
                     activated => {
                         Shot.copy();
                     }
@@ -791,8 +698,6 @@ export component ShotWindow inherits Window {
                     size: root.btn;
                     icon: "download-simple";
                     sign: "⤓";
-                    tip: ShotWords.save();
-                    keys: "⌘S";
                     activated => {
                         Shot.save();
                     }
@@ -801,8 +706,6 @@ export component ShotWindow inherits Window {
                     size: root.btn;
                     icon: "x";
                     sign: "✕";
-                    tip: ShotWords.cancel();
-                    keys: "Esc";
                     activated => {
                         Shot.cancel();
                     }
@@ -813,8 +716,6 @@ export component ShotWindow inherits Window {
                     icon: "check";
                     sign: "✓";
                     accent: true;
-                    tip: ShotWords.done();
-                    keys: "↩ · double-click";
                     activated => {
                         Shot.done();
                     }
@@ -855,8 +756,6 @@ export component ShotWindow inherits Window {
                     square: Shot.tool == ShotTool.mosaic;
                     dot: Shot.tool == ShotTool.mosaic ? [5px, 8px, 12px][index] : [4px, 7px, 11px][index];
                     letter-size: [11px, 14px, 18px][index];
-                    tip: (Shot.tool == ShotTool.text ? ShotWords.text-size() : Shot.tool == ShotTool.mosaic ? ShotWords.brush-size() : ShotWords.line-width())
-                        + " · " + ShotWords.size-name(index);
                 }
                 if Shot.tool != ShotTool.mosaic: Separator { tall: 16px; }
                 if Shot.tool != ShotTool.mosaic: HorizontalLayout {
