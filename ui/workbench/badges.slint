@@ -1,0 +1,46 @@
+// Marks of a chat's unread state in the Workbench theme, shared by the side bar's lines and the
+// Unread page.
+import { WorkbenchPalette as P } from "palette.slint";
+
+// How many messages are unread; a muted chat counts quietly.
+export component UnreadBadge inherits Rectangle {
+    in property <int> count;
+    in property <bool> muted;
+    height: 17px;
+    width: max(17px, label.preferred-width + 12px);
+    border-radius: 8.5px;
+    background: muted ? P.chrome : P.accent;
+
+    label := Text {
+        text: root.count > 999 ? "999+" : "" + root.count;
+        color: root.muted ? P.muted : P.on-accent;
+        font-size: 11px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// Someone mentioned us in the chat.
+export component MentionBadge inherits Rectangle {
+    width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    background: P.accent;
+    Text {
+        text: "@";
+        color: P.on-accent;
+        font-size: 11px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// The chat was marked unread by hand: it has no unread messages to count.
+export component UnreadDot inherits Rectangle {
+    width: 8px;
+    height: 8px;
+    border-radius: 4px;
+    background: P.accent;
+}

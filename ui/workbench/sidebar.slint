@@ -2,33 +2,15 @@
 // channels, the bots. Which one shows is chosen in the activity bar (workbench.slint).
 import { ListView } from "std-widgets.slint";
 import { AppState, Connection, Theme } from "../state.slint";
-import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind } from "../telegram.slint";
+import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind, Unread } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, ListEdge, Avatar } from "../widgets.slint";
 import { ChatIcons, ChatMenuWords } from "../chat.slint";
 import { MenuEntry } from "conversation.slint";
+import { UnreadBadge, MentionBadge, UnreadDot } from "badges.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 
 export enum WorkbenchView { chats, channels, bots, filters, scheduled }
-
-// An unread count: accent, or grey for a muted chat.
-export component UnreadBadge inherits Rectangle {
-    in property <int> count;
-    in property <bool> muted;
-    height: 17px;
-    width: max(17px, label.preferred-width + 12px);
-    border-radius: 8.5px;
-    background: muted ? P.chrome : P.accent;
-
-    label := Text {
-        text: root.count > 999 ? "999+" : "" + root.count;
-        color: root.muted ? P.muted : P.on-accent;
-        font-size: 11px;
-        font-weight: 600;
-        horizontal-alignment: center;
-        vertical-alignment: center;
-    }
-}
 
 // The small uppercase heading above the side bar's list.
 component SideHeading {
@@ -101,10 +83,12 @@ component TreeLine inherits Rectangle {
     in property <TreeRow> item;
     callback menu(length, length);          // a right click, where it is in the window
     property <bool> open: !item.header && item.chat.id == Conversation.chat-id;
-    property <bool> unread: item.chat.unread > 0 || item.chat.mention;
+    property <bool> unread: item.chat.unread > 0 || item.chat.mention || item.chat.marked;
     height: item.header ? 32px : 28px;
     background: open ? P.sel : touch.has-hover && !item.header ? P.chrome.transparentize(0.4) : transparent;
 
+    // A folder's header folds it; the Unread group's folds at its caret, and its name brings the
+    // Unread page to the front.
     if root.item.header: HorizontalLayout {
         padding-left: 14px;
         padding-right: 14px;
@@ -117,11 +101,18 @@ component TreeLine inherits Rectangle {
                 name: root.item.expanded ? "caret-down" : "caret-right";
                 size: 11px;
                 color: P.muted;
+                if root.item.unread: TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Chats.toggle-folder(-1);
+                    }
+                }
             }
         }
         Text {
-            text: root.item.folder < Chats.folders.length ? (Chats.folders[root.item.folder].id == 0 ? @tr("All chats") : Chats.folders[root.item.folder].name) : "";
-            color: P.muted;
+            text: root.item.unread ? @tr("Unread")
+                : root.item.folder < Chats.folders.length ? (Chats.folders[root.item.folder].id == 0 ? @tr("All chats") : Chats.folders[root.item.folder].name) : "";
+            color: root.item.unread && Unread.shown ? P.accent-ink : P.muted;
             font-size: 12px;
             font-weight: 600;
             vertical-alignment: center;
@@ -157,19 +148,29 @@ component TreeLine inherits Rectangle {
             vertical-alignment: center;
             overflow: elide;
         }
-        if root.unread: VerticalLayout {
+        if root.item.chat.mention: VerticalLayout {
+            alignment: center;
+            MentionBadge { }
+        }
+        if root.item.chat.unread > 0: VerticalLayout {
             alignment: center;
             UnreadBadge {
                 count: root.item.chat.unread;
                 muted: root.item.chat.muted;
             }
         }
+        if root.item.chat.marked && root.item.chat.unread == 0: VerticalLayout {
+            alignment: center;
+            UnreadDot { }
+        }
     }
 
     touch := TouchArea {
         mouse-cursor: pointer;
         clicked => {
-            if root.item.header {
+            if root.item.header && root.item.unread {
+                Unread.show();
+            } else if root.item.header {
                 Chats.toggle-folder(root.item.folder);
             } else {
                 Conversation.open(root.item.chat.id);

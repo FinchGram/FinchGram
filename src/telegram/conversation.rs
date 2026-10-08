@@ -161,10 +161,35 @@ fn open_chat() -> Option<i64> {
 
 /// Bring `chat_id` to the front: its tab (opened if needed), its messages.
 pub fn open(chat_id: i64) {
+    open_then(chat_id, None);
+}
+
+/// Bring `chat_id` to the front, scrolled to `message_id` (a line of the Unread page) once its
+/// messages are here.
+pub fn open_at(chat_id: i64, message_id: i64) {
+    open_then(chat_id, Some(Box::new(move || actions::jump(message_id))));
+}
+
+/// Bring `chat_id` or the Unread page to the front: a tab that comes to the front when another
+/// closes.
+fn bring_front(id: i64) {
+    if id == store::UNREAD_TAB {
+        super::unread::show();
+    } else {
+        open(id);
+    }
+}
+
+/// Open `chat_id`, then `then` once its rows are there: with its first messages, or at once when
+/// they are here already.
+fn open_then(chat_id: i64, then: Option<Box<dyn FnOnce()>>) {
     let Some((previous, needs_history, kind)) = store::with(|store| {
         let chat = store.chats.get(&chat_id)?;
         let kind = chat.kind;
+        // Unread now, it stays in the Unread group while it is open (store.rs).
+        let unread = store.is_unread(chat);
         let previous = store.open.replace(chat_id);
+        store.opened_unread = unread;
         if !store.tabs.contains(&chat_id) {
             store.tabs.push(chat_id);
             // Only the front chat is open in TDLib, so the oldest tab just goes.
@@ -193,19 +218,21 @@ pub fn open(chat_id: i64) {
 
     if previous != Some(chat_id) {
         actions::chat_changed(Some(chat_id));
-        if let Some(previous) = previous {
+        if let Some(previous) = previous.filter(|previous| *previous != store::UNREAD_TAB) {
             send(json!({ "@type": "closeChat", "chat_id": previous }), |_| {});
         }
         send(json!({ "@type": "openChat", "chat_id": chat_id }), |answer| log_error("open a chat", answer));
     }
 
+    let mut then_now = None;
     if needs_history {
         store::with(|store| {
             store.histories.insert(chat_id, History { has_older: true, ..History::default() });
         });
-        load_history(chat_id, 0, None);
+        load_history(chat_id, 0, then);
     } else {
         view_newest(chat_id);
+        then_now = then;
     }
     if let ChatType::Supergroup { supergroup_id, is_channel } = kind {
         // The member count, which the supergroup itself mostly leaves at 0.
@@ -222,6 +249,9 @@ pub fn open(chat_id: i64) {
         }
     }
     store::refresh();
+    if let Some(then) = then_now {
+        then();
+    }
 }
 
 /// Close a tab. When it was the front one, the tab next to it comes to the front.
@@ -248,11 +278,11 @@ pub(super) fn close(chat_id: i64) {
         }
     })
     .unwrap_or(Then::Nothing);
-    if !matches!(then, Then::Nothing) {
+    if !matches!(then, Then::Nothing) && chat_id != store::UNREAD_TAB {
         send(json!({ "@type": "closeChat", "chat_id": chat_id }), |_| {});
     }
     match then {
-        Then::Open(next) => open(next),
+        Then::Open(next) => bring_front(next),
         Then::ShowNone => {
             actions::chat_changed(None);
             store::refresh();
@@ -280,7 +310,7 @@ fn close_others(keep: i64) {
     .flatten();
     match front {
         Some(Some(front_chat)) if front_chat == keep => store::refresh(),
-        Some(_) => open(keep),
+        Some(_) => bring_front(keep),
         None => {}
     }
 }

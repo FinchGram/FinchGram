@@ -30,15 +30,30 @@ pub fn connect(ui: &MainWindow) {
     chats.on_show_folder(|index| {
         store::with(|store| {
             store.shown_folder = usize::try_from(index).unwrap_or(0);
+            store.shown_unread = false;
             store.dirty.chats = true;
         });
         store::refresh();
     });
+    // The Unread tab: the list holds the unread chats, and the Unread page comes to the front.
+    chats.on_show_unread(|| {
+        store::with(|store| {
+            store.shown_unread = true;
+            store.dirty.chats = true;
+        });
+        super::unread::show();
+    });
     chats.on_toggle_folder(|index| {
         store::with(|store| {
-            let index = usize::try_from(index).unwrap_or(0);
-            let id = index.checked_sub(1).and_then(|folder| store.folders.get(folder)).map_or(0, |folder| folder.id);
-            let expanded = store.expanded.get(&id).copied().unwrap_or(index > 0 || store.folders.is_empty());
+            let (id, open_at_first) = match usize::try_from(index) {
+                Ok(index) => {
+                    let id = index.checked_sub(1).and_then(|folder| store.folders.get(folder)).map_or(0, |folder| folder.id);
+                    (id, index > 0 || store.folders.is_empty())
+                }
+                // The Unread group, open until folded.
+                Err(_) => (store::UNREAD_GROUP, true),
+            };
+            let expanded = store.expanded.get(&id).copied().unwrap_or(open_at_first);
             store.expanded.insert(id, !expanded);
             store.dirty.chats = true;
         });

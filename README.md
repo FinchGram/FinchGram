@@ -17,7 +17,8 @@ client, not made by Telegram.
 
 - **Chats.** Log in with your phone number, the code and your two-step password, or by scanning a
   QR code; sign up for a new account. The chat list with Telegram's folders, pinned chats, unread
-  counts and mentions; a search box (⌘K); a view of your channels and one of your bots.
+  counts and mentions, and the unread chats gathered at the top; an Unread page that lists their
+  newest unread messages; a search box (⌘K); a view of your channels and one of your bots.
 - **Messages.** Text with its formatting (bold, italic, code, links), replies and forwards, photos,
   videos, GIFs, stickers, files, and a card for a link's preview. A right click on a message gives
   its menu: reply, edit, copy, copy its link, forward, report, delete, or choose several. Photos

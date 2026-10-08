@@ -3,8 +3,9 @@
 import { AppState, Screenshot } from "../state.slint";
 import {
     Conversation, MessageRow, RowKind, ChatKind, Content, Account, Viewer, LinkPreview, ReplyQuote, Actions, ComposeBar,
-    ActionNotice, Tab, Chats, Attachments,
+    ActionNotice, Tab, Chats, Attachments, Unread,
 } from "../telegram.slint";
+import { WorkbenchUnread } from "unread.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Paragraph, Avatar } from "../widgets.slint";
 import {
@@ -17,15 +18,21 @@ component TabItem inherits Rectangle {
     in property <string> id;
     in property <string> title;
     in property <ChatKind> kind;
+    in property <bool> index;               // the Unread page's tab
+    in property <int> count;                // its unread messages
     callback menu(length, length);          // a right click, where it is in the window
-    property <bool> active: id == Conversation.chat-id;
+    property <bool> active: index ? Unread.shown : id == Conversation.chat-id;
     width: row.preferred-width;
     background: active ? P.tab-active : touch.has-hover ? P.tab-active.transparentize(0.5) : transparent;
 
     touch := TouchArea {
         mouse-cursor: pointer;
         clicked => {
-            Conversation.open(root.id);
+            if root.index {
+                Unread.show();
+            } else {
+                Conversation.open(root.id);
+            }
         }
         pointer-event(event) => {
             if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
@@ -41,7 +48,7 @@ component TabItem inherits Rectangle {
         VerticalLayout {
             alignment: center;
             Icon {
-                name: ChatIcons.kind(root.kind);
+                name: root.index ? "tray" : ChatIcons.kind(root.kind);
                 size: 14px;
                 color: root.active ? P.text : P.muted;
             }
@@ -53,6 +60,12 @@ component TabItem inherits Rectangle {
             vertical-alignment: center;
             max-width: 180px;
             overflow: elide;
+        }
+        if root.index && root.count > 0: Text {
+            text: Fmt.count(root.count);
+            color: P.faint;
+            font-size: 11px;
+            vertical-alignment: center;
         }
         VerticalLayout {
             alignment: center;
@@ -182,6 +195,8 @@ component TabBar inherits Rectangle {
                     id: tab.id;
                     title: tab.title;
                     kind: tab.kind;
+                    index: tab.index;
+                    count: tab.count;
                     menu(left, top) => {
                         root.show-tab-menu(tab, left, top);
                     }
@@ -1616,7 +1631,10 @@ export component WorkbenchMain inherits Rectangle {
         if Conversation.chat-id != "": Pane {
             vertical-stretch: 1;
         }
-        if Conversation.chat-id == "": Rectangle {
+        if Conversation.chat-id == "" && Unread.shown: WorkbenchUnread {
+            vertical-stretch: 1;
+        }
+        if Conversation.chat-id == "" && !Unread.shown: Rectangle {
             vertical-stretch: 1;
             Text {
                 text: @tr("Choose a chat on the left");

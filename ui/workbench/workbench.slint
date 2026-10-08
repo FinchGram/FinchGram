@@ -2,7 +2,7 @@
 // account and a search box, an activity bar, the side bar with the chat tree, the chats as tabs,
 // and a status bar.
 import { AppState, Page, Connection } from "../state.slint";
-import { Chats, Conversation, Account } from "../telegram.slint";
+import { Chats, Conversation, Account, Unread } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import { WorkbenchPalette as P } from "palette.slint";
@@ -511,6 +511,19 @@ component StatusBar inherits Rectangle {
                 color: P.muted;
                 font-size: 12px;
                 vertical-alignment: center;
+            }
+        }
+        // The unread messages, and the way to the Unread page.
+        if Unread.total > 0: Text {
+            text: @tr("Unread") + " " + Fmt.count(Unread.total);
+            color: P.muted;
+            font-size: 12px;
+            vertical-alignment: center;
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Unread.show();
+                }
             }
         }
         Rectangle { horizontal-stretch: 1; }

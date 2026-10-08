@@ -1,7 +1,7 @@
 // Parts of the chat windows the three themes share.
 import { AppState } from "state.slint";
 import {
-    Conversation, ChatKind, Media, Sticker, MessageRow, RowKind, Actions, MessageAction, ActionNotice, ComposeBar, ReplyQuote,
+    Conversation, ChatKind, Content, Media, Sticker, MessageRow, RowKind, Actions, MessageAction, ActionNotice, ComposeBar, ReplyQuote,
     DeleteChoice, Attachments, AttachKind, AttachProblem, AttachHint, FileCard, FileState, FileType, ChatConfirm } from "telegram.slint";
 import { Fmt } from "format.slint";
 import { Icon } from "widgets.slint";
@@ -86,6 +86,18 @@ export global ChatIcons {
             return "robot";
         }
         return "user";
+    }
+
+    // A message that is more than words, where a line previews it (the Unread page): "" for words.
+    public pure function content(c: Content) -> string {
+        if c == Content.photo { return "image"; }
+        if c == Content.video || c == Content.animation || c == Content.video-note { return "video"; }
+        if c == Content.voice-note { return "microphone"; }
+        if c == Content.audio { return "music-note"; }
+        if c == Content.document { return "file-text"; }
+        if c == Content.sticker { return "sticker"; }
+        if c == Content.location || c == Content.venue { return "map-pin"; }
+        return "";
     }
 }
 

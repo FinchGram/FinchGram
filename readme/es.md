@@ -17,7 +17,8 @@ Es un cliente no oficial, no hecho por Telegram.
 
 - **Chats.** Inicia sesión con tu número de teléfono, el código y tu contraseña de verificación en dos
   pasos, o escaneando un código QR; o crea una cuenta nueva. La lista de chats con las carpetas de
-  Telegram, los chats fijados, los contadores de no leídos y las menciones; un buscador (⌘K); una
+  Telegram, los chats fijados, los contadores de no leídos y las menciones, y los chats no leídos
+  reunidos arriba; una página «No leídos» que lista sus mensajes nuevos; un buscador (⌘K); una
   vista de tus canales y otra de tus bots.
 - **Mensajes.** Texto con su formato (negrita, cursiva, código, enlaces), respuestas y reenvíos,
   fotos, vídeos, GIF, stickers, archivos y una tarjeta con la vista previa de un enlace. Con un clic

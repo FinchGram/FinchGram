@@ -3,47 +3,47 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-08 01:27+0000\n"
+"POT-Creation-Date: 2026-10-08 07:06+0000\n"
 "Language: zh_Hant\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ui/app.slint:38
+#: ui/app.slint:40
 msgid "View"
 msgstr "檢視"
 
-#: ui/app.slint:40 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
+#: ui/app.slint:42 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
 #: ui/workbench/actions.slint:172
 msgid "Search"
 msgstr "搜尋"
 
-#: ui/app.slint:51 ui/pages/settings.slint:557
+#: ui/app.slint:53 ui/pages/settings.slint:557
 msgid "Workbench"
 msgstr "工作台"
 
-#: ui/app.slint:59 ui/pages/settings.slint:565
+#: ui/app.slint:61 ui/pages/settings.slint:565
 msgid "Broadsheet"
 msgstr "報紙"
 
-#: ui/app.slint:67 ui/pages/settings.slint:573
+#: ui/app.slint:69 ui/pages/settings.slint:573
 msgid "Terminal"
 msgstr "終端機"
 
-#: ui/app.slint:76
+#: ui/app.slint:78
 msgid "Settings…"
 msgstr "設定…"
 
-#: ui/app.slint:85
+#: ui/app.slint:87
 msgid "Help"
 msgstr "輔助說明"
 
-#: ui/app.slint:88
+#: ui/app.slint:90
 msgid "Update to {}…"
 msgstr "更新到 {}…"
 
-#: ui/app.slint:89
+#: ui/app.slint:91
 msgid "Check for Updates…"
 msgstr "檢查更新…"
 
@@ -51,7 +51,7 @@ msgstr "檢查更新…"
 msgid "Choose recipient…"
 msgstr "轉傳給…"
 
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:650
+#: ui/broadsheet/actions.slint:226 ui/telegram.slint:695
 #: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "儲存的訊息"
@@ -73,313 +73,333 @@ msgid "Add a comment (optional)"
 msgstr "補充說明（選填）"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:1941 ui/pages/profile.slint:174
+#: ui/broadsheet/broadsheet.slint:2025 ui/pages/profile.slint:174
 #: ui/pages/settings.slint:1369 ui/terminal/actions.slint:463
-#: ui/terminal/terminal.slint:1040 ui/workbench/actions.slint:547
-#: ui/workbench/conversation.slint:1303
+#: ui/terminal/terminal.slint:1067 ui/workbench/actions.slint:547
+#: ui/workbench/conversation.slint:1318
 msgid "Cancel"
 msgstr "取消"
 
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:1932
-#: ui/chat.slint:777 ui/chat.slint:857 ui/terminal/terminal.slint:1033
-#: ui/workbench/conversation.slint:1278
+#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2016
+#: ui/chat.slint:789 ui/chat.slint:869 ui/terminal/terminal.slint:1060
+#: ui/workbench/conversation.slint:1293
 msgid "Report"
 msgstr "檢舉"
 
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:1923
-#: ui/chat.slint:350 ui/chat.slint:778 ui/terminal/terminal.slint:1025
-#: ui/workbench/conversation.slint:1266
+#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2007
+#: ui/chat.slint:362 ui/chat.slint:790 ui/terminal/terminal.slint:1052
+#: ui/workbench/conversation.slint:1281
 msgid "Delete"
 msgstr "刪除"
 
-#: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:596
+#: ui/broadsheet/broadsheet.slint:96 ui/pages/settings.slint:596
 msgid "Light"
 msgstr "淺色"
 
-#: ui/broadsheet/broadsheet.slint:95 ui/pages/settings.slint:604
+#: ui/broadsheet/broadsheet.slint:96 ui/pages/settings.slint:604
 msgid "Dark"
 msgstr "深色"
 
-#: ui/broadsheet/broadsheet.slint:129 ui/pages/profile.slint:72
+#: ui/broadsheet/broadsheet.slint:130 ui/pages/profile.slint:72
 msgid "Accounts"
 msgstr "帳號"
 
-#: ui/broadsheet/broadsheet.slint:240 ui/pages/settings.slint:125
+#: ui/broadsheet/broadsheet.slint:241 ui/pages/settings.slint:125
 msgid "Chats"
 msgstr "聊天"
 
-#: ui/broadsheet/broadsheet.slint:248 ui/broadsheet/broadsheet.slint:841
-#: ui/workbench/sidebar.slint:401
+#: ui/broadsheet/broadsheet.slint:249 ui/broadsheet/broadsheet.slint:925
+#: ui/workbench/sidebar.slint:402
 msgid "Channels"
 msgstr "頻道"
 
-#: ui/broadsheet/broadsheet.slint:256 ui/broadsheet/broadsheet.slint:842
+#: ui/broadsheet/broadsheet.slint:257 ui/broadsheet/broadsheet.slint:926
 msgid "Bots"
 msgstr "機器人"
 
-#: ui/broadsheet/broadsheet.slint:265
+#: ui/broadsheet/broadsheet.slint:266
 msgid "Filters"
 msgstr "過濾"
 
-#: ui/broadsheet/broadsheet.slint:270
+#: ui/broadsheet/broadsheet.slint:271
 msgid "Scheduled"
 msgstr "排程"
 
-#: ui/broadsheet/broadsheet.slint:358 ui/terminal/terminal.slint:169
+#: ui/broadsheet/broadsheet.slint:359 ui/terminal/terminal.slint:194
 msgid "All"
 msgstr "全部"
 
-#: ui/broadsheet/broadsheet.slint:404
+#: ui/broadsheet/broadsheet.slint:396 ui/broadsheet/broadsheet.slint:2274
+#: ui/terminal/terminal.slint:176 ui/workbench/sidebar.slint:113
+#: ui/workbench/workbench.slint:518
+msgid "Unread"
+msgstr "未讀"
+
+#: ui/broadsheet/broadsheet.slint:457
 msgid "More"
 msgstr "更多"
 
-#: ui/broadsheet/broadsheet.slint:650 ui/format.slint:163
-#: ui/workbench/sidebar.slint:239
+#: ui/broadsheet/broadsheet.slint:734 ui/format.slint:163
+#: ui/workbench/sidebar.slint:240
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
 msgstr[0] "{n} 位訂閱者"
 
-#: ui/broadsheet/broadsheet.slint:872
+#: ui/broadsheet/broadsheet.slint:956
 msgid "Telegram bots"
 msgstr "Telegram 機器人"
 
-#: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
+#: ui/broadsheet/broadsheet.slint:1015 ui/terminal/terminal.slint:379
 msgid "No chats yet"
 msgstr "還沒有聊天"
 
-#: ui/broadsheet/broadsheet.slint:931 ui/terminal/terminal.slint:352
+#: ui/broadsheet/broadsheet.slint:1015 ui/terminal/terminal.slint:379
 msgid "No chats in this folder"
 msgstr "這個資料夾裡沒有聊天"
 
-#: ui/broadsheet/broadsheet.slint:937 ui/workbench/sidebar.slint:432
+#: ui/broadsheet/broadsheet.slint:1021 ui/workbench/sidebar.slint:433
 msgid ""
 "Search for a username or phone number, or open an invite link someone sent "
 "you, to start chatting."
 msgstr "搜尋使用者名稱或手機號碼，或者打開別人傳給你的邀請連結，就能開始聊天。"
 
-#: ui/broadsheet/broadsheet.slint:938
+#: ui/broadsheet/broadsheet.slint:1022
 msgid "Chats you add to this folder in Telegram show up here."
 msgstr "在 Telegram 的資料夾設定裡加入聊天，會自動同步到這裡。"
 
-#: ui/broadsheet/broadsheet.slint:977 ui/terminal/terminal.slint:387
+#: ui/broadsheet/broadsheet.slint:1061 ui/terminal/terminal.slint:414
 msgid "Official bots"
 msgstr "官方機器人"
 
-#: ui/broadsheet/broadsheet.slint:991 ui/terminal/terminal.slint:399
+#: ui/broadsheet/broadsheet.slint:1075 ui/terminal/terminal.slint:426
 msgid "Other bots"
 msgstr "其他機器人"
 
-#: ui/broadsheet/broadsheet.slint:1003 ui/workbench/sidebar.slint:498
+#: ui/broadsheet/broadsheet.slint:1087 ui/workbench/sidebar.slint:499
 msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr "有認證標記的是 Telegram 官方機器人。其他機器人看得到你傳給它的訊息。"
 
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260
-#: ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
-#: ui/workbench/conversation.slint:1593
+#: ui/broadsheet/broadsheet.slint:1132 ui/broadsheet/broadsheet.slint:2669
+#: ui/terminal/terminal.slint:523 ui/workbench/conversation.slint:275
+#: ui/workbench/conversation.slint:1608
 msgid "Unmute"
 msgstr "取消靜音"
 
-#: ui/broadsheet/broadsheet.slint:1048 ui/broadsheet/broadsheet.slint:2260
-#: ui/terminal/terminal.slint:496 ui/workbench/conversation.slint:260
-#: ui/workbench/conversation.slint:1593
+#: ui/broadsheet/broadsheet.slint:1132 ui/broadsheet/broadsheet.slint:2669
+#: ui/terminal/terminal.slint:523 ui/workbench/conversation.slint:275
+#: ui/workbench/conversation.slint:1608
 msgid "Mute"
 msgstr "靜音"
 
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311
-#: ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
+#: ui/broadsheet/broadsheet.slint:1140 ui/broadsheet/broadsheet.slint:2720
+#: ui/terminal/terminal.slint:944 ui/workbench/sidebar.slint:555
 msgid "Unpin"
 msgstr "取消置頂"
 
-#: ui/broadsheet/broadsheet.slint:1056 ui/broadsheet/broadsheet.slint:2311
-#: ui/terminal/terminal.slint:917 ui/workbench/sidebar.slint:554
+#: ui/broadsheet/broadsheet.slint:1140 ui/broadsheet/broadsheet.slint:2720
+#: ui/terminal/terminal.slint:944 ui/workbench/sidebar.slint:555
 msgid "Pin"
 msgstr "置頂"
 
-#: ui/broadsheet/broadsheet.slint:1064 ui/broadsheet/broadsheet.slint:2319
-#: ui/terminal/terminal.slint:925 ui/workbench/sidebar.slint:562
+#: ui/broadsheet/broadsheet.slint:1148 ui/broadsheet/broadsheet.slint:2200
+#: ui/terminal/terminal.slint:537 ui/terminal/terminal.slint:1422
+#: ui/workbench/sidebar.slint:563
 msgid "Mark as read"
 msgstr "標為已讀"
 
-#: ui/broadsheet/broadsheet.slint:1072 ui/terminal/terminal.slint:517
+#: ui/broadsheet/broadsheet.slint:1156 ui/terminal/terminal.slint:544
 msgid "Add to folder"
 msgstr "加入資料夾"
 
-#: ui/broadsheet/broadsheet.slint:1119 ui/pages/login.slint:524
+#: ui/broadsheet/broadsheet.slint:1203 ui/pages/login.slint:524
 #: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
 #: ui/pages/login.slint:841 ui/pages/login.slint:901
 #: ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
-#: ui/workbench/sidebar.slint:619
+#: ui/workbench/sidebar.slint:620
 msgid "Back"
 msgstr "返回"
 
-#: ui/broadsheet/broadsheet.slint:1197 ui/workbench/conversation.slint:621
+#: ui/broadsheet/broadsheet.slint:1281 ui/workbench/conversation.slint:636
 msgid "Instant View"
 msgstr "Instant View"
 
-#: ui/broadsheet/broadsheet.slint:1229 ui/terminal/terminal.slint:612
+#: ui/broadsheet/broadsheet.slint:1313 ui/terminal/terminal.slint:639
 msgid "Forwarded from {0}"
 msgstr "轉傳自 {0}"
 
-#: ui/broadsheet/broadsheet.slint:1491 ui/broadsheet/broadsheet.slint:1598
-#: ui/workbench/conversation.slint:881
+#: ui/broadsheet/broadsheet.slint:1575 ui/broadsheet/broadsheet.slint:1682
+#: ui/workbench/conversation.slint:896
 msgid "edited"
 msgstr "已編輯"
 
-#: ui/broadsheet/broadsheet.slint:1618
+#: ui/broadsheet/broadsheet.slint:1702
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr "贊助訊息 · Telegram 官方投放 · Premium 使用者可以關閉"
 
-#: ui/broadsheet/broadsheet.slint:1684 ui/format.slint:261
-#: ui/workbench/conversation.slint:979
+#: ui/broadsheet/broadsheet.slint:1768 ui/format.slint:261
+#: ui/workbench/conversation.slint:994
 msgid "You"
 msgstr "你"
 
-#: ui/broadsheet/broadsheet.slint:1795 ui/terminal/terminal.slint:1126
+#: ui/broadsheet/broadsheet.slint:1879 ui/terminal/terminal.slint:1153
 msgid "Hide sender's name"
 msgstr "隱藏傳送者名稱"
 
-#: ui/broadsheet/broadsheet.slint:1899 ui/terminal/terminal.slint:1048
+#: ui/broadsheet/broadsheet.slint:1983 ui/terminal/terminal.slint:1075
 msgid "Shift-click to select a range"
 msgstr "按住 Shift 點一下可選取一段範圍"
 
-#: ui/broadsheet/broadsheet.slint:1907 ui/chat.slint:776
-#: ui/workbench/conversation.slint:1244
+#: ui/broadsheet/broadsheet.slint:1991 ui/chat.slint:788
+#: ui/workbench/conversation.slint:1259
 msgid "Forward"
 msgstr "轉傳"
 
-#: ui/broadsheet/broadsheet.slint:1961 ui/terminal/terminal.slint:1362
+#: ui/broadsheet/broadsheet.slint:2236 ui/terminal/terminal.slint:1454
+msgid "{n} more — open the chat to see them"
+msgid_plural "{n} more — open the chat to see them"
+msgstr[0] "還有 {n} 則，開啟聊天查看"
+
+#: ui/broadsheet/broadsheet.slint:2305 ui/terminal/terminal.slint:1494
+msgid "Mark all as read"
+msgstr "全部標為已讀"
+
+#: ui/broadsheet/broadsheet.slint:2350 ui/terminal/terminal.slint:1524
+msgid "You're all caught up"
+msgstr "都看完了"
+
+#: ui/broadsheet/broadsheet.slint:2370 ui/terminal/terminal.slint:1602
 msgid "Choose a chat on the left"
 msgstr "在左側選擇一個聊天"
 
-#: ui/broadsheet/broadsheet.slint:1984 ui/terminal/terminal.slint:864
+#: ui/broadsheet/broadsheet.slint:2393 ui/terminal/terminal.slint:891
 msgid "typing…"
 msgstr "正在輸入…"
 
-#: ui/broadsheet/broadsheet.slint:2033 ui/terminal/terminal.slint:951
+#: ui/broadsheet/broadsheet.slint:2442 ui/terminal/terminal.slint:978
 msgid "{0} is typing…"
 msgstr "{0} 正在輸入…"
 
-#: ui/broadsheet/broadsheet.slint:2065
+#: ui/broadsheet/broadsheet.slint:2474
 msgid "Sending as {0}"
 msgstr "以 {0} 的身分傳送"
 
-#: ui/broadsheet/broadsheet.slint:2082
+#: ui/broadsheet/broadsheet.slint:2491
 msgid "Write a message…"
 msgstr "輸入訊息…"
 
-#: ui/chat.slint:251
+#: ui/chat.slint:263
 msgid "Unblock bot"
 msgstr "解除封鎖機器人"
 
-#: ui/chat.slint:251
+#: ui/chat.slint:263
 msgid "Block bot"
 msgstr "封鎖機器人"
 
-#: ui/chat.slint:252
+#: ui/chat.slint:264
 msgid "Unblock user"
 msgstr "解除封鎖"
 
-#: ui/chat.slint:252
+#: ui/chat.slint:264
 msgid "Block user"
 msgstr "封鎖使用者"
 
-#: ui/chat.slint:255
+#: ui/chat.slint:267
 msgid "Leave channel"
 msgstr "退出頻道"
 
-#: ui/chat.slint:255
+#: ui/chat.slint:267
 msgid "Leave group"
 msgstr "退出群組"
 
-#: ui/chat.slint:256
+#: ui/chat.slint:268
 msgid "Delete chat"
 msgstr "刪除聊天"
 
-#: ui/chat.slint:258
+#: ui/chat.slint:270
 msgid "Block {0}?"
 msgstr "封鎖 {0}？"
 
-#: ui/chat.slint:259
+#: ui/chat.slint:271
 msgid "Leave the channel {0}?"
 msgstr "退出頻道 {0}？"
 
-#: ui/chat.slint:259
+#: ui/chat.slint:271
 msgid "Leave the group {0}?"
 msgstr "退出群組 {0}？"
 
-#: ui/chat.slint:260
+#: ui/chat.slint:272
 msgid "Delete the chat with {0}?"
 msgstr "刪除與 {0} 的聊天？"
 
-#: ui/chat.slint:263
+#: ui/chat.slint:275
 msgid ""
 "They will not be able to send you messages. You can unblock them from this "
 "menu."
 msgstr "對方將無法傳訊息給你。可以在這個選單裡解除封鎖。"
 
-#: ui/chat.slint:264
+#: ui/chat.slint:276
 msgid "You will stop getting its posts."
 msgstr "你將不再收到它的貼文。"
 
-#: ui/chat.slint:264
+#: ui/chat.slint:276
 msgid "You will stop getting its messages."
 msgstr "你將不再收到它的訊息。"
 
-#: ui/chat.slint:265
+#: ui/chat.slint:277
 msgid "The chat and its messages go from your list."
 msgstr "這個聊天和它的訊息會從你的列表裡移除。"
 
-#: ui/chat.slint:267 ui/chat.slint:852
+#: ui/chat.slint:279 ui/chat.slint:864
 msgid "Also delete for {0}"
 msgstr "同時為 {0} 刪除"
 
-#: ui/chat.slint:269
+#: ui/chat.slint:281
 msgid "Block"
 msgstr "封鎖"
 
-#: ui/chat.slint:270
+#: ui/chat.slint:282
 msgid "Leave"
 msgstr "退出"
 
-#: ui/chat.slint:276
+#: ui/chat.slint:288
 msgid "Attach"
 msgstr "附件"
 
-#: ui/chat.slint:277
+#: ui/chat.slint:289
 msgid "Photo or Video"
 msgstr "照片或影片"
 
-#: ui/chat.slint:278 ui/format.slint:212
+#: ui/chat.slint:290 ui/format.slint:212
 msgid "File"
 msgstr "檔案"
 
-#: ui/chat.slint:279
+#: ui/chat.slint:291
 msgid "Poll"
 msgstr "投票"
 
-#: ui/chat.slint:280
+#: ui/chat.slint:292
 msgid "Not available yet"
 msgstr "尚未開放"
 
-#: ui/chat.slint:281 ui/chat.slint:284
+#: ui/chat.slint:293 ui/chat.slint:296
 msgid "Not allowed in this group"
 msgstr "這個群組不允許"
 
-#: ui/chat.slint:282
+#: ui/chat.slint:294
 msgid "You can't send messages in this group"
 msgstr "你無法在這個群組傳送訊息"
 
-#: ui/chat.slint:283
+#: ui/chat.slint:295
 msgid "Screenshot"
 msgstr "截圖"
 
 #. The card shown when the system has not let FinchGram see the screen.
-#: ui/chat.slint:286
+#: ui/chat.slint:298
 msgid "Screen Recording is off for FinchGram"
 msgstr "FinchGram 沒有「螢幕錄製」權限"
 
-#: ui/chat.slint:287
+#: ui/chat.slint:299
 msgid ""
 "Screenshots need Screen Recording in System Settings → Privacy & Security. "
 "If FinchGram is already in the list, turn it off and on again."
@@ -387,300 +407,300 @@ msgstr ""
 "截圖需要在「系統設定 › 隱私權與安全性」裡允許螢幕錄製。如果列表裡已經有 "
 "FinchGram，把它關掉再打開一次。"
 
-#: ui/chat.slint:288
+#: ui/chat.slint:300
 msgid "Open System Settings"
 msgstr "打開系統設定"
 
-#: ui/chat.slint:289
+#: ui/chat.slint:301
 msgid "Not now"
 msgstr "稍後再說"
 
-#: ui/chat.slint:290
+#: ui/chat.slint:302
 msgid "↑↓ Choose · Return Open · Esc Close"
 msgstr "↑↓ 選擇 · Return 打開 · Esc 關閉"
 
-#: ui/chat.slint:296
+#: ui/chat.slint:308
 msgid "Send Screenshot"
 msgstr "傳送截圖"
 
-#: ui/chat.slint:299
+#: ui/chat.slint:311
 msgid "Send File"
 msgstr "傳送檔案"
 
-#: ui/chat.slint:299
+#: ui/chat.slint:311
 msgid "Send {n} Files"
 msgid_plural "Send {n} Files"
 msgstr[0] "傳送 {n} 個檔案"
 
-#: ui/chat.slint:302
+#: ui/chat.slint:314
 msgid "Send Video"
 msgstr "傳送影片"
 
-#: ui/chat.slint:302
+#: ui/chat.slint:314
 msgid "Send {n} Videos"
 msgid_plural "Send {n} Videos"
 msgstr[0] "傳送 {n} 部影片"
 
-#: ui/chat.slint:304
+#: ui/chat.slint:316
 msgid "Send Photo"
 msgstr "傳送照片"
 
-#: ui/chat.slint:304
+#: ui/chat.slint:316
 msgid "Send {n} Photos"
 msgid_plural "Send {n} Photos"
 msgstr[0] "傳送 {n} 張照片"
 
-#: ui/chat.slint:306
+#: ui/chat.slint:318
 msgid "Will be sent as {n} albums"
 msgid_plural "Will be sent as {n} albums"
 msgstr[0] "將分成 {n} 組相簿傳送"
 
-#: ui/chat.slint:307
+#: ui/chat.slint:319
 msgid "Album {0} · {1}"
 msgstr "相簿 {0} · {1}"
 
-#: ui/chat.slint:308
+#: ui/chat.slint:320
 msgid "Add more"
 msgstr "再新增"
 
-#: ui/chat.slint:309
+#: ui/chat.slint:321
 msgid "Remove"
 msgstr "移除"
 
-#: ui/chat.slint:310
+#: ui/chat.slint:322
 msgid "Add a caption…"
 msgstr "加上說明文字…"
 
-#: ui/chat.slint:311
+#: ui/chat.slint:323
 msgid "Send as photo"
 msgstr "以照片傳送"
 
-#: ui/chat.slint:312
+#: ui/chat.slint:324
 msgid "Send as video"
 msgstr "以影片傳送"
 
-#: ui/chat.slint:313
+#: ui/chat.slint:325
 msgid "Send as file"
 msgstr "以檔案傳送"
 
-#: ui/chat.slint:314
+#: ui/chat.slint:326
 msgid "Group items"
 msgstr "合併為相簿"
 
-#: ui/chat.slint:315
+#: ui/chat.slint:327
 msgid "Self-destruct timer"
 msgstr "自毀計時器"
 
-#: ui/chat.slint:316
+#: ui/chat.slint:328
 msgid "Disappears after it's opened."
 msgstr "對方打開後就會銷毀。"
 
-#: ui/chat.slint:318 ui/pages/settings.slint:918 ui/pages/settings.slint:929
+#: ui/chat.slint:330 ui/pages/settings.slint:918 ui/pages/settings.slint:929
 #: ui/pages/settings.slint:1187
 msgid "Off"
 msgstr "關閉"
 
-#: ui/chat.slint:319
+#: ui/chat.slint:331
 msgid "View once"
 msgstr "只看一次"
 
-#: ui/chat.slint:320
+#: ui/chat.slint:332
 msgid "{0} s"
 msgstr "{0} 秒"
 
-#: ui/chat.slint:322
+#: ui/chat.slint:334
 msgid "Hide with spoiler"
 msgstr "劇透遮罩"
 
-#: ui/chat.slint:324
+#: ui/chat.slint:336
 msgid "Send"
 msgstr "傳送"
 
-#: ui/chat.slint:325
+#: ui/chat.slint:337
 msgid "More send options"
 msgstr "更多傳送選項"
 
-#: ui/chat.slint:326
+#: ui/chat.slint:338
 msgid "Send without sound"
 msgstr "靜音傳送"
 
-#: ui/chat.slint:327
+#: ui/chat.slint:339
 msgid "Schedule message"
 msgstr "排程訊息"
 
-#: ui/chat.slint:330
+#: ui/chat.slint:342
 msgid "Return to send · Esc to cancel"
 msgstr "Return 傳送 · Esc 取消"
 
-#: ui/chat.slint:330
+#: ui/chat.slint:342
 msgid "⌘Return to send · Return for a new line · Esc to cancel"
 msgstr "⌘Return 傳送 · Return 換行 · Esc 取消"
 
-#: ui/chat.slint:332
+#: ui/chat.slint:344
 msgid "Remove the marked items to send"
 msgstr "移除標示的項目後才能傳送"
 
-#: ui/chat.slint:333
+#: ui/chat.slint:345
 msgid "Caption is too long"
 msgstr "說明文字太長"
 
-#: ui/chat.slint:337 ui/chat.slint:338
+#: ui/chat.slint:349 ui/chat.slint:350
 msgid "Files over {0} GB can't be sent"
 msgstr "超過 {0} GB 的檔案無法傳送"
 
-#: ui/chat.slint:339
+#: ui/chat.slint:351
 msgid "Can't read this file"
 msgstr "無法讀取這個檔案"
 
-#: ui/chat.slint:343
+#: ui/chat.slint:355
 msgid "Drop to send as photos"
 msgstr "放開以照片傳送"
 
-#: ui/chat.slint:344
+#: ui/chat.slint:356
 msgid "Drop to send as files"
 msgstr "放開以檔案傳送"
 
-#: ui/chat.slint:345
+#: ui/chat.slint:357
 msgid "Compressed"
 msgstr "壓縮"
 
-#: ui/chat.slint:346
+#: ui/chat.slint:358
 msgid "Original quality"
 msgstr "原始畫質"
 
-#: ui/chat.slint:347
+#: ui/chat.slint:359
 msgid "Cancel upload"
 msgstr "取消上傳"
 
-#: ui/chat.slint:348
+#: ui/chat.slint:360
 msgid "Not sent"
 msgstr "未傳送"
 
-#: ui/chat.slint:349
+#: ui/chat.slint:361
 msgid "Retry"
 msgstr "重試"
 
-#: ui/chat.slint:351
+#: ui/chat.slint:363
 msgid "Download"
 msgstr "下載"
 
-#: ui/chat.slint:352
+#: ui/chat.slint:364
 msgid "Cancel download"
 msgstr "取消下載"
 
-#: ui/chat.slint:353
+#: ui/chat.slint:365
 msgid "Show in Finder"
 msgstr "在 Finder 中顯示"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:355
+#: ui/chat.slint:367
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
-#: ui/chat.slint:655 ui/terminal/terminal.slint:677
+#: ui/chat.slint:667 ui/terminal/terminal.slint:704
 msgid "Tap to view"
 msgstr "點一下查看"
 
-#: ui/chat.slint:768
+#: ui/chat.slint:780
 msgid "Reply"
 msgstr "回覆"
 
-#: ui/chat.slint:769
+#: ui/chat.slint:781
 msgid "Edit"
 msgstr "編輯"
 
-#: ui/chat.slint:770
+#: ui/chat.slint:782
 msgid "Copy Image"
 msgstr "複製圖片"
 
-#: ui/chat.slint:771
+#: ui/chat.slint:783
 msgid "Save Image"
 msgstr "儲存圖片"
 
-#: ui/chat.slint:772
+#: ui/chat.slint:784
 msgid "Save Video"
 msgstr "儲存影片"
 
-#: ui/chat.slint:774
+#: ui/chat.slint:786
 msgctxt "words of a photo or video"
 msgid "Copy Text"
 msgstr "複製文字"
 
-#: ui/chat.slint:775
+#: ui/chat.slint:787
 msgid "Copy Message Link"
 msgstr "複製連結"
 
-#: ui/chat.slint:779
+#: ui/chat.slint:791
 msgid "Select"
 msgstr "選取"
 
-#: ui/chat.slint:784
+#: ui/chat.slint:796
 msgctxt "words of a message"
 msgid "Copy Text"
 msgstr "複製"
 
-#: ui/chat.slint:814
+#: ui/chat.slint:826
 msgid "Text copied to clipboard."
 msgstr "已複製"
 
-#: ui/chat.slint:815
+#: ui/chat.slint:827
 msgid "Link copied to clipboard."
 msgstr "連結已複製"
 
-#: ui/chat.slint:816
+#: ui/chat.slint:828
 msgid "Image copied to clipboard."
 msgstr "圖片已複製"
 
-#: ui/chat.slint:817
+#: ui/chat.slint:829
 msgid "Saved to Downloads"
 msgstr "已儲存到「下載項目」"
 
-#: ui/chat.slint:817 ui/viewer.slint:30
+#: ui/chat.slint:829 ui/viewer.slint:30
 msgid "Saved to Downloads · {0}"
 msgstr "已儲存到「下載項目」· {0}"
 
-#: ui/chat.slint:818
+#: ui/chat.slint:830
 msgid "Reported"
 msgstr "已檢舉"
 
-#: ui/chat.slint:819
+#: ui/chat.slint:831
 msgid "A folder must keep at least one chat."
 msgstr "資料夾裡至少要留一個聊天。"
 
-#: ui/chat.slint:826
+#: ui/chat.slint:838
 msgid "Reply to {0}"
 msgstr "回覆 {0}"
 
-#: ui/chat.slint:827
+#: ui/chat.slint:839
 msgid "Edit message"
 msgstr "編輯訊息"
 
-#: ui/chat.slint:828
+#: ui/chat.slint:840
 msgid "Forward {n} message"
 msgid_plural "Forward {n} messages"
 msgstr[0] "轉傳 {n} 則訊息"
 
-#: ui/chat.slint:832
+#: ui/chat.slint:844
 msgid "From: {0}"
 msgstr "來自 {0}"
 
-#: ui/chat.slint:838
+#: ui/chat.slint:850
 msgid "Deleted message"
 msgstr "訊息已刪除"
 
-#: ui/chat.slint:843
+#: ui/chat.slint:855
 msgid "{0} selected"
 msgstr "已選取 {0} 則"
 
-#: ui/chat.slint:847
+#: ui/chat.slint:859
 msgid "Delete this message?"
 msgstr "刪除這則訊息？"
 
-#: ui/chat.slint:848
+#: ui/chat.slint:860
 msgid "Delete {0} messages?"
 msgstr "刪除 {0} 則訊息？"
 
-#: ui/chat.slint:853
+#: ui/chat.slint:865
 msgid "Also delete for everyone"
 msgstr "同時為所有人刪除"
 
@@ -1152,7 +1172,7 @@ msgstr "自動翻譯"
 msgid "Translate foreign-language messages into your UI language"
 msgstr "外語訊息自動翻譯成介面語言"
 
-#: ui/pages/login.slint:133 ui/workbench/conversation.slint:1348
+#: ui/pages/login.slint:133 ui/workbench/conversation.slint:1363
 msgid "Reading mode"
 msgstr "閱讀模式"
 
@@ -1929,89 +1949,89 @@ msgstr "結束 FinchGram"
 msgid "New message"
 msgstr "新訊息"
 
-#: ui/telegram.slint:651
+#: ui/telegram.slint:696
 msgid "Deleted Account"
 msgstr "已刪除的帳號"
 
-#: ui/telegram.slint:652 ui/workbench/sidebar.slint:123
+#: ui/telegram.slint:697 ui/workbench/sidebar.slint:114
 msgid "All chats"
 msgstr "所有聊天"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:654
+#: ui/telegram.slint:700
 msgctxt "list separator"
 msgid ", "
 msgstr "、"
 
-#: ui/terminal/terminal.slint:84
+#: ui/terminal/terminal.slint:85
 msgid "light"
 msgstr "淺色"
 
-#: ui/terminal/terminal.slint:84
+#: ui/terminal/terminal.slint:85
 msgid "dark"
 msgstr "深色"
 
-#: ui/terminal/terminal.slint:185
+#: ui/terminal/terminal.slint:211
 msgid "more"
 msgstr "更多"
 
-#: ui/terminal/terminal.slint:440
+#: ui/terminal/terminal.slint:467
 msgid "Current account"
 msgstr "目前帳號"
 
-#: ui/terminal/terminal.slint:450
+#: ui/terminal/terminal.slint:477
 msgid "profile"
 msgstr "個人資料"
 
-#: ui/terminal/terminal.slint:659 ui/terminal/terminal.slint:664
+#: ui/terminal/terminal.slint:686 ui/terminal/terminal.slint:691
 msgid "(edited)"
 msgstr "（已編輯）"
 
-#: ui/terminal/terminal.slint:807
+#: ui/terminal/terminal.slint:834
 msgid "sponsored"
 msgstr "贊助"
 
-#: ui/terminal/terminal.slint:871
+#: ui/terminal/terminal.slint:898
 msgid "search"
 msgstr "搜尋"
 
-#: ui/terminal/terminal.slint:875
+#: ui/terminal/terminal.slint:902
 msgid "chat settings"
 msgstr "聊天設定"
 
-#: ui/terminal/terminal.slint:1069
+#: ui/terminal/terminal.slint:1096
 msgid "Mute or unmute this chat"
 msgstr "把目前的聊天靜音或取消靜音"
 
-#: ui/terminal/terminal.slint:1070
+#: ui/terminal/terminal.slint:1097
 msgid "Pin or unpin this chat"
 msgstr "把目前的聊天置頂或取消置頂"
 
-#: ui/terminal/terminal.slint:1071
+#: ui/terminal/terminal.slint:1098
 msgid "Mark this chat as read"
 msgstr "把目前的聊天標為已讀"
 
-#: ui/terminal/terminal.slint:1218
+#: ui/terminal/terminal.slint:1245
 msgid "Write a message, or / for commands"
 msgstr "輸入訊息，或按 / 叫出指令"
 
-#: ui/terminal/terminal.slint:1218
+#: ui/terminal/terminal.slint:1245
 msgid "/ for commands"
 msgstr "/ 叫出指令"
 
-#: ui/terminal/terminal.slint:1240
+#: ui/terminal/terminal.slint:1267
 msgid "save"
 msgstr "儲存"
 
-#: ui/terminal/terminal.slint:1240
+#: ui/terminal/terminal.slint:1267
 msgid "send"
 msgstr "傳送"
 
-#: ui/terminal/terminal.slint:1311
+#: ui/terminal/terminal.slint:1548
 msgid "connected"
 msgstr "已連線"
 
-#: ui/terminal/terminal.slint:1319
+#: ui/terminal/terminal.slint:1556
 msgid "command"
 msgstr "指令"
 
@@ -2049,59 +2069,59 @@ msgctxt "terminal"
 msgid "←/→ switch · space play · esc close"
 msgstr "←/→ 切換 · space 播放 · esc 關閉"
 
-#: ui/workbench/conversation.slint:293 ui/workbench/conversation.slint:358
+#: ui/workbench/conversation.slint:308 ui/workbench/conversation.slint:373
 msgid "Close other tabs"
 msgstr "關閉其他分頁"
 
-#: ui/workbench/conversation.slint:350
+#: ui/workbench/conversation.slint:365
 msgid "Close tab"
 msgstr "關閉分頁"
 
-#: ui/workbench/conversation.slint:367
+#: ui/workbench/conversation.slint:382
 msgid "Close all tabs"
 msgstr "關閉所有分頁"
 
-#: ui/workbench/conversation.slint:906
+#: ui/workbench/conversation.slint:921
 msgid "Sponsored"
 msgstr "贊助訊息"
 
-#: ui/workbench/conversation.slint:913
+#: ui/workbench/conversation.slint:928
 msgid "Premium users can turn these off"
 msgstr "Premium 使用者可以關閉"
 
-#: ui/workbench/conversation.slint:953
+#: ui/workbench/conversation.slint:968
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
 msgstr "Telegram 的贊助訊息 · FinchGram 照常顯示，不做過濾"
 
-#: ui/workbench/conversation.slint:1410
+#: ui/workbench/conversation.slint:1425
 msgid "Send to {0}"
 msgstr "傳送給 {0}"
 
-#: ui/workbench/conversation.slint:1543
+#: ui/workbench/conversation.slint:1558
 msgid "Esc to cancel"
 msgstr "Esc 取消"
 
-#: ui/workbench/conversation.slint:1551
+#: ui/workbench/conversation.slint:1566
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ 儲存 · ⇧⏎ 換行"
 
-#: ui/workbench/conversation.slint:1551
+#: ui/workbench/conversation.slint:1566
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ 儲存 · ⏎ 換行"
 
-#: ui/workbench/conversation.slint:1552
+#: ui/workbench/conversation.slint:1567
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ 傳送 · ⇧⏎ 換行"
 
-#: ui/workbench/conversation.slint:1552
+#: ui/workbench/conversation.slint:1567
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ 傳送 · ⏎ 換行"
 
-#: ui/workbench/sidebar.slint:466
+#: ui/workbench/sidebar.slint:467
 msgid "This account has no channels."
 msgstr "這個帳號沒有訂閱任何頻道。"
 
-#: ui/workbench/sidebar.slint:466
+#: ui/workbench/sidebar.slint:467
 msgid "Channels open in reading mode: long posts, set for reading."
 msgstr "頻道以閱讀模式打開：長文排版，方便閱讀。"
 

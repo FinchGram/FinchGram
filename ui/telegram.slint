@@ -48,6 +48,7 @@ export struct ChatRow {
     detail: string,
     unread: int,
     mention: bool,          // an unread message mentions us
+    marked: bool,           // marked as unread by hand while it has no unread messages: a dot
     muted: bool,
     pinned: bool,
     online: bool,           // a user who is online now
@@ -77,6 +78,9 @@ export struct TreeRow {
     expanded: bool,
     count: int,             // a header's number of chats
     chat: ChatRow,
+    // The Unread group at the top (the design's round 2): its header, or one of the chats with
+    // unread messages, which are in their folders below as well. Chats.toggle-folder(-1) folds it.
+    unread: bool,
 }
 
 // One of the account's own folders in a chat's menu: whether the chat is in it.
@@ -97,8 +101,12 @@ export global Chats {
     in-out property <[ChatRow]> bots;            // chats with every other bot
     in-out property <bool> loaded;               // TDLib has sent the chat list
     in-out property <string> query;              // the search box's words; the lists show what matches
+    // Broadsheet and Terminal: the Unread tab before the folders, while chats have unread messages.
+    // Chosen, `list` holds those chats, and the Unread page comes to the front (the Unread global).
+    in-out property <bool> unread-shown;
+    callback show-unread();
     callback show-folder(int);                   // index into folders
-    callback toggle-folder(int);                 // Workbench: expand or collapse
+    callback toggle-folder(int);                 // Workbench: expand or collapse; -1 the Unread group
     callback search(string);
     // A chat's menu (a right click on it in a list, or on its tab in Workbench), by the chat's id.
     callback open-menu(string);                  // it opens: fill menu-folders for the chat
@@ -128,6 +136,8 @@ export struct Tab {
     title: string,
     kind: ChatKind,
     muted: bool,
+    index: bool,            // the Unread page's tab (Workbench), not a chat's
+    count: int,             // the Unread page's unread messages
 }
 
 export enum RowKind { message, service, day, sponsored }
@@ -294,6 +304,41 @@ export global Conversation {
     callback toggle-mute();
     callback toggle-pin();
     callback mark-read();
+}
+
+// One of a chat's newest unread messages on the Unread page: a line, as the chat list shows its
+// last message.
+export struct UnreadLine {
+    id: string,             // the message
+    sender: string,         // who wrote it; "" in a channel, whose posts stand alone
+    time: Moment,
+    content: Content,
+    text: string,
+    detail: string,
+    mention: bool,          // it mentions us
+}
+
+// A chat on the Unread page, with its newest unread messages (at most a few: the chat has the rest).
+export struct UnreadGroup {
+    chat: ChatRow,
+    loading: bool,          // its lines are on their way
+    lines: [UnreadLine],    // oldest first
+    more: int,              // unread messages beyond the lines
+}
+
+// The Unread page (the design's round 2): the chats with unread messages, as the Unread group of
+// the chat list gathers them, each with its newest unread messages, one line each. An index, not
+// a reader: nothing here is marked read, opening the chat is. Rust fills it (src/telegram/unread.rs).
+// Workbench shows it in a tab of its own (Tab.index); Broadsheet and Terminal in the chat's place.
+export global Unread {
+    in-out property <bool> shown;                // the page is in front
+    in-out property <[UnreadGroup]> groups;
+    in-out property <int> total;                 // unread messages in all of them
+    callback show();                             // bring the page to the front
+    callback open-message(string, string);       // chat id, message id: the chat, at that message
+    callback open-chat(string);                  // "N more": the chat, at its end
+    callback mark-read(string);                  // a chat
+    callback mark-all-read();
 }
 
 // The media viewer (the design's media-viewer.js): the open chat's photos and videos, one at a time,
@@ -650,6 +695,7 @@ export global Words {
     out property <string> saved-messages: @tr("Saved Messages");
     out property <string> deleted-account: @tr("Deleted Account");
     out property <string> all-chats: @tr("All chats");
+    out property <string> unread: @tr("Unread");
     // Between names in a list: "Jie, Mika".
     out property <string> list-separator: @tr("list separator" => ", ");
 }
