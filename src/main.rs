@@ -56,8 +56,8 @@ fn main() -> Result<(), slint::PlatformError> {
         settings.borrow().save();
     }
 
-    state.set_appearance(settings.borrow().appearance.clone().into());
     state.set_theme(theme_from_name(&settings.borrow().theme));
+    state.set_appearance(current_appearance(&settings.borrow()).into());
     let widths = settings.borrow().list_widths;
     state.set_workbench_list_width(widths.workbench);
     state.set_broadsheet_list_width(widths.broadsheet);
@@ -93,8 +93,12 @@ fn main() -> Result<(), slint::PlatformError> {
             if !matches!(appearance.as_str(), "system" | "light" | "dark") {
                 return;
             }
-            settings.borrow_mut().appearance = appearance.to_string();
-            settings.borrow().save();
+            {
+                let mut settings = settings.borrow_mut();
+                let theme = settings.theme.clone();
+                settings.appearance.set(&theme, &appearance);
+                settings.save();
+            }
             if let Some(ui) = ui.upgrade() {
                 ui.global::<AppState>().set_appearance(appearance.clone());
                 apply_window_appearance(&ui, &appearance);
@@ -108,8 +112,13 @@ fn main() -> Result<(), slint::PlatformError> {
         move |theme| {
             settings.borrow_mut().theme = theme_name(theme).to_string();
             settings.borrow().save();
+            let appearance = current_appearance(&settings.borrow());
             if let Some(ui) = ui.upgrade() {
-                ui.global::<AppState>().set_theme(theme);
+                let state = ui.global::<AppState>();
+                state.set_theme(theme);
+                // The theme's own light or dark comes with it, the window's buttons to match.
+                state.set_appearance(appearance.clone().into());
+                apply_window_appearance(&ui, &appearance);
             }
         }
     });
@@ -300,7 +309,7 @@ fn main() -> Result<(), slint::PlatformError> {
     }
 
     // The window's own appearance (its buttons, its edge) follows the choice in Settings.
-    apply_window_appearance_when_ready(ui.as_weak(), settings.borrow().appearance.clone(), 40);
+    apply_window_appearance_when_ready(ui.as_weak(), current_appearance(&settings.borrow()), 40);
 
     // Closing the window stops a video with it. On macOS FinchGram keeps running (src/platform/)
     // unless Settings → General says to quit.
@@ -357,6 +366,12 @@ fn theme_name(theme: Theme) -> &'static str {
         Theme::Broadsheet => "broadsheet",
         Theme::Terminal => "terminal",
     }
+}
+
+/// The light or dark of the theme in use, what `AppState.appearance` holds: each theme keeps its
+/// own (src/settings.rs).
+fn current_appearance(settings: &Settings) -> String {
+    settings.appearance.of(&settings.theme).to_string()
 }
 
 /// The native window exists only once the event loop runs: try every 50 ms until it is there.

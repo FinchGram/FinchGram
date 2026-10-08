@@ -160,6 +160,8 @@ component ChatLine inherits Rectangle {
 // The folders as tabs, "1:All 2:Work …": the first four (three after the Unread tab), the rest
 // behind "more". Before them, while chats have unread messages, the Unread tab with their count
 // (the design's round 2): chosen, the list holds those chats and the Unread page comes to the front.
+// Each tab is as tall as its word: a Rectangle has no height of its own, and a tab without one is
+// drawn but takes no clicks.
 component Folders {
     property <bool> has-unread: Unread.groups.length > 0;
     // Next to the Unread tab, as many folders as the column has room for (the list's edge widens it).
@@ -171,6 +173,7 @@ component Folders {
         alignment: start;
         if root.has-unread: Rectangle {
             width: unread-label.preferred-width;
+            height: unread-label.preferred-height;
             unread-label := T {
                 x: 0;
                 font-size: 12px;
@@ -189,6 +192,7 @@ component Folders {
             property <bool> chosen: index == Chats.folder && root.folder-shown;
             visible: index < root.slots;
             width: index < root.slots ? label.preferred-width : 0px;
+            height: label.preferred-height;
             label := T {
                 x: 0;
                 font-size: 12px;
@@ -206,6 +210,7 @@ component Folders {
         if Chats.folders.length > root.slots: Rectangle {
             property <bool> chosen: Chats.folder >= root.slots && root.folder-shown;
             width: more.preferred-width;
+            height: more.preferred-height;
             more := T {
                 x: 0;
                 font-size: 12px;
@@ -323,8 +328,9 @@ component Side inherits Rectangle {
             padding-left: 16px;
             padding-right: 16px;
             padding-top: 14px;
-            padding-bottom: 8px;
-            spacing: 8px;
+            // The same room above the folders as below them: the list's rows have 6px of their own.
+            padding-bottom: 4px;
+            spacing: 10px;
             HorizontalLayout {
                 spacing: 10px;
                 alignment: start;
@@ -474,11 +480,28 @@ component Side inherits Rectangle {
                             overflow: elide;
                         }
                     }
-                    Action {
-                        label: @tr("profile");
-                        color: P.accent;
-                        activated => {
-                            AppState.page = Page.profile;
+                    // The profile and the settings, as the other themes have them at the foot.
+                    VerticalLayout {
+                        spacing: 2px;
+                        HorizontalLayout {
+                            alignment: end;
+                            Action {
+                                label: @tr("profile");
+                                color: P.accent;
+                                activated => {
+                                    AppState.page = Page.profile;
+                                }
+                            }
+                        }
+                        HorizontalLayout {
+                            alignment: end;
+                            Action {
+                                label: @tr("settings");
+                                color: P.accent;
+                                activated => {
+                                    AppState.page = Page.settings;
+                                }
+                            }
                         }
                     }
                 }

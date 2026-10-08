@@ -1159,7 +1159,7 @@ fn screenshots() {
             let (x, y) = match theme {
                 Theme::Workbench => (150.0, 123.0),
                 Theme::Broadsheet => (230.0, 310.0),
-                Theme::Terminal => (140.0, 98.0),
+                Theme::Terminal => (140.0, 110.0),
             };
             right_click(&window, x, y);
             save(&window, &name("chat-menu"));
@@ -1171,7 +1171,7 @@ fn screenshots() {
             let (ux, uy) = match theme {
                 Theme::Workbench => (150.0, 151.0),
                 Theme::Broadsheet => (230.0, 376.0),
-                Theme::Terminal => (140.0, 127.0),
+                Theme::Terminal => (140.0, 139.0),
             };
             right_click(&window, ux, uy);
             save(&window, &name("chat-menu-user"));

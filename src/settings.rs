@@ -4,7 +4,7 @@
 //! Keep this deliberately small. Telegram's own state (accounts, chats, downloaded files) lives in
 //! TDLib's database, never here.
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::fs;
 use std::path::PathBuf;
 
@@ -14,8 +14,6 @@ pub struct Settings {
     /// UI language, a folder name under lang/ ("en", "zh_Hans"); empty until the user or the system
     /// locale picks one.
     pub language: String,
-    /// "system", "light" or "dark".
-    pub appearance: String,
     /// One of the design's three themes: "workbench" (the default), "broadsheet" or "terminal".
     pub theme: String,
     /// The once-a-day update check (src/update.rs).
@@ -26,8 +24,11 @@ pub struct Settings {
     pub quit_on_close: bool,
     pub show_in_menu_bar: bool,
     pub send_with_enter: bool,
-    /// Settings → Notifications & sounds, FinchGram's own part of it. (Tables, this and the next,
-    /// have to come after the plain values in the file.)
+    /// Light or dark, each theme's own. (Tables, this and the next ones, have to come after the
+    /// plain values in the file.)
+    #[serde(deserialize_with = "appearance_in_file")]
+    pub appearance: Appearance,
+    /// Settings → Notifications & sounds, FinchGram's own part of it.
     pub notifications: Notifications,
     /// How wide each theme's chat list is, as the user last dragged its edge.
     pub list_widths: ListWidths,
@@ -55,6 +56,69 @@ impl Default for Screenshots {
     fn default() -> Self {
         Screenshots { shortcut: "cmd+shift+a".to_string(), hide_own_window: false, global: false }
     }
+}
+
+/// "system", "light" or "dark" for each of the three themes: a theme switched to comes back as it
+/// was left. Workbench and Broadsheet follow the system until the user chooses; Terminal is dark,
+/// its better side, until the user chooses.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Appearance {
+    pub workbench: String,
+    pub broadsheet: String,
+    pub terminal: String,
+}
+
+impl Default for Appearance {
+    fn default() -> Self {
+        Appearance { workbench: "system".to_string(), broadsheet: "system".to_string(), terminal: "dark".to_string() }
+    }
+}
+
+impl Appearance {
+    /// The theme's choice, by the theme's name as `Settings::theme` has it.
+    pub fn of(&self, theme: &str) -> &str {
+        match theme {
+            "broadsheet" => &self.broadsheet,
+            "terminal" => &self.terminal,
+            _ => &self.workbench,
+        }
+    }
+
+    pub fn set(&mut self, theme: &str, appearance: &str) {
+        let slot = match theme {
+            "broadsheet" => &mut self.broadsheet,
+            "terminal" => &mut self.terminal,
+            _ => &mut self.workbench,
+        };
+        *slot = appearance.to_string();
+    }
+
+    /// A word that is none of the three (edited by hand) is the theme's default again.
+    fn sanitized(self) -> Appearance {
+        let default = Appearance::default();
+        let sane = |word: String, fallback: String| if matches!(word.as_str(), "system" | "light" | "dark") { word } else { fallback };
+        Appearance {
+            workbench: sane(self.workbench, default.workbench),
+            broadsheet: sane(self.broadsheet, default.broadsheet),
+            terminal: sane(self.terminal, default.terminal),
+        }
+    }
+}
+
+/// Up to v0.3.9 the file had one word for all three themes, `appearance = "dark"`: it still reads,
+/// as Workbench's and Broadsheet's; Terminal, which had no choice of its own before, starts dark.
+fn appearance_in_file<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Appearance, D::Error> {
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum InFile {
+        Each(Appearance),
+        One(String),
+    }
+    Ok(match InFile::deserialize(deserializer)? {
+        InFile::Each(appearance) => appearance,
+        InFile::One(word) => Appearance { workbench: word.clone(), broadsheet: word, ..Appearance::default() },
+    })
 }
 
 /// What FinchGram does when a message arrives (src/telegram/notifications.rs), as the design has it
@@ -115,12 +179,12 @@ impl Default for Settings {
     fn default() -> Self {
         Settings {
             language: String::new(),
-            appearance: "system".to_string(),
             theme: "workbench".to_string(),
             check_for_updates: true,
             quit_on_close: false,
             show_in_menu_bar: true,
             send_with_enter: true,
+            appearance: Appearance::default(),
             notifications: Notifications::default(),
             list_widths: ListWidths::default(),
             screenshots: Screenshots::default(),
@@ -141,12 +205,10 @@ impl Settings {
                 }
             })
             .unwrap_or_default();
-        if !matches!(settings.appearance.as_str(), "system" | "light" | "dark") {
-            settings.appearance = "system".to_string();
-        }
         if !matches!(settings.theme.as_str(), "workbench" | "broadsheet" | "terminal") {
             settings.theme = "workbench".to_string();
         }
+        settings.appearance = settings.appearance.clone().sanitized();
         settings.list_widths = settings.list_widths.sanitized();
         settings
     }
@@ -183,6 +245,29 @@ mod tests {
         assert_eq!((read.theme.as_str(), read.check_for_updates), ("terminal", false));
         assert!(!read.quit_on_close && read.show_in_menu_bar && read.send_with_enter);
         assert_eq!(read.notifications, Notifications::default());
+        assert_eq!(read.appearance, Appearance::default());
+        assert_eq!((read.appearance.of("workbench"), read.appearance.of("terminal")), ("system", "dark"));
+    }
+
+    #[test]
+    fn one_appearance_for_all_themes_reads_as_the_two_older_themes_choice() {
+        let read: Settings = toml::from_str("appearance = \"light\"\ntheme = \"terminal\"\n").expect("read");
+        assert_eq!(read.appearance, Appearance { workbench: "light".into(), broadsheet: "light".into(), terminal: "dark".into() });
+    }
+
+    #[test]
+    fn each_theme_keeps_its_own_appearance() {
+        let mut settings = Settings::default();
+        settings.appearance.set("terminal", "light");
+        settings.appearance.set("broadsheet", "dark");
+        let text = toml::to_string_pretty(&settings).expect("TOML");
+        assert!(text.contains("[appearance]\nworkbench = \"system\"\nbroadsheet = \"dark\"\nterminal = \"light\"\n"), "{text}");
+        let read: Settings = toml::from_str(&text).expect("read back");
+        assert_eq!(read.appearance, settings.appearance);
+        let read: Settings = toml::from_str("[appearance]\nworkbench = \"dark\"\n").expect("read");
+        assert_eq!((read.appearance.of("workbench"), read.appearance.of("broadsheet"), read.appearance.of("terminal")), ("dark", "system", "dark"));
+        let odd = Appearance { terminal: "sepia".into(), ..Appearance::default() }.sanitized();
+        assert_eq!(odd, Appearance::default());
     }
 
     #[test]

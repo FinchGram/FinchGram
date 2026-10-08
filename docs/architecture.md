@@ -106,6 +106,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   the themes stay in step.
 - Switching is immediate (Settings → Appearance, or the View menu), with no restart: the window
   swaps its pages and nothing else changes, not even the open chat.
+- Light or dark is each theme's own choice (`[appearance]` in settings.toml): Workbench and
+  Broadsheet follow the system until told otherwise, Terminal starts dark. A theme switched to
+  comes back as it was left.
 - What the design shows but FinchGram does not have yet is greyed out, never left to look working.
 
 ## In the shell's code

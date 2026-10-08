@@ -79,7 +79,8 @@ export global AppState {
     in-out property <string> language: "en";
     in-out property <string> language-name: "English";     // the active one's name in itself
     in-out property <[Language]> languages;
-    // "system", "light" or "dark".
+    // The theme in use's light or dark: "system", "light" or "dark". Each theme keeps its own
+    // (src/settings.rs): Workbench and Broadsheet follow the system, Terminal is dark, until chosen.
     in-out property <string> appearance: "system";
     in-out property <Theme> theme: Theme.workbench;
     // How wide each theme's chat list is (settings.toml): the user drags its edge (ListEdge).

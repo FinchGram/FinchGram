@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-08 07:06+0000\n"
+"POT-Creation-Date: 2026-10-08 18:47+0000\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -74,21 +74,21 @@ msgid "Add a comment (optional)"
 msgstr "أضف تعليقًا (اختياري)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:2025 ui/pages/profile.slint:174
+#: ui/broadsheet/broadsheet.slint:2027 ui/pages/profile.slint:174
 #: ui/pages/settings.slint:1369 ui/terminal/actions.slint:463
-#: ui/terminal/terminal.slint:1067 ui/workbench/actions.slint:547
+#: ui/terminal/terminal.slint:1091 ui/workbench/actions.slint:547
 #: ui/workbench/conversation.slint:1318
 msgid "Cancel"
 msgstr "إلغاء"
 
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2016
-#: ui/chat.slint:789 ui/chat.slint:869 ui/terminal/terminal.slint:1060
+#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2018
+#: ui/chat.slint:789 ui/chat.slint:869 ui/terminal/terminal.slint:1084
 #: ui/workbench/conversation.slint:1293
 msgid "Report"
 msgstr "إبلاغ"
 
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2007
-#: ui/chat.slint:362 ui/chat.slint:790 ui/terminal/terminal.slint:1052
+#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2009
+#: ui/chat.slint:362 ui/chat.slint:790 ui/terminal/terminal.slint:1076
 #: ui/workbench/conversation.slint:1281
 msgid "Delete"
 msgstr "حذف"
@@ -109,12 +109,12 @@ msgstr "الحسابات"
 msgid "Chats"
 msgstr "الدردشات"
 
-#: ui/broadsheet/broadsheet.slint:249 ui/broadsheet/broadsheet.slint:925
+#: ui/broadsheet/broadsheet.slint:249 ui/broadsheet/broadsheet.slint:927
 #: ui/workbench/sidebar.slint:402
 msgid "Channels"
 msgstr "القنوات"
 
-#: ui/broadsheet/broadsheet.slint:257 ui/broadsheet/broadsheet.slint:926
+#: ui/broadsheet/broadsheet.slint:257 ui/broadsheet/broadsheet.slint:928
 msgid "Bots"
 msgstr "البوتات"
 
@@ -126,21 +126,21 @@ msgstr "تصفية"
 msgid "Scheduled"
 msgstr "المجدولة"
 
-#: ui/broadsheet/broadsheet.slint:359 ui/terminal/terminal.slint:194
+#: ui/broadsheet/broadsheet.slint:359 ui/terminal/terminal.slint:199
 msgid "All"
 msgstr "الكل"
 
-#: ui/broadsheet/broadsheet.slint:396 ui/broadsheet/broadsheet.slint:2274
-#: ui/terminal/terminal.slint:176 ui/workbench/sidebar.slint:113
+#: ui/broadsheet/broadsheet.slint:396 ui/broadsheet/broadsheet.slint:2278
+#: ui/terminal/terminal.slint:180 ui/workbench/sidebar.slint:113
 #: ui/workbench/workbench.slint:518
 msgid "Unread"
 msgstr "غير المقروءة"
 
-#: ui/broadsheet/broadsheet.slint:457
+#: ui/broadsheet/broadsheet.slint:459
 msgid "More"
 msgstr "المزيد"
 
-#: ui/broadsheet/broadsheet.slint:734 ui/format.slint:163
+#: ui/broadsheet/broadsheet.slint:736 ui/format.slint:163
 #: ui/workbench/sidebar.slint:240
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
@@ -151,19 +151,19 @@ msgstr[3] "{n} مشتركين"
 msgstr[4] "{n} مشتركًا"
 msgstr[5] "{n} مشترك"
 
-#: ui/broadsheet/broadsheet.slint:956
+#: ui/broadsheet/broadsheet.slint:958
 msgid "Telegram bots"
 msgstr "بوتات Telegram"
 
-#: ui/broadsheet/broadsheet.slint:1015 ui/terminal/terminal.slint:379
+#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:386
 msgid "No chats yet"
 msgstr "لا توجد دردشات بعد"
 
-#: ui/broadsheet/broadsheet.slint:1015 ui/terminal/terminal.slint:379
+#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:386
 msgid "No chats in this folder"
 msgstr "لا توجد دردشات في هذا المجلد"
 
-#: ui/broadsheet/broadsheet.slint:1021 ui/workbench/sidebar.slint:433
+#: ui/broadsheet/broadsheet.slint:1023 ui/workbench/sidebar.slint:433
 msgid ""
 "Search for a username or phone number, or open an invite link someone sent "
 "you, to start chatting."
@@ -171,58 +171,58 @@ msgstr ""
 "للبدء في الدردشة، ابحث عن اسم مستخدم أو رقم هاتف، أو افتح رابط دعوة أرسله "
 "إليك أحدهم."
 
-#: ui/broadsheet/broadsheet.slint:1022
+#: ui/broadsheet/broadsheet.slint:1024
 msgid "Chats you add to this folder in Telegram show up here."
 msgstr "تظهر هنا الدردشات التي تضيفها إلى هذا المجلد في Telegram."
 
-#: ui/broadsheet/broadsheet.slint:1061 ui/terminal/terminal.slint:414
+#: ui/broadsheet/broadsheet.slint:1063 ui/terminal/terminal.slint:421
 msgid "Official bots"
 msgstr "البوتات الرسمية"
 
-#: ui/broadsheet/broadsheet.slint:1075 ui/terminal/terminal.slint:426
+#: ui/broadsheet/broadsheet.slint:1077 ui/terminal/terminal.slint:433
 msgid "Other bots"
 msgstr "بوتات أخرى"
 
-#: ui/broadsheet/broadsheet.slint:1087 ui/workbench/sidebar.slint:499
+#: ui/broadsheet/broadsheet.slint:1089 ui/workbench/sidebar.slint:499
 msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr ""
 "البوتات التي تحمل علامة التحقق تابعة لـ Telegram. أما البوتات الأخرى فترى ما "
 "ترسله إليها."
 
-#: ui/broadsheet/broadsheet.slint:1132 ui/broadsheet/broadsheet.slint:2669
-#: ui/terminal/terminal.slint:523 ui/workbench/conversation.slint:275
+#: ui/broadsheet/broadsheet.slint:1134 ui/broadsheet/broadsheet.slint:2673
+#: ui/terminal/terminal.slint:547 ui/workbench/conversation.slint:275
 #: ui/workbench/conversation.slint:1608
 msgid "Unmute"
 msgstr "إلغاء الكتم"
 
-#: ui/broadsheet/broadsheet.slint:1132 ui/broadsheet/broadsheet.slint:2669
-#: ui/terminal/terminal.slint:523 ui/workbench/conversation.slint:275
+#: ui/broadsheet/broadsheet.slint:1134 ui/broadsheet/broadsheet.slint:2673
+#: ui/terminal/terminal.slint:547 ui/workbench/conversation.slint:275
 #: ui/workbench/conversation.slint:1608
 msgid "Mute"
 msgstr "كتم"
 
-#: ui/broadsheet/broadsheet.slint:1140 ui/broadsheet/broadsheet.slint:2720
-#: ui/terminal/terminal.slint:944 ui/workbench/sidebar.slint:555
+#: ui/broadsheet/broadsheet.slint:1142 ui/broadsheet/broadsheet.slint:2724
+#: ui/terminal/terminal.slint:968 ui/workbench/sidebar.slint:555
 msgid "Unpin"
 msgstr "إلغاء التثبيت"
 
-#: ui/broadsheet/broadsheet.slint:1140 ui/broadsheet/broadsheet.slint:2720
-#: ui/terminal/terminal.slint:944 ui/workbench/sidebar.slint:555
+#: ui/broadsheet/broadsheet.slint:1142 ui/broadsheet/broadsheet.slint:2724
+#: ui/terminal/terminal.slint:968 ui/workbench/sidebar.slint:555
 msgid "Pin"
 msgstr "تثبيت"
 
-#: ui/broadsheet/broadsheet.slint:1148 ui/broadsheet/broadsheet.slint:2200
-#: ui/terminal/terminal.slint:537 ui/terminal/terminal.slint:1422
+#: ui/broadsheet/broadsheet.slint:1150 ui/broadsheet/broadsheet.slint:2202
+#: ui/terminal/terminal.slint:561 ui/terminal/terminal.slint:1446
 #: ui/workbench/sidebar.slint:563
 msgid "Mark as read"
 msgstr "تعليم كمقروءة"
 
-#: ui/broadsheet/broadsheet.slint:1156 ui/terminal/terminal.slint:544
+#: ui/broadsheet/broadsheet.slint:1158 ui/terminal/terminal.slint:568
 msgid "Add to folder"
 msgstr "إضافة إلى مجلد"
 
-#: ui/broadsheet/broadsheet.slint:1203 ui/pages/login.slint:524
+#: ui/broadsheet/broadsheet.slint:1205 ui/pages/login.slint:524
 #: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
 #: ui/pages/login.slint:841 ui/pages/login.slint:901
 #: ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
@@ -230,42 +230,42 @@ msgstr "إضافة إلى مجلد"
 msgid "Back"
 msgstr "رجوع"
 
-#: ui/broadsheet/broadsheet.slint:1281 ui/workbench/conversation.slint:636
+#: ui/broadsheet/broadsheet.slint:1283 ui/workbench/conversation.slint:636
 msgid "Instant View"
 msgstr "العرض الفوري"
 
-#: ui/broadsheet/broadsheet.slint:1313 ui/terminal/terminal.slint:639
+#: ui/broadsheet/broadsheet.slint:1315 ui/terminal/terminal.slint:663
 msgid "Forwarded from {0}"
 msgstr "معاد توجيهها من {0}"
 
-#: ui/broadsheet/broadsheet.slint:1575 ui/broadsheet/broadsheet.slint:1682
+#: ui/broadsheet/broadsheet.slint:1577 ui/broadsheet/broadsheet.slint:1684
 #: ui/workbench/conversation.slint:896
 msgid "edited"
 msgstr "معدلة"
 
-#: ui/broadsheet/broadsheet.slint:1702
+#: ui/broadsheet/broadsheet.slint:1704
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr "ممولة · من Telegram · يمكن لمستخدمي Premium إيقافها"
 
-#: ui/broadsheet/broadsheet.slint:1768 ui/format.slint:261
+#: ui/broadsheet/broadsheet.slint:1770 ui/format.slint:261
 #: ui/workbench/conversation.slint:994
 msgid "You"
 msgstr "أنت"
 
-#: ui/broadsheet/broadsheet.slint:1879 ui/terminal/terminal.slint:1153
+#: ui/broadsheet/broadsheet.slint:1881 ui/terminal/terminal.slint:1177
 msgid "Hide sender's name"
 msgstr "إخفاء اسم المرسل"
 
-#: ui/broadsheet/broadsheet.slint:1983 ui/terminal/terminal.slint:1075
+#: ui/broadsheet/broadsheet.slint:1985 ui/terminal/terminal.slint:1099
 msgid "Shift-click to select a range"
 msgstr "Shift + نقر لتحديد نطاق"
 
-#: ui/broadsheet/broadsheet.slint:1991 ui/chat.slint:788
+#: ui/broadsheet/broadsheet.slint:1993 ui/chat.slint:788
 #: ui/workbench/conversation.slint:1259
 msgid "Forward"
 msgstr "إعادة توجيه"
 
-#: ui/broadsheet/broadsheet.slint:2236 ui/terminal/terminal.slint:1454
+#: ui/broadsheet/broadsheet.slint:2238 ui/terminal/terminal.slint:1478
 msgid "{n} more — open the chat to see them"
 msgid_plural "{n} more — open the chat to see them"
 msgstr[0] "{n} أخرى — افتح المحادثة لعرضها"
@@ -275,31 +275,31 @@ msgstr[3] "{n} أخرى — افتح المحادثة لعرضها"
 msgstr[4] "{n} أخرى — افتح المحادثة لعرضها"
 msgstr[5] "{n} أخرى — افتح المحادثة لعرضها"
 
-#: ui/broadsheet/broadsheet.slint:2305 ui/terminal/terminal.slint:1494
+#: ui/broadsheet/broadsheet.slint:2309 ui/terminal/terminal.slint:1518
 msgid "Mark all as read"
 msgstr "تعليم الكل كمقروء"
 
-#: ui/broadsheet/broadsheet.slint:2350 ui/terminal/terminal.slint:1524
+#: ui/broadsheet/broadsheet.slint:2354 ui/terminal/terminal.slint:1548
 msgid "You're all caught up"
 msgstr "لقد اطّلعت على كل شيء"
 
-#: ui/broadsheet/broadsheet.slint:2370 ui/terminal/terminal.slint:1602
+#: ui/broadsheet/broadsheet.slint:2374 ui/terminal/terminal.slint:1626
 msgid "Choose a chat on the left"
 msgstr "اختر دردشة من القائمة على اليسار"
 
-#: ui/broadsheet/broadsheet.slint:2393 ui/terminal/terminal.slint:891
+#: ui/broadsheet/broadsheet.slint:2397 ui/terminal/terminal.slint:915
 msgid "typing…"
 msgstr "يكتب…"
 
-#: ui/broadsheet/broadsheet.slint:2442 ui/terminal/terminal.slint:978
+#: ui/broadsheet/broadsheet.slint:2446 ui/terminal/terminal.slint:1002
 msgid "{0} is typing…"
 msgstr "{0} يكتب…"
 
-#: ui/broadsheet/broadsheet.slint:2474
+#: ui/broadsheet/broadsheet.slint:2478
 msgid "Sending as {0}"
 msgstr "الإرسال باسم {0}"
 
-#: ui/broadsheet/broadsheet.slint:2491
+#: ui/broadsheet/broadsheet.slint:2495
 msgid "Write a message…"
 msgstr "اكتب رسالة…"
 
@@ -632,7 +632,7 @@ msgstr "إظهار في Finder"
 msgid "{0} of {1}"
 msgstr "{0} من {1}"
 
-#: ui/chat.slint:667 ui/terminal/terminal.slint:704
+#: ui/chat.slint:667 ui/terminal/terminal.slint:728
 msgid "Tap to view"
 msgstr "انقر للعرض"
 
@@ -2022,67 +2022,71 @@ msgstr "فاتح"
 msgid "dark"
 msgstr "داكن"
 
-#: ui/terminal/terminal.slint:211
+#: ui/terminal/terminal.slint:217
 msgid "more"
 msgstr "المزيد"
 
-#: ui/terminal/terminal.slint:467
+#: ui/terminal/terminal.slint:474
 msgid "Current account"
 msgstr "الحساب الحالي"
 
-#: ui/terminal/terminal.slint:477
+#: ui/terminal/terminal.slint:489
 msgid "profile"
 msgstr "الملف الشخصي"
 
-#: ui/terminal/terminal.slint:686 ui/terminal/terminal.slint:691
+#: ui/terminal/terminal.slint:499
+msgid "settings"
+msgstr "الإعدادات"
+
+#: ui/terminal/terminal.slint:710 ui/terminal/terminal.slint:715
 msgid "(edited)"
 msgstr "(معدلة)"
 
-#: ui/terminal/terminal.slint:834
+#: ui/terminal/terminal.slint:858
 msgid "sponsored"
 msgstr "ممولة"
 
-#: ui/terminal/terminal.slint:898
+#: ui/terminal/terminal.slint:922
 msgid "search"
 msgstr "بحث"
 
-#: ui/terminal/terminal.slint:902
+#: ui/terminal/terminal.slint:926
 msgid "chat settings"
 msgstr "إعدادات الدردشة"
 
-#: ui/terminal/terminal.slint:1096
+#: ui/terminal/terminal.slint:1120
 msgid "Mute or unmute this chat"
 msgstr "كتم هذه الدردشة أو إلغاء كتمها"
 
-#: ui/terminal/terminal.slint:1097
+#: ui/terminal/terminal.slint:1121
 msgid "Pin or unpin this chat"
 msgstr "تثبيت هذه الدردشة أو إلغاء تثبيتها"
 
-#: ui/terminal/terminal.slint:1098
+#: ui/terminal/terminal.slint:1122
 msgid "Mark this chat as read"
 msgstr "تعليم هذه الدردشة كمقروءة"
 
-#: ui/terminal/terminal.slint:1245
+#: ui/terminal/terminal.slint:1269
 msgid "Write a message, or / for commands"
 msgstr "اكتب رسالة، أو / للأوامر"
 
-#: ui/terminal/terminal.slint:1245
+#: ui/terminal/terminal.slint:1269
 msgid "/ for commands"
 msgstr "/ للأوامر"
 
-#: ui/terminal/terminal.slint:1267
+#: ui/terminal/terminal.slint:1291
 msgid "save"
 msgstr "حفظ"
 
-#: ui/terminal/terminal.slint:1267
+#: ui/terminal/terminal.slint:1291
 msgid "send"
 msgstr "إرسال"
 
-#: ui/terminal/terminal.slint:1548
+#: ui/terminal/terminal.slint:1572
 msgid "connected"
 msgstr "متصل"
 
-#: ui/terminal/terminal.slint:1556
+#: ui/terminal/terminal.slint:1580
 msgid "command"
 msgstr "أمر"
 
