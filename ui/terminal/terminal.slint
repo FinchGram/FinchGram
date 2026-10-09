@@ -1,6 +1,7 @@
 // Terminal (the design's "1b 终端"): monospace and keyboard first. The chat list marks each chat
-// with a sign (# group, » channel, @ person, * saved, ~ bot, ^ pinned); the chat reads as a log;
-// one command line writes messages and runs commands ("/mute", "/pin", …).
+// with its kind's icon, the other themes' (a person, a group, a channel's megaphone, a robot, a
+// bookmark; a pin before a pinned one); the chat reads as a log; one command line writes messages
+// and runs commands ("/mute", "/pin", …).
 import { ListView } from "std-widgets.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
@@ -10,7 +11,7 @@ import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords } from "../chat.slint";
 import { TerminalPalette as P } from "palette.slint";
-import { Signs } from "signs.slint";
+import { Sign } from "signs.slint";
 import { TerminalActions } from "actions.slint";
 import { TerminalAttachments } from "attachments.slint";
 
@@ -160,10 +161,18 @@ component ChatLine inherits Rectangle {
             text: root.open ? "▸" : "";
             color: P.accent;
         }
-        T {
-            width: 14px;
-            text: Signs.of(root.chat.kind, root.chat.pinned);
-            color: P.faint;
+        // The pin, or its room, then the kind's sign: two columns, so the titles line up.
+        Rectangle {
+            width: 12px;
+            if root.chat.pinned: Icon {
+                name: "push-pin";
+                size: 12px;
+                color: P.faint;
+                y: (parent.height - self.height) / 2;
+            }
+        }
+        Sign {
+            kind: root.chat.kind;
         }
         T {
             horizontal-stretch: 1;
@@ -540,12 +549,23 @@ component Side inherits Rectangle {
             VerticalLayout {
                 padding-top: 4px;
                 padding-bottom: 4px;
-                T {
+                HorizontalLayout {
                     height: 24px;
                     x: 12px;
-                    text: "── " + Signs.of(root.menu-chat.kind, false) + root.menu-chat.title + " ──";
-                    color: P.faint;
-                    overflow: elide;
+                    spacing: 5px;
+                    T {
+                        text: "──";
+                        color: P.faint;
+                    }
+                    Sign {
+                        kind: root.menu-chat.kind;
+                    }
+                    T {
+                        horizontal-stretch: 1;
+                        text: root.menu-chat.title + " ──";
+                        color: P.faint;
+                        overflow: elide;
+                    }
                 }
                 if !root.menu-folders: MenuEntry {
                     label: root.menu-chat.muted ? @tr("Unmute") : @tr("Mute");
@@ -908,11 +928,19 @@ component Pane inherits Rectangle {
                 padding-left: 16px;
                 padding-right: 16px;
                 spacing: 10px;
-                T {
-                    text: Signs.of(Conversation.kind, false) + Conversation.title;
-                    color: P.accent;
-                    font-weight: 600;
-                    overflow: elide;
+                HorizontalLayout {
+                    horizontal-stretch: 0;
+                    spacing: 5px;
+                    Sign {
+                        kind: Conversation.kind;
+                        color: P.accent;
+                    }
+                    T {
+                        text: Conversation.title;
+                        color: P.accent;
+                        font-weight: 600;
+                        overflow: elide;
+                    }
                 }
                 T {
                     horizontal-stretch: 1;
@@ -953,12 +981,23 @@ component Pane inherits Rectangle {
                     VerticalLayout {
                         padding-top: 4px;
                         padding-bottom: 4px;
-                        T {
+                        HorizontalLayout {
                             height: 24px;
                             x: 12px;
-                            text: "── " + Signs.of(Conversation.kind, false) + Conversation.title + " ──";
-                            color: P.faint;
-                            overflow: elide;
+                            spacing: 5px;
+                            T {
+                                text: "──";
+                                color: P.faint;
+                            }
+                            Sign {
+                                kind: Conversation.kind;
+                            }
+                            T {
+                                horizontal-stretch: 1;
+                                text: Conversation.title + " ──";
+                                color: P.faint;
+                                overflow: elide;
+                            }
                         }
                         MenuEntry {
                             label: Conversation.muted ? @tr("Unmute") : @tr("Mute");
@@ -1268,7 +1307,10 @@ component CommandLine inherits Rectangle {
                 placeholder: Conversation.can-write ? @tr("Write a message, or / for commands") : @tr("/ for commands");
                 text-color: P.text;
                 placeholder-color: P.faint;
-                selection-color: P.sel;
+                // The accent: on macOS the cursor is painted in the selection's colour (chat.slint),
+                // and in P.sel it could not be seen.
+                selection-color: P.accent;
+                selection-text-color: P.on-accent;
                 font-family: P.font;
                 font-size: 13px;
                 padding-x: 0px;
@@ -1406,9 +1448,8 @@ component UnreadSection {
         HorizontalLayout {
             height: 22px;
             spacing: 8px;
-            T {
-                text: Signs.of(root.group.chat.kind, false);
-                color: P.faint;
+            Sign {
+                kind: root.group.chat.kind;
             }
             T {
                 text: root.group.chat.title;

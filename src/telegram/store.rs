@@ -1250,7 +1250,9 @@ impl Store {
         let (official_bots, bots): (Vec<ChatRow>, Vec<ChatRow>) = bots.into_iter().partition(|bot| bot.verified);
 
         let chats = ui.global::<Chats>();
-        chats.set_unread_channels(channels.iter().filter(|channel| channel.unread > 0).count() as i32);
+        // The dot on Workbench's channels button: muted channels do not count, as in Telegram's own
+        // badges, or the dot never goes out.
+        chats.set_unread_channels(channels.iter().filter(|channel| channel.unread > 0 && !channel.muted).count() as i32);
         chats.set_folder(shown as i32);
         sync(&self.models.folders, folders);
         sync(&self.models.list, list);

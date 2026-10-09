@@ -1,23 +1,39 @@
-// Terminal's signs for kinds of chat: # group, » channel, @ person, * saved, ~ bot, ^ pinned.
+// Terminal's signs for the kinds of chat: the icons the other themes use (Phosphor, ui/icons/),
+// drawn small, in the text's colour. A pinned chat has a pin before its sign, in the chat list,
+// which keeps a column for it.
 import { ChatKind } from "../telegram.slint";
+import { Icon } from "../widgets.slint";
+import { TerminalPalette as P } from "palette.slint";
 
 export global Signs {
-    public pure function of(kind: ChatKind, pinned: bool) -> string {
-        if pinned {
-            return "^";
-        }
+    public pure function of(kind: ChatKind) -> string {
         if kind == ChatKind.group {
-            return "#";
+            return "users-three";
         }
         if kind == ChatKind.channel {
-            return "»";
+            return "megaphone";
         }
         if kind == ChatKind.saved {
-            return "*";
+            return "bookmark-simple";
         }
         if kind == ChatKind.bot {
-            return "~";
+            return "robot";
         }
-        return "@";
+        return "user";
+    }
+}
+
+// A chat's sign: its kind's icon, as wide as it is high, in the middle of its line.
+export component Sign {
+    in property <ChatKind> kind;
+    in property <color> color: P.faint;
+    in property <length> size: 12px;
+    width: size;
+
+    Icon {
+        name: Signs.of(root.kind);
+        size: root.size;
+        color: root.color;
+        y: (parent.height - self.height) / 2;
     }
 }

@@ -96,7 +96,7 @@ export global Chats {
     in-out property <[ChatRow]> list;            // its chats, in Telegram's order
     in-out property <[TreeRow]> tree;            // Workbench: every folder, with its chats when expanded
     in-out property <[ChatRow]> channels;        // every channel, for the Channels view
-    in-out property <int> unread-channels;       // how many of them have unread posts
+    in-out property <int> unread-channels;       // how many of them, not muted, have unread posts
     in-out property <[ChatRow]> official-bots;   // chats with Telegram's own bots, for the Bots view
     in-out property <[ChatRow]> bots;            // chats with every other bot
     in-out property <bool> loaded;               // TDLib has sent the chat list

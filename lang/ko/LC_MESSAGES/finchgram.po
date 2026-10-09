@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-09 03:46+0000\n"
+"POT-Creation-Date: 2026-10-09 04:39+0000\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -60,34 +60,34 @@ msgstr "저장된 메시지"
 msgid "Recent"
 msgstr "최근"
 
-#: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:254
+#: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:253
 msgid "No chats found"
 msgstr "채팅을 찾을 수 없음"
 
-#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
+#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:357
 msgid "Add a comment"
 msgstr "설명 추가 (필수)"
 
-#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
+#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:357
 msgid "Add a comment (optional)"
 msgstr "설명 추가 (선택 사항)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
 #: ui/broadsheet/broadsheet.slint:2027 ui/pages/profile.slint:174
 #: ui/pages/settings.slint:1369 ui/terminal/actions.slint:463
-#: ui/terminal/terminal.slint:1095 ui/workbench/actions.slint:547
+#: ui/terminal/terminal.slint:1134 ui/workbench/actions.slint:547
 #: ui/workbench/conversation.slint:1318
 msgid "Cancel"
 msgstr "취소"
 
 #: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2018
-#: ui/chat.slint:789 ui/chat.slint:869 ui/terminal/terminal.slint:1088
+#: ui/chat.slint:793 ui/chat.slint:873 ui/terminal/terminal.slint:1127
 #: ui/workbench/conversation.slint:1293
 msgid "Report"
 msgstr "신고"
 
 #: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2009
-#: ui/chat.slint:362 ui/chat.slint:790 ui/terminal/terminal.slint:1080
+#: ui/chat.slint:366 ui/chat.slint:794 ui/terminal/terminal.slint:1119
 #: ui/workbench/conversation.slint:1281
 msgid "Delete"
 msgstr "삭제"
@@ -125,12 +125,12 @@ msgstr "필터"
 msgid "Scheduled"
 msgstr "예약됨"
 
-#: ui/broadsheet/broadsheet.slint:359 ui/terminal/terminal.slint:232
+#: ui/broadsheet/broadsheet.slint:359 ui/terminal/terminal.slint:241
 msgid "All"
 msgstr "전체"
 
 #: ui/broadsheet/broadsheet.slint:396 ui/broadsheet/broadsheet.slint:2278
-#: ui/terminal/terminal.slint:213 ui/workbench/sidebar.slint:113
+#: ui/terminal/terminal.slint:222 ui/workbench/sidebar.slint:113
 #: ui/workbench/workbench.slint:518
 msgid "Unread"
 msgstr "읽지 않음"
@@ -149,11 +149,11 @@ msgstr[0] "구독자 {n}명"
 msgid "Telegram bots"
 msgstr "Telegram 봇"
 
-#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:419
+#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:428
 msgid "No chats yet"
 msgstr "아직 채팅이 없습니다"
 
-#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:419
+#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:428
 msgid "No chats in this folder"
 msgstr "이 폴더에는 채팅이 없습니다"
 
@@ -169,11 +169,11 @@ msgstr ""
 msgid "Chats you add to this folder in Telegram show up here."
 msgstr "Telegram에서 이 폴더에 추가한 채팅이 여기에 표시됩니다."
 
-#: ui/broadsheet/broadsheet.slint:1063 ui/terminal/terminal.slint:454
+#: ui/broadsheet/broadsheet.slint:1063 ui/terminal/terminal.slint:463
 msgid "Official bots"
 msgstr "공식 봇"
 
-#: ui/broadsheet/broadsheet.slint:1077 ui/terminal/terminal.slint:466
+#: ui/broadsheet/broadsheet.slint:1077 ui/terminal/terminal.slint:475
 msgid "Other bots"
 msgstr "기타 봇"
 
@@ -185,41 +185,41 @@ msgstr ""
 "수 있습니다."
 
 #: ui/broadsheet/broadsheet.slint:1134 ui/broadsheet/broadsheet.slint:2673
-#: ui/terminal/terminal.slint:551 ui/workbench/conversation.slint:275
+#: ui/terminal/terminal.slint:571 ui/workbench/conversation.slint:275
 #: ui/workbench/conversation.slint:1608
 msgid "Unmute"
 msgstr "음소거 해제"
 
 #: ui/broadsheet/broadsheet.slint:1134 ui/broadsheet/broadsheet.slint:2673
-#: ui/terminal/terminal.slint:551 ui/workbench/conversation.slint:275
+#: ui/terminal/terminal.slint:571 ui/workbench/conversation.slint:275
 #: ui/workbench/conversation.slint:1608
 msgid "Mute"
 msgstr "음소거"
 
 #: ui/broadsheet/broadsheet.slint:1142 ui/broadsheet/broadsheet.slint:2724
-#: ui/terminal/terminal.slint:972 ui/workbench/sidebar.slint:555
+#: ui/terminal/terminal.slint:1011 ui/workbench/sidebar.slint:555
 msgid "Unpin"
 msgstr "고정 해제"
 
 #: ui/broadsheet/broadsheet.slint:1142 ui/broadsheet/broadsheet.slint:2724
-#: ui/terminal/terminal.slint:972 ui/workbench/sidebar.slint:555
+#: ui/terminal/terminal.slint:1011 ui/workbench/sidebar.slint:555
 msgid "Pin"
 msgstr "고정"
 
 #: ui/broadsheet/broadsheet.slint:1150 ui/broadsheet/broadsheet.slint:2202
-#: ui/terminal/terminal.slint:565 ui/terminal/terminal.slint:1445
+#: ui/terminal/terminal.slint:585 ui/terminal/terminal.slint:1486
 #: ui/workbench/sidebar.slint:563
 msgid "Mark as read"
 msgstr "읽음으로 표시"
 
-#: ui/broadsheet/broadsheet.slint:1158 ui/terminal/terminal.slint:572
+#: ui/broadsheet/broadsheet.slint:1158 ui/terminal/terminal.slint:592
 msgid "Add to folder"
 msgstr "폴더에 추가"
 
 #: ui/broadsheet/broadsheet.slint:1205 ui/pages/login.slint:524
 #: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
 #: ui/pages/login.slint:841 ui/pages/login.slint:901
-#: ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
+#: ui/pages/settings.slint:1618 ui/terminal/actions.slint:285
 #: ui/workbench/sidebar.slint:620
 msgid "Back"
 msgstr "뒤로"
@@ -228,7 +228,7 @@ msgstr "뒤로"
 msgid "Instant View"
 msgstr "인스턴트 뷰"
 
-#: ui/broadsheet/broadsheet.slint:1315 ui/terminal/terminal.slint:667
+#: ui/broadsheet/broadsheet.slint:1315 ui/terminal/terminal.slint:687
 msgid "Forwarded from {0}"
 msgstr "{0}님으로부터 전달됨"
 
@@ -246,41 +246,41 @@ msgstr "스폰서 메시지 · Telegram 게재 · Premium 사용자는 끌 수 �
 msgid "You"
 msgstr "나"
 
-#: ui/broadsheet/broadsheet.slint:1881 ui/terminal/terminal.slint:1181
+#: ui/broadsheet/broadsheet.slint:1881 ui/terminal/terminal.slint:1220
 msgid "Hide sender's name"
 msgstr "보낸 사람 이름 숨기기"
 
-#: ui/broadsheet/broadsheet.slint:1985 ui/terminal/terminal.slint:1103
+#: ui/broadsheet/broadsheet.slint:1985 ui/terminal/terminal.slint:1142
 msgid "Shift-click to select a range"
 msgstr "Shift-클릭으로 범위 선택"
 
-#: ui/broadsheet/broadsheet.slint:1993 ui/chat.slint:788
+#: ui/broadsheet/broadsheet.slint:1993 ui/chat.slint:792
 #: ui/workbench/conversation.slint:1259
 msgid "Forward"
 msgstr "전달"
 
-#: ui/broadsheet/broadsheet.slint:2238 ui/terminal/terminal.slint:1477
+#: ui/broadsheet/broadsheet.slint:2238 ui/terminal/terminal.slint:1518
 msgid "{n} more — open the chat to see them"
 msgid_plural "{n} more — open the chat to see them"
 msgstr[0] "{n}개 더 있음 · 채팅을 열어 확인"
 
-#: ui/broadsheet/broadsheet.slint:2309 ui/terminal/terminal.slint:1517
+#: ui/broadsheet/broadsheet.slint:2309 ui/terminal/terminal.slint:1558
 msgid "Mark all as read"
 msgstr "모두 읽음으로 표시"
 
-#: ui/broadsheet/broadsheet.slint:2354 ui/terminal/terminal.slint:1547
+#: ui/broadsheet/broadsheet.slint:2354 ui/terminal/terminal.slint:1588
 msgid "You're all caught up"
 msgstr "모두 확인했어요"
 
-#: ui/broadsheet/broadsheet.slint:2374 ui/terminal/terminal.slint:1625
+#: ui/broadsheet/broadsheet.slint:2374 ui/terminal/terminal.slint:1666
 msgid "Choose a chat on the left"
 msgstr "왼쪽에서 채팅을 선택하세요"
 
-#: ui/broadsheet/broadsheet.slint:2397 ui/terminal/terminal.slint:919
+#: ui/broadsheet/broadsheet.slint:2397 ui/terminal/terminal.slint:947
 msgid "typing…"
 msgstr "입력 중…"
 
-#: ui/broadsheet/broadsheet.slint:2446 ui/terminal/terminal.slint:1006
+#: ui/broadsheet/broadsheet.slint:2446 ui/terminal/terminal.slint:1045
 msgid "{0} is typing…"
 msgstr "{0}님이 입력 중…"
 
@@ -292,51 +292,51 @@ msgstr "보내는 사람: {0}"
 msgid "Write a message…"
 msgstr "메시지 입력…"
 
-#: ui/chat.slint:263
+#: ui/chat.slint:267
 msgid "Unblock bot"
 msgstr "봇 차단 해제"
 
-#: ui/chat.slint:263
+#: ui/chat.slint:267
 msgid "Block bot"
 msgstr "봇 차단"
 
-#: ui/chat.slint:264
+#: ui/chat.slint:268
 msgid "Unblock user"
 msgstr "사용자 차단 해제"
 
-#: ui/chat.slint:264
+#: ui/chat.slint:268
 msgid "Block user"
 msgstr "사용자 차단"
 
-#: ui/chat.slint:267
+#: ui/chat.slint:271
 msgid "Leave channel"
 msgstr "채널 나가기"
 
-#: ui/chat.slint:267
+#: ui/chat.slint:271
 msgid "Leave group"
 msgstr "그룹 나가기"
 
-#: ui/chat.slint:268
+#: ui/chat.slint:272
 msgid "Delete chat"
 msgstr "채팅 삭제"
 
-#: ui/chat.slint:270
+#: ui/chat.slint:274
 msgid "Block {0}?"
 msgstr "{0}님을 차단하시겠습니까?"
 
-#: ui/chat.slint:271
+#: ui/chat.slint:275
 msgid "Leave the channel {0}?"
 msgstr "{0} 채널에서 나가시겠습니까?"
 
-#: ui/chat.slint:271
+#: ui/chat.slint:275
 msgid "Leave the group {0}?"
 msgstr "{0} 그룹에서 나가시겠습니까?"
 
-#: ui/chat.slint:272
+#: ui/chat.slint:276
 msgid "Delete the chat with {0}?"
 msgstr "{0}님과의 채팅을 삭제하시겠습니까?"
 
-#: ui/chat.slint:275
+#: ui/chat.slint:279
 msgid ""
 "They will not be able to send you messages. You can unblock them from this "
 "menu."
@@ -344,68 +344,68 @@ msgstr ""
 "상대방이 나에게 메시지를 보낼 수 없게 됩니다. 이 메뉴에서 차단을 해제할 수 있"
 "습니다."
 
-#: ui/chat.slint:276
+#: ui/chat.slint:280
 msgid "You will stop getting its posts."
 msgstr "더 이상 이 채널의 게시물을 받지 않습니다."
 
-#: ui/chat.slint:276
+#: ui/chat.slint:280
 msgid "You will stop getting its messages."
 msgstr "더 이상 이 그룹의 메시지를 받지 않습니다."
 
-#: ui/chat.slint:277
+#: ui/chat.slint:281
 msgid "The chat and its messages go from your list."
 msgstr "채팅과 메시지가 목록에서 사라집니다."
 
-#: ui/chat.slint:279 ui/chat.slint:864
+#: ui/chat.slint:283 ui/chat.slint:868
 msgid "Also delete for {0}"
 msgstr "{0}님에게서도 삭제"
 
-#: ui/chat.slint:281
+#: ui/chat.slint:285
 msgid "Block"
 msgstr "차단"
 
-#: ui/chat.slint:282
+#: ui/chat.slint:286
 msgid "Leave"
 msgstr "나가기"
 
-#: ui/chat.slint:288
+#: ui/chat.slint:292
 msgid "Attach"
 msgstr "첨부"
 
-#: ui/chat.slint:289
+#: ui/chat.slint:293
 msgid "Photo or Video"
 msgstr "사진 또는 비디오"
 
-#: ui/chat.slint:290 ui/format.slint:212
+#: ui/chat.slint:294 ui/format.slint:212
 msgid "File"
 msgstr "파일"
 
-#: ui/chat.slint:291
+#: ui/chat.slint:295
 msgid "Poll"
 msgstr "투표"
 
-#: ui/chat.slint:292
+#: ui/chat.slint:296
 msgid "Not available yet"
 msgstr "아직 사용할 수 없음"
 
-#: ui/chat.slint:293 ui/chat.slint:296
+#: ui/chat.slint:297 ui/chat.slint:300
 msgid "Not allowed in this group"
 msgstr "이 그룹에서는 허용되지 않음"
 
-#: ui/chat.slint:294
+#: ui/chat.slint:298
 msgid "You can't send messages in this group"
 msgstr "이 그룹에서는 메시지를 보낼 수 없습니다"
 
-#: ui/chat.slint:295
+#: ui/chat.slint:299
 msgid "Screenshot"
 msgstr "스크린샷"
 
 #. The card shown when the system has not let FinchGram see the screen.
-#: ui/chat.slint:298
+#: ui/chat.slint:302
 msgid "Screen Recording is off for FinchGram"
 msgstr "FinchGram의 화면 기록 권한이 꺼져 있습니다"
 
-#: ui/chat.slint:299
+#: ui/chat.slint:303
 msgid ""
 "Screenshots need Screen Recording in System Settings → Privacy & Security. "
 "If FinchGram is already in the list, turn it off and on again."
@@ -413,300 +413,300 @@ msgstr ""
 "스크린샷을 찍으려면 시스템 설정 → 개인정보 보호 및 보안에서 화면 기록을 허용"
 "해야 합니다. FinchGram이 이미 목록에 있다면 껐다가 다시 켜세요."
 
-#: ui/chat.slint:300
+#: ui/chat.slint:304
 msgid "Open System Settings"
 msgstr "시스템 설정 열기"
 
-#: ui/chat.slint:301
+#: ui/chat.slint:305
 msgid "Not now"
 msgstr "나중에"
 
-#: ui/chat.slint:302
+#: ui/chat.slint:306
 msgid "↑↓ Choose · Return Open · Esc Close"
 msgstr "↑↓ 선택 · Return 열기 · Esc 닫기"
 
-#: ui/chat.slint:308
+#: ui/chat.slint:312
 msgid "Send Screenshot"
 msgstr "스크린샷 보내기"
 
-#: ui/chat.slint:311
+#: ui/chat.slint:315
 msgid "Send File"
 msgstr "파일 보내기"
 
-#: ui/chat.slint:311
+#: ui/chat.slint:315
 msgid "Send {n} Files"
 msgid_plural "Send {n} Files"
 msgstr[0] "파일 {n}개 보내기"
 
-#: ui/chat.slint:314
+#: ui/chat.slint:318
 msgid "Send Video"
 msgstr "비디오 보내기"
 
-#: ui/chat.slint:314
+#: ui/chat.slint:318
 msgid "Send {n} Videos"
 msgid_plural "Send {n} Videos"
 msgstr[0] "비디오 {n}개 보내기"
 
-#: ui/chat.slint:316
+#: ui/chat.slint:320
 msgid "Send Photo"
 msgstr "사진 보내기"
 
-#: ui/chat.slint:316
+#: ui/chat.slint:320
 msgid "Send {n} Photos"
 msgid_plural "Send {n} Photos"
 msgstr[0] "사진 {n}장 보내기"
 
-#: ui/chat.slint:318
+#: ui/chat.slint:322
 msgid "Will be sent as {n} albums"
 msgid_plural "Will be sent as {n} albums"
 msgstr[0] "앨범 {n}개로 나누어 보냅니다"
 
-#: ui/chat.slint:319
+#: ui/chat.slint:323
 msgid "Album {0} · {1}"
 msgstr "앨범 {0} · {1}"
 
-#: ui/chat.slint:320
+#: ui/chat.slint:324
 msgid "Add more"
 msgstr "더 추가"
 
-#: ui/chat.slint:321
+#: ui/chat.slint:325
 msgid "Remove"
 msgstr "제거"
 
-#: ui/chat.slint:322
+#: ui/chat.slint:326
 msgid "Add a caption…"
 msgstr "캡션 추가…"
 
-#: ui/chat.slint:323
+#: ui/chat.slint:327
 msgid "Send as photo"
 msgstr "사진으로 보내기"
 
-#: ui/chat.slint:324
+#: ui/chat.slint:328
 msgid "Send as video"
 msgstr "비디오로 보내기"
 
-#: ui/chat.slint:325
+#: ui/chat.slint:329
 msgid "Send as file"
 msgstr "파일로 보내기"
 
-#: ui/chat.slint:326
+#: ui/chat.slint:330
 msgid "Group items"
 msgstr "앨범으로 묶기"
 
-#: ui/chat.slint:327
+#: ui/chat.slint:331
 msgid "Self-destruct timer"
 msgstr "자동 삭제 타이머"
 
-#: ui/chat.slint:328
+#: ui/chat.slint:332
 msgid "Disappears after it's opened."
 msgstr "열어 본 후에 사라집니다."
 
-#: ui/chat.slint:330 ui/pages/settings.slint:918 ui/pages/settings.slint:929
+#: ui/chat.slint:334 ui/pages/settings.slint:918 ui/pages/settings.slint:929
 #: ui/pages/settings.slint:1187
 msgid "Off"
 msgstr "끔"
 
-#: ui/chat.slint:331
+#: ui/chat.slint:335
 msgid "View once"
 msgstr "한 번 보기"
 
-#: ui/chat.slint:332
+#: ui/chat.slint:336
 msgid "{0} s"
 msgstr "{0}초"
 
-#: ui/chat.slint:334
+#: ui/chat.slint:338
 msgid "Hide with spoiler"
 msgstr "스포일러로 가리기"
 
-#: ui/chat.slint:336
+#: ui/chat.slint:340
 msgid "Send"
 msgstr "보내기"
 
-#: ui/chat.slint:337
+#: ui/chat.slint:341
 msgid "More send options"
 msgstr "추가 전송 옵션"
 
-#: ui/chat.slint:338
+#: ui/chat.slint:342
 msgid "Send without sound"
 msgstr "소리 없이 보내기"
 
-#: ui/chat.slint:339
+#: ui/chat.slint:343
 msgid "Schedule message"
 msgstr "메시지 예약"
 
-#: ui/chat.slint:342
+#: ui/chat.slint:346
 msgid "Return to send · Esc to cancel"
 msgstr "Return 보내기 · Esc 취소"
 
-#: ui/chat.slint:342
+#: ui/chat.slint:346
 msgid "⌘Return to send · Return for a new line · Esc to cancel"
 msgstr "⌘Return 보내기 · Return 줄 바꿈 · Esc 취소"
 
-#: ui/chat.slint:344
+#: ui/chat.slint:348
 msgid "Remove the marked items to send"
 msgstr "표시된 항목을 제거해야 보낼 수 있습니다"
 
-#: ui/chat.slint:345
+#: ui/chat.slint:349
 msgid "Caption is too long"
 msgstr "캡션이 너무 깁니다"
 
-#: ui/chat.slint:349 ui/chat.slint:350
+#: ui/chat.slint:353 ui/chat.slint:354
 msgid "Files over {0} GB can't be sent"
 msgstr "{0} GB가 넘는 파일은 보낼 수 없습니다"
 
-#: ui/chat.slint:351
+#: ui/chat.slint:355
 msgid "Can't read this file"
 msgstr "이 파일을 읽을 수 없습니다"
 
-#: ui/chat.slint:355
+#: ui/chat.slint:359
 msgid "Drop to send as photos"
 msgstr "놓으면 사진으로 보냅니다"
 
-#: ui/chat.slint:356
+#: ui/chat.slint:360
 msgid "Drop to send as files"
 msgstr "놓으면 파일로 보냅니다"
 
-#: ui/chat.slint:357
+#: ui/chat.slint:361
 msgid "Compressed"
 msgstr "압축됨"
 
-#: ui/chat.slint:358
+#: ui/chat.slint:362
 msgid "Original quality"
 msgstr "원본 화질"
 
-#: ui/chat.slint:359
+#: ui/chat.slint:363
 msgid "Cancel upload"
 msgstr "업로드 취소"
 
-#: ui/chat.slint:360
+#: ui/chat.slint:364
 msgid "Not sent"
 msgstr "전송되지 않음"
 
-#: ui/chat.slint:361
+#: ui/chat.slint:365
 msgid "Retry"
 msgstr "다시 시도"
 
-#: ui/chat.slint:363
+#: ui/chat.slint:367
 msgid "Download"
 msgstr "다운로드"
 
-#: ui/chat.slint:364
+#: ui/chat.slint:368
 msgid "Cancel download"
 msgstr "다운로드 취소"
 
-#: ui/chat.slint:365
+#: ui/chat.slint:369
 msgid "Show in Finder"
 msgstr "Finder에서 보기"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:367
+#: ui/chat.slint:371
 msgid "{0} of {1}"
 msgstr "{1} 중 {0}"
 
-#: ui/chat.slint:667 ui/terminal/terminal.slint:732
+#: ui/chat.slint:671 ui/terminal/terminal.slint:752
 msgid "Tap to view"
 msgstr "클릭하여 보기"
 
-#: ui/chat.slint:780
+#: ui/chat.slint:784
 msgid "Reply"
 msgstr "답장"
 
-#: ui/chat.slint:781
+#: ui/chat.slint:785
 msgid "Edit"
 msgstr "편집"
 
-#: ui/chat.slint:782
+#: ui/chat.slint:786
 msgid "Copy Image"
 msgstr "이미지 복사"
 
-#: ui/chat.slint:783
+#: ui/chat.slint:787
 msgid "Save Image"
 msgstr "이미지 저장"
 
-#: ui/chat.slint:784
+#: ui/chat.slint:788
 msgid "Save Video"
 msgstr "비디오 저장"
 
-#: ui/chat.slint:786
+#: ui/chat.slint:790
 msgctxt "words of a photo or video"
 msgid "Copy Text"
 msgstr "텍스트 복사"
 
-#: ui/chat.slint:787
+#: ui/chat.slint:791
 msgid "Copy Message Link"
 msgstr "메시지 링크 복사"
 
-#: ui/chat.slint:791
+#: ui/chat.slint:795
 msgid "Select"
 msgstr "선택"
 
-#: ui/chat.slint:796
+#: ui/chat.slint:800
 msgctxt "words of a message"
 msgid "Copy Text"
 msgstr "텍스트 복사"
 
-#: ui/chat.slint:826
+#: ui/chat.slint:830
 msgid "Text copied to clipboard."
 msgstr "텍스트를 복사했습니다."
 
-#: ui/chat.slint:827
+#: ui/chat.slint:831
 msgid "Link copied to clipboard."
 msgstr "링크를 복사했습니다."
 
-#: ui/chat.slint:828
+#: ui/chat.slint:832
 msgid "Image copied to clipboard."
 msgstr "이미지를 복사했습니다."
 
-#: ui/chat.slint:829
+#: ui/chat.slint:833
 msgid "Saved to Downloads"
 msgstr "다운로드 폴더에 저장됨"
 
-#: ui/chat.slint:829 ui/viewer.slint:30
+#: ui/chat.slint:833 ui/viewer.slint:30
 msgid "Saved to Downloads · {0}"
 msgstr "다운로드 폴더에 저장됨 · {0}"
 
-#: ui/chat.slint:830
+#: ui/chat.slint:834
 msgid "Reported"
 msgstr "신고됨"
 
-#: ui/chat.slint:831
+#: ui/chat.slint:835
 msgid "A folder must keep at least one chat."
 msgstr "폴더에는 채팅이 하나 이상 있어야 합니다."
 
-#: ui/chat.slint:838
+#: ui/chat.slint:842
 msgid "Reply to {0}"
 msgstr "{0}님에게 답장"
 
-#: ui/chat.slint:839
+#: ui/chat.slint:843
 msgid "Edit message"
 msgstr "메시지 편집"
 
-#: ui/chat.slint:840
+#: ui/chat.slint:844
 msgid "Forward {n} message"
 msgid_plural "Forward {n} messages"
 msgstr[0] "메시지 {n}개 전달"
 
-#: ui/chat.slint:844
+#: ui/chat.slint:848
 msgid "From: {0}"
 msgstr "보낸 사람: {0}"
 
-#: ui/chat.slint:850
+#: ui/chat.slint:854
 msgid "Deleted message"
 msgstr "삭제된 메시지"
 
-#: ui/chat.slint:855
+#: ui/chat.slint:859
 msgid "{0} selected"
 msgstr "{0}개 선택됨"
 
-#: ui/chat.slint:859
+#: ui/chat.slint:863
 msgid "Delete this message?"
 msgstr "이 메시지를 삭제하시겠습니까?"
 
-#: ui/chat.slint:860
+#: ui/chat.slint:864
 msgid "Delete {0} messages?"
 msgstr "메시지 {0}개를 삭제하시겠습니까?"
 
-#: ui/chat.slint:865
+#: ui/chat.slint:869
 msgid "Also delete for everyone"
 msgstr "모두에게서도 삭제"
 
@@ -1977,67 +1977,67 @@ msgctxt "list separator"
 msgid ", "
 msgstr ", "
 
-#: ui/terminal/terminal.slint:118
+#: ui/terminal/terminal.slint:119
 msgid "light"
 msgstr "라이트"
 
-#: ui/terminal/terminal.slint:118
+#: ui/terminal/terminal.slint:119
 msgid "dark"
 msgstr "다크"
 
-#: ui/terminal/terminal.slint:250
+#: ui/terminal/terminal.slint:259
 msgid "more"
 msgstr "더 보기"
 
-#: ui/terminal/terminal.slint:714 ui/terminal/terminal.slint:719
+#: ui/terminal/terminal.slint:734 ui/terminal/terminal.slint:739
 msgid "(edited)"
 msgstr "(편집됨)"
 
-#: ui/terminal/terminal.slint:862
+#: ui/terminal/terminal.slint:882
 msgid "sponsored"
 msgstr "스폰서"
 
-#: ui/terminal/terminal.slint:926
+#: ui/terminal/terminal.slint:954
 msgid "search"
 msgstr "검색"
 
-#: ui/terminal/terminal.slint:930
+#: ui/terminal/terminal.slint:958
 msgid "chat settings"
 msgstr "채팅 설정"
 
-#: ui/terminal/terminal.slint:1124
+#: ui/terminal/terminal.slint:1163
 msgid "Mute or unmute this chat"
 msgstr "이 채팅을 음소거하거나 해제"
 
-#: ui/terminal/terminal.slint:1125
+#: ui/terminal/terminal.slint:1164
 msgid "Pin or unpin this chat"
 msgstr "이 채팅을 고정하거나 해제"
 
-#: ui/terminal/terminal.slint:1126
+#: ui/terminal/terminal.slint:1165
 msgid "Mark this chat as read"
 msgstr "이 채팅을 읽음으로 표시"
 
-#: ui/terminal/terminal.slint:1268
+#: ui/terminal/terminal.slint:1307
 msgid "Write a message, or / for commands"
 msgstr "메시지를 입력하거나 /로 명령을 사용하세요"
 
-#: ui/terminal/terminal.slint:1268
+#: ui/terminal/terminal.slint:1307
 msgid "/ for commands"
 msgstr "/로 명령 사용"
 
-#: ui/terminal/terminal.slint:1290
+#: ui/terminal/terminal.slint:1332
 msgid "save"
 msgstr "저장"
 
-#: ui/terminal/terminal.slint:1290
+#: ui/terminal/terminal.slint:1332
 msgid "send"
 msgstr "보내기"
 
-#: ui/terminal/terminal.slint:1571
+#: ui/terminal/terminal.slint:1612
 msgid "connected"
 msgstr "연결됨"
 
-#: ui/terminal/terminal.slint:1579
+#: ui/terminal/terminal.slint:1620
 msgid "command"
 msgstr "명령"
 

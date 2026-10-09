@@ -109,7 +109,10 @@ export component MessageInput inherits Rectangle {
     in property <string> placeholder;
     in property <color> text-color;
     in property <color> placeholder-color;
+    // The selected words' colours. (On macOS Slint paints the text cursor in the selection's
+    // background colour, so a theme's selection colour is its cursor's too.)
     in property <color> selection-color;
+    in property <color> selection-text-color: text-color;
     in property <string> font-family;
     in property <length> font-size: 14px;
     in property <float> line-height-factor: 1;
@@ -175,6 +178,7 @@ export component MessageInput inherits Rectangle {
             font-size: root.font-size;
             line-height-factor: root.line-height-factor;
             selection-background-color: root.selection-color;
+            selection-foreground-color: root.selection-text-color;
             edited => {
                 root.edited(self.text);
             }
@@ -889,6 +893,7 @@ export component SearchInput inherits Rectangle {
     in property <color> text-color;
     in property <color> placeholder-color;
     in property <color> selection-color;
+    in property <color> selection-text-color: text-color;
     in property <string> font-family;
     in property <length> font-size: 14px;
     callback edited(string);
@@ -916,6 +921,7 @@ export component SearchInput inherits Rectangle {
         font-size: root.font-size;
         vertical-alignment: center;
         selection-background-color: root.selection-color;
+        selection-foreground-color: root.selection-text-color;
         init => {
             self.focus();
         }
@@ -942,6 +948,7 @@ export component CommentInput inherits Rectangle {
     in property <color> text-color;
     in property <color> placeholder-color;
     in property <color> selection-color;
+    in property <color> selection-text-color: text-color;
     in property <string> font-family;
     in property <length> font-size: 14px;
     in property <float> line-height-factor: 1;
@@ -982,6 +989,7 @@ export component CommentInput inherits Rectangle {
             font-size: root.font-size;
             line-height-factor: root.line-height-factor;
             selection-background-color: root.selection-color;
+            selection-foreground-color: root.selection-text-color;
             init => {
                 self.focus();
             }

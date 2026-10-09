@@ -6,7 +6,7 @@ import { Spinner } from "../widgets.slint";
 import { ActionWords, AttachWords, ChatMenuWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
 import { Screenshot } from "../state.slint";
 import { TerminalPalette as P } from "palette.slint";
-import { Signs } from "signs.slint";
+import { Sign } from "signs.slint";
 
 component T inherits Text {
     font-family: P.font;
@@ -165,7 +165,8 @@ component ForwardPicker inherits Dialog {
                         placeholder: @tr("Search");
                         text-color: P.text;
                         placeholder-color: P.faint;
-                        selection-color: P.sel;
+                        selection-color: P.accent;
+                        selection-text-color: P.on-accent;
                         font-family: P.font;
                         font-size: 13px;
                         edited(words) => {
@@ -200,9 +201,8 @@ component ForwardPicker inherits Dialog {
                         padding-left: 16px;
                         padding-right: 16px;
                         spacing: 10px;
-                        T {
-                            width: 12px;
-                            text: "*";
+                        Sign {
+                            kind: ChatKind.saved;
                             color: P.accent2;
                         }
                         T {
@@ -230,9 +230,8 @@ component ForwardPicker inherits Dialog {
                         padding-left: 16px;
                         padding-right: 16px;
                         spacing: 10px;
-                        T {
-                            width: 12px;
-                            text: Signs.of(chat.kind, false);
+                        Sign {
+                            kind: chat.kind;
                             color: P.accent;
                         }
                         T {
@@ -358,7 +357,8 @@ component ReportDialog inherits Dialog {
                     placeholder: Actions.report-comment-required ? @tr("Add a comment") : @tr("Add a comment (optional)");
                     text-color: P.text;
                     placeholder-color: P.faint;
-                    selection-color: P.sel;
+                    selection-color: P.accent;
+                    selection-text-color: P.on-accent;
                     font-family: P.font;
                     font-size: 13px;
                     line-height-factor: P.leading(1.6);

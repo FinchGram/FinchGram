@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-09 03:46+0000\n"
+"POT-Creation-Date: 2026-10-09 04:39+0000\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -61,34 +61,34 @@ msgstr "الرسائل المحفوظة"
 msgid "Recent"
 msgstr "الأخيرة"
 
-#: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:254
+#: ui/broadsheet/actions.slint:292 ui/terminal/actions.slint:253
 msgid "No chats found"
 msgstr "لم يتم العثور على دردشات"
 
-#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
+#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:357
 msgid "Add a comment"
 msgstr "أضف تعليقًا"
 
-#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:358
+#: ui/broadsheet/actions.slint:421 ui/terminal/actions.slint:357
 msgid "Add a comment (optional)"
 msgstr "أضف تعليقًا (اختياري)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
 #: ui/broadsheet/broadsheet.slint:2027 ui/pages/profile.slint:174
 #: ui/pages/settings.slint:1369 ui/terminal/actions.slint:463
-#: ui/terminal/terminal.slint:1095 ui/workbench/actions.slint:547
+#: ui/terminal/terminal.slint:1134 ui/workbench/actions.slint:547
 #: ui/workbench/conversation.slint:1318
 msgid "Cancel"
 msgstr "إلغاء"
 
 #: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2018
-#: ui/chat.slint:789 ui/chat.slint:869 ui/terminal/terminal.slint:1088
+#: ui/chat.slint:793 ui/chat.slint:873 ui/terminal/terminal.slint:1127
 #: ui/workbench/conversation.slint:1293
 msgid "Report"
 msgstr "إبلاغ"
 
 #: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2009
-#: ui/chat.slint:362 ui/chat.slint:790 ui/terminal/terminal.slint:1080
+#: ui/chat.slint:366 ui/chat.slint:794 ui/terminal/terminal.slint:1119
 #: ui/workbench/conversation.slint:1281
 msgid "Delete"
 msgstr "حذف"
@@ -126,12 +126,12 @@ msgstr "تصفية"
 msgid "Scheduled"
 msgstr "المجدولة"
 
-#: ui/broadsheet/broadsheet.slint:359 ui/terminal/terminal.slint:232
+#: ui/broadsheet/broadsheet.slint:359 ui/terminal/terminal.slint:241
 msgid "All"
 msgstr "الكل"
 
 #: ui/broadsheet/broadsheet.slint:396 ui/broadsheet/broadsheet.slint:2278
-#: ui/terminal/terminal.slint:213 ui/workbench/sidebar.slint:113
+#: ui/terminal/terminal.slint:222 ui/workbench/sidebar.slint:113
 #: ui/workbench/workbench.slint:518
 msgid "Unread"
 msgstr "غير المقروءة"
@@ -155,11 +155,11 @@ msgstr[5] "{n} مشترك"
 msgid "Telegram bots"
 msgstr "بوتات Telegram"
 
-#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:419
+#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:428
 msgid "No chats yet"
 msgstr "لا توجد دردشات بعد"
 
-#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:419
+#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:428
 msgid "No chats in this folder"
 msgstr "لا توجد دردشات في هذا المجلد"
 
@@ -175,11 +175,11 @@ msgstr ""
 msgid "Chats you add to this folder in Telegram show up here."
 msgstr "تظهر هنا الدردشات التي تضيفها إلى هذا المجلد في Telegram."
 
-#: ui/broadsheet/broadsheet.slint:1063 ui/terminal/terminal.slint:454
+#: ui/broadsheet/broadsheet.slint:1063 ui/terminal/terminal.slint:463
 msgid "Official bots"
 msgstr "البوتات الرسمية"
 
-#: ui/broadsheet/broadsheet.slint:1077 ui/terminal/terminal.slint:466
+#: ui/broadsheet/broadsheet.slint:1077 ui/terminal/terminal.slint:475
 msgid "Other bots"
 msgstr "بوتات أخرى"
 
@@ -191,41 +191,41 @@ msgstr ""
 "ترسله إليها."
 
 #: ui/broadsheet/broadsheet.slint:1134 ui/broadsheet/broadsheet.slint:2673
-#: ui/terminal/terminal.slint:551 ui/workbench/conversation.slint:275
+#: ui/terminal/terminal.slint:571 ui/workbench/conversation.slint:275
 #: ui/workbench/conversation.slint:1608
 msgid "Unmute"
 msgstr "إلغاء الكتم"
 
 #: ui/broadsheet/broadsheet.slint:1134 ui/broadsheet/broadsheet.slint:2673
-#: ui/terminal/terminal.slint:551 ui/workbench/conversation.slint:275
+#: ui/terminal/terminal.slint:571 ui/workbench/conversation.slint:275
 #: ui/workbench/conversation.slint:1608
 msgid "Mute"
 msgstr "كتم"
 
 #: ui/broadsheet/broadsheet.slint:1142 ui/broadsheet/broadsheet.slint:2724
-#: ui/terminal/terminal.slint:972 ui/workbench/sidebar.slint:555
+#: ui/terminal/terminal.slint:1011 ui/workbench/sidebar.slint:555
 msgid "Unpin"
 msgstr "إلغاء التثبيت"
 
 #: ui/broadsheet/broadsheet.slint:1142 ui/broadsheet/broadsheet.slint:2724
-#: ui/terminal/terminal.slint:972 ui/workbench/sidebar.slint:555
+#: ui/terminal/terminal.slint:1011 ui/workbench/sidebar.slint:555
 msgid "Pin"
 msgstr "تثبيت"
 
 #: ui/broadsheet/broadsheet.slint:1150 ui/broadsheet/broadsheet.slint:2202
-#: ui/terminal/terminal.slint:565 ui/terminal/terminal.slint:1445
+#: ui/terminal/terminal.slint:585 ui/terminal/terminal.slint:1486
 #: ui/workbench/sidebar.slint:563
 msgid "Mark as read"
 msgstr "تعليم كمقروءة"
 
-#: ui/broadsheet/broadsheet.slint:1158 ui/terminal/terminal.slint:572
+#: ui/broadsheet/broadsheet.slint:1158 ui/terminal/terminal.slint:592
 msgid "Add to folder"
 msgstr "إضافة إلى مجلد"
 
 #: ui/broadsheet/broadsheet.slint:1205 ui/pages/login.slint:524
 #: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
 #: ui/pages/login.slint:841 ui/pages/login.slint:901
-#: ui/pages/settings.slint:1618 ui/terminal/actions.slint:286
+#: ui/pages/settings.slint:1618 ui/terminal/actions.slint:285
 #: ui/workbench/sidebar.slint:620
 msgid "Back"
 msgstr "رجوع"
@@ -234,7 +234,7 @@ msgstr "رجوع"
 msgid "Instant View"
 msgstr "العرض الفوري"
 
-#: ui/broadsheet/broadsheet.slint:1315 ui/terminal/terminal.slint:667
+#: ui/broadsheet/broadsheet.slint:1315 ui/terminal/terminal.slint:687
 msgid "Forwarded from {0}"
 msgstr "معاد توجيهها من {0}"
 
@@ -252,20 +252,20 @@ msgstr "ممولة · من Telegram · يمكن لمستخدمي Premium إيق�
 msgid "You"
 msgstr "أنت"
 
-#: ui/broadsheet/broadsheet.slint:1881 ui/terminal/terminal.slint:1181
+#: ui/broadsheet/broadsheet.slint:1881 ui/terminal/terminal.slint:1220
 msgid "Hide sender's name"
 msgstr "إخفاء اسم المرسل"
 
-#: ui/broadsheet/broadsheet.slint:1985 ui/terminal/terminal.slint:1103
+#: ui/broadsheet/broadsheet.slint:1985 ui/terminal/terminal.slint:1142
 msgid "Shift-click to select a range"
 msgstr "Shift + نقر لتحديد نطاق"
 
-#: ui/broadsheet/broadsheet.slint:1993 ui/chat.slint:788
+#: ui/broadsheet/broadsheet.slint:1993 ui/chat.slint:792
 #: ui/workbench/conversation.slint:1259
 msgid "Forward"
 msgstr "إعادة توجيه"
 
-#: ui/broadsheet/broadsheet.slint:2238 ui/terminal/terminal.slint:1477
+#: ui/broadsheet/broadsheet.slint:2238 ui/terminal/terminal.slint:1518
 msgid "{n} more — open the chat to see them"
 msgid_plural "{n} more — open the chat to see them"
 msgstr[0] "{n} أخرى — افتح المحادثة لعرضها"
@@ -275,23 +275,23 @@ msgstr[3] "{n} أخرى — افتح المحادثة لعرضها"
 msgstr[4] "{n} أخرى — افتح المحادثة لعرضها"
 msgstr[5] "{n} أخرى — افتح المحادثة لعرضها"
 
-#: ui/broadsheet/broadsheet.slint:2309 ui/terminal/terminal.slint:1517
+#: ui/broadsheet/broadsheet.slint:2309 ui/terminal/terminal.slint:1558
 msgid "Mark all as read"
 msgstr "تعليم الكل كمقروء"
 
-#: ui/broadsheet/broadsheet.slint:2354 ui/terminal/terminal.slint:1547
+#: ui/broadsheet/broadsheet.slint:2354 ui/terminal/terminal.slint:1588
 msgid "You're all caught up"
 msgstr "لقد اطّلعت على كل شيء"
 
-#: ui/broadsheet/broadsheet.slint:2374 ui/terminal/terminal.slint:1625
+#: ui/broadsheet/broadsheet.slint:2374 ui/terminal/terminal.slint:1666
 msgid "Choose a chat on the left"
 msgstr "اختر دردشة من القائمة على اليسار"
 
-#: ui/broadsheet/broadsheet.slint:2397 ui/terminal/terminal.slint:919
+#: ui/broadsheet/broadsheet.slint:2397 ui/terminal/terminal.slint:947
 msgid "typing…"
 msgstr "يكتب…"
 
-#: ui/broadsheet/broadsheet.slint:2446 ui/terminal/terminal.slint:1006
+#: ui/broadsheet/broadsheet.slint:2446 ui/terminal/terminal.slint:1045
 msgid "{0} is typing…"
 msgstr "{0} يكتب…"
 
@@ -303,118 +303,118 @@ msgstr "الإرسال باسم {0}"
 msgid "Write a message…"
 msgstr "اكتب رسالة…"
 
-#: ui/chat.slint:263
+#: ui/chat.slint:267
 msgid "Unblock bot"
 msgstr "إلغاء حظر البوت"
 
-#: ui/chat.slint:263
+#: ui/chat.slint:267
 msgid "Block bot"
 msgstr "حظر البوت"
 
-#: ui/chat.slint:264
+#: ui/chat.slint:268
 msgid "Unblock user"
 msgstr "إلغاء حظر المستخدم"
 
-#: ui/chat.slint:264
+#: ui/chat.slint:268
 msgid "Block user"
 msgstr "حظر المستخدم"
 
-#: ui/chat.slint:267
+#: ui/chat.slint:271
 msgid "Leave channel"
 msgstr "مغادرة القناة"
 
-#: ui/chat.slint:267
+#: ui/chat.slint:271
 msgid "Leave group"
 msgstr "مغادرة المجموعة"
 
-#: ui/chat.slint:268
+#: ui/chat.slint:272
 msgid "Delete chat"
 msgstr "حذف الدردشة"
 
-#: ui/chat.slint:270
+#: ui/chat.slint:274
 msgid "Block {0}?"
 msgstr "حظر {0}؟"
 
-#: ui/chat.slint:271
+#: ui/chat.slint:275
 msgid "Leave the channel {0}?"
 msgstr "مغادرة القناة {0}؟"
 
-#: ui/chat.slint:271
+#: ui/chat.slint:275
 msgid "Leave the group {0}?"
 msgstr "مغادرة المجموعة {0}؟"
 
-#: ui/chat.slint:272
+#: ui/chat.slint:276
 msgid "Delete the chat with {0}?"
 msgstr "حذف الدردشة مع {0}؟"
 
-#: ui/chat.slint:275
+#: ui/chat.slint:279
 msgid ""
 "They will not be able to send you messages. You can unblock them from this "
 "menu."
 msgstr "لن يتمكن من إرسال رسائل إليك. يمكنك إلغاء حظره من هذه القائمة."
 
-#: ui/chat.slint:276
+#: ui/chat.slint:280
 msgid "You will stop getting its posts."
 msgstr "ستتوقف عن تلقي منشوراتها."
 
-#: ui/chat.slint:276
+#: ui/chat.slint:280
 msgid "You will stop getting its messages."
 msgstr "ستتوقف عن تلقي رسائلها."
 
-#: ui/chat.slint:277
+#: ui/chat.slint:281
 msgid "The chat and its messages go from your list."
 msgstr "ستختفي الدردشة ورسائلها من قائمتك."
 
-#: ui/chat.slint:279 ui/chat.slint:864
+#: ui/chat.slint:283 ui/chat.slint:868
 msgid "Also delete for {0}"
 msgstr "الحذف لدى {0} أيضًا"
 
-#: ui/chat.slint:281
+#: ui/chat.slint:285
 msgid "Block"
 msgstr "حظر"
 
-#: ui/chat.slint:282
+#: ui/chat.slint:286
 msgid "Leave"
 msgstr "مغادرة"
 
-#: ui/chat.slint:288
+#: ui/chat.slint:292
 msgid "Attach"
 msgstr "إرفاق"
 
-#: ui/chat.slint:289
+#: ui/chat.slint:293
 msgid "Photo or Video"
 msgstr "صورة أو فيديو"
 
-#: ui/chat.slint:290 ui/format.slint:212
+#: ui/chat.slint:294 ui/format.slint:212
 msgid "File"
 msgstr "ملف"
 
-#: ui/chat.slint:291
+#: ui/chat.slint:295
 msgid "Poll"
 msgstr "استطلاع"
 
-#: ui/chat.slint:292
+#: ui/chat.slint:296
 msgid "Not available yet"
 msgstr "غير متوفر بعد"
 
-#: ui/chat.slint:293 ui/chat.slint:296
+#: ui/chat.slint:297 ui/chat.slint:300
 msgid "Not allowed in this group"
 msgstr "غير مسموح به في هذه المجموعة"
 
-#: ui/chat.slint:294
+#: ui/chat.slint:298
 msgid "You can't send messages in this group"
 msgstr "لا يمكنك إرسال رسائل في هذه المجموعة"
 
-#: ui/chat.slint:295
+#: ui/chat.slint:299
 msgid "Screenshot"
 msgstr "لقطة شاشة"
 
 #. The card shown when the system has not let FinchGram see the screen.
-#: ui/chat.slint:298
+#: ui/chat.slint:302
 msgid "Screen Recording is off for FinchGram"
 msgstr "تسجيل الشاشة غير مفعّل لـ FinchGram"
 
-#: ui/chat.slint:299
+#: ui/chat.slint:303
 msgid ""
 "Screenshots need Screen Recording in System Settings → Privacy & Security. "
 "If FinchGram is already in the list, turn it off and on again."
@@ -422,27 +422,27 @@ msgstr ""
 "تحتاج لقطات الشاشة إلى إذن تسجيل الشاشة في إعدادات النظام › الخصوصية والأمن. "
 "إذا كان FinchGram في القائمة بالفعل، فأوقفه ثم فعّله مرة أخرى."
 
-#: ui/chat.slint:300
+#: ui/chat.slint:304
 msgid "Open System Settings"
 msgstr "فتح إعدادات النظام"
 
-#: ui/chat.slint:301
+#: ui/chat.slint:305
 msgid "Not now"
 msgstr "ليس الآن"
 
-#: ui/chat.slint:302
+#: ui/chat.slint:306
 msgid "↑↓ Choose · Return Open · Esc Close"
 msgstr "↑↓ اختيار · Return فتح · Esc إغلاق"
 
-#: ui/chat.slint:308
+#: ui/chat.slint:312
 msgid "Send Screenshot"
 msgstr "إرسال لقطة الشاشة"
 
-#: ui/chat.slint:311
+#: ui/chat.slint:315
 msgid "Send File"
 msgstr "إرسال ملف"
 
-#: ui/chat.slint:311
+#: ui/chat.slint:315
 msgid "Send {n} Files"
 msgid_plural "Send {n} Files"
 msgstr[0] "إرسال {n} ملف"
@@ -452,11 +452,11 @@ msgstr[3] "إرسال {n} ملفات"
 msgstr[4] "إرسال {n} ملفًا"
 msgstr[5] "إرسال {n} ملف"
 
-#: ui/chat.slint:314
+#: ui/chat.slint:318
 msgid "Send Video"
 msgstr "إرسال فيديو"
 
-#: ui/chat.slint:314
+#: ui/chat.slint:318
 msgid "Send {n} Videos"
 msgid_plural "Send {n} Videos"
 msgstr[0] "إرسال {n} مقطع فيديو"
@@ -466,11 +466,11 @@ msgstr[3] "إرسال {n} مقاطع فيديو"
 msgstr[4] "إرسال {n} مقطع فيديو"
 msgstr[5] "إرسال {n} مقطع فيديو"
 
-#: ui/chat.slint:316
+#: ui/chat.slint:320
 msgid "Send Photo"
 msgstr "إرسال صورة"
 
-#: ui/chat.slint:316
+#: ui/chat.slint:320
 msgid "Send {n} Photos"
 msgid_plural "Send {n} Photos"
 msgstr[0] "إرسال {n} صورة"
@@ -480,7 +480,7 @@ msgstr[3] "إرسال {n} صور"
 msgstr[4] "إرسال {n} صورة"
 msgstr[5] "إرسال {n} صورة"
 
-#: ui/chat.slint:318
+#: ui/chat.slint:322
 msgid "Will be sent as {n} albums"
 msgid_plural "Will be sent as {n} albums"
 msgstr[0] "سيتم إرسالها في {n} ألبوم"
@@ -490,227 +490,227 @@ msgstr[3] "سيتم إرسالها في {n} ألبومات"
 msgstr[4] "سيتم إرسالها في {n} ألبومًا"
 msgstr[5] "سيتم إرسالها في {n} ألبوم"
 
-#: ui/chat.slint:319
+#: ui/chat.slint:323
 msgid "Album {0} · {1}"
 msgstr "ألبوم {0} · {1}"
 
-#: ui/chat.slint:320
+#: ui/chat.slint:324
 msgid "Add more"
 msgstr "إضافة المزيد"
 
-#: ui/chat.slint:321
+#: ui/chat.slint:325
 msgid "Remove"
 msgstr "إزالة"
 
-#: ui/chat.slint:322
+#: ui/chat.slint:326
 msgid "Add a caption…"
 msgstr "أضف تعليقًا…"
 
-#: ui/chat.slint:323
+#: ui/chat.slint:327
 msgid "Send as photo"
 msgstr "إرسال كصورة"
 
-#: ui/chat.slint:324
+#: ui/chat.slint:328
 msgid "Send as video"
 msgstr "إرسال كفيديو"
 
-#: ui/chat.slint:325
+#: ui/chat.slint:329
 msgid "Send as file"
 msgstr "إرسال كملف"
 
-#: ui/chat.slint:326
+#: ui/chat.slint:330
 msgid "Group items"
 msgstr "تجميع العناصر"
 
-#: ui/chat.slint:327
+#: ui/chat.slint:331
 msgid "Self-destruct timer"
 msgstr "مؤقت التدمير الذاتي"
 
-#: ui/chat.slint:328
+#: ui/chat.slint:332
 msgid "Disappears after it's opened."
 msgstr "يختفي بعد فتحه."
 
-#: ui/chat.slint:330 ui/pages/settings.slint:918 ui/pages/settings.slint:929
+#: ui/chat.slint:334 ui/pages/settings.slint:918 ui/pages/settings.slint:929
 #: ui/pages/settings.slint:1187
 msgid "Off"
 msgstr "إيقاف"
 
-#: ui/chat.slint:331
+#: ui/chat.slint:335
 msgid "View once"
 msgstr "عرض لمرة واحدة"
 
-#: ui/chat.slint:332
+#: ui/chat.slint:336
 msgid "{0} s"
 msgstr "{0} ث"
 
-#: ui/chat.slint:334
+#: ui/chat.slint:338
 msgid "Hide with spoiler"
 msgstr "إخفاء بتمويه"
 
-#: ui/chat.slint:336
+#: ui/chat.slint:340
 msgid "Send"
 msgstr "إرسال"
 
-#: ui/chat.slint:337
+#: ui/chat.slint:341
 msgid "More send options"
 msgstr "خيارات إرسال إضافية"
 
-#: ui/chat.slint:338
+#: ui/chat.slint:342
 msgid "Send without sound"
 msgstr "إرسال بدون صوت"
 
-#: ui/chat.slint:339
+#: ui/chat.slint:343
 msgid "Schedule message"
 msgstr "جدولة الرسالة"
 
-#: ui/chat.slint:342
+#: ui/chat.slint:346
 msgid "Return to send · Esc to cancel"
 msgstr "Return للإرسال · Esc للإلغاء"
 
-#: ui/chat.slint:342
+#: ui/chat.slint:346
 msgid "⌘Return to send · Return for a new line · Esc to cancel"
 msgstr "⌘Return للإرسال · Return لسطر جديد · Esc للإلغاء"
 
-#: ui/chat.slint:344
+#: ui/chat.slint:348
 msgid "Remove the marked items to send"
 msgstr "أزل العناصر المعلّمة لتتمكن من الإرسال"
 
-#: ui/chat.slint:345
+#: ui/chat.slint:349
 msgid "Caption is too long"
 msgstr "التعليق طويل جدًا"
 
-#: ui/chat.slint:349 ui/chat.slint:350
+#: ui/chat.slint:353 ui/chat.slint:354
 msgid "Files over {0} GB can't be sent"
 msgstr "لا يمكن إرسال الملفات الأكبر من {0} غيغابايت"
 
-#: ui/chat.slint:351
+#: ui/chat.slint:355
 msgid "Can't read this file"
 msgstr "تعذر قراءة هذا الملف"
 
-#: ui/chat.slint:355
+#: ui/chat.slint:359
 msgid "Drop to send as photos"
 msgstr "أفلت للإرسال كصور"
 
-#: ui/chat.slint:356
+#: ui/chat.slint:360
 msgid "Drop to send as files"
 msgstr "أفلت للإرسال كملفات"
 
-#: ui/chat.slint:357
+#: ui/chat.slint:361
 msgid "Compressed"
 msgstr "مضغوط"
 
-#: ui/chat.slint:358
+#: ui/chat.slint:362
 msgid "Original quality"
 msgstr "الجودة الأصلية"
 
-#: ui/chat.slint:359
+#: ui/chat.slint:363
 msgid "Cancel upload"
 msgstr "إلغاء الرفع"
 
-#: ui/chat.slint:360
+#: ui/chat.slint:364
 msgid "Not sent"
 msgstr "لم يتم الإرسال"
 
-#: ui/chat.slint:361
+#: ui/chat.slint:365
 msgid "Retry"
 msgstr "إعادة المحاولة"
 
-#: ui/chat.slint:363
+#: ui/chat.slint:367
 msgid "Download"
 msgstr "تنزيل"
 
-#: ui/chat.slint:364
+#: ui/chat.slint:368
 msgid "Cancel download"
 msgstr "إلغاء التنزيل"
 
-#: ui/chat.slint:365
+#: ui/chat.slint:369
 msgid "Show in Finder"
 msgstr "إظهار في Finder"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:367
+#: ui/chat.slint:371
 msgid "{0} of {1}"
 msgstr "{0} من {1}"
 
-#: ui/chat.slint:667 ui/terminal/terminal.slint:732
+#: ui/chat.slint:671 ui/terminal/terminal.slint:752
 msgid "Tap to view"
 msgstr "انقر للعرض"
 
-#: ui/chat.slint:780
+#: ui/chat.slint:784
 msgid "Reply"
 msgstr "رد"
 
-#: ui/chat.slint:781
+#: ui/chat.slint:785
 msgid "Edit"
 msgstr "تعديل"
 
-#: ui/chat.slint:782
+#: ui/chat.slint:786
 msgid "Copy Image"
 msgstr "نسخ الصورة"
 
-#: ui/chat.slint:783
+#: ui/chat.slint:787
 msgid "Save Image"
 msgstr "حفظ الصورة"
 
-#: ui/chat.slint:784
+#: ui/chat.slint:788
 msgid "Save Video"
 msgstr "حفظ الفيديو"
 
-#: ui/chat.slint:786
+#: ui/chat.slint:790
 msgctxt "words of a photo or video"
 msgid "Copy Text"
 msgstr "نسخ النص"
 
-#: ui/chat.slint:787
+#: ui/chat.slint:791
 msgid "Copy Message Link"
 msgstr "نسخ رابط الرسالة"
 
-#: ui/chat.slint:791
+#: ui/chat.slint:795
 msgid "Select"
 msgstr "تحديد"
 
-#: ui/chat.slint:796
+#: ui/chat.slint:800
 msgctxt "words of a message"
 msgid "Copy Text"
 msgstr "نسخ النص"
 
-#: ui/chat.slint:826
+#: ui/chat.slint:830
 msgid "Text copied to clipboard."
 msgstr "تم نسخ النص."
 
-#: ui/chat.slint:827
+#: ui/chat.slint:831
 msgid "Link copied to clipboard."
 msgstr "تم نسخ الرابط."
 
-#: ui/chat.slint:828
+#: ui/chat.slint:832
 msgid "Image copied to clipboard."
 msgstr "تم نسخ الصورة."
 
-#: ui/chat.slint:829
+#: ui/chat.slint:833
 msgid "Saved to Downloads"
 msgstr "تم الحفظ في التنزيلات"
 
-#: ui/chat.slint:829 ui/viewer.slint:30
+#: ui/chat.slint:833 ui/viewer.slint:30
 msgid "Saved to Downloads · {0}"
 msgstr "تم الحفظ في التنزيلات · {0}"
 
-#: ui/chat.slint:830
+#: ui/chat.slint:834
 msgid "Reported"
 msgstr "تم الإبلاغ"
 
-#: ui/chat.slint:831
+#: ui/chat.slint:835
 msgid "A folder must keep at least one chat."
 msgstr "يجب أن يبقى في المجلد دردشة واحدة على الأقل."
 
-#: ui/chat.slint:838
+#: ui/chat.slint:842
 msgid "Reply to {0}"
 msgstr "الرد على {0}"
 
-#: ui/chat.slint:839
+#: ui/chat.slint:843
 msgid "Edit message"
 msgstr "تعديل الرسالة"
 
-#: ui/chat.slint:840
+#: ui/chat.slint:844
 msgid "Forward {n} message"
 msgid_plural "Forward {n} messages"
 msgstr[0] "إعادة توجيه {n} رسالة"
@@ -720,27 +720,27 @@ msgstr[3] "إعادة توجيه {n} رسائل"
 msgstr[4] "إعادة توجيه {n} رسالة"
 msgstr[5] "إعادة توجيه {n} رسالة"
 
-#: ui/chat.slint:844
+#: ui/chat.slint:848
 msgid "From: {0}"
 msgstr "من: {0}"
 
-#: ui/chat.slint:850
+#: ui/chat.slint:854
 msgid "Deleted message"
 msgstr "رسالة محذوفة"
 
-#: ui/chat.slint:855
+#: ui/chat.slint:859
 msgid "{0} selected"
 msgstr "تم تحديد {0}"
 
-#: ui/chat.slint:859
+#: ui/chat.slint:863
 msgid "Delete this message?"
 msgstr "حذف هذه الرسالة؟"
 
-#: ui/chat.slint:860
+#: ui/chat.slint:864
 msgid "Delete {0} messages?"
 msgstr "حذف {0} رسائل؟"
 
-#: ui/chat.slint:865
+#: ui/chat.slint:869
 msgid "Also delete for everyone"
 msgstr "الحذف لدى الجميع أيضًا"
 
@@ -2014,67 +2014,67 @@ msgctxt "list separator"
 msgid ", "
 msgstr "، "
 
-#: ui/terminal/terminal.slint:118
+#: ui/terminal/terminal.slint:119
 msgid "light"
 msgstr "فاتح"
 
-#: ui/terminal/terminal.slint:118
+#: ui/terminal/terminal.slint:119
 msgid "dark"
 msgstr "داكن"
 
-#: ui/terminal/terminal.slint:250
+#: ui/terminal/terminal.slint:259
 msgid "more"
 msgstr "المزيد"
 
-#: ui/terminal/terminal.slint:714 ui/terminal/terminal.slint:719
+#: ui/terminal/terminal.slint:734 ui/terminal/terminal.slint:739
 msgid "(edited)"
 msgstr "(معدلة)"
 
-#: ui/terminal/terminal.slint:862
+#: ui/terminal/terminal.slint:882
 msgid "sponsored"
 msgstr "ممولة"
 
-#: ui/terminal/terminal.slint:926
+#: ui/terminal/terminal.slint:954
 msgid "search"
 msgstr "بحث"
 
-#: ui/terminal/terminal.slint:930
+#: ui/terminal/terminal.slint:958
 msgid "chat settings"
 msgstr "إعدادات الدردشة"
 
-#: ui/terminal/terminal.slint:1124
+#: ui/terminal/terminal.slint:1163
 msgid "Mute or unmute this chat"
 msgstr "كتم هذه الدردشة أو إلغاء كتمها"
 
-#: ui/terminal/terminal.slint:1125
+#: ui/terminal/terminal.slint:1164
 msgid "Pin or unpin this chat"
 msgstr "تثبيت هذه الدردشة أو إلغاء تثبيتها"
 
-#: ui/terminal/terminal.slint:1126
+#: ui/terminal/terminal.slint:1165
 msgid "Mark this chat as read"
 msgstr "تعليم هذه الدردشة كمقروءة"
 
-#: ui/terminal/terminal.slint:1268
+#: ui/terminal/terminal.slint:1307
 msgid "Write a message, or / for commands"
 msgstr "اكتب رسالة، أو / للأوامر"
 
-#: ui/terminal/terminal.slint:1268
+#: ui/terminal/terminal.slint:1307
 msgid "/ for commands"
 msgstr "/ للأوامر"
 
-#: ui/terminal/terminal.slint:1290
+#: ui/terminal/terminal.slint:1332
 msgid "save"
 msgstr "حفظ"
 
-#: ui/terminal/terminal.slint:1290
+#: ui/terminal/terminal.slint:1332
 msgid "send"
 msgstr "إرسال"
 
-#: ui/terminal/terminal.slint:1571
+#: ui/terminal/terminal.slint:1612
 msgid "connected"
 msgstr "متصل"
 
-#: ui/terminal/terminal.slint:1579
+#: ui/terminal/terminal.slint:1620
 msgid "command"
 msgstr "أمر"
 
