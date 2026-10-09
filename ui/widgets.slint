@@ -217,8 +217,9 @@ export component Field inherits Rectangle {
         letter-spacing: root.letter-spacing;
         horizontal-alignment: root.alignment;
         vertical-alignment: center;
-        selection-background-color: Look.soft;
-        selection-foreground-color: Look.soft-ink;
+        selection-background-color: Look.input-sel;
+        selection-foreground-color: root.text-color;
+        text-cursor-width: Look.cursor-width;
         accepted => {
             root.accepted(self.text);
         }

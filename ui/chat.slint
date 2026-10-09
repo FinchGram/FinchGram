@@ -5,6 +5,7 @@ import {
     DeleteChoice, Attachments, AttachKind, AttachProblem, AttachHint, FileCard, FileState, FileType, ChatConfirm } from "telegram.slint";
 import { Fmt } from "format.slint";
 import { Icon } from "widgets.slint";
+import { Look } from "look.slint";
 
 // The open chat's messages, scrolled. New messages are followed while the view is at the end;
 // messages loading above do not move what is being read (the distance from the end is kept); near
@@ -98,7 +99,8 @@ export component MessageInput inherits Rectangle {
     in property <color> text-color;
     in property <color> placeholder-color;
     // The selected words' colours. (On macOS Slint paints the text cursor in the selection's
-    // background colour, so a theme's selection colour is its cursor's too.)
+    // background colour with the alpha taken out, so a theme's selection colour is its cursor's
+    // too: a translucent accent, P.input-sel, gives a pale selection and a solid cursor.)
     in property <color> selection-color;
     in property <color> selection-text-color: text-color;
     in property <string> font-family;
@@ -167,6 +169,7 @@ export component MessageInput inherits Rectangle {
             line-height-factor: root.line-height-factor;
             selection-background-color: root.selection-color;
             selection-foreground-color: root.selection-text-color;
+            text-cursor-width: Look.cursor-width;
             edited => {
                 root.edited(self.text);
             }
@@ -910,6 +913,7 @@ export component SearchInput inherits Rectangle {
         vertical-alignment: center;
         selection-background-color: root.selection-color;
         selection-foreground-color: root.selection-text-color;
+        text-cursor-width: Look.cursor-width;
         init => {
             self.focus();
         }
@@ -978,6 +982,7 @@ export component CommentInput inherits Rectangle {
             line-height-factor: root.line-height-factor;
             selection-background-color: root.selection-color;
             selection-foreground-color: root.selection-text-color;
+            text-cursor-width: Look.cursor-width;
             init => {
                 self.focus();
             }

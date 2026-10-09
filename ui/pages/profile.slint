@@ -226,7 +226,9 @@ component BioField inherits Rectangle {
         color: Look.text;
         font-size: 16px;
         line-height-factor: Look.leading(1.5);
-        selection-background-color: Look.soft;
+        selection-background-color: Look.input-sel;
+        selection-foreground-color: Look.text;
+        text-cursor-width: Look.cursor-width;
         edited => {
             Account.saved = false;
         }

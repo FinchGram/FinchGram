@@ -32,6 +32,10 @@ export global Look {
     out property <color> danger: pick(#b42318, #f97066, #aa0b56, #ff90b1, #a1355c, #ef8fb0);
     out property <color> off: pick(#d0d5dc, #3a3f47, #bab6b6, #605d5d, #c5cac4, #2f3531);
     out property <color> sel: pick(#e6eafb, #252b45, #dedcdc, #2d2b2a, #dfe4dd, #1c211e);
+    // The selected words in a field: the accent, translucent. On macOS Slint paints a text input's
+    // cursor in its selection colour with the alpha taken out (chat.slint's MessageInput), so this
+    // gives a pale selection and a solid accent cursor; a pale colour of its own hid the cursor.
+    out property <color> input-sel: accent.with-alpha(0.2);
     out property <color> ok: pick(#127a72, #6fd0c4, #1a8a5a, #5fcf95, #1d7a45, #7ed69b);
 
     // Type. Letters the font lacks (Chinese) come from Noto Sans SC (src/fonts.rs).
@@ -66,6 +70,8 @@ export global Look {
     out property <length> row-gap: size(16px, 18px, 12px);
     // Fields have a hairline around them, except in Broadsheet.
     out property <length> field-border: broadsheet ? 0px : 1px;
+    // A text input's cursor: twice Slint's cupertino default, so that it is seen.
+    out property <length> cursor-width: 2px;
     // Switches: a track in Workbench and Broadsheet, "[on ]" / "[off]" in Terminal.
     out property <bool> text-switches: terminal;
     out property <length> switch-radius: broadsheet ? 2px : 11px;

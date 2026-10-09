@@ -34,6 +34,8 @@ export global BroadsheetPalette {
     out property <color> file-image: dark ? #78c89e : #29885e;
     out property <color> theirs: dark ? #2d2b2a : #ecebeb;
     out property <color> sel: dark ? #2d2b2a : #e2e0e0;
+    // The selected words in an input, and on macOS its cursor (Look.input-sel says why).
+    out property <color> input-sel: accent.with-alpha(0.2);
     out property <color> off: dark ? #605d5d : #bab6b6;
     out property <color> on-accent: dark ? #1b1a19 : #ffffff;
     out property <color> hover: #80787820;

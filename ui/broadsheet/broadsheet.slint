@@ -5,7 +5,7 @@ import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer, LinkPreview, ReplyQuote,
     Actions, ComposeBar, ActionNotice, Attachments } from "../telegram.slint";
-import { AccountColors } from "../look.slint";
+import { Look, AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import {
@@ -307,7 +307,9 @@ component SearchField inherits Rectangle {
                 color: P.text;
                 font-size: 14px;
                 vertical-alignment: center;
-                selection-background-color: P.tint;
+                selection-background-color: P.input-sel;
+                selection-foreground-color: P.text;
+                text-cursor-width: Look.cursor-width;
                 edited => {
                     Chats.search(self.text);
                 }
@@ -2116,7 +2118,7 @@ component ConversationPane inherits Rectangle {
                         placeholder: @tr("Write a message…");
                         text-color: P.text;
                         placeholder-color: P.faint;
-                        selection-color: P.tint;
+                        selection-color: P.input-sel;
                         font-family: P.font;
                         font-size: 16px;
                         padding-x: 14px;

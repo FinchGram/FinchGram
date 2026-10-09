@@ -29,6 +29,8 @@ export global WorkbenchPalette {
     out property <color> file-image: dark ? #78c89e : #29885e;
     out property <color> line: dark ? #2b2f35 : #e4e7eb;
     out property <color> sel: dark ? #252b45 : #e6eafb;
+    // The selected words in an input, and on macOS its cursor (Look.input-sel says why).
+    out property <color> input-sel: accent.with-alpha(0.2);
     out property <color> tab: dark ? #1e2126 : #f3f4f6;
     out property <color> tab-active: dark ? #17191d : #ffffff;
     out property <color> on-accent: dark ? #17191d : #ffffff;

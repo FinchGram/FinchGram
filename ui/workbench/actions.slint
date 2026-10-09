@@ -172,7 +172,7 @@ component ForwardPicker inherits Dialog {
                         placeholder: @tr("Search");
                         text-color: P.text;
                         placeholder-color: P.faint;
-                        selection-color: P.sel;
+                        selection-color: P.input-sel;
                         font-family: P.font;
                         font-size: 14px;
                         edited(words) => {
@@ -429,7 +429,7 @@ component ReportDialog inherits Dialog {
                     placeholder: Actions.report-comment-required ? @tr("Add a comment") : @tr("Add a comment (optional)");
                     text-color: P.text;
                     placeholder-color: P.faint;
-                    selection-color: P.sel;
+                    selection-color: P.input-sel;
                     font-family: P.font;
                     font-size: 14px;
                     line-height-factor: P.leading(1.5);

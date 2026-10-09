@@ -6,6 +6,7 @@ import { Chats, Conversation, Account } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import { WorkbenchPalette as P } from "palette.slint";
+import { Look } from "../look.slint";
 import { WorkbenchSidebar, WorkbenchView } from "sidebar.slint";
 import { WorkbenchMain } from "conversation.slint";
 import { WorkbenchActions } from "actions.slint";
@@ -50,7 +51,9 @@ component SearchBox inherits Rectangle {
                 font-size: 13px;
                 vertical-alignment: center;
                 single-line: true;
-                selection-background-color: P.sel;
+                selection-background-color: P.input-sel;
+                selection-foreground-color: P.text;
+                text-cursor-width: Look.cursor-width;
                 edited => {
                     Chats.search(self.text);
                 }
