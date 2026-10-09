@@ -4,18 +4,22 @@
 //! (src/player/); a GIF loops. "Download" copies the file into the Downloads folder, where TDLib
 //! says the content may be saved (the chat may restrict it); "locate" closes the viewer and brings
 //! its message into sight. A photo or video sent to self-destruct is shown on its own, and TDLib
-//! is told it was opened, which starts its end (view_secret).
+//! is told it was opened, which starts its end (view_secret). A video's volume and mute are the
+//! user's last (the settings, connect_settings): the speaker's tray, ↑ ↓ and the wheel change them.
 
+use std::cell::{Cell, RefCell};
 use std::path::{Path, PathBuf};
+use std::rc::Rc;
 use std::time::Duration;
 
 use chrono::{Local, TimeZone};
 use serde_json::json;
-use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
+use slint::{ComponentHandle, Model, ModelRc, SharedString, Timer, TimerMode, VecModel};
 
 use super::api::{File, MessageContent};
 use super::store::{self, Names};
 use super::{actions, conversation, files, send, with_ui};
+use crate::settings::Settings;
 use crate::{Conversation, MainWindow, Viewer, ViewerItem};
 use crate::{images, player};
 
@@ -25,6 +29,22 @@ const SAVED_SHOWN: Duration = Duration::from_millis(2200);
 const ASKED: i32 = 32;
 /// The speeds the viewer steps through (Viewer.speed): the design's.
 const SPEEDS: [f64; 4] = [1.0, 1.5, 2.0, 0.5];
+/// How long the volume tray stays out after ↑ ↓ or the wheel.
+const VOLUME_SHOWN: Duration = Duration::from_millis(1000);
+/// The volume and the mute go into the settings this long after they last changed: a drag changes
+/// them many times a second.
+const SETTINGS_WRITTEN: Duration = Duration::from_millis(500);
+/// The volume the speaker brings back from 0 while there has been none above 0.
+const VOLUME_FROM_NOTHING: i32 = 50;
+
+thread_local! {
+    /// The settings, where the volume and the mute are kept (connect_settings).
+    static SETTINGS: RefCell<Option<Rc<RefCell<Settings>>>> = const { RefCell::new(None) };
+    /// The last volume above 0: what the speaker brings back from 0.
+    static LAST_VOLUME: Cell<i32> = const { Cell::new(VOLUME_FROM_NOTHING) };
+    static VOLUME_SHOWN_TIMER: RefCell<Option<Timer>> = const { RefCell::new(None) };
+    static SETTINGS_TIMER: RefCell<Option<Timer>> = const { RefCell::new(None) };
+}
 
 pub fn connect(ui: &MainWindow) {
     let viewer = ui.global::<Viewer>();
@@ -45,16 +65,84 @@ pub fn connect(ui: &MainWindow) {
         });
         player::set_speed(SPEEDS[speed as usize]);
     });
-    viewer.on_toggle_mute(|| {
-        let mut muted = false;
-        with_viewer(|viewer| {
-            muted = !viewer.get_muted();
-            viewer.set_muted(muted);
-        });
-        player::set_muted(muted);
-    });
+    viewer.on_toggle_mute(toggle_mute);
+    viewer.on_set_volume(set_volume);
+    viewer.on_step_volume(step_volume);
     viewer.on_download(download);
     viewer.on_locate(locate);
+}
+
+/// The volume and the mute the user last left, from the settings; they go back there as they
+/// change. Call once.
+pub fn connect_settings(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
+    let (volume, muted) = {
+        let settings = settings.borrow();
+        (settings.video_volume, settings.video_muted)
+    };
+    if volume > 0 {
+        LAST_VOLUME.set(volume);
+    }
+    let viewer = ui.global::<Viewer>();
+    viewer.set_volume(volume);
+    viewer.set_muted(muted);
+    SETTINGS.with(|slot| *slot.borrow_mut() = Some(settings));
+}
+
+/// The speaker: the sound off, or on again. From 0 it brings the last volume above 0 back instead.
+fn toggle_mute() {
+    let (mut volume, mut muted) = (100, false);
+    with_viewer(|viewer| {
+        volume = viewer.get_volume();
+        muted = viewer.get_muted();
+    });
+    if !muted && volume == 0 {
+        sound(LAST_VOLUME.get(), false);
+    } else {
+        sound(volume, !muted);
+    }
+}
+
+/// The slider: `volume` (0 … 100), and the sound on.
+fn set_volume(volume: i32) {
+    sound(volume.clamp(0, 100), false);
+}
+
+/// ↑ ↓ and the wheel: by `step`, the sound on, and the tray out for a moment.
+fn step_volume(step: i32) {
+    let mut volume = 100;
+    with_viewer(|viewer| volume = viewer.get_volume());
+    set_volume(volume + step);
+    with_viewer(|viewer| viewer.set_volume_shown(true));
+    VOLUME_SHOWN_TIMER.with(|timer| {
+        timer.borrow_mut().get_or_insert_with(Timer::default).start(TimerMode::SingleShot, VOLUME_SHOWN, || {
+            with_viewer(|viewer| viewer.set_volume_shown(false));
+        });
+    });
+}
+
+/// The volume and the mute: shown, played, and kept in the settings a moment later.
+fn sound(volume: i32, muted: bool) {
+    if volume > 0 {
+        LAST_VOLUME.set(volume);
+    }
+    with_viewer(|viewer| {
+        viewer.set_volume(volume);
+        viewer.set_muted(muted);
+    });
+    player::set_volume(volume);
+    player::set_muted(muted);
+    SETTINGS_TIMER.with(|timer| {
+        timer.borrow_mut().get_or_insert_with(Timer::default).start(TimerMode::SingleShot, SETTINGS_WRITTEN, move || {
+            SETTINGS.with(|slot| {
+                if let Some(settings) = slot.borrow().as_ref() {
+                    let mut settings = settings.borrow_mut();
+                    settings.video_volume = volume;
+                    settings.video_muted = muted;
+                    settings.save();
+                }
+            });
+        });
+    });
 }
 
 /// Open the viewer at a message's photo or video; a video starts playing when `autoplay`. One sent
@@ -76,7 +164,6 @@ fn view(message_id: i64, autoplay: bool) {
         viewer.set_zoom(0);
         viewer.set_position(0.0);
         viewer.set_speed(0);
-        viewer.set_muted(false);
         viewer.set_saved(SharedString::new());
         viewer.set_playing(false);
         viewer.set_loading(false);
@@ -125,7 +212,6 @@ fn view_secret(message_id: i64) {
         viewer.set_zoom(0);
         viewer.set_position(0.0);
         viewer.set_speed(0);
-        viewer.set_muted(false);
         viewer.set_saved(SharedString::new());
         viewer.set_playing(false);
         viewer.set_loading(true);
@@ -142,13 +228,14 @@ fn view_secret(message_id: i64) {
             return;
         }
         if video {
-            let (mut speed, mut muted) = (0, false);
+            let (mut speed, mut volume, mut muted) = (0, 100, false);
             with_viewer(|viewer| {
                 viewer.set_loading(false);
                 speed = viewer.get_speed();
+                volume = viewer.get_volume();
                 muted = viewer.get_muted();
             });
-            player::play(&path, looping, SPEEDS[speed as usize], muted);
+            player::play(&path, looping, SPEEDS[speed as usize], volume, muted);
             open_content(message_id);
         } else {
             images::load(path, move |picture| {
@@ -199,15 +286,16 @@ fn start_video(message_id: i64) {
     with_viewer(|viewer| viewer.set_loading(true));
     files::download(&file, ASKED, move |path| {
         let mut still_shown = false;
-        let (mut speed, mut muted) = (0, false);
+        let (mut speed, mut volume, mut muted) = (0, 100, false);
         with_viewer(|viewer| {
             viewer.set_loading(false);
             still_shown = viewer.get_open() && shown_id().as_deref() == Some(message_id.to_string().as_str());
             speed = viewer.get_speed();
+            volume = viewer.get_volume();
             muted = viewer.get_muted();
         });
         if still_shown {
-            player::play(&path, looping, SPEEDS[speed as usize], muted);
+            player::play(&path, looping, SPEEDS[speed as usize], volume, muted);
         }
     });
 }

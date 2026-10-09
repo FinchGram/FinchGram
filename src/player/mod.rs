@@ -53,6 +53,8 @@ struct Load {
     path: String,
     looping: bool,
     speed: f64,
+    /// 0 … 100.
+    volume: i32,
     muted: bool,
 }
 
@@ -106,8 +108,8 @@ pub fn install(ui: &MainWindow) {
     }
 }
 
-/// Play the file at `path` from its start; a GIF loops.
-pub fn play(path: &str, looping: bool, speed: f64, muted: bool) {
+/// Play the file at `path` from its start; a GIF loops. `volume` is 0 … 100.
+pub fn play(path: &str, looping: bool, speed: f64, volume: i32, muted: bool) {
     with_player(|player| {
         if player.mpv.is_null()
             && let Err(err) = player.start()
@@ -115,7 +117,7 @@ pub fn play(path: &str, looping: bool, speed: f64, muted: bool) {
             eprintln!("player: cannot start mpv: {err}");
             return;
         }
-        let load = Load { path: path.to_string(), looping, speed, muted };
+        let load = Load { path: path.to_string(), looping, speed, volume, muted };
         if player.render.is_null() {
             // The renderer is made when the window next renders; the file loads then.
             player.waiting = Some(load);
@@ -152,6 +154,11 @@ pub fn seek(seconds: f64) {
 
 pub fn set_speed(speed: f64) {
     with_player(|player| player.command(&["set", "speed", &speed.to_string()]));
+}
+
+/// `volume` is 0 … 100; the mute is a setting of its own.
+pub fn set_volume(volume: i32) {
+    with_player(|player| player.command(&["set", "volume", &volume.to_string()]));
 }
 
 pub fn set_muted(muted: bool) {
@@ -245,6 +252,7 @@ impl Player {
     fn load(&mut self, load: Load) {
         self.command(&["set", "loop-file", if load.looping { "inf" } else { "no" }]);
         self.command(&["set", "speed", &load.speed.to_string()]);
+        self.command(&["set", "volume", &load.volume.to_string()]);
         self.command(&["set", "mute", if load.muted { "yes" } else { "no" }]);
         self.command(&["loadfile", &load.path, "replace"]);
         self.command(&["set", "pause", "no"]);

@@ -24,6 +24,10 @@ pub struct Settings {
     pub quit_on_close: bool,
     pub show_in_menu_bar: bool,
     pub send_with_enter: bool,
+    /// The media viewer's video volume, 0 … 100, and whether its sound is off: as the user last
+    /// left them, for the next video and the next start (src/telegram/viewer.rs).
+    pub video_volume: i32,
+    pub video_muted: bool,
     /// Light or dark, each theme's own. (Tables, this and the next ones, have to come after the
     /// plain values in the file.)
     #[serde(deserialize_with = "appearance_in_file")]
@@ -184,6 +188,8 @@ impl Default for Settings {
             quit_on_close: false,
             show_in_menu_bar: true,
             send_with_enter: true,
+            video_volume: 100,
+            video_muted: false,
             appearance: Appearance::default(),
             notifications: Notifications::default(),
             list_widths: ListWidths::default(),
@@ -210,6 +216,8 @@ impl Settings {
         }
         settings.appearance = settings.appearance.clone().sanitized();
         settings.list_widths = settings.list_widths.sanitized();
+        // A volume that makes no sense (edited by hand) is kept within the slider's range.
+        settings.video_volume = settings.video_volume.clamp(0, 100);
         settings
     }
 
@@ -244,6 +252,7 @@ mod tests {
         let read: Settings = toml::from_str("theme = \"terminal\"\ncheck_for_updates = false\n").expect("read");
         assert_eq!((read.theme.as_str(), read.check_for_updates), ("terminal", false));
         assert!(!read.quit_on_close && read.show_in_menu_bar && read.send_with_enter);
+        assert_eq!((read.video_volume, read.video_muted), (100, false));
         assert_eq!(read.notifications, Notifications::default());
         assert_eq!(read.appearance, Appearance::default());
         assert_eq!((read.appearance.of("workbench"), read.appearance.of("terminal")), ("system", "dark"));

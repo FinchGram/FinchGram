@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-09 05:22+0000\n"
+"POT-Creation-Date: 2026-10-09 09:35+0000\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -51,7 +51,7 @@ msgstr "Rechercher des mises à jour…"
 msgid "Choose recipient…"
 msgstr "Choisir un destinataire…"
 
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:651
+#: ui/broadsheet/actions.slint:226 ui/telegram.slint:655
 #: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "Messages enregistrés"
@@ -1983,16 +1983,16 @@ msgstr "Quitter FinchGram"
 msgid "New message"
 msgstr "Nouveau message"
 
-#: ui/telegram.slint:652
+#: ui/telegram.slint:656
 msgid "Deleted Account"
 msgstr "Compte supprimé"
 
-#: ui/telegram.slint:653 ui/workbench/sidebar.slint:105
+#: ui/telegram.slint:657 ui/workbench/sidebar.slint:105
 msgid "All chats"
 msgstr "Toutes les discussions"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:655
+#: ui/telegram.slint:659
 msgctxt "list separator"
 msgid ", "
 msgstr ", "
@@ -2071,33 +2071,37 @@ msgid "Fit"
 msgstr "Ajuster"
 
 #: ui/viewer.slint:34
-msgid "← → Switch · Space Play · Esc Close"
-msgstr "← → Parcourir · Espace Lecture · Esc Fermer"
+msgid "← → Switch · ↑ ↓ Volume · Space Play · Esc Close"
+msgstr "← → Parcourir · ↑ ↓ Volume · Espace Lecture · Esc Fermer"
 
-#: ui/viewer.slint:769
-msgctxt "terminal"
-msgid "locate"
-msgstr "localiser"
+#: ui/viewer.slint:44
+msgid "Muted"
+msgstr "Muet"
 
-#: ui/viewer.slint:775
-msgctxt "terminal"
-msgid "download"
-msgstr "télécharger"
-
-#: ui/viewer.slint:862
+#: ui/viewer.slint:901 ui/viewer.slint:922
 msgctxt "terminal"
 msgid "muted"
 msgstr "muet"
 
-#: ui/viewer.slint:862
+#: ui/viewer.slint:901 ui/viewer.slint:922
 msgctxt "terminal"
 msgid "sound"
 msgstr "son"
 
-#: ui/viewer.slint:929
+#: ui/viewer.slint:1080
 msgctxt "terminal"
-msgid "←/→ switch · space play · esc close"
-msgstr "←/→ parcourir · espace lecture · esc fermer"
+msgid "locate"
+msgstr "localiser"
+
+#: ui/viewer.slint:1086
+msgctxt "terminal"
+msgid "download"
+msgstr "télécharger"
+
+#: ui/viewer.slint:1237
+msgctxt "terminal"
+msgid "←/→ switch · ↑/↓ volume · space play · esc close"
+msgstr "←/→ parcourir · ↑/↓ volume · espace lecture · esc fermer"
 
 #: ui/workbench/conversation.slint:293 ui/workbench/conversation.slint:358
 msgid "Close other tabs"

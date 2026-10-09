@@ -123,8 +123,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   `conversation.rs`, `actions.rs` (what can be done with a message), `account.rs` and
   `password.rs` (two-step verification) do what the pages ask for; `files.rs` downloads files,
   `avatars.rs` fetches the photos of chats and people for the rows that show them (a letter square
-  until then, or for good when there is no photo), `viewer.rs` fills the media viewer, and
-  `rich_text.rs` turns a message's formatted text (bold, links, …) into Slint's styled text.
+  until then, or for good when there is no photo), `viewer.rs` fills the media viewer and keeps its volume (the
+  speaker's tray, ↑ ↓ and the wheel; `video_volume` and `video_muted` in settings.toml, for the next
+  video and the next start), and `rich_text.rs` turns a message's formatted text (bold, links, …) into Slint's styled text.
 - Notifications (`notifications.rs`, Settings → Notifications & sounds) are TDLib's: switched on
   with its `notification_group_count_max` option, TDLib decides what is worth one. It follows the
   chats' mutes and each kind of chat's setting (Telegram's own, for the account), waits a moment while

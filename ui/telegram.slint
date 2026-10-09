@@ -326,7 +326,9 @@ export global Viewer {
     in-out property <bool> ended;                // played to its end
     in-out property <float> position;            // seconds into the video
     in-out property <int> speed;                 // 0 … 3: 1×, 1.5×, 2×, 0.5×
-    in-out property <bool> muted;
+    in-out property <int> volume;                // 0 … 100, as the user last left it (settings.toml); muting keeps it
+    in-out property <bool> muted;                // remembered too
+    in-out property <bool> volume-shown;         // the volume tray stays out for a moment after ↑ ↓ or the wheel (viewer.rs)
     in-out property <image> frame;               // the video's picture while it plays
     in-out property <string> saved;              // a file just saved to Downloads, "" otherwise
     in-out property <bool> can-save;             // the item shown may be saved: TDLib's word (the chat may restrict it); false until it has said
@@ -336,7 +338,9 @@ export global Viewer {
     callback play-pause();
     callback seek(float);                        // 0 … 1 of the video
     callback next-speed();
-    callback toggle-mute();
+    callback toggle-mute();                      // from 0, the speaker brings the last volume back instead
+    callback set-volume(int);                    // the slider: 0 … 100, and the sound back on
+    callback step-volume(int);                   // ↑ ↓ and the wheel: by so much, the sound back on, the tray out a moment
     callback download();                         // the one shown, to the Downloads folder
     callback locate();                           // close, and scroll the chat to its message
 }

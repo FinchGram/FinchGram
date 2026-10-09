@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-09 05:22+0000\n"
+"POT-Creation-Date: 2026-10-09 09:35+0000\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -52,7 +52,7 @@ msgstr "Проверить обновления…"
 msgid "Choose recipient…"
 msgstr "Выберите получателя…"
 
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:651
+#: ui/broadsheet/actions.slint:226 ui/telegram.slint:655
 #: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "Избранное"
@@ -1975,16 +1975,16 @@ msgstr "Завершить FinchGram"
 msgid "New message"
 msgstr "Новое сообщение"
 
-#: ui/telegram.slint:652
+#: ui/telegram.slint:656
 msgid "Deleted Account"
 msgstr "Удалённый аккаунт"
 
-#: ui/telegram.slint:653 ui/workbench/sidebar.slint:105
+#: ui/telegram.slint:657 ui/workbench/sidebar.slint:105
 msgid "All chats"
 msgstr "Все чаты"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:655
+#: ui/telegram.slint:659
 msgctxt "list separator"
 msgid ", "
 msgstr ", "
@@ -2063,33 +2063,37 @@ msgid "Fit"
 msgstr "Вписать"
 
 #: ui/viewer.slint:34
-msgid "← → Switch · Space Play · Esc Close"
-msgstr "← → Листать · Пробел Воспроизвести · Esc Закрыть"
+msgid "← → Switch · ↑ ↓ Volume · Space Play · Esc Close"
+msgstr "← → Листать · ↑ ↓ Громкость · Пробел Воспроизвести · Esc Закрыть"
 
-#: ui/viewer.slint:769
-msgctxt "terminal"
-msgid "locate"
-msgstr "к сообщению"
+#: ui/viewer.slint:44
+msgid "Muted"
+msgstr "Без звука"
 
-#: ui/viewer.slint:775
-msgctxt "terminal"
-msgid "download"
-msgstr "скачать"
-
-#: ui/viewer.slint:862
+#: ui/viewer.slint:901 ui/viewer.slint:922
 msgctxt "terminal"
 msgid "muted"
 msgstr "без звука"
 
-#: ui/viewer.slint:862
+#: ui/viewer.slint:901 ui/viewer.slint:922
 msgctxt "terminal"
 msgid "sound"
 msgstr "звук"
 
-#: ui/viewer.slint:929
+#: ui/viewer.slint:1080
 msgctxt "terminal"
-msgid "←/→ switch · space play · esc close"
-msgstr "←/→ листать · пробел воспроизвести · esc закрыть"
+msgid "locate"
+msgstr "к сообщению"
+
+#: ui/viewer.slint:1086
+msgctxt "terminal"
+msgid "download"
+msgstr "скачать"
+
+#: ui/viewer.slint:1237
+msgctxt "terminal"
+msgid "←/→ switch · ↑/↓ volume · space play · esc close"
+msgstr "←/→ листать · ↑/↓ громкость · пробел воспроизвести · esc закрыть"
 
 #: ui/workbench/conversation.slint:293 ui/workbench/conversation.slint:358
 msgid "Close other tabs"

@@ -31,7 +31,17 @@ global ViewerText {
     }
 
     public pure function keys() -> string {
-        return @tr("← → Switch · Space Play · Esc Close");
+        return @tr("← → Switch · ↑ ↓ Volume · Space Play · Esc Close");
+    }
+
+    // The speaker's icon: crossed out while muted, else by the volume in three steps.
+    public pure function speaker(volume: int, muted: bool) -> string {
+        return muted ? "speaker-x" : volume == 0 ? "speaker-none" : volume < 50 ? "speaker-low" : "speaker-high";
+    }
+
+    // Beside the volume slider: the volume, or that the sound is off.
+    public pure function volume-label(volume: int, muted: bool) -> string {
+        return muted ? @tr("Muted") : "" + volume;
     }
 }
 
@@ -58,6 +68,14 @@ struct ViewerLook {
     track-height: length,
     track-radius: length,
     play-size: length,
+    thumb-size: length,         // the seek bar's and the volume slider's knob
+    tray-pad: length,           // the volume tray: its room from the speaker,
+    slider-width: length,       // its slider,
+    slider-height: length,      // what of it takes the pointer,
+    volume-gap: length,         // from the slider to the volume,
+    volume-width: length,       // the volume's least width,
+    volume-size: length,        // and its type
+    volume-color: color,
 }
 
 // The item shown, and what can be done with it: shared by the three looks.
@@ -98,6 +116,181 @@ component IconButton inherits Rectangle {
         mouse-cursor: pointer;
         clicked => {
             root.clicked();
+        }
+    }
+}
+
+// Pixels scrolled over the speaker or its tray that have not made a step of the volume yet: twelve
+// make one, so that a wheel's notch (sixty) makes five, and a trackpad's slow swipe a few.
+global VolumeWheel {
+    property <float> scrolled;
+    public function turn(delta: length) {
+        self.scrolled += delta / 1px;
+        if self.scrolled >= 12 {
+            Viewer.step-volume(Math.floor(self.scrolled / 12));
+            self.scrolled -= Math.floor(self.scrolled / 12) * 12;
+        } else if self.scrolled <= -12 {
+            Viewer.step-volume(Math.ceil(self.scrolled / 12));
+            self.scrolled -= Math.ceil(self.scrolled / 12) * 12;
+        }
+    }
+}
+
+// The speaker, and the volume tray that comes out of it (Workbench's and Broadsheet's): the slider
+// and the volume, to the speaker's right in the blank beside the controls, or to its left over the
+// speed button when the window leaves no room there. The tray is out while the pointer is on the
+// speaker or on it, while the slider is dragged, and for a moment after ↑ ↓ or the wheel; it goes
+// 300 ms after the pointer has left, unless the pointer is back by then.
+component VolumeControl inherits Rectangle {
+    in property <ViewerLook> look;
+    in property <length> room;          // the blank to the speaker's right
+    width: look.icon-size + 4px;
+    height: look.icon-size + 4px;
+
+    property <length> volume-width: max(look.volume-width, label.preferred-width);
+    property <length> tray-width: look.tray-pad + look.slider-width + look.volume-gap + volume-width;
+    property <bool> leftwards: room < tray-width;
+    property <bool> wanted: speaker.has-hover || tray-touch.has-hover || slider.has-hover || slider.pressed || Viewer.volume-shown;
+    property <bool> open;
+    // How far out the tray is: revealed from the speaker outwards as it fades in.
+    property <float> out: open ? 1 : 0;
+    animate out { duration: open ? 160ms : 120ms; easing: open ? cubic-bezier(0.2, 0.8, 0.2, 1) : ease-in; }
+
+    changed wanted => {
+        if self.wanted {
+            closing.running = false;
+            self.open = true;
+        } else {
+            closing.running = true;
+        }
+    }
+    closing := Timer {
+        interval: 300ms;
+        running: false;
+        triggered => {
+            self.running = false;
+            root.open = false;
+        }
+    }
+
+    function volume-at(x: length, width: length) {
+        Viewer.set-volume(Math.round(max(0, min(1, x / width)) * 100));
+    }
+
+    // The speaker's ground while the tray is out: 4px around the icon, over the controls' room.
+    Rectangle {
+        x: -2.5px;
+        y: -2.5px;
+        width: root.width + 5px;
+        height: root.height + 5px;
+        border-radius: root.look.button-radius;
+        background: root.wanted ? #ffffff14 : transparent;
+    }
+    Icon {
+        name: ViewerText.speaker(Viewer.volume, Viewer.muted);
+        size: root.look.icon-size + 1px;
+        color: #ffffff;
+        duotone: root.look.duotone;
+    }
+    speaker := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Viewer.toggle-mute();
+        }
+        scroll-event(event) => {
+            VolumeWheel.turn(event.delta-y);
+            return accept;
+        }
+    }
+
+    // The tray, beside the speaker and out of the layout.
+    tray := Rectangle {
+        x: root.leftwards ? -root.tray-width : root.width;
+        y: (root.height - self.height) / 2;
+        width: root.tray-width;
+        height: root.look.slider-height;
+        opacity: root.out;
+        tray-touch := TouchArea {
+            enabled: root.out > 0;
+            scroll-event(event) => {
+                VolumeWheel.turn(event.delta-y);
+                return accept;
+            }
+        }
+        // What is out of it.
+        shown := Rectangle {
+            x: root.leftwards ? parent.width - self.width : 0;
+            width: parent.width * root.out;
+            clip: true;
+            Rectangle {
+                x: -shown.x;
+                width: root.tray-width;
+                // Over the speed button, the tray has the viewer's ground.
+                background: root.leftwards ? root.look.background : transparent;
+                // The slider: the track, the volume in the accent (grey while muted) and the knob,
+                // larger and ringed while it is dragged.
+                Rectangle {
+                    x: root.leftwards ? root.volume-width + root.look.volume-gap : root.look.tray-pad;
+                    width: root.look.slider-width;
+                    Rectangle {
+                        y: (parent.height - self.height) / 2;
+                        height: root.look.track-height;
+                        border-radius: root.look.track-radius;
+                        background: #ffffff33;
+                    }
+                    filled := Rectangle {
+                        x: 0;
+                        y: (parent.height - self.height) / 2;
+                        width: parent.width * Viewer.volume / 100;
+                        height: root.look.track-height;
+                        border-radius: root.look.track-radius;
+                        background: Viewer.muted ? #ffffff52 : root.look.accent;
+                    }
+                    Rectangle {
+                        x: filled.width - self.width / 2;
+                        y: (parent.height - self.height) / 2;
+                        width: root.look.thumb-size + 10px;
+                        height: self.width;
+                        border-radius: self.width / 2;
+                        background: #ffffff29;
+                        opacity: slider.pressed ? 1 : 0;
+                        animate opacity { duration: 100ms; easing: ease-out; }
+                    }
+                    Rectangle {
+                        x: filled.width - self.width / 2;
+                        y: (parent.height - self.height) / 2;
+                        width: slider.pressed ? root.look.thumb-size + 2px : root.look.thumb-size;
+                        height: self.width;
+                        border-radius: self.width / 2;
+                        background: Viewer.muted ? #8b929c : #ffffff;
+                        animate width { duration: 100ms; easing: ease-out; }
+                    }
+                    slider := TouchArea {
+                        mouse-cursor: pointer;
+                        pointer-event(event) => {
+                            if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                                root.volume-at(self.mouse-x, self.width);
+                            }
+                        }
+                        moved => {
+                            if self.pressed {
+                                root.volume-at(self.mouse-x, self.width);
+                            }
+                        }
+                    }
+                }
+                label := Text {
+                    x: root.leftwards ? 0 : root.look.tray-pad + root.look.slider-width + root.look.volume-gap;
+                    width: root.volume-width;
+                    height: parent.height;
+                    text: ViewerText.volume-label(Viewer.volume, Viewer.muted);
+                    color: root.look.volume-color;
+                    font-size: root.look.volume-size;
+                    font-family: root.look.mono-counter ? "IBM Plex Mono" : "";
+                    vertical-alignment: center;
+                    opacity: Viewer.muted ? 0.6 : 1;
+                }
+            }
         }
     }
 }
@@ -191,6 +384,10 @@ component PictureViewer inherits Rectangle {
             }
             if event.text == " " && state.item.video {
                 Viewer.play-pause();
+                return accept;
+            }
+            if (event.text == Key.UpArrow || event.text == Key.DownArrow) && state.item.video {
+                Viewer.step-volume(event.text == Key.UpArrow ? 5 : -5);
                 return accept;
             }
             return reject;
@@ -428,9 +625,9 @@ component PictureViewer inherits Rectangle {
                                 Rectangle {
                                     x: parent.width * state.done - self.width / 2;
                                     y: (parent.height - self.height) / 2;
-                                    width: 12px;
-                                    height: 12px;
-                                    border-radius: 6px;
+                                    width: root.look.thumb-size;
+                                    height: self.width;
+                                    border-radius: self.width / 2;
                                     background: #ffffff;
                                 }
                                 TouchArea {
@@ -462,21 +659,10 @@ component PictureViewer inherits Rectangle {
                             }
                             VerticalLayout {
                                 alignment: center;
-                                Rectangle {
-                                    width: root.look.icon-size + 4px;
-                                    height: root.look.icon-size + 4px;
-                                    Icon {
-                                        name: Viewer.muted ? "speaker-x" : "speaker-high";
-                                        size: root.look.icon-size + 1px;
-                                        color: #ffffff;
-                                        duotone: root.look.duotone;
-                                    }
-                                    TouchArea {
-                                        mouse-cursor: pointer;
-                                        clicked => {
-                                            Viewer.toggle-mute();
-                                        }
-                                    }
+                                VolumeControl {
+                                    look: root.look;
+                                    // The controls are at most 1040px wide, in the middle, with 24px inside.
+                                    room: (root.width - min(1040px, root.width)) / 2 + 24px;
                                 }
                             }
                         }
@@ -642,8 +828,9 @@ component TermText inherits Text {
 
 component TermButton inherits TermText {
     callback clicked();
+    out property <bool> has-hover: touch.has-hover;
     color: #7ed69b;
-    TouchArea {
+    touch := TouchArea {
         mouse-cursor: pointer;
         clicked => {
             root.clicked();
@@ -672,6 +859,128 @@ component TermBar inherits Rectangle {
             text: "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
             color: root.accent;
             letter-spacing: -1px;
+        }
+    }
+}
+
+// Terminal's speaker: "[sound]" or "[muted]", which on hover becomes "[sound ━━━━━━━━━━━━──────── 60]"
+// in its place, over whatever is to its right: twenty cells of five, and the volume in three
+// characters, inverted while the cells are dragged. Out while the pointer is on it, while the cells
+// are dragged, and for a moment after ↑ ↓ or the wheel; the word again 300 ms after the pointer has
+// left, without a transition, as Terminal has none.
+component TermVolume inherits Rectangle {
+    in property <color> accent;
+    width: word.preferred-width;
+    height: word.preferred-height;
+
+    property <bool> wanted: word.has-hover || tray-touch.has-hover || cells.has-hover || cells.pressed || Viewer.volume-shown;
+    property <bool> open;
+    changed wanted => {
+        if self.wanted {
+            closing.running = false;
+            self.open = true;
+        } else {
+            closing.running = true;
+        }
+    }
+    closing := Timer {
+        interval: 300ms;
+        running: false;
+        triggered => {
+            self.running = false;
+            root.open = false;
+        }
+    }
+
+    // A cell is five: the volume snaps to them.
+    function volume-at(x: length, width: length) {
+        Viewer.set-volume(Math.round(max(0, min(1, x / width)) * 20) * 5);
+    }
+
+    word := TermButton {
+        text: Viewer.muted ? "[" + @tr("terminal" => "muted") + "]" : "[" + @tr("terminal" => "sound") + "]";
+        clicked => {
+            Viewer.toggle-mute();
+        }
+    }
+    tray := Rectangle {
+        visible: root.open;
+        x: 0;
+        y: (root.height - self.height) / 2;
+        width: row.preferred-width;
+        height: row.preferred-height;
+        background: #080a09;
+        tray-touch := TouchArea {
+            scroll-event(event) => {
+                VolumeWheel.turn(event.delta-y);
+                return accept;
+            }
+        }
+        row := HorizontalLayout {
+            spacing: 8px;
+            TermButton {
+                text: "[" + (Viewer.muted ? @tr("terminal" => "muted") : @tr("terminal" => "sound"));
+                clicked => {
+                    Viewer.toggle-mute();
+                }
+            }
+            // The cells, with 4px above and below that take the pointer too.
+            Rectangle {
+                width: rest.preferred-width;
+                height: rest.preferred-height + 8px;
+                rest := TermText {
+                    x: 0;
+                    y: 4px;
+                    text: "────────────────────";
+                    color: #3d443f;
+                    letter-spacing: -1px;
+                }
+                Rectangle {
+                    x: 0;
+                    width: parent.width * Math.round(Viewer.volume / 5.0) / 20;
+                    clip: true;
+                    TermText {
+                        x: 0;
+                        y: 4px;
+                        text: "━━━━━━━━━━━━━━━━━━━━";
+                        color: Viewer.muted ? #5a625c : root.accent;
+                        letter-spacing: -1px;
+                    }
+                }
+                cells := TouchArea {
+                    mouse-cursor: pointer;
+                    pointer-event(event) => {
+                        if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                            root.volume-at(self.mouse-x, self.width);
+                        }
+                    }
+                    moved => {
+                        if self.pressed {
+                            root.volume-at(self.mouse-x, self.width);
+                        }
+                    }
+                }
+            }
+            // The volume, right-aligned in the width of "100", and the bracket right after it.
+            HorizontalLayout {
+                Rectangle {
+                    width: max(number.preferred-width, three.preferred-width);
+                    background: cells.pressed ? root.accent : transparent;
+                    three := TermText {
+                        visible: false;
+                        text: "100";
+                    }
+                    number := TermText {
+                        x: parent.width - self.width;
+                        text: "" + Viewer.volume;
+                        color: cells.pressed ? #080a09 : Viewer.muted ? #5a625c : #d6dbd7;
+                    }
+                }
+                TermText {
+                    text: "]";
+                    color: root.accent;
+                }
+            }
         }
     }
 }
@@ -711,6 +1020,10 @@ component TextViewer inherits Rectangle {
             }
             if event.text == " " && state.item.video {
                 Viewer.play-pause();
+                return accept;
+            }
+            if (event.text == Key.UpArrow || event.text == Key.DownArrow) && state.item.video {
+                Viewer.step-volume(event.text == Key.UpArrow ? 5 : -5);
                 return accept;
             }
             return reject;
@@ -858,11 +1171,8 @@ component TextViewer inherits Rectangle {
                                 Viewer.next-speed();
                             }
                         }
-                        TermButton {
-                            text: Viewer.muted ? "[" + @tr("terminal" => "muted") + "]" : "[" + @tr("terminal" => "sound") + "]";
-                            clicked => {
-                                Viewer.toggle-mute();
-                            }
+                        TermVolume {
+                            accent: root.accent;
                         }
                     }
                 }
@@ -926,7 +1236,7 @@ component TextViewer inherits Rectangle {
                 TermText {
                     x: parent.width - self.width - 16px;
                     y: parent.height - self.height - 24px;
-                    text: @tr("terminal" => "←/→ switch · space play · esc close");
+                    text: @tr("terminal" => "←/→ switch · ↑/↓ volume · space play · esc close");
                     color: root.muted;
                     font-size: 11px;
                 }
@@ -983,7 +1293,8 @@ export component MediaViewer inherits Rectangle {
             radius: 4px, button-radius: 6px, bar-height: 56px, avatar-size: 32px, avatar-radius: 6px,
             name-size: 14px, meta-size: 12px, icon-size: 19px, mono-counter: true, duotone: false,
             side-arrows: false, caption-size: 14px, caption-color: #dfe3e8, track-height: 4px,
-            track-radius: 2px, play-size: 72px,
+            track-radius: 2px, play-size: 72px, thumb-size: 12px, tray-pad: 10px, slider-width: 80px,
+            slider-height: 20px, volume-gap: 8px, volume-width: 24px, volume-size: 11px, volume-color: #c7ccd3,
         };
     }
     if AppState.theme == Theme.broadsheet: PictureViewer {
@@ -993,7 +1304,8 @@ export component MediaViewer inherits Rectangle {
             radius: 2px, button-radius: 4px, bar-height: 60px, avatar-size: 34px, avatar-radius: 17px,
             name-size: 15px, meta-size: 13px, icon-size: 21px, mono-counter: false, duotone: true,
             side-arrows: true, caption-size: 16px, caption-color: #e6e4e4, track-height: 3px,
-            track-radius: 0, play-size: 76px,
+            track-radius: 0, play-size: 76px, thumb-size: 13px, tray-pad: 12px, slider-width: 88px,
+            slider-height: 22px, volume-gap: 10px, volume-width: 26px, volume-size: 13px, volume-color: #d6d3d3,
         };
     }
     if AppState.theme == Theme.terminal: TextViewer { }

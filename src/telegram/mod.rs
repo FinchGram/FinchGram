@@ -41,11 +41,13 @@ mod viewer;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 use serde_json::{Value, json};
 use slint::ComponentHandle;
 
+use crate::settings::Settings;
 use crate::{AppState, Connection, MainWindow, Page, TelegramState};
 use api::{AuthorizationState, ConnectionState, OptionValue, Update};
 use store::Followup;
@@ -178,6 +180,12 @@ pub fn language_changed() {
 /// AppState).
 pub fn notification_settings_changed(desktop_turned_on: bool) {
     notifications::settings_changed(desktop_turned_on);
+}
+
+/// The media viewer's volume and mute: the user's last, from the settings, and back into them as
+/// they change (viewer.rs).
+pub fn connect_viewer_settings(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
+    viewer::connect_settings(ui, settings);
 }
 
 /// The app is quitting: let TDLib write its database out and finchgram-tdlib end, for at most

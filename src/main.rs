@@ -130,6 +130,7 @@ fn main() -> Result<(), slint::PlatformError> {
     state.set_send_with_enter(settings.borrow().send_with_enter);
     show_launch_at_login(&state);
     screenshot::connect(&ui, settings.clone());
+    telegram::connect_viewer_settings(&ui, settings.clone());
     state.on_check_launch_at_login({
         let ui = ui.as_weak();
         move || {

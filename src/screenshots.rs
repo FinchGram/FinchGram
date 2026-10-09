@@ -442,6 +442,9 @@ fn open_viewer(ui: &MainWindow, index: i32) {
     viewer.set_can_save(true);
     viewer.set_index(index);
     viewer.set_zoom(0);
+    viewer.set_volume(100);
+    viewer.set_muted(false);
+    viewer.set_volume_shown(false);
     viewer.set_playing(false);
     viewer.set_position(0.0);
     viewer.set_open(true);
@@ -1134,6 +1137,17 @@ fn screenshots() {
             save(&window, &name("viewer-photo"));
             open_viewer(&ui, 2);
             save(&window, &name("viewer-video"));
+            // The volume tray out, as after ↑ ↓: at 60, then with the sound off. It comes out over
+            // 160 ms: it starts now, and is out when the next picture is taken, a second later.
+            {
+                let viewer = ui.global::<Viewer>();
+                viewer.set_volume(60);
+                viewer.set_volume_shown(true);
+                slint::platform::update_timers_and_animations();
+                save(&window, &name("viewer-volume"));
+                viewer.set_muted(true);
+                save(&window, &name("viewer-volume-muted"));
+            }
             open_viewer(&ui, 3);
             save(&window, &name("viewer-wide-video"));
             ui.global::<Viewer>().set_open(false);

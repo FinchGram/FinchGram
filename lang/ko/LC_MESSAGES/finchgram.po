@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-09 05:22+0000\n"
+"POT-Creation-Date: 2026-10-09 09:35+0000\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -51,7 +51,7 @@ msgstr "업데이트 확인…"
 msgid "Choose recipient…"
 msgstr "받는 사람 선택…"
 
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:651
+#: ui/broadsheet/actions.slint:226 ui/telegram.slint:655
 #: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "저장된 메시지"
@@ -1943,16 +1943,16 @@ msgstr "FinchGram 종료"
 msgid "New message"
 msgstr "새 메시지"
 
-#: ui/telegram.slint:652
+#: ui/telegram.slint:656
 msgid "Deleted Account"
 msgstr "삭제된 계정"
 
-#: ui/telegram.slint:653 ui/workbench/sidebar.slint:105
+#: ui/telegram.slint:657 ui/workbench/sidebar.slint:105
 msgid "All chats"
 msgstr "모든 채팅"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:655
+#: ui/telegram.slint:659
 msgctxt "list separator"
 msgid ", "
 msgstr ", "
@@ -2031,33 +2031,37 @@ msgid "Fit"
 msgstr "맞춤"
 
 #: ui/viewer.slint:34
-msgid "← → Switch · Space Play · Esc Close"
-msgstr "← → 전환 · Space 재생 · Esc 닫기"
+msgid "← → Switch · ↑ ↓ Volume · Space Play · Esc Close"
+msgstr "← → 전환 · ↑ ↓ 음량 · Space 재생 · Esc 닫기"
 
-#: ui/viewer.slint:769
-msgctxt "terminal"
-msgid "locate"
-msgstr "위치"
+#: ui/viewer.slint:44
+msgid "Muted"
+msgstr "음소거"
 
-#: ui/viewer.slint:775
-msgctxt "terminal"
-msgid "download"
-msgstr "다운로드"
-
-#: ui/viewer.slint:862
+#: ui/viewer.slint:901 ui/viewer.slint:922
 msgctxt "terminal"
 msgid "muted"
 msgstr "음소거"
 
-#: ui/viewer.slint:862
+#: ui/viewer.slint:901 ui/viewer.slint:922
 msgctxt "terminal"
 msgid "sound"
 msgstr "소리"
 
-#: ui/viewer.slint:929
+#: ui/viewer.slint:1080
 msgctxt "terminal"
-msgid "←/→ switch · space play · esc close"
-msgstr "←/→ 전환 · space 재생 · esc 닫기"
+msgid "locate"
+msgstr "위치"
+
+#: ui/viewer.slint:1086
+msgctxt "terminal"
+msgid "download"
+msgstr "다운로드"
+
+#: ui/viewer.slint:1237
+msgctxt "terminal"
+msgid "←/→ switch · ↑/↓ volume · space play · esc close"
+msgstr "←/→ 전환 · ↑/↓ 음량 · space 재생 · esc 닫기"
 
 #: ui/workbench/conversation.slint:293 ui/workbench/conversation.slint:358
 msgid "Close other tabs"
