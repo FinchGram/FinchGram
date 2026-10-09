@@ -157,7 +157,7 @@ La base de données de TDLib et les fichiers téléchargés se trouvent dans
   tdlib.yml              # compile finchgram-tdlib sur une machine propre ; publie les tags tdlib-* comme releases
 Cargo.toml
 build.rs                 # compile ui/app.slint, intègre lang/, copie vendor/tdlib/bin/ à côté de l'exécutable
-docs/                    # architecture.md, conventions.md, drag-and-drop.md (+ zh-Hans)
+docs/                    # architecture.md, conventions.md, drag-and-drop.md, media-files.md (+ zh-Hans)
   screenshots/           #   les images que montrent les README, issues du test de captures (scripts/readme-pictures.sh)
 lang/                    # traductions : lang/<code>/LC_MESSAGES/finchgram.po, compilées dans le binaire
 readme/                  # ce README dans d'autres langues

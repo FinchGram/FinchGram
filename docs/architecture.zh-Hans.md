@@ -166,7 +166,7 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 
 1. **数据库加密**：TDLib 可以用一个密钥加密它的数据库，密钥放在系统的安全存储（钥匙串）里。
    在那之前，数据库只靠用户的系统账号保护。
-2. **下载的文件放哪**：暂时放在数据库旁边。大小上限和缓存目录（`~/Library/Caches`）需要设计。
+2. **下载的文件放哪**：暂时放在数据库旁边。大小上限和缓存目录（`~/Library/Caches`）需要设计。什么时候取什么、还有什么要做（提前下载、边下边播），见 [media-files.zh-Hans.md](media-files.zh-Hans.md)。
 3. **媒体播放**（媒体中心）：语音消息（Opus）、视频、GIF 和动态贴纸（WebM、Lottie）。2026-09-30 定了：用 mpv。
    它以 libmpv 的形式出现，跟 finchgram-tdlib 一样由 `vendor/mpv/build.sh` 从锁定的源码构建：mpv 加上 FFmpeg、
    libplacebo 和 libass（FreeType、FriBidi、HarfBuzz），全部静态链接进一个只依赖 macOS 的库；app 链接它，

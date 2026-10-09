@@ -132,7 +132,7 @@ TDLib의 데이터베이스와 내려받은 파일은 `~/Library/Application Sup
   tdlib.yml              # 깨끗한 머신에서 finchgram-tdlib을 빌드하고, tdlib-* 태그를 릴리스로 공개
 Cargo.toml
 build.rs                 # ui/app.slint를 컴파일하고, lang/을 포함하며, vendor/tdlib/bin/을 실행 파일 옆에 복사
-docs/                    # architecture.md, conventions.md, drag-and-drop.md (+ zh-Hans)
+docs/                    # architecture.md, conventions.md, drag-and-drop.md, media-files.md (+ zh-Hans)
   screenshots/           #   README에 싣는 그림, 스크린샷 테스트에서 (scripts/readme-pictures.sh)
 lang/                    # 번역: lang/<코드>/LC_MESSAGES/finchgram.po, 바이너리에 포함됨
 readme/                  # 이 README의 다른 언어판

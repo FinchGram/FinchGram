@@ -131,7 +131,7 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   tdlib.yml              # يبني finchgram-tdlib على جهاز نظيف؛ وينشر وسوم tdlib-* كإصدارات
 Cargo.toml
 build.rs                 # يصرّف ui/app.slint، ويضمّن lang/، وينسخ vendor/tdlib/bin/ بجوار الملف التنفيذي
-docs/                    # architecture.md و conventions.md و drag-and-drop.md (+ zh-Hans)
+docs/                    # architecture.md و conventions.md و drag-and-drop.md و media-files.md (+ zh-Hans)
   screenshots/           #   الصور التي تعرضها ملفات README، من اختبار اللقطات (scripts/readme-pictures.sh)
 lang/                    # الترجمات: lang/<الرمز>/LC_MESSAGES/finchgram.po، مُضمَّنة في الملف الثنائي
 readme/                  # ملف README هذا بلغات أخرى

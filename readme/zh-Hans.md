@@ -123,7 +123,7 @@ TDLib 的数据库和下载的文件在 `~/Library/Application Support/FinchGram
   tdlib.yml              # 在干净的机器上构建 finchgram-tdlib；tdlib-* tag 发布成 release
 Cargo.toml
 build.rs                 # 编译 ui/app.slint，打包 lang/，把 vendor/tdlib/bin/ 复制到可执行文件旁边
-docs/                    # architecture.md、conventions.md、drag-and-drop.md（以及中文版）
+docs/                    # architecture.md、conventions.md、drag-and-drop.md、media-files.md（以及中文版）
   screenshots/           #   README 里的图，来自截图测试（scripts/readme-pictures.sh）
 lang/                    # 翻译：lang/<代码>/LC_MESSAGES/finchgram.po，编译进二进制
 readme/                  # 这份 README 的其他语言版本

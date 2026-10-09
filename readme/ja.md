@@ -135,7 +135,7 @@ TDLib のデータベースとダウンロードしたファイルは `~/Library
   tdlib.yml              # クリーンなマシンで finchgram-tdlib をビルドし、tdlib-* タグをリリースとして公開
 Cargo.toml
 build.rs                 # ui/app.slint をコンパイルし、lang/ を同梱し、vendor/tdlib/bin/ を実行ファイルの隣にコピー
-docs/                    # architecture.md、conventions.md、drag-and-drop.md（+ zh-Hans）
+docs/                    # architecture.md、conventions.md、drag-and-drop.md、media-files.md（+ zh-Hans）
   screenshots/           #   README に載せる画像。スクリーンショットテストから（scripts/readme-pictures.sh）
 lang/                    # 翻訳：lang/<コード>/LC_MESSAGES/finchgram.po、バイナリに組み込まれる
 readme/                  # この README の他の言語版

@@ -144,7 +144,7 @@ settings in `~/Library/Application Support/FinchGram/settings.toml`.
   tdlib.yml              # builds finchgram-tdlib on a clean runner; publishes tdlib-* tags as releases
 Cargo.toml
 build.rs                 # compiles ui/app.slint, bundles lang/, copies vendor/tdlib/bin/ next to the executable
-docs/                    # architecture.md, conventions.md, drag-and-drop.md (+ zh-Hans)
+docs/                    # architecture.md, conventions.md, drag-and-drop.md, media-files.md (+ zh-Hans)
   screenshots/           #   the pictures the READMEs show, from the picture test (scripts/readme-pictures.sh)
 lang/                    # translations: lang/<code>/LC_MESSAGES/finchgram.po, compiled into the binary
 readme/                  # this README in other languages

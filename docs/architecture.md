@@ -223,7 +223,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
    system's secure storage (Keychain). Until then the database is protected by the user's account
    only.
 2. **Where downloaded files go**: next to the database for now. A size limit and a cache folder
-   (`~/Library/Caches`) need a design.
+   (`~/Library/Caches`) need a design. What is fetched when, and what is to come (fetching ahead,
+   playing while downloading), is in [media-files.md](media-files.md).
 3. **Media playback** (the media center): voice messages (Opus), video, GIFs and animated stickers
    (WebM, Lottie). Decided on 2026-09-30: mpv. It comes as libmpv, built from pinned sources by
    `vendor/mpv/build.sh` as finchgram-tdlib is: mpv with FFmpeg, libplacebo and libass (FreeType,
