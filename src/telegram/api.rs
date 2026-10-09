@@ -661,9 +661,6 @@ pub struct Message {
     /// Its content self-destructs: the moment it is opened, or so long after.
     #[serde(default)]
     pub self_destruct_type: Option<MessageSelfDestructType>,
-    /// It mentions us, or replies to us, and has not been read.
-    #[serde(default)]
-    pub contains_unread_mention: bool,
     pub content: MessageContent,
 }
 

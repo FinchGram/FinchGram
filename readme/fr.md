@@ -18,8 +18,7 @@ un client non officiel, qui n'est pas fait par Telegram.
 - **Discussions.** Connexion avec le numéro de téléphone, le code et le mot de passe de la validation
   en deux étapes, ou en scannant un code QR ; ou création d'un nouveau compte. La liste des
   discussions avec les dossiers de Telegram, les discussions épinglées, les compteurs de non-lus et
-  les mentions, les discussions non lues réunies en haut ; une page « Non lus » qui liste leurs
-  derniers messages non lus ; une recherche (⌘K) ; une vue de vos chaînes et une de vos bots.
+  les mentions ; une recherche (⌘K) ; une vue de vos chaînes et une de vos bots.
 - **Messages.** Du texte avec sa mise en forme (gras, italique, code, liens), réponses et transferts,
   photos, vidéos, GIF, stickers, fichiers et une carte d'aperçu pour un lien. Un clic droit sur un
   message ouvre son menu : répondre, modifier, copier, copier le lien, transférer, signaler,

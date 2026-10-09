@@ -1196,9 +1196,9 @@ pub fn chat_changed(open: Option<i64>) {
     }
 }
 
-/// A click on a reply's quote, or on a line of the Unread page: to that message, lit up for a
-/// moment. One older than the messages loaded is looked for page by page.
-pub(super) fn jump(message_id: i64) {
+/// A click on a reply's quote: to the message it answers, lit up for a moment. One older than the
+/// messages loaded is looked for page by page.
+fn jump(message_id: i64) {
     jump_looking(message_id, JUMP_PAGES);
 }
 

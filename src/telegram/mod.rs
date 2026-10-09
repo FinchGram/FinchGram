@@ -36,7 +36,6 @@ mod time;
 #[cfg(test)]
 mod timing;
 mod attachments;
-mod unread;
 mod viewer;
 
 use std::cell::RefCell;
@@ -125,7 +124,6 @@ pub fn start(ui: &MainWindow) {
     viewer::connect(ui);
     notifications::connect(ui);
     attachments::connect(ui);
-    unread::connect(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {

@@ -24,8 +24,8 @@ use super::time;
 use crate::images;
 use crate::{
     Account, ChatKind, ChatRow, Chats, Content, Conversation, FileCard, FileState, FileType, Folder, FolderChoice, LinkPreview,
-    MainWindow, Media, MessageRow, Moment, NotificationScopes, ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Unread, UnreadGroup,
-    UnreadLine, Viewer, ViewerItem, Words,
+    MainWindow, Media, MessageRow, Moment, NotificationScopes, ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem,
+    Words,
 };
 
 /// How long someone counts as typing after TDLib last said so.
@@ -40,14 +40,6 @@ const AVATARS_KEPT: usize = 2048;
 /// A photo is downloaded in the smallest size that is at least this large on its longer side:
 /// still sharp at the size a chat shows it.
 const PICTURE_SIDE: i32 = 640;
-
-/// The Unread page (unread.rs) among `tabs`, and as `open` while it is in front: no chat has this
-/// id. Workbench shows it as a tab; Broadsheet and Terminal in the chat's place.
-pub const UNREAD_TAB: i64 = 0;
-/// The Unread group of Workbench's tree in `expanded`; the folders' ids there are 0 (All chats) and up.
-pub const UNREAD_GROUP: i32 = -1;
-/// How many of a chat's unread messages the Unread page lists: its newest.
-pub const UNREAD_LINES: usize = 5;
 
 /// How many of the open chat's newest messages its rows show while the view is at the end. Older
 /// ones join as the view nears the top (conversation.rs), and go again once it is back at the end.
@@ -70,17 +62,6 @@ impl Default for History {
     fn default() -> History {
         History { messages: BTreeMap::new(), has_older: false, loading: false, shown: SHOWN }
     }
-}
-
-/// A chat's lines on the Unread page: its newest unread messages (unread.rs fetches them), oldest
-/// first.
-#[derive(Default)]
-pub struct UnreadEntry {
-    pub messages: Vec<api::Message>,
-    /// A getChatHistory request is on its way.
-    pub loading: bool,
-    /// Its messages or their reading changed since: fetched again while the page is in front.
-    pub stale: bool,
 }
 
 impl History {
@@ -126,8 +107,6 @@ pub struct Dirty {
     pub notification_scopes: bool,
     /// The open chat should show its newest message.
     pub scroll_to_end: bool,
-    /// The Unread page's lines: a chat's unread messages changed, or were fetched.
-    pub unread: bool,
 }
 
 /// The models the pages show, kept so that they can be updated in place.
@@ -135,7 +114,6 @@ struct Models {
     folders: Rc<VecModel<Folder>>,
     list: Rc<VecModel<ChatRow>>,
     tree: Rc<VecModel<TreeRow>>,
-    groups: Rc<VecModel<UnreadGroup>>,
     channels: Rc<VecModel<ChatRow>>,
     official_bots: Rc<VecModel<ChatRow>>,
     bots: Rc<VecModel<ChatRow>>,
@@ -161,16 +139,8 @@ pub struct Store {
 
     /// The folder Broadsheet and Terminal show: 0 is All chats, then the account's folders.
     pub shown_folder: usize,
-    /// Workbench's tree: folders the user expanded or collapsed, by folder id (0 for All chats),
-    /// and the Unread group ([`UNREAD_GROUP`]).
+    /// Workbench's tree: folders the user expanded or collapsed, by folder id (0 for All chats).
     pub expanded: HashMap<i32, bool>,
-    /// Broadsheet and Terminal show the Unread tab: the list holds the chats with unread messages.
-    pub shown_unread: bool,
-    /// The open chat was unread when it was opened: it stays in the Unread group and page while it
-    /// is open, so that it does not go from under the user while they read it.
-    pub opened_unread: bool,
-    /// The Unread page's lines, by chat.
-    pub unread_index: HashMap<i64, UnreadEntry>,
     /// The search box's words, lower case.
     pub query: String,
 
@@ -240,7 +210,6 @@ pub fn install(ui: &MainWindow) {
         bots: Rc::new(VecModel::default()),
         tabs: Rc::new(VecModel::default()),
         messages: Rc::new(VecModel::default()),
-        groups: Rc::new(VecModel::default()),
     };
     let chats = ui.global::<Chats>();
     chats.set_folders(ModelRc::from(models.folders.clone()));
@@ -252,7 +221,6 @@ pub fn install(ui: &MainWindow) {
     let conversation = ui.global::<Conversation>();
     conversation.set_tabs(ModelRc::from(models.tabs.clone()));
     conversation.set_messages(ModelRc::from(models.messages.clone()));
-    ui.global::<Unread>().set_groups(ModelRc::from(models.groups.clone()));
 
     STORE.with(|store| {
         *store.borrow_mut() = Some(Store {
@@ -269,9 +237,6 @@ pub fn install(ui: &MainWindow) {
             folders: Vec::new(),
             shown_folder: 0,
             expanded: HashMap::new(),
-            shown_unread: false,
-            opened_unread: false,
-            unread_index: HashMap::new(),
             query: String::new(),
             tabs: Vec::new(),
             open: None,
@@ -320,9 +285,6 @@ pub fn clear() {
         store.folders.clear();
         store.shown_folder = 0;
         store.expanded.clear();
-        store.shown_unread = false;
-        store.opened_unread = false;
-        store.unread_index.clear();
         store.query.clear();
         store.tabs.clear();
         store.open = None;
@@ -348,7 +310,6 @@ pub fn clear() {
             viewer: true,
             notification_scopes: true,
             scroll_to_end: false,
-            unread: true,
         };
     });
     refresh();
@@ -370,8 +331,6 @@ pub fn refresh() {
         if dirty.chats || dirty.header || dirty.conversation {
             store.refresh_conversation(&ui, &words, dirty.conversation, dirty.scroll_to_end);
         }
-        // The page follows the chats (which are unread, their names) and whether it is in front.
-        let wanted_unread = if dirty.chats || dirty.unread || dirty.conversation { store.refresh_unread(&ui, &words) } else { Vec::new() };
         if dirty.account {
             store.refresh_account(&ui);
         }
@@ -391,9 +350,9 @@ pub fn refresh() {
                 }
             }
         }
-        (std::mem::take(&mut store.missing_replies), store.take_wanted_photos(), close_viewer, wanted_unread)
+        (std::mem::take(&mut store.missing_replies), store.take_wanted_photos(), close_viewer)
     });
-    let (missing, wanted, close_viewer, wanted_unread) = followups.unwrap_or_default();
+    let (missing, wanted, close_viewer) = followups.unwrap_or_default();
     if close_viewer {
         super::viewer::close();
     }
@@ -402,9 +361,6 @@ pub fn refresh() {
     }
     if !wanted.is_empty() {
         avatars::fetch(wanted);
-    }
-    if !wanted_unread.is_empty() {
-        super::unread::fetch(wanted_unread);
     }
 }
 
@@ -431,7 +387,6 @@ pub struct Names {
     pub saved_messages: String,
     deleted_account: String,
     all_chats: String,
-    unread: String,
     pub list_separator: String,
 }
 
@@ -442,7 +397,6 @@ impl Names {
             saved_messages: words.get_saved_messages().into(),
             deleted_account: words.get_deleted_account().into(),
             all_chats: words.get_all_chats().into(),
-            unread: words.get_unread().into(),
             list_separator: words.get_list_separator().into(),
         }
     }
@@ -654,7 +608,6 @@ impl Store {
                     chat.unread_count = unread_count;
                     self.dirty.chats = true;
                 }
-                self.unread_changed(chat_id);
             }
             Update::ChatReadOutbox { chat_id, last_read_outbox_message_id } => {
                 if let Some(chat) = self.chats.get_mut(&chat_id) {
@@ -668,7 +621,6 @@ impl Store {
                     chat.unread_mention_count = unread_mention_count;
                     self.dirty.chats = true;
                 }
-                self.unread_changed(chat_id);
             }
             Update::ChatNotificationSettings { chat_id, notification_settings } => {
                 if let Some(chat) = self.chats.get_mut(&chat_id) {
@@ -686,7 +638,6 @@ impl Store {
                     chat.is_marked_as_unread = is_marked_as_unread;
                     self.dirty.chats = true;
                 }
-                self.unread_changed(chat_id);
             }
             Update::ChatBlockList { chat_id, block_list } => {
                 if let Some(chat) = self.chats.get_mut(&chat_id) {
@@ -719,7 +670,6 @@ impl Store {
             }
             Update::NewMessage { message } => {
                 let chat_id = message.chat_id;
-                self.unread_changed(chat_id);
                 // Someone who sends a message has stopped typing.
                 if let Some(typing) = self.typing.get_mut(&chat_id) {
                     typing.retain(|(sender, _)| *sender != message.sender_id);
@@ -754,7 +704,6 @@ impl Store {
                     message.content = new_content;
                     self.dirty.conversation |= self.open == Some(chat_id);
                 }
-                self.unread_changed(chat_id);
             }
             Update::MessageEdited { chat_id, message_id, edit_date } => {
                 if let Some(message) = self.histories.get_mut(&chat_id).and_then(|history| history.messages.get_mut(&message_id)) {
@@ -764,7 +713,6 @@ impl Store {
             }
             Update::DeleteMessages { chat_id, message_ids, is_permanent } => {
                 if is_permanent {
-                    self.unread_changed(chat_id);
                     if let Some(history) = self.histories.get_mut(&chat_id) {
                         for id in &message_ids {
                             history.messages.remove(id);
@@ -1120,49 +1068,14 @@ impl Store {
 
     /// The chats of `list`, in Telegram's order, matching the search words.
     pub fn chats_in(&self, list: ChatList) -> Vec<&api::Chat> {
-        self.chats_of(list, true)
-    }
-
-    /// The chats of `list`, in Telegram's order: all of them, or (`searched`) those matching the
-    /// search words.
-    fn chats_of(&self, list: ChatList, searched: bool) -> Vec<&api::Chat> {
         let mut chats: Vec<(&api::Chat, i64)> = self
             .chats
             .values()
             .filter_map(|chat| position(chat, list).map(|position| (chat, position.order)))
-            .filter(|(chat, _)| !searched || self.query.is_empty() || chat.title.to_lowercase().contains(&self.query))
+            .filter(|(chat, _)| self.query.is_empty() || chat.title.to_lowercase().contains(&self.query))
             .collect();
         chats.sort_by(|(a, a_order), (b, b_order)| b_order.cmp(a_order).then(b.id.cmp(&a.id)));
         chats.into_iter().map(|(chat, _)| chat).collect()
-    }
-
-    /// Whether the Unread group and page take the chat: it has unread messages or was marked
-    /// unread by hand, and it is not muted, unless someone mentioned us in it.
-    pub fn is_unread(&self, chat: &api::Chat) -> bool {
-        (chat.unread_count > 0 || chat.is_marked_as_unread) && (!self.muted(chat) || chat.unread_mention_count > 0)
-    }
-
-    /// The chats of the Unread group and page, in Telegram's order (the newest message first):
-    /// those that are unread, and the open chat while it stays open when it was unread when opened
-    /// (`opened_unread`). `searched`: only those matching the search words, for the chat list; the
-    /// page takes them all.
-    pub fn unread_chats(&self, searched: bool) -> Vec<&api::Chat> {
-        let kept = if self.opened_unread { self.open } else { None };
-        self.chats_of(ChatList::Main, searched).into_iter().filter(|chat| self.is_unread(chat) || Some(chat.id) == kept).collect()
-    }
-
-    /// The unread messages in the Unread page's chats; a chat marked unread by hand counts one.
-    pub fn unread_total(&self) -> i32 {
-        self.unread_chats(false).iter().map(|chat| chat.unread_count.max(i32::from(chat.is_marked_as_unread))).sum()
-    }
-
-    /// Something changed among `chat_id`'s messages or their reading: the Unread page's lines for
-    /// it are stale, and are fetched again while the page is in front.
-    fn unread_changed(&mut self, chat_id: i64) {
-        if let Some(entry) = self.unread_index.get_mut(&chat_id) {
-            entry.stale = true;
-        }
-        self.dirty.unread = true;
     }
 
     fn refresh_chats(&mut self, ui: &MainWindow, names: &Names) {
@@ -1178,46 +1091,24 @@ impl Store {
             })
             .collect();
 
-        // The chats with unread messages (the design's round 2): the Unread group at the top of
-        // Workbench's tree, and the Unread tab of Broadsheet and Terminal, which goes with the last
-        // of them, back to the folder.
-        let unread = self.unread_chats(true);
-        let shown_unread = self.shown_unread && !unread.is_empty();
         let shown = self.shown_folder.min(lists.len() - 1);
-        let list: Vec<ChatRow> = if shown_unread {
-            unread.iter().map(|chat| self.chat_row(chat, ChatList::Main, names)).collect()
-        } else {
-            self.chats_in(lists[shown]).iter().map(|chat| self.chat_row(chat, lists[shown], names)).collect()
-        };
+        let list: Vec<ChatRow> = self.chats_in(lists[shown]).iter().map(|chat| self.chat_row(chat, lists[shown], names)).collect();
 
-        // Workbench's tree: the Unread group, then the pinned chats on their own, in no folder, then
-        // the account's folders and All chats without them. Without folders, All chats is open; with
+        // Workbench's tree: the pinned chats on their own at the top, in no folder, then the
+        // account's folders and All chats without them. Without folders, All chats is open; with
         // folders, they are open and All chats is closed, until the user says otherwise.
-        let mut tree: Vec<TreeRow> = Vec::new();
-        if !unread.is_empty() {
-            let expanded = !self.query.is_empty() || self.expanded.get(&UNREAD_GROUP).copied().unwrap_or(true);
-            tree.push(TreeRow { header: true, folder: -1, expanded, count: unread.len() as i32, chat: self.blank_chat(), unread: true });
-            if expanded {
-                tree.extend(unread.iter().map(|chat| TreeRow {
-                    header: false,
-                    folder: 0,
-                    expanded,
-                    count: 0,
-                    chat: self.chat_row(chat, ChatList::Main, names),
-                    unread: true,
-                }));
-            }
-        }
         let pinned = self.pinned_chats(&lists);
         let at_top: HashSet<i64> = pinned.iter().map(|chat| chat.id).collect();
-        tree.extend(pinned.iter().map(|chat| TreeRow {
-            header: false,
-            folder: -1,
-            expanded: true,
-            count: 0,
-            chat: ChatRow { pinned: true, ..self.chat_row(chat, ChatList::Main, names) },
-            unread: false,
-        }));
+        let mut tree: Vec<TreeRow> = pinned
+            .iter()
+            .map(|chat| TreeRow {
+                header: false,
+                folder: -1,
+                expanded: true,
+                count: 0,
+                chat: ChatRow { pinned: true, ..self.chat_row(chat, ChatList::Main, names) },
+            })
+            .collect();
         let order: Vec<usize> = (1..lists.len()).chain(std::iter::once(0)).collect();
         for index in order {
             let chats: Vec<&api::Chat> = self.chats_in(lists[index]).into_iter().filter(|chat| !at_top.contains(&chat.id)).collect();
@@ -1226,7 +1117,7 @@ impl Store {
             }
             let id = folders[index].id;
             let expanded = !self.query.is_empty() || self.expanded.get(&id).copied().unwrap_or(index > 0 || self.folders.is_empty());
-            tree.push(TreeRow { header: true, folder: index as i32, expanded, count: chats.len() as i32, chat: self.blank_chat(), unread: false });
+            tree.push(TreeRow { header: true, folder: index as i32, expanded, count: chats.len() as i32, chat: self.blank_chat() });
             if expanded {
                 tree.extend(chats.iter().map(|chat| TreeRow {
                     header: false,
@@ -1234,7 +1125,6 @@ impl Store {
                     expanded,
                     count: 0,
                     chat: self.chat_row(chat, lists[index], names),
-                    unread: false,
                 }));
             }
         }
@@ -1261,86 +1151,19 @@ impl Store {
         sync(&self.models.official_bots, official_bots);
         sync(&self.models.bots, bots);
 
-        // The tabs' names follow the chats', and their menus say whether the chat is muted. The
-        // Unread page's tab counts the unread messages.
+        // The tabs' names follow the chats', and their menus say whether the chat is muted.
         let tabs: Vec<Tab> = self
             .tabs
             .iter()
-            .filter_map(|id| {
-                if *id == UNREAD_TAB {
-                    let title = names.unread.clone().into();
-                    return Some(Tab { id: UNREAD_TAB.to_string().into(), title, kind: ChatKind::Saved, muted: false, index: true, count: self.unread_total() });
-                }
-                let chat = self.chats.get(id)?;
-                Some(Tab {
-                    id: chat.id.to_string().into(),
-                    title: self.title(chat, names).into(),
-                    kind: self.kind(chat),
-                    muted: self.muted(chat),
-                    index: false,
-                    count: 0,
-                })
+            .filter_map(|id| self.chats.get(id))
+            .map(|chat| Tab {
+                id: chat.id.to_string().into(),
+                title: self.title(chat, names).into(),
+                kind: self.kind(chat),
+                muted: self.muted(chat),
             })
             .collect();
         sync_keyed(&self.models.tabs, tabs, |tab| tab.id.clone());
-        self.shown_unread = shown_unread;
-        ui.global::<Chats>().set_unread_shown(shown_unread);
-    }
-
-    /// The Unread page: the unread chats, each with its newest unread messages as unread.rs fetched
-    /// them, oldest first. Returns the chats whose lines the page still wants, while it is in
-    /// front: never fetched, or stale; they count as on their way from here on.
-    fn refresh_unread(&mut self, ui: &MainWindow, names: &Names) -> Vec<i64> {
-        let page = ui.global::<Unread>();
-        let shown = self.open == Some(UNREAD_TAB);
-        page.set_shown(shown);
-        page.set_total(self.unread_total());
-        let mut wanted = Vec::new();
-        let mut kept = HashSet::new();
-        let groups: Vec<UnreadGroup> = self
-            .unread_chats(false)
-            .into_iter()
-            .map(|chat| {
-                kept.insert(chat.id);
-                let entry = self.unread_index.get(&chat.id);
-                if shown && entry.is_none_or(|entry| entry.stale && !entry.loading) {
-                    wanted.push(chat.id);
-                }
-                let kind = self.kind(chat);
-                let lines: Vec<UnreadLine> =
-                    entry.map(|entry| entry.messages.iter().map(|message| self.unread_line(message, kind, names)).collect()).unwrap_or_default();
-                let loading = entry.is_none_or(|entry| entry.loading);
-                let more = if loading { 0 } else { (chat.unread_count - lines.len() as i32).max(0) };
-                UnreadGroup {
-                    chat: self.chat_row(chat, ChatList::Main, names),
-                    loading,
-                    lines: ModelRc::new(VecModel::from(lines)),
-                    more,
-                }
-            })
-            .collect();
-        sync(&self.models.groups, groups);
-        // A chat that is read keeps nothing: back unread, its lines are fetched afresh.
-        self.unread_index.retain(|id, _| kept.contains(id));
-        for id in &wanted {
-            self.unread_index.entry(*id).or_default().loading = true;
-        }
-        wanted
-    }
-
-    /// A message as a line of the Unread page: as the chat list shows a chat's last message.
-    fn unread_line(&self, message: &api::Message, kind: ChatKind, names: &Names) -> UnreadLine {
-        let (content, text, detail) = self.content(message, names);
-        let sender = if kind == ChatKind::Channel { String::new() } else { self.sender_first_name(&message.sender_id, names) };
-        UnreadLine {
-            id: message.id.to_string().into(),
-            sender: sender.into(),
-            time: time::moment(message.date),
-            content,
-            text: first_line(&text).into(),
-            detail: detail.into(),
-            mention: message.contains_unread_mention,
-        }
     }
 
     /// The open chat's header, and its message rows when `rows` (they take the longest: every row

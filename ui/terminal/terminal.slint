@@ -5,8 +5,7 @@
 import { ListView } from "std-widgets.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
-    Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState,
-    Unread, UnreadGroup, UnreadLine } from "../telegram.slint";
+    Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords } from "../chat.slint";
@@ -199,41 +198,17 @@ component ChatLine inherits Rectangle {
     }
 }
 
-// The folders as tabs, "1:All 2:Work …": the first four (three after the Unread tab), the rest
-// behind "more". Before them, while chats have unread messages, the Unread tab with their count
-// (the design's round 2): chosen, the list holds those chats and the Unread page comes to the front.
-// Each tab is as tall as its word: a Rectangle has no height of its own, and a tab without one is
-// drawn but takes no clicks.
+// The folders as tabs, "1:All 2:Work …": the first four, the rest behind "more". Each tab is as
+// tall as its word: a Rectangle has no height of its own, and a tab without one is drawn but takes
+// no clicks.
 component Folders {
-    property <bool> has-unread: Unread.groups.length > 0;
-    // Next to the Unread tab, as many folders as the column has room for (the list's edge widens it).
-    property <int> slots: !has-unread ? 4 : root.width >= 360px ? 3 : root.width >= 300px ? 2 : 1;
-    property <bool> folder-shown: !Chats.unread-shown;
-
     HorizontalLayout {
         spacing: 8px;
         alignment: start;
-        if root.has-unread: Rectangle {
-            width: unread-label.preferred-width;
-            height: unread-label.preferred-height;
-            unread-label := T {
-                x: 0;
-                font-size: 12px;
-                text: "0:" + @tr("Unread") + " " + Fmt.count(Unread.total);
-                color: Chats.unread-shown ? P.accent : P.faint;
-                font-weight: Chats.unread-shown ? 600 : 400;
-            }
-            TouchArea {
-                mouse-cursor: pointer;
-                clicked => {
-                    Chats.show-unread();
-                }
-            }
-        }
         for folder[index] in Chats.folders: Rectangle {
-            property <bool> chosen: index == Chats.folder && root.folder-shown;
-            visible: index < root.slots;
-            width: index < root.slots ? label.preferred-width : 0px;
+            property <bool> chosen: index == Chats.folder;
+            visible: index < 4;
+            width: index < 4 ? label.preferred-width : 0px;
             height: label.preferred-height;
             label := T {
                 x: 0;
@@ -249,8 +224,8 @@ component Folders {
                 }
             }
         }
-        if Chats.folders.length > root.slots: Rectangle {
-            property <bool> chosen: Chats.folder >= root.slots && root.folder-shown;
+        if Chats.folders.length > 4: Rectangle {
+            property <bool> chosen: Chats.folder >= 4;
             width: more.preferred-width;
             height: more.preferred-height;
             more := T {
@@ -282,9 +257,9 @@ component Folders {
                         padding-top: 4px;
                         padding-bottom: 4px;
                         for folder[index] in Chats.folders: Rectangle {
-                            property <bool> chosen: index == Chats.folder && root.folder-shown;
-                            visible: index >= root.slots;
-                            height: index >= root.slots ? 28px : 0px;
+                            property <bool> chosen: index == Chats.folder;
+                            visible: index >= 4;
+                            height: index >= 4 ? 28px : 0px;
                             background: self.chosen ? P.sel : entry.has-hover ? P.sel.transparentize(0.5) : transparent;
                             T {
                                 x: 12px;
@@ -1383,215 +1358,6 @@ component CommandLine inherits Rectangle {
     }
 }
 
-// A word in brackets that does something on the Unread page: "[Mark as read]".
-component Bracketed inherits Rectangle {
-    in property <string> label;
-    callback clicked;
-    width: word.preferred-width;
-    word := T {
-        x: 0;
-        text: "[" + root.label + "]";
-        color: P.accent;
-    }
-    TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            root.clicked();
-        }
-    }
-}
-
-// One of a chat's newest unread messages on the Unread page: when, who, what; a click opens the
-// chat there.
-component UnreadRow inherits Rectangle {
-    in property <ChatRow> chat;
-    in property <UnreadLine> line;
-    property <bool> service: Fmt.is-service(line.content);
-    property <string> label: !service && line.content != Content.text ? "[" + Fmt.content(line.content, line.detail) + "] " : "";
-    height: 22px;
-    background: touch.has-hover ? P.sel.transparentize(0.5) : transparent;
-
-    HorizontalLayout {
-        padding-left: 24px;
-        spacing: 10px;
-        T {
-            width: 44px;
-            text: Fmt.clock(root.line.time);
-            color: P.faint;
-        }
-        T {
-            width: 80px;
-            text: root.line.sender;
-            color: root.line.mention ? P.accent2 : P.muted;
-            overflow: elide;
-        }
-        T {
-            horizontal-stretch: 1;
-            text: root.label + (root.service ? Fmt.service(root.line.content, root.line.sender, root.line.detail) : root.line.text);
-            overflow: elide;
-        }
-    }
-
-    touch := TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            Unread.open-message(root.chat.id, root.line.id);
-        }
-    }
-}
-
-// A chat on the Unread page: its head, a rule to the right, then its lines.
-component UnreadSection {
-    in property <UnreadGroup> group;
-
-    VerticalLayout {
-        HorizontalLayout {
-            height: 22px;
-            spacing: 8px;
-            Sign {
-                kind: root.group.chat.kind;
-            }
-            T {
-                text: root.group.chat.title;
-                font-weight: 600;
-                max-width: 360px;
-                overflow: elide;
-            }
-            if root.group.chat.unread > 0: T {
-                text: root.group.chat.unread;
-                color: root.group.chat.muted ? P.faint : P.accent2;
-            }
-            if root.group.chat.mention: T {
-                text: "@";
-                color: P.accent2;
-            }
-            if root.group.chat.muted: T {
-                text: "⊘";
-                color: P.faint;
-            }
-            if root.group.chat.marked && root.group.chat.unread == 0: T {
-                text: "•";
-                color: P.accent2;
-            }
-            VerticalLayout {
-                horizontal-stretch: 1;
-                alignment: center;
-                Rectangle { height: 1px; background: P.line; }
-            }
-            if root.group.loading: T {
-                text: "[⠋]";
-                color: P.faint;
-            }
-            if !root.group.loading: Bracketed {
-                label: @tr("Mark as read");
-                clicked => {
-                    Unread.mark-read(root.group.chat.id);
-                }
-            }
-        }
-        for line in root.group.lines: UnreadRow {
-            chat: root.group.chat;
-            line: line;
-        }
-        // The lines' places while they are on their way.
-        if root.group.loading: VerticalLayout {
-            padding-left: 18px;
-            for bar in ["░░░░░  ░░░░░░░  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░", "░░░░░  ░░░░░░░░░░  ░░░░░░░░░░░░░░░░░░", "░░░░░  ░░░░░░  ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░"]: T {
-                height: 22px;
-                text: bar;
-                color: P.line;
-                overflow: clip;
-            }
-        }
-        // The chat has more unread messages than the lines: it shows them.
-        if root.group.more > 0: Rectangle {
-            height: 22px;
-            HorizontalLayout {
-                padding-left: 18px;
-                spacing: 8px;
-                alignment: start;
-                T {
-                    text: "…";
-                    color: P.faint;
-                }
-                T {
-                    text: @tr("{n} more — open the chat to see them" | "{n} more — open the chat to see them" % root.group.more);
-                    color: P.accent;
-                }
-            }
-            TouchArea {
-                mouse-cursor: pointer;
-                clicked => {
-                    Unread.open-chat(root.group.chat.id);
-                }
-            }
-        }
-    }
-}
-
-// The Unread page (the design's round 2, 2b): the chats with unread messages as a log, each with its
-// newest unread messages, one line each; lines on their way are ░ bars. An index, not a reader:
-// nothing here is marked read; a line opens the chat at its message. Rust fills the Unread global
-// (src/telegram/unread.rs).
-component TerminalUnread inherits Rectangle {
-    background: P.bg;
-
-    VerticalLayout {
-        Rectangle {
-            height: 34px;
-            background: P.pane-head;
-            HorizontalLayout {
-                padding-left: 16px;
-                padding-right: 16px;
-                spacing: 10px;
-                T {
-                    text: @tr("Unread");
-                    color: P.accent;
-                    font-weight: 600;
-                }
-                if Unread.total > 0: T {
-                    text: Fmt.count(Unread.total);
-                    color: P.accent2;
-                }
-                Rectangle { horizontal-stretch: 1; }
-                if Unread.total > 0: Bracketed {
-                    label: @tr("Mark all as read");
-                    clicked => {
-                        Unread.mark-all-read();
-                    }
-                }
-            }
-            Rectangle {
-                y: parent.height - 1px;
-                height: 1px;
-                background: P.line;
-            }
-        }
-        if Unread.groups.length > 0: Flickable {
-            vertical-stretch: 1;
-            mouse-drag-pan-enabled: false;
-            VerticalLayout {
-                alignment: start;
-                padding-left: 16px;
-                padding-right: 16px;
-                padding-top: 12px;
-                padding-bottom: 16px;
-                spacing: 16px;
-                for group in Unread.groups: UnreadSection {
-                    group: group;
-                }
-            }
-        }
-        if Unread.groups.length == 0: Rectangle {
-            vertical-stretch: 1;
-            T {
-                text: "-- " + @tr("You're all caught up") + " --";
-                color: P.faint;
-            }
-        }
-    }
-}
-
 component StatusBar inherits Rectangle {
     height: 26px;
     background: P.accent;
@@ -1657,10 +1423,7 @@ export component TerminalWindow inherits Rectangle {
                 if Conversation.chat-id != "": Pane {
                     vertical-stretch: 1;
                 }
-                if Conversation.chat-id == "" && Unread.shown: TerminalUnread {
-                    vertical-stretch: 1;
-                }
-                if Conversation.chat-id == "" && !Unread.shown: Rectangle {
+                if Conversation.chat-id == "": Rectangle {
                     vertical-stretch: 1;
                     T {
                         text: "-- " + @tr("Choose a chat on the left") + " --";

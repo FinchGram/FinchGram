@@ -17,9 +17,8 @@ ein inoffizieller Client, nicht von Telegram gemacht.
 
 - **Chats.** Anmelden mit Telefonnummer, Code und dem Passwort der zweistufigen Bestätigung oder durch
   Scannen eines QR-Codes; oder ein neues Konto anlegen. Die Chatliste mit Telegrams Ordnern,
-  angehefteten Chats, Ungelesen-Zählern und Erwähnungen, die ungelesenen Chats oben gesammelt; eine
-  Seite „Ungelesen“, die ihre neuesten ungelesenen Nachrichten auflistet; ein Suchfeld (⌘K); eine
-  Ansicht der Kanäle und eine der Bots.
+  angehefteten Chats, Ungelesen-Zählern und Erwähnungen; ein Suchfeld (⌘K); eine Ansicht der Kanäle
+  und eine der Bots.
 - **Nachrichten.** Text mit Formatierung (fett, kursiv, Code, Links), Antworten und Weiterleitungen,
   Fotos, Videos, GIFs, Sticker, Dateien und eine Karte mit der Linkvorschau. Ein Rechtsklick auf eine
   Nachricht öffnet ihr Menü: antworten, bearbeiten, kopieren, Link kopieren, weiterleiten, melden,

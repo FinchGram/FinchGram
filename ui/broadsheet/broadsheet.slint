@@ -4,13 +4,12 @@ import { ListView } from "std-widgets.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer, LinkPreview, ReplyQuote,
-    Actions, ComposeBar, ActionNotice, Attachments, Unread, UnreadGroup, UnreadLine } from "../telegram.slint";
+    Actions, ComposeBar, ActionNotice, Attachments } from "../telegram.slint";
 import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import {
-    ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope, AttachWords, FileCardView, ChatMenuWords,
-    ChatIcons
+    ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope, AttachWords, FileCardView, ChatMenuWords
 } from "../chat.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 import { BroadsheetActions } from "actions.slint";
@@ -349,7 +348,7 @@ component SearchField inherits Rectangle {
 
 component FolderTab {
     in property <int> index;
-    property <bool> active: index == Chats.folder && !Chats.unread-shown;
+    property <bool> active: index == Chats.folder;
 
     VerticalLayout {
         spacing: 2px;
@@ -383,66 +382,15 @@ component FolderTab {
     }
 }
 
-// The Unread tab (the design's round 2): before the folders while chats have unread messages,
-// with their count. Chosen, the list holds those chats and the Unread page comes to the front.
-component UnreadTab {
-    property <bool> active: Chats.unread-shown;
-
-    VerticalLayout {
-        spacing: 2px;
-        HorizontalLayout {
-            spacing: 4px;
-            Text {
-                text: @tr("Unread");
-                color: root.active ? P.text : P.muted;
-                font-size: 14px;
-                font-weight: root.active ? 600 : 400;
-            }
-            if Unread.total > 0: Text {
-                text: Unread.total > 99 ? "99+" : "" + Unread.total;
-                color: P.accent-ink;
-                font-size: 11px;
-                font-weight: 600;
-                vertical-alignment: bottom;
-            }
-        }
-        Rectangle {
-            height: 2px;
-            background: root.active ? P.accent : transparent;
-        }
-    }
-
-    TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            Chats.show-unread();
-        }
-    }
-}
-
-// The folders as tabs: the first four, the rest behind "More". With the Unread tab before them,
-// as many as the column has room for next to it: three in the design's column, fewer in a narrow
-// one (the list's edge widens it).
+// The folders as tabs: the first four, the rest behind "More".
 component Folders {
-    property <bool> has-unread: Unread.groups.length > 0;
-    property <int> slots: !has-unread ? 4 : root.width >= 340px ? 3 : root.width >= 290px ? 2 : 1;
-    property <bool> folder-shown: !Chats.unread-shown;
     // "More" names the folder shown when it is one of those behind it.
-    property <bool> more-chosen: Chats.folder >= slots && folder-shown;
+    property <bool> more-chosen: Chats.folder >= 4;
 
     HorizontalLayout {
-        if root.has-unread: Rectangle {
-            width: unread-tab.preferred-width + 14px;
-            height: unread-tab.preferred-height;
-            unread-tab := UnreadTab {
-                x: 0;
-                y: 0;
-                width: self.preferred-width;
-            }
-        }
         for folder[index] in Chats.folders: Rectangle {
-            visible: index < root.slots;
-            width: index < root.slots ? tab.preferred-width + 14px : 0px;
+            visible: index < 4;
+            width: index < 4 ? tab.preferred-width + 14px : 0px;
             height: tab.preferred-height;
             tab := FolderTab {
                 x: 0;
@@ -452,7 +400,7 @@ component Folders {
             }
         }
         Rectangle { horizontal-stretch: 1; }
-        if Chats.folders.length > root.slots: Rectangle {
+        if Chats.folders.length > 4: Rectangle {
             HorizontalLayout {
                 spacing: 4px;
                 Text {
@@ -490,9 +438,9 @@ component Folders {
                     VerticalLayout {
                         padding: 6px;
                         for folder[index] in Chats.folders: Rectangle {
-                            property <bool> chosen: index == Chats.folder && root.folder-shown;
-                            visible: index >= root.slots;
-                            height: index >= root.slots ? 34px : 0px;
+                            property <bool> chosen: index == Chats.folder;
+                            visible: index >= 4;
+                            height: index >= 4 ? 34px : 0px;
                             border-radius: 2px;
                             background: self.chosen ? P.sel : entry.has-hover ? P.hover : transparent;
                             HorizontalLayout {
@@ -503,7 +451,7 @@ component Folders {
                                     text: folder.name;
                                     color: P.text;
                                     font-size: 14px;
-                                    font-weight: index == Chats.folder && root.folder-shown ? 600 : 400;
+                                    font-weight: index == Chats.folder ? 600 : 400;
                                     vertical-alignment: center;
                                 }
                                 if folder.unread > 0: Text {
@@ -2040,337 +1988,10 @@ component SelectionBar inherits Rectangle {
     }
 }
 
-// Words that do something when clicked: "Mark as read".
-component LinkText inherits Rectangle {
-    in property <string> text;
-    in property <length> font-size: 13px;
-    in property <bool> italic;
-    callback clicked;
-    width: label.preferred-width;
-    label := Text {
-        text: root.text;
-        color: P.accent-ink;
-        font-size: root.font-size;
-        font-italic: root.italic;
-        vertical-alignment: center;
-    }
-    TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            root.clicked();
-        }
-    }
-}
-
-// One of a chat's newest unread messages on the Unread page: when, who, what; a click opens the
-// chat there.
-component UnreadRow inherits Rectangle {
-    in property <ChatRow> chat;
-    in property <UnreadLine> line;
-    property <bool> service: Fmt.is-service(line.content);
-    property <string> icon: ChatIcons.content(line.content);
-    height: 36px;
-    background: touch.has-hover ? P.hover : transparent;
-
-    Rectangle {
-        y: 0;
-        height: 1px;
-        background: P.line;
-    }
-    HorizontalLayout {
-        padding-left: 8px;
-        padding-right: 8px;
-        spacing: 12px;
-        Text {
-            width: 44px;
-            text: Fmt.clock(root.line.time);
-            color: P.faint;
-            font-size: 13px;
-            vertical-alignment: center;
-        }
-        Text {
-            width: 84px;
-            text: root.line.sender;
-            color: root.line.mention ? P.accent-ink : P.text;
-            font-size: 14px;
-            font-weight: 600;
-            vertical-alignment: center;
-            overflow: elide;
-        }
-        HorizontalLayout {
-            horizontal-stretch: 1;
-            spacing: 6px;
-            if !root.service && root.icon != "": VerticalLayout {
-                alignment: center;
-                DuoIcon {
-                    name: root.icon;
-                    size: 16px;
-                    color: P.muted;
-                }
-            }
-            if !root.service && root.line.content != Content.text: Text {
-                text: Fmt.content(root.line.content, root.line.detail);
-                color: P.muted;
-                font-size: 15px;
-                font-italic: true;
-                vertical-alignment: center;
-            }
-            Text {
-                horizontal-stretch: 1;
-                text: root.service ? Fmt.service(root.line.content, root.line.sender, root.line.detail) : root.line.text;
-                color: P.text;
-                font-size: 15px;
-                vertical-alignment: center;
-                overflow: elide;
-            }
-        }
-    }
-
-    touch := TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            Unread.open-message(root.chat.id, root.line.id);
-        }
-    }
-}
-
-// A chat on the Unread page: its head, then its lines, under a rule.
-component UnreadSection inherits Rectangle {
-    in property <UnreadGroup> group;
-
-    VerticalLayout {
-        padding-top: 16px;
-        padding-bottom: 14px;
-        HorizontalLayout {
-            spacing: 10px;
-            padding-bottom: 8px;
-            VerticalLayout {
-                alignment: center;
-                Avatar {
-                    size: 30px;
-                    radius: 4px;
-                    fill: Avatars.fill(root.group.chat.kind);
-                    ink: Avatars.ink(root.group.chat.kind);
-                    initial: root.group.chat.initial;
-                    picture: root.group.chat.picture;
-                    has-picture: root.group.chat.has-picture;
-                    font-size: 14px;
-                }
-            }
-            Text {
-                text: root.group.chat.title;
-                color: P.text;
-                font-size: 19px;
-                font-weight: 600;
-                vertical-alignment: center;
-                max-width: 420px;
-                overflow: elide;
-            }
-            if root.group.chat.unread > 0: VerticalLayout {
-                alignment: center;
-                Badge {
-                    count: root.group.chat.unread;
-                    muted: root.group.chat.muted;
-                }
-            }
-            if root.group.chat.mention: VerticalLayout {
-                alignment: center;
-                MentionMark { }
-            }
-            if root.group.chat.muted: VerticalLayout {
-                alignment: center;
-                DuoIcon {
-                    name: "bell-slash";
-                    size: 17px;
-                    color: P.faint;
-                }
-            }
-            if root.group.chat.marked && root.group.chat.unread == 0: VerticalLayout {
-                alignment: center;
-                UnreadMark { }
-            }
-            Rectangle { horizontal-stretch: 1; }
-            if root.group.loading: VerticalLayout {
-                alignment: center;
-                DuoIcon {
-                    name: "circle-notch";
-                    size: 17px;
-                    color: P.faint;
-                }
-            }
-            if !root.group.loading: LinkText {
-                text: @tr("Mark as read");
-                clicked => {
-                    Unread.mark-read(root.group.chat.id);
-                }
-            }
-        }
-        for line in root.group.lines: UnreadRow {
-            chat: root.group.chat;
-            line: line;
-        }
-        // The lines' places while they are on their way.
-        if root.group.loading: VerticalLayout {
-            for words in [160px, 220px, 120px]: Rectangle {
-                height: 32px;
-                Rectangle {
-                    y: 0;
-                    height: 1px;
-                    background: P.line;
-                }
-                HorizontalLayout {
-                    spacing: 12px;
-                    padding-top: 11px;
-                    padding-bottom: 11px;
-                    alignment: start;
-                    Rectangle { width: 44px; height: 10px; border-radius: 2px; background: P.line; }
-                    Rectangle { width: 84px; height: 10px; border-radius: 2px; background: P.line; }
-                    Rectangle { width: words; height: 10px; border-radius: 2px; background: P.line; }
-                }
-            }
-        }
-        // The chat has more unread messages than the lines: it shows them.
-        if root.group.more > 0: HorizontalLayout {
-            padding-top: 9px;
-            spacing: 6px;
-            alignment: start;
-            LinkText {
-                text: @tr("{n} more — open the chat to see them" | "{n} more — open the chat to see them" % root.group.more);
-                font-size: 14px;
-                italic: true;
-                clicked => {
-                    Unread.open-chat(root.group.chat.id);
-                }
-            }
-            VerticalLayout {
-                alignment: center;
-                Icon {
-                    name: "arrow-right";
-                    size: 13px;
-                    color: P.accent-ink;
-                }
-            }
-        }
-    }
-    Rectangle {
-        y: parent.height - 1px;
-        height: 1px;
-        background: P.line;
-    }
-}
-
-// The Unread page (the design's round 2, 2a): a newspaper page of the chats with unread messages,
-// each with its newest unread messages, one line each. An index, not a reader: nothing here is
-// marked read; a line opens the chat at its message. Rust fills the Unread global
-// (src/telegram/unread.rs).
-component BroadsheetUnread inherits Rectangle {
-    VerticalLayout {
-        // The masthead keeps to the top; the page below takes the rest.
-        VerticalLayout {
-            vertical-stretch: 0;
-            padding-left: 28px;
-            padding-right: 28px;
-            padding-top: 22px;
-            spacing: 12px;
-            HorizontalLayout {
-                spacing: 12px;
-                Text {
-                    text: @tr("Unread");
-                    color: P.text;
-                    font-size: 34px;
-                    font-weight: 600;
-                    letter-spacing: -0.3px;
-                    vertical-alignment: bottom;
-                }
-                if Unread.total > 0: Text {
-                    text: Fmt.count(Unread.total);
-                    color: P.accent-ink;
-                    font-size: 16px;
-                    font-weight: 600;
-                    vertical-alignment: bottom;
-                }
-                Rectangle { horizontal-stretch: 1; }
-                if Unread.total > 0: VerticalLayout {
-                    alignment: end;
-                    Rectangle {
-                        width: mark.preferred-width;
-                        height: mark.preferred-height;
-                        mark := HorizontalLayout {
-                            spacing: 5px;
-                            VerticalLayout {
-                                alignment: center;
-                                DuoIcon {
-                                    name: "checks";
-                                    size: 16px;
-                                    color: P.accent-ink;
-                                }
-                            }
-                            Text {
-                                text: @tr("Mark all as read");
-                                color: P.accent-ink;
-                                font-size: 14px;
-                                vertical-alignment: center;
-                            }
-                        }
-                        TouchArea {
-                            mouse-cursor: pointer;
-                            clicked => {
-                                Unread.mark-all-read();
-                            }
-                        }
-                    }
-                }
-            }
-            // The masthead's rule: a thick line over a thin one.
-            VerticalLayout {
-                Rectangle { height: 2px; background: P.text; }
-                Rectangle { height: 2px; }
-                Rectangle { height: 1px; background: P.text; }
-            }
-        }
-
-        if Unread.groups.length > 0: Flickable {
-            vertical-stretch: 1;
-            mouse-drag-pan-enabled: false;
-            VerticalLayout {
-                alignment: start;
-                padding-left: 28px;
-                padding-right: 28px;
-                padding-bottom: 24px;
-                for group in Unread.groups: UnreadSection {
-                    group: group;
-                }
-            }
-        }
-        if Unread.groups.length == 0: VerticalLayout {
-            vertical-stretch: 1;
-            alignment: center;
-            spacing: 14px;
-            HorizontalLayout {
-                alignment: center;
-                Rectangle { width: 48px; height: 1px; background: P.text; }
-            }
-            Text {
-                text: @tr("You're all caught up");
-                color: P.text;
-                font-size: 24px;
-                font-weight: 600;
-                horizontal-alignment: center;
-            }
-            HorizontalLayout {
-                alignment: center;
-                Rectangle { width: 48px; height: 1px; background: P.text; }
-            }
-        }
-    }
-}
-
 component ConversationPane inherits Rectangle {
     background: P.panel;
 
-    if Conversation.chat-id == "" && Unread.shown: BroadsheetUnread { }
-
-    if Conversation.chat-id == "" && !Unread.shown: Text {
+    if Conversation.chat-id == "": Text {
         text: @tr("Choose a chat on the left");
         color: P.faint;
         font-size: 15px;

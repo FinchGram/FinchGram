@@ -3,8 +3,7 @@ import { ShotWindow, Shot, ShotTool, ShotCursor, ShotBox, ShotPath, ShotText, Sh
 import { Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, LinkPreview, RowKind, Content, ChatKind, Status, Moment,
     Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice, NotificationScope,
-    NotificationScopes, FileCard, FileState, FileType, Attachments, Attachment, AttachKind, AttachProblem, AttachHint, ChatConfirm,
-    Unread, UnreadGroup, UnreadLine } from "telegram.slint";
+    NotificationScopes, FileCard, FileState, FileType, Attachments, Attachment, AttachKind, AttachProblem, AttachHint, ChatConfirm } from "telegram.slint";
 import { Look } from "look.slint";
 import { Fmt } from "format.slint";
 import { LoginPage } from "pages/login.slint";
@@ -21,8 +20,7 @@ export { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme,
     NotificationSetting, Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, LinkPreview, RowKind, Content, ChatKind, Status, Moment,
     Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice, NotificationScope,
-    NotificationScopes, FileCard, FileState, FileType, Attachments, Attachment, AttachKind, AttachProblem, AttachHint, ChatConfirm, Fmt,
-    Unread, UnreadGroup, UnreadLine }
+    NotificationScopes, FileCard, FileState, FileType, Attachments, Attachment, AttachKind, AttachProblem, AttachHint, ChatConfirm, Fmt }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";

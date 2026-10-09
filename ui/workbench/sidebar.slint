@@ -2,7 +2,7 @@
 // channels, the bots. Which one shows is chosen in the activity bar (workbench.slint).
 import { ListView } from "std-widgets.slint";
 import { AppState, Connection, Theme } from "../state.slint";
-import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind, Unread } from "../telegram.slint";
+import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, ListEdge, Avatar } from "../widgets.slint";
 import { ChatIcons, ChatMenuWords } from "../chat.slint";
@@ -87,8 +87,6 @@ component TreeLine inherits Rectangle {
     height: item.header ? 32px : 28px;
     background: open ? P.sel : touch.has-hover && !item.header ? P.chrome.transparentize(0.4) : transparent;
 
-    // A folder's header folds it; the Unread group's folds at its caret, and its name brings the
-    // Unread page to the front.
     if root.item.header: HorizontalLayout {
         padding-left: 14px;
         padding-right: 14px;
@@ -101,18 +99,11 @@ component TreeLine inherits Rectangle {
                 name: root.item.expanded ? "caret-down" : "caret-right";
                 size: 11px;
                 color: P.muted;
-                if root.item.unread: TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => {
-                        Chats.toggle-folder(-1);
-                    }
-                }
             }
         }
         Text {
-            text: root.item.unread ? @tr("Unread")
-                : root.item.folder < Chats.folders.length ? (Chats.folders[root.item.folder].id == 0 ? @tr("All chats") : Chats.folders[root.item.folder].name) : "";
-            color: root.item.unread && Unread.shown ? P.accent-ink : P.muted;
+            text: root.item.folder < Chats.folders.length ? (Chats.folders[root.item.folder].id == 0 ? @tr("All chats") : Chats.folders[root.item.folder].name) : "";
+            color: P.muted;
             font-size: 12px;
             font-weight: 600;
             vertical-alignment: center;
@@ -168,9 +159,7 @@ component TreeLine inherits Rectangle {
     touch := TouchArea {
         mouse-cursor: pointer;
         clicked => {
-            if root.item.header && root.item.unread {
-                Unread.show();
-            } else if root.item.header {
+            if root.item.header {
                 Chats.toggle-folder(root.item.folder);
             } else {
                 Conversation.open(root.item.chat.id);

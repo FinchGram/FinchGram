@@ -14,7 +14,6 @@ use slint::platform::software_renderer::{MinimalSoftwareWindow, RepaintBufferTyp
 use slint::platform::{Key, PointerEventButton, Platform, WindowAdapter, WindowEvent};
 use slint::{ComponentHandle, Image, Model, ModelRc, Rgba8Pixel, SharedPixelBuffer, SharedString, VecModel};
 
-use crate::{Unread, UnreadGroup, UnreadLine};
 use crate::*;
 
 const WIDTH: u32 = 1280;
@@ -494,15 +493,10 @@ fn fill_chats(ui: &MainWindow) {
     // A chat's menu, Add to folder: Keyboard Lab, which is in Personal.
     let choice = |folder: i32, name: &str, inside: bool| FolderChoice { folder, name: name.into(), inside };
     chats.set_menu_folders(model(vec![choice(1, "Personal", true), choice(2, "Work", false), choice(3, "Channels", false)]));
-    let header = |folder: i32, count: usize, expanded: bool| TreeRow { header: true, folder, expanded, count: count as i32, chat: ChatRow::default(), unread: false };
-    let line = |folder: i32, chat: &ChatRow| TreeRow { header: false, folder, expanded: true, count: 0, chat: chat.clone(), unread: false };
-    // The Unread group first: the chats with unread messages, newest first. Tech Morning has
-    // unread posts but is muted without a mention, so it stays out (the design's example).
-    let unread = [&keyboards, &linxia, &alex];
-    let mut tree: Vec<TreeRow> = vec![TreeRow { header: true, folder: -1, expanded: true, count: unread.len() as i32, chat: ChatRow::default(), unread: true }];
-    tree.extend(unread.iter().map(|chat| TreeRow { header: false, folder: 0, expanded: true, count: 0, chat: (*chat).clone(), unread: true }));
-    // Then the pinned chats, in no folder, and not again below.
-    tree.extend(all.iter().filter(|chat| chat.pinned).map(|chat| line(-1, chat)));
+    let header = |folder: i32, count: usize, expanded: bool| TreeRow { header: true, folder, expanded, count: count as i32, chat: ChatRow::default() };
+    let line = |folder: i32, chat: &ChatRow| TreeRow { header: false, folder, expanded: true, count: 0, chat: chat.clone() };
+    // The pinned chats at the top, in no folder, and not again below.
+    let mut tree: Vec<TreeRow> = all.iter().filter(|chat| chat.pinned).map(|chat| line(-1, chat)).collect();
     for (index, folder_chats) in [(1, &personal), (2, &work), (3, &channels), (0, &all)] {
         let unpinned: Vec<&ChatRow> = folder_chats.iter().filter(|chat| !chat.pinned).collect();
         tree.push(header(index, unpinned.len(), index > 0));
@@ -524,71 +518,8 @@ fn fill_chats(ui: &MainWindow) {
     chats.set_loaded(true);
 
     let conversation = ui.global::<Conversation>();
-    let tab = |chat: &ChatRow| Tab { id: chat.id.clone(), title: chat.title.clone(), kind: chat.kind, muted: chat.muted, index: false, count: 0 };
+    let tab = |chat: &ChatRow| Tab { id: chat.id.clone(), title: chat.title.clone(), kind: chat.kind, muted: chat.muted };
     conversation.set_tabs(model(vec![tab(&keyboards), tab(&news), tab(&alex)]));
-
-    // The Unread page's groups: Keyboard Lab with its newest five of 42 unread messages, Lin Xia
-    // with her two, Alex Chen's still on their way.
-    let line = |id: &str, sender: &str, hour: i32, minute: i32, text: &str, content: Content, mention: bool| UnreadLine {
-        id: id.into(),
-        sender: sender.into(),
-        time: moment(Day::Today, hour, minute),
-        content,
-        text: text.into(),
-        detail: SharedString::new(),
-        mention,
-    };
-    let group = |chat: &ChatRow, lines: Vec<UnreadLine>, loading: bool, more: i32| UnreadGroup { chat: chat.clone(), loading, lines: model(lines), more };
-    let unread = ui.global::<Unread>();
-    unread.set_groups(model(vec![
-        group(
-            &keyboards,
-            vec![
-                line("u1", "Jie", 14, 2, "The group-buy keycaps arrived, the dark PBT looks great", Content::Text, false),
-                line("u2", "Mika", 14, 5, "", Content::Photo, false),
-                line("u3", "Jie", 14, 12, "Who wants the spare set?", Content::Text, false),
-                line("u4", "Mi", 14, 18, "@Zhou Ye do you still sell the dark keycaps?", Content::Text, true),
-                line("u5", "Jie", 14, 20, "Thursday 15:00 at the usual place", Content::Text, false),
-            ],
-            false,
-            37,
-        ),
-        group(&linxia, vec![line("u6", "Lin Xia", 13, 50, "Dinner tonight?", Content::Text, false), line("u7", "Lin Xia", 13, 52, "Is that place open tonight?", Content::Text, false)], false, 0),
-        group(&alex, Vec::new(), true, 0),
-    ]));
-    unread.set_total(45);
-}
-
-/// The Unread page in front: Workbench's tab for it, the chat's place in the other themes, where
-/// the list shows the unread chats as well.
-fn open_unread(ui: &MainWindow, theme: Theme) {
-    let conversation = ui.global::<Conversation>();
-    conversation.set_chat_id(SharedString::new());
-    ui.global::<Unread>().set_shown(true);
-    let chats = ui.global::<Chats>();
-    if theme == Theme::Workbench {
-        let tabs: Vec<Tab> = conversation.get_tabs().iter().collect();
-        let index = Tab { id: "0".into(), title: "Unread".into(), kind: ChatKind::Saved, muted: false, index: true, count: 45 };
-        conversation.set_tabs(model(tabs.into_iter().chain(std::iter::once(index)).collect()));
-    } else {
-        chats.set_unread_shown(true);
-        let all: Vec<ChatRow> = chats.get_list().iter().collect();
-        chats.set_list(model(all.into_iter().filter(|chat| chat.unread > 0 && (!chat.muted || chat.mention)).collect()));
-    }
-}
-
-/// Back from the Unread page: its tab closed, the list whole again.
-fn close_unread(ui: &MainWindow, theme: Theme, all: Vec<ChatRow>) {
-    let conversation = ui.global::<Conversation>();
-    ui.global::<Unread>().set_shown(false);
-    let chats = ui.global::<Chats>();
-    if theme == Theme::Workbench {
-        let tabs: Vec<Tab> = conversation.get_tabs().iter().filter(|tab| !tab.index).collect();
-        conversation.set_tabs(model(tabs));
-    } else {
-        chats.set_unread_shown(false);
-        chats.set_list(model(all));
-    }
 }
 
 fn open_keyboards(ui: &MainWindow) {
@@ -1157,7 +1088,7 @@ fn screenshots() {
             save(&window, &name("chats"));
             // A right click on the first chat of the list: its menu.
             let (x, y) = match theme {
-                Theme::Workbench => (150.0, 123.0),
+                Theme::Workbench => (150.0, 91.0),
                 Theme::Broadsheet => (230.0, 310.0),
                 Theme::Terminal => (140.0, 110.0),
             };
@@ -1169,7 +1100,7 @@ fn screenshots() {
             escape(&window);
             // The menu of a chat with a person: blocking, reporting, deleting.
             let (ux, uy) = match theme {
-                Theme::Workbench => (150.0, 151.0),
+                Theme::Workbench => (150.0, 149.0),
                 Theme::Broadsheet => (230.0, 376.0),
                 Theme::Terminal => (140.0, 139.0),
             };
@@ -1196,19 +1127,6 @@ fn screenshots() {
                 save(&window, &name("tab-menu"));
                 escape(&window);
             }
-            // The Unread page (the design's round 2), with chats to read and with none.
-            let all: Vec<ChatRow> = chats.get_list().iter().collect();
-            open_unread(&ui, theme);
-            save(&window, &name("unread"));
-            let unread = ui.global::<Unread>();
-            let groups: Vec<UnreadGroup> = unread.get_groups().iter().collect();
-            unread.set_groups(model(Vec::new()));
-            unread.set_total(0);
-            save(&window, &name("unread-empty"));
-            unread.set_groups(model(groups));
-            unread.set_total(45);
-            close_unread(&ui, theme, all);
-            open_keyboards(&ui);
             message_actions(&ui, &window, &name);
             attachments(&ui, &window, theme, &name);
             screenshot_tool(&ui, &window, &overlay, &overlay_window, &name);
