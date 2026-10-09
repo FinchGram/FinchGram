@@ -159,8 +159,35 @@ fn open_chat() -> Option<i64> {
     store::with(|store| store.open).flatten()
 }
 
+/// Saved Messages, the chat with oneself, for `then`: as TDLib has it, or made first
+/// (createPrivateChat) when the account has not used it yet. The fixed row above the lists and the
+/// forward picker offer it before it exists.
+pub fn with_saved_messages(then: impl FnOnce(i64) + 'static) {
+    let Some((me, known)) = store::with(|store| (store.my_id, store.chats.contains_key(&store.my_id))) else { return };
+    if me == 0 {
+        return;
+    }
+    if known {
+        then(me);
+        return;
+    }
+    send(json!({ "@type": "createPrivateChat", "user_id": me, "force": false }), move |answer| match answer {
+        Ok(chat) => match chat["id"].as_i64() {
+            Some(chat_id) if store::with(|store| store.chats.contains_key(&chat_id)).unwrap_or(false) => then(chat_id),
+            _ => eprintln!("telegram: Saved Messages was made, but TDLib did not send the chat"),
+        },
+        Err(err) => log_error("open Saved Messages", Err(err)),
+    });
+}
+
 /// Bring `chat_id` to the front: its tab (opened if needed), its messages.
 pub fn open(chat_id: i64) {
+    // Saved Messages is offered before the account has the chat: TDLib makes it, then it opens.
+    let (me, known) = store::with(|store| (store.my_id, store.chats.contains_key(&chat_id))).unwrap_or((0, false));
+    if !known && chat_id != 0 && chat_id == me {
+        with_saved_messages(open);
+        return;
+    }
     let Some((previous, needs_history, kind)) = store::with(|store| {
         let chat = store.chats.get(&chat_id)?;
         let kind = chat.kind;

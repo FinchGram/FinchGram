@@ -1035,11 +1035,11 @@ impl Store {
 
     /// The chats pinned in any of `lists` (All chats and the folders), matching the search words:
     /// those of All chats first, in Telegram's order, then those of each folder.
-    fn pinned_chats(&self, lists: &[ChatList]) -> Vec<&api::Chat> {
+    fn pinned_chats(&self, lists: &[ChatList], names: &Names) -> Vec<&api::Chat> {
         let mut seen = HashSet::new();
         lists
             .iter()
-            .flat_map(|list| self.chats_in(*list).into_iter().filter(|chat| position(chat, *list).is_some_and(|position| position.is_pinned)))
+            .flat_map(|list| self.chats_in(*list, names).into_iter().filter(|chat| position(chat, *list).is_some_and(|position| position.is_pinned)))
             .filter(|chat| seen.insert(chat.id))
             .collect()
     }
@@ -1066,13 +1066,16 @@ impl Store {
             .collect()
     }
 
-    /// The chats of `list`, in Telegram's order, matching the search words.
-    pub fn chats_in(&self, list: ChatList) -> Vec<&api::Chat> {
+    /// The chats of `list`, in Telegram's order, matching the search words by the names the pages
+    /// show (Saved Messages, Deleted Account), not TDLib's titles. Saved Messages is left out: it is
+    /// the fixed row above every list.
+    pub fn chats_in(&self, list: ChatList, names: &Names) -> Vec<&api::Chat> {
         let mut chats: Vec<(&api::Chat, i64)> = self
             .chats
             .values()
+            .filter(|chat| chat.id != self.my_id)
             .filter_map(|chat| position(chat, list).map(|position| (chat, position.order)))
-            .filter(|(chat, _)| self.query.is_empty() || chat.title.to_lowercase().contains(&self.query))
+            .filter(|(chat, _)| self.query.is_empty() || self.title(chat, names).to_lowercase().contains(&self.query))
             .collect();
         chats.sort_by(|(a, a_order), (b, b_order)| b_order.cmp(a_order).then(b.id.cmp(&a.id)));
         chats.into_iter().map(|(chat, _)| chat).collect()
@@ -1087,17 +1090,17 @@ impl Store {
             .map(|(index, list)| Folder {
                 id: if index == 0 { 0 } else { self.folders[index - 1].id },
                 name: if index == 0 { names.all_chats.clone() } else { self.folders[index - 1].name.text.text.clone() }.into(),
-                unread: self.chats_in(*list).iter().map(|chat| chat.unread_count).sum(),
+                unread: self.chats_in(*list, names).iter().map(|chat| chat.unread_count).sum(),
             })
             .collect();
 
         let shown = self.shown_folder.min(lists.len() - 1);
-        let list: Vec<ChatRow> = self.chats_in(lists[shown]).iter().map(|chat| self.chat_row(chat, lists[shown], names)).collect();
+        let list: Vec<ChatRow> = self.chats_in(lists[shown], names).iter().map(|chat| self.chat_row(chat, lists[shown], names)).collect();
 
         // Workbench's tree: the pinned chats on their own at the top, in no folder, then the
         // account's folders and All chats without them. Without folders, All chats is open; with
         // folders, they are open and All chats is closed, until the user says otherwise.
-        let pinned = self.pinned_chats(&lists);
+        let pinned = self.pinned_chats(&lists, names);
         let at_top: HashSet<i64> = pinned.iter().map(|chat| chat.id).collect();
         let mut tree: Vec<TreeRow> = pinned
             .iter()
@@ -1111,7 +1114,7 @@ impl Store {
             .collect();
         let order: Vec<usize> = (1..lists.len()).chain(std::iter::once(0)).collect();
         for index in order {
-            let chats: Vec<&api::Chat> = self.chats_in(lists[index]).into_iter().filter(|chat| !at_top.contains(&chat.id)).collect();
+            let chats: Vec<&api::Chat> = self.chats_in(lists[index], names).into_iter().filter(|chat| !at_top.contains(&chat.id)).collect();
             if index > 0 && chats.is_empty() && !self.query.is_empty() {
                 continue;
             }
@@ -1129,7 +1132,7 @@ impl Store {
             }
         }
 
-        let main = self.chats_in(ChatList::Main);
+        let main = self.chats_in(ChatList::Main, names);
         let channels: Vec<ChatRow> = main
             .iter()
             .filter(|chat| self.kind(chat) == ChatKind::Channel)
@@ -1140,6 +1143,20 @@ impl Store {
         let (official_bots, bots): (Vec<ChatRow>, Vec<ChatRow>) = bots.into_iter().partition(|bot| bot.verified);
 
         let chats = ui.global::<Chats>();
+        // Saved Messages: the fixed row above every list, there before the account has the chat
+        // (TDLib makes it when the row is clicked, conversation.rs). The search hides it like any chat.
+        let saved_messages = match self.chats.get(&self.my_id) {
+            Some(chat) => self.chat_row(chat, ChatList::Main, names),
+            None => ChatRow {
+                id: self.my_id.to_string().into(),
+                title: names.saved_messages.clone().into(),
+                initial: initial(&names.saved_messages),
+                kind: ChatKind::Saved,
+                ..self.blank_chat()
+            },
+        };
+        chats.set_saved_messages(saved_messages);
+        chats.set_saved_messages_shown(self.my_id != 0 && (self.query.is_empty() || names.saved_messages.to_lowercase().contains(&self.query)));
         // The dot on Workbench's channels button: muted channels do not count, as in Telegram's own
         // badges, or the dot never goes out.
         chats.set_unread_channels(channels.iter().filter(|channel| channel.unread > 0 && !channel.muted).count() as i32);

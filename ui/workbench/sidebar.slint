@@ -125,7 +125,7 @@ component TreeLine inherits Rectangle {
         VerticalLayout {
             alignment: center;
             Icon {
-                name: root.item.chat.pinned ? "push-pin" : ChatIcons.kind(root.item.chat.kind);
+                name: root.item.chat.pinned && root.item.chat.kind != ChatKind.saved ? "push-pin" : ChatIcons.kind(root.item.chat.kind);
                 size: 15px;
                 color: P.faint;
             }
@@ -399,6 +399,14 @@ export component WorkbenchSidebar inherits Rectangle {
             padding-top: 6px;
             padding-bottom: 4px;
             NetworkBanner { }
+        }
+
+        // Saved Messages: a fixed row above the tree, found without scrolling.
+        if root.view == WorkbenchView.chats && Chats.saved-messages-shown: TreeLine {
+            item: { header: false, folder: -1, expanded: true, count: 0, chat: Chats.saved-messages };
+            menu(left, top) => {
+                root.show-menu(Chats.saved-messages, -1, left, top);
+            }
         }
 
         if root.view == WorkbenchView.chats && Chats.loaded && Chats.list.length == 0 && Chats.query == "": HorizontalLayout {

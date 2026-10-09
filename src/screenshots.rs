@@ -485,12 +485,15 @@ fn fill_chats(ui: &MainWindow) {
     let finch = with_portrait(chat("finch", "FinchGram Updates", ChatKind::Channel, moment(Day::Yesterday, 20, 0), "", "FinchGram 0.1: the design arrives", 0, 41000), 260.0);
     let books = chat("books", "Wednesday Book Club", ChatKind::Group, moment(Day::ThisWeek, 20, 15), "Chen", "Next up: Invisible Cities", 0, 9);
     let saved = ChatRow { kind: ChatKind::Saved, ..chat("saved", "Saved Messages", ChatKind::Saved, moment(Day::ThisYear, 22, 42), "", "Kyoto, check-in October 3", 0, 0) };
-    let personal = vec![keyboards.clone(), linxia.clone(), mom.clone(), books.clone(), saved.clone()];
+    let personal = vec![keyboards.clone(), linxia.clone(), mom.clone(), books.clone()];
     let work = vec![alex.clone()];
     let channels = vec![news.clone(), finch.clone()];
-    let all = vec![keyboards.clone(), linxia.clone(), alex.clone(), news.clone(), mom.clone(), finch.clone(), books.clone(), saved.clone()];
+    let all = vec![keyboards.clone(), linxia.clone(), alex.clone(), news.clone(), mom.clone(), finch.clone(), books.clone()];
 
     let chats = ui.global::<Chats>();
+    // Saved Messages is the fixed row above the lists, in no folder.
+    chats.set_saved_messages(saved);
+    chats.set_saved_messages_shown(true);
     let folder = |id: i32, name: &str, unread: i32| Folder { id, name: name.into(), unread };
     chats.set_folders(model(vec![folder(0, "All chats", 57), folder(1, "Personal", 44), folder(2, "Work", 1), folder(3, "Channels", 12)]));
     // A chat's menu, Add to folder: Keyboard Lab, which is in Personal.

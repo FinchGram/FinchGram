@@ -104,7 +104,7 @@ pub fn connect(ui: &MainWindow) {
             store.dirty.chats = true;
         });
         store::refresh();
-        super::with_ui(|ui| ui.global::<Chats>().set_query(words));
+        super::with_ui(|ui| ui.global::<Chats>().set_query(words.trim().into()));
     });
 }
 

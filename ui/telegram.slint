@@ -92,6 +92,8 @@ export global Chats {
     in-out property <int> folder: 0;             // the folder shown by Broadsheet and Terminal
     in-out property <[ChatRow]> list;            // its chats, in Telegram's order
     in-out property <[TreeRow]> tree;            // Workbench: every folder, with its chats when expanded
+    in-out property <ChatRow> saved-messages;    // the chat with oneself: the fixed row above every list
+    in-out property <bool> saved-messages-shown; // there is an account, and the row matches the search
     in-out property <[ChatRow]> channels;        // every channel, for the Channels view
     in-out property <int> unread-channels;       // how many of them, not muted, have unread posts
     in-out property <[ChatRow]> official-bots;   // chats with Telegram's own bots, for the Bots view

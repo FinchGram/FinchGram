@@ -395,6 +395,14 @@ component Side inherits Rectangle {
             }
         }
 
+        // Saved Messages: a fixed row above the list, found without scrolling.
+        if root.view == TerminalView.chats && Chats.saved-messages-shown: ChatLine {
+            chat: Chats.saved-messages;
+            menu(left, top) => {
+                root.show-menu(Chats.saved-messages, 0, left, top);
+            }
+        }
+
         if root.view == TerminalView.chats && Chats.loaded && Chats.list.length == 0: VerticalLayout {
             padding-left: 16px;
             padding-right: 16px;

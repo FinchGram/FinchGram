@@ -893,15 +893,7 @@ fn pick(id: &str) {
     with_actions(|actions| actions.set_picker_open(false));
     end_selection();
     if id == "saved" {
-        let Some(me) = store::with(|store| store.my_id) else { return };
-        send(json!({ "@type": "createPrivateChat", "user_id": me, "force": false }), move |answer| match answer {
-            Ok(chat) => {
-                if let Some(chat_id) = chat["id"].as_i64() {
-                    forward_to(chat_id, from_chat_id, message_ids);
-                }
-            }
-            Err(err) => log_error("open Saved Messages", Err(err)),
-        });
+        conversation::with_saved_messages(move |chat_id| forward_to(chat_id, from_chat_id, message_ids));
     } else if let Ok(chat_id) = id.parse() {
         forward_to(chat_id, from_chat_id, message_ids);
     }

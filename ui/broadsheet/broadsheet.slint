@@ -314,7 +314,10 @@ component SearchField inherits Rectangle {
                     Chats.search(self.text);
                 }
                 accepted => {
-                    if Chats.list.length > 0 {
+                    // The first row shown: Saved Messages when it matches the words, else the list's first.
+                    if Chats.saved-messages-shown && Chats.query != "" {
+                        Conversation.open(Chats.saved-messages.id);
+                    } else if Chats.list.length > 0 {
                         Conversation.open(Chats.list[0].id);
                     }
                 }
@@ -955,6 +958,14 @@ component ListColumn inherits Rectangle {
                         vertical-alignment: center;
                     }
                 }
+            }
+        }
+
+        // Saved Messages: a fixed row above the list, found without scrolling.
+        if root.view == BroadsheetView.chats && Chats.saved-messages-shown: ChatLine {
+            chat: Chats.saved-messages;
+            menu(left, top) => {
+                root.show-menu(Chats.saved-messages, 0, left, top);
             }
         }
 
