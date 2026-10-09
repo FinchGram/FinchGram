@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-08 18:47+0000\n"
+"POT-Creation-Date: 2026-10-09 03:46+0000\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -75,19 +75,19 @@ msgstr "补充说明（可选）"
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
 #: ui/broadsheet/broadsheet.slint:2027 ui/pages/profile.slint:174
 #: ui/pages/settings.slint:1369 ui/terminal/actions.slint:463
-#: ui/terminal/terminal.slint:1091 ui/workbench/actions.slint:547
+#: ui/terminal/terminal.slint:1095 ui/workbench/actions.slint:547
 #: ui/workbench/conversation.slint:1318
 msgid "Cancel"
 msgstr "取消"
 
 #: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2018
-#: ui/chat.slint:789 ui/chat.slint:869 ui/terminal/terminal.slint:1084
+#: ui/chat.slint:789 ui/chat.slint:869 ui/terminal/terminal.slint:1088
 #: ui/workbench/conversation.slint:1293
 msgid "Report"
 msgstr "举报"
 
 #: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2009
-#: ui/chat.slint:362 ui/chat.slint:790 ui/terminal/terminal.slint:1076
+#: ui/chat.slint:362 ui/chat.slint:790 ui/terminal/terminal.slint:1080
 #: ui/workbench/conversation.slint:1281
 msgid "Delete"
 msgstr "删除"
@@ -125,12 +125,12 @@ msgstr "过滤"
 msgid "Scheduled"
 msgstr "定时"
 
-#: ui/broadsheet/broadsheet.slint:359 ui/terminal/terminal.slint:199
+#: ui/broadsheet/broadsheet.slint:359 ui/terminal/terminal.slint:232
 msgid "All"
 msgstr "全部"
 
 #: ui/broadsheet/broadsheet.slint:396 ui/broadsheet/broadsheet.slint:2278
-#: ui/terminal/terminal.slint:180 ui/workbench/sidebar.slint:113
+#: ui/terminal/terminal.slint:213 ui/workbench/sidebar.slint:113
 #: ui/workbench/workbench.slint:518
 msgid "Unread"
 msgstr "未读"
@@ -149,11 +149,11 @@ msgstr[0] "{n} 位订阅者"
 msgid "Telegram bots"
 msgstr "Telegram 机器人"
 
-#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:386
+#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:419
 msgid "No chats yet"
 msgstr "还没有聊天"
 
-#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:386
+#: ui/broadsheet/broadsheet.slint:1017 ui/terminal/terminal.slint:419
 msgid "No chats in this folder"
 msgstr "这个文件夹里没有聊天"
 
@@ -167,11 +167,11 @@ msgstr "搜索用户名或手机号，或者打开别人发来的邀请链接，
 msgid "Chats you add to this folder in Telegram show up here."
 msgstr "在 Telegram 的文件夹设置里添加聊天，会自动同步到这里。"
 
-#: ui/broadsheet/broadsheet.slint:1063 ui/terminal/terminal.slint:421
+#: ui/broadsheet/broadsheet.slint:1063 ui/terminal/terminal.slint:454
 msgid "Official bots"
 msgstr "官方机器人"
 
-#: ui/broadsheet/broadsheet.slint:1077 ui/terminal/terminal.slint:433
+#: ui/broadsheet/broadsheet.slint:1077 ui/terminal/terminal.slint:466
 msgid "Other bots"
 msgstr "其他机器人"
 
@@ -181,34 +181,34 @@ msgid ""
 msgstr "带认证标记的是 Telegram 官方机器人。其他机器人能看到你发给它的消息。"
 
 #: ui/broadsheet/broadsheet.slint:1134 ui/broadsheet/broadsheet.slint:2673
-#: ui/terminal/terminal.slint:547 ui/workbench/conversation.slint:275
+#: ui/terminal/terminal.slint:551 ui/workbench/conversation.slint:275
 #: ui/workbench/conversation.slint:1608
 msgid "Unmute"
 msgstr "取消静音"
 
 #: ui/broadsheet/broadsheet.slint:1134 ui/broadsheet/broadsheet.slint:2673
-#: ui/terminal/terminal.slint:547 ui/workbench/conversation.slint:275
+#: ui/terminal/terminal.slint:551 ui/workbench/conversation.slint:275
 #: ui/workbench/conversation.slint:1608
 msgid "Mute"
 msgstr "静音"
 
 #: ui/broadsheet/broadsheet.slint:1142 ui/broadsheet/broadsheet.slint:2724
-#: ui/terminal/terminal.slint:968 ui/workbench/sidebar.slint:555
+#: ui/terminal/terminal.slint:972 ui/workbench/sidebar.slint:555
 msgid "Unpin"
 msgstr "取消置顶"
 
 #: ui/broadsheet/broadsheet.slint:1142 ui/broadsheet/broadsheet.slint:2724
-#: ui/terminal/terminal.slint:968 ui/workbench/sidebar.slint:555
+#: ui/terminal/terminal.slint:972 ui/workbench/sidebar.slint:555
 msgid "Pin"
 msgstr "置顶"
 
 #: ui/broadsheet/broadsheet.slint:1150 ui/broadsheet/broadsheet.slint:2202
-#: ui/terminal/terminal.slint:561 ui/terminal/terminal.slint:1446
+#: ui/terminal/terminal.slint:565 ui/terminal/terminal.slint:1445
 #: ui/workbench/sidebar.slint:563
 msgid "Mark as read"
 msgstr "标为已读"
 
-#: ui/broadsheet/broadsheet.slint:1158 ui/terminal/terminal.slint:568
+#: ui/broadsheet/broadsheet.slint:1158 ui/terminal/terminal.slint:572
 msgid "Add to folder"
 msgstr "加入文件夹"
 
@@ -224,7 +224,7 @@ msgstr "返回"
 msgid "Instant View"
 msgstr "Instant View"
 
-#: ui/broadsheet/broadsheet.slint:1315 ui/terminal/terminal.slint:663
+#: ui/broadsheet/broadsheet.slint:1315 ui/terminal/terminal.slint:667
 msgid "Forwarded from {0}"
 msgstr "转发自 {0}"
 
@@ -242,11 +242,11 @@ msgstr "赞助消息 · Telegram 官方投放 · Premium 用户可关闭"
 msgid "You"
 msgstr "你"
 
-#: ui/broadsheet/broadsheet.slint:1881 ui/terminal/terminal.slint:1177
+#: ui/broadsheet/broadsheet.slint:1881 ui/terminal/terminal.slint:1181
 msgid "Hide sender's name"
 msgstr "隐藏发送者"
 
-#: ui/broadsheet/broadsheet.slint:1985 ui/terminal/terminal.slint:1099
+#: ui/broadsheet/broadsheet.slint:1985 ui/terminal/terminal.slint:1103
 msgid "Shift-click to select a range"
 msgstr "Shift + 点击：选中一段"
 
@@ -255,28 +255,28 @@ msgstr "Shift + 点击：选中一段"
 msgid "Forward"
 msgstr "转发"
 
-#: ui/broadsheet/broadsheet.slint:2238 ui/terminal/terminal.slint:1478
+#: ui/broadsheet/broadsheet.slint:2238 ui/terminal/terminal.slint:1477
 msgid "{n} more — open the chat to see them"
 msgid_plural "{n} more — open the chat to see them"
 msgstr[0] "还有 {n} 条，打开聊天查看"
 
-#: ui/broadsheet/broadsheet.slint:2309 ui/terminal/terminal.slint:1518
+#: ui/broadsheet/broadsheet.slint:2309 ui/terminal/terminal.slint:1517
 msgid "Mark all as read"
 msgstr "全部标为已读"
 
-#: ui/broadsheet/broadsheet.slint:2354 ui/terminal/terminal.slint:1548
+#: ui/broadsheet/broadsheet.slint:2354 ui/terminal/terminal.slint:1547
 msgid "You're all caught up"
 msgstr "都看完了"
 
-#: ui/broadsheet/broadsheet.slint:2374 ui/terminal/terminal.slint:1626
+#: ui/broadsheet/broadsheet.slint:2374 ui/terminal/terminal.slint:1625
 msgid "Choose a chat on the left"
 msgstr "在左侧选择一个聊天"
 
-#: ui/broadsheet/broadsheet.slint:2397 ui/terminal/terminal.slint:915
+#: ui/broadsheet/broadsheet.slint:2397 ui/terminal/terminal.slint:919
 msgid "typing…"
 msgstr "正在输入…"
 
-#: ui/broadsheet/broadsheet.slint:2446 ui/terminal/terminal.slint:1002
+#: ui/broadsheet/broadsheet.slint:2446 ui/terminal/terminal.slint:1006
 msgid "{0} is typing…"
 msgstr "{0} 正在输入…"
 
@@ -597,7 +597,7 @@ msgstr "在访达中显示"
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
-#: ui/chat.slint:667 ui/terminal/terminal.slint:728
+#: ui/chat.slint:667 ui/terminal/terminal.slint:732
 msgid "Tap to view"
 msgstr "点击查看"
 
@@ -1962,79 +1962,67 @@ msgctxt "list separator"
 msgid ", "
 msgstr "、"
 
-#: ui/terminal/terminal.slint:85
+#: ui/terminal/terminal.slint:118
 msgid "light"
 msgstr "浅色"
 
-#: ui/terminal/terminal.slint:85
+#: ui/terminal/terminal.slint:118
 msgid "dark"
 msgstr "深色"
 
-#: ui/terminal/terminal.slint:217
+#: ui/terminal/terminal.slint:250
 msgid "more"
 msgstr "更多"
 
-#: ui/terminal/terminal.slint:474
-msgid "Current account"
-msgstr "当前账号"
-
-#: ui/terminal/terminal.slint:489
-msgid "profile"
-msgstr "资料"
-
-#: ui/terminal/terminal.slint:499
-msgid "settings"
-msgstr "设置"
-
-#: ui/terminal/terminal.slint:710 ui/terminal/terminal.slint:715
+#: ui/terminal/terminal.slint:714 ui/terminal/terminal.slint:719
 msgid "(edited)"
 msgstr "（已编辑）"
 
-#: ui/terminal/terminal.slint:858
+#: ui/terminal/terminal.slint:862
 msgid "sponsored"
 msgstr "赞助"
 
-#: ui/terminal/terminal.slint:922
+#: ui/terminal/terminal.slint:926
 msgid "search"
 msgstr "搜索"
 
-#: ui/terminal/terminal.slint:926
+#: ui/terminal/terminal.slint:930
 msgid "chat settings"
 msgstr "聊天设置"
 
-#: ui/terminal/terminal.slint:1120
+#: ui/terminal/terminal.slint:1124
 msgid "Mute or unmute this chat"
 msgstr "静音或取消静音当前聊天"
 
-#: ui/terminal/terminal.slint:1121
+#: ui/terminal/terminal.slint:1125
 msgid "Pin or unpin this chat"
 msgstr "置顶或取消置顶当前聊天"
 
-#: ui/terminal/terminal.slint:1122
+#: ui/terminal/terminal.slint:1126
 msgid "Mark this chat as read"
 msgstr "把当前聊天标为已读"
 
-#: ui/terminal/terminal.slint:1269
+#: ui/terminal/terminal.slint:1268
 msgid "Write a message, or / for commands"
 msgstr "输入消息，或 / 调出命令"
 
-#: ui/terminal/terminal.slint:1269
+#: ui/terminal/terminal.slint:1268
 msgid "/ for commands"
 msgstr "/ 调出命令"
 
-#: ui/terminal/terminal.slint:1291
+#: ui/terminal/terminal.slint:1290
 msgid "save"
 msgstr "保存"
 
-#: ui/terminal/terminal.slint:1291
+#: ui/terminal/terminal.slint:1290
 msgid "send"
 msgstr "发送"
 
-#: ui/terminal/terminal.slint:1572
+#: ui/terminal/terminal.slint:1571
 msgid "connected"
 msgstr "已连接"
 
-#: ui/terminal/terminal.slint:1580
+#: ui/terminal/terminal.slint:1579
 msgid "command"
 msgstr "命令"
 

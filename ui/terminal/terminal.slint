@@ -6,9 +6,8 @@ import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState,
     Unread, UnreadGroup, UnreadLine } from "../telegram.slint";
-import { AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
-import { Mark, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
+import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords } from "../chat.slint";
 import { TerminalPalette as P } from "palette.slint";
 import { Signs } from "signs.slint";
@@ -38,6 +37,40 @@ component Action {
     }
     touch := TouchArea {
         enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+// An icon in brackets that does something: the foot's profile and settings. (No bundled font has
+// a gear glyph, so the other themes' icons, between two bracket characters.)
+component IconAction {
+    in property <string> icon;
+    in property <color> color: P.muted;
+    callback activated();
+    property <color> ink: touch.has-hover ? P.text : root.color;
+
+    HorizontalLayout {
+        T {
+            text: "[";
+            color: root.ink;
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 12px;
+                color: root.ink;
+            }
+        }
+        T {
+            text: "]";
+            color: root.ink;
+        }
+    }
+    touch := TouchArea {
         mouse-cursor: pointer;
         clicked => {
             root.activated();
@@ -442,67 +475,38 @@ component Side inherits Rectangle {
             }
         }
 
-        // The account, at the foot.
+        // The account, at the foot: one line, as tall as the command line beside it.
         Rectangle {
             vertical-stretch: 0;
-            height: account.preferred-height;
+            height: P.foot-height;
             Rectangle {
                 height: 1px;
                 y: 0;
                 background: P.line;
             }
-            account := VerticalLayout {
+            HorizontalLayout {
                 padding-left: 16px;
                 padding-right: 16px;
-                padding-top: 10px;
-                padding-bottom: 10px;
-                spacing: 6px;
-                HorizontalLayout {
-                    spacing: 10px;
-                    VerticalLayout {
-                        alignment: center;
-                        Rectangle {
-                            width: 10px;
-                            height: 10px;
-                            border-radius: 2px;
-                            background: P.account;
-                        }
+                spacing: 10px;
+                T {
+                    horizontal-stretch: 1;
+                    text: Account.phone == "" ? Account.name : Account.name + " · " + Account.phone;
+                    overflow: elide;
+                }
+                // The profile and the settings, where the other themes have them: the same two
+                // icons, in brackets, one size and so one width.
+                IconAction {
+                    icon: "user";
+                    color: P.accent;
+                    activated => {
+                        AppState.page = Page.profile;
                     }
-                    VerticalLayout {
-                        horizontal-stretch: 1;
-                        T {
-                            text: @tr("Current account");
-                            color: P.faint;
-                            font-size: 11px;
-                        }
-                        T {
-                            text: Account.phone == "" ? Account.name : Account.name + " · " + Account.phone;
-                            overflow: elide;
-                        }
-                    }
-                    // The profile and the settings, as the other themes have them at the foot.
-                    VerticalLayout {
-                        spacing: 2px;
-                        HorizontalLayout {
-                            alignment: end;
-                            Action {
-                                label: @tr("profile");
-                                color: P.accent;
-                                activated => {
-                                    AppState.page = Page.profile;
-                                }
-                            }
-                        }
-                        HorizontalLayout {
-                            alignment: end;
-                            Action {
-                                label: @tr("settings");
-                                color: P.accent;
-                                activated => {
-                                    AppState.page = Page.settings;
-                                }
-                            }
-                        }
+                }
+                IconAction {
+                    icon: "gear-six";
+                    color: P.accent;
+                    activated => {
+                        AppState.page = Page.settings;
                     }
                 }
             }
@@ -1107,7 +1111,7 @@ component SelectionLine inherits Rectangle {
 component CommandLine inherits Rectangle {
     // The strip above the prompt: replying, editing, forwarding (the design's 1b).
     property <bool> strip: Actions.bar != ComposeBar.none && !Actions.selecting && Conversation.chat-id != "";
-    height: root.strip ? 74px : 46px;
+    height: root.strip ? P.foot-height + 28px : P.foot-height;
     background: P.cmd;
     // A reply or an edit begins, a menu or dialog closed: the keyboard comes back here.
     property <int> focus-requests: Actions.focus-requests;
@@ -1196,19 +1200,14 @@ component CommandLine inherits Rectangle {
 
     HorizontalLayout {
         y: root.strip ? 28px : 0;
-        height: 46px;
+        height: P.foot-height;
         padding-left: 16px;
         padding-right: 16px;
         spacing: 10px;
+        // The prompt is the name alone: the chat's name is in the pane head already.
         T {
             text: Account.first-name + " ❯";
             color: P.accent;
-        }
-        T {
-            text: Conversation.chat-id == "" ? "" : "→ " + Signs.of(Conversation.kind, false) + Conversation.title;
-            color: P.faint;
-            max-width: 220px;
-            overflow: elide;
         }
         // "[+]": photos, videos and files (attachments.slint).
         if Conversation.chat-id != "" && Conversation.can-write: VerticalLayout {

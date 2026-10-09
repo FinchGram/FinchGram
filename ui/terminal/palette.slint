@@ -1,6 +1,6 @@
 // Terminal's colours (the design's first round, "1b 终端": TB). The chat window only; the shared
 // pages use Look.
-import { Look, AccountColors } from "../look.slint";
+import { Look } from "../look.slint";
 
 export global TerminalPalette {
     out property <bool> dark: Look.dark;
@@ -27,10 +27,11 @@ export global TerminalPalette {
     out property <color> file-zip: dark ? #e7b369 : #bb731b;
     out property <color> file-image: dark ? #78c89e : #29885e;
     out property <color> shadow: #00000059;
-    // The account's colour (several accounts are still to come: the first).
-    out property <color> account: AccountColors.accent(0, dark);
 
     out property <string> font: "JetBrains Mono";
+
+    // The command line and the chat list's account line stand side by side at the foot: one height.
+    out property <length> foot-height: 46px;
 
     // Line height in em → Slint's factor (JetBrains Mono's own is 1.32 em).
     public pure function leading(em: float) -> float {
