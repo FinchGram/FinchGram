@@ -39,6 +39,11 @@ struct Player {
     render: *mut mpv::mpv_render_context,
     gl: Option<Rc<glow::Context>>,
     target: Option<Target>,
+    /// The viewer has the texture (Viewer.frame). stop() takes it from the viewer and keeps the
+    /// texture: the next video of the same size draws into it, and the viewer has to be given it
+    /// again. (Up to v0.3.14 it was given only with a new texture: a video the size of the one
+    /// before stayed on its still while it played.)
+    handed: bool,
     /// The video's size as shown (mpv's dwidth, dheight).
     width: i64,
     height: i64,
@@ -83,6 +88,7 @@ pub fn install(ui: &MainWindow) {
             render: ptr::null_mut(),
             gl: None,
             target: None,
+            handed: false,
             width: 0,
             height: 0,
             loaded: false,
@@ -177,6 +183,7 @@ pub fn stop() {
         player.ended = false;
         player.width = 0;
         player.height = 0;
+        player.handed = false;
         player.with_viewer(|viewer| {
             viewer.set_frame(Image::default());
             viewer.set_playing(false);
@@ -388,7 +395,7 @@ impl Player {
         // SAFETY: the parameters live until the call returns.
         unsafe { mpv::mpv_render_context_render(self.render, params.as_mut_ptr()) };
         saved.restore(&gl);
-        if replaced {
+        if replaced || !self.handed {
             // Unflipped, mpv writes the top of the picture to the texture's first row, and that is
             // the row Slint draws at the top with TopLeft. (BottomLeft showed videos upside down.)
             // SAFETY: the texture stays alive until it is replaced, and then the image with it.
@@ -398,6 +405,7 @@ impl Player {
                     .build()
             };
             self.with_viewer(|viewer| viewer.set_frame(frame));
+            self.handed = true;
         }
     }
 
@@ -465,6 +473,7 @@ impl Player {
     fn delete_target(&mut self, gl: &glow::Context) {
         if let Some(target) = self.target.take() {
             self.with_viewer(|viewer| viewer.set_frame(Image::default()));
+            self.handed = false;
             // SAFETY: our own objects, in the context that made them.
             unsafe {
                 gl.delete_framebuffer(target.framebuffer);
