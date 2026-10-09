@@ -56,19 +56,19 @@ export component MainWindow inherits Window {
                 }
             }
             MenuItem {
-                title: @tr("Broadsheet");
-                checkable: true;
-                checked: AppState.theme == Theme.broadsheet;
-                activated => {
-                    AppState.change-theme(Theme.broadsheet);
-                }
-            }
-            MenuItem {
                 title: @tr("Terminal");
                 checkable: true;
                 checked: AppState.theme == Theme.terminal;
                 activated => {
                     AppState.change-theme(Theme.terminal);
+                }
+            }
+            MenuItem {
+                title: @tr("Broadsheet");
+                checkable: true;
+                checked: AppState.theme == Theme.broadsheet;
+                activated => {
+                    AppState.change-theme(Theme.broadsheet);
                 }
             }
             MenuSeparator { }

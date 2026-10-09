@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-09 04:57+0000\n"
+"POT-Creation-Date: 2026-10-09 05:22+0000\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -24,12 +24,12 @@ msgid "Workbench"
 msgstr "워크벤치"
 
 #: ui/app.slint:59 ui/pages/settings.slint:565
-msgid "Broadsheet"
-msgstr "브로드시트"
-
-#: ui/app.slint:67 ui/pages/settings.slint:573
 msgid "Terminal"
 msgstr "터미널"
+
+#: ui/app.slint:67 ui/pages/settings.slint:573
+msgid "Broadsheet"
+msgstr "브로드시트"
 
 #: ui/app.slint:76
 msgid "Settings…"
@@ -239,7 +239,7 @@ msgstr "스폰서 메시지 · Telegram 게재 · Premium 사용자는 끌 수 �
 msgid "You"
 msgstr "나"
 
-#: ui/broadsheet/broadsheet.slint:1829 ui/terminal/terminal.slint:1195
+#: ui/broadsheet/broadsheet.slint:1829 ui/terminal/terminal.slint:1202
 msgid "Hide sender's name"
 msgstr "보낸 사람 이름 숨기기"
 
@@ -252,7 +252,7 @@ msgstr "Shift-클릭으로 범위 선택"
 msgid "Forward"
 msgstr "전달"
 
-#: ui/broadsheet/broadsheet.slint:1995 ui/terminal/terminal.slint:1429
+#: ui/broadsheet/broadsheet.slint:1995 ui/terminal/terminal.slint:1445
 msgid "Choose a chat on the left"
 msgstr "왼쪽에서 채팅을 선택하세요"
 
@@ -1985,39 +1985,43 @@ msgstr "검색"
 msgid "chat settings"
 msgstr "채팅 설정"
 
-#: ui/terminal/terminal.slint:1138
+#: ui/terminal/terminal.slint:1143
 msgid "Mute or unmute this chat"
 msgstr "이 채팅을 음소거하거나 해제"
 
-#: ui/terminal/terminal.slint:1139
+#: ui/terminal/terminal.slint:1144
 msgid "Pin or unpin this chat"
 msgstr "이 채팅을 고정하거나 해제"
 
-#: ui/terminal/terminal.slint:1140
+#: ui/terminal/terminal.slint:1145
 msgid "Mark this chat as read"
 msgstr "이 채팅을 읽음으로 표시"
 
-#: ui/terminal/terminal.slint:1282
+#: ui/terminal/terminal.slint:1234
+msgid "unmute"
+msgstr "음소거 해제"
+
+#: ui/terminal/terminal.slint:1234
+msgid "mute"
+msgstr "음소거"
+
+#: ui/terminal/terminal.slint:1298
 msgid "Write a message, or / for commands"
 msgstr "메시지를 입력하거나 /로 명령을 사용하세요"
 
-#: ui/terminal/terminal.slint:1282
-msgid "/ for commands"
-msgstr "/로 명령 사용"
-
-#: ui/terminal/terminal.slint:1307
+#: ui/terminal/terminal.slint:1323
 msgid "save"
 msgstr "저장"
 
-#: ui/terminal/terminal.slint:1307
+#: ui/terminal/terminal.slint:1323
 msgid "send"
 msgstr "보내기"
 
-#: ui/terminal/terminal.slint:1378
+#: ui/terminal/terminal.slint:1394
 msgid "connected"
 msgstr "연결됨"
 
-#: ui/terminal/terminal.slint:1386
+#: ui/terminal/terminal.slint:1402
 msgid "command"
 msgstr "명령"
 

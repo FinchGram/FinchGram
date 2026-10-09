@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-09 04:57+0000\n"
+"POT-Creation-Date: 2026-10-09 05:22+0000\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -24,12 +24,12 @@ msgid "Workbench"
 msgstr "Workbench"
 
 #: ui/app.slint:59 ui/pages/settings.slint:565
-msgid "Broadsheet"
-msgstr "Broadsheet"
-
-#: ui/app.slint:67 ui/pages/settings.slint:573
 msgid "Terminal"
 msgstr "Terminal"
+
+#: ui/app.slint:67 ui/pages/settings.slint:573
+msgid "Broadsheet"
+msgstr "Broadsheet"
 
 #: ui/app.slint:76
 msgid "Settings…"
@@ -241,7 +241,7 @@ msgstr ""
 msgid "You"
 msgstr "Você"
 
-#: ui/broadsheet/broadsheet.slint:1829 ui/terminal/terminal.slint:1195
+#: ui/broadsheet/broadsheet.slint:1829 ui/terminal/terminal.slint:1202
 msgid "Hide sender's name"
 msgstr "Ocultar o nome do remetente"
 
@@ -254,7 +254,7 @@ msgstr "Shift + clique para selecionar um intervalo"
 msgid "Forward"
 msgstr "Encaminhar"
 
-#: ui/broadsheet/broadsheet.slint:1995 ui/terminal/terminal.slint:1429
+#: ui/broadsheet/broadsheet.slint:1995 ui/terminal/terminal.slint:1445
 msgid "Choose a chat on the left"
 msgstr "Escolha um chat à esquerda"
 
@@ -2013,39 +2013,43 @@ msgstr "buscar"
 msgid "chat settings"
 msgstr "configurações do chat"
 
-#: ui/terminal/terminal.slint:1138
+#: ui/terminal/terminal.slint:1143
 msgid "Mute or unmute this chat"
 msgstr "Silenciar ou ativar o som deste chat"
 
-#: ui/terminal/terminal.slint:1139
+#: ui/terminal/terminal.slint:1144
 msgid "Pin or unpin this chat"
 msgstr "Fixar ou desafixar este chat"
 
-#: ui/terminal/terminal.slint:1140
+#: ui/terminal/terminal.slint:1145
 msgid "Mark this chat as read"
 msgstr "Marcar este chat como lido"
 
-#: ui/terminal/terminal.slint:1282
+#: ui/terminal/terminal.slint:1234
+msgid "unmute"
+msgstr "ativar som"
+
+#: ui/terminal/terminal.slint:1234
+msgid "mute"
+msgstr "silenciar"
+
+#: ui/terminal/terminal.slint:1298
 msgid "Write a message, or / for commands"
 msgstr "Escreva uma mensagem, ou / para comandos"
 
-#: ui/terminal/terminal.slint:1282
-msgid "/ for commands"
-msgstr "/ para comandos"
-
-#: ui/terminal/terminal.slint:1307
+#: ui/terminal/terminal.slint:1323
 msgid "save"
 msgstr "salvar"
 
-#: ui/terminal/terminal.slint:1307
+#: ui/terminal/terminal.slint:1323
 msgid "send"
 msgstr "enviar"
 
-#: ui/terminal/terminal.slint:1378
+#: ui/terminal/terminal.slint:1394
 msgid "connected"
 msgstr "conectado"
 
-#: ui/terminal/terminal.slint:1386
+#: ui/terminal/terminal.slint:1402
 msgid "command"
 msgstr "comando"
 

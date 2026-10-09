@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-09 04:57+0000\n"
+"POT-Creation-Date: 2026-10-09 05:22+0000\n"
 "Language: zh_Hant\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -24,12 +24,12 @@ msgid "Workbench"
 msgstr "工作台"
 
 #: ui/app.slint:59 ui/pages/settings.slint:565
-msgid "Broadsheet"
-msgstr "報紙"
-
-#: ui/app.slint:67 ui/pages/settings.slint:573
 msgid "Terminal"
 msgstr "終端機"
+
+#: ui/app.slint:67 ui/pages/settings.slint:573
+msgid "Broadsheet"
+msgstr "報紙"
 
 #: ui/app.slint:76
 msgid "Settings…"
@@ -235,7 +235,7 @@ msgstr "贊助訊息 · Telegram 官方投放 · Premium 使用者可以關閉"
 msgid "You"
 msgstr "你"
 
-#: ui/broadsheet/broadsheet.slint:1829 ui/terminal/terminal.slint:1195
+#: ui/broadsheet/broadsheet.slint:1829 ui/terminal/terminal.slint:1202
 msgid "Hide sender's name"
 msgstr "隱藏傳送者名稱"
 
@@ -248,7 +248,7 @@ msgstr "按住 Shift 點一下可選取一段範圍"
 msgid "Forward"
 msgstr "轉傳"
 
-#: ui/broadsheet/broadsheet.slint:1995 ui/terminal/terminal.slint:1429
+#: ui/broadsheet/broadsheet.slint:1995 ui/terminal/terminal.slint:1445
 msgid "Choose a chat on the left"
 msgstr "在左側選擇一個聊天"
 
@@ -1971,39 +1971,43 @@ msgstr "搜尋"
 msgid "chat settings"
 msgstr "聊天設定"
 
-#: ui/terminal/terminal.slint:1138
+#: ui/terminal/terminal.slint:1143
 msgid "Mute or unmute this chat"
 msgstr "把目前的聊天靜音或取消靜音"
 
-#: ui/terminal/terminal.slint:1139
+#: ui/terminal/terminal.slint:1144
 msgid "Pin or unpin this chat"
 msgstr "把目前的聊天置頂或取消置頂"
 
-#: ui/terminal/terminal.slint:1140
+#: ui/terminal/terminal.slint:1145
 msgid "Mark this chat as read"
 msgstr "把目前的聊天標為已讀"
 
-#: ui/terminal/terminal.slint:1282
+#: ui/terminal/terminal.slint:1234
+msgid "unmute"
+msgstr "取消靜音"
+
+#: ui/terminal/terminal.slint:1234
+msgid "mute"
+msgstr "靜音"
+
+#: ui/terminal/terminal.slint:1298
 msgid "Write a message, or / for commands"
 msgstr "輸入訊息，或按 / 叫出指令"
 
-#: ui/terminal/terminal.slint:1282
-msgid "/ for commands"
-msgstr "/ 叫出指令"
-
-#: ui/terminal/terminal.slint:1307
+#: ui/terminal/terminal.slint:1323
 msgid "save"
 msgstr "儲存"
 
-#: ui/terminal/terminal.slint:1307
+#: ui/terminal/terminal.slint:1323
 msgid "send"
 msgstr "傳送"
 
-#: ui/terminal/terminal.slint:1378
+#: ui/terminal/terminal.slint:1394
 msgid "connected"
 msgstr "已連線"
 
-#: ui/terminal/terminal.slint:1386
+#: ui/terminal/terminal.slint:1402
 msgid "command"
 msgstr "指令"
 

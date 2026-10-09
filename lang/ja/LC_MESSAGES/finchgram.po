@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-09 04:57+0000\n"
+"POT-Creation-Date: 2026-10-09 05:22+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -24,12 +24,12 @@ msgid "Workbench"
 msgstr "ワークベンチ"
 
 #: ui/app.slint:59 ui/pages/settings.slint:565
-msgid "Broadsheet"
-msgstr "ブロードシート"
-
-#: ui/app.slint:67 ui/pages/settings.slint:573
 msgid "Terminal"
 msgstr "ターミナル"
+
+#: ui/app.slint:67 ui/pages/settings.slint:573
+msgid "Broadsheet"
+msgstr "ブロードシート"
 
 #: ui/app.slint:76
 msgid "Settings…"
@@ -239,7 +239,7 @@ msgstr "スポンサー · Telegram による掲載 · Premium ユーザーは�
 msgid "You"
 msgstr "自分"
 
-#: ui/broadsheet/broadsheet.slint:1829 ui/terminal/terminal.slint:1195
+#: ui/broadsheet/broadsheet.slint:1829 ui/terminal/terminal.slint:1202
 msgid "Hide sender's name"
 msgstr "送信者名を非表示"
 
@@ -252,7 +252,7 @@ msgstr "Shift を押しながらクリックで範囲を選択"
 msgid "Forward"
 msgstr "転送"
 
-#: ui/broadsheet/broadsheet.slint:1995 ui/terminal/terminal.slint:1429
+#: ui/broadsheet/broadsheet.slint:1995 ui/terminal/terminal.slint:1445
 msgid "Choose a chat on the left"
 msgstr "左のリストからチャットを選択してください"
 
@@ -1999,39 +1999,43 @@ msgstr "検索"
 msgid "chat settings"
 msgstr "チャット設定"
 
-#: ui/terminal/terminal.slint:1138
+#: ui/terminal/terminal.slint:1143
 msgid "Mute or unmute this chat"
 msgstr "このチャットをミュート/ミュート解除"
 
-#: ui/terminal/terminal.slint:1139
+#: ui/terminal/terminal.slint:1144
 msgid "Pin or unpin this chat"
 msgstr "このチャットをピン留め/ピン留め解除"
 
-#: ui/terminal/terminal.slint:1140
+#: ui/terminal/terminal.slint:1145
 msgid "Mark this chat as read"
 msgstr "このチャットを既読にする"
 
-#: ui/terminal/terminal.slint:1282
+#: ui/terminal/terminal.slint:1234
+msgid "unmute"
+msgstr "ミュート解除"
+
+#: ui/terminal/terminal.slint:1234
+msgid "mute"
+msgstr "ミュート"
+
+#: ui/terminal/terminal.slint:1298
 msgid "Write a message, or / for commands"
 msgstr "メッセージを入力、または / でコマンド"
 
-#: ui/terminal/terminal.slint:1282
-msgid "/ for commands"
-msgstr "/ でコマンド"
-
-#: ui/terminal/terminal.slint:1307
+#: ui/terminal/terminal.slint:1323
 msgid "save"
 msgstr "保存"
 
-#: ui/terminal/terminal.slint:1307
+#: ui/terminal/terminal.slint:1323
 msgid "send"
 msgstr "送信"
 
-#: ui/terminal/terminal.slint:1378
+#: ui/terminal/terminal.slint:1394
 msgid "connected"
 msgstr "接続済み"
 
-#: ui/terminal/terminal.slint:1386
+#: ui/terminal/terminal.slint:1402
 msgid "command"
 msgstr "コマンド"
 

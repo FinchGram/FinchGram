@@ -1128,9 +1128,14 @@ component CommandLine inherits Rectangle {
     height: root.strip ? P.foot-height + 28px : P.foot-height;
     background: P.cmd;
     // A reply or an edit begins, a menu or dialog closed: the keyboard comes back here.
+    // A chat one only reads (a channel, mostly): no words to write, so no input and no cursor; a
+    // channel has muting in their place, as the other themes' composer does.
+    property <bool> read-only: Conversation.chat-id != "" && !Conversation.can-write;
     property <int> focus-requests: Actions.focus-requests;
     changed focus-requests => {
-        input.focus-text();
+        if !root.read-only {
+            input.focus-text();
+        }
     }
     property <[Command]> commands: [
         { command: "/photo", description: AttachWords.photo-or-video() },
@@ -1142,7 +1147,9 @@ component CommandLine inherits Rectangle {
     property <string> typed: input.text;
 
     public function focus-line() {
-        input.focus-text();
+        if !root.read-only {
+            input.focus-text();
+        }
     }
 
     function run(line: string) {
@@ -1223,6 +1230,13 @@ component CommandLine inherits Rectangle {
             text: Account.first-name + " ❯";
             color: P.accent;
         }
+        if root.read-only && Conversation.kind == ChatKind.channel: Action {
+            label: Conversation.muted ? @tr("unmute") : @tr("mute");
+            color: P.accent;
+            activated => {
+                Conversation.toggle-mute();
+            }
+        }
         // "[+]": photos, videos and files (attachments.slint).
         if Conversation.chat-id != "" && Conversation.can-write: VerticalLayout {
             alignment: center;
@@ -1276,10 +1290,12 @@ component CommandLine inherits Rectangle {
             horizontal-stretch: 1;
             alignment: center;
             input := MessageInput {
+                // Out of sight where there is nothing to write; its room keeps the line's shape.
+                visible: !root.read-only;
                 text <=> Conversation.draft;
                 allow-empty: Actions.bar == ComposeBar.forward;
-                enabled: Conversation.chat-id != "" && !Actions.selecting;
-                placeholder: Conversation.can-write ? @tr("Write a message, or / for commands") : @tr("/ for commands");
+                enabled: Conversation.chat-id != "" && !Actions.selecting && !root.read-only;
+                placeholder: @tr("Write a message, or / for commands");
                 text-color: P.text;
                 placeholder-color: P.faint;
                 // The accent: on macOS the cursor is painted in the selection's colour (chat.slint),
@@ -1303,7 +1319,7 @@ component CommandLine inherits Rectangle {
                 }
             }
         }
-        T {
+        if !root.read-only: T {
             text: (AppState.send-with-enter ? "⏎ " : "⌘⏎ ") + (Actions.bar == ComposeBar.edit ? @tr("save") : @tr("send"));
             color: P.faint;
         }

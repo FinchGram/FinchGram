@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-09 04:57+0000\n"
+"POT-Creation-Date: 2026-10-09 05:22+0000\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -25,12 +25,12 @@ msgid "Workbench"
 msgstr "طاولة العمل"
 
 #: ui/app.slint:59 ui/pages/settings.slint:565
-msgid "Broadsheet"
-msgstr "الصحيفة"
-
-#: ui/app.slint:67 ui/pages/settings.slint:573
 msgid "Terminal"
 msgstr "الطرفية"
+
+#: ui/app.slint:67 ui/pages/settings.slint:573
+msgid "Broadsheet"
+msgstr "الصحيفة"
 
 #: ui/app.slint:76
 msgid "Settings…"
@@ -245,7 +245,7 @@ msgstr "ممولة · من Telegram · يمكن لمستخدمي Premium إيق�
 msgid "You"
 msgstr "أنت"
 
-#: ui/broadsheet/broadsheet.slint:1829 ui/terminal/terminal.slint:1195
+#: ui/broadsheet/broadsheet.slint:1829 ui/terminal/terminal.slint:1202
 msgid "Hide sender's name"
 msgstr "إخفاء اسم المرسل"
 
@@ -258,7 +258,7 @@ msgstr "Shift + نقر لتحديد نطاق"
 msgid "Forward"
 msgstr "إعادة توجيه"
 
-#: ui/broadsheet/broadsheet.slint:1995 ui/terminal/terminal.slint:1429
+#: ui/broadsheet/broadsheet.slint:1995 ui/terminal/terminal.slint:1445
 msgid "Choose a chat on the left"
 msgstr "اختر دردشة من القائمة على اليسار"
 
@@ -2017,39 +2017,43 @@ msgstr "بحث"
 msgid "chat settings"
 msgstr "إعدادات الدردشة"
 
-#: ui/terminal/terminal.slint:1138
+#: ui/terminal/terminal.slint:1143
 msgid "Mute or unmute this chat"
 msgstr "كتم هذه الدردشة أو إلغاء كتمها"
 
-#: ui/terminal/terminal.slint:1139
+#: ui/terminal/terminal.slint:1144
 msgid "Pin or unpin this chat"
 msgstr "تثبيت هذه الدردشة أو إلغاء تثبيتها"
 
-#: ui/terminal/terminal.slint:1140
+#: ui/terminal/terminal.slint:1145
 msgid "Mark this chat as read"
 msgstr "تعليم هذه الدردشة كمقروءة"
 
-#: ui/terminal/terminal.slint:1282
+#: ui/terminal/terminal.slint:1234
+msgid "unmute"
+msgstr "إلغاء الكتم"
+
+#: ui/terminal/terminal.slint:1234
+msgid "mute"
+msgstr "كتم"
+
+#: ui/terminal/terminal.slint:1298
 msgid "Write a message, or / for commands"
 msgstr "اكتب رسالة، أو / للأوامر"
 
-#: ui/terminal/terminal.slint:1282
-msgid "/ for commands"
-msgstr "/ للأوامر"
-
-#: ui/terminal/terminal.slint:1307
+#: ui/terminal/terminal.slint:1323
 msgid "save"
 msgstr "حفظ"
 
-#: ui/terminal/terminal.slint:1307
+#: ui/terminal/terminal.slint:1323
 msgid "send"
 msgstr "إرسال"
 
-#: ui/terminal/terminal.slint:1378
+#: ui/terminal/terminal.slint:1394
 msgid "connected"
 msgstr "متصل"
 
-#: ui/terminal/terminal.slint:1386
+#: ui/terminal/terminal.slint:1402
 msgid "command"
 msgstr "أمر"
 
