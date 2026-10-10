@@ -46,6 +46,17 @@ export component MainWindow inherits Window {
                     AppState.search-requests += 1;
                 }
             }
+            MenuItem {
+                title: @tr("Search in Chat");
+                shortcut: @keys(Control + F);
+                enabled: root.ready && Conversation.chat-id != "";
+                activated => {
+                    AppState.show-window();
+                    AppState.page = Page.chats;
+                    Conversation.search-open = true;
+                    Conversation.search-requests += 1;
+                }
+            }
             MenuSeparator { }
             MenuItem {
                 title: @tr("Workbench");

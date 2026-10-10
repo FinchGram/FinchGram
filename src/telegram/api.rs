@@ -1151,6 +1151,17 @@ pub struct Messages {
     pub messages: Vec<Option<Message>>,
 }
 
+/// What searchChatMessages finds: the messages, newest first; how many there are in all (-1 when
+/// TDLib does not know); and the message the next page starts from, 0 when these are all.
+#[derive(Debug, Clone, Deserialize)]
+pub struct FoundChatMessages {
+    #[serde(default)]
+    pub total_count: i32,
+    pub messages: Vec<Message>,
+    #[serde(default)]
+    pub next_from_message_id: i64,
+}
+
 /// A sponsored message in a channel: Telegram's own, shown as it comes.
 #[derive(Debug, Clone, Deserialize)]
 pub struct SponsoredMessage {

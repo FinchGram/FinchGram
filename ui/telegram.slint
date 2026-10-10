@@ -266,6 +266,11 @@ export global Conversation {
     in-out property <[MessageRow]> messages;     // oldest first
     in-out property <bool> loading;              // the first messages are on their way
     in-out property <bool> has-older;
+    // The rows are around an older message (a search match): newer ones load as the view comes
+    // down to them, and the chat's end with them (src/telegram/conversation.rs).
+    in-out property <bool> has-newer;
+    // Counted up when newer messages joined below the rows: the view holds what is being read.
+    in-out property <int> newer-loads;
     // Rust counts this up when the view should show the newest message: the chat was opened, or we
     // sent one.
     in-out property <int> scroll-to-end;
@@ -282,6 +287,7 @@ export global Conversation {
     // stopped (the words are gone).
     callback edited(string);
     callback load-older();
+    callback load-newer();                       // the view nears the end of rows around an older message
     // The view is back at the end of the chat: Rust lets the rows above go again.
     callback reached-end();
     callback retry(string);                      // a message that failed to send
@@ -297,6 +303,16 @@ export global Conversation {
     callback toggle-mute();
     callback toggle-pin();
     callback mark-read();
+    // Searching in the chat (the header's magnifying glass, Terminal's "[search]", ⌘F;
+    // src/telegram/search.rs): the view goes to the matches one by one, newest first.
+    in-out property <bool> search-open;          // the search line is showing; Rust closes it with the chat
+    in-out property <int> search-requests;       // counted up by ⌘F and the header: the line takes the keyboard
+    in-out property <int> search-count;          // matches in all; -1 before TDLib has answered
+    in-out property <int> search-at;             // the match the view is at, from 1; 0 for none
+    in-out property <bool> search-waiting;       // an answer is on its way
+    callback search(string);                     // the words changed
+    callback search-step(bool);                  // true: the next match up the chat (older); false: down
+    callback close-search();
 }
 
 // The media viewer (the design's media-viewer.js): the open chat's photos and videos, one at a time,

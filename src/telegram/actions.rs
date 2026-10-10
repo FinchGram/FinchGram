@@ -21,14 +21,15 @@ use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
 use super::api::{self, ChatType, MessageContent, MessageProperties, ReportChatResult, ReportOption};
 use super::store::{self, Names};
-use super::{Error, conversation, files, send, time, viewer, with_ui};
+use super::{Error, conversation, files, search, send, time, viewer, with_ui};
 use crate::{ActionNotice, Actions, ChatKind, ComposeBar, Conversation, DeleteChoice, Fmt, MainWindow, MessageAction};
 
 /// How long a notice stays, and how long a message jumped to is lit up (the design's).
 const NOTICE_SHOWN: Duration = Duration::from_millis(2000);
 const FLASH_SHOWN: Duration = Duration::from_millis(1500);
-/// Older pages loaded at most, looking for the message a reply answers.
-const JUMP_PAGES: u32 = 20;
+/// Older pages loaded at most, looking for the message a reply answers; one further off is
+/// loaded around instead (conversation.rs).
+const JUMP_PAGES: u32 = 2;
 /// A report's words, at most (reportChat).
 const REPORT_TEXT_LIMIT: usize = 1024;
 /// What the user asked for is downloaded before anything else.
@@ -1186,11 +1187,13 @@ pub fn chat_changed(open: Option<i64>) {
         STATE.with(|state| state.borrow_mut().menu = None);
         hide_menu();
     }
+    search::chat_changed(open);
 }
 
-/// A click on a reply's quote: to the message it answers, lit up for a moment. One older than the
-/// messages loaded is looked for page by page.
-fn jump(message_id: i64) {
+/// A click on a reply's quote, a search match: to the message, lit up for a moment. One just
+/// above the messages loaded is looked for page by page; one further off, or below them, is loaded
+/// around (conversation.rs), with the end of the chat coming again on the way down.
+pub(super) fn jump(message_id: i64) {
     jump_looking(message_id, JUMP_PAGES);
 }
 
@@ -1199,10 +1202,13 @@ fn jump_looking(message_id: i64, pages_left: u32) {
         Row(i64),
         /// Here, but above the rows shown.
         Hidden(i64),
+        /// Just above the messages here, probably.
         Older(i64),
+        /// Beyond the messages here, above or below.
+        Elsewhere(i64),
         Nowhere,
     }
-    let look = |store: &mut store::Store| {
+    let look = move |store: &mut store::Store| {
         let Some(chat_id) = store.open else { return Found::Nowhere };
         if let Some((row, _)) = store.rows.iter().find(|(_, ids)| ids.contains(&message_id)) {
             return Found::Row(*row);
@@ -1211,8 +1217,15 @@ fn jump_looking(message_id: i64, pages_left: u32) {
         if history.messages.contains_key(&message_id) {
             return Found::Hidden(chat_id);
         }
-        let older = history.has_older && history.messages.keys().next().is_some_and(|oldest| *oldest > message_id);
-        if older { Found::Older(chat_id) } else { Found::Nowhere }
+        let older = history.has_older && history.messages.keys().next().is_none_or(|oldest| *oldest > message_id);
+        let newer = history.has_newer && history.messages.keys().next_back().is_none_or(|newest| *newest < message_id);
+        if older && pages_left > 0 {
+            Found::Older(chat_id)
+        } else if older || newer {
+            Found::Elsewhere(chat_id)
+        } else {
+            Found::Nowhere
+        }
     };
     match store::with(look).unwrap_or(Found::Nowhere) {
         Found::Row(row) => reveal(row),
@@ -1222,10 +1235,17 @@ fn jump_looking(message_id: i64, pages_left: u32) {
                 reveal(row);
             }
         }
-        Found::Older(chat_id) if pages_left > 0 => {
+        Found::Older(chat_id) => {
             conversation::load_older_then(chat_id, move || jump_looking(message_id, pages_left - 1));
         }
-        Found::Older(_) | Found::Nowhere => {}
+        Found::Elsewhere(chat_id) => {
+            conversation::load_around(chat_id, message_id, move || {
+                if let Some(Found::Row(row)) = store::with(look) {
+                    reveal(row);
+                }
+            });
+        }
+        Found::Nowhere => {}
     }
 }
 

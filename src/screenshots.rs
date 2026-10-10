@@ -1092,6 +1092,17 @@ fn screenshots() {
             app.set_page(Page::Chats);
             open_keyboards(&ui);
             save(&window, &name("chats"));
+            // Searching in the chat: the line under the header, at the third of 14 matches.
+            {
+                let conversation = ui.global::<Conversation>();
+                conversation.set_search_open(true);
+                conversation.set_search_count(14);
+                conversation.set_search_at(3);
+                save(&window, &name("chat-search"));
+                conversation.set_search_open(false);
+                conversation.set_search_count(-1);
+                conversation.set_search_at(0);
+            }
             // A right click on the first chat of the list: its menu.
             let (x, y) = match theme {
                 Theme::Workbench => (150.0, 91.0),

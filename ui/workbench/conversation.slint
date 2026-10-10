@@ -9,7 +9,7 @@ import { Fmt } from "../format.slint";
 import { Icon, Paragraph, Avatar } from "../widgets.slint";
 import {
     ChatScroll, ChatIcons, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope,
-    AttachWords, FileCardView,
+    AttachWords, FileCardView, SearchInput, SearchWords,
 } from "../chat.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 
@@ -1195,6 +1195,118 @@ component BarButton inherits Rectangle {
     }
 }
 
+// An icon that does something on the search line: the arrows, the cross.
+component SearchButton inherits Rectangle {
+    in property <string> icon;
+    in property <bool> enabled: true;
+    callback activated();
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: touch.has-hover && root.enabled ? P.side : transparent;
+    opacity: root.enabled ? 1 : 0.4;
+
+    Icon {
+        name: root.icon;
+        size: 16px;
+        color: P.text;
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+// Searching in the chat: the line under the header, with the words, where the view is among the
+// matches and the arrows to the next one up or down (src/telegram/search.rs). ⏎ goes up, ⇧⏎ down,
+// Esc closes it.
+component SearchLine inherits Rectangle {
+    height: line.preferred-height;
+    property <int> requests: Conversation.search-requests;
+    changed requests => {
+        input.focus-text();
+    }
+
+    line := HorizontalLayout {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-bottom: 10px;
+        spacing: 4px;
+        Rectangle {
+            horizontal-stretch: 1;
+            height: 30px;
+            border-radius: 6px;
+            background: P.bg;
+            border-width: 1px;
+            border-color: input.has-focus ? P.accent.transparentize(0.4) : P.line;
+            HorizontalLayout {
+                padding-left: 10px;
+                padding-right: 10px;
+                spacing: 8px;
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "magnifying-glass";
+                        size: 14px;
+                        color: P.faint;
+                    }
+                }
+                input := SearchInput {
+                    horizontal-stretch: 1;
+                    placeholder: SearchWords.placeholder;
+                    text-color: P.text;
+                    placeholder-color: P.faint;
+                    selection-color: P.input-sel;
+                    font-family: P.font;
+                    font-size: 13px;
+                    edited(words) => {
+                        Conversation.search(words);
+                    }
+                    accepted => {
+                        Conversation.search-step(true);
+                    }
+                    back => {
+                        Conversation.search-step(false);
+                    }
+                    escape => {
+                        Conversation.close-search();
+                    }
+                }
+                Text {
+                    text: SearchWords.position;
+                    color: P.faint;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                }
+            }
+        }
+        SearchButton {
+            icon: "caret-up";
+            enabled: SearchWords.can-go-up;
+            activated => {
+                Conversation.search-step(true);
+            }
+        }
+        SearchButton {
+            icon: "caret-down";
+            enabled: SearchWords.can-go-down;
+            activated => {
+                Conversation.search-step(false);
+            }
+        }
+        SearchButton {
+            icon: "x";
+            activated => {
+                Conversation.close-search();
+            }
+        }
+    }
+}
+
 // Choosing messages: how many, and what to do with them all (the design's 1c: in place of the
 // composer).
 component SelectionBar inherits Rectangle {
@@ -1350,17 +1462,34 @@ component Pane {
                     ink: P.teal;
                 }
             }
-            // Searching in the chat is still to come.
+            // Searching in the chat: the line under the header (SearchLine).
             VerticalLayout {
                 alignment: center;
-                Icon {
-                    name: "magnifying-glass";
-                    size: 17px;
-                    color: P.muted;
-                    opacity: 0.4;
+                Rectangle {
+                    width: 28px;
+                    height: 28px;
+                    border-radius: 6px;
+                    background: search-touch.has-hover ? P.side : transparent;
+                    Icon {
+                        name: "magnifying-glass";
+                        size: 17px;
+                        color: Conversation.search-open ? P.accent : P.muted;
+                    }
+                    search-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            if Conversation.search-open {
+                                Conversation.close-search();
+                            } else {
+                                Conversation.search-open = true;
+                                Conversation.search-requests += 1;
+                            }
+                        }
+                    }
                 }
             }
         }
+        if Conversation.search-open: SearchLine { }
 
         scroll := ChatScroll {
             vertical-stretch: 1;

@@ -9,7 +9,8 @@ import { Look, AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import {
-    ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope, AttachWords, FileCardView, ChatMenuWords
+    ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope, AttachWords, FileCardView, ChatMenuWords,
+    SearchInput, SearchWords,
 } from "../chat.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 import { BroadsheetActions } from "actions.slint";
@@ -1911,6 +1912,114 @@ component BarAction inherits Rectangle {
     }
 }
 
+// An icon that does something on the search line: the arrows, the cross.
+component SearchButton inherits Rectangle {
+    in property <string> icon;
+    in property <bool> enabled: true;
+    callback activated();
+    width: 30px;
+    height: 34px;
+    opacity: root.enabled ? 1 : 0.4;
+
+    DuoIcon {
+        name: root.icon;
+        size: 20px;
+        color: touch.has-hover && root.enabled ? P.text : P.muted;
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+// Searching in the chat: the line under the header, with the words, where the view is among the
+// matches and the arrows to the next one up or down (src/telegram/search.rs). ⏎ goes up, ⇧⏎ down,
+// Esc closes it.
+component SearchLine inherits Rectangle {
+    height: line.preferred-height;
+    property <int> requests: Conversation.search-requests;
+    changed requests => {
+        input.focus-text();
+    }
+
+    line := HorizontalLayout {
+        padding-left: 24px;
+        padding-right: 24px;
+        padding-bottom: 12px;
+        spacing: 4px;
+        Rectangle {
+            horizontal-stretch: 1;
+            height: 34px;
+            border-radius: 4px;
+            background: P.surface;
+            HorizontalLayout {
+                padding-left: 10px;
+                padding-right: 10px;
+                spacing: 8px;
+                VerticalLayout {
+                    alignment: center;
+                    DuoIcon {
+                        name: "magnifying-glass";
+                        size: 14px;
+                        color: P.faint;
+                    }
+                }
+                input := SearchInput {
+                    horizontal-stretch: 1;
+                    placeholder: SearchWords.placeholder;
+                    text-color: P.text;
+                    placeholder-color: P.faint;
+                    selection-color: P.input-sel;
+                    font-family: P.font;
+                    font-size: 14px;
+                    edited(words) => {
+                        Conversation.search(words);
+                    }
+                    accepted => {
+                        Conversation.search-step(true);
+                    }
+                    back => {
+                        Conversation.search-step(false);
+                    }
+                    escape => {
+                        Conversation.close-search();
+                    }
+                }
+                Text {
+                    text: SearchWords.position;
+                    color: P.faint;
+                    font-size: 13px;
+                    vertical-alignment: center;
+                }
+            }
+        }
+        SearchButton {
+            icon: "caret-up";
+            enabled: SearchWords.can-go-up;
+            activated => {
+                Conversation.search-step(true);
+            }
+        }
+        SearchButton {
+            icon: "caret-down";
+            enabled: SearchWords.can-go-down;
+            activated => {
+                Conversation.search-step(false);
+            }
+        }
+        SearchButton {
+            icon: "x";
+            activated => {
+                Conversation.close-search();
+            }
+        }
+    }
+}
+
 component SelectionBar inherits Rectangle {
     height: bar.preferred-height;
 
@@ -2036,8 +2145,28 @@ component ConversationPane inherits Rectangle {
                     overflow: elide;
                 }
             }
-            // Searching, calls and the chat's settings panel are still to come.
-            for name in ["magnifying-glass", "phone", "sidebar-simple"]: VerticalLayout {
+            // Searching in the chat: the line under the header (SearchLine).
+            VerticalLayout {
+                alignment: center;
+                DuoIcon {
+                    name: "magnifying-glass";
+                    size: 20px;
+                    color: Conversation.search-open ? P.accent : search-touch.has-hover ? P.text : P.muted;
+                    search-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            if Conversation.search-open {
+                                Conversation.close-search();
+                            } else {
+                                Conversation.search-open = true;
+                                Conversation.search-requests += 1;
+                            }
+                        }
+                    }
+                }
+            }
+            // Calls and the chat's settings panel are still to come.
+            for name in ["phone", "sidebar-simple"]: VerticalLayout {
                 alignment: center;
                 DuoIcon {
                     name: name;
@@ -2061,6 +2190,7 @@ component ConversationPane inherits Rectangle {
                 }
             }
         }
+        if Conversation.search-open: SearchLine { }
 
         scroll := ChatScroll {
             vertical-stretch: 1;

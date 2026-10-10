@@ -11,7 +11,8 @@ import { Look } from "look.slint";
 // messages loading above do not move what is being read (the distance from the end is kept); near
 // the top it asks for older messages, and back at the end it says so (Rust then shows the newest
 // alone again: every row here is laid out and measured at each change). With few messages they sit
-// at the bottom, as in any chat.
+// at the bottom, as in any chat. Rows around an older message (a search match) ask for newer ones
+// near their end, and hold what is being read while those join below.
 export component ChatScroll inherits Flickable {
     in property <length> spacing;
     in property <length> margin-top;
@@ -20,9 +21,15 @@ export component ChatScroll inherits Flickable {
     in property <length> margin-right;
     // How far the bottom of the view is above the end of the chat; 0 at the end.
     property <length> from-bottom: 0px;
+    // Conversation.newer-loads as last seen: a change among the rows that came with newer messages.
+    property <int> newer-seen;
     mouse-drag-pan-enabled: false;
     content-width: self.width;
     content-height: max(self.height, messages.preferred-height);
+
+    init => {
+        self.newer-seen = Conversation.newer-loads;
+    }
 
     function keep-place() {
         self.content-y = min(0px, max(self.height - self.content-height, self.from-bottom + self.height - self.content-height));
@@ -35,7 +42,13 @@ export component ChatScroll inherits Flickable {
     }
 
     changed content-height => {
-        self.keep-place();
+        if Conversation.newer-loads != self.newer-seen {
+            // Newer messages joined below: the top stays, the distance from the end grows.
+            self.newer-seen = Conversation.newer-loads;
+            self.from-bottom = max(0px, self.content-height + self.content-y - self.height);
+        } else {
+            self.keep-place();
+        }
     }
     changed height => {
         self.keep-place();
@@ -56,6 +69,9 @@ export component ChatScroll inherits Flickable {
         self.from-bottom = max(0px, self.content-height + self.content-y - self.height);
         if self.content-y > -400px && Conversation.has-older && !Conversation.loading {
             Conversation.load-older();
+        }
+        if self.from-bottom < 400px && Conversation.has-newer && !Conversation.loading {
+            Conversation.load-newer();
         }
     }
 
@@ -887,9 +903,16 @@ export component SearchInput inherits Rectangle {
     in property <color> selection-text-color: text-color;
     in property <string> font-family;
     in property <length> font-size: 14px;
+    out property <bool> has-focus: input.has-focus;
     callback edited(string);
     callback accepted();
+    callback back();                            // ⇧⏎ (the search line: the match before)
     callback escape();
+
+    public function focus-text() {
+        input.focus();
+        input.select-all();
+    }
 
     Text {
         width: parent.width;
@@ -928,9 +951,24 @@ export component SearchInput inherits Rectangle {
                 root.escape();
                 return accept;
             }
+            if event.text == Key.Return && event.modifiers.shift {
+                root.back();
+                return accept;
+            }
             return reject;
         }
     }
+}
+
+// What the search line in a chat says (src/telegram/search.rs): where the view is among the
+// matches, "3 / 14", and whether there is one further up or down.
+export global SearchWords {
+    out property <string> placeholder: @tr("Search in chat");
+    out property <string> position: Conversation.search-count < 0 ? (Conversation.search-waiting ? "…" : "")
+        : Conversation.search-count == 0 ? @tr("No results")
+        : Conversation.search-at + " / " + Conversation.search-count;
+    out property <bool> can-go-up: Conversation.search-at > 0 && Conversation.search-at < Conversation.search-count;
+    out property <bool> can-go-down: Conversation.search-at > 1;
 }
 
 // Words to add to a report: several lines, at most 1024 characters. ⏎ sends them (⇧⏎ starts a new

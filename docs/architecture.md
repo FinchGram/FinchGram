@@ -183,6 +183,14 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   there before the account has used it: TDLib makes the chat (createPrivateChat) when the row is
   clicked. It is not repeated in the folders below, and the search matches the names the lists
   show (Saved Messages, Deleted Account), not TDLib's titles.
+- Searching in the open chat (`search.rs`: the header's magnifying glass, Terminal's "[search]",
+  ⌘F) asks TDLib for the messages with the words (searchChatMessages, a hundred at a time, newest
+  first; Telegram's servers answer, so the search is theirs, by whole words) and goes to them one
+  by one, ⏎ up the chat and ⇧⏎ down, each lit up as a reply's original is. A match far above the
+  messages loaded is not paged to: the page around it takes their place (`conversation.rs`,
+  `History::has_newer`), older pages come as before and newer ones as the view comes down, until
+  the chat's end; a message sent from there, or the chat opened again, starts from the end anew.
+  A reply's original more than two pages up is reached the same way.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
   device, the transparent title bar on macOS, opening links, the clipboard (words and pictures);

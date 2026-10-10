@@ -52,6 +52,10 @@ pub struct History {
     pub messages: BTreeMap<i64, api::Message>,
     /// TDLib may have older messages than the oldest here.
     pub has_older: bool,
+    /// TDLib has newer messages than the newest here: the rows are around an older message (a
+    /// search match, a reply's original, conversation.rs), and the end of the chat is loaded again
+    /// as the view comes down to it.
+    pub has_newer: bool,
     /// A getChatHistory request is on its way.
     pub loading: bool,
     /// How many of the newest messages the rows show ([`SHOWN`] at the end).
@@ -60,7 +64,7 @@ pub struct History {
 
 impl Default for History {
     fn default() -> History {
-        History { messages: BTreeMap::new(), has_older: false, loading: false, shown: SHOWN }
+        History { messages: BTreeMap::new(), has_older: false, has_newer: false, loading: false, shown: SHOWN }
     }
 }
 
@@ -674,7 +678,8 @@ impl Store {
                 if let Some(typing) = self.typing.get_mut(&chat_id) {
                     typing.retain(|(sender, _)| *sender != message.sender_id);
                 }
-                if let Some(history) = self.histories.get_mut(&chat_id) {
+                // Rows around an older message leave it out: it joins them with the end of the chat.
+                if let Some(history) = self.histories.get_mut(&chat_id).filter(|history| !history.has_newer) {
                     let outgoing = message.is_outgoing;
                     let id = message.id;
                     if history.messages.insert(id, *message).is_none() && history.shown > SHOWN {
@@ -1231,6 +1236,7 @@ impl Store {
         let history = self.histories.get(&chat.id);
         conversation.set_loading(history.is_none_or(|history| history.loading && history.messages.is_empty()));
         conversation.set_has_older(history.is_some_and(|history| history.has_older || history.hides_older()));
+        conversation.set_has_newer(history.is_some_and(|history| history.has_newer));
         let (rows, members, missing) = self.message_rows(chat, names);
         self.rows = members;
         self.missing_replies = missing;
@@ -1365,8 +1371,8 @@ impl Store {
         }
         self.attach_media(&mut rows, media);
         *self.row_files.borrow_mut() = row_files;
-        // Telegram's sponsored message, after the newest post of a channel.
-        if let Some(sponsored) = self.sponsored.get(&chat.id).and_then(|sponsored| sponsored.first()) {
+        // Telegram's sponsored message, after the newest post of a channel (not among older ones).
+        if let Some(sponsored) = self.sponsored.get(&chat.id).and_then(|sponsored| sponsored.first()).filter(|_| !history.has_newer) {
             let text = match &sponsored.content {
                 M::Text { text, .. } => text.text.clone(),
                 other => self.content_of(other, &MessageSender::Chat { chat_id: chat.id }, names).1,

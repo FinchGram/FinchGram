@@ -74,6 +74,7 @@ pub fn connect(ui: &MainWindow) {
     conversation.on_send(|text| write(&text));
     conversation.on_edited(|words| edited(&words));
     conversation.on_load_older(load_older);
+    conversation.on_load_newer(load_newer);
     conversation.on_reached_end(reached_end);
     conversation.on_retry(|id| {
         if let (Ok(id), Some(chat_id)) = (id.parse::<i64>(), open_chat()) {
@@ -201,13 +202,14 @@ pub fn open(chat_id: i64) {
                 store.sponsored.remove(&oldest);
             }
         }
-        // The chat opens at its end, with the newest messages.
+        // The chat opens at its end, with the newest messages: a history left around an older
+        // message (a search match) is loaded anew.
         let needs_history = match store.histories.get_mut(&chat_id) {
-            Some(history) => {
+            Some(history) if !history.has_newer => {
                 history.shown = store::SHOWN;
                 false
             }
-            None => true,
+            _ => true,
         };
         store.dirty.chats = true;
         store.dirty.conversation = true;
@@ -354,17 +356,7 @@ fn load_history(chat_id: i64, from_message_id: i64, then: Option<Box<dyn FnOnce(
         "offset": 0, "limit": PAGE, "only_local": false,
     });
     send(request, move |answer| {
-        let messages = match answer.map(serde_json::from_value::<Messages>) {
-            Ok(Ok(messages)) => messages.messages.into_iter().flatten().collect::<Vec<_>>(),
-            Ok(Err(err)) => {
-                eprintln!("telegram: cannot read a chat's history: {err}");
-                Vec::new()
-            }
-            Err(err) => {
-                log_error("load a chat's history", Err(err));
-                Vec::new()
-            }
-        };
+        let messages = read_messages(answer, "load a chat's history");
         let ids: Vec<i64> = messages.iter().map(|message| message.id).collect();
         let next = store::with(|store| {
             let open = store.open == Some(chat_id);
@@ -401,6 +393,21 @@ fn load_history(chat_id: i64, from_message_id: i64, then: Option<Box<dyn FnOnce(
     });
 }
 
+/// getChatHistory's answer as messages, oldest first; none when it failed (said on stderr).
+fn read_messages(answer: Result<serde_json::Value, Error>, doing: &str) -> Vec<api::Message> {
+    match answer.map(serde_json::from_value::<Messages>) {
+        Ok(Ok(messages)) => messages.messages.into_iter().flatten().collect(),
+        Ok(Err(err)) => {
+            eprintln!("telegram: cannot read a chat's history: {err}");
+            Vec::new()
+        }
+        Err(err) => {
+            log_error(doing, Err(err));
+            Vec::new()
+        }
+    }
+}
+
 /// The view reached the top: older messages. Those here already but not shown (the rows show
 /// [`store::SHOWN`] at the end) come first, a page at a time and at once; then TDLib's.
 fn load_older() {
@@ -435,7 +442,13 @@ fn load_older() {
 
 /// The view is back at the end of the chat: the rows go back to the newest messages alone, so that
 /// what follows (new messages, pictures) costs as little as at the start. Nothing on screen moves.
+/// While the rows are around an older message, the end of the rows is not the end of the chat:
+/// the next newer page comes instead.
 fn reached_end() {
+    if store::with(|store| store.histories.get(&store.open?).map(|history| history.has_newer)).flatten() == Some(true) {
+        load_newer();
+        return;
+    }
     let shrunk = store::with(|store| {
         let history = store.histories.get_mut(&store.open?)?;
         if history.shown <= store::SHOWN {
@@ -481,6 +494,120 @@ pub fn load_older_then(chat_id: i64, then: impl FnOnce() + 'static) {
         Some((false, true, oldest)) => load_history(chat_id, oldest, Some(Box::new(then))),
         _ => {}
     }
+}
+
+/// The page around `message_id` (a search match, a reply's original far above) takes the place of
+/// the messages here, so that the rows show it: the view is then up in the chat, older pages come
+/// as before, and newer ones as it comes down (`load_newer`), until the end. `then` runs once the
+/// rows are laid out anew, whether or not the message was found (deleted meanwhile).
+pub fn load_around(chat_id: i64, message_id: i64, then: impl FnOnce() + 'static) {
+    let asked = store::with(|store| {
+        let history = store.histories.get_mut(&chat_id)?;
+        if history.loading {
+            return None;
+        }
+        history.loading = true;
+        Some(())
+    })
+    .flatten();
+    if asked.is_none() {
+        // A page is on its way already: after it.
+        slint::Timer::single_shot(Duration::from_millis(200), move || load_around(chat_id, message_id, then));
+        return;
+    }
+    // Some newer messages above it in the answer, the message, then older ones.
+    let request = json!({
+        "@type": "getChatHistory", "chat_id": chat_id, "from_message_id": message_id,
+        "offset": -(PAGE / 2), "limit": PAGE, "only_local": false,
+    });
+    send(request, move |answer| {
+        let messages = read_messages(answer, "load the messages around one");
+        let found = messages.iter().any(|message| message.id == message_id);
+        store::with(|store| {
+            let last = store.chats.get(&chat_id).and_then(|chat| chat.last_message.as_ref()).map(|message| message.id);
+            let open = store.open == Some(chat_id);
+            let history = store.histories.get_mut(&chat_id)?;
+            history.loading = false;
+            if !found {
+                return None;
+            }
+            let newest = messages.iter().map(|message| message.id).max();
+            let older = messages.iter().filter(|message| message.id < message_id).count();
+            history.messages = messages.into_iter().map(|message| (message.id, message)).collect();
+            history.has_older = older > 0;
+            history.has_newer = last.is_none_or(|last| newest.is_some_and(|newest| newest < last));
+            history.shown = store::SHOWN;
+            store.dirty.conversation = open;
+            Some(())
+        });
+        store::refresh();
+        then();
+    });
+}
+
+/// The view nears the end of rows that are around an older message: the page after the newest
+/// here. Back at the chat's end, the rows are the chat's end again (`has_newer` goes).
+fn load_newer() {
+    let Some((chat_id, newest)) = store::with(|store| {
+        let chat_id = store.open?;
+        let history = store.histories.get_mut(&chat_id)?;
+        if !history.has_newer || history.loading {
+            return None;
+        }
+        history.loading = true;
+        Some((chat_id, *history.messages.keys().next_back()?))
+    })
+    .flatten() else {
+        return;
+    };
+    let request = json!({
+        "@type": "getChatHistory", "chat_id": chat_id, "from_message_id": newest,
+        "offset": -(PAGE - 1), "limit": PAGE, "only_local": false,
+    });
+    send(request, move |answer| {
+        let messages = read_messages(answer, "load newer messages");
+        let newer: Vec<i64> = messages.iter().filter(|message| message.id > newest).map(|message| message.id).collect();
+        let open = store::with(|store| {
+            let last = store.chats.get(&chat_id).and_then(|chat| chat.last_message.as_ref()).map(|message| message.id);
+            let open = store.open == Some(chat_id);
+            let history = store.histories.get_mut(&chat_id)?;
+            history.loading = false;
+            let top = newer.iter().max().copied().unwrap_or(newest);
+            history.has_newer = !newer.is_empty() && last.is_none_or(|last| top < last);
+            for message in messages {
+                history.messages.insert(message.id, message);
+            }
+            // The rows being read stay; the newer ones join below them (ChatScroll holds the top).
+            history.shown += newer.len();
+            store.dirty.conversation = open;
+            Some(open)
+        })
+        .flatten();
+        if open == Some(true) && !newer.is_empty() {
+            super::with_ui(|ui| {
+                let conversation = ui.global::<Conversation>();
+                conversation.set_newer_loads(conversation.get_newer_loads() + 1);
+            });
+        }
+        store::refresh();
+        if open == Some(true) && !newer.is_empty() {
+            view(chat_id, newer);
+        }
+    });
+}
+
+/// Rows around an older message go back to the end of the chat, loaded anew: for a message sent
+/// from there, which shows itself at the end.
+pub fn back_to_end(chat_id: i64) {
+    let around = store::with(|store| store.histories.get(&chat_id).map(|history| history.has_newer)).flatten();
+    if around != Some(true) {
+        return;
+    }
+    store::with(|store| {
+        store.histories.insert(chat_id, History { has_older: true, ..History::default() });
+        store.dirty.conversation = store.open == Some(chat_id);
+    });
+    load_history(chat_id, 0, None);
 }
 
 /// Fetch the messages replies answer that are not in the history, by chat and message, once each;
@@ -586,6 +713,7 @@ fn write(text: &str) {
     let Some(chat_id) = open_chat() else { return };
     // The message ends the typing; the next words say it again at once.
     TYPING.set(None);
+    back_to_end(chat_id);
     if actions::send_with_bar(chat_id, text) || text.is_empty() {
         return;
     }

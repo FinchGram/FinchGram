@@ -31,6 +31,7 @@ mod online;
 mod password;
 mod process;
 mod rich_text;
+mod search;
 mod store;
 mod time;
 #[cfg(test)]
@@ -126,6 +127,7 @@ pub fn start(ui: &MainWindow) {
     viewer::connect(ui);
     notifications::connect(ui);
     attachments::connect(ui);
+    search::connect(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {

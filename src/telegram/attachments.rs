@@ -18,7 +18,7 @@ use slint::{ComponentHandle, Image, ModelRc, VecModel};
 
 use super::api::ChatType;
 use super::store::{self, SendRights};
-use super::{actions, send, with_ui};
+use super::{actions, conversation, send, with_ui};
 use crate::player::probe;
 use crate::{AttachHint, AttachKind, AttachProblem, Attachment, Attachments, MainWindow, images, platform};
 
@@ -445,6 +445,8 @@ fn send_all(silent: bool) {
     let mut caption = Some(caption).filter(|caption| !caption.is_empty());
     let (media, files): (Vec<&Item>, Vec<&Item>) = items.iter().partition(|item| !as_file && item.kind != Kind::File);
     let chunk = if grouped { ALBUM } else { 1 };
+    // Sent from among older messages, they show themselves at the end.
+    conversation::back_to_end(chat_id);
     for album in media.chunks(chunk) {
         let contents: Vec<Value> = album.iter().map(|item| media_content(item, caption.take(), timer)).collect();
         send_contents(chat_id, contents, reply_to.clone(), options.clone());

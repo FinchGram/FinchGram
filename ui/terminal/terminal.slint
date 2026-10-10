@@ -8,7 +8,8 @@ import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
-import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords } from "../chat.slint";
+import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords, SearchInput, SearchWords } from "../chat.slint";
+import { Look } from "../look.slint";
 import { TerminalPalette as P } from "palette.slint";
 import { Sign } from "signs.slint";
 import { TerminalActions } from "actions.slint";
@@ -78,9 +79,96 @@ component IconAction {
     }
 }
 
+// The search box in the title bar, as the other themes have it (⌘K): the lists show the chats
+// whose names have the words; ⏎ opens the first of them.
+component SearchBox inherits Rectangle {
+    width: 360px;
+    height: 24px;
+    border-radius: 3px;
+    background: P.bg;
+    border-width: 1px;
+    border-color: input.has-focus ? P.accent.transparentize(0.4) : P.line;
+    // ⏎ or esc: the keyboard goes back to the command line.
+    callback done();
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "magnifying-glass";
+                size: 12px;
+                color: P.faint;
+            }
+        }
+        Rectangle {
+            horizontal-stretch: 1;
+            T {
+                width: parent.width;
+                visible: input.text == "" && input.preedit-text == "";
+                text: @tr("Search chats");
+                color: P.faint;
+                overflow: elide;
+            }
+            input := TextInput {
+                width: parent.width;
+                height: parent.height;
+                text: Chats.query;
+                color: P.text;
+                font-family: P.font;
+                font-size: 13px;
+                vertical-alignment: center;
+                single-line: true;
+                selection-background-color: P.accent;
+                selection-foreground-color: P.on-accent;
+                text-cursor-width: Look.cursor-width;
+                edited => {
+                    Chats.search(self.text);
+                }
+                accepted => {
+                    // The first row shown: Saved Messages when it matches the words, else the list's first.
+                    if Chats.saved-messages-shown && Chats.query != "" {
+                        Conversation.open(Chats.saved-messages.id);
+                    } else if Chats.list.length > 0 {
+                        Conversation.open(Chats.list[0].id);
+                    }
+                    root.done();
+                }
+                key-pressed(event) => {
+                    if event.text == Key.Escape {
+                        self.text = "";
+                        Chats.search("");
+                        root.done();
+                        return accept;
+                    }
+                    return reject;
+                }
+            }
+        }
+        T {
+            text: "⌘K";
+            color: P.faint;
+            font-size: 11px;
+        }
+    }
+
+    property <int> search-requests: AppState.search-requests;
+    changed search-requests => {
+        root.focus-search();
+    }
+
+    public function focus-search() {
+        input.focus();
+        input.select-all();
+    }
+}
+
 component TitleBar inherits Rectangle {
     height: 34px;
     background: P.side;
+    callback done();          // the search box gave the keyboard back
 
     WindowMover { }
 
@@ -104,10 +192,21 @@ component TitleBar inherits Rectangle {
             }
         }
         T {
-            horizontal-stretch: 1;
             text: "FinchGram — " + Account.name;
             color: P.muted;
             overflow: elide;
+        }
+        HorizontalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            VerticalLayout {
+                alignment: center;
+                search := SearchBox {
+                    done => {
+                        root.done();
+                    }
+                }
+            }
         }
         // What was just done (copied, saved, reported).
         if Actions.notice != ActionNotice.none: T {
@@ -120,6 +219,10 @@ component TitleBar inherits Rectangle {
                 AppState.change-appearance(P.dark ? "light" : "dark");
             }
         }
+    }
+
+    public function focus-search() {
+        search.focus-search();
     }
 }
 
@@ -900,6 +1003,74 @@ component Line {
     }
 }
 
+// Searching in the chat: the line under the pane head, "search ❯ words  3 / 14 [↑] [↓] [esc]"
+// (src/telegram/search.rs). ⏎ goes to the next match up the chat, ⇧⏎ down, esc closes it.
+component SearchLine inherits Rectangle {
+    height: 30px;
+    background: P.pane-head;
+    property <int> requests: Conversation.search-requests;
+    changed requests => {
+        input.focus-text();
+    }
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 10px;
+        T {
+            text: @tr("search") + " ❯";
+            color: P.accent;
+        }
+        input := SearchInput {
+            horizontal-stretch: 1;
+            placeholder: SearchWords.placeholder;
+            text-color: P.text;
+            placeholder-color: P.faint;
+            selection-color: P.accent;
+            selection-text-color: P.on-accent;
+            font-family: P.font;
+            font-size: 13px;
+            edited(words) => {
+                Conversation.search(words);
+            }
+            accepted => {
+                Conversation.search-step(true);
+            }
+            back => {
+                Conversation.search-step(false);
+            }
+            escape => {
+                Conversation.close-search();
+            }
+        }
+        T {
+            text: SearchWords.position;
+            color: P.faint;
+        }
+        Action {
+            label: "↑";
+            enabled: SearchWords.can-go-up;
+            activated => {
+                Conversation.search-step(true);
+            }
+        }
+        Action {
+            label: "↓";
+            enabled: SearchWords.can-go-down;
+            activated => {
+                Conversation.search-step(false);
+            }
+        }
+        Action {
+            label: "esc";
+            color: P.faint;
+            activated => {
+                Conversation.close-search();
+            }
+        }
+    }
+}
+
 component Pane inherits Rectangle {
     background: P.bg;
 
@@ -932,10 +1103,19 @@ component Pane inherits Rectangle {
                     color: P.faint;
                     overflow: elide;
                 }
-                // Searching and the chat's settings are still to come.
+                // Searching in the chat: the line under the head (SearchLine). The chat's settings
+                // panel is still to come.
                 Action {
                     label: @tr("search");
-                    enabled: false;
+                    color: Conversation.search-open ? P.accent : P.muted;
+                    activated => {
+                        if Conversation.search-open {
+                            Conversation.close-search();
+                        } else {
+                            Conversation.search-open = true;
+                            Conversation.search-requests += 1;
+                        }
+                    }
                 }
                 Action {
                     label: @tr("chat settings");
@@ -1010,6 +1190,7 @@ component Pane inherits Rectangle {
                 }
             }
         }
+        if Conversation.search-open: SearchLine { }
 
         scroll := ChatScroll {
             vertical-stretch: 1;
@@ -1385,7 +1566,7 @@ component CommandLine inherits Rectangle {
 component StatusBar inherits Rectangle {
     height: 26px;
     background: P.accent;
-    callback command-line();
+    callback search();
 
     HorizontalLayout {
         padding-left: 14px;
@@ -1404,17 +1585,17 @@ component StatusBar inherits Rectangle {
             font-size: 12px;
         }
         Rectangle {
-            width: cmd.preferred-width;
-            cmd := T {
+            width: hint.preferred-width;
+            hint := T {
                 x: 0;
-                text: "[⌘K " + @tr("command") + "]";
+                text: "[⌘K " + @tr("search") + "]";
                 color: P.on-accent;
                 font-size: 12px;
             }
             TouchArea {
                 mouse-cursor: pointer;
                 clicked => {
-                    root.command-line();
+                    root.search();
                 }
             }
         }
@@ -1425,18 +1606,22 @@ export component TerminalWindow inherits Rectangle {
     property <TerminalView> view: TerminalView.chats;
     background: P.bg;
 
-    // ⌘K, from the menu bar (app.slint): the command line.
+    // ⌘K, from the menu bar (app.slint): the search box in the title bar, as in the other themes.
     property <int> search-requests: AppState.search-requests;
     changed search-requests => {
         root.focus-search();
     }
 
     public function focus-search() {
-        line.focus-line();
+        title.focus-search();
     }
 
     VerticalLayout {
-        TitleBar { }
+        title := TitleBar {
+            done => {
+                line.focus-line();
+            }
+        }
         HorizontalLayout {
             vertical-stretch: 1;
             Side {
@@ -1458,8 +1643,8 @@ export component TerminalWindow inherits Rectangle {
             }
         }
         StatusBar {
-            command-line => {
-                line.focus-line();
+            search => {
+                title.focus-search();
             }
         }
     }
