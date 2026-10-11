@@ -187,4 +187,5 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 4. **渲染**：暂时用 Slint 的默认渲染器（FemtoVG）。设计稿的字体都已打包，界面用到的中文、日文、韩文和阿拉伯文由
    Noto Sans SC、JP、KR、Arabic 提供（回退顺序里界面语言自己的字体排在前面，`fonts.rs`）；消息里的彩色 emoji 和
    其他文字暂时用系统字体。Skia 得从源码构建才行：它的 Rust 绑定默认会
-   下载预编译的库，这是 conventions.md 不允许的。
+   下载预编译的库，这是 conventions.md 不允许的。改用由我们自己的 CI 构建的 Skia 是待办的第一项（2026-10-11）：
+   计划，以及它对 tiny-skia 和 resvg 意味着什么，见 [skia.zh-Hans.md](skia.zh-Hans.md)。
