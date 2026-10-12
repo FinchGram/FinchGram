@@ -2,9 +2,13 @@
 
 [English](skia.md)
 
-状态：待做，排在第一位（维护者，2026-10-11）。下面的东西都还没做。文中的事实以当天 Cargo.lock 里的版本为准：
-Slint 1.18.1、skia-safe 和 skia-bindings 0.153.3、resvg 0.48.1。开工需要新增一个 vendor 构建（推一个 `skia-*`
-tag），并改发布工作流。
+状态：暂停（维护者，2026-10-12）。2026-10-11 写成待办的第一项；第二天权衡它能带来什么之后，维护者决定暂停。
+窗口仍用 FemtoVG：第 2 步对 app 自己画的东西没有任何改变（那些都是先画成图片再交给 Slint 显示，与渲染器无关），
+却带着下文说的 mpv 风险。第 1 步和第 3 步等第一个真正需要 Skia 的功能一起做，比如动态贴纸（Skottie）或图片编辑；
+在那之前截图工具的 resvg 留着，或者用纯 Rust 换掉（parley、skrifa、tiny-skia，Slint 已经全带进了构建）。
+将来做 PDF 走 macOS 的 PDFKit：Skia 只会写 PDF，不会读也不会改。下面的东西都还没做。文中的事实以 2026-10-11
+Cargo.lock 里的版本为准：Slint 1.18.1、skia-safe 和 skia-bindings 0.153.3、resvg 0.48.1。开工需要新增一个
+vendor 构建（推一个 `skia-*` tag），并改发布工作流。
 
 ## 现在谁在画什么
 

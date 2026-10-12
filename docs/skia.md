@@ -2,10 +2,16 @@
 
 [中文](skia.zh-Hans.md)
 
-Status: to do, first on the list (the maintainer, 2026-10-11). Nothing below is built. The facts are
-those of the versions in Cargo.lock that day: Slint 1.18.1, skia-safe and skia-bindings 0.153.3,
-resvg 0.48.1. Starting needs a new vendor build (a `skia-*` tag) and a change to the release
-workflow.
+Status: paused (the maintainer, 2026-10-12). Written on 2026-10-11 as the first thing to do; the
+next day, weighing what it would bring, the maintainer paused it. The window stays on FemtoVG: step
+2 changes nothing for what the app draws itself (that is drawn into pictures Slint shows, whatever
+its renderer) and carries the mpv risk below. Steps 1 and 3 wait for the first feature that needs
+Skia, such as animated stickers (Skottie) or editing pictures; until then the screenshot tool's
+resvg stays, or goes in pure Rust (parley, skrifa and tiny-skia, all in the build through Slint).
+PDF, when it comes, goes through macOS's PDFKit: Skia writes PDF, it neither reads nor changes it.
+Nothing below is built. The facts are those of the versions in Cargo.lock on 2026-10-11: Slint
+1.18.1, skia-safe and skia-bindings 0.153.3, resvg 0.48.1. Starting needs a new vendor build (a
+`skia-*` tag) and a change to the release workflow.
 
 ## What draws what now
 

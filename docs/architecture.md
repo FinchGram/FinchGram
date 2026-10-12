@@ -255,5 +255,5 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
    language's own first among the fallbacks, `fonts.rs`); colour emoji and other scripts in
    messages come from the system's fonts. Skia would need building from source: its
    Rust bindings download a prebuilt library by default, which conventions.md does not allow.
-   Moving to Skia, built by our own CI, is first on the to-do list (2026-10-11): the plan, and what
-   it means for tiny-skia and resvg, is in [skia.md](skia.md).
+   Moving to Skia, built by our own CI, was planned on 2026-10-11 and paused the next day: the plan,
+   why, and what it means for tiny-skia and resvg, is in [skia.md](skia.md).
