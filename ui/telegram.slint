@@ -110,7 +110,10 @@ export global Chats {
     callback toggle-pin(string, int);            // in the list of a folder (index into folders); -1:
                                                  // wherever it is pinned, as Workbench's tree has it
     callback mark-read(string);
+    callback copy-id(string);                    // the chat's id onto the clipboard: what bots and scripts know it by
     callback toggle-in-folder(string, int);      // put the chat into a folder (index into folders), or take it out
+    // A folder's menu (a right click on its tab, or on its header in Workbench's tree).
+    callback mark-all-read(int);                 // every chat of the folder (index into folders) read, as Telegram's apps do it
     // Telegram's own actions on a chat, with a question first where they cannot be undone.
     callback toggle-block(string);               // block the user (after the question), or unblock them at once
     callback report(string);                     // Telegram's report flow, as for a message (Actions.report-open)
@@ -303,6 +306,7 @@ export global Conversation {
     callback toggle-mute();
     callback toggle-pin();
     callback mark-read();
+    callback copy-id();                          // the chat's id onto the clipboard
     // Searching in the chat (the header's magnifying glass, Terminal's "[search]", ⌘F;
     // src/telegram/search.rs): the view goes to the matches one by one, newest first.
     in-out property <bool> search-open;          // the search line is showing; Rust closes it with the chat
@@ -446,7 +450,7 @@ export enum ComposeBar { none, reply, edit, forward }
 
 // What was just done, said for a moment; or what could not be done: a folder that would be left
 // empty, or anything else Telegram refused (failed: in Telegram's words, Actions.failure).
-export enum ActionNotice { none, copied, link-copied, image-copied, saved, reported, folder-empty, failed }
+export enum ActionNotice { none, copied, link-copied, image-copied, id-copied, saved, reported, folder-empty, failed }
 
 // Deleting: whether the messages can go for the others too (a box to tick), and who they are.
 export enum DeleteChoice { none, for-them, for-everyone }
@@ -549,6 +553,7 @@ export global Account {
     in-out property <string> last-name;
     in-out property <string> username;
     in-out property <string> phone;              // "+86 138 0013 2046"
+    in-out property <string> id;                 // Telegram's number for the account: what bots and scripts know it by
     in-out property <string> bio;
     in-out property <string> initial;
     in-out property <image> picture;             // the account's photo, as ChatRow.picture
@@ -558,6 +563,7 @@ export global Account {
     in-out property <bool> saved;
     in-out property <string> save-error;
     callback save(string, string, string, string);   // first name, last name, username, bio
+    callback copy-id();                          // the id onto the clipboard
     callback log-out();
 }
 

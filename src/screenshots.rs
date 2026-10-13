@@ -479,6 +479,7 @@ fn fill_chats(ui: &MainWindow) {
     account.set_has_picture(true);
     account.set_username("zhouye".into());
     account.set_phone("+86 138 0013 2046".into());
+    account.set_id("6130081346".into());
     account.set_bio("Design, and a little code. Shanghai.".into());
 
     // Some chats have photos, the others their letters, as in any account.
@@ -1225,14 +1226,25 @@ fn screenshots() {
             click(&window, x + 40.0, y + add_to_folder(theme));
             save(&window, &name("chat-menu-folders"));
             escape(&window);
-            // The menu of a chat with a person: blocking, reporting, deleting.
+            // The menu of a chat with a person (Lin Xia, under the Personal folder's header in
+            // Workbench): blocking, reporting, deleting.
             let (ux, uy) = match theme {
-                Theme::Workbench => (150.0, 149.0),
-                Theme::Broadsheet => (230.0, 376.0),
-                Theme::Terminal => (140.0, 139.0),
+                Theme::Workbench => (150.0, 177.0),
+                Theme::Broadsheet => (230.0, 443.0),
+                Theme::Terminal => (140.0, 170.0),
             };
             right_click(&window, ux, uy);
             save(&window, &name("chat-menu-user"));
+            escape(&window);
+            // A right click on the Personal folder's tab (its header in Workbench's tree): the
+            // folder's menu.
+            let (fx, fy) = match theme {
+                Theme::Workbench => (110.0, 150.0),
+                Theme::Broadsheet => (170.0, 252.0),
+                Theme::Terminal => (97.0, 83.0),
+            };
+            right_click(&window, fx, fy);
+            save(&window, &name("folder-menu"));
             escape(&window);
             // The questions asked before leaving a group and before deleting a chat.
             let chats = ui.global::<Chats>();

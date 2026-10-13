@@ -1668,6 +1668,7 @@ impl Store {
         let account = ui.global::<Account>();
         let Some(me) = self.users.get(&self.my_id) else {
             account.set_name(SharedString::new());
+            account.set_id(SharedString::new());
             account.set_initial(SharedString::new());
             account.set_picture(self.blank.clone());
             account.set_large_picture(self.blank.clone());
@@ -1682,6 +1683,7 @@ impl Store {
         account.set_large_picture(large_picture);
         account.set_has_picture(has_picture);
         account.set_name(name.into());
+        account.set_id(me.id.to_string().into());
         account.set_first_name(me.first_name.clone().into());
         account.set_last_name(me.last_name.clone().into());
         account.set_username(me.usernames.as_ref().map(|names| names.editable_username.clone()).unwrap_or_default().into());

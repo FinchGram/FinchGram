@@ -240,6 +240,16 @@ component Editor {
     property <string> last-name: Account.last-name;
     property <string> username: Account.username;
     property <string> bio: Account.bio;
+    property <bool> id-copied;              // the ID's link says "Copied" for a moment
+
+    copied-timer := Timer {
+        interval: 2s;
+        running: false;
+        triggered => {
+            self.running = false;
+            root.id-copied = false;
+        }
+    }
 
     VerticalLayout {
         padding-left: 56px;
@@ -347,6 +357,39 @@ component Editor {
                     text: Account.phone;
                     color: Look.text;
                     font-size: 16px;
+                }
+            }
+            // Telegram's number for the account, with a link that copies it: what bots and scripts
+            // know the account by.
+            VerticalLayout {
+                spacing: 6px;
+                Label {
+                    text: @tr("ID");
+                }
+                HorizontalLayout {
+                    alignment: start;
+                    spacing: 14px;
+                    Text {
+                        text: Account.id;
+                        color: Look.text;
+                        font-size: 16px;
+                        vertical-alignment: center;
+                    }
+                    Link {
+                        text: root.id-copied ? @tr("Copied") : @tr("Copy");
+                        icon: root.id-copied ? "check" : "copy";
+                        font-size: 13px;
+                        clicked => {
+                            Account.copy-id();
+                            root.id-copied = true;
+                            copied-timer.running = true;
+                        }
+                    }
+                }
+                Text {
+                    text: @tr("What bots and scripts know this account by.");
+                    color: Look.faint;
+                    font-size: 12px;
                 }
             }
             if Account.save-error != "": Paragraph {

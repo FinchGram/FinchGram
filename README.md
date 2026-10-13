@@ -31,8 +31,9 @@ client, not made by Telegram.
 - **Screenshots.** The scissors in the composer, or ⌘⇧A, freeze the screen: take a window or drag a
   selection, draw rectangles, ellipses, arrows, pen strokes, text and mosaic on it, then send it,
   copy it or save it. As in WeChat, from every chat.
-- **A chat's menu.** Mute, pin, mark as read, put it into a folder; block or unblock a person,
-  report, leave a group or channel, delete a chat.
+- **A chat's menu.** Mute, pin, mark as read, copy its ID, put it into a folder; block or unblock
+  a person, report, leave a group or channel, delete a chat. A right click on a folder marks all
+  of its chats as read.
 - **Notifications.** New messages come as macOS notifications and their number sits on the Dock
   icon; FinchGram stays in the Dock when its window closes, and can live in the menu bar.
 - **Three themes.** Workbench, Broadsheet and Terminal, each light and dark, switched without a

@@ -352,8 +352,58 @@ component SearchField inherits Rectangle {
     }
 }
 
+component MenuEntry inherits Rectangle {
+    in property <string> icon;                // "": no icon, its place kept (a choice not ticked)
+    in property <string> label;
+    in property <string> keys;
+    callback activated();
+    height: 34px;
+    border-radius: 2px;
+    background: touch.has-hover ? P.hover : transparent;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 17px;
+                height: 17px;
+                if root.icon != "": DuoIcon {
+                    name: root.icon;
+                    size: 17px;
+                    color: P.accent;
+                }
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.label;
+            color: P.text;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: root.keys;
+            color: P.faint;
+            font-family: P.mono;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
 component FolderTab {
     in property <int> index;
+    callback menu(length, length);          // a right click, where it is in the window
     property <bool> active: index == Chats.folder;
 
     VerticalLayout {
@@ -385,13 +435,32 @@ component FolderTab {
         clicked => {
             Chats.show-folder(root.index);
         }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
+        }
     }
 }
 
-// The folders as tabs: the first four, the rest behind "More".
+// The folders as tabs: the first four, the rest behind "More". A right click on a tab gives the
+// folder's menu: every chat of it read.
 component Folders {
     // "More" names the folder shown when it is one of those behind it.
     property <bool> more-chosen: Chats.folder >= 4;
+    property <int> menu-index;              // the folder the menu is for: index into Chats.folders
+    property <length> menu-x;
+
+    function show-menu(folder: int, left: length) {
+        root.menu-index = folder;
+        root.menu-x = max(0px, left - root.absolute-position.x);
+        folder-menu.show();
+    }
+
+    pure function name(index: int) -> string {
+        if index < 0 || index >= Chats.folders.length { return ""; }
+        return Chats.folders[index].id == 0 ? @tr("All chats") : Chats.folders[index].name;
+    }
 
     HorizontalLayout {
         for folder[index] in Chats.folders: Rectangle {
@@ -403,6 +472,9 @@ component Folders {
                 y: 0;
                 width: self.preferred-width;
                 index: index;
+                menu(left, top) => {
+                    root.show-menu(index, left);
+                }
             }
         }
         Rectangle { horizontal-stretch: 1; }
@@ -428,6 +500,12 @@ component Folders {
                 mouse-cursor: pointer;
                 clicked => {
                     list.show();
+                }
+                // "More" stands for the folder shown: a right click on it is one on that folder.
+                pointer-event(event) => {
+                    if root.more-chosen && event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                        root.show-menu(Chats.folder, self.absolute-position.x + self.mouse-x);
+                    }
                 }
             }
             list := PopupWindow {
@@ -475,6 +553,40 @@ component Folders {
                                 }
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    folder-menu := PopupWindow {
+        x: root.menu-x;
+        y: 26px;
+        width: 210px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+        Rectangle {
+            border-radius: 4px;
+            background: P.panel;
+            drop-shadow-blur: 32px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: P.shadow;
+            VerticalLayout {
+                padding: 6px;
+                Text {
+                    height: 26px;
+                    x: 10px;
+                    text: root.name(root.menu-index);
+                    color: P.faint;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                MenuEntry {
+                    icon: "checks";
+                    label: @tr("Mark all as read");
+                    activated => {
+                        Chats.mark-all-read(root.menu-index);
+                        folder-menu.close();
                     }
                 }
             }
@@ -789,55 +901,6 @@ component SectionTitle inherits Text {
     letter-spacing: 0.24px;
 }
 
-component MenuEntry inherits Rectangle {
-    in property <string> icon;                // "": no icon, its place kept (a choice not ticked)
-    in property <string> label;
-    in property <string> keys;
-    callback activated();
-    height: 34px;
-    border-radius: 2px;
-    background: touch.has-hover ? P.hover : transparent;
-
-    HorizontalLayout {
-        padding-left: 10px;
-        padding-right: 10px;
-        spacing: 10px;
-        VerticalLayout {
-            alignment: center;
-            Rectangle {
-                width: 17px;
-                height: 17px;
-                if root.icon != "": DuoIcon {
-                    name: root.icon;
-                    size: 17px;
-                    color: P.accent;
-                }
-            }
-        }
-        Text {
-            horizontal-stretch: 1;
-            text: root.label;
-            color: P.text;
-            font-size: 14px;
-            vertical-alignment: center;
-        }
-        Text {
-            text: root.keys;
-            color: P.faint;
-            font-family: P.mono;
-            font-size: 11px;
-            vertical-alignment: center;
-        }
-    }
-
-    touch := TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            root.activated();
-        }
-    }
-}
-
 component ListColumn inherits Rectangle {
     in-out property <BroadsheetView> view;
     width: max(240px, min(560px, AppState.broadsheet-list-width));
@@ -858,7 +921,7 @@ component ListColumn inherits Rectangle {
         Chats.open-menu(chat.id);
         root.menu-x = max(0px, left - root.absolute-position.x);
         // Within the list, whichever of the two pages is the taller.
-        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 44px - 34px * max((Chats.folders.length > 1 ? 4 : 3) + 4, Chats.menu-folders.length + 1)));
+        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 44px - 34px * max((Chats.folders.length > 1 ? 5 : 4) + 4, Chats.menu-folders.length + 1)));
         chat-menu.show();
     }
 
@@ -1120,6 +1183,14 @@ component ListColumn inherits Rectangle {
                     label: @tr("Add to folder");
                     activated => {
                         root.menu-folders = true;
+                    }
+                }
+                if !root.menu-folders: MenuEntry {
+                    icon: "copy";
+                    label: @tr("Copy ID");
+                    activated => {
+                        Chats.copy-id(root.menu-chat.id);
+                        chat-menu.close();
                     }
                 }
                 // Telegram's own actions on the chat (chats.rs); the ones that cannot be undone ask first.
@@ -2497,6 +2568,14 @@ component ConversationPane inherits Rectangle {
                     keys: "⌘⇧R";
                     activated => {
                         Conversation.mark-read();
+                        menu.close();
+                    }
+                }
+                MenuEntry {
+                    icon: "copy";
+                    label: @tr("Copy ID");
+                    activated => {
+                        Conversation.copy-id();
                         menu.close();
                     }
                 }

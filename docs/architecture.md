@@ -176,14 +176,17 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   (`mod.rs`, through winit), counted in a global, and the row under the pointer asks for its menu.
   What the menu offers is what TDLib says can be done with the message (getMessageProperties).
 - A chat's menu (a right click on it in the lists, `chats.rs`) mutes or pins it, marks it as read,
-  and puts it into one of the account's folders or takes it out. TDLib has no request for the
-  last: the folder is fetched whole (getChatFolder), its chosen chats are changed and it is sent
-  back (editChatFolder). A folder that takes chats by kind (contacts, groups, …) would keep a chat
+  copies its id (TDLib's chat id, the number bots and scripts know the chat by; the account's own
+  is on the profile page), and puts it into one of the account's folders or takes it out. TDLib
+  has no request for the last: the folder is fetched whole (getChatFolder), its chosen chats are
+  changed and it is sent back (editChatFolder). A folder that takes chats by kind (contacts, groups, …) would keep a chat
   taken out, so there the chat is excluded by name as well. The menu also does what Telegram's own
   apps do with a chat: block or unblock a user (setMessageSenderBlockList), report the chat
   (reportChat, the steps a message's report goes through), leave a group or channel (leaveChat),
   delete a chat with a user or a bot (deleteChatHistory, for the other side too when TDLib says it
   can be); blocking, leaving and deleting ask first, and a chat left or deleted closes its tab.
+  A folder's menu (a right click on its tab, or on its header in Workbench's tree) marks every
+  chat of it as read: TDLib goes through the list (readChatList), and the read receipts are real.
 - Saved Messages, the chat with oneself, is a fixed row above the chat list in the three themes,
   there before the account has used it: TDLib makes the chat (createPrivateChat) when the row is
   clicked. It is not repeated in the folders below, and the search matches the names the lists

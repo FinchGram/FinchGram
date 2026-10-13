@@ -1,7 +1,8 @@
 //! The chat list: loading its chats from TDLib, and what the pages do with it: show a folder
-//! (Broadsheet, Terminal), expand or collapse a folder in the tree (Workbench), search, and a
-//! chat's menu (a right click on it: mute, pin, mark as read, put it into one of the account's
-//! folders or take it out).
+//! (Broadsheet, Terminal), expand or collapse a folder in the tree (Workbench), search, a
+//! chat's menu (a right click on it: mute, pin, mark as read, copy its id, put it into one of the
+//! account's folders or take it out), and a folder's (a right click on its tab: every chat of it
+//! read).
 //!
 //! TDLib sends the chats of a list, with their positions, as updates once the list has been asked
 //! for with loadChats; it says 404 when every chat of the list has been sent.
@@ -65,6 +66,8 @@ pub fn connect(ui: &MainWindow) {
             conversation::mark_read(chat_id);
         }
     });
+    chats.on_mark_all_read(mark_all_read);
+    chats.on_copy_id(|id| actions::copy_id(&id));
     chats.on_open_menu(|id| {
         let choices = id.parse().ok().and_then(|chat_id| store::with(|store| store.folder_choices(chat_id))).unwrap_or_default();
         super::with_ui(|ui| ui.global::<Chats>().set_menu_folders(ModelRc::new(VecModel::from(choices))));
@@ -106,6 +109,14 @@ pub fn connect(ui: &MainWindow) {
         store::refresh();
         super::with_ui(|ui| ui.global::<Chats>().set_query(words.trim().into()));
     });
+}
+
+/// Every chat of a folder (index into the pages' folders: All chats, or one of the account's own)
+/// read, as Telegram's own apps do it: TDLib goes through the list and reads each chat
+/// (readChatList), so the read receipts are the real ones.
+fn mark_all_read(folder: i32) {
+    let Some(list) = store::with(|store| store.folder_list(usize::try_from(folder).unwrap_or(0))) else { return };
+    send(json!({ "@type": "readChatList", "chat_list": list.to_json() }), |answer| log_error("mark a folder as read", answer));
 }
 
 // ---- Telegram's own actions on a chat ---------------------------------------------------------------

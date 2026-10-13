@@ -837,6 +837,7 @@ export global ActionWords {
         if notice == ActionNotice.copied { return @tr("Text copied to clipboard."); }
         if notice == ActionNotice.link-copied { return @tr("Link copied to clipboard."); }
         if notice == ActionNotice.image-copied { return @tr("Image copied to clipboard."); }
+        if notice == ActionNotice.id-copied { return @tr("ID copied to clipboard."); }
         if notice == ActionNotice.saved { return Actions.saved-name == "" ? @tr("Saved to Downloads") : @tr("Saved to Downloads · {0}", Actions.saved-name); }
         if notice == ActionNotice.reported { return @tr("Reported"); }
         if notice == ActionNotice.folder-empty { return @tr("A folder must keep at least one chat."); }

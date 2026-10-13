@@ -17,6 +17,17 @@ pub fn connect(ui: &MainWindow) {
     account.on_save(|first_name, last_name, username, bio| {
         save(first_name.trim().to_string(), last_name.trim().to_string(), username.trim().trim_start_matches('@').to_string(), bio.trim().to_string());
     });
+    // The id onto the clipboard. The profile page says "Copied" itself: the chat windows' notice
+    // is not on it.
+    account.on_copy_id(|| {
+        let id = store::with(|store| store.my_id).unwrap_or(0);
+        if id == 0 {
+            return;
+        }
+        if let Err(err) = crate::platform::copy_text(&id.to_string()) {
+            eprintln!("account: cannot copy the id: {err}");
+        }
+    });
     account.on_log_out(|| {
         send(json!({ "@type": "logOut" }), |answer| {
             if let Err(err @ Error::Telegram { .. }) = answer {
@@ -64,6 +75,7 @@ pub fn forget() {
         account.set_last_name(SharedString::new());
         account.set_username(SharedString::new());
         account.set_phone(SharedString::new());
+        account.set_id(SharedString::new());
         account.set_bio(SharedString::new());
         account.set_initial(SharedString::new());
         account.set_has_picture(false);

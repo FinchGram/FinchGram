@@ -281,6 +281,14 @@ component TabBar inherits Rectangle {
                         menu.close();
                     }
                 }
+                MenuEntry {
+                    icon: "copy";
+                    label: @tr("Copy ID");
+                    activated => {
+                        Conversation.copy-id();
+                        menu.close();
+                    }
+                }
                 Rectangle {
                     height: 9px;
                     Rectangle {

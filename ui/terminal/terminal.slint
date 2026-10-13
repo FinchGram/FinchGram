@@ -301,10 +301,53 @@ component ChatLine inherits Rectangle {
     }
 }
 
+component MenuEntry inherits Rectangle {
+    in property <string> label;
+    in property <string> command;
+    callback activated();
+    height: 26px;
+    background: touch.has-hover ? P.sel : transparent;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+        T {
+            horizontal-stretch: 1;
+            text: root.label;
+        }
+        T {
+            text: root.command;
+            color: P.accent;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
 // The folders as tabs, "1:All 2:Work …": the first four, the rest behind "more". Each tab is as
 // tall as its word: a Rectangle has no height of its own, and a tab without one is drawn but takes
-// no clicks.
+// no clicks. A right click on a tab gives the folder's menu: every chat of it read.
 component Folders {
+    property <int> menu-index;              // the folder the menu is for: index into Chats.folders
+    property <length> menu-x;
+
+    function show-menu(folder: int, left: length) {
+        root.menu-index = folder;
+        root.menu-x = max(0px, left - root.absolute-position.x);
+        folder-menu.show();
+    }
+
+    pure function name(index: int) -> string {
+        if index < 0 || index >= Chats.folders.length { return ""; }
+        return (index + 1) + ":" + (Chats.folders[index].id == 0 ? @tr("All") : Chats.folders[index].name);
+    }
+
     HorizontalLayout {
         spacing: 8px;
         alignment: start;
@@ -325,6 +368,11 @@ component Folders {
                 clicked => {
                     Chats.show-folder(index);
                 }
+                pointer-event(event) => {
+                    if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                        root.show-menu(index, self.absolute-position.x + self.mouse-x);
+                    }
+                }
             }
         }
         if Chats.folders.length > 4: Rectangle {
@@ -341,6 +389,12 @@ component Folders {
                 mouse-cursor: pointer;
                 clicked => {
                     list.show();
+                }
+                // "more" stands for the folder shown: a right click on it is one on that folder.
+                pointer-event(event) => {
+                    if parent.chosen && event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                        root.show-menu(Chats.folder, self.absolute-position.x + self.mouse-x);
+                    }
                 }
             }
             list := PopupWindow {
@@ -381,33 +435,48 @@ component Folders {
             }
         }
     }
-}
 
-component MenuEntry inherits Rectangle {
-    in property <string> label;
-    in property <string> command;
-    callback activated();
-    height: 26px;
-    background: touch.has-hover ? P.sel : transparent;
-
-    HorizontalLayout {
-        padding-left: 12px;
-        padding-right: 12px;
-        spacing: 8px;
-        T {
-            horizontal-stretch: 1;
-            text: root.label;
-        }
-        T {
-            text: root.command;
-            color: P.accent;
-        }
-    }
-
-    touch := TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            root.activated();
+    folder-menu := PopupWindow {
+        x: root.menu-x;
+        y: 20px;
+        width: 230px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+        Rectangle {
+            border-radius: 4px;
+            background: P.side;
+            border-width: 1px;
+            border-color: P.line;
+            drop-shadow-blur: 30px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: P.shadow;
+            VerticalLayout {
+                padding-top: 4px;
+                padding-bottom: 4px;
+                HorizontalLayout {
+                    height: 24px;
+                    x: 12px;
+                    spacing: 5px;
+                    T {
+                        text: "──";
+                        color: P.faint;
+                    }
+                    T {
+                        horizontal-stretch: 1;
+                        text: root.name(root.menu-index) + " ──";
+                        color: P.faint;
+                        overflow: elide;
+                    }
+                }
+                MenuEntry {
+                    label: @tr("Mark all as read");
+                    // The command line's /readall is for the folder shown.
+                    command: root.menu-index == Chats.folder ? "/readall" : "";
+                    activated => {
+                        Chats.mark-all-read(root.menu-index);
+                        folder-menu.close();
+                    }
+                }
+            }
         }
     }
 }
@@ -432,7 +501,7 @@ component Side inherits Rectangle {
         Chats.open-menu(chat.id);
         root.menu-x = max(0px, left - root.absolute-position.x);
         // Within the list, whichever of the two pages is the taller.
-        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 38px - 26px * max((Chats.folders.length > 1 ? 4 : 3) + 4, Chats.menu-folders.length + 1)));
+        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 38px - 26px * max((Chats.folders.length > 1 ? 5 : 4) + 4, Chats.menu-folders.length + 1)));
         chat-menu.show();
     }
 
@@ -678,6 +747,13 @@ component Side inherits Rectangle {
                     label: @tr("Add to folder");
                     activated => {
                         root.menu-folders = true;
+                    }
+                }
+                if !root.menu-folders: MenuEntry {
+                    label: @tr("Copy ID");
+                    activated => {
+                        Chats.copy-id(root.menu-chat.id);
+                        chat-menu.close();
                     }
                 }
                 // Telegram's own actions on the chat (chats.rs); the ones that cannot be undone ask first.
@@ -1186,6 +1262,14 @@ component Pane inherits Rectangle {
                                 menu.close();
                             }
                         }
+                        MenuEntry {
+                            label: @tr("Copy ID");
+                            command: "/id";
+                            activated => {
+                                Conversation.copy-id();
+                                menu.close();
+                            }
+                        }
                     }
                 }
             }
@@ -1332,6 +1416,8 @@ component CommandLine inherits Rectangle {
         { command: "/mute", description: @tr("Mute or unmute this chat") },
         { command: "/pin", description: @tr("Pin or unpin this chat") },
         { command: "/read", description: @tr("Mark this chat as read") },
+        { command: "/readall", description: @tr("Mark every chat in this folder as read") },
+        { command: "/id", description: @tr("Copy this chat's ID") },
     ];
     property <string> typed: input.text;
 
@@ -1350,8 +1436,12 @@ component CommandLine inherits Rectangle {
             Conversation.toggle-mute();
         } else if line.starts-with("/pin") {
             Conversation.toggle-pin();
+        } else if line.starts-with("/readall") {
+            Chats.mark-all-read(Chats.folder);
         } else if line.starts-with("/read") {
             Conversation.mark-read();
+        } else if line.starts-with("/id") {
+            Conversation.copy-id();
         } else if !line.starts-with("/") {
             Conversation.send(line);
         }

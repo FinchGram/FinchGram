@@ -110,6 +110,11 @@ pub fn connect(ui: &MainWindow) {
             mark_read(chat_id);
         }
     });
+    conversation.on_copy_id(|| {
+        if let Some(chat_id) = open_chat() {
+            actions::copy_id(&chat_id.to_string());
+        }
+    });
     conversation.on_open_link(|url| open_link(&url));
     conversation.on_load_picture(|id| {
         if let Ok(id) = id.parse() {

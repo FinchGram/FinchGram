@@ -655,6 +655,12 @@ fn copy(text: &str, notice: ActionNotice) {
     }
 }
 
+/// A chat's id onto the clipboard, as TDLib writes it: what bots and scripts know the chat by
+/// (the Bot API's chat_id is the same number).
+pub(super) fn copy_id(id: &str) {
+    copy(id, ActionNotice::IdCopied);
+}
+
 /// The message's link (t.me/…): an album's, for the whole of it.
 fn copy_link(chat_id: i64, message_id: i64, album: bool) {
     let request = json!({

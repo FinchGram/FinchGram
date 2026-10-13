@@ -81,7 +81,8 @@ component NetworkBanner inherits Rectangle {
 // One line of the tree: a folder's header, a chat in it, or a pinned chat at the top, in no folder.
 component TreeLine inherits Rectangle {
     in property <TreeRow> item;
-    callback menu(length, length);          // a right click, where it is in the window
+    callback menu(length, length);          // a right click on a chat, where it is in the window
+    callback folder-menu(length, length);   // a right click on a folder's header
     property <bool> open: !item.header && item.chat.id == Conversation.chat-id;
     property <bool> unread: item.chat.unread > 0 || item.chat.mention || item.chat.marked;
     height: item.header ? 32px : 28px;
@@ -166,8 +167,12 @@ component TreeLine inherits Rectangle {
             }
         }
         pointer-event(event) => {
-            if !root.item.header && event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
-                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                if root.item.header {
+                    root.folder-menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+                } else {
+                    root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+                }
             }
         }
     }
@@ -382,8 +387,25 @@ export component WorkbenchSidebar inherits Rectangle {
         Chats.open-menu(chat.id);
         root.menu-x = max(0px, left - root.absolute-position.x);
         // Within the list, whichever of the two pages is the taller.
-        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 44px - 32px * max((Chats.folders.length > 1 ? 4 : 3) + 4, Chats.menu-folders.length + 1)));
+        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 44px - 32px * max((Chats.folders.length > 1 ? 5 : 4) + 4, Chats.menu-folders.length + 1)));
         chat-menu.show();
+    }
+
+    // A folder's menu, from a right click on its header in the tree: every chat of it read.
+    property <int> folder-menu-index;       // index into Chats.folders
+    property <length> folder-menu-x;
+    property <length> folder-menu-y;
+
+    function show-folder-menu(folder: int, left: length, top: length) {
+        root.folder-menu-index = folder;
+        root.folder-menu-x = max(0px, left - root.absolute-position.x);
+        root.folder-menu-y = max(0px, min(top - root.absolute-position.y, root.height - 44px - 32px));
+        folder-menu.show();
+    }
+
+    pure function folder-name(index: int) -> string {
+        if index < 0 || index >= Chats.folders.length { return ""; }
+        return Chats.folders[index].id == 0 ? @tr("All chats") : Chats.folders[index].name;
     }
 
     VerticalLayout {
@@ -443,6 +465,9 @@ export component WorkbenchSidebar inherits Rectangle {
                 item: row;
                 menu(left, top) => {
                     root.show-menu(row.chat, -1, left, top);
+                }
+                folder-menu(left, top) => {
+                    root.show-folder-menu(row.folder, left, top);
                 }
             }
         }
@@ -570,6 +595,14 @@ export component WorkbenchSidebar inherits Rectangle {
                         root.menu-folders = true;
                     }
                 }
+                if !root.menu-folders: MenuEntry {
+                    icon: "copy";
+                    label: @tr("Copy ID");
+                    activated => {
+                        Chats.copy-id(root.menu-chat.id);
+                        chat-menu.close();
+                    }
+                }
                 // Telegram's own actions on the chat (chats.rs); the ones that cannot be undone ask first.
                 if !root.menu-folders && root.menu-chat.kind != ChatKind.saved: Rectangle {
                     height: 9px;
@@ -627,6 +660,46 @@ export component WorkbenchSidebar inherits Rectangle {
                             Chats.toggle-in-folder(root.menu-chat.id, choice.folder);
                             chat-menu.close();
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    folder-menu := PopupWindow {
+        x: root.folder-menu-x;
+        y: root.folder-menu-y;
+        width: 230px;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+
+        Rectangle {
+            border-radius: 8px;
+            background: P.bg;
+            border-width: 1px;
+            border-color: P.line;
+            drop-shadow-blur: 32px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: P.shadow;
+
+            VerticalLayout {
+                padding: 6px;
+                Text {
+                    height: 26px;
+                    x: 10px;
+                    text: root.folder-name(root.folder-menu-index).to-uppercase();
+                    color: P.faint;
+                    font-size: 11px;
+                    font-weight: 600;
+                    letter-spacing: 0.88px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                MenuEntry {
+                    icon: "checks";
+                    label: @tr("Mark all as read");
+                    activated => {
+                        Chats.mark-all-read(root.folder-menu-index);
+                        folder-menu.close();
                     }
                 }
             }
