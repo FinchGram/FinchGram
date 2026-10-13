@@ -101,6 +101,7 @@ export component MenuEntry inherits Rectangle {
     in property <string> keys;
     in property <bool> danger;                // deleting: in the danger colour
     in property <bool> enabled: true;
+    in property <length> indent;              // one of a group's choices, under the group's name
     callback activated();
     height: 32px;
     border-radius: 6px;
@@ -108,7 +109,7 @@ export component MenuEntry inherits Rectangle {
     opacity: enabled ? 1 : 0.4;
 
     HorizontalLayout {
-        padding-left: 10px;
+        padding-left: 10px + root.indent;
         padding-right: 10px;
         spacing: 10px;
         VerticalLayout {

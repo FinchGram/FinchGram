@@ -356,13 +356,14 @@ component MenuEntry inherits Rectangle {
     in property <string> icon;                // "": no icon, its place kept (a choice not ticked)
     in property <string> label;
     in property <string> keys;
+    in property <length> indent;              // one of a group's choices, under the group's name
     callback activated();
     height: 34px;
     border-radius: 2px;
     background: touch.has-hover ? P.hover : transparent;
 
     HorizontalLayout {
-        padding-left: 10px;
+        padding-left: 10px + root.indent;
         padding-right: 10px;
         spacing: 10px;
         VerticalLayout {
@@ -444,18 +445,16 @@ component FolderTab {
 }
 
 // The folders as tabs: the first four, the rest behind "More". A right click on a tab gives the
-// folder's menu: every chat of it read, and its second page, Sort by: how every folder's chats
-// are ordered.
+// folder's menu: every chat of it read, and the group Sort by: how every folder's chats are
+// ordered.
 component Folders {
     // "More" names the folder shown when it is one of those behind it.
     property <bool> more-chosen: Chats.folder >= 4;
     property <int> menu-index;              // the folder the menu is for: index into Chats.folders
-    property <bool> menu-sort;              // the second page is showing
     property <length> menu-x;
 
     function show-menu(folder: int, left: length) {
         root.menu-index = folder;
-        root.menu-sort = false;
         root.menu-x = max(0px, left - root.absolute-position.x);
         folder-menu.show();
     }
@@ -584,7 +583,7 @@ component Folders {
                     vertical-alignment: center;
                     overflow: elide;
                 }
-                if !root.menu-sort: MenuEntry {
+                MenuEntry {
                     icon: "checks";
                     label: @tr("Mark all as read");
                     activated => {
@@ -592,21 +591,24 @@ component Folders {
                         folder-menu.close();
                     }
                 }
-                if !root.menu-sort: MenuEntry {
-                    icon: "sort-ascending";
-                    label: @tr("Sort by");
-                    activated => {
-                        root.menu-sort = true;
+                // How every folder's chats are ordered: a group of choices, the one in force ticked.
+                Rectangle {
+                    height: 9px;
+                    Rectangle {
+                        height: 1px;
+                        background: P.line;
                     }
                 }
-                if root.menu-sort: MenuEntry {
-                    icon: "caret-left";
-                    label: @tr("Back");
-                    activated => {
-                        root.menu-sort = false;
-                    }
+                Text {
+                    height: 26px;
+                    x: 10px;
+                    text: @tr("Sort by");
+                    color: P.faint;
+                    font-size: 12px;
+                    vertical-alignment: center;
                 }
-                if root.menu-sort: MenuEntry {
+                MenuEntry {
+                    indent: 12px;
                     icon: Chats.order == ChatOrder.latest-message ? "check" : "";
                     label: @tr("Latest message");
                     activated => {
@@ -614,7 +616,8 @@ component Folders {
                         folder-menu.close();
                     }
                 }
-                if root.menu-sort: MenuEntry {
+                MenuEntry {
+                    indent: 12px;
                     icon: Chats.order == ChatOrder.name ? "check" : "";
                     label: @tr("Name");
                     activated => {
@@ -622,7 +625,8 @@ component Folders {
                         folder-menu.close();
                     }
                 }
-                if root.menu-sort: MenuEntry {
+                MenuEntry {
+                    indent: 12px;
                     icon: Chats.order == ChatOrder.unread ? "check" : "";
                     label: @tr("Unread");
                     activated => {

@@ -304,12 +304,13 @@ component ChatLine inherits Rectangle {
 component MenuEntry inherits Rectangle {
     in property <string> label;
     in property <string> command;
+    in property <length> indent;              // one of a group's choices, under the group's name
     callback activated();
     height: 26px;
     background: touch.has-hover ? P.sel : transparent;
 
     HorizontalLayout {
-        padding-left: 12px;
+        padding-left: 12px + root.indent;
         padding-right: 12px;
         spacing: 8px;
         T {
@@ -332,16 +333,14 @@ component MenuEntry inherits Rectangle {
 
 // The folders as tabs, "1:All 2:Work …": the first four, the rest behind "more". Each tab is as
 // tall as its word: a Rectangle has no height of its own, and a tab without one is drawn but takes
-// no clicks. A right click on a tab gives the folder's menu: every chat of it read, and its second
-// page, Sort by: how every folder's chats are ordered.
+// no clicks. A right click on a tab gives the folder's menu: every chat of it read, and the group
+// Sort by: how every folder's chats are ordered.
 component Folders {
     property <int> menu-index;              // the folder the menu is for: index into Chats.folders
-    property <bool> menu-sort;              // the second page is showing
     property <length> menu-x;
 
     function show-menu(folder: int, left: length) {
         root.menu-index = folder;
-        root.menu-sort = false;
         root.menu-x = max(0px, left - root.absolute-position.x);
         folder-menu.show();
     }
@@ -474,7 +473,7 @@ component Folders {
                         overflow: elide;
                     }
                 }
-                if !root.menu-sort: MenuEntry {
+                MenuEntry {
                     label: @tr("Mark all as read");
                     // The command line's /readall is for the folder shown.
                     command: root.menu-index == Chats.folder ? "/readall" : "";
@@ -483,33 +482,40 @@ component Folders {
                         folder-menu.close();
                     }
                 }
-                if !root.menu-sort: MenuEntry {
-                    label: @tr("Sort by");
-                    activated => {
-                        root.menu-sort = true;
+                // How every folder's chats are ordered: a group of choices, the one in force ticked.
+                Rectangle {
+                    height: 7px;
+                    Rectangle {
+                        height: 1px;
+                        background: P.line;
                     }
                 }
-                if root.menu-sort: MenuEntry {
-                    label: @tr("Back");
-                    activated => {
-                        root.menu-sort = false;
+                HorizontalLayout {
+                    height: 24px;
+                    x: 12px;
+                    T {
+                        text: @tr("Sort by");
+                        color: P.faint;
                     }
                 }
-                if root.menu-sort: MenuEntry {
+                MenuEntry {
+                    indent: 12px;
                     label: root.chosen(ChatOrder.latest-message) + @tr("Latest message");
                     activated => {
                         Chats.change-order(ChatOrder.latest-message);
                         folder-menu.close();
                     }
                 }
-                if root.menu-sort: MenuEntry {
+                MenuEntry {
+                    indent: 12px;
                     label: root.chosen(ChatOrder.name) + @tr("Name");
                     activated => {
                         Chats.change-order(ChatOrder.name);
                         folder-menu.close();
                     }
                 }
-                if root.menu-sort: MenuEntry {
+                MenuEntry {
+                    indent: 12px;
                     label: root.chosen(ChatOrder.unread) + @tr("Unread");
                     activated => {
                         Chats.change-order(ChatOrder.unread);

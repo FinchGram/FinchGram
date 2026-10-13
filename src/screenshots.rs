@@ -1245,15 +1245,6 @@ fn screenshots() {
             };
             right_click(&window, fx, fy);
             save(&window, &name("folder-menu"));
-            // Its second entry, Sort by: the menu's second page. Workbench's menu opens at the
-            // click; the others' under the tabs.
-            let (sx, sy) = match theme {
-                Theme::Workbench => (fx + 40.0, fy + 32.0 + 1.5 * 32.0),
-                Theme::Broadsheet => (fx + 40.0, 351.0),
-                Theme::Terminal => (fx + 40.0, 163.0),
-            };
-            click(&window, sx, sy);
-            save(&window, &name("folder-menu-sort"));
             escape(&window);
             // The questions asked before leaving a group and before deleting a chat.
             let chats = ui.global::<Chats>();

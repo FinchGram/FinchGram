@@ -392,18 +392,16 @@ export component WorkbenchSidebar inherits Rectangle {
     }
 
     // A folder's menu, from a right click on its header in the tree: every chat of it read, and
-    // its second page, Sort by: how every folder's chats are ordered.
+    // the group Sort by: how every folder's chats are ordered.
     property <int> folder-menu-index;       // index into Chats.folders
-    property <bool> folder-menu-sort;       // the second page is showing
     property <length> folder-menu-x;
     property <length> folder-menu-y;
 
     function show-folder-menu(folder: int, left: length, top: length) {
         root.folder-menu-index = folder;
-        root.folder-menu-sort = false;
         root.folder-menu-x = max(0px, left - root.absolute-position.x);
-        // Within the list, for the taller of the two pages.
-        root.folder-menu-y = max(0px, min(top - root.absolute-position.y, root.height - 44px - 32px * 4));
+        // Within the list: the menu is 201px tall (its padding, two headings, a line, four entries).
+        root.folder-menu-y = max(0px, min(top - root.absolute-position.y, root.height - 201px));
         folder-menu.show();
     }
 
@@ -691,7 +689,7 @@ export component WorkbenchSidebar inherits Rectangle {
                     vertical-alignment: center;
                     overflow: elide;
                 }
-                if !root.folder-menu-sort: MenuEntry {
+                MenuEntry {
                     icon: "checks";
                     label: @tr("Mark all as read");
                     activated => {
@@ -699,21 +697,26 @@ export component WorkbenchSidebar inherits Rectangle {
                         folder-menu.close();
                     }
                 }
-                if !root.folder-menu-sort: MenuEntry {
-                    icon: "sort-ascending";
-                    label: @tr("Sort by");
-                    activated => {
-                        root.folder-menu-sort = true;
+                // How every folder's chats are ordered: a group of choices, the one in force ticked.
+                Rectangle {
+                    height: 9px;
+                    Rectangle {
+                        height: 1px;
+                        background: P.line;
                     }
                 }
-                if root.folder-menu-sort: MenuEntry {
-                    icon: "caret-left";
-                    label: @tr("Back");
-                    activated => {
-                        root.folder-menu-sort = false;
-                    }
+                Text {
+                    height: 26px;
+                    x: 10px;
+                    text: @tr("Sort by").to-uppercase();
+                    color: P.faint;
+                    font-size: 11px;
+                    font-weight: 600;
+                    letter-spacing: 0.88px;
+                    vertical-alignment: center;
                 }
-                if root.folder-menu-sort: MenuEntry {
+                MenuEntry {
+                    indent: 12px;
                     icon: Chats.order == ChatOrder.latest-message ? "check" : "";
                     label: @tr("Latest message");
                     activated => {
@@ -721,7 +724,8 @@ export component WorkbenchSidebar inherits Rectangle {
                         folder-menu.close();
                     }
                 }
-                if root.folder-menu-sort: MenuEntry {
+                MenuEntry {
+                    indent: 12px;
                     icon: Chats.order == ChatOrder.name ? "check" : "";
                     label: @tr("Name");
                     activated => {
@@ -729,7 +733,8 @@ export component WorkbenchSidebar inherits Rectangle {
                         folder-menu.close();
                     }
                 }
-                if root.folder-menu-sort: MenuEntry {
+                MenuEntry {
+                    indent: 12px;
                     icon: Chats.order == ChatOrder.unread ? "check" : "";
                     label: @tr("Unread");
                     activated => {
