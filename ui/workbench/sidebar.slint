@@ -2,7 +2,7 @@
 // channels, the bots. Which one shows is chosen in the activity bar (workbench.slint).
 import { ListView } from "std-widgets.slint";
 import { AppState, Connection, Theme } from "../state.slint";
-import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind } from "../telegram.slint";
+import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind, ChatOrder } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, ListEdge, Avatar } from "../widgets.slint";
 import { ChatIcons, ChatMenuWords } from "../chat.slint";
@@ -391,15 +391,19 @@ export component WorkbenchSidebar inherits Rectangle {
         chat-menu.show();
     }
 
-    // A folder's menu, from a right click on its header in the tree: every chat of it read.
+    // A folder's menu, from a right click on its header in the tree: every chat of it read, and
+    // its second page, Sort by: how every folder's chats are ordered.
     property <int> folder-menu-index;       // index into Chats.folders
+    property <bool> folder-menu-sort;       // the second page is showing
     property <length> folder-menu-x;
     property <length> folder-menu-y;
 
     function show-folder-menu(folder: int, left: length, top: length) {
         root.folder-menu-index = folder;
+        root.folder-menu-sort = false;
         root.folder-menu-x = max(0px, left - root.absolute-position.x);
-        root.folder-menu-y = max(0px, min(top - root.absolute-position.y, root.height - 44px - 32px));
+        // Within the list, for the taller of the two pages.
+        root.folder-menu-y = max(0px, min(top - root.absolute-position.y, root.height - 44px - 32px * 4));
         folder-menu.show();
     }
 
@@ -687,11 +691,49 @@ export component WorkbenchSidebar inherits Rectangle {
                     vertical-alignment: center;
                     overflow: elide;
                 }
-                MenuEntry {
+                if !root.folder-menu-sort: MenuEntry {
                     icon: "checks";
                     label: @tr("Mark all as read");
                     activated => {
                         Chats.mark-all-read(root.folder-menu-index);
+                        folder-menu.close();
+                    }
+                }
+                if !root.folder-menu-sort: MenuEntry {
+                    icon: "sort-ascending";
+                    label: @tr("Sort by");
+                    activated => {
+                        root.folder-menu-sort = true;
+                    }
+                }
+                if root.folder-menu-sort: MenuEntry {
+                    icon: "caret-left";
+                    label: @tr("Back");
+                    activated => {
+                        root.folder-menu-sort = false;
+                    }
+                }
+                if root.folder-menu-sort: MenuEntry {
+                    icon: Chats.order == ChatOrder.latest-message ? "check" : "";
+                    label: @tr("Latest message");
+                    activated => {
+                        Chats.change-order(ChatOrder.latest-message);
+                        folder-menu.close();
+                    }
+                }
+                if root.folder-menu-sort: MenuEntry {
+                    icon: Chats.order == ChatOrder.name ? "check" : "";
+                    label: @tr("Name");
+                    activated => {
+                        Chats.change-order(ChatOrder.name);
+                        folder-menu.close();
+                    }
+                }
+                if root.folder-menu-sort: MenuEntry {
+                    icon: Chats.order == ChatOrder.unread ? "check" : "";
+                    label: @tr("Unread");
+                    activated => {
+                        Chats.change-order(ChatOrder.unread);
                         folder-menu.close();
                     }
                 }

@@ -7,6 +7,7 @@
 //! chats.rs, conversation.rs and account.rs add what the pages can do with it.
 
 use std::cell::RefCell;
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::rc::Rc;
@@ -22,10 +23,11 @@ use super::avatars;
 use super::rich_text;
 use super::time;
 use crate::images;
+use crate::platform::NameOrder;
 use crate::{
-    Account, ChatKind, ChatRow, Chats, Content, Conversation, FileCard, FileState, FileType, Folder, FolderChoice, LinkPreview,
-    MainWindow, Media, MessageRow, Moment, NotificationScopes, ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer, ViewerItem,
-    Words,
+    Account, AppState, ChatKind, ChatOrder, ChatRow, Chats, Content, Conversation, FileCard, FileState, FileType, Folder, FolderChoice,
+    LinkPreview, MainWindow, Media, MessageRow, Moment, NotificationScopes, ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer,
+    ViewerItem, Words,
 };
 
 /// How long someone counts as typing after TDLib last said so.
@@ -386,12 +388,17 @@ pub fn refresh_all() {
     refresh();
 }
 
-/// The names Telegram does not give, in the UI language (the Words global).
+/// The names Telegram does not give, in the UI language (the Words global), and how the pages
+/// want the chat lists ordered.
 pub struct Names {
     pub saved_messages: String,
     deleted_account: String,
     all_chats: String,
     pub list_separator: String,
+    /// How a folder's chats are ordered under the pinned ones (Chats.order), and the order of
+    /// names in the UI language, for the order by name.
+    order: ChatOrder,
+    name_order: NameOrder,
 }
 
 impl Names {
@@ -402,8 +409,35 @@ impl Names {
             deleted_account: words.get_deleted_account().into(),
             all_chats: words.get_all_chats().into(),
             list_separator: words.get_list_separator().into(),
+            order: ui.global::<Chats>().get_order(),
+            name_order: NameOrder::new(&ui.global::<AppState>().get_language()),
         }
     }
+}
+
+/// What a chat is ordered by in a list (chats_in).
+struct SortKey {
+    pinned: bool,
+    order: i64,             // TDLib's: the newest message first, the pinned ones above
+    id: i64,
+    title: String,
+    unread: i32,            // 0 for a muted chat, whatever it has
+}
+
+/// The order of two chats in a list: the pinned ones first, in Telegram's order; then the rest as
+/// chosen, Telegram's order (the newest message first) breaking ties.
+fn compare(a: &SortKey, b: &SortKey, order: ChatOrder, names: &NameOrder) -> Ordering {
+    let telegram = b.order.cmp(&a.order).then(b.id.cmp(&a.id));
+    b.pinned.cmp(&a.pinned).then_with(|| {
+        if a.pinned {
+            return telegram;
+        }
+        match order {
+            ChatOrder::LatestMessage => telegram,
+            ChatOrder::Name => names.compare(&a.title, &b.title).then(telegram),
+            ChatOrder::Unread => b.unread.cmp(&a.unread).then(telegram),
+        }
+    })
 }
 
 /// Replace the rows of `model` with `rows`, touching only the rows that changed when the number of
@@ -1071,19 +1105,27 @@ impl Store {
             .collect()
     }
 
-    /// The chats of `list`, in Telegram's order, matching the search words by the names the pages
-    /// show (Saved Messages, Deleted Account), not TDLib's titles. Saved Messages is left out: it is
-    /// the fixed row above every list.
+    /// The chats of `list`, in the chosen order (`compare`: the pinned ones first, then by the
+    /// newest message, by name or by unread messages), matching the search words by the names the
+    /// pages show (Saved Messages, Deleted Account), not TDLib's titles. Saved Messages is left
+    /// out: it is the fixed row above every list.
     pub fn chats_in(&self, list: ChatList, names: &Names) -> Vec<&api::Chat> {
-        let mut chats: Vec<(&api::Chat, i64)> = self
+        let mut chats: Vec<(&api::Chat, SortKey)> = self
             .chats
             .values()
             .filter(|chat| chat.id != self.my_id)
-            .filter_map(|chat| position(chat, list).map(|position| (chat, position.order)))
-            .filter(|(chat, _)| self.query.is_empty() || self.title(chat, names).to_lowercase().contains(&self.query))
+            .filter_map(|chat| position(chat, list).map(|position| (chat, position)))
+            .map(|(chat, position)| (chat, SortKey { pinned: position.is_pinned, order: position.order, id: chat.id, title: self.title(chat, names), unread: self.unread_for_order(chat) }))
+            .filter(|(_, key)| self.query.is_empty() || key.title.to_lowercase().contains(&self.query))
             .collect();
-        chats.sort_by(|(a, a_order), (b, b_order)| b_order.cmp(a_order).then(b.id.cmp(&a.id)));
+        chats.sort_by(|(_, a), (_, b)| compare(a, b, names.order, &names.name_order));
         chats.into_iter().map(|(chat, _)| chat).collect()
+    }
+
+    /// What a chat counts as unread for the order by unread messages: nothing when it is muted
+    /// (its badge is grey), else its unread messages, or one when it was marked unread by hand.
+    fn unread_for_order(&self, chat: &api::Chat) -> i32 {
+        if self.muted(chat) { 0 } else { chat.unread_count.max(i32::from(chat.is_marked_as_unread)) }
     }
 
     fn refresh_chats(&mut self, ui: &MainWindow, names: &Names) {
@@ -1950,6 +1992,28 @@ mod tests {
             "notification_settings": { "@type": "chatNotificationSettings", "use_default_mute_for": true, "mute_for": 0 }
         }))
         .expect("a chat")
+    }
+
+    fn key(pinned: bool, order: i64, title: &str, unread: i32) -> SortKey {
+        SortKey { pinned, order, id: order, title: title.into(), unread }
+    }
+
+    #[test]
+    fn the_pinned_chats_come_first_in_every_order_then_the_chosen_one() {
+        let names = NameOrder::new("en");
+        let pinned = key(true, 1, "zed", 0);
+        let newest = key(false, 9, "mike", 0);
+        let busy = key(false, 5, "alice", 7);
+        for order in [ChatOrder::LatestMessage, ChatOrder::Name, ChatOrder::Unread] {
+            assert_eq!(compare(&pinned, &newest, order, &names), Ordering::Less);
+            assert_eq!(compare(&busy, &pinned, order, &names), Ordering::Greater);
+        }
+        assert_eq!(compare(&newest, &busy, ChatOrder::LatestMessage, &names), Ordering::Less);
+        assert_eq!(compare(&newest, &busy, ChatOrder::Name, &names), Ordering::Greater);
+        assert_eq!(compare(&newest, &busy, ChatOrder::Unread, &names), Ordering::Greater);
+        // Two pinned chats keep Telegram's order; ties among the rest go to the newest message.
+        assert_eq!(compare(&key(true, 1, "a", 9), &key(true, 2, "b", 0), ChatOrder::Unread, &names), Ordering::Greater);
+        assert_eq!(compare(&key(false, 9, "same", 2), &key(false, 5, "same", 2), ChatOrder::Unread, &names), Ordering::Less);
     }
 
     #[test]

@@ -104,7 +104,10 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   退出群组或频道（leaveChat）、删除和某个用户或机器人的聊天（deleteChatHistory，TDLib 允许时也可以同时删掉对方那边的）；
   拉黑、退出和删除都会先问一句，退出或删除后聊天的标签页随即关闭。
   文件夹的菜单（对它的标签页点右键，Workbench 里是对树里的标题行）把里面的聊天全部标为已读：
-  TDLib 把整个列表走一遍（readChatList），已读回执是真的。
+  TDLib 把整个列表走一遍（readChatList），已读回执是真的。菜单里的"排序方式"决定所有文件夹里聊天的顺序，
+  置顶的不参与，照 Telegram 的顺序留在最前：按最新消息（Telegram 自己的顺序）、按名称（按界面语言的习惯比较，
+  用 macOS 自带的比较，中文按拼音、数字按大小，`platform::NameOrder`）、按未读（静音的聊天按没有未读算，
+  和它灰色的角标一致）；所有文件夹共用一个选择，settings.toml 里的 `chat_order`，排序在 `store.rs` 的 chats_in。
 - 通知（`notifications.rs`，设置 → 通知与声音）用的是 TDLib 自己的：用它的 `notification_group_count_max` 选项打开后，
   该不该通知由 TDLib 决定。它遵循每个聊天的免打扰和每类聊天的设置（Telegram 自己的、跟着账号走的设置），
   账号的另一台设备正在用时会稍等一下，消息在任何地方读过之后会把通知收回。外壳只负责显示 TDLib 加的通知

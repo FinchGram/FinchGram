@@ -4,7 +4,7 @@ import { ListView } from "std-widgets.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer, LinkPreview, ReplyQuote,
-    Actions, ComposeBar, ActionNotice, Attachments } from "../telegram.slint";
+    Actions, ComposeBar, ActionNotice, Attachments, ChatOrder } from "../telegram.slint";
 import { Look, AccountColors } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
@@ -444,15 +444,18 @@ component FolderTab {
 }
 
 // The folders as tabs: the first four, the rest behind "More". A right click on a tab gives the
-// folder's menu: every chat of it read.
+// folder's menu: every chat of it read, and its second page, Sort by: how every folder's chats
+// are ordered.
 component Folders {
     // "More" names the folder shown when it is one of those behind it.
     property <bool> more-chosen: Chats.folder >= 4;
     property <int> menu-index;              // the folder the menu is for: index into Chats.folders
+    property <bool> menu-sort;              // the second page is showing
     property <length> menu-x;
 
     function show-menu(folder: int, left: length) {
         root.menu-index = folder;
+        root.menu-sort = false;
         root.menu-x = max(0px, left - root.absolute-position.x);
         folder-menu.show();
     }
@@ -581,11 +584,49 @@ component Folders {
                     vertical-alignment: center;
                     overflow: elide;
                 }
-                MenuEntry {
+                if !root.menu-sort: MenuEntry {
                     icon: "checks";
                     label: @tr("Mark all as read");
                     activated => {
                         Chats.mark-all-read(root.menu-index);
+                        folder-menu.close();
+                    }
+                }
+                if !root.menu-sort: MenuEntry {
+                    icon: "sort-ascending";
+                    label: @tr("Sort by");
+                    activated => {
+                        root.menu-sort = true;
+                    }
+                }
+                if root.menu-sort: MenuEntry {
+                    icon: "caret-left";
+                    label: @tr("Back");
+                    activated => {
+                        root.menu-sort = false;
+                    }
+                }
+                if root.menu-sort: MenuEntry {
+                    icon: Chats.order == ChatOrder.latest-message ? "check" : "";
+                    label: @tr("Latest message");
+                    activated => {
+                        Chats.change-order(ChatOrder.latest-message);
+                        folder-menu.close();
+                    }
+                }
+                if root.menu-sort: MenuEntry {
+                    icon: Chats.order == ChatOrder.name ? "check" : "";
+                    label: @tr("Name");
+                    activated => {
+                        Chats.change-order(ChatOrder.name);
+                        folder-menu.close();
+                    }
+                }
+                if root.menu-sort: MenuEntry {
+                    icon: Chats.order == ChatOrder.unread ? "check" : "";
+                    label: @tr("Unread");
+                    activated => {
+                        Chats.change-order(ChatOrder.unread);
                         folder-menu.close();
                     }
                 }

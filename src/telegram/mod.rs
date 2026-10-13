@@ -191,6 +191,12 @@ pub fn connect_viewer_settings(ui: &MainWindow, settings: Rc<RefCell<Settings>>)
     viewer::connect_settings(ui, settings);
 }
 
+/// How the folders' chats are ordered: from the settings, and back into them when a folder's menu
+/// changes it.
+pub fn connect_chat_order(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
+    chats::connect_order(ui, settings);
+}
+
 /// The app is quitting: let TDLib write its database out and finchgram-tdlib end, for at most
 /// [`CLOSE_TIMEOUT`]. Call once the event loop has ended.
 pub fn shut_down() {

@@ -64,6 +64,11 @@ export struct ChatRow {
 // chat (chats.rs).
 export enum ChatConfirm { none, block, leave, delete }
 
+// How a folder's chats are ordered under the pinned ones, which stay on top: by the newest message
+// (Telegram's own order), by name, or by unread messages, muted chats counting as read. One choice
+// for every folder, remembered (settings.toml).
+export enum ChatOrder { latest-message, name, unread }
+
 // A folder of chats: 0 is All chats, the others are the account's own Telegram folders.
 export struct Folder {
     id: int,
@@ -113,6 +118,8 @@ export global Chats {
     callback toggle-in-folder(string, int);      // put the chat into a folder (index into folders), or take it out
     // A folder's menu (a right click on its tab, or on its header in Workbench's tree).
     callback mark-all-read(int);                 // every chat of the folder (index into folders) read, as Telegram's apps do it
+    in-out property <ChatOrder> order;           // how every folder's chats are ordered (chats.rs keeps it in the settings)
+    callback change-order(ChatOrder);
     // Telegram's own actions on a chat, with a question first where they cannot be undone.
     callback toggle-block(string);               // block the user (after the question), or unblock them at once
     callback report(string);                     // Telegram's report flow, as for a message (Actions.report-open)

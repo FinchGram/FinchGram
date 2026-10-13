@@ -8,6 +8,7 @@
 
 use std::cell::RefCell;
 use std::collections::HashSet;
+use std::rc::Rc;
 
 use serde_json::{Value, json};
 use slint::{ComponentHandle, ModelRc, VecModel};
@@ -15,7 +16,8 @@ use slint::{ComponentHandle, ModelRc, VecModel};
 use super::api::ChatList;
 use super::{Error, send};
 use super::{actions, conversation, store};
-use crate::{ActionNotice, Chats, MainWindow};
+use crate::settings::{self, Settings};
+use crate::{ActionNotice, ChatOrder, Chats, MainWindow};
 
 /// How many chats one loadChats asks for.
 const PAGE: i32 = 100;
@@ -103,6 +105,37 @@ pub fn connect(ui: &MainWindow) {
         store::refresh();
         super::with_ui(|ui| ui.global::<Chats>().set_query(words.trim().into()));
     });
+}
+
+/// How the folders' chats are ordered under the pinned ones: the settings' choice at the start,
+/// and a folder's menu changes it for every folder at once, and it is remembered. The lists
+/// follow at the next refresh (store.rs reads Chats.order).
+pub fn connect_order(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
+    let chats = ui.global::<Chats>();
+    chats.set_order(order_for_pages(settings.borrow().chat_order));
+    chats.on_change_order(move |order| {
+        settings.borrow_mut().chat_order = order_for_settings(order);
+        settings.borrow().save();
+        super::with_ui(|ui| ui.global::<Chats>().set_order(order));
+        store::with(|store| store.dirty.chats = true);
+        store::refresh();
+    });
+}
+
+fn order_for_pages(order: settings::ChatOrder) -> ChatOrder {
+    match order {
+        settings::ChatOrder::LatestMessage => ChatOrder::LatestMessage,
+        settings::ChatOrder::Name => ChatOrder::Name,
+        settings::ChatOrder::Unread => ChatOrder::Unread,
+    }
+}
+
+fn order_for_settings(order: ChatOrder) -> settings::ChatOrder {
+    match order {
+        ChatOrder::LatestMessage => settings::ChatOrder::LatestMessage,
+        ChatOrder::Name => settings::ChatOrder::Name,
+        ChatOrder::Unread => settings::ChatOrder::Unread,
+    }
 }
 
 /// Every chat of a folder (index into the pages' folders: All chats, or one of the account's own)

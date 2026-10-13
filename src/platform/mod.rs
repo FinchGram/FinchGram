@@ -68,6 +68,34 @@ pub fn set_launch_at_login(on: bool) -> Result<(), String> {
     }
 }
 
+/// The order of names in a language, for the chat list sorted by name: letters as the language
+/// sorts them, Chinese by pinyin, digits by their value, capitals with their small letters (macOS's
+/// own comparison, in the UI language). Elsewhere, small letters by their code points.
+pub struct NameOrder {
+    #[cfg(target_os = "macos")]
+    inner: macos::NameOrder,
+}
+
+impl NameOrder {
+    /// `language` is a UI language code as lang/ names them ("en", "zh_Hans").
+    pub fn new(language: &str) -> NameOrder {
+        #[cfg(target_os = "macos")]
+        return NameOrder { inner: macos::NameOrder::new(language) };
+        #[cfg(not(target_os = "macos"))]
+        {
+            let _ = language;
+            NameOrder {}
+        }
+    }
+
+    pub fn compare(&self, a: &str, b: &str) -> std::cmp::Ordering {
+        #[cfg(target_os = "macos")]
+        return self.inner.compare(a, b);
+        #[cfg(not(target_os = "macos"))]
+        a.to_lowercase().cmp(&b.to_lowercase())
+    }
+}
+
 /// Put `text` on the clipboard.
 pub fn copy_text(text: &str) -> Result<(), String> {
     #[cfg(target_os = "macos")]
@@ -310,5 +338,23 @@ pub fn open_link(url: &str) {
     let result = std::process::Command::new("xdg-open").arg(url).spawn();
     if let Err(err) = result {
         eprintln!("platform: cannot open {url}: {err}");
+    }
+}
+
+#[cfg(all(test, target_os = "macos"))]
+mod tests {
+    use super::*;
+    use std::cmp::Ordering;
+
+    #[test]
+    fn names_follow_the_language_not_the_code_points() {
+        let english = NameOrder::new("en");
+        assert_eq!(english.compare("alice", "Bob"), Ordering::Less);
+        assert_eq!(english.compare("Chat 9", "Chat 10"), Ordering::Less);
+        assert_eq!(english.compare("Émile", "Eve"), Ordering::Less);
+        // Pinyin: 阿 (a) before 波 (bo), 李 (li) before 张 (zhang), whatever their code points.
+        let chinese = NameOrder::new("zh_Hans");
+        assert_eq!(chinese.compare("阿里", "波波"), Ordering::Less);
+        assert_eq!(chinese.compare("张三", "李四"), Ordering::Greater);
     }
 }

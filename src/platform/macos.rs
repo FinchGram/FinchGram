@@ -10,6 +10,7 @@
 //! FinchGram run by `cargo run` has no bundle, and so no notifications.
 
 use std::cell::{Cell, RefCell};
+use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::ffi::CStr;
 use std::ptr::NonNull;
@@ -26,7 +27,10 @@ use objc2_app_kit::{
     NSCursor, NSStatusBar, NSStatusItem, NSVariableStatusItemLength, NSView, NSWindow, NSWindowCollectionBehavior, NSWindowStyleMask,
     NSWorkspace,
 };
-use objc2_foundation::{NSArray, NSBundle, NSData, NSDate, NSDictionary, NSError, NSNumber, NSPoint, NSRect, NSSize, NSString, NSURL};
+use objc2_foundation::{
+    NSArray, NSBundle, NSComparisonResult, NSData, NSDate, NSDictionary, NSError, NSLocale, NSNumber, NSPoint, NSRange, NSRect,
+    NSSize, NSString, NSStringCompareOptions, NSURL,
+};
 use objc2_user_notifications::{
     UNAuthorizationOptions, UNMutableNotificationContent, UNNotification, UNNotificationDefaultActionIdentifier,
     UNNotificationPresentationOptions, UNNotificationRequest, UNNotificationResponse, UNNotificationSound,
@@ -265,6 +269,38 @@ pub fn set_launch_at_login(on: bool) -> Result<(), String> {
         if on { msg_send![&service, registerAndReturnError: _] } else { msg_send![&service, unregisterAndReturnError: _] }
     };
     result.map_err(|error| error.localizedDescription().to_string())
+}
+
+/// Names compared as the UI language orders them: NSString's compare with a locale, case,
+/// width and diacritic insensitive, digits by their value (what the Finder does, but in the
+/// language the user chose for FinchGram rather than the system's).
+pub struct NameOrder {
+    locale: Retained<NSLocale>,
+}
+
+impl NameOrder {
+    pub fn new(language: &str) -> NameOrder {
+        // lang/ names languages with an underscore ("zh_Hans"); NSLocale takes either.
+        NameOrder { locale: NSLocale::localeWithLocaleIdentifier(&NSString::from_str(language)) }
+    }
+
+    pub fn compare(&self, a: &str, b: &str) -> Ordering {
+        let a = NSString::from_str(a);
+        let b = NSString::from_str(b);
+        let options = NSStringCompareOptions::CaseInsensitiveSearch
+            | NSStringCompareOptions::NumericSearch
+            | NSStringCompareOptions::WidthInsensitiveSearch
+            | NSStringCompareOptions::DiacriticInsensitiveSearch
+            | NSStringCompareOptions::ForcedOrderingSearch;
+        let whole = NSRange { location: 0, length: a.length() };
+        // SAFETY: the locale is an NSLocale, the type the method asks for.
+        let result = unsafe { a.compare_options_range_locale(&b, options, whole, Some(&self.locale)) };
+        match result {
+            NSComparisonResult::Ascending => Ordering::Less,
+            NSComparisonResult::Same => Ordering::Equal,
+            NSComparisonResult::Descending => Ordering::Greater,
+        }
+    }
 }
 
 /// Put `text` on the clipboard.

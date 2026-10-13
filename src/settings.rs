@@ -24,6 +24,8 @@ pub struct Settings {
     pub quit_on_close: bool,
     pub show_in_menu_bar: bool,
     pub send_with_enter: bool,
+    /// How the chats of every folder are ordered under the pinned ones (a folder's menu).
+    pub chat_order: ChatOrder,
     /// The media viewer's video volume, 0 … 100, and whether its sound is off: as the user last
     /// left them, for the next video and the next start (src/telegram/viewer.rs).
     pub video_volume: i32,
@@ -40,6 +42,19 @@ pub struct Settings {
     pub screenshots: Screenshots,
     /// Settings → AI access: the MCP server for AI assistants (src/mcp/, docs/mcp.md).
     pub mcp: Mcp,
+}
+
+/// How the chats of a folder are ordered under the pinned ones, which stay on top in Telegram's
+/// order whatever the choice (a folder's menu, src/telegram/chats.rs).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ChatOrder {
+    /// Telegram's own order: the chat with the newest message first.
+    LatestMessage,
+    /// By name, as the UI language orders names (src/platform/).
+    Name,
+    /// The most unread messages first; muted chats count as read, as their grey badges say.
+    Unread,
 }
 
 /// The screenshot tool: its shortcut, and whether FinchGram's own window hides while the screen is
@@ -265,6 +280,7 @@ impl Default for Settings {
             quit_on_close: false,
             show_in_menu_bar: true,
             send_with_enter: true,
+            chat_order: ChatOrder::LatestMessage,
             video_volume: 100,
             video_muted: false,
             appearance: Appearance::default(),
@@ -331,6 +347,7 @@ mod tests {
         assert_eq!((read.theme.as_str(), read.check_for_updates), ("terminal", false));
         assert!(!read.quit_on_close && read.show_in_menu_bar && read.send_with_enter);
         assert_eq!((read.video_volume, read.video_muted), (100, false));
+        assert_eq!(read.chat_order, ChatOrder::LatestMessage);
         assert_eq!(read.notifications, Notifications::default());
         assert_eq!(read.appearance, Appearance::default());
         assert_eq!((read.appearance.of("workbench"), read.appearance.of("terminal")), ("system", "dark"));

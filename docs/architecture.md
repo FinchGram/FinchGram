@@ -188,6 +188,11 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   deleted closes its tab.
   A folder's menu (a right click on its tab, or on its header in Workbench's tree) marks every
   chat of it as read: TDLib goes through the list (readChatList), and the read receipts are real.
+  Its Sort by orders every folder's chats under the pinned ones, which keep Telegram's order: by
+  the newest message (Telegram's own order), by name (as the UI language orders names: macOS's
+  own comparison in that locale, so Chinese by pinyin and digits by their value,
+  `platform::NameOrder`), or by unread messages (muted chats count as read, as their grey badges
+  say). One choice for all folders, `chat_order` in settings.toml; `store.rs` sorts (chats_in).
 - Saved Messages, the chat with oneself, is a fixed row above the chat list in the three themes,
   there before the account has used it: TDLib makes the chat (createPrivateChat) when the row is
   clicked. It is not repeated in the folders below, and the search matches the names the lists

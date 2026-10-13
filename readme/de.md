@@ -32,10 +32,11 @@ ein inoffizieller Client, nicht von Telegram gemacht.
 - **Bildschirmfotos.** Die Schere im Eingabefeld oder ⌘⇧A friert den Bildschirm ein: ein Fenster
   nehmen oder eine Auswahl ziehen, Rechtecke, Ellipsen, Pfeile, Stiftstriche, Text und Mosaik
   darauf zeichnen, dann senden, kopieren oder speichern. Wie in WeChat, aus jedem Chat heraus.
-- **Das Menü eines Chats.** Stummschalten, anheften, die ID kopieren, in
-  einen Ordner legen; eine Person blockieren oder entblocken, melden, eine Gruppe oder einen Kanal
-  verlassen, einen Chat löschen. Ein Rechtsklick auf einen Ordner markiert alle seine Chats als
-  gelesen.
+- **Das Menü eines Chats.** Stummschalten, anheften, die ID kopieren, in einen Ordner legen; eine
+  Person blockieren oder entblocken, melden, eine Gruppe oder einen Kanal verlassen, einen Chat
+  löschen. Ein Rechtsklick auf einen Ordner markiert alle seine Chats als gelesen oder sortiert
+  sie: nach der neuesten Nachricht, nach Namen oder nach ungelesenen Nachrichten; angeheftete
+  bleiben oben.
 - **Mitteilungen.** Neue Nachrichten kommen als macOS-Mitteilungen, ihre Zahl steht auf dem
   Dock-Symbol; FinchGram bleibt im Dock, wenn sein Fenster schließt, und kann in der Menüleiste wohnen.
 - **Drei Themen.** Workbench, Broadsheet und Terminal, jedes hell und dunkel, ohne Neustart gewechselt.

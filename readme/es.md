@@ -33,9 +33,10 @@ Es un cliente no oficial, no hecho por Telegram.
 - **Capturas de pantalla.** Las tijeras del cuadro de escritura, o ⌘⇧A, congelan la pantalla: toma una
   ventana o arrastra una selección, dibuja rectángulos, elipses, flechas, trazos, texto y mosaico
   encima, y envíala, cópiala o guárdala. Como en WeChat, desde cualquier chat.
-- **El menú de un chat.** Silenciar, fijar, copiar su ID, meterlo en una
-  carpeta; bloquear o desbloquear a una persona, reportar, salir de un grupo o canal, eliminar un
-  chat. Un clic derecho en una carpeta marca todos sus chats como leídos.
+- **El menú de un chat.** Silenciar, fijar, copiar su ID, meterlo en una carpeta; bloquear o
+  desbloquear a una persona, reportar, salir de un grupo o canal, eliminar un chat. Un clic
+  derecho en una carpeta marca todos sus chats como leídos, o los ordena: por el último mensaje,
+  por nombre o por mensajes no leídos; los fijados se quedan arriba.
 - **Notificaciones.** Los mensajes nuevos llegan como notificaciones de macOS y su número se ve en el
   icono del Dock; FinchGram sigue en el Dock al cerrar su ventana y puede vivir en la barra de menús.
 - **Tres temas.** Workbench, Broadsheet y Terminal, cada uno claro y oscuro, cambiados sin reiniciar.

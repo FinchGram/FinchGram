@@ -5,7 +5,7 @@
 import { ListView } from "std-widgets.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
-    Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState } from "../telegram.slint";
+    Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState, ChatOrder } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords, SearchInput, SearchWords } from "../chat.slint";
@@ -332,15 +332,22 @@ component MenuEntry inherits Rectangle {
 
 // The folders as tabs, "1:All 2:Work …": the first four, the rest behind "more". Each tab is as
 // tall as its word: a Rectangle has no height of its own, and a tab without one is drawn but takes
-// no clicks. A right click on a tab gives the folder's menu: every chat of it read.
+// no clicks. A right click on a tab gives the folder's menu: every chat of it read, and its second
+// page, Sort by: how every folder's chats are ordered.
 component Folders {
     property <int> menu-index;              // the folder the menu is for: index into Chats.folders
+    property <bool> menu-sort;              // the second page is showing
     property <length> menu-x;
 
     function show-menu(folder: int, left: length) {
         root.menu-index = folder;
+        root.menu-sort = false;
         root.menu-x = max(0px, left - root.absolute-position.x);
         folder-menu.show();
+    }
+
+    pure function chosen(order: ChatOrder) -> string {
+        return Chats.order == order ? "[x] " : "[ ] ";
     }
 
     pure function name(index: int) -> string {
@@ -467,12 +474,45 @@ component Folders {
                         overflow: elide;
                     }
                 }
-                MenuEntry {
+                if !root.menu-sort: MenuEntry {
                     label: @tr("Mark all as read");
                     // The command line's /readall is for the folder shown.
                     command: root.menu-index == Chats.folder ? "/readall" : "";
                     activated => {
                         Chats.mark-all-read(root.menu-index);
+                        folder-menu.close();
+                    }
+                }
+                if !root.menu-sort: MenuEntry {
+                    label: @tr("Sort by");
+                    activated => {
+                        root.menu-sort = true;
+                    }
+                }
+                if root.menu-sort: MenuEntry {
+                    label: @tr("Back");
+                    activated => {
+                        root.menu-sort = false;
+                    }
+                }
+                if root.menu-sort: MenuEntry {
+                    label: root.chosen(ChatOrder.latest-message) + @tr("Latest message");
+                    activated => {
+                        Chats.change-order(ChatOrder.latest-message);
+                        folder-menu.close();
+                    }
+                }
+                if root.menu-sort: MenuEntry {
+                    label: root.chosen(ChatOrder.name) + @tr("Name");
+                    activated => {
+                        Chats.change-order(ChatOrder.name);
+                        folder-menu.close();
+                    }
+                }
+                if root.menu-sort: MenuEntry {
+                    label: root.chosen(ChatOrder.unread) + @tr("Unread");
+                    activated => {
+                        Chats.change-order(ChatOrder.unread);
                         folder-menu.close();
                     }
                 }

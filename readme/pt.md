@@ -32,9 +32,10 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
 - **Capturas de tela.** A tesoura na caixa de escrita, ou ⌘⇧A, congela a tela: pegue uma janela ou
   arraste uma seleção, desenhe retângulos, elipses, setas, traços, texto e mosaico por cima, e
   envie, copie ou salve. Como no WeChat, a partir de qualquer chat.
-- **O menu de um chat.** Silenciar, fixar, copiar o seu ID, colocar numa pasta;
-  bloquear ou desbloquear uma pessoa, denunciar, sair de um grupo ou canal, apagar um chat. Um
-  clique direito numa pasta marca todos os seus chats como lidos.
+- **O menu de um chat.** Silenciar, fixar, copiar o seu ID, colocar numa pasta; bloquear ou
+  desbloquear uma pessoa, denunciar, sair de um grupo ou canal, apagar um chat. Um clique direito
+  numa pasta marca todos os seus chats como lidos, ou ordena-os: pela última mensagem, por nome ou
+  por mensagens não lidas; os fixados ficam no topo.
 - **Notificações.** Mensagens novas chegam como notificações do macOS e o número delas fica no ícone
   do Dock; o FinchGram continua no Dock quando a janela fecha e pode morar na barra de menus.
 - **Três temas.** Workbench, Broadsheet e Terminal, cada um claro e escuro, trocados sem reiniciar.
