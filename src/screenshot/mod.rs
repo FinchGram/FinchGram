@@ -41,10 +41,11 @@ const LINE_WIDTH: [f32; 3] = [2.0, 4.0, 8.0];
 const ARROW_HEAD: [(f32, f32); 3] = [(12.0, 10.0), (18.0, 15.0), (28.0, 24.0)];
 const FONT_SIZE: [f32; 3] = [14.0, 20.0, 28.0];
 const BRUSH: [f32; 3] = [12.0, 24.0, 40.0];
-/// A mosaic block, in points, on a grid of the display: 4 pt (8 px on a Retina display), fine
-/// enough to read as a mosaic rather than a few squares (the design said 8; the maintainer found
-/// that coarse).
-const BLOCK: f32 = 4.0;
+/// A mosaic block, in points, on a grid of the display, by the size chosen: 4 pt (8 px on a Retina
+/// display) with the small brush, fine enough to read as a mosaic rather than a few squares; 8 and
+/// 12 with the medium and large brushes, which hide what is under them (the maintainer found a
+/// fixed 8 coarse, then a fixed 4 too thin to hide anything: 2026-10-12).
+const BLOCK: [f32; 3] = [4.0, 8.0, 12.0];
 /// How near a handle the pointer counts as on it.
 const HANDLE_REACH: f32 = 7.0;
 /// A selection smaller than this is a click, not a selection.
@@ -779,7 +780,7 @@ impl Session {
             Tool::Rect | Tool::Ellipse => Shape::Box { rect: Rect { x: p.0, y: p.1, w: 0.0, h: 0.0 }, ellipse: self.tool == Tool::Ellipse },
             Tool::Arrow => Shape::Arrow { from: p, to: p },
             Tool::Pen => Shape::Pen { points: vec![p] },
-            _ => Shape::Mosaic { cells: Vec::new(), size: BLOCK },
+            _ => Shape::Mosaic { cells: Vec::new(), size: BLOCK[self.size.min(2)] },
         };
         self.draft = Some(Annotation { shape, color: self.color, size: self.size });
         self.stroke_cells.clear();
@@ -788,8 +789,8 @@ impl Session {
 
     fn update_draw(&mut self, p: (f32, f32), shift: bool) {
         let Phase::Drawing { anchor } = self.phase else { return };
-        let brush = BRUSH[self.size.min(2)];
-        let new_cells = if self.tool == Tool::Mosaic { self.cells_along(self.last_point, p, brush / 2.0) } else { Vec::new() };
+        let (brush, block) = (BRUSH[self.size.min(2)], BLOCK[self.size.min(2)]);
+        let new_cells = if self.tool == Tool::Mosaic { self.cells_along(self.last_point, p, brush / 2.0, block) } else { Vec::new() };
         let Some(draft) = self.draft.as_mut() else { return };
         match &mut draft.shape {
             Shape::Box { rect, .. } => {
@@ -814,35 +815,36 @@ impl Session {
         self.last_point = p;
     }
 
-    /// The mosaic blocks the brush of radius `r` paints between `a` and `b`, each once, in the
-    /// average colour of the picture under it.
-    fn cells_along(&mut self, a: (f32, f32), b: (f32, f32), r: f32) -> Vec<MosaicCell> {
-        let (x0, x1) = ((a.0.min(b.0) - r) / BLOCK, (a.0.max(b.0) + r) / BLOCK);
-        let (y0, y1) = ((a.1.min(b.1) - r) / BLOCK, (a.1.max(b.1) + r) / BLOCK);
+    /// The mosaic blocks, `block` points square, that the brush of radius `r` paints between `a`
+    /// and `b`, each once, in the average colour of the picture under it.
+    fn cells_along(&mut self, a: (f32, f32), b: (f32, f32), r: f32, block: f32) -> Vec<MosaicCell> {
+        let (x0, x1) = ((a.0.min(b.0) - r) / block, (a.0.max(b.0) + r) / block);
+        let (y0, y1) = ((a.1.min(b.1) - r) / block, (a.1.max(b.1) + r) / block);
         let mut cells = Vec::new();
         for by in (y0.floor() as i32)..=(y1.ceil() as i32) {
             for bx in (x0.floor() as i32)..=(x1.ceil() as i32) {
                 if self.stroke_cells.contains(&(bx, by)) {
                     continue;
                 }
-                let centre = (bx as f32 * BLOCK + BLOCK / 2.0, by as f32 * BLOCK + BLOCK / 2.0);
+                let centre = (bx as f32 * block + block / 2.0, by as f32 * block + block / 2.0);
                 if distance_to_segment(centre, a, b) > r {
                     continue;
                 }
-                let Some(color) = self.block_colour(bx, by) else { continue };
+                let Some(color) = self.block_colour(bx, by, block) else { continue };
                 self.stroke_cells.insert((bx, by));
-                cells.push(MosaicCell { x: bx as f32 * BLOCK, y: by as f32 * BLOCK, color });
+                cells.push(MosaicCell { x: bx as f32 * block, y: by as f32 * block, color });
             }
         }
         cells
     }
 
-    /// The average colour of the picture under a block, as "#rrggbb"; none off the picture.
-    fn block_colour(&self, bx: i32, by: i32) -> Option<String> {
+    /// The average colour of the picture under the block (`bx`, `by`) of `block` points, as
+    /// "#rrggbb"; none off the picture.
+    fn block_colour(&self, bx: i32, by: i32, block: f32) -> Option<String> {
         let display = self.display();
         let (w, h) = display.px;
-        let side = (BLOCK * display.scale).round().max(1.0) as i64;
-        let (x0, y0) = ((bx as f32 * BLOCK * display.scale).round() as i64, (by as f32 * BLOCK * display.scale).round() as i64);
+        let side = (block * display.scale).round().max(1.0) as i64;
+        let (x0, y0) = ((bx as f32 * block * display.scale).round() as i64, (by as f32 * block * display.scale).round() as i64);
         let (mut sum, mut count) = ([0u64; 3], 0u64);
         for y in y0.max(0)..(y0 + side).min(h as i64) {
             for x in x0.max(0)..(x0 + side).min(w as i64) {
@@ -1338,5 +1340,41 @@ mod tests {
         // Snapped to the horizontal, as long as the pointer is far.
         let (x, y) = snapped((0.0, 0.0), (100.0, 10.0));
         assert!((x - 100.499).abs() < 0.01 && y.abs() < 0.001, "{x} {y}");
+    }
+
+    #[test]
+    fn a_mosaic_stroke_paints_blocks_of_the_size_chosen() {
+        let mut session = session();
+        // The screen is black left of x = 100 and white from there on.
+        {
+            let display = &mut session.displays[0];
+            for y in 0..display.px.1 {
+                for x in 100..display.px.0 {
+                    let at = ((y * display.px.0 + x) * 4) as usize;
+                    display.rgba[at..at + 4].fill(255);
+                }
+            }
+        }
+        session.selection = Some(Rect { x: 50.0, y: 50.0, w: 300.0, h: 200.0 });
+        session.phase = Phase::Settled;
+        session.tool = Tool::Mosaic;
+        // Small, medium, large: the blocks grow with the brush, and a block over the edge between
+        // black and white gets the average of what is under it (4 black columns, then white).
+        for (size, block, over_the_edge) in [(0, 4.0, None), (1, 8.0, Some("#7f7f7f")), (2, 12.0, Some("#aaaaaa"))] {
+            session.size = size;
+            session.pressed(0, (100.0, 100.0), false, false);
+            session.moved(0, (130.0, 100.0), false);
+            session.released(0, (130.0, 100.0));
+            let Some(Annotation { shape: Shape::Mosaic { cells, size: painted }, .. }) = session.annotations.last() else {
+                panic!("no mosaic")
+            };
+            assert_eq!(*painted, block);
+            assert!(!cells.is_empty());
+            assert!(cells.iter().all(|cell| cell.x % block == 0.0 && cell.y % block == 0.0), "off the grid of {block}");
+            let edge = cells.iter().find(|cell| cell.x < 100.0 && cell.x + block > 100.0).map(|cell| cell.color.as_str());
+            assert_eq!(edge, over_the_edge);
+            assert!(cells.iter().filter(|cell| cell.x + block <= 100.0).all(|cell| cell.color == "#000000"));
+            assert!(cells.iter().filter(|cell| cell.x >= 100.0).all(|cell| cell.color == "#ffffff"));
+        }
     }
 }
