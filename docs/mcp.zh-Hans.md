@@ -64,7 +64,7 @@ FinchGram 自身不调用任何 AI，不为 AI 建索引，不为 AI 存任何�
 | `mark_read` | 把消息标为已读 | viewMessages |
 | `get_me` | 账号：id、名字、用户名 | store |
 
-一开始（协议的 `instructions`）就告诉助手：读取不会标已读；`send_message` 无法撤回，只在用户要求发送时用；其他情况
+一开始（协议的 `instructions`）就告诉助手：读取不会标已读；`send_message` 以用户的名义立即发出，在用户要求发送时用；其他情况
 都用 `draft_message`。
 
 ## 用户能控制什么

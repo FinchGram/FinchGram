@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-13 03:59+0000\n"
+"POT-Creation-Date: 2026-10-13 05:36+0000\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1331,8 +1331,8 @@ msgid "Writing"
 msgstr "الكتابة"
 
 #: ui/pages/ai-access.slint:484
-msgid "Sent at once, under your name. Can't be undone"
-msgstr "تُرسل فورًا باسمك ولا يمكن التراجع عنها"
+msgid "Sent at once, under your name"
+msgstr "تُرسل فورًا باسمك"
 
 #: ui/pages/ai-access.slint:493
 msgid "The assistant leaves a draft; you send it from any Telegram app"
@@ -1358,7 +1358,8 @@ msgstr "سماح"
 msgid ""
 "An app asks the first time it connects. Its name comes from macOS, not from "
 "the app itself."
-msgstr "يطلب التطبيق الإذن عند اتصاله أول مرة. يأتي اسمه من macOS لا من التطبيق نفسه."
+msgstr ""
+"يطلب التطبيق الإذن عند اتصاله أول مرة. يأتي اسمه من macOS لا من التطبيق نفسه."
 
 #: ui/pages/ai-access.slint:549
 msgid "Connect an app"
@@ -1408,7 +1409,8 @@ msgstr "القراءة لا تجعل الرسائل مقروءة إلا عند �
 msgid ""
 "Self-destructing media, and media from chats that restrict saving, stays in "
 "FinchGram"
-msgstr "تبقى الوسائط ذاتية التدمير ووسائط الدردشات التي تمنع الحفظ داخل FinchGram"
+msgstr ""
+"تبقى الوسائط ذاتية التدمير ووسائط الدردشات التي تمنع الحفظ داخل FinchGram"
 
 #: ui/pages/ai-access.slint:634
 msgid "Nothing an assistant reads is kept: no index, no copy"
@@ -1430,7 +1432,9 @@ msgstr "يفيد macOS بأن هذا البرنامج هو الذي يتصل ب�
 msgid ""
 "macOS wouldn't say which program this is. Allow it only if you've just set "
 "one up yourself."
-msgstr "لم يحدد macOS ما هذا البرنامج. اسمح به فقط إذا كنت قد أعددت برنامجًا بنفسك للتو."
+msgstr ""
+"لم يحدد macOS ما هذا البرنامج. اسمح به فقط إذا كنت قد أعددت برنامجًا بنفسك "
+"للتو."
 
 #: ui/pages/ai-access.slint:806
 msgid "Can see"
@@ -2258,7 +2262,10 @@ msgid ""
 "An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
 "chats and act in them through FinchGram, with your account. FinchGram itself "
 "calls no AI and keeps nothing for one."
-msgstr "يمكن لتطبيق مساعد ذكاء اصطناعي (مثل Claude Desktop وClaude Code وCursor) قراءة دردشاتك والتصرف فيها عبر FinchGram بحسابك. لا يستدعي FinchGram نفسه أي ذكاء اصطناعي ولا يحتفظ بشيء من أجله."
+msgstr ""
+"يمكن لتطبيق مساعد ذكاء اصطناعي (مثل Claude Desktop وClaude Code وCursor) "
+"قراءة دردشاتك والتصرف فيها عبر FinchGram بحسابك. لا يستدعي FinchGram نفسه أي "
+"ذكاء اصطناعي ولا يحتفظ بشيء من أجله."
 
 #: ui/pages/settings.slint:1602
 msgid "Password updated"

@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-13 03:59+0000\n"
+"POT-Creation-Date: 2026-10-13 05:36+0000\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1303,12 +1303,14 @@ msgid "Writing"
 msgstr "Schreiben"
 
 #: ui/pages/ai-access.slint:484
-msgid "Sent at once, under your name. Can't be undone"
-msgstr "Gehen sofort in deinem Namen raus, nicht widerrufbar"
+msgid "Sent at once, under your name"
+msgstr "Gehen sofort in deinem Namen raus"
 
 #: ui/pages/ai-access.slint:493
 msgid "The assistant leaves a draft; you send it from any Telegram app"
-msgstr "Der Assistent hinterlässt einen Entwurf; du sendest ihn aus einer beliebigen Telegram-App"
+msgstr ""
+"Der Assistent hinterlässt einen Entwurf; du sendest ihn aus einer beliebigen "
+"Telegram-App"
 
 #: ui/pages/ai-access.slint:502
 msgid "No messages, no drafts"
@@ -1330,7 +1332,9 @@ msgstr "Erlauben"
 msgid ""
 "An app asks the first time it connects. Its name comes from macOS, not from "
 "the app itself."
-msgstr "Eine App fragt beim ersten Verbinden. Ihr Name kommt von macOS, nicht von der App selbst."
+msgstr ""
+"Eine App fragt beim ersten Verbinden. Ihr Name kommt von macOS, nicht von "
+"der App selbst."
 
 #: ui/pages/ai-access.slint:549
 msgid "Connect an app"
@@ -1362,7 +1366,8 @@ msgstr "Protokoll im Finder zeigen"
 
 #: ui/pages/ai-access.slint:606
 msgid "Who connected and what it asked for. Never the words of a message."
-msgstr "Wer sich verbunden hat und was angefragt wurde. Nie der Text einer Nachricht."
+msgstr ""
+"Wer sich verbunden hat und was angefragt wurde. Nie der Text einer Nachricht."
 
 #: ui/pages/ai-access.slint:614
 msgid "Always, whatever the settings"
@@ -1380,11 +1385,14 @@ msgstr "Lesen markiert nichts als gelesen, außer auf ausdrückliche Bitte"
 msgid ""
 "Self-destructing media, and media from chats that restrict saving, stays in "
 "FinchGram"
-msgstr "Selbstzerstörende Medien und Medien aus Chats, die das Speichern sperren, bleiben in FinchGram"
+msgstr ""
+"Selbstzerstörende Medien und Medien aus Chats, die das Speichern sperren, "
+"bleiben in FinchGram"
 
 #: ui/pages/ai-access.slint:634
 msgid "Nothing an assistant reads is kept: no index, no copy"
-msgstr "Was ein Assistent liest, wird nicht aufbewahrt: kein Index, keine Kopie"
+msgstr ""
+"Was ein Assistent liest, wird nicht aufbewahrt: kein Index, keine Kopie"
 
 #: ui/pages/ai-access.slint:764
 msgid "Allow “{0}” to use your Telegram account?"
@@ -1402,7 +1410,9 @@ msgstr "Laut macOS verbindet sich dieses Programm mit FinchGram."
 msgid ""
 "macOS wouldn't say which program this is. Allow it only if you've just set "
 "one up yourself."
-msgstr "macOS hat nicht verraten, welches Programm das ist. Erlaube es nur, wenn du gerade selbst eines eingerichtet hast."
+msgstr ""
+"macOS hat nicht verraten, welches Programm das ist. Erlaube es nur, wenn du "
+"gerade selbst eines eingerichtet hast."
 
 #: ui/pages/ai-access.slint:806
 msgid "Can see"
@@ -2263,7 +2273,10 @@ msgid ""
 "An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
 "chats and act in them through FinchGram, with your account. FinchGram itself "
 "calls no AI and keeps nothing for one."
-msgstr "Die App eines KI-Assistenten (Claude Desktop, Claude Code, Cursor …) kann über FinchGram mit deinem Konto deine Chats lesen und darin handeln. FinchGram selbst ruft keine KI auf und speichert nichts für sie."
+msgstr ""
+"Die App eines KI-Assistenten (Claude Desktop, Claude Code, Cursor …) kann "
+"über FinchGram mit deinem Konto deine Chats lesen und darin handeln. "
+"FinchGram selbst ruft keine KI auf und speichert nichts für sie."
 
 #: ui/pages/settings.slint:1602
 msgid "Password updated"

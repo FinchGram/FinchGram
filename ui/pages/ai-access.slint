@@ -481,7 +481,7 @@ export component AiSection {
             Card {
                 RadioRow {
                     title: @tr("Send messages");
-                    description: @tr("Sent at once, under your name. Can't be undone");
+                    description: @tr("Sent at once, under your name");
                     on: AiAccess.writing == AiWriting.messages;
                     chosen => {
                         AiAccess.set-writing(AiWriting.messages);

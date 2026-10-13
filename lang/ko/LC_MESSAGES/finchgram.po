@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-13 03:59+0000\n"
+"POT-Creation-Date: 2026-10-13 05:36+0000\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1292,8 +1292,8 @@ msgid "Writing"
 msgstr "쓰기"
 
 #: ui/pages/ai-access.slint:484
-msgid "Sent at once, under your name. Can't be undone"
-msgstr "내 이름으로 바로 전송되며 되돌릴 수 없습니다"
+msgid "Sent at once, under your name"
+msgstr "내 이름으로 바로 전송됩니다"
 
 #: ui/pages/ai-access.slint:493
 msgid "The assistant leaves a draft; you send it from any Telegram app"
@@ -1319,7 +1319,9 @@ msgstr "허용"
 msgid ""
 "An app asks the first time it connects. Its name comes from macOS, not from "
 "the app itself."
-msgstr "앱은 처음 연결할 때 허락을 구합니다. 앱 이름은 앱이 밝힌 것이 아니라 macOS에서 가져옵니다."
+msgstr ""
+"앱은 처음 연결할 때 허락을 구합니다. 앱 이름은 앱이 밝힌 것이 아니라 macOS에"
+"서 가져옵니다."
 
 #: ui/pages/ai-access.slint:549
 msgid "Connect an app"
@@ -1351,7 +1353,8 @@ msgstr "Finder에서 기록 보기"
 
 #: ui/pages/ai-access.slint:606
 msgid "Who connected and what it asked for. Never the words of a message."
-msgstr "누가 연결했고 무엇을 요청했는지 기록합니다. 메시지 내용은 기록하지 않습니다."
+msgstr ""
+"누가 연결했고 무엇을 요청했는지 기록합니다. 메시지 내용은 기록하지 않습니다."
 
 #: ui/pages/ai-access.slint:614
 msgid "Always, whatever the settings"
@@ -1363,13 +1366,16 @@ msgstr "비밀 채팅은 어시스턴트에게 절대 보이지 않습니다"
 
 #: ui/pages/ai-access.slint:624
 msgid "Reading never marks messages as read unless asked to"
-msgstr "읽어도 읽음으로 표시되지 않습니다. 표시해 달라고 요청할 때만 표시됩니다"
+msgstr ""
+"읽어도 읽음으로 표시되지 않습니다. 표시해 달라고 요청할 때만 표시됩니다"
 
 #: ui/pages/ai-access.slint:629
 msgid ""
 "Self-destructing media, and media from chats that restrict saving, stays in "
 "FinchGram"
-msgstr "자동 삭제 미디어와 저장이 제한된 채팅의 미디어는 FinchGram 밖으로 나가지 않습니다"
+msgstr ""
+"자동 삭제 미디어와 저장이 제한된 채팅의 미디어는 FinchGram 밖으로 나가지 않습"
+"니다"
 
 #: ui/pages/ai-access.slint:634
 msgid "Nothing an assistant reads is kept: no index, no copy"
@@ -1391,7 +1397,9 @@ msgstr "macOS에 따르면 FinchGram에 연결하는 프로그램은 이것입�
 msgid ""
 "macOS wouldn't say which program this is. Allow it only if you've just set "
 "one up yourself."
-msgstr "macOS가 어떤 프로그램인지 알려 주지 않았습니다. 방금 직접 설정한 경우에만 허용하세요."
+msgstr ""
+"macOS가 어떤 프로그램인지 알려 주지 않았습니다. 방금 직접 설정한 경우에만 허"
+"용하세요."
 
 #: ui/pages/ai-access.slint:806
 msgid "Can see"
@@ -2226,7 +2234,10 @@ msgid ""
 "An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
 "chats and act in them through FinchGram, with your account. FinchGram itself "
 "calls no AI and keeps nothing for one."
-msgstr "Claude Desktop, Claude Code, Cursor 같은 AI 어시스턴트 앱이 FinchGram을 통해 내 계정으로 채팅을 읽고 대신 작업할 수 있습니다. FinchGram 자체는 AI를 호출하지 않으며 AI를 위해 아무것도 저장하지 않습니다."
+msgstr ""
+"Claude Desktop, Claude Code, Cursor 같은 AI 어시스턴트 앱이 FinchGram을 통해 "
+"내 계정으로 채팅을 읽고 대신 작업할 수 있습니다. FinchGram 자체는 AI를 호출하"
+"지 않으며 AI를 위해 아무것도 저장하지 않습니다."
 
 #: ui/pages/settings.slint:1602
 msgid "Password updated"

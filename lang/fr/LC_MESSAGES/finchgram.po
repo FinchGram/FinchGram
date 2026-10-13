@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-13 03:59+0000\n"
+"POT-Creation-Date: 2026-10-13 05:36+0000\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1305,12 +1305,14 @@ msgid "Writing"
 msgstr "Écriture"
 
 #: ui/pages/ai-access.slint:484
-msgid "Sent at once, under your name. Can't be undone"
-msgstr "Envoyés aussitôt, en votre nom. Irréversible"
+msgid "Sent at once, under your name"
+msgstr "Envoyés aussitôt, en votre nom"
 
 #: ui/pages/ai-access.slint:493
 msgid "The assistant leaves a draft; you send it from any Telegram app"
-msgstr "L'assistant laisse un brouillon ; vous l'envoyez depuis n'importe quelle app Telegram"
+msgstr ""
+"L'assistant laisse un brouillon ; vous l'envoyez depuis n'importe quelle app "
+"Telegram"
 
 #: ui/pages/ai-access.slint:502
 msgid "No messages, no drafts"
@@ -1332,7 +1334,9 @@ msgstr "Autoriser"
 msgid ""
 "An app asks the first time it connects. Its name comes from macOS, not from "
 "the app itself."
-msgstr "Une app demande la permission à sa première connexion. Son nom vient de macOS, pas de l'app elle-même."
+msgstr ""
+"Une app demande la permission à sa première connexion. Son nom vient de "
+"macOS, pas de l'app elle-même."
 
 #: ui/pages/ai-access.slint:549
 msgid "Connect an app"
@@ -1352,7 +1356,8 @@ msgstr "Claude Desktop et autres apps"
 
 #: ui/pages/ai-access.slint:575
 msgid "FinchGram doesn't need to be open: the app starts it in the background."
-msgstr "FinchGram n'a pas besoin d'être ouvert : l'app le lance en arrière-plan."
+msgstr ""
+"FinchGram n'a pas besoin d'être ouvert : l'app le lance en arrière-plan."
 
 #: ui/pages/ai-access.slint:583
 msgid "Log"
@@ -1364,7 +1369,8 @@ msgstr "Afficher le journal dans le Finder"
 
 #: ui/pages/ai-access.slint:606
 msgid "Who connected and what it asked for. Never the words of a message."
-msgstr "Qui s'est connecté et ce qu'il a demandé. Jamais le texte d'un message."
+msgstr ""
+"Qui s'est connecté et ce qu'il a demandé. Jamais le texte d'un message."
 
 #: ui/pages/ai-access.slint:614
 msgid "Always, whatever the settings"
@@ -1382,7 +1388,9 @@ msgstr "Lire ne marque rien comme lu, sauf demande explicite"
 msgid ""
 "Self-destructing media, and media from chats that restrict saving, stays in "
 "FinchGram"
-msgstr "Les médias éphémères et ceux des discussions qui interdisent l'enregistrement restent dans FinchGram"
+msgstr ""
+"Les médias éphémères et ceux des discussions qui interdisent "
+"l'enregistrement restent dans FinchGram"
 
 #: ui/pages/ai-access.slint:634
 msgid "Nothing an assistant reads is kept: no index, no copy"
@@ -1394,7 +1402,8 @@ msgstr "Autoriser « {0} » à utiliser votre compte Telegram ?"
 
 #: ui/pages/ai-access.slint:765
 msgid "Allow an unidentified program to use your Telegram account?"
-msgstr "Autoriser un programme non identifié à utiliser votre compte Telegram ?"
+msgstr ""
+"Autoriser un programme non identifié à utiliser votre compte Telegram ?"
 
 #: ui/pages/ai-access.slint:773
 msgid "macOS reports this program as the one connecting to FinchGram."
@@ -1404,7 +1413,9 @@ msgstr "Selon macOS, c'est ce programme qui se connecte à FinchGram."
 msgid ""
 "macOS wouldn't say which program this is. Allow it only if you've just set "
 "one up yourself."
-msgstr "macOS n'a pas indiqué de quel programme il s'agit. N'autorisez que si vous venez d'en configurer un vous-même."
+msgstr ""
+"macOS n'a pas indiqué de quel programme il s'agit. N'autorisez que si vous "
+"venez d'en configurer un vous-même."
 
 #: ui/pages/ai-access.slint:806
 msgid "Can see"
@@ -2266,7 +2277,10 @@ msgid ""
 "An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
 "chats and act in them through FinchGram, with your account. FinchGram itself "
 "calls no AI and keeps nothing for one."
-msgstr "L'app d'un assistant IA (Claude Desktop, Claude Code, Cursor…) peut lire vos discussions et y agir via FinchGram, avec votre compte. FinchGram lui-même n'appelle aucune IA et ne garde rien pour elle."
+msgstr ""
+"L'app d'un assistant IA (Claude Desktop, Claude Code, Cursor…) peut lire vos "
+"discussions et y agir via FinchGram, avec votre compte. FinchGram lui-même "
+"n'appelle aucune IA et ne garde rien pour elle."
 
 #: ui/pages/settings.slint:1602
 msgid "Password updated"

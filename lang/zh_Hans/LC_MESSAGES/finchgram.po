@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-13 03:59+0000\n"
+"POT-Creation-Date: 2026-10-13 05:36+0000\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1286,8 +1286,8 @@ msgid "Writing"
 msgstr "发消息"
 
 #: ui/pages/ai-access.slint:484
-msgid "Sent at once, under your name. Can't be undone"
-msgstr "以你的名义立即发出，无法撤回"
+msgid "Sent at once, under your name"
+msgstr "以你的名义立即发出"
 
 #: ui/pages/ai-access.slint:493
 msgid "The assistant leaves a draft; you send it from any Telegram app"
@@ -2211,7 +2211,10 @@ msgid ""
 "An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
 "chats and act in them through FinchGram, with your account. FinchGram itself "
 "calls no AI and keeps nothing for one."
-msgstr "AI 助手的应用（如 Claude Desktop、Claude Code、Cursor）可以通过 FinchGram、以你的账号读取聊天并代你操作。FinchGram 本身不调用任何 AI，也不为 AI 保存任何内容。"
+msgstr ""
+"AI 助手的应用（如 Claude Desktop、Claude Code、Cursor）可以通过 FinchGram、以"
+"你的账号读取聊天并代你操作。FinchGram 本身不调用任何 AI，也不为 AI 保存任何内"
+"容。"
 
 #: ui/pages/settings.slint:1602
 msgid "Password updated"

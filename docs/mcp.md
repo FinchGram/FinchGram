@@ -75,7 +75,7 @@ What an assistant can ask for. Chats and messages go by their ids, which `list_c
 | `get_me` | The account: id, name, username | the store |
 
 The assistant is told at the start (the protocol's `instructions`) that reading marks nothing as
-read, that `send_message` cannot be undone and is for when the user asked to send, and that
+read, that `send_message` sends under the user's name at once and is for when the user asked to send, and that
 `draft_message` is for everything else.
 
 ## What the user controls

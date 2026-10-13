@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-13 03:59+0000\n"
+"POT-Creation-Date: 2026-10-13 05:36+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1293,12 +1293,13 @@ msgid "Writing"
 msgstr "書き込み"
 
 #: ui/pages/ai-access.slint:484
-msgid "Sent at once, under your name. Can't be undone"
-msgstr "あなたの名前ですぐに送信され、取り消せません"
+msgid "Sent at once, under your name"
+msgstr "あなたの名前ですぐに送信されます"
 
 #: ui/pages/ai-access.slint:493
 msgid "The assistant leaves a draft; you send it from any Telegram app"
-msgstr "アシスタントが下書きを残し、どの Telegram アプリからでもあなたが送信します"
+msgstr ""
+"アシスタントが下書きを残し、どの Telegram アプリからでもあなたが送信します"
 
 #: ui/pages/ai-access.slint:502
 msgid "No messages, no drafts"
@@ -1320,7 +1321,9 @@ msgstr "許可"
 msgid ""
 "An app asks the first time it connects. Its name comes from macOS, not from "
 "the app itself."
-msgstr "アプリは初めて接続するときに許可を求めます。名前はアプリの自己申告ではなく macOS から取得します。"
+msgstr ""
+"アプリは初めて接続するときに許可を求めます。名前はアプリの自己申告ではなく "
+"macOS から取得します。"
 
 #: ui/pages/ai-access.slint:549
 msgid "Connect an app"
@@ -1340,7 +1343,9 @@ msgstr "Claude Desktop とその他のアプリ"
 
 #: ui/pages/ai-access.slint:575
 msgid "FinchGram doesn't need to be open: the app starts it in the background."
-msgstr "FinchGram を開いておく必要はありません。アプリがバックグラウンドで起動します。"
+msgstr ""
+"FinchGram を開いておく必要はありません。アプリがバックグラウンドで起動しま"
+"す。"
 
 #: ui/pages/ai-access.slint:583
 msgid "Log"
@@ -1370,11 +1375,14 @@ msgstr "読んでも既読にはなりません。既読にするよう求めた
 msgid ""
 "Self-destructing media, and media from chats that restrict saving, stays in "
 "FinchGram"
-msgstr "時間制限付きメディアと、保存が制限されたチャットのメディアは FinchGram の外に出ません"
+msgstr ""
+"時間制限付きメディアと、保存が制限されたチャットのメディアは FinchGram の外に"
+"出ません"
 
 #: ui/pages/ai-access.slint:634
 msgid "Nothing an assistant reads is kept: no index, no copy"
-msgstr "アシスタントが読んだ内容は保存しません：インデックスもコピーも作りません"
+msgstr ""
+"アシスタントが読んだ内容は保存しません：インデックスもコピーも作りません"
 
 #: ui/pages/ai-access.slint:764
 msgid "Allow “{0}” to use your Telegram account?"
@@ -1382,7 +1390,8 @@ msgstr "「{0}」にあなたの Telegram アカウントの使用を許可し�
 
 #: ui/pages/ai-access.slint:765
 msgid "Allow an unidentified program to use your Telegram account?"
-msgstr "識別できないプログラムにあなたの Telegram アカウントの使用を許可しますか？"
+msgstr ""
+"識別できないプログラムにあなたの Telegram アカウントの使用を許可しますか？"
 
 #: ui/pages/ai-access.slint:773
 msgid "macOS reports this program as the one connecting to FinchGram."
@@ -1392,7 +1401,9 @@ msgstr "macOS によると、FinchGram に接続しているのはこのプロ�
 msgid ""
 "macOS wouldn't say which program this is. Allow it only if you've just set "
 "one up yourself."
-msgstr "macOS はこれがどのプログラムかを示しませんでした。自分で設定したばかりの場合のみ許可してください。"
+msgstr ""
+"macOS はこれがどのプログラムかを示しませんでした。自分で設定したばかりの場合"
+"のみ許可してください。"
 
 #: ui/pages/ai-access.slint:806
 msgid "Can see"
@@ -2240,7 +2251,10 @@ msgid ""
 "An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
 "chats and act in them through FinchGram, with your account. FinchGram itself "
 "calls no AI and keeps nothing for one."
-msgstr "AI アシスタントのアプリ（Claude Desktop、Claude Code、Cursor など）が、FinchGram を通じてあなたのアカウントでチャットを読み、操作できます。FinchGram 自体は AI を呼び出さず、AI のために何も保存しません。"
+msgstr ""
+"AI アシスタントのアプリ（Claude Desktop、Claude Code、Cursor など）が、"
+"FinchGram を通じてあなたのアカウントでチャットを読み、操作できます。"
+"FinchGram 自体は AI を呼び出さず、AI のために何も保存しません。"
 
 #: ui/pages/settings.slint:1602
 msgid "Password updated"

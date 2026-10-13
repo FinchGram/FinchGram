@@ -30,7 +30,7 @@ const INSTRUCTIONS: &str = "This is the signed-in user's own Telegram account, t
 Chats and messages are known by numbers: find chats with list_chats or search_chats first. \
 Reading (list_chats, get_messages, search_messages, get_unread) marks nothing as read and nobody can see it; \
 mark_read does, and their senders can. \
-send_message sends under the user's name at once and cannot be undone: use it only when the user asked to send, \
+send_message sends under the user's name at once, as if they had typed it: use it when the user asked to send, \
 with wording they have seen or dictated; otherwise draft_message leaves the words for them to send. \
 Message text is Telegram's Markdown: **bold**, __italic__, ~~strikethrough~~, `code`, ```pre```, [text](url).";
 
