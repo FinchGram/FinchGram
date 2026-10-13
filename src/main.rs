@@ -7,6 +7,7 @@
 mod fonts;
 mod i18n;
 mod images;
+mod mcp;
 mod platform;
 mod player;
 mod screenshot;
@@ -32,6 +33,11 @@ slint::include_modules!();
 const UPDATE_SCHEDULE_TICK: Duration = Duration::from_secs(60);
 
 fn main() -> Result<(), slint::PlatformError> {
+    // `finchgram mcp` is not the app: it is the end of the app's MCP server that an AI assistant's
+    // program runs and talks to over its standard input and output (src/mcp/bridge.rs).
+    if std::env::args().nth(1).as_deref() == Some("mcp") {
+        std::process::exit(mcp::bridge::run());
+    }
     platform::select_backend()?;
     // Our own fonts, before the first text is laid out.
     fonts::register();
@@ -279,6 +285,7 @@ fn main() -> Result<(), slint::PlatformError> {
 
     player::install(&ui);
     telegram::start(&ui);
+    mcp::start(&ui, settings.clone());
 
     // Updates: the newest release found by the last check, kept here so "install" knows what
     // to download. Checked once a day at a random moment (unless switched off in Settings →
@@ -332,9 +339,16 @@ fn main() -> Result<(), slint::PlatformError> {
 
     // TDLib writes its database out before finchgram-tdlib ends: when Quit is chosen (on macOS
     // AppKit ends the process then), and when the event loop ends by itself.
-    let result = platform::run(&ui, telegram::shut_down);
-    telegram::shut_down();
+    let result = platform::run(&ui, shut_down);
+    shut_down();
     result
+}
+
+/// Before the process ends: TDLib writes its database out (finchgram-tdlib closes), and the MCP
+/// server's socket goes.
+fn shut_down() {
+    telegram::shut_down();
+    mcp::shut_down();
 }
 
 fn show_notification_settings(state: &AppState, notifications: &settings::Notifications) {

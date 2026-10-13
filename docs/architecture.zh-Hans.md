@@ -76,6 +76,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - 耗时的活（解码图片、读文件）放到单独的线程里做，做完通过事件循环汇报，跟酷丸工具箱一样。
   图片在 UI 线程之外解码成 `SharedPixelBuffer`，到 UI 线程上再变成 `slint::Image`。
 - 没有 async 运行时：网络全是 TDLib 在做。
+- MCP 服务端（`src/mcp/`）有一个监听 socket 的线程，每个连接再各一个。连接线程读一行、答一行；工具的活交给 UI 线程
+  （`upgrade_in_event_loop`），store 和 TDLib 都在那里，结果通过 channel 回来。
 
 ## 页面：三套主题
 
@@ -140,6 +142,11 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - Saved Messages（和自己的聊天）在三个主题里都是聊天列表上方固定的一行，账号还没用过它也在：点这一行时由 TDLib
   建出这个聊天（createPrivateChat）。它不会在下面的文件夹里重复出现；搜索匹配的是列表显示的名字（Saved Messages、
   Deleted Account），不是 TDLib 的标题。
+- MCP 服务端（`src/mcp/`，[mcp.zh-Hans.md](mcp.zh-Hans.md)）：AI 助手的应用（Claude Desktop、Claude Code 等）通过
+  正在运行的 app、用 Model Context Protocol 读用户的聊天并在其中行动。app 监听自己文件夹里的一个 Unix socket；
+  `finchgram mcp`（同一个可执行文件）是助手应用运行的 stdio 桥。`protocol.rs` 是 JSON-RPC 和 MCP 的方法，`tools.rs`
+  是助手眼中的工具，`src/telegram/tools.rs` 是每个工具对 store 和 TDLib 做的事，在 UI 线程上，范围由设置 → AI 访问
+  决定（默认关；页面本身等设计）。读取不标已读；秘密聊天、自毁媒体和限制保存的聊天的媒体永远不交出去。
 - `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）。
 - `src/platform/`：平台层。目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接、剪贴板（文字和图片）；以及 macOS 上
   （设置 → 通用）关闭窗口后留在 Dock 里，即设计稿的“关闭窗口时：最小化到托盘”（点 Dock 图标重新打开窗口，退出时先让

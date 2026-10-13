@@ -36,6 +36,7 @@ mod store;
 mod time;
 #[cfg(test)]
 mod timing;
+pub mod tools;
 mod attachments;
 mod viewer;
 

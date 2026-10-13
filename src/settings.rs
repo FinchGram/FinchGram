@@ -38,6 +38,8 @@ pub struct Settings {
     pub list_widths: ListWidths,
     /// Settings → General → Screenshots (src/screenshot/).
     pub screenshots: Screenshots,
+    /// Settings → AI access: the MCP server for AI assistants (src/mcp/, docs/mcp.md).
+    pub mcp: Mcp,
 }
 
 /// The screenshot tool: its shortcut, and whether FinchGram's own window hides while the screen is
@@ -60,6 +62,56 @@ impl Default for Screenshots {
     fn default() -> Self {
         Screenshots { shortcut: "cmd+shift+a".to_string(), hide_own_window: false, global: false }
     }
+}
+
+/// Settings → AI access: what an AI assistant connected through the MCP server (src/mcp/,
+/// docs/mcp.md) may do. Nothing until the user turns the server on.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Mcp {
+    /// The server answers assistants at all.
+    pub enabled: bool,
+    /// Which chats an assistant may see and act in: every chat, or only `chats`.
+    pub scope: McpScope,
+    /// The chats an assistant may see when `scope` is "chosen", by TDLib's chat ids.
+    pub chats: Vec<i64>,
+    /// Whether an assistant may send messages under the user's name, only write drafts for the
+    /// user to send, or neither.
+    pub sending: McpSending,
+}
+
+impl Default for Mcp {
+    fn default() -> Self {
+        Mcp { enabled: false, scope: McpScope::All, chats: Vec::new(), sending: McpSending::On }
+    }
+}
+
+impl Mcp {
+    /// Whether the chat is within what the user allows an assistant. (Secret chats never are, whatever
+    /// the scope: src/telegram/tools.rs.)
+    pub fn allows(&self, chat_id: i64) -> bool {
+        match self.scope {
+            McpScope::All => true,
+            McpScope::Chosen => self.chats.contains(&chat_id),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum McpScope {
+    All,
+    Chosen,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum McpSending {
+    /// Messages go out at once.
+    On,
+    /// Only drafts, for the user to send.
+    Drafts,
+    Off,
 }
 
 /// "system", "light" or "dark" for each of the three themes: a theme switched to comes back as it
@@ -194,6 +246,7 @@ impl Default for Settings {
             notifications: Notifications::default(),
             list_widths: ListWidths::default(),
             screenshots: Screenshots::default(),
+            mcp: Mcp::default(),
         }
     }
 }
@@ -297,5 +350,24 @@ mod tests {
         let read: Settings = toml::from_str(&text).expect("read back");
         assert_eq!(read.list_widths.workbench, 320.0);
         assert_eq!(ListWidths { terminal: f32::NAN, ..ListWidths::default() }.sanitized().terminal, 268.0);
+    }
+
+    #[test]
+    fn the_mcp_server_is_off_until_turned_on_and_its_table_reads_back() {
+        let read: Settings = toml::from_str("theme = \"terminal\"\n").expect("read");
+        assert_eq!(read.mcp, Mcp::default());
+        assert!(!read.mcp.enabled && read.mcp.allows(42) && read.mcp.sending == McpSending::On);
+        let settings = Settings {
+            mcp: Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![-1001, 42], sending: McpSending::Drafts },
+            ..Settings::default()
+        };
+        let text = toml::to_string_pretty(&settings).expect("TOML");
+        assert!(text.contains("[mcp]\nenabled = true\nscope = \"chosen\"\n"), "{text}");
+        assert!(text.contains("sending = \"drafts\"\n"), "{text}");
+        let read: Settings = toml::from_str(&text).expect("read back");
+        assert_eq!(read.mcp, settings.mcp);
+        assert!(read.mcp.allows(42) && !read.mcp.allows(7));
+        let read: Settings = toml::from_str("[mcp]\nenabled = true\n").expect("read");
+        assert!(read.mcp.enabled && read.mcp.scope == McpScope::All && read.mcp.sending == McpSending::On);
     }
 }

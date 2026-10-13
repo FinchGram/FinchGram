@@ -92,6 +92,9 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
   back through the event loop, as in Coova Studio. Images are decoded into a `SharedPixelBuffer` off
   the UI thread and become a `slint::Image` on it.
 - There is no async runtime: TDLib does the networking.
+- The MCP server (`src/mcp/`) has a thread listening on its socket and one per connection. A
+  connection's thread reads a line and answers it; a tool's work goes to the UI thread
+  (`upgrade_in_event_loop`), where the store and TDLib are, and its outcome comes back on a channel.
 
 ## The pages: three themes
 
@@ -191,6 +194,14 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   `History::has_newer`), older pages come as before and newer ones as the view comes down, until
   the chat's end; a message sent from there, or the chat opened again, starts from the end anew.
   A reply's original more than two pages up is reached the same way.
+- The MCP server (`src/mcp/`, [mcp.md](mcp.md)): AI assistants' apps (Claude Desktop, Claude
+  Code, …) read the user's chats and act in them through the running app, with the Model Context
+  Protocol. The app listens on a Unix socket in its own folder; `finchgram mcp` (the same
+  executable) is the stdio bridge an assistant's app runs. `protocol.rs` is JSON-RPC and MCP's
+  methods, `tools.rs` the tools as the assistant sees them, and `src/telegram/tools.rs` what each
+  does with the store and TDLib, on the UI thread, within what Settings → AI access allows (off by
+  default; the page itself waits for its design). Reading marks nothing as read; secret chats,
+  self-destructing media and the media of chats that restrict saving are never handed out.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
   device, the transparent title bar on macOS, opening links, the clipboard (words and pictures);

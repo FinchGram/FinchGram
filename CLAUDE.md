@@ -35,6 +35,11 @@ things fit together.
 - Video (and later voice messages) plays through mpv, as libmpv built from pinned sources in
   `vendor/mpv/` the way finchgram-tdlib is (`mpv-*` releases, `scripts/fetch-mpv.sh`); the app links
   it and draws its frames with OpenGL (`src/player/`). Media follow the design's media-viewer.js.
+- The MCP server (`src/mcp/`, `src/telegram/tools.rs`, docs/mcp.md) is what sets FinchGram apart:
+  AI assistants' apps work with the user's Telegram through the running app, over a Unix socket
+  with `finchgram mcp` as the stdio bridge, inside the one TDLib session and without an async
+  runtime. What an assistant may do is Settings → AI access, off by default; that page and the
+  dialog that allows an app come from a design round first, and until then `[mcp]` in settings.toml.
 - Telegram API credentials are never in the repository. Every developer uses their own
   (`FINCHGRAM_API_ID`, `FINCHGRAM_API_HASH` at build time); the release workflow uses secrets.
 
@@ -71,4 +76,7 @@ things fit together.
 - Think of contributors: a fresh clone must build and run by following the README.
 - Telegram's API terms (core.telegram.org/api/terms) are part of the design: nothing that
   interferes with read receipts, typing or online status; official sponsored messages in channels
-  are shown; nothing obtained from Telegram trains or feeds AI.
+  are shown. FinchGram itself calls no AI and trains nothing; what reaches an AI is only what the
+  user hands it through the MCP server (docs/mcp.md): off by default, within the chats the user
+  chose, never indexed or stored for it, and reading that marks nothing as read. The maintainer
+  decided this on 2026-10-12 knowing the terms' clause 1.5.
