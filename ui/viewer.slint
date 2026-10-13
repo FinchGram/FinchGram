@@ -62,7 +62,7 @@ struct ViewerLook {
     icon-size: length,
     mono-counter: bool,         // the counter and times in a monospaced face
     duotone: bool,
-    side-arrows: bool,          // Broadsheet: the whole side is the arrow
+    arrow-size: length,         // the arrows over the picture's sides
     caption-size: length,
     caption-color: color,
     track-height: length,
@@ -98,11 +98,12 @@ component IconButton inherits Rectangle {
     in property <bool> duotone;
     in property <bool> enabled: true;
     in property <length> radius: 6px;
+    in property <bool> standing;        // filled while the pointer is away too: the close button
     callback clicked();
     width: size + 16px;
     height: size + 16px;
     border-radius: radius;
-    background: touch.has-hover && enabled ? #ffffff14 : transparent;
+    background: touch.has-hover && enabled ? (standing ? #ffffff3d : #ffffff14) : standing ? #ffffff1f : transparent;
     opacity: enabled ? 1 : 0.35;
 
     Icon {
@@ -116,6 +117,36 @@ component IconButton inherits Rectangle {
         mouse-cursor: pointer;
         clicked => {
             root.clicked();
+        }
+    }
+}
+
+// The arrow to the previous or the next item (Workbench's and Broadsheet's): a strip over the
+// picture's side, the stage's height, as wide as the arrow with 12px around it, lit while the
+// pointer is on it. Where there is nothing further the strip stays, with the arrow dimmed, and a
+// click on it does nothing: taken away, the click fell through to the ground beside the picture and
+// closed the viewer.
+component SideArrow inherits Rectangle {
+    in property <ViewerLook> look;
+    in property <bool> forward;
+    in property <bool> enabled;
+    callback clicked();
+    width: look.arrow-size + 24px;
+    background: touch.has-hover && enabled ? #ffffff14 : transparent;
+
+    Icon {
+        name: root.forward ? "caret-right" : "caret-left";
+        size: root.look.arrow-size;
+        color: #ffffff;
+        duotone: false;
+        opacity: root.enabled ? 1 : 0.35;
+    }
+    touch := TouchArea {
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            if root.enabled {
+                root.clicked();
+            }
         }
     }
 }
@@ -301,6 +332,7 @@ component Stage inherits Rectangle {
     in property <length> radius;
     in property <float> zoom: 1;
     in property <length> room;          // the most height the stage may take
+    in property <length> side: 80px;    // kept clear of the picture on either side, for the arrows
     // What the fitted picture needs, with 16px above and below: the stage's height unless zoomed.
     out property <length> fitted-height: Math.round(own-height * fit) * 1px + 32px;
     callback activated();       // a click on the picture
@@ -309,8 +341,7 @@ component Stage inherits Rectangle {
 
     property <float> own-width: item.width > 0 ? item.width : item.video ? 16 : 4;
     property <float> own-height: item.height > 0 ? item.height : item.video ? 9 : 3;
-    // Room for the arrows on either side.
-    property <float> fit: max(0, min((self.width - 160px) / 1px / own-width, (root.room - 32px) / 1px / own-height));
+    property <float> fit: max(0, min((self.width - 2 * side) / 1px / own-width, (root.room - 32px) / 1px / own-height));
 
     TouchArea {
         clicked => {
@@ -515,10 +546,12 @@ component PictureViewer inherits Rectangle {
                     }
                     VerticalLayout {
                         alignment: center;
+                        // Filled and round, unlike the other buttons: the one that must be found.
                         IconButton {
                             icon: "x";
                             size: root.look.icon-size;
-                            radius: root.look.button-radius;
+                            radius: self.width / 2;
+                            standing: true;
                             clicked => {
                                 Viewer.close();
                             }
@@ -536,6 +569,7 @@ component PictureViewer inherits Rectangle {
                 alignment: center;
                 stage := Stage {
                     room: root.room - root.below;
+                    side: previous.width + 16px;
                     height: Viewer.zoom > 0 && !state.item.video ? self.room : self.fitted-height;
                     item: state.item;
                     radius: root.look.radius;
@@ -745,46 +779,26 @@ component PictureViewer inherits Rectangle {
     }
 
     // The arrows, over the picture's sides.
-    if state.has-previous: Rectangle {
-        x: root.look.side-arrows ? 0 : 16px;
-        y: root.look.bar-height + stage.y + (root.look.side-arrows ? 0 : (stage.height - self.height) / 2);
-        width: root.look.side-arrows ? 120px : 44px;
-        height: root.look.side-arrows ? stage.height : 44px;
-        border-radius: root.look.side-arrows ? 0 : 22px;
-        background: root.look.side-arrows ? (previous.has-hover ? #ffffff0f : transparent) : previous.has-hover ? #ffffff33 : #ffffff1a;
-        Icon {
-            x: root.look.side-arrows ? 20px : (parent.width - self.width) / 2;
-            name: "caret-left";
-            size: root.look.side-arrows ? 28px : 20px;
-            color: #ffffff;
-            duotone: false;
-        }
-        previous := TouchArea {
-            mouse-cursor: pointer;
-            clicked => {
-                Viewer.show(Viewer.index - 1);
-            }
+    previous := SideArrow {
+        x: 0;
+        y: root.look.bar-height + stage.y;
+        height: stage.height;
+        look: root.look;
+        forward: false;
+        enabled: state.has-previous;
+        clicked => {
+            Viewer.show(Viewer.index - 1);
         }
     }
-    if state.has-next: Rectangle {
-        x: root.width - self.width - (root.look.side-arrows ? 0 : 16px);
-        y: root.look.bar-height + stage.y + (root.look.side-arrows ? 0 : (stage.height - self.height) / 2);
-        width: root.look.side-arrows ? 120px : 44px;
-        height: root.look.side-arrows ? stage.height : 44px;
-        border-radius: root.look.side-arrows ? 0 : 22px;
-        background: root.look.side-arrows ? (next.has-hover ? #ffffff0f : transparent) : next.has-hover ? #ffffff33 : #ffffff1a;
-        Icon {
-            x: root.look.side-arrows ? parent.width - self.width - 20px : (parent.width - self.width) / 2;
-            name: "caret-right";
-            size: root.look.side-arrows ? 28px : 20px;
-            color: #ffffff;
-            duotone: false;
-        }
-        next := TouchArea {
-            mouse-cursor: pointer;
-            clicked => {
-                Viewer.show(Viewer.index + 1);
-            }
+    SideArrow {
+        x: root.width - self.width;
+        y: root.look.bar-height + stage.y;
+        height: stage.height;
+        look: root.look;
+        forward: true;
+        enabled: state.has-next;
+        clicked => {
+            Viewer.show(Viewer.index + 1);
         }
     }
 
@@ -834,6 +848,30 @@ component TermButton inherits TermText {
         mouse-cursor: pointer;
         clicked => {
             root.clicked();
+        }
+    }
+}
+
+// Terminal's SideArrow: "[←]" or "[→]" in the middle of a strip over the picture's side.
+component TermArrow inherits Rectangle {
+    in property <bool> forward;
+    in property <bool> enabled;
+    callback clicked();
+    width: label.preferred-width + 24px;
+    background: touch.has-hover && enabled ? #ffffff0f : transparent;
+
+    label := TermText {
+        text: root.forward ? "[→]" : "[←]";
+        color: #7ed69b;
+        font-size: 15px;
+        opacity: root.enabled ? 1 : 0.35;
+    }
+    touch := TouchArea {
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            if root.enabled {
+                root.clicked();
+            }
         }
     }
 }
@@ -1090,9 +1128,10 @@ component TextViewer inherits Rectangle {
                             Viewer.download();
                         }
                     }
+                    // In the accent like the other buttons, not muted as a key hint would be: the
+                    // one that must be found.
                     TermButton {
                         text: "[esc]";
-                        color: root.muted;
                         clicked => {
                             Viewer.close();
                         }
@@ -1109,6 +1148,7 @@ component TextViewer inherits Rectangle {
                 alignment: center;
                 stage := Stage {
                     room: root.room - root.below;
+                    side: previous.width + 16px;
                     height: Viewer.zoom > 0 && !state.item.video ? self.room : self.fitted-height;
                     item: state.item;
                     radius: 0;
@@ -1244,20 +1284,22 @@ component TextViewer inherits Rectangle {
         }
     }
 
-    if state.has-previous: TermButton {
-        x: 14px;
-        y: 36px + stage.y + (stage.height - self.height) / 2;
-        text: "[←]";
-        font-size: 15px;
+    previous := TermArrow {
+        x: 0;
+        y: 36px + stage.y;
+        height: stage.height;
+        forward: false;
+        enabled: state.has-previous;
         clicked => {
             Viewer.show(Viewer.index - 1);
         }
     }
-    if state.has-next: TermButton {
-        x: root.width - self.width - 14px;
-        y: 36px + stage.y + (stage.height - self.height) / 2;
-        text: "[→]";
-        font-size: 15px;
+    TermArrow {
+        x: root.width - self.width;
+        y: 36px + stage.y;
+        height: stage.height;
+        forward: true;
+        enabled: state.has-next;
         clicked => {
             Viewer.show(Viewer.index + 1);
         }
@@ -1292,7 +1334,7 @@ export component MediaViewer inherits Rectangle {
             background: #0d0f13, text: #eef0f3, muted: #a3aab4, toast: #2a2f37, accent: #8e9ff0,
             radius: 4px, button-radius: 6px, bar-height: 56px, avatar-size: 32px, avatar-radius: 6px,
             name-size: 14px, meta-size: 12px, icon-size: 19px, mono-counter: true, duotone: false,
-            side-arrows: false, caption-size: 14px, caption-color: #dfe3e8, track-height: 4px,
+            arrow-size: 20px, caption-size: 14px, caption-color: #dfe3e8, track-height: 4px,
             track-radius: 2px, play-size: 72px, thumb-size: 12px, tray-pad: 10px, slider-width: 80px,
             slider-height: 20px, volume-gap: 8px, volume-width: 24px, volume-size: 11px, volume-color: #c7ccd3,
         };
@@ -1303,7 +1345,7 @@ export component MediaViewer inherits Rectangle {
             accent: AccountColors.accent(0, true),
             radius: 2px, button-radius: 4px, bar-height: 60px, avatar-size: 34px, avatar-radius: 17px,
             name-size: 15px, meta-size: 13px, icon-size: 21px, mono-counter: false, duotone: true,
-            side-arrows: true, caption-size: 16px, caption-color: #e6e4e4, track-height: 3px,
+            arrow-size: 28px, caption-size: 16px, caption-color: #e6e4e4, track-height: 3px,
             track-radius: 0, play-size: 76px, thumb-size: 13px, tray-pad: 12px, slider-width: 88px,
             slider-height: 22px, volume-gap: 10px, volume-width: 26px, volume-size: 13px, volume-color: #d6d3d3,
         };
