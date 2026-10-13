@@ -18,6 +18,7 @@ PICTURES=(
   workbench-light-shot-annotated
   workbench-light-shot-send-card
   workbench-light-settings-general
+  workbench-light-settings-ai
   zh-workbench-chats
 )
 mkdir -p "$TO"

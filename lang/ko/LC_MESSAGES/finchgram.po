@@ -3,51 +3,51 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-10 05:32+0000\n"
+"POT-Creation-Date: 2026-10-13 03:59+0000\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ui/app.slint:38
+#: ui/app.slint:41
 msgid "View"
 msgstr "보기"
 
-#: ui/app.slint:40 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
+#: ui/app.slint:43 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
 #: ui/workbench/actions.slint:172
 msgid "Search"
 msgstr "검색"
 
-#: ui/app.slint:50
+#: ui/app.slint:53
 msgid "Search in Chat"
 msgstr "채팅에서 검색"
 
-#: ui/app.slint:62 ui/pages/settings.slint:557
+#: ui/app.slint:65 ui/pages/settings.slint:406
 msgid "Workbench"
 msgstr "워크벤치"
 
-#: ui/app.slint:70 ui/pages/settings.slint:565
+#: ui/app.slint:73 ui/pages/settings.slint:414
 msgid "Terminal"
 msgstr "터미널"
 
-#: ui/app.slint:78 ui/pages/settings.slint:573
+#: ui/app.slint:81 ui/pages/settings.slint:422
 msgid "Broadsheet"
 msgstr "브로드시트"
 
-#: ui/app.slint:87
+#: ui/app.slint:90
 msgid "Settings…"
 msgstr "설정…"
 
-#: ui/app.slint:96
+#: ui/app.slint:99
 msgid "Help"
 msgstr "도움말"
 
-#: ui/app.slint:99
+#: ui/app.slint:102
 msgid "Update to {}…"
 msgstr "{} 버전으로 업데이트…"
 
-#: ui/app.slint:100
+#: ui/app.slint:103
 msgid "Check for Updates…"
 msgstr "업데이트 확인…"
 
@@ -78,7 +78,7 @@ msgstr "설명 추가 (선택 사항)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
 #: ui/broadsheet/broadsheet.slint:2097 ui/pages/profile.slint:174
-#: ui/pages/settings.slint:1369 ui/terminal/actions.slint:463
+#: ui/pages/settings.slint:1218 ui/terminal/actions.slint:463
 #: ui/terminal/terminal.slint:1298 ui/workbench/actions.slint:547
 #: ui/workbench/conversation.slint:1415
 msgid "Cancel"
@@ -96,11 +96,11 @@ msgstr "신고"
 msgid "Delete"
 msgstr "삭제"
 
-#: ui/broadsheet/broadsheet.slint:96 ui/pages/settings.slint:596
+#: ui/broadsheet/broadsheet.slint:96 ui/pages/settings.slint:445
 msgid "Light"
 msgstr "라이트"
 
-#: ui/broadsheet/broadsheet.slint:96 ui/pages/settings.slint:604
+#: ui/broadsheet/broadsheet.slint:96 ui/pages/settings.slint:453
 msgid "Dark"
 msgstr "다크"
 
@@ -108,7 +108,7 @@ msgstr "다크"
 msgid "Accounts"
 msgstr "계정"
 
-#: ui/broadsheet/broadsheet.slint:241 ui/pages/settings.slint:125
+#: ui/broadsheet/broadsheet.slint:241 ui/pages/settings.slint:135
 msgid "Chats"
 msgstr "채팅"
 
@@ -216,7 +216,7 @@ msgstr "폴더에 추가"
 #: ui/broadsheet/broadsheet.slint:1167 ui/pages/login.slint:524
 #: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
 #: ui/pages/login.slint:841 ui/pages/login.slint:901
-#: ui/pages/settings.slint:1618 ui/terminal/actions.slint:285
+#: ui/pages/settings.slint:1467 ui/terminal/actions.slint:285
 #: ui/workbench/sidebar.slint:617
 msgid "Back"
 msgstr "뒤로"
@@ -453,7 +453,7 @@ msgstr "앨범 {0} · {1}"
 msgid "Add more"
 msgstr "더 추가"
 
-#: ui/chat.slint:332
+#: ui/chat.slint:332 ui/pages/ai-access.slint:456 ui/pages/ai-access.slint:528
 msgid "Remove"
 msgstr "제거"
 
@@ -485,8 +485,8 @@ msgstr "자동 삭제 타이머"
 msgid "Disappears after it's opened."
 msgstr "열어 본 후에 사라집니다."
 
-#: ui/chat.slint:341 ui/pages/settings.slint:918 ui/pages/settings.slint:929
-#: ui/pages/settings.slint:1187
+#: ui/chat.slint:341 ui/pages/settings.slint:767 ui/pages/settings.slint:778
+#: ui/pages/settings.slint:1036
 msgid "Off"
 msgstr "끔"
 
@@ -971,7 +971,7 @@ msgstr "연결 중…"
 msgid "Updating…"
 msgstr "업데이트 중…"
 
-#: ui/format.slint:185
+#: ui/format.slint:185 ui/pages/ai-access.slint:78
 msgid "Connected"
 msgstr "연결됨"
 
@@ -1122,6 +1122,293 @@ msgctxt "sender and message"
 msgid "{0}: {1}"
 msgstr "{0}: {1}"
 
+#: ui/pages/ai-access.slint:22
+msgid "Secret chat · never shown"
+msgstr "비밀 채팅 · 표시 안 됨"
+
+#: ui/pages/ai-access.slint:25
+msgid "Group · {0} members"
+msgstr "그룹 · 멤버 {0}명"
+
+#: ui/pages/ai-access.slint:25
+msgid "Group"
+msgstr "그룹"
+
+#: ui/pages/ai-access.slint:28
+msgid "Channel · {0} subscribers"
+msgstr "채널 · 구독자 {0}명"
+
+#: ui/pages/ai-access.slint:28
+msgid "Channel"
+msgstr "채널"
+
+#: ui/pages/ai-access.slint:31
+msgid "Bot"
+msgstr "봇"
+
+#: ui/pages/ai-access.slint:36
+msgid "Private chat"
+msgstr "개인 채팅"
+
+#: ui/pages/ai-access.slint:40
+msgid "Unidentified program"
+msgstr "알 수 없는 프로그램"
+
+#: ui/pages/ai-access.slint:47
+msgid "Not allowed"
+msgstr "허용 안 함"
+
+#: ui/pages/ai-access.slint:50
+msgid "Connected now"
+msgstr "지금 연결됨"
+
+#: ui/pages/ai-access.slint:53
+msgid "Last used {0}"
+msgstr "마지막 사용 {0}"
+
+#: ui/pages/ai-access.slint:79
+msgid "Not allowed, turned away"
+msgstr "허용 안 함, 연결 거부"
+
+#: ui/pages/ai-access.slint:80
+msgid "Listed chats"
+msgstr "채팅 목록을 봄"
+
+#: ui/pages/ai-access.slint:81
+msgid "Searched chats"
+msgstr "채팅 검색"
+
+#: ui/pages/ai-access.slint:82
+msgid "Looked at {0}"
+msgstr "{0} 확인"
+
+#: ui/pages/ai-access.slint:83
+msgid "Read {0} messages in {1}"
+msgstr "{1}에서 메시지 {0}개를 읽음"
+
+#: ui/pages/ai-access.slint:85
+msgid "Searched messages in {0}"
+msgstr "{0}에서 메시지 검색"
+
+#: ui/pages/ai-access.slint:85
+msgid "Searched messages in {0} chats"
+msgstr "채팅 {0}개에서 메시지 검색"
+
+#: ui/pages/ai-access.slint:87
+msgid "Searched messages in all chats"
+msgstr "모든 채팅에서 메시지 검색"
+
+#: ui/pages/ai-access.slint:88
+msgid "Read unread messages in {0} chats"
+msgstr "채팅 {0}개의 안 읽은 메시지를 읽음"
+
+#: ui/pages/ai-access.slint:89
+msgid "Took media from {0}"
+msgstr "{0}의 미디어를 가져감"
+
+#: ui/pages/ai-access.slint:90
+msgid "Saved a draft in {0}"
+msgstr "{0}에 임시 메시지 저장"
+
+#: ui/pages/ai-access.slint:91
+msgid "Sent a message in {0}"
+msgstr "{0}에 메시지를 보냄"
+
+#: ui/pages/ai-access.slint:92
+msgid "Marked {0} messages as read in {1}"
+msgstr "{1}의 메시지 {0}개를 읽음으로 표시"
+
+#: ui/pages/ai-access.slint:93
+msgid "Looked at the account"
+msgstr "계정 정보 확인"
+
+#: ui/pages/ai-access.slint:94
+msgid "Turned away from {0}: not a chosen chat"
+msgstr "거부됨: {0}은(는) 선택한 채팅이 아님"
+
+#: ui/pages/ai-access.slint:100 ui/pages/ai-access.slint:432
+#: ui/workbench/sidebar.slint:105
+msgid "All chats"
+msgstr "모든 채팅"
+
+#: ui/pages/ai-access.slint:102
+msgid "{0} chats you chose"
+msgstr "내가 고른 채팅 {0}개"
+
+#: ui/pages/ai-access.slint:102 ui/pages/ai-access.slint:442
+msgid "None chosen yet: assistants see nothing"
+msgstr "아직 선택 안 함: 어시스턴트는 아무것도 볼 수 없습니다"
+
+#: ui/pages/ai-access.slint:106 ui/pages/ai-access.slint:483
+msgid "Send messages"
+msgstr "메시지 보내기"
+
+#: ui/pages/ai-access.slint:106 ui/pages/ai-access.slint:492
+msgid "Drafts only"
+msgstr "임시 저장만"
+
+#: ui/pages/ai-access.slint:106 ui/pages/ai-access.slint:501
+msgid "Read only"
+msgstr "읽기 전용"
+
+#: ui/pages/ai-access.slint:372 ui/terminal/terminal.slint:111
+msgid "Search chats"
+msgstr "채팅 검색"
+
+#: ui/pages/ai-access.slint:411
+msgid "Access"
+msgstr "접근"
+
+#: ui/pages/ai-access.slint:416
+msgid "Let AI assistants connect"
+msgstr "AI 어시스턴트 연결 허용"
+
+#: ui/pages/ai-access.slint:417
+msgid "When off, FinchGram turns every assistant away"
+msgstr "끄면 FinchGram이 모든 어시스턴트를 거부합니다"
+
+#: ui/pages/ai-access.slint:428
+msgid "Chats assistants can see"
+msgstr "어시스턴트가 볼 수 있는 채팅"
+
+#: ui/pages/ai-access.slint:433
+msgid "Every chat except secret chats"
+msgstr "비밀 채팅을 제외한 모든 채팅"
+
+#: ui/pages/ai-access.slint:441
+msgid "Only chats I choose"
+msgstr "내가 고른 채팅만"
+
+#: ui/pages/ai-access.slint:442 ui/pages/ai-access.slint:649
+msgid "{0} chosen"
+msgstr "{0}개 선택됨"
+
+#: ui/pages/ai-access.slint:467 ui/pages/settings.slint:1576
+msgid "Choose chats"
+msgstr "채팅 선택"
+
+#: ui/pages/ai-access.slint:479
+msgid "Writing"
+msgstr "쓰기"
+
+#: ui/pages/ai-access.slint:484
+msgid "Sent at once, under your name. Can't be undone"
+msgstr "내 이름으로 바로 전송되며 되돌릴 수 없습니다"
+
+#: ui/pages/ai-access.slint:493
+msgid "The assistant leaves a draft; you send it from any Telegram app"
+msgstr "어시스턴트가 임시 메시지를 남기면 아무 Telegram 앱에서 내가 보냅니다"
+
+#: ui/pages/ai-access.slint:502
+msgid "No messages, no drafts"
+msgstr "메시지도 임시 메시지도 쓰지 않습니다"
+
+#: ui/pages/ai-access.slint:513
+msgid "Apps"
+msgstr "앱"
+
+#: ui/pages/ai-access.slint:518
+msgid "No app has connected yet"
+msgstr "아직 연결한 앱이 없습니다"
+
+#: ui/pages/ai-access.slint:528 ui/pages/ai-access.slint:855
+msgid "Allow"
+msgstr "허용"
+
+#: ui/pages/ai-access.slint:541
+msgid ""
+"An app asks the first time it connects. Its name comes from macOS, not from "
+"the app itself."
+msgstr "앱은 처음 연결할 때 허락을 구합니다. 앱 이름은 앱이 밝힌 것이 아니라 macOS에서 가져옵니다."
+
+#: ui/pages/ai-access.slint:549
+msgid "Connect an app"
+msgstr "앱 연결"
+
+#: ui/pages/ai-access.slint:557 ui/pages/ai-access.slint:568
+msgid "Copied"
+msgstr "복사됨"
+
+#: ui/pages/ai-access.slint:557 ui/pages/ai-access.slint:568
+msgid "Copy"
+msgstr "복사"
+
+#: ui/pages/ai-access.slint:565
+msgid "Claude Desktop and other apps"
+msgstr "Claude Desktop 및 기타 앱"
+
+#: ui/pages/ai-access.slint:575
+msgid "FinchGram doesn't need to be open: the app starts it in the background."
+msgstr "FinchGram이 열려 있지 않아도 됩니다. 앱이 백그라운드에서 실행합니다."
+
+#: ui/pages/ai-access.slint:583
+msgid "Log"
+msgstr "기록"
+
+#: ui/pages/ai-access.slint:598
+msgid "Show log in Finder"
+msgstr "Finder에서 기록 보기"
+
+#: ui/pages/ai-access.slint:606
+msgid "Who connected and what it asked for. Never the words of a message."
+msgstr "누가 연결했고 무엇을 요청했는지 기록합니다. 메시지 내용은 기록하지 않습니다."
+
+#: ui/pages/ai-access.slint:614
+msgid "Always, whatever the settings"
+msgstr "설정과 관계없이 항상"
+
+#: ui/pages/ai-access.slint:619
+msgid "Secret chats are never shown to an assistant"
+msgstr "비밀 채팅은 어시스턴트에게 절대 보이지 않습니다"
+
+#: ui/pages/ai-access.slint:624
+msgid "Reading never marks messages as read unless asked to"
+msgstr "읽어도 읽음으로 표시되지 않습니다. 표시해 달라고 요청할 때만 표시됩니다"
+
+#: ui/pages/ai-access.slint:629
+msgid ""
+"Self-destructing media, and media from chats that restrict saving, stays in "
+"FinchGram"
+msgstr "자동 삭제 미디어와 저장이 제한된 채팅의 미디어는 FinchGram 밖으로 나가지 않습니다"
+
+#: ui/pages/ai-access.slint:634
+msgid "Nothing an assistant reads is kept: no index, no copy"
+msgstr "어시스턴트가 읽은 내용은 저장하지 않습니다: 색인도 사본도 없습니다"
+
+#: ui/pages/ai-access.slint:764
+msgid "Allow “{0}” to use your Telegram account?"
+msgstr "'{0}'에 내 Telegram 계정 사용을 허용할까요?"
+
+#: ui/pages/ai-access.slint:765
+msgid "Allow an unidentified program to use your Telegram account?"
+msgstr "알 수 없는 프로그램에 내 Telegram 계정 사용을 허용할까요?"
+
+#: ui/pages/ai-access.slint:773
+msgid "macOS reports this program as the one connecting to FinchGram."
+msgstr "macOS에 따르면 FinchGram에 연결하는 프로그램은 이것입니다."
+
+#: ui/pages/ai-access.slint:774
+msgid ""
+"macOS wouldn't say which program this is. Allow it only if you've just set "
+"one up yourself."
+msgstr "macOS가 어떤 프로그램인지 알려 주지 않았습니다. 방금 직접 설정한 경우에만 허용하세요."
+
+#: ui/pages/ai-access.slint:806
+msgid "Can see"
+msgstr "볼 수 있는 것"
+
+#: ui/pages/ai-access.slint:822
+msgid "Can write"
+msgstr "쓸 수 있는 것"
+
+#: ui/pages/ai-access.slint:835
+msgid "Change in Settings"
+msgstr "설정에서 변경"
+
+#: ui/pages/ai-access.slint:848
+msgid "Don't Allow"
+msgstr "허용 안 함"
+
 #: ui/pages/login.slint:15
 msgid "A lighter Telegram client"
 msgstr "더 가벼운 Telegram 클라이언트"
@@ -1186,11 +1473,11 @@ msgstr "다중 계정 및 폴더"
 msgid "Keep work and life apart"
 msgstr "일과 생활을 분리하세요"
 
-#: ui/pages/login.slint:163 ui/pages/settings.slint:1084
+#: ui/pages/login.slint:163 ui/pages/settings.slint:933
 msgid "Fully open source — read the code"
 msgstr "완전한 오픈 소스 — 코드를 직접 확인하세요"
 
-#: ui/pages/login.slint:183 ui/pages/settings.slint:1113
+#: ui/pages/login.slint:183 ui/pages/settings.slint:962
 msgid ""
 "FinchGram is an unofficial client built on the Telegram API. It is not made "
 "by Telegram."
@@ -1215,7 +1502,7 @@ msgid "Phone number"
 msgstr "전화번호"
 
 #: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613
-#: ui/pages/settings.slint:1405 ui/pages/settings.slint:1602
+#: ui/pages/settings.slint:1254 ui/pages/settings.slint:1451
 msgid "Next"
 msgstr "다음"
 
@@ -1267,7 +1554,7 @@ msgstr "다시 보냈습니다 — Telegram을 확인하세요"
 msgid "Didn't get it? Resend"
 msgstr "받지 못하셨습니까? 다시 보내기"
 
-#: ui/pages/login.slint:537 ui/pages/settings.slint:1186
+#: ui/pages/login.slint:537 ui/pages/settings.slint:1035
 msgid "Two-step verification"
 msgstr "2단계 인증"
 
@@ -1275,7 +1562,7 @@ msgstr "2단계 인증"
 msgid "This account has two-step verification on. Enter your password."
 msgstr "이 계정은 2단계 인증이 켜져 있습니다. 암호를 입력하세요."
 
-#: ui/pages/login.slint:545 ui/pages/settings.slint:1387
+#: ui/pages/login.slint:545 ui/pages/settings.slint:1236
 msgid "Password"
 msgstr "암호"
 
@@ -1283,27 +1570,27 @@ msgstr "암호"
 msgid "Hint: {0}"
 msgstr "힌트: {0}"
 
-#: ui/pages/login.slint:572 ui/pages/settings.slint:1413
+#: ui/pages/login.slint:572 ui/pages/settings.slint:1262
 msgid "Forgot password?"
 msgstr "암호를 잊으셨습니까?"
 
-#: ui/pages/login.slint:593 ui/pages/settings.slint:1581
+#: ui/pages/login.slint:593 ui/pages/settings.slint:1430
 msgid "Recover via email"
 msgstr "이메일로 복구"
 
-#: ui/pages/login.slint:594 ui/pages/settings.slint:1582
+#: ui/pages/login.slint:594 ui/pages/settings.slint:1431
 msgid "A recovery code was sent to {0}. Enter it to set a new password."
 msgstr "{0}에 복구 코드를 보냈습니다. 코드를 입력하여 새 암호를 설정하세요."
 
-#: ui/pages/login.slint:621 ui/pages/settings.slint:1610
+#: ui/pages/login.slint:621 ui/pages/settings.slint:1459
 msgid "Can't access this email?"
 msgstr "이 이메일에 접근할 수 없습니까?"
 
-#: ui/pages/login.slint:643 ui/pages/settings.slint:1425
+#: ui/pages/login.slint:643 ui/pages/settings.slint:1274
 msgid "Set a new password"
 msgstr "새 암호 설정"
 
-#: ui/pages/login.slint:644 ui/pages/settings.slint:1426
+#: ui/pages/login.slint:644 ui/pages/settings.slint:1275
 msgid "You'll need this password when signing in on a new device."
 msgstr "새 기기에서 로그인할 때 이 암호가 필요합니다."
 
@@ -1460,11 +1747,11 @@ msgstr "새 암호"
 msgid "Re-enter new password"
 msgstr "새 암호 재입력"
 
-#: ui/pages/password.slint:182 ui/pages/settings.slint:1452
+#: ui/pages/password.slint:182 ui/pages/settings.slint:1301
 msgid "Password hint (optional)"
 msgstr "암호 힌트 (선택 사항)"
 
-#: ui/pages/password.slint:192 ui/pages/settings.slint:1444
+#: ui/pages/password.slint:192 ui/pages/settings.slint:1293
 msgid ""
 "The hint is shown on the sign-in screen to anyone who knows your number. "
 "Don't write the password itself."
@@ -1516,7 +1803,7 @@ msgstr "사용자 이름이 없으면 다른 사람이 전화번호로만 나를
 msgid "Bio"
 msgstr "소개"
 
-#: ui/pages/profile.slint:386 ui/pages/settings.slint:1429
+#: ui/pages/profile.slint:386 ui/pages/settings.slint:1278
 msgid "Save"
 msgstr "저장"
 
@@ -1524,92 +1811,96 @@ msgstr "저장"
 msgid "Profile"
 msgstr "프로필"
 
-#: ui/pages/settings.slint:97 ui/pages/settings.slint:1675
+#: ui/pages/settings.slint:101 ui/pages/settings.slint:1528
 msgid "Settings"
 msgstr "설정"
 
-#: ui/pages/settings.slint:106 ui/pages/settings.slint:1716
+#: ui/pages/settings.slint:110 ui/pages/settings.slint:1577
 msgid "General"
 msgstr "일반"
 
-#: ui/pages/settings.slint:112 ui/pages/settings.slint:1717
+#: ui/pages/settings.slint:116 ui/pages/settings.slint:1578
 msgid "Notifications & sounds"
 msgstr "알림 및 소리"
 
-#: ui/pages/settings.slint:118 ui/pages/settings.slint:1707
+#: ui/pages/settings.slint:122 ui/pages/settings.slint:1560
 msgid "Privacy & security"
 msgstr "개인정보 보호 및 보안"
 
-#: ui/pages/settings.slint:130
+#: ui/pages/settings.slint:129 ui/pages/settings.slint:1568
+msgid "AI access"
+msgstr "AI 접근"
+
+#: ui/pages/settings.slint:140
 msgid "Folders"
 msgstr "폴더"
 
-#: ui/pages/settings.slint:135
+#: ui/pages/settings.slint:145
 msgid "Finch features"
 msgstr "Finch 기능"
 
-#: ui/pages/settings.slint:140 ui/pages/settings.slint:1720
+#: ui/pages/settings.slint:150 ui/pages/settings.slint:1582
 msgid "Appearance"
 msgstr "화면 모드"
 
-#: ui/pages/settings.slint:146 ui/pages/settings.slint:1718
+#: ui/pages/settings.slint:156 ui/pages/settings.slint:1579
 msgid "Language"
 msgstr "언어"
 
-#: ui/pages/settings.slint:152
+#: ui/pages/settings.slint:162
 msgid "Data & storage"
 msgstr "데이터 및 저장 공간"
 
-#: ui/pages/settings.slint:157
+#: ui/pages/settings.slint:167
 msgid "Advanced"
 msgstr "고급"
 
-#: ui/pages/settings.slint:162 ui/pages/settings.slint:1720
+#: ui/pages/settings.slint:172 ui/pages/settings.slint:1582
 msgid "About"
 msgstr "정보"
 
-#: ui/pages/settings.slint:496
+#: ui/pages/settings.slint:345
 msgid "Checking…"
 msgstr "확인 중…"
 
-#: ui/pages/settings.slint:497
+#: ui/pages/settings.slint:346
 msgid "Version {0} available"
 msgstr "{0} 버전 사용 가능"
 
-#: ui/pages/settings.slint:499
+#: ui/pages/settings.slint:348
 msgid "Downloading {0}% · {1} of {2}"
 msgstr "다운로드 중 {0}% · {2} 중 {1}"
 
-#: ui/pages/settings.slint:500
+#: ui/pages/settings.slint:349
 msgid "Installing…"
 msgstr "설치 중…"
 
-#: ui/pages/settings.slint:501
+#: ui/pages/settings.slint:350
 msgid "You're up to date"
 msgstr "최신 버전입니다"
 
-#: ui/pages/settings.slint:502
+#: ui/pages/settings.slint:351
 msgid "The update failed"
 msgstr "업데이트에 실패했습니다"
 
-#: ui/pages/settings.slint:503 ui/pages/settings.slint:519
-#: ui/pages/settings.slint:1027
+#: ui/pages/settings.slint:352 ui/pages/settings.slint:368
+#: ui/pages/settings.slint:876
 msgid "Version {0}"
 msgstr "버전 {0}"
 
-#: ui/pages/settings.slint:527
+#: ui/pages/settings.slint:376
 msgid "Install and restart"
 msgstr "설치하고 다시 실행"
 
-#: ui/pages/settings.slint:534
+#: ui/pages/settings.slint:383
 msgid "Check for updates"
 msgstr "업데이트 확인"
 
-#: ui/pages/settings.slint:550
+#: ui/pages/settings.slint:399
 msgid "Theme"
 msgstr "테마"
 
-#: ui/pages/settings.slint:581
+#: ui/pages/settings.slint:430
 msgid ""
 "Workbench is an editor's layout, Broadsheet a newspaper's, Terminal a "
 "console's. The same chats and settings in all three."
@@ -1617,308 +1908,308 @@ msgstr ""
 "워크벤치는 편집기, 브로드시트는 신문, 터미널은 콘솔의 레이아웃입니다. 세 가"
 "지 모두 같은 채팅과 설정을 사용합니다."
 
-#: ui/pages/settings.slint:589
+#: ui/pages/settings.slint:438
 msgid "Light and dark"
 msgstr "라이트 및 다크"
 
-#: ui/pages/settings.slint:614
+#: ui/pages/settings.slint:463
 msgid "Match system appearance"
 msgstr "시스템 화면 모드에 맞춤"
 
-#: ui/pages/settings.slint:645
+#: ui/pages/settings.slint:494
 msgid "Screenshot shortcut"
 msgstr "스크린샷 단축키"
 
-#: ui/pages/settings.slint:662
+#: ui/pages/settings.slint:511
 msgid "Type a new shortcut…"
 msgstr "새 단축키를 누르세요…"
 
-#: ui/pages/settings.slint:705
+#: ui/pages/settings.slint:554
 msgid "Reset"
 msgstr "재설정"
 
-#: ui/pages/settings.slint:734
+#: ui/pages/settings.slint:583
 msgid "Startup & window"
 msgstr "시작 및 윈도우"
 
-#: ui/pages/settings.slint:739
+#: ui/pages/settings.slint:588
 msgid "Launch at login"
 msgstr "로그인 시 실행"
 
-#: ui/pages/settings.slint:749
+#: ui/pages/settings.slint:598
 msgid "Show in menu bar"
 msgstr "메뉴 막대에 표시"
 
-#: ui/pages/settings.slint:759
+#: ui/pages/settings.slint:608
 msgid "When closing the window"
 msgstr "윈도우를 닫을 때"
 
-#: ui/pages/settings.slint:760
+#: ui/pages/settings.slint:609
 msgid "Quit"
 msgstr "종료"
 
-#: ui/pages/settings.slint:760
+#: ui/pages/settings.slint:609
 msgid "Minimize to tray"
 msgstr "트레이로 최소화"
 
-#: ui/pages/settings.slint:772
+#: ui/pages/settings.slint:621
 msgid "Input"
 msgstr "입력"
 
-#: ui/pages/settings.slint:777
+#: ui/pages/settings.slint:626
 msgid "Send with Enter"
 msgstr "Enter 키로 보내기"
 
-#: ui/pages/settings.slint:786
+#: ui/pages/settings.slint:635
 msgid "Spell check"
 msgstr "맞춤법 검사"
 
-#: ui/pages/settings.slint:792
+#: ui/pages/settings.slint:641
 msgid "Replace emoji automatically"
 msgstr "이모티콘 자동 대치"
 
-#: ui/pages/settings.slint:800
+#: ui/pages/settings.slint:649
 msgid "Shortcuts"
 msgstr "단축키"
 
-#: ui/pages/settings.slint:805
+#: ui/pages/settings.slint:654
 msgid "Keyboard shortcuts"
 msgstr "키보드 단축키"
 
-#: ui/pages/settings.slint:806
+#: ui/pages/settings.slint:655
 msgctxt "shortcuts"
 msgid "View"
 msgstr "보기"
 
-#: ui/pages/settings.slint:814
+#: ui/pages/settings.slint:663
 msgid "Screenshots"
 msgstr "스크린샷"
 
-#: ui/pages/settings.slint:821
+#: ui/pages/settings.slint:670
 msgid "Hide the FinchGram window while taking a screenshot"
 msgstr "스크린샷을 찍는 동안 FinchGram 윈도우 가리기"
 
-#: ui/pages/settings.slint:830
+#: ui/pages/settings.slint:679
 msgid "Also when FinchGram is in the background"
 msgstr "FinchGram이 백그라운드에 있을 때도"
 
-#: ui/pages/settings.slint:849 ui/pages/settings.slint:854
+#: ui/pages/settings.slint:698 ui/pages/settings.slint:703
 msgid "Desktop notifications"
 msgstr "데스크탑 알림"
 
-#: ui/pages/settings.slint:863
+#: ui/pages/settings.slint:712
 msgid "Message previews"
 msgstr "메시지 미리보기"
 
-#: ui/pages/settings.slint:873
+#: ui/pages/settings.slint:722
 msgid "Sounds"
 msgstr "소리"
 
-#: ui/pages/settings.slint:883
+#: ui/pages/settings.slint:732
 msgid "Flash taskbar"
 msgstr "작업 표시줄 깜박임"
 
-#: ui/pages/settings.slint:892
+#: ui/pages/settings.slint:741
 msgid "Count muted chats in badge"
 msgstr "배지에 음소거된 채팅 포함"
 
-#: ui/pages/settings.slint:901
+#: ui/pages/settings.slint:750
 msgid "Notifications from other accounts"
 msgstr "다른 계정의 알림"
 
-#: ui/pages/settings.slint:902
+#: ui/pages/settings.slint:751
 msgid "When off, only the current account notifies you"
 msgstr "끄면 현재 계정의 알림만 받습니다"
 
-#: ui/pages/settings.slint:910
+#: ui/pages/settings.slint:759
 msgid "By chat type"
 msgstr "채팅 유형별"
 
-#: ui/pages/settings.slint:917
+#: ui/pages/settings.slint:766
 msgid "Private chats"
 msgstr "개인 채팅"
 
-#: ui/pages/settings.slint:918 ui/pages/settings.slint:929
-#: ui/pages/settings.slint:1187
+#: ui/pages/settings.slint:767 ui/pages/settings.slint:778
+#: ui/pages/settings.slint:1036
 msgid "On"
 msgstr "켬"
 
-#: ui/pages/settings.slint:928
+#: ui/pages/settings.slint:777
 msgid "Groups"
 msgstr "그룹"
 
-#: ui/pages/settings.slint:956
+#: ui/pages/settings.slint:805
 msgid "Changes the interface only — messages aren't translated"
 msgstr "인터페이스에만 적용되며 메시지는 번역되지 않습니다"
 
-#: ui/pages/settings.slint:1036
+#: ui/pages/settings.slint:885
 msgid "Updates"
 msgstr "업데이트"
 
-#: ui/pages/settings.slint:1043
+#: ui/pages/settings.slint:892
 msgid "Check for updates automatically"
 msgstr "자동으로 업데이트 확인"
 
-#: ui/pages/settings.slint:1051
+#: ui/pages/settings.slint:900
 msgid ""
 "Updates come from GitHub Releases and are signature-checked before install."
 msgstr "업데이트는 GitHub Releases에서 받으며 설치 전에 서명을 검증합니다."
 
-#: ui/pages/settings.slint:1133
+#: ui/pages/settings.slint:982
 msgid "Who can see"
 msgstr "공개 범위"
 
-#: ui/pages/settings.slint:1144
+#: ui/pages/settings.slint:993
 msgid "Last seen"
 msgstr "마지막 접속"
 
-#: ui/pages/settings.slint:1150
+#: ui/pages/settings.slint:999
 msgid "Profile photos"
 msgstr "프로필 사진"
 
-#: ui/pages/settings.slint:1156
+#: ui/pages/settings.slint:1005
 msgid "Forwarded messages"
 msgstr "전달된 메시지"
 
-#: ui/pages/settings.slint:1162
+#: ui/pages/settings.slint:1011
 msgid "Calls"
 msgstr "통화"
 
-#: ui/pages/settings.slint:1168
+#: ui/pages/settings.slint:1017
 msgid "Invites to groups"
 msgstr "그룹 초대"
 
-#: ui/pages/settings.slint:1173
+#: ui/pages/settings.slint:1022
 msgid "Stored on Telegram servers and synced across all your apps."
 msgstr "Telegram 서버에 저장되어 모든 앱에서 동기화됩니다."
 
-#: ui/pages/settings.slint:1181
+#: ui/pages/settings.slint:1030
 msgid "Security"
 msgstr "보안"
 
-#: ui/pages/settings.slint:1199
+#: ui/pages/settings.slint:1048
 msgid "Local passcode"
 msgstr "로컬 잠금 암호"
 
-#: ui/pages/settings.slint:1205
+#: ui/pages/settings.slint:1054
 msgid "Active sessions"
 msgstr "활성 세션"
 
-#: ui/pages/settings.slint:1211
+#: ui/pages/settings.slint:1060
 msgid "Blocked users"
 msgstr "차단된 사용자"
 
-#: ui/pages/settings.slint:1217
+#: ui/pages/settings.slint:1066
 msgid "Delete my account"
 msgstr "내 계정 삭제"
 
-#: ui/pages/settings.slint:1250
+#: ui/pages/settings.slint:1099
 msgid "Two-step verification is on"
 msgstr "2단계 인증 켜짐"
 
-#: ui/pages/settings.slint:1250
+#: ui/pages/settings.slint:1099
 msgid "Two-step verification is off"
 msgstr "2단계 인증 꺼짐"
 
-#: ui/pages/settings.slint:1257
+#: ui/pages/settings.slint:1106
 msgid ""
 "When you sign in on a new device, you'll need this password in addition to "
 "the code."
 msgstr "새 기기에서 로그인할 때 코드와 함께 이 암호가 필요합니다."
 
-#: ui/pages/settings.slint:1258
+#: ui/pages/settings.slint:1107
 msgid ""
 "Turn it on to require an extra password when signing in on a new device."
 msgstr "켜면 새 기기에서 로그인할 때 추가 암호를 요구합니다."
 
-#: ui/pages/settings.slint:1287
+#: ui/pages/settings.slint:1136
 msgid "Password will reset on {0}"
 msgstr "{0}에 암호가 재설정됩니다"
 
-#: ui/pages/settings.slint:1293
+#: ui/pages/settings.slint:1142
 msgid "Come back then to set a new password. If this wasn't you, cancel now."
 msgstr ""
 "그때 돌아와서 새 암호를 설정하세요. 본인이 요청한 것이 아니라면 지금 취소하세"
 "요."
 
-#: ui/pages/settings.slint:1302
+#: ui/pages/settings.slint:1151
 msgid "Cancel reset"
 msgstr "재설정 취소"
 
-#: ui/pages/settings.slint:1314
+#: ui/pages/settings.slint:1163
 msgid "Change password"
 msgstr "암호 변경"
 
-#: ui/pages/settings.slint:1322
+#: ui/pages/settings.slint:1171
 msgid "Password hint"
 msgstr "암호 힌트"
 
-#: ui/pages/settings.slint:1331
+#: ui/pages/settings.slint:1180
 msgid "Recovery email"
 msgstr "복구 이메일"
 
-#: ui/pages/settings.slint:1340
+#: ui/pages/settings.slint:1189
 msgid "Turn off two-step verification"
 msgstr "2단계 인증 끄기"
 
-#: ui/pages/settings.slint:1350 ui/pages/settings.slint:1425
+#: ui/pages/settings.slint:1199 ui/pages/settings.slint:1274
 msgid "Set password"
 msgstr "암호 설정"
 
-#: ui/pages/settings.slint:1378
+#: ui/pages/settings.slint:1227
 msgid "Enter your current password"
 msgstr "현재 암호 입력"
 
-#: ui/pages/settings.slint:1379
+#: ui/pages/settings.slint:1228
 msgid "Confirm it's you before changing two-step verification settings."
 msgstr "2단계 인증 설정을 변경하기 전에 본인 확인이 필요합니다."
 
-#: ui/pages/settings.slint:1443
+#: ui/pages/settings.slint:1292
 msgid "Change password hint"
 msgstr "암호 힌트 변경"
 
-#: ui/pages/settings.slint:1480
+#: ui/pages/settings.slint:1329
 msgid "Change recovery email"
 msgstr "복구 이메일 변경"
 
-#: ui/pages/settings.slint:1481
+#: ui/pages/settings.slint:1330
 msgid ""
 "If you forget your password, a recovery code will be sent to this address."
 msgstr "암호를 잊은 경우 이 주소로 복구 코드가 전송됩니다."
 
-#: ui/pages/settings.slint:1489
+#: ui/pages/settings.slint:1338
 msgid "Email address"
 msgstr "이메일 주소"
 
-#: ui/pages/settings.slint:1504
+#: ui/pages/settings.slint:1353
 msgid "Send code"
 msgstr "코드 보내기"
 
-#: ui/pages/settings.slint:1517
+#: ui/pages/settings.slint:1366
 msgid "Enter the email code"
 msgstr "이메일 코드 입력"
 
-#: ui/pages/settings.slint:1518
+#: ui/pages/settings.slint:1367
 msgid "Code sent to {0}"
 msgstr "{0}에 코드를 보냈습니다"
 
-#: ui/pages/settings.slint:1559
+#: ui/pages/settings.slint:1408
 msgid "Turn off two-step verification?"
 msgstr "2단계 인증을 끄시겠습니까?"
 
-#: ui/pages/settings.slint:1560
+#: ui/pages/settings.slint:1409
 msgid "Anyone who gets your sign-in code will be able to access your account."
 msgstr "로그인 코드를 얻은 사람은 누구나 내 계정에 접근할 수 있게 됩니다."
 
-#: ui/pages/settings.slint:1567
+#: ui/pages/settings.slint:1416
 msgid "Turn off"
 msgstr "끄기"
 
-#: ui/pages/settings.slint:1630
+#: ui/pages/settings.slint:1479
 msgid "Request password reset"
 msgstr "암호 재설정 요청"
 
-#: ui/pages/settings.slint:1631
+#: ui/pages/settings.slint:1480
 msgid ""
 "If you can't get the recovery email, you can request a reset. To protect "
 "your account it takes 7 days, and you can cancel any time before then."
@@ -1926,19 +2217,26 @@ msgstr ""
 "복구 이메일을 받을 수 없다면 재설정을 요청할 수 있습니다. 계정 보호를 위해 7"
 "일이 걸리며, 그전에는 언제든지 취소할 수 있습니다."
 
-#: ui/pages/settings.slint:1638
+#: ui/pages/settings.slint:1487
 msgid "Request reset"
 msgstr "재설정 요청"
 
-#: ui/pages/settings.slint:1734
+#: ui/pages/settings.slint:1585
+msgid ""
+"An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
+"chats and act in them through FinchGram, with your account. FinchGram itself "
+"calls no AI and keeps nothing for one."
+msgstr "Claude Desktop, Claude Code, Cursor 같은 AI 어시스턴트 앱이 FinchGram을 통해 내 계정으로 채팅을 읽고 대신 작업할 수 있습니다. FinchGram 자체는 AI를 호출하지 않으며 AI를 위해 아무것도 저장하지 않습니다."
+
+#: ui/pages/settings.slint:1602
 msgid "Password updated"
 msgstr "암호가 업데이트되었습니다"
 
-#: ui/pages/settings.slint:1735
+#: ui/pages/settings.slint:1603
 msgid "Password hint updated"
 msgstr "암호 힌트가 업데이트되었습니다"
 
-#: ui/pages/settings.slint:1735
+#: ui/pages/settings.slint:1603
 msgid "Recovery email updated"
 msgstr "복구 이메일이 업데이트되었습니다"
 
@@ -1959,19 +2257,11 @@ msgstr "새 메시지"
 msgid "Deleted Account"
 msgstr "삭제된 계정"
 
-#: ui/telegram.slint:675 ui/workbench/sidebar.slint:105
-msgid "All chats"
-msgstr "모든 채팅"
-
 #. Between names in a list: "Jie, Mika".
 #: ui/telegram.slint:677
 msgctxt "list separator"
 msgid ", "
 msgstr ", "
-
-#: ui/terminal/terminal.slint:111 ui/workbench/workbench.slint:40
-msgid "Search chats"
-msgstr "채팅 검색"
 
 #: ui/terminal/terminal.slint:217
 msgid "light"

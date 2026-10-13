@@ -77,7 +77,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   图片在 UI 线程之外解码成 `SharedPixelBuffer`，到 UI 线程上再变成 `slint::Image`。
 - 没有 async 运行时：网络全是 TDLib 在做。
 - MCP 服务端（`src/mcp/`）有一个监听 socket 的线程，每个连接再各一个。连接线程读一行、答一行；工具的活交给 UI 线程
-  （`upgrade_in_event_loop`），store 和 TDLib 都在那里，结果通过 channel 回来。
+  （`upgrade_in_event_loop`），store、TDLib 和页面都在那里，结果通过 channel 回来。一个程序能不能连也是这样问的：
+  对话框问用户的时候，连接线程等着。
 
 ## 页面：三套主题
 
@@ -146,7 +147,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   正在运行的 app、用 Model Context Protocol 读用户的聊天并在其中行动。app 监听自己文件夹里的一个 Unix socket；
   `finchgram mcp`（同一个可执行文件）是助手应用运行的 stdio 桥。`protocol.rs` 是 JSON-RPC 和 MCP 的方法，`tools.rs`
   是助手眼中的工具，`src/telegram/tools.rs` 是每个工具对 store 和 TDLib 做的事，在 UI 线程上，范围由设置 → AI 访问
-  决定（默认关；页面本身等设计）。读取不标已读；秘密聊天、自毁媒体和限制保存的聊天的媒体永远不交出去。
+  决定（默认关）。`access.rs` 就是那个页面和应用第一次连接时请用户允许的对话框（ui/ai-access.slint、
+  ui/pages/ai-access.slint，三个主题都有）：开关、哪些聊天、助手能写什么、允许或拒绝过的应用、记录。读取不标已读；
+  秘密聊天、自毁媒体和限制保存的聊天的媒体永远不交出去。
 - `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）。
 - `src/platform/`：平台层。目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接、剪贴板（文字和图片）；以及 macOS 上
   （设置 → 通用）关闭窗口后留在 Dock 里，即设计稿的“关闭窗口时：最小化到托盘”（点 Dock 图标重新打开窗口，退出时先让

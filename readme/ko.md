@@ -32,6 +32,7 @@ FinchGram은 Telegram 공식 라이브러리 [TDLib](https://core.telegram.org/t
 - **세 가지 테마.** Workbench, Broadsheet, Terminal. 각각 라이트와 다크가 있고, 다시 시작하지 않고 바꿀 수 있습니다.
 - **설정.** 로그인 시 실행, Enter로 보내기, 스크린샷 단축키, 알림 소리와 미리보기, 2단계 인증, 인터페이스 언어, 그리고
   업데이트: 앱은 GitHub Releases에서 스스로 업데이트하며 검증할 수 없는 것은 설치하지 않습니다.
+- **AI 어시스턴트.** Claude Desktop, Claude Code 등 Model Context Protocol을 쓰는 앱이 내가 허용하면 FinchGram을 통해 채팅을 읽고 대신 작업할 수 있습니다. 설정 → AI 접근은 켤 때까지 꺼져 있고, 보여 줄 채팅과 전송 허용 여부를 고르며, 앱은 처음 연결할 때 허락을 구합니다. [docs/mcp.md](../docs/mcp.md) 참고.
 - **언어.** 인터페이스와 이 README는 11개 언어.
 
 아직 없는 것: 비밀 채팅, 음성 메시지와 통화, 여러 계정, 투표와 예약 메시지, 키워드 필터, Windows와 Linux.
@@ -70,6 +71,12 @@ FinchGram 창을 숨길지 정할 수 있습니다.
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="스크린샷이 담긴 보내기 카드"></p>
 
+## AI 어시스턴트
+
+<p align="center"><img src="../docs/screenshots/workbench-light-settings-ai.png" width="800" alt="설정 → AI 접근"></p>
+
+FinchGram은 MCP 서버입니다. Mac의 AI 어시스턴트 앱(Claude Desktop, Claude Code, Cursor 등)이 실행 중인 FinchGram을 통해 내 계정으로 Telegram을 읽고 작업할 수 있습니다. 설정 → AI 접근이 그 스위치이며 기본값은 꺼짐입니다. 거기서 어시스턴트가 볼 채팅(비밀 채팅을 뺀 전부, 또는 고른 채팅만)과 쓸 수 있는 것(내 이름으로 메시지 보내기, 임시 저장만 남기고 내가 보내기, 아무것도 안 쓰기)을 고르고, 어떤 앱이 연결했는지(이름은 macOS가 알려 준 것)와 무엇을 요청했는지 볼 수 있습니다. 앱이 처음 연결할 때 FinchGram이 허용할지 묻습니다. 읽어도 읽음으로 표시되지 않고, 비밀 채팅은 절대 보여 주지 않으며, AI를 위해 아무것도 저장하지 않습니다. Claude Code나 Claude Desktop에 붙여 넣을 한 줄은 페이지에 준비되어 있습니다. 자세한 내용은 [docs/mcp.md](../docs/mcp.md).
+
 ## 어떻게 만들었나
 
 앱은 껍데기입니다. Telegram 자체는 TDLib이 맡고, 실행 파일 옆에서 별도 프로그램 `finchgram-tdlib`으로 실행됩니다. 이것은
@@ -82,7 +89,7 @@ FinchGram 창을 숨길지 정할 수 있습니다.
 
 FinchGram은 Telegram 공식 앱이 하는 일만 하고, 금지된 일은 하지 않습니다. 메시지는 보는 순간 읽음으로 표시되고, 상대는
 다른 Telegram 앱에서처럼 입력 중과 온라인을 볼 수 있으며, 채널의 스폰서 메시지는 표시되고, 자동 삭제 미디어는 한 번만
-열리며, Telegram에서 온 것은 어떤 AI에도 넘기지 않습니다. Telegram과 업데이트용 GitHub 외에는 아무것도 컴퓨터 밖으로
+열리며, Telegram에서 온 것은 설정 → AI 접근에서 어시스턴트를 허용하지 않는 한 어떤 AI에도 넘기지 않습니다. Telegram과 업데이트용 GitHub 외에는 아무것도 컴퓨터 밖으로
 나가지 않습니다.
 
 ## 개발

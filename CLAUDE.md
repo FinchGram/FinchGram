@@ -38,8 +38,10 @@ things fit together.
 - The MCP server (`src/mcp/`, `src/telegram/tools.rs`, docs/mcp.md) is what sets FinchGram apart:
   AI assistants' apps work with the user's Telegram through the running app, over a Unix socket
   with `finchgram mcp` as the stdio bridge, inside the one TDLib session and without an async
-  runtime. What an assistant may do is Settings → AI access, off by default; that page and the
-  dialog that allows an app come from a design round first, and until then `[mcp]` in settings.toml.
+  runtime. What an assistant may do is Settings → AI access (the design's "AI 访问" round, built in
+  every theme: `src/mcp/access.rs`, ui/pages/ai-access.slint), off by default; each app is allowed
+  by the user the first time it connects, through the dialog, and remembered by the path macOS
+  reports for it.
 - Telegram API credentials are never in the repository. Every developer uses their own
   (`FINCHGRAM_API_ID`, `FINCHGRAM_API_HASH` at build time); the release workflow uses secrets.
 

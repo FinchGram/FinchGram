@@ -46,6 +46,11 @@ un client non officiel, qui n'est pas fait par Telegram.
 - **Réglages.** Ouvrir à la connexion, envoyer avec Entrée, le raccourci de capture, sons et aperçus
   des notifications, validation en deux étapes, langue de l'interface, et mises à jour : l'application
   se met à jour elle-même depuis GitHub Releases et n'installe rien qu'elle ne puisse vérifier.
+- **Assistants IA.** Claude Desktop, Claude Code et les autres apps qui parlent le Model Context
+  Protocol peuvent lire vos discussions et y agir via FinchGram, une fois que vous les y autorisez :
+  Réglages → Accès IA, désactivé tant que vous ne l'activez pas, avec les discussions que vous
+  choisissez et le droit d'envoyer ou non, et une question la première fois qu'une app se connecte.
+  Voir [docs/mcp.md](../docs/mcp.md).
 - **Langues.** L'interface et ce README en onze langues.
 
 Pas encore : discussions secrètes, messages vocaux et appels, plusieurs comptes, sondages et messages
@@ -90,6 +95,21 @@ légende peut l'accompagner ; ⌘C la copie ; ⌘S l'enregistre dans Télécharg
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="La carte d'envoi avec une capture"></p>
 
+## Assistants IA
+
+<p align="center"><img src="../docs/screenshots/workbench-light-settings-ai.png" width="800" alt="Réglages → Accès IA"></p>
+
+FinchGram est un serveur MCP : l'app d'un assistant IA sur votre Mac (Claude Desktop, Claude Code,
+Cursor…) peut lire votre Telegram et y agir via l'app en cours d'exécution, avec votre propre
+compte. Réglages → Accès IA est l'interrupteur, désactivé par défaut. Vous y choisissez les
+discussions qu'un assistant peut voir (toutes sauf les secrètes, ou seulement celles que vous
+choisissez) et ce qu'il peut écrire (des messages en votre nom, des brouillons seulement que vous
+envoyez, ou rien), et vous voyez quelles apps se sont connectées, sous le nom que macOS leur donne,
+et ce qu'elles ont demandé. La première fois qu'une app se connecte, FinchGram demande s'il faut
+l'autoriser. Lire ne marque rien comme lu, les discussions secrètes ne sont jamais montrées, et rien
+n'est conservé pour une IA. La page donne la ligne à coller dans Claude Code ou Claude Desktop ; les
+détails sont dans [docs/mcp.md](../docs/mcp.md).
+
 ## Comment c'est fait
 
 L'application est une coquille. Telegram lui-même est l'affaire de TDLib, qui tourne comme un
@@ -103,10 +123,11 @@ est public : les sources, les builds de `vendor/` et les versions. Voir
 ## Les règles de Telegram
 
 FinchGram fait ce que font les applications de Telegram, et rien de ce qu'elles interdisent. Un
-message est marqué lu quand vous le voyez, l'autre côté vous voit écrire et en ligne comme dans toute
-application Telegram, les messages sponsorisés des chaînes sont affichés, les médias qui
-s'autodétruisent s'ouvrent une fois, et rien de Telegram ne va à une IA. Rien ne quitte votre machine
-sauf vers Telegram, et vers GitHub pour les mises à jour.
+message est marqué lu quand vous le voyez, l'autre côté vous voit écrire et en ligne comme dans
+toute application Telegram, les messages sponsorisés des chaînes sont affichés, les médias qui
+s'autodétruisent s'ouvrent une fois, et rien de Telegram ne va à une IA, sauf si vous laissez entrer
+un assistant (Réglages → Accès IA). Rien ne quitte votre machine sauf vers Telegram, et vers GitHub
+pour les mises à jour.
 
 ## Développement
 

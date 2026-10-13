@@ -52,6 +52,52 @@ impl Outcome {
     }
 }
 
+/// What a call did, for Settings → AI access's log (access.rs): which kind of thing, which chat,
+/// how many. Never the words of a message or a search.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Activity {
+    pub kind: ActivityKind,
+    /// The chat it was about, by title, where there is one.
+    pub chat: String,
+    /// How many messages or chats, where it matters.
+    pub count: usize,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ActivityKind {
+    /// An app connected, or was turned away because the user has not allowed it.
+    Connected,
+    TurnedAway,
+    Listed,
+    SearchedChats,
+    Looked,
+    Read,
+    Searched,
+    SearchedAll,
+    Unread,
+    Media,
+    Draft,
+    Sent,
+    Marked,
+    Account,
+    /// A chat outside the ones the user chose was asked for.
+    Refused,
+}
+
+impl Activity {
+    pub fn new(kind: ActivityKind) -> Activity {
+        Activity { kind, chat: String::new(), count: 0 }
+    }
+
+    pub fn about(kind: ActivityKind, chat: impl Into<String>) -> Activity {
+        Activity { kind, chat: chat.into(), count: 0 }
+    }
+
+    pub fn counted(kind: ActivityKind, chat: impl Into<String>, count: usize) -> Activity {
+        Activity { kind, chat: chat.into(), count }
+    }
+}
+
 /// A call of one of the tools, its arguments checked and within bounds.
 #[derive(Debug, Clone, PartialEq)]
 pub enum ToolCall {

@@ -1,0 +1,864 @@
+// Settings → AI access, from the design's second round ("AI 访问"): the switch, which chats an
+// assistant may see (with the picker, a page within the page), what it may write, the apps that
+// have connected, how to connect one, the log, and what holds whatever the settings. And the
+// dialog that asks the user to allow an app the first time it connects, over whichever page is
+// open. One set of rows for the three themes, in Look's colours and shapes.
+import { AppState, Page, SettingsSection } from "../state.slint";
+import { ChatKind, Words } from "../telegram.slint";
+import { AiAccess, AiScope, AiWriting, AiChat, AiApp, AiActivity, AiActivityKind } from "../ai-access.slint";
+import { Look } from "../look.slint";
+import { Fmt } from "../format.slint";
+import { Icon, Logo, SectionLabel, Paragraph, Link } from "../widgets.slint";
+import { Card, Separator, SwitchRow, NavRow, SmallButton } from "rows.slint";
+
+// How chats, apps and what an assistant asked for are worded.
+export global AiWords {
+    public pure function kind-icon(chat: AiChat) -> string {
+        return chat.secret ? "lock-simple" : chat.kind == ChatKind.group ? "users-three" : chat.kind == ChatKind.channel ? "megaphone" : "user";
+    }
+
+    public pure function kind-text(chat: AiChat) -> string {
+        if chat.secret {
+            return @tr("Secret chat · never shown");
+        }
+        if chat.kind == ChatKind.group {
+            return chat.members > 0 ? @tr("Group · {0} members", Fmt.count(chat.members)) : @tr("Group");
+        }
+        if chat.kind == ChatKind.channel {
+            return chat.members > 0 ? @tr("Channel · {0} subscribers", Fmt.count(chat.members)) : @tr("Channel");
+        }
+        if chat.kind == ChatKind.bot {
+            return @tr("Bot");
+        }
+        if chat.kind == ChatKind.saved {
+            return Words.saved-messages;
+        }
+        return @tr("Private chat");
+    }
+
+    public pure function app-name(name: string) -> string {
+        return name != "" ? name : @tr("Unidentified program");
+    }
+
+    // Under an app's name: where it is, and whether it is connected, when it last was, or that it
+    // was turned away.
+    public pure function app-text(app: AiApp) -> string {
+        if !app.allowed {
+            return app.path + " · " + @tr("Not allowed");
+        }
+        if app.live {
+            return app.path + " · " + @tr("Connected now");
+        }
+        if app.has-last-used {
+            return app.path + " · " + @tr("Last used {0}", Fmt.list-time(app.last-used));
+        }
+        return app.path;
+    }
+
+    public pure function activity-icon(kind: AiActivityKind) -> string {
+        if kind == AiActivityKind.connected { return "plugs-connected"; }
+        if kind == AiActivityKind.turned-away { return "hand"; }
+        if kind == AiActivityKind.listed { return "list-bullets"; }
+        if kind == AiActivityKind.searched-chats || kind == AiActivityKind.searched || kind == AiActivityKind.searched-all { return "magnifying-glass"; }
+        if kind == AiActivityKind.looked { return "info"; }
+        if kind == AiActivityKind.read || kind == AiActivityKind.unread { return "chat-circle-text"; }
+        if kind == AiActivityKind.media { return "download-simple"; }
+        if kind == AiActivityKind.draft { return "pencil-simple-line"; }
+        if kind == AiActivityKind.sent { return "paper-plane-tilt"; }
+        if kind == AiActivityKind.marked { return "checks"; }
+        if kind == AiActivityKind.account { return "user-circle"; }
+        return "prohibit";
+    }
+
+    public pure function activity-warns(kind: AiActivityKind) -> bool {
+        return kind == AiActivityKind.refused || kind == AiActivityKind.turned-away;
+    }
+
+    public pure function activity-text(entry: AiActivity) -> string {
+        if entry.kind == AiActivityKind.connected { return @tr("Connected"); }
+        if entry.kind == AiActivityKind.turned-away { return @tr("Not allowed, turned away"); }
+        if entry.kind == AiActivityKind.listed { return @tr("Listed chats"); }
+        if entry.kind == AiActivityKind.searched-chats { return @tr("Searched chats"); }
+        if entry.kind == AiActivityKind.looked { return @tr("Looked at {0}", entry.chat); }
+        if entry.kind == AiActivityKind.read { return @tr("Read {0} messages in {1}", entry.count, entry.chat); }
+        if entry.kind == AiActivityKind.searched {
+            return entry.count == 1 && entry.chat != "" ? @tr("Searched messages in {0}", entry.chat) : @tr("Searched messages in {0} chats", entry.count);
+        }
+        if entry.kind == AiActivityKind.searched-all { return @tr("Searched messages in all chats"); }
+        if entry.kind == AiActivityKind.unread { return @tr("Read unread messages in {0} chats", entry.count); }
+        if entry.kind == AiActivityKind.media { return @tr("Took media from {0}", entry.chat); }
+        if entry.kind == AiActivityKind.draft { return @tr("Saved a draft in {0}", entry.chat); }
+        if entry.kind == AiActivityKind.sent { return @tr("Sent a message in {0}", entry.chat); }
+        if entry.kind == AiActivityKind.marked { return @tr("Marked {0} messages as read in {1}", entry.count, entry.chat); }
+        if entry.kind == AiActivityKind.account { return @tr("Looked at the account"); }
+        return @tr("Turned away from {0}: not a chosen chat", entry.chat);
+    }
+
+    // The dialog's and the page's word for what an assistant may see and write now.
+    public pure function can-see() -> string {
+        if AiAccess.scope == AiScope.all {
+            return @tr("All chats");
+        }
+        return AiAccess.chosen-count > 0 ? @tr("{0} chats you chose", AiAccess.chosen-count) : @tr("None chosen yet: assistants see nothing");
+    }
+
+    public pure function can-write() -> string {
+        return AiAccess.writing == AiWriting.messages ? @tr("Send messages") : AiAccess.writing == AiWriting.drafts ? @tr("Drafts only") : @tr("Read only");
+    }
+}
+
+// One of a few choices: a radio before the words, no icon; "(•)" and "( )" in Terminal.
+component RadioRow inherits Rectangle {
+    in property <string> title;
+    in property <string> description;
+    in property <bool> on;
+    callback chosen();
+    background: touch.has-hover ? Look.sel : transparent;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 22px;
+                height: 18px;
+                if !Look.text-switches: Rectangle {
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 9px;
+                    border-width: root.on ? 5px : 1.5px;
+                    border-color: root.on ? Look.accent : Look.faint;
+                    animate border-width { duration: 150ms; }
+                }
+                if Look.text-switches: Text {
+                    text: root.on ? "(•)" : "( )";
+                    color: root.on ? Look.accent : Look.faint;
+                    font-family: Look.mono;
+                    font-size: 13px;
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.title;
+                color: Look.text;
+                font-size: 15px;
+                font-weight: 500;
+            }
+            if root.description != "": Paragraph {
+                text: root.description;
+                color: Look.muted;
+                font-size: 13px;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.chosen();
+        }
+    }
+}
+
+// A chat the picker offers: ticked when chosen; dimmed, and never ticked, for a secret chat.
+component CheckRow inherits Rectangle {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> description;
+    in property <bool> checked;
+    in property <bool> dim;
+    callback toggled();
+    background: touch.has-hover && !dim ? Look.sel : transparent;
+    opacity: dim ? 0.45 : 1;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 20px;
+                color: Look.accent;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.title;
+                color: Look.text;
+                font-size: 15px;
+                font-weight: 500;
+                overflow: elide;
+            }
+            if root.description != "": Paragraph {
+                text: root.description;
+                color: Look.muted;
+                font-size: 13px;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            if !Look.text-switches: Rectangle {
+                width: 20px;
+                height: 20px;
+                border-radius: Look.button-radius;
+                background: root.checked ? Look.accent : transparent;
+                border-width: root.checked ? 0px : 1.5px;
+                border-color: Look.faint;
+                if root.checked: Icon {
+                    name: "check";
+                    size: 14px;
+                    color: Look.on-accent;
+                    duotone: false;
+                }
+            }
+            if Look.text-switches: Text {
+                text: root.checked ? "[x]" : "[ ]";
+                color: root.checked ? Look.accent : Look.faint;
+                font-family: Look.mono;
+                font-size: 13px;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        enabled: !root.dim;
+        mouse-cursor: pointer;
+        clicked => {
+            root.toggled();
+        }
+    }
+}
+
+// A row that says something and does nothing: a line of the log, or one of the rules.
+component InfoRow {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> description;
+    in property <bool> warn;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 20px;
+                color: root.warn ? Look.danger : Look.accent;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Paragraph {
+                text: root.title;
+                color: Look.text;
+                font-size: 15px;
+                font-weight: 500;
+            }
+            if root.description != "": Paragraph {
+                text: root.description;
+                color: Look.muted;
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+// A row with a button at its end: a chosen chat (Remove), an app (Remove, or Allow one that was
+// turned away), a command to copy.
+component ActionRow {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> description;
+    in property <color> description-color: Look.muted;
+    in property <bool> mono-description;     // a command: in the monospace face, broken anywhere
+    in property <bool> warn;
+    in property <bool> indent;
+    in property <string> action;
+    in property <bool> quiet;
+    callback acted();
+
+    HorizontalLayout {
+        padding-left: root.indent ? 52px : 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 20px;
+                color: root.warn ? Look.danger : Look.accent;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.title;
+                color: Look.text;
+                font-size: 15px;
+                font-weight: 500;
+                overflow: elide;
+            }
+            if root.description != "": Paragraph {
+                text: root.description;
+                color: root.description-color;
+                font-family: root.mono-description ? Look.mono : Look.font;
+                font-size: root.mono-description ? 12px : 13px;
+                wrap: root.mono-description ? char-wrap : word-wrap;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            SmallButton {
+                text: root.action;
+                quiet: root.quiet;
+                clicked => {
+                    root.acted();
+                }
+            }
+        }
+    }
+}
+
+// The picker's search box, under its heading.
+export component AiSearchBox inherits Rectangle {
+    height: 38px;
+    border-radius: Look.radius;
+    background: Look.field;
+    border-width: Look.field-border;
+    border-color: Look.line;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "magnifying-glass";
+                size: 16px;
+                color: Look.faint;
+            }
+        }
+        Rectangle {
+            horizontal-stretch: 1;
+            if input.text == "": Text {
+                width: parent.width;
+                height: parent.height;
+                text: @tr("Search chats");
+                color: Look.text;
+                opacity: 0.5;
+                font-size: 15px;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            input := TextInput {
+                width: parent.width;
+                height: parent.height;
+                single-line: true;
+                font-size: 15px;
+                color: Look.text;
+                vertical-alignment: center;
+                selection-background-color: Look.input-sel;
+                selection-foreground-color: Look.text;
+                text-cursor-width: Look.cursor-width;
+                init => {
+                    self.focus();
+                }
+                edited => {
+                    AiAccess.search-chats(self.text);
+                }
+            }
+        }
+    }
+}
+
+// The page: off, only the switch and the rules; on, everything.
+export component AiSection {
+    init => {
+        AiAccess.opened();
+    }
+
+    VerticalLayout {
+        spacing: 26px;
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Access");
+            }
+            Card {
+                SwitchRow {
+                    icon: "plugs-connected";
+                    title: @tr("Let AI assistants connect");
+                    description: @tr("When off, FinchGram turns every assistant away");
+                    on: AiAccess.on;
+                    toggled => {
+                        AiAccess.set-on(!AiAccess.on);
+                    }
+                }
+            }
+        }
+        if AiAccess.on: VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Chats assistants can see");
+            }
+            Card {
+                RadioRow {
+                    title: @tr("All chats");
+                    description: @tr("Every chat except secret chats");
+                    on: AiAccess.scope == AiScope.all;
+                    chosen => {
+                        AiAccess.set-scope(AiScope.all);
+                    }
+                }
+                Separator { }
+                RadioRow {
+                    title: @tr("Only chats I choose");
+                    description: AiAccess.chosen-count > 0 ? @tr("{0} chosen", AiAccess.chosen-count) : @tr("None chosen yet: assistants see nothing");
+                    on: AiAccess.scope == AiScope.chosen;
+                    chosen => {
+                        AiAccess.set-scope(AiScope.chosen);
+                    }
+                }
+                if AiAccess.scope == AiScope.chosen: VerticalLayout {
+                    for chat in AiAccess.chosen: VerticalLayout {
+                        Separator { }
+                        ActionRow {
+                            indent: true;
+                            icon: AiWords.kind-icon(chat);
+                            title: chat.title;
+                            description: AiWords.kind-text(chat);
+                            action: @tr("Remove");
+                            quiet: true;
+                            acted => {
+                                AiAccess.toggle-chat(chat.id);
+                            }
+                        }
+                    }
+                    Separator { }
+                    NavRow {
+                        indent: true;
+                        icon: "plus-circle";
+                        title: @tr("Choose chats");
+                        clicked => {
+                            AiAccess.search-chats("");
+                            AiAccess.picking = true;
+                        }
+                    }
+                }
+            }
+        }
+        if AiAccess.on: VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Writing");
+            }
+            Card {
+                RadioRow {
+                    title: @tr("Send messages");
+                    description: @tr("Sent at once, under your name. Can't be undone");
+                    on: AiAccess.writing == AiWriting.messages;
+                    chosen => {
+                        AiAccess.set-writing(AiWriting.messages);
+                    }
+                }
+                Separator { }
+                RadioRow {
+                    title: @tr("Drafts only");
+                    description: @tr("The assistant leaves a draft; you send it from any Telegram app");
+                    on: AiAccess.writing == AiWriting.drafts;
+                    chosen => {
+                        AiAccess.set-writing(AiWriting.drafts);
+                    }
+                }
+                Separator { }
+                RadioRow {
+                    title: @tr("Read only");
+                    description: @tr("No messages, no drafts");
+                    on: AiAccess.writing == AiWriting.nothing;
+                    chosen => {
+                        AiAccess.set-writing(AiWriting.nothing);
+                    }
+                }
+            }
+        }
+        if AiAccess.on: VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Apps");
+            }
+            Card {
+                if AiAccess.apps.length == 0: InfoRow {
+                    icon: "app-window";
+                    title: @tr("No app has connected yet");
+                }
+                for app[index] in AiAccess.apps: VerticalLayout {
+                    if index > 0: Separator { }
+                    ActionRow {
+                        icon: app.allowed ? "app-window" : "prohibit";
+                        warn: !app.allowed;
+                        title: AiWords.app-name(app.name);
+                        description: AiWords.app-text(app);
+                        description-color: app.allowed && app.live ? Look.ok : Look.muted;
+                        action: app.allowed ? @tr("Remove") : @tr("Allow");
+                        quiet: app.allowed;
+                        acted => {
+                            if app.allowed {
+                                AiAccess.remove-app(app.path);
+                            } else {
+                                AiAccess.allow-app(app.path);
+                            }
+                        }
+                    }
+                }
+            }
+            Paragraph {
+                text: @tr("An app asks the first time it connects. Its name comes from macOS, not from the app itself.");
+                color: Look.faint;
+                font-size: 12px;
+            }
+        }
+        if AiAccess.on: VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Connect an app");
+            }
+            Card {
+                ActionRow {
+                    icon: "terminal-window";
+                    title: "Claude Code";
+                    description: AiAccess.claude-code-command;
+                    mono-description: true;
+                    action: AiAccess.copied == "code" ? @tr("Copied") : @tr("Copy");
+                    acted => {
+                        AiAccess.copy("code");
+                    }
+                }
+                Separator { }
+                ActionRow {
+                    icon: "app-window";
+                    title: @tr("Claude Desktop and other apps");
+                    description: AiAccess.claude-desktop-config;
+                    mono-description: true;
+                    action: AiAccess.copied == "desktop" ? @tr("Copied") : @tr("Copy");
+                    acted => {
+                        AiAccess.copy("desktop");
+                    }
+                }
+            }
+            Paragraph {
+                text: @tr("FinchGram doesn't need to be open: the app starts it in the background.");
+                color: Look.faint;
+                font-size: 12px;
+            }
+        }
+        if AiAccess.on: VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Log");
+            }
+            Card {
+                for entry[index] in AiAccess.activity: VerticalLayout {
+                    if index > 0: Separator { }
+                    InfoRow {
+                        icon: AiWords.activity-icon(entry.kind);
+                        warn: AiWords.activity-warns(entry.kind);
+                        title: AiWords.activity-text(entry);
+                        description: AiWords.app-name(entry.app) + " · " + Fmt.list-time(entry.time);
+                    }
+                }
+                if AiAccess.activity.length > 0: Separator { }
+                NavRow {
+                    icon: "folder-open";
+                    title: @tr("Show log in Finder");
+                    caret: "arrow-square-out";
+                    clicked => {
+                        AiAccess.show-log();
+                    }
+                }
+            }
+            Paragraph {
+                text: @tr("Who connected and what it asked for. Never the words of a message.");
+                color: Look.faint;
+                font-size: 12px;
+            }
+        }
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("Always, whatever the settings");
+            }
+            Card {
+                InfoRow {
+                    icon: "check-circle";
+                    title: @tr("Secret chats are never shown to an assistant");
+                }
+                Separator { }
+                InfoRow {
+                    icon: "check-circle";
+                    title: @tr("Reading never marks messages as read unless asked to");
+                }
+                Separator { }
+                InfoRow {
+                    icon: "check-circle";
+                    title: @tr("Self-destructing media, and media from chats that restrict saving, stays in FinchGram");
+                }
+                Separator { }
+                InfoRow {
+                    icon: "check-circle";
+                    title: @tr("Nothing an assistant reads is kept: no index, no copy");
+                }
+            }
+        }
+    }
+}
+
+// The picker, a page within the page: the search box, then every chat, the chosen ones ticked.
+export component AiPickSection {
+    VerticalLayout {
+        spacing: 18px;
+        AiSearchBox { }
+        VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: @tr("{0} chosen", AiAccess.chosen-count);
+            }
+            Card {
+                for chat[index] in AiAccess.all-chats: VerticalLayout {
+                    if index > 0: Separator { }
+                    CheckRow {
+                        icon: AiWords.kind-icon(chat);
+                        title: chat.title;
+                        description: AiWords.kind-text(chat);
+                        checked: chat.chosen;
+                        dim: chat.secret;
+                        toggled => {
+                            AiAccess.toggle-chat(chat.id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Allow or Don't Allow: the one that is safe to press is filled.
+component AllowButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> primary;
+    callback clicked();
+    height: 38px;
+    width: label.preferred-width + 36px;
+    border-radius: Look.button-radius;
+    background: primary ? (touch.has-hover ? Look.accent.mix(Look.text, 0.88) : Look.accent) : touch.has-hover ? Look.sel : Look.field;
+    border-width: primary ? 0px : 1px;
+    border-color: Look.line-strong;
+
+    label := Text {
+        text: root.text;
+        color: root.primary ? Look.on-accent : Look.text;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// An app that has not connected before is connecting: FinchGram and the app, who the system says
+// it is, what the settings would let it do, and the two answers. Over the window as it is, which
+// stays usable; nothing closes the dialog but an answer.
+export component AllowDialog inherits Rectangle {
+    property <bool> known: AiAccess.ask-name != "";
+    property <bool> known-is-safe: known;
+
+    box := Rectangle {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        width: 460px;
+        height: body.preferred-height;
+        border-radius: Look.dialog-radius;
+        background: Look.bg;
+        border-width: 1px;
+        border-color: Look.line-strong;
+        drop-shadow-blur: 80px;
+        drop-shadow-offset-y: 30px;
+        drop-shadow-color: #00000057;
+
+        // Clicks inside stay inside.
+        TouchArea { }
+
+        body := VerticalLayout {
+            padding-left: 26px;
+            padding-right: 26px;
+            padding-top: 26px;
+            padding-bottom: 20px;
+            spacing: 18px;
+            HorizontalLayout {
+                spacing: 12px;
+                alignment: start;
+                Logo {
+                    size: 44px;
+                    radius: Look.logo-radius;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "arrows-left-right";
+                        size: 18px;
+                        color: Look.faint;
+                    }
+                }
+                Rectangle {
+                    width: 44px;
+                    height: 44px;
+                    border-radius: Look.avatar-radius;
+                    background: Look.soft;
+                    if root.known: Text {
+                        text: AiAccess.ask-initial;
+                        color: Look.soft-ink;
+                        font-size: 20px;
+                        font-weight: 600;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                    if !root.known: Icon {
+                        name: "question";
+                        size: 24px;
+                        color: Look.soft-ink;
+                    }
+                }
+            }
+            VerticalLayout {
+                spacing: 6px;
+                Paragraph {
+                    text: Look.heading-prefix + (root.known ? @tr("Allow “{0}” to use your Telegram account?", AiAccess.ask-name)
+                        : @tr("Allow an unidentified program to use your Telegram account?"));
+                    color: Look.text;
+                    font-size: 18px;
+                    font-weight: 600;
+                    letter-spacing: Look.heading-tracking * 18px;
+                    line-height-factor: Look.leading(1.35);
+                }
+                Paragraph {
+                    text: root.known ? @tr("macOS reports this program as the one connecting to FinchGram.")
+                        : @tr("macOS wouldn't say which program this is. Allow it only if you've just set one up yourself.");
+                    color: root.known ? Look.muted : Look.danger;
+                    font-size: 14px;
+                    line-height-factor: Look.leading(1.5);
+                }
+            }
+            Rectangle {
+                border-radius: Look.radius;
+                background: Look.side;
+                border-width: Look.field-border;
+                border-color: Look.line;
+                VerticalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    padding-top: 9px;
+                    padding-bottom: 9px;
+                    Paragraph {
+                        text: AiAccess.ask-path;
+                        color: Look.muted;
+                        font-family: Look.mono;
+                        font-size: 12px;
+                        line-height-factor: Look.leading(1.5);
+                        wrap: char-wrap;
+                    }
+                }
+            }
+            VerticalLayout {
+                spacing: 8px;
+                HorizontalLayout {
+                    spacing: 12px;
+                    Text {
+                        width: 96px;
+                        text: @tr("Can see");
+                        color: Look.muted;
+                        font-size: 14px;
+                    }
+                    Paragraph {
+                        horizontal-stretch: 1;
+                        text: AiWords.can-see();
+                        color: Look.text;
+                        font-size: 14px;
+                        font-weight: 500;
+                    }
+                }
+                HorizontalLayout {
+                    spacing: 12px;
+                    Text {
+                        width: 96px;
+                        text: @tr("Can write");
+                        color: Look.muted;
+                        font-size: 14px;
+                    }
+                    Paragraph {
+                        horizontal-stretch: 1;
+                        text: AiWords.can-write();
+                        color: Look.text;
+                        font-size: 14px;
+                        font-weight: 500;
+                    }
+                }
+                Link {
+                    text: @tr("Change in Settings");
+                    clicked => {
+                        AiAccess.picking = false;
+                        AppState.settings-section = SettingsSection.ai;
+                        AppState.page = Page.settings;
+                    }
+                }
+            }
+            HorizontalLayout {
+                alignment: end;
+                spacing: 10px;
+                padding-top: 2px;
+                AllowButton {
+                    text: @tr("Don't Allow");
+                    primary: !root.known-is-safe;
+                    clicked => {
+                        AiAccess.answer(false);
+                    }
+                }
+                AllowButton {
+                    text: @tr("Allow");
+                    primary: root.known-is-safe;
+                    clicked => {
+                        AiAccess.answer(true);
+                    }
+                }
+            }
+        }
+    }
+}

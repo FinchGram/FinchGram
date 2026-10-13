@@ -2,8 +2,8 @@
 //! that is our own bridge (`finchgram mcp`), the program that started it, which is the assistant's
 //! app (Claude Desktop, Claude Code, …). Nothing is taken from what connects: the system is asked
 //! who it is (the socket's LOCAL_PEERPID, then libproc for the program and its parent), so nothing
-//! connecting can claim to be something else. The name goes into the log, and will be what the
-//! dialog that asks the user to allow an assistant shows.
+//! connecting can claim to be something else. The name goes into the log, into Settings → AI
+//! access's list of apps, and into the dialog that asks the user to allow an app (access.rs).
 
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
@@ -26,13 +26,40 @@ impl Host {
     /// process id when the system would not say more.
     pub fn describe(&self) -> String {
         match &self.path {
-            Some(path) => match bundle_of(path) {
-                Some(bundle) => format!("{} ({})", bundle.file_stem().and_then(|stem| stem.to_str()).unwrap_or("app"), bundle.display()),
-                None => format!("{} ({})", path.file_name().and_then(|name| name.to_str()).unwrap_or("program"), path.display()),
-            },
+            Some(_) => format!("{} ({})", self.name(), self.key()),
             None if self.pid > 0 => format!("pid {}", self.pid),
             None => "an unknown process".to_string(),
         }
+    }
+
+    /// The program's name as the user sees it: its app bundle's ("Claude"), or its file name
+    /// ("claude"); empty when the system would not say which program it is. A program kept under
+    /// its version number ("…/claude/versions/2.1.296", as Claude Code is) goes by the folder that
+    /// names it.
+    pub fn name(&self) -> String {
+        match &self.path {
+            Some(path) => match bundle_of(path) {
+                Some(bundle) => bundle.file_stem().and_then(|stem| stem.to_str()).unwrap_or("app").to_string(),
+                None => program_name(path),
+            },
+            None => String::new(),
+        }
+    }
+
+    /// What the user's answer is remembered by: the app bundle ("/Applications/Claude.app") or
+    /// the program's path; for a program the system would not name, its process id, which lasts
+    /// as long as it runs.
+    pub fn key(&self) -> String {
+        match &self.path {
+            Some(path) => bundle_of(path).unwrap_or_else(|| path.clone()).display().to_string(),
+            None if self.pid > 0 => format!("pid {}", self.pid),
+            None => "unknown".to_string(),
+        }
+    }
+
+    /// The system named the program: its answer can be kept for next time.
+    pub fn identified(&self) -> bool {
+        self.path.is_some()
     }
 }
 
@@ -54,13 +81,34 @@ pub fn host_of(stream: &UnixStream) -> Host {
         pid = parent;
         path = system::path_of(pid);
     }
-    Host { pid, path }
+    // Only our own bridge, or a shell, could be found (its parent is gone, or further away): that
+    // is not the program.
+    let ours_or_wrapper = path.as_ref().is_some_and(|current| {
+        ours.as_ref().is_some_and(|ours| current.canonicalize().ok().as_ref() == Some(ours))
+            || current.file_name().and_then(|name| name.to_str()).is_some_and(|name| WRAPPERS.contains(&name))
+    });
+    Host { pid, path: if ours_or_wrapper { None } else { path } }
 }
 
 /// The app bundle a program is in, when it is in one: "/Applications/Claude.app" for
 /// "/Applications/Claude.app/Contents/MacOS/Claude".
 pub fn bundle_of(path: &Path) -> Option<PathBuf> {
     path.ancestors().find(|ancestor| ancestor.extension().is_some_and(|extension| extension == "app")).map(Path::to_path_buf)
+}
+
+/// A program's name from its path: its file name, unless that is a version number, in which case
+/// the first folder above it that is not "versions" or "bin" ("claude" for
+/// "/Users/x/.local/share/claude/versions/2.1.296").
+fn program_name(path: &Path) -> String {
+    let names = path.iter().rev().filter_map(|part| part.to_str());
+    let is_version = |name: &str| !name.is_empty() && name.chars().all(|c| c.is_ascii_digit() || c == '.');
+    let mut names = names.skip_while(|name| is_version(name) || matches!(*name, "versions" | "bin"));
+    match (path.file_name().and_then(|name| name.to_str()), names.next()) {
+        (Some(file), _) if !is_version(file) => file.to_string(),
+        (_, Some(folder)) if folder != "/" => folder.to_string(),
+        (Some(file), _) => file.to_string(),
+        (None, _) => "program".to_string(),
+    }
 }
 
 #[cfg(target_os = "macos")]
@@ -175,9 +223,18 @@ mod tests {
         assert_eq!(claude.describe(), "Claude (/Applications/Claude.app)");
         let tool = Host { pid: 8, path: Some(PathBuf::from("/Users/x/.local/bin/claude")) };
         assert_eq!(tool.describe(), "claude (/Users/x/.local/bin/claude)");
-        assert_eq!(Host { pid: 9, path: None }.describe(), "pid 9");
+        assert_eq!((claude.name(), claude.key()), ("Claude".to_string(), "/Applications/Claude.app".to_string()));
+        assert_eq!((tool.name(), tool.key()), ("claude".to_string(), "/Users/x/.local/bin/claude".to_string()));
+        let nameless = Host { pid: 9, path: None };
+        assert_eq!((nameless.describe(), nameless.name(), nameless.key(), nameless.identified()), ("pid 9".into(), String::new(), "pid 9".into(), false));
         assert_eq!(Host { pid: 0, path: None }.describe(), "an unknown process");
+        assert_eq!(Host { pid: 0, path: None }.key(), "unknown");
         assert_eq!(bundle_of(Path::new("/usr/bin/node")), None);
+        let versioned = Host { pid: 10, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.296")) };
+        assert_eq!((versioned.name(), versioned.key()), ("claude".to_string(), "/Users/x/.local/share/claude/versions/2.1.296".to_string()));
+        assert_eq!(program_name(Path::new("/opt/homebrew/bin/node")), "node");
+        assert_eq!(program_name(Path::new("/Users/x/tools/3.0")), "tools");
+        assert_eq!(program_name(Path::new("/")), "program");
     }
 
     #[cfg(target_os = "macos")]

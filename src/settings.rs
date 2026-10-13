@@ -78,11 +78,14 @@ pub struct Mcp {
     /// Whether an assistant may send messages under the user's name, only write drafts for the
     /// user to send, or neither.
     pub sending: McpSending,
+    /// The programs that have connected and what the user answered, by the path the system
+    /// reported for each (src/mcp/peer.rs). One the user removes asks again next time.
+    pub apps: Vec<McpApp>,
 }
 
 impl Default for Mcp {
     fn default() -> Self {
-        Mcp { enabled: false, scope: McpScope::All, chats: Vec::new(), sending: McpSending::On }
+        Mcp { enabled: false, scope: McpScope::All, chats: Vec::new(), sending: McpSending::On, apps: Vec::new() }
     }
 }
 
@@ -95,6 +98,28 @@ impl Mcp {
             McpScope::Chosen => self.chats.contains(&chat_id),
         }
     }
+
+    /// The remembered answer for the program at `path`, if any.
+    pub fn app(&self, path: &str) -> Option<&McpApp> {
+        self.apps.iter().find(|app| app.path == path)
+    }
+
+    pub fn app_mut(&mut self, path: &str) -> Option<&mut McpApp> {
+        self.apps.iter_mut().find(|app| app.path == path)
+    }
+}
+
+/// A program that connected to the MCP server, and what the user answered when it first did.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct McpApp {
+    /// Where the system said it is: an app bundle ("/Applications/Claude.app") or a program.
+    pub path: String,
+    /// Its name as shown: the bundle's, or the program's file name.
+    pub name: String,
+    pub allowed: bool,
+    /// When it last connected or asked for something, in seconds since the epoch; 0 for never.
+    pub last_used: i64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -357,17 +382,20 @@ mod tests {
         let read: Settings = toml::from_str("theme = \"terminal\"\n").expect("read");
         assert_eq!(read.mcp, Mcp::default());
         assert!(!read.mcp.enabled && read.mcp.allows(42) && read.mcp.sending == McpSending::On);
+        let claude = McpApp { path: "/Applications/Claude.app".into(), name: "Claude".into(), allowed: true, last_used: 1_760_000_000 };
         let settings = Settings {
-            mcp: Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![-1001, 42], sending: McpSending::Drafts },
+            mcp: Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![-1001, 42], sending: McpSending::Drafts, apps: vec![claude] },
             ..Settings::default()
         };
         let text = toml::to_string_pretty(&settings).expect("TOML");
         assert!(text.contains("[mcp]\nenabled = true\nscope = \"chosen\"\n"), "{text}");
         assert!(text.contains("sending = \"drafts\"\n"), "{text}");
+        assert!(text.contains("[[mcp.apps]]\npath = \"/Applications/Claude.app\"\nname = \"Claude\"\nallowed = true\n"), "{text}");
         let read: Settings = toml::from_str(&text).expect("read back");
         assert_eq!(read.mcp, settings.mcp);
         assert!(read.mcp.allows(42) && !read.mcp.allows(7));
+        assert!(read.mcp.app("/Applications/Claude.app").is_some_and(|app| app.allowed) && read.mcp.app("/Applications/Zed.app").is_none());
         let read: Settings = toml::from_str("[mcp]\nenabled = true\n").expect("read");
-        assert!(read.mcp.enabled && read.mcp.scope == McpScope::All && read.mcp.sending == McpSending::On);
+        assert!(read.mcp.enabled && read.mcp.scope == McpScope::All && read.mcp.sending == McpSending::On && read.mcp.apps.is_empty());
     }
 }

@@ -1,0 +1,81 @@
+// Settings → AI access (the design's "AI 访问" in "FinchGram Desktop 页面") and the dialog that asks
+// the user to allow an app the first time it connects: what the MCP server (src/mcp/, docs/mcp.md)
+// lets AI assistants' apps do with the account. Rust fills this global from the settings and the
+// server (src/mcp/access.rs); the pages (pages/ai-access.slint) show it in every theme.
+import { ChatKind, Moment } from "telegram.slint";
+
+// Which chats an assistant may see: every chat (never a secret one), or only the chosen ones.
+export enum AiScope { all, chosen }
+
+// What an assistant may write: messages, under the user's name and at once; drafts only, for the
+// user to send; or nothing.
+export enum AiWriting { messages, drafts, nothing }
+
+// A chat as the page and the picker show it.
+export struct AiChat {
+    id: string,             // TDLib's chat id
+    title: string,
+    kind: ChatKind,
+    members: int,           // of a group, subscribers of a channel; 0 when not known
+    secret: bool,           // a secret chat: shown in the picker, never chosen
+    chosen: bool,
+}
+
+// A program that has connected: allowed or not, as the system named it.
+export struct AiApp {
+    name: string,           // "Claude", "claude"; "" when the system would not say which program it is
+    path: string,           // "/Applications/Claude.app", "/Users/x/.local/bin/claude", or "pid 48213"
+    allowed: bool,
+    live: bool,             // connected now
+    has-last-used: bool,
+    last-used: Moment,
+}
+
+// What an assistant asked for, for the log on the page. Never the words of a message.
+export enum AiActivityKind {
+    connected, turned-away,     // an app connected, or was turned away because it is not allowed
+    listed, searched-chats, looked, read, searched, searched-all, unread, media,
+    draft, sent, marked, account,
+    refused,                    // a chat outside the chosen ones was asked for
+}
+
+export struct AiActivity {
+    kind: AiActivityKind,
+    app: string,            // "" for an unidentified program
+    time: Moment,
+    chat: string,           // the chat it was about, where there is one
+    count: int,             // how many messages or chats, where it matters
+}
+
+export global AiAccess {
+    in-out property <bool> on;                       // the server answers assistants at all
+    in-out property <AiScope> scope: AiScope.all;
+    in-out property <AiWriting> writing: AiWriting.messages;
+    in-out property <[AiChat]> chosen;               // the chosen chats, for the page
+    in-out property <int> chosen-count;
+    in-out property <[AiChat]> all-chats;            // the chats the picker offers, matching its search
+    in-out property <bool> picking;                  // the picker is open, over the page
+    in-out property <[AiApp]> apps;
+    in-out property <[AiActivity]> activity;         // the newest first
+    in-out property <string> claude-code-command;    // what to paste to connect Claude Code
+    in-out property <string> claude-desktop-config;  // and Claude Desktop (or any app that takes a command)
+    in-out property <string> copied;                 // "code" or "desktop" for a moment after Copy; "" otherwise
+
+    // The dialog: an app that has not been allowed or turned away before is connecting.
+    in-out property <bool> ask-open;
+    in-out property <string> ask-name;               // "" when the system would not say which program it is
+    in-out property <string> ask-path;
+    in-out property <string> ask-initial;            // the name's first letter, for its square
+
+    callback opened();                               // the page is shown: Rust refreshes the lists
+    callback set-on(bool);
+    callback set-scope(AiScope);
+    callback set-writing(AiWriting);
+    callback toggle-chat(string);                    // chosen, or not any more
+    callback search-chats(string);                   // the picker's words
+    callback remove-app(string);                     // by path: it asks again next time
+    callback allow-app(string);                      // one that was turned away
+    callback copy(string);                           // "code" or "desktop"
+    callback show-log();                             // mcp.log, in the Finder
+    callback answer(bool);                           // the dialog: allow, or don't
+}

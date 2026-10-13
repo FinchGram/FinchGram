@@ -6,9 +6,12 @@ import { AppState, NotificationSetting, Page, SettingsSection, TelegramState, Th
 import { NotificationScope, NotificationScopes, PasswordSettings, PasswordStep, PasswordChange } from "../telegram.slint";
 import { Look } from "../look.slint";
 import { Fmt } from "../format.slint";
-import { Icon, Logo, Spinner, Switch, Field, PrimaryButton, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
+import { Icon, Logo, Spinner, Field, PrimaryButton, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
+import { AiAccess } from "../ai-access.slint";
 import { FormHeading, FormError, HintLine, EmailCodeField, LinkRow, NewPasswordForm } from "password.slint";
 import { PageFrame, SideColumn } from "frame.slint";
+import { Card, Separator, SwitchRow, NavRow, SmallButton } from "rows.slint";
+import { AiSection, AiPickSection } from "ai-access.slint";
 
 component Category inherits Rectangle {
     in property <SettingsSection> section;
@@ -51,6 +54,7 @@ component Category inherits Rectangle {
                 PasswordSettings.cancel();
                 PasswordSettings.open = false;
             }
+            AiAccess.picking = false;
         }
     }
 }
@@ -118,6 +122,12 @@ component Categories {
             label: @tr("Privacy & security");
             // These settings are the account's, kept by Telegram.
             enabled: AppState.telegram-state == TelegramState.ready;
+        }
+        Category {
+            section: SettingsSection.ai;
+            icon: "robot";
+            label: @tr("AI access");
+            enabled: true;
         }
         Category {
             section: SettingsSection.chats;
@@ -301,167 +311,6 @@ component AppearanceCard {
         mouse-cursor: pointer;
         clicked => {
             AppState.change-appearance(root.appearance);
-        }
-    }
-}
-
-// A group of settings: rows on the field colour, a hairline between them.
-component Card inherits Rectangle {
-    border-radius: Look.radius;
-    background: Look.field;
-    border-width: Look.field-border;
-    border-color: Look.line;
-    height: rows.preferred-height;
-
-    rows := VerticalLayout {
-        @children
-    }
-}
-
-component Separator inherits Rectangle {
-    height: 1px;
-    background: Look.line;
-}
-
-// One setting: an icon, what it is, and a switch.
-component SwitchRow {
-    in property <string> icon;
-    in property <string> title;
-    in property <string> description;
-    in property <bool> on;
-    in property <bool> enabled: true;
-    callback toggled();
-    opacity: enabled ? 1 : 0.4;
-
-    HorizontalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        padding-top: 12px;
-        padding-bottom: 12px;
-        spacing: 14px;
-        VerticalLayout {
-            alignment: center;
-            Icon {
-                name: root.icon;
-                size: 20px;
-                color: Look.accent;
-            }
-        }
-        VerticalLayout {
-            horizontal-stretch: 1;
-            alignment: center;
-            spacing: 2px;
-            Text {
-                text: root.title;
-                color: Look.text;
-                font-size: 15px;
-                font-weight: 500;
-            }
-            if root.description != "": Paragraph {
-                text: root.description;
-                color: Look.muted;
-                font-size: 13px;
-            }
-        }
-        VerticalLayout {
-            alignment: center;
-            Switch {
-                on: root.on;
-                enabled: root.enabled;
-                toggled => {
-                    root.toggled();
-                }
-            }
-        }
-    }
-}
-
-// One setting that opens more: an icon, what it is, its value, and a caret. A choice between a few
-// values (the caret up and down) takes the next one when clicked.
-component NavRow inherits Rectangle {
-    in property <string> icon;
-    in property <string> title;
-    in property <string> value;
-    in property <string> caret: "caret-right";
-    in property <bool> enabled: true;
-    in property <bool> danger;
-    callback clicked();
-    background: touch.has-hover && enabled ? Look.sel : transparent;
-    opacity: enabled ? 1 : 0.4;
-
-    HorizontalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        padding-top: 12px;
-        padding-bottom: 12px;
-        spacing: 14px;
-        VerticalLayout {
-            alignment: center;
-            Icon {
-                name: root.icon;
-                size: 20px;
-                color: root.danger ? Look.danger : Look.accent;
-            }
-        }
-        Text {
-            horizontal-stretch: 1;
-            text: root.title;
-            color: root.danger ? Look.danger : Look.text;
-            font-size: 15px;
-            font-weight: 500;
-            vertical-alignment: center;
-            overflow: elide;
-        }
-        if root.value != "": Text {
-            text: root.value;
-            color: Look.muted;
-            font-size: 14px;
-            vertical-alignment: center;
-        }
-        VerticalLayout {
-            alignment: center;
-            Icon {
-                name: root.caret;
-                size: 14px;
-                color: Look.faint;
-            }
-        }
-    }
-
-    touch := TouchArea {
-        enabled: root.enabled;
-        mouse-cursor: pointer;
-        clicked => {
-            root.clicked();
-        }
-    }
-}
-
-component SmallButton inherits Rectangle {
-    in property <string> text;
-    in property <bool> primary;
-    in property <bool> enabled: true;
-    callback clicked();
-    height: 32px;
-    width: label.preferred-width + 28px;
-    border-radius: Look.button-radius;
-    background: primary ? (touch.has-hover ? Look.accent.darker(0.1) : Look.accent) : touch.has-hover ? Look.sel : Look.bg;
-    border-width: primary ? 0px : 1px;
-    border-color: Look.line-strong;
-    opacity: enabled ? 1 : 0.5;
-
-    label := Text {
-        text: root.text;
-        color: root.primary ? Look.on-accent : Look.text;
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    touch := TouchArea {
-        enabled: root.enabled;
-        mouse-cursor: pointer;
-        clicked => {
-            root.clicked();
         }
     }
 }
@@ -1672,6 +1521,10 @@ component PasswordSection {
 
 export component SettingsPage inherits PageFrame {
     property <bool> two-step: AppState.settings-section == SettingsSection.privacy && PasswordSettings.open;
+    property <bool> ai: AppState.settings-section == SettingsSection.ai;
+    // Choosing the chats an assistant may see is a page within AI access, as two-step
+    // verification is within Privacy & security.
+    property <bool> picking: ai && AiAccess.picking;
     title: @tr("Settings");
 
     SideColumn {
@@ -1711,13 +1564,28 @@ export component SettingsPage inherits PageFrame {
                             PasswordSettings.open = false;
                         }
                     }
+                    if root.picking: Link {
+                        text: @tr("AI access");
+                        icon: "caret-left";
+                        clicked => {
+                            AiAccess.picking = false;
+                        }
+                    }
                     Heading {
                         label: root.two-step ? @tr("Two-step verification")
+                            : root.picking ? @tr("Choose chats")
                             : AppState.settings-section == SettingsSection.general ? @tr("General")
                             : AppState.settings-section == SettingsSection.notifications ? @tr("Notifications & sounds")
                             : AppState.settings-section == SettingsSection.language ? @tr("Language")
                             : AppState.settings-section == SettingsSection.privacy ? @tr("Privacy & security")
+                            : AppState.settings-section == SettingsSection.ai ? @tr("AI access")
                             : AppState.settings-section == SettingsSection.about ? @tr("About") : @tr("Appearance");
+                    }
+                    if root.ai && !root.picking: Paragraph {
+                        text: @tr("An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your chats and act in them through FinchGram, with your account. FinchGram itself calls no AI and keeps nothing for one.");
+                        color: Look.muted;
+                        font-size: 15px;
+                        line-height-factor: Look.leading(1.6);
                     }
                     if root.two-step && PasswordSettings.step == PasswordStep.overview && PasswordSettings.done != PasswordChange.nothing: HorizontalLayout {
                         spacing: 6px;
@@ -1745,6 +1613,8 @@ export component SettingsPage inherits PageFrame {
                 if AppState.settings-section == SettingsSection.language: LanguageSection { }
                 if AppState.settings-section == SettingsSection.privacy && !root.two-step: PrivacySection { }
                 if root.two-step: PasswordSection { }
+                if root.ai && !root.picking: AiSection { }
+                if root.picking: AiPickSection { }
                 if AppState.settings-section == SettingsSection.about: AboutSection { }
             }
         }

@@ -30,6 +30,7 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
 - **三套主题。** 工作台、报纸和终端，各有浅色和深色，切换不用重启。
 - **设置。** 开机启动、按 Enter 发送、截图快捷键、通知的声音和预览、两步验证、界面语言，还有更新：app 从
   GitHub Releases 自动更新，验证不过的一律不装。
+- **AI 助手。** Claude Desktop、Claude Code 以及其他会说 Model Context Protocol 的应用，可以在你允许后通过 FinchGram 读你的聊天并代你操作：设置 → AI 访问，默认关着，由你选哪些聊天、助手能不能发消息，应用第一次连接时会先问你。见 [docs/mcp.zh-Hans.md](../docs/mcp.zh-Hans.md)。
 - **语言。** 界面和这份 README 都有十一种语言。
 
 还没有的：秘密聊天、语音消息和通话、多账号、投票和定时消息、关键词过滤、Windows 和 Linux。见
@@ -66,6 +67,12 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="带截图的发送卡片"></p>
 
+## AI 助手
+
+<p align="center"><img src="../docs/screenshots/workbench-light-settings-ai.png" width="800" alt="设置 → AI 访问"></p>
+
+FinchGram 是一个 MCP 服务端：你 Mac 上的 AI 助手应用（Claude Desktop、Claude Code、Cursor……）可以通过正在运行的 FinchGram、用你自己的账号读你的 Telegram 并在其中操作。设置 → AI 访问 是开关，默认关着。在那里你选助手能看到哪些聊天（除秘密聊天外的全部，或只限选定的）、能写什么（以你的名义发消息、只留草稿由你发、或什么都不写），也能看到哪些应用连接过——名字是 macOS 报告的——以及它们要过什么。应用第一次连接时，FinchGram 会问你允不允许。读取不会标已读，秘密聊天永远不给看，也不为 AI 保存任何东西。页面上备好了贴进 Claude Code 或 Claude Desktop 的那一行；细节见 [docs/mcp.zh-Hans.md](../docs/mcp.zh-Hans.md)。
+
 ## 怎么做的
 
 app 是一个外壳。Telegram 本身交给 TDLib，它作为一个独立程序跑在可执行文件旁边：`finchgram-tdlib`，由本仓库从锁定的
@@ -77,7 +84,7 @@ app 是一个外壳。Telegram 本身交给 TDLib，它作为一个独立程序�
 ## Telegram 的规矩
 
 FinchGram 只做 Telegram 官方应用做的事，不做它们禁止的事。消息在你看到时标为已读，对方像在任何 Telegram 应用里一样
-能看到你正在输入和在线，频道里的赞助消息照常显示，自毁媒体只能打开一次，来自 Telegram 的内容不会交给任何 AI。
+能看到你正在输入和在线，频道里的赞助消息照常显示，自毁媒体只能打开一次，来自 Telegram 的内容不会交给任何 AI，除非你在设置 → AI 访问里放一个助手进来。
 除了 Telegram 和用来更新的 GitHub，什么都不会离开你的机器。
 
 ## 开发

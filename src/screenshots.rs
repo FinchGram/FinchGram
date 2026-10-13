@@ -116,6 +116,14 @@ fn add_to_folder(theme: Theme) -> f32 {
     }
 }
 
+/// The wheel turned at `x`, `y`: `down` logical pixels further down the page.
+fn scroll(window: &MinimalSoftwareWindow, x: f32, y: f32, down: f32) {
+    let position = slint::LogicalPosition::new(x, y + MENU_BAR as f32);
+    window.dispatch_event(WindowEvent::PointerMoved { position });
+    window.dispatch_event(WindowEvent::PointerScrolled { position, delta_x: 0.0, delta_y: -down });
+    window.dispatch_event(WindowEvent::PointerExited);
+}
+
 /// Escape (closing a menu), and the pointer out of the window, so that nothing stays hovered.
 fn escape(window: &MinimalSoftwareWindow) {
     window.dispatch_event(WindowEvent::KeyPressed { text: Key::Escape.into() });
@@ -1033,6 +1041,108 @@ fn two_step(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str)
     password.set_open(false);
 }
 
+/// Settings → AI access as in the design: on, with chosen chats, two apps (one connected now) and
+/// two turned away, and a log; the picker, plain and searched; off; and the dialog, for an app
+/// the system named and for one it would not.
+fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    let app = ui.global::<AppState>();
+    let ai = ui.global::<AiAccess>();
+    let chat = |id: &str, title: &str, kind: ChatKind, members: i32, secret: bool, chosen: bool| AiChat {
+        id: id.into(),
+        title: title.into(),
+        kind,
+        members,
+        secret,
+        chosen,
+    };
+    let program = |name: &str, path: &str, allowed: bool, live: bool, last: Option<Moment>| AiApp {
+        name: name.into(),
+        path: path.into(),
+        allowed,
+        live,
+        has_last_used: last.is_some(),
+        last_used: last.unwrap_or_default(),
+    };
+    let entry = |kind: AiActivityKind, app: &str, hour: i32, minute: i32, chat: &str, count: i32| AiActivity {
+        kind,
+        app: app.into(),
+        time: moment(Day::Today, hour, minute),
+        chat: chat.into(),
+        count,
+    };
+    app.set_settings_section(SettingsSection::Ai);
+    ai.set_on(true);
+    ai.set_scope(AiScope::Chosen);
+    ai.set_writing(AiWriting::Drafts);
+    ai.set_chosen_count(3);
+    ai.set_chosen(model(vec![
+        chat("1", "Keyboard Lab", ChatKind::Group, 486, false, true),
+        chat("2", "Weekend Hikers", ChatKind::Group, 23, false, true),
+        chat("3", "Mika", ChatKind::User, 0, false, true),
+    ]));
+    ai.set_apps(model(vec![
+        program("Claude", "/Applications/Claude.app", true, true, None),
+        program("Zed", "/Applications/Zed.app", true, false, Some(moment(Day::ThisWeek, 21, 40))),
+        program("claude", "/Users/me/.local/bin/claude", false, false, Some(moment(Day::Today, 14, 7))),
+        program("", "pid 48213", false, false, Some(moment(Day::Today, 14, 8))),
+    ]));
+    ai.set_activity(model(vec![
+        entry(AiActivityKind::Draft, "Claude", 14, 6, "Weekend Hikers", 0),
+        entry(AiActivityKind::Read, "Claude", 14, 5, "Keyboard Lab", 20),
+        entry(AiActivityKind::Refused, "Claude", 14, 5, "Tech Morning", 0),
+        entry(AiActivityKind::Searched, "Claude", 14, 4, "", 3),
+        entry(AiActivityKind::Connected, "Claude", 14, 3, "", 0),
+    ]));
+    ai.set_claude_code_command("claude mcp add finchgram -- /Applications/FinchGram.app/Contents/MacOS/finchgram mcp".into());
+    ai.set_claude_desktop_config(
+        r#"{ "mcpServers": { "finchgram": { "command": "/Applications/FinchGram.app/Contents/MacOS/finchgram", "args": ["mcp"] } } }"#.into(),
+    );
+    save(window, &name("settings-ai"));
+    // The rest of the page: the apps and how to connect one, then the log and the rules.
+    scroll(window, 800.0, 400.0, 760.0);
+    save(window, &name("settings-ai-apps"));
+    scroll(window, 800.0, 400.0, 760.0);
+    save(window, &name("settings-ai-log"));
+    scroll(window, 800.0, 400.0, -1520.0);
+    // The picker: every chat, the chosen ones ticked, a secret chat dimmed; then searched.
+    ai.set_all_chats(model(vec![
+        chat("1", "Keyboard Lab", ChatKind::Group, 486, false, true),
+        chat("2", "Weekend Hikers", ChatKind::Group, 23, false, true),
+        chat("4", "Film Photography", ChatKind::Group, 1204, false, false),
+        chat("5", "Tech Morning", ChatKind::Channel, 82413, false, false),
+        chat("3", "Mika", ChatKind::User, 0, false, true),
+        chat("6", "Jie", ChatKind::User, 0, false, false),
+        chat("7", "Lin Xia", ChatKind::User, 0, false, false),
+        chat("8", "Deer", ChatKind::User, 0, true, false),
+    ]));
+    ai.set_picking(true);
+    save(window, &name("settings-ai-chats"));
+    ai.set_all_chats(model(vec![
+        chat("2", "Weekend Hikers", ChatKind::Group, 23, false, true),
+        chat("3", "Mika", ChatKind::User, 0, false, true),
+        chat("8", "Deer", ChatKind::User, 0, true, false),
+    ]));
+    save(window, &name("settings-ai-chats-searched"));
+    ai.set_picking(false);
+    // Off: the switch and the rules only.
+    ai.set_on(false);
+    save(window, &name("settings-ai-off"));
+    ai.set_on(true);
+    // The dialog, over the chats.
+    app.set_page(Page::Chats);
+    ai.set_ask_name("Cursor".into());
+    ai.set_ask_initial("C".into());
+    ai.set_ask_path("/Applications/Cursor.app".into());
+    ai.set_ask_open(true);
+    save(window, &name("ai-allow"));
+    ai.set_ask_name(SharedString::new());
+    ai.set_ask_initial(SharedString::new());
+    ai.set_ask_path("pid 48213".into());
+    save(window, &name("ai-allow-unidentified"));
+    ai.set_ask_open(false);
+    app.set_page(Page::Settings);
+}
+
 #[test]
 #[ignore = "takes over Slint's platform; run with: cargo test screenshots -- --ignored"]
 fn screenshots() {
@@ -1187,6 +1297,7 @@ fn screenshots() {
             save(&window, &name("settings-screenshot-shortcut"));
             ui.global::<Screenshot>().set_recording(false);
             two_step(&ui, &window, &name);
+            ai_access(&ui, &window, &name);
             app.set_page(Page::Profile);
             save(&window, &name("profile"));
             app.set_page(Page::Chats);
@@ -1239,6 +1350,7 @@ fn screenshots() {
     password.set_done(PasswordChange::Password);
     save(&window, "zh-workbench-settings-two-step");
     password.set_open(false);
+    ai_access(&ui, &window, &|page: &str| format!("zh-workbench-{page}"));
     app.set_page(Page::Chats);
 
     // The other languages, light, Workbench: the chat window and Settings → General, every script

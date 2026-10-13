@@ -94,7 +94,9 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
 - There is no async runtime: TDLib does the networking.
 - The MCP server (`src/mcp/`) has a thread listening on its socket and one per connection. A
   connection's thread reads a line and answers it; a tool's work goes to the UI thread
-  (`upgrade_in_event_loop`), where the store and TDLib are, and its outcome comes back on a channel.
+  (`upgrade_in_event_loop`), where the store, TDLib and the page are, and its outcome comes back
+  on a channel. So does the question whether a program may connect: the thread waits while the
+  dialog asks the user.
 
 ## The pages: three themes
 
@@ -200,8 +202,11 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   executable) is the stdio bridge an assistant's app runs. `protocol.rs` is JSON-RPC and MCP's
   methods, `tools.rs` the tools as the assistant sees them, and `src/telegram/tools.rs` what each
   does with the store and TDLib, on the UI thread, within what Settings → AI access allows (off by
-  default; the page itself waits for its design). Reading marks nothing as read; secret chats,
-  self-destructing media and the media of chats that restrict saving are never handed out.
+  default). `access.rs` is that page and the dialog that asks the user to allow an app the first
+  time it connects (ui/ai-access.slint, ui/pages/ai-access.slint, in every theme): the switch,
+  which chats, what an assistant may write, the apps allowed or turned away, the log. Reading
+  marks nothing as read; secret chats, self-destructing media and the media of chats that
+  restrict saving are never handed out.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
   device, the transparent title bar on macOS, opening links, the clipboard (words and pictures);

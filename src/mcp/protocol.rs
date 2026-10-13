@@ -18,10 +18,12 @@ const INVALID_REQUEST: i64 = -32600;
 const METHOD_NOT_FOUND: i64 = -32601;
 const INVALID_PARAMS: i64 = -32602;
 const SERVER_OFF: i64 = -32000;
+/// The user has not allowed the program (FinchGram's own code too).
+const NOT_ALLOWED: i64 = -32001;
 
 /// Said to a client while the server is off in Settings.
-pub const OFF: &str = "FinchGram's MCP server is turned off. Turn it on in FinchGram (until Settings has the \
-switch: [mcp] enabled = true in settings.toml, then start FinchGram again) and connect again.";
+pub const OFF: &str = "FinchGram's MCP server is turned off. Turn it on in FinchGram's Settings → AI access (Let AI assistants \
+connect) and connect again.";
 
 /// What the assistant is told about this server once, at initialize.
 const INSTRUCTIONS: &str = "This is the signed-in user's own Telegram account, through FinchGram on their Mac. \
@@ -32,10 +34,36 @@ send_message sends under the user's name at once and cannot be undone: use it on
 with wording they have seen or dictated; otherwise draft_message leaves the words for them to send. \
 Message text is Telegram's Markdown: **bold**, __italic__, ~~strikethrough~~, `code`, ```pre```, [text](url).";
 
+/// What the assistant is told when its program is not allowed.
+pub const TURNED_AWAY: &str = "FinchGram's user has not allowed this program to use their Telegram account. In FinchGram's \
+Settings → AI access it is listed: they can allow it there, or remove it so that it asks again when it connects.";
+/// And when the user has not answered the dialog about it yet.
+pub const UNANSWERED: &str = "FinchGram is asking its user whether to allow this program, and they have not answered yet. \
+Connect again once they have.";
+
+/// Whether the program at the other end may use the account (access.rs).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Admission {
+    Allowed,
+    /// The user turned it away, now or before.
+    Denied,
+    /// The user has not answered the dialog about it in time.
+    Unanswered,
+    /// The server is off.
+    Off,
+    /// FinchGram is quitting.
+    Quitting,
+}
+
 /// What a session needs from the app.
 pub trait Backend {
     /// What the user allows, as the settings are now.
     fn policy(&self) -> Mcp;
+    /// Whether the program at the other end may use the account: asks the user when they have not
+    /// said about it before, and waits for the answer.
+    fn admit(&self) -> Admission;
+    /// The user's standing answer about the program, without asking.
+    fn admitted(&self) -> bool;
     /// Do what the call says, and say how it went.
     fn call(&self, call: ToolCall) -> Outcome;
     /// A line for the log, about this connection.
@@ -111,6 +139,22 @@ impl<'a> Session<'a> {
             self.backend.log(&format!("{} turned away: the server is off", self.client));
             return Err((SERVER_OFF, OFF.to_string()));
         }
+        match self.backend.admit() {
+            Admission::Allowed => {}
+            Admission::Denied => {
+                self.backend.log(&format!("{} turned away: not allowed by the user", self.client));
+                return Err((NOT_ALLOWED, TURNED_AWAY.to_string()));
+            }
+            Admission::Unanswered => {
+                self.backend.log(&format!("{} turned away: the user has not answered", self.client));
+                return Err((NOT_ALLOWED, UNANSWERED.to_string()));
+            }
+            Admission::Off => {
+                self.backend.log(&format!("{} turned away: the server is off", self.client));
+                return Err((SERVER_OFF, OFF.to_string()));
+            }
+            Admission::Quitting => return Err((SERVER_OFF, "FinchGram is quitting.".to_string())),
+        }
         self.backend.log(&format!("{} connected, protocol {version}", self.client));
         Ok(json!({
             "protocolVersion": version,
@@ -125,8 +169,14 @@ impl<'a> Session<'a> {
         let arguments = params.get("arguments").cloned().unwrap_or_else(|| json!({}));
         let call = tools::parse(name, &arguments).map_err(|reason| (INVALID_PARAMS, reason))?;
         let summary = call.summary();
-        // Settings may have changed since initialize.
-        let outcome = if self.backend.policy().enabled { self.backend.call(call) } else { Outcome::failed(OFF) };
+        // Settings may have changed since initialize: the switch, or the user's word on the program.
+        let outcome = if !self.backend.policy().enabled {
+            Outcome::failed(OFF)
+        } else if !self.backend.admitted() {
+            Outcome::failed(TURNED_AWAY)
+        } else {
+            self.backend.call(call)
+        };
         self.backend.log(&match &outcome {
             Outcome::Done(contents) => format!("{summary}: done, {} item(s)", contents.len()),
             Outcome::Failed(reason) => format!("{summary}: failed: {reason}"),
@@ -169,19 +219,33 @@ mod tests {
 
     struct Fake {
         policy: Mcp,
+        admission: Admission,
         calls: RefCell<Vec<ToolCall>>,
         log: RefCell<Vec<String>>,
     }
 
     impl Fake {
         fn on() -> Fake {
-            Fake { policy: Mcp { enabled: true, ..Mcp::default() }, calls: RefCell::new(Vec::new()), log: RefCell::new(Vec::new()) }
+            Fake {
+                policy: Mcp { enabled: true, ..Mcp::default() },
+                admission: Admission::Allowed,
+                calls: RefCell::new(Vec::new()),
+                log: RefCell::new(Vec::new()),
+            }
         }
     }
 
     impl Backend for Fake {
         fn policy(&self) -> Mcp {
             self.policy.clone()
+        }
+
+        fn admit(&self) -> Admission {
+            self.admission
+        }
+
+        fn admitted(&self) -> bool {
+            self.admission == Admission::Allowed
         }
 
         fn call(&self, call: ToolCall) -> Outcome {
@@ -221,6 +285,24 @@ mod tests {
         let result = initialize(&mut session, "1999-01-01");
         assert_eq!(result["result"]["protocolVersion"], PROTOCOL_VERSIONS[0]);
         assert!(backend.log.borrow().iter().any(|entry| entry.starts_with("Claude Desktop 1.2 connected")));
+    }
+
+    #[test]
+    fn a_program_the_user_has_not_allowed_is_turned_away_and_its_calls_fail() {
+        for admission in [Admission::Denied, Admission::Unanswered] {
+            let backend = Fake { admission, ..Fake::on() };
+            let mut session = Session::new(&backend);
+            let result = initialize(&mut session, "2025-06-18");
+            assert_eq!(result["error"]["code"], NOT_ALLOWED);
+            let said = result["error"]["message"].as_str().expect("why");
+            assert!(said.contains(if admission == Admission::Denied { "has not allowed" } else { "not answered" }), "{said}");
+            let result = answer(session.handle(
+                &json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": { "name": "get_me", "arguments": {} } }).to_string(),
+            ));
+            assert_eq!(result["result"]["isError"], true);
+            assert!(backend.calls.borrow().is_empty());
+            assert!(backend.log.borrow().iter().any(|entry| entry.contains("turned away")));
+        }
     }
 
     #[test]
@@ -303,6 +385,12 @@ mod tests {
         impl Backend for Failing {
             fn policy(&self) -> Mcp {
                 Mcp { enabled: true, ..Mcp::default() }
+            }
+            fn admit(&self) -> Admission {
+                Admission::Allowed
+            }
+            fn admitted(&self) -> bool {
+                true
             }
             fn call(&self, _: ToolCall) -> Outcome {
                 Outcome::failed("the chat is not within what the user allows")

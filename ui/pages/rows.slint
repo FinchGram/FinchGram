@@ -1,0 +1,170 @@
+// The rows of the settings pages (the design's second round): groups of settings on the field
+// colour, each row an icon, what it is, and a switch, a value or a button.
+import { Look } from "../look.slint";
+import { Icon, Switch, Paragraph } from "../widgets.slint";
+
+// A group of settings: rows on the field colour, a hairline between them.
+export component Card inherits Rectangle {
+    border-radius: Look.radius;
+    background: Look.field;
+    border-width: Look.field-border;
+    border-color: Look.line;
+    height: rows.preferred-height;
+
+    rows := VerticalLayout {
+        @children
+    }
+}
+
+export component Separator inherits Rectangle {
+    height: 1px;
+    background: Look.line;
+}
+
+// One setting: an icon, what it is, and a switch.
+export component SwitchRow {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> description;
+    in property <bool> on;
+    in property <bool> enabled: true;
+    callback toggled();
+    opacity: enabled ? 1 : 0.4;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 20px;
+                color: Look.accent;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.title;
+                color: Look.text;
+                font-size: 15px;
+                font-weight: 500;
+            }
+            if root.description != "": Paragraph {
+                text: root.description;
+                color: Look.muted;
+                font-size: 13px;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Switch {
+                on: root.on;
+                enabled: root.enabled;
+                toggled => {
+                    root.toggled();
+                }
+            }
+        }
+    }
+}
+
+// One setting that opens more: an icon, what it is, its value, and a caret. A choice between a few
+// values (the caret up and down) takes the next one when clicked. Indented, it belongs to the row
+// above it.
+export component NavRow inherits Rectangle {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> value;
+    in property <string> caret: "caret-right";
+    in property <bool> enabled: true;
+    in property <bool> danger;
+    in property <bool> indent;
+    callback clicked();
+    background: touch.has-hover && enabled ? Look.sel : transparent;
+    opacity: enabled ? 1 : 0.4;
+
+    HorizontalLayout {
+        padding-left: root.indent ? 52px : 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 20px;
+                color: root.danger ? Look.danger : Look.accent;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.title;
+            color: root.danger ? Look.danger : Look.text;
+            font-size: 15px;
+            font-weight: 500;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        if root.value != "": Text {
+            text: root.value;
+            color: Look.muted;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.caret;
+                size: 14px;
+                color: Look.faint;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A word button at the end of a row: on the page colour, or the accent for the main thing to do,
+// or quiet (words only) for what undoes something small.
+export component SmallButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> primary;
+    in property <bool> quiet;
+    in property <bool> enabled: true;
+    callback clicked();
+    height: 32px;
+    width: label.preferred-width + 28px;
+    border-radius: Look.button-radius;
+    background: primary ? (touch.has-hover ? Look.accent.darker(0.1) : Look.accent) : touch.has-hover ? Look.sel : quiet ? transparent : Look.bg;
+    border-width: primary || quiet ? 0px : 1px;
+    border-color: Look.line-strong;
+    opacity: enabled ? 1 : 0.5;
+
+    label := Text {
+        text: root.text;
+        color: root.primary ? Look.on-accent : root.quiet ? Look.muted : Look.text;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}

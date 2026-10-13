@@ -7,6 +7,8 @@
 //! never viewMessages); only mark_read does, and only when asked. Self-destructing media is
 //! described but never handed out, nor is the media of a chat that restricts saving
 //! (getMessageProperties: can_be_saved), as the media viewer's save button follows the same rule.
+//! Each call also says what it did, in a word and a count, for the log on Settings → AI access
+//! (src/mcp/access.rs); and the page's lists of chats come from here.
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -18,9 +20,9 @@ use slint::ComponentHandle;
 use super::api::{self, Chat, ChatList, ChatType, Message, MessageContent as M, MessageReplyTo, MessageSender, StickerFormat, TextEntityType, UserType};
 use super::store::{self, Names, Store};
 use super::{Error, send};
-use crate::mcp::tools::{Content, Outcome, ToolCall};
+use crate::mcp::tools::{Activity, ActivityKind, Content, Outcome, ToolCall};
 use crate::settings::{Mcp, McpScope, McpSending};
-use crate::{Chats, MainWindow};
+use crate::{AiChat, ChatKind, Chats, MainWindow};
 
 /// A picture handed to the assistant as itself is at most this long on its longer side (Telegram
 /// keeps photos in several sizes), and this large.
@@ -37,18 +39,47 @@ const DOWNLOAD_PRIORITY: i32 = 1;
 
 const NOT_ALLOWED: &str = "This chat is not among the ones the user lets assistants see.";
 
-type Reply = Box<dyn FnOnce(Outcome)>;
 type Found<T> = Box<dyn FnOnce(Result<T, Error>)>;
+
+/// Where a tool's outcome goes, with what it did for the page's log (access.rs); a failure says
+/// nothing there, except a chat outside the chosen ones, which the user should know was asked for.
+pub struct Reply {
+    send: Box<dyn FnOnce(Outcome, Option<Activity>)>,
+}
+
+impl Reply {
+    fn done(self, outcome: Outcome, activity: Activity) {
+        (self.send)(outcome, Some(activity));
+    }
+
+    fn failed(self, reason: impl Into<String>) {
+        (self.send)(Outcome::failed(reason), None);
+    }
+
+    fn refuse(self, refusal: Refusal) {
+        match refusal {
+            Refusal::NotAllowed { chat } => (self.send)(Outcome::failed(NOT_ALLOWED), Some(Activity::about(ActivityKind::Refused, chat))),
+            Refusal::Other(reason) => self.failed(reason),
+        }
+    }
+}
+
+/// Why a chat was not given: it is outside what the user allows (named, for the log), or TDLib
+/// would not give it.
+enum Refusal {
+    NotAllowed { chat: String },
+    Other(String),
+}
 
 /// Do what `call` asks, within `policy`, and give `reply` the outcome, now or once TDLib has
 /// answered. UI thread.
-pub fn call(ui: &MainWindow, call: ToolCall, policy: Mcp, reply: impl FnOnce(Outcome) + 'static) {
-    let reply: Reply = Box::new(reply);
+pub fn call(ui: &MainWindow, call: ToolCall, policy: Mcp, reply: impl FnOnce(Outcome, Option<Activity>) + 'static) {
+    let reply = Reply { send: Box::new(reply) };
     if !policy.enabled {
-        return reply(Outcome::failed(crate::mcp::protocol::OFF));
+        return reply.failed(crate::mcp::protocol::OFF);
     }
     if store::with(|store| store.my_id == 0).unwrap_or(true) {
-        return reply(Outcome::failed("FinchGram is not signed in to Telegram, or is still starting; try again in a moment."));
+        return reply.failed("FinchGram is not signed in to Telegram, or is still starting; try again in a moment.");
     }
     let names = Names::from(ui);
     let loaded = ui.global::<Chats>().get_loaded();
@@ -61,14 +92,14 @@ pub fn call(ui: &MainWindow, call: ToolCall, policy: Mcp, reply: impl FnOnce(Out
         }
         ToolCall::SearchMessages { query, chat_id, limit } => search_messages(policy, names, query, chat_id, limit, reply),
         ToolCall::GetUnread { chats_limit, messages_per_chat } => get_unread(policy, names, chats_limit, messages_per_chat, reply),
-        ToolCall::DownloadMedia { chat_id, message_id } => download_media(policy, chat_id, message_id, reply),
+        ToolCall::DownloadMedia { chat_id, message_id } => download_media(policy, names, chat_id, message_id, reply),
         ToolCall::DraftMessage { chat_id, text, reply_to_message_id } => {
             write_message(policy, names, chat_id, text, reply_to_message_id, false, reply)
         }
         ToolCall::SendMessage { chat_id, text, reply_to_message_id } => {
             write_message(policy, names, chat_id, text, reply_to_message_id, true, reply)
         }
-        ToolCall::MarkRead { chat_id, message_ids } => mark_read(policy, chat_id, message_ids, reply),
+        ToolCall::MarkRead { chat_id, message_ids } => mark_read(policy, names, chat_id, message_ids, reply),
         ToolCall::GetMe => get_me(&names, reply),
     }
 }
@@ -82,19 +113,23 @@ fn allowed(policy: &Mcp, chat: &Chat) -> bool {
 
 /// The chat with `chat_id`, from the store or from TDLib, when the assistant may see it; else why
 /// not.
-fn with_chat(policy: Mcp, chat_id: i64, then: impl FnOnce(Result<Chat, String>) + 'static) {
+fn with_chat(policy: Mcp, chat_id: i64, then: impl FnOnce(Result<Chat, Refusal>) + 'static) {
+    let refused = move |chat: Option<&Chat>| Refusal::NotAllowed {
+        chat: chat.map(|chat| chat.title.clone()).filter(|title| !title.is_empty()).unwrap_or_else(|| format!("chat {chat_id}")),
+    };
     if !policy.allows(chat_id) {
-        return then(Err(NOT_ALLOWED.to_string()));
+        let chat = store::with(|store| store.chats.get(&chat_id).map(|chat| refused(Some(chat)))).flatten().unwrap_or_else(|| refused(None));
+        return then(Err(chat));
     }
-    let check = move |chat: Chat| if allowed(&policy, &chat) { Ok(chat) } else { Err(NOT_ALLOWED.to_string()) };
+    let check = move |chat: Chat| if allowed(&policy, &chat) { Ok(chat) } else { Err(refused(Some(&chat))) };
     if let Some(chat) = store::with(|store| store.chats.get(&chat_id).cloned()).flatten() {
         return then(check(chat));
     }
     send(json!({ "@type": "getChat", "chat_id": chat_id }), move |answer| {
         then(match answer.map(serde_json::from_value::<Chat>) {
             Ok(Ok(chat)) => check(chat),
-            Ok(Err(err)) => Err(format!("cannot read the chat: {err}")),
-            Err(err) => Err(telegram_error("find the chat", err)),
+            Ok(Err(err)) => Err(Refusal::Other(format!("cannot read the chat: {err}"))),
+            Err(err) => Err(Refusal::Other(telegram_error("find the chat", err))),
         })
     });
 }
@@ -109,17 +144,18 @@ fn telegram_error(doing: &str, err: Error) -> String {
 // ---- the tools -------------------------------------------------------------------------------------
 
 fn list_chats(policy: &Mcp, names: &Names, loaded: bool, limit: usize, unread_only: bool, reply: Reply) {
-    let value = store::with(|store| {
+    let (value, count) = store::with(|store| {
         let chats = main_list(store, policy, |chat| !unread_only || chat.unread_count > 0 || chat.is_marked_as_unread);
         let rows: Vec<Value> = chats.iter().take(limit).map(|chat| chat_json(store, names, chat)).collect();
+        let count = rows.len();
         let mut value = json!({ "chats": rows, "total": chats.len() });
         if !loaded {
             value["note"] = "The chat list is still coming from Telegram; ask again for the rest.".into();
         }
-        value
+        (value, count)
     })
-    .unwrap_or_else(|| json!({ "chats": [], "total": 0 }));
-    reply(Outcome::json(&value));
+    .unwrap_or_else(|| (json!({ "chats": [], "total": 0 }), 0));
+    reply.done(Outcome::json(&value), Activity::counted(ActivityKind::Listed, "", count));
 }
 
 /// The allowed chats of the main list that `keep` keeps, in the list's order.
@@ -139,7 +175,7 @@ fn search_chats(policy: Mcp, names: Names, query: String, limit: usize, reply: R
     send(json!({ "@type": "searchChats", "query": query, "limit": limit as i32 }), move |answer| {
         let ids: Vec<i64> = match answer {
             Ok(found) => found["chat_ids"].as_array().map(|ids| ids.iter().filter_map(Value::as_i64).collect()).unwrap_or_default(),
-            Err(err) => return reply(Outcome::failed(telegram_error("search the chats", err))),
+            Err(err) => return reply.failed(telegram_error("search the chats", err)),
         };
         // TDLib has sent every chat it names before it answers.
         let rows: Vec<Value> = store::with(|store| {
@@ -150,16 +186,17 @@ fn search_chats(policy: Mcp, names: Names, query: String, limit: usize, reply: R
                 .collect()
         })
         .unwrap_or_default();
-        reply(Outcome::json(&json!({ "chats": rows })));
+        let count = rows.len();
+        reply.done(Outcome::json(&json!({ "chats": rows })), Activity::counted(ActivityKind::SearchedChats, "", count));
     });
 }
 
 fn get_chat(policy: Mcp, names: Names, chat_id: i64, reply: Reply) {
     with_chat(policy, chat_id, move |chat| match chat {
-        Err(reason) => reply(Outcome::failed(reason)),
+        Err(refusal) => reply.refuse(refusal),
         Ok(chat) => {
-            let value = store::with(|store| chat_json(store, &names, &chat)).unwrap_or_default();
-            reply(Outcome::json(&value));
+            let (value, title) = store::with(|store| (chat_json(store, &names, &chat), store.title(&chat, &names))).unwrap_or_default();
+            reply.done(Outcome::json(&value), Activity::about(ActivityKind::Looked, title));
         }
     });
 }
@@ -168,26 +205,27 @@ fn get_messages(policy: Mcp, names: Names, chat_id: i64, limit: usize, before: i
     with_chat(policy, chat_id, move |chat| {
         let chat = match chat {
             Ok(chat) => chat,
-            Err(reason) => return reply(Outcome::failed(reason)),
+            Err(refusal) => return reply.refuse(refusal),
         };
         history(chat.id, before, limit, Vec::new(), 0, Box::new(move |messages| {
             let messages = match messages {
                 Ok(messages) => messages,
-                Err(err) => return reply(Outcome::failed(telegram_error("read the messages", err))),
+                Err(err) => return reply.failed(telegram_error("read the messages", err)),
             };
-            let value = store::with(|store| {
+            let (value, title) = store::with(|store| {
+                let title = store.title(&chat, &names);
                 let rows: Vec<Value> = messages.iter().map(|message| message_json(store, &names, message)).collect();
                 let mut value = json!({
-                    "chat": { "id": chat.id, "title": store.title(&chat, &names), "kind": kind_of(store, &chat) },
+                    "chat": { "id": chat.id, "title": title, "kind": kind_of(store, &chat) },
                     "messages": rows,
                 });
                 if let Some(oldest) = messages.last() {
                     value["older_before_message_id"] = oldest.id.into();
                 }
-                value
+                (value, title)
             })
             .unwrap_or_default();
-            reply(Outcome::json(&value));
+            reply.done(Outcome::json(&value), Activity::counted(ActivityKind::Read, title, messages.len()));
         }));
     });
 }
@@ -229,11 +267,12 @@ fn search_messages(policy: Mcp, names: Names, query: String, chat_id: Option<i64
         return with_chat(policy, chat_id, move |chat| {
             let chat = match chat {
                 Ok(chat) => chat,
-                Err(reason) => return reply(Outcome::failed(reason)),
+                Err(refusal) => return reply.refuse(refusal),
             };
+            let title = store::with(|store| store.title(&chat, &names)).unwrap_or_default();
             search_in(chat.id, query, limit, Box::new(move |found| match found {
-                Err(err) => reply(Outcome::failed(telegram_error("search the messages", err))),
-                Ok(messages) => reply(found_json(&names, &messages, true)),
+                Err(err) => reply.failed(telegram_error("search the messages", err)),
+                Ok(messages) => reply.done(found_json(&names, &messages, true), Activity::counted(ActivityKind::Searched, title, 1)),
             }));
         });
     }
@@ -244,7 +283,7 @@ fn search_messages(policy: Mcp, names: Names, query: String, chat_id: Option<i64
                 "filter": null, "chat_type_filter": null, "min_date": 0, "max_date": 0,
             });
             send(request, move |answer| match answer {
-                Err(err) => reply(Outcome::failed(telegram_error("search the messages", err))),
+                Err(err) => reply.failed(telegram_error("search the messages", err)),
                 Ok(found) => {
                     let messages: Vec<Message> = serde_json::from_value(found["messages"].clone()).unwrap_or_default();
                     let messages: Vec<Message> = store::with(|store| {
@@ -254,20 +293,21 @@ fn search_messages(policy: Mcp, names: Names, query: String, chat_id: Option<i64
                             .collect()
                     })
                     .unwrap_or_default();
-                    reply(found_json(&names, &messages, false));
+                    reply.done(found_json(&names, &messages, false), Activity::new(ActivityKind::SearchedAll));
                 }
             });
         }
         McpScope::Chosen => {
             let chats: Vec<i64> = policy.chats.iter().copied().take(SEARCHED_CHATS_MAX).collect();
             if chats.is_empty() {
-                return reply(Outcome::json(&json!({ "messages": [], "count": 0 })));
+                return reply.done(Outcome::json(&json!({ "messages": [], "count": 0 })), Activity::counted(ActivityKind::Searched, "", 0));
             }
+            let searched = chats.len();
             let gather = Gather::new(chats.len(), move |pages: Vec<Vec<Message>>| {
                 let mut messages: Vec<Message> = pages.into_iter().flatten().collect();
                 messages.sort_by(|a, b| b.date.cmp(&a.date).then(b.id.cmp(&a.id)));
                 messages.truncate(limit);
-                reply(found_json(&names, &messages, false));
+                reply.done(found_json(&names, &messages, false), Activity::counted(ActivityKind::Searched, "", searched));
             });
             for (index, chat_id) in chats.into_iter().enumerate() {
                 let gather = gather.clone();
@@ -320,7 +360,7 @@ fn get_unread(policy: Mcp, names: Names, chats_limit: usize, per_chat: usize, re
     })
     .unwrap_or_default();
     if chats.is_empty() {
-        return reply(Outcome::json(&json!({ "chats": [], "note": "Nothing is unread." })));
+        return reply.done(Outcome::json(&json!({ "chats": [], "note": "Nothing is unread." })), Activity::counted(ActivityKind::Unread, "", 0));
     }
     let gather = Gather::new(chats.len(), move |pages: Vec<(i64, i64, Vec<Message>)>| {
         let rows: Vec<Value> = store::with(|store| {
@@ -339,7 +379,8 @@ fn get_unread(policy: Mcp, names: Names, chats_limit: usize, per_chat: usize, re
                 .collect()
         })
         .unwrap_or_default();
-        reply(Outcome::json(&json!({ "chats": rows })));
+        let count = rows.len();
+        reply.done(Outcome::json(&json!({ "chats": rows })), Activity::counted(ActivityKind::Unread, "", count));
     });
     for (index, (chat_id, last_read, want)) in chats.into_iter().enumerate() {
         let gather = gather.clone();
@@ -349,29 +390,30 @@ fn get_unread(policy: Mcp, names: Names, chats_limit: usize, per_chat: usize, re
     }
 }
 
-fn download_media(policy: Mcp, chat_id: i64, message_id: i64, reply: Reply) {
+fn download_media(policy: Mcp, names: Names, chat_id: i64, message_id: i64, reply: Reply) {
     with_chat(policy, chat_id, move |chat| {
         let chat = match chat {
             Ok(chat) => chat,
-            Err(reason) => return reply(Outcome::failed(reason)),
+            Err(refusal) => return reply.refuse(refusal),
         };
+        let title = store::with(|store| store.title(&chat, &names)).unwrap_or_default();
         send(json!({ "@type": "getMessage", "chat_id": chat.id, "message_id": message_id }), move |answer| {
             let message = match answer.map(serde_json::from_value::<Message>) {
                 Ok(Ok(message)) => message,
-                Ok(Err(err)) => return reply(Outcome::failed(format!("cannot read the message: {err}"))),
-                Err(err) => return reply(Outcome::failed(telegram_error("find the message", err))),
+                Ok(Err(err)) => return reply.failed(format!("cannot read the message: {err}")),
+                Err(err) => return reply.failed(telegram_error("find the message", err)),
             };
             if store::is_secret(&message.content) {
-                return reply(Outcome::failed("Self-destructing media is for the user's eyes only; it is not handed to assistants."));
+                return reply.failed("Self-destructing media is for the user's eyes only; it is not handed to assistants.");
             }
             let Some(target) = media_file(&message.content) else {
-                return reply(Outcome::failed("This message has no photo, sticker, video, GIF or file to download."));
+                return reply.failed("This message has no photo, sticker, video, GIF or file to download.");
             };
             send(json!({ "@type": "getMessageProperties", "chat_id": chat.id, "message_id": message_id }), move |answer| {
                 match answer {
                     Ok(properties) if properties["can_be_saved"].as_bool() == Some(true) => {}
-                    Ok(_) => return reply(Outcome::failed("This chat restricts saving its content, so its media stays in FinchGram.")),
-                    Err(err) => return reply(Outcome::failed(telegram_error("check the message", err))),
+                    Ok(_) => return reply.failed("This chat restricts saving its content, so its media stays in FinchGram."),
+                    Err(err) => return reply.failed(telegram_error("check the message", err)),
                 }
                 let request = json!({
                     "@type": "downloadFile", "file_id": target.file_id, "priority": DOWNLOAD_PRIORITY, "offset": 0, "limit": 0, "synchronous": true,
@@ -379,13 +421,16 @@ fn download_media(policy: Mcp, chat_id: i64, message_id: i64, reply: Reply) {
                 send(request, move |answer| {
                     let file = match answer.map(serde_json::from_value::<api::File>) {
                         Ok(Ok(file)) => file,
-                        Ok(Err(err)) => return reply(Outcome::failed(format!("cannot read the file TDLib gave: {err}"))),
-                        Err(err) => return reply(Outcome::failed(telegram_error("download the file", err))),
+                        Ok(Err(err)) => return reply.failed(format!("cannot read the file TDLib gave: {err}")),
+                        Err(err) => return reply.failed(telegram_error("download the file", err)),
                     };
                     if !file.local.is_downloading_completed || file.local.path.is_empty() {
-                        return reply(Outcome::failed("The download did not finish."));
+                        return reply.failed("The download did not finish.");
                     }
-                    reply(deliver(&target, &file));
+                    match deliver(&target, &file) {
+                        Ok(outcome) => reply.done(outcome, Activity::about(ActivityKind::Media, title)),
+                        Err(reason) => reply.failed(reason),
+                    }
                 });
             });
         });
@@ -447,7 +492,7 @@ fn media_file(content: &M) -> Option<Target> {
 
 /// The downloaded file for the assistant: a picture as itself (and where it is), anything else as
 /// where it is.
-fn deliver(target: &Target, file: &api::File) -> Outcome {
+fn deliver(target: &Target, file: &api::File) -> Result<Outcome, String> {
     let about = json!({
         "kind": target.kind, "path": file.local.path, "file_name": target.file_name, "mime_type": target.mime_type,
         "size": file.size_or_expected(),
@@ -456,37 +501,37 @@ fn deliver(target: &Target, file: &api::File) -> Outcome {
         match std::fs::read(&file.local.path) {
             Ok(bytes) if bytes.len() as u64 <= PICTURE_BYTES_MAX => {
                 let data = base64::engine::general_purpose::STANDARD.encode(&bytes);
-                return Outcome::Done(vec![
+                return Ok(Outcome::Done(vec![
                     Content::Image { data, mime_type: target.mime_type.clone() },
                     Content::Text(serde_json::to_string_pretty(&about).unwrap_or_default()),
-                ]);
+                ]));
             }
             Ok(_) => {}
-            Err(err) => return Outcome::failed(format!("cannot read the downloaded file: {err}")),
+            Err(err) => return Err(format!("cannot read the downloaded file: {err}")),
         }
     }
-    Outcome::json(&about)
+    Ok(Outcome::json(&about))
 }
 
 /// A draft (`sending` false) or a message, with its Markdown read into formatting by TDLib.
 fn write_message(policy: Mcp, names: Names, chat_id: i64, text: String, reply_to: Option<i64>, sending: bool, reply: Reply) {
     match (policy.sending, sending) {
-        (McpSending::Off, _) => return reply(Outcome::failed("The user does not let assistants write messages or drafts.")),
+        (McpSending::Off, _) => return reply.failed("The user does not let assistants write messages or drafts."),
         (McpSending::Drafts, true) => {
-            return reply(Outcome::failed("The user lets assistants write drafts only: use draft_message, and the user sends it."));
+            return reply.failed("The user lets assistants write drafts only: use draft_message, and the user sends it.");
         }
         _ => {}
     }
     with_chat(policy, chat_id, move |chat| {
         let chat = match chat {
             Ok(chat) => chat,
-            Err(reason) => return reply(Outcome::failed(reason)),
+            Err(refusal) => return reply.refuse(refusal),
         };
         let words = json!({ "@type": "formattedText", "text": text, "entities": [] });
         send(json!({ "@type": "parseMarkdown", "text": words }), move |answer| {
             let formatted = match answer {
                 Ok(formatted) => formatted,
-                Err(err) => return reply(Outcome::failed(telegram_error("read the Markdown", err))),
+                Err(err) => return reply.failed(telegram_error("read the Markdown", err)),
             };
             let reply_to = reply_to.map(|message_id| {
                 json!({ "@type": "inputMessageReplyToMessage", "message_id": message_id, "quote": null, "checklist_task_id": 0, "poll_option_id": "" })
@@ -500,11 +545,12 @@ fn write_message(policy: Mcp, names: Names, chat_id: i64, text: String, reply_to
                         "@type": "inputMessageText", "text": formatted, "link_preview_options": null, "clear_draft": false,
                     },
                 });
-                send(request, move |answer| {
-                    reply(match answer {
-                        Ok(sent) => Outcome::json(&json!({ "sent": true, "chat_id": chat.id, "chat": title, "message_id": sent["id"] })),
-                        Err(err) => Outcome::failed(telegram_error("send the message", err)),
-                    })
+                send(request, move |answer| match answer {
+                    Ok(sent) => reply.done(
+                        Outcome::json(&json!({ "sent": true, "chat_id": chat.id, "chat": title, "message_id": sent["id"] })),
+                        Activity::about(ActivityKind::Sent, title),
+                    ),
+                    Err(err) => reply.failed(telegram_error("send the message", err)),
                 });
             } else {
                 let request = json!({
@@ -514,36 +560,36 @@ fn write_message(policy: Mcp, names: Names, chat_id: i64, text: String, reply_to
                         "content": { "@type": "draftMessageContentText", "text": formatted, "link_preview_options": null },
                     },
                 });
-                send(request, move |answer| {
-                    reply(match answer {
-                        Ok(_) => Outcome::json(&json!({
+                send(request, move |answer| match answer {
+                    Ok(_) => reply.done(
+                        Outcome::json(&json!({
                             "draft_saved": true, "chat_id": chat.id, "chat": title,
                             "note": "The user can send it from FinchGram or any Telegram app.",
                         })),
-                        Err(err) => Outcome::failed(telegram_error("save the draft", err)),
-                    })
+                        Activity::about(ActivityKind::Draft, title),
+                    ),
+                    Err(err) => reply.failed(telegram_error("save the draft", err)),
                 });
             }
         });
     });
 }
 
-fn mark_read(policy: Mcp, chat_id: i64, message_ids: Vec<i64>, reply: Reply) {
+fn mark_read(policy: Mcp, names: Names, chat_id: i64, message_ids: Vec<i64>, reply: Reply) {
     with_chat(policy, chat_id, move |chat| {
         let chat = match chat {
             Ok(chat) => chat,
-            Err(reason) => return reply(Outcome::failed(reason)),
+            Err(refusal) => return reply.refuse(refusal),
         };
+        let title = store::with(|store| store.title(&chat, &names)).unwrap_or_default();
         let count = message_ids.len();
         let request = json!({
             "@type": "viewMessages", "chat_id": chat.id, "message_ids": message_ids,
             "source": { "@type": "messageSourceChatHistory" }, "force_read": true,
         });
-        send(request, move |answer| {
-            reply(match answer {
-                Ok(_) => Outcome::json(&json!({ "marked_read": count, "chat_id": chat.id })),
-                Err(err) => Outcome::failed(telegram_error("mark the messages as read", err)),
-            })
+        send(request, move |answer| match answer {
+            Ok(_) => reply.done(Outcome::json(&json!({ "marked_read": count, "chat_id": chat.id })), Activity::counted(ActivityKind::Marked, title, count)),
+            Err(err) => reply.failed(telegram_error("mark the messages as read", err)),
         });
     });
 }
@@ -558,10 +604,63 @@ fn get_me(names: &Names, reply: Reply) {
             "is_premium": store.is_premium,
         })
     });
-    reply(match value {
-        Some(value) => Outcome::json(&value),
-        None => Outcome::failed("FinchGram has no account yet."),
-    });
+    match value {
+        Some(value) => reply.done(Outcome::json(&value), Activity::new(ActivityKind::Account)),
+        None => reply.failed("FinchGram has no account yet."),
+    }
+}
+
+// ---- Settings → AI access -------------------------------------------------------------------------
+
+/// The chats the picker offers (Choose chats): those of the main list, in its order, matching
+/// `query` by title. Secret chats are among them, marked, so that the user sees why one cannot be
+/// chosen.
+pub fn picker_chats(ui: &MainWindow, query: &str, chosen: &[i64]) -> Vec<AiChat> {
+    let names = Names::from(ui);
+    let query = query.trim().to_lowercase();
+    store::with(|store| {
+        let mut chats: Vec<(&Chat, i64)> = store
+            .chats
+            .values()
+            .filter_map(|chat| store::position(chat, ChatList::Main).map(|position| (chat, position.order)))
+            .filter(|(chat, _)| query.is_empty() || store.title(chat, &names).to_lowercase().contains(&query))
+            .collect();
+        chats.sort_by(|(a, a_order), (b, b_order)| b_order.cmp(a_order).then(b.id.cmp(&a.id)));
+        chats.into_iter().map(|(chat, _)| ai_chat(store, &names, chat, chosen.contains(&chat.id))).collect()
+    })
+    .unwrap_or_default()
+}
+
+/// The chosen chats as the page lists them, in the order chosen; one the store does not know yet
+/// (the list is still coming) goes by its id.
+pub fn chosen_chats(ui: &MainWindow, chosen: &[i64]) -> Vec<AiChat> {
+    let names = Names::from(ui);
+    store::with(|store| {
+        chosen
+            .iter()
+            .map(|id| match store.chats.get(id) {
+                Some(chat) => ai_chat(store, &names, chat, true),
+                None => AiChat { id: id.to_string().into(), title: format!("Chat {id}").into(), kind: ChatKind::User, members: 0, secret: false, chosen: true },
+            })
+            .collect()
+    })
+    .unwrap_or_default()
+}
+
+fn ai_chat(store: &Store, names: &Names, chat: &Chat, chosen: bool) -> AiChat {
+    AiChat {
+        id: chat.id.to_string().into(),
+        title: store.title(chat, names).into(),
+        kind: store.kind(chat),
+        members: store.members(chat),
+        secret: matches!(chat.kind, ChatType::Secret { .. }),
+        chosen,
+    }
+}
+
+/// A moment in seconds since the epoch, taken apart for the pages (time.rs).
+pub fn moment(unix: i64) -> crate::Moment {
+    super::time::moment(i32::try_from(unix).unwrap_or(0))
 }
 
 // ---- several requests at once ---------------------------------------------------------------------

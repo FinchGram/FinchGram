@@ -40,6 +40,10 @@ client, not made by Telegram.
 - **Settings.** Launch at login, Send with Enter, the screenshot shortcut, notification sounds and
   previews, two-step verification, the interface language, and updates: the app updates itself from
   GitHub Releases and installs nothing it cannot verify.
+- **AI assistants.** Claude Desktop, Claude Code and other apps that speak the Model Context
+  Protocol can read your chats and act in them through FinchGram, once you let them: Settings → AI
+  access, off until you turn it on, with the chats you choose and whether an assistant may send, and
+  a question the first time an app connects. See [docs/mcp.md](docs/mcp.md).
 - **Languages.** The interface and this README in eleven languages.
 
 Not there yet: secret chats, voice messages and calls, several accounts, polls and scheduled
@@ -81,6 +85,20 @@ whether the FinchGram window hides meanwhile.
 
 <p align="center"><img src="docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="The send card with a screenshot"></p>
 
+## AI assistants
+
+<p align="center"><img src="docs/screenshots/workbench-light-settings-ai.png" width="800" alt="Settings → AI access"></p>
+
+FinchGram is an MCP server: an AI assistant's app on your Mac (Claude Desktop, Claude Code, Cursor…)
+can read your Telegram and act in it through the running app, with your own account. Settings → AI
+access is the switch, off by default. There you choose which chats an assistant may see (all but
+secret chats, or only chosen ones) and what it may write (messages under your name, drafts only for
+you to send, or nothing), and you see which apps have connected, with their names as macOS reports
+them, and what they asked for. The first time an app connects, FinchGram asks whether to allow it.
+Reading marks nothing as read, secret chats are never shown, and nothing is kept for an AI. The page
+gives the line to paste into Claude Code or Claude Desktop; [docs/mcp.md](docs/mcp.md) has the
+details.
+
 ## How it is built
 
 The app is a shell. Telegram itself is done by TDLib, running as a separate program next to the
@@ -95,8 +113,9 @@ releases. See [docs/architecture.md](docs/architecture.md) and
 
 FinchGram does what Telegram's own apps do, and nothing they forbid. A message is marked read when
 you see it, the other side sees you typing and online as in any Telegram app, sponsored messages in
-channels are shown, self-destructing media opens once, and nothing from Telegram goes to any AI.
-Nothing leaves your machine except to Telegram, and to GitHub for updates.
+channels are shown, self-destructing media opens once, and nothing from Telegram goes to any AI
+unless you let an assistant in (Settings → AI access). Nothing leaves your machine except to
+Telegram, and to GitHub for updates.
 
 ## Development
 

@@ -5,16 +5,18 @@
 //! output and the socket. Each connection gets a thread of its own, which reads a line, has the
 //! protocol (protocol.rs) answer it and writes the answer back; a tool's work happens on the UI
 //! thread (src/telegram/tools.rs), where the store and TDLib are, and its outcome comes back on a
-//! channel. What an assistant may do is Settings → AI access (`settings::Mcp`): nothing until the
-//! user turns the server on. Who connected and what it asked for go into the log (mcp.log next to
-//! the socket), never the words of a message.
+//! channel. What an assistant may do is Settings → AI access (`settings::Mcp`, access.rs): nothing
+//! until the user turns the server on, and nothing for a program the user has not allowed, which
+//! the dialog asks about the first time it connects. Who connected and what it asked for go into
+//! the log (mcp.log next to the socket) and onto the page, never the words of a message.
 
+mod access;
 pub mod bridge;
 mod peer;
 pub mod protocol;
 pub mod tools;
 
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::fs;
 use std::io::{BufRead, BufReader, BufWriter, Write};
 use std::os::unix::fs::PermissionsExt;
@@ -28,12 +30,15 @@ use slint::ComponentHandle;
 
 use crate::MainWindow;
 use crate::settings::{Mcp, Settings};
-use protocol::Backend;
-use tools::{Outcome, ToolCall};
+use peer::Host;
+use protocol::{Admission, Backend};
+use tools::{Activity, ActivityKind, Outcome, ToolCall};
 
 /// How long a tool may take on the UI thread (a download among them) before the assistant is told
 /// that it did not finish.
 const CALL_TIMEOUT: Duration = Duration::from_secs(180);
+/// How long a connection waits for the user to answer the dialog about its program.
+const ASK_TIMEOUT: Duration = Duration::from_secs(300);
 /// The log starts over once it is this large.
 const LOG_LIMIT: u64 = 1_000_000;
 /// A socket's path may have about a hundred bytes (sockaddr_un); a longer one goes elsewhere.
@@ -44,8 +49,10 @@ thread_local! {
     static SETTINGS: RefCell<Option<Rc<RefCell<Settings>>>> = const { RefCell::new(None) };
 }
 
-/// Listen for assistants. Call once, on the UI thread, when the app is up.
+/// Show Settings → AI access and listen for assistants. Call once, on the UI thread, when the app
+/// is up.
 pub fn start(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
+    access::connect(ui, settings.clone());
     SETTINGS.with(|slot| *slot.borrow_mut() = Some(settings));
     let path = socket_path();
     if let Some(folder) = path.parent() {
@@ -119,10 +126,15 @@ fn settings_folder() -> Option<PathBuf> {
     Some(dirs::config_dir()?.join("FinchGram"))
 }
 
+/// The log file, mcp.log next to settings.toml.
+fn log_path() -> Option<PathBuf> {
+    settings_folder().map(|folder| folder.join("mcp.log"))
+}
+
 /// One connection, on its own thread: lines in, answers out, until the other end closes.
 fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>) {
-    let host = peer::host_of(&stream).describe();
-    let backend = UiBackend { ui, host };
+    let host = peer::host_of(&stream);
+    let backend = UiBackend { ui, host, live: Cell::new(false) };
     backend.log("connected");
     let reading = match stream.try_clone() {
         Ok(reading) => reading,
@@ -142,13 +154,27 @@ fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>) {
         }
     }
     backend.log("disconnected");
+    if backend.live.get() {
+        let host = backend.host.clone();
+        let _ = backend.ui.upgrade_in_event_loop(move |_| access::disconnected(&host));
+    }
 }
 
-/// The app's side of a session: the settings and the tools live on the UI thread, so each question
-/// goes there and its answer comes back on a channel.
+/// The app's side of a session: the settings, the tools and the page live on the UI thread, so
+/// each question goes there and its answer comes back on a channel.
 struct UiBackend {
     ui: slint::Weak<MainWindow>,
-    host: String,
+    host: Host,
+    /// The program was admitted: the page shows it as connected until the connection ends.
+    live: Cell<bool>,
+}
+
+impl UiBackend {
+    /// Something for the UI thread: the page, the log.
+    fn on_ui(&self, work: impl FnOnce(&Host) + Send + 'static) {
+        let host = self.host.clone();
+        let _ = self.ui.upgrade_in_event_loop(move |_| work(&host));
+    }
 }
 
 impl Backend for UiBackend {
@@ -163,11 +189,48 @@ impl Backend for UiBackend {
         receiver.recv_timeout(CALL_TIMEOUT).unwrap_or_default()
     }
 
+    fn admit(&self) -> Admission {
+        let (sender, receiver) = mpsc::channel();
+        let host = self.host.clone();
+        if self.ui.upgrade_in_event_loop(move |_| access::admit(host, sender)).is_err() {
+            return Admission::Quitting;
+        }
+        let admission = receiver.recv_timeout(ASK_TIMEOUT).unwrap_or(Admission::Unanswered);
+        let noted = match admission {
+            Admission::Allowed => Some(ActivityKind::Connected),
+            Admission::Denied => Some(ActivityKind::TurnedAway),
+            Admission::Unanswered | Admission::Off | Admission::Quitting => None,
+        };
+        if let Some(kind) = noted {
+            self.on_ui(move |host| access::record(host, Activity::new(kind)));
+        }
+        if admission == Admission::Allowed && !self.live.replace(true) {
+            self.on_ui(access::connected);
+        }
+        admission
+    }
+
+    fn admitted(&self) -> bool {
+        let (sender, receiver) = mpsc::channel();
+        let host = self.host.clone();
+        if self.ui.upgrade_in_event_loop(move |_| {
+            let _ = sender.send(access::admitted(&host));
+        }).is_err()
+        {
+            return false;
+        }
+        receiver.recv_timeout(CALL_TIMEOUT).unwrap_or(false)
+    }
+
     fn call(&self, call: ToolCall) -> Outcome {
         let (sender, receiver) = mpsc::channel();
+        let host = self.host.clone();
         let asked = self.ui.upgrade_in_event_loop(move |ui| {
             let policy = current_policy();
-            crate::telegram::tools::call(&ui, call, policy, move |outcome| {
+            crate::telegram::tools::call(&ui, call, policy, move |outcome, activity| {
+                if let Some(activity) = activity {
+                    access::record(&host, activity);
+                }
                 let _ = sender.send(outcome);
             });
         });
@@ -181,7 +244,7 @@ impl Backend for UiBackend {
     }
 
     fn log(&self, entry: &str) {
-        log(&format!("{}: {entry}", self.host));
+        log(&format!("{}: {entry}", self.host.describe()));
     }
 }
 
@@ -199,7 +262,7 @@ fn log(entry: &str) {
     eprintln!("mcp: {entry}");
     let line = format!("{} {entry}", chrono::Local::now().format("%Y-%m-%d %H:%M:%S"));
     let _one_at_a_time = LOG.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
-    let Some(path) = settings_folder().map(|folder| folder.join("mcp.log")) else { return };
+    let Some(path) = log_path() else { return };
     if fs::metadata(&path).is_ok_and(|file| file.len() > LOG_LIMIT) {
         let _ = fs::rename(&path, path.with_file_name("mcp.log.1"));
     }

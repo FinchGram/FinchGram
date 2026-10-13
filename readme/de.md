@@ -41,6 +41,11 @@ ein inoffizieller Client, nicht von Telegram gemacht.
 - **Einstellungen.** Beim Anmelden starten, Senden mit Enter, das Bildschirmfoto-Kürzel, Töne und
   Vorschauen der Mitteilungen, zweistufige Bestätigung, die Sprache der Oberfläche und Updates: die App
   aktualisiert sich selbst aus GitHub Releases und installiert nichts, was sie nicht prüfen kann.
+- **KI-Assistenten.** Claude Desktop, Claude Code und andere Apps, die das Model Context Protocol
+  sprechen, können über FinchGram deine Chats lesen und darin handeln, sobald du es erlaubst:
+  Einstellungen → KI-Zugriff, aus, bis du es einschaltest, mit den Chats, die du wählst, und ob ein
+  Assistent senden darf; beim ersten Verbinden fragt eine App nach. Siehe
+  [docs/mcp.md](../docs/mcp.md).
 - **Sprachen.** Die Oberfläche und dieses README in elf Sprachen.
 
 Noch nicht da: geheime Chats, Sprachnachrichten und Anrufe, mehrere Konten, Umfragen und geplante
@@ -84,6 +89,21 @@ wo eine Bildunterschrift dazukommen kann; ⌘C kopiert es; ⌘S speichert es in 
 
 <p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="Die Sendekarte mit einem Bildschirmfoto"></p>
 
+## KI-Assistenten
+
+<p align="center"><img src="../docs/screenshots/workbench-light-settings-ai.png" width="800" alt="Einstellungen → KI-Zugriff"></p>
+
+FinchGram ist ein MCP-Server: Die App eines KI-Assistenten auf deinem Mac (Claude Desktop, Claude
+Code, Cursor …) kann über die laufende App mit deinem eigenen Konto dein Telegram lesen und darin
+handeln. Einstellungen → KI-Zugriff ist der Schalter, standardmäßig aus. Dort wählst du, welche
+Chats ein Assistent sehen darf (alle außer geheimen, oder nur gewählte) und was er schreiben darf
+(Nachrichten in deinem Namen, nur Entwürfe, die du sendest, oder nichts), und du siehst, welche Apps
+sich verbunden haben, mit dem Namen, den macOS für sie nennt, und was sie angefragt haben. Beim
+ersten Verbinden fragt FinchGram, ob eine App erlaubt wird. Lesen markiert nichts als gelesen,
+geheime Chats werden nie gezeigt, und nichts wird für eine KI aufbewahrt. Die Seite liefert die
+Zeile zum Einfügen in Claude Code oder Claude Desktop; die Einzelheiten stehen in
+[docs/mcp.md](../docs/mcp.md).
+
 ## Wie es gebaut ist
 
 Die App ist eine Hülle. Telegram selbst erledigt TDLib, das als eigenes Programm neben der
@@ -99,8 +119,8 @@ Builds in `vendor/` und die Releases. Siehe [docs/architecture.md](../docs/archi
 FinchGram tut, was Telegrams eigene Apps tun, und nichts, was sie verbieten. Eine Nachricht gilt als
 gelesen, wenn du sie siehst, die Gegenseite sieht dich tippen und online wie in jeder Telegram-App,
 gesponserte Nachrichten in Kanälen werden gezeigt, selbstzerstörende Medien öffnen sich einmal, und
-nichts von Telegram geht an irgendeine KI. Nichts verlässt deinen Rechner außer zu Telegram, und zu
-GitHub für Updates.
+nichts von Telegram geht an irgendeine KI, außer du lässt einen Assistenten herein (Einstellungen →
+KI-Zugriff). Nichts verlässt deinen Rechner außer zu Telegram, und zu GitHub für Updates.
 
 ## Entwicklung
 
