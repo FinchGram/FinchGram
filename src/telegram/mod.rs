@@ -290,6 +290,10 @@ fn deliver(run: u64, batch: Vec<Output>) {
 }
 
 fn on_update(update: Update) {
+    // A message an assistant sent has its final id now, or was not sent (tools.rs answers then).
+    if let Update::MessageSendSucceeded { message, old_message_id } | Update::MessageSendFailed { message, old_message_id } = &update {
+        tools::message_sent(*old_message_id, message, matches!(update, Update::MessageSendSucceeded { .. }));
+    }
     match update {
         Update::AuthorizationState { authorization_state } => on_authorization_state(authorization_state),
         Update::ConnectionState { state } => with_state(|app| app.set_connection(connection(state))),

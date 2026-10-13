@@ -60,7 +60,7 @@ FinchGram 自身不调用任何 AI，不为 AI 建索引，不为 AI 存任何�
 | `get_unread` | 有未读的聊天，各带最新的未读消息 | store、getChatHistory |
 | `download_media` | 一条消息的照片或静态贴纸，直接给图；视频、GIF 或文件下载后给路径 | getMessage、getMessageProperties、downloadFile |
 | `draft_message` | 在一个聊天里留草稿，由用户在任意 Telegram 应用里发送 | parseMarkdown、setChatDraftMessage |
-| `send_message` | 以用户的名义立即发一条消息 | parseMarkdown、sendMessage |
+| `send_message` | 以用户的名义立即发一条消息；等 Telegram 确认后再回答，带上消息的最终 id | parseMarkdown、sendMessage |
 | `delete_message` | 删掉这个账号发过的一条消息（用户自己发的，或助手以用户名义发的），在 Telegram 允许的范围内为所有人删除：私聊随时，群里 48 小时内；别人的消息不行 | getMessage、getMessageProperties、deleteMessages |
 | `mark_read` | 把消息标为已读 | viewMessages |
 | `get_me` | 账号：id、名字、用户名 | store |

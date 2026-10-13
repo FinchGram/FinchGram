@@ -11,7 +11,9 @@
 //! (src/mcp/access.rs); and the page's lists of chats come from here.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::rc::Rc;
+use std::time::Duration;
 
 use base64::Engine;
 use serde_json::{Value, json};
@@ -36,6 +38,28 @@ const SEARCHED_CHATS_MAX: usize = 25;
 const PREVIEW_CHARS: usize = 120;
 /// TDLib's download priority for an assistant's file, 1 … 32: the pages' own pictures come first.
 const DOWNLOAD_PRIORITY: i32 = 1;
+/// How long send_message waits for Telegram to confirm the message (which gives it its final id)
+/// before answering with the temporary one.
+const SENT_CONFIRMATION: Duration = Duration::from_secs(15);
+
+/// What to do once Telegram has confirmed a message an assistant sent, or would not send it.
+type Confirmed = Box<dyn FnOnce(Result<Message, String>)>;
+/// send_message's answer, given once: the message's id (its final one, or the temporary one when
+/// `false`), or why it was not sent.
+type SentAnswer = Rc<dyn Fn(Result<(i64, bool), String>)>;
+
+thread_local! {
+    /// Messages an assistant sent that Telegram has not confirmed yet, by their temporary id, and
+    /// what to do once it has (mod.rs brings updateMessageSendSucceeded and Failed here).
+    static SENDING: RefCell<HashMap<i64, Confirmed>> = RefCell::new(HashMap::new());
+}
+
+/// Telegram confirmed a message that was being sent (`succeeded`: it has its final id now), or
+/// would not send it. UI thread.
+pub fn message_sent(old_message_id: i64, message: &Message, succeeded: bool) {
+    let Some(then) = SENDING.with(|sending| sending.borrow_mut().remove(&old_message_id)) else { return };
+    then(if succeeded { Ok(message.clone()) } else { Err("Telegram did not send the message.".to_string()) });
+}
 
 const NOT_ALLOWED: &str = "This chat is not among the ones the user lets assistants see.";
 
@@ -546,12 +570,40 @@ fn write_message(policy: Mcp, names: Names, chat_id: i64, text: String, reply_to
                         "@type": "inputMessageText", "text": formatted, "link_preview_options": null, "clear_draft": false,
                     },
                 });
-                send(request, move |answer| match answer {
-                    Ok(sent) => reply.done(
-                        Outcome::json(&json!({ "sent": true, "chat_id": chat.id, "chat": title, "message_id": sent["id"] })),
-                        Activity::about(ActivityKind::Sent, title),
-                    ),
-                    Err(err) => reply.failed(telegram_error("send the message", err)),
+                send(request, move |answer| {
+                    let sent = match answer {
+                        Ok(sent) => sent,
+                        Err(err) => return reply.failed(telegram_error("send the message", err)),
+                    };
+                    // TDLib answers with a temporary id; the message's own comes once Telegram has
+                    // it (updateMessageSendSucceeded). The assistant is told that one, which is
+                    // what delete_message and the others take; the temporary one only when
+                    // Telegram keeps it waiting.
+                    let temporary = sent["id"].as_i64().unwrap_or(0);
+                    let chat_id = chat.id;
+                    let slot = Rc::new(RefCell::new(Some(reply)));
+                    let done: SentAnswer = Rc::new(move |outcome| {
+                        let Some(reply) = slot.borrow_mut().take() else { return };
+                        match outcome {
+                            Ok((id, confirmed)) => {
+                                let mut value = json!({ "sent": true, "chat_id": chat_id, "chat": title, "message_id": id });
+                                if !confirmed {
+                                    value["note"] = "Telegram has not confirmed the message yet; its id may change.".into();
+                                }
+                                reply.done(Outcome::json(&value), Activity::about(ActivityKind::Sent, title.clone()));
+                            }
+                            Err(reason) => reply.failed(reason),
+                        }
+                    });
+                    SENDING.with(|sending| {
+                        let done = done.clone();
+                        sending.borrow_mut().insert(temporary, Box::new(move |confirmed| done(confirmed.map(|message| (message.id, true)))));
+                    });
+                    slint::Timer::single_shot(SENT_CONFIRMATION, move || {
+                        if SENDING.with(|sending| sending.borrow_mut().remove(&temporary)).is_some() {
+                            done(Ok((temporary, false)));
+                        }
+                    });
                 });
             } else {
                 let request = json!({
@@ -1075,6 +1127,29 @@ mod tests {
         assert!(media_file(&voice.content).is_none());
         let gone = message(r#"{"@type":"messageExpiredPhoto"}"#);
         assert_eq!(media_json(&gone.content).map(|media| media["kind"].to_string()), Some("\"expired\"".to_string()));
+    }
+
+    #[test]
+    fn a_sent_message_is_answered_once_telegram_confirms_it() {
+        let seen = Rc::new(RefCell::new(Vec::new()));
+        SENDING.with(|sending| {
+            let seen = seen.clone();
+            sending.borrow_mut().insert(5, Box::new(move |confirmed| seen.borrow_mut().push(confirmed.map(|message| message.id))));
+        });
+        // Another temporary id: not ours.
+        message_sent(6, &message(r#"{"@type":"messageText","text":{"@type":"formattedText","text":"hi","entities":[]}}"#), true);
+        assert!(seen.borrow().is_empty());
+        message_sent(5, &message(r#"{"@type":"messageText","text":{"@type":"formattedText","text":"hi","entities":[]}}"#), true);
+        assert_eq!(seen.borrow().as_slice(), &[Ok(77)]);
+        // Once: a second update for the same id finds nothing waiting.
+        message_sent(5, &message(r#"{"@type":"messageText","text":{"@type":"formattedText","text":"hi","entities":[]}}"#), false);
+        assert_eq!(seen.borrow().len(), 1);
+        SENDING.with(|sending| {
+            let seen = seen.clone();
+            sending.borrow_mut().insert(8, Box::new(move |confirmed| seen.borrow_mut().push(confirmed.map(|message| message.id))));
+        });
+        message_sent(8, &message(r#"{"@type":"messageText","text":{"@type":"formattedText","text":"hi","entities":[]}}"#), false);
+        assert_eq!(seen.borrow().last(), Some(&Err("Telegram did not send the message.".to_string())));
     }
 
     #[test]
