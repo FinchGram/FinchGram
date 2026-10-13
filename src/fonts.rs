@@ -19,8 +19,12 @@ macro_rules! font {
     };
 }
 
+// Statics, not consts: a const's bytes are laid down again wherever it is used, and with the two
+// uses here (register, annotation_fonts) in different codegen units the linker kept two copies of
+// all 39 MB of fonts (v0.3.25 was 39 MB larger than v0.3.24 for an unrelated change).
+
 /// The fonts the themes name, and IBM Plex Sans first among the fallbacks.
-const LATIN: &[&[u8]] = &[
+static LATIN: &[&[u8]] = &[
     font!("IBMPlexSans-Variable.ttf"),
     font!("IBMPlexMono-Regular.ttf"),
     font!("IBMPlexMono-Medium.ttf"),
@@ -29,10 +33,10 @@ const LATIN: &[&[u8]] = &[
     font!("SourceSans3-Italic-Variable.ttf"),
     font!("JetBrainsMono-Variable.ttf"),
 ];
-const CHINESE: &[&[u8]] = &[font!("NotoSansSC-Variable.ttf")];
-const JAPANESE: &[&[u8]] = &[font!("NotoSansJP-Variable.ttf")];
-const KOREAN: &[&[u8]] = &[font!("NotoSansKR-Variable.ttf")];
-const ARABIC: &[&[u8]] = &[font!("NotoSansArabic-Variable.ttf")];
+static CHINESE: &[&[u8]] = &[font!("NotoSansSC-Variable.ttf")];
+static JAPANESE: &[&[u8]] = &[font!("NotoSansJP-Variable.ttf")];
+static KOREAN: &[&[u8]] = &[font!("NotoSansKR-Variable.ttf")];
+static ARABIC: &[&[u8]] = &[font!("NotoSansArabic-Variable.ttf")];
 
 /// The fonts the screenshot tool draws its words with, into the picture (src/screenshot/export.rs):
 /// IBM Plex Sans, and the Noto fonts for the other scripts.

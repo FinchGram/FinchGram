@@ -41,6 +41,13 @@ done
 ls "$FONTS"/*-OFL.txt >/dev/null 2>&1 || { echo "missing $FONTS - run scripts/fetch-fonts.sh first" >&2; exit 1; }
 
 cargo build --release --manifest-path "$ROOT/Cargo.toml" --bin "$BIN"
+# The executable holds the 39 MB of fonts once (src/fonts.rs); a copy that is far larger holds
+# them twice, as v0.3.25 did when they were consts, and is not shipped.
+BYTES=$(stat -f %z "$ROOT/target/release/$BIN")
+if [ "$BYTES" -gt 100000000 ]; then
+  echo "$BIN is $BYTES bytes, more than it should be: are the fonts in it twice (src/fonts.rs)?" >&2
+  exit 1
+fi
 
 rm -rf "$APP"
 mkdir -p "$MACOS" "$FRAMEWORKS" "$RESOURCES"
