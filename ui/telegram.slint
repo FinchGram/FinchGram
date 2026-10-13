@@ -109,7 +109,6 @@ export global Chats {
     callback toggle-mute(string);
     callback toggle-pin(string, int);            // in the list of a folder (index into folders); -1:
                                                  // wherever it is pinned, as Workbench's tree has it
-    callback mark-read(string);
     callback copy-id(string);                    // the chat's id onto the clipboard: what bots and scripts know it by
     callback toggle-in-folder(string, int);      // put the chat into a folder (index into folders), or take it out
     // A folder's menu (a right click on its tab, or on its header in Workbench's tree).
@@ -305,7 +304,6 @@ export global Conversation {
     callback open-link(string);
     callback toggle-mute();
     callback toggle-pin();
-    callback mark-read();
     callback copy-id();                          // the chat's id onto the clipboard
     // Searching in the chat (the header's magnifying glass, Terminal's "[search]", ⌘F;
     // src/telegram/search.rs): the view goes to the matches one by one, newest first.

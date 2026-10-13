@@ -106,13 +106,13 @@ fn click_with(window: &MinimalSoftwareWindow, x: f32, y: f32, button: PointerEve
     window.dispatch_event(WindowEvent::PointerReleased { position, button });
 }
 
-/// How far under a chat menu's top its fourth entry, Add to folder, is: the menu's padding and
-/// heading, then three entries and a half.
+/// How far under a chat menu's top its third entry, Add to folder, is: the menu's padding and
+/// heading, then two entries and a half.
 fn add_to_folder(theme: Theme) -> f32 {
     match theme {
-        Theme::Workbench => 32.0 + 3.5 * 32.0,
-        Theme::Broadsheet => 32.0 + 3.5 * 34.0,
-        Theme::Terminal => 28.0 + 3.5 * 26.0,
+        Theme::Workbench => 32.0 + 2.5 * 32.0,
+        Theme::Broadsheet => 32.0 + 2.5 * 34.0,
+        Theme::Terminal => 28.0 + 2.5 * 26.0,
     }
 }
 
@@ -1222,7 +1222,7 @@ fn screenshots() {
             };
             right_click(&window, x, y);
             save(&window, &name("chat-menu"));
-            // Its fourth entry, Add to folder: the menu's second page.
+            // Its third entry, Add to folder: the menu's second page.
             click(&window, x + 40.0, y + add_to_folder(theme));
             save(&window, &name("chat-menu-folders"));
             escape(&window);

@@ -273,15 +273,6 @@ component TabBar inherits Rectangle {
                     }
                 }
                 MenuEntry {
-                    icon: "checks";
-                    label: @tr("Mark as read");
-                    keys: "⌘⇧R";
-                    activated => {
-                        Conversation.mark-read();
-                        menu.close();
-                    }
-                }
-                MenuEntry {
                     icon: "copy";
                     label: @tr("Copy ID");
                     activated => {

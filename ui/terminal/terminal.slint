@@ -501,7 +501,7 @@ component Side inherits Rectangle {
         Chats.open-menu(chat.id);
         root.menu-x = max(0px, left - root.absolute-position.x);
         // Within the list, whichever of the two pages is the taller.
-        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 38px - 26px * max((Chats.folders.length > 1 ? 5 : 4) + 4, Chats.menu-folders.length + 1)));
+        root.menu-y = max(0px, min(top - root.absolute-position.y, root.height - 38px - 26px * max((Chats.folders.length > 1 ? 4 : 3) + 4, Chats.menu-folders.length + 1)));
         chat-menu.show();
     }
 
@@ -736,13 +736,7 @@ component Side inherits Rectangle {
                         chat-menu.close();
                     }
                 }
-                if !root.menu-folders: MenuEntry {
-                    label: @tr("Mark as read");
-                    activated => {
-                        Chats.mark-read(root.menu-chat.id);
-                        chat-menu.close();
-                    }
-                }
+
                 if !root.menu-folders && Chats.folders.length > 1: MenuEntry {
                     label: @tr("Add to folder");
                     activated => {
@@ -1255,14 +1249,6 @@ component Pane inherits Rectangle {
                             }
                         }
                         MenuEntry {
-                            label: @tr("Mark as read");
-                            command: "/read";
-                            activated => {
-                                Conversation.mark-read();
-                                menu.close();
-                            }
-                        }
-                        MenuEntry {
                             label: @tr("Copy ID");
                             command: "/id";
                             activated => {
@@ -1415,7 +1401,6 @@ component CommandLine inherits Rectangle {
         { command: "/file", description: AttachWords.file() },
         { command: "/mute", description: @tr("Mute or unmute this chat") },
         { command: "/pin", description: @tr("Pin or unpin this chat") },
-        { command: "/read", description: @tr("Mark this chat as read") },
         { command: "/readall", description: @tr("Mark every chat in this folder as read") },
         { command: "/id", description: @tr("Copy this chat's ID") },
     ];
@@ -1438,8 +1423,6 @@ component CommandLine inherits Rectangle {
             Conversation.toggle-pin();
         } else if line.starts-with("/readall") {
             Chats.mark-all-read(Chats.folder);
-        } else if line.starts-with("/read") {
-            Conversation.mark-read();
         } else if line.starts-with("/id") {
             Conversation.copy-id();
         } else if !line.starts-with("/") {

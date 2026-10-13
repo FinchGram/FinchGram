@@ -1,8 +1,7 @@
 //! The chat list: loading its chats from TDLib, and what the pages do with it: show a folder
 //! (Broadsheet, Terminal), expand or collapse a folder in the tree (Workbench), search, a
-//! chat's menu (a right click on it: mute, pin, mark as read, copy its id, put it into one of the
-//! account's folders or take it out), and a folder's (a right click on its tab: every chat of it
-//! read).
+//! chat's menu (a right click on it: mute, pin, copy its id, put it into one of the account's
+//! folders or take it out), and a folder's (a right click on its tab: every chat of it read).
 //!
 //! TDLib sends the chats of a list, with their positions, as updates once the list has been asked
 //! for with loadChats; it says 404 when every chat of the list has been sent.
@@ -59,11 +58,6 @@ pub fn connect(ui: &MainWindow) {
                 }
             }
             Err(_) => conversation::toggle_pin(chat_id),
-        }
-    });
-    chats.on_mark_read(|id| {
-        if let Ok(chat_id) = id.parse() {
-            conversation::mark_read(chat_id);
         }
     });
     chats.on_mark_all_read(mark_all_read);

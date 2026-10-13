@@ -32,7 +32,7 @@ ein inoffizieller Client, nicht von Telegram gemacht.
 - **Bildschirmfotos.** Die Schere im Eingabefeld oder ⌘⇧A friert den Bildschirm ein: ein Fenster
   nehmen oder eine Auswahl ziehen, Rechtecke, Ellipsen, Pfeile, Stiftstriche, Text und Mosaik
   darauf zeichnen, dann senden, kopieren oder speichern. Wie in WeChat, aus jedem Chat heraus.
-- **Das Menü eines Chats.** Stummschalten, anheften, als gelesen markieren, die ID kopieren, in
+- **Das Menü eines Chats.** Stummschalten, anheften, die ID kopieren, in
   einen Ordner legen; eine Person blockieren oder entblocken, melden, eine Gruppe oder einen Kanal
   verlassen, einen Chat löschen. Ein Rechtsklick auf einen Ordner markiert alle seine Chats als
   gelesen.

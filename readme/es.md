@@ -33,7 +33,7 @@ Es un cliente no oficial, no hecho por Telegram.
 - **Capturas de pantalla.** Las tijeras del cuadro de escritura, o ⌘⇧A, congelan la pantalla: toma una
   ventana o arrastra una selección, dibuja rectángulos, elipses, flechas, trazos, texto y mosaico
   encima, y envíala, cópiala o guárdala. Como en WeChat, desde cualquier chat.
-- **El menú de un chat.** Silenciar, fijar, marcar como leído, copiar su ID, meterlo en una
+- **El menú de un chat.** Silenciar, fijar, copiar su ID, meterlo en una
   carpeta; bloquear o desbloquear a una persona, reportar, salir de un grupo o canal, eliminar un
   chat. Un clic derecho en una carpeta marca todos sus chats como leídos.
 - **Notificaciones.** Los mensajes nuevos llegan como notificaciones de macOS y su número se ve en el

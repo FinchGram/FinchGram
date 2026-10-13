@@ -35,7 +35,7 @@ un client non officiel, qui n'est pas fait par Telegram.
 - **Captures d'écran.** Les ciseaux du champ de saisie, ou ⌘⇧A, figent l'écran : prenez une fenêtre
   ou tracez une sélection, dessinez dessus rectangles, ellipses, flèches, traits, texte et mosaïque,
   puis envoyez, copiez ou enregistrez. Comme dans WeChat, depuis chaque discussion.
-- **Le menu d'une discussion.** Mettre en sourdine, épingler, marquer comme lu, copier son ID,
+- **Le menu d'une discussion.** Mettre en sourdine, épingler, copier son ID,
   ranger dans un dossier ; bloquer ou débloquer une personne, signaler, quitter un groupe ou une
   chaîne, supprimer une discussion. Un clic droit sur un dossier marque toutes ses discussions
   comme lues.

@@ -1,5 +1,5 @@
 //! The open chat: its tabs (Workbench), its messages, writing, and what the chat menu does (mute,
-//! pin, mark as read).
+//! pin, copy its id).
 //!
 //! TDLib is told which chat is open (openChat, closeChat): supergroups and channels send their
 //! updates only while open. The messages of the open chat are marked as seen as they arrive
@@ -103,11 +103,6 @@ pub fn connect(ui: &MainWindow) {
     conversation.on_toggle_pin(|| {
         if let Some(chat_id) = open_chat() {
             toggle_pin(chat_id);
-        }
-    });
-    conversation.on_mark_read(|| {
-        if let Some(chat_id) = open_chat() {
-            mark_read(chat_id);
         }
     });
     conversation.on_copy_id(|| {
@@ -846,31 +841,6 @@ pub fn toggle_pin_in(chat_id: i64, list: ChatList) {
 fn pin(chat_id: i64, list: ChatList, pinned: bool) {
     let request = json!({ "@type": "toggleChatIsPinned", "chat_list": list.to_json(), "chat_id": chat_id, "is_pinned": pinned });
     send(request, |answer| log_error("pin a chat", answer));
-}
-
-/// Mark a chat as read: its last message seen, its unread mark and its mentions gone.
-pub fn mark_read(chat_id: i64) {
-    let Some((last, marked, mentions)) = store::with(|store| {
-        let chat = store.chats.get(&chat_id)?;
-        Some((chat.last_message.as_ref().map(|message| message.id), chat.is_marked_as_unread, chat.unread_mention_count > 0))
-    })
-    .flatten() else {
-        return;
-    };
-    if let Some(last) = last {
-        let request = json!({
-            "@type": "viewMessages", "chat_id": chat_id, "message_ids": [last],
-            "source": { "@type": "messageSourceChatList" }, "force_read": true,
-        });
-        send(request, |answer| log_error("mark a chat as read", answer));
-    }
-    if marked {
-        let request = json!({ "@type": "toggleChatIsMarkedAsUnread", "chat_id": chat_id, "is_marked_as_unread": false });
-        send(request, |answer| log_error("mark a chat as read", answer));
-    }
-    if mentions {
-        send(json!({ "@type": "readAllChatMentions", "chat_id": chat_id }), |answer| log_error("read mentions", answer));
-    }
 }
 
 /// A link in a message or in its preview: a chat FinchGram opens itself (by its username, from an

@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-13 19:03+0000\n"
+"POT-Creation-Date: 2026-10-13 19:41+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -55,7 +55,7 @@ msgstr "アップデートを確認…"
 msgid "Choose recipient…"
 msgstr "転送先を選択…"
 
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:679
+#: ui/broadsheet/actions.slint:226 ui/telegram.slint:677
 #: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "保存済みメッセージ"
@@ -77,22 +77,22 @@ msgid "Add a comment (optional)"
 msgstr "コメントを入力（任意）"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:2168 ui/pages/profile.slint:174
+#: ui/broadsheet/broadsheet.slint:2161 ui/pages/profile.slint:174
 #: ui/pages/settings.slint:1218 ui/terminal/actions.slint:463
-#: ui/terminal/terminal.slint:1382 ui/workbench/actions.slint:547
-#: ui/workbench/conversation.slint:1423
+#: ui/terminal/terminal.slint:1368 ui/workbench/actions.slint:547
+#: ui/workbench/conversation.slint:1414
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2159
-#: ui/chat.slint:800 ui/chat.slint:881 ui/terminal/terminal.slint:1375
-#: ui/workbench/conversation.slint:1398
+#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2152
+#: ui/chat.slint:800 ui/chat.slint:881 ui/terminal/terminal.slint:1361
+#: ui/workbench/conversation.slint:1389
 msgid "Report"
 msgstr "報告"
 
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2150
-#: ui/chat.slint:373 ui/chat.slint:801 ui/terminal/terminal.slint:1367
-#: ui/workbench/conversation.slint:1386
+#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2143
+#: ui/chat.slint:373 ui/chat.slint:801 ui/terminal/terminal.slint:1353
+#: ui/workbench/conversation.slint:1377
 msgid "Delete"
 msgstr "削除"
 
@@ -134,7 +134,7 @@ msgid "All"
 msgstr "すべて"
 
 #: ui/broadsheet/broadsheet.slint:462 ui/pages/ai-access.slint:102
-#: ui/telegram.slint:681 ui/workbench/sidebar.slint:408
+#: ui/telegram.slint:679 ui/workbench/sidebar.slint:408
 msgid "All chats"
 msgstr "すべてのチャット"
 
@@ -191,102 +191,97 @@ msgstr ""
 "チェックマークの付いたボットは Telegram 公式のものです。それ以外のボットは、"
 "送信した内容を読むことができます。"
 
-#: ui/broadsheet/broadsheet.slint:1159 ui/broadsheet/broadsheet.slint:2508
+#: ui/broadsheet/broadsheet.slint:1159 ui/broadsheet/broadsheet.slint:2501
 #: ui/terminal/terminal.slint:726 ui/workbench/conversation.slint:260
-#: ui/workbench/conversation.slint:1730
+#: ui/workbench/conversation.slint:1721
 msgid "Unmute"
 msgstr "ミュート解除"
 
-#: ui/broadsheet/broadsheet.slint:1159 ui/broadsheet/broadsheet.slint:2508
+#: ui/broadsheet/broadsheet.slint:1159 ui/broadsheet/broadsheet.slint:2501
 #: ui/terminal/terminal.slint:726 ui/workbench/conversation.slint:260
-#: ui/workbench/conversation.slint:1730
+#: ui/workbench/conversation.slint:1721
 msgid "Mute"
 msgstr "ミュート"
 
-#: ui/broadsheet/broadsheet.slint:1167 ui/broadsheet/broadsheet.slint:2559
-#: ui/terminal/terminal.slint:1250 ui/workbench/sidebar.slint:577
+#: ui/broadsheet/broadsheet.slint:1167 ui/broadsheet/broadsheet.slint:2552
+#: ui/terminal/terminal.slint:1244 ui/workbench/sidebar.slint:577
 msgid "Unpin"
 msgstr "ピン留めを解除"
 
-#: ui/broadsheet/broadsheet.slint:1167 ui/broadsheet/broadsheet.slint:2559
-#: ui/terminal/terminal.slint:1250 ui/workbench/sidebar.slint:577
+#: ui/broadsheet/broadsheet.slint:1167 ui/broadsheet/broadsheet.slint:2552
+#: ui/terminal/terminal.slint:1244 ui/workbench/sidebar.slint:577
 msgid "Pin"
 msgstr "ピン留め"
 
-#: ui/broadsheet/broadsheet.slint:1175 ui/broadsheet/broadsheet.slint:2567
-#: ui/terminal/terminal.slint:1258 ui/workbench/sidebar.slint:585
-msgid "Mark as read"
-msgstr "既読にする"
-
-#: ui/broadsheet/broadsheet.slint:1183 ui/terminal/terminal.slint:747
+#: ui/broadsheet/broadsheet.slint:1176 ui/terminal/terminal.slint:741
 msgid "Add to folder"
 msgstr "フォルダに追加"
 
-#: ui/broadsheet/broadsheet.slint:1190 ui/broadsheet/broadsheet.slint:2576
-#: ui/terminal/terminal.slint:1266 ui/workbench/sidebar.slint:600
+#: ui/broadsheet/broadsheet.slint:1183 ui/broadsheet/broadsheet.slint:2560
+#: ui/terminal/terminal.slint:1252 ui/workbench/sidebar.slint:593
 msgid "Copy ID"
 msgstr "IDをコピー"
 
-#: ui/broadsheet/broadsheet.slint:1238 ui/pages/login.slint:524
+#: ui/broadsheet/broadsheet.slint:1231 ui/pages/login.slint:524
 #: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
 #: ui/pages/login.slint:841 ui/pages/login.slint:901
 #: ui/pages/settings.slint:1467 ui/terminal/actions.slint:285
-#: ui/workbench/sidebar.slint:650
+#: ui/workbench/sidebar.slint:643
 msgid "Back"
 msgstr "戻る"
 
-#: ui/broadsheet/broadsheet.slint:1316 ui/workbench/conversation.slint:629
+#: ui/broadsheet/broadsheet.slint:1309 ui/workbench/conversation.slint:620
 msgid "Instant View"
 msgstr "Instant View"
 
-#: ui/broadsheet/broadsheet.slint:1348 ui/terminal/terminal.slint:849
+#: ui/broadsheet/broadsheet.slint:1341 ui/terminal/terminal.slint:843
 msgid "Forwarded from {0}"
 msgstr "転送元：{0}"
 
-#: ui/broadsheet/broadsheet.slint:1610 ui/broadsheet/broadsheet.slint:1717
-#: ui/workbench/conversation.slint:889
+#: ui/broadsheet/broadsheet.slint:1603 ui/broadsheet/broadsheet.slint:1710
+#: ui/workbench/conversation.slint:880
 msgid "edited"
 msgstr "編集済み"
 
-#: ui/broadsheet/broadsheet.slint:1737
+#: ui/broadsheet/broadsheet.slint:1730
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr "スポンサー · Telegram による掲載 · Premium ユーザーは非表示にできます"
 
-#: ui/broadsheet/broadsheet.slint:1803 ui/format.slint:261
-#: ui/workbench/conversation.slint:987
+#: ui/broadsheet/broadsheet.slint:1796 ui/format.slint:261
+#: ui/workbench/conversation.slint:978
 msgid "You"
 msgstr "自分"
 
-#: ui/broadsheet/broadsheet.slint:1914 ui/terminal/terminal.slint:1481
+#: ui/broadsheet/broadsheet.slint:1907 ui/terminal/terminal.slint:1464
 msgid "Hide sender's name"
 msgstr "送信者名を非表示"
 
-#: ui/broadsheet/broadsheet.slint:2126 ui/terminal/terminal.slint:1390
+#: ui/broadsheet/broadsheet.slint:2119 ui/terminal/terminal.slint:1376
 msgid "Shift-click to select a range"
 msgstr "Shift を押しながらクリックで範囲を選択"
 
-#: ui/broadsheet/broadsheet.slint:2134 ui/chat.slint:799
-#: ui/workbench/conversation.slint:1364
+#: ui/broadsheet/broadsheet.slint:2127 ui/chat.slint:799
+#: ui/workbench/conversation.slint:1355
 msgid "Forward"
 msgstr "転送"
 
-#: ui/broadsheet/broadsheet.slint:2188 ui/terminal/terminal.slint:1728
+#: ui/broadsheet/broadsheet.slint:2181 ui/terminal/terminal.slint:1711
 msgid "Choose a chat on the left"
 msgstr "左のリストからチャットを選択してください"
 
-#: ui/broadsheet/broadsheet.slint:2211 ui/terminal/terminal.slint:1177
+#: ui/broadsheet/broadsheet.slint:2204 ui/terminal/terminal.slint:1171
 msgid "typing…"
 msgstr "入力中…"
 
-#: ui/broadsheet/broadsheet.slint:2281 ui/terminal/terminal.slint:1293
+#: ui/broadsheet/broadsheet.slint:2274 ui/terminal/terminal.slint:1279
 msgid "{0} is typing…"
 msgstr "{0} が入力中…"
 
-#: ui/broadsheet/broadsheet.slint:2313
+#: ui/broadsheet/broadsheet.slint:2306
 msgid "Sending as {0}"
 msgstr "{0} として送信"
 
-#: ui/broadsheet/broadsheet.slint:2330
+#: ui/broadsheet/broadsheet.slint:2323
 msgid "Write a message…"
 msgstr "メッセージを入力…"
 
@@ -602,7 +597,7 @@ msgstr "Finder に表示"
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
-#: ui/chat.slint:678 ui/terminal/terminal.slint:914
+#: ui/chat.slint:678 ui/terminal/terminal.slint:908
 msgid "Tap to view"
 msgstr "クリックして表示"
 
@@ -1488,7 +1483,7 @@ msgstr "自動翻訳"
 msgid "Translate foreign-language messages into your UI language"
 msgstr "外国語のメッセージを UI の言語に翻訳"
 
-#: ui/pages/login.slint:133 ui/workbench/conversation.slint:1468
+#: ui/pages/login.slint:133 ui/workbench/conversation.slint:1459
 msgid "Reading mode"
 msgstr "リーダーモード"
 
@@ -2306,12 +2301,12 @@ msgstr "FinchGram を終了"
 msgid "New message"
 msgstr "新着メッセージ"
 
-#: ui/telegram.slint:680
+#: ui/telegram.slint:678
 msgid "Deleted Account"
 msgstr "削除されたアカウント"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:683
+#: ui/telegram.slint:681
 msgctxt "list separator"
 msgid ", "
 msgstr "、"
@@ -2328,63 +2323,59 @@ msgstr "ダーク"
 msgid "more"
 msgstr "その他"
 
-#: ui/terminal/terminal.slint:896 ui/terminal/terminal.slint:901
+#: ui/terminal/terminal.slint:890 ui/terminal/terminal.slint:895
 msgid "(edited)"
 msgstr "（編集済み）"
 
-#: ui/terminal/terminal.slint:1044
+#: ui/terminal/terminal.slint:1038
 msgid "sponsored"
 msgstr "スポンサー"
 
-#: ui/terminal/terminal.slint:1097 ui/terminal/terminal.slint:1185
+#: ui/terminal/terminal.slint:1091 ui/terminal/terminal.slint:1179
 msgid "search"
 msgstr "検索"
 
-#: ui/terminal/terminal.slint:1197
+#: ui/terminal/terminal.slint:1191
 msgid "chat settings"
 msgstr "チャット設定"
 
-#: ui/terminal/terminal.slint:1416
+#: ui/terminal/terminal.slint:1402
 msgid "Mute or unmute this chat"
 msgstr "このチャットをミュート/ミュート解除"
 
-#: ui/terminal/terminal.slint:1417
+#: ui/terminal/terminal.slint:1403
 msgid "Pin or unpin this chat"
 msgstr "このチャットをピン留め/ピン留め解除"
 
-#: ui/terminal/terminal.slint:1418
-msgid "Mark this chat as read"
-msgstr "このチャットを既読にする"
-
-#: ui/terminal/terminal.slint:1419
+#: ui/terminal/terminal.slint:1404
 msgid "Mark every chat in this folder as read"
 msgstr "このフォルダのチャットをすべて既読にする"
 
-#: ui/terminal/terminal.slint:1420
+#: ui/terminal/terminal.slint:1405
 msgid "Copy this chat's ID"
 msgstr "このチャットのIDをコピー"
 
-#: ui/terminal/terminal.slint:1513
+#: ui/terminal/terminal.slint:1496
 msgid "unmute"
 msgstr "ミュート解除"
 
-#: ui/terminal/terminal.slint:1513
+#: ui/terminal/terminal.slint:1496
 msgid "mute"
 msgstr "ミュート"
 
-#: ui/terminal/terminal.slint:1577
+#: ui/terminal/terminal.slint:1560
 msgid "Write a message, or / for commands"
 msgstr "メッセージを入力、または / でコマンド"
 
-#: ui/terminal/terminal.slint:1602
+#: ui/terminal/terminal.slint:1585
 msgid "save"
 msgstr "保存"
 
-#: ui/terminal/terminal.slint:1602
+#: ui/terminal/terminal.slint:1585
 msgid "send"
 msgstr "送信"
 
-#: ui/terminal/terminal.slint:1673
+#: ui/terminal/terminal.slint:1656
 msgid "connected"
 msgstr "接続済み"
 
@@ -2426,51 +2417,51 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ 切り替え · ↑/↓ 音量 · space 再生 · esc 閉じる"
 
-#: ui/workbench/conversation.slint:301 ui/workbench/conversation.slint:366
+#: ui/workbench/conversation.slint:292 ui/workbench/conversation.slint:357
 msgid "Close other tabs"
 msgstr "ほかのタブを閉じる"
 
-#: ui/workbench/conversation.slint:358
+#: ui/workbench/conversation.slint:349
 msgid "Close tab"
 msgstr "タブを閉じる"
 
-#: ui/workbench/conversation.slint:375
+#: ui/workbench/conversation.slint:366
 msgid "Close all tabs"
 msgstr "すべてのタブを閉じる"
 
-#: ui/workbench/conversation.slint:914
+#: ui/workbench/conversation.slint:905
 msgid "Sponsored"
 msgstr "スポンサー"
 
-#: ui/workbench/conversation.slint:921
+#: ui/workbench/conversation.slint:912
 msgid "Premium users can turn these off"
 msgstr "Premium ユーザーは非表示にできます"
 
-#: ui/workbench/conversation.slint:961
+#: ui/workbench/conversation.slint:952
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
 msgstr "Telegram のスポンサーメッセージ · FinchGram はそのまま表示します"
 
-#: ui/workbench/conversation.slint:1547
+#: ui/workbench/conversation.slint:1538
 msgid "Send to {0}"
 msgstr "{0} に送信"
 
-#: ui/workbench/conversation.slint:1680
+#: ui/workbench/conversation.slint:1671
 msgid "Esc to cancel"
 msgstr "Esc でキャンセル"
 
-#: ui/workbench/conversation.slint:1688
+#: ui/workbench/conversation.slint:1679
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ 保存 · ⇧⏎ 改行"
 
-#: ui/workbench/conversation.slint:1688
+#: ui/workbench/conversation.slint:1679
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ 保存 · ⏎ 改行"
 
-#: ui/workbench/conversation.slint:1689
+#: ui/workbench/conversation.slint:1680
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ 送信 · ⇧⏎ 改行"
 
-#: ui/workbench/conversation.slint:1689
+#: ui/workbench/conversation.slint:1680
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ 送信 · ⏎ 改行"
 
@@ -2485,6 +2476,12 @@ msgstr "チャンネルはリーダーモードで開きます。長い投稿を
 #: ui/workbench/workbench.slint:345
 msgid "Manage accounts"
 msgstr "アカウントを管理"
+
+#~ msgid "Mark as read"
+#~ msgstr "既読にする"
+
+#~ msgid "Mark this chat as read"
+#~ msgstr "このチャットを既読にする"
 
 #~ msgid "command"
 #~ msgstr "コマンド"
