@@ -102,9 +102,10 @@ FinchGram 自身不调用任何 AI，不为 AI 建索引，不为 AI 存任何�
    只有同一个用户的进程能打开它。不开任何端口。
 2. **系统说是谁连的，用户说它能不能。** 每个连接，FinchGram 向内核问对端进程（`LOCAL_PEERPID`），向 libproc 问它
    的程序；如果那是 FinchGram 自己的桥、或启动桥的 shell，就往父进程找，直到找到助手的应用（"Claude"，
-   /Applications/Claude.app；"claude"，~/.local/share/claude/versions/2.1.296）。不取连接自报的任何东西，所以
-   没有东西能冒充别的。程序第一次连接时，对话框问用户；答案按程序的路径记住。系统说不出程序名时，对话框会说明，
-   并把"不允许"做成稳妥的那个按钮。
+   /Applications/Claude.app；"claude"，~/.local/share/claude）。不取连接自报的任何东西，所以没有东西能冒充别的。
+   程序第一次连接时，对话框问用户；答案按程序的路径记住：它的 app 包，或者按版本号存放的程序（Claude Code 的
+   ~/.local/share/claude/versions/2.1.296）上面那个装着所有版本的文件夹，这样升级后不会再问。系统说不出程序名时，
+   对话框会说明，并把"不允许"做成稳妥的那个按钮。
 3. **设置决定它能做什么**：开关、聊天范围、发送选项。
 
 助手不需要任何 Telegram 凭据：它通过 FinchGram 已登录的会话工作，FinchGram 的 api_id 完全不在其中。

@@ -125,9 +125,11 @@ credentials from the environment". FinchGram's answer has three layers:
    FinchGram asks the kernel for the peer process (`LOCAL_PEERPID`) and libproc for its program;
    when that is FinchGram's own bridge, or a shell that started it, it looks at the parent until
    it finds the assistant's app ("Claude", /Applications/Claude.app; "claude",
-   ~/.local/share/claude/versions/2.1.296). Nothing is taken from what the connection says about
-   itself, so nothing can claim to be something else. The first time a program connects, the
-   dialog asks the user; the answer is kept by the program's path. When the system cannot name
+   ~/.local/share/claude). Nothing is taken from what the connection says about itself, so
+   nothing can claim to be something else. The first time a program connects, the dialog asks
+   the user; the answer is kept by the program's path: its app bundle, or for a program kept
+   under its version number (Claude Code's ~/.local/share/claude/versions/2.1.296) the folder
+   that holds every version, so that an update does not ask again. When the system cannot name
    the program, the dialog says so and makes Don't Allow the safe choice.
 3. **Settings decide what it may do**: the switch, the chats, the sending choice.
 

@@ -46,12 +46,13 @@ impl Host {
         }
     }
 
-    /// What the user's answer is remembered by: the app bundle ("/Applications/Claude.app") or
-    /// the program's path; for a program the system would not name, its process id, which lasts
-    /// as long as it runs.
+    /// What the user's answer is remembered by: the app bundle ("/Applications/Claude.app"), the
+    /// folder of a program kept under its version number ("/Users/x/.local/share/claude", so that
+    /// an update of Claude Code is not a stranger), or the program's path; for a program the
+    /// system would not name, its process id, which lasts as long as it runs.
     pub fn key(&self) -> String {
         match &self.path {
-            Some(path) => bundle_of(path).unwrap_or_else(|| path.clone()).display().to_string(),
+            Some(path) => bundle_of(path).or_else(|| versioned_home(path)).unwrap_or_else(|| path.clone()).display().to_string(),
             None if self.pid > 0 => format!("pid {}", self.pid),
             None => "unknown".to_string(),
         }
@@ -96,12 +97,27 @@ pub fn bundle_of(path: &Path) -> Option<PathBuf> {
     path.ancestors().find(|ancestor| ancestor.extension().is_some_and(|extension| extension == "app")).map(Path::to_path_buf)
 }
 
+/// "2.1.296": a version number, as a file or folder is named by one.
+fn is_version(name: &str) -> bool {
+    !name.is_empty() && name.chars().all(|c| c.is_ascii_digit() || c == '.')
+}
+
+/// For a program kept under its version number, the folder that holds every version:
+/// "/Users/x/.local/share/claude" for "/Users/x/.local/share/claude/versions/2.1.296".
+fn versioned_home(path: &Path) -> Option<PathBuf> {
+    if !is_version(path.file_name()?.to_str()?) {
+        return None;
+    }
+    let parent = path.parent()?;
+    let home = if parent.file_name().and_then(|name| name.to_str()) == Some("versions") { parent.parent()? } else { parent };
+    Some(home.to_path_buf())
+}
+
 /// A program's name from its path: its file name, unless that is a version number, in which case
 /// the first folder above it that is not "versions" or "bin" ("claude" for
 /// "/Users/x/.local/share/claude/versions/2.1.296").
 fn program_name(path: &Path) -> String {
     let names = path.iter().rev().filter_map(|part| part.to_str());
-    let is_version = |name: &str| !name.is_empty() && name.chars().all(|c| c.is_ascii_digit() || c == '.');
     let mut names = names.skip_while(|name| is_version(name) || matches!(*name, "versions" | "bin"));
     match (path.file_name().and_then(|name| name.to_str()), names.next()) {
         (Some(file), _) if !is_version(file) => file.to_string(),
@@ -231,9 +247,12 @@ mod tests {
         assert_eq!(Host { pid: 0, path: None }.key(), "unknown");
         assert_eq!(bundle_of(Path::new("/usr/bin/node")), None);
         let versioned = Host { pid: 10, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.296")) };
-        assert_eq!((versioned.name(), versioned.key()), ("claude".to_string(), "/Users/x/.local/share/claude/versions/2.1.296".to_string()));
+        assert_eq!((versioned.name(), versioned.key()), ("claude".to_string(), "/Users/x/.local/share/claude".to_string()));
+        assert_eq!(versioned.describe(), "claude (/Users/x/.local/share/claude)");
         assert_eq!(program_name(Path::new("/opt/homebrew/bin/node")), "node");
         assert_eq!(program_name(Path::new("/Users/x/tools/3.0")), "tools");
+        assert_eq!(versioned_home(Path::new("/Users/x/tools/3.0")), Some(PathBuf::from("/Users/x/tools")));
+        assert_eq!(versioned_home(Path::new("/opt/homebrew/bin/node")), None);
         assert_eq!(program_name(Path::new("/")), "program");
     }
 
