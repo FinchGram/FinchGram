@@ -71,6 +71,7 @@ What an assistant can ask for. Chats and messages go by their ids, which `list_c
 | `download_media` | A message's photo or still sticker as the picture itself; a video, GIF or file downloaded and its path given | getMessage, getMessageProperties, downloadFile |
 | `draft_message` | A draft in a chat, for the user to send from any Telegram app | parseMarkdown, setChatDraftMessage |
 | `send_message` | A message, under the user's name, at once | parseMarkdown, sendMessage |
+| `delete_message` | A message the account sent (the user's own, or an assistant's under their name), deleted for everyone where Telegram allows it: any time in private chats, within 48 hours in groups; never someone else's | getMessage, getMessageProperties, deleteMessages |
 | `mark_read` | Messages marked as read | viewMessages |
 | `get_me` | The account: id, name, username | the store |
 
@@ -87,8 +88,8 @@ Settings → AI access, from the design:
 - **Chats assistants can see**: all chats (never a secret one), or only chats the user chooses,
   listed on the page with Remove, and a picker (Choose chats) with a search box, where secret
   chats are shown dimmed and cannot be ticked.
-- **Writing**: send messages (at once, under the user's name), drafts only (the assistant leaves a
-  draft, the user sends it), or read only.
+- **Writing**: send messages (at once, under the user's name; and delete messages the account
+  sent), drafts only (the assistant leaves a draft, the user sends it), or read only.
 - **Apps**: every program that has connected, as macOS named it and where it is; connected now,
   or when it was last used; Remove (it asks again next time), or Allow for one that was turned
   away. A program macOS would not name ("Unidentified program", by its process id) is remembered

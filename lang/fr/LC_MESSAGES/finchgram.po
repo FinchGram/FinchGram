@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-13 05:36+0000\n"
+"POT-Creation-Date: 2026-10-13 05:53+0000\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -462,7 +462,7 @@ msgstr "Album {0} · {1}"
 msgid "Add more"
 msgstr "Ajouter d'autres"
 
-#: ui/chat.slint:332 ui/pages/ai-access.slint:456 ui/pages/ai-access.slint:528
+#: ui/chat.slint:332 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
 msgid "Remove"
 msgstr "Retirer"
 
@@ -983,7 +983,7 @@ msgstr "Connexion…"
 msgid "Updating…"
 msgstr "Mise à jour…"
 
-#: ui/format.slint:185 ui/pages/ai-access.slint:78
+#: ui/format.slint:185 ui/pages/ai-access.slint:79
 msgid "Connected"
 msgstr "Connecté"
 
@@ -1179,158 +1179,162 @@ msgstr "Connectée en ce moment"
 msgid "Last used {0}"
 msgstr "Dernière utilisation {0}"
 
-#: ui/pages/ai-access.slint:79
+#: ui/pages/ai-access.slint:80
 msgid "Not allowed, turned away"
 msgstr "Non autorisée, refusée"
 
-#: ui/pages/ai-access.slint:80
+#: ui/pages/ai-access.slint:81
 msgid "Listed chats"
 msgstr "A listé les discussions"
 
-#: ui/pages/ai-access.slint:81
+#: ui/pages/ai-access.slint:82
 msgid "Searched chats"
 msgstr "A cherché des discussions"
 
-#: ui/pages/ai-access.slint:82
+#: ui/pages/ai-access.slint:83
 msgid "Looked at {0}"
 msgstr "A consulté {0}"
 
-#: ui/pages/ai-access.slint:83
+#: ui/pages/ai-access.slint:84
 msgid "Read {0} messages in {1}"
 msgstr "{0} messages lus dans {1}"
 
-#: ui/pages/ai-access.slint:85
+#: ui/pages/ai-access.slint:86
 msgid "Searched messages in {0}"
 msgstr "Recherche de messages dans {0}"
 
-#: ui/pages/ai-access.slint:85
+#: ui/pages/ai-access.slint:86
 msgid "Searched messages in {0} chats"
 msgstr "Recherche de messages dans {0} discussions"
 
-#: ui/pages/ai-access.slint:87
+#: ui/pages/ai-access.slint:88
 msgid "Searched messages in all chats"
 msgstr "Recherche de messages dans toutes les discussions"
 
-#: ui/pages/ai-access.slint:88
+#: ui/pages/ai-access.slint:89
 msgid "Read unread messages in {0} chats"
 msgstr "A lu les messages non lus de {0} discussions"
 
-#: ui/pages/ai-access.slint:89
+#: ui/pages/ai-access.slint:90
 msgid "Took media from {0}"
 msgstr "A pris un média dans {0}"
 
-#: ui/pages/ai-access.slint:90
+#: ui/pages/ai-access.slint:91
 msgid "Saved a draft in {0}"
 msgstr "Brouillon enregistré dans {0}"
 
-#: ui/pages/ai-access.slint:91
+#: ui/pages/ai-access.slint:92
 msgid "Sent a message in {0}"
 msgstr "A envoyé un message dans {0}"
 
-#: ui/pages/ai-access.slint:92
+#: ui/pages/ai-access.slint:93
+msgid "Deleted a message in {0}"
+msgstr "A supprimé un message dans {0}"
+
+#: ui/pages/ai-access.slint:94
 msgid "Marked {0} messages as read in {1}"
 msgstr "A marqué {0} messages comme lus dans {1}"
 
-#: ui/pages/ai-access.slint:93
+#: ui/pages/ai-access.slint:95
 msgid "Looked at the account"
 msgstr "A consulté le compte"
 
-#: ui/pages/ai-access.slint:94
+#: ui/pages/ai-access.slint:96
 msgid "Turned away from {0}: not a chosen chat"
 msgstr "Refusé : {0} ne fait pas partie des discussions choisies"
 
-#: ui/pages/ai-access.slint:100 ui/pages/ai-access.slint:432
+#: ui/pages/ai-access.slint:102 ui/pages/ai-access.slint:434
 #: ui/workbench/sidebar.slint:105
 msgid "All chats"
 msgstr "Toutes les discussions"
 
-#: ui/pages/ai-access.slint:102
+#: ui/pages/ai-access.slint:104
 msgid "{0} chats you chose"
 msgstr "{0} discussions choisies"
 
-#: ui/pages/ai-access.slint:102 ui/pages/ai-access.slint:442
+#: ui/pages/ai-access.slint:104 ui/pages/ai-access.slint:444
 msgid "None chosen yet: assistants see nothing"
 msgstr "Aucune choisie : les assistants ne voient rien"
 
-#: ui/pages/ai-access.slint:106 ui/pages/ai-access.slint:483
+#: ui/pages/ai-access.slint:108 ui/pages/ai-access.slint:485
 msgid "Send messages"
 msgstr "Envoyer des messages"
 
-#: ui/pages/ai-access.slint:106 ui/pages/ai-access.slint:492
+#: ui/pages/ai-access.slint:108 ui/pages/ai-access.slint:494
 msgid "Drafts only"
 msgstr "Brouillons seulement"
 
-#: ui/pages/ai-access.slint:106 ui/pages/ai-access.slint:501
+#: ui/pages/ai-access.slint:108 ui/pages/ai-access.slint:503
 msgid "Read only"
 msgstr "Lecture seule"
 
-#: ui/pages/ai-access.slint:372 ui/terminal/terminal.slint:111
+#: ui/pages/ai-access.slint:374 ui/terminal/terminal.slint:111
 msgid "Search chats"
 msgstr "Rechercher une discussion"
 
-#: ui/pages/ai-access.slint:411
+#: ui/pages/ai-access.slint:413
 msgid "Access"
 msgstr "Accès"
 
-#: ui/pages/ai-access.slint:416
+#: ui/pages/ai-access.slint:418
 msgid "Let AI assistants connect"
 msgstr "Autoriser les assistants IA à se connecter"
 
-#: ui/pages/ai-access.slint:417
+#: ui/pages/ai-access.slint:419
 msgid "When off, FinchGram turns every assistant away"
 msgstr "Désactivé : FinchGram refuse tous les assistants"
 
-#: ui/pages/ai-access.slint:428
+#: ui/pages/ai-access.slint:430
 msgid "Chats assistants can see"
 msgstr "Discussions visibles par les assistants"
 
-#: ui/pages/ai-access.slint:433
+#: ui/pages/ai-access.slint:435
 msgid "Every chat except secret chats"
 msgstr "Toutes, sauf les discussions secrètes"
 
-#: ui/pages/ai-access.slint:441
+#: ui/pages/ai-access.slint:443
 msgid "Only chats I choose"
 msgstr "Seulement celles que je choisis"
 
-#: ui/pages/ai-access.slint:442 ui/pages/ai-access.slint:649
+#: ui/pages/ai-access.slint:444 ui/pages/ai-access.slint:651
 msgid "{0} chosen"
 msgstr "{0} choisies"
 
-#: ui/pages/ai-access.slint:467 ui/pages/settings.slint:1576
+#: ui/pages/ai-access.slint:469 ui/pages/settings.slint:1576
 msgid "Choose chats"
 msgstr "Choisir des discussions"
 
-#: ui/pages/ai-access.slint:479
+#: ui/pages/ai-access.slint:481
 msgid "Writing"
 msgstr "Écriture"
 
-#: ui/pages/ai-access.slint:484
+#: ui/pages/ai-access.slint:486
 msgid "Sent at once, under your name"
 msgstr "Envoyés aussitôt, en votre nom"
 
-#: ui/pages/ai-access.slint:493
+#: ui/pages/ai-access.slint:495
 msgid "The assistant leaves a draft; you send it from any Telegram app"
 msgstr ""
 "L'assistant laisse un brouillon ; vous l'envoyez depuis n'importe quelle app "
 "Telegram"
 
-#: ui/pages/ai-access.slint:502
+#: ui/pages/ai-access.slint:504
 msgid "No messages, no drafts"
 msgstr "Ni messages ni brouillons"
 
-#: ui/pages/ai-access.slint:513
+#: ui/pages/ai-access.slint:515
 msgid "Apps"
 msgstr "Apps"
 
-#: ui/pages/ai-access.slint:518
+#: ui/pages/ai-access.slint:520
 msgid "No app has connected yet"
 msgstr "Aucune app ne s'est encore connectée"
 
-#: ui/pages/ai-access.slint:528 ui/pages/ai-access.slint:855
+#: ui/pages/ai-access.slint:530 ui/pages/ai-access.slint:857
 msgid "Allow"
 msgstr "Autoriser"
 
-#: ui/pages/ai-access.slint:541
+#: ui/pages/ai-access.slint:543
 msgid ""
 "An app asks the first time it connects. Its name comes from macOS, not from "
 "the app itself."
@@ -1338,53 +1342,53 @@ msgstr ""
 "Une app demande la permission à sa première connexion. Son nom vient de "
 "macOS, pas de l'app elle-même."
 
-#: ui/pages/ai-access.slint:549
+#: ui/pages/ai-access.slint:551
 msgid "Connect an app"
 msgstr "Connecter une app"
 
-#: ui/pages/ai-access.slint:557 ui/pages/ai-access.slint:568
+#: ui/pages/ai-access.slint:559 ui/pages/ai-access.slint:570
 msgid "Copied"
 msgstr "Copié"
 
-#: ui/pages/ai-access.slint:557 ui/pages/ai-access.slint:568
+#: ui/pages/ai-access.slint:559 ui/pages/ai-access.slint:570
 msgid "Copy"
 msgstr "Copier"
 
-#: ui/pages/ai-access.slint:565
+#: ui/pages/ai-access.slint:567
 msgid "Claude Desktop and other apps"
 msgstr "Claude Desktop et autres apps"
 
-#: ui/pages/ai-access.slint:575
+#: ui/pages/ai-access.slint:577
 msgid "FinchGram doesn't need to be open: the app starts it in the background."
 msgstr ""
 "FinchGram n'a pas besoin d'être ouvert : l'app le lance en arrière-plan."
 
-#: ui/pages/ai-access.slint:583
+#: ui/pages/ai-access.slint:585
 msgid "Log"
 msgstr "Journal"
 
-#: ui/pages/ai-access.slint:598
+#: ui/pages/ai-access.slint:600
 msgid "Show log in Finder"
 msgstr "Afficher le journal dans le Finder"
 
-#: ui/pages/ai-access.slint:606
+#: ui/pages/ai-access.slint:608
 msgid "Who connected and what it asked for. Never the words of a message."
 msgstr ""
 "Qui s'est connecté et ce qu'il a demandé. Jamais le texte d'un message."
 
-#: ui/pages/ai-access.slint:614
+#: ui/pages/ai-access.slint:616
 msgid "Always, whatever the settings"
 msgstr "Toujours, quels que soient les réglages"
 
-#: ui/pages/ai-access.slint:619
+#: ui/pages/ai-access.slint:621
 msgid "Secret chats are never shown to an assistant"
 msgstr "Les discussions secrètes ne sont jamais montrées à un assistant"
 
-#: ui/pages/ai-access.slint:624
+#: ui/pages/ai-access.slint:626
 msgid "Reading never marks messages as read unless asked to"
 msgstr "Lire ne marque rien comme lu, sauf demande explicite"
 
-#: ui/pages/ai-access.slint:629
+#: ui/pages/ai-access.slint:631
 msgid ""
 "Self-destructing media, and media from chats that restrict saving, stays in "
 "FinchGram"
@@ -1392,24 +1396,24 @@ msgstr ""
 "Les médias éphémères et ceux des discussions qui interdisent "
 "l'enregistrement restent dans FinchGram"
 
-#: ui/pages/ai-access.slint:634
+#: ui/pages/ai-access.slint:636
 msgid "Nothing an assistant reads is kept: no index, no copy"
 msgstr "Rien de ce que lit un assistant n'est conservé : ni index, ni copie"
 
-#: ui/pages/ai-access.slint:764
+#: ui/pages/ai-access.slint:766
 msgid "Allow “{0}” to use your Telegram account?"
 msgstr "Autoriser « {0} » à utiliser votre compte Telegram ?"
 
-#: ui/pages/ai-access.slint:765
+#: ui/pages/ai-access.slint:767
 msgid "Allow an unidentified program to use your Telegram account?"
 msgstr ""
 "Autoriser un programme non identifié à utiliser votre compte Telegram ?"
 
-#: ui/pages/ai-access.slint:773
+#: ui/pages/ai-access.slint:775
 msgid "macOS reports this program as the one connecting to FinchGram."
 msgstr "Selon macOS, c'est ce programme qui se connecte à FinchGram."
 
-#: ui/pages/ai-access.slint:774
+#: ui/pages/ai-access.slint:776
 msgid ""
 "macOS wouldn't say which program this is. Allow it only if you've just set "
 "one up yourself."
@@ -1417,19 +1421,19 @@ msgstr ""
 "macOS n'a pas indiqué de quel programme il s'agit. N'autorisez que si vous "
 "venez d'en configurer un vous-même."
 
-#: ui/pages/ai-access.slint:806
+#: ui/pages/ai-access.slint:808
 msgid "Can see"
 msgstr "Peut voir"
 
-#: ui/pages/ai-access.slint:822
+#: ui/pages/ai-access.slint:824
 msgid "Can write"
 msgstr "Peut écrire"
 
-#: ui/pages/ai-access.slint:835
+#: ui/pages/ai-access.slint:837
 msgid "Change in Settings"
 msgstr "Modifier dans les réglages"
 
-#: ui/pages/ai-access.slint:848
+#: ui/pages/ai-access.slint:850
 msgid "Don't Allow"
 msgstr "Refuser"
 

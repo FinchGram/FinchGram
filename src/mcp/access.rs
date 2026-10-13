@@ -293,6 +293,7 @@ fn kind_shown(kind: ActivityKind) -> AiActivityKind {
         ActivityKind::Media => AiActivityKind::Media,
         ActivityKind::Draft => AiActivityKind::Draft,
         ActivityKind::Sent => AiActivityKind::Sent,
+        ActivityKind::Deleted => AiActivityKind::Deleted,
         ActivityKind::Marked => AiActivityKind::Marked,
         ActivityKind::Account => AiActivityKind::Account,
         ActivityKind::Refused => AiActivityKind::Refused,

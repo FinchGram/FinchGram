@@ -65,6 +65,7 @@ export global AiWords {
         if kind == AiActivityKind.media { return "download-simple"; }
         if kind == AiActivityKind.draft { return "pencil-simple-line"; }
         if kind == AiActivityKind.sent { return "paper-plane-tilt"; }
+        if kind == AiActivityKind.deleted { return "trash"; }
         if kind == AiActivityKind.marked { return "checks"; }
         if kind == AiActivityKind.account { return "user-circle"; }
         return "prohibit";
@@ -89,6 +90,7 @@ export global AiWords {
         if entry.kind == AiActivityKind.media { return @tr("Took media from {0}", entry.chat); }
         if entry.kind == AiActivityKind.draft { return @tr("Saved a draft in {0}", entry.chat); }
         if entry.kind == AiActivityKind.sent { return @tr("Sent a message in {0}", entry.chat); }
+        if entry.kind == AiActivityKind.deleted { return @tr("Deleted a message in {0}", entry.chat); }
         if entry.kind == AiActivityKind.marked { return @tr("Marked {0} messages as read in {1}", entry.count, entry.chat); }
         if entry.kind == AiActivityKind.account { return @tr("Looked at the account"); }
         return @tr("Turned away from {0}: not a chosen chat", entry.chat);

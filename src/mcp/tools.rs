@@ -78,6 +78,7 @@ pub enum ActivityKind {
     Media,
     Draft,
     Sent,
+    Deleted,
     Marked,
     Account,
     /// A chat outside the ones the user chose was asked for.
@@ -110,6 +111,7 @@ pub enum ToolCall {
     DownloadMedia { chat_id: i64, message_id: i64 },
     DraftMessage { chat_id: i64, text: String, reply_to_message_id: Option<i64> },
     SendMessage { chat_id: i64, text: String, reply_to_message_id: Option<i64> },
+    DeleteMessage { chat_id: i64, message_id: i64 },
     MarkRead { chat_id: i64, message_ids: Vec<i64> },
     GetMe,
 }
@@ -126,6 +128,7 @@ impl ToolCall {
             ToolCall::DownloadMedia { .. } => "download_media",
             ToolCall::DraftMessage { .. } => "draft_message",
             ToolCall::SendMessage { .. } => "send_message",
+            ToolCall::DeleteMessage { .. } => "delete_message",
             ToolCall::MarkRead { .. } => "mark_read",
             ToolCall::GetMe => "get_me",
         }
@@ -150,6 +153,7 @@ impl ToolCall {
             ToolCall::DraftMessage { chat_id, text, reply_to_message_id } | ToolCall::SendMessage { chat_id, text, reply_to_message_id } => {
                 format!("chat={chat_id} ({} chars) reply_to={}", chars(text), reply_to_message_id.unwrap_or(0))
             }
+            ToolCall::DeleteMessage { chat_id, message_id } => format!("chat={chat_id} message={message_id}"),
             ToolCall::MarkRead { chat_id, message_ids } => format!("chat={chat_id} messages={}", message_ids.len()),
             ToolCall::GetMe => String::new(),
         };
@@ -269,6 +273,17 @@ pub fn definitions() -> Vec<Value> {
             json!({ "readOnlyHint": false, "destructiveHint": false, "idempotentHint": false, "openWorldHint": true }),
         ),
         tool(
+            "delete_message",
+            "Delete a message",
+            "Delete a message the user's account sent (their own, or one an assistant sent under their name), for everyone, where Telegram allows it: at any time in private chats, within 48 hours in groups. Never someone else's message. Only when the user asked for it.",
+            json!({
+                "chat_id": integer("The chat's id."),
+                "message_id": integer("The message's id, from get_messages or from send_message's answer."),
+            }),
+            &["chat_id", "message_id"],
+            json!({ "readOnlyHint": false, "destructiveHint": true, "idempotentHint": true, "openWorldHint": true }),
+        ),
+        tool(
             "mark_read",
             "Mark as read",
             "Mark messages of a chat as read, which their senders can see. Only when the user asks for it; reading with get_messages never does this.",
@@ -338,6 +353,7 @@ pub fn parse(name: &str, arguments: &Value) -> Result<ToolCall, String> {
             text: args.message("text")?,
             reply_to_message_id: args.integer("reply_to_message_id")?.filter(|id| *id != 0),
         },
+        "delete_message" => ToolCall::DeleteMessage { chat_id: args.id("chat_id")?, message_id: args.id("message_id")? },
         "mark_read" => ToolCall::MarkRead { chat_id: args.id("chat_id")?, message_ids: args.ids("message_ids")? },
         "get_me" => ToolCall::GetMe,
         other => return Err(format!("Unknown tool: {other}")),
@@ -429,7 +445,7 @@ mod tests {
     #[test]
     fn every_defined_tool_parses_and_is_named_the_same() {
         let defined: Vec<String> = definitions().iter().map(|tool| tool["name"].as_str().expect("a name").to_string()).collect();
-        assert_eq!(defined.len(), 11);
+        assert_eq!(defined.len(), 12);
         let examples = json!({
             "chat_id": 42, "message_id": 7, "query": "hello", "text": "hi", "message_ids": [1, 2],
         });

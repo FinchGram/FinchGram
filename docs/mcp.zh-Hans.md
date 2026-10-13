@@ -61,6 +61,7 @@ FinchGram 自身不调用任何 AI，不为 AI 建索引，不为 AI 存任何�
 | `download_media` | 一条消息的照片或静态贴纸，直接给图；视频、GIF 或文件下载后给路径 | getMessage、getMessageProperties、downloadFile |
 | `draft_message` | 在一个聊天里留草稿，由用户在任意 Telegram 应用里发送 | parseMarkdown、setChatDraftMessage |
 | `send_message` | 以用户的名义立即发一条消息 | parseMarkdown、sendMessage |
+| `delete_message` | 删掉这个账号发过的一条消息（用户自己发的，或助手以用户名义发的），在 Telegram 允许的范围内为所有人删除：私聊随时，群里 48 小时内；别人的消息不行 | getMessage、getMessageProperties、deleteMessages |
 | `mark_read` | 把消息标为已读 | viewMessages |
 | `get_me` | 账号：id、名字、用户名 | store |
 
@@ -74,7 +75,7 @@ FinchGram 自身不调用任何 AI，不为 AI 建索引，不为 AI 存任何�
 - **访问**：总开关。关着（默认）时，FinchGram 拒绝所有助手。关着时页面只有这个开关和末尾的那几条规则。
 - **助手能看到的聊天**：所有聊天（秘密聊天永远不算），或只限用户选的；选定的列在页面上，可以移除；选聊天的面板
   （选择聊天）带搜索框，秘密聊天灰显、不能勾。
-- **发消息**：可以发消息（以用户名义立即发出）、只写草稿（助手留草稿，用户发）、或只读。
+- **发消息**：可以发消息（以用户名义立即发出；也能删这个账号发过的消息）、只写草稿（助手留草稿，用户发）、或只读。
 - **应用**：每个连接过的程序，按 macOS 给出的名字和位置；当前是否连着，或上次使用时间；移除（下次重新问），或对
   被拒绝的那个点允许。macOS 说不出名字的程序（"无法识别的程序"，按进程号）只在 FinchGram 这次运行期间记住。
 - **连接应用**：Claude Code 那一行和 Claude Desktop 的 JSON，里面是 FinchGram 自己的路径，可复制。

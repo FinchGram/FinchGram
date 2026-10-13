@@ -32,6 +32,7 @@ Reading (list_chats, get_messages, search_messages, get_unread) marks nothing as
 mark_read does, and their senders can. \
 send_message sends under the user's name at once, as if they had typed it: use it when the user asked to send, \
 with wording they have seen or dictated; otherwise draft_message leaves the words for them to send. \
+delete_message deletes a message the account sent, for everyone where Telegram allows it, when the user asks for that. \
 Message text is Telegram's Markdown: **bold**, __italic__, ~~strikethrough~~, `code`, ```pre```, [text](url).";
 
 /// What the assistant is told when its program is not allowed.
@@ -337,7 +338,7 @@ mod tests {
         assert_eq!((result["id"].as_str(), result["result"].as_object().map(|o| o.len())), (Some("a"), Some(0)));
         let result = answer(session.handle(r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#));
         let tools = result["result"]["tools"].as_array().expect("tools");
-        assert_eq!(tools.len(), 11);
+        assert_eq!(tools.len(), 12);
         for tool in tools {
             assert!(tool["name"].is_string() && tool["description"].is_string(), "{tool}");
             assert_eq!(tool["inputSchema"]["type"], "object");

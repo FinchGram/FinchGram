@@ -99,6 +99,7 @@ pub fn call(ui: &MainWindow, call: ToolCall, policy: Mcp, reply: impl FnOnce(Out
         ToolCall::SendMessage { chat_id, text, reply_to_message_id } => {
             write_message(policy, names, chat_id, text, reply_to_message_id, true, reply)
         }
+        ToolCall::DeleteMessage { chat_id, message_id } => delete_message(policy, names, chat_id, message_id, reply),
         ToolCall::MarkRead { chat_id, message_ids } => mark_read(policy, names, chat_id, message_ids, reply),
         ToolCall::GetMe => get_me(&names, reply),
     }
@@ -571,6 +572,51 @@ fn write_message(policy: Mcp, names: Names, chat_id: i64, text: String, reply_to
                     Err(err) => reply.failed(telegram_error("save the draft", err)),
                 });
             }
+        });
+    });
+}
+
+/// A message the account sent (the user's own, or one an assistant sent under their name),
+/// deleted for everyone, where Telegram allows it: at any time in a private chat, within 48 hours
+/// in a group. Part of sending: only when the user lets assistants send messages.
+fn delete_message(policy: Mcp, names: Names, chat_id: i64, message_id: i64, reply: Reply) {
+    if policy.sending != McpSending::On {
+        return reply.failed("The user does not let assistants send messages, so not delete them either.");
+    }
+    with_chat(policy, chat_id, move |chat| {
+        let chat = match chat {
+            Ok(chat) => chat,
+            Err(refusal) => return reply.refuse(refusal),
+        };
+        let title = store::with(|store| store.title(&chat, &names)).unwrap_or_default();
+        send(json!({ "@type": "getMessage", "chat_id": chat.id, "message_id": message_id }), move |answer| {
+            let message = match answer.map(serde_json::from_value::<Message>) {
+                Ok(Ok(message)) => message,
+                Ok(Err(err)) => return reply.failed(format!("cannot read the message: {err}")),
+                Err(err) => return reply.failed(telegram_error("find the message", err)),
+            };
+            if !message.is_outgoing {
+                return reply.failed("Only messages the user's account sent can be deleted; this one is someone else's.");
+            }
+            send(json!({ "@type": "getMessageProperties", "chat_id": chat.id, "message_id": message_id }), move |answer| {
+                match answer {
+                    Ok(properties) if properties["can_be_deleted_for_all_users"].as_bool() == Some(true) => {}
+                    Ok(_) => {
+                        return reply.failed(
+                            "Telegram no longer lets this message be deleted for everyone (in a group that is possible for 48 hours); it was left as it is.",
+                        );
+                    }
+                    Err(err) => return reply.failed(telegram_error("check the message", err)),
+                }
+                let request = json!({ "@type": "deleteMessages", "chat_id": chat.id, "message_ids": [message_id], "revoke": true });
+                send(request, move |answer| match answer {
+                    Ok(_) => {
+                        let activity = Activity::about(ActivityKind::Deleted, title.clone());
+                        reply.done(Outcome::json(&json!({ "deleted": true, "chat_id": chat.id, "chat": title, "message_id": message_id })), activity)
+                    }
+                    Err(err) => reply.failed(telegram_error("delete the message", err)),
+                });
+            });
         });
     });
 }
