@@ -7,6 +7,7 @@ import { Fmt } from "../format.slint";
 import { Icon, Logo, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 import { Look } from "../look.slint";
+import { Downloads } from "../downloads.slint";
 import { WorkbenchSidebar, WorkbenchView } from "sidebar.slint";
 import { WorkbenchMain } from "conversation.slint";
 import { WorkbenchActions } from "actions.slint";
@@ -436,6 +437,17 @@ component ActivityBar inherits Rectangle {
         padding-bottom: 10px;
         spacing: 6px;
         alignment: end;
+        // Downloads (the design's third round of the pages), with a dot while some are on their way.
+        HorizontalLayout {
+            alignment: center;
+            ActivityButton {
+                icon: "download-simple";
+                dot: Downloads.active-count > 0;
+                activated => {
+                    AppState.page = Page.downloads;
+                }
+            }
+        }
         HorizontalLayout {
             alignment: center;
             ActivityButton {

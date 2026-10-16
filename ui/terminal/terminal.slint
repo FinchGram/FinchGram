@@ -10,6 +10,7 @@ import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords, SearchInput, SearchWords } from "../chat.slint";
 import { Look } from "../look.slint";
+import { Downloads } from "../downloads.slint";
 import { TerminalPalette as P } from "palette.slint";
 import { Sign } from "signs.slint";
 import { TerminalActions } from "actions.slint";
@@ -702,6 +703,15 @@ component Side inherits Rectangle {
                     horizontal-stretch: 1;
                     text: Account.phone == "" ? Account.name : Account.name + " · " + Account.phone;
                     overflow: elide;
+                }
+                // Downloads (the design's third round of the pages): "[↓]", with how many are on
+                // their way.
+                Action {
+                    label: Downloads.active-count > 0 ? "↓ " + Downloads.active-count : "↓";
+                    color: P.accent;
+                    activated => {
+                        AppState.page = Page.downloads;
+                    }
                 }
                 // The profile and the settings, where the other themes have them: the same two
                 // icons, in brackets, one size and so one width.

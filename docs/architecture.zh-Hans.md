@@ -156,11 +156,17 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   决定（默认关）。`access.rs` 就是那个页面和应用第一次连接时请用户允许的对话框（ui/ai-access.slint、
   ui/pages/ai-access.slint，三个主题都有）：开关、哪些聊天、助手能写什么、允许或拒绝过的应用、记录。读取不标已读；
   秘密聊天、自毁媒体和限制保存的聊天的媒体永远不交出去。
+- 下载页面（`src/downloads/`，[downloads.zh-Hans.md](downloads.zh-Hans.md)）：WebDAV 客户端，对着 NAS、seedbox、
+  PikPak、Alist/OpenList 或 `vget serve` 共享的文件夹，只读。`webdav.rs` 列目录（PROPFIND），`transfer.rs` 把一个文件
+  切成 8 MB 的块、最多 12 条连接并发取进 `.part` 文件，停了接着来，照 vget 的做法；`mod.rs` 是 UI 线程上的页面状态、
+  一个负责列目录的“webdav”线程，以及每个在下的文件一个线程，同时两个。密码进 macOS 钥匙串，服务器和下载目录进
+  settings.toml；下好的照片或视频在媒体查看器里打开（`viewer.rs` 的 `view_file`）。这个页面不需要账号。
 - `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）。
 - `src/platform/`：平台层。目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接、剪贴板（文字和图片）；以及 macOS 上
   （设置 → 通用）关闭窗口后留在 Dock 里，即设计稿的“关闭窗口时：最小化到托盘”（点 Dock 图标重新打开窗口，退出时先让
   TDLib 关好）、菜单栏图标、开机时启动（SMAppService，macOS 13 及以上）；通过系统的 UserNotifications 框架发通知
-  （只有打包成 .app 才有，`cargo run` 时没有）、Dock 图标上的未读数，以及让 Dock 图标跳一下（设置 → 通知与声音）。
+  （只有打包成 .app 才有，`cargo run` 时没有）、Dock 图标上的未读数，以及让 Dock 图标跳一下（设置 → 通知与声音）；
+  下载页面用的选目录面板和钥匙串（WebDAV 服务器的密码）。
 - `src/update.rs`：自动更新（[conventions.md](conventions.zh-Hans.md) 第 3 节）。
 - `src/settings.rs`、`src/i18n.rs`、`src/fonts.rs`（界面字体，编译进可执行文件）。
 - `src/images.rs`：图片（照片、视频封面、聊天和联系人的头像、消息里自带的小预览图）在界面线程之外解码，并缓存最近的。
@@ -168,7 +174,7 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   （`cargo test screenshots -- --ignored`）。
 - `src/telegram/timing.rs`：用同样的方式、很多假聊天和假消息，量页面跟上 store 要多久
   （`cargo test --release refresh_timing -- --ignored --nocapture`）。
-- `ui/`：`app.slint`（窗口：菜单，以及显示哪个页面）、`state.slint` 和 `telegram.slint`（Rust 和页面共用的 global）、
+- `ui/`：`app.slint`（窗口：菜单，以及显示哪个页面）、`state.slint`、`telegram.slint` 和 `downloads.slint`（Rust 和页面共用的 global）、
   `look.slint`、`format.slint`（按界面语言写出的日期、数量和消息类型）、`widgets.slint` 和 `chat.slint`（共用的部件）、
   `viewer.slint`（覆盖整个窗口的媒体查看器）、`pages/`，以及三套主题各自的目录。
 

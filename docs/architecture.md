@@ -216,6 +216,13 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   which chats, what an assistant may write, the apps allowed or turned away, the log. Reading
   marks nothing as read; secret chats, self-destructing media and the media of chats that
   restrict saving are never handed out.
+- The Downloads page (`src/downloads/`, [downloads.md](downloads.md)): a WebDAV client for a NAS,
+  a seedbox, PikPak, Alist/OpenList or a folder shared with `vget serve`, read-only. `webdav.rs`
+  lists folders (PROPFIND), `transfer.rs` fetches a file in chunks of 8 MB over up to 12 connections
+  into a `.part` file, going on from where it stopped, as vget does; `mod.rs` is the page's state on
+  the UI thread, a "webdav" thread for listings and one thread per file on its way, two at a time.
+  Passwords go into the macOS Keychain, the servers and the folder into settings.toml; a downloaded
+  photo or video opens in the media viewer (`viewer.rs`, `view_file`). The page needs no account.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
   device, the transparent title bar on macOS, opening links, the clipboard (words and pictures);
@@ -224,7 +231,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   to tray" has it (the Dock icon shows the window again, and Quit lets TDLib close first), the icon
   in the menu bar, and launching at login (SMAppService, macOS 13 and later); notifications through
   the system's UserNotifications framework (only for the app as a bundle, so not from `cargo run`),
-  the unread count on the Dock icon, and its bounce (Settings → Notifications & sounds).
+  the unread count on the Dock icon, and its bounce (Settings → Notifications & sounds); the folder
+  chooser and the Keychain (the passwords of WebDAV servers) for the Downloads page.
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
 - `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
 - `src/images.rs`: pictures (photos, video stills, the photos of chats and people, the tiny previews
@@ -234,7 +242,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 - `src/telegram/timing.rs`: how long the pages take to follow the store, with many made-up chats and
   messages, drawn the same way (`cargo test --release refresh_timing -- --ignored --nocapture`).
 - `ui/`: `app.slint` (the window: its menus and which page shows), `state.slint` and
-  `telegram.slint` (the globals Rust and the pages share), `look.slint`, `format.slint` (dates,
+  `telegram.slint` and `downloads.slint` (the globals Rust and the pages share), `look.slint`, `format.slint` (dates,
   counts and kinds of message in the UI language), `widgets.slint` and `chat.slint` (shared parts),
   `viewer.slint` (the media viewer, over the whole window), `pages/`, and the three themes' folders.
 

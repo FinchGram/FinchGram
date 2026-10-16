@@ -30,8 +30,9 @@ export enum Connection { waiting-for-network, connecting-to-proxy, connecting, u
 // colours, type and shapes from Look (look.slint). Workbench is the default.
 export enum Theme { workbench, broadsheet, terminal }
 
-// What fills the window. Until Telegram is ready, "chats" shows the login pages instead.
-export enum Page { chats, settings, profile }
+// What fills the window. Until Telegram is ready, "chats" shows the login pages instead; settings
+// and downloads need no account.
+export enum Page { chats, settings, profile, downloads }
 
 // The categories of the settings page, in the design's order. Those without a setting FinchGram
 // has yet are shown greyed out.

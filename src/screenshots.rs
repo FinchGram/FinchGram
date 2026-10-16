@@ -1144,6 +1144,148 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
     app.set_page(Page::Settings);
 }
 
+/// The Downloads page as it is looked at: three servers, a folder of films with two files chosen,
+/// and a queue with a file on its way, one waiting, one stopped and one done.
+fn fill_downloads(ui: &MainWindow) {
+    let downloads = ui.global::<Downloads>();
+    let server = |name: &str, host: &str, status: ServerStatus| ServerRow { name: name.into(), host: host.into(), status };
+    let entry = |name: &str, folder: bool, icon: &str, date: &str, size: &str, selected: bool| FolderEntry {
+        name: name.into(),
+        folder,
+        icon: icon.into(),
+        date: date.into(),
+        size: size.into(),
+        selected,
+    };
+    let transfer = |id: i32, name: &str, icon: &str, state: TransferState, fraction: f32, done: &str, total: &str, speed: &str, seconds: i32, problem: Problem| TransferRow {
+        id,
+        name: name.into(),
+        icon: icon.into(),
+        state,
+        fraction,
+        done: done.into(),
+        total: total.into(),
+        speed: speed.into(),
+        seconds_left: seconds,
+        minutes_left: if seconds < 0 { -1 } else { (seconds + 59) / 60 },
+        problem,
+        detail: SharedString::new(),
+    };
+    downloads.set_servers(model(vec![
+        server("Home NAS", "nas.home", ServerStatus::Connected),
+        server("Studio", "files.studio.example", ServerStatus::Connected),
+        server("Seedbox", "box.example.net", ServerStatus::NotReachable),
+    ]));
+    downloads.set_current(0);
+    downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into()]));
+    downloads.set_title("2026".into());
+    downloads.set_folder_state(FolderState::Listed);
+    downloads.set_problem(Problem::None);
+    downloads.set_problem_detail(SharedString::new());
+    downloads.set_filter(SharedString::new());
+    downloads.set_has_entries(true);
+    downloads.set_entries(model(vec![
+        entry("Documentaries", true, "folder", "Sep 30", "", false),
+        entry("Shorts", true, "folder", "Aug 2", "", false),
+        entry("Dune Part Three (2026).mkv", false, "film-strip", "Sep 30", "4.4 GB", true),
+        entry("Dune Part Three (2026).srt", false, "file-text", "Sep 30", "90 KB", false),
+        entry("poster.jpg", false, "file-image", "Sep 29", "2.4 MB", true),
+        entry("soundtrack.zip", false, "file-zip", "Sep 28", "48 MB", false),
+        entry("notes.pdf", false, "file-pdf", "Mar 3", "1.1 MB", false),
+    ]));
+    downloads.set_selected_count(2);
+    downloads.set_selected_size("4.4 GB".into());
+    downloads.set_can_open(false);
+    downloads.set_all_selected(false);
+    downloads.set_some_selected(true);
+    downloads.set_queue(model(vec![
+        transfer(1, "Dune Part Three (2026).mkv", "film-strip", TransferState::Active, 0.38, "4.1 GB", "10.8 GB", "24.3 MB/s", 275, Problem::None),
+        transfer(2, "poster.jpg", "file-image", TransferState::Waiting, 0.0, "", "2.4 MB", "", -1, Problem::None),
+        transfer(3, "soundtrack.zip", "file-zip", TransferState::Stopped, 0.25, "12 MB", "48 MB", "", -1, Problem::Connection),
+        transfer(4, "notes.pdf", "file-pdf", TransferState::Done, 1.0, "1.1 MB", "1.1 MB", "", -1, Problem::None),
+    ]));
+    downloads.set_active_count(1);
+    downloads.set_queue_open(true);
+    downloads.set_folder_label("~/Downloads/FinchGram".into());
+    downloads.set_connections(12);
+    downloads.set_form_open(false);
+    downloads.set_form_editing(false);
+    downloads.set_form_error(FormError::None);
+    downloads.set_test_state(TestState::None);
+}
+
+/// The Downloads page's scenes: browsing, the queue hidden, a file's menu, the folder loading,
+/// empty and unreadable, the form for a new server and for one being edited, and no server yet.
+fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: &dyn Fn(&str) -> String) {
+    let app = ui.global::<AppState>();
+    let downloads = ui.global::<Downloads>();
+    fill_downloads(ui);
+    app.set_page(Page::Downloads);
+    save(window, &name("downloads"));
+    downloads.set_queue_open(false);
+    save(window, &name("downloads-collapsed"));
+    downloads.set_queue_open(true);
+    // A right click on the first file, Dune: its menu.
+    let (x, y) = match theme {
+        Theme::Workbench => (520.0, 309.0),
+        Theme::Broadsheet => (520.0, 334.0),
+        Theme::Terminal => (520.0, 305.0),
+    };
+    right_click(window, x, y);
+    save(window, &name("downloads-menu"));
+    escape(window);
+    downloads.set_folder_state(FolderState::Loading);
+    save(window, &name("downloads-loading"));
+    downloads.set_folder_state(FolderState::Listed);
+    downloads.set_has_entries(false);
+    downloads.set_entries(model(Vec::new()));
+    downloads.set_selected_count(0);
+    downloads.set_some_selected(false);
+    downloads.set_title("Shorts".into());
+    downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into(), "2026".into()]));
+    save(window, &name("downloads-empty"));
+    downloads.set_folder_state(FolderState::Error);
+    downloads.set_problem(Problem::Unreachable);
+    downloads.set_problem_detail("nas.home".into());
+    save(window, &name("downloads-error"));
+    downloads.set_folder_state(FolderState::Listed);
+    // The form: a new server, then Home NAS being edited after a test that worked.
+    downloads.set_form_open(true);
+    downloads.set_form_editing(false);
+    downloads.set_form_name(SharedString::new());
+    downloads.set_form_address(SharedString::new());
+    downloads.set_form_username(SharedString::new());
+    downloads.set_form_password(SharedString::new());
+    save(window, &name("downloads-add"));
+    downloads.set_form_editing(true);
+    downloads.set_form_name("Home NAS".into());
+    downloads.set_form_address("https://nas.home:5006/dav".into());
+    downloads.set_form_username("yumin".into());
+    downloads.set_form_password("correct horse".into());
+    downloads.set_test_state(TestState::Ok);
+    downloads.set_test_folders(12);
+    downloads.set_test_files(3);
+    downloads.set_test_ranges(true);
+    downloads.set_test_probed(true);
+    save(window, &name("downloads-edit"));
+    downloads.set_test_state(TestState::Failed);
+    downloads.set_test_problem(Problem::Password);
+    downloads.set_test_detail(SharedString::new());
+    save(window, &name("downloads-edit-refused"));
+    downloads.set_test_state(TestState::None);
+    downloads.set_form_open(false);
+    // No server yet.
+    downloads.set_servers(model(Vec::new()));
+    downloads.set_current(-1);
+    downloads.set_queue(model(Vec::new()));
+    downloads.set_active_count(0);
+    save(window, &name("downloads-none"));
+    // Back to the page as it was, but with nothing on its way: the chat windows' pictures that
+    // follow show the download icon without its dot.
+    fill_downloads(ui);
+    downloads.set_active_count(0);
+}
+
 #[test]
 #[ignore = "takes over Slint's platform; run with: cargo test screenshots -- --ignored"]
 fn screenshots() {
@@ -1312,6 +1454,7 @@ fn screenshots() {
             ai_access(&ui, &window, &name);
             app.set_page(Page::Profile);
             save(&window, &name("profile"));
+            downloads(&ui, &window, theme, &name);
             app.set_page(Page::Chats);
         }
     }
@@ -1363,6 +1506,9 @@ fn screenshots() {
     save(&window, "zh-workbench-settings-two-step");
     password.set_open(false);
     ai_access(&ui, &window, &|page: &str| format!("zh-workbench-{page}"));
+    fill_downloads(&ui);
+    app.set_page(Page::Downloads);
+    save(&window, "zh-workbench-downloads");
     app.set_page(Page::Chats);
 
     // The other languages, light, Workbench: the chat window and Settings → General, every script

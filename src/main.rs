@@ -4,6 +4,7 @@
 //! through finchgram-tdlib, a separate program next to this executable (src/telegram/,
 //! docs/architecture.md).
 
+mod downloads;
 mod fonts;
 mod i18n;
 mod images;
@@ -136,6 +137,7 @@ fn main() -> Result<(), slint::PlatformError> {
     state.set_send_with_enter(settings.borrow().send_with_enter);
     show_launch_at_login(&state);
     screenshot::connect(&ui, settings.clone());
+    downloads::connect(&ui, settings.clone());
     telegram::connect_viewer_settings(&ui, settings.clone());
     telegram::connect_chat_order(&ui, settings.clone());
     state.on_check_launch_at_login({

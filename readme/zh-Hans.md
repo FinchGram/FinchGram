@@ -21,6 +21,9 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
   打码显示、只能打开一次，和 Telegram 官方应用一样。
 - **媒体。** 照片和视频在盖住整个窗口的查看器里打开，可以翻看同一相册的其他图片；视频用从源码构建的 mpv
   播放。聊天允许时可以保存到“下载”。
+- **下载。** 媒体中心里的 WebDAV 客户端：你的 NAS、seedbox、PikPak、Alist/OpenList，或者用 `vget serve` 共享的
+  文件夹，在 app 里直接浏览。文件多连接并发下载，停了能接着来；照片和视频下完直接在查看器里打开；密码存在 macOS
+  钥匙串里。见 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
 - **发送。** 照片、视频和文件可以从回形针菜单发送，也可以拖进窗口或直接粘贴。发出去之前先在一张卡片里显示：
   可以加说明文字，按照片发或按文件发，最多十个合成一个相册，私聊里可以设自毁计时器，也可以静默发送。
 - **截图。** 输入栏里的剪刀或 ⌘⇧A 会定住屏幕：取一个窗口或拖一个选区，画上方框、椭圆、箭头、画笔、文字和马赛克，
@@ -74,6 +77,17 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
 <p align="center"><img src="../docs/screenshots/workbench-light-settings-ai.png" width="800" alt="设置 → AI 访问"></p>
 
 FinchGram 是一个 MCP 服务端：你 Mac 上的 AI 助手应用（Claude Desktop、Claude Code、Cursor……）可以通过正在运行的 FinchGram、用你自己的账号读你的 Telegram 并在其中操作。设置 → AI 访问 是开关，默认关着。在那里你选助手能看到哪些聊天（除秘密聊天外的全部，或只限选定的）、能写什么（以你的名义发消息、只留草稿由你发、或什么都不写），也能看到哪些应用连接过——名字是 macOS 报告的——以及它们要过什么。应用第一次连接时，FinchGram 会问你允不允许。读取不会标已读，秘密聊天永远不给看，也不为 AI 保存任何东西。页面上备好了贴进 Claude Code 或 Claude Desktop 的那一行；细节见 [docs/mcp.zh-Hans.md](../docs/mcp.zh-Hans.md)。
+
+## 下载页面
+
+<p align="center"><img src="../docs/screenshots/zh-workbench-downloads.png" width="800" alt="下载页面"></p>
+
+显示 → 下载，或者齿轮上方的下载图标。添加一个 WebDAV 服务器（NAS、seedbox、PikPak、Alist/OpenList、Nextcloud、
+`rclone serve webdav`，或者用 `vget serve` 共享的文件夹），浏览它的文件夹，勾选文件或整个文件夹拿走，文件就到了
+~/Downloads/FinchGram：每个文件切成 8 MB 的块、最多十二条连接并发，重试时从停下的地方接着来，和维护者的命令行
+工具 vget 一个做法。右边的队列显示速度和还剩多少；“打开”把照片或视频取下来后在查看器里显示。FinchGram 只从服务器
+读，密码进 macOS 钥匙串，从不写进文件。细节和还没做的部分见 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
+（自签名证书会被拒绝：局域网用 http，或者配正规证书）。
 
 ## 怎么做的
 
@@ -132,7 +146,7 @@ TDLib 的数据库和下载的文件在 `~/Library/Application Support/FinchGram
   tdlib.yml              # 在干净的机器上构建 finchgram-tdlib；tdlib-* tag 发布成 release
 Cargo.toml
 build.rs                 # 编译 ui/app.slint，打包 lang/，把 vendor/tdlib/bin/ 复制到可执行文件旁边
-docs/                    # architecture.md、conventions.md、drag-and-drop.md、media-files.md、skia.md（以及中文版）
+docs/                    # architecture.md、conventions.md、downloads.md、drag-and-drop.md、media-files.md、skia.md（以及中文版）
   screenshots/           #   README 里的图，来自截图测试（scripts/readme-pictures.sh）
 lang/                    # 翻译：lang/<代码>/LC_MESSAGES/finchgram.po，编译进二进制
 readme/                  # 这份 README 的其他语言版本
@@ -168,6 +182,10 @@ src/
   platform/              # 随操作系统而不同的部分
   player/                # 用 libmpv 播放视频，经 OpenGL 画进窗口
   screenshot/            # 截图工具：截取、覆盖层、标注、成图
+  downloads/             # 下载页面：WebDAV 客户端，带多连接下载引擎
+    webdav.rs            #   PROPFIND 列目录、地址、Basic 认证
+    transfer.rs          #   一个文件分块多连接下载，停了接着来
+    mod.rs               #   页面状态、线程、队列、服务器表单
   update.rs              # 自动更新：GitHub Releases、校验签名、替换、重启
   settings.rs            # 用户偏好（settings.toml）
   i18n.rs                # 界面语言：保存的选择，否则跟系统，否则英文
@@ -177,11 +195,12 @@ ui/
   app.slint              # 主窗口：菜单，以及显示哪个页面
   state.slint            # app 的状态，Rust 和页面共用
   telegram.slint         # Telegram 的内容：账号、登录、聊天、消息
+  downloads.slint        # 下载页面的状态：服务器、文件夹、队列
   look.slint             # 当前主题的颜色、字体和形状，给共用页面用
   format.slint           # 按界面语言写出的日期、数量和消息类型
   widgets.slint          # 共用的小部件；chat.slint 是聊天窗口共用的部分
   viewer.slint           # 覆盖整个窗口的媒体查看器，三套主题各有样式
-  pages/                 # 三套主题共用的页面：登录、设置、个人资料
+  pages/                 # 三套主题共用的页面：登录、设置、个人资料、下载
   workbench/             # 工作台主题的聊天窗口（默认）
   broadsheet/            # 报纸主题的聊天窗口
   terminal/              # 终端主题的聊天窗口

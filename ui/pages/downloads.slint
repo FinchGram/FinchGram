@@ -1,0 +1,1615 @@
+// Downloads, from the design's third round of the shared pages ("FinchGram Desktop 下载"): the
+// WebDAV servers on the left, the folder being looked at in the middle, the queue of downloads
+// on the right, which hides. One page for the three themes, in Look's colours and shapes; Rust
+// fills the Downloads global (src/downloads/).
+import { AppState, Page } from "../state.slint";
+import { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError } from "../downloads.slint";
+import { Look } from "../look.slint";
+import { Icon, Spinner, Field, PrimaryButton, Heading, Paragraph, Link } from "../widgets.slint";
+import { PageFrame } from "frame.slint";
+import { SmallButton } from "rows.slint";
+import { KeyScope } from "../chat.slint";
+
+// How the page words a server's state, a problem and a download's progress.
+export global DownloadWords {
+    public pure function status(status: ServerStatus) -> string {
+        if status == ServerStatus.connected { return @tr("Connected"); }
+        if status == ServerStatus.checking { return @tr("Checking…"); }
+        if status == ServerStatus.password-rejected { return @tr("Password rejected"); }
+        if status == ServerStatus.not-reachable { return @tr("Not reachable"); }
+        return "";
+    }
+
+    // Why a folder could not be read, as a sentence of its own.
+    public pure function problem(problem: Problem, detail: string) -> string {
+        if problem == Problem.password { return @tr("The server refused the password (401)"); }
+        if problem == Problem.forbidden { return @tr("The server refused access (403)"); }
+        if problem == Problem.unreachable { return @tr("Cannot reach {0}", detail); }
+        if problem == Problem.http { return @tr("The server answered HTTP {0}", detail); }
+        if problem == Problem.unreadable { return @tr("The server did not answer with a WebDAV listing"); }
+        if problem == Problem.connection { return @tr("The connection was lost"); }
+        if problem == Problem.disk { return @tr("The file could not be written"); }
+        return "";
+    }
+
+    // Why a download stopped, within "Stopped: …".
+    public pure function reason(problem: Problem, detail: string) -> string {
+        if problem == Problem.password { return @tr("the server refused the password (401)"); }
+        if problem == Problem.forbidden { return @tr("the server refused access (403)"); }
+        if problem == Problem.http { return @tr("the server answered HTTP {0}", detail); }
+        if problem == Problem.unreadable { return @tr("the server did not answer with the file"); }
+        if problem == Problem.disk { return @tr("the file could not be written"); }
+        return @tr("the server closed the connection");
+    }
+
+    public pure function transfer(row: TransferRow) -> string {
+        if row.state == TransferState.waiting { return @tr("Waiting · {0}", row.total); }
+        if row.state == TransferState.done { return @tr("Done · {0}", row.total); }
+        if row.state == TransferState.stopped { return @tr("Stopped: {0}. {1} of {2} kept.", reason(row.problem, row.detail), row.done, row.total); }
+        if row.speed == "" { return @tr("{0} of {1}", row.done, row.total); }
+        return @tr("{0} of {1} · {2} · {3}", row.done, row.total, row.speed, left(row.seconds-left, row.minutes-left));
+    }
+
+    public pure function left(seconds: int, minutes: int) -> string {
+        if seconds < 0 { return @tr("estimating…"); }
+        if seconds < 60 { return @tr("{0} s left", seconds); }
+        return @tr("{0} min left", minutes);
+    }
+
+    // What Test connection found.
+    public pure function test-result() -> string {
+        if Downloads.test-state == TestState.failed {
+            return problem(Downloads.test-problem, Downloads.test-detail);
+        }
+        if !Downloads.test-probed {
+            return @tr("Reached: {0} folders and {1} files at the root.", Downloads.test-folders, Downloads.test-files);
+        }
+        if Downloads.test-ranges {
+            return @tr("Reached: {0} folders and {1} files at the root. Ranges supported, so downloads can use several connections.", Downloads.test-folders, Downloads.test-files);
+        }
+        return @tr("Reached: {0} folders and {1} files at the root. No ranges, so each file comes over one connection.", Downloads.test-folders, Downloads.test-files);
+    }
+
+    public pure function form-error(error: FormError) -> string {
+        if error == FormError.name { return @tr("Give the server a name."); }
+        if error == FormError.address { return @tr("The address needs to start with http:// or https://."); }
+        return "";
+    }
+}
+
+// A 20 px box with a tick, or "[x]" / "[ ]" / "[-]" in Terminal.
+component CheckBox {
+    in property <bool> on;
+    in property <bool> some;        // a few of them, not all
+    width: Look.terminal ? 28px : 20px;
+    height: 20px;
+
+    if !Look.terminal: Rectangle {
+        width: 20px;
+        height: 20px;
+        border-radius: Look.button-radius;
+        background: root.on || root.some ? Look.accent : transparent;
+        border-width: root.on || root.some ? 0px : 1.5px;
+        border-color: Look.faint;
+        if root.on || root.some: Icon {
+            name: root.some && !root.on ? "minus" : "check";
+            size: 14px;
+            color: Look.on-accent;
+            duotone: false;
+        }
+    }
+    if Look.terminal: Text {
+        text: root.on ? "[x]" : root.some ? "[-]" : "[ ]";
+        color: root.on || root.some ? Look.accent : Look.faint;
+        font-family: Look.mono;
+        font-size: 14px;
+        vertical-alignment: center;
+        height: parent.height;
+    }
+}
+
+// An icon, between brackets in Terminal.
+component ToolIcon {
+    in property <string> name;
+    in property <length> size: 18px;
+    in property <color> color: Look.muted;
+
+    HorizontalLayout {
+        alignment: center;
+        if Look.terminal: Text {
+            text: "[";
+            color: root.color;
+            font-family: Look.mono;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.name;
+                size: root.size;
+                color: root.color;
+            }
+        }
+        if Look.terminal: Text {
+            text: "]";
+            color: root.color;
+            font-family: Look.mono;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// A 32 px button with an icon: refresh.
+component ToolButton inherits Rectangle {
+    in property <string> icon;
+    callback clicked();
+    width: max(32px, inner.preferred-width + 8px);
+    height: 32px;
+    border-radius: Look.button-radius;
+    background: touch.has-hover ? Look.sel : transparent;
+
+    inner := ToolIcon {
+        width: parent.width;
+        height: parent.height;
+        name: root.icon;
+        size: 18px;
+        color: Look.muted;
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A small word button: "Show in Finder", "Retry" in the queue.
+component TinyButton inherits Rectangle {
+    in property <string> text;
+    callback clicked();
+    height: 26px;
+    width: label.preferred-width + 20px;
+    border-radius: Look.button-radius;
+    background: touch.has-hover ? Look.sel : Look.bg;
+    border-width: 1px;
+    border-color: Look.line-strong;
+
+    label := Text {
+        text: root.text;
+        color: Look.text;
+        font-size: 12px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        width: parent.width;
+        height: parent.height;
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A server in the left column: its name, its host and whether it answers.
+component ServerItem inherits Rectangle {
+    in property <ServerRow> server;
+    in property <int> index;
+    in property <bool> active;
+    callback menu(length, length);
+    property <color> ink: active && !Look.broadsheet ? Look.accent-ink : Look.text;
+    height: content.preferred-height;
+    border-radius: Look.radius;
+    background: active || touch.has-hover ? Look.sel : transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Downloads.select-server(root.index);
+        }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
+        }
+    }
+
+    content := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 9px;
+        padding-bottom: 9px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: start;
+            padding-top: 1px;
+            Icon {
+                name: "hard-drives";
+                size: 19px;
+                color: root.ink;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            alignment: start;
+            Text {
+                text: root.server.name;
+                color: root.ink;
+                font-size: 14px;
+                font-weight: root.active ? 600 : 400;
+                overflow: elide;
+            }
+            HorizontalLayout {
+                spacing: 5px;
+                alignment: start;
+                Text {
+                    text: root.server.host + " ·";
+                    color: Look.faint;
+                    font-size: 12px;
+                    line-height-factor: Look.leading(1.45);
+                    overflow: elide;
+                }
+                if root.server.status == ServerStatus.checking: VerticalLayout {
+                    alignment: center;
+                    Spinner {
+                        size: 11px;
+                        color: Look.faint;
+                    }
+                }
+                Text {
+                    text: DownloadWords.status(root.server.status);
+                    color: root.server.status == ServerStatus.password-rejected ? Look.danger : Look.faint;
+                    font-size: 12px;
+                    line-height-factor: Look.leading(1.45);
+                }
+            }
+        }
+    }
+}
+
+// The last row of the left column: a new server.
+component AddServerRow inherits Rectangle {
+    property <bool> active: Downloads.form-open && !Downloads.form-editing;
+    property <color> ink: active ? (Look.broadsheet ? Look.text : Look.accent-ink) : Look.muted;
+    height: content.preferred-height;
+    border-radius: Look.radius;
+    background: active || touch.has-hover ? Look.sel : transparent;
+
+    content := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 9px;
+        padding-bottom: 9px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "plus";
+                size: 19px;
+                color: root.ink;
+            }
+        }
+        Text {
+            text: @tr("Add server");
+            color: root.ink;
+            font-size: 14px;
+            font-weight: root.active ? 600 : 400;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Downloads.add-server();
+        }
+    }
+}
+
+// The box that narrows the folder's listing to the names matching what is typed.
+component FilterBox inherits Rectangle {
+    width: 200px;
+    height: 32px;
+    border-radius: Look.radius;
+    background: Look.field;
+    border-width: Look.field-border;
+    border-color: Look.line;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "magnifying-glass";
+                size: 15px;
+                color: Look.faint;
+                duotone: false;
+            }
+        }
+        Rectangle {
+            horizontal-stretch: 1;
+            Text {
+                visible: input.text == "";
+                text: @tr("Filter this folder");
+                color: Look.faint;
+                font-size: 14px;
+                vertical-alignment: center;
+                width: parent.width;
+                height: parent.height;
+                overflow: elide;
+            }
+            input := TextInput {
+                width: parent.width;
+                height: parent.height;
+                text <=> Downloads.filter;
+                single-line: true;
+                color: Look.text;
+                font-size: 14px;
+                vertical-alignment: center;
+                selection-background-color: Look.input-sel;
+                selection-foreground-color: Look.text;
+                text-cursor-width: Look.cursor-width;
+                edited => {
+                    Downloads.set-filter(self.text);
+                }
+            }
+        }
+    }
+}
+
+// The button that shows or hides the queue: "Downloads", with how many are on their way.
+component QueueButton inherits Rectangle {
+    property <bool> shown: Downloads.queue-open && Downloads.queue.length > 0;
+    property <bool> usable: Downloads.queue.length > 0;
+    property <color> ink: shown ? (Look.broadsheet ? Look.text : Look.accent-ink) : Look.text;
+    height: 32px;
+    width: content.preferred-width;
+    border-radius: Look.button-radius;
+    background: shown ? Look.sel : Look.bg;
+    border-width: shown ? 0px : 1px;
+    border-color: Look.line-strong;
+    opacity: usable ? 1 : 0.5;
+
+    content := HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 12px;
+        spacing: 7px;
+        if Look.terminal: Text {
+            text: "[";
+            color: root.ink;
+            font-family: Look.mono;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "download-simple";
+                size: 17px;
+                color: root.ink;
+            }
+        }
+        Text {
+            text: @tr("Downloads");
+            color: root.ink;
+            font-size: 14px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+        if Downloads.active-count > 0: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                height: 18px;
+                width: max(18px, count.preferred-width + 10px);
+                border-radius: 9px;
+                background: Look.accent;
+                count := Text {
+                    text: "" + Downloads.active-count;
+                    color: Look.on-accent;
+                    font-size: 11px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    width: parent.width;
+                    height: parent.height;
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.shown ? "caret-right" : "caret-left";
+                size: 13px;
+                color: root.ink;
+                opacity: 0.7;
+                duotone: false;
+            }
+        }
+        if Look.terminal: Text {
+            text: "]";
+            color: root.ink;
+            font-family: Look.mono;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+
+    TouchArea {
+        enabled: root.usable;
+        mouse-cursor: pointer;
+        clicked => {
+            Downloads.toggle-queue();
+        }
+    }
+}
+
+// The heading of a column of the listing: "NAME", "name".
+component ColumnLabel inherits Text {
+    in property <string> label;
+    text: Look.workbench ? label.to-uppercase() : Look.terminal ? label.to-lowercase() : label;
+    font-size: Look.section-size;
+    font-weight: Look.section-weight;
+    letter-spacing: AppState.language == "ar" ? 0px : Look.section-spacing;
+    color: Look.faint;
+    vertical-alignment: center;
+}
+
+// A folder or a file of the listing.
+component EntryRow inherits Rectangle {
+    in property <FolderEntry> entry;
+    callback menu(length, length);
+    height: content.preferred-height;
+    background: entry.selected || touch.has-hover ? Look.sel : transparent;
+
+    Rectangle {
+        y: 0;
+        height: 1px;
+        width: parent.width;
+        background: Look.line;
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            if root.entry.folder {
+                Downloads.open-folder(root.entry.name);
+            } else {
+                Downloads.toggle(root.entry.name);
+            }
+        }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
+        }
+    }
+
+    content := HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 11px;
+        padding-bottom: 11px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: Look.terminal ? 28px : 20px;
+                height: 20px;
+                if root.entry.folder: Icon {
+                    x: (parent.width - self.width) / 2;
+                    y: 3px;
+                    name: "caret-right";
+                    size: 14px;
+                    color: Look.faint;
+                    duotone: false;
+                }
+                if !root.entry.folder: CheckBox {
+                    on: root.entry.selected;
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.entry.icon;
+                size: 20px;
+                color: Look.accent;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.entry.name;
+            color: Look.text;
+            font-size: 14px;
+            font-weight: root.entry.folder ? 500 : 400;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        Text {
+            width: 96px;
+            text: root.entry.date;
+            color: Look.muted;
+            font-size: 13px;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+        Text {
+            width: 84px;
+            text: root.entry.folder ? "—" : root.entry.size;
+            color: Look.muted;
+            font-size: 13px;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// A download in the queue: on its way, waiting, done or stopped.
+component TransferItem inherits Rectangle {
+    in property <TransferRow> item;
+    callback menu(length, length);
+    property <bool> live: item.state == TransferState.active || item.state == TransferState.waiting;
+    height: content.preferred-height;
+    border-radius: Look.radius;
+    background: touch.has-hover ? Look.sel : transparent;
+
+    touch := TouchArea {
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                root.menu(self.absolute-position.x + self.mouse-x, self.absolute-position.y + self.mouse-y);
+            }
+        }
+    }
+
+    content := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: start;
+            padding-top: 1px;
+            Icon {
+                name: root.item.icon;
+                size: 20px;
+                color: Look.accent;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 5px;
+            alignment: start;
+            Text {
+                text: root.item.name;
+                color: Look.text;
+                font-size: 13px;
+                font-weight: 500;
+                overflow: elide;
+            }
+            if root.item.state == TransferState.active: Rectangle {
+                height: 4px;
+                border-radius: 2px;
+                background: Look.off;
+                Rectangle {
+                    x: 0;
+                    width: parent.width * root.item.fraction;
+                    height: parent.height;
+                    border-radius: 2px;
+                    background: Look.accent;
+                }
+            }
+            Paragraph {
+                text: DownloadWords.transfer(root.item);
+                color: root.item.state == TransferState.stopped ? Look.danger : Look.muted;
+                font-size: 12px;
+                line-height-factor: Look.leading(1.45);
+            }
+        }
+        if root.live: VerticalLayout {
+            alignment: start;
+            Rectangle {
+                width: max(24px, cross.preferred-width + 4px);
+                height: 24px;
+                border-radius: Look.button-radius;
+                cross := ToolIcon {
+                    width: parent.width;
+                    height: parent.height;
+                    name: "x";
+                    size: 15px;
+                    color: cancel.has-hover ? Look.text : Look.muted;
+                }
+                cancel := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Downloads.cancel(root.item.id);
+                    }
+                }
+            }
+        }
+        if root.item.state == TransferState.done: VerticalLayout {
+            alignment: start;
+            TinyButton {
+                text: @tr("Show in Finder");
+                clicked => {
+                    Downloads.show-in-finder(root.item.id);
+                }
+            }
+        }
+        if root.item.state == TransferState.stopped: VerticalLayout {
+            alignment: start;
+            TinyButton {
+                text: @tr("Retry");
+                clicked => {
+                    Downloads.retry(root.item.id);
+                }
+            }
+        }
+    }
+}
+
+// One entry of a context menu.
+component MenuEntry inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <bool> enabled: true;
+    in property <bool> danger;
+    callback chosen();
+    height: 34px;
+    border-radius: Look.button-radius;
+    background: touch.has-hover && enabled ? Look.sel : transparent;
+    opacity: enabled ? 1 : 0.4;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 17px;
+                color: root.danger ? Look.danger : Look.text;
+            }
+        }
+        Text {
+            text: root.label;
+            color: root.danger ? Look.danger : Look.text;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.chosen();
+        }
+    }
+}
+
+// A field of the form: its label above, a hint below.
+component FormField {
+    in property <string> label;
+    in property <string> hint;
+    in property <string> placeholder;
+    in-out property <string> text;
+    in property <InputType> input-type: InputType.text;
+    callback accepted();
+
+    VerticalLayout {
+        spacing: 6px;
+        Text {
+            text: root.label;
+            color: Look.muted;
+            font-size: 13px;
+        }
+        Field {
+            text <=> root.text;
+            placeholder: root.placeholder;
+            input-type: root.input-type;
+            accepted => {
+                root.accepted();
+            }
+        }
+        if root.hint != "": Paragraph {
+            text: root.hint;
+            color: Look.faint;
+            font-size: 12px;
+        }
+    }
+}
+
+export component DownloadsPage inherits Rectangle {
+    // The context menu: what it is for, and where.
+    property <int> menu-kind;           // 0 none, 1 a server, 2 an entry of the listing, 3 a download
+    property <int> menu-index;          // the server
+    property <string> menu-name;        // the entry
+    property <bool> menu-folder;
+    property <int> menu-id;             // the download
+    property <TransferState> menu-state;
+    property <length> menu-x;
+    property <length> menu-y;
+    property <bool> queue-shown: Downloads.queue-open && Downloads.queue.length > 0;
+    property <bool> has-head: !Downloads.form-open && Downloads.current >= 0;
+    property <bool> listing: has-head && Downloads.folder-state == FolderState.listed && Downloads.has-entries;
+    property <bool> empty: has-head && Downloads.folder-state == FolderState.listed && !Downloads.has-entries;
+    property <bool> menu-live: menu-state == TransferState.active || menu-state == TransferState.waiting;
+    background: Look.bg;
+
+    init => {
+        Downloads.opened();
+    }
+
+    function show-menu(kind: int, x: length, y: length) {
+        root.menu-kind = kind;
+        root.menu-x = max(0px, min(x - root.absolute-position.x, root.width - 216px));
+        root.menu-y = max(0px, min(y - root.absolute-position.y, root.height - 160px));
+    }
+
+    function close-menu() {
+        root.menu-kind = 0;
+    }
+
+    PageFrame {
+        title: @tr("Downloads");
+
+        // The servers.
+        Rectangle {
+            width: 260px;
+            background: Look.side;
+
+            Flickable {
+                width: parent.width;
+                height: parent.height;
+                mouse-drag-pan-enabled: false;
+                content-height: max(self.height, servers.preferred-height);
+
+                servers := VerticalLayout {
+                    width: parent.width;
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    padding-top: 10px;
+                    padding-bottom: 16px;
+                    spacing: 2px;
+                    alignment: start;
+                    // Back to the chats (or to logging in).
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-bottom: 8px;
+                        alignment: start;
+                        Link {
+                            text: @tr("Chats");
+                            icon: "arrow-left";
+                            font-size: 13px;
+                            clicked => {
+                                AppState.page = Page.chats;
+                            }
+                        }
+                    }
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-bottom: 12px;
+                        Heading {
+                            label: @tr("WebDAV servers");
+                            size: Look.nav-heading-size;
+                        }
+                    }
+                    for server[index] in Downloads.servers: ServerItem {
+                        server: server;
+                        index: index;
+                        active: Downloads.form-open ? Downloads.form-editing && Downloads.current == index : Downloads.current == index;
+                        menu(x, y) => {
+                            root.menu-index = index;
+                            root.show-menu(1, x, y);
+                        }
+                    }
+                    Rectangle { height: 4px; }
+                    AddServerRow { }
+                }
+            }
+
+            Rectangle {
+                x: parent.width - 1px;
+                width: 1px;
+                background: Look.line;
+            }
+        }
+
+        // The folder being looked at: its listing, or what stands in for it.
+        Flickable {
+            horizontal-stretch: 1;
+            mouse-drag-pan-enabled: false;
+            content-height: max(self.height, middle.preferred-height);
+
+            middle := VerticalLayout {
+                width: parent.width;
+                padding-left: 32px;
+                padding-right: 32px;
+                padding-top: 40px;
+                padding-bottom: 28px;
+                spacing: 20px;
+                alignment: start;
+
+                if root.has-head: VerticalLayout {
+                    spacing: 6px;
+                    // The way here: the server, then the folders above this one.
+                    HorizontalLayout {
+                        spacing: 8px;
+                        alignment: start;
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "hard-drives";
+                                size: 20px;
+                                color: Look.muted;
+                            }
+                        }
+                        for crumb[index] in Downloads.crumbs: HorizontalLayout {
+                            spacing: 8px;
+                            if index > 0: Text {
+                                text: "›";
+                                color: Look.faint;
+                                font-size: Look.nav-heading-size;
+                                vertical-alignment: center;
+                            }
+                            Rectangle {
+                                width: crumb-label.preferred-width;
+                                crumb-label := Text {
+                                    text: crumb;
+                                    color: crumb-touch.has-hover ? Look.accent-ink : Look.text;
+                                    font-size: Look.nav-heading-size;
+                                    font-weight: 600;
+                                    letter-spacing: Look.heading-tracking * Look.nav-heading-size;
+                                    vertical-alignment: center;
+                                    height: parent.height;
+                                }
+                                crumb-touch := TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => {
+                                        Downloads.go-to(index);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    // The folder's name, the filter, refresh, and the queue's button.
+                    HorizontalLayout {
+                        spacing: 8px;
+                        Heading {
+                            horizontal-stretch: 1;
+                            label: Downloads.title;
+                            wrap: no-wrap;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            FilterBox { }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            ToolButton {
+                                icon: "arrows-clockwise";
+                                clicked => {
+                                    Downloads.refresh();
+                                }
+                            }
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            QueueButton { }
+                        }
+                    }
+                }
+
+                if root.listing || (root.empty && Downloads.filter != ""): Rectangle {
+                    height: card.preferred-height;
+                    border-radius: Look.radius;
+                    background: Look.field;
+                    border-width: Look.field-border;
+                    border-color: Look.line;
+                    clip: true;
+
+                    card := VerticalLayout {
+                        HorizontalLayout {
+                            padding-left: 16px;
+                            padding-right: 16px;
+                            padding-top: 10px;
+                            padding-bottom: 10px;
+                            spacing: 12px;
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle {
+                                    width: Look.terminal ? 28px : 20px;
+                                    height: 20px;
+                                    CheckBox {
+                                        on: Downloads.all-selected;
+                                        some: Downloads.some-selected;
+                                    }
+                                    TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => {
+                                            Downloads.toggle-all();
+                                        }
+                                    }
+                                }
+                            }
+                            Rectangle { width: 20px; }
+                            ColumnLabel {
+                                horizontal-stretch: 1;
+                                label: @tr("Name");
+                            }
+                            ColumnLabel {
+                                width: 96px;
+                                label: @tr("Modified");
+                                horizontal-alignment: right;
+                            }
+                            ColumnLabel {
+                                width: 84px;
+                                label: @tr("Size");
+                                horizontal-alignment: right;
+                            }
+                        }
+                        for entry in Downloads.entries: EntryRow {
+                            entry: entry;
+                            menu(x, y) => {
+                                root.menu-name = entry.name;
+                                root.menu-folder = entry.folder;
+                                root.show-menu(2, x, y);
+                            }
+                        }
+                        if Downloads.entries.length == 0: Rectangle {
+                            height: no-match.preferred-height + 36px;
+                            Rectangle {
+                                y: 0;
+                                height: 1px;
+                                width: parent.width;
+                                background: Look.line;
+                            }
+                            no-match := Paragraph {
+                                x: 16px;
+                                y: 18px;
+                                width: parent.width - 32px;
+                                text: @tr("Nothing in this folder matches “{0}”", Downloads.filter);
+                                color: Look.faint;
+                                font-size: 14px;
+                            }
+                        }
+                        if Downloads.selected-count > 0: Rectangle {
+                            height: foot.preferred-height;
+                            background: Look.side;
+                            Rectangle {
+                                y: 0;
+                                height: 1px;
+                                width: parent.width;
+                                background: Look.line;
+                            }
+                            foot := HorizontalLayout {
+                                padding-left: 16px;
+                                padding-right: 12px;
+                                padding-top: 10px;
+                                padding-bottom: 10px;
+                                spacing: 8px;
+                                Text {
+                                    horizontal-stretch: 1;
+                                    text: @tr("{0} selected · {1}", Downloads.selected-count, Downloads.selected-size);
+                                    color: Look.text;
+                                    font-size: 14px;
+                                    font-weight: 500;
+                                    vertical-alignment: center;
+                                    overflow: elide;
+                                }
+                                SmallButton {
+                                    text: @tr("Clear");
+                                    quiet: true;
+                                    clicked => {
+                                        Downloads.clear-selection();
+                                    }
+                                }
+                                if Downloads.can-open: SmallButton {
+                                    text: @tr("Open");
+                                    clicked => {
+                                        Downloads.open-selected();
+                                    }
+                                }
+                                SmallButton {
+                                    text: @tr("Download");
+                                    primary: true;
+                                    clicked => {
+                                        Downloads.download-selected();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if root.has-head && Downloads.folder-state == FolderState.loading: VerticalLayout {
+                    padding-top: 120px;
+                    alignment: start;
+                    HorizontalLayout {
+                        alignment: center;
+                        Spinner {
+                            size: 28px;
+                            color: Look.muted;
+                        }
+                    }
+                }
+
+                if root.empty && Downloads.filter == "": VerticalLayout {
+                    padding-top: 120px;
+                    spacing: 12px;
+                    alignment: start;
+                    HorizontalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "folder-open";
+                            size: 32px;
+                            color: Look.faint;
+                        }
+                    }
+                    Text {
+                        text: @tr("This folder is empty");
+                        color: Look.muted;
+                        font-size: 15px;
+                        horizontal-alignment: center;
+                    }
+                }
+
+                if root.has-head && Downloads.folder-state == FolderState.error: VerticalLayout {
+                    padding-top: 120px;
+                    spacing: 14px;
+                    alignment: start;
+                    HorizontalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "warning-circle";
+                            size: 32px;
+                            color: Look.danger;
+                        }
+                    }
+                    HorizontalLayout {
+                        alignment: center;
+                        Paragraph {
+                            max-width: 360px;
+                            text: DownloadWords.problem(Downloads.problem, Downloads.problem-detail);
+                            color: Look.text;
+                            font-size: 15px;
+                            horizontal-alignment: center;
+                        }
+                    }
+                    HorizontalLayout {
+                        alignment: center;
+                        SmallButton {
+                            text: @tr("Retry");
+                            clicked => {
+                                Downloads.refresh();
+                            }
+                        }
+                    }
+                }
+
+                // No server yet: what this page is for.
+                if !Downloads.form-open && Downloads.current < 0: HorizontalLayout {
+                    alignment: start;
+                    VerticalLayout {
+                        preferred-width: 520px;
+                        max-width: 520px;
+                        spacing: 18px;
+                        alignment: start;
+                        Heading {
+                            label: @tr("No WebDAV servers yet");
+                        }
+                        Paragraph {
+                            text: @tr("Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a folder you share with vget serve. Then browse it here and pick the files you want.");
+                            color: Look.muted;
+                            font-size: 15px;
+                            line-height-factor: Look.leading(1.6);
+                        }
+                        Paragraph {
+                            text: @tr("Cloud drives without WebDAV can be reached through OpenList. FinchGram only reads: nothing is uploaded, synced, renamed or deleted on the server.");
+                            color: Look.muted;
+                            font-size: 15px;
+                            line-height-factor: Look.leading(1.6);
+                        }
+                        HorizontalLayout {
+                            alignment: start;
+                            PrimaryButton {
+                                text: @tr("Add server");
+                                height: 42px;
+                                font-size: 15px;
+                                clicked => {
+                                    Downloads.add-server();
+                                }
+                            }
+                        }
+                        VerticalLayout {
+                            padding-top: 6px;
+                            spacing: 8px;
+                            alignment: start;
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: start;
+                                for word in ["Synology · QNAP", "PikPak", "Alist · OpenList"]: Rectangle {
+                                    height: 26px;
+                                    width: pill.preferred-width + 20px;
+                                    border-radius: Look.button-radius;
+                                    background: Look.soft;
+                                    pill := Text {
+                                        text: word;
+                                        color: Look.soft-ink;
+                                        font-size: 13px;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                        width: parent.width;
+                                        height: parent.height;
+                                    }
+                                }
+                            }
+                            HorizontalLayout {
+                                spacing: 8px;
+                                alignment: start;
+                                for word in ["rclone serve webdav", "vget serve", "Nextcloud"]: Rectangle {
+                                    height: 26px;
+                                    width: pill2.preferred-width + 20px;
+                                    border-radius: Look.button-radius;
+                                    background: Look.soft;
+                                    pill2 := Text {
+                                        text: word;
+                                        color: Look.soft-ink;
+                                        font-size: 13px;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                        width: parent.width;
+                                        height: parent.height;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Adding or editing a server.
+                if Downloads.form-open: HorizontalLayout {
+                    alignment: start;
+                    VerticalLayout {
+                        preferred-width: 480px;
+                        max-width: 480px;
+                        spacing: 20px;
+                        alignment: start;
+                        VerticalLayout {
+                            spacing: 6px;
+                            Heading {
+                                label: Downloads.form-editing ? @tr("Edit server") : @tr("Add WebDAV server");
+                            }
+                            Paragraph {
+                                text: @tr("The address of the WebDAV server, and the account it gave you. The password goes into your macOS Keychain, not into a file.");
+                                color: Look.muted;
+                                font-size: 15px;
+                                line-height-factor: Look.leading(1.55);
+                            }
+                        }
+                        FormField {
+                            label: @tr("Name");
+                            placeholder: "Home NAS";
+                            text <=> Downloads.form-name;
+                            accepted => {
+                                Downloads.submit-form();
+                            }
+                        }
+                        FormField {
+                            label: @tr("Address");
+                            placeholder: "https://nas.home:5006/";
+                            hint: @tr("http:// or https://. A folder may be part of the address.");
+                            text <=> Downloads.form-address;
+                            accepted => {
+                                Downloads.submit-form();
+                            }
+                        }
+                        FormField {
+                            label: @tr("Username");
+                            text <=> Downloads.form-username;
+                            accepted => {
+                                Downloads.submit-form();
+                            }
+                        }
+                        FormField {
+                            label: @tr("Password");
+                            input-type: InputType.password;
+                            text <=> Downloads.form-password;
+                            accepted => {
+                                Downloads.submit-form();
+                            }
+                        }
+                        if Downloads.form-error != FormError.none: HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            VerticalLayout {
+                                alignment: start;
+                                padding-top: 1px;
+                                Icon {
+                                    name: "warning-circle";
+                                    size: 17px;
+                                    color: Look.danger;
+                                }
+                            }
+                            Paragraph {
+                                text: DownloadWords.form-error(Downloads.form-error);
+                                color: Look.danger;
+                                font-size: 14px;
+                                line-height-factor: Look.leading(1.5);
+                            }
+                        }
+                        if Downloads.test-state == TestState.testing: HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            VerticalLayout {
+                                alignment: center;
+                                Spinner {
+                                    size: 16px;
+                                    color: Look.muted;
+                                }
+                            }
+                            Text {
+                                text: @tr("Testing…");
+                                color: Look.muted;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                            }
+                        }
+                        if Downloads.test-state == TestState.ok || Downloads.test-state == TestState.failed: HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            VerticalLayout {
+                                alignment: start;
+                                padding-top: 1px;
+                                Icon {
+                                    name: Downloads.test-state == TestState.ok ? "check-circle" : "warning-circle";
+                                    size: 17px;
+                                    color: Downloads.test-state == TestState.ok ? Look.ok : Look.danger;
+                                }
+                            }
+                            Paragraph {
+                                text: DownloadWords.test-result();
+                                color: Downloads.test-state == TestState.ok ? Look.ok : Look.danger;
+                                font-size: 14px;
+                                line-height-factor: Look.leading(1.5);
+                            }
+                        }
+                        HorizontalLayout {
+                            padding-top: 4px;
+                            spacing: 10px;
+                            PrimaryButton {
+                                text: Downloads.form-editing ? @tr("Save") : @tr("Add");
+                                height: 42px;
+                                font-size: 15px;
+                                clicked => {
+                                    Downloads.submit-form();
+                                }
+                            }
+                            VerticalLayout {
+                                alignment: center;
+                                SmallButton {
+                                    text: @tr("Test connection");
+                                    enabled: Downloads.test-state != TestState.testing;
+                                    clicked => {
+                                        Downloads.test-connection();
+                                    }
+                                }
+                            }
+                            VerticalLayout {
+                                alignment: center;
+                                SmallButton {
+                                    text: @tr("Cancel");
+                                    quiet: true;
+                                    clicked => {
+                                        Downloads.cancel-form();
+                                    }
+                                }
+                            }
+                            Rectangle { horizontal-stretch: 1; }
+                            if Downloads.form-editing: VerticalLayout {
+                                alignment: center;
+                                Link {
+                                    text: @tr("Remove");
+                                    icon: "trash";
+                                    color: Look.danger;
+                                    font-weight: 600;
+                                    clicked => {
+                                        Downloads.remove-from-form();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // The queue, when it is not empty and not hidden.
+        if root.queue-shown: Rectangle {
+            width: 380px;
+            background: Look.side;
+
+            Rectangle {
+                x: 0;
+                width: 1px;
+                background: Look.line;
+            }
+
+            VerticalLayout {
+                padding-top: 40px;
+                HorizontalLayout {
+                    padding-left: 20px;
+                    padding-right: 14px;
+                    padding-bottom: 10px;
+                    spacing: 8px;
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        spacing: 3px;
+                        alignment: start;
+                        Heading {
+                            label: @tr("Downloads");
+                            size: Look.nav-heading-size;
+                            wrap: no-wrap;
+                            overflow: elide;
+                        }
+                        if Downloads.active-count > 0: Text {
+                            text: @tr("{0} active", Downloads.active-count);
+                            color: Look.muted;
+                            font-size: 13px;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: start;
+                        Rectangle {
+                            height: 28px;
+                            width: hide.preferred-width;
+                            border-radius: Look.button-radius;
+                            background: hide-touch.has-hover ? Look.sel : transparent;
+                            hide := HorizontalLayout {
+                                padding-left: 8px;
+                                padding-right: 8px;
+                                spacing: 5px;
+                                if Look.terminal: Text {
+                                    text: "[";
+                                    color: hide-touch.has-hover ? Look.text : Look.muted;
+                                    font-family: Look.mono;
+                                    font-size: Look.nav-heading-size;
+                                    vertical-alignment: center;
+                                }
+                                Text {
+                                    text: @tr("Hide");
+                                    color: hide-touch.has-hover ? Look.text : Look.muted;
+                                    font-size: Look.nav-heading-size;
+                                    font-weight: 600;
+                                    letter-spacing: Look.heading-tracking * Look.nav-heading-size;
+                                    vertical-alignment: center;
+                                }
+                                VerticalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        name: "caret-right";
+                                        size: 13px;
+                                        color: hide-touch.has-hover ? Look.text : Look.muted;
+                                        duotone: false;
+                                    }
+                                }
+                                if Look.terminal: Text {
+                                    text: "]";
+                                    color: hide-touch.has-hover ? Look.text : Look.muted;
+                                    font-family: Look.mono;
+                                    font-size: Look.nav-heading-size;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            hide-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    Downloads.toggle-queue();
+                                }
+                            }
+                        }
+                    }
+                }
+                Flickable {
+                    vertical-stretch: 1;
+                    mouse-drag-pan-enabled: false;
+                    content-height: max(self.height, rows.preferred-height);
+                    rows := VerticalLayout {
+                        width: parent.width;
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        alignment: start;
+                        for row in Downloads.queue: TransferItem {
+                            item: row;
+                            menu(x, y) => {
+                                root.menu-id = row.id;
+                                root.menu-state = row.state;
+                                root.show-menu(3, x, y);
+                            }
+                        }
+                    }
+                }
+                Rectangle {
+                    height: footline.preferred-height;
+                    Rectangle {
+                        y: 0;
+                        height: 1px;
+                        width: parent.width;
+                        background: Look.line;
+                    }
+                    footline := VerticalLayout {
+                        padding-left: 20px;
+                        padding-right: 20px;
+                        padding-top: 14px;
+                        padding-bottom: 16px;
+                        spacing: 2px;
+                        Paragraph {
+                            text: @tr("{0} connections per file · Downloads go to {1}", Downloads.connections, Downloads.folder-label);
+                            color: Look.muted;
+                            font-size: 12px;
+                            line-height-factor: Look.leading(1.5);
+                        }
+                        Link {
+                            text: @tr("Change");
+                            font-size: 12px;
+                            font-weight: 500;
+                            clicked => {
+                                Downloads.change-folder();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // The context menu of a server, an entry or a download, over the page; a click anywhere
+    // else closes it, and so does Esc.
+    if root.menu-kind != 0: Rectangle {
+        KeyScope {
+            escape => {
+                root.close-menu();
+            }
+        }
+        TouchArea {
+            clicked => {
+                root.close-menu();
+            }
+            pointer-event(event) => {
+                if event.kind == PointerEventKind.down {
+                    root.close-menu();
+                }
+            }
+        }
+        Rectangle {
+            x: root.menu-x;
+            y: root.menu-y;
+            width: 200px;
+            height: items.preferred-height;
+            border-radius: Look.broadsheet ? 6px : Look.terminal ? 4px : 8px;
+            background: Look.bg;
+            border-width: 1px;
+            border-color: Look.line-strong;
+            drop-shadow-blur: 32px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: #00000038;
+
+            items := VerticalLayout {
+                padding: 6px;
+                if root.menu-kind == 1: MenuEntry {
+                    icon: "pencil-simple";
+                    label: @tr("Edit");
+                    chosen => {
+                        Downloads.edit-server(root.menu-index);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 1: MenuEntry {
+                    icon: "trash";
+                    label: @tr("Remove");
+                    danger: true;
+                    chosen => {
+                        Downloads.remove-server(root.menu-index);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 1: MenuEntry {
+                    icon: "copy";
+                    label: @tr("Copy address");
+                    chosen => {
+                        Downloads.copy-address(root.menu-index);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 2 && root.menu-folder: MenuEntry {
+                    icon: "folder-open";
+                    label: @tr("Open");
+                    chosen => {
+                        Downloads.open-folder(root.menu-name);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 2 && root.menu-folder: MenuEntry {
+                    icon: "download-simple";
+                    label: @tr("Download folder");
+                    chosen => {
+                        Downloads.download-folder(root.menu-name);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 2 && !root.menu-folder: MenuEntry {
+                    icon: "download-simple";
+                    label: @tr("Download");
+                    chosen => {
+                        Downloads.download-file(root.menu-name);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 2 && !root.menu-folder: MenuEntry {
+                    icon: "arrow-square-out";
+                    label: @tr("Open");
+                    chosen => {
+                        Downloads.open-file(root.menu-name);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 2: MenuEntry {
+                    icon: "link";
+                    label: @tr("Copy link");
+                    chosen => {
+                        Downloads.copy-link(root.menu-name);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 3: MenuEntry {
+                    icon: "x-circle";
+                    label: @tr("Cancel");
+                    enabled: root.menu-live;
+                    chosen => {
+                        Downloads.cancel(root.menu-id);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 3: MenuEntry {
+                    icon: "arrow-clockwise";
+                    label: @tr("Retry");
+                    enabled: root.menu-state == TransferState.stopped;
+                    chosen => {
+                        Downloads.retry(root.menu-id);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 3: MenuEntry {
+                    icon: "folder-open";
+                    label: @tr("Show in Finder");
+                    enabled: root.menu-state == TransferState.done;
+                    chosen => {
+                        Downloads.show-in-finder(root.menu-id);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 3: MenuEntry {
+                    icon: "list-dashes";
+                    label: @tr("Remove from list");
+                    enabled: !root.menu-live;
+                    chosen => {
+                        Downloads.remove-transfer(root.menu-id);
+                        root.close-menu();
+                    }
+                }
+            }
+        }
+    }
+}

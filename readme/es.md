@@ -27,6 +27,11 @@ Es un cliente no oficial, no hecho por Telegram.
 - **Multimedia.** Las fotos y los vídeos se abren en un visor sobre la ventana, con el resto de su
   álbum; el vídeo se reproduce con mpv, compilado desde el código fuente. Se guardan en Descargas
   donde el chat lo permite.
+- **Descargas.** Un cliente WebDAV en el centro multimedia: tu NAS, un seedbox, PikPak,
+  Alist/OpenList o una carpeta compartida con `vget serve`, explorados desde la app. Los archivos
+  llegan por varias conexiones a la vez y continúan tras una interrupción; las fotos y los vídeos se
+  abren en el visor cuando llegan; las contraseñas se quedan en el llavero de macOS. Ver
+  [docs/downloads.md](../docs/downloads.md).
 - **Envío.** Fotos, vídeos y archivos desde el clip, arrastrándolos a la ventana o pegándolos. Una
   tarjeta los muestra antes de enviarlos: con un pie, como foto o como archivo, juntos en un álbum de
   hasta diez, con temporizador de autodestrucción en un chat privado, sin sonido.
@@ -103,6 +108,20 @@ permitirla. Leer no marca nada como leído, los chats secretos nunca se muestran
 para una IA. La página da la línea para pegar en Claude Code o Claude Desktop; los detalles están en
 [docs/mcp.md](../docs/mcp.md).
 
+## La página de descargas
+
+<p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="La página de Descargas"></p>
+
+Visualización → Descargas, o el icono de descarga encima del engranaje. Añade un servidor WebDAV (un
+NAS, un seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` o una carpeta compartida
+con `vget serve`), explora sus carpetas, marca archivos o toma una carpeta entera, y llegan a
+~/Downloads/FinchGram: cada archivo en bloques de 8 MB con hasta doce conexiones, y tras un
+Reintentar sigue desde donde se quedó, como hace vget, la herramienta de línea de comandos del
+mantenedor. La cola de la derecha muestra la velocidad y lo que queda; Abrir trae una foto o un
+vídeo y lo muestra en el visor. FinchGram solo lee del servidor, y la contraseña va al llavero de
+macOS, nunca a un archivo. En [docs/downloads.md](../docs/downloads.md) están los detalles y lo que
+aún falta (un certificado autofirmado se rechaza: usa http en la red local o un certificado real).
+
 ## Cómo está hecho
 
 La app es una carcasa. De Telegram se ocupa TDLib, que corre como un programa aparte junto al
@@ -171,7 +190,7 @@ La base de datos de TDLib y los archivos descargados están en
   tdlib.yml              # compila finchgram-tdlib en una máquina limpia; publica las etiquetas tdlib-* como releases
 Cargo.toml
 build.rs                 # compila ui/app.slint, empaqueta lang/, copia vendor/tdlib/bin/ junto al ejecutable
-docs/                    # architecture.md, conventions.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
+docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   las imágenes que muestran los README, de la prueba de capturas (scripts/readme-pictures.sh)
 lang/                    # traducciones: lang/<código>/LC_MESSAGES/finchgram.po, compiladas en el binario
 readme/                  # este README en otros idiomas
@@ -207,6 +226,10 @@ src/
   platform/              # lo que cambia de un sistema operativo a otro
   player/                # el vídeo con libmpv, dibujado en la ventana con OpenGL
   screenshot/            # la herramienta de captura: la captura, la capa, las anotaciones, la imagen
+  downloads/             # la página de Descargas: un cliente WebDAV con un motor de varias conexiones
+    webdav.rs            #   listados PROPFIND, direcciones, autenticación Basic
+    transfer.rs          #   un archivo por bloques en varias conexiones, que continúa tras una interrupción
+    mod.rs               #   el estado de la página, sus hilos, la cola, el formulario de los servidores
   update.rs              # la autoactualización: GitHub Releases, firma, sustitución, reinicio
   settings.rs            # las preferencias del usuario (settings.toml)
   i18n.rs                # idioma de la interfaz: el elegido; si no, el del sistema; si no, inglés
@@ -216,11 +239,12 @@ ui/
   app.slint              # la ventana principal: los menús y qué página se muestra
   state.slint            # el estado de la app, compartido por Rust y las páginas
   telegram.slint         # lo que muestra Telegram: la cuenta, el inicio de sesión, chats, mensajes
+  downloads.slint        # el estado de la página de Descargas: servidores, la carpeta, la cola
   look.slint             # colores, tipografía y formas del tema, para las páginas compartidas
   format.slint           # fechas, cantidades y tipos de mensaje en el idioma de la interfaz
   widgets.slint          # piezas pequeñas compartidas; chat.slint: lo que comparten las ventanas de chat
   viewer.slint           # el visor sobre toda la ventana, al estilo de cada tema
-  pages/                 # las páginas que comparten los tres temas: inicio de sesión, ajustes, perfil
+  pages/                 # las páginas que comparten los tres temas: inicio de sesión, ajustes, perfil, descargas
   workbench/             # la ventana de chat del tema Workbench (el predeterminado)
   broadsheet/            # la ventana de chat del tema Broadsheet
   terminal/              # la ventana de chat del tema Terminal

@@ -341,6 +341,50 @@ pub fn open_link(url: &str) {
     }
 }
 
+/// Show the system's open panel for one folder, and hand `chosen` the folder picked, on the UI
+/// thread once the panel closes; none when it was cancelled.
+pub fn choose_folder(chosen: impl FnOnce(Option<std::path::PathBuf>) + 'static) {
+    #[cfg(target_os = "macos")]
+    macos::choose_folder(chosen);
+    #[cfg(not(target_os = "macos"))]
+    chosen(None);
+}
+
+/// Keep a password in the system's keychain (the Keychain on macOS), as `service`'s password for
+/// `account`; one that is there already is replaced. The system may ask the user the first time
+/// FinchGram reads it back.
+pub fn keychain_store(service: &str, account: &str, password: &str) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    return macos::keychain_store(service, account, password);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (service, account, password);
+        Err("the keychain is not built for this system".into())
+    }
+}
+
+/// The password kept for `account` under `service`; none when there is none.
+pub fn keychain_read(service: &str, account: &str) -> Result<Option<String>, String> {
+    #[cfg(target_os = "macos")]
+    return macos::keychain_read(service, account);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (service, account);
+        Err("the keychain is not built for this system".into())
+    }
+}
+
+/// Forget the password kept for `account` under `service`; nothing happens when there is none.
+pub fn keychain_delete(service: &str, account: &str) -> Result<(), String> {
+    #[cfg(target_os = "macos")]
+    return macos::keychain_delete(service, account);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (service, account);
+        Ok(())
+    }
+}
+
 #[cfg(all(test, target_os = "macos"))]
 mod tests {
     use super::*;

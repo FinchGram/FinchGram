@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-13 20:12+0000\n"
+"POT-Creation-Date: 2026-10-16 19:29+0000\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -11,44 +11,48 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
-#: ui/app.slint:41
+#: ui/app.slint:44
 msgid "View"
 msgstr "Вид"
 
-#: ui/app.slint:43 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
+#: ui/app.slint:46 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
 #: ui/workbench/actions.slint:172
 msgid "Search"
 msgstr "Поиск"
 
-#: ui/app.slint:53
+#: ui/app.slint:56
 msgid "Search in Chat"
 msgstr "Поиск в чате"
 
-#: ui/app.slint:65 ui/pages/settings.slint:406
+#: ui/app.slint:68 ui/pages/settings.slint:406
 msgid "Workbench"
 msgstr "Верстак"
 
-#: ui/app.slint:73 ui/pages/settings.slint:414
+#: ui/app.slint:76 ui/pages/settings.slint:414
 msgid "Terminal"
 msgstr "Терминал"
 
-#: ui/app.slint:81 ui/pages/settings.slint:422
+#: ui/app.slint:84 ui/pages/settings.slint:422
 msgid "Broadsheet"
 msgstr "Газета"
 
-#: ui/app.slint:90
+#: ui/app.slint:93 ui/pages/downloads.slint:401 ui/pages/downloads.slint:764
+msgid "Downloads"
+msgstr "Загрузки"
+
+#: ui/app.slint:101
 msgid "Settings…"
 msgstr "Настройки…"
 
-#: ui/app.slint:99
+#: ui/app.slint:110
 msgid "Help"
 msgstr "Справка"
 
-#: ui/app.slint:102
+#: ui/app.slint:113
 msgid "Update to {}…"
 msgstr "Обновить до {}…"
 
-#: ui/app.slint:103
+#: ui/app.slint:114
 msgid "Check for Updates…"
 msgstr "Проверить обновления…"
 
@@ -78,100 +82,94 @@ msgid "Add a comment (optional)"
 msgstr "Добавьте комментарий (необязательно)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:2202 ui/pages/profile.slint:174
-#: ui/pages/settings.slint:1218 ui/terminal/actions.slint:463
-#: ui/terminal/terminal.slint:1408 ui/workbench/actions.slint:547
-#: ui/workbench/conversation.slint:1414
+#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1313
+#: ui/pages/profile.slint:174 ui/terminal/actions.slint:385
+#: ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
+#: ui/workbench/actions.slint:720
 msgid "Cancel"
 msgstr "Отменить"
 
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2193
-#: ui/chat.slint:800 ui/chat.slint:881 ui/terminal/terminal.slint:1401
-#: ui/workbench/conversation.slint:1389
+#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2226
+#: ui/chat.slint:800 ui/chat.slint:881 ui/terminal/terminal.slint:1417
+#: ui/workbench/conversation.slint:1390
 msgid "Report"
 msgstr "Пожаловаться"
 
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2184
-#: ui/chat.slint:373 ui/chat.slint:801 ui/terminal/terminal.slint:1393
-#: ui/workbench/conversation.slint:1377
+#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2217
+#: ui/chat.slint:373 ui/chat.slint:801 ui/terminal/terminal.slint:1409
+#: ui/workbench/conversation.slint:1378
 msgid "Delete"
 msgstr "Удалить"
 
-#: ui/broadsheet/broadsheet.slint:96 ui/pages/settings.slint:445
+#: ui/broadsheet/broadsheet.slint:97 ui/pages/settings.slint:445
 msgid "Light"
 msgstr "Светлая"
 
-#: ui/broadsheet/broadsheet.slint:96 ui/pages/settings.slint:453
+#: ui/broadsheet/broadsheet.slint:97 ui/pages/settings.slint:453
 msgid "Dark"
 msgstr "Тёмная"
 
-#: ui/broadsheet/broadsheet.slint:130 ui/pages/profile.slint:72
+#: ui/broadsheet/broadsheet.slint:131 ui/pages/profile.slint:72
 msgid "Accounts"
 msgstr "Аккаунты"
 
-#: ui/broadsheet/broadsheet.slint:241 ui/pages/settings.slint:135
+#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:791
+#: ui/workbench/sidebar.slint:417
 msgid "Chats"
 msgstr "Чаты"
 
-#: ui/broadsheet/broadsheet.slint:249 ui/broadsheet/broadsheet.slint:985
-#: ui/workbench/sidebar.slint:417
+#: ui/broadsheet/broadsheet.slint:278 ui/broadsheet/broadsheet.slint:1018
+#: ui/workbench/sidebar.slint:415
 msgid "Channels"
 msgstr "Каналы"
 
-#: ui/broadsheet/broadsheet.slint:257 ui/broadsheet/broadsheet.slint:986
+#: ui/broadsheet/broadsheet.slint:286 ui/broadsheet/broadsheet.slint:1019
 msgid "Bots"
 msgstr "Боты"
 
-#: ui/broadsheet/broadsheet.slint:266
+#: ui/broadsheet/broadsheet.slint:295
 msgid "Filters"
 msgstr "Фильтры"
 
-#: ui/broadsheet/broadsheet.slint:271
+#: ui/broadsheet/broadsheet.slint:300
 msgid "Scheduled"
 msgstr "Отложенные"
 
-#: ui/broadsheet/broadsheet.slint:414 ui/terminal/terminal.slint:355
+#: ui/broadsheet/broadsheet.slint:444 ui/terminal/terminal.slint:355
 msgid "All"
 msgstr "Все"
 
-#: ui/broadsheet/broadsheet.slint:465 ui/pages/ai-access.slint:102
-#: ui/telegram.slint:686 ui/workbench/sidebar.slint:412
+#: ui/broadsheet/broadsheet.slint:493 ui/pages/ai-access.slint:102
+#: ui/telegram.slint:686 ui/workbench/sidebar.slint:410
 msgid "All chats"
 msgstr "Все чаты"
 
-#: ui/broadsheet/broadsheet.slint:488
+#: ui/broadsheet/broadsheet.slint:516
 msgid "More"
 msgstr "Ещё"
 
-#: ui/broadsheet/broadsheet.slint:589 ui/terminal/terminal.slint:478
+#: ui/broadsheet/broadsheet.slint:617 ui/terminal/terminal.slint:478
 msgid "Mark all as read"
 msgstr "Отметить все прочитанными"
 
-#: ui/broadsheet/broadsheet.slint:597 ui/terminal/terminal.slint:487
+#: ui/broadsheet/broadsheet.slint:634 ui/terminal/terminal.slint:498
 msgid "Sort by"
 msgstr "Сортировать по"
 
-#: ui/broadsheet/broadsheet.slint:604 ui/broadsheet/broadsheet.slint:1272
-#: ui/pages/login.slint:579 ui/pages/login.slint:629 ui/pages/login.slint:695
-#: ui/pages/login.slint:800 ui/pages/login.slint:872 ui/pages/login.slint:901
-#: ui/pages/settings.slint:1467 ui/terminal/actions.slint:285
-#: ui/terminal/terminal.slint:830 ui/workbench/sidebar.slint:711
-msgid "Back"
-msgstr "Назад"
-
-#: ui/broadsheet/broadsheet.slint:611 ui/terminal/terminal.slint:499
+#: ui/broadsheet/broadsheet.slint:642 ui/terminal/terminal.slint:504
 msgid "Latest message"
 msgstr "Последнее сообщение"
 
-#: ui/broadsheet/broadsheet.slint:619 ui/terminal/terminal.slint:506
+#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:950
+#: ui/terminal/terminal.slint:512
 msgid "Name"
 msgstr "Название"
 
-#: ui/broadsheet/broadsheet.slint:627 ui/terminal/terminal.slint:513
+#: ui/broadsheet/broadsheet.slint:660 ui/terminal/terminal.slint:520
 msgid "Unread"
 msgstr "Непрочитанные"
 
-#: ui/broadsheet/broadsheet.slint:843 ui/format.slint:163
+#: ui/broadsheet/broadsheet.slint:876 ui/format.slint:163
 #: ui/workbench/sidebar.slint:234
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
@@ -179,19 +177,19 @@ msgstr[0] "{n} подписчик"
 msgstr[1] "{n} подписчика"
 msgstr[2] "{n} подписчиков"
 
-#: ui/broadsheet/broadsheet.slint:1016
+#: ui/broadsheet/broadsheet.slint:1049
 msgid "Telegram bots"
 msgstr "Боты Telegram"
 
-#: ui/broadsheet/broadsheet.slint:1083 ui/terminal/terminal.slint:623
+#: ui/broadsheet/broadsheet.slint:1116 ui/terminal/terminal.slint:630
 msgid "No chats yet"
 msgstr "Чатов пока нет"
 
-#: ui/broadsheet/broadsheet.slint:1083 ui/terminal/terminal.slint:623
+#: ui/broadsheet/broadsheet.slint:1116 ui/terminal/terminal.slint:630
 msgid "No chats in this folder"
 msgstr "В этой папке нет чатов"
 
-#: ui/broadsheet/broadsheet.slint:1089 ui/workbench/sidebar.slint:456
+#: ui/broadsheet/broadsheet.slint:1122 ui/workbench/sidebar.slint:454
 msgid ""
 "Search for a username or phone number, or open an invite link someone sent "
 "you, to start chatting."
@@ -199,108 +197,116 @@ msgstr ""
 "Чтобы начать общение, найдите собеседника по имени пользователя или номеру "
 "телефона либо откройте присланную вам ссылку-приглашение."
 
-#: ui/broadsheet/broadsheet.slint:1090
+#: ui/broadsheet/broadsheet.slint:1123
 msgid "Chats you add to this folder in Telegram show up here."
 msgstr "Чаты, которые вы добавите в эту папку в Telegram, появятся здесь."
 
-#: ui/broadsheet/broadsheet.slint:1129 ui/terminal/terminal.slint:658
+#: ui/broadsheet/broadsheet.slint:1162 ui/terminal/terminal.slint:665
 msgid "Official bots"
 msgstr "Официальные боты"
 
-#: ui/broadsheet/broadsheet.slint:1143 ui/terminal/terminal.slint:670
+#: ui/broadsheet/broadsheet.slint:1176 ui/terminal/terminal.slint:677
 msgid "Other bots"
 msgstr "Другие боты"
 
-#: ui/broadsheet/broadsheet.slint:1155 ui/workbench/sidebar.slint:525
+#: ui/broadsheet/broadsheet.slint:1188 ui/workbench/sidebar.slint:523
 msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr ""
 "Боты с галочкой принадлежат Telegram. Остальные боты видят всё, что вы им "
 "отправляете."
 
-#: ui/broadsheet/broadsheet.slint:1200 ui/broadsheet/broadsheet.slint:2542
-#: ui/terminal/terminal.slint:766 ui/workbench/conversation.slint:260
-#: ui/workbench/conversation.slint:1721
+#: ui/broadsheet/broadsheet.slint:1233 ui/broadsheet/broadsheet.slint:2575
+#: ui/terminal/terminal.slint:782 ui/workbench/conversation.slint:261
+#: ui/workbench/conversation.slint:1722
 msgid "Unmute"
 msgstr "Включить уведомления"
 
-#: ui/broadsheet/broadsheet.slint:1200 ui/broadsheet/broadsheet.slint:2542
-#: ui/terminal/terminal.slint:766 ui/workbench/conversation.slint:260
-#: ui/workbench/conversation.slint:1721
+#: ui/broadsheet/broadsheet.slint:1233 ui/broadsheet/broadsheet.slint:2575
+#: ui/terminal/terminal.slint:782 ui/workbench/conversation.slint:261
+#: ui/workbench/conversation.slint:1722
 msgid "Mute"
 msgstr "Выключить уведомления"
 
-#: ui/broadsheet/broadsheet.slint:1208 ui/broadsheet/broadsheet.slint:2593
-#: ui/terminal/terminal.slint:1284 ui/workbench/sidebar.slint:581
+#: ui/broadsheet/broadsheet.slint:1241 ui/broadsheet/broadsheet.slint:2626
+#: ui/terminal/terminal.slint:1300 ui/workbench/sidebar.slint:579
 msgid "Unpin"
 msgstr "Открепить"
 
-#: ui/broadsheet/broadsheet.slint:1208 ui/broadsheet/broadsheet.slint:2593
-#: ui/terminal/terminal.slint:1284 ui/workbench/sidebar.slint:581
+#: ui/broadsheet/broadsheet.slint:1241 ui/broadsheet/broadsheet.slint:2626
+#: ui/terminal/terminal.slint:1300 ui/workbench/sidebar.slint:579
 msgid "Pin"
 msgstr "Закрепить"
 
-#: ui/broadsheet/broadsheet.slint:1217 ui/terminal/terminal.slint:781
+#: ui/broadsheet/broadsheet.slint:1250 ui/terminal/terminal.slint:797
 msgid "Add to folder"
 msgstr "Добавить в папку"
 
-#: ui/broadsheet/broadsheet.slint:1224 ui/broadsheet/broadsheet.slint:2601
-#: ui/terminal/terminal.slint:1292 ui/workbench/sidebar.slint:597
+#: ui/broadsheet/broadsheet.slint:1257 ui/broadsheet/broadsheet.slint:2634
+#: ui/terminal/terminal.slint:1308 ui/workbench/sidebar.slint:595
 msgid "Copy ID"
 msgstr "Копировать ID"
 
-#: ui/broadsheet/broadsheet.slint:1350 ui/workbench/conversation.slint:620
+#: ui/broadsheet/broadsheet.slint:1305 ui/pages/login.slint:524
+#: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
+#: ui/pages/login.slint:841 ui/pages/login.slint:901
+#: ui/pages/settings.slint:1467 ui/terminal/actions.slint:285
+#: ui/workbench/sidebar.slint:645
+msgid "Back"
+msgstr "Назад"
+
+#: ui/broadsheet/broadsheet.slint:1383 ui/workbench/conversation.slint:621
 msgid "Instant View"
 msgstr "Instant View"
 
-#: ui/broadsheet/broadsheet.slint:1382 ui/terminal/terminal.slint:883
+#: ui/broadsheet/broadsheet.slint:1415 ui/terminal/terminal.slint:899
 msgid "Forwarded from {0}"
 msgstr "Переслано от {0}"
 
-#: ui/broadsheet/broadsheet.slint:1644 ui/broadsheet/broadsheet.slint:1751
-#: ui/workbench/conversation.slint:880
+#: ui/broadsheet/broadsheet.slint:1677 ui/broadsheet/broadsheet.slint:1784
+#: ui/workbench/conversation.slint:881
 msgid "edited"
 msgstr "изменено"
 
-#: ui/broadsheet/broadsheet.slint:1771
+#: ui/broadsheet/broadsheet.slint:1804
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr "Реклама · размещена Telegram · пользователи Premium могут её отключить"
 
-#: ui/broadsheet/broadsheet.slint:1837 ui/format.slint:261
-#: ui/workbench/conversation.slint:978
+#: ui/broadsheet/broadsheet.slint:1870 ui/format.slint:261
+#: ui/workbench/conversation.slint:979
 msgid "You"
 msgstr "Вы"
 
-#: ui/broadsheet/broadsheet.slint:1948 ui/terminal/terminal.slint:1504
+#: ui/broadsheet/broadsheet.slint:1981 ui/terminal/terminal.slint:1520
 msgid "Hide sender's name"
 msgstr "Скрыть имя отправителя"
 
-#: ui/broadsheet/broadsheet.slint:2160 ui/terminal/terminal.slint:1416
+#: ui/broadsheet/broadsheet.slint:2193 ui/terminal/terminal.slint:1432
 msgid "Shift-click to select a range"
 msgstr "Щёлкните с Shift, чтобы выделить диапазон"
 
-#: ui/broadsheet/broadsheet.slint:2168 ui/chat.slint:799
-#: ui/workbench/conversation.slint:1355
+#: ui/broadsheet/broadsheet.slint:2201 ui/chat.slint:799
+#: ui/workbench/conversation.slint:1356
 msgid "Forward"
 msgstr "Переслать"
 
-#: ui/broadsheet/broadsheet.slint:2222 ui/terminal/terminal.slint:1751
+#: ui/broadsheet/broadsheet.slint:2255 ui/terminal/terminal.slint:1767
 msgid "Choose a chat on the left"
 msgstr "Выберите чат слева"
 
-#: ui/broadsheet/broadsheet.slint:2245 ui/terminal/terminal.slint:1211
+#: ui/broadsheet/broadsheet.slint:2278 ui/terminal/terminal.slint:1227
 msgid "typing…"
 msgstr "печатает…"
 
-#: ui/broadsheet/broadsheet.slint:2315 ui/terminal/terminal.slint:1319
+#: ui/broadsheet/broadsheet.slint:2348 ui/terminal/terminal.slint:1335
 msgid "{0} is typing…"
 msgstr "{0} печатает…"
 
-#: ui/broadsheet/broadsheet.slint:2347
+#: ui/broadsheet/broadsheet.slint:2380
 msgid "Sending as {0}"
 msgstr "Отправка от имени {0}"
 
-#: ui/broadsheet/broadsheet.slint:2364
+#: ui/broadsheet/broadsheet.slint:2397
 msgid "Write a message…"
 msgstr "Написать сообщение…"
 
@@ -489,6 +495,7 @@ msgid "Add more"
 msgstr "Добавить ещё"
 
 #: ui/chat.slint:332 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
+#: ui/pages/downloads.slint:1521
 msgid "Remove"
 msgstr "Убрать"
 
@@ -601,11 +608,11 @@ msgstr "Отменить отправку"
 msgid "Not sent"
 msgstr "Не отправлено"
 
-#: ui/chat.slint:372
+#: ui/chat.slint:372 ui/pages/downloads.slint:650 ui/pages/downloads.slint:1587
 msgid "Retry"
 msgstr "Повторить"
 
-#: ui/chat.slint:374
+#: ui/chat.slint:374 ui/pages/downloads.slint:1026
 msgid "Download"
 msgstr "Скачать"
 
@@ -613,16 +620,16 @@ msgstr "Скачать"
 msgid "Cancel download"
 msgstr "Отменить скачивание"
 
-#: ui/chat.slint:376
+#: ui/chat.slint:376 ui/pages/downloads.slint:641
 msgid "Show in Finder"
 msgstr "Показать в Finder"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:378
+#: ui/chat.slint:378 ui/pages/downloads.slint:49
 msgid "{0} of {1}"
 msgstr "{0} из {1}"
 
-#: ui/chat.slint:678 ui/terminal/terminal.slint:948
+#: ui/chat.slint:678 ui/terminal/terminal.slint:964
 msgid "Tap to view"
 msgstr "Нажмите, чтобы посмотреть"
 
@@ -630,7 +637,7 @@ msgstr "Нажмите, чтобы посмотреть"
 msgid "Reply"
 msgstr "Ответить"
 
-#: ui/chat.slint:792
+#: ui/chat.slint:792 ui/pages/downloads.slint:1513
 msgid "Edit"
 msgstr "Изменить"
 
@@ -1014,7 +1021,7 @@ msgstr "Подключение…"
 msgid "Updating…"
 msgstr "Обновление…"
 
-#: ui/format.slint:185 ui/pages/ai-access.slint:79
+#: ui/format.slint:185 ui/pages/ai-access.slint:79 ui/pages/downloads.slint:16
 msgid "Connected"
 msgstr "Подключено"
 
@@ -1295,7 +1302,7 @@ msgstr "Только черновики"
 msgid "Read only"
 msgstr "Только чтение"
 
-#: ui/pages/ai-access.slint:374 ui/terminal/terminal.slint:111
+#: ui/pages/ai-access.slint:374 ui/terminal/terminal.slint:112
 msgid "Search chats"
 msgstr "Поиск чатов"
 
@@ -1462,6 +1469,270 @@ msgstr "Изменить в настройках"
 msgid "Don't Allow"
 msgstr "Не разрешать"
 
+#: ui/pages/downloads.slint:17 ui/pages/settings.slint:345
+msgid "Checking…"
+msgstr "Проверка…"
+
+#: ui/pages/downloads.slint:18
+msgid "Password rejected"
+msgstr "Пароль отклонён"
+
+#: ui/pages/downloads.slint:19
+msgid "Not reachable"
+msgstr "Недоступен"
+
+#: ui/pages/downloads.slint:25
+msgid "The server refused the password (401)"
+msgstr "Сервер отклонил пароль (401)"
+
+#: ui/pages/downloads.slint:26
+msgid "The server refused access (403)"
+msgstr "Сервер отказал в доступе (403)"
+
+#: ui/pages/downloads.slint:27
+msgid "Cannot reach {0}"
+msgstr "Не удаётся связаться с {0}"
+
+#: ui/pages/downloads.slint:28
+msgid "The server answered HTTP {0}"
+msgstr "Сервер ответил кодом HTTP {0}"
+
+#: ui/pages/downloads.slint:29
+msgid "The server did not answer with a WebDAV listing"
+msgstr "Сервер не вернул список файлов WebDAV"
+
+#: ui/pages/downloads.slint:30
+msgid "The connection was lost"
+msgstr "Соединение потеряно"
+
+#: ui/pages/downloads.slint:31
+msgid "The file could not be written"
+msgstr "Не удалось записать файл"
+
+#: ui/pages/downloads.slint:37
+msgid "the server refused the password (401)"
+msgstr "сервер отклонил пароль (401)"
+
+#: ui/pages/downloads.slint:38
+msgid "the server refused access (403)"
+msgstr "сервер отказал в доступе (403)"
+
+#: ui/pages/downloads.slint:39
+msgid "the server answered HTTP {0}"
+msgstr "сервер ответил кодом HTTP {0}"
+
+#: ui/pages/downloads.slint:40
+msgid "the server did not answer with the file"
+msgstr "сервер не вернул файл"
+
+#: ui/pages/downloads.slint:41
+msgid "the file could not be written"
+msgstr "не удалось записать файл"
+
+#: ui/pages/downloads.slint:42
+msgid "the server closed the connection"
+msgstr "сервер закрыл соединение"
+
+#: ui/pages/downloads.slint:46
+msgid "Waiting · {0}"
+msgstr "Ожидание · {0}"
+
+#: ui/pages/downloads.slint:47
+msgid "Done · {0}"
+msgstr "Готово · {0}"
+
+#: ui/pages/downloads.slint:48
+msgid "Stopped: {0}. {1} of {2} kept."
+msgstr "Остановлено: {0}. Сохранено {1} из {2}."
+
+#: ui/pages/downloads.slint:50
+msgid "{0} of {1} · {2} · {3}"
+msgstr "{0} из {1} · {2} · {3}"
+
+#: ui/pages/downloads.slint:54
+msgid "estimating…"
+msgstr "оценка времени…"
+
+#: ui/pages/downloads.slint:55
+msgid "{0} s left"
+msgstr "осталось {0} с"
+
+#: ui/pages/downloads.slint:56
+msgid "{0} min left"
+msgstr "осталось {0} мин"
+
+#: ui/pages/downloads.slint:65
+msgid "Reached: {0} folders and {1} files at the root."
+msgstr "Подключено. В корне папок: {0}, файлов: {1}."
+
+#: ui/pages/downloads.slint:68
+msgid ""
+"Reached: {0} folders and {1} files at the root. Ranges supported, so "
+"downloads can use several connections."
+msgstr ""
+"Подключено. В корне папок: {0}, файлов: {1}. Запросы Range поддерживаются: "
+"файлы можно скачивать по нескольким соединениям сразу."
+
+#: ui/pages/downloads.slint:70
+msgid ""
+"Reached: {0} folders and {1} files at the root. No ranges, so each file "
+"comes over one connection."
+msgstr ""
+"Подключено. В корне папок: {0}, файлов: {1}. Запросы Range не "
+"поддерживаются: каждый файл скачивается по одному соединению."
+
+#: ui/pages/downloads.slint:74
+msgid "Give the server a name."
+msgstr "Укажите название сервера."
+
+#: ui/pages/downloads.slint:75
+msgid "The address needs to start with http:// or https://."
+msgstr "Адрес должен начинаться с http:// или https://."
+
+#: ui/pages/downloads.slint:299 ui/pages/downloads.slint:1128
+msgid "Add server"
+msgstr "Добавить сервер"
+
+#: ui/pages/downloads.slint:341
+msgid "Filter this folder"
+msgstr "Искать в этой папке"
+
+#: ui/pages/downloads.slint:803
+msgid "WebDAV servers"
+msgstr "Серверы WebDAV"
+
+#: ui/pages/downloads.slint:954
+msgid "Modified"
+msgstr "Изменено"
+
+#: ui/pages/downloads.slint:959
+msgid "Size"
+msgstr "Размер"
+
+#: ui/pages/downloads.slint:983
+msgid "Nothing in this folder matches “{0}”"
+msgstr "В этой папке ничего не найдено по запросу «{0}»"
+
+#: ui/pages/downloads.slint:1005
+msgid "{0} selected · {1}"
+msgstr "Выбрано: {0} · {1}"
+
+#: ui/pages/downloads.slint:1013
+msgid "Clear"
+msgstr "Сбросить"
+
+#: ui/pages/downloads.slint:1020 ui/pages/downloads.slint:1538
+msgid "Open"
+msgstr "Открыть"
+
+#: ui/pages/downloads.slint:1062
+msgid "This folder is empty"
+msgstr "Эта папка пуста"
+
+#: ui/pages/downloads.slint:1111
+msgid "No WebDAV servers yet"
+msgstr "Серверов WebDAV пока нет"
+
+#: ui/pages/downloads.slint:1114
+msgid ""
+"Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
+"folder you share with vget serve. Then browse it here and pick the files you "
+"want."
+msgstr ""
+"Добавьте адрес WebDAV своего NAS, сидбокса, PikPak, Alist / OpenList или "
+"папки, которую вы раздаёте через vget serve. Затем просматривайте содержимое "
+"здесь и выбирайте нужные файлы."
+
+#: ui/pages/downloads.slint:1120
+msgid ""
+"Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
+"reads: nothing is uploaded, synced, renamed or deleted on the server."
+msgstr ""
+"К облачным дискам без WebDAV можно подключиться через OpenList. FinchGram "
+"только читает: ничего не загружает на сервер, не синхронизирует, не "
+"переименовывает и не удаляет."
+
+#: ui/pages/downloads.slint:1193
+msgid "Edit server"
+msgstr "Изменить сервер"
+
+#: ui/pages/downloads.slint:1193
+msgid "Add WebDAV server"
+msgstr "Добавить сервер WebDAV"
+
+#: ui/pages/downloads.slint:1196
+msgid ""
+"The address of the WebDAV server, and the account it gave you. The password "
+"goes into your macOS Keychain, not into a file."
+msgstr ""
+"Адрес сервера WebDAV и учётная запись, которую он вам выдал. Пароль хранится "
+"в Связке ключей macOS, а не в файле."
+
+#: ui/pages/downloads.slint:1211
+msgid "Address"
+msgstr "Адрес"
+
+#: ui/pages/downloads.slint:1213
+msgid "http:// or https://. A folder may be part of the address."
+msgstr "http:// или https://. Адрес может включать папку."
+
+#: ui/pages/downloads.slint:1220 ui/pages/profile.slint:300
+msgid "Username"
+msgstr "Имя пользователя"
+
+#: ui/pages/downloads.slint:1227 ui/pages/login.slint:545
+msgid "Password"
+msgstr "Пароль"
+
+#: ui/pages/downloads.slint:1264
+msgid "Testing…"
+msgstr "Проверка…"
+
+#: ui/pages/downloads.slint:1293 ui/pages/profile.slint:429
+#: ui/pages/settings.slint:1316
+msgid "Save"
+msgstr "Сохранить"
+
+#: ui/pages/downloads.slint:1293
+msgid "Add"
+msgstr "Добавить"
+
+#: ui/pages/downloads.slint:1303
+msgid "Test connection"
+msgstr "Проверить подключение"
+
+#: ui/pages/downloads.slint:1368
+msgid "{0} active"
+msgstr "Активных: {0}"
+
+#: ui/pages/downloads.slint:1392
+msgid "Hide"
+msgstr "Скрыть"
+
+#: ui/pages/downloads.slint:1459
+msgid "{0} connections per file · Downloads go to {1}"
+msgstr "Соединений на файл: {0} · Загрузки сохраняются в {1}"
+
+#: ui/pages/downloads.slint:1465
+msgid "Change"
+msgstr "Изменить"
+
+#: ui/pages/downloads.slint:1530
+msgid "Copy address"
+msgstr "Скопировать адрес"
+
+#: ui/pages/downloads.slint:1546
+msgid "Download folder"
+msgstr "Скачать папку"
+
+#: ui/pages/downloads.slint:1570
+msgid "Copy link"
+msgstr "Скопировать ссылку"
+
+#: ui/pages/downloads.slint:1605
+msgid "Remove from list"
+msgstr "Убрать из списка"
+
 #: ui/pages/login.slint:15
 msgid "A lighter Telegram client"
 msgstr "Лёгкий клиент Telegram"
@@ -1512,7 +1783,7 @@ msgstr "Автоперевод"
 msgid "Translate foreign-language messages into your UI language"
 msgstr "Переводит сообщения с других языков на язык интерфейса"
 
-#: ui/pages/login.slint:133 ui/workbench/conversation.slint:1459
+#: ui/pages/login.slint:133 ui/workbench/conversation.slint:1460
 msgid "Reading mode"
 msgstr "Режим чтения"
 
@@ -1618,10 +1889,6 @@ msgstr "Двухэтапная аутентификация"
 #: ui/pages/login.slint:538
 msgid "This account has two-step verification on. Enter your password."
 msgstr "В этом аккаунте включена двухэтапная аутентификация. Введите пароль."
-
-#: ui/pages/login.slint:545 ui/pages/settings.slint:1236
-msgid "Password"
-msgstr "Пароль"
 
 #: ui/pages/login.slint:556 ui/pages/password.slint:114
 msgid "Hint: {0}"
@@ -1824,7 +2091,7 @@ msgstr ""
 msgid "Current"
 msgstr "Текущий"
 
-#: ui/pages/profile.slint:119 ui/workbench/workbench.slint:321
+#: ui/pages/profile.slint:119 ui/workbench/workbench.slint:322
 msgid "Add account"
 msgstr "Добавить аккаунт"
 
@@ -1852,10 +2119,6 @@ msgstr "Изменить профиль"
 msgid "Last name"
 msgstr "Фамилия"
 
-#: ui/pages/profile.slint:300
-msgid "Username"
-msgstr "Имя пользователя"
-
 #: ui/pages/profile.slint:332
 msgid "Without a username, people find you by your phone number."
 msgstr "Без имени пользователя вас можно найти только по номеру телефона."
@@ -1871,10 +2134,6 @@ msgstr "ID"
 #: ui/pages/profile.slint:390
 msgid "What bots and scripts know this account by."
 msgstr "По нему боты и скрипты узнают этот аккаунт."
-
-#: ui/pages/profile.slint:429 ui/pages/settings.slint:1278
-msgid "Save"
-msgstr "Сохранить"
 
 #: ui/pages/profile.slint:450
 msgid "Profile"
@@ -1927,10 +2186,6 @@ msgstr "Дополнительно"
 #: ui/pages/settings.slint:172 ui/pages/settings.slint:1582
 msgid "About"
 msgstr "О программе"
-
-#: ui/pages/settings.slint:345
-msgid "Checking…"
-msgstr "Проверка…"
 
 #: ui/pages/settings.slint:346
 msgid "Version {0} available"
@@ -2320,16 +2575,16 @@ msgstr "Подсказка к паролю обновлена"
 msgid "Recovery email updated"
 msgstr "Почта для восстановления обновлена"
 
-#: ui/state.slint:53
+#: ui/state.slint:54
 msgid "Open FinchGram"
 msgstr "Открыть FinchGram"
 
-#: ui/state.slint:54
+#: ui/state.slint:55
 msgid "Quit FinchGram"
 msgstr "Завершить FinchGram"
 
 #. A notification that does not show its message.
-#: ui/state.slint:56
+#: ui/state.slint:57
 msgid "New message"
 msgstr "Новое сообщение"
 
@@ -2343,11 +2598,11 @@ msgctxt "list separator"
 msgid ", "
 msgstr ", "
 
-#: ui/terminal/terminal.slint:217
+#: ui/terminal/terminal.slint:218
 msgid "light"
 msgstr "светлая"
 
-#: ui/terminal/terminal.slint:217
+#: ui/terminal/terminal.slint:218
 msgid "dark"
 msgstr "тёмная"
 
@@ -2355,59 +2610,59 @@ msgstr "тёмная"
 msgid "more"
 msgstr "ещё"
 
-#: ui/terminal/terminal.slint:930 ui/terminal/terminal.slint:935
+#: ui/terminal/terminal.slint:946 ui/terminal/terminal.slint:951
 msgid "(edited)"
 msgstr "(изменено)"
 
-#: ui/terminal/terminal.slint:1078
+#: ui/terminal/terminal.slint:1094
 msgid "sponsored"
 msgstr "реклама"
 
-#: ui/terminal/terminal.slint:1131 ui/terminal/terminal.slint:1219
+#: ui/terminal/terminal.slint:1147 ui/terminal/terminal.slint:1235
 msgid "search"
 msgstr "поиск"
 
-#: ui/terminal/terminal.slint:1231
+#: ui/terminal/terminal.slint:1247
 msgid "chat settings"
 msgstr "настройки чата"
 
-#: ui/terminal/terminal.slint:1442
+#: ui/terminal/terminal.slint:1458
 msgid "Mute or unmute this chat"
 msgstr "Выключить или включить уведомления в этом чате"
 
-#: ui/terminal/terminal.slint:1443
+#: ui/terminal/terminal.slint:1459
 msgid "Pin or unpin this chat"
 msgstr "Закрепить или открепить этот чат"
 
-#: ui/terminal/terminal.slint:1444
+#: ui/terminal/terminal.slint:1460
 msgid "Mark every chat in this folder as read"
 msgstr "Отметить все чаты в этой папке прочитанными"
 
-#: ui/terminal/terminal.slint:1445
+#: ui/terminal/terminal.slint:1461
 msgid "Copy this chat's ID"
 msgstr "Копировать ID этого чата"
 
-#: ui/terminal/terminal.slint:1536
+#: ui/terminal/terminal.slint:1552
 msgid "unmute"
 msgstr "включить уведомления"
 
-#: ui/terminal/terminal.slint:1536
+#: ui/terminal/terminal.slint:1552
 msgid "mute"
 msgstr "выключить уведомления"
 
-#: ui/terminal/terminal.slint:1600
+#: ui/terminal/terminal.slint:1616
 msgid "Write a message, or / for commands"
 msgstr "Напишите сообщение или / для команд"
 
-#: ui/terminal/terminal.slint:1625
+#: ui/terminal/terminal.slint:1641
 msgid "save"
 msgstr "сохранить"
 
-#: ui/terminal/terminal.slint:1625
+#: ui/terminal/terminal.slint:1641
 msgid "send"
 msgstr "отправить"
 
-#: ui/terminal/terminal.slint:1696
+#: ui/terminal/terminal.slint:1712
 msgid "connected"
 msgstr "подключено"
 
@@ -2424,98 +2679,89 @@ msgstr "← → Листать · ↑ ↓ Громкость · Пробел В�
 msgid "Muted"
 msgstr "Без звука"
 
-#: ui/viewer.slint:901 ui/viewer.slint:922
+#: ui/viewer.slint:939 ui/viewer.slint:960
 msgctxt "terminal"
 msgid "muted"
 msgstr "без звука"
 
-#: ui/viewer.slint:901 ui/viewer.slint:922
+#: ui/viewer.slint:939 ui/viewer.slint:960
 msgctxt "terminal"
 msgid "sound"
 msgstr "звук"
 
-#: ui/viewer.slint:1082
+#: ui/viewer.slint:1120
 msgctxt "terminal"
 msgid "locate"
 msgstr "к сообщению"
 
-#: ui/viewer.slint:1088
+#: ui/viewer.slint:1126
 msgctxt "terminal"
 msgid "download"
 msgstr "скачать"
 
-#: ui/viewer.slint:1239
+#: ui/viewer.slint:1279
 msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ листать · ↑/↓ громкость · пробел воспроизвести · esc закрыть"
 
-#: ui/workbench/conversation.slint:292 ui/workbench/conversation.slint:357
+#: ui/workbench/conversation.slint:293 ui/workbench/conversation.slint:358
 msgid "Close other tabs"
 msgstr "Закрыть другие вкладки"
 
-#: ui/workbench/conversation.slint:349
+#: ui/workbench/conversation.slint:350
 msgid "Close tab"
 msgstr "Закрыть вкладку"
 
-#: ui/workbench/conversation.slint:366
+#: ui/workbench/conversation.slint:367
 msgid "Close all tabs"
 msgstr "Закрыть все вкладки"
 
-#: ui/workbench/conversation.slint:905
+#: ui/workbench/conversation.slint:906
 msgid "Sponsored"
 msgstr "Реклама"
 
-#: ui/workbench/conversation.slint:912
+#: ui/workbench/conversation.slint:913
 msgid "Premium users can turn these off"
 msgstr "Пользователи Premium могут отключить рекламу"
 
-#: ui/workbench/conversation.slint:952
+#: ui/workbench/conversation.slint:953
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
 msgstr "Рекламное сообщение Telegram · FinchGram показывает его как есть"
 
-#: ui/workbench/conversation.slint:1538
+#: ui/workbench/conversation.slint:1539
 msgid "Send to {0}"
 msgstr "Кому: {0}"
 
-#: ui/workbench/conversation.slint:1671
+#: ui/workbench/conversation.slint:1672
 msgid "Esc to cancel"
 msgstr "Esc — отмена"
 
-#: ui/workbench/conversation.slint:1679
+#: ui/workbench/conversation.slint:1680
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ сохранить · ⇧⏎ новая строка"
 
-#: ui/workbench/conversation.slint:1679
+#: ui/workbench/conversation.slint:1680
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ сохранить · ⏎ новая строка"
 
-#: ui/workbench/conversation.slint:1680
+#: ui/workbench/conversation.slint:1681
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ отправить · ⇧⏎ новая строка"
 
-#: ui/workbench/conversation.slint:1680
+#: ui/workbench/conversation.slint:1681
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ отправить · ⏎ новая строка"
 
-#: ui/workbench/sidebar.slint:493
+#: ui/workbench/sidebar.slint:491
 msgid "This account has no channels."
 msgstr "В этом аккаунте нет каналов."
 
-#: ui/workbench/sidebar.slint:493
+#: ui/workbench/sidebar.slint:491
 msgid "Channels open in reading mode: long posts, set for reading."
 msgstr ""
 "Каналы открываются в режиме чтения: длинные публикации, свёрстанные для "
 "чтения."
 
-#: ui/workbench/workbench.slint:345
+#: ui/workbench/workbench.slint:346
 msgid "Manage accounts"
 msgstr "Управление аккаунтами"
-
-#~ msgid "Mark as read"
-#~ msgstr "Отметить прочитанным"
-
-#~ msgid "Mark this chat as read"
-#~ msgstr "Отметить этот чат прочитанным"
-
-#~ msgid "command"
-#~ msgstr "команда"

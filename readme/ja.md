@@ -22,6 +22,10 @@ FinchGram は Telegram 公式のライブラリ [TDLib](https://core.telegram.or
   削除、複数選択。自動消滅の写真と動画はぼかして表示され、一度だけ開けます。Telegram 公式アプリと同じです。
 - **メディア。** 写真と動画はウィンドウ全体のビューアで開き、同じアルバムの他の写真も見られます。動画はソースから
   ビルドした mpv で再生します。チャットが許可していれば「ダウンロード」に保存できます。
+- **ダウンロード。** メディアセンターの WebDAV クライアント：NAS、シードボックス、PikPak、Alist/OpenList、あるいは
+  `vget serve` で共有しているフォルダを、アプリの中で閲覧できます。ファイルは複数の接続で同時に受け取り、止まっても続きから
+  再開します。写真と動画は届くとビューアで開き、パスワードは macOS のキーチェーンに保存されます。
+  [docs/downloads.md](../docs/downloads.md) を参照。
 - **送信。** 写真、動画、ファイルはクリップから送信できるほか、ウィンドウにドラッグするか貼り付けても送れます。送る前に
   カードで確認：キャプションを付ける、写真として送るかファイルとして送るか、最大 10 個をアルバムにまとめる、個人チャットでは
   自動消滅タイマー、サイレント送信。
@@ -80,6 +84,19 @@ Terminal は等幅フォントの画面でコマンドが使えます。どれ�
 <p align="center"><img src="../docs/screenshots/workbench-light-settings-ai.png" width="800" alt="設定 → AI アクセス"></p>
 
 FinchGram は MCP サーバーです。Mac 上の AI アシスタントのアプリ（Claude Desktop、Claude Code、Cursor など）が、起動中の FinchGram を通じて、あなた自身のアカウントで Telegram を読み、操作できます。設定 → AI アクセスがそのスイッチで、既定ではオフです。そこで、アシスタントが見られるチャット（シークレットチャット以外のすべて、または選んだものだけ）と書けること（あなたの名前でメッセージを送る、下書きだけ残してあなたが送る、何も書かない）を選び、どのアプリが接続したか（名前は macOS が報告するもの）と何を求めたかを確認できます。アプリが初めて接続するとき、FinchGram は許可するかを尋ねます。読んでも既読にはならず、シークレットチャットは決して見せず、AI のために何も保存しません。Claude Code や Claude Desktop に貼る 1 行はページに用意されています。詳しくは [docs/mcp.md](../docs/mcp.md)。
+
+## ダウンロードページ
+
+<p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="ダウンロードページ"></p>
+
+表示 → ダウンロード、または歯車の上のダウンロードアイコンから開きます。WebDAV サーバー（NAS、シードボックス、PikPak、
+Alist/OpenList、Nextcloud、`rclone serve webdav`、あるいは `vget serve` で共有しているフォルダ）を追加し、そのフォルダを
+閲覧して、ファイルにチェックを付けるか、フォルダをまるごと選ぶと、ファイルは ~/Downloads/FinchGram に届きます：ファイルごとに
+8 MB のチャンクを最大 12 本の接続で受け取り、「再試行」の後は止まったところから続きます。メンテナーのコマンドラインツール
+vget と同じ仕組みです。右側のキューには速度と残りが表示されます。「開く」は写真や動画を取得してビューアで表示します。
+FinchGram はサーバーから読み取るだけで、パスワードはファイルではなく macOS のキーチェーンに保存されます。詳細と、まだないもの
+（自己署名証明書は拒否されます：LAN では http を、あるいは正規の証明書を使ってください）は
+[docs/downloads.md](../docs/downloads.md) にあります。
 
 ## 仕組み
 
@@ -143,7 +160,7 @@ TDLib のデータベースとダウンロードしたファイルは `~/Library
   tdlib.yml              # クリーンなマシンで finchgram-tdlib をビルドし、tdlib-* タグをリリースとして公開
 Cargo.toml
 build.rs                 # ui/app.slint をコンパイルし、lang/ を同梱し、vendor/tdlib/bin/ を実行ファイルの隣にコピー
-docs/                    # architecture.md、conventions.md、drag-and-drop.md、media-files.md、skia.md（+ zh-Hans）
+docs/                    # architecture.md、conventions.md、downloads.md、drag-and-drop.md、media-files.md、skia.md（+ zh-Hans）
   screenshots/           #   README に載せる画像。スクリーンショットテストから（scripts/readme-pictures.sh）
 lang/                    # 翻訳：lang/<コード>/LC_MESSAGES/finchgram.po、バイナリに組み込まれる
 readme/                  # この README の他の言語版
@@ -179,6 +196,10 @@ src/
   platform/              # OS ごとに異なる部分
   player/                # libmpv による動画再生。OpenGL でウィンドウに描画
   screenshot/            # スクリーンショット機能：撮影、オーバーレイ、書き込み、画像
+  downloads/             # ダウンロードページ：複数接続のエンジンを備えた WebDAV クライアント
+    webdav.rs            #   PROPFIND の一覧、アドレス、Basic 認証
+    transfer.rs          #   ファイルをチャンクに分けて複数の接続で受け取る。止まっても続きから
+    mod.rs               #   ページの状態、そのスレッド、キュー、サーバーのフォーム
   update.rs              # 自動アップデート：GitHub Releases、署名の検証、入れ替え、再起動
   settings.rs            # ユーザーの設定（settings.toml）
   i18n.rs                # UI の言語：保存された選択、なければシステムの言語、それもなければ英語
@@ -188,11 +209,12 @@ ui/
   app.slint              # メインウィンドウ：メニューと、どのページを表示するか
   state.slint            # アプリの状態。Rust とページで共有
   telegram.slint         # Telegram の内容：アカウント、ログイン、チャット、メッセージ
+  downloads.slint        # ダウンロードページの状態：サーバー、フォルダ、キュー
   look.slint             # テーマの色・書体・形。共有ページ用
   format.slint           # UI の言語で書く日付・数・メッセージの種類
   widgets.slint          # 共有の小さな部品。chat.slint はチャットウィンドウの共有部分
   viewer.slint           # ウィンドウ全体を覆うメディアビューア。テーマごとのスタイル
-  pages/                 # 3 つのテーマで共有するページ：ログイン、設定、プロフィール
+  pages/                 # 3 つのテーマで共有するページ：ログイン、設定、プロフィール、ダウンロード
   workbench/             # ワークベンチテーマのチャットウィンドウ（既定）
   broadsheet/            # ブロードシートテーマのチャットウィンドウ
   terminal/              # ターミナルテーマのチャットウィンドウ

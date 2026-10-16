@@ -356,6 +356,31 @@ pub fn choose_files(media: bool, chosen: impl FnOnce(Vec<std::path::PathBuf>) + 
     panel.beginWithCompletionHandler(&handler);
 }
 
+/// The open panel for one folder: where downloads go. `chosen` runs on the UI thread once the
+/// panel closes, with nothing when it was cancelled.
+pub fn choose_folder(chosen: impl FnOnce(Option<std::path::PathBuf>) + 'static) {
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    let panel = NSOpenPanel::openPanel(mtm);
+    panel.setCanChooseFiles(false);
+    panel.setCanChooseDirectories(true);
+    panel.setCanCreateDirectories(true);
+    panel.setAllowsMultipleSelection(false);
+    let chosen = RefCell::new(Some(chosen));
+    let read_from = panel.clone();
+    let handler = RcBlock::new(move |response: NSModalResponse| {
+        let path = if response == MODAL_OK {
+            read_from.URLs().iter().next().and_then(|url| url.path()).map(|path| std::path::PathBuf::from(path.to_string()))
+        } else {
+            None
+        };
+        if let Some(chosen) = chosen.borrow_mut().take() {
+            chosen(path);
+        }
+    });
+    OPEN_PANEL.with(|open| *open.borrow_mut() = Some(panel.clone()));
+    panel.beginWithCompletionHandler(&handler);
+}
+
 /// Show a file in the Finder, selected.
 pub fn reveal_file(path: &str) {
     let url = NSURL::fileURLWithPath(&NSString::from_str(path));
@@ -792,6 +817,83 @@ pub fn set_badge(count: i32) {
 pub fn flash_icon() {
     let Some(mtm) = MainThreadMarker::new() else { return };
     NSApplication::sharedApplication(mtm).requestUserAttention(NSRequestUserAttentionType::InformationalRequest);
+}
+
+// ---- the Keychain --------------------------------------------------------------------------
+
+/// The query that names a password: a generic password of `service` for `account`.
+fn keychain_query(service: &str, account: &str) -> objc2_core_foundation::CFRetained<objc2_core_foundation::CFMutableDictionary<objc2_core_foundation::CFString, objc2_core_foundation::CFType>> {
+    use objc2_core_foundation::{CFMutableDictionary, CFString, CFType};
+    use objc2_security::{kSecAttrAccount, kSecAttrService, kSecClass, kSecClassGenericPassword};
+    let query = CFMutableDictionary::<CFString, CFType>::empty();
+    let service = CFString::from_str(service);
+    let account = CFString::from_str(account);
+    // SAFETY: the framework's constants are only read. The dictionary keeps its own references.
+    unsafe {
+        query.set(kSecClass, AsRef::<CFType>::as_ref(kSecClassGenericPassword));
+        query.set(kSecAttrService, AsRef::<CFType>::as_ref(&*service));
+        query.set(kSecAttrAccount, AsRef::<CFType>::as_ref(&*account));
+    }
+    query
+}
+
+fn keychain_status(status: i32) -> Result<(), String> {
+    if status == objc2_security::errSecSuccess { Ok(()) } else { Err(format!("the Keychain answered {status}")) }
+}
+
+/// Keep `password` as `service`'s password for `account`, in place of one that is there.
+pub fn keychain_store(service: &str, account: &str, password: &str) -> Result<(), String> {
+    use objc2_core_foundation::{CFData, CFDictionary, CFType};
+    use objc2_security::{SecItemAdd, SecItemDelete, errSecItemNotFound, errSecSuccess, kSecValueData};
+    let query = keychain_query(service, account);
+    // SAFETY: the query is a dictionary of the keys the framework documents.
+    let status = unsafe { SecItemDelete(AsRef::<CFDictionary>::as_ref(query.as_opaque())) };
+    if status != errSecSuccess && status != errSecItemNotFound {
+        return Err(format!("the Keychain answered {status}"));
+    }
+    let attributes = keychain_query(service, account);
+    let data = CFData::from_bytes(password.as_bytes());
+    // SAFETY: as above; the password's bytes are the item's data.
+    unsafe {
+        attributes.set(kSecValueData, AsRef::<CFType>::as_ref(&*data));
+    }
+    // SAFETY: no result is asked for (null).
+    let status = unsafe { SecItemAdd(AsRef::<CFDictionary>::as_ref(attributes.as_opaque()), std::ptr::null_mut()) };
+    keychain_status(status)
+}
+
+/// `service`'s password for `account`, if one is kept.
+pub fn keychain_read(service: &str, account: &str) -> Result<Option<String>, String> {
+    use objc2_core_foundation::{CFBoolean, CFData, CFDictionary, CFRetained, CFType};
+    use objc2_security::{SecItemCopyMatching, errSecItemNotFound, kSecMatchLimit, kSecMatchLimitOne, kSecReturnData};
+    let query = keychain_query(service, account);
+    // SAFETY: the framework's constants are only read.
+    unsafe {
+        query.set(kSecReturnData, AsRef::<CFType>::as_ref(CFBoolean::new(true)));
+        query.set(kSecMatchLimit, AsRef::<CFType>::as_ref(kSecMatchLimitOne));
+    }
+    let mut result: *const CFType = std::ptr::null();
+    // SAFETY: the query asks for the item's data; `result` is where the framework puts it.
+    let status = unsafe { SecItemCopyMatching(AsRef::<CFDictionary>::as_ref(query.as_opaque()), &mut result) };
+    if status == errSecItemNotFound {
+        return Ok(None);
+    }
+    keychain_status(status)?;
+    let Some(pointer) = NonNull::new(result.cast_mut()) else { return Ok(None) };
+    // SAFETY: SecItemCopyMatching hands over one reference, which is ours to release.
+    let value: CFRetained<CFType> = unsafe { CFRetained::from_raw(pointer) };
+    let data = value.downcast::<CFData>().map_err(|_| "the Keychain answered with something that is not data".to_string())?;
+    Ok(Some(String::from_utf8_lossy(&data.to_vec()).into_owned()))
+}
+
+/// Forget `service`'s password for `account`.
+pub fn keychain_delete(service: &str, account: &str) -> Result<(), String> {
+    use objc2_core_foundation::CFDictionary;
+    use objc2_security::{SecItemDelete, errSecItemNotFound};
+    let query = keychain_query(service, account);
+    // SAFETY: the query is a dictionary of the keys the framework documents.
+    let status = unsafe { SecItemDelete(AsRef::<CFDictionary>::as_ref(query.as_opaque())) };
+    if status == errSecItemNotFound { Ok(()) } else { keychain_status(status) }
 }
 
 #[cfg(test)]

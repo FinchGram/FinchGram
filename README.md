@@ -25,6 +25,10 @@ client, not made by Telegram.
   and videos sent to self-destruct are shown blurred and opened once, as in Telegram's own apps.
 - **Media.** Photos and videos open in a viewer over the window, with the rest of their album;
   video plays through mpv, built from source. Saving to Downloads where the chat allows it.
+- **Downloads.** A WebDAV client in the media center: your NAS, a seedbox, PikPak, Alist/OpenList
+  or a folder shared with `vget serve`, browsed in the app. Files come over several connections at
+  once and go on after a stop; photos and videos open in the viewer when they arrive; passwords
+  stay in the macOS Keychain. See [docs/downloads.md](docs/downloads.md).
 - **Sending.** Photos, videos and files from the paperclip, by dragging them onto the window, or by
   pasting them. A card shows them before they go: with a caption, as a photo or as a file, together
   as an album of up to ten, with a self-destruct timer in a private chat, without sound.
@@ -101,6 +105,20 @@ Reading marks nothing as read, secret chats are never shown, and nothing is kept
 gives the line to paste into Claude Code or Claude Desktop; [docs/mcp.md](docs/mcp.md) has the
 details.
 
+## The Downloads page
+
+<p align="center"><img src="docs/screenshots/workbench-light-downloads.png" width="800" alt="The Downloads page"></p>
+
+View → Downloads, or the download icon above the gear. Add a WebDAV server (a NAS, a seedbox,
+PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav`, or a folder shared with `vget serve`),
+browse its folders, tick files or take a whole folder, and they arrive in ~/Downloads/FinchGram:
+each file in 8 MB chunks over up to twelve connections, going on from where it stopped after a
+Retry, as the maintainer's command-line tool vget does. The queue on the right shows the speed and
+what is left; Open fetches a photo or video and shows it in the viewer. FinchGram only reads from
+the server, and the password goes into the macOS Keychain, never into a file.
+[docs/downloads.md](docs/downloads.md) has the details and what is not there yet (a self-signed
+certificate is refused: use http on the LAN, or a real certificate).
+
 ## How it is built
 
 The app is a shell. Telegram itself is done by TDLib, running as a separate program next to the
@@ -166,7 +184,7 @@ settings in `~/Library/Application Support/FinchGram/settings.toml`.
   tdlib.yml              # builds finchgram-tdlib on a clean runner; publishes tdlib-* tags as releases
 Cargo.toml
 build.rs                 # compiles ui/app.slint, bundles lang/, copies vendor/tdlib/bin/ next to the executable
-docs/                    # architecture.md, conventions.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
+docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   the pictures the READMEs show, from the picture test (scripts/readme-pictures.sh)
 lang/                    # translations: lang/<code>/LC_MESSAGES/finchgram.po, compiled into the binary
 readme/                  # this README in other languages
@@ -202,6 +220,10 @@ src/
   platform/              # what differs from one operating system to another
   player/                # video through libmpv, drawn into the window with OpenGL
   screenshot/            # the screenshot tool: capture, the overlay, annotations, the picture
+  downloads/             # the Downloads page: a WebDAV client with a multi-connection engine
+    webdav.rs            #   PROPFIND listings, addresses, Basic authentication
+    transfer.rs          #   a file in chunks over several connections, going on after a stop
+    mod.rs               #   the page's state, its threads, the queue, the servers' form
   update.rs              # the self-updater: GitHub Releases, signature check, swap, relaunch
   settings.rs            # the user's preferences (settings.toml)
   i18n.rs                # UI language: saved choice, else the system's, else English
@@ -211,11 +233,12 @@ ui/
   app.slint              # the main window: the menus, and which page shows
   state.slint            # the app's state, shared by Rust and the pages
   telegram.slint         # what Telegram shows: the account, logging in, chats, messages
+  downloads.slint        # the Downloads page's state: servers, the folder, the queue
   look.slint             # the theme's colours, type and shapes, for the shared pages
   format.slint           # dates, counts and kinds of message in the UI language
   widgets.slint          # small shared parts; chat.slint: the chat windows' shared parts
   viewer.slint           # the media viewer over the whole window, in each theme's manner
-  pages/                 # the pages the three themes share: logging in, settings, the profile
+  pages/                 # the pages the three themes share: logging in, settings, the profile, downloads
   workbench/             # the Workbench theme's chat window (the default)
   broadsheet/            # the Broadsheet theme's chat window
   terminal/              # the Terminal theme's chat window

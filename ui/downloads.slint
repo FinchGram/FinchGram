@@ -1,0 +1,121 @@
+// Downloads (the design's third round of the shared pages, "FinchGram Desktop 下载"): the WebDAV
+// servers, the folder being looked at, and the queue of files on their way. Rust fills this global
+// (src/downloads/) and does what its callbacks ask; the page (pages/downloads.slint) shows it in
+// every theme. FinchGram only reads from a server: nothing is uploaded, synced, renamed or deleted.
+
+// Whether a server answers: asked when the page opens, and whenever the server is looked at.
+export enum ServerStatus { unknown, checking, connected, password-rejected, not-reachable }
+
+export struct ServerRow {
+    name: string,
+    host: string,           // "nas.home", out of the address
+    status: ServerStatus,
+}
+
+// Why a folder could not be read, a server not reached, or a file not fetched.
+export enum Problem { none, password, forbidden, unreachable, http, unreadable, connection, disk }
+
+// What the middle column shows of the folder: a spinner, its entries (none for an empty folder),
+// or why it could not be read.
+export enum FolderState { loading, listed, error }
+
+export struct FolderEntry {
+    name: string,
+    folder: bool,
+    icon: string,           // "folder", "film-strip", "file-image", "file-pdf", "file-zip", "file-text" or "file"
+    date: string,           // "Sep 30"; "" when the server did not say
+    size: string,           // "4.4 GB"; "" for a folder
+    selected: bool,
+}
+
+export enum TransferState { active, waiting, done, stopped }
+
+export struct TransferRow {
+    id: int,
+    name: string,
+    icon: string,           // as FolderEntry.icon; "folder" for a whole folder
+    state: TransferState,
+    fraction: float,        // 0 … 1, how far it is
+    done: string,           // "4.1 GB" so far
+    total: string,          // "10.8 GB"
+    speed: string,          // "24.3 MB/s" while active; "" until known
+    seconds-left: int,      // while active; -1 until known
+    minutes-left: int,      // the same, rounded up to minutes
+    problem: Problem,       // why it stopped
+    detail: string,         // the problem's detail: an HTTP code
+}
+
+// The form's "Test connection".
+export enum TestState { none, testing, ok, failed }
+
+// What is wrong with the form when Add or Save is pressed.
+export enum FormError { none, name, address }
+
+export global Downloads {
+    in-out property <[ServerRow]> servers;
+    in-out property <int> current: -1;              // the server looked at; -1 for none
+    in-out property <[string]> crumbs;              // the server's name, then the path's folders but the last
+    in-out property <string> title;                 // the folder looked at: its name, or the server's at the root
+    in-out property <FolderState> folder-state: FolderState.loading;
+    in-out property <Problem> problem;              // when folder-state is error
+    in-out property <string> problem-detail;        // the host, or an HTTP code
+    in-out property <[FolderEntry]> entries;        // those the filter lets through, folders first
+    in-out property <bool> has-entries;             // the folder is not empty (the filter may hide them all)
+    in-out property <string> filter;
+    in-out property <int> selected-count;
+    in-out property <string> selected-size;         // "10.8 GB"
+    in-out property <bool> can-open;                // one photo or video is chosen: it can be fetched and shown
+    in-out property <bool> all-selected;            // every file shown is chosen
+    in-out property <bool> some-selected;           // some of them are
+    in-out property <[TransferRow]> queue;          // active, then waiting, stopped, done
+    in-out property <int> active-count;
+    in-out property <bool> queue-open: true;        // the user's choice (settings.toml); the column shows when the queue is not empty
+    in-out property <string> folder-label;          // "~/Downloads/FinchGram"
+    in-out property <int> connections;              // per file (settings.toml)
+
+    // Adding or editing a server: the form in the middle column.
+    in-out property <bool> form-open;
+    in-out property <bool> form-editing;            // Save and Remove instead of Add
+    in-out property <string> form-name;
+    in-out property <string> form-address;
+    in-out property <string> form-username;
+    in-out property <string> form-password;
+    in-out property <FormError> form-error;
+    in-out property <TestState> test-state;
+    in-out property <int> test-folders;             // what Test connection found at the root
+    in-out property <int> test-files;
+    in-out property <bool> test-ranges;             // the server does ranges: several connections per file
+    in-out property <bool> test-probed;             // there was a file to ask that of
+    in-out property <Problem> test-problem;
+    in-out property <string> test-detail;
+
+    callback opened();                              // the page is shown
+    callback select-server(int);
+    callback add-server();                          // the form, empty
+    callback edit-server(int);
+    callback remove-server(int);
+    callback copy-address(int);
+    callback open-folder(string);                   // a folder of the listing, by name
+    callback go-to(int);                            // a crumb: 0 is the server's root
+    callback refresh();
+    callback set-filter(string);
+    callback toggle(string);                        // a file chosen, or not any more
+    callback toggle-all();                          // every file shown, or none
+    callback clear-selection();
+    callback download-selected();
+    callback open-selected();                       // the one photo or video chosen: fetched, then shown
+    callback download-file(string);
+    callback download-folder(string);               // with everything in it
+    callback open-file(string);                     // fetched, then shown (a photo or video) or shown in the Finder
+    callback copy-link(string);                     // the file's address
+    callback cancel(int);                           // a transfer, by id
+    callback retry(int);
+    callback show-in-finder(int);
+    callback remove-transfer(int);                  // from the list; done or stopped
+    callback toggle-queue();
+    callback change-folder();                       // where downloads go
+    callback test-connection();
+    callback submit-form();                         // Add, or Save
+    callback cancel-form();
+    callback remove-from-form();                    // editing: the server goes
+}

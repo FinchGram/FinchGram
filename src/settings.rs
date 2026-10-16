@@ -42,6 +42,41 @@ pub struct Settings {
     pub screenshots: Screenshots,
     /// Settings → AI access: the MCP server for AI assistants (src/mcp/, docs/mcp.md).
     pub mcp: Mcp,
+    /// The downloads page (src/downloads/, docs/downloads.md): where files go, how many connections
+    /// a file comes over, whether the queue column shows.
+    pub downloads: Downloads,
+    /// The WebDAV servers of the downloads page: name, address and account. Their passwords are in
+    /// the Keychain (src/platform/), never here. (A list of tables comes last in the file.)
+    pub webdav: Vec<WebdavServer>,
+}
+
+/// The downloads page's own settings.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Downloads {
+    /// Where downloaded files go; "" for ~/Downloads/FinchGram.
+    pub folder: String,
+    /// How many connections a file is fetched over at once, 1 … 32 (src/downloads/transfer.rs).
+    pub connections: u32,
+    /// The queue column of the page shows; the user can hide it.
+    pub queue_shown: bool,
+}
+
+impl Default for Downloads {
+    fn default() -> Self {
+        Downloads { folder: String::new(), connections: crate::downloads::transfer::DEFAULT_CONNECTIONS as u32, queue_shown: true }
+    }
+}
+
+/// A WebDAV server of the downloads page, as the user named it.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct WebdavServer {
+    pub name: String,
+    /// "https://nas.home:5006/dav", without a trailing slash; a folder may be part of it.
+    pub url: String,
+    /// The account; "" for a server that asks for none.
+    pub username: String,
 }
 
 /// How the chats of a folder are ordered under the pinned ones, which stay on top in Telegram's
@@ -288,6 +323,8 @@ impl Default for Settings {
             list_widths: ListWidths::default(),
             screenshots: Screenshots::default(),
             mcp: Mcp::default(),
+            downloads: Downloads::default(),
+            webdav: Vec::new(),
         }
     }
 }
@@ -312,6 +349,7 @@ impl Settings {
         settings.list_widths = settings.list_widths.sanitized();
         // A volume that makes no sense (edited by hand) is kept within the slider's range.
         settings.video_volume = settings.video_volume.clamp(0, 100);
+        settings.downloads.connections = settings.downloads.connections.clamp(1, crate::downloads::transfer::MOST_CONNECTIONS as u32);
         settings
     }
 

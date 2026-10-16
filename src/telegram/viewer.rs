@@ -311,9 +311,69 @@ fn play_pause() {
     }
     if player::is_loaded() {
         player::set_paused(playing);
+    } else if let Some(path) = shown_file() {
+        play_file(&path);
     } else if let Some(message_id) = shown_id().and_then(|id| id.parse().ok()) {
         start_video(message_id);
     }
+}
+
+/// Open the viewer on a file FinchGram downloaded from a WebDAV server (src/downloads/): a photo,
+/// decoded off the UI thread, or a video played from its path. Its id is "file:<path>", which no
+/// message has, so that what asks for a message's file does nothing for it; it cannot be saved
+/// to Downloads (it is there, or where the user chose) or located in a chat.
+pub fn view_file(path: &str, video: bool) {
+    let name = Path::new(path).file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default();
+    let id = SharedString::from(format!("file:{path}"));
+    let item = ViewerItem { id: id.clone(), video, name: name.into(), ..ViewerItem::default() };
+    player::stop();
+    with_viewer(|viewer| {
+        viewer.set_items(ModelRc::new(VecModel::from(vec![item])));
+        viewer.set_index(0);
+        viewer.set_zoom(0);
+        viewer.set_position(0.0);
+        viewer.set_speed(0);
+        viewer.set_saved(SharedString::new());
+        viewer.set_playing(false);
+        viewer.set_loading(!video);
+        viewer.set_ended(false);
+        viewer.set_can_save(false);
+        viewer.set_open(true);
+    });
+    if video {
+        play_file(path);
+        return;
+    }
+    images::load(path.to_string(), move |picture| {
+        with_viewer(|viewer| viewer.set_loading(false));
+        let Some(picture) = picture else { return };
+        if shown_id().as_deref() != Some(id.as_str()) {
+            return;
+        }
+        with_viewer(|viewer| {
+            let items = viewer.get_items();
+            if let Some(item) = items.row_data(0) {
+                let size = picture.size();
+                items.set_row_data(0, ViewerItem { width: size.width as i32, height: size.height as i32, picture, ..item });
+            }
+        });
+    });
+}
+
+/// Play a downloaded file in the viewer, at the user's speed, volume and mute.
+fn play_file(path: &str) {
+    let (mut speed, mut volume, mut muted) = (0, 100, false);
+    with_viewer(|viewer| {
+        speed = viewer.get_speed();
+        volume = viewer.get_volume();
+        muted = viewer.get_muted();
+    });
+    player::play(path, false, SPEEDS[speed as usize], volume, muted);
+}
+
+/// The path of the downloaded file shown, when the viewer shows one (view_file).
+fn shown_file() -> Option<String> {
+    shown_id().and_then(|id| id.strip_prefix("file:").map(str::to_string))
 }
 
 fn seek(part: f32) {

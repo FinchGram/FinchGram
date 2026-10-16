@@ -19,7 +19,9 @@ PICTURES=(
   workbench-light-shot-send-card
   workbench-light-settings-general
   workbench-light-settings-ai
+  workbench-light-downloads
   zh-workbench-chats
+  zh-workbench-downloads
 )
 mkdir -p "$TO"
 for name in "${PICTURES[@]}"; do

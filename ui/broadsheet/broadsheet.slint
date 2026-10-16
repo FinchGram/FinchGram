@@ -6,6 +6,7 @@ import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer, LinkPreview, ReplyQuote,
     Actions, ComposeBar, ActionNotice, Attachments, ChatOrder } from "../telegram.slint";
 import { Look, AccountColors } from "../look.slint";
+import { Downloads } from "../downloads.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import {
@@ -174,7 +175,35 @@ component Rail inherits Rectangle {
 
     VerticalLayout {
         padding-bottom: 16px;
+        spacing: 16px;
         alignment: end;
+        // Downloads (the design's third round of the pages), with a dot while some are on their way.
+        HorizontalLayout {
+            alignment: center;
+            Rectangle {
+                width: 22px;
+                height: 22px;
+                DuoIcon {
+                    name: "download-simple";
+                    size: 22px;
+                    color: P.muted;
+                }
+                if Downloads.active-count > 0: Rectangle {
+                    x: parent.width / 2 + 6px;
+                    y: -2px;
+                    width: 7px;
+                    height: 7px;
+                    border-radius: 3.5px;
+                    background: P.accent;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        AppState.page = Page.downloads;
+                    }
+                }
+            }
+        }
         HorizontalLayout {
             alignment: center;
             DuoIcon {

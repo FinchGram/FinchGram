@@ -42,6 +42,11 @@ things fit together.
   every theme: `src/mcp/access.rs`, ui/pages/ai-access.slint), off by default; each app is allowed
   by the user the first time it connects, through the dialog, and remembered by the path macOS
   reports for it.
+- The Downloads page (`src/downloads/`, docs/downloads.md, the design's "FinchGram Desktop 下载"
+  round, built in every theme) is a read-only WebDAV client whose engine follows the maintainer's
+  vget: 8 MB chunks over up to 12 connections, `.part` + `.part.json` for going on after a stop.
+  Passwords live in the macOS Keychain (`platform::keychain_*`), never in settings.toml; the
+  maintainer confirmed the Keychain on 2026-10-16. It needs no Telegram account.
 - Telegram API credentials are never in the repository. Every developer uses their own
   (`FINCHGRAM_API_ID`, `FINCHGRAM_API_HASH` at build time); the release workflow uses secrets.
 

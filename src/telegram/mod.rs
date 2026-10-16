@@ -187,6 +187,12 @@ pub fn notification_settings_changed(desktop_turned_on: bool) {
 
 /// The media viewer's volume and mute: the user's last, from the settings, and back into them as
 /// they change (viewer.rs).
+/// Show a file FinchGram downloaded from a WebDAV server (src/downloads/) in the media viewer: a
+/// photo, or a video that plays.
+pub fn view_downloaded_file(path: &str, video: bool) {
+    viewer::view_file(path, video);
+}
+
 pub fn connect_viewer_settings(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     viewer::connect_settings(ui, settings);
 }

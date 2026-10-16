@@ -5,6 +5,7 @@ import { Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, 
     Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice, NotificationScope,
     NotificationScopes, FileCard, FileState, FileType, Attachments, Attachment, AttachKind, AttachProblem, AttachHint, ChatConfirm } from "telegram.slint";
 import { AiAccess, AiScope, AiWriting, AiChat, AiApp, AiActivity, AiActivityKind } from "ai-access.slint";
+import { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError } from "downloads.slint";
 import { Look } from "look.slint";
 import { Fmt } from "format.slint";
 import { LoginPage } from "pages/login.slint";
@@ -15,6 +16,7 @@ import { SettingsPage } from "pages/settings.slint";
 import { MediaViewer } from "viewer.slint";
 import { ProfilePage } from "pages/profile.slint";
 import { AllowDialog } from "pages/ai-access.slint";
+import { DownloadsPage } from "pages/downloads.slint";
 
 // Re-exported so Rust can reach them through slint::include_modules!().
 export { ShotWindow, Shot, ShotTool, ShotCursor, ShotBox, ShotPath, ShotText, ShotCell, Screenshot }
@@ -24,6 +26,7 @@ export { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme,
     Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice, NotificationScope,
     NotificationScopes, FileCard, FileState, FileType, Attachments, Attachment, AttachKind, AttachProblem, AttachHint, ChatConfirm, Fmt }
 export { AiAccess, AiScope, AiWriting, AiChat, AiApp, AiActivity, AiActivityKind }
+export { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";
@@ -87,6 +90,14 @@ export component MainWindow inherits Window {
             }
             MenuSeparator { }
             MenuItem {
+                title: @tr("Downloads");
+                shortcut: @keys(Control + Alt + L);
+                activated => {
+                    AppState.show-window();
+                    AppState.page = Page.downloads;
+                }
+            }
+            MenuItem {
                 title: @tr("Settings…");
                 shortcut: @keys(Control + Comma);
                 activated => {
@@ -115,14 +126,15 @@ export component MainWindow inherits Window {
     // Until Telegram is ready, the login pages; then the theme's chat window, or a shared page.
     property <bool> ready: AppState.telegram-state == TelegramState.ready;
 
-    if !root.ready && AppState.page != Page.settings: LoginPage { }
+    if !root.ready && AppState.page != Page.settings && AppState.page != Page.downloads: LoginPage { }
     if root.ready && AppState.page == Page.chats && AppState.theme == Theme.workbench: WorkbenchWindow { }
     if root.ready && AppState.page == Page.chats && AppState.theme == Theme.broadsheet: BroadsheetWindow { }
     if root.ready && AppState.page == Page.chats && AppState.theme == Theme.terminal: TerminalWindow { }
     if AppState.page == Page.settings: SettingsPage { }
     if root.ready && AppState.page == Page.profile: ProfilePage { }
-    // The media viewer, over everything while it is open.
-    if root.ready && AppState.page == Page.chats && Viewer.open: MediaViewer { }
+    if AppState.page == Page.downloads: DownloadsPage { }
+    // The media viewer, over everything while it is open: a chat's media, or a downloaded file.
+    if ((root.ready && AppState.page == Page.chats) || AppState.page == Page.downloads) && Viewer.open: MediaViewer { }
     // An AI assistant's app is connecting for the first time: the question, over whatever is open.
     if AiAccess.ask-open: AllowDialog { }
 }
