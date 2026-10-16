@@ -79,14 +79,17 @@ const PROPFIND_BODY: &str = r#"<?xml version="1.0" encoding="utf-8"?>
 <D:propfind xmlns:D="DAV:"><D:prop><D:resourcetype/><D:getcontentlength/><D:getlastmodified/><D:displayname/></D:prop></D:propfind>"#;
 
 /// An agent for a server: `connections` is how many a file may be fetched over at once
-/// (transfer.rs), so that many connections to the host stay open between chunks.
+/// (transfer.rs), so that many connections to the host stay open between chunks. No compression
+/// is offered: the files are media, and a body that arrived compressed would not have the length
+/// the range promised.
 pub fn agent(connections: usize) -> ureq::Agent {
     ureq::Agent::config_builder()
         .user_agent(format!("finchgram/{}", crate::update::CURRENT_VERSION))
         .timeout_connect(Some(CONNECT_TIMEOUT))
         .timeout_recv_response(Some(RESPONSE_TIMEOUT))
-        .max_idle_connections_per_host(connections.max(1))
-        .max_idle_connections(connections.max(1) * 2)
+        .max_idle_connections_per_host(connections.max(1) + 2)
+        .max_idle_connections(connections.max(1) * 2 + 4)
+        .accept_encoding(ureq::config::AutoHeaderValue::None)
         .allow_non_standard_methods(true)
         .build()
         .into()

@@ -190,6 +190,8 @@ struct State {
     /// The server being edited in the form; none while adding one.
     editing: Option<usize>,
     worker: Option<Sender<Task>>,
+    /// The system is told the app is busy while a file is on its way (no App Nap, no sleep).
+    activity: Option<platform::Activity>,
 }
 
 thread_local! {
@@ -220,6 +222,7 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
             next_id: 1,
             editing: None,
             worker: None,
+            activity: None,
         })
     });
     let downloads = ui.global::<Downloads>();
@@ -974,9 +977,18 @@ fn show_queue() {
         transfers.iter().map(|transfer| transfer.row()).collect::<Vec<_>>()
     })
     .unwrap_or_default();
+    let active = active_count();
     with_downloads(|downloads| {
         downloads.set_queue(ModelRc::new(VecModel::from(rows)));
-        downloads.set_active_count(active_count());
+        downloads.set_active_count(active);
+    });
+    // Busy while a file is on its way: a window in the background is no reason to slow down.
+    with_state(|state| {
+        if active > 0 && state.activity.is_none() {
+            state.activity = Some(platform::begin_activity("Downloading files"));
+        } else if active == 0 {
+            state.activity = None;
+        }
     });
 }
 

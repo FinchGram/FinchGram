@@ -128,9 +128,18 @@ pub fn probe(agent: &ureq::Agent, source: &Source) -> Result<Probe, Error> {
         request = request.header("Authorization", authorization.as_str());
     }
     match request.call() {
-        Ok(response) => {
+        Ok(mut response) => {
             if response.status().as_u16() == 206 {
                 let total = response.headers().get("content-range").and_then(|value| value.to_str().ok()).and_then(content_range_total);
+                // The two bytes, read to the body's end: the connection then serves the first
+                // chunk. (Not read_to_vec with a limit: ureq's limited reader fails at the limit
+                // before it sees the end.) A server that sends more gets its connection closed.
+                let mut reader = response.body_mut().as_reader();
+                let mut sink = [0u8; 64];
+                let mut allowance = sink.len();
+                while allowance > 0 && matches!(reader.read(&mut sink[..allowance]), Ok(count) if count > 0) {
+                    allowance -= sink.len().min(allowance);
+                }
                 Ok(Probe { size: total, ranges: total.is_some() })
             } else {
                 Ok(Probe { size: response.body().content_length(), ranges: false })
@@ -295,9 +304,10 @@ fn fetch_chunk(agent: &ureq::Agent, source: &Source, shared: &Shared, index: usi
         match fetch_range(agent, source, start + written, end, shared, &mut written, &mut buffer, cancel) {
             Ok(()) => return Ok(()),
             Err(Error::Cancelled) => return Err(Error::Cancelled),
-            // The account or the file itself: trying again will not help.
-            Err(err @ (Error::Unauthorized | Error::Forbidden | Error::Disk(_) | Error::Protocol(_))) => return Err(err),
-            Err(err @ Error::Status(400..=499)) => return Err(err),
+            // The account, a file that is not there, or the disk: trying again will not help.
+            // Everything else may pass next time, as vget has it: a connection that drops, a 429
+            // or a 5xx from a busy server, a 200 where a 206 was due.
+            Err(err @ (Error::Unauthorized | Error::Forbidden | Error::Status(404 | 410) | Error::Disk(_))) => return Err(err),
             Err(err) => {
                 attempts = if written > before { 1 } else { attempts + 1 };
                 if attempts >= ATTEMPTS {
@@ -338,6 +348,11 @@ fn fetch_range(
     loop {
         let remaining = (end + 1).saturating_sub(offset);
         if remaining == 0 {
+            // One more read, to the body's end: only then does ureq keep the connection for the
+            // next chunk instead of closing it, which would cost a new connection, its handshake
+            // and its slow start for every 8 MB. A server that sends more than the range asked
+            // for gets its connection closed instead; the file is not touched.
+            let _ = reader.read(&mut buffer[..1]);
             return Ok(());
         }
         let want = usize::try_from(remaining).map_or(buffer.len(), |remaining| remaining.min(buffer.len()));
@@ -457,33 +472,39 @@ mod tests {
 
     use super::*;
 
-    /// A server of one file on the loopback: HTTP/1.1, ranges when told to, a count of the
-    /// requests and their Range headers, and 503 for the next `failures` range requests.
+    /// A server of one file on the loopback: HTTP/1.1 with keep-alive, ranges when told to, a
+    /// count of the connections and of the requests with their Range headers, 429 for the next
+    /// `failures` range requests, and 404 for every range request once `gone` is set.
     struct FileServer {
         url: String,
+        connections: Arc<AtomicUsize>,
         requests: Arc<Mutex<Vec<String>>>,
         failures: Arc<AtomicUsize>,
+        gone: Arc<AtomicBool>,
     }
 
     fn serve(content: Vec<u8>, ranges: bool, authorization: Option<&str>) -> FileServer {
         let listener = TcpListener::bind("127.0.0.1:0").expect("a port");
         let port = listener.local_addr().expect("the port").port();
+        let connections = Arc::new(AtomicUsize::new(0));
         let requests = Arc::new(Mutex::new(Vec::new()));
         let failures = Arc::new(AtomicUsize::new(0));
+        let gone = Arc::new(AtomicBool::new(false));
         let content = Arc::new(content);
         let authorization = authorization.map(str::to_string);
-        let (seen, fail) = (requests.clone(), failures.clone());
+        let (opened, seen, fail, missing) = (connections.clone(), requests.clone(), failures.clone(), gone.clone());
         std::thread::spawn(move || {
             for stream in listener.incoming() {
                 let Ok(stream) = stream else { break };
-                let (content, seen, fail, authorization) = (content.clone(), seen.clone(), fail.clone(), authorization.clone());
-                std::thread::spawn(move || answer(stream, &content, ranges, authorization.as_deref(), &seen, &fail));
+                opened.fetch_add(1, Ordering::SeqCst);
+                let (content, seen, fail, missing, authorization) = (content.clone(), seen.clone(), fail.clone(), missing.clone(), authorization.clone());
+                std::thread::spawn(move || answer(stream, &content, ranges, authorization.as_deref(), &seen, &fail, &missing));
             }
         });
-        FileServer { url: format!("http://127.0.0.1:{port}/film.mkv"), requests, failures }
+        FileServer { url: format!("http://127.0.0.1:{port}/film.mkv"), connections, requests, failures, gone }
     }
 
-    fn answer(stream: TcpStream, content: &[u8], ranges: bool, authorization: Option<&str>, requests: &Mutex<Vec<String>>, failures: &AtomicUsize) {
+    fn answer(stream: TcpStream, content: &[u8], ranges: bool, authorization: Option<&str>, requests: &Mutex<Vec<String>>, failures: &AtomicUsize, gone: &AtomicBool) {
         let mut reader = BufReader::new(stream.try_clone().expect("a reader"));
         let mut stream = stream;
         loop {
@@ -515,7 +536,9 @@ mod tests {
             let (status, extra, body): (&str, String, &[u8]) = if authorization.is_some() && given.as_deref() != authorization {
                 ("401 Unauthorized", String::new(), b"")
             } else if failing {
-                ("503 Service Unavailable", String::new(), b"")
+                ("429 Too Many Requests", String::new(), b"")
+            } else if !probe && range.is_some() && gone.load(Ordering::SeqCst) {
+                ("404 Not Found", String::new(), b"")
             } else if let Some((start, end)) = range.as_deref().filter(|_| ranges).and_then(parse_range) {
                 if start >= content.len() {
                     ("416 Range Not Satisfiable", format!("Content-Range: bytes */{}\r\n", content.len()), b"")
@@ -609,6 +632,22 @@ mod tests {
     }
 
     #[test]
+    fn connections_are_kept_between_chunks() {
+        // Twelve chunks over two workers take a handful of connections, each serving chunk after
+        // chunk (the probe's, and a couple opened at the start); without the body read to its
+        // end, every chunk would open one of its own, thirteen in all.
+        let content = pattern(11 * CHUNK_SIZE as usize + 7);
+        let server = serve(content.clone(), true, None);
+        let scratch = Scratch::new("keepalive");
+        let dest = scratch.path("film.mkv");
+        fetch(&server, &dest, 2).expect("the file");
+        assert_eq!(fs::read(&dest).unwrap(), content);
+        assert_eq!(server.requests.lock().unwrap().len(), 13);
+        let connections = server.connections.load(Ordering::SeqCst);
+        assert!(connections <= 4, "{connections} connections for 12 chunks over 2");
+    }
+
+    #[test]
     fn a_stopped_download_goes_on_where_it_was() {
         let content = pattern(2 * CHUNK_SIZE as usize + 999);
         let server = serve(content.clone(), true, None);
@@ -650,8 +689,18 @@ mod tests {
         let dest = scratch.path("film.mkv");
         fetch(&server, &dest, 4).expect("the file");
         assert_eq!(fs::read(&dest).unwrap(), content);
-        // The probe, two refused tries, the one that worked.
+        // The probe, two tries answered 429, the one that worked.
         assert_eq!(server.requests.lock().unwrap().len(), 4);
+    }
+
+    #[test]
+    fn a_file_that_is_gone_is_not_tried_again() {
+        let server = serve(pattern(100_000), true, None);
+        server.gone.store(true, Ordering::SeqCst);
+        let scratch = Scratch::new("gone");
+        assert_eq!(fetch(&server, &scratch.path("film.mkv"), 4), Err(Error::Status(404)));
+        // The probe and one try.
+        assert_eq!(server.requests.lock().unwrap().len(), 2);
     }
 
     #[test]

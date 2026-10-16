@@ -896,6 +896,24 @@ pub fn keychain_delete(service: &str, account: &str) -> Result<(), String> {
     if status == errSecItemNotFound { Ok(()) } else { keychain_status(status) }
 }
 
+// ---- activities ----------------------------------------------------------------------------
+
+/// What NSProcessInfo gave for an activity; handed back to end it.
+pub struct ActivityToken(objc2::rc::Retained<objc2::runtime::ProtocolObject<dyn objc2_foundation::NSObjectProtocol>>);
+
+/// Begin an activity on the user's behalf (NSActivityUserInitiated: no App Nap, no idle sleep).
+pub fn begin_activity(reason: &str) -> ActivityToken {
+    use objc2_foundation::{NSActivityOptions, NSProcessInfo, NSString};
+    let token = NSProcessInfo::processInfo().beginActivityWithOptions_reason(NSActivityOptions::UserInitiated, &NSString::from_str(reason));
+    ActivityToken(token)
+}
+
+pub fn end_activity(token: ActivityToken) {
+    use objc2_foundation::NSProcessInfo;
+    // SAFETY: the token is the one beginActivityWithOptions:reason: gave, ended once.
+    unsafe { NSProcessInfo::processInfo().endActivity(&token.0) };
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

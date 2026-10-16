@@ -64,7 +64,9 @@ The engine, `src/downloads/transfer.rs`, follows vget:
    range gets the file over one connection.
 5. Done, `.part` takes the file's name, or "name (2).ext" when that name is taken.
 
-Two files are on their way at a time; the others wait their turn. The speed shown is over the last
+Two files are on their way at a time; the others wait their turn. While any is, the app tells macOS
+it is busy (an NSProcessInfo activity): App Nap does not slow it down when the window is in the
+background, and the Mac does not go to sleep on its own. The speed shown is over the last
 three seconds. Cancel keeps the `.part` files for a retry; Remove from list takes a stopped or
 finished file off the list and deletes nothing.
 

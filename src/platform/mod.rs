@@ -402,3 +402,31 @@ mod tests {
         assert_eq!(chinese.compare("张三", "李四"), Ordering::Greater);
     }
 }
+
+/// The system has been told that the app is busy on the user's behalf, until this is dropped: on
+/// macOS an NSProcessInfo activity, which keeps App Nap from slowing the app down when its window
+/// is not in front, and the Mac from going to sleep on its own meanwhile.
+pub struct Activity {
+    #[cfg(target_os = "macos")]
+    token: Option<macos::ActivityToken>,
+}
+
+/// Tell the system the app is busy, for `reason` (a short English phrase, for its tools).
+pub fn begin_activity(reason: &str) -> Activity {
+    #[cfg(target_os = "macos")]
+    return Activity { token: Some(macos::begin_activity(reason)) };
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = reason;
+        Activity {}
+    }
+}
+
+impl Drop for Activity {
+    fn drop(&mut self) {
+        #[cfg(target_os = "macos")]
+        if let Some(token) = self.token.take() {
+            macos::end_activity(token);
+        }
+    }
+}
