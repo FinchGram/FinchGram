@@ -59,9 +59,12 @@ The engine, `src/downloads/transfer.rs`, follows vget:
    and says the server does ranges; a 200 answer means it does not.
 2. The file is cut into chunks: 8 MB for a small file, up to 32 MB for a large one (a stream sits
    idle while the server works out each request, so the fewer chunks the better). A pool of
-   workers, one stream each (12 by default, `connections` in settings.toml, 1 to 32), takes the
+   workers, one stream each (24 by default, `connections` in settings.toml, 1 to 64), takes the
    next chunk until none is left, each written at its offset into `<name>.part`, which has the
-   file's full size from the start, by a writer thread.
+   file's full size from the start, by a writer thread. Once nothing is left, an idle stream takes
+   three quarters of the longest stretch still on its way (from 1 MB up): the last chunks used to
+   sit on the slowest connections, a CDN node at 1 MB/s or less, and keep a 1 GB file waiting ten
+   seconds after the rest had arrived.
 3. `<name>.part.json` records which chunks are done. Retry, or a later download of the same file,
    goes on from there: "12 MB of 48 MB kept".
 4. A chunk that fails is tried again from the last byte written, up to ten times, after a pause that
@@ -87,14 +90,18 @@ to check a server), the 207 Multi-Status answer parsed with roxmltree, Basic aut
 percent-encoded by segment.
 
 HTTP is hyper (`src/downloads/http.rs`), HTTP/2 where the server offers it and HTTP/1.1 elsewhere, on
-a tokio runtime of the engine's own. HTTP/2 is what PikPak and the like need for speed: their servers
-take a few hundred milliseconds to answer each range, and over HTTP/1.1 every connection sits idle
-that long between chunks, so the server's congestion window shrinks and each chunk starts slowly
-again; over HTTP/2 the twelve streams share one connection that never idles, which is how vget gets
-its speed. The flow-control windows are set like Go's transport (4 MB per stream, 32 MB per
-connection); hyper's defaults would cap a stream at a few hundred kilobytes per second across an
-ocean. TLS is rustls with the platform's trust store: a certificate the Mac trusts, including one
-you trusted yourself in Keychain Access, passes.
+a tokio runtime of the engine's own, with the flow-control windows set like Go's transport (4 MB per
+stream, 32 MB per connection; hyper's defaults would cap a stream at a few hundred kilobytes per
+second across an ocean). Redirects are followed, the credentials left behind when the host changes.
+TLS is rustls with the platform's trust store: a certificate the Mac trusts, including one you
+trusted yourself in Keychain Access, passes.
+
+What PikPak does, measured on 2026-10-16: its WebDAV host (HTTP/2, in Singapore) answers every file
+request with a redirect to a CDN node, `dl-z01a-00xx.mypikpak.net`, which speaks HTTP/1.1 only and
+gives each connection between 1 and 10 MB/s, a different node each time. So the speed is a matter
+of how many streams there are and of the tail, not of the protocol: with 12 streams the same 1 GB
+file came at the same speed as with vget in the same minute (35 to 40 MB/s on average, the tail
+included), with 24 streams and the tail taken at 55 to 100 MB/s while the bytes flow.
 
 ## Where things are kept
 

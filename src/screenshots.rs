@@ -1207,7 +1207,7 @@ fn fill_downloads(ui: &MainWindow) {
     downloads.set_active_count(1);
     downloads.set_queue_open(true);
     downloads.set_folder_label("~/Downloads/FinchGram".into());
-    downloads.set_connections(12);
+    downloads.set_connections(24);
     downloads.set_form_open(false);
     downloads.set_form_editing(false);
     downloads.set_form_error(FormError::None);

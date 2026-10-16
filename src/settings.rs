@@ -56,7 +56,7 @@ pub struct Settings {
 pub struct Downloads {
     /// Where downloaded files go; "" for ~/Downloads/FinchGram.
     pub folder: String,
-    /// How many connections a file is fetched over at once, 1 … 32 (src/downloads/transfer.rs).
+    /// How many streams a file is fetched over at once, 1 … 64 (src/downloads/transfer.rs).
     pub connections: u32,
     /// The queue column of the page shows; the user can hide it.
     pub queue_shown: bool,
@@ -349,6 +349,11 @@ impl Settings {
         settings.list_widths = settings.list_widths.sanitized();
         // A volume that makes no sense (edited by hand) is kept within the slider's range.
         settings.video_volume = settings.video_volume.clamp(0, 100);
+        // 12 was the default up to v0.4.6 and nothing in the app sets the number, so a file that
+        // still says 12 means the default: now 24 (src/downloads/transfer.rs).
+        if settings.downloads.connections == 12 {
+            settings.downloads.connections = crate::downloads::transfer::DEFAULT_CONNECTIONS as u32;
+        }
         settings.downloads.connections = settings.downloads.connections.clamp(1, crate::downloads::transfer::MOST_CONNECTIONS as u32);
         settings
     }

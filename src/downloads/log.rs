@@ -29,8 +29,12 @@ fn open() -> Option<Mutex<File>> {
     OpenOptions::new().create(true).write(true).append(!afresh).truncate(afresh).open(&path).ok().map(Mutex::new)
 }
 
-/// A line, with the time; nothing happens when the log cannot be written.
+/// A line, with the time; nothing happens when the log cannot be written. The benchmark test
+/// (transfer.rs, FINCHGRAM_BENCH_URL) sees the lines on stderr instead.
 pub fn line(words: impl AsRef<str>) {
+    if cfg!(test) && std::env::var_os("FINCHGRAM_BENCH_URL").is_some() {
+        eprintln!("{} {}", chrono::Local::now().format("%H:%M:%S%.3f"), words.as_ref());
+    }
     if let Some(file) = LOG.get_or_init(open)
         && let Ok(mut file) = file.lock()
     {

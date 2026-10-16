@@ -12,7 +12,7 @@
 //! runs the whole transfer on the caller's thread with `Http::block_on`, and reports progress to
 //! the caller's closure from there.
 
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 use std::fmt;
 use std::fs::{self, File, OpenOptions};
 use std::io::Write as _;
@@ -33,10 +33,11 @@ use tokio::sync::{Semaphore, mpsc, oneshot};
 use super::http::{Failure, Http};
 use super::log;
 
-/// Streams per file unless settings say otherwise (vget's default).
-pub const DEFAULT_CONNECTIONS: usize = 12;
+/// Streams per file unless settings say otherwise. vget's 12 was the start; measured against
+/// PikPak's CDN, whose connections each give 1 to 10 MB/s, 24 streams go half as fast again.
+pub const DEFAULT_CONNECTIONS: usize = 24;
 /// The most streams settings may ask for.
-pub const MOST_CONNECTIONS: usize = 32;
+pub const MOST_CONNECTIONS: usize = 64;
 /// A chunk: 8 MB for a small file, small enough that a failed one is cheap to fetch again; up to
 /// 32 MB for a large one, since a stream sits idle while the server works out each request
 /// (PikPak takes half a second), and the fewer chunks the less of that.
@@ -53,6 +54,10 @@ const PROGRESS_TICK: Duration = Duration::from_millis(50);
 const STALL_TIMEOUT: Duration = Duration::from_secs(60);
 /// Writes waiting for the writer thread before the streams pause.
 const WRITES_IN_FLIGHT: usize = 64;
+/// The tail: once nothing is pending, an idle stream takes most of the longest part still on its
+/// way, when that is at least this much. Without it the last chunks on the slowest connections
+/// (1 MB/s, or 0.2, on a bad CDN node) kept a 1 GB file waiting ten seconds after the rest.
+const LEAST_STOLEN: u64 = 1024 * 1024;
 
 /// How many streams a transfer may use: `count` per file, and a budget shared by every file of
 /// a folder being downloaded at once, so that several files together use no more than one.
@@ -210,6 +215,38 @@ struct Shared {
     /// A worker failed, or the user stopped the file: the others stop.
     abort: AtomicBool,
     failed: Mutex<Option<Error>>,
+    /// The parts of chunks on their way, for the tail.
+    parts: Mutex<Vec<Part>>,
+    /// How many parts of each chunk are still on their way: the chunk is done when the last is.
+    parts_left: Mutex<HashMap<usize, usize>>,
+}
+
+/// A stretch of a chunk one stream fetches: from `offset`, which moves as bytes are written, up
+/// to `stop`, which an idle stream moves down when it takes the rest.
+struct Part {
+    chunk: usize,
+    offset: Arc<AtomicU64>,
+    stop: Arc<AtomicU64>,
+}
+
+impl Part {
+    fn new(chunk: usize, from: u64, to: u64) -> Part {
+        Part { chunk, offset: Arc::new(AtomicU64::new(from)), stop: Arc::new(AtomicU64::new(to)) }
+    }
+
+    fn remaining(&self) -> u64 {
+        self.stop.load(Ordering::Relaxed).saturating_sub(self.offset.load(Ordering::Relaxed))
+    }
+
+    fn same(&self, other: &Part) -> bool {
+        Arc::ptr_eq(&self.offset, &other.offset)
+    }
+}
+
+impl Clone for Part {
+    fn clone(&self) -> Part {
+        Part { chunk: self.chunk, offset: self.offset.clone(), stop: self.stop.clone() }
+    }
 }
 
 impl Shared {
@@ -361,6 +398,8 @@ async fn multi(
         bytes: AtomicU64::new(already),
         abort: AtomicBool::new(false),
         failed: Mutex::new(None),
+        parts: Mutex::new(Vec::new()),
+        parts_left: Mutex::new(HashMap::new()),
     });
     progress(already, total);
     let (sender, receiver) = mpsc::channel::<Write>(WRITES_IN_FLIGHT);
@@ -446,7 +485,8 @@ impl Writer {
     }
 }
 
-/// One worker: the next chunk, until there is none, the file failed, or the user stopped it.
+/// One worker: the next chunk, then the tail of another stream's, until there is nothing left,
+/// the file failed, or the user stopped it.
 async fn worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, writer: mpsc::Sender<Write>) {
     loop {
         if shared.abort.load(Ordering::Relaxed) {
@@ -454,9 +494,10 @@ async fn worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, writer: mp
         }
         // A stream of the transfer's budget, shared with the other files of a folder.
         let Ok(permit) = shared.budget.clone().acquire_owned().await else { return };
-        let Some(index) = shared.pending.lock().unwrap().pop_front() else { return };
-        let outcome = fetch_chunk(&http, &source, &shared, &writer, index).await;
+        let Some(part) = next_part(&shared) else { return };
+        let outcome = fetch_part(&http, &source, &shared, &writer, &part).await;
         drop(permit);
+        shared.parts.lock().unwrap().retain(|other| !other.same(&part));
         match outcome {
             Ok(()) => {}
             Err(Error::Cancelled) => return,
@@ -468,18 +509,47 @@ async fn worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, writer: mp
     }
 }
 
-/// Chunk `index`, tried again from the last byte handed over when the stream fails.
-async fn fetch_chunk(http: &Http, source: &Source, shared: &Shared, writer: &mpsc::Sender<Write>, index: usize) -> Result<(), Error> {
-    let start = index as u64 * shared.chunk_size;
-    let end = start + chunk_length(index, shared.total, shared.chunk_size) - 1;
-    let mut written: u64 = 0;
+/// The next chunk; when none is pending, three quarters of the longest part still on its way
+/// (the stream that has it is slow, or it would not be the longest), if that is worth a request
+/// of its own.
+fn next_part(shared: &Shared) -> Option<Part> {
+    let part = match shared.pending.lock().unwrap().pop_front() {
+        Some(index) => {
+            let start = index as u64 * shared.chunk_size;
+            Part::new(index, start, start + chunk_length(index, shared.total, shared.chunk_size))
+        }
+        None => {
+            let parts = shared.parts.lock().unwrap();
+            let longest = parts.iter().max_by_key(|part| part.remaining())?;
+            let remaining = longest.remaining();
+            if remaining < LEAST_STOLEN {
+                return None;
+            }
+            let stop = longest.stop.load(Ordering::Relaxed);
+            let mid = stop - remaining * 3 / 4;
+            longest.stop.store(mid, Ordering::Relaxed);
+            log::line(format!("chunk {}: an idle stream takes its last {}", longest.chunk, size_words(stop - mid)));
+            Part::new(longest.chunk, mid, stop)
+        }
+    };
+    shared.parts.lock().unwrap().push(part.clone());
+    *shared.parts_left.lock().unwrap().entry(part.chunk).or_insert(0) += 1;
+    Some(part)
+}
+
+/// `part`, tried again from the last byte handed over when the stream fails; the chunk is marked
+/// done once its last part is.
+async fn fetch_part(http: &Http, source: &Source, shared: &Shared, writer: &mpsc::Sender<Write>, part: &Part) -> Result<(), Error> {
     let mut attempts: u32 = 0;
     loop {
         if shared.abort.load(Ordering::Relaxed) {
             return Err(Error::Cancelled);
         }
-        let before = written;
-        match fetch_range(http, source, start + written, end, shared, &mut written, writer, index).await {
+        let from = part.offset.load(Ordering::Relaxed);
+        if from >= part.stop.load(Ordering::Relaxed) {
+            break;
+        }
+        match fetch_range(http, source, part, shared, writer).await {
             Ok(()) => break,
             Err(Error::Cancelled) => return Err(Error::Cancelled),
             // The disk is the one thing trying again will not help. Everything else may pass next
@@ -488,8 +558,8 @@ async fn fetch_chunk(http: &Http, source: &Source, shared: &Shared, writer: &mps
             // 206 was due.
             Err(err @ Error::Disk(_)) => return Err(err),
             Err(err) => {
-                attempts = if written > before { 1 } else { attempts + 1 };
-                log::line(format!("chunk {index} of {}: {err}; try {attempts} of {ATTEMPTS}", source.url));
+                attempts = if part.offset.load(Ordering::Relaxed) > from { 1 } else { attempts + 1 };
+                log::line(format!("chunk {} of {}: {err}; try {attempts} of {ATTEMPTS}", part.chunk, source.url));
                 if attempts >= ATTEMPTS {
                     return Err(err);
                 }
@@ -497,16 +567,31 @@ async fn fetch_chunk(http: &Http, source: &Source, shared: &Shared, writer: &mps
             }
         }
     }
-    // The chunk is done once its last byte is on disk, not when it was handed over.
-    let (ack, written_down) = oneshot::channel();
-    writer.send(Write::Done { index, ack }).await.map_err(|_| Error::Cancelled)?;
-    written_down.await.map_err(|_| Error::Cancelled)
+    // The chunk is done once the last byte of its last part is on disk, not when handed over.
+    let last = {
+        let mut left = shared.parts_left.lock().unwrap();
+        let count = left.entry(part.chunk).or_insert(1);
+        *count -= 1;
+        let last = *count == 0;
+        if last {
+            left.remove(&part.chunk);
+        }
+        last
+    };
+    if last {
+        let (ack, written_down) = oneshot::channel();
+        writer.send(Write::Done { index: part.chunk, ack }).await.map_err(|_| Error::Cancelled)?;
+        written_down.await.map_err(|_| Error::Cancelled)?;
+    }
+    Ok(())
 }
 
-/// Bytes `from` to `end` of the file, handed to the writer for where they belong; `written`
-/// counts what was handed over.
-#[allow(clippy::too_many_arguments)]
-async fn fetch_range(http: &Http, source: &Source, from: u64, end: u64, shared: &Shared, written: &mut u64, writer: &mpsc::Sender<Write>, index: usize) -> Result<(), Error> {
+/// The bytes of `part` from its offset to its stop, handed to the writer for where they belong;
+/// the offset moves as they go. The stop may move down meanwhile (an idle stream took the rest):
+/// the body is then left unread, and the connection closed, which is cheaper than the wait.
+async fn fetch_range(http: &Http, source: &Source, part: &Part, shared: &Shared, writer: &mpsc::Sender<Write>) -> Result<(), Error> {
+    let from = part.offset.load(Ordering::Relaxed);
+    let end = part.stop.load(Ordering::Relaxed) - 1;
     let started = Instant::now();
     let mut response = http.send(source.request(http, Some(&format!("bytes={from}-{end}")))?).await?;
     let answered = started.elapsed();
@@ -518,17 +603,21 @@ async fn fetch_range(http: &Http, source: &Source, from: u64, end: u64, shared: 
     let body = response.body_mut();
     let mut offset = from;
     loop {
-        let remaining = (end + 1).saturating_sub(offset);
+        let stop = part.stop.load(Ordering::Relaxed);
+        let remaining = stop.saturating_sub(offset);
         if remaining == 0 {
-            // To the body's end, so that the connection (HTTP/1.1) or the stream is finished
-            // properly and the connection stays in the pool.
-            drain(body, 64).await;
+            if stop > end {
+                // To the body's end, so that the connection (HTTP/1.1) or the stream is finished
+                // properly and the connection stays in the pool.
+                drain(body, 64).await;
+            }
             let seconds = started.elapsed().as_secs_f64();
             log::line(format!(
-                "chunk {index}: answered in {} ms, {} in {seconds:.2} s ({:.1} MB/s)",
+                "chunk {}: answered in {} ms, {} in {seconds:.2} s ({:.1} MB/s)",
+                part.chunk,
                 answered.as_millis(),
-                size_words(end + 1 - from),
-                (end + 1 - from) as f64 / (1024.0 * 1024.0) / seconds.max(0.001)
+                size_words(offset - from),
+                (offset - from) as f64 / (1024.0 * 1024.0) / seconds.max(0.001)
             ));
             return Ok(());
         }
@@ -542,14 +631,15 @@ async fn fetch_range(http: &Http, source: &Source, from: u64, end: u64, shared: 
         if data.is_empty() {
             continue;
         }
-        // Never past the chunk's end: a server that sends more is cut short.
+        // Never past the part's end: a server that sends more is cut short, and so is a part
+        // whose rest another stream took.
         if data.len() as u64 > remaining {
             data.truncate(remaining as usize);
         }
         let count = data.len() as u64;
         writer.send(Write::Data { offset, data }).await.map_err(|_| Error::Cancelled)?;
         offset += count;
-        *written += count;
+        part.offset.store(offset, Ordering::Relaxed);
         shared.bytes.fetch_add(count, Ordering::Relaxed);
         if shared.abort.load(Ordering::Relaxed) {
             return Err(Error::Cancelled);
@@ -703,6 +793,8 @@ mod tests {
         failures: Arc<AtomicUsize>,
         missing: Arc<AtomicUsize>,
         probe_failures: Arc<AtomicUsize>,
+        /// The next `slow` chunk requests are answered 64 KB every 20 ms.
+        slow: Arc<AtomicUsize>,
     }
 
     fn serve(content: Vec<u8>, ranges: bool, authorization: Option<&str>) -> FileServer {
@@ -713,9 +805,10 @@ mod tests {
         let failures = Arc::new(AtomicUsize::new(0));
         let missing = Arc::new(AtomicUsize::new(0));
         let probe_failures = Arc::new(AtomicUsize::new(0));
+        let slow = Arc::new(AtomicUsize::new(0));
         let content = Arc::new(content);
         let authorization = authorization.map(str::to_string);
-        let counters = Arc::new(Counters { failures: failures.clone(), missing: missing.clone(), probe_failures: probe_failures.clone() });
+        let counters = Arc::new(Counters { failures: failures.clone(), missing: missing.clone(), probe_failures: probe_failures.clone(), slow: slow.clone() });
         let (opened, seen) = (connections.clone(), requests.clone());
         std::thread::spawn(move || {
             for stream in listener.incoming() {
@@ -725,14 +818,15 @@ mod tests {
                 std::thread::spawn(move || answer(stream, &content, ranges, authorization.as_deref(), &seen, &counters));
             }
         });
-        FileServer { url: format!("http://127.0.0.1:{port}/film.mkv"), connections, requests, failures, missing, probe_failures }
+        FileServer { url: format!("http://127.0.0.1:{port}/film.mkv"), connections, requests, failures, missing, probe_failures, slow }
     }
 
-    /// How many of the next requests the server turns away, and how.
+    /// How many of the next requests the server turns away, and how; how many it answers slowly.
     struct Counters {
         failures: Arc<AtomicUsize>,
         missing: Arc<AtomicUsize>,
         probe_failures: Arc<AtomicUsize>,
+        slow: Arc<AtomicUsize>,
     }
 
     /// Takes one from `counter` when there is one to take.
@@ -788,7 +882,17 @@ mod tests {
                 ("200 OK", String::new(), content)
             };
             let head = format!("HTTP/1.1 {status}\r\nContent-Length: {}\r\n{extra}\r\n", body.len());
-            if stream.write_all(head.as_bytes()).and_then(|_| stream.write_all(body)).is_err() {
+            if stream.write_all(head.as_bytes()).is_err() {
+                return;
+            }
+            if chunk && take(&counters.slow) {
+                for piece in body.chunks(64 * 1024) {
+                    if stream.write_all(piece).is_err() {
+                        return;
+                    }
+                    std::thread::sleep(Duration::from_millis(20));
+                }
+            } else if stream.write_all(body).is_err() {
                 return;
             }
         }
@@ -861,10 +965,44 @@ mod tests {
         let seen = seen.into_inner().unwrap();
         assert_eq!(seen.last(), Some(&(content.len() as u64, content.len() as u64)));
         assert!(seen.windows(2).all(|pair| pair[0].0 <= pair[1].0), "progress never goes back: {seen:?}");
-        let mut requests = server.requests.lock().unwrap().clone();
-        requests.sort();
-        let last = content.len() - 1;
-        assert_eq!(requests, vec!["bytes=0-1".to_string(), format!("bytes=0-{}", CHUNK_SIZE - 1), format!("bytes={}-{last}", 2 * CHUNK_SIZE), format!("bytes={}-{}", CHUNK_SIZE, 2 * CHUNK_SIZE - 1)]);
+        let requests = server.requests.lock().unwrap().clone();
+        assert_eq!(requests[0], "bytes=0-1");
+        assert!(requests.len() >= 4, "{requests:?}");
+        assert!(covers(&requests[1..], content.len()), "every byte asked for: {requests:?}");
+    }
+
+    /// Whether `ranges` ("bytes=a-b"), together, ask for every byte of a file of `len` bytes
+    /// (an idle stream may take the tail of another's chunk, so they may overlap).
+    fn covers(ranges: &[String], len: usize) -> bool {
+        let mut spans: Vec<(usize, usize)> = ranges.iter().filter_map(|range| parse_range(range)).collect();
+        spans.sort();
+        let mut reached = 0;
+        for (start, end) in spans {
+            if start > reached {
+                return false;
+            }
+            reached = reached.max(end + 1);
+        }
+        reached >= len
+    }
+
+    #[test]
+    fn an_idle_stream_takes_the_tail_of_a_slow_one() {
+        // Two chunks over four streams, the first chunk's connection slow: the idle streams take
+        // its rest, most of it at a time, instead of waiting for it.
+        let content = pattern(2 * CHUNK_SIZE as usize + 5);
+        let server = serve(content.clone(), true, None);
+        server.slow.store(1, Ordering::SeqCst);
+        let scratch = Scratch::new("tail");
+        let dest = scratch.path("film.mkv");
+        let started = Instant::now();
+        fetch(&server, &dest, 4).expect("the file");
+        assert_eq!(fs::read(&dest).unwrap(), content);
+        let requests = server.requests.lock().unwrap().clone();
+        assert!(requests.len() > 3, "the tail was taken: {requests:?}");
+        assert!(covers(&requests[1..], content.len()), "{requests:?}");
+        // The slow connection alone would have taken 8 MB at 64 KB per 20 ms: 2.6 s.
+        assert!(started.elapsed() < Duration::from_millis(2000), "{:?}", started.elapsed());
     }
 
     #[test]
@@ -878,9 +1016,10 @@ mod tests {
         let dest = scratch.path("film.mkv");
         fetch(&server, &dest, 2).expect("the file");
         assert_eq!(fs::read(&dest).unwrap(), content);
-        assert_eq!(server.requests.lock().unwrap().len(), 13);
+        let requests = server.requests.lock().unwrap().len();
+        assert!((13..=16).contains(&requests), "{requests} requests for 12 chunks");
         let connections = server.connections.load(Ordering::SeqCst);
-        assert!(connections <= 4, "{connections} connections for 12 chunks over 2");
+        assert!(connections <= 6, "{connections} connections for 12 chunks over 2");
     }
 
     #[test]
@@ -900,8 +1039,9 @@ mod tests {
         assert_eq!(got, dest);
         assert_eq!(fs::read(&dest).unwrap(), content);
         let requests = server.requests.lock().unwrap().clone();
-        assert!(!requests.iter().any(|range| range == &format!("bytes=0-{}", CHUNK_SIZE - 1)), "the first chunk is not fetched again: {requests:?}");
-        assert_eq!(requests.len(), 3);
+        let lowest = requests[1..].iter().filter_map(|range| parse_range(range)).map(|(start, _)| start).min();
+        assert_eq!(lowest, Some(CHUNK_SIZE as usize), "the first chunk is not fetched again: {requests:?}");
+        assert!(requests.len() >= 3);
         assert_eq!(kept(&dest), 0);
     }
 
@@ -1053,6 +1193,43 @@ mod tests {
         download(http, &source, &dest, &Streams::new(4), &AtomicBool::new(false), &|_| {}).expect("the file");
         let text = fs::read_to_string(&dest).unwrap();
         assert!(text.starts_with("/*! jQuery v3.7.1"), "{}", &text[..40.min(text.len())]);
+    }
+
+    /// A real server, named by the environment: FINCHGRAM_BENCH_URL (the WebDAV address),
+    /// FINCHGRAM_BENCH_USER, FINCHGRAM_BENCH_PASSWORD, FINCHGRAM_BENCH_FILE (the file's path on
+    /// the server, "/Movies/film.mkv") and FINCHGRAM_BENCH_STREAMS (12 unless set). Prints the
+    /// speed every two seconds and the engine's log, leaves nothing behind:
+    /// cargo test bench_real_server -- --ignored --nocapture
+    #[test]
+    #[ignore = "needs a server: cargo test bench_real_server -- --ignored --nocapture"]
+    fn bench_real_server() {
+        use crate::downloads::webdav::Server;
+        let var = |name: &str| std::env::var(name).ok().filter(|value| !value.is_empty());
+        let (Some(url), Some(file)) = (var("FINCHGRAM_BENCH_URL"), var("FINCHGRAM_BENCH_FILE")) else {
+            eprintln!("no server given");
+            return;
+        };
+        let server = Server { url: Server::normalized_url(&url), username: var("FINCHGRAM_BENCH_USER").unwrap_or_default(), password: var("FINCHGRAM_BENCH_PASSWORD").unwrap_or_default() };
+        let streams: usize = var("FINCHGRAM_BENCH_STREAMS").and_then(|value| value.parse().ok()).unwrap_or(DEFAULT_CONNECTIONS);
+        let segments: Vec<String> = file.trim_matches('/').split('/').map(str::to_string).collect();
+        let (name, folder) = segments.split_last().expect("a file name");
+        let source = Source { url: server.file_url(folder, name), authorization: server.authorization() };
+        let scratch = Scratch::new("bench");
+        let dest = scratch.path(name);
+        let started = Instant::now();
+        let last = Mutex::new((Instant::now(), 0u64));
+        let result = download(http::client(), &source, &dest, &Streams::new(streams), &AtomicBool::new(false), &|progress| {
+            let mut last = last.lock().unwrap();
+            if last.0.elapsed() >= Duration::from_secs(2) {
+                let rate = progress.done.saturating_sub(last.1) as f64 / 1048576.0 / last.0.elapsed().as_secs_f64();
+                eprintln!("{:6.1} s {:8.1} MB {:6.1} MB/s {}", started.elapsed().as_secs_f64(), progress.done as f64 / 1048576.0, rate, progress.protocol.name());
+                *last = (Instant::now(), progress.done);
+            }
+        });
+        let seconds = started.elapsed().as_secs_f64();
+        let bytes = fs::metadata(&dest).map(|meta| meta.len()).unwrap_or(0);
+        eprintln!("result {:?}: {:.1} MB in {seconds:.1} s = {:.1} MB/s on average, {streams} streams", result.as_ref().map(|_| ()), bytes as f64 / 1048576.0, bytes as f64 / 1048576.0 / seconds.max(0.001));
+        assert!(result.is_ok(), "{result:?}");
     }
 
     #[test]

@@ -158,6 +158,7 @@ impl Http {
                 return Err(Failure::Redirect("the server redirected too many times".into()));
             }
             let target = resolve(&parts.uri, location)?;
+            super::log::line(format!("{} {} redirects to {}://{}/…", parts.uri.host().unwrap_or_default(), response.status().as_u16(), target.scheme_str().unwrap_or_default(), target.host().unwrap_or_default()));
             if target.authority() != parts.uri.authority() {
                 parts.headers.remove(AUTHORIZATION);
             }
