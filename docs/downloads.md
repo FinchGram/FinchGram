@@ -45,8 +45,11 @@ Three columns:
 
 Open fetches the photo or video and then shows it in the media viewer, the same one as for
 Telegram's media, with the player's speed and volume. Any other file is shown in the Finder when
-it arrives. Download folder lists the folder's tree first and then fetches every file into the same
-tree under the downloads folder; a file already there with the same size is skipped.
+it arrives. Download folder lists the folder's tree first, eight folders at a time with the total
+growing on the page as files are found, then fetches the files into the same tree under the
+downloads folder, six at a time (a server that takes half a second per request would otherwise
+make a folder of small files crawl), the files sharing the transfer's streams; a file already
+there with the same size is skipped.
 
 ## How a file comes
 
@@ -54,9 +57,11 @@ The engine, `src/downloads/transfer.rs`, follows vget:
 
 1. A probe asks for the first two bytes with `Range: bytes=0-1`. A 206 answer gives the file's size
    and says the server does ranges; a 200 answer means it does not.
-2. The file is cut into chunks of 8 MB. A pool of workers, one connection each (12 by default,
-   `connections` in settings.toml, 1 to 32), takes the next chunk until none is left, each written at
-   its offset into `<name>.part`, which has the file's full size from the start.
+2. The file is cut into chunks: 8 MB for a small file, up to 32 MB for a large one (a stream sits
+   idle while the server works out each request, so the fewer chunks the better). A pool of
+   workers, one stream each (12 by default, `connections` in settings.toml, 1 to 32), takes the
+   next chunk until none is left, each written at its offset into `<name>.part`, which has the
+   file's full size from the start, by a writer thread.
 3. `<name>.part.json` records which chunks are done. Retry, or a later download of the same file,
    goes on from there: "12 MB of 48 MB kept".
 4. A chunk that fails is tried again from the last byte written, up to ten times, after a pause that
@@ -68,8 +73,13 @@ The engine, `src/downloads/transfer.rs`, follows vget:
 
 Two files are on their way at a time; the others wait their turn. While any is, the app tells macOS
 it is busy (an NSProcessInfo activity): App Nap does not slow it down when the window is in the
-background, and the Mac does not go to sleep on its own. The speed shown is over the last
-three seconds. Cancel keeps the `.part` files for a retry; Remove from list takes a stopped or
+background, and the Mac does not go to sleep on its own. The speed shown is over the last five
+seconds, with what the server speaks beside it, "24.3 MB/s (HTTP/2)".
+
+What the engine does goes line by line into `downloads.log` next to settings.toml: each probe and
+chunk with the protocol, how long the server took to answer and how fast the bytes came, every
+retry and why, each listing. It starts afresh past 8 MB. When a server is slow, that file says
+where the time goes. Cancel keeps the `.part` files for a retry; Remove from list takes a stopped or
 finished file off the list and deletes nothing.
 
 WebDAV itself is `src/downloads/webdav.rs`: PROPFIND with depth 1 for a folder's listing (and depth 0

@@ -1199,7 +1199,7 @@ fn fill_downloads(ui: &MainWindow) {
     downloads.set_all_selected(false);
     downloads.set_some_selected(true);
     downloads.set_queue(model(vec![
-        transfer(1, "Dune Part Three (2026).mkv", "film-strip", TransferState::Active, 0.38, "4.1 GB", "10.8 GB", "24.3 MB/s", 275, Problem::None),
+        transfer(1, "Dune Part Three (2026).mkv", "film-strip", TransferState::Active, 0.38, "4.1 GB", "10.8 GB", "24.3 MB/s (HTTP/2)", 275, Problem::None),
         transfer(2, "poster.jpg", "file-image", TransferState::Waiting, 0.0, "", "2.4 MB", "", -1, Problem::None),
         transfer(3, "soundtrack.zip", "file-zip", TransferState::Stopped, 0.25, "12 MB", "48 MB", "", -1, Problem::Connection),
         transfer(4, "notes.pdf", "file-pdf", TransferState::Done, 1.0, "1.1 MB", "1.1 MB", "", -1, Problem::None),

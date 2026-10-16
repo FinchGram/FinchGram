@@ -140,9 +140,17 @@ impl Server {
     /// What a folder holds: folders and files, as the server lists them (unsorted); the folder
     /// itself is left out.
     pub fn list(&self, http: &Http, path: &[String]) -> Result<Vec<Entry>, Error> {
+        http.block_on(self.list_in(http, path))
+    }
+
+    /// The same, from inside the runtime (a tree is walked several folders at a time).
+    pub async fn list_in(&self, http: &Http, path: &[String]) -> Result<Vec<Entry>, Error> {
         let url = self.folder_url(path);
-        let body = http.block_on(self.propfind(http, &url, "1"))?;
-        parse_listing(&body, &url_path(&url))
+        let started = std::time::Instant::now();
+        let body = self.propfind(http, &url, "1").await?;
+        let entries = parse_listing(&body, &url_path(&url))?;
+        super::log::line(format!("listed {url}: {} entries in {} ms", entries.len(), started.elapsed().as_millis()));
+        Ok(entries)
     }
 
     /// Whether the server answers at the root: nothing is read but the fact.

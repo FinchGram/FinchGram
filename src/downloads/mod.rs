@@ -12,6 +12,7 @@
 //! server is first used.
 
 pub mod http;
+pub mod log;
 pub mod transfer;
 pub mod webdav;
 
@@ -19,8 +20,8 @@ use std::cell::RefCell;
 use std::collections::{BTreeSet, VecDeque};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 use std::sync::mpsc::{self, Sender};
 use std::time::{Duration, Instant};
 
@@ -35,7 +36,7 @@ const KEYCHAIN_SERVICE: &str = "FinchGram WebDAV";
 /// How many files are fetched at the same time; the rest wait.
 const MOST_ACTIVE: usize = 2;
 /// The speed shown is over this long.
-const SPEED_WINDOW: Duration = Duration::from_secs(3);
+const SPEED_WINDOW: Duration = Duration::from_secs(5);
 /// Where downloads go unless the settings say: this folder in the user's Downloads.
 const DEFAULT_FOLDER: &str = "FinchGram";
 
@@ -100,6 +101,8 @@ struct Transfer {
     total: u64,
     /// (when, bytes done) over the last moments, for the speed.
     samples: VecDeque<(Instant, u64)>,
+    /// What the server speaks, once known: shown beside the speed.
+    protocol: transfer::Protocol,
     problem: Problem,
     detail: String,
     cancel: Arc<AtomicBool>,
@@ -136,7 +139,7 @@ impl Transfer {
             fraction: if self.total > 0 { (self.done as f64 / self.total as f64).clamp(0.0, 1.0) as f32 } else { 0.0 },
             done: size_text(self.done).into(),
             total: size_text(self.total).into(),
-            speed: speed.map(speed_text).unwrap_or_default().into(),
+            speed: speed.map(speed_text).map(|words| match self.protocol.name() { "" => words, name => format!("{words} ({name})") }).unwrap_or_default().into(),
             seconds_left: seconds_left.unwrap_or(-1),
             minutes_left: seconds_left.map(|seconds| (seconds + 59) / 60).unwrap_or(-1),
             problem: self.problem,
@@ -714,6 +717,7 @@ fn enqueue_entry(name: &str, open: bool) {
             done: transfer::kept(&dest),
             total: entry.size,
             samples: VecDeque::new(),
+            protocol: transfer::Protocol::Unknown,
             problem: Problem::None,
             detail: String::new(),
             cancel: Arc::new(AtomicBool::new(false)),
@@ -753,6 +757,7 @@ fn enqueue_folder(name: &str) {
             done: 0,
             total: 0,
             samples: VecDeque::new(),
+            protocol: transfer::Protocol::Unknown,
             problem: Problem::None,
             detail: String::new(),
             cancel: Arc::new(AtomicBool::new(false)),
@@ -813,12 +818,13 @@ fn start_next() {
 fn run(id: i32, kind: Kind, cancel: Arc<AtomicBool>, connections: usize) {
     let started = std::thread::Builder::new().name(format!("download {id}")).spawn(move || {
         let http = http::client();
-        let progress = move |done: u64, total: u64| {
-            let _ = slint::invoke_from_event_loop(move || progressed(id, done, total));
+        let streams = transfer::Streams::new(connections);
+        let progress = move |progress: transfer::Progress| {
+            let _ = slint::invoke_from_event_loop(move || progressed(id, progress));
         };
         let result = match kind {
-            Kind::File { source, dest } => transfer::download(http, &source, &dest, connections, &cancel, &progress),
-            Kind::Folder { server, path, dest } => download_tree(http, &server, &path, &dest, connections, &cancel, &progress),
+            Kind::File { source, dest } => transfer::download(http, &source, &dest, &streams, &cancel, &progress),
+            Kind::Folder { server, path, dest } => download_tree(http, &server, &path, &dest, &streams, &cancel, &progress),
         };
         let _ = slint::invoke_from_event_loop(move || finished(id, result));
     });
@@ -828,60 +834,131 @@ fn run(id: i32, kind: Kind, cancel: Arc<AtomicBool>, connections: usize) {
     }
 }
 
-/// A folder and everything in it (listed first, so that the whole is known), into `dest`. A file
-/// already there with its size is not fetched again: a stopped folder goes on where it was.
+/// Files of a folder fetched at once: enough to hide a server's half second per request behind
+/// one another when the files are small; the transfer's budget of streams caps the large ones.
+const FILES_AT_ONCE: usize = 6;
+/// Folders listed at once while a tree is walked.
+const LISTINGS_AT_ONCE: usize = 8;
+
+/// A file found in a folder's tree: where it is within the folder, its name, its size.
+struct TreeFile {
+    folder: Vec<String>,
+    name: String,
+    size: u64,
+}
+
+/// A folder and everything in it, into `dest`: the tree listed first, several folders at a time,
+/// the total growing on the page as files are found; then the files, several at a time over the
+/// transfer's budget of streams. A file already there with its size is not fetched again: a
+/// stopped folder goes on where it was.
 fn download_tree(
     http: &http::Http,
     server: &webdav::Server,
     path: &[String],
     dest: &Path,
-    connections: usize,
+    streams: &transfer::Streams,
     cancel: &AtomicBool,
-    progress: &dyn Fn(u64, u64),
+    progress: &(dyn Fn(transfer::Progress) + Sync),
 ) -> Result<PathBuf, transfer::Error> {
-    // (the folder within `path`, the file's name, its size)
-    let mut files: Vec<(Vec<String>, String, u64)> = Vec::new();
-    let mut folders: VecDeque<Vec<String>> = VecDeque::from([Vec::new()]);
-    while let Some(folder) = folders.pop_front() {
-        if cancel.load(Ordering::Relaxed) {
-            return Err(transfer::Error::Cancelled);
+    let files = http.block_on(list_tree(http, server, path, cancel, progress))?;
+    let total: u64 = files.iter().map(|file| file.size).sum();
+    log::line(format!("folder {}: {} files, {:.1} MB", server.folder_url(path), files.len(), total as f64 / (1024.0 * 1024.0)));
+    progress(transfer::Progress { done: 0, total, protocol: transfer::Protocol::Unknown });
+    let workers = FILES_AT_ONCE.min(files.len().max(1));
+    let queue = Mutex::new(VecDeque::from(files));
+    // Bytes of the files done or skipped, and of each worker's file so far: their sum is where
+    // the folder is.
+    let finished = AtomicU64::new(0);
+    let in_flight: Mutex<Vec<u64>> = Mutex::new(vec![0; workers]);
+    let protocol = Mutex::new(transfer::Protocol::Unknown);
+    let failure: Mutex<Option<transfer::Error>> = Mutex::new(None);
+    let report = |slot: usize, done: u64, seen: transfer::Protocol| {
+        let mut flight = in_flight.lock().unwrap();
+        flight[slot] = done;
+        let under_way: u64 = flight.iter().sum();
+        drop(flight);
+        let mut known = protocol.lock().unwrap();
+        if seen != transfer::Protocol::Unknown {
+            *known = seen;
         }
-        let mut whole = path.to_vec();
-        whole.extend(folder.iter().cloned());
-        let entries = server.list(http, &whole).map_err(transfer_error)?;
-        for entry in entries {
+        progress(transfer::Progress { done: finished.load(Ordering::Relaxed) + under_way, total, protocol: *known });
+    };
+    std::thread::scope(|scope| {
+        for slot in 0..workers {
+            let (queue, finished, failure, report) = (&queue, &finished, &failure, &report);
+            scope.spawn(move || {
+                loop {
+                    if cancel.load(Ordering::Relaxed) || failure.lock().unwrap().is_some() {
+                        return;
+                    }
+                    let Some(file) = queue.lock().unwrap().pop_front() else { return };
+                    let mut whole = path.to_vec();
+                    whole.extend(file.folder.iter().cloned());
+                    let mut file_dest = dest.to_path_buf();
+                    for part in &file.folder {
+                        file_dest.push(part);
+                    }
+                    file_dest.push(&file.name);
+                    let already = std::fs::metadata(&file_dest).map(|meta| meta.is_file() && meta.len() == file.size).unwrap_or(false);
+                    if !already {
+                        let source = transfer::Source { url: server.file_url(&whole, &file.name), authorization: server.authorization() };
+                        if let Err(err) = transfer::download(http, &source, &file_dest, streams, cancel, &|progress| report(slot, progress.done, progress.protocol)) {
+                            let mut failed = failure.lock().unwrap();
+                            if failed.is_none() {
+                                *failed = Some(err);
+                            }
+                            return;
+                        }
+                    }
+                    finished.fetch_add(file.size, Ordering::Relaxed);
+                    report(slot, 0, transfer::Protocol::Unknown);
+                }
+            });
+        }
+    });
+    if cancel.load(Ordering::Relaxed) {
+        return Err(transfer::Error::Cancelled);
+    }
+    if let Some(err) = failure.lock().unwrap().take() {
+        return Err(err);
+    }
+    Ok(dest.to_path_buf())
+}
+
+/// The files of the tree under `path`, listed several folders at a time; the total so far goes to
+/// the page as it grows.
+async fn list_tree(http: &http::Http, server: &webdav::Server, path: &[String], cancel: &AtomicBool, progress: &(dyn Fn(transfer::Progress) + Sync)) -> Result<Vec<TreeFile>, transfer::Error> {
+    let mut files = Vec::new();
+    let mut pending: VecDeque<Vec<String>> = VecDeque::from([Vec::new()]);
+    let mut set = tokio::task::JoinSet::new();
+    let mut total: u64 = 0;
+    loop {
+        while set.len() < LISTINGS_AT_ONCE
+            && let Some(folder) = pending.pop_front()
+        {
+            let (client, server) = (http.clone(), server.clone());
+            let mut whole = path.to_vec();
+            whole.extend(folder.iter().cloned());
+            set.spawn_on(async move { (folder, server.list_in(&client, &whole).await) }, http.handle());
+        }
+        let Some(next) = set.join_next().await else { break };
+        let (folder, listed) = next.map_err(|err| transfer::Error::Connection(format!("a listing's task failed: {err}")))?;
+        for entry in listed.map_err(transfer_error)? {
             let mut within = folder.clone();
             if entry.is_dir {
                 within.push(entry.name);
-                folders.push_back(within);
+                pending.push_back(within);
             } else {
-                files.push((within, entry.name, entry.size));
+                total += entry.size;
+                files.push(TreeFile { folder: within, name: entry.name, size: entry.size });
             }
         }
-    }
-    let total: u64 = files.iter().map(|(_, _, size)| *size).sum();
-    progress(0, total);
-    let mut before: u64 = 0;
-    for (folder, name, size) in files {
+        progress(transfer::Progress { done: 0, total, protocol: transfer::Protocol::Unknown });
         if cancel.load(Ordering::Relaxed) {
             return Err(transfer::Error::Cancelled);
         }
-        let mut whole = path.to_vec();
-        whole.extend(folder.iter().cloned());
-        let mut file_dest = dest.to_path_buf();
-        for part in &folder {
-            file_dest.push(part);
-        }
-        file_dest.push(&name);
-        let already = std::fs::metadata(&file_dest).map(|meta| meta.is_file() && meta.len() == size).unwrap_or(false);
-        if !already {
-            let source = transfer::Source { url: server.file_url(&whole, &name), authorization: server.authorization() };
-            transfer::download(http, &source, &file_dest, connections, cancel, &|done, _| progress(before + done, total))?;
-        }
-        before += size;
-        progress(before, total);
     }
-    Ok(dest.to_path_buf())
+    Ok(files)
 }
 
 /// A server's refusal, as the transfer engine words it.
@@ -895,12 +972,16 @@ fn transfer_error(error: webdav::Error) -> transfer::Error {
     }
 }
 
-fn progressed(id: i32, done: u64, total: u64) {
+fn progressed(id: i32, progress: transfer::Progress) {
     let row = with_state(|state| {
         let transfer = state.queue.iter_mut().find(|transfer| transfer.id == id && transfer.state == TransferState::Active)?;
+        let done = progress.done;
         transfer.done = done;
-        if total > 0 {
-            transfer.total = total;
+        if progress.total > 0 {
+            transfer.total = progress.total;
+        }
+        if progress.protocol != transfer::Protocol::Unknown {
+            transfer.protocol = progress.protocol;
         }
         let now = Instant::now();
         transfer.samples.push_back((now, done));

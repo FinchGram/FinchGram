@@ -20,24 +20,28 @@ use std::os::unix::fs::FileExt;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use bytes::Bytes;
 use http_body_util::{BodyExt, Full};
 use hyper::body::Incoming;
 use hyper::header::{AUTHORIZATION, RANGE};
-use hyper::{Method, Request, Response};
+use hyper::{Method, Request, Response, Version};
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::{Semaphore, mpsc, oneshot};
 
 use super::http::{Failure, Http};
+use super::log;
 
 /// Streams per file unless settings say otherwise (vget's default).
 pub const DEFAULT_CONNECTIONS: usize = 12;
 /// The most streams settings may ask for.
 pub const MOST_CONNECTIONS: usize = 32;
-/// A chunk: 8 MB, small enough that a failed one is cheap to fetch again.
+/// A chunk: 8 MB for a small file, small enough that a failed one is cheap to fetch again; up to
+/// 32 MB for a large one, since a stream sits idle while the server works out each request
+/// (PikPak takes half a second), and the fewer chunks the less of that.
 const CHUNK_SIZE: u64 = 8 * 1024 * 1024;
+const LARGEST_CHUNK: u64 = 32 * 1024 * 1024;
 /// Tries per chunk before the file is given up on; the count starts over whenever a try brought
 /// some bytes.
 const ATTEMPTS: u32 = 10;
@@ -49,6 +53,55 @@ const PROGRESS_TICK: Duration = Duration::from_millis(50);
 const STALL_TIMEOUT: Duration = Duration::from_secs(60);
 /// Writes waiting for the writer thread before the streams pause.
 const WRITES_IN_FLIGHT: usize = 64;
+
+/// How many streams a transfer may use: `count` per file, and a budget shared by every file of
+/// a folder being downloaded at once, so that several files together use no more than one.
+#[derive(Clone)]
+pub struct Streams {
+    pub count: usize,
+    budget: Arc<Semaphore>,
+}
+
+impl Streams {
+    pub fn new(count: usize) -> Streams {
+        let count = count.clamp(1, MOST_CONNECTIONS);
+        Streams { count, budget: Arc::new(Semaphore::new(count)) }
+    }
+}
+
+/// What the server speaks, for the page.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Protocol {
+    #[default]
+    Unknown,
+    Http1,
+    Http2,
+}
+
+impl Protocol {
+    fn of(version: Version) -> Protocol {
+        match version {
+            Version::HTTP_2 | Version::HTTP_3 => Protocol::Http2,
+            _ => Protocol::Http1,
+        }
+    }
+
+    pub fn name(self) -> &'static str {
+        match self {
+            Protocol::Unknown => "",
+            Protocol::Http1 => "HTTP/1.1",
+            Protocol::Http2 => "HTTP/2",
+        }
+    }
+}
+
+/// How far a transfer is: reported to the caller every 50 ms while bytes come.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Progress {
+    pub done: u64,
+    pub total: u64,
+    pub protocol: Protocol,
+}
 
 /// Where a file is, and the account to get it with (webdav::Server::authorization).
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -132,6 +185,7 @@ pub struct Probe {
     pub size: Option<u64>,
     /// The server answers a range with that range: several streams can share the file.
     pub ranges: bool,
+    pub protocol: Protocol,
 }
 
 /// Which chunks of a `.part` file are there: `.part.json`, next to it.
@@ -146,6 +200,9 @@ struct State {
 /// What the workers of one file share.
 struct Shared {
     total: u64,
+    chunk_size: u64,
+    /// Streams in flight across every file of the transfer (Streams::budget).
+    budget: Arc<Semaphore>,
     /// The chunks still to fetch.
     pending: Mutex<VecDeque<usize>>,
     /// Bytes handed to the writer so far, the done chunks of a resumed file counted.
@@ -179,17 +236,20 @@ pub fn probe(http: &Http, source: &Source) -> Result<Probe, Error> {
 }
 
 async fn probe_once(http: &Http, source: &Source) -> Result<Probe, Error> {
+    let started = Instant::now();
     let mut response = http.send(source.request(http, Some("bytes=0-1"))?).await?;
+    let protocol = Protocol::of(response.version());
+    log::line(format!("probe {}: {} {} in {} ms", source.url, protocol.name(), response.status().as_u16(), started.elapsed().as_millis()));
     match response.status().as_u16() {
         206 => {
             let total = response.headers().get("content-range").and_then(|value| value.to_str().ok()).and_then(content_range_total);
             // The two bytes, read to the body's end: a connection with its body read is kept.
             drain(response.body_mut(), 64).await;
-            Ok(Probe { size: total, ranges: total.is_some() })
+            Ok(Probe { size: total, ranges: total.is_some(), protocol })
         }
         // 416: nothing to range over, the file is empty.
-        416 => Ok(Probe { size: Some(0), ranges: true }),
-        200 => Ok(Probe { size: content_length(&response), ranges: false }),
+        416 => Ok(Probe { size: Some(0), ranges: true, protocol }),
+        200 => Ok(Probe { size: content_length(&response), ranges: false, protocol }),
         code => Err(status_error(code)),
     }
 }
@@ -219,27 +279,40 @@ async fn drain(body: &mut Incoming, most: usize) {
 /// done, bytes in all) to `progress` as it goes. A `dest` that is taken gets " (2)" and so on; the
 /// path the file got is returned. `cancel` stops it and leaves the `.part` files for a later try.
 /// Blocks: call it on a thread of the file's own.
-pub fn download(http: &Http, source: &Source, dest: &Path, connections: usize, cancel: &AtomicBool, progress: &dyn Fn(u64, u64)) -> Result<PathBuf, Error> {
+pub fn download(http: &Http, source: &Source, dest: &Path, streams: &Streams, cancel: &AtomicBool, progress: &(dyn Fn(Progress) + Sync)) -> Result<PathBuf, Error> {
     if let Some(folder) = dest.parent() {
         fs::create_dir_all(folder).map_err(disk)?;
     }
     let part = with_suffix(dest, ".part");
     let state_path = with_suffix(dest, ".part.json");
+    let started = Instant::now();
     let probe = http.block_on(probe_with_retries(http, source, cancel))?;
+    let protocol = probe.protocol;
     match probe {
-        Probe { size: Some(total), ranges: true } if total > 0 => {
-            http.block_on(multi(http, source, &part, &state_path, total, connections, cancel, progress))?;
+        Probe { size: Some(total), ranges: true, .. } if total > 0 => {
+            http.block_on(multi(http, source, &part, &state_path, total, streams, cancel, &|done, total| progress(Progress { done, total, protocol })))?;
         }
         Probe { size: Some(0), .. } => {
             File::create(&part).map_err(disk)?;
-            progress(0, 0);
+            progress(Progress { done: 0, total: 0, protocol });
         }
-        Probe { size, .. } => http.block_on(single(http, source, &part, size, cancel, progress))?,
+        Probe { size, .. } => http.block_on(single(http, source, &part, size, cancel, &|done, total| progress(Progress { done, total, protocol })))?,
     }
     let _ = fs::remove_file(&state_path);
     let target = free_path(dest);
     fs::rename(&part, &target).map_err(disk)?;
+    log::line(format!("done {}: {} in {:.1} s", source.url, size_words(fs::metadata(&target).map(|meta| meta.len()).unwrap_or(0)), started.elapsed().as_secs_f64()));
     Ok(target)
+}
+
+/// "12.3 MB", for the log.
+fn size_words(bytes: u64) -> String {
+    format!("{:.1} MB", bytes as f64 / (1024.0 * 1024.0))
+}
+
+/// The chunk a file of `total` bytes is cut into: 8 MB, growing to 32 MB for a large file.
+fn chunk_size(total: u64) -> u64 {
+    (total / 96).clamp(CHUNK_SIZE, LARGEST_CHUNK)
 }
 
 /// Bytes of `dest` that are there from an earlier try: the done chunks of its `.part` file.
@@ -260,15 +333,16 @@ async fn multi(
     part: &Path,
     state_path: &Path,
     total: u64,
-    connections: usize,
+    streams: &Streams,
     cancel: &AtomicBool,
     progress: &dyn Fn(u64, u64),
 ) -> Result<(), Error> {
-    let chunks = usize::try_from(total.div_ceil(CHUNK_SIZE)).unwrap_or(usize::MAX);
+    let chunk = chunk_size(total);
+    let chunks = usize::try_from(total.div_ceil(chunk)).unwrap_or(usize::MAX);
     let file = OpenOptions::new().read(true).write(true).create(true).truncate(false).open(part).map_err(disk)?;
     // An earlier try of the same file goes on; anything else starts afresh.
     let earlier = read_state(state_path)
-        .filter(|state| state.size == total && state.chunk_size == CHUNK_SIZE && state.chunks == chunks && state.done.len() == chunks)
+        .filter(|state| state.size == total && state.chunk_size == chunk && state.chunks == chunks && state.done.len() == chunks)
         .filter(|_| file.metadata().map(|meta| meta.len() == total).unwrap_or(false));
     let done = match earlier {
         Some(state) => state.done,
@@ -277,10 +351,12 @@ async fn multi(
             vec![false; chunks]
         }
     };
-    let already: u64 = done.iter().enumerate().filter(|(_, done)| **done).map(|(index, _)| chunk_length(index, total, CHUNK_SIZE)).sum();
+    let already: u64 = done.iter().enumerate().filter(|(_, done)| **done).map(|(index, _)| chunk_length(index, total, chunk)).sum();
     let pending: VecDeque<usize> = (0..chunks).filter(|index| !done[*index]).collect();
     let shared = Arc::new(Shared {
         total,
+        chunk_size: chunk,
+        budget: streams.budget.clone(),
         pending: Mutex::new(pending),
         bytes: AtomicU64::new(already),
         abort: AtomicBool::new(false),
@@ -288,8 +364,9 @@ async fn multi(
     });
     progress(already, total);
     let (sender, receiver) = mpsc::channel::<Write>(WRITES_IN_FLIGHT);
-    let writer = Writer::start(file, state_path.to_path_buf(), total, done, receiver, shared.clone());
-    let workers = connections.clamp(1, MOST_CONNECTIONS).min(chunks.max(1));
+    let writer = Writer::start(file, state_path.to_path_buf(), total, chunk, done, receiver, shared.clone());
+    let workers = streams.count.min(chunks.max(1));
+    log::line(format!("start {}: {}, {} chunks of {}, {} streams, {} kept", source.url, size_words(total), chunks, size_words(chunk), workers, size_words(already)));
     let source = Arc::new(source.clone());
     let mut set = tokio::task::JoinSet::new();
     for _ in 0..workers {
@@ -336,7 +413,7 @@ struct Writer {
 }
 
 impl Writer {
-    fn start(file: File, state_path: PathBuf, total: u64, mut done: Vec<bool>, mut receiver: mpsc::Receiver<Write>, shared: Arc<Shared>) -> Writer {
+    fn start(file: File, state_path: PathBuf, total: u64, chunk_size: u64, mut done: Vec<bool>, mut receiver: mpsc::Receiver<Write>, shared: Arc<Shared>) -> Writer {
         let thread = std::thread::Builder::new()
             .name("writer".into())
             .spawn(move || {
@@ -352,7 +429,7 @@ impl Writer {
                         }
                         Write::Done { index, ack } => {
                             done[index] = true;
-                            write_state(&state_path, total, &done);
+                            write_state(&state_path, total, chunk_size, &done);
                             let _ = ack.send(());
                         }
                     }
@@ -375,8 +452,12 @@ async fn worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, writer: mp
         if shared.abort.load(Ordering::Relaxed) {
             return;
         }
+        // A stream of the transfer's budget, shared with the other files of a folder.
+        let Ok(permit) = shared.budget.clone().acquire_owned().await else { return };
         let Some(index) = shared.pending.lock().unwrap().pop_front() else { return };
-        match fetch_chunk(&http, &source, &shared, &writer, index).await {
+        let outcome = fetch_chunk(&http, &source, &shared, &writer, index).await;
+        drop(permit);
+        match outcome {
             Ok(()) => {}
             Err(Error::Cancelled) => return,
             Err(err) => {
@@ -389,8 +470,8 @@ async fn worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, writer: mp
 
 /// Chunk `index`, tried again from the last byte handed over when the stream fails.
 async fn fetch_chunk(http: &Http, source: &Source, shared: &Shared, writer: &mpsc::Sender<Write>, index: usize) -> Result<(), Error> {
-    let start = index as u64 * CHUNK_SIZE;
-    let end = start + chunk_length(index, shared.total, CHUNK_SIZE) - 1;
+    let start = index as u64 * shared.chunk_size;
+    let end = start + chunk_length(index, shared.total, shared.chunk_size) - 1;
     let mut written: u64 = 0;
     let mut attempts: u32 = 0;
     loop {
@@ -398,7 +479,7 @@ async fn fetch_chunk(http: &Http, source: &Source, shared: &Shared, writer: &mps
             return Err(Error::Cancelled);
         }
         let before = written;
-        match fetch_range(http, source, start + written, end, shared, &mut written, writer).await {
+        match fetch_range(http, source, start + written, end, shared, &mut written, writer, index).await {
             Ok(()) => break,
             Err(Error::Cancelled) => return Err(Error::Cancelled),
             // The disk is the one thing trying again will not help. Everything else may pass next
@@ -408,6 +489,7 @@ async fn fetch_chunk(http: &Http, source: &Source, shared: &Shared, writer: &mps
             Err(err @ Error::Disk(_)) => return Err(err),
             Err(err) => {
                 attempts = if written > before { 1 } else { attempts + 1 };
+                log::line(format!("chunk {index} of {}: {err}; try {attempts} of {ATTEMPTS}", source.url));
                 if attempts >= ATTEMPTS {
                     return Err(err);
                 }
@@ -423,8 +505,11 @@ async fn fetch_chunk(http: &Http, source: &Source, shared: &Shared, writer: &mps
 
 /// Bytes `from` to `end` of the file, handed to the writer for where they belong; `written`
 /// counts what was handed over.
-async fn fetch_range(http: &Http, source: &Source, from: u64, end: u64, shared: &Shared, written: &mut u64, writer: &mpsc::Sender<Write>) -> Result<(), Error> {
+#[allow(clippy::too_many_arguments)]
+async fn fetch_range(http: &Http, source: &Source, from: u64, end: u64, shared: &Shared, written: &mut u64, writer: &mpsc::Sender<Write>, index: usize) -> Result<(), Error> {
+    let started = Instant::now();
     let mut response = http.send(source.request(http, Some(&format!("bytes={from}-{end}")))?).await?;
+    let answered = started.elapsed();
     match response.status().as_u16() {
         206 => {}
         200 => return Err(Error::Protocol("the server ignored the range it said it would answer".into())),
@@ -438,6 +523,13 @@ async fn fetch_range(http: &Http, source: &Source, from: u64, end: u64, shared: 
             // To the body's end, so that the connection (HTTP/1.1) or the stream is finished
             // properly and the connection stays in the pool.
             drain(body, 64).await;
+            let seconds = started.elapsed().as_secs_f64();
+            log::line(format!(
+                "chunk {index}: answered in {} ms, {} in {seconds:.2} s ({:.1} MB/s)",
+                answered.as_millis(),
+                size_words(end + 1 - from),
+                (end + 1 - from) as f64 / (1024.0 * 1024.0) / seconds.max(0.001)
+            ));
             return Ok(());
         }
         let frame = match tokio::time::timeout(STALL_TIMEOUT, body.frame()).await {
@@ -555,8 +647,8 @@ fn read_state(path: &Path) -> Option<State> {
     serde_json::from_str(&fs::read_to_string(path).ok()?).ok()
 }
 
-fn write_state(path: &Path, total: u64, done: &[bool]) {
-    let state = State { size: total, chunk_size: CHUNK_SIZE, chunks: done.len(), done: done.to_vec() };
+fn write_state(path: &Path, total: u64, chunk_size: u64, done: &[bool]) {
+    let state = State { size: total, chunk_size, chunks: done.len(), done: done.to_vec() };
     match serde_json::to_string(&state) {
         Ok(text) => {
             if let Err(err) = fs::write(path, text) {
@@ -738,18 +830,18 @@ mod tests {
     }
 
     fn fetch(server: &FileServer, dest: &Path, connections: usize) -> Result<PathBuf, Error> {
-        download(http::client(), &source(server), dest, connections, &AtomicBool::new(false), &|_, _| {})
+        download(http::client(), &source(server), dest, &Streams::new(connections), &AtomicBool::new(false), &|_| {})
     }
 
     #[test]
     fn the_probe_tells_the_size_and_whether_ranges_work() {
         let http = http::client();
         let with = serve(pattern(1000), true, None);
-        assert_eq!(probe(http, &source(&with)).unwrap(), Probe { size: Some(1000), ranges: true });
+        assert_eq!(probe(http, &source(&with)).unwrap(), Probe { size: Some(1000), ranges: true, protocol: Protocol::Http1 });
         let without = serve(pattern(1000), false, None);
-        assert_eq!(probe(http, &source(&without)).unwrap(), Probe { size: Some(1000), ranges: false });
+        assert_eq!(probe(http, &source(&without)).unwrap(), Probe { size: Some(1000), ranges: false, protocol: Protocol::Http1 });
         let empty = serve(Vec::new(), true, None);
-        assert_eq!(probe(http, &source(&empty)).unwrap(), Probe { size: Some(0), ranges: true });
+        assert_eq!(probe(http, &source(&empty)).unwrap(), Probe { size: Some(0), ranges: true, protocol: Protocol::Http1 });
         assert_eq!(content_range_total("bytes 0-1/12345"), Some(12345));
         assert_eq!(content_range_total("bytes 0-1/*"), None);
     }
@@ -761,7 +853,7 @@ mod tests {
         let scratch = Scratch::new("chunks");
         let dest = scratch.path("film.mkv");
         let seen = Mutex::new(Vec::new());
-        let got = download(http::client(), &source(&server), &dest, 4, &AtomicBool::new(false), &|done, total| seen.lock().unwrap().push((done, total))).expect("the file");
+        let got = download(http::client(), &source(&server), &dest, &Streams::new(4), &AtomicBool::new(false), &|progress| seen.lock().unwrap().push((progress.done, progress.total))).expect("the file");
         assert_eq!(got, dest);
         assert_eq!(fs::read(&dest).unwrap(), content);
         assert!(!with_suffix(&dest, ".part").exists());
@@ -802,7 +894,7 @@ mod tests {
         let mut earlier = vec![0; content.len()];
         earlier[..CHUNK_SIZE as usize].copy_from_slice(&content[..CHUNK_SIZE as usize]);
         fs::write(&part, &earlier).unwrap();
-        write_state(&with_suffix(&dest, ".part.json"), content.len() as u64, &[true, false, false]);
+        write_state(&with_suffix(&dest, ".part.json"), content.len() as u64, CHUNK_SIZE, &[true, false, false]);
         assert_eq!(kept(&dest), CHUNK_SIZE);
         let got = fetch(&server, &dest, 2).expect("the file");
         assert_eq!(got, dest);
@@ -871,9 +963,9 @@ mod tests {
         assert_eq!(fetch(&server, &scratch.path("film.mkv"), 2), Err(Error::Unauthorized));
         let http = http::client();
         let right = Source { url: server.url.clone(), authorization: Some("Basic abc".into()) };
-        assert_eq!(download(http, &right, &scratch.path("film.mkv"), 2, &AtomicBool::new(false), &|_, _| {}), Ok(scratch.path("film.mkv")));
+        assert_eq!(download(http, &right, &scratch.path("film.mkv"), &Streams::new(2), &AtomicBool::new(false), &|_| {}), Ok(scratch.path("film.mkv")));
         let gone = Source { url: "http://127.0.0.1:1/film.mkv".into(), authorization: None };
-        assert!(matches!(download(http, &gone, &scratch.path("gone.mkv"), 2, &AtomicBool::new(false), &|_, _| {}), Err(Error::Connection(_))));
+        assert!(matches!(download(http, &gone, &scratch.path("gone.mkv"), &Streams::new(2), &AtomicBool::new(false), &|_| {}), Err(Error::Connection(_))));
     }
 
     #[test]
@@ -883,7 +975,7 @@ mod tests {
         let scratch = Scratch::new("cancel");
         let dest = scratch.path("film.mkv");
         let cancel = AtomicBool::new(true);
-        assert_eq!(download(http::client(), &source(&server), &dest, 2, &cancel, &|_, _| {}), Err(Error::Cancelled));
+        assert_eq!(download(http::client(), &source(&server), &dest, &Streams::new(2), &cancel, &|_| {}), Err(Error::Cancelled));
         assert!(!dest.exists());
         assert_eq!(kept(&dest), 0);
         assert!(server.requests.lock().unwrap().is_empty());
@@ -921,9 +1013,11 @@ mod tests {
         let source = Source { url: format!("http://127.0.0.1:{port}/film.mkv"), authorization: None };
         let scratch = Scratch::new("h2");
         let dest = scratch.path("film.mkv");
-        download(&http, &source, &dest, 4, &AtomicBool::new(false), &|_, _| {}).expect("the file");
+        let seen = Mutex::new(Protocol::Unknown);
+        download(&http, &source, &dest, &Streams::new(4), &AtomicBool::new(false), &|progress| *seen.lock().unwrap() = progress.protocol).expect("the file");
         assert_eq!(fs::read(&dest).unwrap(), *content);
         assert_eq!(connections.load(Ordering::SeqCst), 1);
+        assert_eq!(*seen.lock().unwrap(), Protocol::Http2);
     }
 
     /// What the HTTP/2 test server answers: the range asked for, or the whole file.
@@ -956,7 +1050,7 @@ mod tests {
         assert!(matches!(response.status().as_u16(), 200 | 206), "{}", response.status());
         let scratch = Scratch::new("real");
         let dest = scratch.path("jquery.min.js");
-        download(http, &source, &dest, 4, &AtomicBool::new(false), &|_, _| {}).expect("the file");
+        download(http, &source, &dest, &Streams::new(4), &AtomicBool::new(false), &|_| {}).expect("the file");
         let text = fs::read_to_string(&dest).unwrap();
         assert!(text.starts_with("/*! jQuery v3.7.1"), "{}", &text[..40.min(text.len())]);
     }
@@ -974,6 +1068,13 @@ mod tests {
         fs::write(scratch.path(".hidden"), b"").unwrap();
         assert_eq!(free_path(&scratch.path(".hidden")), scratch.path(".hidden (2)"));
         assert_eq!(with_suffix(Path::new("/a/film.mkv"), ".part"), PathBuf::from("/a/film.mkv.part"));
+    }
+
+    #[test]
+    fn chunks_grow_with_the_file() {
+        assert_eq!(chunk_size(100), CHUNK_SIZE);
+        assert_eq!(chunk_size(1 << 30), (1u64 << 30) / 96);
+        assert_eq!(chunk_size(20 << 30), LARGEST_CHUNK);
     }
 
     #[test]
