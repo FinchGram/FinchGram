@@ -514,10 +514,9 @@ fn show_folder() {
     }
     let shown = with_state(|state| {
         let server_name = state.current.and_then(|index| state.servers.get(index)).map(|server| server.name.clone()).unwrap_or_default();
+        // The path as the page shows it, "Home NAS /Movies/2026": the server, then every folder.
         let mut crumbs = vec![SharedString::from(server_name.as_str())];
-        if state.path.len() > 1 {
-            crumbs.extend(state.path[..state.path.len() - 1].iter().map(|folder| SharedString::from(folder.as_str())));
-        }
+        crumbs.extend(state.path.iter().map(|folder| SharedString::from(folder.as_str())));
         let title = state.path.last().cloned().unwrap_or(server_name);
         let (folder_state, problem, detail) = match &state.folder {
             Folder::Loading => (FolderState::Loading, Problem::None, String::new()),

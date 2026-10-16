@@ -842,28 +842,32 @@ export component DownloadsPage inherits Rectangle {
 
                 if root.has-head: VerticalLayout {
                     spacing: 6px;
-                    // The way here: the server, then the folders above this one.
+                    // The way here: the server, then the path down to this folder.
                     HorizontalLayout {
-                        spacing: 8px;
+                        spacing: 0;
                         alignment: start;
                         VerticalLayout {
                             alignment: center;
+                            padding-right: 8px;
                             Icon {
                                 name: "hard-drives";
                                 size: 20px;
                                 color: Look.muted;
                             }
                         }
+                        // The server's name, then where we are as a path, "/Movies/2026": each
+                        // folder of it goes back there; the last is the folder looked at.
                         for crumb[index] in Downloads.crumbs: HorizontalLayout {
-                            spacing: 8px;
+                            spacing: 0;
                             if index > 0: Text {
-                                text: "›";
+                                text: "/";
                                 color: Look.faint;
                                 font-size: Look.nav-heading-size;
+                                font-weight: 600;
                                 vertical-alignment: center;
                             }
                             Rectangle {
-                                width: crumb-label.preferred-width;
+                                width: crumb-label.preferred-width + (index == 0 ? 8px : 0);
                                 crumb-label := Text {
                                     text: crumb;
                                     color: crumb-touch.has-hover ? Look.accent-ink : Look.text;
@@ -874,6 +878,7 @@ export component DownloadsPage inherits Rectangle {
                                     height: parent.height;
                                 }
                                 crumb-touch := TouchArea {
+                                    enabled: index < Downloads.crumbs.length - 1;
                                     mouse-cursor: pointer;
                                     clicked => {
                                         Downloads.go-to(index);
@@ -881,13 +886,24 @@ export component DownloadsPage inherits Rectangle {
                                 }
                             }
                         }
+                        // At the root the path is "/".
+                        if Downloads.crumbs.length <= 1: Text {
+                            text: "/";
+                            color: Look.faint;
+                            font-size: Look.nav-heading-size;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
                     }
                     // The folder's name, the filter, refresh, and the queue's button.
                     HorizontalLayout {
                         spacing: 8px;
+                        // The folder's name, no bigger than the toolbar's words: the path above
+                        // already says where we are.
                         Heading {
                             horizontal-stretch: 1;
                             label: Downloads.title;
+                            size: 14px;
                             wrap: no-wrap;
                             overflow: elide;
                             vertical-alignment: center;

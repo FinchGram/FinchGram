@@ -1177,7 +1177,7 @@ fn fill_downloads(ui: &MainWindow) {
         server("Seedbox", "box.example.net", ServerStatus::NotReachable),
     ]));
     downloads.set_current(0);
-    downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into()]));
+    downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into(), "2026".into()]));
     downloads.set_title("2026".into());
     downloads.set_folder_state(FolderState::Listed);
     downloads.set_problem(Problem::None);
@@ -1242,7 +1242,7 @@ fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name
     downloads.set_selected_count(0);
     downloads.set_some_selected(false);
     downloads.set_title("Shorts".into());
-    downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into(), "2026".into()]));
+    downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into(), "2026".into(), "Shorts".into()]));
     save(window, &name("downloads-empty"));
     downloads.set_folder_state(FolderState::Error);
     downloads.set_problem(Problem::Unreachable);

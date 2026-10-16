@@ -27,7 +27,8 @@ Three columns:
 - **WebDAV servers**, on the left: each with its name, its host and its status, checked when the
   page opens: Connected, Password rejected, Not reachable. A right click gives Edit, Remove and Copy
   address. Add server is the last row.
-- **The folder**, in the middle: the server's name and the path as crumbs, the folder's name, a box
+- **The folder**, in the middle: where we are as a path, "Home NAS /Movies/2026", each folder of it
+  a step back, then the folder's name, a box
   that filters the listing by name, a refresh button, and the "Downloads" button that shows or hides
   the queue, with the number of files on their way. The listing is a table: a checkbox for each
   file, an icon by kind, the name, when it was modified, its size; folders first, then names in the

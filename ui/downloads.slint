@@ -54,7 +54,7 @@ export enum FormError { none, name, address }
 export global Downloads {
     in-out property <[ServerRow]> servers;
     in-out property <int> current: -1;              // the server looked at; -1 for none
-    in-out property <[string]> crumbs;              // the server's name, then the path's folders but the last
+    in-out property <[string]> crumbs;              // the server's name, then the path's folders: "Home NAS /Movies/2026"
     in-out property <string> title;                 // the folder looked at: its name, or the server's at the root
     in-out property <FolderState> folder-state: FolderState.loading;
     in-out property <Problem> problem;              // when folder-state is error
