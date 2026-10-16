@@ -1234,8 +1234,15 @@ fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name
     right_click(window, x, y);
     save(window, &name("downloads-menu"));
     escape(window);
+    // Loading, in a folder whose name is a whole sentence, as PikPak folders are: the path row cuts
+    // it short instead of pushing the column off the window.
+    let sentence = "【更多高清电影访问 www.mkvhome.com】教父[共3部合集][国英多音轨+简繁字幕].The.Godfather.Trilogy.2160p";
     downloads.set_folder_state(FolderState::Loading);
+    downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into(), sentence.into()]));
+    downloads.set_title(sentence.into());
     save(window, &name("downloads-loading"));
+    downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into(), "2026".into()]));
+    downloads.set_title("2026".into());
     downloads.set_folder_state(FolderState::Listed);
     downloads.set_has_entries(false);
     downloads.set_entries(model(Vec::new()));

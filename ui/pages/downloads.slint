@@ -842,57 +842,96 @@ export component DownloadsPage inherits Rectangle {
 
                 if root.has-head: VerticalLayout {
                     spacing: 6px;
-                    // The way here: the server, then the path down to this folder.
-                    HorizontalLayout {
-                        spacing: 0;
-                        alignment: start;
-                        VerticalLayout {
-                            alignment: center;
-                            padding-right: 8px;
-                            Icon {
-                                name: "hard-drives";
-                                size: 20px;
-                                color: Look.muted;
-                            }
-                        }
-                        // The server's name, then where we are as a path, "/Movies/2026": each
-                        // folder of it goes back there; the last is the folder looked at.
-                        for crumb[index] in Downloads.crumbs: HorizontalLayout {
+                    // The way here: the server, then the path down to this folder, "/Movies/2026",
+                    // each folder of it a step back. The row is as wide as the column and never
+                    // wider: a folder above this one is at most 240px, the folder looked at takes
+                    // what is left, and a name too long for that is cut short with "…" (a PikPak
+                    // folder can be a whole sentence; it used to push the column off the window).
+                    Rectangle {
+                        // No width of its own (bound to the column's, it would be a binding loop
+                        // through the layouts) and constraints of its own, not the row's: the
+                        // row's preferred width is the whole path, and the column grew to it.
+                        min-width: 0;
+                        preferred-width: 0;
+                        height: way.preferred-height;
+                        clip: true;
+                        way := HorizontalLayout {
                             spacing: 0;
-                            if index > 0: Text {
+                            VerticalLayout {
+                                alignment: center;
+                                padding-right: 8px;
+                                horizontal-stretch: 0;
+                                Icon {
+                                    name: "hard-drives";
+                                    size: 20px;
+                                    color: Look.muted;
+                                }
+                            }
+                            for crumb[index] in Downloads.crumbs: HorizontalLayout {
+                                property <bool> here: index > 0 && index == Downloads.crumbs.length - 1;
+                                spacing: 0;
+                                padding-right: index == 0 ? 8px : 0px;
+                                horizontal-stretch: 0;
+                                if index > 0: Text {
+                                    text: "/";
+                                    color: Look.faint;
+                                    font-size: Look.nav-heading-size;
+                                    font-weight: 600;
+                                    vertical-alignment: center;
+                                }
+                                // The server, or a folder above this one: a step back.
+                                if !here: Rectangle {
+                                    width: min(step-label.preferred-width, 240px);
+                                    step-label := Text {
+                                        width: parent.width;
+                                        height: parent.height;
+                                        text: crumb;
+                                        color: step-touch.has-hover ? Look.accent-ink : Look.text;
+                                        font-size: Look.nav-heading-size;
+                                        font-weight: 600;
+                                        letter-spacing: Look.heading-tracking * Look.nav-heading-size;
+                                        vertical-alignment: center;
+                                        overflow: elide;
+                                    }
+                                    step-touch := TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => {
+                                            Downloads.go-to(index);
+                                        }
+                                    }
+                                }
+                                // The folder looked at: its name, or what is left of the row.
+                                if here: Rectangle {
+                                    min-width: 0;
+                                    preferred-width: here-label.preferred-width;
+                                    max-width: here-label.preferred-width;
+                                    here-label := Text {
+                                        width: parent.width;
+                                        height: parent.height;
+                                        text: crumb;
+                                        color: Look.text;
+                                        font-size: Look.nav-heading-size;
+                                        font-weight: 600;
+                                        letter-spacing: Look.heading-tracking * Look.nav-heading-size;
+                                        vertical-alignment: center;
+                                        overflow: elide;
+                                    }
+                                }
+                            }
+                            // At the root the path is "/".
+                            if Downloads.crumbs.length <= 1: Text {
                                 text: "/";
                                 color: Look.faint;
                                 font-size: Look.nav-heading-size;
                                 font-weight: 600;
                                 vertical-alignment: center;
+                                horizontal-stretch: 0;
                             }
+                            // What is left of the row.
                             Rectangle {
-                                width: crumb-label.preferred-width + (index == 0 ? 8px : 0);
-                                crumb-label := Text {
-                                    text: crumb;
-                                    color: crumb-touch.has-hover ? Look.accent-ink : Look.text;
-                                    font-size: Look.nav-heading-size;
-                                    font-weight: 600;
-                                    letter-spacing: Look.heading-tracking * Look.nav-heading-size;
-                                    vertical-alignment: center;
-                                    height: parent.height;
-                                }
-                                crumb-touch := TouchArea {
-                                    enabled: index < Downloads.crumbs.length - 1;
-                                    mouse-cursor: pointer;
-                                    clicked => {
-                                        Downloads.go-to(index);
-                                    }
-                                }
+                                horizontal-stretch: 1;
+                                min-width: 0;
                             }
-                        }
-                        // At the root the path is "/".
-                        if Downloads.crumbs.length <= 1: Text {
-                            text: "/";
-                            color: Look.faint;
-                            font-size: Look.nav-heading-size;
-                            font-weight: 600;
-                            vertical-alignment: center;
                         }
                     }
                     // The folder's name, the filter, refresh, and the queue's button.
