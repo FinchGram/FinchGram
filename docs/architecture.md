@@ -91,7 +91,12 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
 - Work that takes time (decoding an image, reading a file) runs on a thread of its own and reports
   back through the event loop, as in Coova Studio. Images are decoded into a `SharedPixelBuffer` off
   the UI thread and become a `slint::Image` on it.
-- There is no async runtime: TDLib does the networking.
+- There is no async runtime for the app's own work: TDLib does Telegram's networking. The one
+  exception, since 2026-10-16, is the downloads engine's HTTP client (`src/downloads/http.rs`):
+  hyper on a tokio runtime of its own, on two threads named "http", because HTTP/2 (which PikPak
+  and the like need for speed: one connection whose streams keep it busy) only exists in Rust as
+  async code. The engine blocks on that runtime from the transfer's own thread, so nothing outside
+  `src/downloads/` is async, and the UI thread never touches it.
 - The MCP server (`src/mcp/`) has a thread listening on its socket and one per connection. A
   connection's thread reads a line and answers it; a tool's work goes to the UI thread
   (`upgrade_in_event_loop`), where the store, TDLib and the page are, and its outcome comes back

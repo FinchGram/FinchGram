@@ -4,9 +4,14 @@
 //! password comes from the Keychain (src/platform/). Nothing is ever written to the server.
 
 use std::fmt;
-use std::time::Duration;
 
 use base64::Engine;
+use bytes::Bytes;
+use http_body_util::{BodyExt, Full, Limited};
+use hyper::Method;
+use hyper::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+
+use super::http::{Failure, Http};
 
 /// A server as the page knows it: its address without a trailing slash, and the account.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -54,46 +59,22 @@ impl fmt::Display for Error {
     }
 }
 
-impl From<ureq::Error> for Error {
-    fn from(err: ureq::Error) -> Self {
-        match err {
-            ureq::Error::StatusCode(401) => Error::Unauthorized,
-            ureq::Error::StatusCode(403) => Error::Forbidden,
-            ureq::Error::StatusCode(code) => Error::Status(code),
-            ureq::Error::Http(err) => Error::Unreadable(err.to_string()),
-            ureq::Error::BadUri(uri) => Error::Unreadable(format!("bad address {uri}")),
-            ureq::Error::Protocol(err) => Error::Unreadable(err.to_string()),
-            other => Error::Unreachable(other.to_string()),
+impl From<Failure> for Error {
+    fn from(failure: Failure) -> Self {
+        match failure {
+            Failure::Connection(why) => Error::Unreachable(why),
+            Failure::Timeout => Error::Unreachable("the server did not answer in time".into()),
+            Failure::Redirect(why) => Error::Unreadable(why),
         }
     }
 }
 
-/// How long a connection may take to open, and a server to begin its answer.
-const CONNECT_TIMEOUT: Duration = Duration::from_secs(15);
-const RESPONSE_TIMEOUT: Duration = Duration::from_secs(30);
 /// A folder's listing larger than this is not read: it would be thousands of entries.
-const LARGEST_LISTING: u64 = 32 * 1024 * 1024;
+const LARGEST_LISTING: usize = 32 * 1024 * 1024;
 
 /// What a listing asks for: whether an entry is a folder, its size, when it changed, its name.
 const PROPFIND_BODY: &str = r#"<?xml version="1.0" encoding="utf-8"?>
 <D:propfind xmlns:D="DAV:"><D:prop><D:resourcetype/><D:getcontentlength/><D:getlastmodified/><D:displayname/></D:prop></D:propfind>"#;
-
-/// An agent for a server: `connections` is how many a file may be fetched over at once
-/// (transfer.rs), so that many connections to the host stay open between chunks. No compression
-/// is offered: the files are media, and a body that arrived compressed would not have the length
-/// the range promised.
-pub fn agent(connections: usize) -> ureq::Agent {
-    ureq::Agent::config_builder()
-        .user_agent(format!("finchgram/{}", crate::update::CURRENT_VERSION))
-        .timeout_connect(Some(CONNECT_TIMEOUT))
-        .timeout_recv_response(Some(RESPONSE_TIMEOUT))
-        .max_idle_connections_per_host(connections.max(1) + 2)
-        .max_idle_connections(connections.max(1) * 2 + 4)
-        .accept_encoding(ureq::config::AutoHeaderValue::None)
-        .allow_non_standard_methods(true)
-        .build()
-        .into()
-}
 
 impl Server {
     /// The address as it is kept: trimmed, without the trailing slashes.
@@ -158,33 +139,41 @@ impl Server {
 
     /// What a folder holds: folders and files, as the server lists them (unsorted); the folder
     /// itself is left out.
-    pub fn list(&self, agent: &ureq::Agent, path: &[String]) -> Result<Vec<Entry>, Error> {
+    pub fn list(&self, http: &Http, path: &[String]) -> Result<Vec<Entry>, Error> {
         let url = self.folder_url(path);
-        let body = self.propfind(agent, &url, "1")?;
+        let body = http.block_on(self.propfind(http, &url, "1"))?;
         parse_listing(&body, &url_path(&url))
     }
 
     /// Whether the server answers at the root: nothing is read but the fact.
-    pub fn check(&self, agent: &ureq::Agent) -> Result<(), Error> {
-        self.propfind(agent, &self.folder_url(&[]), "0").map(|_| ())
+    pub fn check(&self, http: &Http) -> Result<(), Error> {
+        http.block_on(self.propfind(http, &self.folder_url(&[]), "0")).map(|_| ())
     }
 
-    fn propfind(&self, agent: &ureq::Agent, url: &str, depth: &str) -> Result<String, Error> {
-        let mut request = ureq::http::Request::builder()
-            .method("PROPFIND")
-            .uri(url)
+    async fn propfind(&self, http: &Http, url: &str, depth: &str) -> Result<String, Error> {
+        let mut request = http
+            .request(Method::from_bytes(b"PROPFIND").expect("a method"), url)
             .header("Depth", depth)
-            .header("Content-Type", "application/xml; charset=utf-8")
-            .header("Accept", "application/xml, text/xml");
+            .header(CONTENT_TYPE, "application/xml; charset=utf-8")
+            .header(ACCEPT, "application/xml, text/xml");
         if let Some(authorization) = self.authorization() {
-            request = request.header("Authorization", authorization);
+            request = request.header(AUTHORIZATION, authorization);
         }
-        let request = request.body(PROPFIND_BODY).map_err(|err| Error::Unreadable(err.to_string()))?;
-        let mut response = agent.run(request)?;
-        if response.status().as_u16() != 207 {
-            return Err(Error::Unreadable(format!("HTTP {} instead of a Multi-Status answer", response.status().as_u16())));
+        let request = request.body(Full::new(Bytes::from_static(PROPFIND_BODY.as_bytes()))).map_err(|err| Error::Unreadable(err.to_string()))?;
+        let response = http.send(request).await?;
+        match response.status().as_u16() {
+            207 => {}
+            401 => return Err(Error::Unauthorized),
+            403 => return Err(Error::Forbidden),
+            code if (400..600).contains(&code) => return Err(Error::Status(code)),
+            code => return Err(Error::Unreadable(format!("HTTP {code} instead of a Multi-Status answer"))),
         }
-        response.body_mut().with_config().limit(LARGEST_LISTING).read_to_string().map_err(Error::from)
+        let bytes = Limited::new(response.into_body(), LARGEST_LISTING)
+            .collect()
+            .await
+            .map_err(|err| Error::Unreadable(err.to_string()))?
+            .to_bytes();
+        Ok(String::from_utf8_lossy(&bytes).into_owned())
     }
 }
 

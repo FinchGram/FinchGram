@@ -11,6 +11,7 @@
 //! in the Keychain (src/platform/), under the server's address and account, and are read when a
 //! server is first used.
 
+pub mod http;
 pub mod transfer;
 pub mod webdav;
 
@@ -293,19 +294,19 @@ fn send(task: Task) {
 fn start_worker() -> Sender<Task> {
     let (sender, tasks) = mpsc::channel::<Task>();
     let started = std::thread::Builder::new().name("webdav".into()).spawn(move || {
-        let agent = webdav::agent(4);
+        let http = http::client();
         for task in tasks {
             match task {
                 Task::List { request, server, path } => {
-                    let result = server.list(&agent, &path);
+                    let result = server.list(http, &path);
                     let _ = slint::invoke_from_event_loop(move || listed(request, result));
                 }
                 Task::Check { index, server } => {
-                    let result = server.check(&agent);
+                    let result = server.check(http);
                     let _ = slint::invoke_from_event_loop(move || checked(index, result));
                 }
                 Task::Test { request, server } => {
-                    let result = test(&agent, &server);
+                    let result = test(http, &server);
                     let _ = slint::invoke_from_event_loop(move || tested(request, result));
                 }
             }
@@ -318,13 +319,13 @@ fn start_worker() -> Sender<Task> {
 }
 
 /// Test connection, on the worker: the root's listing, and whether the first file comes in ranges.
-fn test(agent: &ureq::Agent, server: &webdav::Server) -> Result<TestResult, webdav::Error> {
-    let entries = server.list(agent, &[])?;
+fn test(http: &http::Http, server: &webdav::Server) -> Result<TestResult, webdav::Error> {
+    let entries = server.list(http, &[])?;
     let folders = entries.iter().filter(|entry| entry.is_dir).count() as i32;
     let files = entries.len() as i32 - folders;
     let ranges = entries.iter().find(|entry| !entry.is_dir && entry.size > 0).and_then(|file| {
         let source = transfer::Source { url: server.file_url(&[], &file.name), authorization: server.authorization() };
-        transfer::probe(agent, &source).ok().map(|probe| probe.ranges)
+        transfer::probe(http, &source).ok().map(|probe| probe.ranges)
     });
     Ok(TestResult { folders, files, ranges })
 }
@@ -811,13 +812,13 @@ fn start_next() {
 /// The download's own thread: the file, or the folder's files one after another.
 fn run(id: i32, kind: Kind, cancel: Arc<AtomicBool>, connections: usize) {
     let started = std::thread::Builder::new().name(format!("download {id}")).spawn(move || {
-        let agent = webdav::agent(connections);
+        let http = http::client();
         let progress = move |done: u64, total: u64| {
             let _ = slint::invoke_from_event_loop(move || progressed(id, done, total));
         };
         let result = match kind {
-            Kind::File { source, dest } => transfer::download(&agent, &source, &dest, connections, &cancel, &progress),
-            Kind::Folder { server, path, dest } => download_tree(&agent, &server, &path, &dest, connections, &cancel, &progress),
+            Kind::File { source, dest } => transfer::download(http, &source, &dest, connections, &cancel, &progress),
+            Kind::Folder { server, path, dest } => download_tree(http, &server, &path, &dest, connections, &cancel, &progress),
         };
         let _ = slint::invoke_from_event_loop(move || finished(id, result));
     });
@@ -830,7 +831,7 @@ fn run(id: i32, kind: Kind, cancel: Arc<AtomicBool>, connections: usize) {
 /// A folder and everything in it (listed first, so that the whole is known), into `dest`. A file
 /// already there with its size is not fetched again: a stopped folder goes on where it was.
 fn download_tree(
-    agent: &ureq::Agent,
+    http: &http::Http,
     server: &webdav::Server,
     path: &[String],
     dest: &Path,
@@ -847,7 +848,7 @@ fn download_tree(
         }
         let mut whole = path.to_vec();
         whole.extend(folder.iter().cloned());
-        let entries = server.list(agent, &whole).map_err(transfer_error)?;
+        let entries = server.list(http, &whole).map_err(transfer_error)?;
         for entry in entries {
             let mut within = folder.clone();
             if entry.is_dir {
@@ -875,7 +876,7 @@ fn download_tree(
         let already = std::fs::metadata(&file_dest).map(|meta| meta.is_file() && meta.len() == size).unwrap_or(false);
         if !already {
             let source = transfer::Source { url: server.file_url(&whole, &name), authorization: server.authorization() };
-            transfer::download(agent, &source, &file_dest, connections, cancel, &|done, _| progress(before + done, total))?;
+            transfer::download(http, &source, &file_dest, connections, cancel, &|done, _| progress(before + done, total))?;
         }
         before += size;
         progress(before, total);

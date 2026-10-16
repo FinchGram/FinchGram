@@ -29,9 +29,22 @@ ureq = "3"
 semver = "1"
 # WebDAV (src/downloads/): PROPFIND answers are XML; roxmltree is in the tree already (resvg).
 roxmltree = "0.21"
+# The downloads' HTTP client (src/downloads/http.rs): hyper, HTTP/2 where a server offers it, on a
+# tokio runtime of its own. The one async corner of the app (docs/architecture.md, Threads); TLS
+# through rustls with the platform's trust store, so a certificate trusted in the Keychain passes.
+tokio = { version = "1", features = ["rt-multi-thread", "net", "time", "sync", "macros"] }
+hyper = { version = "1", features = ["client", "http1", "http2"] }
+hyper-util = { version = "0.1", features = ["client", "client-legacy", "http1", "http2", "tokio"] }
+hyper-rustls = { version = "0.27", default-features = false, features = ["http1", "http2", "tls12", "ring", "rustls-platform-verifier"] }
+http-body-util = "0.1"
+bytes = "1"
 sha2 = "0.11"
 ed25519-dalek = "3"
 hex = "0.4"
+
+[dev-dependencies]
+# The HTTP/2 server of the transfer engine's test (src/downloads/transfer.rs).
+hyper = { version = "1", features = ["server"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 # The Dock, Quit, the menu bar icon, launching at login, the clipboard and notifications

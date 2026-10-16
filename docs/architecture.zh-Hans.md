@@ -75,7 +75,10 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - 每个 finchgram-tdlib 有一个写线程和一个读线程。
 - 耗时的活（解码图片、读文件）放到单独的线程里做，做完通过事件循环汇报，跟酷丸工具箱一样。
   图片在 UI 线程之外解码成 `SharedPixelBuffer`，到 UI 线程上再变成 `slint::Image`。
-- 没有 async 运行时：网络全是 TDLib 在做。
+- app 自己的活没有 async 运行时：Telegram 的网络由 TDLib 做。唯一的例外从 2026-10-16 起是下载引擎的 HTTP 客户端
+  （`src/downloads/http.rs`）：hyper 跑在它自己的 tokio 运行时上，两个叫 "http" 的线程。原因是 HTTP/2（PikPak 这类
+  服务器要靠它提速：一条连接上的多个流让它一直有活干）在 Rust 里只有异步实现。引擎在传输自己的线程上阻塞等待这个运行时，
+  所以 `src/downloads/` 之外没有任何异步代码，UI 线程也碰不到它。
 - MCP 服务端（`src/mcp/`）有一个监听 socket 的线程，每个连接再各一个。连接线程读一行、答一行；工具的活交给 UI 线程
   （`upgrade_in_event_loop`），store、TDLib 和页面都在那里，结果通过 channel 回来。一个程序能不能连也是这样问的：
   对话框问用户的时候，连接线程等着。

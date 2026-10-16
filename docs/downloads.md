@@ -74,7 +74,17 @@ finished file off the list and deletes nothing.
 
 WebDAV itself is `src/downloads/webdav.rs`: PROPFIND with depth 1 for a folder's listing (and depth 0
 to check a server), the 207 Multi-Status answer parsed with roxmltree, Basic authentication, addresses
-percent-encoded by segment. HTTP is ureq with rustls.
+percent-encoded by segment.
+
+HTTP is hyper (`src/downloads/http.rs`), HTTP/2 where the server offers it and HTTP/1.1 elsewhere, on
+a tokio runtime of the engine's own. HTTP/2 is what PikPak and the like need for speed: their servers
+take a few hundred milliseconds to answer each range, and over HTTP/1.1 every connection sits idle
+that long between chunks, so the server's congestion window shrinks and each chunk starts slowly
+again; over HTTP/2 the twelve streams share one connection that never idles, which is how vget gets
+its speed. The flow-control windows are set like Go's transport (4 MB per stream, 32 MB per
+connection); hyper's defaults would cap a stream at a few hundred kilobytes per second across an
+ocean. TLS is rustls with the platform's trust store: a certificate the Mac trusts, including one
+you trusted yourself in Keychain Access, passes.
 
 ## Where things are kept
 
@@ -94,9 +104,10 @@ percent-encoded by segment. HTTP is ureq with rustls.
 
 ## Not there yet
 
-- A self-signed certificate, the default on a NAS, is refused: rustls trusts the Mozilla roots only.
-  Use http on the LAN, or a real certificate (most NAS can get one from Let's Encrypt). A "trust this
-  certificate" choice is not built.
+- A self-signed certificate, the default on a NAS, is refused unless the Mac trusts it: use http on
+  the LAN, get a real certificate (most NAS can get one from Let's Encrypt), or open the NAS's
+  certificate in Keychain Access and set it to Always Trust. A "trust this certificate" choice in
+  the app is not built.
 - Basic authentication only: no Digest, no tokens, no proxy settings.
 - A file is fetched whole before it opens; nothing streams.
 - No sorting of the table beyond folders first and names in order, no sizes of folders.

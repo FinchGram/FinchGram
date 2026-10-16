@@ -53,7 +53,13 @@ App Nap 降速，Mac 也不会自己睡着。显示的速度是最近三秒的�
 完成的文件从列表拿掉，什么都不删。
 
 WebDAV 本身在 `src/downloads/webdav.rs`：深度 1 的 PROPFIND 列文件夹（深度 0 检查服务器），207 Multi-Status
-用 roxmltree 解析，Basic 认证，地址按段做百分号编码。HTTP 用 ureq 加 rustls。
+用 roxmltree 解析，Basic 认证，地址按段做百分号编码。
+
+HTTP 用 hyper（`src/downloads/http.rs`），服务器支持就走 HTTP/2，否则 HTTP/1.1，跑在引擎自己的 tokio 运行时上。
+PikPak 这类服务器要靠 HTTP/2 提速：它们每个 Range 请求要几百毫秒才开始回数据，HTTP/1.1 下每条连接在块与块之间就空闲
+这么久，服务器那边的拥塞窗口缩回去，每块都重新慢启动；HTTP/2 下十二个流共用一条从不空闲的连接，vget 的速度就是这么
+来的。流量控制窗口按 Go 的 transport 设（每流 4 MB，每连接 32 MB）；hyper 的默认值会把跨洋的一个流限制在每秒几百 KB。
+TLS 用 rustls 加系统的信任库：Mac 信任的证书都能过，包括你自己在"钥匙串访问"里设为信任的。
 
 ## 东西存在哪
 
@@ -69,8 +75,8 @@ WebDAV 本身在 `src/downloads/webdav.rs`：深度 1 的 PROPFIND 列文件夹�
 
 ## 还没有的
 
-- 自签名证书（NAS 的默认）会被拒绝：rustls 只信 Mozilla 的根证书。局域网用 http，或者配个正规证书（多数 NAS
-  能从 Let's Encrypt 拿）。没做“信任这张证书”的选项。
+- 自签名证书（NAS 的默认）除非 Mac 信任它，否则会被拒绝：局域网用 http，配个正规证书（多数 NAS 能从 Let's Encrypt
+  拿），或者把 NAS 的证书在"钥匙串访问"里设为"始终信任"。app 里没做"信任这张证书"的选项。
 - 只有 Basic 认证：没有 Digest、没有 token、没有代理设置。
 - 文件要整个取下来才能打开，不流式播放。
 - 表格除了文件夹在前、名称排序之外没有别的排序，文件夹不显示大小。
