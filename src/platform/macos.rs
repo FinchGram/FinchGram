@@ -141,11 +141,11 @@ unsafe fn override_method(class: &AnyClass, name: Sel, implementation: Imp, type
     unsafe { objc2::ffi::class_addMethod((class as *const AnyClass).cast_mut(), name, implementation, types.as_ptr()) };
 }
 
-/// A click on the Dock icon, or FinchGram opened again, while its window is closed: show it.
-unsafe extern "C-unwind" fn reopen(_this: *mut AnyObject, _cmd: Sel, _app: *mut AnyObject, has_visible_windows: Bool) -> Bool {
-    if !has_visible_windows.as_bool() {
-        show_window_soon();
-    }
+/// A click on the Dock icon, or FinchGram opened again: show the window, whether it was closed,
+/// minimized into the Dock, or already there (then it just comes to the front). AppKit's flag is
+/// not consulted: a minimized window is "visible" to some versions and not to others.
+unsafe extern "C-unwind" fn reopen(_this: *mut AnyObject, _cmd: Sel, _app: *mut AnyObject, _has_visible_windows: Bool) -> Bool {
+    show_window_soon();
     // Handled: AppKit has nothing more to do.
     Bool::NO
 }
@@ -179,6 +179,13 @@ unsafe extern "C-unwind" fn should_terminate(_this: *mut AnyObject, _cmd: Sel, _
 pub fn bring_to_front() {
     let Some(mtm) = MainThreadMarker::new() else { return };
     let app = NSApplication::sharedApplication(mtm);
+    // A window minimized into the Dock does not come back by being shown: it is brought back here,
+    // at AppKit's level (seen on 0.4.0: the Dock icon did nothing for a minimized window).
+    for window in app.windows().iter() {
+        if window.isMiniaturized() {
+            window.deminiaturize(None);
+        }
+    }
     // activateIgnoringOtherApps: is deprecated from macOS 14 on for activate, which 12 and 13 lack.
     // SAFETY: the method takes a BOOL and returns nothing.
     unsafe {

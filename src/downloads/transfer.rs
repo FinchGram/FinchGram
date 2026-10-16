@@ -173,7 +173,7 @@ pub fn download(
     }
     let part = with_suffix(dest, ".part");
     let state_path = with_suffix(dest, ".part.json");
-    let probe = probe(agent, source)?;
+    let probe = probe_with_retries(agent, source, cancel)?;
     match probe {
         Probe { size: Some(total), ranges: true } if total > 0 => {
             multi(agent, source, &part, &state_path, total, connections, cancel, progress)?;
@@ -304,20 +304,17 @@ fn fetch_chunk(agent: &ureq::Agent, source: &Source, shared: &Shared, index: usi
         match fetch_range(agent, source, start + written, end, shared, &mut written, &mut buffer, cancel) {
             Ok(()) => return Ok(()),
             Err(Error::Cancelled) => return Err(Error::Cancelled),
-            // The account, a file that is not there, or the disk: trying again will not help.
-            // Everything else may pass next time, as vget has it: a connection that drops, a 429
-            // or a 5xx from a busy server, a 200 where a 206 was due.
-            Err(err @ (Error::Unauthorized | Error::Forbidden | Error::Status(404 | 410) | Error::Disk(_))) => return Err(err),
+            // The disk is the one thing trying again will not help. Everything else may pass next
+            // time, as vget has it: a connection that drops, a 429 or a 5xx from a busy server, a
+            // 404 from a CDN node that does not have the file yet (PikPak does that), a 200 where a
+            // 206 was due.
+            Err(err @ Error::Disk(_)) => return Err(err),
             Err(err) => {
                 attempts = if written > before { 1 } else { attempts + 1 };
                 if attempts >= ATTEMPTS {
                     return Err(err);
                 }
-                let mut pause = FIRST_BACKOFF;
-                for _ in 1..attempts {
-                    pause = (pause * 2).min(LONGEST_BACKOFF);
-                }
-                wait(pause, cancel, &shared.abort)?;
+                wait(backoff(attempts), cancel, &shared.abort)?;
             }
         }
     }
@@ -367,6 +364,40 @@ fn fetch_range(
         shared.bytes.fetch_add(count as u64, Ordering::Relaxed);
         if cancel.load(Ordering::Relaxed) || shared.abort.load(Ordering::Relaxed) {
             return Err(Error::Cancelled);
+        }
+    }
+}
+
+/// How long to wait before try number `attempts + 1`: half a second, doubling up to eight (the
+/// tests, which only count the tries, wait next to nothing).
+fn backoff(attempts: u32) -> Duration {
+    if cfg!(test) {
+        return Duration::from_millis(10);
+    }
+    let mut pause = FIRST_BACKOFF;
+    for _ in 1..attempts {
+        pause = (pause * 2).min(LONGEST_BACKOFF);
+    }
+    pause
+}
+
+/// The probe, tried again like a chunk is: a server that answers 404 or 5xx once is asked again.
+fn probe_with_retries(agent: &ureq::Agent, source: &Source, cancel: &AtomicBool) -> Result<Probe, Error> {
+    let never = AtomicBool::new(false);
+    let mut attempts: u32 = 0;
+    loop {
+        if cancel.load(Ordering::Relaxed) {
+            return Err(Error::Cancelled);
+        }
+        match probe(agent, source) {
+            Ok(probe) => return Ok(probe),
+            Err(err) => {
+                attempts += 1;
+                if attempts >= ATTEMPTS {
+                    return Err(err);
+                }
+                wait(backoff(attempts), cancel, &never)?;
+            }
         }
     }
 }
@@ -474,13 +505,15 @@ mod tests {
 
     /// A server of one file on the loopback: HTTP/1.1 with keep-alive, ranges when told to, a
     /// count of the connections and of the requests with their Range headers, 429 for the next
-    /// `failures` range requests, and 404 for every range request once `gone` is set.
+    /// `failures` chunk requests, 404 for the next `missing` ones, and 503 for the next
+    /// `probe_failures` probes.
     struct FileServer {
         url: String,
         connections: Arc<AtomicUsize>,
         requests: Arc<Mutex<Vec<String>>>,
         failures: Arc<AtomicUsize>,
-        gone: Arc<AtomicBool>,
+        missing: Arc<AtomicUsize>,
+        probe_failures: Arc<AtomicUsize>,
     }
 
     fn serve(content: Vec<u8>, ranges: bool, authorization: Option<&str>) -> FileServer {
@@ -489,22 +522,36 @@ mod tests {
         let connections = Arc::new(AtomicUsize::new(0));
         let requests = Arc::new(Mutex::new(Vec::new()));
         let failures = Arc::new(AtomicUsize::new(0));
-        let gone = Arc::new(AtomicBool::new(false));
+        let missing = Arc::new(AtomicUsize::new(0));
+        let probe_failures = Arc::new(AtomicUsize::new(0));
         let content = Arc::new(content);
         let authorization = authorization.map(str::to_string);
-        let (opened, seen, fail, missing) = (connections.clone(), requests.clone(), failures.clone(), gone.clone());
+        let counters = Arc::new(Counters { failures: failures.clone(), missing: missing.clone(), probe_failures: probe_failures.clone() });
+        let (opened, seen) = (connections.clone(), requests.clone());
         std::thread::spawn(move || {
             for stream in listener.incoming() {
                 let Ok(stream) = stream else { break };
                 opened.fetch_add(1, Ordering::SeqCst);
-                let (content, seen, fail, missing, authorization) = (content.clone(), seen.clone(), fail.clone(), missing.clone(), authorization.clone());
-                std::thread::spawn(move || answer(stream, &content, ranges, authorization.as_deref(), &seen, &fail, &missing));
+                let (content, seen, counters, authorization) = (content.clone(), seen.clone(), counters.clone(), authorization.clone());
+                std::thread::spawn(move || answer(stream, &content, ranges, authorization.as_deref(), &seen, &counters));
             }
         });
-        FileServer { url: format!("http://127.0.0.1:{port}/film.mkv"), connections, requests, failures, gone }
+        FileServer { url: format!("http://127.0.0.1:{port}/film.mkv"), connections, requests, failures, missing, probe_failures }
     }
 
-    fn answer(stream: TcpStream, content: &[u8], ranges: bool, authorization: Option<&str>, requests: &Mutex<Vec<String>>, failures: &AtomicUsize, gone: &AtomicBool) {
+    /// How many of the next requests the server turns away, and how.
+    struct Counters {
+        failures: Arc<AtomicUsize>,
+        missing: Arc<AtomicUsize>,
+        probe_failures: Arc<AtomicUsize>,
+    }
+
+    /// Takes one from `counter` when there is one to take.
+    fn take(counter: &AtomicUsize) -> bool {
+        counter.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |left| left.checked_sub(1)).is_ok()
+    }
+
+    fn answer(stream: TcpStream, content: &[u8], ranges: bool, authorization: Option<&str>, requests: &Mutex<Vec<String>>, counters: &Counters) {
         let mut reader = BufReader::new(stream.try_clone().expect("a reader"));
         let mut stream = stream;
         loop {
@@ -532,13 +579,15 @@ mod tests {
             }
             requests.lock().unwrap().push(range.clone().unwrap_or_default());
             let probe = range.as_deref() == Some("bytes=0-1");
-            let failing = !probe && range.is_some() && failures.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |left| left.checked_sub(1)).is_ok();
+            let chunk = !probe && range.is_some();
             let (status, extra, body): (&str, String, &[u8]) = if authorization.is_some() && given.as_deref() != authorization {
                 ("401 Unauthorized", String::new(), b"")
-            } else if failing {
+            } else if chunk && take(&counters.failures) {
                 ("429 Too Many Requests", String::new(), b"")
-            } else if !probe && range.is_some() && gone.load(Ordering::SeqCst) {
+            } else if chunk && take(&counters.missing) {
                 ("404 Not Found", String::new(), b"")
+            } else if probe && take(&counters.probe_failures) {
+                ("503 Service Unavailable", String::new(), b"")
             } else if let Some((start, end)) = range.as_deref().filter(|_| ranges).and_then(parse_range) {
                 if start >= content.len() {
                     ("416 Range Not Satisfiable", format!("Content-Range: bytes */{}\r\n", content.len()), b"")
@@ -694,13 +743,30 @@ mod tests {
     }
 
     #[test]
-    fn a_file_that_is_gone_is_not_tried_again() {
-        let server = serve(pattern(100_000), true, None);
-        server.gone.store(true, Ordering::SeqCst);
-        let scratch = Scratch::new("gone");
-        assert_eq!(fetch(&server, &scratch.path("film.mkv"), 4), Err(Error::Status(404)));
-        // The probe and one try.
-        assert_eq!(server.requests.lock().unwrap().len(), 2);
+    fn a_404_from_a_node_without_the_file_yet_passes() {
+        // PikPak's CDN answers 404 for a moment to a range of a file it is still fetching.
+        let content = pattern(100_000);
+        let server = serve(content.clone(), true, None);
+        server.missing.store(1, Ordering::SeqCst);
+        let scratch = Scratch::new("missing");
+        let dest = scratch.path("film.mkv");
+        fetch(&server, &dest, 4).expect("the file");
+        assert_eq!(fs::read(&dest).unwrap(), content);
+        // The probe, the 404, the one that worked.
+        assert_eq!(server.requests.lock().unwrap().len(), 3);
+    }
+
+    #[test]
+    fn the_probe_is_tried_again_too() {
+        let content = pattern(100_000);
+        let server = serve(content.clone(), true, None);
+        server.probe_failures.store(1, Ordering::SeqCst);
+        let scratch = Scratch::new("probe-retry");
+        let dest = scratch.path("film.mkv");
+        fetch(&server, &dest, 4).expect("the file");
+        assert_eq!(fs::read(&dest).unwrap(), content);
+        // Two probes, one chunk.
+        assert_eq!(server.requests.lock().unwrap().len(), 3);
     }
 
     #[test]
@@ -716,7 +782,7 @@ mod tests {
     }
 
     #[test]
-    fn cancelled_before_the_first_byte_leaves_the_part_file() {
+    fn cancelled_before_the_first_byte_fetches_nothing() {
         let content = pattern(2 * CHUNK_SIZE as usize);
         let server = serve(content, true, None);
         let scratch = Scratch::new("cancel");
@@ -724,9 +790,9 @@ mod tests {
         let agent = crate::downloads::webdav::agent(2);
         let cancel = AtomicBool::new(true);
         assert_eq!(download(&agent, &source(&server), &dest, 2, &cancel, &|_, _| {}), Err(Error::Cancelled));
-        assert!(with_suffix(&dest, ".part").exists());
         assert!(!dest.exists());
         assert_eq!(kept(&dest), 0);
+        assert!(server.requests.lock().unwrap().is_empty());
     }
 
     #[test]

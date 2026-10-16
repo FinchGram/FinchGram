@@ -60,8 +60,10 @@ The engine, `src/downloads/transfer.rs`, follows vget:
 3. `<name>.part.json` records which chunks are done. Retry, or a later download of the same file,
    goes on from there: "12 MB of 48 MB kept".
 4. A chunk that fails is tried again from the last byte written, up to ten times, after a pause that
-   grows from half a second to eight; a 401, 403 or 404 stops at once. A server that answers 200 to a
-   range gets the file over one connection.
+   grows from half a second to eight, whatever the failure: a dropped connection, a 429 or 5xx from
+   a busy server, a 404 from a CDN node that does not have the file yet (PikPak does that), a 200
+   where a 206 was due; so is the probe. Only the disk stops a file at once. A server that answers
+   200 to a range gets the file over one connection.
 5. Done, `.part` takes the file's name, or "name (2).ext" when that name is taken.
 
 Two files are on their way at a time; the others wait their turn. While any is, the app tells macOS
