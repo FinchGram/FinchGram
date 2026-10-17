@@ -48,8 +48,9 @@ Telegram's media, with the player's speed and volume. Any other file is shown in
 it arrives. Download folder lists the folder's tree first, eight folders at a time with the total
 growing on the page as files are found, then fetches the files into the same tree under the
 downloads folder, six at a time (a server that takes half a second per request would otherwise
-make a folder of small files crawl), the files sharing the transfer's streams; a file already
-there with the same size is skipped.
+make a folder of small files crawl), the files sharing the transfer's streams, first requests
+included, so that a folder never has more requests out than one file would; a file already there
+with the same size is skipped.
 
 ## How a file comes
 
@@ -60,14 +61,12 @@ The engine, `src/downloads/transfer.rs`, follows vget:
    ranges, and its body is that chunk, streamed in while the other streams start on the rest; a
    200 answer means the server does no ranges, and its body is the whole file. One round trip
    per file, where a probe for two bytes used to cost a second more on PikPak.
-2. The file is cut into chunks: 8 MB for a small file, up to 32 MB for a large one (a stream sits
-   idle while the server works out each request, so the fewer chunks the better). A pool of
-   workers, one stream each (12 by default, `connections` in settings.toml, 1 to 64), takes the
-   next chunk until none is left, each written at its offset into `<name>.part`, which has the
-   file's full size from the start, by a writer thread. Once nothing is left, an idle stream takes
-   three quarters of the longest stretch still on its way (from 1 MB up): the last chunks used to
-   sit on the slowest connections, a CDN node at 1 MB/s or less, and keep a 1 GB file waiting ten
-   seconds after the rest had arrived.
+2. The file is cut into chunks of 8 MB, vget's size. A pool of workers, one stream each (12 by
+   default, vget's number; `connections` in settings.toml, 1 to 64), takes the next chunk until
+   none is left, each written at its offset into `<name>.part`, which has the file's full size
+   from the start, by a writer thread. Nothing else is asked of the server: larger chunks, an idle
+   stream taking over the tail of a slow one, and a crawling stream replaced were all tried on
+   2026-10-16, and every request more was one more that PikPak answered with 503.
 3. `<name>.part.json` records which chunks are done. Retry, or a later download of the same file,
    goes on from there: "12 MB of 48 MB kept".
 4. A chunk that fails is tried again from the last byte written, up to ten times, after a pause that
@@ -75,10 +74,11 @@ The engine, `src/downloads/transfer.rs`, follows vget:
    node that does not have the file yet (PikPak does that), a 200 where a 206 was due; so is the
    first request. Only the disk stops a file at once. A server that answers 429, 502, 503 or 504 is
    busy, not broken: PikPak does that while it fetches a file from cold storage, and when it is
-   pressed. Then every stream holds back for two seconds before its next request, nothing new is
-   asked for meanwhile, the page says "Server busy (HTTP 503), trying again…", and the file waits
-   up to five minutes for the server before it is given up on; such answers are not counted as
-   tries. A server that answers 200 to a range gets the file over one connection.
+   pressed. Then every stream holds back for two seconds before its next request, and the file
+   waits up to five minutes for the server before it is given up on; such answers are not counted
+   as tries, and the page says "Server busy (HTTP 503), trying again…" only once the server has been
+   busy for five seconds (a 503 or two in passing is nothing to tell of). A server that answers 200
+   to a range gets the file over one connection.
 5. Done, `.part` takes the file's name, or "name (2).ext" when that name is taken.
 
 Two files are on their way at a time; the others wait their turn. While any is, the app tells macOS
@@ -107,10 +107,10 @@ trusted yourself in Keychain Access, passes.
 What PikPak does, measured on 2026-10-16: its WebDAV host (HTTP/2, in Singapore) answers every file
 request with a redirect to a CDN node, `dl-z01a-00xx.mypikpak.net`, which speaks HTTP/1.1 only and
 gives each connection between 1 and 10 MB/s, a different node each time. So the speed is a matter
-of the tail, not of the protocol: with 12 streams the same 1 GB file came at the same speed as with
-vget in the same minute (35 to 40 MB/s on average, the tail included), and with the tail taken at
-55 to 100 MB/s while the bytes flow and 60 on average; 24 and 32 streams were no faster, and every
-stream is a request more for a server that answers 503 when pressed.
+of the tail, not of the protocol: with vget's 12 streams and 8 MB chunks the same 1 GB file came
+at the same speed as with vget in the same minute (35 to 40 MB/s on average, the tail included).
+More streams, larger chunks and a taken tail bought 60 on average, and 503s with it; the maintainer
+chose vget's parameters and no 503s.
 
 ## Where things are kept
 
@@ -128,7 +128,9 @@ stream is a request more for a server that answers 503 when pressed.
   does not trust the way it trusts Apple's, and so took each update for a stranger. The item is
   still encrypted at rest with the login keychain, listed in Keychain Access, and deleted with the
   server; an item kept by a version before 0.4.11 is moved to the open list the first time it is
-  read, which may ask one last time.
+  read, which may ask one last time. This is a workaround for the certificate: once releases are
+  signed with an Apple Developer ID, the item goes back to being readable by FinchGram alone
+  (`open_access` in src/platform/macos.rs goes away).
 - Deleting FinchGram does not delete any of this, as with any Mac app: the Application Support
   folder stays, and so do the Keychain items (Keychain Access → search "FinchGram" → delete).
 

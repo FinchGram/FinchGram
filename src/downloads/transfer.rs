@@ -39,11 +39,8 @@ use super::log;
 pub const DEFAULT_CONNECTIONS: usize = 12;
 /// The most streams settings may ask for.
 pub const MOST_CONNECTIONS: usize = 64;
-/// A chunk: 8 MB for a small file, small enough that a failed one is cheap to fetch again; up to
-/// 32 MB for a large one, since a stream sits idle while the server works out each request
-/// (PikPak takes half a second), and the fewer chunks the less of that.
+/// A chunk: 8 MB, vget's, small enough that a failed one is cheap to fetch again.
 const CHUNK_SIZE: u64 = 8 * 1024 * 1024;
-const LARGEST_CHUNK: u64 = 32 * 1024 * 1024;
 /// Tries per chunk before the file is given up on; the count starts over whenever a try brought
 /// some bytes.
 const ATTEMPTS: u32 = 10;
@@ -55,10 +52,6 @@ const PROGRESS_TICK: Duration = Duration::from_millis(50);
 const STALL_TIMEOUT: Duration = Duration::from_secs(60);
 /// Writes waiting for the writer thread before the streams pause.
 const WRITES_IN_FLIGHT: usize = 64;
-/// The tail: once nothing is pending, an idle stream takes most of the longest part still on its
-/// way, when that is at least this much. Without it the last chunks on the slowest connections
-/// (1 MB/s, or 0.2, on a bad CDN node) kept a 1 GB file waiting ten seconds after the rest.
-const LEAST_STOLEN: u64 = 1024 * 1024;
 /// A server that answers 429, 502, 503 or 504 is busy, not broken: PikPak does that while it
 /// fetches a file from cold storage, and when it is pressed. Then every stream of the file
 /// pauses before its next request, and the file waits for the server this long before it is
@@ -248,6 +241,12 @@ fn busy_pause() -> Duration {
     if cfg!(test) { Duration::from_millis(10) } else { BUSY_PAUSE }
 }
 
+/// How long a server must have been busy before the page says so: a 503 or two in passing is
+/// nothing to tell the user about (vget tells of none); a file waiting on a cold server is.
+fn busy_shown_after() -> Duration {
+    if cfg!(test) { Duration::ZERO } else { Duration::from_secs(5) }
+}
+
 impl Shared {
     /// The first failure is the one reported; every failure stops the others.
     fn fail(&self, err: Error) {
@@ -274,13 +273,13 @@ impl Shared {
         *self.busy.lock().unwrap() = Busy::default();
     }
 
+    /// The status a busy server keeps answering, once it has for a while; 0 otherwise.
     fn busy_code(&self) -> u16 {
-        self.busy.lock().unwrap().code
-    }
-
-    /// Whether the streams are holding back right now.
-    fn holding_back(&self) -> bool {
-        self.busy.lock().unwrap().until.is_some_and(|until| until > Instant::now())
+        let busy = self.busy.lock().unwrap();
+        match busy.since {
+            Some(since) if since.elapsed() >= busy_shown_after() => busy.code,
+            _ => 0,
+        }
     }
 
     /// Hold back while the server is busy.
@@ -306,10 +305,6 @@ struct Part {
 impl Part {
     fn new(chunk: usize, from: u64, to: u64) -> Part {
         Part { chunk, offset: Arc::new(AtomicU64::new(from)), stop: Arc::new(AtomicU64::new(to)) }
-    }
-
-    fn remaining(&self) -> u64 {
-        self.stop.load(Ordering::Relaxed).saturating_sub(self.offset.load(Ordering::Relaxed))
     }
 
     fn same(&self, other: &Part) -> bool {
@@ -423,7 +418,9 @@ async fn open_with_retries(http: &Http, source: &Source, dest: &Path, cancel: &A
                 if since.elapsed() > BUSY_PATIENCE {
                     return Err(Error::Status(code));
                 }
-                waiting(code);
+                if since.elapsed() >= busy_shown_after() {
+                    waiting(code);
+                }
                 wait(busy_pause(), cancel).await?;
             }
             Err(err) => {
@@ -477,18 +474,26 @@ pub fn download(http: &Http, source: &Source, dest: &Path, streams: &Streams, ca
     let part = with_suffix(dest, ".part");
     let state_path = with_suffix(dest, ".part.json");
     let started = Instant::now();
+    // The first request is one of the transfer's streams too: a folder's files together never
+    // have more requests out than the budget.
+    let permit = http.block_on(streams.budget.clone().acquire_owned()).map_err(|_| Error::Cancelled)?;
     let head = http.block_on(open_with_retries(http, source, dest, cancel, &|code| progress(Progress { done: 0, total: 0, protocol: Protocol::Unknown, waiting: code })))?;
     let protocol = head.probe.protocol;
     let report = |done, total, waiting| progress(Progress { done, total, protocol, waiting });
     match head.probe {
         Probe { size: Some(total), ranges: true, .. } if total > 0 => {
-            http.block_on(multi(http, source, &part, &state_path, total, streams, cancel, &report, head))?;
+            http.block_on(multi(http, source, &part, &state_path, total, streams, cancel, &report, head, permit))?;
         }
         Probe { size: Some(0), .. } => {
+            drop(permit);
             File::create(&part).map_err(disk)?;
             report(0, 0, 0);
         }
-        Probe { size, .. } => http.block_on(single(&part, size, cancel, &report, head.response))?,
+        Probe { size, .. } => {
+            let outcome = http.block_on(single(&part, size, cancel, &report, head.response));
+            drop(permit);
+            outcome?;
+        }
     }
     let _ = fs::remove_file(&state_path);
     let target = free_path(dest);
@@ -502,9 +507,10 @@ fn size_words(bytes: u64) -> String {
     format!("{:.1} MB", bytes as f64 / (1024.0 * 1024.0))
 }
 
-/// The chunk a file of `total` bytes is cut into: 8 MB, growing to 32 MB for a large file.
-fn chunk_size(total: u64) -> u64 {
-    (total / 96).clamp(CHUNK_SIZE, LARGEST_CHUNK)
+/// The chunk a file is cut into: 8 MB whatever its size, as vget has it (a larger chunk for a
+/// large file was tried, and the fewer requests were not worth the longer tail).
+fn chunk_size(_total: u64) -> u64 {
+    CHUNK_SIZE
 }
 
 /// Bytes of `dest` that are there from an earlier try: the done chunks of its `.part` file.
@@ -531,6 +537,7 @@ async fn multi(
     cancel: &AtomicBool,
     progress: &dyn Fn(u64, u64, u16),
     head: Head,
+    permit: tokio::sync::OwnedSemaphorePermit,
 ) -> Result<(), Error> {
     let chunk = chunk_size(total);
     let chunks = usize::try_from(total.div_ceil(chunk)).unwrap_or(usize::MAX);
@@ -590,8 +597,10 @@ async fn multi(
     let mut spawned = 0;
     if let Some(first) = first {
         shared.parts.lock().unwrap().push(first.clone());
-        set.spawn_on(head_worker(http.clone(), source.clone(), shared.clone(), sender.clone(), first, head.response), http.handle());
+        set.spawn_on(head_worker(http.clone(), source.clone(), shared.clone(), sender.clone(), first, head.response, permit), http.handle());
         spawned += 1;
+    } else {
+        drop(permit);
     }
     for _ in spawned..workers {
         set.spawn_on(worker(http.clone(), source.clone(), shared.clone(), sender.clone()), http.handle());
@@ -679,17 +688,7 @@ async fn worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, writer: mp
         }
         // A stream of the transfer's budget, shared with the other files of a folder.
         let Ok(permit) = shared.budget.clone().acquire_owned().await else { return };
-        let Some(part) = next_part(&shared) else {
-            drop(permit);
-            // Nothing to take while the server is busy: look again once it is not.
-            if shared.holding_back() && !shared.parts.lock().unwrap().is_empty() {
-                if wait(busy_pause(), &shared.abort).await.is_err() {
-                    return;
-                }
-                continue;
-            }
-            return;
-        };
+        let Some(part) = next_part(&shared) else { return };
         let outcome = fetch_part(&http, &source, &shared, &writer, &part).await;
         drop(permit);
         shared.parts.lock().unwrap().retain(|other| !other.same(&part));
@@ -704,9 +703,9 @@ async fn worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, writer: mp
     }
 }
 
-/// The worker with the first answer: it streams that body in, then goes on like any other.
-async fn head_worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, writer: mpsc::Sender<Write>, part: Part, mut response: Response<Incoming>) {
-    let Ok(permit) = shared.budget.clone().acquire_owned().await else { return };
+/// The worker with the first answer: it streams that body in, under the permit the first
+/// request already holds, then goes on like any other.
+async fn head_worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, writer: mpsc::Sender<Write>, part: Part, mut response: Response<Incoming>, permit: tokio::sync::OwnedSemaphorePermit) {
     let from = part.offset.load(Ordering::Relaxed);
     let end = part.stop.load(Ordering::Relaxed) - 1;
     let streamed = stream_body(response.body_mut(), &part, &shared, &writer, from, end, Instant::now(), Duration::ZERO).await;
@@ -726,32 +725,11 @@ async fn head_worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, write
     }
 }
 
-/// The next part in the queue; when none is pending, three quarters of the longest part still on
-/// its way (the stream that has it is slow, or it would not be the longest), if that is worth a
-/// request of its own.
+/// The next part in the queue, if any. (An idle stream taking over the tail of a slow one was
+/// tried: a request more each time, which PikPak answered with 503s; vget's streams each take
+/// whole chunks and nothing else, and so do these.)
 fn next_part(shared: &Shared) -> Option<Part> {
-    let part = match shared.pending.lock().unwrap().pop_front() {
-        Some(part) => part,
-        None => {
-            // No request more while the server is busy.
-            if shared.holding_back() {
-                return None;
-            }
-            let parts = shared.parts.lock().unwrap();
-            let longest = parts.iter().max_by_key(|part| part.remaining())?;
-            let remaining = longest.remaining();
-            if remaining < LEAST_STOLEN {
-                return None;
-            }
-            let stop = longest.stop.load(Ordering::Relaxed);
-            let mid = stop - remaining * 3 / 4;
-            longest.stop.store(mid, Ordering::Relaxed);
-            log::line(format!("chunk {}: an idle stream takes its last {}", longest.chunk, size_words(stop - mid)));
-            let part = Part::new(longest.chunk, mid, stop);
-            *shared.parts_left.lock().unwrap().entry(part.chunk).or_insert(0) += 1;
-            part
-        }
-    };
+    let part = shared.pending.lock().unwrap().pop_front()?;
     shared.parts.lock().unwrap().push(part.clone());
     Some(part)
 }
@@ -828,9 +806,8 @@ async fn fetch_range(http: &Http, source: &Source, part: &Part, shared: &Shared,
 }
 
 /// The bytes of a body that starts at `from` and runs to `end`, handed to the writer for where
-/// they belong, up to the part's stop; the offset moves as they go. The stop may move down
-/// meanwhile (an idle stream took the rest): the body is then left unread, and the connection
-/// closed, which is cheaper than the wait.
+/// they belong, up to the part's stop (less than `end` when a server sends more than the part);
+/// the offset moves as they go.
 #[allow(clippy::too_many_arguments)]
 async fn stream_body(body: &mut Incoming, part: &Part, shared: &Shared, writer: &mpsc::Sender<Write>, from: u64, end: u64, started: Instant, answered: Duration) -> Result<(), Error> {
     let mut offset = from;
@@ -996,7 +973,7 @@ mod tests {
     /// A server of one file on the loopback: HTTP/1.1 with keep-alive, ranges when told to, a
     /// count of the connections and of the requests with their Range headers, 429 for the next
     /// `failures` chunk requests, 404 for the next `missing` ones, and 503 for the next
-    /// `probe_failures` probes.
+    /// `probe_failures` first requests.
     struct FileServer {
         url: String,
         connections: Arc<AtomicUsize>,
@@ -1004,8 +981,6 @@ mod tests {
         failures: Arc<AtomicUsize>,
         missing: Arc<AtomicUsize>,
         probe_failures: Arc<AtomicUsize>,
-        /// The next `slow` chunk requests are answered 64 KB every 20 ms.
-        slow: Arc<AtomicUsize>,
     }
 
     fn serve(content: Vec<u8>, ranges: bool, authorization: Option<&str>) -> FileServer {
@@ -1016,10 +991,9 @@ mod tests {
         let failures = Arc::new(AtomicUsize::new(0));
         let missing = Arc::new(AtomicUsize::new(0));
         let probe_failures = Arc::new(AtomicUsize::new(0));
-        let slow = Arc::new(AtomicUsize::new(0));
         let content = Arc::new(content);
         let authorization = authorization.map(str::to_string);
-        let counters = Arc::new(Counters { failures: failures.clone(), missing: missing.clone(), probe_failures: probe_failures.clone(), slow: slow.clone() });
+        let counters = Arc::new(Counters { failures: failures.clone(), missing: missing.clone(), probe_failures: probe_failures.clone() });
         let (opened, seen) = (connections.clone(), requests.clone());
         std::thread::spawn(move || {
             for stream in listener.incoming() {
@@ -1029,15 +1003,14 @@ mod tests {
                 std::thread::spawn(move || answer(stream, &content, ranges, authorization.as_deref(), &seen, &counters));
             }
         });
-        FileServer { url: format!("http://127.0.0.1:{port}/film.mkv"), connections, requests, failures, missing, probe_failures, slow }
+        FileServer { url: format!("http://127.0.0.1:{port}/film.mkv"), connections, requests, failures, missing, probe_failures }
     }
 
-    /// How many of the next requests the server turns away, and how; how many it answers slowly.
+    /// How many of the next requests the server turns away, and how.
     struct Counters {
         failures: Arc<AtomicUsize>,
         missing: Arc<AtomicUsize>,
         probe_failures: Arc<AtomicUsize>,
-        slow: Arc<AtomicUsize>,
     }
 
     /// Takes one from `counter` when there is one to take.
@@ -1095,17 +1068,7 @@ mod tests {
                 ("200 OK", String::new(), content)
             };
             let head = format!("HTTP/1.1 {status}\r\nContent-Length: {}\r\n{extra}\r\n", body.len());
-            if stream.write_all(head.as_bytes()).is_err() {
-                return;
-            }
-            if chunk && take(&counters.slow) {
-                for piece in body.chunks(64 * 1024) {
-                    if stream.write_all(piece).is_err() {
-                        return;
-                    }
-                    std::thread::sleep(Duration::from_millis(20));
-                }
-            } else if stream.write_all(body).is_err() {
+            if stream.write_all(head.as_bytes()).and_then(|_| stream.write_all(body)).is_err() {
                 return;
             }
         }
@@ -1179,14 +1142,13 @@ mod tests {
         assert_eq!(seen.last(), Some(&(content.len() as u64, content.len() as u64)));
         assert!(seen.windows(2).all(|pair| pair[0].0 <= pair[1].0), "progress never goes back: {seen:?}");
         let requests = server.requests.lock().unwrap().clone();
-        // The first request is the first chunk itself, not a two-byte probe.
+        // The first request is the first chunk itself, not a two-byte probe; then the other two.
         assert_eq!(requests[0], format!("bytes=0-{}", CHUNK_SIZE - 1));
-        assert!(requests.len() >= 3, "{requests:?}");
+        assert_eq!(requests.len(), 3, "{requests:?}");
         assert!(covers(&requests, content.len()), "every byte asked for: {requests:?}");
     }
 
-    /// Whether `ranges` ("bytes=a-b"), together, ask for every byte of a file of `len` bytes
-    /// (an idle stream may take the tail of another's chunk, so they may overlap).
+    /// Whether `ranges` ("bytes=a-b"), together, ask for every byte of a file of `len` bytes.
     fn covers(ranges: &[String], len: usize) -> bool {
         let mut spans: Vec<(usize, usize)> = ranges.iter().filter_map(|range| parse_range(range)).collect();
         spans.sort();
@@ -1201,25 +1163,6 @@ mod tests {
     }
 
     #[test]
-    fn an_idle_stream_takes_the_tail_of_a_slow_one() {
-        // Two chunks over four streams, the second chunk's connection slow: the idle streams take
-        // its rest, most of it at a time, instead of waiting for it.
-        let content = pattern(2 * CHUNK_SIZE as usize + 5);
-        let server = serve(content.clone(), true, None);
-        server.slow.store(1, Ordering::SeqCst);
-        let scratch = Scratch::new("tail");
-        let dest = scratch.path("film.mkv");
-        let started = Instant::now();
-        fetch(&server, &dest, 4).expect("the file");
-        assert_eq!(fs::read(&dest).unwrap(), content);
-        let requests = server.requests.lock().unwrap().clone();
-        assert!(requests.len() > 2, "the tail was taken: {requests:?}");
-        assert!(covers(&requests, content.len()), "{requests:?}");
-        // The slow connection alone would have taken 8 MB at 64 KB per 20 ms: 2.6 s.
-        assert!(started.elapsed() < Duration::from_millis(2000), "{:?}", started.elapsed());
-    }
-
-    #[test]
     fn connections_are_kept_between_chunks() {
         // Twelve chunks over two workers take a handful of HTTP/1.1 connections, each serving
         // chunk after chunk; without the body read to its end, every chunk would open one of its
@@ -1230,11 +1173,10 @@ mod tests {
         let dest = scratch.path("film.mkv");
         fetch(&server, &dest, 2).expect("the file");
         assert_eq!(fs::read(&dest).unwrap(), content);
-        // Twelve chunks, a few more requests for the tail; and far fewer connections than that.
-        let requests = server.requests.lock().unwrap().len();
-        assert!((12..=20).contains(&requests), "{requests} requests for 12 chunks");
+        // Twelve requests for twelve chunks, over far fewer connections than that.
+        assert_eq!(server.requests.lock().unwrap().len(), 12);
         let connections = server.connections.load(Ordering::SeqCst);
-        assert!(connections <= 8, "{connections} connections for 12 chunks over 2");
+        assert!(connections <= 4, "{connections} connections for 12 chunks over 2");
     }
 
     #[test]
@@ -1257,7 +1199,7 @@ mod tests {
         let lowest = requests.iter().filter_map(|range| parse_range(range)).map(|(start, _)| start).min();
         assert_eq!(lowest, Some(CHUNK_SIZE as usize), "the first chunk is not fetched again: {requests:?}");
         // The first request is the first missing chunk; then the last one.
-        assert!(requests.len() >= 2);
+        assert_eq!(requests.len(), 2);
         assert_eq!(kept(&dest), 0);
     }
 
@@ -1472,10 +1414,9 @@ mod tests {
     }
 
     #[test]
-    fn chunks_grow_with_the_file() {
+    fn every_chunk_is_eight_megabytes() {
         assert_eq!(chunk_size(100), CHUNK_SIZE);
-        assert_eq!(chunk_size(1 << 30), (1u64 << 30) / 96);
-        assert_eq!(chunk_size(20 << 30), LARGEST_CHUNK);
+        assert_eq!(chunk_size(20 << 30), CHUNK_SIZE);
     }
 
     #[test]
