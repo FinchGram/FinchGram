@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-16 19:29+0000\n"
+"POT-Creation-Date: 2026-10-17 02:30+0000\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -35,7 +35,7 @@ msgstr "终端"
 msgid "Broadsheet"
 msgstr "报纸"
 
-#: ui/app.slint:93 ui/pages/downloads.slint:401 ui/pages/downloads.slint:764
+#: ui/app.slint:93 ui/pages/downloads.slint:402 ui/pages/downloads.slint:765
 msgid "Downloads"
 msgstr "下载"
 
@@ -81,7 +81,7 @@ msgid "Add a comment (optional)"
 msgstr "补充说明（可选）"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1313
+#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1369
 #: ui/pages/profile.slint:174 ui/terminal/actions.slint:385
 #: ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
 #: ui/workbench/actions.slint:720
@@ -112,7 +112,7 @@ msgstr "深色"
 msgid "Accounts"
 msgstr "账号"
 
-#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:791
+#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:792
 #: ui/workbench/sidebar.slint:417
 msgid "Chats"
 msgstr "聊天"
@@ -159,7 +159,7 @@ msgstr "排序方式"
 msgid "Latest message"
 msgstr "最新消息"
 
-#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:950
+#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:1006
 #: ui/terminal/terminal.slint:512
 msgid "Name"
 msgstr "名称"
@@ -479,7 +479,7 @@ msgid "Add more"
 msgstr "再添加"
 
 #: ui/chat.slint:332 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
-#: ui/pages/downloads.slint:1521
+#: ui/pages/downloads.slint:1577
 msgid "Remove"
 msgstr "移除"
 
@@ -592,11 +592,11 @@ msgstr "取消上传"
 msgid "Not sent"
 msgstr "未发送"
 
-#: ui/chat.slint:372 ui/pages/downloads.slint:650 ui/pages/downloads.slint:1587
+#: ui/chat.slint:372 ui/pages/downloads.slint:651 ui/pages/downloads.slint:1643
 msgid "Retry"
 msgstr "重试"
 
-#: ui/chat.slint:374 ui/pages/downloads.slint:1026
+#: ui/chat.slint:374 ui/pages/downloads.slint:1082
 msgid "Download"
 msgstr "下载"
 
@@ -604,12 +604,12 @@ msgstr "下载"
 msgid "Cancel download"
 msgstr "取消下载"
 
-#: ui/chat.slint:376 ui/pages/downloads.slint:641
+#: ui/chat.slint:376 ui/pages/downloads.slint:642
 msgid "Show in Finder"
 msgstr "在访达中显示"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:378 ui/pages/downloads.slint:49
+#: ui/chat.slint:378 ui/pages/downloads.slint:50
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
@@ -621,7 +621,7 @@ msgstr "点击查看"
 msgid "Reply"
 msgstr "回复"
 
-#: ui/chat.slint:792 ui/pages/downloads.slint:1513
+#: ui/chat.slint:792 ui/pages/downloads.slint:1569
 msgid "Edit"
 msgstr "编辑"
 
@@ -1514,179 +1514,191 @@ msgstr "已完成 · {0}"
 msgid "Stopped: {0}. {1} of {2} kept."
 msgstr "已停止：{0}。已保留 {1}，共 {2}。"
 
-#: ui/pages/downloads.slint:50
+#: ui/pages/downloads.slint:49
+msgid "Server busy (HTTP {0}), trying again…"
+msgstr "服务器忙（HTTP {0}），重试中…"
+
+#: ui/pages/downloads.slint:51
 msgid "{0} of {1} · {2} · {3}"
 msgstr "{0} / {1} · {2} · {3}"
 
-#: ui/pages/downloads.slint:54
+#: ui/pages/downloads.slint:55
 msgid "estimating…"
 msgstr "正在估算…"
 
-#: ui/pages/downloads.slint:55
+#: ui/pages/downloads.slint:56
 msgid "{0} s left"
 msgstr "剩余 {0} 秒"
 
-#: ui/pages/downloads.slint:56
+#: ui/pages/downloads.slint:57
 msgid "{0} min left"
 msgstr "剩余 {0} 分钟"
 
-#: ui/pages/downloads.slint:65
+#: ui/pages/downloads.slint:66
 msgid "Reached: {0} folders and {1} files at the root."
 msgstr "已连上：根目录有 {0} 个文件夹、{1} 个文件。"
 
-#: ui/pages/downloads.slint:68
+#: ui/pages/downloads.slint:69
 msgid ""
 "Reached: {0} folders and {1} files at the root. Ranges supported, so "
 "downloads can use several connections."
-msgstr "已连上：根目录有 {0} 个文件夹、{1} 个文件。支持 Range 请求，下载可以用多个连接。"
+msgstr ""
+"已连上：根目录有 {0} 个文件夹、{1} 个文件。支持 Range 请求，下载可以用多个连"
+"接。"
 
-#: ui/pages/downloads.slint:70
+#: ui/pages/downloads.slint:71
 msgid ""
 "Reached: {0} folders and {1} files at the root. No ranges, so each file "
 "comes over one connection."
-msgstr "已连上：根目录有 {0} 个文件夹、{1} 个文件。不支持 Range 请求，每个文件只能用一个连接。"
+msgstr ""
+"已连上：根目录有 {0} 个文件夹、{1} 个文件。不支持 Range 请求，每个文件只能用"
+"一个连接。"
 
-#: ui/pages/downloads.slint:74
+#: ui/pages/downloads.slint:75
 msgid "Give the server a name."
 msgstr "给服务器起个名称。"
 
-#: ui/pages/downloads.slint:75
+#: ui/pages/downloads.slint:76
 msgid "The address needs to start with http:// or https://."
 msgstr "地址需要以 http:// 或 https:// 开头。"
 
-#: ui/pages/downloads.slint:299 ui/pages/downloads.slint:1128
+#: ui/pages/downloads.slint:300 ui/pages/downloads.slint:1184
 msgid "Add server"
 msgstr "添加服务器"
 
-#: ui/pages/downloads.slint:341
+#: ui/pages/downloads.slint:342
 msgid "Filter this folder"
 msgstr "筛选这个文件夹"
 
-#: ui/pages/downloads.slint:803
+#: ui/pages/downloads.slint:804
 msgid "WebDAV servers"
 msgstr "WebDAV 服务器"
 
-#: ui/pages/downloads.slint:954
+#: ui/pages/downloads.slint:1010
 msgid "Modified"
 msgstr "修改日期"
 
-#: ui/pages/downloads.slint:959
+#: ui/pages/downloads.slint:1015
 msgid "Size"
 msgstr "大小"
 
-#: ui/pages/downloads.slint:983
+#: ui/pages/downloads.slint:1039
 msgid "Nothing in this folder matches “{0}”"
 msgstr "这个文件夹里没有匹配「{0}」的内容"
 
-#: ui/pages/downloads.slint:1005
+#: ui/pages/downloads.slint:1061
 msgid "{0} selected · {1}"
 msgstr "已选 {0} 个 · {1}"
 
-#: ui/pages/downloads.slint:1013
+#: ui/pages/downloads.slint:1069
 msgid "Clear"
 msgstr "清除"
 
-#: ui/pages/downloads.slint:1020 ui/pages/downloads.slint:1538
+#: ui/pages/downloads.slint:1076 ui/pages/downloads.slint:1594
 msgid "Open"
 msgstr "打开"
 
-#: ui/pages/downloads.slint:1062
+#: ui/pages/downloads.slint:1118
 msgid "This folder is empty"
 msgstr "这个文件夹是空的"
 
-#: ui/pages/downloads.slint:1111
+#: ui/pages/downloads.slint:1167
 msgid "No WebDAV servers yet"
 msgstr "还没有 WebDAV 服务器"
 
-#: ui/pages/downloads.slint:1114
+#: ui/pages/downloads.slint:1170
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
 "want."
-msgstr "添加 NAS、seedbox、PikPak、Alist / OpenList 的 WebDAV 地址，或者用 vget serve 共享的文件夹。然后在这里浏览，挑你想要的文件。"
+msgstr ""
+"添加 NAS、seedbox、PikPak、Alist / OpenList 的 WebDAV 地址，或者用 vget "
+"serve 共享的文件夹。然后在这里浏览，挑你想要的文件。"
 
-#: ui/pages/downloads.slint:1120
+#: ui/pages/downloads.slint:1176
 msgid ""
 "Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
 "reads: nothing is uploaded, synced, renamed or deleted on the server."
-msgstr "没有 WebDAV 的网盘可以通过 OpenList 接入。FinchGram 只读：不会上传、同步、重命名或删除服务器上的任何东西。"
+msgstr ""
+"没有 WebDAV 的网盘可以通过 OpenList 接入。FinchGram 只读：不会上传、同步、重"
+"命名或删除服务器上的任何东西。"
 
-#: ui/pages/downloads.slint:1193
+#: ui/pages/downloads.slint:1249
 msgid "Edit server"
 msgstr "编辑服务器"
 
-#: ui/pages/downloads.slint:1193
+#: ui/pages/downloads.slint:1249
 msgid "Add WebDAV server"
 msgstr "添加 WebDAV 服务器"
 
-#: ui/pages/downloads.slint:1196
+#: ui/pages/downloads.slint:1252
 msgid ""
 "The address of the WebDAV server, and the account it gave you. The password "
 "goes into your macOS Keychain, not into a file."
 msgstr "WebDAV 服务器的地址和它给你的账号。密码存入 macOS 钥匙串，不写进文件。"
 
-#: ui/pages/downloads.slint:1211
+#: ui/pages/downloads.slint:1267
 msgid "Address"
 msgstr "地址"
 
-#: ui/pages/downloads.slint:1213
+#: ui/pages/downloads.slint:1269
 msgid "http:// or https://. A folder may be part of the address."
 msgstr "以 http:// 或 https:// 开头，地址里可以带文件夹。"
 
-#: ui/pages/downloads.slint:1220 ui/pages/profile.slint:300
+#: ui/pages/downloads.slint:1276 ui/pages/profile.slint:300
 msgid "Username"
 msgstr "用户名"
 
-#: ui/pages/downloads.slint:1227 ui/pages/login.slint:545
+#: ui/pages/downloads.slint:1283 ui/pages/login.slint:545
 msgid "Password"
 msgstr "密码"
 
-#: ui/pages/downloads.slint:1264
+#: ui/pages/downloads.slint:1320
 msgid "Testing…"
 msgstr "正在测试…"
 
-#: ui/pages/downloads.slint:1293 ui/pages/profile.slint:429
+#: ui/pages/downloads.slint:1349 ui/pages/profile.slint:429
 #: ui/pages/settings.slint:1316
 msgid "Save"
 msgstr "保存"
 
-#: ui/pages/downloads.slint:1293
+#: ui/pages/downloads.slint:1349
 msgid "Add"
 msgstr "添加"
 
-#: ui/pages/downloads.slint:1303
+#: ui/pages/downloads.slint:1359
 msgid "Test connection"
 msgstr "测试连接"
 
-#: ui/pages/downloads.slint:1368
+#: ui/pages/downloads.slint:1424
 msgid "{0} active"
 msgstr "{0} 个进行中"
 
-#: ui/pages/downloads.slint:1392
+#: ui/pages/downloads.slint:1448
 msgid "Hide"
 msgstr "隐藏"
 
-#: ui/pages/downloads.slint:1459
+#: ui/pages/downloads.slint:1515
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "每个文件 {0} 个连接 · 下载到 {1}"
 
-#: ui/pages/downloads.slint:1465
+#: ui/pages/downloads.slint:1521
 msgid "Change"
 msgstr "更改"
 
-#: ui/pages/downloads.slint:1530
+#: ui/pages/downloads.slint:1586
 msgid "Copy address"
 msgstr "复制地址"
 
-#: ui/pages/downloads.slint:1546
+#: ui/pages/downloads.slint:1602
 msgid "Download folder"
 msgstr "下载文件夹"
 
-#: ui/pages/downloads.slint:1570
+#: ui/pages/downloads.slint:1626
 msgid "Copy link"
 msgstr "复制链接"
 
-#: ui/pages/downloads.slint:1605
+#: ui/pages/downloads.slint:1661
 msgid "Remove from list"
 msgstr "从列表移除"
 

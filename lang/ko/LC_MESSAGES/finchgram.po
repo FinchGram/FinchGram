@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-16 19:29+0000\n"
+"POT-Creation-Date: 2026-10-17 02:30+0000\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -35,7 +35,7 @@ msgstr "터미널"
 msgid "Broadsheet"
 msgstr "브로드시트"
 
-#: ui/app.slint:93 ui/pages/downloads.slint:401 ui/pages/downloads.slint:764
+#: ui/app.slint:93 ui/pages/downloads.slint:402 ui/pages/downloads.slint:765
 msgid "Downloads"
 msgstr "다운로드"
 
@@ -81,7 +81,7 @@ msgid "Add a comment (optional)"
 msgstr "설명 추가 (선택 사항)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1313
+#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1369
 #: ui/pages/profile.slint:174 ui/terminal/actions.slint:385
 #: ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
 #: ui/workbench/actions.slint:720
@@ -112,7 +112,7 @@ msgstr "다크"
 msgid "Accounts"
 msgstr "계정"
 
-#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:791
+#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:792
 #: ui/workbench/sidebar.slint:417
 msgid "Chats"
 msgstr "채팅"
@@ -159,7 +159,7 @@ msgstr "정렬 기준"
 msgid "Latest message"
 msgstr "최신 메시지"
 
-#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:950
+#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:1006
 #: ui/terminal/terminal.slint:512
 msgid "Name"
 msgstr "이름"
@@ -485,7 +485,7 @@ msgid "Add more"
 msgstr "더 추가"
 
 #: ui/chat.slint:332 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
-#: ui/pages/downloads.slint:1521
+#: ui/pages/downloads.slint:1577
 msgid "Remove"
 msgstr "제거"
 
@@ -598,11 +598,11 @@ msgstr "업로드 취소"
 msgid "Not sent"
 msgstr "전송되지 않음"
 
-#: ui/chat.slint:372 ui/pages/downloads.slint:650 ui/pages/downloads.slint:1587
+#: ui/chat.slint:372 ui/pages/downloads.slint:651 ui/pages/downloads.slint:1643
 msgid "Retry"
 msgstr "다시 시도"
 
-#: ui/chat.slint:374 ui/pages/downloads.slint:1026
+#: ui/chat.slint:374 ui/pages/downloads.slint:1082
 msgid "Download"
 msgstr "다운로드"
 
@@ -610,12 +610,12 @@ msgstr "다운로드"
 msgid "Cancel download"
 msgstr "다운로드 취소"
 
-#: ui/chat.slint:376 ui/pages/downloads.slint:641
+#: ui/chat.slint:376 ui/pages/downloads.slint:642
 msgid "Show in Finder"
 msgstr "Finder에서 보기"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:378 ui/pages/downloads.slint:49
+#: ui/chat.slint:378 ui/pages/downloads.slint:50
 msgid "{0} of {1}"
 msgstr "{1} 중 {0}"
 
@@ -627,7 +627,7 @@ msgstr "클릭하여 보기"
 msgid "Reply"
 msgstr "답장"
 
-#: ui/chat.slint:792 ui/pages/downloads.slint:1513
+#: ui/chat.slint:792 ui/pages/downloads.slint:1569
 msgid "Edit"
 msgstr "편집"
 
@@ -1528,191 +1528,194 @@ msgstr "완료 · {0}"
 msgid "Stopped: {0}. {1} of {2} kept."
 msgstr "중단됨: {0}. {2} 중 {1} 보관됨."
 
-#: ui/pages/downloads.slint:50
+#: ui/pages/downloads.slint:49
+msgid "Server busy (HTTP {0}), trying again…"
+msgstr "서버가 바쁩니다 (HTTP {0}), 다시 시도 중…"
+
+#: ui/pages/downloads.slint:51
 msgid "{0} of {1} · {2} · {3}"
 msgstr "{1} 중 {0} · {2} · {3}"
 
-#: ui/pages/downloads.slint:54
+#: ui/pages/downloads.slint:55
 msgid "estimating…"
 msgstr "계산 중…"
 
-#: ui/pages/downloads.slint:55
+#: ui/pages/downloads.slint:56
 msgid "{0} s left"
 msgstr "{0}초 남음"
 
-#: ui/pages/downloads.slint:56
+#: ui/pages/downloads.slint:57
 msgid "{0} min left"
 msgstr "{0}분 남음"
 
-#: ui/pages/downloads.slint:65
+#: ui/pages/downloads.slint:66
 msgid "Reached: {0} folders and {1} files at the root."
 msgstr "연결됨: 최상위 폴더에 폴더 {0}개와 파일 {1}개가 있습니다."
 
-#: ui/pages/downloads.slint:68
+#: ui/pages/downloads.slint:69
 msgid ""
 "Reached: {0} folders and {1} files at the root. Ranges supported, so "
 "downloads can use several connections."
 msgstr ""
-"연결됨: 최상위 폴더에 폴더 {0}개와 파일 {1}개가 있습니다. 범위 요청을 "
-"지원하므로 다운로드에 여러 연결을 사용할 수 있습니다."
+"연결됨: 최상위 폴더에 폴더 {0}개와 파일 {1}개가 있습니다. 범위 요청을 지원하"
+"므로 다운로드에 여러 연결을 사용할 수 있습니다."
 
-#: ui/pages/downloads.slint:70
+#: ui/pages/downloads.slint:71
 msgid ""
 "Reached: {0} folders and {1} files at the root. No ranges, so each file "
 "comes over one connection."
 msgstr ""
-"연결됨: 최상위 폴더에 폴더 {0}개와 파일 {1}개가 있습니다. 범위 요청을 "
-"지원하지 않으므로 파일마다 연결을 하나만 사용합니다."
+"연결됨: 최상위 폴더에 폴더 {0}개와 파일 {1}개가 있습니다. 범위 요청을 지원하"
+"지 않으므로 파일마다 연결을 하나만 사용합니다."
 
-#: ui/pages/downloads.slint:74
+#: ui/pages/downloads.slint:75
 msgid "Give the server a name."
 msgstr "서버 이름을 입력하세요."
 
-#: ui/pages/downloads.slint:75
+#: ui/pages/downloads.slint:76
 msgid "The address needs to start with http:// or https://."
 msgstr "주소는 http:// 또는 https://로 시작해야 합니다."
 
-#: ui/pages/downloads.slint:299 ui/pages/downloads.slint:1128
+#: ui/pages/downloads.slint:300 ui/pages/downloads.slint:1184
 msgid "Add server"
 msgstr "서버 추가"
 
-#: ui/pages/downloads.slint:341
+#: ui/pages/downloads.slint:342
 msgid "Filter this folder"
 msgstr "이 폴더 필터링"
 
-#: ui/pages/downloads.slint:803
+#: ui/pages/downloads.slint:804
 msgid "WebDAV servers"
 msgstr "WebDAV 서버"
 
-#: ui/pages/downloads.slint:954
+#: ui/pages/downloads.slint:1010
 msgid "Modified"
 msgstr "수정일"
 
-#: ui/pages/downloads.slint:959
+#: ui/pages/downloads.slint:1015
 msgid "Size"
 msgstr "크기"
 
-#: ui/pages/downloads.slint:983
+#: ui/pages/downloads.slint:1039
 msgid "Nothing in this folder matches “{0}”"
 msgstr "이 폴더에는 “{0}”에 해당하는 항목이 없습니다"
 
-#: ui/pages/downloads.slint:1005
+#: ui/pages/downloads.slint:1061
 msgid "{0} selected · {1}"
 msgstr "{0}개 선택됨 · {1}"
 
-#: ui/pages/downloads.slint:1013
+#: ui/pages/downloads.slint:1069
 msgid "Clear"
 msgstr "선택 해제"
 
-#: ui/pages/downloads.slint:1020 ui/pages/downloads.slint:1538
+#: ui/pages/downloads.slint:1076 ui/pages/downloads.slint:1594
 msgid "Open"
 msgstr "열기"
 
-#: ui/pages/downloads.slint:1062
+#: ui/pages/downloads.slint:1118
 msgid "This folder is empty"
 msgstr "이 폴더는 비어 있습니다"
 
-#: ui/pages/downloads.slint:1111
+#: ui/pages/downloads.slint:1167
 msgid "No WebDAV servers yet"
 msgstr "아직 WebDAV 서버가 없습니다"
 
-#: ui/pages/downloads.slint:1114
+#: ui/pages/downloads.slint:1170
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
 "want."
 msgstr ""
-"NAS, 시드박스, PikPak, Alist / OpenList의 WebDAV 주소나 vget serve로 "
-"공유하는 폴더를 추가하세요. 그런 다음 여기에서 둘러보고 원하는 파일을 "
-"고르세요."
+"NAS, 시드박스, PikPak, Alist / OpenList의 WebDAV 주소나 vget serve로 공유하"
+"는 폴더를 추가하세요. 그런 다음 여기에서 둘러보고 원하는 파일을 고르세요."
 
-#: ui/pages/downloads.slint:1120
+#: ui/pages/downloads.slint:1176
 msgid ""
 "Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
 "reads: nothing is uploaded, synced, renamed or deleted on the server."
 msgstr ""
-"WebDAV를 지원하지 않는 클라우드 드라이브는 OpenList를 통해 연결할 수 "
-"있습니다. FinchGram은 읽기만 합니다: 서버의 파일을 업로드, 동기화, 이름 "
-"변경, 삭제하지 않습니다."
+"WebDAV를 지원하지 않는 클라우드 드라이브는 OpenList를 통해 연결할 수 있습니"
+"다. FinchGram은 읽기만 합니다: 서버의 파일을 업로드, 동기화, 이름 변경, 삭제"
+"하지 않습니다."
 
-#: ui/pages/downloads.slint:1193
+#: ui/pages/downloads.slint:1249
 msgid "Edit server"
 msgstr "서버 편집"
 
-#: ui/pages/downloads.slint:1193
+#: ui/pages/downloads.slint:1249
 msgid "Add WebDAV server"
 msgstr "WebDAV 서버 추가"
 
-#: ui/pages/downloads.slint:1196
+#: ui/pages/downloads.slint:1252
 msgid ""
 "The address of the WebDAV server, and the account it gave you. The password "
 "goes into your macOS Keychain, not into a file."
 msgstr ""
-"WebDAV 서버의 주소와 서버에서 받은 계정입니다. 암호는 파일이 아니라 macOS "
-"키체인에 저장됩니다."
+"WebDAV 서버의 주소와 서버에서 받은 계정입니다. 암호는 파일이 아니라 macOS 키"
+"체인에 저장됩니다."
 
-#: ui/pages/downloads.slint:1211
+#: ui/pages/downloads.slint:1267
 msgid "Address"
 msgstr "주소"
 
-#: ui/pages/downloads.slint:1213
+#: ui/pages/downloads.slint:1269
 msgid "http:// or https://. A folder may be part of the address."
 msgstr "http:// 또는 https://. 주소에 폴더 경로를 포함할 수 있습니다."
 
-#: ui/pages/downloads.slint:1220 ui/pages/profile.slint:300
+#: ui/pages/downloads.slint:1276 ui/pages/profile.slint:300
 msgid "Username"
 msgstr "사용자 이름"
 
-#: ui/pages/downloads.slint:1227 ui/pages/login.slint:545
+#: ui/pages/downloads.slint:1283 ui/pages/login.slint:545
 msgid "Password"
 msgstr "암호"
 
-#: ui/pages/downloads.slint:1264
+#: ui/pages/downloads.slint:1320
 msgid "Testing…"
 msgstr "테스트 중…"
 
-#: ui/pages/downloads.slint:1293 ui/pages/profile.slint:429
+#: ui/pages/downloads.slint:1349 ui/pages/profile.slint:429
 #: ui/pages/settings.slint:1316
 msgid "Save"
 msgstr "저장"
 
-#: ui/pages/downloads.slint:1293
+#: ui/pages/downloads.slint:1349
 msgid "Add"
 msgstr "추가"
 
-#: ui/pages/downloads.slint:1303
+#: ui/pages/downloads.slint:1359
 msgid "Test connection"
 msgstr "연결 테스트"
 
-#: ui/pages/downloads.slint:1368
+#: ui/pages/downloads.slint:1424
 msgid "{0} active"
 msgstr "{0}개 진행 중"
 
-#: ui/pages/downloads.slint:1392
+#: ui/pages/downloads.slint:1448
 msgid "Hide"
 msgstr "가리기"
 
-#: ui/pages/downloads.slint:1459
+#: ui/pages/downloads.slint:1515
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "파일당 연결 {0}개 · 다운로드 위치: {1}"
 
-#: ui/pages/downloads.slint:1465
+#: ui/pages/downloads.slint:1521
 msgid "Change"
 msgstr "변경"
 
-#: ui/pages/downloads.slint:1530
+#: ui/pages/downloads.slint:1586
 msgid "Copy address"
 msgstr "주소 복사"
 
-#: ui/pages/downloads.slint:1546
+#: ui/pages/downloads.slint:1602
 msgid "Download folder"
 msgstr "폴더 다운로드"
 
-#: ui/pages/downloads.slint:1570
+#: ui/pages/downloads.slint:1626
 msgid "Copy link"
 msgstr "링크 복사"
 
-#: ui/pages/downloads.slint:1605
+#: ui/pages/downloads.slint:1661
 msgid "Remove from list"
 msgstr "목록에서 제거"
 

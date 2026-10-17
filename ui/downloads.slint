@@ -43,6 +43,7 @@ export struct TransferRow {
     minutes-left: int,      // the same, rounded up to minutes
     problem: Problem,       // why it stopped
     detail: string,         // the problem's detail: an HTTP code
+    waiting: int,           // the HTTP status a busy server keeps answering (503 …) while active; 0 otherwise
 }
 
 // The form's "Test connection".

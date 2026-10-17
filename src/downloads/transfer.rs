@@ -18,7 +18,7 @@ use std::fs::{self, File, OpenOptions};
 use std::io::Write as _;
 use std::os::unix::fs::FileExt;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -33,9 +33,10 @@ use tokio::sync::{Semaphore, mpsc, oneshot};
 use super::http::{Failure, Http};
 use super::log;
 
-/// Streams per file unless settings say otherwise. vget's 12 was the start; measured against
-/// PikPak's CDN, whose connections each give 1 to 10 MB/s, 24 streams go half as fast again.
-pub const DEFAULT_CONNECTIONS: usize = 24;
+/// Streams per file unless settings say otherwise: vget's 12. Measured against PikPak's CDN, 24
+/// and 32 were no faster once the tail is taken, and every stream is a request more for a
+/// server that answers 503 when pressed.
+pub const DEFAULT_CONNECTIONS: usize = 12;
 /// The most streams settings may ask for.
 pub const MOST_CONNECTIONS: usize = 64;
 /// A chunk: 8 MB for a small file, small enough that a failed one is cheap to fetch again; up to
@@ -58,31 +59,24 @@ const WRITES_IN_FLIGHT: usize = 64;
 /// way, when that is at least this much. Without it the last chunks on the slowest connections
 /// (1 MB/s, or 0.2, on a bad CDN node) kept a 1 GB file waiting ten seconds after the rest.
 const LEAST_STOLEN: u64 = 1024 * 1024;
-/// A crawling stream: one that, over the last `WATCH_SPAN`, brought less than a quarter of what
-/// the median stream did (the median itself at least 1 MB/s), with at least 2 MB still to come.
-/// Its connection is dropped and the rest asked for anew, which on a CDN lands on another node;
-/// at most twice per stretch. PikPak's nodes differ tenfold, and a slow one held its chunk for
-/// ten seconds while the others raced.
-const WATCH_SPAN: Duration = Duration::from_secs(3);
-const CRAWL_RATIO: u64 = 4;
-const MEDIAN_FLOOR: u64 = 1024 * 1024;
-const LEAST_REROLLED: u64 = 2 * 1024 * 1024;
-const MOST_REROLLS: usize = 2;
-
+/// A server that answers 429, 502, 503 or 504 is busy, not broken: PikPak does that while it
+/// fetches a file from cold storage, and when it is pressed. Then every stream of the file
+/// pauses before its next request, and the file waits for the server this long before it is
+/// given up on; such answers are not counted as tries.
+const BUSY_PAUSE: Duration = Duration::from_secs(2);
+const BUSY_PATIENCE: Duration = Duration::from_secs(5 * 60);
 /// How many streams a transfer may use: `count` per file, and a budget shared by every file of
 /// a folder being downloaded at once, so that several files together use no more than one.
 #[derive(Clone)]
 pub struct Streams {
     pub count: usize,
     budget: Arc<Semaphore>,
-    /// Whether crawling streams are replaced (always, but for measuring without).
-    pub watch: bool,
 }
 
 impl Streams {
     pub fn new(count: usize) -> Streams {
         let count = count.clamp(1, MOST_CONNECTIONS);
-        Streams { count, budget: Arc::new(Semaphore::new(count)), watch: true }
+        Streams { count, budget: Arc::new(Semaphore::new(count)) }
     }
 }
 
@@ -112,12 +106,15 @@ impl Protocol {
     }
 }
 
-/// How far a transfer is: reported to the caller every 50 ms while bytes come.
+/// How far a transfer is: reported to the caller every 50 ms while bytes come, and when the
+/// server says it is busy.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Progress {
     pub done: u64,
     pub total: u64,
     pub protocol: Protocol,
+    /// The HTTP status the server is answering with while it is busy (429, 503 …), or 0.
+    pub waiting: u16,
 }
 
 /// Where a file is, and the account to get it with (webdav::Server::authorization).
@@ -229,6 +226,73 @@ struct Shared {
     parts: Mutex<Vec<Part>>,
     /// How many parts of each chunk are still on their way: the chunk is done when the last is.
     parts_left: Mutex<HashMap<usize, usize>>,
+    /// The server said it is busy: when it did first, until when the streams hold back, and what
+    /// it said.
+    busy: Mutex<Busy>,
+}
+
+#[derive(Default, Clone, Copy)]
+struct Busy {
+    since: Option<Instant>,
+    until: Option<Instant>,
+    code: u16,
+}
+
+/// Whether an HTTP status means "busy, ask again in a moment".
+fn is_busy(code: u16) -> bool {
+    matches!(code, 429 | 502 | 503 | 504)
+}
+
+/// How long the streams hold back after a busy answer (next to nothing in the tests).
+fn busy_pause() -> Duration {
+    if cfg!(test) { Duration::from_millis(10) } else { BUSY_PAUSE }
+}
+
+impl Shared {
+    /// The first failure is the one reported; every failure stops the others.
+    fn fail(&self, err: Error) {
+        self.abort.store(true, Ordering::Relaxed);
+        let mut failed = self.failed.lock().unwrap();
+        if failed.is_none() {
+            *failed = Some(err);
+        }
+    }
+
+    /// A busy answer: every stream holds back a moment. Err when the server has been busy for
+    /// longer than the file is worth waiting.
+    fn note_busy(&self, code: u16) -> Result<(), Error> {
+        let mut busy = self.busy.lock().unwrap();
+        let now = Instant::now();
+        let since = *busy.since.get_or_insert(now);
+        busy.until = Some(now + busy_pause());
+        busy.code = code;
+        if now.duration_since(since) > BUSY_PATIENCE { Err(Error::Status(code)) } else { Ok(()) }
+    }
+
+    /// An answer that was not busy: the server is itself again.
+    fn note_fine(&self) {
+        *self.busy.lock().unwrap() = Busy::default();
+    }
+
+    fn busy_code(&self) -> u16 {
+        self.busy.lock().unwrap().code
+    }
+
+    /// Whether the streams are holding back right now.
+    fn holding_back(&self) -> bool {
+        self.busy.lock().unwrap().until.is_some_and(|until| until > Instant::now())
+    }
+
+    /// Hold back while the server is busy.
+    async fn wait_if_busy(&self) -> Result<(), Error> {
+        loop {
+            let until = self.busy.lock().unwrap().until;
+            match until {
+                Some(until) if until > Instant::now() => wait((until - Instant::now()).min(PROGRESS_TICK), &self.abort).await?,
+                _ => return Ok(()),
+            }
+        }
+    }
 }
 
 /// A stretch of a chunk one stream fetches: from `offset`, which moves as bytes are written, up
@@ -237,25 +301,11 @@ struct Part {
     chunk: usize,
     offset: Arc<AtomicU64>,
     stop: Arc<AtomicU64>,
-    /// Set by the watch in `multi`: drop this connection and ask for the rest anew.
-    reroll: Arc<AtomicBool>,
-    rerolls: Arc<AtomicUsize>,
 }
 
 impl Part {
     fn new(chunk: usize, from: u64, to: u64) -> Part {
-        Part {
-            chunk,
-            offset: Arc::new(AtomicU64::new(from)),
-            stop: Arc::new(AtomicU64::new(to)),
-            reroll: Arc::new(AtomicBool::new(false)),
-            rerolls: Arc::new(AtomicUsize::new(0)),
-        }
-    }
-
-    /// What tells this part apart, for the watch.
-    fn key(&self) -> usize {
-        Arc::as_ptr(&self.offset) as usize
+        Part { chunk, offset: Arc::new(AtomicU64::new(from)), stop: Arc::new(AtomicU64::new(to)) }
     }
 
     fn remaining(&self) -> u64 {
@@ -269,34 +319,7 @@ impl Part {
 
 impl Clone for Part {
     fn clone(&self) -> Part {
-        Part { chunk: self.chunk, offset: self.offset.clone(), stop: self.stop.clone(), reroll: self.reroll.clone(), rerolls: self.rerolls.clone() }
-    }
-}
-
-/// Which of the parts on their way crawl: each is (bytes per second over the watch span, bytes
-/// still to come, times rerolled already). The median rate of all of them is the measure; with
-/// fewer than three parts, or a median under the floor (the server is slow for everyone), none.
-fn crawling(parts: &[(u64, u64, usize)]) -> Vec<bool> {
-    if parts.len() < 3 {
-        return vec![false; parts.len()];
-    }
-    let mut rates: Vec<u64> = parts.iter().map(|(rate, _, _)| *rate).collect();
-    rates.sort_unstable();
-    let median = rates[rates.len() / 2];
-    if median < MEDIAN_FLOOR {
-        return vec![false; parts.len()];
-    }
-    parts.iter().map(|(rate, remaining, rerolls)| *rate < median / CRAWL_RATIO && *remaining >= LEAST_REROLLED && *rerolls < MOST_REROLLS).collect()
-}
-
-impl Shared {
-    /// The first failure is the one reported; every failure stops the others.
-    fn fail(&self, err: Error) {
-        self.abort.store(true, Ordering::Relaxed);
-        let mut failed = self.failed.lock().unwrap();
-        if failed.is_none() {
-            *failed = Some(err);
-        }
+        Part { chunk: self.chunk, offset: self.offset.clone(), stop: self.stop.clone() }
     }
 }
 
@@ -381,15 +404,28 @@ fn first_range(dest: &Path) -> (u64, u64) {
 }
 
 /// The first request, tried again like a chunk is: a server that answers 404 or 5xx once is
-/// asked again.
-async fn open_with_retries(http: &Http, source: &Source, dest: &Path, cancel: &AtomicBool) -> Result<Head, Error> {
+/// asked again, and one that says it is busy is waited for, `waiting` told the code meanwhile.
+async fn open_with_retries(http: &Http, source: &Source, dest: &Path, cancel: &AtomicBool, waiting: &dyn Fn(u16)) -> Result<Head, Error> {
     let mut attempts: u32 = 0;
+    let mut busy_since: Option<Instant> = None;
     loop {
         if cancel.load(Ordering::Relaxed) {
             return Err(Error::Cancelled);
         }
         match open_once(http, source, dest).await {
-            Ok(head) => return Ok(head),
+            Ok(head) => {
+                waiting(0);
+                return Ok(head);
+            }
+            Err(Error::Status(code)) if is_busy(code) => {
+                let since = *busy_since.get_or_insert_with(Instant::now);
+                log::line(format!("first {}: busy, HTTP {code}, for {:.0} s", source.url, since.elapsed().as_secs_f64()));
+                if since.elapsed() > BUSY_PATIENCE {
+                    return Err(Error::Status(code));
+                }
+                waiting(code);
+                wait(busy_pause(), cancel).await?;
+            }
             Err(err) => {
                 attempts += 1;
                 log::line(format!("first {}: {err}; try {attempts} of {ATTEMPTS}", source.url));
@@ -441,16 +477,16 @@ pub fn download(http: &Http, source: &Source, dest: &Path, streams: &Streams, ca
     let part = with_suffix(dest, ".part");
     let state_path = with_suffix(dest, ".part.json");
     let started = Instant::now();
-    let head = http.block_on(open_with_retries(http, source, dest, cancel))?;
+    let head = http.block_on(open_with_retries(http, source, dest, cancel, &|code| progress(Progress { done: 0, total: 0, protocol: Protocol::Unknown, waiting: code })))?;
     let protocol = head.probe.protocol;
-    let report = |done, total| progress(Progress { done, total, protocol });
+    let report = |done, total, waiting| progress(Progress { done, total, protocol, waiting });
     match head.probe {
         Probe { size: Some(total), ranges: true, .. } if total > 0 => {
             http.block_on(multi(http, source, &part, &state_path, total, streams, cancel, &report, head))?;
         }
         Probe { size: Some(0), .. } => {
             File::create(&part).map_err(disk)?;
-            report(0, 0);
+            report(0, 0, 0);
         }
         Probe { size, .. } => http.block_on(single(&part, size, cancel, &report, head.response))?,
     }
@@ -493,7 +529,7 @@ async fn multi(
     total: u64,
     streams: &Streams,
     cancel: &AtomicBool,
-    progress: &dyn Fn(u64, u64),
+    progress: &dyn Fn(u64, u64, u16),
     head: Head,
 ) -> Result<(), Error> {
     let chunk = chunk_size(total);
@@ -542,8 +578,9 @@ async fn multi(
         failed: Mutex::new(None),
         parts: Mutex::new(Vec::new()),
         parts_left: Mutex::new(parts_left),
+        busy: Mutex::new(Busy::default()),
     });
-    progress(already, total);
+    progress(already, total, 0);
     let (sender, receiver) = mpsc::channel::<Write>(WRITES_IN_FLIGHT);
     let writer = Writer::start(file, state_path.to_path_buf(), total, chunk, done, receiver, shared.clone());
     let workers = streams.count.min(chunks.max(1));
@@ -560,51 +597,19 @@ async fn multi(
         set.spawn_on(worker(http.clone(), source.clone(), shared.clone(), sender.clone()), http.handle());
     }
     drop(sender);
-    // Progress every tick, the user's cancel passed on, and once a second a look at which stream
-    // crawls, until the last worker is done.
+    // Progress every tick, and the user's cancel passed on, until the last worker is done.
     let mut ticker = tokio::time::interval(PROGRESS_TICK);
-    let mut last = already;
-    let mut watch: HashMap<usize, VecDeque<(Instant, u64)>> = HashMap::new();
-    let mut looked = Instant::now();
+    let mut last = (already, 0u16);
     loop {
         tokio::select! {
             _ = ticker.tick() => {
                 if cancel.load(Ordering::Relaxed) {
                     shared.abort.store(true, Ordering::Relaxed);
                 }
-                let now = shared.bytes.load(Ordering::Relaxed);
+                let now = (shared.bytes.load(Ordering::Relaxed), shared.busy_code());
                 if now != last {
                     last = now;
-                    progress(now, total);
-                }
-                let parts = shared.parts.lock().unwrap().clone();
-                let moment = Instant::now();
-                watch.retain(|key, _| parts.iter().any(|part| part.key() == *key));
-                for part in &parts {
-                    let history = watch.entry(part.key()).or_default();
-                    history.push_back((moment, part.offset.load(Ordering::Relaxed)));
-                    while history.len() > 2 && history.front().is_some_and(|(at, _)| moment.duration_since(*at) > WATCH_SPAN) {
-                        history.pop_front();
-                    }
-                }
-                if streams.watch && looked.elapsed() >= Duration::from_secs(1) {
-                    looked = moment;
-                    let watched: Vec<(&Part, u64)> = parts
-                        .iter()
-                        .filter_map(|part| {
-                            let history = watch.get(&part.key())?;
-                            let (first_at, first) = *history.front()?;
-                            let (last_at, last) = *history.back()?;
-                            let seconds = last_at.duration_since(first_at).as_secs_f64();
-                            (seconds >= WATCH_SPAN.as_secs_f64() * 0.9).then(|| (part, ((last - first) as f64 / seconds) as u64))
-                        })
-                        .collect();
-                    let measured: Vec<(u64, u64, usize)> = watched.iter().map(|(part, rate)| (*rate, part.remaining(), part.rerolls.load(Ordering::Relaxed))).collect();
-                    for ((part, rate), crawls) in watched.iter().zip(crawling(&measured)) {
-                        if crawls && !part.reroll.swap(true, Ordering::Relaxed) {
-                            log::line(format!("chunk {}: crawling at {:.1} MB/s with {} to come: another connection", part.chunk, *rate as f64 / (1024.0 * 1024.0), size_words(part.remaining())));
-                        }
-                    }
+                    progress(now.0, total, now.1);
                 }
             }
             next = set.join_next() => match next {
@@ -615,7 +620,7 @@ async fn multi(
         }
     }
     let written = writer.finish();
-    progress(shared.bytes.load(Ordering::Relaxed), total);
+    progress(shared.bytes.load(Ordering::Relaxed), total, 0);
     if cancel.load(Ordering::Relaxed) {
         return Err(Error::Cancelled);
     }
@@ -674,7 +679,17 @@ async fn worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, writer: mp
         }
         // A stream of the transfer's budget, shared with the other files of a folder.
         let Ok(permit) = shared.budget.clone().acquire_owned().await else { return };
-        let Some(part) = next_part(&shared) else { return };
+        let Some(part) = next_part(&shared) else {
+            drop(permit);
+            // Nothing to take while the server is busy: look again once it is not.
+            if shared.holding_back() && !shared.parts.lock().unwrap().is_empty() {
+                if wait(busy_pause(), &shared.abort).await.is_err() {
+                    return;
+                }
+                continue;
+            }
+            return;
+        };
         let outcome = fetch_part(&http, &source, &shared, &writer, &part).await;
         drop(permit);
         shared.parts.lock().unwrap().retain(|other| !other.same(&part));
@@ -700,7 +715,7 @@ async fn head_worker(http: Http, source: Arc<Source>, shared: Arc<Shared>, write
     let outcome = match streamed {
         Err(err @ Error::Disk(_)) => Err(err),
         Err(Error::Cancelled) => Err(Error::Cancelled),
-        Ok(_) | Err(_) => fetch_part(&http, &source, &shared, &writer, &part).await,
+        Ok(()) | Err(_) => fetch_part(&http, &source, &shared, &writer, &part).await,
     };
     drop(permit);
     shared.parts.lock().unwrap().retain(|other| !other.same(&part));
@@ -718,6 +733,10 @@ fn next_part(shared: &Shared) -> Option<Part> {
     let part = match shared.pending.lock().unwrap().pop_front() {
         Some(part) => part,
         None => {
+            // No request more while the server is busy.
+            if shared.holding_back() {
+                return None;
+            }
             let parts = shared.parts.lock().unwrap();
             let longest = parts.iter().max_by_key(|part| part.remaining())?;
             let remaining = longest.remaining();
@@ -749,14 +768,16 @@ async fn fetch_part(http: &Http, source: &Source, shared: &Shared, writer: &mpsc
         if from >= part.stop.load(Ordering::Relaxed) {
             break;
         }
+        shared.wait_if_busy().await?;
         match fetch_range(http, source, part, shared, writer).await {
-            Ok(true) => break,
-            // Dropped as a crawler: the rest anew, now, over another connection.
-            Ok(false) => {
-                part.rerolls.fetch_add(1, Ordering::Relaxed);
-                continue;
-            }
+            Ok(()) => break,
             Err(Error::Cancelled) => return Err(Error::Cancelled),
+            // Busy: every stream holds back a moment, and this one asks again, as often as the
+            // file is worth waiting for.
+            Err(Error::Status(code)) if is_busy(code) => {
+                log::line(format!("chunk {} of {}: busy, HTTP {code}", part.chunk, source.url));
+                shared.note_busy(code)?;
+            }
             // The disk is the one thing trying again will not help. Everything else may pass next
             // time, as vget has it: a connection that drops, a 429 or a 5xx from a busy server, a
             // 404 from a CDN node that does not have the file yet (PikPak does that), a 200 where a
@@ -791,16 +812,15 @@ async fn fetch_part(http: &Http, source: &Source, shared: &Shared, writer: &mpsc
     Ok(())
 }
 
-/// A request for the bytes of `part` from its offset to its stop, and its body streamed in. True
-/// when the part is complete; false when the watch had the connection dropped as a crawler.
-async fn fetch_range(http: &Http, source: &Source, part: &Part, shared: &Shared, writer: &mpsc::Sender<Write>) -> Result<bool, Error> {
+/// A request for the bytes of `part` from its offset to its stop, and its body streamed in.
+async fn fetch_range(http: &Http, source: &Source, part: &Part, shared: &Shared, writer: &mpsc::Sender<Write>) -> Result<(), Error> {
     let from = part.offset.load(Ordering::Relaxed);
     let end = part.stop.load(Ordering::Relaxed) - 1;
     let started = Instant::now();
     let mut response = http.send(source.request(http, Some(&format!("bytes={from}-{end}")))?).await?;
     let answered = started.elapsed();
     match response.status().as_u16() {
-        206 => {}
+        206 => shared.note_fine(),
         200 => return Err(Error::Protocol("the server ignored the range it said it would answer".into())),
         code => return Err(status_error(code)),
     }
@@ -810,10 +830,9 @@ async fn fetch_range(http: &Http, source: &Source, part: &Part, shared: &Shared,
 /// The bytes of a body that starts at `from` and runs to `end`, handed to the writer for where
 /// they belong, up to the part's stop; the offset moves as they go. The stop may move down
 /// meanwhile (an idle stream took the rest): the body is then left unread, and the connection
-/// closed, which is cheaper than the wait. True when the part is complete; false when the watch
-/// had the connection dropped as a crawler.
+/// closed, which is cheaper than the wait.
 #[allow(clippy::too_many_arguments)]
-async fn stream_body(body: &mut Incoming, part: &Part, shared: &Shared, writer: &mpsc::Sender<Write>, from: u64, end: u64, started: Instant, answered: Duration) -> Result<bool, Error> {
+async fn stream_body(body: &mut Incoming, part: &Part, shared: &Shared, writer: &mpsc::Sender<Write>, from: u64, end: u64, started: Instant, answered: Duration) -> Result<(), Error> {
     let mut offset = from;
     loop {
         let stop = part.stop.load(Ordering::Relaxed);
@@ -832,10 +851,7 @@ async fn stream_body(body: &mut Incoming, part: &Part, shared: &Shared, writer: 
                 size_words(offset - from),
                 (offset - from) as f64 / (1024.0 * 1024.0) / seconds.max(0.001)
             ));
-            return Ok(true);
-        }
-        if part.reroll.swap(false, Ordering::Relaxed) {
-            return Ok(false);
+            return Ok(());
         }
         let frame = match tokio::time::timeout(STALL_TIMEOUT, body.frame()).await {
             Err(_) => return Err(Error::Connection("the stream brought nothing for a minute".into())),
@@ -890,7 +906,7 @@ async fn wait(pause: Duration, stop: &AtomicBool) -> Result<(), Error> {
 
 /// One stream, from the start: the answer of a server that does not do ranges is the whole
 /// file, and here it is streamed in. Nothing to go on from when it fails.
-async fn single(part: &Path, size: Option<u64>, cancel: &AtomicBool, progress: &dyn Fn(u64, u64), mut response: Response<Incoming>) -> Result<(), Error> {
+async fn single(part: &Path, size: Option<u64>, cancel: &AtomicBool, progress: &dyn Fn(u64, u64, u16), mut response: Response<Incoming>) -> Result<(), Error> {
     if !response.status().is_success() {
         return Err(status_error(response.status().as_u16()));
     }
@@ -899,7 +915,7 @@ async fn single(part: &Path, size: Option<u64>, cancel: &AtomicBool, progress: &
     let body = response.body_mut();
     let mut done: u64 = 0;
     let mut reported = tokio::time::Instant::now();
-    progress(0, total);
+    progress(0, total, 0);
     loop {
         let frame = match tokio::time::timeout(STALL_TIMEOUT, body.frame()).await {
             Err(_) => return Err(Error::Connection("the stream brought nothing for a minute".into())),
@@ -911,14 +927,14 @@ async fn single(part: &Path, size: Option<u64>, cancel: &AtomicBool, progress: &
         file.write_all(&data).map_err(disk)?;
         done += data.len() as u64;
         if reported.elapsed() >= PROGRESS_TICK {
-            progress(done, total.max(done));
+            progress(done, total.max(done), 0);
             reported = tokio::time::Instant::now();
         }
         if cancel.load(Ordering::Relaxed) {
             return Err(Error::Cancelled);
         }
     }
-    progress(done, total.max(done));
+    progress(done, total.max(done), 0);
     Ok(())
 }
 
@@ -1258,16 +1274,18 @@ mod tests {
     }
 
     #[test]
-    fn a_failed_chunk_is_tried_again() {
+    fn a_busy_server_is_waited_for() {
+        // 429 is "busy", waited for as long as it takes, not counted as a try: fifteen of them
+        // and the file still comes.
         let content = pattern(CHUNK_SIZE as usize + 100_000);
         let server = serve(content.clone(), true, None);
-        server.failures.store(2, Ordering::SeqCst);
-        let scratch = Scratch::new("retry");
+        server.failures.store(15, Ordering::SeqCst);
+        let scratch = Scratch::new("busy");
         let dest = scratch.path("film.mkv");
         fetch(&server, &dest, 1).expect("the file");
         assert_eq!(fs::read(&dest).unwrap(), content);
-        // The first chunk, then the second: two tries answered 429, the one that worked.
-        assert_eq!(server.requests.lock().unwrap().len(), 4);
+        // The first chunk, then the second: fifteen tries answered 429, the one that worked.
+        assert_eq!(server.requests.lock().unwrap().len(), 17);
     }
 
     #[test]
@@ -1285,16 +1303,20 @@ mod tests {
     }
 
     #[test]
-    fn the_first_request_is_tried_again_too() {
+    fn the_first_request_waits_for_a_busy_server_too() {
         let content = pattern(100_000);
         let server = serve(content.clone(), true, None);
-        server.probe_failures.store(1, Ordering::SeqCst);
+        server.probe_failures.store(12, Ordering::SeqCst);
         let scratch = Scratch::new("probe-retry");
         let dest = scratch.path("film.mkv");
-        fetch(&server, &dest, 4).expect("the file");
+        let waited = Mutex::new(Vec::new());
+        download(http::client(), &source(&server), &dest, &Streams::new(4), &AtomicBool::new(false), &|progress| waited.lock().unwrap().push(progress.waiting)).expect("the file");
         assert_eq!(fs::read(&dest).unwrap(), content);
-        // The first request answered 503, then the one that worked, which was the whole file.
-        assert_eq!(server.requests.lock().unwrap().len(), 2);
+        // Twelve answers of 503, then the one that worked, which was the whole file; the page
+        // was told the 503 meanwhile, and that it was over.
+        assert_eq!(server.requests.lock().unwrap().len(), 13);
+        let waited = waited.into_inner().unwrap();
+        assert!(waited.contains(&503) && waited.last() == Some(&0), "{waited:?}");
     }
 
     #[test]
@@ -1412,8 +1434,7 @@ mod tests {
         };
         let server = Server { url: Server::normalized_url(&url), username: var("FINCHGRAM_BENCH_USER").unwrap_or_default(), password: var("FINCHGRAM_BENCH_PASSWORD").unwrap_or_default() };
         let count: usize = var("FINCHGRAM_BENCH_STREAMS").and_then(|value| value.parse().ok()).unwrap_or(DEFAULT_CONNECTIONS);
-        let mut streams = Streams::new(count);
-        streams.watch = var("FINCHGRAM_BENCH_NO_WATCH").is_none();
+        let streams = Streams::new(count);
         let segments: Vec<String> = file.trim_matches('/').split('/').map(str::to_string).collect();
         let (name, folder) = segments.split_last().expect("a file name");
         let source = Source { url: server.file_url(folder, name), authorization: server.authorization() };
@@ -1431,7 +1452,7 @@ mod tests {
         });
         let seconds = started.elapsed().as_secs_f64();
         let bytes = fs::metadata(&dest).map(|meta| meta.len()).unwrap_or(0);
-        eprintln!("result {:?}: {:.1} MB in {seconds:.1} s = {:.1} MB/s on average, {count} streams, watch {}", result.as_ref().map(|_| ()), bytes as f64 / 1048576.0, bytes as f64 / 1048576.0 / seconds.max(0.001), streams.watch);
+        eprintln!("result {:?}: {:.1} MB in {seconds:.1} s = {:.1} MB/s on average, {count} streams", result.as_ref().map(|_| ()), bytes as f64 / 1048576.0, bytes as f64 / 1048576.0 / seconds.max(0.001));
         assert!(result.is_ok(), "{result:?}");
     }
 
@@ -1448,25 +1469,6 @@ mod tests {
         fs::write(scratch.path(".hidden"), b"").unwrap();
         assert_eq!(free_path(&scratch.path(".hidden")), scratch.path(".hidden (2)"));
         assert_eq!(with_suffix(Path::new("/a/film.mkv"), ".part"), PathBuf::from("/a/film.mkv.part"));
-    }
-
-    #[test]
-    fn a_crawler_is_told_from_the_rest() {
-        const MB: u64 = 1024 * 1024;
-        // Eight streams at 6 to 9 MB/s and one at 1: the one crawls, as long as it has 2 MB to
-        // come and has not been rerolled twice.
-        let mut parts: Vec<(u64, u64, usize)> = (0..8).map(|i| ((6 + i % 4) * MB, 5 * MB, 0)).collect();
-        parts.push((MB, 5 * MB, 0));
-        assert_eq!(crawling(&parts).iter().filter(|crawls| **crawls).count(), 1);
-        assert!(crawling(&parts)[8]);
-        parts[8] = (MB, MB, 0);
-        assert!(!crawling(&parts)[8], "too little left to be worth a request");
-        parts[8] = (MB, 5 * MB, MOST_REROLLS);
-        assert!(!crawling(&parts)[8], "rerolled enough");
-        // Everyone slow: nobody crawls. Two streams: nothing to compare.
-        let slow: Vec<(u64, u64, usize)> = (0..6).map(|i| (100 * 1024 + i, 5 * MB, 0)).collect();
-        assert!(crawling(&slow).iter().all(|crawls| !crawls));
-        assert!(crawling(&[(10 * MB, 5 * MB, 0), (MB, 5 * MB, 0)]).iter().all(|crawls| !crawls));
     }
 
     #[test]

@@ -349,9 +349,9 @@ impl Settings {
         settings.list_widths = settings.list_widths.sanitized();
         // A volume that makes no sense (edited by hand) is kept within the slider's range.
         settings.video_volume = settings.video_volume.clamp(0, 100);
-        // 12 was the default up to v0.4.6 and nothing in the app sets the number, so a file that
-        // still says 12 means the default: now 24 (src/downloads/transfer.rs).
-        if settings.downloads.connections == 12 {
+        // 24 was the default from v0.4.7 to v0.4.9 and nothing in the app sets the number, so a
+        // file that says 24 means the default, 12 again (src/downloads/transfer.rs).
+        if settings.downloads.connections == 24 {
             settings.downloads.connections = crate::downloads::transfer::DEFAULT_CONNECTIONS as u32;
         }
         settings.downloads.connections = settings.downloads.connections.clamp(1, crate::downloads::transfer::MOST_CONNECTIONS as u32);

@@ -101,8 +101,8 @@ struct Transfer {
     total: u64,
     /// (when, bytes done) over the last moments, for the speed.
     samples: VecDeque<(Instant, u64)>,
-    /// What the server speaks, once known: shown beside the speed.
-    protocol: transfer::Protocol,
+    /// The HTTP status a busy server keeps answering (503 …), shown while it does; 0 otherwise.
+    waiting: u16,
     problem: Problem,
     detail: String,
     cancel: Arc<AtomicBool>,
@@ -139,7 +139,8 @@ impl Transfer {
             fraction: if self.total > 0 { (self.done as f64 / self.total as f64).clamp(0.0, 1.0) as f32 } else { 0.0 },
             done: size_text(self.done).into(),
             total: size_text(self.total).into(),
-            speed: speed.map(speed_text).map(|words| match self.protocol.name() { "" => words, name => format!("{words} ({name})") }).unwrap_or_default().into(),
+            speed: speed.map(speed_text).unwrap_or_default().into(),
+            waiting: self.waiting as i32,
             seconds_left: seconds_left.unwrap_or(-1),
             minutes_left: seconds_left.map(|seconds| (seconds + 59) / 60).unwrap_or(-1),
             problem: self.problem,
@@ -717,7 +718,7 @@ fn enqueue_entry(name: &str, open: bool) {
             done: transfer::kept(&dest),
             total: entry.size,
             samples: VecDeque::new(),
-            protocol: transfer::Protocol::Unknown,
+            waiting: 0,
             problem: Problem::None,
             detail: String::new(),
             cancel: Arc::new(AtomicBool::new(false)),
@@ -757,7 +758,7 @@ fn enqueue_folder(name: &str) {
             done: 0,
             total: 0,
             samples: VecDeque::new(),
-            protocol: transfer::Protocol::Unknown,
+            waiting: 0,
             problem: Problem::None,
             detail: String::new(),
             cancel: Arc::new(AtomicBool::new(false)),
@@ -863,25 +864,21 @@ fn download_tree(
     let files = http.block_on(list_tree(http, server, path, cancel, progress))?;
     let total: u64 = files.iter().map(|file| file.size).sum();
     log::line(format!("folder {}: {} files, {:.1} MB", server.folder_url(path), files.len(), total as f64 / (1024.0 * 1024.0)));
-    progress(transfer::Progress { done: 0, total, protocol: transfer::Protocol::Unknown });
+    progress(transfer::Progress { done: 0, total, protocol: transfer::Protocol::Unknown, waiting: 0 });
     let workers = FILES_AT_ONCE.min(files.len().max(1));
     let queue = Mutex::new(VecDeque::from(files));
     // Bytes of the files done or skipped, and of each worker's file so far: their sum is where
     // the folder is.
     let finished = AtomicU64::new(0);
-    let in_flight: Mutex<Vec<u64>> = Mutex::new(vec![0; workers]);
-    let protocol = Mutex::new(transfer::Protocol::Unknown);
+    let in_flight: Mutex<Vec<(u64, u16)>> = Mutex::new(vec![(0, 0); workers]);
     let failure: Mutex<Option<transfer::Error>> = Mutex::new(None);
-    let report = |slot: usize, done: u64, seen: transfer::Protocol| {
+    let report = |slot: usize, done: u64, waiting: u16| {
         let mut flight = in_flight.lock().unwrap();
-        flight[slot] = done;
-        let under_way: u64 = flight.iter().sum();
+        flight[slot] = (done, waiting);
+        let under_way: u64 = flight.iter().map(|(done, _)| *done).sum();
+        let waiting = flight.iter().map(|(_, waiting)| *waiting).max().unwrap_or(0);
         drop(flight);
-        let mut known = protocol.lock().unwrap();
-        if seen != transfer::Protocol::Unknown {
-            *known = seen;
-        }
-        progress(transfer::Progress { done: finished.load(Ordering::Relaxed) + under_way, total, protocol: *known });
+        progress(transfer::Progress { done: finished.load(Ordering::Relaxed) + under_way, total, protocol: transfer::Protocol::Unknown, waiting });
     };
     std::thread::scope(|scope| {
         for slot in 0..workers {
@@ -902,7 +899,7 @@ fn download_tree(
                     let already = std::fs::metadata(&file_dest).map(|meta| meta.is_file() && meta.len() == file.size).unwrap_or(false);
                     if !already {
                         let source = transfer::Source { url: server.file_url(&whole, &file.name), authorization: server.authorization() };
-                        if let Err(err) = transfer::download(http, &source, &file_dest, streams, cancel, &|progress| report(slot, progress.done, progress.protocol)) {
+                        if let Err(err) = transfer::download(http, &source, &file_dest, streams, cancel, &|progress| report(slot, progress.done, progress.waiting)) {
                             let mut failed = failure.lock().unwrap();
                             if failed.is_none() {
                                 *failed = Some(err);
@@ -911,7 +908,7 @@ fn download_tree(
                         }
                     }
                     finished.fetch_add(file.size, Ordering::Relaxed);
-                    report(slot, 0, transfer::Protocol::Unknown);
+                    report(slot, 0, 0);
                 }
             });
         }
@@ -953,7 +950,7 @@ async fn list_tree(http: &http::Http, server: &webdav::Server, path: &[String], 
                 files.push(TreeFile { folder: within, name: entry.name, size: entry.size });
             }
         }
-        progress(transfer::Progress { done: 0, total, protocol: transfer::Protocol::Unknown });
+        progress(transfer::Progress { done: 0, total, protocol: transfer::Protocol::Unknown, waiting: 0 });
         if cancel.load(Ordering::Relaxed) {
             return Err(transfer::Error::Cancelled);
         }
@@ -980,9 +977,7 @@ fn progressed(id: i32, progress: transfer::Progress) {
         if progress.total > 0 {
             transfer.total = progress.total;
         }
-        if progress.protocol != transfer::Protocol::Unknown {
-            transfer.protocol = progress.protocol;
-        }
+        transfer.waiting = progress.waiting;
         let now = Instant::now();
         transfer.samples.push_back((now, done));
         while transfer.samples.len() > 2 && transfer.samples.front().is_some_and(|(at, _)| now.duration_since(*at) > SPEED_WINDOW) {
