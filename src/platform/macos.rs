@@ -848,10 +848,74 @@ fn keychain_status(status: i32) -> Result<(), String> {
     if status == objc2_security::errSecSuccess { Ok(()) } else { Err(format!("the Keychain answered {status}")) }
 }
 
-/// Keep `password` as `service`'s password for `account`, in place of one that is there.
+/// An access list under which any application reads the password without a prompt. The app is
+/// signed with the project's own certificate, which macOS does not trust the way it trusts
+/// Apple's, so under the usual list (this application only) every update of the app was a
+/// stranger to the item, and the login keychain's password was asked for after each one. The
+/// item is still encrypted at rest, listed in Keychain Access, and deleted with the server.
+#[allow(deprecated)]
+fn open_access(label: &str) -> Result<objc2_core_foundation::CFRetained<objc2_security::SecAccess>, String> {
+    use objc2_core_foundation::{CFArray, CFRetained, CFString, CFType};
+    use objc2_security::{SecACL, SecAccess, SecKeychainPromptSelector, kSecACLAuthorizationDecrypt};
+    let label = CFString::from_str(label);
+    let mut raw: *mut SecAccess = std::ptr::null_mut();
+    // SAFETY: a valid pointer for the result; no trusted list means this application, which the
+    // loop below widens to any.
+    let status = unsafe { SecAccess::create(&label, None, NonNull::from(&mut raw)) };
+    keychain_status(status)?;
+    let Some(pointer) = NonNull::new(raw) else { return Err("the Keychain gave no access list".into()) };
+    // SAFETY: SecAccessCreate hands over one reference, which is ours to release.
+    let access: CFRetained<SecAccess> = unsafe { CFRetained::from_raw(pointer) };
+    // SAFETY: the tag is one the framework documents; the list holds CF objects.
+    if let Some(acls) = unsafe { access.matching_acl_list(AsRef::<CFType>::as_ref(kSecACLAuthorizationDecrypt)) } {
+        let acls: &CFArray<CFType> = unsafe { acls.cast_unchecked::<CFType>() };
+        for index in 0..acls.len() {
+            if let Some(acl) = acls.get(index).and_then(|entry| entry.downcast::<SecACL>().ok()) {
+                // SAFETY: no application list means any application; the selector asks nothing.
+                let status = unsafe { acl.set_contents(None, &label, SecKeychainPromptSelector(0)) };
+                keychain_status(status)?;
+            }
+        }
+    }
+    Ok(access)
+}
+
+/// Whether `item` is still under the usual access list (this application only), which asks for
+/// the login keychain's password after every update: the item is then stored again.
+#[allow(deprecated)]
+fn keychain_restricted(item: &objc2_security::SecKeychainItem) -> bool {
+    use objc2_core_foundation::{CFArray, CFRetained, CFString, CFType};
+    use objc2_security::{SecACL, SecAccess, SecKeychainPromptSelector, kSecACLAuthorizationDecrypt};
+    let mut raw: *mut SecAccess = std::ptr::null_mut();
+    // SAFETY: a valid pointer for the result.
+    if unsafe { item.copy_access(NonNull::from(&mut raw)) } != objc2_security::errSecSuccess {
+        return false;
+    }
+    let Some(pointer) = NonNull::new(raw) else { return false };
+    // SAFETY: SecKeychainItemCopyAccess hands over one reference.
+    let access: CFRetained<SecAccess> = unsafe { CFRetained::from_raw(pointer) };
+    // SAFETY: the tag is one the framework documents; the list holds CF objects.
+    let Some(acls) = (unsafe { access.matching_acl_list(AsRef::<CFType>::as_ref(kSecACLAuthorizationDecrypt)) }) else { return false };
+    let acls: &CFArray<CFType> = unsafe { acls.cast_unchecked::<CFType>() };
+    (0..acls.len()).filter_map(|index| acls.get(index).and_then(|entry| entry.downcast::<SecACL>().ok())).any(|acl| {
+        let mut applications: *const CFArray = std::ptr::null();
+        let mut description: *const CFString = std::ptr::null();
+        let mut selector = SecKeychainPromptSelector(0);
+        // SAFETY: valid pointers for the results, released below.
+        let status = unsafe { acl.copy_contents(NonNull::from(&mut applications), NonNull::from(&mut description), NonNull::from(&mut selector)) };
+        // SAFETY: SecACLCopyContents hands over one reference to each, ours to release.
+        let applications: Option<CFRetained<CFArray>> = NonNull::new(applications.cast_mut()).map(|pointer| unsafe { CFRetained::from_raw(pointer) });
+        let _description: Option<CFRetained<CFString>> = NonNull::new(description.cast_mut()).map(|pointer| unsafe { CFRetained::from_raw(pointer) });
+        // A list of applications, even this one, is the usual list; none means any application.
+        status == objc2_security::errSecSuccess && applications.is_some()
+    })
+}
+
+/// Keep `password` as `service`'s password for `account`, in place of one that is there, under
+/// the access list of `open_access`.
 pub fn keychain_store(service: &str, account: &str, password: &str) -> Result<(), String> {
     use objc2_core_foundation::{CFData, CFDictionary, CFType};
-    use objc2_security::{SecItemAdd, SecItemDelete, errSecItemNotFound, errSecSuccess, kSecValueData};
+    use objc2_security::{SecItemAdd, SecItemDelete, errSecItemNotFound, errSecSuccess, kSecAttrAccess, kSecValueData};
     let query = keychain_query(service, account);
     // SAFETY: the query is a dictionary of the keys the framework documents.
     let status = unsafe { SecItemDelete(AsRef::<CFDictionary>::as_ref(query.as_opaque())) };
@@ -860,27 +924,33 @@ pub fn keychain_store(service: &str, account: &str, password: &str) -> Result<()
     }
     let attributes = keychain_query(service, account);
     let data = CFData::from_bytes(password.as_bytes());
-    // SAFETY: as above; the password's bytes are the item's data.
+    let access = open_access(service)?;
+    // SAFETY: as above; the password's bytes are the item's data, the access list its own.
     unsafe {
         attributes.set(kSecValueData, AsRef::<CFType>::as_ref(&*data));
+        attributes.set(kSecAttrAccess, AsRef::<CFType>::as_ref(&*access));
     }
     // SAFETY: no result is asked for (null).
     let status = unsafe { SecItemAdd(AsRef::<CFDictionary>::as_ref(attributes.as_opaque()), std::ptr::null_mut()) };
     keychain_status(status)
 }
 
-/// `service`'s password for `account`, if one is kept.
+/// `service`'s password for `account`, if one is kept. An item still under the usual access
+/// list (kept by a version before 0.4.11, or asked for once more just now) is stored again under
+/// the open one, so that no update asks again.
 pub fn keychain_read(service: &str, account: &str) -> Result<Option<String>, String> {
     use objc2_core_foundation::{CFBoolean, CFData, CFDictionary, CFRetained, CFType};
-    use objc2_security::{SecItemCopyMatching, errSecItemNotFound, kSecMatchLimit, kSecMatchLimitOne, kSecReturnData};
+    use objc2_security::{SecItemCopyMatching, SecKeychainItem, errSecItemNotFound, kSecMatchLimit, kSecMatchLimitOne, kSecReturnData, kSecReturnRef, kSecValueData, kSecValueRef};
     let query = keychain_query(service, account);
     // SAFETY: the framework's constants are only read.
     unsafe {
         query.set(kSecReturnData, AsRef::<CFType>::as_ref(CFBoolean::new(true)));
+        query.set(kSecReturnRef, AsRef::<CFType>::as_ref(CFBoolean::new(true)));
         query.set(kSecMatchLimit, AsRef::<CFType>::as_ref(kSecMatchLimitOne));
     }
     let mut result: *const CFType = std::ptr::null();
-    // SAFETY: the query asks for the item's data; `result` is where the framework puts it.
+    // SAFETY: the query asks for the item's data and the item; `result` is where the framework
+    // puts them, as a dictionary.
     let status = unsafe { SecItemCopyMatching(AsRef::<CFDictionary>::as_ref(query.as_opaque()), &mut result) };
     if status == errSecItemNotFound {
         return Ok(None);
@@ -889,8 +959,20 @@ pub fn keychain_read(service: &str, account: &str) -> Result<Option<String>, Str
     let Some(pointer) = NonNull::new(result.cast_mut()) else { return Ok(None) };
     // SAFETY: SecItemCopyMatching hands over one reference, which is ours to release.
     let value: CFRetained<CFType> = unsafe { CFRetained::from_raw(pointer) };
-    let data = value.downcast::<CFData>().map_err(|_| "the Keychain answered with something that is not data".to_string())?;
-    Ok(Some(String::from_utf8_lossy(&data.to_vec()).into_owned()))
+    let answer = value.downcast::<CFDictionary>().map_err(|_| "the Keychain answered with something that is not an item".to_string())?;
+    // SAFETY: the dictionary's keys and values are CF objects; the constants are only read.
+    let answer: &CFDictionary<CFType, CFType> = unsafe { answer.cast_unchecked::<CFType, CFType>() };
+    let data = answer.get(unsafe { AsRef::<CFType>::as_ref(kSecValueData) }).and_then(|data| data.downcast::<CFData>().ok());
+    let Some(data) = data else { return Err("the Keychain answered without the password".into()) };
+    let password = String::from_utf8_lossy(&data.to_vec()).into_owned();
+    // SAFETY: as above.
+    let item = answer.get(unsafe { AsRef::<CFType>::as_ref(kSecValueRef) }).and_then(|item| item.downcast::<SecKeychainItem>().ok());
+    if item.is_some_and(|item| keychain_restricted(&item))
+        && let Err(err) = keychain_store(service, account, &password)
+    {
+        eprintln!("keychain: cannot store the password again under an open access list: {err}");
+    }
+    Ok(Some(password))
 }
 
 /// Forget `service`'s password for `account`.
@@ -923,6 +1005,17 @@ pub fn end_activity(token: ActivityToken) {
 
 #[cfg(test)]
 mod tests {
+    /// A password stored and read back, under an access list that asks nothing of any
+    /// application. It touches the login keychain, so only when asked:
+    /// cargo test keychain_round_trip -- --ignored; then look at the item's access list with
+    /// security dump-keychain -a, and remove it with security delete-generic-password -s "FinchGram test".
+    #[test]
+    #[ignore = "touches the login keychain: cargo test keychain_round_trip -- --ignored"]
+    fn keychain_round_trip_is_open() {
+        super::keychain_store("FinchGram test", "someone@https://example.test", "correct horse").expect("stored");
+        assert_eq!(super::keychain_read("FinchGram test", "someone@https://example.test").expect("read"), Some("correct horse".to_string()));
+    }
+
     use super::*;
 
     #[test]

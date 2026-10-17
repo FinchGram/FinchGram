@@ -122,9 +122,13 @@ stream is a request more for a server that answers 503 when pressed.
   session, and deleted when the server is removed, or when its address or user name changes. On the
   wire it is Basic authentication: base64, so plain over http on the LAN, and encrypted only by TLS
   over https.
-- Keychain items belong to the app's signing identity. Releases are signed with the project's own
-  certificate, which stays the same across updates, so the installed app reads them without a
-  prompt; a local ad-hoc build is a different identity and macOS may ask once.
+- The item's access list lets any application read it without a prompt. Under the usual list
+  (the one application that stored it) macOS asked for the login keychain's password after every
+  update of FinchGram, because the app is signed with the project's own certificate, which macOS
+  does not trust the way it trusts Apple's, and so took each update for a stranger. The item is
+  still encrypted at rest with the login keychain, listed in Keychain Access, and deleted with the
+  server; an item kept by a version before 0.4.11 is moved to the open list the first time it is
+  read, which may ask one last time.
 - Deleting FinchGram does not delete any of this, as with any Mac app: the Application Support
   folder stays, and so do the Keychain items (Keychain Access → search "FinchGram" → delete).
 
