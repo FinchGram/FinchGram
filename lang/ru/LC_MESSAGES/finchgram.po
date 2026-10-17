@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-17 02:30+0000\n"
+"POT-Creation-Date: 2026-10-17 04:22+0000\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -36,7 +36,7 @@ msgstr "Терминал"
 msgid "Broadsheet"
 msgstr "Газета"
 
-#: ui/app.slint:93 ui/pages/downloads.slint:402 ui/pages/downloads.slint:765
+#: ui/app.slint:93 ui/pages/downloads.slint:458 ui/pages/downloads.slint:821
 msgid "Downloads"
 msgstr "Загрузки"
 
@@ -82,7 +82,7 @@ msgid "Add a comment (optional)"
 msgstr "Добавьте комментарий (необязательно)"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1369
+#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1425
 #: ui/pages/profile.slint:174 ui/terminal/actions.slint:385
 #: ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
 #: ui/workbench/actions.slint:720
@@ -113,7 +113,7 @@ msgstr "Тёмная"
 msgid "Accounts"
 msgstr "Аккаунты"
 
-#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:792
+#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:848
 #: ui/workbench/sidebar.slint:417
 msgid "Chats"
 msgstr "Чаты"
@@ -160,7 +160,7 @@ msgstr "Сортировать по"
 msgid "Latest message"
 msgstr "Последнее сообщение"
 
-#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:1006
+#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:1062
 #: ui/terminal/terminal.slint:512
 msgid "Name"
 msgstr "Название"
@@ -495,7 +495,7 @@ msgid "Add more"
 msgstr "Добавить ещё"
 
 #: ui/chat.slint:332 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
-#: ui/pages/downloads.slint:1577
+#: ui/pages/downloads.slint:1602
 msgid "Remove"
 msgstr "Убрать"
 
@@ -608,11 +608,11 @@ msgstr "Отменить отправку"
 msgid "Not sent"
 msgstr "Не отправлено"
 
-#: ui/chat.slint:372 ui/pages/downloads.slint:651 ui/pages/downloads.slint:1643
+#: ui/chat.slint:372 ui/pages/downloads.slint:707 ui/pages/downloads.slint:1668
 msgid "Retry"
 msgstr "Повторить"
 
-#: ui/chat.slint:374 ui/pages/downloads.slint:1082
+#: ui/chat.slint:374 ui/pages/downloads.slint:1138
 msgid "Download"
 msgstr "Скачать"
 
@@ -620,7 +620,7 @@ msgstr "Скачать"
 msgid "Cancel download"
 msgstr "Отменить скачивание"
 
-#: ui/chat.slint:376 ui/pages/downloads.slint:642
+#: ui/chat.slint:376 ui/pages/downloads.slint:698
 msgid "Show in Finder"
 msgstr "Показать в Finder"
 
@@ -637,7 +637,7 @@ msgstr "Нажмите, чтобы посмотреть"
 msgid "Reply"
 msgstr "Ответить"
 
-#: ui/chat.slint:792 ui/pages/downloads.slint:1569
+#: ui/chat.slint:792 ui/pages/downloads.slint:1594
 msgid "Edit"
 msgstr "Изменить"
 
@@ -1593,51 +1593,51 @@ msgstr "Укажите название сервера."
 msgid "The address needs to start with http:// or https://."
 msgstr "Адрес должен начинаться с http:// или https://."
 
-#: ui/pages/downloads.slint:300 ui/pages/downloads.slint:1184
+#: ui/pages/downloads.slint:356 ui/pages/downloads.slint:1240
 msgid "Add server"
 msgstr "Добавить сервер"
 
-#: ui/pages/downloads.slint:342
+#: ui/pages/downloads.slint:398
 msgid "Filter this folder"
 msgstr "Искать в этой папке"
 
-#: ui/pages/downloads.slint:804
+#: ui/pages/downloads.slint:860
 msgid "WebDAV servers"
 msgstr "Серверы WebDAV"
 
-#: ui/pages/downloads.slint:1010
+#: ui/pages/downloads.slint:1066
 msgid "Modified"
 msgstr "Изменено"
 
-#: ui/pages/downloads.slint:1015
+#: ui/pages/downloads.slint:1071
 msgid "Size"
 msgstr "Размер"
 
-#: ui/pages/downloads.slint:1039
+#: ui/pages/downloads.slint:1095
 msgid "Nothing in this folder matches “{0}”"
 msgstr "В этой папке ничего не найдено по запросу «{0}»"
 
-#: ui/pages/downloads.slint:1061
+#: ui/pages/downloads.slint:1117
 msgid "{0} selected · {1}"
 msgstr "Выбрано: {0} · {1}"
 
-#: ui/pages/downloads.slint:1069
+#: ui/pages/downloads.slint:1125
 msgid "Clear"
 msgstr "Сбросить"
 
-#: ui/pages/downloads.slint:1076 ui/pages/downloads.slint:1594
+#: ui/pages/downloads.slint:1132 ui/pages/downloads.slint:1619
 msgid "Open"
 msgstr "Открыть"
 
-#: ui/pages/downloads.slint:1118
+#: ui/pages/downloads.slint:1174
 msgid "This folder is empty"
 msgstr "Эта папка пуста"
 
-#: ui/pages/downloads.slint:1167
+#: ui/pages/downloads.slint:1223
 msgid "No WebDAV servers yet"
 msgstr "Серверов WebDAV пока нет"
 
-#: ui/pages/downloads.slint:1170
+#: ui/pages/downloads.slint:1226
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -1647,7 +1647,7 @@ msgstr ""
 "папки, которую вы раздаёте через vget serve. Затем просматривайте содержимое "
 "здесь и выбирайте нужные файлы."
 
-#: ui/pages/downloads.slint:1176
+#: ui/pages/downloads.slint:1232
 msgid ""
 "Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
 "reads: nothing is uploaded, synced, renamed or deleted on the server."
@@ -1656,15 +1656,15 @@ msgstr ""
 "только читает: ничего не загружает на сервер, не синхронизирует, не "
 "переименовывает и не удаляет."
 
-#: ui/pages/downloads.slint:1249
+#: ui/pages/downloads.slint:1305
 msgid "Edit server"
 msgstr "Изменить сервер"
 
-#: ui/pages/downloads.slint:1249
+#: ui/pages/downloads.slint:1305
 msgid "Add WebDAV server"
 msgstr "Добавить сервер WebDAV"
 
-#: ui/pages/downloads.slint:1252
+#: ui/pages/downloads.slint:1308
 msgid ""
 "The address of the WebDAV server, and the account it gave you. The password "
 "goes into your macOS Keychain, not into a file."
@@ -1672,68 +1672,72 @@ msgstr ""
 "Адрес сервера WebDAV и учётная запись, которую он вам выдал. Пароль хранится "
 "в Связке ключей macOS, а не в файле."
 
-#: ui/pages/downloads.slint:1267
+#: ui/pages/downloads.slint:1323
 msgid "Address"
 msgstr "Адрес"
 
-#: ui/pages/downloads.slint:1269
+#: ui/pages/downloads.slint:1325
 msgid "http:// or https://. A folder may be part of the address."
 msgstr "http:// или https://. Адрес может включать папку."
 
-#: ui/pages/downloads.slint:1276 ui/pages/profile.slint:300
+#: ui/pages/downloads.slint:1332 ui/pages/profile.slint:300
 msgid "Username"
 msgstr "Имя пользователя"
 
-#: ui/pages/downloads.slint:1283 ui/pages/login.slint:545
+#: ui/pages/downloads.slint:1339 ui/pages/login.slint:545
 msgid "Password"
 msgstr "Пароль"
 
-#: ui/pages/downloads.slint:1320
+#: ui/pages/downloads.slint:1376
 msgid "Testing…"
 msgstr "Проверка…"
 
-#: ui/pages/downloads.slint:1349 ui/pages/profile.slint:429
+#: ui/pages/downloads.slint:1405 ui/pages/profile.slint:429
 #: ui/pages/settings.slint:1316
 msgid "Save"
 msgstr "Сохранить"
 
-#: ui/pages/downloads.slint:1349
+#: ui/pages/downloads.slint:1405
 msgid "Add"
 msgstr "Добавить"
 
-#: ui/pages/downloads.slint:1359
+#: ui/pages/downloads.slint:1415
 msgid "Test connection"
 msgstr "Проверить подключение"
 
-#: ui/pages/downloads.slint:1424
+#: ui/pages/downloads.slint:1480
 msgid "{0} active"
 msgstr "Активных: {0}"
 
-#: ui/pages/downloads.slint:1448
+#: ui/pages/downloads.slint:1491
+msgid "Clear finished"
+msgstr "Убрать завершённые"
+
+#: ui/pages/downloads.slint:1497
 msgid "Hide"
 msgstr "Скрыть"
 
-#: ui/pages/downloads.slint:1515
+#: ui/pages/downloads.slint:1540
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "Соединений на файл: {0} · Загрузки сохраняются в {1}"
 
-#: ui/pages/downloads.slint:1521
+#: ui/pages/downloads.slint:1546
 msgid "Change"
 msgstr "Изменить"
 
-#: ui/pages/downloads.slint:1586
+#: ui/pages/downloads.slint:1611
 msgid "Copy address"
 msgstr "Скопировать адрес"
 
-#: ui/pages/downloads.slint:1602
+#: ui/pages/downloads.slint:1627
 msgid "Download folder"
 msgstr "Скачать папку"
 
-#: ui/pages/downloads.slint:1626
+#: ui/pages/downloads.slint:1651
 msgid "Copy link"
 msgstr "Скопировать ссылку"
 
-#: ui/pages/downloads.slint:1661
+#: ui/pages/downloads.slint:1686
 msgid "Remove from list"
 msgstr "Убрать из списка"
 

@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-17 02:30+0000\n"
+"POT-Creation-Date: 2026-10-17 04:22+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -35,7 +35,7 @@ msgstr "ターミナル"
 msgid "Broadsheet"
 msgstr "ブロードシート"
 
-#: ui/app.slint:93 ui/pages/downloads.slint:402 ui/pages/downloads.slint:765
+#: ui/app.slint:93 ui/pages/downloads.slint:458 ui/pages/downloads.slint:821
 msgid "Downloads"
 msgstr "ダウンロード"
 
@@ -81,7 +81,7 @@ msgid "Add a comment (optional)"
 msgstr "コメントを入力（任意）"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1369
+#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1425
 #: ui/pages/profile.slint:174 ui/terminal/actions.slint:385
 #: ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
 #: ui/workbench/actions.slint:720
@@ -112,7 +112,7 @@ msgstr "ダーク"
 msgid "Accounts"
 msgstr "アカウント"
 
-#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:792
+#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:848
 #: ui/workbench/sidebar.slint:417
 msgid "Chats"
 msgstr "チャット"
@@ -159,7 +159,7 @@ msgstr "並び順"
 msgid "Latest message"
 msgstr "最新のメッセージ"
 
-#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:1006
+#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:1062
 #: ui/terminal/terminal.slint:512
 msgid "Name"
 msgstr "名前"
@@ -486,7 +486,7 @@ msgid "Add more"
 msgstr "さらに追加"
 
 #: ui/chat.slint:332 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
-#: ui/pages/downloads.slint:1577
+#: ui/pages/downloads.slint:1602
 msgid "Remove"
 msgstr "取り除く"
 
@@ -599,11 +599,11 @@ msgstr "アップロードをキャンセル"
 msgid "Not sent"
 msgstr "未送信"
 
-#: ui/chat.slint:372 ui/pages/downloads.slint:651 ui/pages/downloads.slint:1643
+#: ui/chat.slint:372 ui/pages/downloads.slint:707 ui/pages/downloads.slint:1668
 msgid "Retry"
 msgstr "再試行"
 
-#: ui/chat.slint:374 ui/pages/downloads.slint:1082
+#: ui/chat.slint:374 ui/pages/downloads.slint:1138
 msgid "Download"
 msgstr "ダウンロード"
 
@@ -611,7 +611,7 @@ msgstr "ダウンロード"
 msgid "Cancel download"
 msgstr "ダウンロードをキャンセル"
 
-#: ui/chat.slint:376 ui/pages/downloads.slint:642
+#: ui/chat.slint:376 ui/pages/downloads.slint:698
 msgid "Show in Finder"
 msgstr "Finder に表示"
 
@@ -628,7 +628,7 @@ msgstr "クリックして表示"
 msgid "Reply"
 msgstr "返信"
 
-#: ui/chat.slint:792 ui/pages/downloads.slint:1569
+#: ui/chat.slint:792 ui/pages/downloads.slint:1594
 msgid "Edit"
 msgstr "編集"
 
@@ -1580,51 +1580,51 @@ msgstr "サーバーに名前を付けてください。"
 msgid "The address needs to start with http:// or https://."
 msgstr "アドレスは http:// または https:// で始まる必要があります。"
 
-#: ui/pages/downloads.slint:300 ui/pages/downloads.slint:1184
+#: ui/pages/downloads.slint:356 ui/pages/downloads.slint:1240
 msgid "Add server"
 msgstr "サーバーを追加"
 
-#: ui/pages/downloads.slint:342
+#: ui/pages/downloads.slint:398
 msgid "Filter this folder"
 msgstr "このフォルダ内を絞り込む"
 
-#: ui/pages/downloads.slint:804
+#: ui/pages/downloads.slint:860
 msgid "WebDAV servers"
 msgstr "WebDAV サーバー"
 
-#: ui/pages/downloads.slint:1010
+#: ui/pages/downloads.slint:1066
 msgid "Modified"
 msgstr "変更日"
 
-#: ui/pages/downloads.slint:1015
+#: ui/pages/downloads.slint:1071
 msgid "Size"
 msgstr "サイズ"
 
-#: ui/pages/downloads.slint:1039
+#: ui/pages/downloads.slint:1095
 msgid "Nothing in this folder matches “{0}”"
 msgstr "このフォルダには「{0}」に一致するものがありません"
 
-#: ui/pages/downloads.slint:1061
+#: ui/pages/downloads.slint:1117
 msgid "{0} selected · {1}"
 msgstr "{0}件を選択中 · {1}"
 
-#: ui/pages/downloads.slint:1069
+#: ui/pages/downloads.slint:1125
 msgid "Clear"
 msgstr "選択解除"
 
-#: ui/pages/downloads.slint:1076 ui/pages/downloads.slint:1594
+#: ui/pages/downloads.slint:1132 ui/pages/downloads.slint:1619
 msgid "Open"
 msgstr "開く"
 
-#: ui/pages/downloads.slint:1118
+#: ui/pages/downloads.slint:1174
 msgid "This folder is empty"
 msgstr "このフォルダは空です"
 
-#: ui/pages/downloads.slint:1167
+#: ui/pages/downloads.slint:1223
 msgid "No WebDAV servers yet"
 msgstr "WebDAV サーバーはまだありません"
 
-#: ui/pages/downloads.slint:1170
+#: ui/pages/downloads.slint:1226
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -1634,7 +1634,7 @@ msgstr ""
 "いるフォルダの WebDAV アドレスを追加してください。追加すると、ここで中身を閲"
 "覧して必要なファイルを選べます。"
 
-#: ui/pages/downloads.slint:1176
+#: ui/pages/downloads.slint:1232
 msgid ""
 "Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
 "reads: nothing is uploaded, synced, renamed or deleted on the server."
@@ -1643,15 +1643,15 @@ msgstr ""
 "す。FinchGram は読み取るだけです：サーバー上でアップロード、同期、名前の変"
 "更、削除は一切行いません。"
 
-#: ui/pages/downloads.slint:1249
+#: ui/pages/downloads.slint:1305
 msgid "Edit server"
 msgstr "サーバーを編集"
 
-#: ui/pages/downloads.slint:1249
+#: ui/pages/downloads.slint:1305
 msgid "Add WebDAV server"
 msgstr "WebDAV サーバーを追加"
 
-#: ui/pages/downloads.slint:1252
+#: ui/pages/downloads.slint:1308
 msgid ""
 "The address of the WebDAV server, and the account it gave you. The password "
 "goes into your macOS Keychain, not into a file."
@@ -1659,70 +1659,74 @@ msgstr ""
 "WebDAV サーバーのアドレスと、そのサーバーから渡されたアカウントです。パスワー"
 "ドはファイルではなく、macOS のキーチェーンに保存されます。"
 
-#: ui/pages/downloads.slint:1267
+#: ui/pages/downloads.slint:1323
 msgid "Address"
 msgstr "アドレス"
 
-#: ui/pages/downloads.slint:1269
+#: ui/pages/downloads.slint:1325
 msgid "http:// or https://. A folder may be part of the address."
 msgstr ""
 "http:// または https:// で始めます。アドレスにフォルダを含めることもできま"
 "す。"
 
-#: ui/pages/downloads.slint:1276 ui/pages/profile.slint:300
+#: ui/pages/downloads.slint:1332 ui/pages/profile.slint:300
 msgid "Username"
 msgstr "ユーザー名"
 
-#: ui/pages/downloads.slint:1283 ui/pages/login.slint:545
+#: ui/pages/downloads.slint:1339 ui/pages/login.slint:545
 msgid "Password"
 msgstr "パスワード"
 
-#: ui/pages/downloads.slint:1320
+#: ui/pages/downloads.slint:1376
 msgid "Testing…"
 msgstr "テスト中…"
 
-#: ui/pages/downloads.slint:1349 ui/pages/profile.slint:429
+#: ui/pages/downloads.slint:1405 ui/pages/profile.slint:429
 #: ui/pages/settings.slint:1316
 msgid "Save"
 msgstr "保存"
 
-#: ui/pages/downloads.slint:1349
+#: ui/pages/downloads.slint:1405
 msgid "Add"
 msgstr "追加"
 
-#: ui/pages/downloads.slint:1359
+#: ui/pages/downloads.slint:1415
 msgid "Test connection"
 msgstr "接続をテスト"
 
-#: ui/pages/downloads.slint:1424
+#: ui/pages/downloads.slint:1480
 msgid "{0} active"
 msgstr "{0}件がダウンロード中"
 
-#: ui/pages/downloads.slint:1448
+#: ui/pages/downloads.slint:1491
+msgid "Clear finished"
+msgstr "完了済みを消去"
+
+#: ui/pages/downloads.slint:1497
 msgid "Hide"
 msgstr "隠す"
 
-#: ui/pages/downloads.slint:1515
+#: ui/pages/downloads.slint:1540
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "1ファイルあたり {0} 接続 · ダウンロード先：{1}"
 
-#: ui/pages/downloads.slint:1521
+#: ui/pages/downloads.slint:1546
 msgid "Change"
 msgstr "変更"
 
-#: ui/pages/downloads.slint:1586
+#: ui/pages/downloads.slint:1611
 msgid "Copy address"
 msgstr "アドレスをコピー"
 
-#: ui/pages/downloads.slint:1602
+#: ui/pages/downloads.slint:1627
 msgid "Download folder"
 msgstr "フォルダをダウンロード"
 
-#: ui/pages/downloads.slint:1626
+#: ui/pages/downloads.slint:1651
 msgid "Copy link"
 msgstr "リンクをコピー"
 
-#: ui/pages/downloads.slint:1661
+#: ui/pages/downloads.slint:1686
 msgid "Remove from list"
 msgstr "リストから取り除く"
 

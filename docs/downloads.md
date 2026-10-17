@@ -38,7 +38,8 @@ Three columns:
 - **Downloads**, on the right, 380 px: the queue. Each file has its name, a progress bar, "4.1 GB
   of 10.8 GB · 24.3 MB/s · 5 min left", and an X that stops it. A stopped file says why and how
   much is kept, with Retry; a finished one has Show in Finder. A right click gives Cancel, Retry,
-  Show in Finder and Remove from list. The foot says how many connections a file gets and where
+  Show in Finder and Remove from list; once a file is done, Clear finished stands at the head beside
+  Hide and takes every finished file off the list at once. The foot says how many connections a file gets and where
   downloads go, with Change, which opens the folder chooser. Hide folds the column; the choice is
   remembered, and the column comes out by itself when a download starts. With nothing in the queue
   the column is not there at all.
@@ -91,7 +92,7 @@ What the engine does goes line by line into `downloads.log` next to settings.tom
 chunk with the protocol, how long the server took to answer and how fast the bytes came, every
 retry and why, each listing. It starts afresh past 8 MB. When a server is slow, that file says
 where the time goes. Cancel keeps the `.part` files for a retry; Remove from list takes a stopped or
-finished file off the list and deletes nothing.
+finished file off the list and deletes nothing, and Clear finished does that for every finished file at once.
 
 WebDAV itself is `src/downloads/webdav.rs`: PROPFIND with depth 1 for a folder's listing (and depth 0
 to check a server), the 207 Multi-Status answer parsed with roxmltree, Basic authentication, addresses

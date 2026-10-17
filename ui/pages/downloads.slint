@@ -167,7 +167,7 @@ component ToolButton inherits Rectangle {
     }
 }
 
-// A small word button: "Show in Finder", "Retry" in the queue.
+// A small word button: "Show in Finder", "Retry" and "Clear finished" in the queue.
 component TinyButton inherits Rectangle {
     in property <string> text;
     callback clicked();
@@ -1426,53 +1426,66 @@ export component DownloadsPage inherits Rectangle {
                             font-size: 13px;
                         }
                     }
+                    // Clear finished, while there is a finished file, then Hide.
                     VerticalLayout {
                         alignment: start;
-                        Rectangle {
-                            height: 28px;
-                            width: hide.preferred-width;
-                            border-radius: Look.button-radius;
-                            background: hide-touch.has-hover ? Look.sel : transparent;
-                            hide := HorizontalLayout {
-                                padding-left: 8px;
-                                padding-right: 8px;
-                                spacing: 5px;
-                                if Look.terminal: Text {
-                                    text: "[";
-                                    color: hide-touch.has-hover ? Look.text : Look.muted;
-                                    font-family: Look.mono;
-                                    font-size: Look.nav-heading-size;
-                                    vertical-alignment: center;
-                                }
-                                Text {
-                                    text: @tr("Hide");
-                                    color: hide-touch.has-hover ? Look.text : Look.muted;
-                                    font-size: Look.nav-heading-size;
-                                    font-weight: 600;
-                                    letter-spacing: Look.heading-tracking * Look.nav-heading-size;
-                                    vertical-alignment: center;
-                                }
-                                VerticalLayout {
-                                    alignment: center;
-                                    Icon {
-                                        name: "caret-right";
-                                        size: 13px;
-                                        color: hide-touch.has-hover ? Look.text : Look.muted;
-                                        duotone: false;
+                        HorizontalLayout {
+                            spacing: 6px;
+                            if Downloads.done-count > 0: VerticalLayout {
+                                alignment: center;
+                                TinyButton {
+                                    text: @tr("Clear finished");
+                                    clicked => {
+                                        Downloads.clear-finished();
                                     }
                                 }
-                                if Look.terminal: Text {
-                                    text: "]";
-                                    color: hide-touch.has-hover ? Look.text : Look.muted;
-                                    font-family: Look.mono;
-                                    font-size: Look.nav-heading-size;
-                                    vertical-alignment: center;
-                                }
                             }
-                            hide-touch := TouchArea {
-                                mouse-cursor: pointer;
-                                clicked => {
-                                    Downloads.toggle-queue();
+                            Rectangle {
+                                height: 28px;
+                                width: hide.preferred-width;
+                                border-radius: Look.button-radius;
+                                background: hide-touch.has-hover ? Look.sel : transparent;
+                                hide := HorizontalLayout {
+                                    padding-left: 8px;
+                                    padding-right: 8px;
+                                    spacing: 5px;
+                                    if Look.terminal: Text {
+                                        text: "[";
+                                        color: hide-touch.has-hover ? Look.text : Look.muted;
+                                        font-family: Look.mono;
+                                        font-size: Look.nav-heading-size;
+                                        vertical-alignment: center;
+                                    }
+                                    Text {
+                                        text: @tr("Hide");
+                                        color: hide-touch.has-hover ? Look.text : Look.muted;
+                                        font-size: Look.nav-heading-size;
+                                        font-weight: 600;
+                                        letter-spacing: Look.heading-tracking * Look.nav-heading-size;
+                                        vertical-alignment: center;
+                                    }
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon {
+                                            name: "caret-right";
+                                            size: 13px;
+                                            color: hide-touch.has-hover ? Look.text : Look.muted;
+                                            duotone: false;
+                                        }
+                                    }
+                                    if Look.terminal: Text {
+                                        text: "]";
+                                        color: hide-touch.has-hover ? Look.text : Look.muted;
+                                        font-family: Look.mono;
+                                        font-size: Look.nav-heading-size;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                                hide-touch := TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => {
+                                        Downloads.toggle-queue();
+                                    }
                                 }
                             }
                         }

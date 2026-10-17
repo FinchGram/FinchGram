@@ -261,6 +261,7 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     downloads.on_retry(retry);
     downloads.on_show_in_finder(show_in_finder);
     downloads.on_remove_transfer(remove_transfer);
+    downloads.on_clear_finished(clear_finished);
     downloads.on_toggle_queue(toggle_queue);
     downloads.on_change_folder(change_folder);
     downloads.on_test_connection(test_connection);
@@ -1048,16 +1049,18 @@ fn active_count() -> i32 {
 }
 
 fn show_queue() {
-    let rows = with_state(|state| {
+    let (rows, done) = with_state(|state| {
         let mut transfers: Vec<&Transfer> = state.queue.iter().collect();
         transfers.sort_by_key(|transfer| transfer.rank());
-        transfers.iter().map(|transfer| transfer.row()).collect::<Vec<_>>()
+        let done = transfers.iter().filter(|transfer| transfer.state == TransferState::Done).count() as i32;
+        (transfers.iter().map(|transfer| transfer.row()).collect::<Vec<_>>(), done)
     })
     .unwrap_or_default();
     let active = active_count();
     with_downloads(|downloads| {
         downloads.set_queue(ModelRc::new(VecModel::from(rows)));
         downloads.set_active_count(active);
+        downloads.set_done_count(done);
     });
     // Busy while a file is on its way: a window in the background is no reason to slow down.
     with_state(|state| {
@@ -1104,6 +1107,12 @@ fn show_in_finder(id: i32) {
 
 fn remove_transfer(id: i32) {
     with_state(|state| state.queue.retain(|transfer| transfer.id != id || transfer.live()));
+    show_queue();
+}
+
+/// Every finished download off the list at once; the files stay where they are.
+fn clear_finished() {
+    with_state(|state| state.queue.retain(|transfer| transfer.state != TransferState::Done));
     show_queue();
 }
 

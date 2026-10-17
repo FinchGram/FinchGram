@@ -70,6 +70,7 @@ export global Downloads {
     in-out property <bool> some-selected;           // some of them are
     in-out property <[TransferRow]> queue;          // active, then waiting, stopped, done
     in-out property <int> active-count;
+    in-out property <int> done-count;               // finished: "Clear finished" shows while there are any
     in-out property <bool> queue-open: true;        // the user's choice (settings.toml); the column shows when the queue is not empty
     in-out property <string> folder-label;          // "~/Downloads/FinchGram"
     in-out property <int> connections;              // per file (settings.toml)
@@ -113,6 +114,7 @@ export global Downloads {
     callback retry(int);
     callback show-in-finder(int);
     callback remove-transfer(int);                  // from the list; done or stopped
+    callback clear-finished();                      // every finished download off the list
     callback toggle-queue();
     callback change-folder();                       // where downloads go
     callback test-connection();
