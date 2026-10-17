@@ -55,8 +55,11 @@ there with the same size is skipped.
 
 The engine, `src/downloads/transfer.rs`, follows vget:
 
-1. A probe asks for the first two bytes with `Range: bytes=0-1`. A 206 answer gives the file's size
-   and says the server does ranges; a 200 answer means it does not.
+1. The first request asks for the first chunk, `Range: bytes=0-8388607` (or the first chunk still
+   missing of a stopped download). A 206 answer gives the file's size and says the server does
+   ranges, and its body is that chunk, streamed in while the other streams start on the rest; a
+   200 answer means the server does no ranges, and its body is the whole file. One round trip
+   per file, where a probe for two bytes used to cost a second more on PikPak.
 2. The file is cut into chunks: 8 MB for a small file, up to 32 MB for a large one (a stream sits
    idle while the server works out each request, so the fewer chunks the better). A pool of
    workers, one stream each (24 by default, `connections` in settings.toml, 1 to 64), takes the
