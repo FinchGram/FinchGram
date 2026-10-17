@@ -64,7 +64,11 @@ The engine, `src/downloads/transfer.rs`, follows vget:
    file's full size from the start, by a writer thread. Once nothing is left, an idle stream takes
    three quarters of the longest stretch still on its way (from 1 MB up): the last chunks used to
    sit on the slowest connections, a CDN node at 1 MB/s or less, and keep a 1 GB file waiting ten
-   seconds after the rest had arrived.
+   seconds after the rest had arrived. Once a second, a stream that brought less than a quarter of
+   what the median stream did over the last three seconds, with 2 MB or more to come, has its
+   connection dropped and the rest asked for anew (at most twice per stretch), which on a CDN lands
+   on another node; measured on PikPak this changes little, and it is kept for the stream that is
+   stuck rather than slow.
 3. `<name>.part.json` records which chunks are done. Retry, or a later download of the same file,
    goes on from there: "12 MB of 48 MB kept".
 4. A chunk that fails is tried again from the last byte written, up to ten times, after a pause that
@@ -76,8 +80,9 @@ The engine, `src/downloads/transfer.rs`, follows vget:
 
 Two files are on their way at a time; the others wait their turn. While any is, the app tells macOS
 it is busy (an NSProcessInfo activity): App Nap does not slow it down when the window is in the
-background, and the Mac does not go to sleep on its own. The speed shown is over the last five
-seconds, with what the server speaks beside it, "24.3 MB/s (HTTP/2)".
+background, and the Mac does not go to sleep on its own. The speed shown is over the last ten
+seconds, with what the server speaks beside it, "24.3 MB/s (HTTP/2)"; what a CDN gives varies from
+minute to minute by a factor of two, and the figure follows it.
 
 What the engine does goes line by line into `downloads.log` next to settings.toml: each probe and
 chunk with the protocol, how long the server took to answer and how fast the bytes came, every

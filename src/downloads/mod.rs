@@ -36,7 +36,7 @@ const KEYCHAIN_SERVICE: &str = "FinchGram WebDAV";
 /// How many files are fetched at the same time; the rest wait.
 const MOST_ACTIVE: usize = 2;
 /// The speed shown is over this long.
-const SPEED_WINDOW: Duration = Duration::from_secs(5);
+const SPEED_WINDOW: Duration = Duration::from_secs(10);
 /// Where downloads go unless the settings say: this folder in the user's Downloads.
 const DEFAULT_FOLDER: &str = "FinchGram";
 
