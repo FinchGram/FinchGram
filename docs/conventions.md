@@ -91,7 +91,10 @@ As in Coova Studio.
 - Releases are built by GitHub Actions (`.github/workflows/release.yml`) from the tagged commit on a
   clean runner, never on a developer's machine, with the pinned finchgram-tdlib fetched by the same
   script everyone uses. The workflow runs `scripts/bundle.sh`, which is also how to try the
-  packaged app locally; a local bundle is never released.
+  packaged app locally; a local bundle is never released. Every Action the workflows use (checkout,
+  the Rust toolchain, the caches, the artifact upload) is pinned to a commit by its full SHA, the
+  version beside it, never to a tag or branch that can be moved: what runs on the runner that signs
+  releases is what was reviewed. To update one, change the SHA.
 - Every release is signed: CI signs `SHA256SUMS` with an Ed25519 key that only CI has (the
   `RELEASE_SIGNING_KEY` secret, backed up in the release manager's keychain as "FinchGram release
   signing key"), and the app installs no update it cannot verify with the public keys compiled

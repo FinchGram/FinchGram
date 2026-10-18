@@ -234,8 +234,17 @@ pub fn decode(text: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
+/// Whether `name` can be one folder's or file's name on the disk: not empty, not "." or "..", and
+/// without a "/" or a NUL byte in it. A server's answer names its entries, and the names become
+/// paths under the download folder (mod.rs), so a name that is a path of its own, "../x" or
+/// "/tmp/x", would put a file wherever the server chose; such an entry is left out of a listing.
+pub fn is_plain_name(name: &str) -> bool {
+    !name.is_empty() && name != "." && name != ".." && !name.contains(['/', '\0'])
+}
+
 /// The entries of a Multi-Status answer to a PROPFIND of depth 1 on `folder_path` (decoded, no
-/// trailing slash): every response but the folder's own.
+/// trailing slash): every response but the folder's own, and none whose name is not a name
+/// (`is_plain_name`).
 pub fn parse_listing(xml: &str, folder_path: &str) -> Result<Vec<Entry>, Error> {
     let document = roxmltree::Document::parse(xml).map_err(|err| Error::Unreadable(err.to_string()))?;
     let dav = "DAV:";
@@ -271,6 +280,9 @@ pub fn parse_listing(xml: &str, folder_path: &str) -> Result<Vec<Entry>, Error> 
             || (href.trim().ends_with('/') && prop.is_none());
         let name = href_path.rsplit('/').next().filter(|name| !name.is_empty()).map(str::to_string).or_else(|| text_of("displayname").map(str::to_string));
         let Some(name) = name else { continue };
+        if !is_plain_name(&name) {
+            continue;
+        }
         let size = if is_dir { 0 } else { text_of("getcontentlength").and_then(|size| size.parse().ok()).unwrap_or(0) };
         let modified = text_of("getlastmodified").and_then(|date| chrono::DateTime::parse_from_rfc2822(date).ok()).map(|date| date.timestamp());
         entries.push(Entry { name, is_dir, size, modified });
@@ -395,6 +407,28 @@ mod tests {
             <response><href>/film.mkv</href><propstat><prop><getcontentlength>12</getcontentlength></prop><status>HTTP/1.1 200 OK</status></propstat></response></multistatus>"#;
         let entries = parse_listing(xml, "/").expect("a listing");
         assert_eq!(entries, vec![Entry { name: "film.mkv".into(), is_dir: false, size: 12, modified: None }]);
+    }
+
+    #[test]
+    fn an_entry_whose_name_is_a_path_is_left_out() {
+        // "..", encoded or not, and a displayname that is a path (the href being the root, which
+        // names nothing): a server that answers so could put files outside the download folder.
+        let xml = r#"<D:multistatus xmlns:D="DAV:">
+            <D:response><D:href>/dav/../</D:href><D:propstat><D:prop><D:resourcetype><D:collection/></D:resourcetype></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>
+            <D:response><D:href>/dav/%2e%2e/</D:href><D:propstat><D:prop><D:resourcetype><D:collection/></D:resourcetype></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>
+            <D:response><D:href>/</D:href><D:propstat><D:prop><D:displayname>/tmp/elsewhere</D:displayname></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>
+            <D:response><D:href>/</D:href><D:propstat><D:prop><D:displayname>../elsewhere</D:displayname></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>
+            <D:response><D:href>/</D:href><D:propstat><D:prop><D:displayname>.</D:displayname></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>
+            <D:response><D:href>/dav/fine.txt</D:href><D:propstat><D:prop><D:resourcetype/></D:prop><D:status>HTTP/1.1 200 OK</D:status></D:propstat></D:response>
+        </D:multistatus>"#;
+        let entries = parse_listing(xml, "/dav").expect("a listing");
+        assert_eq!(entries, vec![Entry { name: "fine.txt".into(), is_dir: false, size: 0, modified: None }]);
+        for name in ["film.mkv", "2026 Films", ".hidden", "...", "电影 (2026) #1.mkv", "a\\b"] {
+            assert!(is_plain_name(name), "{name}");
+        }
+        for name in ["", ".", "..", "a/b", "/tmp/x", "../x", "a\0b"] {
+            assert!(!is_plain_name(name), "{name:?}");
+        }
     }
 
     #[test]

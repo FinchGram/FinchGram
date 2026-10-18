@@ -128,6 +128,10 @@ pub struct Mcp {
     /// Whether an assistant may send messages under the user's name, only write drafts for the
     /// user to send, or neither.
     pub sending: McpSending,
+    /// The Telegram account these settings are for, by its user id: `apps` and `chats` were
+    /// allowed and chosen for it. When another account logs in they go, so that every program asks
+    /// again (`bind_to_account`). 0 until an account has logged in since the setting exists.
+    pub account: i64,
     /// The programs that have connected and what the user answered, by the path the system
     /// reported for each (src/mcp/peer.rs). One the user removes asks again next time.
     pub apps: Vec<McpApp>,
@@ -135,11 +139,30 @@ pub struct Mcp {
 
 impl Default for Mcp {
     fn default() -> Self {
-        Mcp { enabled: false, scope: McpScope::All, chats: Vec::new(), sending: McpSending::On, apps: Vec::new() }
+        Mcp { enabled: false, scope: McpScope::All, chats: Vec::new(), sending: McpSending::On, account: 0, apps: Vec::new() }
     }
 }
 
 impl Mcp {
+    /// These settings are the account's with `id` from now on. The programs allowed and the chats
+    /// chosen were for the account that was logged in then: when this is another one, they go,
+    /// so that every program is asked about again, and the chats are chosen again, for this
+    /// account; true says so. The same account again (a restart, or logging out and in) changes
+    /// nothing, and a file from before the account was written down (0) is this account's.
+    pub fn bind_to_account(&mut self, id: i64) -> bool {
+        if id == 0 || self.account == id {
+            return false;
+        }
+        let first = self.account == 0;
+        self.account = id;
+        if first {
+            return false;
+        }
+        self.apps.clear();
+        self.chats.clear();
+        true
+    }
+
     /// Whether the chat is within what the user allows an assistant. (Secret chats never are, whatever
     /// the scope: src/telegram/tools.rs.)
     pub fn allows(&self, chat_id: i64) -> bool {
@@ -444,12 +467,12 @@ mod tests {
         assert!(!read.mcp.enabled && read.mcp.allows(42) && read.mcp.sending == McpSending::On);
         let claude = McpApp { path: "/Applications/Claude.app".into(), name: "Claude".into(), allowed: true, last_used: 1_760_000_000 };
         let settings = Settings {
-            mcp: Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![-1001, 42], sending: McpSending::Drafts, apps: vec![claude] },
+            mcp: Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![-1001, 42], sending: McpSending::Drafts, account: 1001, apps: vec![claude] },
             ..Settings::default()
         };
         let text = toml::to_string_pretty(&settings).expect("TOML");
         assert!(text.contains("[mcp]\nenabled = true\nscope = \"chosen\"\n"), "{text}");
-        assert!(text.contains("sending = \"drafts\"\n"), "{text}");
+        assert!(text.contains("sending = \"drafts\"\naccount = 1001\n"), "{text}");
         assert!(text.contains("[[mcp.apps]]\npath = \"/Applications/Claude.app\"\nname = \"Claude\"\nallowed = true\n"), "{text}");
         let read: Settings = toml::from_str(&text).expect("read back");
         assert_eq!(read.mcp, settings.mcp);
@@ -457,5 +480,27 @@ mod tests {
         assert!(read.mcp.app("/Applications/Claude.app").is_some_and(|app| app.allowed) && read.mcp.app("/Applications/Zed.app").is_none());
         let read: Settings = toml::from_str("[mcp]\nenabled = true\n").expect("read");
         assert!(read.mcp.enabled && read.mcp.scope == McpScope::All && read.mcp.sending == McpSending::On && read.mcp.apps.is_empty());
+        assert_eq!(read.mcp.account, 0);
+    }
+
+    #[test]
+    fn another_account_starts_without_the_allowed_apps_and_the_chosen_chats() {
+        let claude = McpApp { path: "/Applications/Claude.app".into(), name: "Claude".into(), allowed: true, last_used: 1 };
+        let mut mcp = Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![42], apps: vec![claude], ..Mcp::default() };
+        // A file from before the account was written down is the account's that logs in.
+        assert!(!mcp.bind_to_account(1001));
+        assert_eq!((mcp.account, mcp.apps.len(), mcp.chats.len()), (1001, 1, 1));
+        // The same account again: a restart, or logging out and in.
+        assert!(!mcp.bind_to_account(1001));
+        assert_eq!((mcp.account, mcp.apps.len(), mcp.chats.len()), (1001, 1, 1));
+        // Another account: every program asks again, and the chats chosen were the other one's.
+        assert!(mcp.bind_to_account(2002));
+        assert_eq!((mcp.account, mcp.apps.len(), mcp.chats.len()), (2002, 0, 0));
+        assert!(mcp.enabled && mcp.scope == McpScope::Chosen && mcp.sending == McpSending::On);
+        // Nobody is not an account.
+        assert!(!mcp.bind_to_account(0));
+        assert_eq!(mcp.account, 2002);
+        let text = toml::to_string_pretty(&Settings { mcp, ..Settings::default() }).expect("TOML");
+        assert!(text.contains("[mcp]\nenabled = true\nscope = \"chosen\"\nchats = []\nsending = \"on\"\naccount = 2002\n"), "{text}");
     }
 }

@@ -700,6 +700,10 @@ fn enqueue_entry(name: &str, open: bool) {
     let added = with_state(|state| {
         let index = state.current?;
         let entry = state.entries.iter().find(|entry| !entry.is_dir && entry.name == name)?.clone();
+        // A listing lets no name through that is a path of its own; said again where the path is made.
+        if !webdav::is_plain_name(&entry.name) {
+            return None;
+        }
         let client = state.servers.get_mut(index)?.client();
         let source = transfer::Source { url: client.file_url(&state.path, &entry.name), authorization: client.authorization() };
         // One at a time per file: a second request only asks to open it.
@@ -738,7 +742,7 @@ fn enqueue_entry(name: &str, open: bool) {
 fn enqueue_folder(name: &str) {
     let added = with_state(|state| {
         let index = state.current?;
-        if !state.entries.iter().any(|entry| entry.is_dir && entry.name == name) {
+        if !webdav::is_plain_name(name) || !state.entries.iter().any(|entry| entry.is_dir && entry.name == name) {
             return None;
         }
         let client = state.servers.get_mut(index)?.client();
@@ -849,6 +853,23 @@ struct TreeFile {
     size: u64,
 }
 
+impl TreeFile {
+    /// Where the file goes under `dest`: its folders and its name, each one component of the
+    /// path. A listing lets no name through that is a path of its own (webdav::is_plain_name);
+    /// this says so again before anything is written, since a name that is not a name would put
+    /// the file wherever the server chose.
+    fn path_under(&self, dest: &Path) -> Option<PathBuf> {
+        let mut path = dest.to_path_buf();
+        for part in self.folder.iter().chain(std::iter::once(&self.name)) {
+            if !webdav::is_plain_name(part) {
+                return None;
+            }
+            path.push(part);
+        }
+        Some(path)
+    }
+}
+
 /// A folder and everything in it, into `dest`: the tree listed first, several folders at a time,
 /// the total growing on the page as files are found; then the files, several at a time over the
 /// transfer's budget of streams. A file already there with its size is not fetched again: a
@@ -892,11 +913,13 @@ fn download_tree(
                     let Some(file) = queue.lock().unwrap().pop_front() else { return };
                     let mut whole = path.to_vec();
                     whole.extend(file.folder.iter().cloned());
-                    let mut file_dest = dest.to_path_buf();
-                    for part in &file.folder {
-                        file_dest.push(part);
-                    }
-                    file_dest.push(&file.name);
+                    let Some(file_dest) = file.path_under(dest) else {
+                        let mut failed = failure.lock().unwrap();
+                        if failed.is_none() {
+                            *failed = Some(transfer::Error::Protocol(format!("the server named a file in a way that is not a name: {:?}", file.name)));
+                        }
+                        return;
+                    };
                     let already = std::fs::metadata(&file_dest).map(|meta| meta.is_file() && meta.len() == file.size).unwrap_or(false);
                     if !already {
                         let source = transfer::Source { url: server.file_url(&whole, &file.name), authorization: server.authorization() };
@@ -1407,5 +1430,23 @@ fn date_text(unix: i64, this_year: i32) -> String {
         Some(time) if time.year() == this_year => time.format("%b %-d").to_string(),
         Some(time) => time.format("%b %-d, %Y").to_string(),
         None => String::new(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_file_of_a_tree_goes_under_the_folder_and_nowhere_else() {
+        let dest = Path::new("/Users/x/Downloads/FinchGram/Movies");
+        let file = |folder: &[&str], name: &str| TreeFile { folder: folder.iter().map(|part| part.to_string()).collect(), name: name.to_string(), size: 0 };
+        assert_eq!(file(&["2026 Films"], "Dune.mkv").path_under(dest), Some(dest.join("2026 Films").join("Dune.mkv")));
+        assert_eq!(file(&[], "notes.txt").path_under(dest), Some(dest.join("notes.txt")));
+        assert_eq!(file(&[".."], "x").path_under(dest), None);
+        assert_eq!(file(&["a/b"], "x").path_under(dest), None);
+        assert_eq!(file(&[], "/tmp/x").path_under(dest), None);
+        assert_eq!(file(&[], "..").path_under(dest), None);
+        assert_eq!(file(&[], "").path_under(dest), None);
     }
 }

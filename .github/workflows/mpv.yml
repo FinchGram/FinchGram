@@ -3,6 +3,8 @@ name: mpv
 # Builds libmpv (mpv, FFmpeg, libplacebo and libass as pinned in vendor/mpv/build.sh) on a clean
 # Apple-silicon runner. Pushing a tag such as mpv-0.41.0-1 also publishes it as a release of this
 # repository, which scripts/fetch-mpv.sh pins by tag and SHA-256. A manual run only builds.
+# Every Action is pinned to a commit (its full SHA, the version beside it), never to a movable
+# tag or branch: what this builds ships inside the app (docs/conventions.md, Release first).
 on:
   workflow_dispatch:
   push:
@@ -15,13 +17,13 @@ jobs:
       contents: write # gh release create needs it; the default token is read-only
     timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Install build tools
         run: brew install meson ninja pkgconf # python3 comes with the runner
 
       - name: Cache source downloads
-        uses: actions/cache@v6
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: vendor/mpv/work/downloads
           key: mpv-sources-${{ hashFiles('vendor/mpv/build.sh') }}
@@ -30,7 +32,7 @@ jobs:
         run: vendor/mpv/build.sh
 
       - name: Upload build output
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: libmpv-macos-arm64
           path: vendor/mpv/dist

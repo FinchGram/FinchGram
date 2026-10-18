@@ -72,7 +72,9 @@ libmpv 跟 finchgram-tdlib 一样照这个做：`vendor/mpv/build.sh` 按锁定�
   和 GitHub release 是同一回事。
 - release 由 GitHub Actions（`.github/workflows/release.yml`）在干净的机器上从打了 tag 的 commit 构建，
   永远不在开发者的机器上构建，用的是所有人都在用的同一个脚本拿到的锁定版 finchgram-tdlib。流程里跑的是
-  `scripts/bundle.sh`，本地想试试打包后的 app 也用它；本地打出来的包永远不发布。
+  `scripts/bundle.sh`，本地想试试打包后的 app 也用它；本地打出来的包永远不发布。流程用到的每个 Action（checkout、
+  Rust 工具链、缓存、上传产物）都按完整的 commit SHA 锁定，旁边注明版本，不用可以被挪动的 tag 或分支：在给 release
+  签名的机器上跑的，必须是审过的那份代码。要升级就改 SHA。
 - 每个 release 都签名：CI 用只有 CI 才有的 Ed25519 私钥（`RELEASE_SIGNING_KEY` secret，另在发布负责人的
   钥匙串里以 "FinchGram release signing key" 备份一份）给 `SHA256SUMS` 签名，app 用编译进去的公钥
   （`release-signing.pub`）验证，验证不过的更新一律不装。密钥对由 `src/bin/finchgram-release-sign.rs`

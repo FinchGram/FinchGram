@@ -36,8 +36,9 @@ delete_message deletes a message the account sent, for everyone where Telegram a
 Message text is Telegram's Markdown: **bold**, __italic__, ~~strikethrough~~, `code`, ```pre```, [text](url).";
 
 /// What the assistant is told when its program is not allowed.
-pub const TURNED_AWAY: &str = "FinchGram's user has not allowed this program to use their Telegram account. In FinchGram's \
-Settings → AI access it is listed: they can allow it there, or remove it so that it asks again when it connects.";
+pub const TURNED_AWAY: &str = "FinchGram's user has not allowed this program to use the Telegram account signed in. In FinchGram's \
+Settings → AI access they can allow it, or remove it so that it asks again when it connects; a program not listed there \
+asks when it connects again.";
 /// And when the user has not answered the dialog about it yet.
 pub const UNANSWERED: &str = "FinchGram is asking its user whether to allow this program, and they have not answered yet. \
 Connect again once they have.";

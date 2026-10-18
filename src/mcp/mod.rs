@@ -100,6 +100,12 @@ pub fn start(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     }
 }
 
+/// The account with `id` has signed in (src/telegram/account.rs): what the user allowed is bound
+/// to it, and another account's allowances are dropped (access.rs). UI thread.
+pub fn signed_in(id: i64) {
+    access::signed_in(id);
+}
+
 /// The socket goes with the app. (A stale one is removed at the next start all the same.)
 pub fn shut_down() {
     let _ = fs::remove_file(socket_path());

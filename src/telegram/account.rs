@@ -49,6 +49,8 @@ pub fn load() {
             store.dirty.chats = true;
         });
         store::refresh();
+        // What the user allows AI assistants is this account's (src/mcp/access.rs).
+        crate::mcp::signed_in(id);
         send(json!({ "@type": "getUserFullInfo", "user_id": id }), move |answer| {
             let Ok(Ok(info)) = answer.map(serde_json::from_value::<UserFullInfo>) else { return };
             store::with(|store| {

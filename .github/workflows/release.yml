@@ -6,6 +6,10 @@ name: release
 # When the pushed commit carries a v<version> tag (made by scripts/release.sh), the build is also
 # published as a release of this repository, from which installed copies of the app update
 # themselves (src/update.rs). Nothing is ever built on a developer machine.
+#
+# Every Action is pinned to a commit (its full SHA, the version beside it), never to a tag or a
+# branch, which can be moved: this job builds, signs and publishes what users install, and what runs
+# here must be what was reviewed (docs/conventions.md, Release first). To update one, change the SHA.
 on:
   push:
     branches: [main]
@@ -25,7 +29,7 @@ jobs:
       contents: write # gh release create needs it; the default token is read-only
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Version and tag
         id: meta
@@ -42,9 +46,11 @@ jobs:
           echo "zip=FinchGram-$VERSION-macos-arm64.zip" >> "$GITHUB_OUTPUT" # the name the app looks for
           echo "version $VERSION, tag ${TAG:-none}"
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master, 2026-10-16
+        with:
+          toolchain: stable
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
 
       - name: finchgram-tdlib, pinned, from this repository's tdlib-* release
         run: scripts/fetch-tdlib.sh
@@ -131,7 +137,7 @@ jobs:
           cargo run --release --quiet --bin finchgram-release-sign -- verify dist/SHA256SUMS release-signing.pub
           ls -la dist
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: finchgram-${{ steps.meta.outputs.version }}-macos-arm64
           path: |

@@ -205,6 +205,37 @@ pub fn admit(host: Host, answer: mpsc::Sender<Admission>) {
     }
 }
 
+/// The account with `id` is signed in (src/telegram/account.rs): the settings are bound to it.
+/// When it is another account than the one the allowed programs and the chosen chats were for,
+/// they are gone (`settings::Mcp::bind_to_account`), this run's answers with them: every program
+/// asks again, for this account, and its old connections are turned away from here on (their
+/// calls ask `admitted`). UI thread.
+pub fn signed_in(id: i64) {
+    let dropped = STATE.with(|slot| {
+        let mut slot = slot.borrow_mut();
+        let state = slot.as_mut()?;
+        let (before, dropped) = {
+            let mut settings = state.settings.borrow_mut();
+            let before = settings.mcp.account;
+            (before, settings.mcp.bind_to_account(id))
+        };
+        if dropped {
+            state.session_apps.clear();
+        }
+        if before != state.settings.borrow().mcp.account {
+            state.settings.borrow().save();
+        }
+        Some(dropped)
+    });
+    if dropped == Some(true) {
+        super::log("another Telegram account signed in: the programs allowed for the one before ask again");
+        if let Some(ui) = window() {
+            show_policy(&ui);
+            show_apps(&ui);
+        }
+    }
+}
+
 /// The user's standing answer about `host`, without asking: allowed, and the server on.
 pub fn admitted(host: &Host) -> bool {
     STATE.with(|slot| {

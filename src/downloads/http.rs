@@ -136,8 +136,9 @@ impl Http {
         Request::builder().method(method).uri(url).header(USER_AGENT, user_agent())
     }
 
-    /// Send `request` and wait for the answer's headers, following redirects (the account's
-    /// credentials stay behind when the host changes). The body is the caller's to read.
+    /// Send `request` and wait for the answer's headers, following redirects: the account's
+    /// credentials stay behind when the origin changes, and a redirect from https to http is
+    /// refused (`downgrades`). The body is the caller's to read.
     pub async fn send(&self, request: Request<Full<Bytes>>) -> Result<Response<Incoming>, Failure> {
         let (mut parts, body) = request.into_parts();
         let mut hops = 0;
@@ -159,7 +160,15 @@ impl Http {
             }
             let target = resolve(&parts.uri, location)?;
             super::log::line(format!("{} {} redirects to {}://{}/…", parts.uri.host().unwrap_or_default(), response.status().as_u16(), target.scheme_str().unwrap_or_default(), target.host().unwrap_or_default()));
-            if target.authority() != parts.uri.authority() {
+            if downgrades(&parts.uri, &target) {
+                return Err(Failure::Redirect(format!(
+                    "the server redirected from https to {}, which would send the request in the clear",
+                    target.scheme_str().unwrap_or("an address without a scheme")
+                )));
+            }
+            // The credentials were given for one origin: another scheme, host or port does not
+            // see them. (The authority alone is the same for https://nas.home and http://nas.home.)
+            if !same_origin(&parts.uri, &target) {
                 parts.headers.remove(AUTHORIZATION);
             }
             if response.status() == StatusCode::SEE_OTHER && parts.method != Method::GET {
@@ -188,6 +197,30 @@ fn resolve(base: &Uri, location: &str) -> Result<Uri, Failure> {
     format!("{scheme}://{authority}{path}").parse::<Uri>().map_err(bad)
 }
 
+/// Whether going from `from` to `to` leaves https for anything else: what was encrypted, the
+/// request's headers among it, would travel in the clear.
+fn downgrades(from: &Uri, to: &Uri) -> bool {
+    let is_https = |uri: &Uri| uri.scheme_str().is_some_and(|scheme| scheme.eq_ignore_ascii_case("https"));
+    is_https(from) && !is_https(to)
+}
+
+/// Whether two addresses are of one origin: the same scheme, host and port, the port being the
+/// scheme's own (80, 443) when an address names none.
+fn same_origin(a: &Uri, b: &Uri) -> bool {
+    fn scheme(uri: &Uri) -> Option<String> {
+        uri.scheme_str().map(str::to_ascii_lowercase)
+    }
+    fn port(uri: &Uri) -> Option<u16> {
+        uri.port_u16().or(match scheme(uri).as_deref() {
+            Some("http") => Some(80),
+            Some("https") => Some(443),
+            _ => None,
+        })
+    }
+    let host = |uri: &Uri| uri.host().map(str::to_ascii_lowercase);
+    scheme(a) == scheme(b) && host(a) == host(b) && port(a) == port(b)
+}
+
 /// hyper's errors say little on their own ("client error (Connect)"); what they wrap says why.
 fn describe(err: &dyn std::error::Error) -> String {
     let mut words = err.to_string();
@@ -201,4 +234,73 @@ fn describe(err: &dyn std::error::Error) -> String {
         source = cause.source();
     }
     words
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::{Read as _, Write as _};
+    use std::net::TcpListener;
+
+    /// A server on the loopback that answers one connection per reply, each with its status line
+    /// and headers and no body, and gives back the head of every request as it came.
+    fn answers(replies: Vec<(&'static str, String)>) -> (u16, std::thread::JoinHandle<Vec<String>>) {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("a port");
+        let port = listener.local_addr().expect("an address").port();
+        let server = std::thread::spawn(move || {
+            let mut heads = Vec::new();
+            for (status, headers) in replies {
+                let (mut socket, _) = listener.accept().expect("a connection");
+                let mut head = Vec::new();
+                let mut byte = [0u8];
+                while !head.ends_with(b"\r\n\r\n") && socket.read(&mut byte).is_ok_and(|n| n == 1) {
+                    head.push(byte[0]);
+                }
+                let _ = write!(socket, "HTTP/1.1 {status}\r\n{headers}Content-Length: 0\r\nConnection: close\r\n\r\n");
+                heads.push(String::from_utf8_lossy(&head).to_ascii_lowercase());
+            }
+            heads
+        });
+        (port, server)
+    }
+
+    fn get(http: &Http, url: &str) -> Response<Incoming> {
+        let request = http.request(Method::GET, url).header(AUTHORIZATION, "Basic c2VjcmV0").body(Full::new(Bytes::new())).expect("a request");
+        http.block_on(http.send(request)).expect("an answer")
+    }
+
+    #[test]
+    fn a_redirect_to_another_origin_does_not_carry_the_account() {
+        let (target, target_server) = answers(vec![("200 OK", String::new())]);
+        let (first, first_server) = answers(vec![("302 Found", format!("Location: http://127.0.0.1:{target}/elsewhere\r\n"))]);
+        let response = get(client(), &format!("http://127.0.0.1:{first}/file"));
+        assert_eq!(response.status(), StatusCode::OK);
+        let first_head = first_server.join().expect("the first server").remove(0);
+        let target_head = target_server.join().expect("the target server").remove(0);
+        assert!(first_head.contains("authorization: basic c2vjcmv0"), "{first_head}");
+        assert!(target_head.starts_with("get /elsewhere ") && !target_head.contains("authorization:"), "{target_head}");
+    }
+
+    #[test]
+    fn a_redirect_within_the_origin_keeps_the_account() {
+        let (port, server) = answers(vec![("302 Found", "Location: /moved\r\n".to_string()), ("200 OK", String::new())]);
+        let response = get(client(), &format!("http://127.0.0.1:{port}/file"));
+        assert_eq!(response.status(), StatusCode::OK);
+        let heads = server.join().expect("the server");
+        assert!(heads[1].starts_with("get /moved ") && heads[1].contains("authorization: basic c2vjcmv0"), "{}", heads[1]);
+    }
+
+    #[test]
+    fn one_origin_is_the_scheme_the_host_and_the_port() {
+        let uri = |address: &str| address.parse::<Uri>().expect("an address");
+        assert!(same_origin(&uri("https://nas.home/dav"), &uri("https://nas.home:443/other")));
+        assert!(same_origin(&uri("http://NAS.home/dav"), &uri("http://nas.home:80/")));
+        assert!(!same_origin(&uri("https://nas.home/dav"), &uri("http://nas.home/dav")));
+        assert!(!same_origin(&uri("http://nas.home/dav"), &uri("http://nas.home:8080/dav")));
+        assert!(!same_origin(&uri("https://nas.home/dav"), &uri("https://cdn.example/dav")));
+        assert!(downgrades(&uri("https://nas.home/dav"), &uri("http://nas.home/dav")));
+        assert!(!downgrades(&uri("http://nas.home/dav"), &uri("https://nas.home/dav")));
+        assert!(!downgrades(&uri("https://nas.home/dav"), &uri("https://cdn.example/x")));
+        assert!(!downgrades(&uri("http://nas.home/dav"), &uri("http://cdn.example/x")));
+    }
 }

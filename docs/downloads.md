@@ -96,12 +96,15 @@ finished file off the list and deletes nothing, and Clear finished does that for
 
 WebDAV itself is `src/downloads/webdav.rs`: PROPFIND with depth 1 for a folder's listing (and depth 0
 to check a server), the 207 Multi-Status answer parsed with roxmltree, Basic authentication, addresses
-percent-encoded by segment.
+percent-encoded by segment. An entry whose name is not a name (empty, "." or "..", or with a "/" in
+it) is left out of a listing, and the engine refuses it again before writing: the names become paths
+under the download folder, and a server does not get to say where a file lands.
 
 HTTP is hyper (`src/downloads/http.rs`), HTTP/2 where the server offers it and HTTP/1.1 elsewhere, on
 a tokio runtime of the engine's own, with the flow-control windows set like Go's transport (4 MB per
 stream, 32 MB per connection; hyper's defaults would cap a stream at a few hundred kilobytes per
-second across an ocean). Redirects are followed, the credentials left behind when the host changes.
+second across an ocean). Redirects are followed, the credentials left behind when the origin changes
+(the scheme, the host or the port), and a redirect from https to http is refused rather than followed.
 TLS is rustls with the platform's trust store: a certificate the Mac trusts, including one you
 trusted yourself in Keychain Access, passes.
 

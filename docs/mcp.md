@@ -45,14 +45,17 @@ reading that nobody can see, sending that the user controls.
 4. The first time an app connects, FinchGram's window comes up with the question: "Allow “Claude”
    to use your Telegram account?", with the program as macOS reports it, where it is, and what the
    settings would let it see and write. Allow, or Don't Allow; either is remembered, under Apps on
-   the page, where an app can be allowed later or removed so that it asks again.
+   the page, where an app can be allowed later or removed so that it asks again. The answer is for
+   the Telegram account signed in: when another account logs in, every app asks again, and the
+   chosen chats, which were the other account's, start empty.
 
 An assistant that connects while the server is off, or that the user has not allowed, is told so,
 in words the user sees in their app's MCP log.
 
 The same, by hand: `[mcp]` in `~/Library/Application Support/FinchGram/settings.toml`
-(`enabled`, `scope = "all" | "chosen"`, `chats = [ids]`, `sending = "on" | "drafts" | "off"`, and
-`[[mcp.apps]]` with `path`, `name`, `allowed`, `last_used`), read when FinchGram starts.
+(`enabled`, `scope = "all" | "chosen"`, `chats = [ids]`, `sending = "on" | "drafts" | "off"`,
+`account`, the id of the Telegram account the apps and chats are for, and `[[mcp.apps]]` with
+`path`, `name`, `allowed`, `last_used`), read when FinchGram starts.
 
 ## The tools
 
@@ -130,8 +133,10 @@ credentials from the environment". FinchGram's answer has three layers:
    nothing can claim to be something else. The first time a program connects, the dialog asks
    the user; the answer is kept by the program's path: its app bundle, or for a program kept
    under its version number (Claude Code's ~/.local/share/claude/versions/2.1.296) the folder
-   that holds every version, so that an update does not ask again. When the system cannot name
-   the program, the dialog says so and makes Don't Allow the safe choice.
+   that holds every version, so that an update does not ask again; and for the Telegram account
+   signed in: another account logging in drops every answer and the chosen chats, so that nothing
+   allowed for one account carries over to the next. When the system cannot name the program, the
+   dialog says so and makes Don't Allow the safe choice.
 3. **Settings decide what it may do**: the switch, the chats, the sending choice.
 
 The assistant needs no Telegram credentials: it works through the session FinchGram is signed in

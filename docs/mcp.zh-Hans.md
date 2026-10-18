@@ -37,13 +37,14 @@ FinchGram 自身不调用任何 AI，不为 AI 建索引，不为 AI 存任何�
 
 4. 应用第一次连接时，FinchGram 的窗口会弹出来问："允许「Claude」使用你的 Telegram 账号吗？"，带着 macOS 报告的
    程序名、它的位置，以及按当前设置它能看到什么、能写什么。允许，或不允许；两种答案都会记住，列在页面的"应用"
-   里，之后可以再允许，或移除它让它下次重新问。
+   里，之后可以再允许，或移除它让它下次重新问。答案属于当前登录的 Telegram 账号：换一个账号登录，所有应用都重新
+   问一遍，选定的聊天（那是另一个账号的）也清空。
 
 服务端关着时连上来的助手，或用户没有允许的助手，会被明确告知，用户在自己应用的 MCP 日志里看得到那句话。
 
 手改也行：`~/Library/Application Support/FinchGram/settings.toml` 里的 `[mcp]`（`enabled`、`scope = "all" |
-"chosen"`、`chats = [ids]`、`sending = "on" | "drafts" | "off"`，以及 `[[mcp.apps]]` 的 `path`、`name`、`allowed`、
-`last_used`），FinchGram 启动时读。
+"chosen"`、`chats = [ids]`、`sending = "on" | "drafts" | "off"`、`account`（这些应用和聊天属于哪个 Telegram 账号，
+按它的 id），以及 `[[mcp.apps]]` 的 `path`、`name`、`allowed`、`last_used`），FinchGram 启动时读。
 
 ## 工具
 
@@ -105,7 +106,8 @@ FinchGram 自身不调用任何 AI，不为 AI 建索引，不为 AI 存任何�
    的程序；如果那是 FinchGram 自己的桥、或启动桥的 shell，就往父进程找，直到找到助手的应用（"Claude"，
    /Applications/Claude.app；"claude"，~/.local/share/claude）。不取连接自报的任何东西，所以没有东西能冒充别的。
    程序第一次连接时，对话框问用户；答案按程序的路径记住：它的 app 包，或者按版本号存放的程序（Claude Code 的
-   ~/.local/share/claude/versions/2.1.296）上面那个装着所有版本的文件夹，这样升级后不会再问。系统说不出程序名时，
+   ~/.local/share/claude/versions/2.1.296）上面那个装着所有版本的文件夹，这样升级后不会再问。答案也只属于当时登录的
+   Telegram 账号：换账号登录会丢掉所有答案和选定的聊天，一个账号允许的东西不会带到下一个账号。系统说不出程序名时，
    对话框会说明，并把"不允许"做成稳妥的那个按钮。
 3. **设置决定它能做什么**：开关、聊天范围、发送选项。
 
