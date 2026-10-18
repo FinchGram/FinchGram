@@ -18,7 +18,7 @@ pub mod tools;
 
 use std::cell::{Cell, RefCell};
 use std::fs;
-use std::io::{BufRead, BufReader, BufWriter, Write};
+use std::io::{BufRead, BufReader, BufWriter, Read, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::PathBuf;
@@ -43,6 +43,10 @@ const ASK_TIMEOUT: Duration = Duration::from_secs(300);
 const LOG_LIMIT: u64 = 1_000_000;
 /// A socket's path may have about a hundred bytes (sockaddr_un); a longer one goes elsewhere.
 const SOCKET_PATH_MAX: usize = 100;
+/// A line longer than this is no message of this protocol: the connection is closed. Any
+/// process of the user's may connect to the socket before the user has allowed it, and a reader
+/// that took bytes until a newline came would hold them all in memory.
+const LINE_LIMIT: u64 = 1024 * 1024;
 
 thread_local! {
     /// The app's settings, for the policy an assistant is held to. UI thread.
@@ -151,9 +155,20 @@ fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>) {
     };
     let mut writing = BufWriter::new(stream);
     let mut session = protocol::Session::new(&backend);
-    for line in BufReader::new(reading).lines() {
-        let Ok(line) = line else { break };
-        if let Some(answer) = session.handle(&line)
+    let mut reader = BufReader::new(reading);
+    let mut line = Vec::new();
+    loop {
+        line.clear();
+        // A line's worth and one byte more: a line still going at the limit ends the connection.
+        match reader.by_ref().take(LINE_LIMIT + 1).read_until(b'\n', &mut line) {
+            Ok(0) | Err(_) => break,
+            Ok(_) if line.len() as u64 > LINE_LIMIT => {
+                backend.log("sent a line over the limit of 1 MB: the connection is closed");
+                break;
+            }
+            Ok(_) => {}
+        }
+        if let Some(answer) = session.handle(&String::from_utf8_lossy(&line))
             && (writeln!(writing, "{answer}").is_err() || writing.flush().is_err())
         {
             break;
@@ -233,7 +248,16 @@ impl Backend for UiBackend {
         let host = self.host.clone();
         let asked = self.ui.upgrade_in_event_loop(move |ui| {
             let policy = current_policy();
-            crate::telegram::tools::call(&ui, call, policy, move |outcome, activity| {
+            // The settings may change while the call waits on Telegram: it asks again before each
+            // side effect, and before anything is handed over (tools::Guard).
+            let guard = crate::telegram::tools::Guard::new(
+                {
+                    let host = host.clone();
+                    move || access::admitted(&host)
+                },
+                current_policy,
+            );
+            crate::telegram::tools::call(&ui, call, policy, guard, move |outcome, activity| {
                 if let Some(activity) = activity {
                     access::record(&host, activity);
                 }
@@ -254,8 +278,8 @@ impl Backend for UiBackend {
     }
 }
 
-/// Settings → AI access as they are now. UI thread. Everything off when the app has no settings
-/// (it always has).
+/// Settings → AI access as they are now (a call under way asks again before each side effect,
+/// tools::Guard). UI thread. Everything off when the app has no settings (it always has).
 fn current_policy() -> Mcp {
     SETTINGS.with(|slot| slot.borrow().as_ref().map(|settings| settings.borrow().mcp.clone())).unwrap_or_default()
 }

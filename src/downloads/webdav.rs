@@ -4,10 +4,12 @@
 //! password comes from the Keychain (src/platform/). Nothing is ever written to the server.
 
 use std::fmt;
+use std::time::Duration;
 
 use base64::Engine;
 use bytes::Bytes;
-use http_body_util::{BodyExt, Full, Limited};
+use http_body_util::{BodyExt, Full};
+use hyper::body::Incoming;
 use hyper::Method;
 use hyper::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 
@@ -71,6 +73,10 @@ impl From<Failure> for Error {
 
 /// A folder's listing larger than this is not read: it would be thousands of entries.
 const LARGEST_LISTING: usize = 32 * 1024 * 1024;
+/// How long a listing's body may bring nothing, and how long the whole may take: a server that
+/// answers 207 and then never finishes would otherwise hold the listing thread for good.
+const LISTING_IDLE: Duration = Duration::from_secs(30);
+const LISTING_PATIENCE: Duration = Duration::from_secs(10 * 60);
 
 /// What a listing asks for: whether an entry is a folder, its size, when it changed, its name.
 const PROPFIND_BODY: &str = r#"<?xml version="1.0" encoding="utf-8"?>
@@ -149,7 +155,7 @@ impl Server {
         let started = std::time::Instant::now();
         let body = self.propfind(http, &url, "1").await?;
         let entries = parse_listing(&body, &url_path(&url))?;
-        super::log::line(format!("listed {url}: {} entries in {} ms", entries.len(), started.elapsed().as_millis()));
+        super::log::line(format!("listed {}: {} entries in {} ms", super::log::shown(&url), entries.len(), started.elapsed().as_millis()));
         Ok(entries)
     }
 
@@ -176,12 +182,30 @@ impl Server {
             code if (400..600).contains(&code) => return Err(Error::Status(code)),
             code => return Err(Error::Unreadable(format!("HTTP {code} instead of a Multi-Status answer"))),
         }
-        let bytes = Limited::new(response.into_body(), LARGEST_LISTING)
-            .collect()
-            .await
-            .map_err(|err| Error::Unreadable(err.to_string()))?
-            .to_bytes();
+        let bytes = read_body(response.into_body(), LARGEST_LISTING).await?;
         Ok(String::from_utf8_lossy(&bytes).into_owned())
+    }
+}
+
+/// A listing's body, up to `most` bytes, within `LISTING_IDLE` between its pieces and
+/// `LISTING_PATIENCE` in all.
+async fn read_body(mut body: Incoming, most: usize) -> Result<Vec<u8>, Error> {
+    let deadline = tokio::time::Instant::now() + LISTING_PATIENCE;
+    let mut bytes = Vec::new();
+    loop {
+        let until = deadline.min(tokio::time::Instant::now() + LISTING_IDLE);
+        let frame = match tokio::time::timeout_at(until, body.frame()).await {
+            Err(_) => return Err(Error::Unreachable("the server did not finish its answer in time".into())),
+            Ok(None) => return Ok(bytes),
+            Ok(Some(Err(err))) => return Err(Error::Unreachable(err.to_string())),
+            Ok(Some(Ok(frame))) => frame,
+        };
+        if let Some(data) = frame.data_ref() {
+            if bytes.len() + data.len() > most {
+                return Err(Error::Unreadable(format!("the listing is over {} MB", most / (1024 * 1024))));
+            }
+            bytes.extend_from_slice(data);
+        }
     }
 }
 

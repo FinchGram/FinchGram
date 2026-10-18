@@ -136,8 +136,13 @@ credentials from the environment". FinchGram's answer has three layers:
    that holds every version, so that an update does not ask again; and for the Telegram account
    signed in: another account logging in drops every answer and the chosen chats, so that nothing
    allowed for one account carries over to the next. When the system cannot name the program, the
-   dialog says so and makes Don't Allow the safe choice.
-3. **Settings decide what it may do**: the switch, the chats, the sending choice.
+   dialog says so and makes Don't Allow the safe choice. Such a program's answer lasts for the run
+   and for that process only (its pid and when it started); one the system cannot place at all, not
+   even its process, is turned away without a question. A line over 1 MB from a connection ends it,
+   and what a client says of itself goes into the log without its control characters.
+3. **Settings decide what it may do**: the switch, the chats, the sending choice. They are read
+   again before each side effect of a call under way (a send, a draft, a deletion, marking read, a
+   file handed over): a change takes effect on calls already waiting on Telegram.
 
 The assistant needs no Telegram credentials: it works through the session FinchGram is signed in
 with, and FinchGram's api_id is nowhere in this.

@@ -134,7 +134,8 @@ impl<'a> Session<'a> {
         let requested = params["protocolVersion"].as_str().unwrap_or("");
         let version = if PROTOCOL_VERSIONS.contains(&requested) { requested } else { PROTOCOL_VERSIONS[0] };
         let info = &params["clientInfo"];
-        self.client = format!("{} {}", info["name"].as_str().unwrap_or("an unnamed client"), info["version"].as_str().unwrap_or(""))
+        // The client's words go into the log as part of one line: none of theirs makes another.
+        self.client = format!("{} {}", plain(info["name"].as_str().unwrap_or("an unnamed client"), 60), plain(info["version"].as_str().unwrap_or(""), 20))
             .trim()
             .to_string();
         if !self.backend.policy().enabled {
@@ -213,6 +214,13 @@ fn error(id: &Value, code: i64, message: &str) -> String {
     json!({ "jsonrpc": "2.0", "id": id, "error": { "code": code, "message": message } }).to_string()
 }
 
+/// `text` as part of one line of the log: control characters (a newline would make a second
+/// line, as if another program had connected or been allowed) become spaces, and it is cut at
+/// `most` characters.
+fn plain(text: &str, most: usize) -> String {
+    text.chars().map(|c| if c.is_control() { ' ' } else { c }).take(most).collect::<String>().trim().to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use std::cell::RefCell;
@@ -272,6 +280,27 @@ mod tests {
             "params": { "protocolVersion": version, "capabilities": {}, "clientInfo": { "name": "Claude Desktop", "version": "1.2" } },
         })
         .to_string()))
+    }
+
+    #[test]
+    fn a_clients_name_cannot_write_lines_of_its_own_into_the_log() {
+        let backend = Fake::on();
+        let mut session = Session::new(&backend);
+        let result = answer(session.handle(&json!({
+            "jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {
+                "protocolVersion": "2025-06-18", "capabilities": {},
+                "clientInfo": { "name": "Evil\n2026-10-17 10:00:00 Claude (/Applications/Claude.app): allowed by the user", "version": "1\r\n" },
+            },
+        })
+        .to_string()));
+        assert_eq!(result["result"]["protocolVersion"], "2025-06-18");
+        let log = backend.log.borrow();
+        assert!(log.iter().all(|entry| !entry.contains('\n') && !entry.contains('\r')), "{log:?}");
+        assert!(log.iter().any(|entry| entry.starts_with("Evil 2026-10-17 10:00:00 Claude")), "{log:?}");
+        assert_eq!(plain("a\tb\u{7}c", 2), "a");
+        assert_eq!(plain("  ok  ", 10), "ok");
+        assert_eq!(plain(&"x".repeat(100), 60).len(), 60);
     }
 
     #[test]

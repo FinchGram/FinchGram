@@ -57,9 +57,28 @@ thread_local! {
 }
 
 fn look(path: &Path, out_dir: &Path, name: &str) -> Option<VideoInfo> {
-    if std::fs::create_dir_all(out_dir).is_err() {
+    // A folder of this probe's own: vo=image names the frame by its number, 00000001.jpg, and two
+    // probes at once in one folder would take each other's frame, and the card would send it as
+    // the still of the wrong video.
+    let own = out_dir.join(format!("{name}.probe"));
+    if std::fs::create_dir_all(&own).is_err() {
         return None;
     }
+    let mut info = decode(path, &own);
+    if let Some(info) = info.as_mut() {
+        let frame = own.join("00000001.jpg");
+        let still = out_dir.join(format!("{name}.jpg"));
+        if frame.is_file() && std::fs::rename(&frame, &still).is_ok() {
+            info.thumbnail = Some(still);
+        }
+    }
+    let _ = std::fs::remove_dir_all(&own);
+    info
+}
+
+/// mpv decodes one frame of `path` into `out_dir` (as 00000001.jpg): the video's duration and
+/// size, the still not yet named.
+fn decode(path: &Path, out_dir: &Path) -> Option<VideoInfo> {
     // SAFETY: a libmpv handle of our own, used on this thread only and destroyed before leaving.
     unsafe {
         let handle = mpv::mpv_create();
@@ -123,14 +142,7 @@ fn look(path: &Path, out_dir: &Path, name: &str) -> Option<VideoInfo> {
             }
         }
         mpv::mpv_terminate_destroy(handle);
-        let mut info = info?;
-        // vo=image names the frame by its number.
-        let frame = out_dir.join("00000001.jpg");
-        let still = out_dir.join(format!("{name}.jpg"));
-        if frame.is_file() && std::fs::rename(&frame, &still).is_ok() {
-            info.thumbnail = Some(still);
-        }
-        Some(info)
+        info
     }
 }
 

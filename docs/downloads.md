@@ -61,13 +61,18 @@ The engine, `src/downloads/transfer.rs`, follows vget:
    missing of a stopped download). A 206 answer gives the file's size and says the server does
    ranges, and its body is that chunk, streamed in while the other streams start on the rest; a
    200 answer means the server does no ranges, and its body is the whole file. One round trip
-   per file, where a probe for two bytes used to cost a second more on PikPak.
+   per file, where a probe for two bytes used to cost a second more on PikPak. Every 206, this one
+   and the chunks', must say in its Content-Range that it carries the bytes asked for, with a body
+   of that length and the size the first answer gave; an answer for other bytes is a failure like
+   any other, and none of it is written.
 2. The file is cut into chunks of 8 MB, vget's size. A pool of workers, one stream each (12 by
    default, vget's number; `connections` in settings.toml, 1 to 64), takes the next chunk until
    none is left, each written at its offset into `<name>.part`, which has the file's full size
    from the start, by a writer thread. Nothing else is asked of the server: larger chunks, an idle
    stream taking over the tail of a slow one, and a crawling stream replaced were all tried on
-   2026-10-16, and every request more was one more that PikPak answered with 503.
+   2026-10-16, and every request more was one more that PikPak answered with 503. `<name>.part` and
+   `<name>.part.json` are opened without following a symbolic link, and must be regular files: a
+   link put under those names in the download folder is refused, not written through.
 3. `<name>.part.json` records which chunks are done. Retry, or a later download of the same file,
    goes on from there: "12 MB of 48 MB kept".
 4. A chunk that fails is tried again from the last byte written, up to ten times, after a pause that
@@ -90,7 +95,8 @@ it. Which protocol a server speaks is in the log, not on the page.
 
 What the engine does goes line by line into `downloads.log` next to settings.toml: each probe and
 chunk with the protocol, how long the server took to answer and how fast the bytes came, every
-retry and why, each listing. It starts afresh past 8 MB. When a server is slow, that file says
+retry and why, each listing. It starts afresh past 8 MB, and shows addresses without the account
+or query that may be in them (a CDN's signed link). When a server is slow, that file says
 where the time goes. Cancel keeps the `.part` files for a retry; Remove from list takes a stopped or
 finished file off the list and deletes nothing, and Clear finished does that for every finished file at once.
 
@@ -98,7 +104,9 @@ WebDAV itself is `src/downloads/webdav.rs`: PROPFIND with depth 1 for a folder's
 to check a server), the 207 Multi-Status answer parsed with roxmltree, Basic authentication, addresses
 percent-encoded by segment. An entry whose name is not a name (empty, "." or "..", or with a "/" in
 it) is left out of a listing, and the engine refuses it again before writing: the names become paths
-under the download folder, and a server does not get to say where a file lands.
+under the download folder, and a server does not get to say where a file lands. A listing's body
+must come within thirty seconds between its pieces and ten minutes in all. A folder download lists
+at most 100,000 files and goes at most 64 folders deep, each folder once.
 
 HTTP is hyper (`src/downloads/http.rs`), HTTP/2 where the server offers it and HTTP/1.1 elsewhere, on
 a tokio runtime of the engine's own, with the flow-control windows set like Go's transport (4 MB per

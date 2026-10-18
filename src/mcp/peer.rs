@@ -19,6 +19,10 @@ const ANCESTORS: usize = 6;
 pub struct Host {
     pub pid: i32,
     pub path: Option<PathBuf>,
+    /// When the process started, in seconds since the epoch; 0 when the system would not say. A
+    /// program the system would not name is remembered for the run by its pid and this: a later
+    /// process under the same pid (pids are reused) is a stranger (access.rs).
+    pub started: u64,
 }
 
 impl Host {
@@ -67,7 +71,7 @@ impl Host {
 /// The program behind `stream`: the process that connected, unless that is our own bridge or a
 /// shell, in which case the one that started it.
 pub fn host_of(stream: &UnixStream) -> Host {
-    let Some(peer) = system::peer_pid(stream) else { return Host { pid: 0, path: None } };
+    let Some(peer) = system::peer_pid(stream) else { return Host { pid: 0, path: None, started: 0 } };
     let ours = std::env::current_exe().ok().and_then(|exe| exe.canonicalize().ok());
     let mut pid = peer;
     let mut path = system::path_of(pid);
@@ -88,7 +92,7 @@ pub fn host_of(stream: &UnixStream) -> Host {
         ours.as_ref().is_some_and(|ours| current.canonicalize().ok().as_ref() == Some(ours))
             || current.file_name().and_then(|name| name.to_str()).is_some_and(|name| WRAPPERS.contains(&name))
     });
-    Host { pid, path: if ours_or_wrapper { None } else { path } }
+    Host { pid, path: if ours_or_wrapper { None } else { path }, started: system::started_at(pid).unwrap_or(0) }
 }
 
 /// The app bundle a program is in, when it is in one: "/Applications/Claude.app" for
@@ -196,8 +200,8 @@ mod system {
         Some(PathBuf::from(String::from_utf8_lossy(&buffer).into_owned()))
     }
 
-    /// The process that started `pid`.
-    pub fn parent_of(pid: i32) -> Option<i32> {
+    /// What the system knows of the process `pid`.
+    fn bsd_info(pid: i32) -> Option<ProcBsdInfo> {
         let mut info = MaybeUninit::<ProcBsdInfo>::zeroed();
         let size = size_of::<ProcBsdInfo>() as i32;
         // SAFETY: the buffer is exactly a proc_bsdinfo; the call fills it whole or returns less.
@@ -206,8 +210,17 @@ mod system {
             return None;
         }
         // SAFETY: the system wrote the whole structure.
-        let info = unsafe { info.assume_init() };
-        i32::try_from(info.pbi_ppid).ok()
+        Some(unsafe { info.assume_init() })
+    }
+
+    /// The process that started `pid`.
+    pub fn parent_of(pid: i32) -> Option<i32> {
+        i32::try_from(bsd_info(pid)?.pbi_ppid).ok()
+    }
+
+    /// When the process `pid` started, in seconds since the epoch.
+    pub fn started_at(pid: i32) -> Option<u64> {
+        Some(bsd_info(pid)?.pbi_start_tvsec)
     }
 }
 
@@ -227,6 +240,10 @@ mod system {
     pub fn parent_of(_pid: i32) -> Option<i32> {
         None
     }
+
+    pub fn started_at(_pid: i32) -> Option<u64> {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -235,18 +252,18 @@ mod tests {
 
     #[test]
     fn a_program_in_an_app_bundle_is_named_after_the_bundle() {
-        let claude = Host { pid: 7, path: Some(PathBuf::from("/Applications/Claude.app/Contents/MacOS/Claude")) };
+        let claude = Host { pid: 7, path: Some(PathBuf::from("/Applications/Claude.app/Contents/MacOS/Claude")), started: 0 };
         assert_eq!(claude.describe(), "Claude (/Applications/Claude.app)");
-        let tool = Host { pid: 8, path: Some(PathBuf::from("/Users/x/.local/bin/claude")) };
+        let tool = Host { pid: 8, path: Some(PathBuf::from("/Users/x/.local/bin/claude")), started: 0 };
         assert_eq!(tool.describe(), "claude (/Users/x/.local/bin/claude)");
         assert_eq!((claude.name(), claude.key()), ("Claude".to_string(), "/Applications/Claude.app".to_string()));
         assert_eq!((tool.name(), tool.key()), ("claude".to_string(), "/Users/x/.local/bin/claude".to_string()));
-        let nameless = Host { pid: 9, path: None };
+        let nameless = Host { pid: 9, path: None, started: 0 };
         assert_eq!((nameless.describe(), nameless.name(), nameless.key(), nameless.identified()), ("pid 9".into(), String::new(), "pid 9".into(), false));
-        assert_eq!(Host { pid: 0, path: None }.describe(), "an unknown process");
-        assert_eq!(Host { pid: 0, path: None }.key(), "unknown");
+        assert_eq!(Host { pid: 0, path: None, started: 0 }.describe(), "an unknown process");
+        assert_eq!(Host { pid: 0, path: None, started: 0 }.key(), "unknown");
         assert_eq!(bundle_of(Path::new("/usr/bin/node")), None);
-        let versioned = Host { pid: 10, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.296")) };
+        let versioned = Host { pid: 10, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.296")), started: 0 };
         assert_eq!((versioned.name(), versioned.key()), ("claude".to_string(), "/Users/x/.local/share/claude".to_string()));
         assert_eq!(versioned.describe(), "claude (/Users/x/.local/share/claude)");
         assert_eq!(program_name(Path::new("/opt/homebrew/bin/node")), "node");
@@ -264,6 +281,7 @@ mod tests {
         assert_eq!(path.canonicalize().ok(), std::env::current_exe().ok().and_then(|exe| exe.canonicalize().ok()));
         let parent = system::parent_of(me).expect("a parent");
         assert!(parent > 0 && parent != me);
+        assert!(system::started_at(me).is_some_and(|started| started > 1_600_000_000));
         let (ours, theirs) = UnixStream::pair().expect("a pair");
         assert_eq!(system::peer_pid(&ours), Some(me));
         drop(theirs);

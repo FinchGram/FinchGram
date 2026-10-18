@@ -16,7 +16,7 @@ use std::collections::{HashMap, VecDeque};
 use std::fmt;
 use std::fs::{self, File, OpenOptions};
 use std::io::Write as _;
-use std::os::unix::fs::FileExt;
+use std::os::unix::fs::{FileExt, OpenOptionsExt};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
@@ -58,6 +58,14 @@ const WRITES_IN_FLIGHT: usize = 64;
 /// given up on; such answers are not counted as tries.
 const BUSY_PAUSE: Duration = Duration::from_secs(2);
 const BUSY_PATIENCE: Duration = Duration::from_secs(5 * 60);
+/// open(2)'s O_NOFOLLOW: the path's last part may not be a symbolic link, so that a link put
+/// into the download folder cannot make the engine write into another file (`open_own`).
+#[cfg(any(target_os = "macos", target_os = "ios"))]
+const O_NOFOLLOW: i32 = 0x0100;
+#[cfg(target_os = "linux")]
+const O_NOFOLLOW: i32 = 0o400000;
+#[cfg(not(any(target_os = "macos", target_os = "ios", target_os = "linux")))]
+const O_NOFOLLOW: i32 = 0;
 /// How many streams a transfer may use: `count` per file, and a budget shared by every file of
 /// a folder being downloaded at once, so that several files together use no more than one.
 #[derive(Clone)]
@@ -118,6 +126,11 @@ pub struct Source {
 }
 
 impl Source {
+    /// The address for the log: without an account in it, or a query (a CDN's signed link).
+    fn shown(&self) -> String {
+        log::shown(&self.url)
+    }
+
     /// A GET of the file, or of `range` of it.
     fn request(&self, http: &Http, range: Option<&str>) -> Result<Request<Full<Bytes>>, Error> {
         let mut builder = http.request(Method::GET, &self.url);
@@ -208,6 +221,8 @@ struct State {
 struct Shared {
     /// Streams in flight across every file of the transfer (Streams::budget).
     budget: Arc<Semaphore>,
+    /// The file's size, as the first answer said: every later answer must agree.
+    total: u64,
     /// The parts still to fetch: every chunk not done, and what the first answer left of its.
     pending: Mutex<VecDeque<Part>>,
     /// Bytes handed to the writer so far, the done chunks of a resumed file counted.
@@ -366,12 +381,12 @@ async fn open_once(http: &Http, source: &Source, dest: &Path) -> Result<Head, Er
     let response = http.send(source.request(http, Some(&format!("bytes={from}-{}", to - 1)))?).await?;
     let protocol = Protocol::of(response.version());
     let status = response.status().as_u16();
-    log::line(format!("first {}: {} {status} in {} ms", source.url, protocol.name(), started.elapsed().as_millis()));
+    log::line(format!("first {}: {} {status} in {} ms", source.shown(), protocol.name(), started.elapsed().as_millis()));
     match status {
         206 => {
-            let total = content_range_total(&response);
-            let served = content_range_end(&response).map(|end| end + 1).unwrap_or(to).min(to);
-            Ok(Head { probe: Probe { size: total, ranges: total.is_some(), protocol }, response, from, to: served })
+            let range = range_of(&response, from)?;
+            let served = (range.last + 1).min(to);
+            Ok(Head { probe: Probe { size: range.total, ranges: range.total.is_some(), protocol }, response, from, to: served })
         }
         // 416: nothing at `from`; the file is empty, or smaller than it was when it was stopped.
         416 => {
@@ -414,7 +429,7 @@ async fn open_with_retries(http: &Http, source: &Source, dest: &Path, cancel: &A
             }
             Err(Error::Status(code)) if is_busy(code) => {
                 let since = *busy_since.get_or_insert_with(Instant::now);
-                log::line(format!("first {}: busy, HTTP {code}, for {:.0} s", source.url, since.elapsed().as_secs_f64()));
+                log::line(format!("first {}: busy, HTTP {code}, for {:.0} s", source.shown(), since.elapsed().as_secs_f64()));
                 if since.elapsed() > BUSY_PATIENCE {
                     return Err(Error::Status(code));
                 }
@@ -425,7 +440,7 @@ async fn open_with_retries(http: &Http, source: &Source, dest: &Path, cancel: &A
             }
             Err(err) => {
                 attempts += 1;
-                log::line(format!("first {}: {err}; try {attempts} of {ATTEMPTS}", source.url));
+                log::line(format!("first {}: {err}; try {attempts} of {ATTEMPTS}", source.shown()));
                 if attempts >= ATTEMPTS {
                     return Err(err);
                 }
@@ -441,10 +456,45 @@ fn content_range_total(response: &Response<Incoming>) -> Option<u64> {
     header.trim().rsplit('/').next()?.trim().parse().ok()
 }
 
-/// The last byte a Content-Range covers, "bytes 0-8388607/12345" → 8388607.
-fn content_range_end(response: &Response<Incoming>) -> Option<u64> {
-    let header = response.headers().get("content-range")?.to_str().ok()?;
-    header.trim().strip_prefix("bytes ")?.split('/').next()?.split('-').nth(1)?.trim().parse().ok()
+/// What a 206 answer says it carries: "bytes first-last/total", or "/*" for a total not known.
+struct ContentRange {
+    last: u64,
+    total: Option<u64>,
+}
+
+/// The Content-Range of a 206 answer to a request for the bytes from `from`, read strictly: it
+/// must be there and well formed, start at `from`, end within the total, and the body must be as
+/// long as it says (Content-Length). A cache, a proxy or a server that answers with another
+/// stretch of the file would otherwise have its bytes written as the asked-for ones, and the
+/// chunk marked done.
+fn range_of(response: &Response<Incoming>, from: u64) -> Result<ContentRange, Error> {
+    let Some(header) = response.headers().get("content-range").and_then(|value| value.to_str().ok()).map(str::trim) else {
+        return Err(Error::Protocol("the server answered 206 without a Content-Range".into()));
+    };
+    let bad = || Error::Protocol(format!("the server's Content-Range cannot be read: {header}"));
+    let (unit, rest) = header.split_once(' ').ok_or_else(bad)?;
+    if !unit.eq_ignore_ascii_case("bytes") {
+        return Err(bad());
+    }
+    let (range, total) = rest.split_once('/').ok_or_else(bad)?;
+    let total = match total.trim() {
+        "*" => None,
+        digits => Some(digits.parse::<u64>().map_err(|_| bad())?),
+    };
+    let (first, last) = range.trim().split_once('-').ok_or_else(bad)?;
+    let (first, last) = (first.trim().parse::<u64>().map_err(|_| bad())?, last.trim().parse::<u64>().map_err(|_| bad())?);
+    if first > last || total.is_some_and(|total| last >= total) {
+        return Err(bad());
+    }
+    if first != from {
+        return Err(Error::Protocol(format!("the server answered with the bytes from {first} where those from {from} were asked for")));
+    }
+    if let Some(length) = content_length(response)
+        && length != last - first + 1
+    {
+        return Err(Error::Protocol(format!("the server's Content-Length ({length}) does not match its Content-Range ({header})")));
+    }
+    Ok(ContentRange { last, total })
 }
 
 fn content_length(response: &Response<Incoming>) -> Option<u64> {
@@ -486,7 +536,7 @@ pub fn download(http: &Http, source: &Source, dest: &Path, streams: &Streams, ca
         }
         Probe { size: Some(0), .. } => {
             drop(permit);
-            File::create(&part).map_err(disk)?;
+            open_own(&part, true)?;
             report(0, 0, 0);
         }
         Probe { size, .. } => {
@@ -498,7 +548,7 @@ pub fn download(http: &Http, source: &Source, dest: &Path, streams: &Streams, ca
     let _ = fs::remove_file(&state_path);
     let target = free_path(dest);
     fs::rename(&part, &target).map_err(disk)?;
-    log::line(format!("done {}: {} in {:.1} s", source.url, size_words(fs::metadata(&target).map(|meta| meta.len()).unwrap_or(0)), started.elapsed().as_secs_f64()));
+    log::line(format!("done {}: {} in {:.1} s", source.shown(), size_words(fs::metadata(&target).map(|meta| meta.len()).unwrap_or(0)), started.elapsed().as_secs_f64()));
     Ok(target)
 }
 
@@ -541,7 +591,7 @@ async fn multi(
 ) -> Result<(), Error> {
     let chunk = chunk_size(total);
     let chunks = usize::try_from(total.div_ceil(chunk)).unwrap_or(usize::MAX);
-    let file = OpenOptions::new().read(true).write(true).create(true).truncate(false).open(part).map_err(disk)?;
+    let file = open_own(part, false)?;
     // An earlier try of the same file goes on; anything else starts afresh.
     let earlier = read_state(state_path)
         .filter(|state| state.size == total && state.chunk_size == chunk && state.chunks == chunks && state.done.len() == chunks)
@@ -579,6 +629,7 @@ async fn multi(
     }
     let shared = Arc::new(Shared {
         budget: streams.budget.clone(),
+        total,
         pending: Mutex::new(pending),
         bytes: AtomicU64::new(already),
         abort: AtomicBool::new(false),
@@ -591,7 +642,7 @@ async fn multi(
     let (sender, receiver) = mpsc::channel::<Write>(WRITES_IN_FLIGHT);
     let writer = Writer::start(file, state_path.to_path_buf(), total, chunk, done, receiver, shared.clone());
     let workers = streams.count.min(chunks.max(1));
-    log::line(format!("start {}: {}, {} chunks of {}, {} streams, {} kept", source.url, size_words(total), chunks, size_words(chunk), workers, size_words(already)));
+    log::line(format!("start {}: {}, {} chunks of {}, {} streams, {} kept", source.shown(), size_words(total), chunks, size_words(chunk), workers, size_words(already)));
     let source = Arc::new(source.clone());
     let mut set = tokio::task::JoinSet::new();
     let mut spawned = 0;
@@ -753,7 +804,7 @@ async fn fetch_part(http: &Http, source: &Source, shared: &Shared, writer: &mpsc
             // Busy: every stream holds back a moment, and this one asks again, as often as the
             // file is worth waiting for.
             Err(Error::Status(code)) if is_busy(code) => {
-                log::line(format!("chunk {} of {}: busy, HTTP {code}", part.chunk, source.url));
+                log::line(format!("chunk {} of {}: busy, HTTP {code}", part.chunk, source.shown()));
                 shared.note_busy(code)?;
             }
             // The disk is the one thing trying again will not help. Everything else may pass next
@@ -763,7 +814,7 @@ async fn fetch_part(http: &Http, source: &Source, shared: &Shared, writer: &mpsc
             Err(err @ Error::Disk(_)) => return Err(err),
             Err(err) => {
                 attempts = if part.offset.load(Ordering::Relaxed) > from { 1 } else { attempts + 1 };
-                log::line(format!("chunk {} of {}: {err}; try {attempts} of {ATTEMPTS}", part.chunk, source.url));
+                log::line(format!("chunk {} of {}: {err}; try {attempts} of {ATTEMPTS}", part.chunk, source.shown()));
                 if attempts >= ATTEMPTS {
                     return Err(err);
                 }
@@ -798,7 +849,15 @@ async fn fetch_range(http: &Http, source: &Source, part: &Part, shared: &Shared,
     let mut response = http.send(source.request(http, Some(&format!("bytes={from}-{end}")))?).await?;
     let answered = started.elapsed();
     match response.status().as_u16() {
-        206 => shared.note_fine(),
+        206 => {
+            let range = range_of(&response, from)?;
+            if let Some(total) = range.total
+                && total != shared.total
+            {
+                return Err(Error::Protocol(format!("the file's size on the server changed: {total} bytes where it was {}", shared.total)));
+            }
+            shared.note_fine();
+        }
         200 => return Err(Error::Protocol("the server ignored the range it said it would answer".into())),
         code => return Err(status_error(code)),
     }
@@ -888,7 +947,7 @@ async fn single(part: &Path, size: Option<u64>, cancel: &AtomicBool, progress: &
         return Err(status_error(response.status().as_u16()));
     }
     let total = content_length(&response).or(size).unwrap_or(0);
-    let mut file = File::create(part).map_err(disk)?;
+    let mut file = open_own(part, true)?;
     let body = response.body_mut();
     let mut done: u64 = 0;
     let mut reported = tokio::time::Instant::now();
@@ -929,12 +988,23 @@ fn write_state(path: &Path, total: u64, chunk_size: u64, done: &[bool]) {
     let state = State { size: total, chunk_size, chunks: done.len(), done: done.to_vec() };
     match serde_json::to_string(&state) {
         Ok(text) => {
-            if let Err(err) = fs::write(path, text) {
+            if let Err(err) = open_own(path, true).and_then(|mut file| file.write_all(text.as_bytes()).map_err(disk)) {
                 eprintln!("downloads: cannot write {}: {err}", path.display());
             }
         }
         Err(err) => eprintln!("downloads: cannot describe {}: {err}", path.display()),
     }
+}
+
+/// Open, or make, one of the transfer's own files (`.part`, `.part.json`), `truncate`d or not:
+/// never through a symbolic link, and a regular file once open. A link put into the download
+/// folder under the file's name would otherwise have the engine write into whatever it points at.
+fn open_own(path: &Path, truncate: bool) -> Result<File, Error> {
+    let file = OpenOptions::new().read(true).write(true).create(true).truncate(truncate).custom_flags(O_NOFOLLOW).open(path).map_err(disk)?;
+    if !file.metadata().map_err(disk)?.file_type().is_file() {
+        return Err(Error::Disk(format!("{} is not a regular file", path.display())));
+    }
+    Ok(file)
 }
 
 /// `path` with `suffix` after its name: "film.mkv" → "film.mkv.part".
@@ -1396,6 +1466,59 @@ mod tests {
         let bytes = fs::metadata(&dest).map(|meta| meta.len()).unwrap_or(0);
         eprintln!("result {:?}: {:.1} MB in {seconds:.1} s = {:.1} MB/s on average, {count} streams", result.as_ref().map(|_| ()), bytes as f64 / 1048576.0, bytes as f64 / 1048576.0 / seconds.max(0.001));
         assert!(result.is_ok(), "{result:?}");
+    }
+
+    /// A server that answers every request for the file with `status`, `content_range` and `body`,
+    /// whatever was asked for, for as long as the test runs.
+    fn misanswering_server(status: &'static str, content_range: &'static str, body: &'static [u8]) -> String {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("a port");
+        let url = format!("http://{}/file", listener.local_addr().expect("the port"));
+        std::thread::spawn(move || {
+            for stream in listener.incoming() {
+                let Ok(mut stream) = stream else { break };
+                let mut head = Vec::new();
+                let mut byte = [0u8];
+                while !head.ends_with(b"\r\n\r\n") && std::io::Read::read(&mut stream, &mut byte).is_ok_and(|n| n == 1) {
+                    head.push(byte[0]);
+                }
+                let _ = write!(stream, "HTTP/1.1 {status}\r\nContent-Length: {}\r\nContent-Range: {content_range}\r\nConnection: close\r\n\r\n", body.len());
+                let _ = stream.write_all(body);
+            }
+        });
+        url
+    }
+
+    #[test]
+    fn an_answer_for_other_bytes_than_asked_is_not_taken() {
+        // Asked for the bytes from 0, answered with bytes 2-3 of 4 (and a 4-byte body): a cache or
+        // a proxy gone wrong. Nothing of it is written as the file.
+        let scratch = Scratch::new("misranged");
+        let dest = scratch.path("sample.bin");
+        let url = misanswering_server("206 Partial Content", "bytes 2-3/4", b"BBBB");
+        let outcome = download(http::client(), &Source { url, authorization: None }, &dest, &Streams::new(1), &AtomicBool::new(false), &|_| {});
+        assert!(matches!(&outcome, Err(Error::Protocol(why)) if why.contains("from 0")), "{outcome:?}");
+        assert!(!dest.exists());
+        // A Content-Range that cannot be read, and one whose body is not as long as it says.
+        let url = misanswering_server("206 Partial Content", "bytes=0-3/4", b"BBBB");
+        let outcome = download(http::client(), &Source { url, authorization: None }, &scratch.path("odd.bin"), &Streams::new(1), &AtomicBool::new(false), &|_| {});
+        assert!(matches!(&outcome, Err(Error::Protocol(why)) if why.contains("cannot be read")), "{outcome:?}");
+        let url = misanswering_server("206 Partial Content", "bytes 0-1/4", b"BBBB");
+        let outcome = download(http::client(), &Source { url, authorization: None }, &scratch.path("short.bin"), &Streams::new(1), &AtomicBool::new(false), &|_| {});
+        assert!(matches!(&outcome, Err(Error::Protocol(why)) if why.contains("Content-Length")), "{outcome:?}");
+    }
+
+    #[test]
+    fn a_part_file_that_is_a_link_is_not_written_through() {
+        let scratch = Scratch::new("linked");
+        let victim = scratch.path("victim");
+        fs::write(&victim, b"original").expect("the victim");
+        let dest = scratch.path("film.mkv");
+        std::os::unix::fs::symlink(&victim, with_suffix(&dest, ".part")).expect("a link");
+        let server = serve(pattern(100_000), true, None);
+        let outcome = fetch(&server, &dest, 2);
+        assert!(matches!(&outcome, Err(Error::Disk(why)) if why.contains("symbolic") || why.contains("symlink") || why.contains("not a regular file") || why.contains("Too many levels")), "{outcome:?}");
+        assert_eq!(fs::read(&victim).expect("the victim"), b"original");
+        assert!(!dest.exists());
     }
 
     #[test]

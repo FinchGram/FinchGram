@@ -29,11 +29,19 @@ thread_local! {
     static STATE: RefCell<Option<State>> = const { RefCell::new(None) };
 }
 
+/// A program the system would not name, allowed or turned away for this run: by "pid N", and
+/// only for the process that was, by when it started (peer.rs).
+struct SessionApp {
+    app: McpApp,
+    started: u64,
+}
+
 struct State {
     ui: slint::Weak<MainWindow>,
     settings: Rc<RefCell<Settings>>,
-    /// Programs the system would not name, by "pid N": their answers last while FinchGram runs.
-    session_apps: Vec<McpApp>,
+    /// Programs the system would not name: their answers last while FinchGram runs, and only
+    /// for the process they were given for.
+    session_apps: Vec<SessionApp>,
     /// How many connections each program has open now, by the key it is remembered by.
     live: HashMap<String, usize>,
     /// The picker's words.
@@ -130,7 +138,7 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         change(|settings| settings.mcp.apps.retain(|app| app.path != path.as_str()));
         STATE.with(|slot| {
             if let Some(state) = slot.borrow_mut().as_mut() {
-                state.session_apps.retain(|app| app.path != path.as_str());
+                state.session_apps.retain(|known| known.app.path != path.as_str());
             }
         });
         if let Some(ui) = window() {
@@ -145,9 +153,9 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         });
         STATE.with(|slot| {
             if let Some(state) = slot.borrow_mut().as_mut()
-                && let Some(app) = state.session_apps.iter_mut().find(|app| app.path == path.as_str())
+                && let Some(known) = state.session_apps.iter_mut().find(|known| known.app.path == path.as_str())
             {
-                app.allowed = true;
+                known.app.allowed = true;
             }
         });
         if let Some(ui) = window() {
@@ -173,6 +181,12 @@ pub fn admit(host: Host, answer: mpsc::Sender<Admission>) {
         }
         let key = host.key();
         let now = now();
+        // A program the system could not place at all, not even its process: nothing to ask the
+        // user about, and nothing to remember an answer by.
+        if !host.identified() && host.pid == 0 {
+            super::log("a program the system could not identify at all: turned away");
+            return Some(Admission::Denied);
+        }
         let remembered = {
             let mut settings = state.settings.borrow_mut();
             settings.mcp.app_mut(&key).map(|app| {
@@ -184,9 +198,9 @@ pub fn admit(host: Host, answer: mpsc::Sender<Admission>) {
             state.settings.borrow().save();
             return Some(if allowed { Admission::Allowed } else { Admission::Denied });
         }
-        if let Some(app) = state.session_apps.iter_mut().find(|app| app.path == key) {
-            app.last_used = now;
-            return Some(if app.allowed { Admission::Allowed } else { Admission::Denied });
+        if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.path == key && known.started == host.started) {
+            known.app.last_used = now;
+            return Some(if known.app.allowed { Admission::Allowed } else { Admission::Denied });
         }
         state.asking.push_back((host, answer.clone()));
         None
@@ -244,7 +258,11 @@ pub fn admitted(host: &Host) -> bool {
         let settings = state.settings.borrow();
         let key = host.key();
         settings.mcp.enabled
-            && settings.mcp.app(&key).or_else(|| state.session_apps.iter().find(|app| app.path == key)).is_some_and(|app| app.allowed)
+            && settings
+                .mcp
+                .app(&key)
+                .or_else(|| state.session_apps.iter().find(|known| known.app.path == key && known.started == host.started).map(|known| &known.app))
+                .is_some_and(|app| app.allowed)
     })
 }
 
@@ -297,8 +315,8 @@ pub fn record(host: &Host, activity: Activity) {
         if let Some(app) = state.settings.borrow_mut().mcp.app_mut(&key) {
             app.last_used = now;
         }
-        if let Some(app) = state.session_apps.iter_mut().find(|app| app.path == key) {
-            app.last_used = now;
+        if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.path == key && known.started == host.started) {
+            known.app.last_used = now;
         }
         state.activity.insert(0, entry);
         state.activity.truncate(ACTIVITY_SHOWN);
@@ -390,8 +408,8 @@ fn remember(host: &Host, allowed: bool) {
             settings.mcp.apps.push(app);
             settings.save();
         } else {
-            state.session_apps.retain(|known| known.path != app.path);
-            state.session_apps.push(app);
+            state.session_apps.retain(|known| known.app.path != app.path);
+            state.session_apps.push(SessionApp { app, started: host.started });
         }
     });
 }
@@ -445,7 +463,7 @@ fn show_apps(ui: &MainWindow) {
                     .mcp
                     .apps
                     .iter()
-                    .chain(state.session_apps.iter())
+                    .chain(state.session_apps.iter().map(|known| &known.app))
                     .map(|app| AiApp {
                         name: app.name.clone().into(),
                         path: app.path.clone().into(),

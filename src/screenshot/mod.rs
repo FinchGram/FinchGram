@@ -1228,7 +1228,9 @@ fn file_name() -> String {
     Local::now().format("Screenshot %Y-%m-%d at %H.%M.%S.png").to_string()
 }
 
-fn scratch_dir() -> PathBuf {
+/// Where the displays' captures and a finished screenshot are written; what is left of earlier
+/// runs is swept with the attachments' folder (src/telegram/attachments.rs).
+pub(crate) fn scratch_dir() -> PathBuf {
     std::env::temp_dir().join("finchgram-screenshots")
 }
 

@@ -845,6 +845,11 @@ fn run(id: i32, kind: Kind, cancel: Arc<AtomicBool>, connections: usize) {
 const FILES_AT_ONCE: usize = 6;
 /// Folders listed at once while a tree is walked.
 const LISTINGS_AT_ONCE: usize = 8;
+/// A folder download lists at most this many files, and goes at most this deep under the
+/// folder: a server that answers every listing with more folders would otherwise be followed,
+/// and its entries kept, for as long as it likes.
+const MOST_TREE_FILES: usize = 100_000;
+const MOST_TREE_DEPTH: usize = 64;
 
 /// A file found in a folder's tree: where it is within the folder, its name, its size.
 struct TreeFile {
@@ -885,7 +890,7 @@ fn download_tree(
 ) -> Result<PathBuf, transfer::Error> {
     let files = http.block_on(list_tree(http, server, path, cancel, progress))?;
     let total: u64 = files.iter().map(|file| file.size).sum();
-    log::line(format!("folder {}: {} files, {:.1} MB", server.folder_url(path), files.len(), total as f64 / (1024.0 * 1024.0)));
+    log::line(format!("folder {}: {} files, {:.1} MB", log::shown(&server.folder_url(path)), files.len(), total as f64 / (1024.0 * 1024.0)));
     progress(transfer::Progress { done: 0, total, protocol: transfer::Protocol::Unknown, waiting: 0 });
     let workers = FILES_AT_ONCE.min(files.len().max(1));
     let queue = Mutex::new(VecDeque::from(files));
@@ -951,6 +956,8 @@ fn download_tree(
 async fn list_tree(http: &http::Http, server: &webdav::Server, path: &[String], cancel: &AtomicBool, progress: &(dyn Fn(transfer::Progress) + Sync)) -> Result<Vec<TreeFile>, transfer::Error> {
     let mut files = Vec::new();
     let mut pending: VecDeque<Vec<String>> = VecDeque::from([Vec::new()]);
+    // Each folder once, whatever a server lists twice.
+    let mut seen: BTreeSet<Vec<String>> = BTreeSet::from([Vec::new()]);
     let mut set = tokio::task::JoinSet::new();
     let mut total: u64 = 0;
     loop {
@@ -968,8 +975,16 @@ async fn list_tree(http: &http::Http, server: &webdav::Server, path: &[String], 
             let mut within = folder.clone();
             if entry.is_dir {
                 within.push(entry.name);
-                pending.push_back(within);
+                if within.len() > MOST_TREE_DEPTH {
+                    return Err(transfer::Error::Protocol(format!("the folder's folders go more than {MOST_TREE_DEPTH} deep; download them one at a time")));
+                }
+                if seen.insert(within.clone()) {
+                    pending.push_back(within);
+                }
             } else {
+                if files.len() >= MOST_TREE_FILES {
+                    return Err(transfer::Error::Protocol(format!("the folder holds more than {MOST_TREE_FILES} files; download its folders one at a time")));
+                }
                 total += entry.size;
                 files.push(TreeFile { folder: within, name: entry.name, size: entry.size });
             }

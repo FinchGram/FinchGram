@@ -65,15 +65,64 @@ const NOT_ALLOWED: &str = "This chat is not among the ones the user lets assista
 
 type Found<T> = Box<dyn FnOnce(Result<T, Error>)>;
 
+/// What a call must still be allowed as it goes on. The settings may change while Telegram is
+/// answering (the user turns the server off, turns the program away, narrows the chats or the
+/// writing), so what was allowed when the call began is asked again before each side effect and
+/// before anything is handed over.
+#[derive(Clone)]
+pub struct Guard {
+    /// The program is still allowed, and the server on (src/mcp/access.rs).
+    admitted: Rc<dyn Fn() -> bool>,
+    /// The settings as they are now.
+    policy: Rc<dyn Fn() -> Mcp>,
+}
+
+impl Guard {
+    pub fn new(admitted: impl Fn() -> bool + 'static, policy: impl Fn() -> Mcp + 'static) -> Guard {
+        Guard { admitted: Rc::new(admitted), policy: Rc::new(policy) }
+    }
+
+    /// Why the call may not go on now, if it may not: the server off, or the program turned away;
+    /// with `chat_id`, the chat outside the user's choice now; with `writing`, that kind of
+    /// writing no longer allowed.
+    fn revoked(&self, chat_id: Option<i64>, writing: Option<McpSending>) -> Option<String> {
+        let now = (self.policy)();
+        if !now.enabled {
+            return Some(crate::mcp::protocol::OFF.to_string());
+        }
+        if !(self.admitted)() {
+            return Some(crate::mcp::protocol::TURNED_AWAY.to_string());
+        }
+        if chat_id.is_some_and(|chat_id| !now.allows(chat_id)) {
+            return Some(NOT_ALLOWED.to_string());
+        }
+        match (writing, now.sending) {
+            (Some(McpSending::On), sending) if sending != McpSending::On => Some("The user no longer lets assistants send messages.".to_string()),
+            (Some(McpSending::Drafts), McpSending::Off) => Some("The user no longer lets assistants write drafts.".to_string()),
+            _ => None,
+        }
+    }
+}
+
 /// Where a tool's outcome goes, with what it did for the page's log (access.rs); a failure says
 /// nothing there, except a chat outside the chosen ones, which the user should know was asked for.
 pub struct Reply {
     send: Box<dyn FnOnce(Outcome, Option<Activity>)>,
+    guard: Guard,
 }
 
 impl Reply {
+    /// The outcome, handed over unless the settings have changed meanwhile (`Guard`).
     fn done(self, outcome: Outcome, activity: Activity) {
+        if let Some(why) = self.guard.revoked(None, None) {
+            return (self.send)(Outcome::failed(why), None);
+        }
         (self.send)(outcome, Some(activity));
+    }
+
+    /// Why the call may not go on, if it may not, as the settings are now (`Guard::revoked`).
+    fn revoked(&self, chat_id: i64, writing: Option<McpSending>) -> Option<String> {
+        self.guard.revoked(Some(chat_id), writing)
     }
 
     fn failed(self, reason: impl Into<String>) {
@@ -95,10 +144,10 @@ enum Refusal {
     Other(String),
 }
 
-/// Do what `call` asks, within `policy`, and give `reply` the outcome, now or once TDLib has
-/// answered. UI thread.
-pub fn call(ui: &MainWindow, call: ToolCall, policy: Mcp, reply: impl FnOnce(Outcome, Option<Activity>) + 'static) {
-    let reply = Reply { send: Box::new(reply) };
+/// Do what `call` asks, within `policy` (and within the settings as they are later, `guard`), and
+/// give `reply` the outcome, now or once TDLib has answered. UI thread.
+pub fn call(ui: &MainWindow, call: ToolCall, policy: Mcp, guard: Guard, reply: impl FnOnce(Outcome, Option<Activity>) + 'static) {
+    let reply = Reply { send: Box::new(reply), guard };
     if !policy.enabled {
         return reply.failed(crate::mcp::protocol::OFF);
     }
@@ -440,6 +489,9 @@ fn download_media(policy: Mcp, names: Names, chat_id: i64, message_id: i64, repl
                     Ok(_) => return reply.failed("This chat restricts saving its content, so its media stays in FinchGram."),
                     Err(err) => return reply.failed(telegram_error("check the message", err)),
                 }
+                if let Some(why) = reply.revoked(chat.id, None) {
+                    return reply.failed(why);
+                }
                 let request = json!({
                     "@type": "downloadFile", "file_id": target.file_id, "priority": DOWNLOAD_PRIORITY, "offset": 0, "limit": 0, "synchronous": true,
                 });
@@ -451,6 +503,9 @@ fn download_media(policy: Mcp, names: Names, chat_id: i64, message_id: i64, repl
                     };
                     if !file.local.is_downloading_completed || file.local.path.is_empty() {
                         return reply.failed("The download did not finish.");
+                    }
+                    if let Some(why) = reply.revoked(chat.id, None) {
+                        return reply.failed(why);
                     }
                     match deliver(&target, &file) {
                         Ok(outcome) => reply.done(outcome, Activity::about(ActivityKind::Media, title)),
@@ -562,6 +617,9 @@ fn write_message(policy: Mcp, names: Names, chat_id: i64, text: String, reply_to
                 json!({ "@type": "inputMessageReplyToMessage", "message_id": message_id, "quote": null, "checklist_task_id": 0, "poll_option_id": "" })
             });
             let title = store::with(|store| store.title(&chat, &names)).unwrap_or_default();
+            if let Some(why) = reply.revoked(chat.id, Some(if sending { McpSending::On } else { McpSending::Drafts })) {
+                return reply.failed(why);
+            }
             if sending {
                 // The user's own draft in the chat stays: this is not it being sent.
                 let request = json!({
@@ -660,6 +718,9 @@ fn delete_message(policy: Mcp, names: Names, chat_id: i64, message_id: i64, repl
                     }
                     Err(err) => return reply.failed(telegram_error("check the message", err)),
                 }
+                if let Some(why) = reply.revoked(chat.id, Some(McpSending::On)) {
+                    return reply.failed(why);
+                }
                 let request = json!({ "@type": "deleteMessages", "chat_id": chat.id, "message_ids": [message_id], "revoke": true });
                 send(request, move |answer| match answer {
                     Ok(_) => {
@@ -680,6 +741,9 @@ fn mark_read(policy: Mcp, names: Names, chat_id: i64, message_ids: Vec<i64>, rep
             Err(refusal) => return reply.refuse(refusal),
         };
         let title = store::with(|store| store.title(&chat, &names)).unwrap_or_default();
+        if let Some(why) = reply.revoked(chat.id, None) {
+            return reply.failed(why);
+        }
         let count = message_ids.len();
         let request = json!({
             "@type": "viewMessages", "chat_id": chat.id, "message_ids": message_ids,
@@ -1150,6 +1214,36 @@ mod tests {
         });
         message_sent(8, &message(r#"{"@type":"messageText","text":{"@type":"formattedText","text":"hi","entities":[]}}"#), false);
         assert_eq!(seen.borrow().last(), Some(&Err("Telegram did not send the message.".to_string())));
+    }
+
+    #[test]
+    fn a_guard_says_why_a_call_may_not_go_on() {
+        let policy = Rc::new(RefCell::new(Mcp { enabled: true, ..Mcp::default() }));
+        let admitted = Rc::new(std::cell::Cell::new(true));
+        let guard = Guard::new(
+            {
+                let admitted = admitted.clone();
+                move || admitted.get()
+            },
+            {
+                let policy = policy.clone();
+                move || policy.borrow().clone()
+            },
+        );
+        assert_eq!(guard.revoked(Some(42), Some(McpSending::On)), None);
+        policy.borrow_mut().sending = McpSending::Drafts;
+        assert!(guard.revoked(Some(42), Some(McpSending::On)).is_some_and(|why| why.contains("send")));
+        assert_eq!(guard.revoked(Some(42), Some(McpSending::Drafts)), None);
+        policy.borrow_mut().sending = McpSending::Off;
+        assert!(guard.revoked(Some(42), Some(McpSending::Drafts)).is_some_and(|why| why.contains("drafts")));
+        assert_eq!(guard.revoked(Some(42), None), None);
+        policy.borrow_mut().scope = McpScope::Chosen;
+        assert_eq!(guard.revoked(Some(42), None).as_deref(), Some(NOT_ALLOWED));
+        assert_eq!(guard.revoked(None, None), None);
+        admitted.set(false);
+        assert_eq!(guard.revoked(None, None).as_deref(), Some(crate::mcp::protocol::TURNED_AWAY));
+        policy.borrow_mut().enabled = false;
+        assert_eq!(guard.revoked(None, None).as_deref(), Some(crate::mcp::protocol::OFF));
     }
 
     #[test]

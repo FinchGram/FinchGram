@@ -11,7 +11,7 @@
 
 use std::cell::RefCell;
 use std::path::{Path, PathBuf};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde_json::{Value, json};
 use slint::{ComponentHandle, Image, ModelRc, VecModel};
@@ -49,6 +49,9 @@ struct Item {
     kind: Kind,
     /// Its file could not be read: it cannot be sent.
     unreadable: bool,
+    /// The file is the app's own, written for this card (a pasted picture, a screenshot): it goes
+    /// with the card unless it is sent (`discard`).
+    temporary: bool,
     width: i32,
     height: i32,
     duration: i32,
@@ -82,6 +85,7 @@ thread_local! {
 }
 
 pub fn connect(ui: &MainWindow) {
+    sweep_scratch();
     let attachments = ui.global::<Attachments>();
     attachments.on_choose(|kind| choose(kind == AttachKind::File));
     attachments.on_add_more(|| {
@@ -120,19 +124,22 @@ fn choose(files_only: bool) {
     }
     platform::choose_files(!files_only, move |paths| {
         if !paths.is_empty() {
-            add(paths, files_only);
+            add(paths, files_only, false);
         }
     });
 }
 
 /// Files chosen, dropped or pasted: into the card, which opens for the chat in front if it was
 /// closed. `as_files`: they were asked for as files, and go as such whatever they are.
-fn add(paths: Vec<PathBuf>, as_files: bool) {
+/// `temporary`: they are the app's own (a pasted picture, a screenshot), and go with the card
+/// unless sent.
+fn add(paths: Vec<PathBuf>, as_files: bool, temporary: bool) {
     let Some(chat_id) = open_chat() else { return };
     let mut loads = Vec::new();
     STATE.with(|state| {
         let mut state = state.borrow_mut();
         if state.open != Some(chat_id) {
+            discard(&state.items);
             *state = State { open: Some(chat_id), grouped: true, ..State::default() };
         }
         if as_files {
@@ -148,7 +155,7 @@ fn add(paths: Vec<PathBuf>, as_files: bool) {
             };
             let kind = if unreadable { Kind::File } else { kind_of(&path) };
             let (width, height) = if kind == Kind::Photo { image::image_dimensions(&path).map(|(w, h)| (w as i32, h as i32)).unwrap_or((0, 0)) } else { (0, 0) };
-            state.items.push(Item { id, path: path.clone(), name, size, kind, unreadable, width, height, duration: 0, still: None, picture: None });
+            state.items.push(Item { id, path: path.clone(), name, size, kind, unreadable, temporary, width, height, duration: 0, still: None, picture: None });
             if !unreadable {
                 loads.push((id, path, kind));
             }
@@ -190,7 +197,7 @@ pub(super) fn add_screenshot(path: PathBuf) {
     if open_chat().is_none() {
         return;
     }
-    add(vec![path], false);
+    add(vec![path], false, true);
     STATE.with(|state| {
         let mut state = state.borrow_mut();
         state.screenshot = state.items.len() == 1;
@@ -211,7 +218,10 @@ fn set_picture(id: i32, picture: Option<Image>) {
 fn remove(id: i32) {
     let empty = STATE.with(|state| {
         let mut state = state.borrow_mut();
-        state.items.retain(|item| item.id != id);
+        if let Some(at) = state.items.iter().position(|item| item.id == id) {
+            discard(&state.items[at..=at]);
+            state.items.remove(at);
+        }
         state.items.is_empty()
     });
     if empty {
@@ -221,11 +231,13 @@ fn remove(id: i32) {
     }
 }
 
-/// Close the card and forget what it held.
+/// Close the card and forget what it held. (After a send the items are gone already, and their
+/// files stay for TDLib to upload: `sweep_scratch` takes them later.)
 fn cancel() {
     STATE.with(|state| {
         let mut state = state.borrow_mut();
         state.open = None;
+        discard(&state.items);
         state.items.clear();
         state.caption.clear();
     });
@@ -253,7 +265,7 @@ pub fn escape() -> bool {
 fn paste() -> bool {
     let files = platform::pasteboard_files();
     if !files.is_empty() {
-        add(files, false);
+        add(files, false, false);
         return true;
     }
     let Some(png) = platform::pasteboard_image() else { return false };
@@ -261,7 +273,7 @@ fn paste() -> bool {
     if std::fs::create_dir_all(scratch_dir()).and_then(|()| std::fs::write(&path, png)).is_err() {
         return false;
     }
-    add(vec![path], false);
+    add(vec![path], false, true);
     true
 }
 
@@ -301,7 +313,7 @@ fn flush_dropped() {
     });
     show_drop_zone();
     if drop_allowed() && !paths.is_empty() {
-        add(paths, false);
+        add(paths, false, false);
     }
 }
 
@@ -554,6 +566,39 @@ fn scratch_dir() -> PathBuf {
     std::env::temp_dir().join("finchgram-attachments")
 }
 
+/// The app's own files among `items` go: the pasted pictures and screenshots (`temporary`) and
+/// every video's still, written for the card and not sent. The user's own files are never
+/// touched.
+fn discard(items: &[Item]) {
+    for item in items {
+        if item.temporary {
+            let _ = std::fs::remove_file(&item.path);
+        }
+        if let Some(still) = &item.still {
+            let _ = std::fs::remove_file(still);
+        }
+    }
+}
+
+/// How old a file of the scratch folders must be to be taken by `sweep_scratch`.
+const SCRATCH_KEPT: Duration = Duration::from_secs(24 * 60 * 60);
+
+/// What earlier runs left in the scratch folders: the pasted pictures, screenshots and stills of
+/// what was sent, which TDLib reads while it uploads them and so cannot go with the card. They go
+/// once they are a day old, at the start.
+fn sweep_scratch() {
+    let old = SystemTime::now().checked_sub(SCRATCH_KEPT).unwrap_or(SystemTime::UNIX_EPOCH);
+    for folder in [scratch_dir(), crate::screenshot::scratch_dir()] {
+        let Ok(entries) = std::fs::read_dir(&folder) else { continue };
+        for entry in entries.flatten() {
+            let Ok(metadata) = entry.metadata() else { continue };
+            if metadata.modified().is_ok_and(|modified| modified < old) {
+                let _ = if metadata.is_dir() { std::fs::remove_dir_all(entry.path()) } else { std::fs::remove_file(entry.path()) };
+            }
+        }
+    }
+}
+
 fn unix_now() -> u64 {
     SystemTime::now().duration_since(UNIX_EPOCH).map(|since| since.as_millis() as u64).unwrap_or(0)
 }
@@ -572,7 +617,7 @@ mod tests {
 
     #[test]
     fn a_view_once_photo_and_a_timed_video_say_so() {
-        let photo = Item { id: 1, path: "/a/p.jpg".into(), name: "p.jpg".into(), size: 1, kind: Kind::Photo, unreadable: false, width: 4, height: 3, duration: 0, still: None, picture: None };
+        let photo = Item { id: 1, path: "/a/p.jpg".into(), name: "p.jpg".into(), size: 1, kind: Kind::Photo, unreadable: false, temporary: false, width: 4, height: 3, duration: 0, still: None, picture: None };
         let content = media_content(&photo, Some("hi".into()), -1);
         assert_eq!(content["@type"], "inputMessagePhoto");
         assert_eq!(content["self_destruct_type"]["@type"], "messageSelfDestructTypeImmediately");
