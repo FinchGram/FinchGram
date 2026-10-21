@@ -4,7 +4,7 @@
 
 <p align="center"><img src="../ui/logo/png/FinchGram-icon-128.png" width="96" alt="FinchGram"></p>
 
-**미디어 센터를 갖춘 Telegram 데스크톱 클라이언트. Rust와 [Slint](https://slint.dev)로 만들었습니다.** GPL-3.0
+**초능력을 갖춘 Telegram 데스크톱 클라이언트. Rust와 [Slint](https://slint.dev)로 만들었습니다.** GPL-3.0
 오픈 소스입니다. 지금은 Apple silicon macOS용이고, Windows와 Linux는 나중에 지원합니다.
 
 FinchGram은 Telegram 공식 라이브러리 [TDLib](https://core.telegram.org/tdlib)을 통해 Telegram과 통신하며

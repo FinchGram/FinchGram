@@ -4,7 +4,7 @@
 
 <p align="center"><img src="../ui/logo/png/FinchGram-icon-128.png" width="96" alt="FinchGram"></p>
 
-**Un client Telegram de bureau avec un centre multimédia, en Rust et [Slint](https://slint.dev).**
+**Un client Telegram de bureau avec des superpouvoirs, en Rust et [Slint](https://slint.dev).**
 Libre, sous GPL-3.0. Aujourd'hui pour macOS sur Apple silicon ; Windows et Linux plus tard.
 
 FinchGram parle à Telegram par [TDLib](https://core.telegram.org/tdlib), la bibliothèque de Telegram

@@ -4,7 +4,7 @@
 
 <p align="center"><img src="../ui/logo/png/FinchGram-icon-128.png" width="96" alt="FinchGram"></p>
 
-**عميل Telegram لسطح المكتب مع مركز وسائط، مكتوب بـ Rust و[Slint](https://slint.dev).** مفتوح المصدر برخصة GPL-3.0.
+**عميل Telegram لسطح المكتب بقدرات خارقة، مكتوب بـ Rust و[Slint](https://slint.dev).** مفتوح المصدر برخصة GPL-3.0.
 اليوم لنظام macOS على Apple silicon؛ وWindows وLinux لاحقًا.
 
 يتواصل FinchGram مع Telegram عبر [TDLib](https://core.telegram.org/tdlib)، مكتبة Telegram نفسها، ويلتزم

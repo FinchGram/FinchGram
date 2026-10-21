@@ -1,4 +1,4 @@
-//! FinchGram — an open-source Telegram desktop client with a media center.
+//! FinchGram — an open-source Telegram desktop client with superpowers.
 //!
 //! This is the shell: the pages, the settings and the app's state. Telegram itself is reached only
 //! through finchgram-tdlib, a separate program next to this executable (src/telegram/,

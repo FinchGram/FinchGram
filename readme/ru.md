@@ -4,7 +4,7 @@
 
 <p align="center"><img src="../ui/logo/png/FinchGram-icon-128.png" width="96" alt="FinchGram"></p>
 
-**Настольный клиент Telegram с медиацентром, на Rust и [Slint](https://slint.dev).** Открытый исходный
+**Настольный клиент Telegram с суперспособностями, на Rust и [Slint](https://slint.dev).** Открытый исходный
 код под GPL-3.0. Сегодня — macOS на Apple silicon; Windows и Linux позже.
 
 FinchGram общается с Telegram через [TDLib](https://core.telegram.org/tdlib), собственную библиотеку

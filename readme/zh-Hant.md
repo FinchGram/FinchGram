@@ -4,7 +4,7 @@
 
 <p align="center"><img src="../ui/logo/png/FinchGram-icon-128.png" width="96" alt="FinchGram"></p>
 
-**一個帶媒體中心的 Telegram 桌面客戶端，用 Rust 和 [Slint](https://slint.dev) 寫成。** 開源，GPL-3.0 授權。
+**一個有超能力的 Telegram 桌面客戶端，用 Rust 和 [Slint](https://slint.dev) 寫成。** 開源，GPL-3.0 授權。
 現在支援 Apple silicon 的 macOS，Windows 和 Linux 之後再做。
 
 FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/tdlib) 和 Telegram 通訊，並遵守
