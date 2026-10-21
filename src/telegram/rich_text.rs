@@ -69,7 +69,7 @@ pub fn markdown(text: &FormattedText) -> Option<String> {
             TextEntityType::Code | TextEntityType::Pre | TextEntityType::PreCode {} => Style::Code,
             TextEntityType::BlockQuote | TextEntityType::ExpandableBlockQuote => Style::Quote,
             TextEntityType::Url => Style::Link(web_address(&words)),
-            TextEntityType::TextUrl { url } => Style::Link(url.clone()),
+            TextEntityType::TextUrl { url } => Style::Link(if same_address(&words, url) { url.clone() } else { format!("{HIDDEN}{url}") }),
             TextEntityType::EmailAddress => Style::Link(format!("mailto:{words}")),
             TextEntityType::Mention => Style::Link(format!("tg://resolve?domain={}", words.trim_start_matches('@'))),
             TextEntityType::MentionName { user_id } => Style::Link(format!("tg://user?id={user_id}")),
@@ -189,6 +189,22 @@ fn destination(target: &str) -> String {
     target.replace('\\', "%5C").replace('<', "%3C").replace('>', "%3E").replace(' ', "%20").replace('\n', "%0A")
 }
 
+/// Before the address of a link whose words are not that address ("apple.com" going to
+/// example.org): the chat window asks before opening such a link, shown where it goes
+/// (conversation.rs, chats.rs). A link whose words are its address opens at once.
+pub const HIDDEN: &str = "hidden:";
+
+/// Whether `words` are `url` itself, as people write addresses: without the scheme, or the
+/// slash at the end, or in capitals.
+fn same_address(words: &str, url: &str) -> bool {
+    let plain = |address: &str| {
+        let address = address.trim().to_lowercase();
+        let address = address.strip_prefix("https://").or_else(|| address.strip_prefix("http://")).unwrap_or(&address);
+        address.trim_end_matches('/').to_string()
+    };
+    plain(words) == plain(url)
+}
+
 /// A web address as written in a message ("example.org/page"), with its scheme.
 fn web_address(words: &str) -> String {
     if words.contains("://") { words.to_string() } else { format!("https://{words}") }
@@ -250,11 +266,27 @@ mod tests {
             &[(0, 2, TextEntityType::Bold), (1, 2, TextEntityType::Italic), (0, 3, TextEntityType::TextUrl { url: "https://example.org/a b".into() })],
         );
         assert!(styled_text(&formatted).is_some());
-        assert!(markdown(&formatted).unwrap().contains("(<https://example.org/a%20b>)"));
+        assert!(markdown(&formatted).unwrap().contains("(<hidden:https://example.org/a%20b>)"));
         for kind in [TextEntityType::Underline, TextEntityType::Strikethrough, TextEntityType::Code, TextEntityType::BlockQuote] {
             let formatted = text("one two\nthree", &[(0, 3, TextEntityType::Bold), (2, 11, kind)]);
             assert!(styled_text(&formatted).is_some(), "{:?}", markdown(&formatted));
         }
+    }
+
+    #[test]
+    fn a_link_is_hidden_unless_its_words_are_its_address() {
+        let link = |words: &str, url: &str| {
+            let formatted = text(words, &[(0, words.encode_utf16().count() as i32, TextEntityType::TextUrl { url: url.into() })]);
+            markdown(&formatted).unwrap()
+        };
+        assert!(link("https://example.org/", "https://example.org/").contains("(<https://example.org/>)"));
+        assert!(link("example.org", "https://example.org").contains("(<https://example.org>)"));
+        assert!(link("Example.org/", "http://example.org").contains("(<http://example.org>)"));
+        assert!(link("apple.com", "https://example.org/login").contains("(<hidden:https://example.org/login>)"));
+        assert!(link("the docs", "https://example.org/docs").contains("(<hidden:https://example.org/docs>)"));
+        // A plain address in the words is not hidden: it is what it says.
+        let formatted = text("see example.org/page", &[(4, 16, TextEntityType::Url)]);
+        assert!(markdown(&formatted).unwrap().contains("(<https://example.org/page>)"));
     }
 
     #[test]

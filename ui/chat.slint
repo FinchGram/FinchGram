@@ -278,9 +278,14 @@ export global ChatMenuWords {
     public pure function leave(kind: ChatKind) -> string { return kind == ChatKind.channel ? @tr("Leave channel") : @tr("Leave group"); }
     public pure function delete() -> string { return @tr("Delete chat"); }
     public pure function title(what: ChatConfirm, kind: ChatKind, name: string) -> string {
+        if what == ChatConfirm.link { return @tr("Open this link?"); }
         if what == ChatConfirm.block { return @tr("Block {0}?", name); }
         if what == ChatConfirm.leave { return kind == ChatKind.channel ? @tr("Leave the channel {0}?", name) : @tr("Leave the group {0}?", name); }
         return @tr("Delete the chat with {0}?", name);
+    }
+    // A link whose words are not its address: where it goes (Chats.confirm-title holds the site).
+    public pure function link-lead(site: string) -> string {
+        return @tr("The message shows other words for it. It goes to {0}.", site);
     }
     public pure function lead(what: ChatConfirm, kind: ChatKind) -> string {
         if what == ChatConfirm.block { return @tr("They will not be able to send you messages. You can unblock them from this menu."); }
@@ -289,6 +294,7 @@ export global ChatMenuWords {
     }
     public pure function revoke(name: string) -> string { return @tr("Also delete for {0}", name); }
     public pure function action(what: ChatConfirm) -> string {
+        if what == ChatConfirm.link { return @tr("Open"); }
         if what == ChatConfirm.block { return @tr("Block"); }
         if what == ChatConfirm.leave { return @tr("Leave"); }
         return @tr("Delete");

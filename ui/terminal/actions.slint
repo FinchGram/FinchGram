@@ -607,9 +607,13 @@ component ChatQuestion inherits Dialog {
             }
         }
         T {
-            text: ChatMenuWords.lead(Chats.question, Chats.confirm-kind);
+            text: Chats.question == ChatConfirm.link ? ChatMenuWords.link-lead(Chats.confirm-title) : ChatMenuWords.lead(Chats.question, Chats.confirm-kind);
             color: P.muted;
             wrap: word-wrap;
+        }
+        if Chats.question == ChatConfirm.link: T {
+            text: Chats.confirm-link;
+            wrap: char-wrap;
         }
         if Chats.confirm-revoke-choice: Rectangle {
             height: choice.preferred-height;

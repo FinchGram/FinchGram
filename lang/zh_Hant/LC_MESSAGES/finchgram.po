@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-21 04:47+0000\n"
+"POT-Creation-Date: 2026-10-21 05:35+0000\n"
 "Language: zh_Hant\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -59,7 +59,7 @@ msgstr "檢查更新…"
 msgid "Choose recipient…"
 msgstr "轉傳給…"
 
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:684
+#: ui/broadsheet/actions.slint:226 ui/telegram.slint:685
 #: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "儲存的訊息"
@@ -83,19 +83,19 @@ msgstr "補充說明（選填）"
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
 #: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1390
 #: ui/pages/profile.slint:174 ui/terminal/actions.slint:385
-#: ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
-#: ui/workbench/actions.slint:720
+#: ui/terminal/actions.slint:642 ui/workbench/actions.slint:457
+#: ui/workbench/actions.slint:727
 msgid "Cancel"
 msgstr "取消"
 
 #: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2226
-#: ui/chat.slint:800 ui/chat.slint:881 ui/terminal/terminal.slint:1417
+#: ui/chat.slint:806 ui/chat.slint:887 ui/terminal/terminal.slint:1417
 #: ui/workbench/conversation.slint:1390
 msgid "Report"
 msgstr "檢舉"
 
 #: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2217
-#: ui/chat.slint:373 ui/chat.slint:801 ui/terminal/terminal.slint:1409
+#: ui/chat.slint:379 ui/chat.slint:807 ui/terminal/terminal.slint:1409
 #: ui/workbench/conversation.slint:1378
 msgid "Delete"
 msgstr "刪除"
@@ -139,7 +139,7 @@ msgid "All"
 msgstr "全部"
 
 #: ui/broadsheet/broadsheet.slint:493 ui/pages/ai-access.slint:102
-#: ui/telegram.slint:686 ui/workbench/sidebar.slint:410
+#: ui/telegram.slint:687 ui/workbench/sidebar.slint:410
 msgid "All chats"
 msgstr "所有聊天"
 
@@ -278,7 +278,7 @@ msgstr "隱藏傳送者名稱"
 msgid "Shift-click to select a range"
 msgstr "按住 Shift 點一下可選取一段範圍"
 
-#: ui/broadsheet/broadsheet.slint:2201 ui/chat.slint:799
+#: ui/broadsheet/broadsheet.slint:2201 ui/chat.slint:805
 #: ui/workbench/conversation.slint:1356
 msgid "Forward"
 msgstr "轉傳"
@@ -332,89 +332,102 @@ msgid "Delete chat"
 msgstr "刪除聊天"
 
 #: ui/chat.slint:281
+msgid "Open this link?"
+msgstr "打開這個連結？"
+
+#: ui/chat.slint:282
 msgid "Block {0}?"
 msgstr "封鎖 {0}？"
 
-#: ui/chat.slint:282
+#: ui/chat.slint:283
 msgid "Leave the channel {0}?"
 msgstr "退出頻道 {0}？"
 
-#: ui/chat.slint:282
+#: ui/chat.slint:283
 msgid "Leave the group {0}?"
 msgstr "退出群組 {0}？"
 
-#: ui/chat.slint:283
+#: ui/chat.slint:284
 msgid "Delete the chat with {0}?"
 msgstr "刪除與 {0} 的聊天？"
 
-#: ui/chat.slint:286
+#: ui/chat.slint:288
+msgid "The message shows other words for it. It goes to {0}."
+msgstr "訊息裡顯示的文字和它不一樣。它指向 {0}。"
+
+#: ui/chat.slint:291
 msgid ""
 "They will not be able to send you messages. You can unblock them from this "
 "menu."
 msgstr "對方將無法傳訊息給你。可以在這個選單裡解除封鎖。"
 
-#: ui/chat.slint:287
+#: ui/chat.slint:292
 msgid "You will stop getting its posts."
 msgstr "你將不再收到它的貼文。"
 
-#: ui/chat.slint:287
+#: ui/chat.slint:292
 msgid "You will stop getting its messages."
 msgstr "你將不再收到它的訊息。"
 
-#: ui/chat.slint:288
+#: ui/chat.slint:293
 msgid "The chat and its messages go from your list."
 msgstr "這個聊天和它的訊息會從你的列表裡移除。"
 
-#: ui/chat.slint:290 ui/chat.slint:876
+#: ui/chat.slint:295 ui/chat.slint:882
 msgid "Also delete for {0}"
 msgstr "同時為 {0} 刪除"
 
-#: ui/chat.slint:292
+#: ui/chat.slint:297 ui/pages/downloads.slint:1076
+#: ui/pages/downloads.slint:1652
+msgid "Open"
+msgstr "打開"
+
+#: ui/chat.slint:298
 msgid "Block"
 msgstr "封鎖"
 
-#: ui/chat.slint:293
+#: ui/chat.slint:299
 msgid "Leave"
 msgstr "退出"
 
-#: ui/chat.slint:299
+#: ui/chat.slint:305
 msgid "Attach"
 msgstr "附件"
 
-#: ui/chat.slint:300
+#: ui/chat.slint:306
 msgid "Photo or Video"
 msgstr "照片或影片"
 
-#: ui/chat.slint:301 ui/format.slint:212
+#: ui/chat.slint:307 ui/format.slint:212
 msgid "File"
 msgstr "檔案"
 
-#: ui/chat.slint:302
+#: ui/chat.slint:308
 msgid "Poll"
 msgstr "投票"
 
-#: ui/chat.slint:303
+#: ui/chat.slint:309
 msgid "Not available yet"
 msgstr "尚未開放"
 
-#: ui/chat.slint:304 ui/chat.slint:307
+#: ui/chat.slint:310 ui/chat.slint:313
 msgid "Not allowed in this group"
 msgstr "這個群組不允許"
 
-#: ui/chat.slint:305
+#: ui/chat.slint:311
 msgid "You can't send messages in this group"
 msgstr "你無法在這個群組傳送訊息"
 
-#: ui/chat.slint:306
+#: ui/chat.slint:312
 msgid "Screenshot"
 msgstr "截圖"
 
 #. The card shown when the system has not let FinchGram see the screen.
-#: ui/chat.slint:309
+#: ui/chat.slint:315
 msgid "Screen Recording is off for FinchGram"
 msgstr "FinchGram 沒有「螢幕錄製」權限"
 
-#: ui/chat.slint:310
+#: ui/chat.slint:316
 msgid ""
 "Screenshots need Screen Recording in System Settings → Privacy & Security. "
 "If FinchGram is already in the list, turn it off and on again."
@@ -422,313 +435,313 @@ msgstr ""
 "截圖需要在「系統設定 › 隱私權與安全性」裡允許螢幕錄製。如果列表裡已經有 "
 "FinchGram，把它關掉再打開一次。"
 
-#: ui/chat.slint:311
+#: ui/chat.slint:317
 msgid "Open System Settings"
 msgstr "打開系統設定"
 
-#: ui/chat.slint:312
+#: ui/chat.slint:318
 msgid "Not now"
 msgstr "稍後再說"
 
-#: ui/chat.slint:313
+#: ui/chat.slint:319
 msgid "↑↓ Choose · Return Open · Esc Close"
 msgstr "↑↓ 選擇 · Return 打開 · Esc 關閉"
 
-#: ui/chat.slint:319
+#: ui/chat.slint:325
 msgid "Send Screenshot"
 msgstr "傳送截圖"
 
-#: ui/chat.slint:322
+#: ui/chat.slint:328
 msgid "Send File"
 msgstr "傳送檔案"
 
-#: ui/chat.slint:322
+#: ui/chat.slint:328
 msgid "Send {n} Files"
 msgid_plural "Send {n} Files"
 msgstr[0] "傳送 {n} 個檔案"
 
-#: ui/chat.slint:325
+#: ui/chat.slint:331
 msgid "Send Video"
 msgstr "傳送影片"
 
-#: ui/chat.slint:325
+#: ui/chat.slint:331
 msgid "Send {n} Videos"
 msgid_plural "Send {n} Videos"
 msgstr[0] "傳送 {n} 部影片"
 
-#: ui/chat.slint:327
+#: ui/chat.slint:333
 msgid "Send Photo"
 msgstr "傳送照片"
 
-#: ui/chat.slint:327
+#: ui/chat.slint:333
 msgid "Send {n} Photos"
 msgid_plural "Send {n} Photos"
 msgstr[0] "傳送 {n} 張照片"
 
-#: ui/chat.slint:329
+#: ui/chat.slint:335
 msgid "Will be sent as {n} albums"
 msgid_plural "Will be sent as {n} albums"
 msgstr[0] "將分成 {n} 組相簿傳送"
 
-#: ui/chat.slint:330
+#: ui/chat.slint:336
 msgid "Album {0} · {1}"
 msgstr "相簿 {0} · {1}"
 
-#: ui/chat.slint:331
+#: ui/chat.slint:337
 msgid "Add more"
 msgstr "再新增"
 
-#: ui/chat.slint:332 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
+#: ui/chat.slint:338 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
 #: ui/pages/downloads.slint:1611
 msgid "Remove"
 msgstr "移除"
 
-#: ui/chat.slint:333
+#: ui/chat.slint:339
 msgid "Add a caption…"
 msgstr "加上說明文字…"
 
-#: ui/chat.slint:334
+#: ui/chat.slint:340
 msgid "Send as photo"
 msgstr "以照片傳送"
 
-#: ui/chat.slint:335
+#: ui/chat.slint:341
 msgid "Send as video"
 msgstr "以影片傳送"
 
-#: ui/chat.slint:336
+#: ui/chat.slint:342
 msgid "Send as file"
 msgstr "以檔案傳送"
 
-#: ui/chat.slint:337
+#: ui/chat.slint:343
 msgid "Group items"
 msgstr "合併為相簿"
 
-#: ui/chat.slint:338
+#: ui/chat.slint:344
 msgid "Self-destruct timer"
 msgstr "自毀計時器"
 
-#: ui/chat.slint:339
+#: ui/chat.slint:345
 msgid "Disappears after it's opened."
 msgstr "對方打開後就會銷毀。"
 
-#: ui/chat.slint:341 ui/pages/settings.slint:767 ui/pages/settings.slint:778
+#: ui/chat.slint:347 ui/pages/settings.slint:767 ui/pages/settings.slint:778
 #: ui/pages/settings.slint:1036
 msgid "Off"
 msgstr "關閉"
 
-#: ui/chat.slint:342
+#: ui/chat.slint:348
 msgid "View once"
 msgstr "只看一次"
 
-#: ui/chat.slint:343
+#: ui/chat.slint:349
 msgid "{0} s"
 msgstr "{0} 秒"
 
-#: ui/chat.slint:345
+#: ui/chat.slint:351
 msgid "Hide with spoiler"
 msgstr "劇透遮罩"
 
-#: ui/chat.slint:347
+#: ui/chat.slint:353
 msgid "Send"
 msgstr "傳送"
 
-#: ui/chat.slint:348
+#: ui/chat.slint:354
 msgid "More send options"
 msgstr "更多傳送選項"
 
-#: ui/chat.slint:349
+#: ui/chat.slint:355
 msgid "Send without sound"
 msgstr "靜音傳送"
 
-#: ui/chat.slint:350
+#: ui/chat.slint:356
 msgid "Schedule message"
 msgstr "排程訊息"
 
-#: ui/chat.slint:353
+#: ui/chat.slint:359
 msgid "Return to send · Esc to cancel"
 msgstr "Return 傳送 · Esc 取消"
 
-#: ui/chat.slint:353
+#: ui/chat.slint:359
 msgid "⌘Return to send · Return for a new line · Esc to cancel"
 msgstr "⌘Return 傳送 · Return 換行 · Esc 取消"
 
-#: ui/chat.slint:355
+#: ui/chat.slint:361
 msgid "Remove the marked items to send"
 msgstr "移除標示的項目後才能傳送"
 
-#: ui/chat.slint:356
+#: ui/chat.slint:362
 msgid "Caption is too long"
 msgstr "說明文字太長"
 
-#: ui/chat.slint:360 ui/chat.slint:361
+#: ui/chat.slint:366 ui/chat.slint:367
 msgid "Files over {0} GB can't be sent"
 msgstr "超過 {0} GB 的檔案無法傳送"
 
-#: ui/chat.slint:362
+#: ui/chat.slint:368
 msgid "Can't read this file"
 msgstr "無法讀取這個檔案"
 
-#: ui/chat.slint:366
+#: ui/chat.slint:372
 msgid "Drop to send as photos"
 msgstr "放開以照片傳送"
 
-#: ui/chat.slint:367
+#: ui/chat.slint:373
 msgid "Drop to send as files"
 msgstr "放開以檔案傳送"
 
-#: ui/chat.slint:368
+#: ui/chat.slint:374
 msgid "Compressed"
 msgstr "壓縮"
 
-#: ui/chat.slint:369
+#: ui/chat.slint:375
 msgid "Original quality"
 msgstr "原始畫質"
 
-#: ui/chat.slint:370
+#: ui/chat.slint:376
 msgid "Cancel upload"
 msgstr "取消上傳"
 
-#: ui/chat.slint:371
+#: ui/chat.slint:377
 msgid "Not sent"
 msgstr "未傳送"
 
-#: ui/chat.slint:372 ui/pages/downloads.slint:651 ui/pages/downloads.slint:1677
+#: ui/chat.slint:378 ui/pages/downloads.slint:651 ui/pages/downloads.slint:1677
 msgid "Retry"
 msgstr "重試"
 
-#: ui/chat.slint:374 ui/pages/downloads.slint:1082
+#: ui/chat.slint:380 ui/pages/downloads.slint:1082
 msgid "Download"
 msgstr "下載"
 
-#: ui/chat.slint:375
+#: ui/chat.slint:381
 msgid "Cancel download"
 msgstr "取消下載"
 
-#: ui/chat.slint:376 ui/pages/downloads.slint:642
+#: ui/chat.slint:382 ui/pages/downloads.slint:642
 msgid "Show in Finder"
 msgstr "在 Finder 中顯示"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:378 ui/pages/downloads.slint:50
+#: ui/chat.slint:384 ui/pages/downloads.slint:50
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
-#: ui/chat.slint:678 ui/terminal/terminal.slint:964
+#: ui/chat.slint:684 ui/terminal/terminal.slint:964
 msgid "Tap to view"
 msgstr "點一下查看"
 
-#: ui/chat.slint:791
+#: ui/chat.slint:797
 msgid "Reply"
 msgstr "回覆"
 
-#: ui/chat.slint:792 ui/pages/downloads.slint:1603
+#: ui/chat.slint:798 ui/pages/downloads.slint:1603
 msgid "Edit"
 msgstr "編輯"
 
-#: ui/chat.slint:793
+#: ui/chat.slint:799
 msgid "Copy Image"
 msgstr "複製圖片"
 
-#: ui/chat.slint:794
+#: ui/chat.slint:800
 msgid "Save Image"
 msgstr "儲存圖片"
 
-#: ui/chat.slint:795
+#: ui/chat.slint:801
 msgid "Save Video"
 msgstr "儲存影片"
 
-#: ui/chat.slint:797
+#: ui/chat.slint:803
 msgctxt "words of a photo or video"
 msgid "Copy Text"
 msgstr "複製文字"
 
-#: ui/chat.slint:798
+#: ui/chat.slint:804
 msgid "Copy Message Link"
 msgstr "複製連結"
 
-#: ui/chat.slint:802
+#: ui/chat.slint:808
 msgid "Select"
 msgstr "選取"
 
-#: ui/chat.slint:807
+#: ui/chat.slint:813
 msgctxt "words of a message"
 msgid "Copy Text"
 msgstr "複製"
 
-#: ui/chat.slint:837
+#: ui/chat.slint:843
 msgid "Text copied to clipboard."
 msgstr "已複製"
 
-#: ui/chat.slint:838
+#: ui/chat.slint:844
 msgid "Link copied to clipboard."
 msgstr "連結已複製"
 
-#: ui/chat.slint:839
+#: ui/chat.slint:845
 msgid "Image copied to clipboard."
 msgstr "圖片已複製"
 
-#: ui/chat.slint:840
+#: ui/chat.slint:846
 msgid "ID copied to clipboard."
 msgstr "ID 已複製"
 
-#: ui/chat.slint:841
+#: ui/chat.slint:847
 msgid "Saved to Downloads"
 msgstr "已儲存到「下載項目」"
 
-#: ui/chat.slint:841 ui/viewer.slint:30
+#: ui/chat.slint:847 ui/viewer.slint:30
 msgid "Saved to Downloads · {0}"
 msgstr "已儲存到「下載項目」· {0}"
 
-#: ui/chat.slint:842
+#: ui/chat.slint:848
 msgid "Reported"
 msgstr "已檢舉"
 
-#: ui/chat.slint:843
+#: ui/chat.slint:849
 msgid "A folder must keep at least one chat."
 msgstr "資料夾裡至少要留一個聊天。"
 
-#: ui/chat.slint:850
+#: ui/chat.slint:856
 msgid "Reply to {0}"
 msgstr "回覆 {0}"
 
-#: ui/chat.slint:851
+#: ui/chat.slint:857
 msgid "Edit message"
 msgstr "編輯訊息"
 
-#: ui/chat.slint:852
+#: ui/chat.slint:858
 msgid "Forward {n} message"
 msgid_plural "Forward {n} messages"
 msgstr[0] "轉傳 {n} 則訊息"
 
-#: ui/chat.slint:856
+#: ui/chat.slint:862
 msgid "From: {0}"
 msgstr "來自 {0}"
 
-#: ui/chat.slint:862
+#: ui/chat.slint:868
 msgid "Deleted message"
 msgstr "訊息已刪除"
 
-#: ui/chat.slint:867
+#: ui/chat.slint:873
 msgid "{0} selected"
 msgstr "已選取 {0} 則"
 
-#: ui/chat.slint:871
+#: ui/chat.slint:877
 msgid "Delete this message?"
 msgstr "刪除這則訊息？"
 
-#: ui/chat.slint:872
+#: ui/chat.slint:878
 msgid "Delete {0} messages?"
 msgstr "刪除 {0} 則訊息？"
 
-#: ui/chat.slint:877
+#: ui/chat.slint:883
 msgid "Also delete for everyone"
 msgstr "同時為所有人刪除"
 
-#: ui/chat.slint:967
+#: ui/chat.slint:973
 msgid "Search in chat"
 msgstr "在聊天中搜尋"
 
-#: ui/chat.slint:969
+#: ui/chat.slint:975
 msgid "No results"
 msgstr "沒有結果"
 
@@ -1594,10 +1607,6 @@ msgstr "已選取 {0} 個項目 · {1}"
 msgid "Clear"
 msgstr "清除"
 
-#: ui/pages/downloads.slint:1076 ui/pages/downloads.slint:1628
-msgid "Open"
-msgstr "打開"
-
 #: ui/pages/downloads.slint:1118
 msgid "This folder is empty"
 msgstr "這個資料夾是空的"
@@ -1635,7 +1644,9 @@ msgstr "新增 WebDAV 伺服器"
 msgid ""
 "The address of the WebDAV server, and the account it gave you. The password "
 "is kept in FinchGram's encrypted database on this Mac."
-msgstr "WebDAV 伺服器的地址，和它給你的帳號。密碼存在這台 Mac 上 FinchGram 的加密資料庫裡。"
+msgstr ""
+"WebDAV 伺服器的地址，和它給你的帳號。密碼存在這台 Mac 上 FinchGram 的加密資料"
+"庫裡。"
 
 #: ui/pages/downloads.slint:1267
 msgid "Address"
@@ -2543,12 +2554,12 @@ msgstr "結束 FinchGram"
 msgid "New message"
 msgstr "新訊息"
 
-#: ui/telegram.slint:685
+#: ui/telegram.slint:686
 msgid "Deleted Account"
 msgstr "已刪除的帳號"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:688
+#: ui/telegram.slint:689
 msgctxt "list separator"
 msgid ", "
 msgstr "、"

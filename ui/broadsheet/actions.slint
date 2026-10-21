@@ -700,10 +700,17 @@ component ChatQuestion inherits Dialog {
             wrap: word-wrap;
         }
         Text {
-            text: ChatMenuWords.lead(Chats.question, Chats.confirm-kind);
+            text: Chats.question == ChatConfirm.link ? ChatMenuWords.link-lead(Chats.confirm-title) : ChatMenuWords.lead(Chats.question, Chats.confirm-kind);
             color: P.muted;
             font-size: 15px;
             wrap: word-wrap;
+        }
+        if Chats.question == ChatConfirm.link: Text {
+            text: Chats.confirm-link;
+            color: P.text;
+            font-family: P.mono;
+            font-size: 14px;
+            wrap: char-wrap;
         }
         if Chats.confirm-revoke-choice: Rectangle {
             height: 22px;

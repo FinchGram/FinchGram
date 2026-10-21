@@ -844,8 +844,13 @@ fn pin(chat_id: i64, list: ChatList, pinned: bool) {
 }
 
 /// A link in a message or in its preview: a chat FinchGram opens itself (by its username, from an
-/// @mention or t.me; a user), else the browser or the mail app.
-fn open_link(url: &str) {
+/// @mention or t.me; a user), else the browser or the mail app. One whose words are not its
+/// address (rich_text::HIDDEN) is asked about first, with the address shown (chats.rs).
+pub(super) fn open_link(url: &str) {
+    if let Some(address) = url.strip_prefix(super::rich_text::HIDDEN) {
+        super::chats::ask_link(address);
+        return;
+    }
     let open_answer = |what: &'static str| {
         move |answer: Result<serde_json::Value, Error>| match answer {
             Ok(chat) => {

@@ -1413,6 +1413,12 @@ fn screenshots() {
             chats.set_confirm_revoke(true);
             chats.set_question(ChatConfirm::Delete);
             save(&window, &name("chat-delete"));
+            // The question before a link whose words are not its address opens.
+            chats.set_confirm_title("evil.example".into());
+            chats.set_confirm_link("https://evil.example/login?account=lin.xia&next=%2Fwallet".into());
+            chats.set_confirm_revoke_choice(false);
+            chats.set_question(ChatConfirm::Link);
+            save(&window, &name("chat-link"));
             chats.set_question(ChatConfirm::None);
             // Workbench's tabs: a right click on the second one, Tech Morning.
             if theme == Theme::Workbench {

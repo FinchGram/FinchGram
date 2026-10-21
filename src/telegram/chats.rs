@@ -180,6 +180,45 @@ fn set_blocked(user_id: i64, blocked: bool) {
     super::send(request, |answer| log_error("block a user", answer));
 }
 
+thread_local! {
+    /// The address a link question is about, until it is answered.
+    static LINK: std::cell::RefCell<Option<String>> = const { std::cell::RefCell::new(None) };
+}
+
+/// A link whose words are not its address (rich_text::HIDDEN) opens only once the user has seen
+/// where it goes: the question, with the address and the site it names.
+pub(super) fn ask_link(url: &str) {
+    let url = url.to_string();
+    super::with_ui(|ui| {
+        QUESTION.with(|question| *question.borrow_mut() = Some((0, crate::ChatConfirm::Link)));
+        LINK.with(|link| *link.borrow_mut() = Some(url.clone()));
+        let chats = ui.global::<Chats>();
+        chats.set_confirm_title(link_site(&url).into());
+        chats.set_confirm_link(url.into());
+        chats.set_confirm_revoke_choice(false);
+        chats.set_confirm_revoke(false);
+        chats.set_question(crate::ChatConfirm::Link);
+    });
+}
+
+/// Where a link goes, for the question: its host, without an account before an @ and without
+/// the port; "Telegram" for a tg:// link; the address of a mailto: link.
+pub(super) fn link_site(url: &str) -> String {
+    if url.starts_with("tg://") {
+        return "Telegram".to_string();
+    }
+    if let Some(address) = url.strip_prefix("mailto:") {
+        return address.split('?').next().unwrap_or(address).to_string();
+    }
+    let rest = url.split("://").nth(1).unwrap_or(url);
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or(rest);
+    let host = authority.rsplit('@').next().unwrap_or(authority);
+    if host.starts_with('[') {
+        return host.find(']').map(|end| host[..=end].to_string()).unwrap_or_else(|| host.to_string());
+    }
+    host.split(':').next().unwrap_or(host).to_string()
+}
+
 /// The question before something that cannot be undone: the chat's name, its kind, and for a
 /// deletion whether the messages can go for the other side too.
 fn ask(chat_id: i64, what: crate::ChatConfirm) {
@@ -206,10 +245,16 @@ fn ask(chat_id: i64, what: crate::ChatConfirm) {
 /// and its tab closes now.
 fn confirm() {
     let Some((chat_id, what)) = QUESTION.with(|question| question.borrow_mut().take()) else { return };
+    let link = LINK.with(|link| link.borrow_mut().take());
     let mut revoke = false;
     super::with_ui(|ui| revoke = ui.global::<Chats>().get_confirm_revoke());
     close_question();
     match what {
+        crate::ChatConfirm::Link => {
+            if let Some(url) = link {
+                conversation::open_link(&url);
+            }
+        }
         crate::ChatConfirm::Block => {
             let user_id = store::with(|store| match store.chats.get(&chat_id).map(|chat| chat.kind) {
                 Some(super::api::ChatType::Private { user_id }) => Some(user_id),
@@ -235,6 +280,7 @@ fn confirm() {
 
 fn close_question() {
     QUESTION.with(|question| question.borrow_mut().take());
+    LINK.with(|link| link.borrow_mut().take());
     super::with_ui(|ui| ui.global::<Chats>().set_question(crate::ChatConfirm::None));
 }
 
@@ -382,6 +428,17 @@ fn ids<'a>(folder: &'a mut Value, field: &str) -> &'a mut Vec<Value> {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn a_links_site_is_its_host_alone() {
+        use super::link_site;
+        assert_eq!(link_site("https://example.org/login?next=1#x"), "example.org");
+        assert_eq!(link_site("http://user:pass@evil.example:8080/"), "evil.example");
+        assert_eq!(link_site("https://[2001:db8::1]:443/x"), "[2001:db8::1]");
+        assert_eq!(link_site("tg://resolve?domain=durov"), "Telegram");
+        assert_eq!(link_site("mailto:someone@example.org?subject=hi"), "someone@example.org");
+        assert_eq!(link_site("example.org/page"), "example.org");
+    }
+
     use super::*;
 
     #[test]

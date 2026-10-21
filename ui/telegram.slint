@@ -62,7 +62,7 @@ export struct ChatRow {
 
 // What a chat's menu asks before doing: blocking a user, leaving a group or channel, deleting a
 // chat (chats.rs).
-export enum ChatConfirm { none, block, leave, delete }
+export enum ChatConfirm { none, block, leave, delete, link }
 
 // How a folder's chats are ordered under the pinned ones, which stay on top: by the newest message
 // (Telegram's own order), by name, or by unread messages, muted chats counting as read. One choice
@@ -126,7 +126,8 @@ export global Chats {
     callback leave(string);                      // a group or a channel
     callback delete-chat(string);                // a chat with a user or a bot
     in-out property <ChatConfirm> question;      // the question open, if any
-    in-out property <string> confirm-title;      // the chat it is about
+    in-out property <string> confirm-title;      // the chat it is about; for a link, the site it goes to
+    in-out property <string> confirm-link;       // a link question: the address, shown whole
     in-out property <ChatKind> confirm-kind;
     in-out property <bool> confirm-revoke-choice;  // deleting: the messages can go for the other side too
     in-out property <bool> confirm-revoke;         // and the box is ticked
