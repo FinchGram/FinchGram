@@ -1266,6 +1266,9 @@ fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name
     downloads.set_form_username(SharedString::new());
     downloads.set_form_password(SharedString::new());
     save(window, &name("downloads-add"));
+    // The same with an http address: the note, in red, that the password travels in the clear.
+    downloads.set_form_address("http://192.168.1.10:5005/".into());
+    save(window, &name("downloads-add-http"));
     downloads.set_form_editing(true);
     downloads.set_form_name("Home NAS".into());
     downloads.set_form_address("https://nas.home:5006/dav".into());

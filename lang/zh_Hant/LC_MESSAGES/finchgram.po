@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-17 04:22+0000\n"
+"POT-Creation-Date: 2026-10-21 04:47+0000\n"
 "Language: zh_Hant\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -35,7 +35,7 @@ msgstr "終端機"
 msgid "Broadsheet"
 msgstr "報紙"
 
-#: ui/app.slint:93 ui/pages/downloads.slint:458 ui/pages/downloads.slint:821
+#: ui/app.slint:93 ui/pages/downloads.slint:402 ui/pages/downloads.slint:765
 msgid "Downloads"
 msgstr "下載"
 
@@ -81,7 +81,7 @@ msgid "Add a comment (optional)"
 msgstr "補充說明（選填）"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1425
+#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1390
 #: ui/pages/profile.slint:174 ui/terminal/actions.slint:385
 #: ui/terminal/actions.slint:638 ui/workbench/actions.slint:457
 #: ui/workbench/actions.slint:720
@@ -112,7 +112,7 @@ msgstr "深色"
 msgid "Accounts"
 msgstr "帳號"
 
-#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:848
+#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:792
 #: ui/workbench/sidebar.slint:417
 msgid "Chats"
 msgstr "聊天"
@@ -159,7 +159,7 @@ msgstr "排序方式"
 msgid "Latest message"
 msgstr "最新訊息"
 
-#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:1062
+#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:1006
 #: ui/terminal/terminal.slint:512
 msgid "Name"
 msgstr "名稱"
@@ -479,7 +479,7 @@ msgid "Add more"
 msgstr "再新增"
 
 #: ui/chat.slint:332 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
-#: ui/pages/downloads.slint:1602
+#: ui/pages/downloads.slint:1611
 msgid "Remove"
 msgstr "移除"
 
@@ -592,11 +592,11 @@ msgstr "取消上傳"
 msgid "Not sent"
 msgstr "未傳送"
 
-#: ui/chat.slint:372 ui/pages/downloads.slint:707 ui/pages/downloads.slint:1668
+#: ui/chat.slint:372 ui/pages/downloads.slint:651 ui/pages/downloads.slint:1677
 msgid "Retry"
 msgstr "重試"
 
-#: ui/chat.slint:374 ui/pages/downloads.slint:1138
+#: ui/chat.slint:374 ui/pages/downloads.slint:1082
 msgid "Download"
 msgstr "下載"
 
@@ -604,7 +604,7 @@ msgstr "下載"
 msgid "Cancel download"
 msgstr "取消下載"
 
-#: ui/chat.slint:376 ui/pages/downloads.slint:698
+#: ui/chat.slint:376 ui/pages/downloads.slint:642
 msgid "Show in Finder"
 msgstr "在 Finder 中顯示"
 
@@ -621,7 +621,7 @@ msgstr "點一下查看"
 msgid "Reply"
 msgstr "回覆"
 
-#: ui/chat.slint:792 ui/pages/downloads.slint:1594
+#: ui/chat.slint:792 ui/pages/downloads.slint:1603
 msgid "Edit"
 msgstr "編輯"
 
@@ -1562,51 +1562,51 @@ msgstr "請為伺服器取個名稱。"
 msgid "The address needs to start with http:// or https://."
 msgstr "位址必須以 http:// 或 https:// 開頭。"
 
-#: ui/pages/downloads.slint:356 ui/pages/downloads.slint:1240
+#: ui/pages/downloads.slint:300 ui/pages/downloads.slint:1184
 msgid "Add server"
 msgstr "新增伺服器"
 
-#: ui/pages/downloads.slint:398
+#: ui/pages/downloads.slint:342
 msgid "Filter this folder"
 msgstr "篩選這個資料夾"
 
-#: ui/pages/downloads.slint:860
+#: ui/pages/downloads.slint:804
 msgid "WebDAV servers"
 msgstr "WebDAV 伺服器"
 
-#: ui/pages/downloads.slint:1066
+#: ui/pages/downloads.slint:1010
 msgid "Modified"
 msgstr "修改日期"
 
-#: ui/pages/downloads.slint:1071
+#: ui/pages/downloads.slint:1015
 msgid "Size"
 msgstr "大小"
 
-#: ui/pages/downloads.slint:1095
+#: ui/pages/downloads.slint:1039
 msgid "Nothing in this folder matches “{0}”"
 msgstr "這個資料夾裡沒有符合「{0}」的項目"
 
-#: ui/pages/downloads.slint:1117
+#: ui/pages/downloads.slint:1061
 msgid "{0} selected · {1}"
 msgstr "已選取 {0} 個項目 · {1}"
 
-#: ui/pages/downloads.slint:1125
+#: ui/pages/downloads.slint:1069
 msgid "Clear"
 msgstr "清除"
 
-#: ui/pages/downloads.slint:1132 ui/pages/downloads.slint:1619
+#: ui/pages/downloads.slint:1076 ui/pages/downloads.slint:1628
 msgid "Open"
 msgstr "打開"
 
-#: ui/pages/downloads.slint:1174
+#: ui/pages/downloads.slint:1118
 msgid "This folder is empty"
 msgstr "這個資料夾是空的"
 
-#: ui/pages/downloads.slint:1223
+#: ui/pages/downloads.slint:1167
 msgid "No WebDAV servers yet"
 msgstr "還沒有 WebDAV 伺服器"
 
-#: ui/pages/downloads.slint:1226
+#: ui/pages/downloads.slint:1170
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -1615,7 +1615,7 @@ msgstr ""
 "加入 NAS、seedbox、PikPak、Alist / OpenList 的 WebDAV 位址，或是你用 vget "
 "serve 分享的資料夾，然後就能在這裡瀏覽，挑選想要的檔案。"
 
-#: ui/pages/downloads.slint:1232
+#: ui/pages/downloads.slint:1176
 msgid ""
 "Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
 "reads: nothing is uploaded, synced, renamed or deleted on the server."
@@ -1623,88 +1623,92 @@ msgstr ""
 "沒有 WebDAV 的雲端硬碟可以透過 OpenList 連線。FinchGram 只會讀取：不上傳、不"
 "同步，也不會重新命名或刪除伺服器上的任何檔案。"
 
-#: ui/pages/downloads.slint:1305
+#: ui/pages/downloads.slint:1249
 msgid "Edit server"
 msgstr "編輯伺服器"
 
-#: ui/pages/downloads.slint:1305
+#: ui/pages/downloads.slint:1249
 msgid "Add WebDAV server"
 msgstr "新增 WebDAV 伺服器"
 
-#: ui/pages/downloads.slint:1308
+#: ui/pages/downloads.slint:1252
 msgid ""
 "The address of the WebDAV server, and the account it gave you. The password "
-"goes into your macOS Keychain, not into a file."
-msgstr ""
-"WebDAV 伺服器的位址，以及它給你的帳號。密碼會存進你的 macOS 鑰匙圈，不會寫進"
-"檔案。"
+"is kept in FinchGram's encrypted database on this Mac."
+msgstr "WebDAV 伺服器的地址，和它給你的帳號。密碼存在這台 Mac 上 FinchGram 的加密資料庫裡。"
 
-#: ui/pages/downloads.slint:1323
+#: ui/pages/downloads.slint:1267
 msgid "Address"
 msgstr "位址"
 
-#: ui/pages/downloads.slint:1325
+#: ui/pages/downloads.slint:1269
 msgid "http:// or https://. A folder may be part of the address."
 msgstr "以 http:// 或 https:// 開頭，位址裡可以包含資料夾。"
 
-#: ui/pages/downloads.slint:1332 ui/pages/profile.slint:300
+#: ui/pages/downloads.slint:1276 ui/pages/profile.slint:300
 msgid "Username"
 msgstr "使用者名稱"
 
-#: ui/pages/downloads.slint:1339 ui/pages/login.slint:545
+#: ui/pages/downloads.slint:1283 ui/pages/login.slint:545
 msgid "Password"
 msgstr "密碼"
 
-#: ui/pages/downloads.slint:1376
+#: ui/pages/downloads.slint:1305
+msgid ""
+"Over http the password and the files travel in the clear: use this server "
+"only on a network you trust."
+msgstr "走 http 時密碼和檔案都是明文傳輸：這個伺服器只在你信任的網路裡用。"
+
+#: ui/pages/downloads.slint:1341
 msgid "Testing…"
 msgstr "正在測試…"
 
-#: ui/pages/downloads.slint:1405 ui/pages/profile.slint:429
+#: ui/pages/downloads.slint:1370 ui/pages/profile.slint:429
 #: ui/pages/settings.slint:1316
 msgid "Save"
 msgstr "儲存"
 
-#: ui/pages/downloads.slint:1405
+#: ui/pages/downloads.slint:1370
 msgid "Add"
 msgstr "新增"
 
-#: ui/pages/downloads.slint:1415
+#: ui/pages/downloads.slint:1380
 msgid "Test connection"
 msgstr "測試連線"
 
-#: ui/pages/downloads.slint:1480
+#: ui/pages/downloads.slint:1445
 msgid "{0} active"
 msgstr "{0} 個進行中"
 
-#: ui/pages/downloads.slint:1491
+#: ui/pages/downloads.slint:1458
 msgid "Clear finished"
 msgstr "清除已完成"
 
-#: ui/pages/downloads.slint:1497
+#: ui/pages/downloads.slint:1481
 msgid "Hide"
 msgstr "隱藏"
 
-#: ui/pages/downloads.slint:1540
+#: ui/pages/downloads.slint:1549
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "每個檔案 {0} 條連線 · 下載到 {1}"
 
-#: ui/pages/downloads.slint:1546
+#: ui/pages/downloads.slint:1555
 msgid "Change"
 msgstr "變更"
 
-#: ui/pages/downloads.slint:1611
+#: ui/pages/downloads.slint:1620
 msgid "Copy address"
 msgstr "複製位址"
 
-#: ui/pages/downloads.slint:1627
+#: ui/pages/downloads.slint:1636
 msgid "Download folder"
 msgstr "下載整個資料夾"
 
-#: ui/pages/downloads.slint:1651
+#: ui/pages/downloads.slint:1660
 msgid "Copy link"
 msgstr "複製連結"
 
-#: ui/pages/downloads.slint:1686
+#: ui/pages/downloads.slint:1695
 msgid "Remove from list"
 msgstr "從列表中移除"
 

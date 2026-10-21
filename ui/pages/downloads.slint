@@ -1249,7 +1249,7 @@ export component DownloadsPage inherits Rectangle {
                                 label: Downloads.form-editing ? @tr("Edit server") : @tr("Add WebDAV server");
                             }
                             Paragraph {
-                                text: @tr("The address of the WebDAV server, and the account it gave you. The password goes into your macOS Keychain, not into a file.");
+                                text: @tr("The address of the WebDAV server, and the account it gave you. The password is kept in FinchGram's encrypted database on this Mac.");
                                 color: Look.muted;
                                 font-size: 15px;
                                 line-height-factor: Look.leading(1.55);
@@ -1285,6 +1285,27 @@ export component DownloadsPage inherits Rectangle {
                             text <=> Downloads.form-password;
                             accepted => {
                                 Downloads.submit-form();
+                            }
+                        }
+                        // Basic authentication over http is the password in the clear (docs/downloads.md):
+                        // allowed, for a NAS at home, and said in red.
+                        if Downloads.form-address.to-lowercase().starts-with("http://"): HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            VerticalLayout {
+                                alignment: start;
+                                padding-top: 1px;
+                                Icon {
+                                    name: "warning-circle";
+                                    size: 17px;
+                                    color: Look.danger;
+                                }
+                            }
+                            Paragraph {
+                                text: @tr("Over http the password and the files travel in the clear: use this server only on a network you trust.");
+                                color: Look.danger;
+                                font-size: 14px;
+                                line-height-factor: Look.leading(1.5);
                             }
                         }
                         if Downloads.form-error != FormError.none: HorizontalLayout {
