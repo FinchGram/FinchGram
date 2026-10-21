@@ -282,6 +282,10 @@ of layout then comes with its migration, told apart by SQLite's own `user_versio
 - **Calls.** TDLib only does the signalling; the media part (tgcalls) is a large project of its own.
 - **Plugins by other people.** They first need a trust model: who signs them, what the user
   approves, how they are sandboxed.
+- **Voice input.** Dictation into the composer: the user's own OpenAI key first, later a plan,
+  servers the user runs, the operating systems' own recognizers and a router between them. The
+  five steps and the facts behind them are in [voice-input.md](voice-input.md). Decided on
+  2026-10-21; needs a design first.
 
 ## Open questions
 
