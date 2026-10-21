@@ -30,7 +30,7 @@ Es un cliente no oficial, no hecho por Telegram.
 - **Descargas.** Un cliente WebDAV en el centro multimedia: tu NAS, un seedbox, PikPak,
   Alist/OpenList o una carpeta compartida con `vget serve`, explorados desde la app. Los archivos
   llegan por varias conexiones a la vez y continúan tras una interrupción; las fotos y los vídeos se
-  abren en el visor cuando llegan; las contraseñas se quedan en el llavero de macOS. Ver
+  abren en el visor cuando llegan; las contraseñas se guardan en la base de datos cifrada de FinchGram. Ver
   [docs/downloads.md](../docs/downloads.md).
 - **Envío.** Fotos, vídeos y archivos desde el clip, arrastrándolos a la ventana o pegándolos. Una
   tarjeta los muestra antes de enviarlos: con un pie, como foto o como archivo, juntos en un álbum de
@@ -118,8 +118,8 @@ con `vget serve`), explora sus carpetas, marca archivos o toma una carpeta enter
 ~/Downloads/FinchGram: cada archivo en bloques de 8 MB con hasta doce conexiones, y tras un
 Reintentar sigue desde donde se quedó, como hace vget, la herramienta de línea de comandos del
 mantenedor. La cola de la derecha muestra la velocidad y lo que queda; Abrir trae una foto o un
-vídeo y lo muestra en el visor. FinchGram solo lee del servidor, y la contraseña va al llavero de
-macOS, nunca a un archivo. En [docs/downloads.md](../docs/downloads.md) están los detalles y lo que
+vídeo y lo muestra en el visor. FinchGram solo lee del servidor, y la contraseña va a la base de datos
+cifrada de FinchGram, nunca a un archivo de texto. En [docs/downloads.md](../docs/downloads.md) están los detalles y lo que
 aún falta (un certificado autofirmado se rechaza: usa http en la red local o un certificado real).
 
 ## Cómo está hecho

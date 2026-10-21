@@ -226,7 +226,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   lists folders (PROPFIND), `transfer.rs` fetches a file in chunks of 8 MB over up to 12 connections
   into a `.part` file, going on from where it stopped, as vget does; `mod.rs` is the page's state on
   the UI thread, a "webdav" thread for listings and one thread per file on its way, two at a time.
-  Passwords go into the macOS Keychain, the servers and the folder into settings.toml; a downloaded
+  The servers with their passwords go into the app's database (below), the folder into settings.toml; a downloaded
   photo or video opens in the media viewer (`viewer.rs`, `view_file`). The page needs no account.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
@@ -237,7 +237,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   in the menu bar, and launching at login (SMAppService, macOS 13 and later); notifications through
   the system's UserNotifications framework (only for the app as a bundle, so not from `cargo run`),
   the unread count on the Dock icon, and its bounce (Settings → Notifications & sounds); the folder
-  chooser and the Keychain (the passwords of WebDAV servers) for the Downloads page.
+  chooser for the Downloads page, and the Keychain, where the keys of the two databases are.
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
 - `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
 - `src/images.rs`: pictures (photos, video stills, the photos of chats and people, the tiny previews

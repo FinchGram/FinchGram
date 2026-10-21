@@ -22,8 +22,8 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
 - **媒體。** 照片和影片在蓋住整個視窗的檢視器裡打開，可以翻看同一相簿的其他圖片；影片用從原始碼建置的 mpv
   播放。聊天允許時可以儲存到「下載項目」。
 - **下載。** 媒體中心裡的 WebDAV 客戶端：你的 NAS、seedbox、PikPak、Alist/OpenList，或者用 `vget serve` 分享的
-  資料夾，都能在 app 裡瀏覽。檔案走多條連線同時下載，中斷後可以接著下；照片和影片一到就在檢視器裡打開；密碼存在 macOS
-  鑰匙圈裡。見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
+  資料夾，都能在 app 裡瀏覽。檔案走多條連線同時下載，中斷後可以接著下；照片和影片一到就在檢視器裡打開；密碼存在 FinchGram
+  的加密資料庫裡。見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
 - **傳送。** 照片、影片和檔案可以從迴紋針選單傳送，也可以拖進視窗或直接貼上。送出之前先在一張卡片裡顯示：
   可以加說明文字，按照片傳或按檔案傳，最多十個合成一個相簿，私訊裡可以設自毀計時器，也可以靜音傳送。
 - **截圖。** 輸入列裡的剪刀或 ⌘⇧A 會定住螢幕：取一個視窗或拖一個選取範圍，畫上方框、橢圓、箭頭、畫筆、文字和馬賽克，
@@ -86,7 +86,7 @@ FinchGram 是一個 MCP 伺服器：你 Mac 上的 AI 助理應用程式（Claud
 `rclone serve webdav`，或者用 `vget serve` 分享的資料夾），瀏覽它的資料夾，勾選檔案或整個資料夾一起拿，檔案就會到
 ~/Downloads/FinchGram 裡：每個檔案切成 8 MB 的區塊、最多同時走十二條連線，按「重試」後從停下的地方接著下，和維護者的
 命令列工具 vget 一個做法。右邊的佇列顯示速度和還剩多少；「打開」會把照片或影片取回來，在檢視器裡顯示。FinchGram 只從
-伺服器讀取，密碼存進 macOS 鑰匙圈，永遠不寫進檔案。細節和還沒做的部分見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
+伺服器讀取，密碼存進 FinchGram 的加密資料庫，永遠不以明文寫進檔案。細節和還沒做的部分見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
 （自簽憑證會被拒絕：區域網路裡用 http，或者用正式的憑證）。
 
 ## 怎麼做的

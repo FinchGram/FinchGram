@@ -29,7 +29,7 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
 - **Downloads.** Um cliente WebDAV na central de mídia: o seu NAS, um seedbox, o PikPak, o
   Alist/OpenList ou uma pasta compartilhada com o `vget serve`, navegados no app. Os arquivos vêm
   por várias conexões ao mesmo tempo e continuam de onde pararam; fotos e vídeos abrem no
-  visualizador quando chegam; as senhas ficam nas Chaves do macOS. Veja
+  visualizador quando chegam; as senhas ficam no banco de dados cifrado do FinchGram. Veja
   [docs/downloads.md](../docs/downloads.md).
 - **Envio.** Fotos, vídeos e arquivos pelo clipe, arrastando-os para a janela ou colando-os. Um cartão
   os mostra antes de ir: com legenda, como foto ou como arquivo, juntos num álbum de até dez, com
@@ -117,8 +117,8 @@ compartilhada com o `vget serve`), navegue pelas pastas dele, marque arquivos ou
 inteira, e eles chegam em ~/Downloads/FinchGram: cada arquivo em pedaços de 8 MB por até doze
 conexões, continuando de onde parou depois de um Tentar novamente, como faz o vget, a ferramenta de
 linha de comando do mantenedor. A fila à direita mostra a velocidade e o que falta; Abrir busca uma
-foto ou um vídeo e o mostra no visualizador. O FinchGram só lê do servidor, e a senha vai para as
-Chaves do macOS, nunca para um arquivo. [docs/downloads.md](../docs/downloads.md) tem os detalhes e
+foto ou um vídeo e o mostra no visualizador. O FinchGram só lê do servidor, e a senha vai para o banco de
+dados cifrado do FinchGram, nunca para um arquivo em texto claro. [docs/downloads.md](../docs/downloads.md) tem os detalhes e
 o que ainda falta (um certificado autoassinado é recusado: use http na rede local, ou um
 certificado de verdade).
 

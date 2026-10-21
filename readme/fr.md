@@ -31,8 +31,8 @@ un client non officiel, qui n'est pas fait par Telegram.
 - **Téléchargements.** Un client WebDAV dans le centre multimédia : votre NAS, une seedbox, PikPak,
   Alist/OpenList ou un dossier partagé avec `vget serve`, parcourus dans l'application. Les fichiers
   arrivent par plusieurs connexions à la fois et reprennent après un arrêt ; les photos et vidéos
-  s'ouvrent dans la visionneuse dès qu'elles arrivent ; les mots de passe restent dans le trousseau
-  macOS. Voir [docs/downloads.md](../docs/downloads.md).
+  s'ouvrent dans la visionneuse dès qu'elles arrivent ; les mots de passe sont conservés dans la base de
+  données chiffrée de FinchGram. Voir [docs/downloads.md](../docs/downloads.md).
 - **Envoi.** Photos, vidéos et fichiers depuis le trombone, en les glissant dans la fenêtre ou en les
   collant. Une carte les montre avant l'envoi : avec une légende, en photo ou en fichier, ensemble
   dans un album de dix au plus, avec un minuteur d'autodestruction dans une discussion privée, sans
@@ -128,7 +128,7 @@ entier, et ils arrivent dans ~/Downloads/FinchGram : chaque fichier par morceaux
 connexions au plus, en reprenant là où il s'était arrêté après un Réessayer, comme le fait vget,
 l'outil en ligne de commande du mainteneur. La file d'attente à droite montre la vitesse et ce qui
 reste ; Ouvrir récupère une photo ou une vidéo et la montre dans la visionneuse. FinchGram ne fait
-que lire sur le serveur, et le mot de passe va dans le trousseau macOS, jamais dans un fichier.
+que lire sur le serveur, et le mot de passe va dans la base de données chiffrée de FinchGram, jamais en clair dans un fichier.
 [docs/downloads.md](../docs/downloads.md) donne les détails et ce qui manque encore (un certificat
 autosigné est refusé : utilisez http sur le réseau local, ou un vrai certificat).
 

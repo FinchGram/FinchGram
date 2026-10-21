@@ -45,8 +45,9 @@ things fit together.
 - The Downloads page (`src/downloads/`, docs/downloads.md, the design's "FinchGram Desktop 下载"
   round, built in every theme) is a read-only WebDAV client whose engine follows the maintainer's
   vget: 8 MB chunks over up to 12 connections, `.part` + `.part.json` for going on after a stop.
-  Passwords live in the macOS Keychain (`platform::keychain_*`), never in settings.toml; the
-  maintainer confirmed the Keychain on 2026-10-16. It needs no Telegram account. Its HTTP client
+  The servers with their passwords live in the app's encrypted database (`src/database.rs`), never
+  in settings.toml, at the maintainer's word of 2026-10-20 (the Keychain holds the database keys).
+  It needs no Telegram account. Its HTTP client
   (`src/downloads/http.rs`) is hyper with HTTP/2 where a server offers it, on a tokio runtime of
   its own, the one async corner of the app: the maintainer required HTTP/2 on 2026-10-16, knowing
   the "no async runtime" line was a simplification from the first day, not a need. (PikPak itself

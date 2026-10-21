@@ -29,7 +29,7 @@ ein inoffizieller Client, nicht von Telegram gemacht.
 - **Downloads.** Ein WebDAV-Client im Mediencenter: dein NAS, eine Seedbox, PikPak, Alist/OpenList
   oder ein mit `vget serve` freigegebener Ordner, in der App durchstöbert. Dateien kommen über mehrere
   Verbindungen zugleich und laufen nach einer Unterbrechung weiter; Fotos und Videos öffnen sich im
-  Betrachter, sobald sie da sind; Passwörter bleiben im macOS-Schlüsselbund. Siehe
+  Betrachter, sobald sie da sind; Passwörter liegen in der verschlüsselten Datenbank von FinchGram. Siehe
   [docs/downloads.md](../docs/downloads.md).
 - **Senden.** Fotos, Videos und Dateien über die Büroklammer, per Ziehen ins Fenster oder per
   Einfügen. Eine Karte zeigt sie vor dem Senden: mit Bildunterschrift, als Foto oder als Datei,
@@ -122,7 +122,7 @@ ganzen Ordner, und sie landen in ~/Downloads/FinchGram: jede Datei in Stücken v
 zwölf Verbindungen, und nach „Erneut versuchen“ geht es dort weiter, wo es stehen geblieben ist,
 wie bei vget, dem Kommandozeilenwerkzeug des Maintainers. Die Warteschlange rechts zeigt die
 Geschwindigkeit und was noch aussteht; „Öffnen“ holt ein Foto oder Video und zeigt es im Betrachter.
-FinchGram liest nur vom Server, und das Passwort kommt in den macOS-Schlüsselbund, nie in eine Datei.
+FinchGram liest nur vom Server, und das Passwort kommt in die verschlüsselte Datenbank von FinchGram, nie in eine Klartextdatei.
 [docs/downloads.md](../docs/downloads.md) hat die Einzelheiten und was noch fehlt (ein
 selbstsigniertes Zertifikat wird abgelehnt: im LAN http nehmen, oder ein echtes Zertifikat).
 
