@@ -1063,6 +1063,25 @@ fn open_own(path: &Path, truncate: bool) -> Result<File, Error> {
     Ok(file)
 }
 
+/// The partial files of `dest` go: its `.part` and `.part.json`; or, when `dest` is a folder (a
+/// folder download stopped half way), every one under it.
+pub fn remove_partials(dest: &Path) {
+    if dest.is_dir() {
+        let Ok(entries) = fs::read_dir(dest) else { return };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                remove_partials(&path);
+            } else if path.to_string_lossy().ends_with(".part") || path.to_string_lossy().ends_with(".part.json") {
+                let _ = fs::remove_file(&path);
+            }
+        }
+        return;
+    }
+    let _ = fs::remove_file(with_suffix(dest, ".part"));
+    let _ = fs::remove_file(with_suffix(dest, ".part.json"));
+}
+
 /// `path` with `suffix` after its name: "film.mkv" → "film.mkv.part".
 pub fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
     let mut name = path.as_os_str().to_os_string();
@@ -1594,6 +1613,28 @@ mod tests {
         assert!(matches!(&outcome, Err(Error::Disk(why)) if why.contains("symbolic") || why.contains("symlink") || why.contains("not a regular file") || why.contains("Too many levels")), "{outcome:?}");
         assert_eq!(fs::read(&victim).expect("the victim"), b"original");
         assert!(!dest.exists());
+    }
+
+    #[test]
+    fn a_removed_downloads_partial_files_go_and_nothing_else() {
+        let scratch = Scratch::new("partials");
+        let dest = scratch.path("film.mkv");
+        fs::write(with_suffix(&dest, ".part"), b"half").unwrap();
+        fs::write(with_suffix(&dest, ".part.json"), b"{}").unwrap();
+        fs::write(scratch.path("notes.txt"), b"kept").unwrap();
+        remove_partials(&dest);
+        assert!(!with_suffix(&dest, ".part").exists() && !with_suffix(&dest, ".part.json").exists());
+        assert!(scratch.path("notes.txt").exists());
+        // A folder: every partial file under it, however deep; the finished ones stay.
+        let folder = scratch.path("Season 1");
+        fs::create_dir_all(folder.join("Extras")).unwrap();
+        fs::write(folder.join("e1.mkv.part"), b"half").unwrap();
+        fs::write(folder.join("e1.mkv.part.json"), b"{}").unwrap();
+        fs::write(folder.join("e2.mkv"), b"whole").unwrap();
+        fs::write(folder.join("Extras").join("x.mkv.part"), b"half").unwrap();
+        remove_partials(&folder);
+        assert!(!folder.join("e1.mkv.part").exists() && !folder.join("e1.mkv.part.json").exists() && !folder.join("Extras").join("x.mkv.part").exists());
+        assert!(folder.join("e2.mkv").exists());
     }
 
     #[test]

@@ -52,7 +52,7 @@ pub struct Settings {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Downloads {
-    /// Where downloaded files go; "" for ~/Downloads/FinchGram.
+    /// Where downloaded files go, a folder per server under it; "" for ~/Documents/FinchGram/webdav.
     pub folder: String,
     /// How many streams a file is fetched over at once, 1 … 64 (src/downloads/transfer.rs).
     pub connections: u32,

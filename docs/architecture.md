@@ -286,9 +286,10 @@ re-entering a record beats keeping code for it.
 
 1. **Database encryption**: settled in 0.4.18. TDLib's database and the app's own are encrypted
    with random keys kept in the Keychain (The app's database, above).
-2. **Where downloaded files go**: next to the database for now. A size limit and a cache folder
-   (`~/Library/Caches`) need a design. What is fetched when, and what is to come (fetching ahead,
-   playing while downloading), is in [media-files.md](media-files.md).
+2. **Where downloaded files go**: settled on 2026-10-20: `~/Documents/FinchGram/media_cache`, where
+   the user can see the folder and clear it (what is cleared is fetched again when looked at); no
+   size limit, by the maintainer's choice. What is fetched when, and what is to come (fetching
+   ahead, playing while downloading), is in [media-files.md](media-files.md).
 3. **Media playback** (the media center): voice messages (Opus), video, GIFs and animated stickers
    (WebM, Lottie). Decided on 2026-09-30: mpv. It comes as libmpv, built from pinned sources by
    `vendor/mpv/build.sh` as finchgram-tdlib is: mpv with FFmpeg, libplacebo and libass (FreeType,

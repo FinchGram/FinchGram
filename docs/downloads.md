@@ -104,7 +104,8 @@ chunk with the protocol, how long the server took to answer and how fast the byt
 retry and why, each listing. It starts afresh past 8 MB, and shows addresses without the account
 or query that may be in them (a CDN's signed link). When a server is slow, that file says
 where the time goes. Cancel keeps the `.part` files for a retry; Remove from list takes a stopped or
-finished file off the list and deletes nothing, and Clear finished does that for every finished file at once.
+finished file off the list, and a stopped one's `.part` files with it (removing is giving up); Clear
+finished takes every finished file off the list and deletes nothing.
 
 WebDAV itself is `src/downloads/webdav.rs`: PROPFIND with depth 1 for a folder's listing (and depth 0
 to check a server), the 207 Multi-Status answer parsed with roxmltree, Basic authentication, addresses
@@ -132,8 +133,9 @@ chose vget's parameters and no 503s.
 
 ## Where things are kept
 
-- `settings.toml`: `[downloads]` has `folder` (empty for the default, `~/Downloads/FinchGram`),
-  `connections` and `queue_shown`. That is all of it: the file is for preferences.
+- `settings.toml`: `[downloads]` has `folder` (empty for the default, `~/Documents/FinchGram/webdav`;
+  each server's files go into a folder named after it under there), `connections` and
+  `queue_shown`. That is all of it: the file is for preferences.
 - The servers, with their passwords, are in the app's database, `finchgram.db` next to it: SQLite
   encrypted as a whole with SQLCipher (docs/architecture.md, The app's database). Its key is a
   random one kept in the macOS Keychain under "FinchGram" (the account "database"), in the login
@@ -157,8 +159,6 @@ chose vget's parameters and no 503s.
 - Basic authentication only: no Digest, no tokens, no proxy settings.
 - A file is fetched whole before it opens; nothing streams.
 - No sorting of the table beyond folders first and names in order, no sizes of folders.
-- The `.part` files of a stopped download that was removed from the list stay in the downloads
-  folder until the same file is downloaded again.
 
 ## How it is built
 

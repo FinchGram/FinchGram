@@ -115,7 +115,7 @@ para una IA. La página da la línea para pegar en Claude Code o Claude Desktop;
 Visualización → Descargas, o el icono de descarga encima del engranaje. Añade un servidor WebDAV (un
 NAS, un seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` o una carpeta compartida
 con `vget serve`), explora sus carpetas, marca archivos o toma una carpeta entera, y llegan a
-~/Downloads/FinchGram: cada archivo en bloques de 8 MB con hasta doce conexiones, y tras un
+~/Documents/FinchGram/webdav: cada archivo en bloques de 8 MB con hasta doce conexiones, y tras un
 Reintentar sigue desde donde se quedó, como hace vget, la herramienta de línea de comandos del
 mantenedor. La cola de la derecha muestra la velocidad y lo que queda; Abrir trae una foto o un
 vídeo y lo muestra en el visor. FinchGram solo lee del servidor, y la contraseña va a la base de datos

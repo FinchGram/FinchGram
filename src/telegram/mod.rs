@@ -446,12 +446,16 @@ fn set_parameters() {
         Ok(database) => database,
         Err(err) => return fail(err),
     };
+    let media = match media_directory(test_dc) {
+        Ok(media) => media,
+        Err(err) => return fail(err),
+    };
     let key = database_key(test_dc);
     let parameters = json!({
         "@type": "setTdlibParameters",
         "use_test_dc": test_dc,
         "database_directory": database,
-        "files_directory": "", // downloaded files are kept next to the database
+        "files_directory": media,
         "database_encryption_key": "", // open_database fills it in
         "use_file_database": true,
         "use_chat_info_database": true,
@@ -615,6 +619,16 @@ fn use_test_dc() -> bool {
 
 /// TDLib's database and downloaded files, in the platform's data folder
 /// (`~/Library/Application Support/FinchGram/tdlib` on macOS).
+/// Where TDLib keeps the media it downloads (photos, videos, files, stickers, profile photos), in
+/// folders of its own under it: in the user's Documents, where they can see it and clear it; what
+/// is cleared is fetched again when it is looked at.
+fn media_directory(test_dc: bool) -> Result<PathBuf, String> {
+    let documents = dirs::document_dir().ok_or("the system has no Documents folder for the media cache")?;
+    let media = documents.join("FinchGram").join(if test_dc { "media_cache_test" } else { "media_cache" });
+    std::fs::create_dir_all(&media).map_err(|err| format!("cannot create {}: {err}", media.display()))?;
+    Ok(media)
+}
+
 fn database_directory(test_dc: bool) -> Result<PathBuf, String> {
     let base = dirs::data_dir().ok_or("the system has no data folder for TDLib's database")?;
     let database = base.join("FinchGram").join(if test_dc { "tdlib-test" } else { "tdlib" });

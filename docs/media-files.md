@@ -9,10 +9,10 @@ late and shows that it waits.
 
 ## What is kept
 
-- TDLib downloads every file into a folder of its own next to its database: on macOS
-  `~/Library/Application Support/FinchGram/tdlib/`, with `photos/`, `videos/`, `thumbnails/`,
-  `animations/`, `profile_photos/` and so on (`files_directory` is left empty in
-  setTdlibParameters, `src/telegram/mod.rs`). Its file database is on (`use_file_database`), so
+- TDLib downloads every file into a folder of its own under `~/Documents/FinchGram/media_cache/`:
+  `photos/`, `videos/`, `thumbnails/`, `animations/`, `profile_photos/` and so on (the
+  `files_directory` of setTdlibParameters, `src/telegram/mod.rs`); the database itself is in
+  `~/Library/Application Support/FinchGram/tdlib/`. Its file database is on (`use_file_database`), so
   across starts TDLib knows what it has. A file is downloaded once; asked for again, it is there at
   once.
 - Nothing is deleted. The app sets none of TDLib's storage options, and TDLib's own cleaner

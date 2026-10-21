@@ -124,7 +124,7 @@ détails sont dans [docs/mcp.md](../docs/mcp.md).
 Présentation → Téléchargements, ou l'icône de téléchargement au-dessus de la roue dentée. Ajoutez un
 serveur WebDAV (un NAS, une seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` ou un
 dossier partagé avec `vget serve`), parcourez ses dossiers, cochez des fichiers ou prenez un dossier
-entier, et ils arrivent dans ~/Downloads/FinchGram : chaque fichier par morceaux de 8 Mo, sur douze
+entier, et ils arrivent dans ~/Documents/FinchGram/webdav : chaque fichier par morceaux de 8 Mo, sur douze
 connexions au plus, en reprenant là où il s'était arrêté après un Réessayer, comme le fait vget,
 l'outil en ligne de commande du mainteneur. La file d'attente à droite montre la vitesse et ce qui
 reste ; Ouvrir récupère une photo ou une vidéo et la montre dans la visionneuse. FinchGram ne fait

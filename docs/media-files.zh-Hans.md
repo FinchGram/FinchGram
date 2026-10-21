@@ -8,9 +8,9 @@
 
 ## 留下什么
 
-- TDLib 把每个文件都下载到数据库旁边它自己的文件夹里：macOS 上是
-  `~/Library/Application Support/FinchGram/tdlib/`，里面有 `photos/`、`videos/`、`thumbnails/`、
-  `animations/`、`profile_photos/` 等（setTdlibParameters 里 `files_directory` 留空，`src/telegram/mod.rs`）。
+- TDLib 把每个文件都下载到 `~/Documents/FinchGram/media_cache/` 里它自己的文件夹中：`photos/`、`videos/`、
+  `thumbnails/`、`animations/`、`profile_photos/` 等（setTdlibParameters 里的 `files_directory`，`src/telegram/mod.rs`）。
+  数据库本身在 `~/Library/Application Support/FinchGram/tdlib/`。
   它的文件数据库是开着的（`use_file_database`），所以重启之后 TDLib 也知道自己有哪些文件。
   一个文件只下载一次；再要的时候立刻就有。
 - 什么都不删。app 没有设过 TDLib 的任何存储选项，TDLib 自带的清理器（`use_storage_optimizer`）默认关着。

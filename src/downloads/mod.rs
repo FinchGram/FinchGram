@@ -34,8 +34,6 @@ use crate::{AppState, Downloads, FolderEntry, FolderState, FormError, MainWindow
 const MOST_ACTIVE: usize = 2;
 /// The speed shown is over this long.
 const SPEED_WINDOW: Duration = Duration::from_secs(10);
-/// Where downloads go unless the settings say: this folder in the user's Downloads.
-const DEFAULT_FOLDER: &str = "FinchGram";
 
 /// A server as the page keeps it.
 struct Server {
@@ -665,10 +663,17 @@ fn download_folder(settings: &Settings) -> PathBuf {
     if !settings.downloads.folder.trim().is_empty() {
         return PathBuf::from(settings.downloads.folder.trim());
     }
-    dirs::download_dir().or_else(dirs::home_dir).unwrap_or_else(|| PathBuf::from(".")).join(DEFAULT_FOLDER)
+    dirs::document_dir().or_else(dirs::home_dir).unwrap_or_else(|| PathBuf::from(".")).join("FinchGram").join("webdav")
 }
 
-/// The folder as the page names it: "~/Downloads/FinchGram".
+/// Where a server's files go: a folder named after the server, in small letters, under the
+/// download folder.
+fn server_folder(settings: &Settings, server_name: &str) -> PathBuf {
+    let name: String = server_name.trim().to_lowercase().chars().map(|c| if c == '/' { '-' } else { c }).collect();
+    download_folder(settings).join(if name.is_empty() { "server".to_string() } else { name })
+}
+
+/// The folder as the page names it: "~/Documents/FinchGram/webdav".
 fn folder_label(settings: &Settings) -> String {
     let folder = download_folder(settings);
     if let Some(home) = dirs::home_dir()
@@ -700,14 +705,15 @@ fn enqueue_entry(name: &str, open: bool) {
         if !webdav::is_plain_name(&entry.name) {
             return None;
         }
-        let client = state.servers.get_mut(index)?.client();
+        let server = state.servers.get(index)?;
+        let (client, server_name) = (server.client(), server.name.clone());
         let source = transfer::Source { url: client.file_url(&state.path, &entry.name), authorization: client.authorization() };
         // One at a time per file: a second request only asks to open it.
         if let Some(existing) = state.queue.iter_mut().find(|transfer| transfer.live() && matches!(&transfer.kind, Kind::File { source: theirs, .. } if *theirs == source)) {
             existing.open_when_done |= open;
             return Some(false);
         }
-        let dest = download_folder(&state.settings.borrow()).join(&entry.name);
+        let dest = server_folder(&state.settings.borrow(), &server_name).join(&entry.name);
         let done = transfer::kept(&dest, &source.url);
         let id = state.next_id;
         state.next_id += 1;
@@ -742,13 +748,14 @@ fn enqueue_folder(name: &str) {
         if !webdav::is_plain_name(name) || !state.entries.iter().any(|entry| entry.is_dir && entry.name == name) {
             return None;
         }
-        let client = state.servers.get_mut(index)?.client();
+        let server = state.servers.get(index)?;
+        let (client, server_name) = (server.client(), server.name.clone());
         let mut path = state.path.clone();
         path.push(name.to_string());
         if state.queue.iter().any(|transfer| transfer.live() && matches!(&transfer.kind, Kind::Folder { path: theirs, server, .. } if *theirs == path && server.url == client.url)) {
             return Some(false);
         }
-        let dest = download_folder(&state.settings.borrow()).join(name);
+        let dest = server_folder(&state.settings.borrow(), &server_name).join(name);
         let id = state.next_id;
         state.next_id += 1;
         state.queue.push(Transfer {
@@ -1145,7 +1152,18 @@ fn show_in_finder(id: i32) {
     }
 }
 
+/// A download off the list. A stopped one's partial files go with it: Cancel keeps them for a
+/// Retry, Remove is giving up on it.
 fn remove_transfer(id: i32) {
+    let partial = with_state(|state| {
+        let transfer = state.queue.iter().find(|transfer| transfer.id == id && !transfer.live())?;
+        Some((transfer.state == TransferState::Stopped).then(|| transfer.kind.dest().to_path_buf()))
+    })
+    .flatten()
+    .flatten();
+    if let Some(dest) = partial {
+        transfer::remove_partials(&dest);
+    }
     with_state(|state| state.queue.retain(|transfer| transfer.id != id || transfer.live()));
     show_queue();
 }
@@ -1440,7 +1458,7 @@ mod tests {
 
     #[test]
     fn a_file_of_a_tree_goes_under_the_folder_and_nowhere_else() {
-        let dest = Path::new("/Users/x/Downloads/FinchGram/Movies");
+        let dest = Path::new("/Users/x/Documents/FinchGram/webdav/home nas/Movies");
         let file = |folder: &[&str], name: &str| TreeFile { folder: folder.iter().map(|part| part.to_string()).collect(), name: name.to_string(), size: 0 };
         assert_eq!(file(&["2026 Films"], "Dune.mkv").path_under(dest), Some(dest.join("2026 Films").join("Dune.mkv")));
         assert_eq!(file(&[], "notes.txt").path_under(dest), Some(dest.join("notes.txt")));

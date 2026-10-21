@@ -65,8 +65,8 @@ App Nap 降速，Mac 也不会自己睡着。显示的速度是最近十秒的�
 服务器说的是哪种协议记在日志里，不在页面上。
 
 引擎做的事一行一行记在 settings.toml 旁边的 `downloads.log` 里：每次探测和每个块的协议、服务器多久开始回答、字节来得多快、
-每次重试和原因、每次列目录。超过 8 MB 从头来；里面的地址不带账号和查询串（CDN 的签名链接）。服务器慢的时候，这个文件能说明时间花在哪了。取消会留着 `.part` 文件以便重试；从列表移除只是把停下的或
-完成的文件从列表拿掉，什么都不删；清除已完成对所有已完成的文件一次做同样的事。
+每次重试和原因、每次列目录。超过 8 MB 从头来；里面的地址不带账号和查询串（CDN 的签名链接）。服务器慢的时候，这个文件能说明时间花在哪了。取消会留着 `.part` 文件以便重试；从列表移除把停下的或完成的
+文件从列表拿掉，停下的那份 `.part` 文件也一起删掉（移除就是放弃了）；清除已完成把所有已完成的文件从列表拿掉，什么都不删。
 
 WebDAV 本身在 `src/downloads/webdav.rs`：深度 1 的 PROPFIND 列文件夹（深度 0 检查服务器），207 Multi-Status
 用 roxmltree 解析，Basic 认证，地址按段做百分号编码。名字不成名字的条目（空的、"." 或 ".."、带 "/" 的）不进列表，
@@ -85,8 +85,8 @@ PikPak 的实际情况，2026-10-16 实测：它的 WebDAV 主机（HTTP/2，在
 
 ## 东西存在哪
 
-- `settings.toml`：`[downloads]` 有 `folder`（空就是默认的 `~/Downloads/FinchGram`）、`connections`、
-  `queue_shown`。就这些：这个文件只放偏好设置。
+- `settings.toml`：`[downloads]` 有 `folder`（空就是默认的 `~/Documents/FinchGram/webdav`；每个服务器的文件进它名下
+  的一个文件夹）、`connections`、`queue_shown`。就这些：这个文件只放偏好设置。
 - 服务器连同密码在 app 自己的数据库里，旁边的 `finchgram.db`：SQLite，用 SQLCipher 整库加密
   （docs/architecture.md，“app 自己的数据库”）。密钥是随机生成的，存在 macOS 钥匙串里 "FinchGram" 名下（account 是
   “database”），只在登录钥匙串里，只有本应用能读：钥匙串条目归应用的签名身份所有，发布版用 North Brookville LLC 的
@@ -102,7 +102,6 @@ PikPak 的实际情况，2026-10-16 实测：它的 WebDAV 主机（HTTP/2，在
 - 只有 Basic 认证：没有 Digest、没有 token、没有代理设置。
 - 文件要整个取下来才能打开，不流式播放。
 - 表格除了文件夹在前、名称排序之外没有别的排序，文件夹不显示大小。
-- 停下的下载从列表移除后，它的 `.part` 文件留在下载文件夹里，直到再下同一个文件。
 
 ## 怎么做的
 

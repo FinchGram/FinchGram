@@ -118,7 +118,7 @@ Zeile zum Einfügen in Claude Code oder Claude Desktop; die Einzelheiten stehen 
 Darstellung → Downloads, oder das Download-Symbol über dem Zahnrad. Füge einen WebDAV-Server hinzu
 (ein NAS, eine Seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` oder einen mit
 `vget serve` freigegebenen Ordner), durchstöbere seine Ordner, kreuze Dateien an oder nimm einen
-ganzen Ordner, und sie landen in ~/Downloads/FinchGram: jede Datei in Stücken von 8 MB über bis zu
+ganzen Ordner, und sie landen in ~/Documents/FinchGram/webdav: jede Datei in Stücken von 8 MB über bis zu
 zwölf Verbindungen, und nach „Erneut versuchen“ geht es dort weiter, wo es stehen geblieben ist,
 wie bei vget, dem Kommandozeilenwerkzeug des Maintainers. Die Warteschlange rechts zeigt die
 Geschwindigkeit und was noch aussteht; „Öffnen“ holt ein Foto oder Video und zeigt es im Betrachter.

@@ -84,7 +84,7 @@ FinchGram 是一个 MCP 服务端：你 Mac 上的 AI 助手应用（Claude Desk
 
 显示 → 下载，或者齿轮上方的下载图标。添加一个 WebDAV 服务器（NAS、seedbox、PikPak、Alist/OpenList、Nextcloud、
 `rclone serve webdav`，或者用 `vget serve` 共享的文件夹），浏览它的文件夹，勾选文件或整个文件夹拿走，文件就到了
-~/Downloads/FinchGram：每个文件切成 8 MB 的块、最多十二条连接并发，重试时从停下的地方接着来，和维护者的命令行
+~/Documents/FinchGram/webdav：每个文件切成 8 MB 的块、最多十二条连接并发，重试时从停下的地方接着来，和维护者的命令行
 工具 vget 一个做法。右边的队列显示速度和还剩多少；“打开”把照片或视频取下来后在查看器里显示。FinchGram 只从服务器
 读，密码进 FinchGram 的加密数据库，从不以明文写进文件。细节和还没做的部分见 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
 （自签名证书会被拒绝：局域网用 http，或者配正规证书）。
