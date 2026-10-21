@@ -41,6 +41,7 @@ bytes = "1"
 sha2 = "0.11"
 ed25519-dalek = "3"
 hex = "0.4"
+rusqlite = { version = "0.40.2", features = ["bundled-sqlcipher"] }
 
 [dev-dependencies]
 # The HTTP/2 server of the transfer engine's test (src/downloads/transfer.rs).

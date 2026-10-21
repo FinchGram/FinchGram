@@ -58,6 +58,11 @@ const WRITES_IN_FLIGHT: usize = 64;
 /// given up on; such answers are not counted as tries.
 const BUSY_PAUSE: Duration = Duration::from_secs(2);
 const BUSY_PATIENCE: Duration = Duration::from_secs(5 * 60);
+/// Room a volume must keep beyond a file: for the system, and for the files of a folder arriving
+/// beside it. A file that cannot fit is refused before it fills the disk, not at its end.
+const SPACE_MARGIN: u64 = 256 * 1024 * 1024;
+/// A file of unknown size is checked against the room left this often, by bytes written.
+const SPACE_CHECK_EVERY: u64 = 256 * 1024 * 1024;
 /// open(2)'s O_NOFOLLOW: the path's last part may not be a symbolic link, so that a link put
 /// into the download folder cannot make the engine write into another file (`open_own`).
 #[cfg(any(target_os = "macos", target_os = "ios"))]
@@ -529,6 +534,10 @@ pub fn download(http: &Http, source: &Source, dest: &Path, streams: &Streams, ca
     let permit = http.block_on(streams.budget.clone().acquire_owned()).map_err(|_| Error::Cancelled)?;
     let head = http.block_on(open_with_retries(http, source, dest, cancel, &|code| progress(Progress { done: 0, total: 0, protocol: Protocol::Unknown, waiting: code })))?;
     let protocol = head.probe.protocol;
+    if let Some(total) = head.probe.size {
+        let already = if head.probe.ranges { kept(dest) } else { 0 };
+        check_space(dest, total.saturating_sub(already))?;
+    }
     let report = |done, total, waiting| progress(Progress { done, total, protocol, waiting });
     match head.probe {
         Probe { size: Some(total), ranges: true, .. } if total > 0 => {
@@ -950,6 +959,7 @@ async fn single(part: &Path, size: Option<u64>, cancel: &AtomicBool, progress: &
     let mut file = open_own(part, true)?;
     let body = response.body_mut();
     let mut done: u64 = 0;
+    let mut checked: u64 = 0;
     let mut reported = tokio::time::Instant::now();
     progress(0, total, 0);
     loop {
@@ -962,6 +972,11 @@ async fn single(part: &Path, size: Option<u64>, cancel: &AtomicBool, progress: &
         let Ok(data) = frame.into_data() else { continue };
         file.write_all(&data).map_err(disk)?;
         done += data.len() as u64;
+        // A server that never ends its body must not fill the disk.
+        if done - checked >= SPACE_CHECK_EVERY {
+            check_space(part, 0)?;
+            checked = done;
+        }
         if reported.elapsed() >= PROGRESS_TICK {
             progress(done, total.max(done), 0);
             reported = tokio::time::Instant::now();
@@ -994,6 +1009,16 @@ fn write_state(path: &Path, total: u64, chunk_size: u64, done: &[bool]) {
         }
         Err(err) => eprintln!("downloads: cannot describe {}: {err}", path.display()),
     }
+}
+
+/// Err when the volume `dest` is on does not have `needed` bytes free, and the margin beyond.
+pub fn check_space(dest: &Path, needed: u64) -> Result<(), Error> {
+    let folder = dest.parent().filter(|folder| !folder.as_os_str().is_empty()).unwrap_or(dest);
+    let Some(free) = crate::platform::free_space(folder) else { return Ok(()) };
+    if free < needed.saturating_add(SPACE_MARGIN) {
+        return Err(Error::Disk(format!("not enough room on the disk: {} free, the file needs {}", size_words(free), size_words(needed))));
+    }
+    Ok(())
 }
 
 /// Open, or make, one of the transfer's own files (`.part`, `.part.json`), `truncate`d or not:

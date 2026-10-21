@@ -181,6 +181,15 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   `look.slint`、`format.slint`（按界面语言写出的日期、数量和消息类型）、`widgets.slint` 和 `chat.slint`（共用的部件）、
   `viewer.slint`（覆盖整个窗口的媒体查看器）、`pages/`，以及三套主题各自的目录。
 
+## app 自己的数据库
+
+FinchGram 自己要留的、既不是偏好设置也不是 Telegram 的东西，进它自己的数据库：settings.toml 旁边的 `finchgram.db`
+（`src/database.rs`），SQLite，用 SQLCipher 整库加密，从 rusqlite crate 自带的源码构建，macOS 上用系统的 CommonCrypto。
+密钥是随机的，第一次生成后存进钥匙串 "FinchGram" 名下（account 是“database”），只有本应用能读；TDLib 的数据库从
+0.4.18 起也有一把自己的密钥，同样存法（account 是“tdlib”）。规矩：偏好设置进 settings.toml，它要小、要能手改；记录进
+数据库；Telegram 自己的状态归 TDLib。现在数据库里放的是 WebDAV 服务器和它们的密码（docs/downloads.md）；AI 访问里允许过
+的程序下一个迁；以后的东西（重启后还在的下载队列、日志、每个聊天的设置）建的时候再加表，`meta.version` 记录变化。
+
 ## 平台
 
 | | macOS | Windows | Linux |
@@ -197,8 +206,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 
 ## 还没定的事
 
-1. **数据库加密**：TDLib 可以用一个密钥加密它的数据库，密钥放在系统的安全存储（钥匙串）里。
-   在那之前，数据库只靠用户的系统账号保护。
+1. **数据库加密**：0.4.18 定了。TDLib 的数据库和 app 自己的数据库都用随机密钥加密，密钥放钥匙串（见上面
+   “app 自己的数据库”）。
 2. **下载的文件放哪**：暂时放在数据库旁边。大小上限和缓存目录（`~/Library/Caches`）需要设计。什么时候取什么、还有什么要做（提前下载、边下边播），见 [media-files.zh-Hans.md](media-files.zh-Hans.md)。
 3. **媒体播放**（媒体中心）：语音消息（Opus）、视频、GIF 和动态贴纸（WebM、Lottie）。2026-09-30 定了：用 mpv。
    它以 libmpv 的形式出现，跟 finchgram-tdlib 一样由 `vendor/mpv/build.sh` 从锁定的源码构建：mpv 加上 FFmpeg、

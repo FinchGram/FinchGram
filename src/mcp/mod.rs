@@ -18,11 +18,12 @@ pub mod tools;
 
 use std::cell::{Cell, RefCell};
 use std::fs;
-use std::io::{BufRead, BufReader, BufWriter, Read, Write};
+use std::io::{BufRead, BufReader, BufWriter, ErrorKind, Read, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Mutex, mpsc};
 use std::time::Duration;
 
@@ -47,6 +48,36 @@ const SOCKET_PATH_MAX: usize = 100;
 /// process of the user's may connect to the socket before the user has allowed it, and a reader
 /// that took bytes until a newline came would hold them all in memory.
 const LINE_LIMIT: u64 = 1024 * 1024;
+/// How many connections may be open at once: an assistant's app holds one or two, and each costs
+/// a thread; many more is a program misbehaving, and the rest are turned away at the door.
+const MOST_CONNECTIONS: usize = 32;
+/// A connection that has not said `initialize` within this long is closed: a program that
+/// connects and says nothing would otherwise hold its thread for good. Once initialized it may be
+/// quiet as long as it likes: an assistant's app keeps its connection open for hours.
+const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(120);
+
+/// How many connections are open now.
+static CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
+
+/// One connection's place among `MOST_CONNECTIONS`, given back when dropped.
+struct Counted;
+
+impl Counted {
+    fn take() -> Option<Counted> {
+        let before = CONNECTIONS.fetch_add(1, Ordering::Relaxed);
+        if before >= MOST_CONNECTIONS {
+            CONNECTIONS.fetch_sub(1, Ordering::Relaxed);
+            return None;
+        }
+        Some(Counted)
+    }
+}
+
+impl Drop for Counted {
+    fn drop(&mut self) {
+        CONNECTIONS.fetch_sub(1, Ordering::Relaxed);
+    }
+}
 
 thread_local! {
     /// The app's settings, for the policy an assistant is held to. UI thread.
@@ -87,8 +118,16 @@ pub fn start(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
+                    let Some(counted) = Counted::take() else {
+                        log(&format!("a connection turned away: {MOST_CONNECTIONS} are open already"));
+                        continue;
+                    };
                     let ui = ui.clone();
-                    if let Err(err) = std::thread::Builder::new().name("mcp-session".into()).spawn(move || serve(stream, ui)) {
+                    let session = std::thread::Builder::new().name("mcp-session".into()).spawn(move || {
+                        let _counted = counted;
+                        serve(stream, ui);
+                    });
+                    if let Err(err) = session {
                         eprintln!("mcp: cannot start a thread for a connection: {err}");
                     }
                 }
@@ -155,13 +194,21 @@ fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>) {
     };
     let mut writing = BufWriter::new(stream);
     let mut session = protocol::Session::new(&backend);
+    // Until `initialize` the client has HANDSHAKE_TIMEOUT between its lines; after it, as long
+    // as it likes.
+    let mut timed = reading.set_read_timeout(Some(HANDSHAKE_TIMEOUT)).is_ok();
     let mut reader = BufReader::new(reading);
     let mut line = Vec::new();
     loop {
         line.clear();
         // A line's worth and one byte more: a line still going at the limit ends the connection.
         match reader.by_ref().take(LINE_LIMIT + 1).read_until(b'\n', &mut line) {
-            Ok(0) | Err(_) => break,
+            Ok(0) => break,
+            Err(err) if timed && matches!(err.kind(), ErrorKind::WouldBlock | ErrorKind::TimedOut) => {
+                backend.log("said nothing for two minutes before initialize: the connection is closed");
+                break;
+            }
+            Err(_) => break,
             Ok(_) if line.len() as u64 > LINE_LIMIT => {
                 backend.log("sent a line over the limit of 1 MB: the connection is closed");
                 break;
@@ -172,6 +219,9 @@ fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>) {
             && (writeln!(writing, "{answer}").is_err() || writing.flush().is_err())
         {
             break;
+        }
+        if timed && session.ready() {
+            timed = reader.get_ref().set_read_timeout(None).is_err();
         }
     }
     backend.log("disconnected");

@@ -78,7 +78,9 @@ The engine, `src/downloads/transfer.rs`, follows vget:
 4. A chunk that fails is tried again from the last byte written, up to ten times, after a pause that
    grows from half a second to eight, whatever the failure: a dropped connection, a 404 from a CDN
    node that does not have the file yet (PikPak does that), a 200 where a 206 was due; so is the
-   first request. Only the disk stops a file at once. A server that answers 429, 502, 503 or 504 is
+   first request. Only the disk stops a file at once: a file is refused before it starts when the
+   disk has not its size and a quarter of a gigabyte to spare, and one of unknown size stops when
+   the disk is that nearly full. A server that answers 429, 502, 503 or 504 is
    busy, not broken: PikPak does that while it fetches a file from cold storage, and when it is
    pressed. Then every stream holds back for two seconds before its next request, and the file
    waits up to five minutes for the server before it is given up on; such answers are not counted
@@ -127,20 +129,19 @@ chose vget's parameters and no 503s.
 ## Where things are kept
 
 - `settings.toml`: `[downloads]` has `folder` (empty for the default, `~/Downloads/FinchGram`),
-  `connections` and `queue_shown`; `[[webdav]]` has each server's `name`, `url` and `username`.
-- The password goes into the macOS Keychain, not into a file: a generic password with the service
-  "FinchGram WebDAV" and the account "username@url", in the login keychain only (not iCloud
-  Keychain). It is stored when the form is saved, read the first time the server is used in a
-  session, and deleted when the server is removed, or when its address or user name changes. On the
-  wire it is Basic authentication: base64, so plain over http on the LAN, and encrypted only by TLS
-  over https.
-- Keychain items belong to the app's signing identity. Releases are signed with North Brookville
-  LLC's Apple Developer ID (docs/conventions.md), which macOS trusts across updates, so the item is
-  read without a question. Releases up to v0.4.16 were signed with the project's own certificate,
-  which macOS did not trust that way: after each update it asked for the login keychain's password
-  before FinchGram could read the item, and Always Allow did not stick. An item stored by one of
-  those versions asks once more when the Developer ID-signed app first reads it; Always Allow then
-  holds.
+  `connections` and `queue_shown`. That is all of it: the file is for preferences.
+- The servers, with their passwords, are in the app's database, `finchgram.db` next to it: SQLite
+  encrypted as a whole with SQLCipher (docs/architecture.md, The app's database). Its key is a
+  random one kept in the macOS Keychain under "FinchGram" (the account "database"), in the login
+  keychain only, where only this app reads it: Keychain items belong to the app's signing identity,
+  and releases are signed with North Brookville LLC's Apple Developer ID (docs/conventions.md),
+  which macOS trusts across updates. On the wire the password is Basic authentication: base64, so
+  plain over http on the LAN, and encrypted only by TLS over https.
+- Versions up to 0.4.17 kept the servers in settings.toml (`[[webdav]]`) and each password in the
+  Keychain as "FinchGram WebDAV"; 0.4.18 moves them into the database the first time it starts and
+  deletes those items. Reading an item stored by a version signed with the project's old
+  certificate may ask once more for the login keychain's password; nothing is moved or deleted
+  unless every password could be read.
   Versions 0.4.11 to 0.4.13 gave the item an access list open to any application as a way around
   it; the prompt stayed, so 0.4.14 took that out again. An item those versions stored keeps the
   list it was given; saving the server again in the form stores a fresh one under the usual list,

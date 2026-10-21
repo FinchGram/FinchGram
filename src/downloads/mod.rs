@@ -7,9 +7,10 @@
 //! Threads (docs/architecture.md): one worker lists folders, checks servers and tests the form's
 //! server, one request at a time in the order asked, and answers through the event loop; a
 //! listing that is not the current one any more is dropped when it comes back. Each download runs
-//! on a thread of its own, two at a time, and reports its progress the same way. Passwords live
-//! in the Keychain (src/platform/), under the server's address and account, and are read when a
-//! server is first used.
+//! on a thread of its own, two at a time, and reports its progress the same way. The servers,
+//! with their passwords, are the app's database's (src/database.rs); versions up to 0.4.17 kept
+//! them in settings.toml with the passwords in the Keychain, and such a list is moved into the
+//! database once, at the start (`load_servers`).
 
 pub mod http;
 pub mod log;
@@ -29,10 +30,11 @@ use chrono::{Datelike, Local, TimeZone};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
 
 use crate::settings::{self, Settings};
-use crate::{AppState, Downloads, FolderEntry, FolderState, FormError, MainWindow, Problem, ServerRow, ServerStatus, TestState, TransferRow, TransferState, platform, telegram};
+use crate::{AppState, Downloads, FolderEntry, FolderState, FormError, MainWindow, Problem, ServerRow, ServerStatus, TestState, TransferRow, TransferState, database, platform, telegram};
 
-/// The Keychain's name for FinchGram's WebDAV passwords; the account is "user@address".
-const KEYCHAIN_SERVICE: &str = "FinchGram WebDAV";
+/// The Keychain's name for the WebDAV passwords of versions up to 0.4.17 (the account was
+/// "user@address"): read once to move them into the database, then deleted.
+const OLD_KEYCHAIN_SERVICE: &str = "FinchGram WebDAV";
 /// How many files are fetched at the same time; the rest wait.
 const MOST_ACTIVE: usize = 2;
 /// The speed shown is over this long.
@@ -45,29 +47,24 @@ struct Server {
     name: String,
     url: String,
     username: String,
-    /// From the Keychain, read when first needed; "" when there is none.
-    password: Option<String>,
+    /// "" for a server that asks for none.
+    password: String,
     status: ServerStatus,
 }
 
 impl Server {
-    /// The Keychain's account for this server's password.
-    fn keychain_account(url: &str, username: &str) -> String {
-        format!("{username}@{url}")
+    fn from_record(record: database::WebdavServer) -> Server {
+        Server { name: record.name, url: record.url, username: record.username, password: record.password, status: ServerStatus::Unknown }
     }
 
-    /// The server for the worker, its password read from the Keychain the first time.
-    fn client(&mut self) -> webdav::Server {
-        let password = self.password.get_or_insert_with(|| {
-            match platform::keychain_read(KEYCHAIN_SERVICE, &Server::keychain_account(&self.url, &self.username)) {
-                Ok(password) => password.unwrap_or_default(),
-                Err(err) => {
-                    eprintln!("downloads: cannot read the password of {}: {err}", self.name);
-                    String::new()
-                }
-            }
-        });
-        webdav::Server { url: self.url.clone(), username: self.username.clone(), password: password.clone() }
+    /// The server as the database keeps it.
+    fn record(&self) -> database::WebdavServer {
+        database::WebdavServer { name: self.name.clone(), url: self.url.clone(), username: self.username.clone(), password: self.password.clone() }
+    }
+
+    /// The server for the worker.
+    fn client(&self) -> webdav::Server {
+        webdav::Server { url: self.url.clone(), username: self.username.clone(), password: self.password.clone() }
     }
 
     fn row(&self) -> ServerRow {
@@ -204,12 +201,7 @@ thread_local! {
 }
 
 pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
-    let servers = settings
-        .borrow()
-        .webdav
-        .iter()
-        .map(|server| Server { name: server.name.clone(), url: server.url.clone(), username: server.username.clone(), password: None, status: ServerStatus::Unknown })
-        .collect();
+    let servers = load_servers(&settings);
     STATE.with(|state| {
         *state.borrow_mut() = Some(State {
             ui: ui.as_weak(),
@@ -891,6 +883,7 @@ fn download_tree(
     let files = http.block_on(list_tree(http, server, path, cancel, progress))?;
     let total: u64 = files.iter().map(|file| file.size).sum();
     log::line(format!("folder {}: {} files, {:.1} MB", log::shown(&server.folder_url(path)), files.len(), total as f64 / (1024.0 * 1024.0)));
+    transfer::check_space(dest, total)?;
     progress(transfer::Progress { done: 0, total, protocol: transfer::Protocol::Unknown, waiting: 0 });
     let workers = FILES_AT_ONCE.min(files.len().max(1));
     let queue = Mutex::new(VecDeque::from(files));
@@ -1291,28 +1284,18 @@ fn submit_form() {
         let index = match state.editing.filter(|index| *index < state.servers.len()) {
             Some(index) => {
                 let server = &mut state.servers[index];
-                let old_account = Server::keychain_account(&server.url, &server.username);
-                let new_account = Server::keychain_account(&url, &username);
-                if old_account != new_account
-                    && let Err(err) = platform::keychain_delete(KEYCHAIN_SERVICE, &old_account)
-                {
-                    eprintln!("downloads: cannot forget the old password: {err}");
-                }
                 server.name = name.clone();
                 server.url = url.clone();
                 server.username = username.clone();
-                server.password = Some(password.clone());
+                server.password = password.clone();
                 server.status = ServerStatus::Unknown;
                 index
             }
             None => {
-                state.servers.push(Server { name: name.clone(), url: url.clone(), username: username.clone(), password: Some(password.clone()), status: ServerStatus::Unknown });
+                state.servers.push(Server { name: name.clone(), url: url.clone(), username: username.clone(), password: password.clone(), status: ServerStatus::Unknown });
                 state.servers.len() - 1
             }
         };
-        if let Err(err) = platform::keychain_store(KEYCHAIN_SERVICE, &Server::keychain_account(&url, &username), &password) {
-            eprintln!("downloads: cannot keep the password in the Keychain: {err}");
-        }
         state.editing = None;
         save_servers(state);
         index
@@ -1355,10 +1338,7 @@ fn remove_server(index: i32) {
         if index >= state.servers.len() {
             return None;
         }
-        let server = state.servers.remove(index);
-        if let Err(err) = platform::keychain_delete(KEYCHAIN_SERVICE, &Server::keychain_account(&server.url, &server.username)) {
-            eprintln!("downloads: cannot forget the password of {}: {err}", server.name);
-        }
+        state.servers.remove(index);
         state.editing = None;
         save_servers(state);
         state.current = match state.current {
@@ -1388,15 +1368,58 @@ fn remove_server(index: i32) {
     }
 }
 
-/// The servers into the settings, as they are now.
+/// The servers into the database, as they are now.
 fn save_servers(state: &State) {
-    let mut settings = state.settings.borrow_mut();
-    settings.webdav = state
-        .servers
+    let records: Vec<database::WebdavServer> = state.servers.iter().map(Server::record).collect();
+    if let Err(err) = database::save_webdav_servers(&records) {
+        eprintln!("downloads: cannot keep the servers in the database: {err}");
+    }
+}
+
+/// The servers from the database; or, the first time after 0.4.17, from settings.toml with their
+/// passwords from the Keychain, which are moved into the database and gone from where they were.
+/// Nothing is moved, and nothing deleted, unless every password could be read.
+fn load_servers(settings: &Rc<RefCell<Settings>>) -> Vec<Server> {
+    let from_database = database::webdav_servers();
+    let old: Vec<settings::WebdavServer> = settings.borrow().webdav.clone();
+    if !from_database.is_empty() || old.is_empty() || !database::is_open() {
+        return from_database.into_iter().map(Server::from_record).collect();
+    }
+    let account = |server: &settings::WebdavServer| format!("{}@{}", server.username, server.url);
+    let mut all_read = true;
+    let moved: Vec<Server> = old
         .iter()
-        .map(|server| settings::WebdavServer { name: server.name.clone(), url: server.url.clone(), username: server.username.clone() })
+        .map(|server| {
+            let password = match platform::keychain_read(OLD_KEYCHAIN_SERVICE, &account(server)) {
+                Ok(password) => password.unwrap_or_default(),
+                Err(err) => {
+                    eprintln!("downloads: cannot read the password of {} from the Keychain: {err}", server.name);
+                    all_read = false;
+                    String::new()
+                }
+            };
+            Server { name: server.name.clone(), url: server.url.clone(), username: server.username.clone(), password, status: ServerStatus::Unknown }
+        })
         .collect();
-    settings.save();
+    if !all_read {
+        return moved;
+    }
+    let records: Vec<database::WebdavServer> = moved.iter().map(Server::record).collect();
+    match database::save_webdav_servers(&records) {
+        Ok(()) => {
+            for server in &old {
+                if let Err(err) = platform::keychain_delete(OLD_KEYCHAIN_SERVICE, &account(server)) {
+                    eprintln!("downloads: cannot forget the old Keychain item of {}: {err}", server.name);
+                }
+            }
+            let mut settings = settings.borrow_mut();
+            settings.webdav.clear();
+            settings.save();
+            eprintln!("downloads: {} server(s) moved from settings.toml and the Keychain into the database", moved.len());
+        }
+        Err(err) => eprintln!("downloads: cannot move the servers into the database: {err}"),
+    }
+    moved
 }
 
 // ---- words and pictures -----------------------------------------------------------------------

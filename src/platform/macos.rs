@@ -903,6 +903,43 @@ pub fn keychain_delete(service: &str, account: &str) -> Result<(), String> {
     if status == errSecItemNotFound { Ok(()) } else { keychain_status(status) }
 }
 
+// ---- free space ------------------------------------------------------------------------------
+
+/// libc's statvfs as macOS lays it out: fsblkcnt_t and fsfilcnt_t are 32-bit there.
+#[repr(C)]
+struct StatVfs {
+    f_bsize: u64,
+    f_frsize: u64,
+    f_blocks: u32,
+    f_bfree: u32,
+    f_bavail: u32,
+    f_files: u32,
+    f_ffree: u32,
+    f_favail: u32,
+    f_fsid: u64,
+    f_flag: u64,
+    f_namemax: u64,
+}
+
+unsafe extern "C" {
+    fn statvfs(path: *const std::ffi::c_char, buffer: *mut StatVfs) -> i32;
+}
+
+/// How many bytes the volume holding `path` has free for this user.
+pub fn free_space(path: &std::path::Path) -> Option<u64> {
+    use std::os::unix::ffi::OsStrExt as _;
+    let path = std::ffi::CString::new(path.as_os_str().as_bytes()).ok()?;
+    let mut info = std::mem::MaybeUninit::<StatVfs>::zeroed();
+    // SAFETY: a NUL-terminated path and a buffer of the structure's size, which statvfs fills.
+    let result = unsafe { statvfs(path.as_ptr(), info.as_mut_ptr()) };
+    if result != 0 {
+        return None;
+    }
+    // SAFETY: the call succeeded, so the system wrote the whole structure.
+    let info = unsafe { info.assume_init() };
+    Some(u64::from(info.f_bavail) * info.f_frsize)
+}
+
 // ---- activities ----------------------------------------------------------------------------
 
 /// What NSProcessInfo gave for an activity; handed back to end it.

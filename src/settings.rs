@@ -1,8 +1,9 @@
 //! User settings: the user's own preferences, nothing else. Stored as TOML in the platform's
 //! config folder (`~/Library/Application Support/FinchGram/settings.toml` on macOS).
 //!
-//! Keep this deliberately small. Telegram's own state (accounts, chats, downloaded files) lives in
-//! TDLib's database, never here.
+//! Keep this deliberately small, and for preferences only. Records (the WebDAV servers and their
+//! passwords, and what comes next) are the app's database's (src/database.rs); Telegram's own
+//! state (accounts, chats, downloaded files) lives in TDLib's database, never here.
 
 use serde::{Deserialize, Deserializer, Serialize};
 use std::fs;
@@ -45,8 +46,10 @@ pub struct Settings {
     /// The downloads page (src/downloads/, docs/downloads.md): where files go, how many connections
     /// a file comes over, whether the queue column shows.
     pub downloads: Downloads,
-    /// The WebDAV servers of the downloads page: name, address and account. Their passwords are in
-    /// the Keychain (src/platform/), never here. (A list of tables comes last in the file.)
+    /// The WebDAV servers as versions up to 0.4.17 kept them here, their passwords in the Keychain:
+    /// read once to move them into the app's database (src/database.rs, src/downloads/mod.rs) and
+    /// emptied then. Records are the database's; this file is for preferences. (A list of tables
+    /// comes last in the file.)
     pub webdav: Vec<WebdavServer>,
 }
 
@@ -68,7 +71,8 @@ impl Default for Downloads {
     }
 }
 
-/// A WebDAV server of the downloads page, as the user named it.
+/// A WebDAV server of the downloads page as settings.toml had it up to 0.4.17 (src/database.rs
+/// has them now).
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct WebdavServer {

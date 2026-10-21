@@ -385,8 +385,42 @@ pub fn keychain_delete(service: &str, account: &str) -> Result<(), String> {
     }
 }
 
+/// The service every Keychain item of FinchGram's is under; the account names what the item is
+/// ("tdlib", "database", …).
+pub const KEYCHAIN_SERVICE: &str = "FinchGram";
+
+/// 32 random bytes from the system, as base64: a key for a database.
+pub fn random_key() -> Option<String> {
+    use base64::Engine as _;
+    let mut bytes = [0u8; 32];
+    let mut random = std::fs::File::open("/dev/urandom").ok()?;
+    std::io::Read::read_exact(&mut random, &mut bytes).ok()?;
+    Some(base64::engine::general_purpose::STANDARD.encode(bytes))
+}
+
+/// How many bytes the volume holding `path` has free for this user; none when the system would
+/// not say, and then nothing is refused for want of room.
+pub fn free_space(path: &std::path::Path) -> Option<u64> {
+    #[cfg(target_os = "macos")]
+    return macos::free_space(path);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = path;
+        None
+    }
+}
+
 #[cfg(all(test, target_os = "macos"))]
 mod tests {
+    #[test]
+    fn the_root_volume_has_some_room() {
+        let free = super::free_space(std::path::Path::new("/"));
+        if cfg!(target_os = "macos") {
+            let free = free.expect("the system says how much room there is");
+            assert!(free > 0 && free < 1 << 50, "{free}");
+        }
+    }
+
     use super::*;
     use std::cmp::Ordering;
 

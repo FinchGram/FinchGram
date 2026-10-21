@@ -4,6 +4,7 @@
 //! through finchgram-tdlib, a separate program next to this executable (src/telegram/,
 //! docs/architecture.md).
 
+mod database;
 mod downloads;
 mod fonts;
 mod i18n;
@@ -137,6 +138,10 @@ fn main() -> Result<(), slint::PlatformError> {
     state.set_send_with_enter(settings.borrow().send_with_enter);
     show_launch_at_login(&state);
     screenshot::connect(&ui, settings.clone());
+    // The app's own database (src/database.rs): what is neither a preference nor Telegram's.
+    if let Err(err) = database::open() {
+        eprintln!("database: {err}");
+    }
     downloads::connect(&ui, settings.clone());
     telegram::connect_viewer_settings(&ui, settings.clone());
     telegram::connect_chat_order(&ui, settings.clone());

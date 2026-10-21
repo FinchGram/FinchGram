@@ -77,11 +77,18 @@ pub struct Session<'a> {
     backend: &'a dyn Backend,
     /// The client's name and version, once it has said them.
     client: String,
+    /// `initialize` was answered with a welcome: the program is allowed.
+    ready: bool,
 }
 
 impl<'a> Session<'a> {
     pub fn new(backend: &'a dyn Backend) -> Self {
-        Session { backend, client: String::new() }
+        Session { backend, client: String::new(), ready: false }
+    }
+
+    /// Whether the client has been through `initialize` and was let in.
+    pub fn ready(&self) -> bool {
+        self.ready
     }
 
     /// Answer one line from the client: the line to write back, when the message wants one.
@@ -159,6 +166,7 @@ impl<'a> Session<'a> {
             Admission::Quitting => return Err((SERVER_OFF, "FinchGram is quitting.".to_string())),
         }
         self.backend.log(&format!("{} connected, protocol {version}", self.client));
+        self.ready = true;
         Ok(json!({
             "protocolVersion": version,
             "capabilities": { "tools": { "listChanged": false } },

@@ -101,7 +101,8 @@ FinchGram 自身不调用任何 AI，不为 AI 建索引，不为 AI 存任何�
 
 1. **socket 是用户自己的。** FinchGram 在自己的文件夹里监听一个 Unix socket（`~/Library/Application
    Support/FinchGram/mcp.sock`，权限 0600；路径对 socket 来说太长时，用用户临时文件夹里的 `finchgram-mcp.sock`）：
-   只有同一个用户的进程能打开它。不开任何端口。
+   只有同一个用户的进程能打开它。不开任何端口。最多同时开 32 个连接；连上两分钟还没说 `initialize` 的会被断开，说过
+   之后想安静多久都行，助手的 app 就是这样。
 2. **系统说是谁连的，用户说它能不能。** 每个连接，FinchGram 向内核问对端进程（`LOCAL_PEERPID`），向 libproc 问它
    的程序；如果那是 FinchGram 自己的桥、或启动桥的 shell，就往父进程找，直到找到助手的应用（"Claude"，
    /Applications/Claude.app；"claude"，~/.local/share/claude）。不取连接自报的任何东西，所以没有东西能冒充别的。

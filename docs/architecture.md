@@ -251,6 +251,19 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   counts and kinds of message in the UI language), `widgets.slint` and `chat.slint` (shared parts),
   `viewer.slint` (the media viewer, over the whole window), `pages/`, and the three themes' folders.
 
+## The app's database
+
+What FinchGram keeps that is neither a preference nor Telegram's goes into a database of its own:
+`finchgram.db` next to settings.toml (`src/database.rs`), SQLite encrypted as a whole with
+SQLCipher, built from the rusqlite crate's bundled sources with Apple's CommonCrypto on macOS. Its
+key is random, made the first time and kept in the Keychain under "FinchGram" (the account
+"database"), where only this app reads it; TDLib's database has a key of its own kept the same way
+(the account "tdlib"), since 0.4.18. The rule: preferences go into settings.toml, which stays small
+and readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
+database holds the WebDAV servers with their passwords (docs/downloads.md); the programs allowed
+through AI access are next to move, and what comes after (a download queue that outlives a restart,
+logs, per-chat settings) gets a table when it is built, `meta.version` marking the changes.
+
 ## Platforms
 
 | | macOS | Windows | Linux |
@@ -269,9 +282,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 
 ## Open questions
 
-1. **Database encryption**: TDLib can encrypt its database with a key, which would live in the
-   system's secure storage (Keychain). Until then the database is protected by the user's account
-   only.
+1. **Database encryption**: settled in 0.4.18. TDLib's database and the app's own are encrypted
+   with random keys kept in the Keychain (The app's database, above).
 2. **Where downloaded files go**: next to the database for now. A size limit and a cache folder
    (`~/Library/Caches`) need a design. What is fetched when, and what is to come (fetching ahead,
    playing while downloading), is in [media-files.md](media-files.md).
