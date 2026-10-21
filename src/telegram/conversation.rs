@@ -787,8 +787,8 @@ fn file_action(message_id: i64) {
     .flatten() else {
         return;
     };
-    if file.local.is_downloading_completed && !file.local.path.is_empty() {
-        crate::platform::reveal_file(&file.local.path);
+    if let Some(path) = files::completed(&file) {
+        crate::platform::reveal_file(&path);
     } else if file.local.is_downloading_active {
         let request = json!({ "@type": "cancelDownloadFile", "file_id": file.id, "only_if_pending": false });
         send(request, |answer| log_error("stop a download", answer));

@@ -62,8 +62,11 @@ pub fn forget() {
     WAITING.with(|waiting| waiting.borrow_mut().clear());
 }
 
-fn completed(file: &File) -> Option<String> {
-    (file.local.is_downloading_completed && !file.local.path.is_empty()).then(|| file.local.path.clone())
+/// The path of a file that is here: one TDLib calls complete and that is on the disk. One that
+/// is gone from the disk (the media cache cleared) is not: asked for, TDLib checks the file,
+/// finds it gone, and downloads it again.
+pub(super) fn completed(file: &File) -> Option<String> {
+    (file.local.is_downloading_completed && !file.local.path.is_empty() && std::path::Path::new(&file.local.path).exists()).then(|| file.local.path.clone())
 }
 
 /// What waited for the file waits no longer; asking again starts a new download.

@@ -1589,7 +1589,7 @@ impl Store {
         let transfer = self.transfer_of(Some(file));
         let state = if pending && !file.remote.is_uploading_completed {
             FileState::Uploading
-        } else if file.local.is_downloading_completed && !file.local.path.is_empty() {
+        } else if super::files::completed(file).is_some() {
             FileState::Done
         } else if transfer.is_some() || file.local.is_downloading_active {
             FileState::Downloading
