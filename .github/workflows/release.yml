@@ -120,7 +120,8 @@ jobs:
           fi
 
       # Notarization: Apple scans the signed app and issues a ticket, stapled into the bundle, so
-      # that Gatekeeper opens a downloaded copy without asking. The App Store Connect API key for it
+      # that Gatekeeper opens a downloaded copy without asking. Apple usually answers within
+      # minutes; the team's first submission (v0.4.17) took 28, hence the long wait allowed here. The App Store Connect API key for it
       # exists only as secrets of this repository (docs/conventions.md, Release first); without them
       # (a fork) the app ships signed but not notarized, and macOS asks once on the first launch.
       - name: Notarize
@@ -142,7 +143,7 @@ jobs:
           printf '%s\n' "$NOTARY_KEY" > "$KEY"
           ditto -c -k --keepParent "dist/$APP_NAME.app" "$RUNNER_TEMP/notarize.zip"
           xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" --key "$KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" \
-            --wait --timeout 30m --output-format json > "$RUNNER_TEMP/notarize.json" || true
+            --wait --timeout 45m --output-format json > "$RUNNER_TEMP/notarize.json" || true
           cat "$RUNNER_TEMP/notarize.json"; echo
           STATUS="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("status", ""))' "$RUNNER_TEMP/notarize.json" 2>/dev/null || true)"
           SUBMISSION="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("id", ""))' "$RUNNER_TEMP/notarize.json" 2>/dev/null || true)"
