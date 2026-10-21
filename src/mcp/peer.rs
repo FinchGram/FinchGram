@@ -1,9 +1,11 @@
 //! Who is at the other end of a connection to the socket: the process that connected, and when
 //! that is our own bridge (`finchgram mcp`), the program that started it, which is the assistant's
 //! app (Claude Desktop, Claude Code, …). Nothing is taken from what connects: the system is asked
-//! who it is (the socket's LOCAL_PEERPID, then libproc for the program and its parent), so nothing
-//! connecting can claim to be something else. The name goes into the log, into Settings → AI
-//! access's list of apps, and into the dialog that asks the user to allow an app (access.rs).
+//! who it is (the socket's LOCAL_PEERPID, then libproc for the program and its parent, then the
+//! Security framework for the program's code signature), so nothing connecting can claim to be
+//! something else. The name and the place go into the log, into Settings → AI access's list of
+//! apps, and into the dialog that asks the user to allow an app (access.rs); the signature is what
+//! the user's answer is remembered by.
 
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
@@ -14,11 +16,34 @@ const WRAPPERS: &[&str] = &["sh", "bash", "zsh", "dash", "fish", "env"];
 /// How far up the parents to look for the program behind the bridge.
 const ANCESTORS: usize = 6;
 
+/// A program's code signature, as the system validated it, under a certificate Apple issued to a
+/// team (Developer ID or the App Store). It is the same whatever the program's version and
+/// wherever it is installed, which a path is not: Claude Code is kept under its version number,
+/// and by the VS Code extension under another folder again. macOS itself tells apps apart this
+/// way (the designated requirements its privacy settings are kept by).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Signature {
+    /// The developer's Team ID: "Q6L2SF6YDW" for Anthropic PBC.
+    pub team: String,
+    /// The signing identifier the developer gave the program: "com.anthropic.claude-code",
+    /// "com.anthropic.claudefordesktop".
+    pub identifier: String,
+}
+
+impl Signature {
+    /// "Q6L2SF6YDW/com.anthropic.claude-code": the team, then the identifier it chose.
+    pub fn key(&self) -> String {
+        format!("{}/{}", self.team, self.identifier)
+    }
+}
+
 /// The program at the other end.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Host {
     pub pid: i32,
     pub path: Option<PathBuf>,
+    /// Its code signature, when it has a valid one from a team.
+    pub signature: Option<Signature>,
     /// When the process started, in seconds since the epoch; 0 when the system would not say. A
     /// program the system would not name is remembered for the run by its pid and this: a later
     /// process under the same pid (pids are reused) is a stranger (access.rs).
@@ -26,13 +51,14 @@ pub struct Host {
 }
 
 impl Host {
-    /// "Claude (/Applications/Claude.app)", "claude (/Users/x/.local/bin/claude)", or only the
-    /// process id when the system would not say more.
+    /// "Claude (/Applications/Claude.app, Q6L2SF6YDW/com.anthropic.claudefordesktop)",
+    /// "node (/opt/homebrew/bin/node)", or only the process id when the system would not say more.
     pub fn describe(&self) -> String {
-        match &self.path {
-            Some(_) => format!("{} ({})", self.name(), self.key()),
-            None if self.pid > 0 => format!("pid {}", self.pid),
-            None => "an unknown process".to_string(),
+        match (&self.path, &self.signature) {
+            (Some(_), Some(signature)) => format!("{} ({}, {})", self.name(), self.location(), signature.key()),
+            (Some(_), None) => format!("{} ({})", self.name(), self.location()),
+            (None, _) if self.pid > 0 => format!("pid {}", self.pid),
+            (None, _) => "an unknown process".to_string(),
         }
     }
 
@@ -50,15 +76,25 @@ impl Host {
         }
     }
 
-    /// What the user's answer is remembered by: the app bundle ("/Applications/Claude.app"), the
-    /// folder of a program kept under its version number ("/Users/x/.local/share/claude", so that
-    /// an update of Claude Code is not a stranger), or the program's path; for a program the
-    /// system would not name, its process id, which lasts as long as it runs.
-    pub fn key(&self) -> String {
+    /// Where the program is, as the user sees it: its app bundle ("/Applications/Claude.app") or
+    /// the program itself ("/Users/x/.local/share/claude/versions/2.1.296"); for a program the
+    /// system would not name, its process id.
+    pub fn location(&self) -> String {
         match &self.path {
-            Some(path) => bundle_of(path).or_else(|| versioned_home(path)).unwrap_or_else(|| path.clone()).display().to_string(),
+            Some(path) => bundle_of(path).unwrap_or_else(|| path.clone()).display().to_string(),
             None if self.pid > 0 => format!("pid {}", self.pid),
             None => "unknown".to_string(),
+        }
+    }
+
+    /// What the user's answer is remembered by: the program's signature
+    /// ("Q6L2SF6YDW/com.anthropic.claude-code"), the same for every version and every copy of it;
+    /// for a program without one from a team, where it is; for one the system would not name, its
+    /// process id, which lasts as long as it runs.
+    pub fn key(&self) -> String {
+        match &self.signature {
+            Some(signature) => signature.key(),
+            None => self.location(),
         }
     }
 
@@ -71,7 +107,7 @@ impl Host {
 /// The program behind `stream`: the process that connected, unless that is our own bridge or a
 /// shell, in which case the one that started it.
 pub fn host_of(stream: &UnixStream) -> Host {
-    let Some(peer) = system::peer_pid(stream) else { return Host { pid: 0, path: None, started: 0 } };
+    let Some(peer) = system::peer_pid(stream) else { return Host { pid: 0, path: None, signature: None, started: 0 } };
     let ours = std::env::current_exe().ok().and_then(|exe| exe.canonicalize().ok());
     let mut pid = peer;
     let mut path = system::path_of(pid);
@@ -92,7 +128,9 @@ pub fn host_of(stream: &UnixStream) -> Host {
         ours.as_ref().is_some_and(|ours| current.canonicalize().ok().as_ref() == Some(ours))
             || current.file_name().and_then(|name| name.to_str()).is_some_and(|name| WRAPPERS.contains(&name))
     });
-    Host { pid, path: if ours_or_wrapper { None } else { path }, started: system::started_at(pid).unwrap_or(0) }
+    let path = if ours_or_wrapper { None } else { path };
+    let signature = if path.is_some() { system::signature_of(pid) } else { None };
+    Host { pid, path, signature, started: system::started_at(pid).unwrap_or(0) }
 }
 
 /// The app bundle a program is in, when it is in one: "/Applications/Claude.app" for
@@ -104,17 +142,6 @@ pub fn bundle_of(path: &Path) -> Option<PathBuf> {
 /// "2.1.296": a version number, as a file or folder is named by one.
 fn is_version(name: &str) -> bool {
     !name.is_empty() && name.chars().all(|c| c.is_ascii_digit() || c == '.')
-}
-
-/// For a program kept under its version number, the folder that holds every version:
-/// "/Users/x/.local/share/claude" for "/Users/x/.local/share/claude/versions/2.1.296".
-fn versioned_home(path: &Path) -> Option<PathBuf> {
-    if !is_version(path.file_name()?.to_str()?) {
-        return None;
-    }
-    let parent = path.parent()?;
-    let home = if parent.file_name().and_then(|name| name.to_str()) == Some("versions") { parent.parent()? } else { parent };
-    Some(home.to_path_buf())
 }
 
 /// A program's name from its path: its file name, unless that is a version number, in which case
@@ -138,6 +165,15 @@ mod system {
     use std::os::fd::AsRawFd;
     use std::os::unix::net::UnixStream;
     use std::path::PathBuf;
+    use std::ptr::NonNull;
+
+    use objc2_core_foundation::{CFDictionary, CFNumber, CFNumberType, CFRetained, CFString, CFType};
+    use objc2_security::{
+        SecCSFlags, SecCode, SecRequirement, SecStaticCode, errSecSuccess, kSecCSSigningInformation, kSecCodeInfoIdentifier,
+        kSecCodeInfoTeamIdentifier, kSecGuestAttributePid,
+    };
+
+    use super::Signature;
 
     unsafe extern "C" {
         fn getsockopt(socket: i32, level: i32, option_name: i32, option_value: *mut c_void, option_len: *mut u32) -> i32;
@@ -150,6 +186,12 @@ mod system {
     const PROC_PIDTBSDINFO: i32 = 3;
     /// PROC_PIDPATHINFO_MAXSIZE: four times MAXPATHLEN.
     const PATH_BUFFER: usize = 4 * 1024;
+    /// What a signature must meet to be believed: a certificate chain to Apple's root, which is a
+    /// Developer ID, an App Store or Apple's own certificate; the framework then holds the team in
+    /// the signature to the one in the certificate. Without this, a signature under a self-made
+    /// certificate, or none at all (ad hoc), passes as valid and could name any team and
+    /// identifier it likes.
+    const APPLE_ISSUED: &str = "anchor apple generic";
 
     /// libproc's proc_bsdinfo, as far as its parent process id.
     #[repr(C)]
@@ -222,12 +264,67 @@ mod system {
     pub fn started_at(pid: i32) -> Option<u64> {
         Some(bsd_info(pid)?.pbi_start_tvsec)
     }
+
+    /// The code signature of the process `pid`, validated under APPLE_ISSUED: its identifier and,
+    /// when the certificate names one, its team. None for a program without such a signature, or
+    /// one that is gone.
+    pub fn signing_of(pid: i32) -> Option<(String, Option<String>)> {
+        // SAFETY: `pid` is an i32, which is what SInt32Type reads; CFNumber copies the value.
+        let number = unsafe { CFNumber::new(None, CFNumberType::SInt32Type, std::ptr::from_ref(&pid).cast()) }?;
+        // SAFETY: the framework's constant is only read.
+        let attributes = CFDictionary::<CFString, CFType>::from_slices(&[unsafe { kSecGuestAttributePid }], &[AsRef::<CFType>::as_ref(&*number)]);
+        let mut code: *mut SecCode = std::ptr::null_mut();
+        // SAFETY: the attributes name a process, as the framework documents; `code` is where it
+        // puts its answer.
+        let status = unsafe { SecCode::copy_guest_with_attributes(None, Some(attributes.as_opaque()), SecCSFlags::DefaultFlags, NonNull::from(&mut code)) };
+        if status != errSecSuccess {
+            return None;
+        }
+        // SAFETY: the framework handed over one reference, which is ours to release.
+        let code: CFRetained<SecCode> = unsafe { CFRetained::from_raw(NonNull::new(code)?) };
+        let text = CFString::from_str(APPLE_ISSUED);
+        let mut requirement: *mut SecRequirement = std::ptr::null_mut();
+        // SAFETY: a requirement in the framework's own language; `requirement` is where it goes.
+        let status = unsafe { SecRequirement::create_with_string(&text, SecCSFlags::DefaultFlags, NonNull::from(&mut requirement)) };
+        if status != errSecSuccess {
+            return None;
+        }
+        // SAFETY: as above, one reference that is ours.
+        let requirement: CFRetained<SecRequirement> = unsafe { CFRetained::from_raw(NonNull::new(requirement)?) };
+        // SAFETY: both are valid objects from the calls above.
+        if unsafe { code.check_validity(SecCSFlags::DefaultFlags, Some(&*requirement)) } != errSecSuccess {
+            return None;
+        }
+        let mut information: *const CFDictionary = std::ptr::null();
+        // The team comes with the certificates (kSecCSSigningInformation), not with the basic facts.
+        let wanted = SecCSFlags(kSecCSSigningInformation);
+        // SAFETY: a SecCode is a SecStaticCode as well, the framework says ("SecCodeRef is a
+        // subtype of SecStaticCodeRef"); `information` is where the dictionary goes.
+        let status = unsafe { SecCode::copy_signing_information(CFRetained::as_ptr(&code).cast::<SecStaticCode>().as_ref(), wanted, NonNull::from(&mut information)) };
+        if status != errSecSuccess {
+            return None;
+        }
+        // SAFETY: one reference that is ours; the dictionary's keys are strings, its values vary.
+        let information: CFRetained<CFDictionary<CFType, CFType>> = unsafe { CFRetained::from_raw(NonNull::new(information.cast_mut())?.cast()) };
+        let text_of = |key: &CFString| information.get(AsRef::<CFType>::as_ref(key)).and_then(|value| value.downcast::<CFString>().ok()).map(|value| value.to_string());
+        // SAFETY: the framework's constants are only read.
+        let (identifier, team) = unsafe { (text_of(kSecCodeInfoIdentifier), text_of(kSecCodeInfoTeamIdentifier)) };
+        Some((identifier?, team))
+    }
+
+    /// The signature a program's answer is remembered by: one from a team.
+    pub fn signature_of(pid: i32) -> Option<Signature> {
+        let (identifier, team) = signing_of(pid)?;
+        Some(Signature { team: team?, identifier })
+    }
 }
 
 #[cfg(not(target_os = "macos"))]
 mod system {
     use std::os::unix::net::UnixStream;
     use std::path::PathBuf;
+
+    use super::Signature;
 
     pub fn peer_pid(_stream: &UnixStream) -> Option<i32> {
         None
@@ -244,6 +341,10 @@ mod system {
     pub fn started_at(_pid: i32) -> Option<u64> {
         None
     }
+
+    pub fn signature_of(_pid: i32) -> Option<Signature> {
+        None
+    }
 }
 
 #[cfg(test)]
@@ -252,25 +353,42 @@ mod tests {
 
     #[test]
     fn a_program_in_an_app_bundle_is_named_after_the_bundle() {
-        let claude = Host { pid: 7, path: Some(PathBuf::from("/Applications/Claude.app/Contents/MacOS/Claude")), started: 0 };
+        let claude = Host { pid: 7, path: Some(PathBuf::from("/Applications/Claude.app/Contents/MacOS/Claude")), signature: None, started: 0 };
         assert_eq!(claude.describe(), "Claude (/Applications/Claude.app)");
-        let tool = Host { pid: 8, path: Some(PathBuf::from("/Users/x/.local/bin/claude")), started: 0 };
+        let tool = Host { pid: 8, path: Some(PathBuf::from("/Users/x/.local/bin/claude")), signature: None, started: 0 };
         assert_eq!(tool.describe(), "claude (/Users/x/.local/bin/claude)");
         assert_eq!((claude.name(), claude.key()), ("Claude".to_string(), "/Applications/Claude.app".to_string()));
         assert_eq!((tool.name(), tool.key()), ("claude".to_string(), "/Users/x/.local/bin/claude".to_string()));
-        let nameless = Host { pid: 9, path: None, started: 0 };
+        let nameless = Host { pid: 9, path: None, signature: None, started: 0 };
         assert_eq!((nameless.describe(), nameless.name(), nameless.key(), nameless.identified()), ("pid 9".into(), String::new(), "pid 9".into(), false));
-        assert_eq!(Host { pid: 0, path: None, started: 0 }.describe(), "an unknown process");
-        assert_eq!(Host { pid: 0, path: None, started: 0 }.key(), "unknown");
+        assert_eq!(Host { pid: 0, path: None, signature: None, started: 0 }.describe(), "an unknown process");
+        assert_eq!(Host { pid: 0, path: None, signature: None, started: 0 }.key(), "unknown");
         assert_eq!(bundle_of(Path::new("/usr/bin/node")), None);
-        let versioned = Host { pid: 10, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.296")), started: 0 };
-        assert_eq!((versioned.name(), versioned.key()), ("claude".to_string(), "/Users/x/.local/share/claude".to_string()));
-        assert_eq!(versioned.describe(), "claude (/Users/x/.local/share/claude)");
+        let versioned = Host { pid: 10, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.296")), signature: None, started: 0 };
+        assert_eq!((versioned.name(), versioned.key()), ("claude".to_string(), "/Users/x/.local/share/claude/versions/2.1.296".to_string()));
         assert_eq!(program_name(Path::new("/opt/homebrew/bin/node")), "node");
         assert_eq!(program_name(Path::new("/Users/x/tools/3.0")), "tools");
-        assert_eq!(versioned_home(Path::new("/Users/x/tools/3.0")), Some(PathBuf::from("/Users/x/tools")));
-        assert_eq!(versioned_home(Path::new("/opt/homebrew/bin/node")), None);
         assert_eq!(program_name(Path::new("/")), "program");
+    }
+
+    #[test]
+    fn a_signed_program_is_remembered_by_its_signature_wherever_it_is() {
+        let signature = Signature { team: "Q6L2SF6YDW".into(), identifier: "com.anthropic.claude-code".into() };
+        let standalone = Host { pid: 11, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.306")), signature: Some(signature.clone()), started: 0 };
+        let inside_vscode = "/Users/x/.vscode/extensions/anthropic.claude-code-2.1.305-darwin-arm64/resources/native-binary/claude";
+        let extension = Host { pid: 12, path: Some(PathBuf::from(inside_vscode)), signature: Some(signature), started: 0 };
+        assert_eq!(standalone.key(), "Q6L2SF6YDW/com.anthropic.claude-code");
+        assert_eq!(extension.key(), standalone.key());
+        assert_eq!((standalone.name(), standalone.location()), ("claude".to_string(), "/Users/x/.local/share/claude/versions/2.1.306".to_string()));
+        assert_eq!((extension.name(), extension.location()), ("claude".to_string(), inside_vscode.to_string()));
+        assert_eq!(standalone.describe(), "claude (/Users/x/.local/share/claude/versions/2.1.306, Q6L2SF6YDW/com.anthropic.claude-code)");
+        let desktop = Host {
+            pid: 13,
+            path: Some(PathBuf::from("/Applications/Claude.app/Contents/MacOS/Claude")),
+            signature: Some(Signature { team: "Q6L2SF6YDW".into(), identifier: "com.anthropic.claudefordesktop".into() }),
+            started: 0,
+        };
+        assert_eq!((desktop.name(), desktop.location(), desktop.key()), ("Claude".to_string(), "/Applications/Claude.app".to_string(), "Q6L2SF6YDW/com.anthropic.claudefordesktop".to_string()));
     }
 
     #[cfg(target_os = "macos")]
@@ -285,5 +403,20 @@ mod tests {
         let (ours, theirs) = UnixStream::pair().expect("a pair");
         assert_eq!(system::peer_pid(&ours), Some(me));
         drop(theirs);
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn the_system_validates_a_signature_apple_stands_behind_and_no_other() {
+        // Apple's own sleep: signed by Apple, under no team.
+        let mut sleep = std::process::Command::new("/bin/sleep").arg("30").spawn().expect("sleep");
+        let pid = i32::try_from(sleep.id()).expect("a pid");
+        assert_eq!(system::signing_of(pid), Some(("com.apple.sleep".to_string(), None)));
+        assert_eq!(system::signature_of(pid), None);
+        let _ = sleep.kill();
+        let _ = sleep.wait();
+        // This test program: signed ad hoc by the linker, under no certificate at all.
+        assert_eq!(system::signing_of(std::process::id() as i32), None);
+        assert_eq!(system::signature_of(-1), None);
     }
 }

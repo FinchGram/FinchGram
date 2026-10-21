@@ -40,8 +40,9 @@ things fit together.
   with `finchgram mcp` as the stdio bridge, inside the one TDLib session and without an async
   runtime. What an assistant may do is Settings → AI access (the design's "AI 访问" round, built in
   every theme: `src/mcp/access.rs`, ui/pages/ai-access.slint), off by default; each app is allowed
-  by the user the first time it connects, through the dialog, and remembered by the path macOS
-  reports for it.
+  by the user the first time it connects, through the dialog, and remembered by its code signature
+  as macOS validates it (Team ID and signing identifier, the same through updates and for every
+  copy), or by its path when it has no signature from a team.
 - The Downloads page (`src/downloads/`, docs/downloads.md, the design's "FinchGram Desktop 下载"
   round, built in every theme) is a read-only WebDAV client whose engine follows the maintainer's
   vget: 8 MB chunks over up to 12 connections, `.part` + `.part.json` for going on after a stop.

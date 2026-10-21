@@ -1,8 +1,9 @@
 //! Settings → AI access and the dialog that allows an app: the user's side of the MCP server, on
-//! the UI thread. The settings hold what an assistant may do and which programs the user has
-//! allowed or turned away (`settings::Mcp`); this module shows them in the AiAccess global
-//! (ui/ai-access.slint), takes the page's changes, answers the server's questions (may this
-//! program connect? is it connected now?) and keeps the page's log of what assistants asked for.
+//! the UI thread. The settings hold what an assistant may do (`settings::Mcp`), the database which
+//! programs the user has allowed or turned away (`database::McpApp`, by the key peer.rs gives
+//! them); this module shows them in the AiAccess global (ui/ai-access.slint), takes the page's
+//! changes, answers the server's questions (may this program connect? is it connected now?) and
+//! keeps the page's log of what assistants asked for.
 //! The server's threads reach it through `upgrade_in_event_loop` (mod.rs).
 
 use std::cell::RefCell;
@@ -135,21 +136,21 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
             show_policy(&ui);
         }
     });
-    ai.on_remove_app(|path| {
-        if let Err(err) = database::remove_mcp_app(&path) {
+    ai.on_remove_app(|key| {
+        if let Err(err) = database::remove_mcp_app(&key) {
             eprintln!("mcp: cannot forget the program: {err}");
         }
         STATE.with(|slot| {
             if let Some(state) = slot.borrow_mut().as_mut() {
-                state.session_apps.retain(|known| known.app.path != path.as_str());
+                state.session_apps.retain(|known| known.app.key != key.as_str());
             }
         });
         if let Some(ui) = window() {
             show_apps(&ui);
         }
     });
-    ai.on_allow_app(|path| {
-        if let Some(mut app) = database::mcp_app(&path) {
+    ai.on_allow_app(|key| {
+        if let Some(mut app) = database::mcp_app(&key) {
             app.allowed = true;
             if let Err(err) = database::save_mcp_app(&app) {
                 eprintln!("mcp: cannot allow the program: {err}");
@@ -157,7 +158,7 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         }
         STATE.with(|slot| {
             if let Some(state) = slot.borrow_mut().as_mut()
-                && let Some(known) = state.session_apps.iter_mut().find(|known| known.app.path == path.as_str())
+                && let Some(known) = state.session_apps.iter_mut().find(|known| known.app.key == key.as_str())
             {
                 known.app.allowed = true;
             }
@@ -192,13 +193,16 @@ pub fn admit(host: Host, answer: mpsc::Sender<Admission>) {
             return Some(Admission::Denied);
         }
         if let Some(mut app) = database::mcp_app(&key) {
+            // Where it is now: a newer version, or another copy, of the same program.
+            app.path = host.location();
+            app.name = host.name();
             app.last_used = now;
             if let Err(err) = database::save_mcp_app(&app) {
                 eprintln!("mcp: cannot note the program's use: {err}");
             }
             return Some(if app.allowed { Admission::Allowed } else { Admission::Denied });
         }
-        if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.path == key && known.started == host.started) {
+        if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.key == key && known.started == host.started) {
             known.app.last_used = now;
             return Some(if known.app.allowed { Admission::Allowed } else { Admission::Denied });
         }
@@ -262,7 +266,7 @@ pub fn admitted(host: &Host) -> bool {
         let key = host.key();
         settings.mcp.enabled
             && database::mcp_app(&key)
-                .or_else(|| state.session_apps.iter().find(|known| known.app.path == key && known.started == host.started).map(|known| known.app.clone()))
+                .or_else(|| state.session_apps.iter().find(|known| known.app.key == key && known.started == host.started).map(|known| known.app.clone()))
                 .is_some_and(|app| app.allowed)
     })
 }
@@ -317,7 +321,7 @@ pub fn record(host: &Host, activity: Activity) {
                 eprintln!("mcp: cannot note the program's use: {err}");
             }
         }
-        if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.path == key && known.started == host.started) {
+        if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.key == key && known.started == host.started) {
             known.app.last_used = now;
         }
         state.activity.insert(0, entry);
@@ -366,7 +370,7 @@ fn show_question() {
     let name = host.name();
     ai.set_ask_initial(initial(&name).into());
     ai.set_ask_name(name.into());
-    ai.set_ask_path(host.key().into());
+    ai.set_ask_path(host.location().into());
     ai.set_ask_open(true);
     crate::platform::show_window(&ui);
 }
@@ -400,7 +404,7 @@ fn turn_away_waiting() {
 
 /// Keep the answer: in the database for a program the system named, else for this run only.
 fn remember(host: &Host, allowed: bool) {
-    let app = McpApp { path: host.key(), name: host.name(), allowed, last_used: now() };
+    let app = McpApp { key: host.key(), path: host.location(), name: host.name(), allowed, last_used: now() };
     STATE.with(|slot| {
         let mut slot = slot.borrow_mut();
         let Some(state) = slot.as_mut() else { return };
@@ -409,7 +413,7 @@ fn remember(host: &Host, allowed: bool) {
                 eprintln!("mcp: cannot keep the answer about the program: {err}");
             }
         } else {
-            state.session_apps.retain(|known| known.app.path != app.path);
+            state.session_apps.retain(|known| known.app.key != app.key);
             state.session_apps.push(SessionApp { app, started: host.started });
         }
     });
@@ -463,10 +467,11 @@ fn show_apps(ui: &MainWindow) {
                 kept.iter()
                     .chain(state.session_apps.iter().map(|known| &known.app))
                     .map(|app| AiApp {
+                        key: app.key.clone().into(),
                         name: app.name.clone().into(),
                         path: app.path.clone().into(),
                         allowed: app.allowed,
-                        live: state.live.get(&app.path).is_some_and(|count| *count > 0),
+                        live: state.live.get(&app.key).is_some_and(|count| *count > 0),
                         has_last_used: app.last_used > 0,
                         last_used: moment(app.last_used),
                     })

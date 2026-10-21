@@ -16,8 +16,6 @@ use rusqlite::{Connection, OptionalExtension as _, params};
 
 use crate::platform;
 
-/// The tables as this version makes them; a later version that changes them reads this first.
-const VERSION: i64 = 1;
 /// The Keychain account of the database's key.
 const KEY_ACCOUNT: &str = "database";
 
@@ -40,7 +38,11 @@ pub struct WebdavServer {
 /// (src/mcp/access.rs).
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct McpApp {
-    /// Where the system said it is: an app bundle ("/Applications/Claude.app") or a program.
+    /// What it is remembered by (`Host::key`, src/mcp/peer.rs): its code signature
+    /// ("Q6L2SF6YDW/com.anthropic.claude-code"), the same for every version and copy of it, or
+    /// where it is when it has none from a team.
+    pub key: String,
+    /// Where the system last saw it: an app bundle ("/Applications/Claude.app") or a program.
     pub path: String,
     /// Its name as shown: the bundle's, or the program's file name.
     pub name: String,
@@ -92,7 +94,6 @@ fn open_at(path: &Path, key: &str) -> Result<Connection, String> {
     connection
         .execute_batch(
             "PRAGMA journal_mode = WAL;
-             CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
              CREATE TABLE IF NOT EXISTS webdav_servers (
                  id INTEGER PRIMARY KEY,
                  position INTEGER NOT NULL,
@@ -102,16 +103,14 @@ fn open_at(path: &Path, key: &str) -> Result<Connection, String> {
                  password TEXT NOT NULL
              );
              CREATE TABLE IF NOT EXISTS mcp_apps (
-                 path TEXT PRIMARY KEY,
+                 key TEXT PRIMARY KEY,
+                 path TEXT NOT NULL,
                  name TEXT NOT NULL,
                  allowed INTEGER NOT NULL,
                  last_used INTEGER NOT NULL
              );",
         )
         .map_err(|err| format!("cannot make the tables: {err}"))?;
-    connection
-        .execute("INSERT OR IGNORE INTO meta (key, value) VALUES ('version', ?1)", params![VERSION.to_string()])
-        .map_err(|err| format!("cannot write the version: {err}"))?;
     Ok(connection)
 }
 
@@ -182,22 +181,22 @@ pub fn mcp_apps() -> Vec<McpApp> {
     }
 }
 
-/// The program at `path`, if it has connected before.
-pub fn mcp_app(path: &str) -> Option<McpApp> {
-    with(|connection| read_mcp_app(connection, path)).unwrap_or_else(|err| {
+/// The program remembered by `key`, if it has connected before.
+pub fn mcp_app(key: &str) -> Option<McpApp> {
+    with(|connection| read_mcp_app(connection, key)).unwrap_or_else(|err| {
         eprintln!("database: cannot read a program: {err}");
         None
     })
 }
 
-/// Keep `app`, in place of what was kept for its path.
+/// Keep `app`, in place of what was kept under its key.
 pub fn save_mcp_app(app: &McpApp) -> Result<(), String> {
     with(|connection| write_mcp_app(connection, app))
 }
 
-/// Forget the program at `path`; nothing happens when there is none.
-pub fn remove_mcp_app(path: &str) -> Result<(), String> {
-    with(|connection| connection.execute("DELETE FROM mcp_apps WHERE path = ?1", params![path]).map(|_| ()))
+/// Forget the program remembered by `key`; nothing happens when there is none.
+pub fn remove_mcp_app(key: &str) -> Result<(), String> {
+    with(|connection| connection.execute("DELETE FROM mcp_apps WHERE key = ?1", params![key]).map(|_| ()))
 }
 
 /// Forget every program (another Telegram account logged in: src/mcp/access.rs).
@@ -206,25 +205,25 @@ pub fn clear_mcp_apps() -> Result<(), String> {
 }
 
 fn read_mcp_apps(connection: &Connection) -> rusqlite::Result<Vec<McpApp>> {
-    let mut statement = connection.prepare("SELECT path, name, allowed, last_used FROM mcp_apps ORDER BY rowid")?;
-    let rows = statement.query_map([], |row| Ok(McpApp { path: row.get(0)?, name: row.get(1)?, allowed: row.get::<_, i64>(2)? != 0, last_used: row.get(3)? }))?;
+    let mut statement = connection.prepare("SELECT key, path, name, allowed, last_used FROM mcp_apps ORDER BY rowid")?;
+    let rows = statement.query_map([], mcp_app_row)?;
     rows.collect()
 }
 
-fn read_mcp_app(connection: &Connection, path: &str) -> rusqlite::Result<Option<McpApp>> {
-    connection
-        .query_row("SELECT path, name, allowed, last_used FROM mcp_apps WHERE path = ?1", params![path], |row| {
-            Ok(McpApp { path: row.get(0)?, name: row.get(1)?, allowed: row.get::<_, i64>(2)? != 0, last_used: row.get(3)? })
-        })
-        .optional()
+fn read_mcp_app(connection: &Connection, key: &str) -> rusqlite::Result<Option<McpApp>> {
+    connection.query_row("SELECT key, path, name, allowed, last_used FROM mcp_apps WHERE key = ?1", params![key], mcp_app_row).optional()
+}
+
+fn mcp_app_row(row: &rusqlite::Row) -> rusqlite::Result<McpApp> {
+    Ok(McpApp { key: row.get(0)?, path: row.get(1)?, name: row.get(2)?, allowed: row.get::<_, i64>(3)? != 0, last_used: row.get(4)? })
 }
 
 fn write_mcp_app(connection: &Connection, app: &McpApp) -> rusqlite::Result<()> {
     connection
         .execute(
-            "INSERT INTO mcp_apps (path, name, allowed, last_used) VALUES (?1, ?2, ?3, ?4)
-             ON CONFLICT(path) DO UPDATE SET name = excluded.name, allowed = excluded.allowed, last_used = excluded.last_used",
-            params![app.path, app.name, i64::from(app.allowed), app.last_used],
+            "INSERT INTO mcp_apps (key, path, name, allowed, last_used) VALUES (?1, ?2, ?3, ?4, ?5)
+             ON CONFLICT(key) DO UPDATE SET path = excluded.path, name = excluded.name, allowed = excluded.allowed, last_used = excluded.last_used",
+            params![app.key, app.path, app.name, i64::from(app.allowed), app.last_used],
         )
         .map(|_| ())
 }
@@ -262,8 +261,6 @@ mod tests {
         // The same key opens it; another does not, and nor does none.
         let connection = open_at(&path, &a_key(1)).expect("opened again");
         assert_eq!(read_webdav_servers(&connection).expect("read"), servers);
-        let version: String = connection.query_row("SELECT value FROM meta WHERE key = 'version'", [], |row| row.get(0)).expect("the version");
-        assert_eq!(version, VERSION.to_string());
         drop(connection);
         assert!(open_at(&path, &a_key(2)).is_err());
         let plain = Connection::open(&path).expect("the file");
@@ -276,21 +273,35 @@ mod tests {
     }
 
     #[test]
-    fn programs_are_kept_by_their_path_and_forgotten_one_by_one_or_all_at_once() {
+    fn programs_are_kept_by_their_key_and_forgotten_one_by_one_or_all_at_once() {
         let path = scratch("apps");
         let connection = open_at(&path, &a_key(3)).expect("a new database");
         assert_eq!(read_mcp_apps(&connection).expect("read"), vec![]);
-        let claude = McpApp { path: "/Applications/Claude.app".into(), name: "Claude".into(), allowed: true, last_used: 10 };
-        let code = McpApp { path: "/Users/x/.local/share/claude".into(), name: "claude".into(), allowed: false, last_used: 0 };
+        let claude = McpApp {
+            key: "Q6L2SF6YDW/com.anthropic.claudefordesktop".into(),
+            path: "/Applications/Claude.app".into(),
+            name: "Claude".into(),
+            allowed: true,
+            last_used: 10,
+        };
+        let code = McpApp {
+            key: "Q6L2SF6YDW/com.anthropic.claude-code".into(),
+            path: "/Users/x/.local/share/claude/versions/2.1.306".into(),
+            name: "claude".into(),
+            allowed: false,
+            last_used: 0,
+        };
         write_mcp_app(&connection, &claude).expect("write");
         write_mcp_app(&connection, &code).expect("write");
         assert_eq!(read_mcp_apps(&connection).expect("read"), vec![claude.clone(), code.clone()]);
-        // Again under the same path: the one record, brought up to date.
-        let used = McpApp { last_used: 20, ..claude.clone() };
+        // Again under the same key, from another copy of the program: the one record, brought up
+        // to date, where it is now included.
+        let elsewhere = "/Users/x/.vscode/extensions/anthropic.claude-code-2.1.305-darwin-arm64/resources/native-binary/claude";
+        let used = McpApp { path: elsewhere.into(), last_used: 20, ..code.clone() };
         write_mcp_app(&connection, &used).expect("write again");
-        assert_eq!(read_mcp_app(&connection, &claude.path).expect("read one"), Some(used));
+        assert_eq!(read_mcp_app(&connection, &code.key).expect("read one"), Some(used));
         assert_eq!(read_mcp_app(&connection, "/nowhere").expect("read none"), None);
-        connection.execute("DELETE FROM mcp_apps WHERE path = ?1", params![code.path]).expect("remove");
+        connection.execute("DELETE FROM mcp_apps WHERE key = ?1", params![code.key]).expect("remove");
         assert_eq!(read_mcp_apps(&connection).expect("read").len(), 1);
         connection.execute("DELETE FROM mcp_apps", []).expect("clear");
         assert_eq!(read_mcp_apps(&connection).expect("read"), vec![]);

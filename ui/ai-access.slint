@@ -23,8 +23,9 @@ export struct AiChat {
 
 // A program that has connected: allowed or not, as the system named it.
 export struct AiApp {
+    key: string,            // what it is remembered by: its code signature ("Q6L2SF6YDW/com.anthropic.claude-code"), or its path when it has none (src/mcp/peer.rs)
     name: string,           // "Claude", "claude"; "" when the system would not say which program it is
-    path: string,           // "/Applications/Claude.app", "/Users/x/.local/bin/claude", or "pid 48213"
+    path: string,           // where it is: "/Applications/Claude.app", "/Users/x/.local/bin/claude", or "pid 48213"
     allowed: bool,
     live: bool,             // connected now
     has-last-used: bool,
@@ -64,7 +65,7 @@ export global AiAccess {
     // The dialog: an app that has not been allowed or turned away before is connecting.
     in-out property <bool> ask-open;
     in-out property <string> ask-name;               // "" when the system would not say which program it is
-    in-out property <string> ask-path;
+    in-out property <string> ask-path;               // where it is
     in-out property <string> ask-initial;            // the name's first letter, for its square
 
     callback opened();                               // the page is shown: Rust refreshes the lists
@@ -73,8 +74,8 @@ export global AiAccess {
     callback set-writing(AiWriting);
     callback toggle-chat(string);                    // chosen, or not any more
     callback search-chats(string);                   // the picker's words
-    callback remove-app(string);                     // by path: it asks again next time
-    callback allow-app(string);                      // one that was turned away
+    callback remove-app(string);                     // by key: it asks again next time
+    callback allow-app(string);                      // by key: one that was turned away
     callback copy(string);                           // "code" or "desktop"
     callback show-log();                             // mcp.log, in the Finder
     callback answer(bool);                           // the dialog: allow, or don't

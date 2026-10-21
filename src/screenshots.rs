@@ -1057,6 +1057,7 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
         chosen,
     };
     let program = |name: &str, path: &str, allowed: bool, live: bool, last: Option<Moment>| AiApp {
+        key: path.into(),
         name: name.into(),
         path: path.into(),
         allowed,

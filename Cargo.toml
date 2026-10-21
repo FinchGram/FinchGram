@@ -67,9 +67,10 @@ objc2-user-notifications = { version = "0.3", default-features = false, features
     "UNNotificationResponse", "UNNotificationSound", "UNNotificationTrigger", "UNUserNotificationCenter",
 ] }
 resvg = { version = "0.48", default-features = false, features = ["text"] }   # also draws the screenshot tool's annotations into the picture
-# The Keychain, for the passwords of WebDAV servers (src/platform/macos.rs); the same objc2 family.
+# The Keychain, for the database's key (src/platform/macos.rs), and the code signature of a program
+# connecting to the MCP server (src/mcp/peer.rs); the same objc2 family.
 objc2-core-foundation = { version = "0.3", default-features = false, features = ["std", "CFBase", "CFData", "CFDictionary", "CFNumber", "CFString"] }
-objc2-security = { version = "0.3", default-features = false, features = ["std", "SecBase", "SecItem"] }
+objc2-security = { version = "0.3", default-features = false, features = ["std", "CSCommon", "SecBase", "SecCode", "SecItem", "SecRequirement"] }
 
 [build-dependencies]
 slint-build = "~1.18"

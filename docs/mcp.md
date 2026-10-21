@@ -93,7 +93,7 @@ Settings → AI access, from the design:
   chats are shown dimmed and cannot be ticked.
 - **Writing**: send messages (at once, under the user's name; and delete messages the account
   sent), drafts only (the assistant leaves a draft, the user sends it), or read only.
-- **Apps**: every program that has connected, as macOS named it and where it is; connected now,
+- **Apps**: every program that has connected, as macOS named it and where it was last seen; connected now,
   or when it was last used; Remove (it asks again next time), or Allow for one that was turned
   away. A program macOS would not name ("Unidentified program", by its process id) is remembered
   only while FinchGram runs.
@@ -131,13 +131,21 @@ credentials from the environment". FinchGram's answer has three layers:
    FinchGram asks the kernel for the peer process (`LOCAL_PEERPID`) and libproc for its program;
    when that is FinchGram's own bridge, or a shell that started it, it looks at the parent until
    it finds the assistant's app ("Claude", /Applications/Claude.app; "claude",
-   ~/.local/share/claude). Nothing is taken from what the connection says about itself, so
-   nothing can claim to be something else. The first time a program connects, the dialog asks
-   the user; the answer is kept by the program's path: its app bundle, or for a program kept
-   under its version number (Claude Code's ~/.local/share/claude/versions/2.1.296) the folder
-   that holds every version, so that an update does not ask again; and for the Telegram account
-   signed in: another account logging in drops every answer and the chosen chats, so that nothing
-   allowed for one account carries over to the next. When the system cannot name the program, the
+   ~/.local/share/claude/versions/2.1.306). Nothing is taken from what the connection says about
+   itself, so nothing can claim to be something else. The first time a program connects, the
+   dialog asks the user; the answer is kept by the program's code signature, the way macOS itself
+   tells apps apart: the Security framework validates the running process's signature against
+   `anchor apple generic` (a certificate Apple issued: Developer ID, the App Store, or Apple's own),
+   and the answer is remembered by the Team ID and the signing identifier in it
+   ("Q6L2SF6YDW/com.anthropic.claude-code" for Claude Code,
+   "Q6L2SF6YDW/com.anthropic.claudefordesktop" for Claude Desktop), which stay the same through
+   every update and for every copy of the program: Claude Code installed on its own and the one
+   inside the VS Code extension are one app, allowed once. A program without such a signature
+   (unsigned, signed ad hoc, or under a certificate Apple did not issue; Apple's own programs carry
+   no team) is remembered by where it is instead, its app bundle or its path. The answer is also
+   for the Telegram account signed in: another account logging in drops every answer and the chosen
+   chats, so that nothing allowed for one account carries over to the next. When the system cannot
+   name the program, the
    dialog says so and makes Don't Allow the safe choice. Such a program's answer lasts for the run
    and for that process only (its pid and when it started); one the system cannot place at all, not
    even its process, is turned away without a question. A line over 1 MB from a connection ends it,

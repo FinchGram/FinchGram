@@ -531,9 +531,9 @@ export component AiSection {
                         quiet: app.allowed;
                         acted => {
                             if app.allowed {
-                                AiAccess.remove-app(app.path);
+                                AiAccess.remove-app(app.key);
                             } else {
-                                AiAccess.allow-app(app.path);
+                                AiAccess.allow-app(app.key);
                             }
                         }
                     }

@@ -262,9 +262,10 @@ key is random, made the first time and kept in the Keychain under "FinchGram" (t
 and readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
 database holds the WebDAV servers with their passwords (docs/downloads.md) and the programs
 allowed or turned away at AI access (docs/mcp.md); what comes after (a download queue that outlives
-a restart, logs, per-chat settings) gets a table when it is built, `meta.version` marking the
-changes. No table carries data over from an earlier layout: the maintainer is the one user, and
-re-entering a record beats keeping code for it.
+a restart, logs, per-chat settings) gets a table when it is built. No table carries data over
+from an earlier layout, and nothing stamps the layout's version: the maintainer is the one user,
+and re-entering a record beats keeping code for it. With other users that turns around: a change
+of layout then comes with its migration, told apart by SQLite's own `user_version`.
 
 ## Platforms
 
