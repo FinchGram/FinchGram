@@ -85,14 +85,17 @@ libmpv 跟 finchgram-tdlib 一样照这个做：`vendor/mpv/build.sh` 按锁定�
   它要找的 zip 名字由版本号推出来，所以旧的签名清单没法挪到新 tag 上冒充。
 - 更新流程是产品的一部分，必须保证从每一个发布过的版本都能更新到下一个版本。改 asset 名字、`SHA256SUMS`
   格式、签名密钥或仓库之前，必须先发一个能认新布局的版本。
-- CI 用项目自己的证书（"FinchGram"，自签名，有效期到 2056 年）给 app 签名，每个版本都用同一张。macOS 把用户
-  给 app 的权限（截图工具要的“屏幕录制”）绑在代码签名上；ad-hoc 签名每次构建都不一样，所以以前每次更新都会丢掉
-  这个权限，而系统设置里还显示着已允许。证书和私钥只存在于 secrets `CODESIGN_CERTIFICATE`（base64 的 .p12）和
-  `CODESIGN_CERTIFICATE_PASSWORD` 里，另在发布负责人的钥匙串里以 "FinchGram" 备份一份；没有这两个 secret
-  （比如 fork）时流程退回 ad-hoc 签名并给出警告。换证书会让每个用户重新授权一次。
-- 这不是 Developer ID，所以下载的 app 第一次打开仍会被 Gatekeeper 拦下（系统设置 → 隐私与安全性 → “仍要打开”）；
-  app 自己安装的更新没有隔离标记，不受影响。用 Developer ID 签名并公证后就没有这一步：
-  `SIGN_IDENTITY="Developer ID Application: …" scripts/bundle.sh`。
+- CI 用 North Brookville LLC 的 Developer ID Application 证书（团队 S7W3MG9276；证书 2027-11-20 到期，到时换同一
+  团队的新证书，对用户没有影响）给 app 签名，开 Hardened Runtime 并带时间戳。macOS 把用户给 app 的权限（截图工具
+  要的“屏幕录制”）绑在代码签名的团队上，所以更新、换证书都不会丢；ad-hoc 签名每次构建都不一样，以前每次更新丢权限
+  就是这个原因。证书和私钥只存在于 secrets `CODESIGN_CERTIFICATE`（base64 的 .p12，里面带着 Apple 的 Developer ID
+  G2 中间证书）和 `CODESIGN_CERTIFICATE_PASSWORD` 里，另在维护者的登录钥匙串里备份一份；没有这两个 secret（比如
+  fork）时流程退回 ad-hoc 签名并给出警告。v0.3.2 到 v0.4.16 用的是自签名证书（"FinchGram"），换过来时每个用户重新
+  授权了一次屏幕录制。
+- 每个 release 都做公证：流程用 `notarytool` 把签好名的 app 交给 Apple（App Store Connect 的 API 密钥，secrets
+  `NOTARY_KEY`、`NOTARY_KEY_ID`、`NOTARY_ISSUER_ID`），把票据钉进 app 包，再用 `spctl` 问一遍 Gatekeeper 的结论，
+  然后才打 zip，所以下载的 app 直接能开。没有这几个 secret（比如 fork）时 app 只签名不公证，第一次打开 macOS 会问
+  一次。本地 `SIGN_IDENTITY="Developer ID Application: …" scripts/bundle.sh` 签法相同，只是不公证。
 
 ## 4. Telegram API 凭据
 

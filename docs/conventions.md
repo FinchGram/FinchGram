@@ -108,18 +108,24 @@ As in Coova Studio.
 - The update path is part of the product and must keep working from every released version to the
   next. Never change the asset names, the `SHA256SUMS` format, the signing key or the repository
   without first shipping a version that understands the new layout.
-- CI signs the app with the project's own certificate ("FinchGram", self-signed, valid until
-  2056), the same for every release. macOS ties what the user allowed an app (Screen Recording,
-  for the screenshot tool) to its code signature; an ad-hoc signature is new with every build, so
-  every update lost the permission while System Settings still showed it on. The certificate and
-  its key exist only as the secrets `CODESIGN_CERTIFICATE` (a base64 .p12) and
-  `CODESIGN_CERTIFICATE_PASSWORD`, backed up in the release manager's keychain as "FinchGram";
-  without them (a fork) the workflow signs ad hoc and says so. Replacing the certificate costs
-  every user that permission once.
-- It is not a Developer ID, so Gatekeeper stops a downloaded copy on its first launch (System
-  Settings → Privacy & Security → "Open Anyway"); updates installed by the app itself carry no
-  quarantine flag. A Developer ID signature with notarization removes that step:
-  `SIGN_IDENTITY="Developer ID Application: …" scripts/bundle.sh`.
+- CI signs the app with North Brookville LLC's Developer ID Application certificate (team
+  S7W3MG9276; the certificate expires on 2027-11-20 and is then replaced by a new one of the same
+  team, which changes nothing for users), with the hardened runtime and a timestamp. macOS ties
+  what the user allowed an app (Screen Recording, for the screenshot tool) to its signature's
+  team, so the permission stays across updates and certificates; an ad-hoc signature is new with
+  every build, which is how every update once lost it. The certificate and its key exist only as
+  the secrets `CODESIGN_CERTIFICATE` (a base64 .p12, Apple's Developer ID G2 intermediate inside)
+  and `CODESIGN_CERTIFICATE_PASSWORD`, backed up in the maintainer's login keychain; without them
+  (a fork) the workflow signs ad hoc and says so. From v0.3.2 to v0.4.16 the app was signed with
+  a self-signed certificate ("FinchGram"); the switch cost every user the Screen Recording
+  permission once.
+- Every release is notarized: the workflow submits the signed app to Apple with `notarytool` (an
+  App Store Connect API key, the secrets `NOTARY_KEY`, `NOTARY_KEY_ID` and `NOTARY_ISSUER_ID`),
+  staples the ticket into the bundle and asks Gatekeeper's own verdict (`spctl`) before the zip is
+  made, so a downloaded copy opens without a question. Without those secrets (a fork) the app
+  ships signed but not notarized, and macOS asks once on the first launch. Locally,
+  `SIGN_IDENTITY="Developer ID Application: …" scripts/bundle.sh` signs the same way, without
+  notarizing.
 
 ## 4. Telegram API credentials
 

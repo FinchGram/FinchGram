@@ -59,9 +59,9 @@ messages, keyword filters, Windows and Linux. See [what comes next](docs/archite
 
 Get `FinchGram-<version>-macos-arm64.zip` from the latest
 [release](https://github.com/FinchGram/FinchGram/releases/latest), unzip it and move FinchGram into
-Applications. It needs macOS 12 or newer on Apple silicon. The app is not notarized yet, so macOS
-asks once on the first launch: System Settings → Privacy & Security → "Open Anyway". From then on
-it updates itself.
+Applications. It needs macOS 12 or newer on Apple silicon. The app is signed with North Brookville LLC's
+Developer ID and notarized by Apple, so it opens like any other app. From then on it updates
+itself.
 
 Every release comes with `SHA256SUMS` and its Ed25519 signature. The app checks both before it
 installs an update; so can you, with the public key in [release-signing.pub](release-signing.pub).
@@ -282,9 +282,9 @@ nothing they cannot verify. A maintainer starts a release with one command:
 scripts/release.sh patch    # 0.1.0 -> 0.1.1; also minor, major, or an exact version
 ```
 
-The app is signed with the project's own certificate, not an Apple Developer ID, so on the first
-launch of a downloaded copy macOS asks once (System Settings → Privacy & Security → "Open Anyway").
-Updates installed by the app itself start without that step.
+The app is signed with North Brookville LLC's Apple Developer ID, with the hardened runtime, and
+notarized by Apple: a downloaded copy opens without a question from Gatekeeper, and updates
+installed by the app itself do too.
 
 ## Contributing
 

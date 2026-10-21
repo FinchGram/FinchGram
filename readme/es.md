@@ -63,8 +63,8 @@ programados, filtros por palabras clave, Windows y Linux. Mira
 
 Descarga `FinchGram-<versión>-macos-arm64.zip` de la [última versión](https://github.com/FinchGram/FinchGram/releases/latest),
 descomprímelo y mueve FinchGram a Aplicaciones. Necesita macOS 12 o posterior en Apple silicon. La app
-aún no está notarizada, así que macOS pregunta una vez al abrirla por primera vez: Ajustes del
-Sistema → Privacidad y seguridad → «Abrir de todos modos». A partir de ahí se actualiza sola.
+está firmada con el Developer ID de North Brookville LLC y notarizada por Apple, así que se abre
+como cualquier otra. A partir de ahí se actualiza sola.
 
 Cada versión viene con `SHA256SUMS` y su firma Ed25519. La app comprueba ambas antes de instalar una
 actualización; tú también puedes, con la clave pública de [release-signing.pub](../release-signing.pub).
@@ -288,9 +288,9 @@ nada que no puedan verificar. Un mantenedor inicia una release con un solo coman
 scripts/release.sh patch    # 0.1.0 -> 0.1.1; también minor, major o una versión exacta
 ```
 
-La app está firmada con el certificado propio del proyecto, no con un Apple Developer ID, así que la
-primera vez que se abre una copia descargada, macOS pide permiso una vez (Ajustes del Sistema →
-Privacidad y seguridad). Las actualizaciones que instala la propia app arrancan sin ese paso.
+La app está firmada con el Apple Developer ID de North Brookville LLC, con el hardened runtime, y
+notarizada por Apple: una copia descargada se abre sin que Gatekeeper pregunte, y las
+actualizaciones que instala la propia app también.
 
 ## Contribuir
 

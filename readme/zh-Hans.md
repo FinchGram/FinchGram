@@ -45,7 +45,7 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
 
 从[最新的 release](https://github.com/FinchGram/FinchGram/releases/latest) 下载
 `FinchGram-<版本>-macos-arm64.zip`，解压后把 FinchGram 拖进“应用程序”。需要 Apple silicon 的 macOS 12
-或更新。app 还没有做公证，所以第一次打开时 macOS 会拦一次：系统设置 → 隐私与安全性 → “仍要打开”。之后它会自动更新。
+或更新。app 用 North Brookville LLC 的 Developer ID 签名并经 Apple 公证，和其它 app 一样直接打开。之后它会自动更新。
 
 每个 release 都带 `SHA256SUMS` 和它的 Ed25519 签名。app 装更新之前会先校验这两样；你也可以自己校验，公钥在
 [release-signing.pub](../release-signing.pub)。
@@ -241,8 +241,8 @@ release 只由 GitHub Actions 在干净的机器上、从打了 tag 的 commit �
 scripts/release.sh patch    # 0.1.0 -> 0.1.1；也可以是 minor、major 或一个具体版本号
 ```
 
-app 用项目自己的证书签名，不是 Apple Developer ID，所以下载的 app 第一次打开时，macOS 会拦一次
-（系统设置 → 隐私与安全性 → “仍要打开”）。app 自己安装的更新不需要这一步。
+app 用 North Brookville LLC 的 Apple Developer ID 签名，开启 Hardened Runtime，并经 Apple 公证：下载的 app 打开时
+Gatekeeper 不会拦，app 自己安装的更新也一样。
 
 ## 参与
 

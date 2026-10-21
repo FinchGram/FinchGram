@@ -48,8 +48,8 @@ FinchGram は Telegram 公式のライブラリ [TDLib](https://core.telegram.or
 ## ダウンロード
 
 [最新のリリース](https://github.com/FinchGram/FinchGram/releases/latest)から `FinchGram-<バージョン>-macos-arm64.zip` を
-取得し、解凍して FinchGram を「アプリケーション」に移動します。Apple silicon の macOS 12 以降が必要です。アプリはまだ公証
-されていないため、初回起動時に macOS が一度確認します：システム設定 → プライバシーとセキュリティ → 「このまま開く」。
+取得し、解凍して FinchGram を「アプリケーション」に移動します。Apple silicon の macOS 12 以降が必要です。アプリは North
+Brookville LLC の Developer ID で署名され、Apple の公証を受けているので、ほかのアプリと同じようにそのまま開けます。
 以降は自動で更新されます。
 
 すべてのリリースに `SHA256SUMS` とその Ed25519 署名が付きます。アプリは更新をインストールする前に両方を検証します。
@@ -256,9 +256,9 @@ for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finch
 scripts/release.sh patch    # 0.1.0 -> 0.1.1。minor、major、または正確なバージョンも可
 ```
 
-署名にはプロジェクト自身の証明書を使っていて、Apple Developer ID ではありません。そのため、ダウンロードしたアプリを
-初めて開くとき、macOS が一度だけ確認します（システム設定 → プライバシーとセキュリティ）。アプリ自身がインストールした
-アップデートは、この手順なしで起動します。
+署名には North Brookville LLC の Apple Developer ID を使い、Hardened Runtime を有効にして、Apple の公証を受けて
+います。ダウンロードしたアプリは Gatekeeper に確認されることなく開き、アプリ自身がインストールしたアップデートも同じ
+です。
 
 ## 貢献
 

@@ -134,10 +134,13 @@ chose vget's parameters and no 503s.
   session, and deleted when the server is removed, or when its address or user name changes. On the
   wire it is Basic authentication: base64, so plain over http on the LAN, and encrypted only by TLS
   over https.
-- Keychain items belong to the app's signing identity. Releases are signed with the project's own
-  certificate, which macOS does not trust the way it trusts Apple's, so after an update macOS may
-  ask for the login keychain's password before FinchGram reads the item, and Always Allow does not
-  stick for such a signature. That stays until releases are signed with an Apple Developer ID.
+- Keychain items belong to the app's signing identity. Releases are signed with North Brookville
+  LLC's Apple Developer ID (docs/conventions.md), which macOS trusts across updates, so the item is
+  read without a question. Releases up to v0.4.16 were signed with the project's own certificate,
+  which macOS did not trust that way: after each update it asked for the login keychain's password
+  before FinchGram could read the item, and Always Allow did not stick. An item stored by one of
+  those versions asks once more when the Developer ID-signed app first reads it; Always Allow then
+  holds.
   Versions 0.4.11 to 0.4.13 gave the item an access list open to any application as a way around
   it; the prompt stayed, so 0.4.14 took that out again. An item those versions stored keeps the
   list it was given; saving the server again in the form stores a fresh one under the usual list,

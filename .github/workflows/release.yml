@@ -61,11 +61,13 @@ jobs:
       - name: The UI fonts, pinned, from google/fonts
         run: scripts/fetch-fonts.sh
 
-      # The app is signed with the project's own certificate, the same for every release, so that
-      # macOS keeps what the user allowed the app (Screen Recording, for the screenshot tool) across
-      # updates: it ties a permission to the code signature, and an ad-hoc signature is new with
-      # every build. The certificate and its key exist only as secrets of this repository
-      # (docs/conventions.md, Release first). Without them (a fork) the app is signed ad hoc.
+      # The app is signed with North Brookville LLC's Developer ID Application certificate, the
+      # same for every release: macOS ties what the user allowed the app (Screen Recording, for the
+      # screenshot tool) to the signature's team, so permissions stay across updates, and once
+      # notarized (below) a downloaded copy opens without Gatekeeper's question. The certificate
+      # and its key exist only as secrets of this repository, with a backup in the maintainer's
+      # login keychain (docs/conventions.md, Release first). Without them (a fork) the app is
+      # signed ad hoc.
       - name: Signing identity
         id: identity
         env:
@@ -83,19 +85,20 @@ jobs:
           security set-keychain-settings -lut 3600 "$KEYCHAIN"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           echo "$CODESIGN_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/finchgram.p12"
+          # The .p12 carries Apple's Developer ID G2 intermediate certificate too, so that the chain
+          # up to Apple's root (in every macOS) is complete on a clean runner.
           security import "$RUNNER_TEMP/finchgram.p12" -k "$KEYCHAIN" -P "$CODESIGN_CERTIFICATE_PASSWORD" -T /usr/bin/codesign -T /usr/bin/security
           rm "$RUNNER_TEMP/finchgram.p12"
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
           security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '" ')
-          # A certificate of our own is trusted for code signing only once the machine is told so.
-          security find-certificate -c FinchGram -p "$KEYCHAIN" > "$RUNNER_TEMP/finchgram.pem"
-          sudo security add-trusted-cert -d -r trustRoot -p codeSign -k /Library/Keychains/System.keychain "$RUNNER_TEMP/finchgram.pem"
           security find-identity -v -p codesigning "$KEYCHAIN"
-          if ! security find-identity -v -p codesigning "$KEYCHAIN" | grep -q '1 valid identities found'; then
-            echo "::error::the signing certificate cannot be used"
+          IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN" | sed -n 's/^ *1) [0-9A-F]* "\(.*\)"$/\1/p')"
+          if [ -z "$IDENTITY" ] || ! security find-identity -v -p codesigning "$KEYCHAIN" | grep -q '1 valid identities found'; then
+            echo "::error::the signing certificate cannot be used (is its chain complete?)"
             exit 1
           fi
-          echo "identity=FinchGram" >> "$GITHUB_OUTPUT"
+          echo "identity=$IDENTITY" >> "$GITHUB_OUTPUT"
+          echo "signing as $IDENTITY"
 
       # FinchGram's own api_id and api_hash from my.telegram.org, compiled into the app. They exist
       # only as secrets of this repository (docs/conventions.md, Telegram API credentials).
@@ -115,6 +118,47 @@ jobs:
             echo "::error::the app is signed per build (cdhash), not with the certificate"
             exit 1
           fi
+
+      # Notarization: Apple scans the signed app and issues a ticket, stapled into the bundle, so
+      # that Gatekeeper opens a downloaded copy without asking. The App Store Connect API key for it
+      # exists only as secrets of this repository (docs/conventions.md, Release first); without them
+      # (a fork) the app ships signed but not notarized, and macOS asks once on the first launch.
+      - name: Notarize
+        env:
+          NOTARY_KEY: ${{ secrets.NOTARY_KEY }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+          SIGN_IDENTITY: ${{ steps.identity.outputs.identity }}
+        run: |
+          case "$SIGN_IDENTITY" in
+            "Developer ID Application:"*) ;;
+            *) echo "::warning::not notarized: the app is not signed with a Developer ID"; exit 0 ;;
+          esac
+          if [ -z "$NOTARY_KEY" ] || [ -z "$NOTARY_KEY_ID" ] || [ -z "$NOTARY_ISSUER_ID" ]; then
+            echo "::warning::secrets NOTARY_KEY, NOTARY_KEY_ID and NOTARY_ISSUER_ID are missing: the app is not notarized, so macOS asks once before opening a downloaded copy (docs/conventions.md)"
+            exit 0
+          fi
+          KEY="$RUNNER_TEMP/notary.p8"
+          printf '%s\n' "$NOTARY_KEY" > "$KEY"
+          ditto -c -k --keepParent "dist/$APP_NAME.app" "$RUNNER_TEMP/notarize.zip"
+          xcrun notarytool submit "$RUNNER_TEMP/notarize.zip" --key "$KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" \
+            --wait --timeout 30m --output-format json > "$RUNNER_TEMP/notarize.json" || true
+          cat "$RUNNER_TEMP/notarize.json"; echo
+          STATUS="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("status", ""))' "$RUNNER_TEMP/notarize.json" 2>/dev/null || true)"
+          SUBMISSION="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("id", ""))' "$RUNNER_TEMP/notarize.json" 2>/dev/null || true)"
+          if [ "$STATUS" != "Accepted" ]; then
+            # Apple's reasons, when it got as far as a verdict.
+            [ -z "$SUBMISSION" ] || xcrun notarytool log "$SUBMISSION" --key "$KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID" || true
+            rm -f "$KEY"
+            echo "::error::notarization ended with status '$STATUS'"
+            exit 1
+          fi
+          rm -f "$KEY"
+          xcrun stapler staple "dist/$APP_NAME.app"
+          xcrun stapler validate "dist/$APP_NAME.app"
+          # Gatekeeper's own verdict on the stapled app: it must be a notarized Developer ID app.
+          spctl -a -vv -t exec "dist/$APP_NAME.app" 2>&1 | tee "$RUNNER_TEMP/spctl.txt"
+          grep -q "source=Notarized Developer ID" "$RUNNER_TEMP/spctl.txt"
 
       - name: Archive
         env:

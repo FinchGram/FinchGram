@@ -46,8 +46,8 @@
 ## التنزيل
 
 احصل على `FinchGram-<version>-macos-arm64.zip` من [أحدث إصدار](https://github.com/FinchGram/FinchGram/releases/latest)، وفكّ
-ضغطه وانقل FinchGram إلى «التطبيقات». يحتاج إلى macOS 12 أو أحدث على Apple silicon. التطبيق غير موثّق بعد، لذا يسأل macOS
-مرة واحدة عند أول تشغيل: إعدادات النظام ← الخصوصية والأمن ← «فتح على أي حال». وبعدها يحدّث نفسه.
+ضغطه وانقل FinchGram إلى «التطبيقات». يحتاج إلى macOS 12 أو أحدث على Apple silicon. التطبيق موقّع بـ Developer ID
+الخاص بشركة North Brookville LLC وموثّق من Apple، لذا يُفتح كأي تطبيق آخر. وبعدها يحدّث نفسه.
 
 يأتي كل إصدار مع `SHA256SUMS` وتوقيعه Ed25519. يتحقق التطبيق منهما قبل تثبيت أي تحديث؛ ويمكنك أنت أيضًا، بالمفتاح
 العام في [release-signing.pub](../release-signing.pub).
@@ -250,9 +250,8 @@ for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finch
 scripts/release.sh patch    # 0.1.0 -> 0.1.1؛ وكذلك minor أو major أو إصدار محدد
 ```
 
-التطبيق موقّع بشهادة المشروع الخاصة لا بـ Apple Developer ID، لذا عند أول تشغيل لنسخة منزّلة يطلب macOS
-الإذن مرة واحدة (إعدادات النظام ← الخصوصية والأمن). أما التحديثات التي يثبّتها التطبيق بنفسه فتعمل دون
-هذه الخطوة.
+التطبيق موقّع بـ Apple Developer ID الخاص بشركة North Brookville LLC مع تفعيل hardened runtime، وموثّق من
+Apple: تُفتح النسخة المنزّلة دون سؤال من Gatekeeper، وكذلك التحديثات التي يثبّتها التطبيق بنفسه.
 
 ## المساهمة
 
