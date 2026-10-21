@@ -46,11 +46,6 @@ pub struct Settings {
     /// The downloads page (src/downloads/, docs/downloads.md): where files go, how many connections
     /// a file comes over, whether the queue column shows.
     pub downloads: Downloads,
-    /// The WebDAV servers as versions up to 0.4.17 kept them here, their passwords in the Keychain:
-    /// read once to move them into the app's database (src/database.rs, src/downloads/mod.rs) and
-    /// emptied then. Records are the database's; this file is for preferences. (A list of tables
-    /// comes last in the file.)
-    pub webdav: Vec<WebdavServer>,
 }
 
 /// The downloads page's own settings.
@@ -69,18 +64,6 @@ impl Default for Downloads {
     fn default() -> Self {
         Downloads { folder: String::new(), connections: crate::downloads::transfer::DEFAULT_CONNECTIONS as u32, queue_shown: true }
     }
-}
-
-/// A WebDAV server of the downloads page as settings.toml had it up to 0.4.17 (src/database.rs
-/// has them now).
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-#[serde(default)]
-pub struct WebdavServer {
-    pub name: String,
-    /// "https://nas.home:5006/dav", without a trailing slash; a folder may be part of it.
-    pub url: String,
-    /// The account; "" for a server that asks for none.
-    pub username: String,
 }
 
 /// How the chats of a folder are ordered under the pinned ones, which stay on top in Telegram's
@@ -132,27 +115,26 @@ pub struct Mcp {
     /// Whether an assistant may send messages under the user's name, only write drafts for the
     /// user to send, or neither.
     pub sending: McpSending,
-    /// The Telegram account these settings are for, by its user id: `apps` and `chats` were
-    /// allowed and chosen for it. When another account logs in they go, so that every program asks
-    /// again (`bind_to_account`). 0 until an account has logged in since the setting exists.
+    /// The Telegram account these settings are for, by its user id: `chats` were chosen for it,
+    /// and the programs allowed (the database's, src/mcp/access.rs) were allowed for it. When
+    /// another account logs in they go, so that every program asks again (`bind_to_account`). 0
+    /// until an account has logged in since the setting exists.
     pub account: i64,
-    /// The programs that have connected and what the user answered, by the path the system
-    /// reported for each (src/mcp/peer.rs). One the user removes asks again next time.
-    pub apps: Vec<McpApp>,
 }
 
 impl Default for Mcp {
     fn default() -> Self {
-        Mcp { enabled: false, scope: McpScope::All, chats: Vec::new(), sending: McpSending::On, account: 0, apps: Vec::new() }
+        Mcp { enabled: false, scope: McpScope::All, chats: Vec::new(), sending: McpSending::On, account: 0 }
     }
 }
 
 impl Mcp {
-    /// These settings are the account's with `id` from now on. The programs allowed and the chats
-    /// chosen were for the account that was logged in then: when this is another one, they go,
-    /// so that every program is asked about again, and the chats are chosen again, for this
-    /// account; true says so. The same account again (a restart, or logging out and in) changes
-    /// nothing, and a file from before the account was written down (0) is this account's.
+    /// These settings are the account's with `id` from now on. The chats chosen were for the
+    /// account that was logged in then: when this is another one, they go, and true says so (the
+    /// caller drops the programs allowed, the database's, too), so that the chats are chosen
+    /// again and every program asked about again for this account. The same account again (a
+    /// restart, or logging out and in) changes nothing, and a file from before the account was
+    /// written down (0) is this account's.
     pub fn bind_to_account(&mut self, id: i64) -> bool {
         if id == 0 || self.account == id {
             return false;
@@ -162,7 +144,6 @@ impl Mcp {
         if first {
             return false;
         }
-        self.apps.clear();
         self.chats.clear();
         true
     }
@@ -175,28 +156,6 @@ impl Mcp {
             McpScope::Chosen => self.chats.contains(&chat_id),
         }
     }
-
-    /// The remembered answer for the program at `path`, if any.
-    pub fn app(&self, path: &str) -> Option<&McpApp> {
-        self.apps.iter().find(|app| app.path == path)
-    }
-
-    pub fn app_mut(&mut self, path: &str) -> Option<&mut McpApp> {
-        self.apps.iter_mut().find(|app| app.path == path)
-    }
-}
-
-/// A program that connected to the MCP server, and what the user answered when it first did.
-#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
-#[serde(default)]
-pub struct McpApp {
-    /// Where the system said it is: an app bundle ("/Applications/Claude.app") or a program.
-    pub path: String,
-    /// Its name as shown: the bundle's, or the program's file name.
-    pub name: String,
-    pub allowed: bool,
-    /// When it last connected or asked for something, in seconds since the epoch; 0 for never.
-    pub last_used: i64,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
@@ -351,7 +310,6 @@ impl Default for Settings {
             screenshots: Screenshots::default(),
             mcp: Mcp::default(),
             downloads: Downloads::default(),
-            webdav: Vec::new(),
         }
     }
 }
@@ -469,37 +427,33 @@ mod tests {
         let read: Settings = toml::from_str("theme = \"terminal\"\n").expect("read");
         assert_eq!(read.mcp, Mcp::default());
         assert!(!read.mcp.enabled && read.mcp.allows(42) && read.mcp.sending == McpSending::On);
-        let claude = McpApp { path: "/Applications/Claude.app".into(), name: "Claude".into(), allowed: true, last_used: 1_760_000_000 };
         let settings = Settings {
-            mcp: Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![-1001, 42], sending: McpSending::Drafts, account: 1001, apps: vec![claude] },
+            mcp: Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![-1001, 42], sending: McpSending::Drafts, account: 1001 },
             ..Settings::default()
         };
         let text = toml::to_string_pretty(&settings).expect("TOML");
         assert!(text.contains("[mcp]\nenabled = true\nscope = \"chosen\"\n"), "{text}");
         assert!(text.contains("sending = \"drafts\"\naccount = 1001\n"), "{text}");
-        assert!(text.contains("[[mcp.apps]]\npath = \"/Applications/Claude.app\"\nname = \"Claude\"\nallowed = true\n"), "{text}");
         let read: Settings = toml::from_str(&text).expect("read back");
         assert_eq!(read.mcp, settings.mcp);
         assert!(read.mcp.allows(42) && !read.mcp.allows(7));
-        assert!(read.mcp.app("/Applications/Claude.app").is_some_and(|app| app.allowed) && read.mcp.app("/Applications/Zed.app").is_none());
         let read: Settings = toml::from_str("[mcp]\nenabled = true\n").expect("read");
-        assert!(read.mcp.enabled && read.mcp.scope == McpScope::All && read.mcp.sending == McpSending::On && read.mcp.apps.is_empty());
+        assert!(read.mcp.enabled && read.mcp.scope == McpScope::All && read.mcp.sending == McpSending::On);
         assert_eq!(read.mcp.account, 0);
     }
 
     #[test]
-    fn another_account_starts_without_the_allowed_apps_and_the_chosen_chats() {
-        let claude = McpApp { path: "/Applications/Claude.app".into(), name: "Claude".into(), allowed: true, last_used: 1 };
-        let mut mcp = Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![42], apps: vec![claude], ..Mcp::default() };
+    fn another_account_starts_without_the_chosen_chats() {
+        let mut mcp = Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![42], ..Mcp::default() };
         // A file from before the account was written down is the account's that logs in.
         assert!(!mcp.bind_to_account(1001));
-        assert_eq!((mcp.account, mcp.apps.len(), mcp.chats.len()), (1001, 1, 1));
+        assert_eq!((mcp.account, mcp.chats.len()), (1001, 1));
         // The same account again: a restart, or logging out and in.
         assert!(!mcp.bind_to_account(1001));
-        assert_eq!((mcp.account, mcp.apps.len(), mcp.chats.len()), (1001, 1, 1));
-        // Another account: every program asks again, and the chats chosen were the other one's.
+        assert_eq!((mcp.account, mcp.chats.len()), (1001, 1));
+        // Another account: the chats chosen were the other one's (and the programs go with them, in access.rs).
         assert!(mcp.bind_to_account(2002));
-        assert_eq!((mcp.account, mcp.apps.len(), mcp.chats.len()), (2002, 0, 0));
+        assert_eq!((mcp.account, mcp.chats.len()), (2002, 0));
         assert!(mcp.enabled && mcp.scope == McpScope::Chosen && mcp.sending == McpSending::On);
         // Nobody is not an account.
         assert!(!mcp.bind_to_account(0));

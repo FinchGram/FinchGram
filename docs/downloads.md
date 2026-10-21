@@ -73,8 +73,10 @@ The engine, `src/downloads/transfer.rs`, follows vget:
    2026-10-16, and every request more was one more that PikPak answered with 503. `<name>.part` and
    `<name>.part.json` are opened without following a symbolic link, and must be regular files: a
    link put under those names in the download folder is refused, not written through.
-3. `<name>.part.json` records which chunks are done. Retry, or a later download of the same file,
-   goes on from there: "12 MB of 48 MB kept".
+3. `<name>.part.json` records which chunks are done, the address they came from and the server's
+   Last-Modified for the file. Retry, or a later download of the same file, goes on from there:
+   "12 MB of 48 MB kept"; a `.part` of another file of the same size, or of this file changed on
+   the server since, is not gone on from.
 4. A chunk that fails is tried again from the last byte written, up to ten times, after a pause that
    grows from half a second to eight, whatever the failure: a dropped connection, a 404 from a CDN
    node that does not have the file yet (PikPak does that), a 200 where a 206 was due; so is the
@@ -89,7 +91,9 @@ The engine, `src/downloads/transfer.rs`, follows vget:
    to a range gets the file over one connection.
 5. Done, `.part` takes the file's name, or "name (2).ext" when that name is taken.
 
-Two files are on their way at a time; the others wait their turn. While any is, the app tells macOS
+Two files are on their way at a time; the others wait their turn, and one whose destination is in
+use by a file on its way (the same name from elsewhere; a folder and a file within it) waits for
+that one, so that two never write one `.part`. While any is, the app tells macOS
 it is busy (an NSProcessInfo activity): App Nap does not slow it down when the window is in the
 background, and the Mac does not go to sleep on its own. The speed shown is over the last ten
 seconds; what a CDN gives varies from minute to minute by a factor of two, and the figure follows
@@ -137,11 +141,6 @@ chose vget's parameters and no 503s.
   and releases are signed with North Brookville LLC's Apple Developer ID (docs/conventions.md),
   which macOS trusts across updates. On the wire the password is Basic authentication: base64, so
   plain over http on the LAN, and encrypted only by TLS over https.
-- Versions up to 0.4.17 kept the servers in settings.toml (`[[webdav]]`) and each password in the
-  Keychain as "FinchGram WebDAV"; 0.4.18 moves them into the database the first time it starts and
-  deletes those items. Reading an item stored by a version signed with the project's old
-  certificate may ask once more for the login keychain's password; nothing is moved or deleted
-  unless every password could be read.
   Versions 0.4.11 to 0.4.13 gave the item an access list open to any application as a way around
   it; the prompt stayed, so 0.4.14 took that out again. An item those versions stored keeps the
   list it was given; saving the server again in the form stores a fresh one under the usual list,

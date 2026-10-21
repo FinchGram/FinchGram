@@ -8,9 +8,7 @@
 //! server, one request at a time in the order asked, and answers through the event loop; a
 //! listing that is not the current one any more is dropped when it comes back. Each download runs
 //! on a thread of its own, two at a time, and reports its progress the same way. The servers,
-//! with their passwords, are the app's database's (src/database.rs); versions up to 0.4.17 kept
-//! them in settings.toml with the passwords in the Keychain, and such a list is moved into the
-//! database once, at the start (`load_servers`).
+//! with their passwords, are the app's database's (src/database.rs).
 
 pub mod http;
 pub mod log;
@@ -29,12 +27,9 @@ use std::time::{Duration, Instant};
 use chrono::{Datelike, Local, TimeZone};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
 
-use crate::settings::{self, Settings};
+use crate::settings::Settings;
 use crate::{AppState, Downloads, FolderEntry, FolderState, FormError, MainWindow, Problem, ServerRow, ServerStatus, TestState, TransferRow, TransferState, database, platform, telegram};
 
-/// The Keychain's name for the WebDAV passwords of versions up to 0.4.17 (the account was
-/// "user@address"): read once to move them into the database, then deleted.
-const OLD_KEYCHAIN_SERVICE: &str = "FinchGram WebDAV";
 /// How many files are fetched at the same time; the rest wait.
 const MOST_ACTIVE: usize = 2;
 /// The speed shown is over this long.
@@ -85,6 +80,15 @@ enum Kind {
     File { source: transfer::Source, dest: PathBuf },
     /// A whole folder, file by file, into `dest`.
     Folder { server: webdav::Server, path: Vec<String>, dest: PathBuf },
+}
+
+impl Kind {
+    /// Where the download goes: the file, or the folder.
+    fn dest(&self) -> &Path {
+        match self {
+            Kind::File { dest, .. } | Kind::Folder { dest, .. } => dest,
+        }
+    }
 }
 
 /// A download in the queue.
@@ -201,7 +205,7 @@ thread_local! {
 }
 
 pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
-    let servers = load_servers(&settings);
+    let servers: Vec<Server> = database::webdav_servers().into_iter().map(Server::from_record).collect();
     STATE.with(|state| {
         *state.borrow_mut() = Some(State {
             ui: ui.as_weak(),
@@ -704,6 +708,7 @@ fn enqueue_entry(name: &str, open: bool) {
             return Some(false);
         }
         let dest = download_folder(&state.settings.borrow()).join(&entry.name);
+        let done = transfer::kept(&dest, &source.url);
         let id = state.next_id;
         state.next_id += 1;
         state.queue.push(Transfer {
@@ -712,7 +717,7 @@ fn enqueue_entry(name: &str, open: bool) {
             icon: icon_for(&entry.name),
             kind: Kind::File { source, dest: dest.clone() },
             state: TransferState::Waiting,
-            done: transfer::kept(&dest),
+            done,
             total: entry.size,
             samples: VecDeque::new(),
             waiting: 0,
@@ -789,7 +794,9 @@ fn queued() {
     show_queue();
 }
 
-/// Start waiting downloads while fewer than MOST_ACTIVE are on their way.
+/// Start waiting downloads while fewer than MOST_ACTIVE are on their way. One whose destination
+/// is in use by a download under way (a file of the same name from elsewhere; a folder and a
+/// file within it) waits for that one to finish, so that two never write one `.part` file.
 fn start_next() {
     loop {
         let started = with_state(|state| {
@@ -798,7 +805,9 @@ fn start_next() {
                 return false;
             }
             let connections = state.settings.borrow().downloads.connections.clamp(1, transfer::MOST_CONNECTIONS as u32) as usize;
-            let Some(transfer) = state.queue.iter_mut().find(|transfer| transfer.state == TransferState::Waiting) else { return false };
+            let taken: Vec<PathBuf> = state.queue.iter().filter(|transfer| transfer.state == TransferState::Active).map(|transfer| transfer.kind.dest().to_path_buf()).collect();
+            let free = |dest: &Path| !taken.iter().any(|other| other == dest || other.starts_with(dest) || dest.starts_with(other));
+            let Some(transfer) = state.queue.iter_mut().find(|transfer| transfer.state == TransferState::Waiting && free(transfer.kind.dest())) else { return false };
             transfer.state = TransferState::Active;
             transfer.samples.clear();
             transfer.cancel = Arc::new(AtomicBool::new(false));
@@ -1120,8 +1129,8 @@ fn retry(id: i32) {
             transfer.state = TransferState::Waiting;
             transfer.problem = Problem::None;
             transfer.detail.clear();
-            if let Kind::File { dest, .. } = &transfer.kind {
-                transfer.done = transfer::kept(dest);
+            if let Kind::File { source, dest } = &transfer.kind {
+                transfer.done = transfer::kept(dest, &source.url);
             }
         }
     });
@@ -1374,52 +1383,6 @@ fn save_servers(state: &State) {
     if let Err(err) = database::save_webdav_servers(&records) {
         eprintln!("downloads: cannot keep the servers in the database: {err}");
     }
-}
-
-/// The servers from the database; or, the first time after 0.4.17, from settings.toml with their
-/// passwords from the Keychain, which are moved into the database and gone from where they were.
-/// Nothing is moved, and nothing deleted, unless every password could be read.
-fn load_servers(settings: &Rc<RefCell<Settings>>) -> Vec<Server> {
-    let from_database = database::webdav_servers();
-    let old: Vec<settings::WebdavServer> = settings.borrow().webdav.clone();
-    if !from_database.is_empty() || old.is_empty() || !database::is_open() {
-        return from_database.into_iter().map(Server::from_record).collect();
-    }
-    let account = |server: &settings::WebdavServer| format!("{}@{}", server.username, server.url);
-    let mut all_read = true;
-    let moved: Vec<Server> = old
-        .iter()
-        .map(|server| {
-            let password = match platform::keychain_read(OLD_KEYCHAIN_SERVICE, &account(server)) {
-                Ok(password) => password.unwrap_or_default(),
-                Err(err) => {
-                    eprintln!("downloads: cannot read the password of {} from the Keychain: {err}", server.name);
-                    all_read = false;
-                    String::new()
-                }
-            };
-            Server { name: server.name.clone(), url: server.url.clone(), username: server.username.clone(), password, status: ServerStatus::Unknown }
-        })
-        .collect();
-    if !all_read {
-        return moved;
-    }
-    let records: Vec<database::WebdavServer> = moved.iter().map(Server::record).collect();
-    match database::save_webdav_servers(&records) {
-        Ok(()) => {
-            for server in &old {
-                if let Err(err) = platform::keychain_delete(OLD_KEYCHAIN_SERVICE, &account(server)) {
-                    eprintln!("downloads: cannot forget the old Keychain item of {}: {err}", server.name);
-                }
-            }
-            let mut settings = settings.borrow_mut();
-            settings.webdav.clear();
-            settings.save();
-            eprintln!("downloads: {} server(s) moved from settings.toml and the Keychain into the database", moved.len());
-        }
-        Err(err) => eprintln!("downloads: cannot move the servers into the database: {err}"),
-    }
-    moved
 }
 
 // ---- words and pictures -----------------------------------------------------------------------

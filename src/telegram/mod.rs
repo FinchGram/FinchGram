@@ -464,13 +464,13 @@ fn set_parameters() {
         "system_version": "", // detected by TDLib
         "application_version": env!("CARGO_PKG_VERSION"),
     });
-    open_database(parameters, database, key.clone(), key.is_some());
+    open_database(parameters, database, key);
 }
 
 /// The key TDLib encrypts its database with: random, made the first time and kept in the Keychain
 /// under FinchGram's name (src/platform/, the database folder's name as the account), where only
 /// this app reads it. None when the Keychain would not give or keep one: then the database is
-/// opened as it is, without a key, as every version up to 0.4.17 did. The key is never logged.
+/// opened without. The key is never logged.
 fn database_key(test_dc: bool) -> Option<String> {
     let account = if test_dc { "tdlib-test" } else { "tdlib" };
     match crate::platform::keychain_read(crate::platform::KEYCHAIN_SERVICE, account) {
@@ -491,30 +491,15 @@ fn database_key(test_dc: bool) -> Option<String> {
     }
 }
 
-/// setTdlibParameters with the key (`with_key`), or without. A database from before the key
-/// existed (every version up to 0.4.17 kept it without one) does not open with it: TDLib answers
-/// 401 (any refusal is taken the same way), and the database is opened without and given the key
-/// with setDatabaseEncryptionKey, once. One that opens with neither is encrypted with a key that
-/// is gone from the Keychain: the app says so, and how to log in again.
-fn open_database(mut parameters: Value, database: PathBuf, key: Option<String>, with_key: bool) {
-    parameters["database_encryption_key"] = key.clone().filter(|_| with_key).unwrap_or_default().into();
-    send(parameters.clone(), move |answer| match answer {
-        Ok(_) => {
-            if with_key {
-                return;
-            }
-            if let Some(key) = key {
-                send(json!({ "@type": "setDatabaseEncryptionKey", "new_encryption_key": key }), |answer| match answer {
-                    Ok(_) => eprintln!("telegram: the database is encrypted with the key in the Keychain from now on"),
-                    Err(err) => eprintln!("telegram: cannot encrypt the database: {err}"),
-                });
-            }
-        }
-        Err(err @ Error::Telegram { .. }) if with_key => {
-            eprintln!("telegram: the database did not open with the key in the Keychain ({err}); opening it without, to give it the key");
-            open_database(parameters, database, key, false);
-        }
-        Err(Error::Telegram { code: 401, .. }) => fail(format!(
+/// setTdlibParameters with the key, or without when the Keychain gave none. A database that does
+/// not open with the key is encrypted with another, gone from the Keychain: the app says so, and
+/// how to log in again.
+fn open_database(mut parameters: Value, database: PathBuf, key: Option<String>) {
+    let with_key = key.is_some();
+    parameters["database_encryption_key"] = key.unwrap_or_default().into();
+    send(parameters, move |answer| match answer {
+        Ok(_) => {}
+        Err(Error::Telegram { code: 401, .. }) if with_key => fail(format!(
             "The Telegram database is encrypted with a key that is not in the Keychain. To log in again, quit FinchGram, delete the folder {} and open FinchGram.",
             database.display()
         )),

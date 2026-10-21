@@ -260,9 +260,11 @@ key is random, made the first time and kept in the Keychain under "FinchGram" (t
 "database"), where only this app reads it; TDLib's database has a key of its own kept the same way
 (the account "tdlib"), since 0.4.18. The rule: preferences go into settings.toml, which stays small
 and readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
-database holds the WebDAV servers with their passwords (docs/downloads.md); the programs allowed
-through AI access are next to move, and what comes after (a download queue that outlives a restart,
-logs, per-chat settings) gets a table when it is built, `meta.version` marking the changes.
+database holds the WebDAV servers with their passwords (docs/downloads.md) and the programs
+allowed or turned away at AI access (docs/mcp.md); what comes after (a download queue that outlives
+a restart, logs, per-chat settings) gets a table when it is built, `meta.version` marking the
+changes. No table carries data over from an earlier layout: the maintainer is the one user, and
+re-entering a record beats keeping code for it.
 
 ## Platforms
 

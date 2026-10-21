@@ -1,6 +1,7 @@
 //! The app's own database: SQLite, encrypted as a whole with SQLCipher, for what FinchGram keeps
 //! that is neither a preference (settings.toml is for those, and only those) nor Telegram's (that
-//! is TDLib's database): the WebDAV servers with their passwords, and whatever comes next. It is
+//! is TDLib's database): the WebDAV servers with their passwords, the programs the user has
+//! allowed or turned away at AI access, and whatever comes next. It is
 //! `finchgram.db` next to settings.toml. Its key is random, made the first time and kept in the
 //! Keychain under FinchGram's name (platform::KEYCHAIN_SERVICE, the account "database"), where
 //! only this app reads it; TDLib's database key is kept the same way (src/telegram/mod.rs).
@@ -11,7 +12,7 @@ use std::cell::RefCell;
 use std::path::{Path, PathBuf};
 
 use base64::Engine as _;
-use rusqlite::{Connection, params};
+use rusqlite::{Connection, OptionalExtension as _, params};
 
 use crate::platform;
 
@@ -35,6 +36,19 @@ pub struct WebdavServer {
     pub password: String,
 }
 
+/// A program that connected to the MCP server, and what the user answered when it first did
+/// (src/mcp/access.rs).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct McpApp {
+    /// Where the system said it is: an app bundle ("/Applications/Claude.app") or a program.
+    pub path: String,
+    /// Its name as shown: the bundle's, or the program's file name.
+    pub name: String,
+    pub allowed: bool,
+    /// When it last connected or asked for something, in seconds since the epoch; 0 for never.
+    pub last_used: i64,
+}
+
 /// Open the database, making it and its key the first time. Call once, on the UI thread, before
 /// anything reads it. Err when it cannot be opened: the Keychain gave no key, or the file is
 /// encrypted with another key than the Keychain's; then nothing of it is read or written, and
@@ -44,11 +58,6 @@ pub fn open() -> Result<(), String> {
     let connection = open_at(&path, &key()?)?;
     DATABASE.with(|slot| *slot.borrow_mut() = Some(connection));
     Ok(())
-}
-
-/// Whether the database is open.
-pub fn is_open() -> bool {
-    DATABASE.with(|slot| slot.borrow().is_some())
 }
 
 /// The key from the Keychain, or a new one kept there.
@@ -91,6 +100,12 @@ fn open_at(path: &Path, key: &str) -> Result<Connection, String> {
                  url TEXT NOT NULL,
                  username TEXT NOT NULL,
                  password TEXT NOT NULL
+             );
+             CREATE TABLE IF NOT EXISTS mcp_apps (
+                 path TEXT PRIMARY KEY,
+                 name TEXT NOT NULL,
+                 allowed INTEGER NOT NULL,
+                 last_used INTEGER NOT NULL
              );",
         )
         .map_err(|err| format!("cannot make the tables: {err}"))?;
@@ -156,6 +171,64 @@ fn write_webdav_servers(connection: &Connection, servers: &[WebdavServer]) -> ru
     }
 }
 
+/// The programs that have connected to the MCP server, in the order they first did.
+pub fn mcp_apps() -> Vec<McpApp> {
+    match with(read_mcp_apps) {
+        Ok(apps) => apps,
+        Err(err) => {
+            eprintln!("database: cannot read the programs: {err}");
+            Vec::new()
+        }
+    }
+}
+
+/// The program at `path`, if it has connected before.
+pub fn mcp_app(path: &str) -> Option<McpApp> {
+    with(|connection| read_mcp_app(connection, path)).unwrap_or_else(|err| {
+        eprintln!("database: cannot read a program: {err}");
+        None
+    })
+}
+
+/// Keep `app`, in place of what was kept for its path.
+pub fn save_mcp_app(app: &McpApp) -> Result<(), String> {
+    with(|connection| write_mcp_app(connection, app))
+}
+
+/// Forget the program at `path`; nothing happens when there is none.
+pub fn remove_mcp_app(path: &str) -> Result<(), String> {
+    with(|connection| connection.execute("DELETE FROM mcp_apps WHERE path = ?1", params![path]).map(|_| ()))
+}
+
+/// Forget every program (another Telegram account logged in: src/mcp/access.rs).
+pub fn clear_mcp_apps() -> Result<(), String> {
+    with(|connection| connection.execute("DELETE FROM mcp_apps", []).map(|_| ()))
+}
+
+fn read_mcp_apps(connection: &Connection) -> rusqlite::Result<Vec<McpApp>> {
+    let mut statement = connection.prepare("SELECT path, name, allowed, last_used FROM mcp_apps ORDER BY rowid")?;
+    let rows = statement.query_map([], |row| Ok(McpApp { path: row.get(0)?, name: row.get(1)?, allowed: row.get::<_, i64>(2)? != 0, last_used: row.get(3)? }))?;
+    rows.collect()
+}
+
+fn read_mcp_app(connection: &Connection, path: &str) -> rusqlite::Result<Option<McpApp>> {
+    connection
+        .query_row("SELECT path, name, allowed, last_used FROM mcp_apps WHERE path = ?1", params![path], |row| {
+            Ok(McpApp { path: row.get(0)?, name: row.get(1)?, allowed: row.get::<_, i64>(2)? != 0, last_used: row.get(3)? })
+        })
+        .optional()
+}
+
+fn write_mcp_app(connection: &Connection, app: &McpApp) -> rusqlite::Result<()> {
+    connection
+        .execute(
+            "INSERT INTO mcp_apps (path, name, allowed, last_used) VALUES (?1, ?2, ?3, ?4)
+             ON CONFLICT(path) DO UPDATE SET name = excluded.name, allowed = excluded.allowed, last_used = excluded.last_used",
+            params![app.path, app.name, i64::from(app.allowed), app.last_used],
+        )
+        .map(|_| ())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -199,6 +272,29 @@ mod tests {
         let bytes = std::fs::read(&path).expect("the file's bytes");
         assert!(!bytes.windows(6).any(|window| window == b"secret"));
         assert!(!bytes.windows(14).any(|window| window == b"webdav_servers"));
+        let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
+    }
+
+    #[test]
+    fn programs_are_kept_by_their_path_and_forgotten_one_by_one_or_all_at_once() {
+        let path = scratch("apps");
+        let connection = open_at(&path, &a_key(3)).expect("a new database");
+        assert_eq!(read_mcp_apps(&connection).expect("read"), vec![]);
+        let claude = McpApp { path: "/Applications/Claude.app".into(), name: "Claude".into(), allowed: true, last_used: 10 };
+        let code = McpApp { path: "/Users/x/.local/share/claude".into(), name: "claude".into(), allowed: false, last_used: 0 };
+        write_mcp_app(&connection, &claude).expect("write");
+        write_mcp_app(&connection, &code).expect("write");
+        assert_eq!(read_mcp_apps(&connection).expect("read"), vec![claude.clone(), code.clone()]);
+        // Again under the same path: the one record, brought up to date.
+        let used = McpApp { last_used: 20, ..claude.clone() };
+        write_mcp_app(&connection, &used).expect("write again");
+        assert_eq!(read_mcp_app(&connection, &claude.path).expect("read one"), Some(used));
+        assert_eq!(read_mcp_app(&connection, "/nowhere").expect("read none"), None);
+        connection.execute("DELETE FROM mcp_apps WHERE path = ?1", params![code.path]).expect("remove");
+        assert_eq!(read_mcp_apps(&connection).expect("read").len(), 1);
+        connection.execute("DELETE FROM mcp_apps", []).expect("clear");
+        assert_eq!(read_mcp_apps(&connection).expect("read"), vec![]);
+        drop(connection);
         let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
     }
 

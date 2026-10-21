@@ -374,17 +374,6 @@ pub fn keychain_read(service: &str, account: &str) -> Result<Option<String>, Str
     }
 }
 
-/// Forget the password kept for `account` under `service`; nothing happens when there is none.
-pub fn keychain_delete(service: &str, account: &str) -> Result<(), String> {
-    #[cfg(target_os = "macos")]
-    return macos::keychain_delete(service, account);
-    #[cfg(not(target_os = "macos"))]
-    {
-        let _ = (service, account);
-        Ok(())
-    }
-}
-
 /// The service every Keychain item of FinchGram's is under; the account names what the item is
 /// ("tdlib", "database", …).
 pub const KEYCHAIN_SERVICE: &str = "FinchGram";

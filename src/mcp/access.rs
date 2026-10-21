@@ -16,7 +16,8 @@ use slint::{ComponentHandle, Model, ModelRc, VecModel};
 use super::peer::Host;
 use super::protocol::Admission;
 use super::tools::{Activity, ActivityKind};
-use crate::settings::{McpApp, McpScope, McpSending, Settings};
+use crate::database::{self, McpApp};
+use crate::settings::{McpScope, McpSending, Settings};
 use crate::telegram::tools::{chosen_chats, moment, picker_chats};
 use crate::{AiAccess, AiActivity, AiActivityKind, AiApp, AiChat, AiScope, AiWriting, MainWindow};
 
@@ -135,7 +136,9 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         }
     });
     ai.on_remove_app(|path| {
-        change(|settings| settings.mcp.apps.retain(|app| app.path != path.as_str()));
+        if let Err(err) = database::remove_mcp_app(&path) {
+            eprintln!("mcp: cannot forget the program: {err}");
+        }
         STATE.with(|slot| {
             if let Some(state) = slot.borrow_mut().as_mut() {
                 state.session_apps.retain(|known| known.app.path != path.as_str());
@@ -146,11 +149,12 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         }
     });
     ai.on_allow_app(|path| {
-        change(|settings| {
-            if let Some(app) = settings.mcp.app_mut(&path) {
-                app.allowed = true;
+        if let Some(mut app) = database::mcp_app(&path) {
+            app.allowed = true;
+            if let Err(err) = database::save_mcp_app(&app) {
+                eprintln!("mcp: cannot allow the program: {err}");
             }
-        });
+        }
         STATE.with(|slot| {
             if let Some(state) = slot.borrow_mut().as_mut()
                 && let Some(known) = state.session_apps.iter_mut().find(|known| known.app.path == path.as_str())
@@ -187,16 +191,12 @@ pub fn admit(host: Host, answer: mpsc::Sender<Admission>) {
             super::log("a program the system could not identify at all: turned away");
             return Some(Admission::Denied);
         }
-        let remembered = {
-            let mut settings = state.settings.borrow_mut();
-            settings.mcp.app_mut(&key).map(|app| {
-                app.last_used = now;
-                app.allowed
-            })
-        };
-        if let Some(allowed) = remembered {
-            state.settings.borrow().save();
-            return Some(if allowed { Admission::Allowed } else { Admission::Denied });
+        if let Some(mut app) = database::mcp_app(&key) {
+            app.last_used = now;
+            if let Err(err) = database::save_mcp_app(&app) {
+                eprintln!("mcp: cannot note the program's use: {err}");
+            }
+            return Some(if app.allowed { Admission::Allowed } else { Admission::Denied });
         }
         if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.path == key && known.started == host.started) {
             known.app.last_used = now;
@@ -235,6 +235,9 @@ pub fn signed_in(id: i64) {
         };
         if dropped {
             state.session_apps.clear();
+            if let Err(err) = database::clear_mcp_apps() {
+                eprintln!("mcp: cannot forget the programs of the account before: {err}");
+            }
         }
         if before != state.settings.borrow().mcp.account {
             state.settings.borrow().save();
@@ -258,10 +261,8 @@ pub fn admitted(host: &Host) -> bool {
         let settings = state.settings.borrow();
         let key = host.key();
         settings.mcp.enabled
-            && settings
-                .mcp
-                .app(&key)
-                .or_else(|| state.session_apps.iter().find(|known| known.app.path == key && known.started == host.started).map(|known| &known.app))
+            && database::mcp_app(&key)
+                .or_else(|| state.session_apps.iter().find(|known| known.app.path == key && known.started == host.started).map(|known| known.app.clone()))
                 .is_some_and(|app| app.allowed)
     })
 }
@@ -288,8 +289,6 @@ pub fn disconnected(host: &Host) {
             } else {
                 state.live.insert(key, left);
             }
-            // When it was last used, into the file.
-            state.settings.borrow().save();
         }
     });
     if let Some(ui) = window() {
@@ -312,8 +311,11 @@ pub fn record(host: &Host, activity: Activity) {
         let mut slot = slot.borrow_mut();
         let state = slot.as_mut()?;
         let key = host.key();
-        if let Some(app) = state.settings.borrow_mut().mcp.app_mut(&key) {
+        if let Some(mut app) = database::mcp_app(&key) {
             app.last_used = now;
+            if let Err(err) = database::save_mcp_app(&app) {
+                eprintln!("mcp: cannot note the program's use: {err}");
+            }
         }
         if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.path == key && known.started == host.started) {
             known.app.last_used = now;
@@ -396,17 +398,16 @@ fn turn_away_waiting() {
     }
 }
 
-/// Keep the answer: in the settings for a program the system named, else for this run only.
+/// Keep the answer: in the database for a program the system named, else for this run only.
 fn remember(host: &Host, allowed: bool) {
     let app = McpApp { path: host.key(), name: host.name(), allowed, last_used: now() };
     STATE.with(|slot| {
         let mut slot = slot.borrow_mut();
         let Some(state) = slot.as_mut() else { return };
         if host.identified() {
-            let mut settings = state.settings.borrow_mut();
-            settings.mcp.apps.retain(|known| known.path != app.path);
-            settings.mcp.apps.push(app);
-            settings.save();
+            if let Err(err) = database::save_mcp_app(&app) {
+                eprintln!("mcp: cannot keep the answer about the program: {err}");
+            }
         } else {
             state.session_apps.retain(|known| known.app.path != app.path);
             state.session_apps.push(SessionApp { app, started: host.started });
@@ -453,16 +454,13 @@ fn show_policy(ui: &MainWindow) {
 
 /// The programs that have connected, the remembered ones first, then this run's unnamed ones.
 fn show_apps(ui: &MainWindow) {
+    let kept = database::mcp_apps();
     let rows: Vec<AiApp> = STATE
         .with(|slot| {
             let slot = slot.borrow();
             let state = slot.as_ref()?;
-            let settings = state.settings.borrow();
             Some(
-                settings
-                    .mcp
-                    .apps
-                    .iter()
+                kept.iter()
                     .chain(state.session_apps.iter().map(|known| &known.app))
                     .map(|app| AiApp {
                         name: app.name.clone().into(),

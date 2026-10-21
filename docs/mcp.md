@@ -54,8 +54,8 @@ in words the user sees in their app's MCP log.
 
 The same, by hand: `[mcp]` in `~/Library/Application Support/FinchGram/settings.toml`
 (`enabled`, `scope = "all" | "chosen"`, `chats = [ids]`, `sending = "on" | "drafts" | "off"`,
-`account`, the id of the Telegram account the apps and chats are for, and `[[mcp.apps]]` with
-`path`, `name`, `allowed`, `last_used`), read when FinchGram starts.
+`account`, the id of the Telegram account the chats are for), read when FinchGram starts. The
+programs allowed or turned away are in the app's database (docs/architecture.md), not in the file.
 
 ## The tools
 

@@ -43,8 +43,8 @@ FinchGram 自身不调用任何 AI，不为 AI 建索引，不为 AI 存任何�
 服务端关着时连上来的助手，或用户没有允许的助手，会被明确告知，用户在自己应用的 MCP 日志里看得到那句话。
 
 手改也行：`~/Library/Application Support/FinchGram/settings.toml` 里的 `[mcp]`（`enabled`、`scope = "all" |
-"chosen"`、`chats = [ids]`、`sending = "on" | "drafts" | "off"`、`account`（这些应用和聊天属于哪个 Telegram 账号，
-按它的 id），以及 `[[mcp.apps]]` 的 `path`、`name`、`allowed`、`last_used`），FinchGram 启动时读。
+"chosen"`、`chats = [ids]`、`sending = "on" | "drafts" | "off"`、`account`（这些聊天属于哪个 Telegram 账号，按它的
+id）），FinchGram 启动时读。允许过或拒绝过的程序在 app 自己的数据库里（docs/architecture.md），不在这个文件里。
 
 ## 工具
 

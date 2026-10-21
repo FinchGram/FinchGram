@@ -893,16 +893,6 @@ pub fn keychain_read(service: &str, account: &str) -> Result<Option<String>, Str
     Ok(Some(String::from_utf8_lossy(&data.to_vec()).into_owned()))
 }
 
-/// Forget `service`'s password for `account`.
-pub fn keychain_delete(service: &str, account: &str) -> Result<(), String> {
-    use objc2_core_foundation::CFDictionary;
-    use objc2_security::{SecItemDelete, errSecItemNotFound};
-    let query = keychain_query(service, account);
-    // SAFETY: the query is a dictionary of the keys the framework documents.
-    let status = unsafe { SecItemDelete(AsRef::<CFDictionary>::as_ref(query.as_opaque())) };
-    if status == errSecItemNotFound { Ok(()) } else { keychain_status(status) }
-}
-
 // ---- free space ------------------------------------------------------------------------------
 
 /// libc's statvfs as macOS lays it out: fsblkcnt_t and fsfilcnt_t are 32-bit there.

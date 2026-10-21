@@ -220,6 +220,18 @@ struct State {
     chunk_size: u64,
     chunks: usize,
     done: Vec<bool>,
+    /// The address the chunks came from, and the server's Last-Modified for it ("" when it gave
+    /// none): a `.part` of another file of the same size, or of this file changed since, is not
+    /// gone on from.
+    source: String,
+    modified: String,
+}
+
+impl State {
+    /// Whether the state is this file's, as `source` and `modified` name it.
+    fn is_of(&self, source: &str, modified: &str) -> bool {
+        self.source == source && self.modified == modified
+    }
 }
 
 /// What the workers of one file share.
@@ -381,7 +393,7 @@ struct Head {
 /// chunk's bytes with it: one round trip less per file, a second on a server that takes a
 /// second to answer. A stopped download asks for its first missing chunk instead.
 async fn open_once(http: &Http, source: &Source, dest: &Path) -> Result<Head, Error> {
-    let (from, to) = first_range(dest);
+    let (from, to) = first_range(dest, &source.url);
     let started = Instant::now();
     let response = http.send(source.request(http, Some(&format!("bytes={from}-{}", to - 1)))?).await?;
     let protocol = Protocol::of(response.version());
@@ -403,10 +415,11 @@ async fn open_once(http: &Http, source: &Source, dest: &Path) -> Result<Head, Er
     }
 }
 
-/// What the first request asks for: the first missing chunk of an earlier try of `dest`, or
-/// the smallest chunk from the start.
-fn first_range(dest: &Path) -> (u64, u64) {
+/// What the first request asks for: the first missing chunk of an earlier try of `dest` from the
+/// same address, or the smallest chunk from the start.
+fn first_range(dest: &Path, source: &str) -> (u64, u64) {
     if let Some(state) = read_state(&with_suffix(dest, ".part.json"))
+        && state.source == source
         && state.chunk_size > 0
         && state.done.len() == state.chunks
         && fs::metadata(with_suffix(dest, ".part")).map(|meta| meta.len() == state.size).unwrap_or(false)
@@ -502,6 +515,11 @@ fn range_of(response: &Response<Incoming>, from: u64) -> Result<ContentRange, Er
     Ok(ContentRange { last, total })
 }
 
+/// The server's Last-Modified for the file, as it wrote it; "" when it gave none.
+fn last_modified(response: &Response<Incoming>) -> String {
+    response.headers().get("last-modified").and_then(|value| value.to_str().ok()).map(|value| value.trim().to_string()).unwrap_or_default()
+}
+
 fn content_length(response: &Response<Incoming>) -> Option<u64> {
     response.headers().get("content-length").and_then(|value| value.to_str().ok()).and_then(|value| value.trim().parse().ok())
 }
@@ -534,14 +552,15 @@ pub fn download(http: &Http, source: &Source, dest: &Path, streams: &Streams, ca
     let permit = http.block_on(streams.budget.clone().acquire_owned()).map_err(|_| Error::Cancelled)?;
     let head = http.block_on(open_with_retries(http, source, dest, cancel, &|code| progress(Progress { done: 0, total: 0, protocol: Protocol::Unknown, waiting: code })))?;
     let protocol = head.probe.protocol;
+    let modified = last_modified(&head.response);
     if let Some(total) = head.probe.size {
-        let already = if head.probe.ranges { kept(dest) } else { 0 };
+        let already = if head.probe.ranges { kept(dest, &source.url) } else { 0 };
         check_space(dest, total.saturating_sub(already))?;
     }
     let report = |done, total, waiting| progress(Progress { done, total, protocol, waiting });
     match head.probe {
         Probe { size: Some(total), ranges: true, .. } if total > 0 => {
-            http.block_on(multi(http, source, &part, &state_path, total, streams, cancel, &report, head, permit))?;
+            http.block_on(multi(http, source, &modified, &part, &state_path, total, streams, cancel, &report, head, permit))?;
         }
         Probe { size: Some(0), .. } => {
             drop(permit);
@@ -572,10 +591,11 @@ fn chunk_size(_total: u64) -> u64 {
     CHUNK_SIZE
 }
 
-/// Bytes of `dest` that are there from an earlier try: the done chunks of its `.part` file.
-pub fn kept(dest: &Path) -> u64 {
+/// Bytes of `dest` that are there from an earlier try from the same address: the done chunks of
+/// its `.part` file. (Whether the file changed on the server meanwhile shows at the first answer.)
+pub fn kept(dest: &Path, source: &str) -> u64 {
     let Some(state) = read_state(&with_suffix(dest, ".part.json")) else { return 0 };
-    if state.chunk_size == 0 || state.done.len() != state.chunks {
+    if state.source != source || state.chunk_size == 0 || state.done.len() != state.chunks {
         return 0;
     }
     state.done.iter().enumerate().filter(|(_, done)| **done).map(|(index, _)| chunk_length(index, state.size, state.chunk_size)).sum()
@@ -589,6 +609,7 @@ pub fn kept(dest: &Path) -> u64 {
 async fn multi(
     http: &Http,
     source: &Source,
+    modified: &str,
     part: &Path,
     state_path: &Path,
     total: u64,
@@ -601,8 +622,10 @@ async fn multi(
     let chunk = chunk_size(total);
     let chunks = usize::try_from(total.div_ceil(chunk)).unwrap_or(usize::MAX);
     let file = open_own(part, false)?;
-    // An earlier try of the same file goes on; anything else starts afresh.
+    // An earlier try of the same file, from the same address and unchanged on the server, goes
+    // on; anything else starts afresh.
     let earlier = read_state(state_path)
+        .filter(|state| state.is_of(&source.url, modified))
         .filter(|state| state.size == total && state.chunk_size == chunk && state.chunks == chunks && state.done.len() == chunks)
         .filter(|_| file.metadata().map(|meta| meta.len() == total).unwrap_or(false));
     let done = match earlier {
@@ -649,7 +672,8 @@ async fn multi(
     });
     progress(already, total, 0);
     let (sender, receiver) = mpsc::channel::<Write>(WRITES_IN_FLIGHT);
-    let writer = Writer::start(file, state_path.to_path_buf(), total, chunk, done, receiver, shared.clone());
+    let named = Named { source: source.url.clone(), modified: modified.to_string() };
+    let writer = Writer::start(file, state_path.to_path_buf(), named, total, chunk, done, receiver, shared.clone());
     let workers = streams.count.min(chunks.max(1));
     log::line(format!("start {}: {}, {} chunks of {}, {} streams, {} kept", source.shown(), size_words(total), chunks, size_words(chunk), workers, size_words(already)));
     let source = Arc::new(source.clone());
@@ -705,8 +729,15 @@ struct Writer {
     thread: std::thread::JoinHandle<Result<(), Error>>,
 }
 
+/// Whose `.part` it is: the address and the server's Last-Modified, written into `.part.json`.
+struct Named {
+    source: String,
+    modified: String,
+}
+
 impl Writer {
-    fn start(file: File, state_path: PathBuf, total: u64, chunk_size: u64, mut done: Vec<bool>, mut receiver: mpsc::Receiver<Write>, shared: Arc<Shared>) -> Writer {
+    #[allow(clippy::too_many_arguments)]
+    fn start(file: File, state_path: PathBuf, named: Named, total: u64, chunk_size: u64, mut done: Vec<bool>, mut receiver: mpsc::Receiver<Write>, shared: Arc<Shared>) -> Writer {
         let thread = std::thread::Builder::new()
             .name("writer".into())
             .spawn(move || {
@@ -722,7 +753,7 @@ impl Writer {
                         }
                         Write::Done { index, ack } => {
                             done[index] = true;
-                            write_state(&state_path, total, chunk_size, &done);
+                            write_state(&state_path, &named, total, chunk_size, &done);
                             let _ = ack.send(());
                         }
                     }
@@ -999,8 +1030,8 @@ fn read_state(path: &Path) -> Option<State> {
     serde_json::from_str(&fs::read_to_string(path).ok()?).ok()
 }
 
-fn write_state(path: &Path, total: u64, chunk_size: u64, done: &[bool]) {
-    let state = State { size: total, chunk_size, chunks: done.len(), done: done.to_vec() };
+fn write_state(path: &Path, named: &Named, total: u64, chunk_size: u64, done: &[bool]) {
+    let state = State { size: total, chunk_size, chunks: done.len(), done: done.to_vec(), source: named.source.clone(), modified: named.modified.clone() };
     match serde_json::to_string(&state) {
         Ok(text) => {
             if let Err(err) = open_own(path, true).and_then(|mut file| file.write_all(text.as_bytes()).map_err(disk)) {
@@ -1285,8 +1316,9 @@ mod tests {
         let mut earlier = vec![0; content.len()];
         earlier[..CHUNK_SIZE as usize].copy_from_slice(&content[..CHUNK_SIZE as usize]);
         fs::write(&part, &earlier).unwrap();
-        write_state(&with_suffix(&dest, ".part.json"), content.len() as u64, CHUNK_SIZE, &[true, false, false]);
-        assert_eq!(kept(&dest), CHUNK_SIZE);
+        let named = Named { source: source(&server).url, modified: String::new() };
+        write_state(&with_suffix(&dest, ".part.json"), &named, content.len() as u64, CHUNK_SIZE, &[true, false, false]);
+        assert_eq!(kept(&dest, &named.source), CHUNK_SIZE);
         let got = fetch(&server, &dest, 2).expect("the file");
         assert_eq!(got, dest);
         assert_eq!(fs::read(&dest).unwrap(), content);
@@ -1295,7 +1327,25 @@ mod tests {
         assert_eq!(lowest, Some(CHUNK_SIZE as usize), "the first chunk is not fetched again: {requests:?}");
         // The first request is the first missing chunk; then the last one.
         assert_eq!(requests.len(), 2);
-        assert_eq!(kept(&dest), 0);
+        assert_eq!(kept(&dest, &named.source), 0);
+    }
+
+    #[test]
+    fn a_part_of_another_source_or_of_a_changed_file_is_not_gone_on_from() {
+        // The same size as the file, but from another address: nothing of it is kept, and the file
+        // comes whole from this server.
+        let content = pattern(2 * CHUNK_SIZE as usize + 999);
+        let server = serve(content.clone(), true, None);
+        let scratch = Scratch::new("other-source");
+        let dest = scratch.path("film.mkv");
+        fs::write(with_suffix(&dest, ".part"), vec![b'A'; content.len()]).unwrap();
+        let elsewhere = Named { source: "http://elsewhere.example/film.mkv".into(), modified: String::new() };
+        write_state(&with_suffix(&dest, ".part.json"), &elsewhere, content.len() as u64, CHUNK_SIZE, &[true, false, false]);
+        assert_eq!(kept(&dest, &source(&server).url), 0);
+        fetch(&server, &dest, 2).expect("the file");
+        assert_eq!(fs::read(&dest).unwrap(), content);
+        let requests = server.requests.lock().unwrap().clone();
+        assert_eq!(requests.iter().filter_map(|range| parse_range(range)).map(|(start, _)| start).min(), Some(0), "{requests:?}");
     }
 
     #[test]
@@ -1377,7 +1427,7 @@ mod tests {
         let cancel = AtomicBool::new(true);
         assert_eq!(download(http::client(), &source(&server), &dest, &Streams::new(2), &cancel, &|_| {}), Err(Error::Cancelled));
         assert!(!dest.exists());
-        assert_eq!(kept(&dest), 0);
+        assert_eq!(kept(&dest, &source(&server).url), 0);
         assert!(server.requests.lock().unwrap().is_empty());
     }
 
