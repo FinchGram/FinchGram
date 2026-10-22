@@ -44,7 +44,9 @@ cargo build --release --manifest-path "$ROOT/Cargo.toml" --bin "$BIN"
 # The executable holds the 39 MB of fonts once (src/fonts.rs); a copy that is far larger holds
 # them twice, as v0.3.25 did when they were consts, and is not shipped.
 BYTES=$(stat -f %z "$ROOT/target/release/$BIN")
-if [ "$BYTES" -gt 100000000 ]; then
+# The binary was 92 MB at v0.4.22 and 103 MB at v0.5.0 (the UI's three themes grow with each round);
+# the fonts in it twice (the v0.3.25 mistake, src/fonts.rs) would add 39 MB more.
+if [ "$BYTES" -gt 130000000 ]; then
   echo "$BIN is $BYTES bytes, more than it should be: are the fonts in it twice (src/fonts.rs)?" >&2
   exit 1
 fi
