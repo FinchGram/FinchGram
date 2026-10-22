@@ -9,6 +9,7 @@ import {
 import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords, SearchInput, SearchWords, ButtonGrid, BotWords } from "../chat.slint";
+import { ExtraWords, ReactionChips, ReactionPicker, RoundNoteView, ContactCardView, TopicList, AdminPanelView } from "../extras.slint";
 import { Look } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { TerminalPalette as P } from "palette.slint";
@@ -49,12 +50,15 @@ component Action {
 }
 
 // An icon in brackets that does something: the foot's profile and settings. (No bundled font has
-// a gear glyph, so the other themes' icons, between two bracket characters.)
+// a gear glyph, so the other themes' icons, between two bracket characters.) Disabled, it is a
+// mark only: a closed topic's lock, the microphone that is still to come.
 component IconAction {
     in property <string> icon;
     in property <color> color: P.muted;
+    in property <color> hover: P.text;          // its ink under the pointer
+    in property <bool> enabled: true;
     callback activated();
-    property <color> ink: touch.has-hover ? P.text : root.color;
+    property <color> ink: touch.has-hover && root.enabled ? root.hover : root.color;
 
     HorizontalLayout {
         T {
@@ -75,7 +79,8 @@ component IconAction {
         }
     }
     touch := TouchArea {
-        mouse-cursor: pointer;
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
         clicked => {
             root.activated();
         }
@@ -179,9 +184,34 @@ component ChatLine inherits Rectangle {
         }
         T {
             horizontal-stretch: 1;
+            // Beside a draft, the title gives way last: all of it, or 100px of a long one. (A
+            // layout shrinks its items by their stretch, and the draft's line has one too.)
+            min-width: root.chat.draft != "" ? min(self.preferred-width, 100px) : 0px;
             text: root.chat.title;
             color: root.open ? P.text : P.muted;
             overflow: elide;
+        }
+        // Words left in its composer (src/telegram/drafts.rs), after a pencil: the other themes'
+        // lists show them in the last message's place, which this list has not. (No bundled font
+        // has ✎, so the icon.) At most two fifths of the list (Side's width; the row's own would
+        // loop through the bots' Flickable).
+        if root.chat.draft != "": HorizontalLayout {
+            horizontal-stretch: 1;
+            max-width: max(220px, min(560px, AppState.terminal-list-width)) * 0.4;
+            spacing: 5px;
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "pencil-simple";
+                    size: 12px;
+                    color: P.accent2;
+                }
+            }
+            T {
+                text: root.chat.draft;
+                color: P.accent2;
+                overflow: elide;
+            }
         }
         T {
             text: root.chat.unread > 0 ? (root.chat.mention ? root.chat.unread + " @" : "" + root.chat.unread) : root.chat.marked ? "•" : "";
@@ -948,7 +978,7 @@ component LogLine {
                 text: (root.message.edited ? @tr("(edited)") : "") + (root.message.sending ? " …" : "");
                 color: P.faint;
             }
-            if !root.message.rich && (!root.has-media || root.message.text != ""): Paragraph {
+            if !root.message.rich && !root.message.round.shown && !root.message.contact.shown && (!root.has-media || root.message.text != ""): Paragraph {
                 text: (root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail))
                     + (root.message.edited ? " " + @tr("(edited)") : "")
                     + (root.message.sending ? " …" : "");
@@ -1044,6 +1074,91 @@ component LogLine {
                     }
                 }
             }
+            // The design's fifth round (extras.slint): a round video message, a contact card, the
+            // reactions and their picker, each on a line of its own under the words.
+            if root.message.round.shown: HorizontalLayout {
+                alignment: start;
+                padding-top: 4px;
+                RoundNoteView {
+                    note: root.message.round;
+                    size: 160px;
+                    line: P.line;
+                    accent: P.accent;
+                    side: P.side;
+                    faint: P.faint;
+                    mono: P.font;
+                    font-family: P.font;
+                    clicked => {
+                        Conversation.play-round(root.message.id);
+                    }
+                }
+            }
+            if root.message.contact.shown: HorizontalLayout {
+                alignment: start;
+                padding-top: 4px;
+                ContactCardView {
+                    card: root.message.contact;
+                    bg: P.side;
+                    line: P.line;
+                    soft: P.sel;
+                    soft-ink: P.accent;
+                    accent: P.accent;
+                    text-color: P.text;
+                    muted: P.muted;
+                    faint: P.faint;
+                    radius: 3px;
+                    av-radius: 3px;
+                    font-family: P.font;
+                    font-size: 13px;
+                    small: 12px;
+                    message => {
+                        Conversation.contact-message(root.message.id);
+                    }
+                    invite => {
+                        Conversation.contact-invite(root.message.id);
+                    }
+                    add => {
+                        Conversation.contact-add(root.message.id);
+                    }
+                    share => {
+                        Conversation.contact-share(root.message.id);
+                    }
+                }
+            }
+            if root.message.reactions.length > 0: VerticalLayout {
+                padding-top: 4px;
+                ReactionChips {
+                    reactions: root.message.reactions;
+                    fill: P.sel;
+                    ink: P.muted;
+                    chosen-fill: P.sel;
+                    chosen-ink: P.accent;
+                    ring: P.accent;
+                    radius: 2px;
+                    font-family: P.font;
+                    react(emoji) => {
+                        Conversation.react(root.message.id, emoji);
+                    }
+                }
+            }
+            if Conversation.reaction-picker == root.message.id: HorizontalLayout {
+                alignment: start;
+                padding-top: 4px;
+                ReactionPicker {
+                    choices: Conversation.reaction-choices;
+                    max: Conversation.reaction-max;
+                    bg: P.side;
+                    line: P.line;
+                    soft: P.bg;
+                    note-color: P.faint;
+                    shadow: P.shadow;
+                    radius: 3px;
+                    font-family: P.font;
+                    pick(emoji) => {
+                        Conversation.react(root.message.id, emoji);
+                    }
+                }
+            }
             // Not sent: "↳ ✗ not sent [retry] [delete]".
             if root.message.failed: HorizontalLayout {
                 alignment: start;
@@ -1076,6 +1191,38 @@ component LogLine {
                         clicked => {
                             Conversation.discard(root.message.id);
                         }
+                    }
+                }
+            }
+        }
+        // At the end of the first line: "[share]" under a channel's post (src/telegram/share.rs),
+        // and the smiley that opens the reactions' picker (a double click reacts at once:
+        // MessageArea). 2px down: the line has the log's leading, these have none.
+        if Conversation.kind == ChatKind.channel && root.message.can-share: VerticalLayout {
+            horizontal-stretch: 0;
+            alignment: start;
+            padding-top: 2px;
+            Action {
+                label: ExtraWords.share().to-lowercase();
+                color: P.faint;
+                activated => {
+                    Conversation.share-message(root.message.id);
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 0;
+            alignment: start;
+            padding-top: 2px;
+            IconAction {
+                icon: "smiley";
+                color: Conversation.reaction-picker == root.message.id ? P.accent : P.faint;
+                hover: P.accent;
+                activated => {
+                    if Conversation.reaction-picker == root.message.id {
+                        Conversation.close-reactions();
+                    } else {
+                        Conversation.open-reactions(root.message.id);
                     }
                 }
             }
@@ -1250,6 +1397,115 @@ component PinnedLine inherits Rectangle {
     }
 }
 
+// A topic open in a group with topics (src/telegram/topics.rs), as a line under the pane head:
+// "[← all topics] / 📷 Gear talk", a lock after a closed one.
+component TopicLine inherits Rectangle {
+    height: 28px;
+    background: P.pane-head;
+
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: P.line;
+    }
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 8px;
+        Action {
+            label: "← " + ExtraWords.all-topics().to-lowercase();
+            color: P.accent;
+            activated => {
+                Conversation.back-to-topics();
+            }
+        }
+        T {
+            text: "/";
+            color: P.faint;
+        }
+        if Conversation.topic-icon != "": T {
+            text: Conversation.topic-icon;
+        }
+        T {
+            text: Conversation.topic-title;
+            font-weight: 600;
+            overflow: elide;
+        }
+        if Conversation.topic-closed: IconAction {
+            icon: "lock-simple";
+            color: P.faint;
+            enabled: false;
+        }
+        Rectangle { horizontal-stretch: 1; }
+    }
+}
+
+// The chat's settings panel, over the right of the pane: a group's rules, or what its
+// administrators may change (src/telegram/admin.rs); nothing yet for other chats.
+component SettingsPanel inherits Rectangle {
+    background: P.side;
+
+    Rectangle {
+        x: 0;
+        width: 1px;
+        background: P.line;
+    }
+    VerticalLayout {
+        HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 9px;
+            padding-bottom: 8px;
+            spacing: 8px;
+            T {
+                horizontal-stretch: 1;
+                text: "── " + @tr("chat settings") + " ──";
+                color: P.faint;
+                overflow: elide;
+            }
+            Action {
+                label: "x";
+                color: P.faint;
+                activated => {
+                    Conversation.toggle-settings();
+                }
+            }
+        }
+        Flickable {
+            vertical-stretch: 1;
+            mouse-drag-pan-enabled: false;
+            content-width: self.width;
+            content-height: body.preferred-height;
+            body := VerticalLayout {
+                width: parent.width;
+                alignment: start;
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-bottom: 16px;
+                if Conversation.admin.shown: AdminPanelView {
+                    side: P.bg;
+                    accent: P.accent;
+                    on-accent: P.on-accent;
+                    text-color: P.text;
+                    muted: P.muted;
+                    faint: P.faint;
+                    off: P.line;
+                    danger: P.accent3;
+                    font-family: P.font;
+                    font-size: 13px;
+                    small: 12px;
+                }
+                if !Conversation.admin.shown: Paragraph {
+                    text: ExtraWords.nothing-here();
+                    color: P.faint;
+                    font-family: P.font;
+                    font-size: 12px;
+                }
+            }
+        }
+    }
+}
+
 component Pane inherits Rectangle {
     background: P.bg;
 
@@ -1282,8 +1538,8 @@ component Pane inherits Rectangle {
                     color: P.faint;
                     overflow: elide;
                 }
-                // Searching in the chat: the line under the head (SearchLine). The chat's settings
-                // panel is still to come.
+                // Searching in the chat: the line under the head (SearchLine); the chat's settings
+                // panel, over the right of the pane (SettingsPanel).
                 Action {
                     label: @tr("search");
                     color: Conversation.search-open ? P.accent : P.muted;
@@ -1298,7 +1554,11 @@ component Pane inherits Rectangle {
                 }
                 Action {
                     label: @tr("chat settings");
-                    enabled: false;
+                    enabled: Conversation.chat-id != "";
+                    color: Conversation.settings-open ? P.accent : P.muted;
+                    activated => {
+                        Conversation.toggle-settings();
+                    }
                 }
                 Action {
                     label: "⋯";
@@ -1371,14 +1631,39 @@ component Pane inherits Rectangle {
         }
         if Conversation.search-open: SearchLine { }
         if Conversation.pinned-message.shown: PinnedLine { }
+        if Conversation.topic-id != "": TopicLine { }
 
         scroll := ChatScroll {
             vertical-stretch: 1;
+            from-top: Conversation.showing-topics;
             spacing: 3px;
             margin-left: 16px;
             margin-right: 16px;
             margin-top: 10px;
             margin-bottom: 14px;
+            // A group with topics opens on them (src/telegram/topics.rs).
+            if Conversation.showing-topics: TopicList {
+                bg: P.bg;
+                side: P.side;
+                soft: P.sel;
+                soft-ink: P.accent;
+                line: P.line;
+                accent: P.accent;
+                accent-ink: P.accent;
+                on-accent: P.on-accent;
+                text-color: P.text;
+                muted: P.muted;
+                faint: P.faint;
+                danger: P.accent3;
+                // Translucent: the list's input paints selected words in the text colour, which a
+                // solid accent would hide (the command line's gets P.on-accent instead).
+                selection: P.accent.transparentize(0.65);
+                radius: 2px;
+                big-radius: 3px;
+                font-family: P.font;
+                font-size: 13px;
+                small: 12px;
+            }
             for row in Conversation.messages: Line {
                 message: row;
                 reveal(top, bottom) => {
@@ -1408,6 +1693,14 @@ component Pane inherits Rectangle {
                 }
             }
         }
+    }
+
+    // Under the head, so "[chat settings]" stays in sight, lit.
+    if Conversation.settings-open && Conversation.chat-id != "": SettingsPanel {
+        x: root.width - self.width;
+        y: 34px;
+        width: min(340px, root.width * 0.4);
+        height: root.height - 34px;
     }
 }
 
@@ -1510,14 +1803,20 @@ component SelectionLine inherits Rectangle {
 }
 
 component CommandLine inherits Rectangle {
-    // The strip above the prompt: replying, editing, forwarding (the design's 1b).
+    // The strip above the prompt: replying, editing, forwarding (the design's 1b); under it, what
+    // Telegram refused (Conversation.send-error), while there is something.
     property <bool> strip: Actions.bar != ComposeBar.none && !Actions.selecting && Conversation.chat-id != "";
-    height: root.strip ? P.foot-height + 28px : P.foot-height;
+    property <bool> refused: Conversation.send-error != "" && !Actions.selecting && Conversation.chat-id != "";
+    property <length> above: (root.strip ? 28px : 0px) + (root.refused ? 28px : 0px);
+    height: P.foot-height + root.above;
     background: P.cmd;
     // A reply or an edit begins, a menu or dialog closed: the keyboard comes back here.
-    // A chat one only reads (a channel, mostly): no words to write, so no input and no cursor; a
-    // channel has muting in their place, as the other themes' composer does.
-    property <bool> read-only: Conversation.chat-id != "" && !Conversation.can-write;
+    // A chat one only reads (a channel, mostly), or a closed topic: no words to write, so no input
+    // and no cursor; a channel has muting in their place, as the other themes' composer does, a
+    // closed topic the words saying so (src/telegram/topics.rs).
+    property <bool> read-only: Conversation.chat-id != "" && (!Conversation.can-write || Conversation.topic-closed);
+    // Where words can go: not while a group's topics are listed.
+    property <bool> writable: Conversation.chat-id != "" && Conversation.can-write && !Conversation.topic-closed && !Conversation.showing-topics;
     property <int> focus-requests: Actions.focus-requests;
     changed focus-requests => {
         if !root.read-only {
@@ -1570,7 +1869,12 @@ component CommandLine inherits Rectangle {
         } else if line.starts-with("/contact") {
             NewChat.start(NewDialog.contact);
         } else if !line.starts-with("/") {
-            Conversation.send(line);
+            // Slow mode still holds (the hint says for how long): the words stay on the line.
+            if Conversation.slow-wait > 0 {
+                input.text = line;
+            } else {
+                Conversation.send(line);
+            }
         } else if Conversation.can-write {
             // A bot's command, or any other "/words": sent as they are, as Telegram's apps do.
             Conversation.send-command(line);
@@ -1628,8 +1932,22 @@ component CommandLine inherits Rectangle {
         }
     }
 
-    HorizontalLayout {
+    // What Telegram refused, in its words (src/telegram/errors.rs), above the prompt.
+    if root.refused: HorizontalLayout {
         y: root.strip ? 28px : 0;
+        height: 28px;
+        padding-top: 7px;
+        padding-left: 16px;
+        padding-right: 16px;
+        T {
+            text: Conversation.send-error;
+            color: P.accent3;
+            overflow: elide;
+        }
+    }
+
+    HorizontalLayout {
+        y: root.above;
         height: P.foot-height;
         padding-left: 16px;
         padding-right: 16px;
@@ -1647,7 +1965,7 @@ component CommandLine inherits Rectangle {
             }
         }
         // "[+]": photos, videos and files (attachments.slint).
-        if Conversation.chat-id != "" && Conversation.can-write: VerticalLayout {
+        if root.writable: VerticalLayout {
             alignment: center;
             plus := Rectangle {
                 property <bool> allowed: Conversation.can-send-photos || Conversation.can-send-videos || Conversation.can-send-files;
@@ -1674,7 +1992,7 @@ component CommandLine inherits Rectangle {
         }
         // "[✂]": a screenshot into the card (src/screenshot/), as its shortcut does; greyed where
         // the chat takes no photos.
-        if Conversation.chat-id != "" && Conversation.can-write: VerticalLayout {
+        if root.writable: VerticalLayout {
             alignment: center;
             scissors := Rectangle {
                 property <bool> allowed: Conversation.can-send-photos;
@@ -1695,8 +2013,18 @@ component CommandLine inherits Rectangle {
                 }
             }
         }
+        // "[mic]": voice messages are still to come (docs/voice-input.md), so greyed.
+        if root.writable: VerticalLayout {
+            alignment: center;
+            IconAction {
+                icon: "microphone";
+                color: P.faint;
+                opacity: 0.4;
+                enabled: false;
+            }
+        }
         // A bot's menu button, and the fold for its keyboard (bots.rs).
-        if Conversation.chat-id != "" && Conversation.can-write && Conversation.menu-button != "": VerticalLayout {
+        if root.writable && Conversation.menu-button != "": VerticalLayout {
             alignment: center;
             Action {
                 label: Conversation.menu-button == "/" ? BotWords.menu().to-lowercase() : Conversation.menu-button;
@@ -1706,7 +2034,7 @@ component CommandLine inherits Rectangle {
                 }
             }
         }
-        if Conversation.chat-id != "" && Conversation.can-write && Conversation.keyboard.length > 0: VerticalLayout {
+        if root.writable && Conversation.keyboard.length > 0: VerticalLayout {
             alignment: center;
             IconAction {
                 icon: "keyboard";
@@ -1716,16 +2044,26 @@ component CommandLine inherits Rectangle {
                 }
             }
         }
-        VerticalLayout {
+        // A closed topic: the words saying so, in the input's place.
+        if Conversation.chat-id != "" && Conversation.topic-closed: T {
             horizontal-stretch: 1;
+            text: ExtraWords.topic-closed();
+            color: P.muted;
+            overflow: elide;
+        }
+        VerticalLayout {
+            horizontal-stretch: Conversation.chat-id != "" && Conversation.topic-closed ? 0 : 1;
             alignment: center;
             input := MessageInput {
                 // Out of sight where there is nothing to write; its room keeps the line's shape.
                 visible: !root.read-only;
                 text <=> Conversation.draft;
                 allow-empty: Actions.bar == ComposeBar.forward;
-                enabled: Conversation.chat-id != "" && !Actions.selecting && !root.read-only;
-                placeholder: Conversation.keyboard-placeholder != "" ? Conversation.keyboard-placeholder : @tr("Write a message, or / for commands");
+                // Nothing goes while a group's topics are listed.
+                enabled: Conversation.chat-id != "" && !Actions.selecting && !root.read-only && !Conversation.showing-topics;
+                // Slow mode holding: how long still, in the placeholder (src/telegram/admin.rs).
+                placeholder: Conversation.slow-wait > 0 ? ExtraWords.slow-wait-placeholder(Conversation.slow-wait)
+                    : Conversation.keyboard-placeholder != "" ? Conversation.keyboard-placeholder : @tr("Write a message, or / for commands");
                 text-color: P.text;
                 placeholder-color: P.faint;
                 // The accent: on macOS the cursor is painted in the selection's colour (chat.slint),
@@ -1752,9 +2090,12 @@ component CommandLine inherits Rectangle {
                 }
             }
         }
-        if !root.read-only: T {
-            text: (AppState.send-with-enter ? "⏎ " : "⌘⏎ ") + (Actions.bar == ComposeBar.edit ? @tr("save") : @tr("send"));
-            color: P.faint;
+        // Slow mode's wait, or its rule, in the hint's place.
+        if !root.read-only && !Conversation.showing-topics: T {
+            text: Conversation.slow-wait > 0 ? ExtraWords.slow-wait-hint(Conversation.slow-wait)
+                : Conversation.slow-limited ? ExtraWords.slow-hint(Conversation.slow-mode)
+                : (AppState.send-with-enter ? "⏎ " : "⌘⏎ ") + (Actions.bar == ComposeBar.edit ? @tr("save") : @tr("send"));
+            color: Conversation.slow-wait > 0 ? P.accent2 : P.faint;
         }
     }
 

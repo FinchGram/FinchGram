@@ -10,6 +10,7 @@ import { MenuEntry } from "conversation.slint";
 import { UnreadBadge, MentionBadge, UnreadDot } from "badges.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 import { NewChat, NewDialog, ComposeWords } from "../compose.slint";
+import { ExtraWords } from "../extras.slint";
 
 export enum WorkbenchView { chats, channels, bots, filters, scheduled }
 
@@ -211,6 +212,16 @@ component TreeLine inherits Rectangle {
             vertical-alignment: center;
             overflow: elide;
         }
+        // Words left in its composer (src/telegram/drafts.rs).
+        if root.item.chat.draft != "": VerticalLayout {
+            alignment: center;
+            Text {
+                text: ExtraWords.draft();
+                color: P.accent-ink;
+                font-size: 11px;
+                font-weight: 600;
+            }
+        }
         if root.item.chat.mention: VerticalLayout {
             alignment: center;
             MentionBadge { }
@@ -290,13 +301,24 @@ component ChannelLine inherits Rectangle {
                 }
             }
         }
-        Text {
+        // The last message, or the words left in the composer (src/telegram/drafts.rs).
+        HorizontalLayout {
             x: 22px;
             width: parent.width - 22px;
-            text: Fmt.body(root.chat.content, root.chat.text, root.chat.detail);
-            color: P.muted;
-            font-size: 12px;
-            overflow: elide;
+            spacing: 4px;
+            if root.chat.draft != "": Text {
+                text: ExtraWords.draft();
+                color: P.accent-ink;
+                font-size: 12px;
+                font-weight: 600;
+            }
+            Text {
+                horizontal-stretch: 1;
+                text: root.chat.draft != "" ? root.chat.draft : Fmt.body(root.chat.content, root.chat.text, root.chat.detail);
+                color: P.muted;
+                font-size: 12px;
+                overflow: elide;
+            }
         }
         Text {
             x: 22px;

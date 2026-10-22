@@ -28,7 +28,12 @@ Es un cliente no oficial, no hecho por Telegram.
   muestran difuminados y se abren una sola vez, como en las apps de Telegram. Los botones de los
   bots bajo sus mensajes, sus teclados, comandos y botón de menú; el mensaje fijado del chat bajo el
   encabezado. Un chat que protege su contenido no aparece en las capturas ni en las grabaciones de
-  pantalla mientras está en primer plano.
+  pantalla mientras está en primer plano. Reacciones, con un selector y un doble clic para la
+  reacción predeterminada; videomensajes redondos reproducidos en el propio chat; tarjetas de
+  contacto con Mensaje, Añadir contacto y Compartir; compartir una publicación o una tarjeta con
+  varios chats a la vez; borradores conservados por chat y entre dispositivos; grupos con temas que
+  se abren en sus temas; modo lento con cuenta atrás en el cuadro de escritura, y las reglas de un
+  grupo o, para sus administradores, sus permisos y opciones en el panel de ajustes del chat.
 - **Multimedia.** Las fotos y los vídeos se abren en un visor sobre la ventana, con el resto de su
   álbum; el vídeo se reproduce con mpv, compilado desde el código fuente. Se guardan en Descargas
   donde el chat lo permite.

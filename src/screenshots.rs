@@ -219,6 +219,7 @@ fn chat(id: &str, title: &str, kind: ChatKind, time: Moment, sender: &str, text:
         detail: SharedString::new(),
         unread,
         mention: id == "keyboards",
+        draft: SharedString::new(),
         marked: false,
         muted: id == "news",
         pinned: false,
@@ -489,6 +490,8 @@ fn fill_chats(ui: &MainWindow) {
     };
     let alex = with_portrait(chat("alex", "Alex Chen", ChatKind::User, moment(Day::Today, 12, 8), "", "Can we move the call to Thursday?", 1, 0), 120.0);
     let linxia = with_portrait(chat("linxia", "Lin Xia", ChatKind::User, moment(Day::Today, 13, 52), "", "Is that place open tonight?", 2, 0), 200.0);
+    // Words left in its composer (drafts.rs): the list shows them as a draft.
+    let linxia = ChatRow { draft: "See you at 7 then?".into(), ..linxia };
     let news = with_portrait(chat("news", "Tech Morning", ChatKind::Channel, moment(Day::Today, 7, 30), "", "New chip export rules take effect", 12, 82413), 25.0);
     let mom = chat("mom", "Mom", ChatKind::User, moment(Day::Yesterday, 18, 32), "", "Never mind, if you are busy don't reply", 0, 0);
     let finch = with_portrait(chat("finch", "FinchGram Updates", ChatKind::Channel, moment(Day::Yesterday, 20, 0), "", "FinchGram 0.1: the design arrives", 0, 41000), 260.0);
@@ -565,7 +568,13 @@ fn open_keyboards(ui: &MainWindow) {
         MessageRow { reply: quote("2", "Jie", "I'm lubing my 65% today, photos later."), ..message("3", "Zhou Ye", "10:31", "Nice, @ me when it's done.") },
         MessageRow { content: Content::Sticker, detail: "👍".into(), sticker: sticker(), ..message("3a", "Zhou Ye", "10:31", "") },
         message("4", "Mika", "11:02", "I can make the meetup on Thursday, but only after 3pm."),
-        message("5", "Mi", "11:05", "Thursday 15:00 at the usual place. Who's coming?"),
+        MessageRow {
+            reactions: model(vec![
+                Reaction { emoji: "👍".into(), count: "6".into(), chosen: true },
+                Reaction { emoji: "🎉".into(), count: "2".into(), chosen: false },
+            ]),
+            ..message("5", "Mi", "11:05", "Thursday 15:00 at the usual place. Who's coming?")
+        },
         MessageRow {
             forwarded_from: "Keyboard Lab Notices".into(),
             ..message("5a", "Mi", "11:40", "October group buy: dark PBT keycaps, orders close October 8.")
@@ -573,6 +582,24 @@ fn open_keyboards(ui: &MainWindow) {
         MessageRow {
             reply: ReplyQuote { shown: true, gone: true, ..ReplyQuote::default() },
             ..message("5b", "Mika", "14:05", "Saw it before it was deleted, looks great.")
+        },
+        // A round video message and a contact card (the design's fifth round).
+        MessageRow {
+            content: Content::VideoNote,
+            round: RoundNote { shown: true, picture: gradient(12, 12, 200.0), has_picture: true, duration: "0:14".into(), playing: false, loading: false },
+            ..message("5e", "Jie", "14:08", "")
+        },
+        MessageRow {
+            content: Content::Contact,
+            contact: ContactCard {
+                shown: true,
+                name: "Aunt Wang".into(),
+                initial: "A".into(),
+                phone: "+86 139 0571 2233".into(),
+                registered: true,
+                added: false,
+            },
+            ..message("5f", "Mika", "14:09", "")
         },
         MessageRow {
             content: Content::Photo,
@@ -614,7 +641,7 @@ fn open_news(ui: &MainWindow) {
     conversation.set_status(Status::Subscribers);
     conversation.set_members(82413);
     conversation.set_can_write(false);
-    let post = |id: &str, time: &str, text: &str| MessageRow { sender: "Tech Morning".into(), ..message(id, "Tech Morning", time, text) };
+    let post = |id: &str, time: &str, text: &str| MessageRow { sender: "Tech Morning".into(), can_share: true, ..message(id, "Tech Morning", time, text) };
     conversation.set_messages(model(vec![
         day_row(Day::Today),
         // The design's post with an article in Instant View.
@@ -860,6 +887,171 @@ fn bots(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> 
     conversation.set_keyboard_placeholder(SharedString::new());
     conversation.set_keyboard_hidden(false);
     conversation.set_menu_button(SharedString::new());
+    open_keyboards(ui);
+}
+
+/// The design's fifth round (src/telegram/{reactions,topics,share,admin}.rs): the reactions'
+/// picker; the settings panel as an administrator and as a member; slow mode in the composer; a
+/// group with topics, its list, a new topic's form, a topic open, a closed one; the share panel.
+fn extras(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    let conversation = ui.global::<Conversation>();
+    // Keyboard Lab is open (open_keyboards): its end shows Mi's message with reactions and the
+    // picker open on it, Jie's round video message and Mika's contact card.
+    let messages = conversation.get_messages();
+    let kept: Vec<MessageRow> = (0..messages.row_count())
+        .filter_map(|index| messages.row_data(index))
+        .filter(|row| ["", "4", "5", "5e", "5f"].contains(&row.id.as_str()) && row.kind != RowKind::Day || row.kind == RowKind::Day && row.id.is_empty())
+        .collect();
+    conversation.set_messages(model(kept));
+    conversation.set_reaction_choices(model(["👍", "❤️", "🔥", "🎉", "😂", "😮", "😢", "🙏"].map(SharedString::from).to_vec()));
+    conversation.set_reaction_max(1);
+    conversation.set_reaction_picker("5".into());
+    save(window, &name("reactions"));
+    conversation.set_reaction_picker(SharedString::new());
+    save(window, &name("extras"));
+
+    // The settings panel: as the group's administrator, then as a member reading its rules.
+    let admin = AdminPanel {
+        shown: true,
+        admin: true,
+        supergroup: true,
+        members: 486,
+        slow_mode: 30,
+        can_send: true,
+        can_media: true,
+        can_stickers: true,
+        can_links: false,
+        can_polls: true,
+        can_invite: false,
+        can_pin: false,
+        can_info: false,
+        join_request: true,
+        protected: false,
+        history: true,
+        hidden_members: false,
+        hidden_members_allowed: true,
+        anti_spam: true,
+        anti_spam_allowed: true,
+        busy: SharedString::new(),
+        error: SharedString::new(),
+    };
+    conversation.set_admin(admin.clone());
+    conversation.set_settings_open(true);
+    save(window, &name("settings-admin"));
+    conversation.set_admin(AdminPanel { admin: false, ..admin });
+    save(window, &name("settings-rules"));
+    conversation.set_settings_open(false);
+    conversation.set_admin(AdminPanel::default());
+
+    // Slow mode holds the composer: one message every 30 seconds, 22 still to wait.
+    conversation.set_slow_mode(30);
+    conversation.set_slow_limited(true);
+    conversation.set_slow_wait(22);
+    save(window, &name("slow-mode"));
+    conversation.set_slow_wait(0);
+    conversation.set_slow_limited(false);
+    conversation.set_slow_mode(0);
+
+    // A group with topics: Film Photography opens on its topics.
+    let topic = |id: &str, icon: &str, colour: u32, title: &str, last: &str, hour: i32, minute: i32, unread: i32, pinned: bool, closed: bool| TopicRow {
+        id: id.into(),
+        icon: icon.into(),
+        color: slint::Color::from_rgb_u8((colour >> 16) as u8, (colour >> 8) as u8, colour as u8),
+        title: title.into(),
+        last: last.into(),
+        time: moment(Day::Today, hour, minute),
+        unread,
+        pinned,
+        closed,
+    };
+    conversation.set_chat_id("film".into());
+    conversation.set_title("Film Photography".into());
+    conversation.set_initial("F".into());
+    conversation.set_kind(ChatKind::Group);
+    conversation.set_status(Status::Members);
+    conversation.set_members(1204);
+    conversation.set_online_members(0);
+    conversation.set_can_write(true);
+    conversation.set_messages(ModelRc::default());
+    conversation.set_is_forum(true);
+    conversation.set_showing_topics(true);
+    conversation.set_topics(model(vec![
+        topic("1", "", 0x6FB9F0, "General", "Lao Zhou: Any tickets left for the weekend screening?", 13, 40, 0, true, false),
+        topic("2", "📷", 0xFFD67E, "Gear talk", "Ajie: What does a used FM2 go for now?", 14, 2, 3, false, false),
+        topic("3", "🚶", 0x8EEE98, "Weekend photo walk", "Kai: Saturday 9:00, meet at Wukang Road", 11, 15, 12, false, false),
+        topic("4", "🎞️", 0xCB86DB, "Scanning and editing", "Lulu: The scan settings are pinned", 9, 30, 0, false, false),
+        topic("5", "📌", 0xFB6F5F, "Rules", "An administrator closed this topic", 8, 0, 0, false, true),
+    ]));
+    conversation.set_topic_count(5);
+    save(window, &name("topics"));
+    // A new topic's form.
+    conversation.set_topic_icons(model(["💬", "📷", "🎞️", "🗺️", "📚", "🎧", "⚠️", "🎉"].map(SharedString::from).to_vec()));
+    conversation.set_new_topic_icon(1);
+    conversation.set_new_topic_name("Darkroom".into());
+    conversation.set_new_topic_open(true);
+    save(window, &name("topic-new"));
+    conversation.set_new_topic_open(false);
+    // Gear talk, open.
+    conversation.set_showing_topics(false);
+    conversation.set_topic_id("2".into());
+    conversation.set_topic_title("Gear talk".into());
+    conversation.set_topic_icon("📷".into());
+    conversation.set_topic_color(slint::Color::from_rgb_u8(0xFF, 0xD6, 0x7E));
+    conversation.set_topic_closed(false);
+    conversation.set_messages(model(vec![
+        day_row(Day::Today),
+        message("t1", "Xiaoyu", "13:10", "Got an FM2, the shutter sound is lovely"),
+        message("t2", "Lulu", "13:31", "Congrats! Replace the light seals first"),
+        message("t3", "Ajie", "14:02", "What does a used FM2 go for now? Worth it?"),
+    ]));
+    save(window, &name("topic"));
+    // Rules, closed.
+    conversation.set_topic_id("5".into());
+    conversation.set_topic_title("Rules".into());
+    conversation.set_topic_icon("📌".into());
+    conversation.set_topic_color(slint::Color::from_rgb_u8(0xFB, 0x6F, 0x5F));
+    conversation.set_topic_closed(true);
+    conversation.set_messages(model(vec![
+        day_row(Day::Today),
+        message("t4", "Mi", "10:00", "Say which camera and film a photo was shot on; no advertising."),
+    ]));
+    save(window, &name("topic-closed"));
+    conversation.set_topic_closed(false);
+    conversation.set_topic_id(SharedString::new());
+    conversation.set_is_forum(false);
+    conversation.set_topics(ModelRc::default());
+    conversation.set_topic_count(0);
+
+    // The share panel: a post of Tech Morning, two chats chosen.
+    let share = ui.global::<Share>();
+    let row = |id: &str, title: &str, kind: ChatKind, sub: &str, hue: Option<f32>, picked: bool| ShareRow {
+        id: id.into(),
+        title: title.into(),
+        initial: title.chars().next().map(String::from).unwrap_or_default().into(),
+        picture: hue.map(portrait).unwrap_or_default(),
+        has_picture: hue.is_some(),
+        kind,
+        sub: sub.into(),
+        picked,
+    };
+    share.set_kind(ShareKind::Message);
+    share.set_preview("Tech Morning: New chip export rules take effect next month".into());
+    share.set_query(SharedString::new());
+    share.set_rows(model(vec![
+        row("saved", "Saved Messages", ChatKind::Saved, "Only you can see it", None, false),
+        row("keyboards", "Keyboard Lab", ChatKind::Group, "486 members", None, true),
+        row("linxia", "Lin Xia", ChatKind::User, "online", Some(200.0), true),
+        row("alex", "Alex Chen", ChatKind::User, "", Some(120.0), false),
+        row("mom", "Mom", ChatKind::User, "", None, false),
+        row("book", "Wednesday Book Club", ChatKind::Group, "9 members", None, false),
+    ]));
+    share.set_picked(2);
+    share.set_comment(SharedString::new());
+    share.set_error(SharedString::new());
+    share.set_busy(false);
+    share.set_open(true);
+    save(window, &name("share"));
+    share.set_open(false);
     open_keyboards(ui);
 }
 
@@ -1699,6 +1891,7 @@ fn screenshots() {
             }
             message_actions(&ui, &window, &name);
             bots(&ui, &window, &name);
+            extras(&ui, &window, &name);
             compose(&ui, &window, theme, &name);
             attachments(&ui, &window, theme, &name);
             screenshot_tool(&ui, &window, &overlay, &overlay_window, &name);

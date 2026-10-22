@@ -30,7 +30,13 @@ un client non officiel, qui n'est pas fait par Telegram.
   Les boutons des bots sous leurs messages, leurs claviers, leurs commandes et leur bouton de menu ;
   le message épinglé de la discussion sous l'en-tête. Une discussion qui protège son contenu
   n'apparaît ni dans les captures d'écran ni dans les enregistrements de l'écran tant qu'elle est au
-  premier plan.
+  premier plan. Les réactions, avec un sélecteur et un double-clic pour celle par défaut ; les
+  messages vidéo ronds, lus sur place ; les fiches de contact avec Message, Ajouter un contact et
+  Partager ; le partage d'une publication ou d'une fiche vers plusieurs discussions à la fois ; les
+  brouillons conservés par discussion et d'un appareil à l'autre ; les groupes avec sujets s'ouvrent
+  sur leurs sujets ; le mode lent avec son compte à rebours dans le champ de saisie, et les règles
+  d'un groupe ou, pour ses administrateurs, ses autorisations et options dans le panneau des
+  réglages de la discussion.
 - **Médias.** Les photos et vidéos s'ouvrent dans une visionneuse par-dessus la fenêtre, avec le reste
   de leur album ; la vidéo passe par mpv, compilé depuis les sources. Enregistrement dans
   Téléchargements là où la discussion le permet.

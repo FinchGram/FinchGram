@@ -1,6 +1,7 @@
 // Workbench's message actions over the window (the design's fourth round, 1c): a message's menu,
 // where it was right-clicked, and the dialogs for forwarding, reporting and deleting.
-import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment, Chats, ChatConfirm } from "../telegram.slint";
+import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment, Chats, ChatConfirm, Share } from "../telegram.slint";
+import { SharePanelBody } from "../extras.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Spinner, Avatar } from "../widgets.slint";
 import { ActionWords, AttachWords, ChatMenuWords, MenuPlace, KeyScope, SearchInput, CommentInput, BotWords } from "../chat.slint";
@@ -785,6 +786,38 @@ component BotAlert inherits Dialog {
     }
 }
 
+// Sharing to other chats (extras.slint's SharePanelBody; src/telegram/share.rs).
+component ShareDialog inherits Dialog {
+    box-width: 440px;
+    box-height: min(root.height - 80px, body.preferred-height);
+    close => {
+        Share.close();
+    }
+
+    body := SharePanelBody {
+        width: 440px;
+        bg: P.bg;
+        side: P.side;
+        soft: P.accent-soft;
+        soft-ink: P.accent-ink;
+        line: P.line;
+        accent: P.accent;
+        on-accent: P.on-accent;
+        text-color: P.text;
+        muted: P.muted;
+        faint: P.faint;
+        danger: P.danger;
+        selection: P.input-sel;
+        radius: 6px;
+        av-radius: 6px;
+        font-family: P.font;
+        font-size: 13px;
+        small: 12px;
+        title-size: 16px;
+        list-height: 300px;
+    }
+}
+
 export component WorkbenchActions inherits Rectangle {
     // A message's menu, where it was clicked; a click anywhere else closes it.
     if Actions.menu-open: TouchArea {
@@ -833,4 +866,5 @@ export component WorkbenchActions inherits Rectangle {
     if Screenshot.permission-card: PermissionCard { }
     if Chats.question != ChatConfirm.none: ChatQuestion { }
     if Actions.alert-open: BotAlert { }
+    if Share.open: ShareDialog { }
 }

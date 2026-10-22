@@ -17,7 +17,7 @@ use slint::ComponentHandle;
 
 use super::api::{self, ChatList, ChatType, Messages, SponsoredMessages, SupergroupFullInfo};
 use super::store::{self, History};
-use super::{Error, actions, bots, files, send};
+use super::{Error, actions, admin, bots, drafts, errors, files, reactions, send, topics};
 use crate::images;
 use crate::{Conversation, MainWindow};
 
@@ -128,7 +128,11 @@ fn load_picture(message_id: i64) {
         if store::is_secret(&message.content) {
             return None;
         }
-        store::picture(&message.content).or_else(|| store::sticker_picture(&message.content))?.file.cloned()
+        store::picture(&message.content)
+            .or_else(|| store::sticker_picture(&message.content))
+            .or_else(|| store::round_picture(&message.content))?
+            .file
+            .cloned()
     })
     .flatten();
     if let Some(file) = file {
@@ -221,14 +225,23 @@ pub fn open(chat_id: i64) {
     };
 
     if previous != Some(chat_id) {
+        // The words left in the composer stay with the chat that leaves (drafts.rs).
+        if let Some(previous) = previous {
+            drafts::leaving(previous);
+        }
         actions::chat_changed(Some(chat_id));
+        reactions::chat_changed();
+        super::viewer::chat_changed();
         if let Some(previous) = previous {
             send(json!({ "@type": "closeChat", "chat_id": previous }), |_| {});
         }
         send(json!({ "@type": "openChat", "chat_id": chat_id }), |answer| log_error("open a chat", answer));
     }
+    super::with_ui(|ui| ui.global::<crate::Conversation>().set_send_error(slint::SharedString::new()));
 
-    if needs_history {
+    // A group with topics opens on its list of topics (topics.rs), not on messages.
+    if topics::chat_opened(chat_id) {
+    } else if needs_history {
         store::with(|store| {
             store.histories.insert(chat_id, History { has_older: true, ..History::default() });
         });
@@ -236,6 +249,7 @@ pub fn open(chat_id: i64) {
     } else {
         view_newest(chat_id);
     }
+    drafts::entering(chat_id);
     if let ChatType::Supergroup { supergroup_id, is_channel } = kind {
         // The member count, which the supergroup itself mostly leaves at 0; and the commands of
         // the group's bots (bots.rs).
@@ -254,8 +268,14 @@ pub fn open(chat_id: i64) {
         }
     }
     bots::chat_opened(chat_id);
+    admin::slow_mode_changed();
     protect_window();
     store::refresh();
+}
+
+/// The messages of a chat (or of its open topic) from `from_message_id` up, for topics.rs.
+pub(super) fn load_history_from(chat_id: i64, from_message_id: i64) {
+    load_history(chat_id, from_message_id, None);
 }
 
 /// The window may be captured (screenshots, screen recordings) unless the chat in front protects
@@ -307,6 +327,7 @@ pub(super) fn close(chat_id: i64) {
         Open(i64),
         ShowNone,
     }
+    drafts::leaving(chat_id);
     let then = store::with(|store| {
         let Some(index) = store.tabs.iter().position(|id| *id == chat_id) else { return Then::Nothing };
         store.tabs.remove(index);
@@ -400,10 +421,18 @@ fn load_history(chat_id: i64, from_message_id: i64, then: Option<Box<dyn FnOnce(
         return;
     }
     store::with(|store| store.dirty.conversation = true);
-    let request = json!({
-        "@type": "getChatHistory", "chat_id": chat_id, "from_message_id": from_message_id,
-        "offset": 0, "limit": PAGE, "only_local": false,
-    });
+    // In a group with topics, the rows are one topic's (topics.rs).
+    let topic = store::with(|store| store.histories.get(&chat_id).and_then(|history| history.topic_id)).flatten();
+    let request = match topic {
+        Some(forum_topic_id) => json!({
+            "@type": "getForumTopicHistory", "chat_id": chat_id, "forum_topic_id": forum_topic_id, "from_message_id": from_message_id,
+            "offset": 0, "limit": PAGE,
+        }),
+        None => json!({
+            "@type": "getChatHistory", "chat_id": chat_id, "from_message_id": from_message_id,
+            "offset": 0, "limit": PAGE, "only_local": false,
+        }),
+    };
     send(request, move |answer| {
         let messages = read_messages(answer, "load a chat's history");
         let ids: Vec<i64> = messages.iter().map(|message| message.id).collect();
@@ -763,6 +792,11 @@ fn write(text: &str) {
     // The message ends the typing; the next words say it again at once.
     TYPING.set(None);
     back_to_end(chat_id);
+    // Slow mode holds us: the composer says for how long, and keeps the words.
+    if admin::blocked(chat_id) {
+        actions::set_draft(text);
+        return;
+    }
     if actions::send_with_bar(chat_id, text) || text.is_empty() {
         return;
     }
@@ -775,6 +809,8 @@ fn edited(words: &str) {
     let Some(chat_id) = open_chat() else { return };
     // "/…" alone: the bot's commands that start so are offered.
     bots::draft_changed(words);
+    // The words stay with the chat (drafts.rs).
+    drafts::changed(chat_id, words);
     if actions::editing(chat_id) {
         return;
     }
@@ -804,7 +840,7 @@ pub fn send_text(chat_id: i64, text: &str, reply_to: Option<i64>) {
         json!({ "@type": "inputMessageReplyToMessage", "message_id": message_id, "quote": null, "checklist_task_id": 0, "poll_option_id": "" })
     });
     let request = json!({
-        "@type": "sendMessage", "chat_id": chat_id, "topic_id": null, "reply_to": reply_to,
+        "@type": "sendMessage", "chat_id": chat_id, "topic_id": topics::topic_json(chat_id), "reply_to": reply_to,
         "options": null, "reply_markup": null,
         "input_message_content": {
             "@type": "inputMessageText",
@@ -813,8 +849,36 @@ pub fn send_text(chat_id: i64, text: &str, reply_to: Option<i64>) {
             "clear_draft": true,
         },
     });
-    send(request, |answer| log_error("send a message", answer));
+    send(request, move |answer| sent(chat_id, answer));
     store::with(|store| store.dirty.scroll_to_end = true);
+}
+
+/// Telegram answered a message of ours: slow mode's wait starts (admin.rs), the draft is gone
+/// (drafts.rs); a refusal (SLOWMODE_WAIT_N, FLOOD_WAIT_N, TOPIC_CLOSED, …) is shown by the
+/// composer while the chat is in front.
+pub(super) fn sent(chat_id: i64, answer: Result<serde_json::Value, Error>) {
+    match answer {
+        Ok(_) => {
+            admin::message_sent(chat_id);
+            drafts::sent(chat_id);
+            if open_chat() == Some(chat_id) {
+                super::with_ui(|ui| ui.global::<crate::Conversation>().set_send_error(slint::SharedString::new()));
+            }
+        }
+        Err(Error::Stopped) => {}
+        Err(Error::Telegram { message, .. }) => {
+            eprintln!("telegram: cannot send a message: {message}");
+            if let Some(seconds) = errors::wait_seconds(&message)
+                && message.starts_with("SLOWMODE_WAIT")
+            {
+                admin::wait_refused(chat_id, seconds);
+            }
+            if open_chat() == Some(chat_id) {
+                let words = errors::explain(&message);
+                super::with_ui(|ui| ui.global::<crate::Conversation>().set_send_error(words.into()));
+            }
+        }
+    }
 }
 
 /// Delete a message of ours that was not sent, or is still being sent: for us only, as it never

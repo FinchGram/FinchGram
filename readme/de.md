@@ -28,7 +28,13 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   gezeigt und einmal geöffnet, wie in Telegrams eigenen Apps. Die Schaltflächen der Bots unter ihren
   Nachrichten, ihre Tastaturen, Befehle und Menü-Schaltfläche; die angeheftete Nachricht des Chats
   unter der Kopfzeile. Ein Chat, der seinen Inhalt schützt, erscheint nicht in Bildschirmfotos und
-  Bildschirmaufnahmen, solange er im Vordergrund steht.
+  Bildschirmaufnahmen, solange er im Vordergrund steht. Reaktionen, mit einer Auswahl und einem
+  Doppelklick für die Standardreaktion; runde Videonachrichten, an Ort und Stelle abgespielt;
+  Kontaktkarten mit Nachricht, Kontakt hinzufügen und Teilen; das Teilen eines Beitrags oder einer
+  Karte mit mehreren Chats auf einmal; Entwürfe, pro Chat und geräteübergreifend gespeichert;
+  Gruppen mit Themen öffnen sich auf ihrer Themenliste; der Langsame Modus, im Eingabefeld
+  heruntergezählt, und im Bereich der Chat-Einstellungen die Regeln einer Gruppe oder, für ihre
+  Administratoren, ihre Berechtigungen und Optionen.
 - **Medien.** Fotos und Videos öffnen sich in einem Betrachter über dem Fenster, mit dem Rest ihres
   Albums; Video läuft über mpv, aus den Quellen gebaut. Speichern in Downloads, wo der Chat es erlaubt.
 - **Downloads.** Ein WebDAV-Client im Mediencenter: dein NAS, eine Seedbox, PikPak, Alist/OpenList

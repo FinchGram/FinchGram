@@ -215,7 +215,7 @@ pub(super) fn share_phone(chat_id: i64) {
         return;
     };
     let request = json!({
-        "@type": "sendMessage", "chat_id": chat_id, "topic_id": null, "reply_to": null, "options": null, "reply_markup": null,
+        "@type": "sendMessage", "chat_id": chat_id, "topic_id": super::topics::topic_json(chat_id), "reply_to": null, "options": null, "reply_markup": null,
         "input_message_content": { "@type": "inputMessageContact", "contact": contact },
     });
     send(request, |answer| log_error("share the phone number", answer));

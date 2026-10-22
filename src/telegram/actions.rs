@@ -624,7 +624,7 @@ fn draft() -> String {
     draft
 }
 
-fn set_draft(text: &str) {
+pub(super) fn set_draft(text: &str) {
     with_ui(|ui| ui.global::<Conversation>().set_draft(text.into()));
 }
 
@@ -667,6 +667,12 @@ pub(super) fn copy_id(id: &str) {
 /// Words a bot's copy button holds, onto the clipboard (bots.rs).
 pub(super) fn copy_words_of(text: &str) {
     copy(text, ActionNotice::Copied);
+}
+
+/// Words onto the clipboard, with a notice in the pages' words (a contact card's invitation).
+pub(super) fn copy_saying(text: &str, words: &str) {
+    with_actions(|actions| actions.set_words(words.into()));
+    copy(text, ActionNotice::Words);
 }
 
 /// The message's link (t.me/…): an album's, for the whole of it.
@@ -1364,7 +1370,15 @@ pub(super) fn put_draft(words: &str) {
 
 /// Esc closes the topmost of the menu, a dialog, the strip and choosing; false when none is open.
 fn escape() -> bool {
-    if super::attachments::escape() || super::chats::escape() || super::new_chat::escape() || super::global_search::escape() || super::bots::escape() {
+    if super::attachments::escape()
+        || super::chats::escape()
+        || super::new_chat::escape()
+        || super::global_search::escape()
+        || super::bots::escape()
+        || super::share::escape()
+        || super::reactions::escape()
+        || super::topics::escape()
+    {
         return true;
     }
     let (menu, deleting, report, picking, bar, selection) = STATE.with(|state| {

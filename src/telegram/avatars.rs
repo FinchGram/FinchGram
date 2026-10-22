@@ -58,5 +58,6 @@ fn refresh_soon() {
         super::actions::photos_arrived();
         super::global_search::photos_arrived();
         super::new_chat::photos_arrived();
+        super::share::photos_arrived();
     });
 }

@@ -28,6 +28,12 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
   abrem uma única vez, como nos apps do Telegram. Os botões dos bots sob as mensagens deles, os
   teclados, os comandos e o botão de menu; a mensagem fixada do chat sob o cabeçalho. Um chat com
   conteúdo protegido fica de fora das capturas e gravações de tela enquanto está em primeiro plano.
+  Reações, com um seletor e um clique duplo para a reação padrão; mensagens de vídeo redondas
+  reproduzidas ali mesmo; cartões de contato com Mensagem, Adicionar contato e Compartilhar;
+  compartilhamento de uma publicação ou de um cartão com vários chats de uma vez; rascunhos
+  guardados por chat e em todos os dispositivos; grupos com tópicos, que abrem na lista de tópicos;
+  modo lento com contagem regressiva na caixa de escrita e, no painel de configurações do chat, as
+  regras do grupo ou, para os administradores, as permissões e opções.
 - **Mídia.** Fotos e vídeos abrem num visualizador sobre a janela, com o resto do álbum; o vídeo toca
   com o mpv, compilado do código-fonte. Salvar em Downloads onde o chat permite.
 - **Downloads.** Um cliente WebDAV na central de mídia: o seu NAS, um seedbox, o PikPak, o

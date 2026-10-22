@@ -15,6 +15,8 @@ import { Look } from "look.slint";
 // near their end, and hold what is being read while those join below.
 export component ChatScroll inherits Flickable {
     in property <length> spacing;
+    // The rows hang from the top instead of standing on the end: a group's list of topics.
+    in property <bool> from-top;
     in property <length> margin-top;
     in property <length> margin-bottom;
     in property <length> margin-left;
@@ -77,7 +79,7 @@ export component ChatScroll inherits Flickable {
 
     messages := VerticalLayout {
         width: root.width;
-        alignment: end;
+        alignment: root.from-top ? start : end;
         spacing: root.spacing;
         padding-top: root.margin-top;
         padding-bottom: root.margin-bottom;
@@ -759,6 +761,12 @@ export component MessageArea inherits TouchArea {
             Actions.ask-menu(root.message.id, Actions.hovered-media);
         }
     }
+    // A double click gives the default reaction (src/telegram/reactions.rs).
+    double-clicked => {
+        if root.choosable && !Actions.selecting {
+            Conversation.quick-react(root.message.id);
+        }
+    }
 
     @children
 
@@ -1003,6 +1011,7 @@ export component SearchInput inherits Rectangle {
     in property <color> selection-text-color: text-color;
     in property <string> font-family;
     in property <length> font-size: 14px;
+    in-out property <string> text <=> input.text;
     out property <bool> has-focus: input.has-focus;
     callback edited(string);
     callback accepted();

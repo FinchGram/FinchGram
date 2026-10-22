@@ -578,3 +578,108 @@ mod tests {
         assert_eq!(photo_name(unix), "photo_2026-09-30_14-19-05.jpg");
     }
 }
+
+// ---- round video messages (the design's fifth round) ------------------------------------------
+
+thread_local! {
+    /// Watches a round video message that plays: its end, the viewer opening over it.
+    static ROUND_WATCH: RefCell<Option<Timer>> = const { RefCell::new(None) };
+}
+
+/// A round video message plays in its circle, through the same player: the frame is
+/// Viewer.frame while Conversation.round-playing names the message.
+pub fn connect_round(ui: &MainWindow) {
+    ui.global::<Conversation>().on_play_round(|id| {
+        if let Ok(message_id) = id.parse() {
+            play_round(message_id);
+        }
+    });
+}
+
+/// Play the round video message, or stop it when it is the one playing.
+fn play_round(message_id: i64) {
+    let playing = store::with(|store| store.round_playing == Some(message_id)).unwrap_or(false);
+    if playing {
+        stop_round(true);
+        return;
+    }
+    let Some((chat_id, file)) = store::with(|store| {
+        let chat_id = store.open?;
+        match &store.histories.get(&chat_id)?.messages.get(&message_id)?.content {
+            MessageContent::VideoNote { video_note, .. } => Some((chat_id, video_note.video.clone())),
+            _ => None,
+        }
+    })
+    .flatten() else {
+        return;
+    };
+    player::stop();
+    store::with(|store| {
+        store.round_playing = None;
+        store.round_loading = Some(message_id);
+        store.dirty.conversation = true;
+    });
+    store::refresh();
+    // Telegram's apps count a video message watched when it plays.
+    send(json!({ "@type": "openMessageContent", "chat_id": chat_id, "message_id": message_id }), |_| {});
+    files::download(&file, ASKED, move |path| {
+        let wanted = store::with(|store| store.round_loading == Some(message_id)).unwrap_or(false);
+        if !wanted {
+            return;
+        }
+        let (mut volume, mut muted) = (100, false);
+        with_viewer(|viewer| {
+            volume = viewer.get_volume();
+            muted = viewer.get_muted();
+            viewer.set_ended(false);
+        });
+        store::with(|store| {
+            store.round_loading = None;
+            store.round_playing = Some(message_id);
+            store.dirty.conversation = true;
+        });
+        player::play(&path, false, 1.0, volume, muted);
+        store::refresh();
+        watch_round();
+    });
+}
+
+/// Another chat came to the front: a round video message playing stops.
+pub fn chat_changed() {
+    let playing = store::with(|store| store.round_playing.is_some() || store.round_loading.is_some()).unwrap_or(false);
+    if playing {
+        stop_round(true);
+    }
+}
+
+/// The round video message stops: at its end, by a click, or because the viewer took the player.
+fn stop_round(stop_player: bool) {
+    if stop_player {
+        player::stop();
+    }
+    ROUND_WATCH.with(|watch| *watch.borrow_mut() = None);
+    store::with(|store| {
+        store.round_playing = None;
+        store.round_loading = None;
+        store.dirty.conversation = true;
+    });
+    store::refresh();
+}
+
+fn watch_round() {
+    ROUND_WATCH.with(|watch| {
+        let timer = Timer::default();
+        timer.start(TimerMode::Repeated, Duration::from_millis(300), || {
+            let (mut taken, mut ended) = (false, false);
+            with_viewer(|viewer| {
+                taken = viewer.get_open();
+                ended = viewer.get_ended();
+            });
+            let playing = store::with(|store| store.round_playing.is_some()).unwrap_or(false);
+            if !playing || taken || ended || !player::is_loaded() {
+                stop_round(!taken && playing && !ended);
+            }
+        });
+        *watch.borrow_mut() = Some(timer);
+    });
+}

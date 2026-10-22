@@ -27,7 +27,11 @@ client, not made by Telegram.
   and videos sent to self-destruct are shown blurred and opened once, as in Telegram's own apps.
   Bots' buttons under their messages, their keyboards, commands and menu button; the chat's pinned
   message under the header. A chat that protects its content is left out of screenshots and screen
-  recordings while it is in front.
+  recordings while it is in front. Reactions, with a picker and a double click for the default one;
+  round video messages played in place; contact cards with Message, Add contact and Share; sharing
+  a post or a card to several chats at once; drafts kept per chat and across devices; groups with
+  topics open on their topics; slow mode counted down in the composer, and a group's rules or, for
+  its administrators, its permissions and options in the chat settings panel.
 - **Media.** Photos and videos open in a viewer over the window, with the rest of their album;
   video plays through mpv, built from source. Saving to Downloads where the chat allows it.
 - **Downloads.** A WebDAV client in the media center: your NAS, a seedbox, PikPak, Alist/OpenList

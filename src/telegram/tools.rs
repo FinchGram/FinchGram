@@ -1032,7 +1032,7 @@ fn media_json(content: &M) -> Option<Value> {
             "size": document.document.size_or_expected(),
         }),
         M::VoiceNote { .. } => json!({ "kind": "voice_note" }),
-        M::VideoNote {} => json!({ "kind": "video_note" }),
+        M::VideoNote { .. } => json!({ "kind": "video_note" }),
         M::Sticker { sticker } => json!({
             "kind": "sticker", "emoji": sticker.emoji, "animated": sticker.format != StickerFormat::Webp, "file_id": sticker.sticker.id,
         }),

@@ -60,7 +60,34 @@ pub enum Update {
     #[serde(rename = "updateChatPosition")]
     ChatPosition { chat_id: i64, position: ChatPosition },
     #[serde(rename = "updateChatDraftMessage")]
-    ChatDraftMessage { chat_id: i64, positions: Vec<ChatPosition> },
+    ChatDraftMessage {
+        chat_id: i64,
+        #[serde(default)]
+        draft_message: Option<DraftMessage>,
+        positions: Vec<ChatPosition>,
+    },
+    #[serde(rename = "updateMessageInteractionInfo")]
+    MessageInteractionInfo {
+        chat_id: i64,
+        message_id: i64,
+        #[serde(default)]
+        interaction_info: Option<MessageInteractionInfo>,
+    },
+    #[serde(rename = "updateChatAvailableReactions")]
+    ChatAvailableReactions { chat_id: i64, available_reactions: ChatAvailableReactions },
+    #[serde(rename = "updateDefaultReactionType")]
+    DefaultReactionType { reaction_type: ReactionType },
+    #[serde(rename = "updateForumTopicInfo")]
+    ForumTopicInfo { info: ForumTopicInfo },
+    #[serde(rename = "updateForumTopic")]
+    ForumTopic {
+        chat_id: i64,
+        forum_topic_id: i32,
+        is_pinned: bool,
+        last_read_inbox_message_id: i64,
+        #[serde(default)]
+        unread_mention_count: i32,
+    },
     #[serde(rename = "updateChatReadInbox")]
     ChatReadInbox { chat_id: i64, last_read_inbox_message_id: i64, unread_count: i32 },
     #[serde(rename = "updateChatReadOutbox")]
@@ -388,6 +415,12 @@ pub struct Supergroup {
     pub member_count: i32,
     #[serde(default)]
     pub verification_status: Option<VerificationStatus>,
+    /// A group with topics: it opens on its list of topics (topics.rs).
+    #[serde(default)]
+    pub is_forum: bool,
+    /// Those who come by an invite link wait for an administrator's word.
+    #[serde(default)]
+    pub join_by_request: bool,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -395,6 +428,22 @@ pub struct SupergroupFullInfo {
     pub member_count: i32,
     #[serde(default)]
     pub description: String,
+    /// Slow mode: how many seconds a member waits between messages (0: off), and how long we
+    /// still wait after our last one (admin.rs).
+    #[serde(default)]
+    pub slow_mode_delay: i32,
+    #[serde(default)]
+    pub slow_mode_delay_expires_in: f64,
+    #[serde(default)]
+    pub has_hidden_members: bool,
+    #[serde(default)]
+    pub can_hide_members: bool,
+    #[serde(default)]
+    pub can_toggle_aggressive_anti_spam: bool,
+    #[serde(default)]
+    pub is_all_history_available: bool,
+    #[serde(default)]
+    pub has_aggressive_anti_spam_enabled: bool,
     /// The chat's primary invite link, for an administrator who may invite; none otherwise.
     #[serde(default)]
     pub invite_link: Option<ChatInviteLink>,
@@ -430,17 +479,65 @@ pub enum ChatMemberStatus {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct AdministratorRights {
     pub can_post_messages: bool,
+    #[serde(default)]
+    pub can_restrict_members: bool,
+    #[serde(default)]
+    pub can_change_info: bool,
 }
 
+/// What a chat's members may do (chatPermissions): the group's defaults, or one member's. Every
+/// field, so that the group's can be sent back changed (setChatPermissions, admin.rs).
 #[derive(Debug, Clone, PartialEq, Default, Deserialize)]
 pub struct ChatPermissions {
     pub can_send_basic_messages: bool,
+    #[serde(default)]
+    pub can_send_audios: bool,
+    #[serde(default)]
+    pub can_send_documents: bool,
     #[serde(default)]
     pub can_send_photos: bool,
     #[serde(default)]
     pub can_send_videos: bool,
     #[serde(default)]
-    pub can_send_documents: bool,
+    pub can_send_video_notes: bool,
+    #[serde(default)]
+    pub can_send_voice_notes: bool,
+    #[serde(default)]
+    pub can_send_polls: bool,
+    /// Stickers, GIFs, games and inline bots' results.
+    #[serde(default)]
+    pub can_send_other_messages: bool,
+    #[serde(default)]
+    pub can_add_link_previews: bool,
+    #[serde(default)]
+    pub can_react_to_messages: bool,
+    #[serde(default)]
+    pub can_edit_tag: bool,
+    #[serde(default)]
+    pub can_change_info: bool,
+    #[serde(default)]
+    pub can_invite_users: bool,
+    #[serde(default)]
+    pub can_pin_messages: bool,
+    #[serde(default)]
+    pub can_create_topics: bool,
+}
+
+impl ChatPermissions {
+    /// As TDLib takes them back.
+    pub fn to_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "@type": "chatPermissions",
+            "can_send_basic_messages": self.can_send_basic_messages, "can_send_audios": self.can_send_audios,
+            "can_send_documents": self.can_send_documents, "can_send_photos": self.can_send_photos,
+            "can_send_videos": self.can_send_videos, "can_send_video_notes": self.can_send_video_notes,
+            "can_send_voice_notes": self.can_send_voice_notes, "can_send_polls": self.can_send_polls,
+            "can_send_other_messages": self.can_send_other_messages, "can_add_link_previews": self.can_add_link_previews,
+            "can_react_to_messages": self.can_react_to_messages, "can_edit_tag": self.can_edit_tag,
+            "can_change_info": self.can_change_info, "can_invite_users": self.can_invite_users,
+            "can_pin_messages": self.can_pin_messages, "can_create_topics": self.can_create_topics,
+        })
+    }
 }
 
 // ---- chats ------------------------------------------------------------------------------------
@@ -479,6 +576,58 @@ pub struct Chat {
     /// The message whose keyboard (a bot's) the chat shows under the composer; 0 for none.
     #[serde(default)]
     pub reply_markup_message_id: i64,
+    /// Which reactions the chat allows (reactions.rs); none while TDLib has not said.
+    #[serde(default)]
+    pub available_reactions: Option<ChatAvailableReactions>,
+    /// Words left in the composer, kept by Telegram for every device (drafts.rs).
+    #[serde(default)]
+    pub draft_message: Option<DraftMessage>,
+}
+
+/// Which reactions a chat allows: all of Telegram's, or some of them; and how many one person
+/// may give a message here.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum ChatAvailableReactions {
+    #[serde(rename = "chatAvailableReactionsAll")]
+    All {
+        #[serde(default)]
+        max_reaction_count: i32,
+    },
+    #[serde(rename = "chatAvailableReactionsSome")]
+    Some {
+        reactions: Vec<ReactionType>,
+        #[serde(default)]
+        max_reaction_count: i32,
+    },
+}
+
+/// A draft: words left in a chat's composer, with when.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct DraftMessage {
+    #[serde(default)]
+    pub date: i32,
+    pub content: DraftMessageContent,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum DraftMessageContent {
+    #[serde(rename = "draftMessageContentText")]
+    Text { text: FormattedText },
+    /// A voice or video note waiting, or a rich message: not written here.
+    #[serde(other)]
+    Other,
+}
+
+impl DraftMessage {
+    /// The words of a text draft; "" for any other.
+    pub fn words(&self) -> &str {
+        match &self.content {
+            DraftMessageContent::Text { text } => &text.text,
+            DraftMessageContent::Other => "",
+        }
+    }
 }
 
 /// Where a user is blocked (TDLib's BlockList): from sending us messages, or only from our stories.
@@ -711,7 +860,171 @@ pub struct Message {
     /// A bot's buttons under it, or the keyboard it asks the chat to show.
     #[serde(default)]
     pub reply_markup: Option<ReplyMarkup>,
+    /// Its views, forwards and reactions.
+    #[serde(default)]
+    pub interaction_info: Option<MessageInteractionInfo>,
+    /// The topic it is in, in a group with topics (topics.rs).
+    #[serde(default)]
+    pub topic_id: Option<MessageTopic>,
     pub content: MessageContent,
+}
+
+impl Message {
+    /// The reactions to it, as TDLib lists them.
+    pub fn reactions(&self) -> &[MessageReaction] {
+        self.interaction_info.as_ref().and_then(|info| info.reactions.as_ref()).map(|reactions| reactions.reactions.as_slice()).unwrap_or(&[])
+    }
+
+    /// The forum topic it is in, when it is in one.
+    pub fn forum_topic_id(&self) -> Option<i32> {
+        match self.topic_id {
+            Some(MessageTopic::Forum { forum_topic_id }) => Some(forum_topic_id),
+            _ => None,
+        }
+    }
+}
+
+/// What others did with a message: its views, its forwards, the reactions to it.
+#[derive(Debug, Clone, PartialEq, Default, Deserialize)]
+pub struct MessageInteractionInfo {
+    #[serde(default)]
+    pub view_count: i32,
+    #[serde(default)]
+    pub forward_count: i32,
+    #[serde(default)]
+    pub reactions: Option<MessageReactions>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default, Deserialize)]
+pub struct MessageReactions {
+    pub reactions: Vec<MessageReaction>,
+    /// Saved Messages: the reactions are tags, not reactions.
+    #[serde(default)]
+    pub are_tags: bool,
+}
+
+/// One reaction to a message: which, how many gave it, and whether we did.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct MessageReaction {
+    #[serde(rename = "type")]
+    pub kind: ReactionType,
+    pub total_count: i32,
+    pub is_chosen: bool,
+}
+
+/// A reaction: an emoji, a custom emoji (a sticker we know by its id), or a paid one (stars).
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Deserialize)]
+#[serde(tag = "@type")]
+pub enum ReactionType {
+    #[serde(rename = "reactionTypeEmoji")]
+    Emoji { emoji: String },
+    #[serde(rename = "reactionTypeCustomEmoji")]
+    CustomEmoji {
+        #[serde(with = "int64")]
+        custom_emoji_id: i64,
+    },
+    #[serde(rename = "reactionTypePaid")]
+    Paid,
+}
+
+impl ReactionType {
+    /// As TDLib takes it back (addMessageReaction, removeMessageReaction).
+    pub fn to_json(&self) -> serde_json::Value {
+        match self {
+            ReactionType::Emoji { emoji } => serde_json::json!({ "@type": "reactionTypeEmoji", "emoji": emoji }),
+            ReactionType::CustomEmoji { custom_emoji_id } => {
+                serde_json::json!({ "@type": "reactionTypeCustomEmoji", "custom_emoji_id": custom_emoji_id.to_string() })
+            }
+            ReactionType::Paid => serde_json::json!({ "@type": "reactionTypePaid" }),
+        }
+    }
+}
+
+/// Which reactions may be given to a message, as Telegram orders them for the picker.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct AvailableReactions {
+    #[serde(default)]
+    pub top_reactions: Vec<AvailableReaction>,
+    #[serde(default)]
+    pub recent_reactions: Vec<AvailableReaction>,
+    #[serde(default)]
+    pub popular_reactions: Vec<AvailableReaction>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct AvailableReaction {
+    #[serde(rename = "type")]
+    pub kind: ReactionType,
+    #[serde(default)]
+    pub needs_premium: bool,
+}
+
+/// Where a message is within its chat: a forum topic, or something else (a thread of direct
+/// messages, Saved Messages' tags) that FinchGram does not tell apart.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum MessageTopic {
+    #[serde(rename = "messageTopicForum")]
+    Forum { forum_topic_id: i32 },
+    #[serde(other)]
+    Other,
+}
+
+// ---- forum topics -----------------------------------------------------------------------------
+
+/// getForumTopics' answer: a page of a group's topics, newest activity first.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ForumTopics {
+    pub topics: Vec<ForumTopic>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct ForumTopic {
+    pub info: ForumTopicInfo,
+    #[serde(default)]
+    pub last_message: Option<Box<Message>>,
+    #[serde(default, with = "int64")]
+    pub order: i64,
+    #[serde(default)]
+    pub is_pinned: bool,
+    #[serde(default)]
+    pub unread_count: i32,
+    #[serde(default)]
+    pub unread_mention_count: i32,
+    #[serde(default)]
+    pub last_read_inbox_message_id: i64,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct ForumTopicInfo {
+    pub chat_id: i64,
+    pub forum_topic_id: i32,
+    pub name: String,
+    pub icon: ForumTopicIcon,
+    #[serde(default)]
+    pub is_general: bool,
+    #[serde(default)]
+    pub is_outgoing: bool,
+    #[serde(default)]
+    pub is_closed: bool,
+    #[serde(default)]
+    pub is_hidden: bool,
+}
+
+/// A topic's icon: one of Telegram's colours (0x6FB9F0, 0xFFD67E, 0xCB86DB, 0x8EEE98, 0xFF93B2,
+/// 0xFB6F5F), and a custom emoji drawn on it, 0 for none.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct ForumTopicIcon {
+    #[serde(default)]
+    pub color: i32,
+    #[serde(default, with = "int64")]
+    pub custom_emoji_id: i64,
+}
+
+/// A list of stickers (getForumTopicDefaultIcons, getCustomEmojiStickers).
+#[derive(Debug, Clone, Deserialize)]
+pub struct Stickers {
+    pub stickers: Vec<Sticker>,
 }
 
 /// What a bot attached to a message: buttons under it (an inline keyboard), a keyboard for the
@@ -1144,7 +1457,13 @@ pub enum MessageContent {
     #[serde(rename = "messageVoiceNote")]
     VoiceNote { caption: FormattedText },
     #[serde(rename = "messageVideoNote")]
-    VideoNote {},
+    VideoNote {
+        video_note: VideoNote,
+        #[serde(default)]
+        is_viewed: bool,
+        #[serde(default)]
+        is_secret: bool,
+    },
     /// Self-destructing content that is gone: it was opened once, or its time ran out.
     #[serde(rename = "messageExpiredPhoto")]
     ExpiredPhoto {},
@@ -1343,6 +1662,9 @@ pub struct Document {
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Sticker {
+    /// Its id; a custom emoji is known by it (a topic's icon, a reaction).
+    #[serde(default, with = "int64")]
+    pub id: i64,
     pub width: i32,
     pub height: i32,
     pub emoji: String,
@@ -1369,10 +1691,44 @@ pub struct Venue {
     pub title: String,
 }
 
+/// A round video message: a square video shown in a circle (the design: 180 px).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct VideoNote {
+    pub duration: i32,
+    /// Its width and height, which are the same.
+    pub length: i32,
+    #[serde(default)]
+    pub minithumbnail: Option<Minithumbnail>,
+    #[serde(default)]
+    pub thumbnail: Option<Thumbnail>,
+    pub video: File,
+}
+
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Contact {
+    #[serde(default)]
+    pub phone_number: String,
     pub first_name: String,
     pub last_name: String,
+    #[serde(default)]
+    pub vcard: String,
+    /// The Telegram user with the number, 0 when they have no account (or hide it).
+    #[serde(default)]
+    pub user_id: i64,
+}
+
+impl Contact {
+    pub fn name(&self) -> String {
+        format!("{} {}", self.first_name, self.last_name).trim().to_string()
+    }
+
+    /// As TDLib takes it (inputMessageContact, addContact).
+    pub fn to_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "@type": "contact", "phone_number": self.phone_number, "first_name": self.first_name, "last_name": self.last_name,
+            "vcard": self.vcard, "user_id": self.user_id,
+        })
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]

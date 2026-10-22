@@ -474,12 +474,12 @@ fn send_all(silent: bool) {
 fn send_contents(chat_id: i64, mut contents: Vec<Value>, reply_to: Option<Value>, options: Option<Value>) {
     let request = if contents.len() == 1 {
         json!({
-            "@type": "sendMessage", "chat_id": chat_id, "topic_id": null, "reply_to": reply_to, "options": options,
+            "@type": "sendMessage", "chat_id": chat_id, "topic_id": super::topics::topic_json(chat_id), "reply_to": reply_to, "options": options,
             "reply_markup": null, "input_message_content": contents.remove(0),
         })
     } else {
         json!({
-            "@type": "sendMessageAlbum", "chat_id": chat_id, "topic_id": null, "reply_to": reply_to, "options": options,
+            "@type": "sendMessageAlbum", "chat_id": chat_id, "topic_id": super::topics::topic_json(chat_id), "reply_to": reply_to, "options": options,
             "input_message_contents": contents,
         })
     };

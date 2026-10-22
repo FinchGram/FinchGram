@@ -25,9 +25,9 @@ use super::time;
 use crate::images;
 use crate::platform::NameOrder;
 use crate::{
-    Account, AppState, BotCommand, ButtonKind, ButtonRow, ChatButton, ChatKind, ChatOrder, ChatRow, Chats, Content, Conversation, FileCard,
-    FileState, FileType, Folder, FolderChoice, LinkPreview, MainWindow, Media, MessageRow, Moment, NotificationScopes, ReplyQuote, RowKind,
-    Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
+    Account, AdminPanel, AppState, BotCommand, ButtonKind, ButtonRow, ChatButton, ChatKind, ChatOrder, ChatRow, Chats, ContactCard, Content,
+    Conversation, FileCard, FileState, FileType, Folder, FolderChoice, LinkPreview, MainWindow, Media, MessageRow, Moment, NotificationScopes,
+    Reaction, ReplyQuote, RoundNote, RowKind, Status, Sticker, Tab, TopicRow, TreeRow, Viewer, ViewerItem, Words,
 };
 
 /// Commands shown at most when "/" is typed.
@@ -55,6 +55,9 @@ pub const SHOWN: usize = 100;
 /// The messages of an open chat that TDLib has given us, by id (oldest first).
 pub struct History {
     pub messages: BTreeMap<i64, api::Message>,
+    /// In a group with topics, the topic these messages are of (topics.rs): messages of other
+    /// topics stay out.
+    pub topic_id: Option<i32>,
     /// TDLib may have older messages than the oldest here.
     pub has_older: bool,
     /// TDLib has newer messages than the newest here: the rows are around an older message (a
@@ -69,7 +72,7 @@ pub struct History {
 
 impl Default for History {
     fn default() -> History {
-        History { messages: BTreeMap::new(), has_older: false, has_newer: false, loading: false, shown: SHOWN }
+        History { messages: BTreeMap::new(), topic_id: None, has_older: false, has_newer: false, loading: false, shown: SHOWN }
     }
 }
 
@@ -116,6 +119,8 @@ pub struct Dirty {
     pub notification_scopes: bool,
     /// The open chat should show its newest message.
     pub scroll_to_end: bool,
+    /// The open group's list of topics (topics.rs).
+    pub topics: bool,
 }
 
 /// The models the pages show, kept so that they can be updated in place.
@@ -222,6 +227,42 @@ pub struct Store {
     /// The commands shown, as last set.
     commands_shown: RefCell<Vec<BotCommand>>,
 
+    /// The default reaction (updateDefaultReactionType), given by a double click (reactions.rs).
+    pub default_reaction: api::ReactionType,
+    /// Custom emoji by id: the emoji each stands for (getCustomEmojiStickers), for reactions and
+    /// topics' icons; "" while it is being asked for.
+    pub custom_emoji: HashMap<i64, String>,
+    /// Custom emoji the rows met and did not know, to ask for after the refresh.
+    custom_emoji_wanted: RefCell<Vec<i64>>,
+    /// The topics of groups with topics, by chat, as TDLib orders them (topics.rs).
+    pub topics: HashMap<i64, Vec<api::ForumTopic>>,
+    /// Groups whose topics are being fetched.
+    pub topics_loading: HashSet<i64>,
+    /// The topic open in the front chat (a group with topics); None: its list of topics shows.
+    pub open_topic: Option<i32>,
+    /// The icons a new topic may take (getForumTopicDefaultIcons): each custom emoji's id and
+    /// the emoji it shows.
+    pub topic_icons: Vec<(i64, String)>,
+    /// Supergroups' full info, by supergroup id: slow mode, and what administrators may change
+    /// (admin.rs).
+    pub supergroup_full: HashMap<i64, api::SupergroupFullInfo>,
+    /// When slow mode lets us send again, by chat (admin.rs).
+    pub slow_until: HashMap<i64, Instant>,
+    /// The settings panel's control waiting for Telegram, and what Telegram refused (admin.rs).
+    pub admin_busy: String,
+    pub admin_error: String,
+    /// Words the composer holds for chats not in front, until Telegram has them (drafts.rs).
+    pub drafts: HashMap<i64, String>,
+    /// Contacts added from cards this session, by phone number: their cards say so.
+    pub added_contacts: HashSet<String>,
+    /// The round video message playing, and the one whose file is on its way (viewer.rs).
+    pub round_playing: Option<i64>,
+    pub round_loading: Option<i64>,
+    /// The reactions model of each row, by row id, with a hash of what it was built from.
+    reaction_models: RefCell<HashMap<SharedString, (u64, ModelRc<Reaction>)>>,
+    /// The topic rows as last set.
+    topics_shown: RefCell<Vec<TopicRow>>,
+
     pub dirty: Dirty,
     models: Models,
 }
@@ -299,6 +340,23 @@ pub fn install(ui: &MainWindow) {
             button_models: RefCell::new(HashMap::new()),
             keyboard_model: RefCell::new(None),
             commands_shown: RefCell::new(Vec::new()),
+            default_reaction: api::ReactionType::Emoji { emoji: "❤️".into() },
+            custom_emoji: HashMap::new(),
+            custom_emoji_wanted: RefCell::new(Vec::new()),
+            topics: HashMap::new(),
+            topics_loading: HashSet::new(),
+            open_topic: None,
+            topic_icons: Vec::new(),
+            supergroup_full: HashMap::new(),
+            slow_until: HashMap::new(),
+            admin_busy: String::new(),
+            admin_error: String::new(),
+            drafts: HashMap::new(),
+            added_contacts: HashSet::new(),
+            round_playing: None,
+            round_loading: None,
+            reaction_models: RefCell::new(HashMap::new()),
+            topics_shown: RefCell::new(Vec::new()),
             dirty: Dirty::default(),
             models,
         })
@@ -350,6 +408,22 @@ pub fn clear() {
         store.button_models.borrow_mut().clear();
         *store.keyboard_model.borrow_mut() = None;
         store.commands_shown.borrow_mut().clear();
+        store.custom_emoji.clear();
+        store.custom_emoji_wanted.borrow_mut().clear();
+        store.topics.clear();
+        store.topics_loading.clear();
+        store.open_topic = None;
+        store.topic_icons.clear();
+        store.supergroup_full.clear();
+        store.slow_until.clear();
+        store.admin_busy.clear();
+        store.admin_error.clear();
+        store.drafts.clear();
+        store.added_contacts.clear();
+        store.round_playing = None;
+        store.round_loading = None;
+        store.reaction_models.borrow_mut().clear();
+        store.topics_shown.borrow_mut().clear();
         store.dirty = Dirty {
             chats: true,
             conversation: true,
@@ -358,6 +432,7 @@ pub fn clear() {
             viewer: true,
             notification_scopes: true,
             scroll_to_end: false,
+            topics: true,
         };
     });
     refresh();
@@ -376,7 +451,7 @@ pub fn refresh() {
         }
         // The header shows the chat as the lists do (its name, its mute, who is online): it follows
         // them; the message rows only follow the messages.
-        if dirty.chats || dirty.header || dirty.conversation {
+        if dirty.chats || dirty.header || dirty.conversation || dirty.topics {
             store.refresh_conversation(&ui, &words, dirty.conversation, dirty.scroll_to_end);
         }
         if dirty.account {
@@ -398,9 +473,9 @@ pub fn refresh() {
                 }
             }
         }
-        (std::mem::take(&mut store.missing_replies), store.take_wanted_photos(), close_viewer)
+        (std::mem::take(&mut store.missing_replies), store.take_wanted_photos(), close_viewer, store.custom_emoji_wanted.take())
     });
-    let (missing, wanted, close_viewer) = followups.unwrap_or_default();
+    let (missing, wanted, close_viewer, custom_emoji) = followups.unwrap_or_default();
     if close_viewer {
         super::viewer::close();
     }
@@ -409,6 +484,9 @@ pub fn refresh() {
     }
     if !wanted.is_empty() {
         avatars::fetch(wanted);
+    }
+    if !custom_emoji.is_empty() {
+        super::reactions::fetch_custom_emoji(custom_emoji);
     }
 }
 
@@ -635,10 +713,21 @@ impl Store {
             Update::Supergroup { supergroup } => {
                 self.supergroups.insert(supergroup.id, supergroup);
                 self.dirty.chats = true;
+                // Our status in it, its joining rule: the settings panel.
+                self.dirty.header = true;
             }
             Update::SupergroupFullInfo { supergroup_id, supergroup_full_info } => {
                 self.supergroup_members.insert(supergroup_id, supergroup_full_info.member_count);
+                let open = self.open.and_then(|id| self.chats.get(&id)).is_some_and(|chat| {
+                    matches!(chat.kind, ChatType::Supergroup { supergroup_id: id, .. } if id == supergroup_id)
+                });
+                self.supergroup_full.insert(supergroup_id, supergroup_full_info);
                 self.dirty.chats = true;
+                if open {
+                    // Slow mode and the settings panel follow it (admin.rs).
+                    self.dirty.header = true;
+                    followup = Followup::SlowModeChanged;
+                }
             }
             Update::NewChat { chat } => {
                 self.chats.insert(chat.id, *chat);
@@ -684,12 +773,19 @@ impl Store {
                     self.dirty.chats = true;
                 }
             }
-            Update::ChatDraftMessage { chat_id, positions } => {
+            Update::ChatDraftMessage { chat_id, draft_message, positions } => {
                 if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.draft_message = draft_message;
                     for position in positions {
                         set_position(chat, position);
                     }
+                    // Telegram has it now: what was kept here goes.
+                    self.drafts.remove(&chat_id);
                     self.dirty.chats = true;
+                    if self.open == Some(chat_id) {
+                        // Written on another device: the composer follows (drafts.rs).
+                        followup = Followup::DraftChanged { chat_id };
+                    }
                 }
             }
             Update::ChatReadInbox { chat_id, last_read_inbox_message_id, unread_count } => {
@@ -760,9 +856,23 @@ impl Store {
             }
             Update::NewMessage { message } => {
                 let chat_id = message.chat_id;
+                let topic = message.forum_topic_id();
                 // Someone who sends a message has stopped typing.
                 if let Some(typing) = self.typing.get_mut(&chat_id) {
                     typing.retain(|(sender, _)| *sender != message.sender_id);
+                }
+                // In a group with topics, a message of another topic than the rows' leaves them
+                // alone; its topic's row in the list is fetched anew (topics.rs).
+                let other_topic = self.histories.get(&chat_id).and_then(|history| history.topic_id).is_some_and(|open| topic != Some(open))
+                    || (!self.histories.contains_key(&chat_id) && self.topics.contains_key(&chat_id));
+                if other_topic {
+                    if let Some(topic_id) = topic {
+                        followup = Followup::TopicChanged { chat_id, topic_id };
+                    }
+                    return followup;
+                }
+                if let Some(topic_id) = topic.filter(|_| self.topics.contains_key(&chat_id)) {
+                    followup = Followup::TopicChanged { chat_id, topic_id };
                 }
                 // Rows around an older message leave it out: it joins them with the end of the chat.
                 if let Some(history) = self.histories.get_mut(&chat_id).filter(|history| !history.has_newer) {
@@ -833,8 +943,50 @@ impl Store {
                 if let Some(chat) = self.chats.get_mut(&chat_id) {
                     chat.has_protected_content = has_protected_content;
                     if self.open == Some(chat_id) {
+                        self.dirty.header = true;
                         followup = Followup::ProtectionChanged;
                     }
+                }
+            }
+            Update::MessageInteractionInfo { chat_id, message_id, interaction_info } => {
+                if let Some(message) = self.histories.get_mut(&chat_id).and_then(|history| history.messages.get_mut(&message_id)) {
+                    message.interaction_info = interaction_info;
+                    self.dirty.conversation |= self.open == Some(chat_id);
+                }
+            }
+            Update::ChatAvailableReactions { chat_id, available_reactions } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.available_reactions = Some(available_reactions);
+                    self.dirty.header |= self.open == Some(chat_id);
+                }
+            }
+            Update::DefaultReactionType { reaction_type } => self.default_reaction = reaction_type,
+            Update::ForumTopicInfo { info } => {
+                let chat_id = info.chat_id;
+                let topic_id = info.forum_topic_id;
+                let open = self.open == Some(chat_id);
+                let listed = self.topics.contains_key(&chat_id);
+                let known = self.topics.get_mut(&chat_id).and_then(|topics| topics.iter_mut().find(|topic| topic.info.forum_topic_id == topic_id));
+                match known {
+                    Some(topic) => {
+                        topic.info = info;
+                        if open {
+                            self.dirty.topics = true;
+                            self.dirty.header = true;
+                        }
+                    }
+                    // A new topic: its row is fetched whole (topics.rs).
+                    None if listed => followup = Followup::TopicChanged { chat_id, topic_id },
+                    None => {}
+                }
+            }
+            Update::ForumTopic { chat_id, forum_topic_id, is_pinned, last_read_inbox_message_id, unread_mention_count } => {
+                if let Some(topic) = self.topics.get_mut(&chat_id).and_then(|topics| topics.iter_mut().find(|topic| topic.info.forum_topic_id == forum_topic_id)) {
+                    topic.is_pinned = is_pinned;
+                    topic.last_read_inbox_message_id = last_read_inbox_message_id;
+                    topic.unread_mention_count = unread_mention_count;
+                    // Its unread count is not in the update: the topic is fetched anew.
+                    followup = Followup::TopicChanged { chat_id, topic_id: forum_topic_id };
                 }
             }
             Update::DeleteMessages { chat_id, message_ids, is_permanent } => {
@@ -1066,7 +1218,7 @@ impl Store {
             }
             M::Document { document, caption } => (Content::Document, caption.text.clone(), document.file_name.clone()),
             M::VoiceNote { caption } => (Content::VoiceNote, caption.text.clone(), none()),
-            M::VideoNote {} => (Content::VideoNote, none(), none()),
+            M::VideoNote { .. } => (Content::VideoNote, none(), none()),
             M::ExpiredPhoto {} => (Content::ExpiredPhoto, none(), none()),
             M::ExpiredVideo {} => (Content::ExpiredVideo, none(), none()),
             M::ExpiredVideoNote {} => (Content::ExpiredVideoNote, none(), none()),
@@ -1075,9 +1227,7 @@ impl Store {
             M::Dice { emoji } => (Content::Dice, none(), emoji.clone()),
             M::Location {} => (Content::Location, none(), none()),
             M::Venue { venue } => (Content::Venue, none(), venue.title.clone()),
-            M::Contact { contact } => {
-                (Content::Contact, none(), format!("{} {}", contact.first_name, contact.last_name).trim().to_string())
-            }
+            M::Contact { contact } => (Content::Contact, none(), contact.name()),
             M::Poll { poll } => (Content::Poll, none(), poll.question.text.clone()),
             M::Game { game } => (Content::Game, none(), game.title.clone()),
             M::Invoice {} => (Content::Invoice, none(), none()),
@@ -1150,6 +1300,7 @@ impl Store {
             detail: detail.into(),
             unread: chat.unread_count,
             mention: chat.unread_mention_count > 0,
+            draft: first_line(&self.draft_of(chat)).into(),
             marked: chat.unread_count == 0 && chat.is_marked_as_unread,
             muted: self.muted(chat),
             pinned: position(chat, list).is_some_and(|position| position.is_pinned),
@@ -1377,6 +1528,39 @@ impl Store {
             *self.commands_shown.borrow_mut() = commands;
         }
         conversation.set_menu_button(self.menu_button(chat).into());
+
+        // Topics, slow mode, how many reactions one may give, the settings panel's group part.
+        let is_forum = self.is_forum(chat);
+        conversation.set_is_forum(is_forum);
+        conversation.set_showing_topics(is_forum && self.open_topic.is_none());
+        conversation.set_topics_loading(self.topics_loading.contains(&chat.id));
+        let topic = self.open_topic.and_then(|id| self.topics.get(&chat.id)?.iter().find(|topic| topic.info.forum_topic_id == id));
+        conversation.set_topic_id(self.open_topic.map(|id| id.to_string()).unwrap_or_default().into());
+        conversation.set_topic_title(topic.map(|topic| topic.info.name.clone()).unwrap_or_default().into());
+        conversation.set_topic_icon(topic.map(|topic| self.topic_emoji(&topic.info)).unwrap_or_default().into());
+        conversation.set_topic_color(topic.map(|topic| topic_colour(topic.info.icon.color)).unwrap_or_default());
+        conversation.set_topic_closed(topic.is_some_and(|topic| topic.info.is_closed));
+        conversation.set_topic_count(self.topics.get(&chat.id).map_or(0, |topics| topics.iter().filter(|topic| !topic.info.is_hidden).count() as i32));
+        if is_forum {
+            let topic_rows = self.topic_rows(chat, names);
+            if *self.topics_shown.borrow() != topic_rows {
+                conversation.set_topics(ModelRc::new(VecModel::from(topic_rows.clone())));
+                *self.topics_shown.borrow_mut() = topic_rows;
+            }
+        } else if !self.topics_shown.borrow().is_empty() {
+            conversation.set_topics(ModelRc::default());
+            self.topics_shown.borrow_mut().clear();
+        }
+        let (slow_mode, limited) = self.slow_mode(chat);
+        conversation.set_slow_mode(slow_mode);
+        conversation.set_slow_limited(limited);
+        let wait = self.slow_until.get(&chat.id).map_or(0, |until| until.saturating_duration_since(Instant::now()).as_secs_f64().ceil() as i32);
+        conversation.set_slow_wait(if limited { wait } else { 0 });
+        conversation.set_reaction_max(self.reaction_max(chat));
+        let admin = self.admin_panel(chat);
+        if conversation.get_admin() != admin {
+            conversation.set_admin(admin);
+        }
         if !rows {
             return;
         }
@@ -1438,6 +1622,7 @@ impl Store {
     fn message_rows(&self, chat: &api::Chat, names: &Names) -> (Vec<MessageRow>, Vec<(i64, Vec<i64>)>, Vec<(i64, i64)>) {
         let Some(history) = self.histories.get(&chat.id) else { return (Vec::new(), Vec::new(), Vec::new()) };
         let me = self.user_name(self.my_id, names);
+        let channel = self.kind(chat) == ChatKind::Channel;
         let shown = history.messages.len().min(history.shown);
         let mut rows = Vec::with_capacity(shown + 8);
         let mut members: Vec<(i64, Vec<i64>)> = Vec::with_capacity(shown);
@@ -1528,6 +1713,10 @@ impl Store {
                 media: ModelRc::default(),
                 files: if files.is_empty() { ModelRc::default() } else { ModelRc::new(VecModel::from(files)) },
                 buttons: self.button_rows(message),
+                reactions: self.reaction_rows(message),
+                round: self.round_note(message),
+                contact: self.contact_card(message),
+                can_share: channel && !service && !pending,
                 sticker,
                 rich: rich_text.is_some(),
                 rich_text: rich_text.unwrap_or_default(),
@@ -1845,7 +2034,232 @@ impl Store {
 
     /// A row with no pictures anywhere, to build the others from.
     fn blank_row(&self) -> MessageRow {
-        MessageRow { sender_picture: self.blank.clone(), sticker: self.no_sticker(), reply: self.no_quote(), ..MessageRow::default() }
+        MessageRow {
+            sender_picture: self.blank.clone(),
+            sticker: self.no_sticker(),
+            reply: self.no_quote(),
+            round: self.no_round(),
+            ..MessageRow::default()
+        }
+    }
+
+    fn no_round(&self) -> RoundNote {
+        RoundNote { picture: self.blank.clone(), ..RoundNote::default() }
+    }
+
+    // ---- the fifth round: reactions, round video messages, contact cards, topics, admin ------
+
+    /// The reactions to a message, most given first, as the row shows them; the model is kept
+    /// while they stay the same (a model compares by identity).
+    fn reaction_rows(&self, message: &api::Message) -> ModelRc<Reaction> {
+        let reactions = message.reactions();
+        if reactions.is_empty() {
+            return ModelRc::default();
+        }
+        let built: Vec<Reaction> = reactions
+            .iter()
+            .filter(|reaction| reaction.total_count > 0)
+            .map(|reaction| Reaction {
+                emoji: self.reaction_emoji(&reaction.kind).into(),
+                count: count_text(reaction.total_count).into(),
+                chosen: reaction.is_chosen,
+            })
+            .collect();
+        if built.is_empty() {
+            return ModelRc::default();
+        }
+        let id: SharedString = message.id.to_string().into();
+        let mut hasher = DefaultHasher::new();
+        for reaction in &built {
+            reaction.emoji.hash(&mut hasher);
+            reaction.count.hash(&mut hasher);
+            reaction.chosen.hash(&mut hasher);
+        }
+        let hash = hasher.finish();
+        let mut models = self.reaction_models.borrow_mut();
+        if let Some((kept, model)) = models.get(&id)
+            && *kept == hash
+        {
+            return model.clone();
+        }
+        let model = ModelRc::new(VecModel::from(built));
+        models.insert(id, (hash, model.clone()));
+        model
+    }
+
+    /// What a reaction looks like: its emoji; a custom emoji's, once TDLib has told us which
+    /// (asked for after the refresh), "✨" until then; "⭐" for a paid one.
+    pub fn reaction_emoji(&self, kind: &api::ReactionType) -> String {
+        match kind {
+            api::ReactionType::Emoji { emoji } => emoji.clone(),
+            api::ReactionType::CustomEmoji { custom_emoji_id } => self.custom_emoji_text(*custom_emoji_id).unwrap_or_else(|| "✨".into()),
+            api::ReactionType::Paid => "⭐".into(),
+        }
+    }
+
+    /// The emoji a custom emoji stands for, when known; else it is noted to ask for.
+    fn custom_emoji_text(&self, id: i64) -> Option<String> {
+        if id == 0 {
+            return None;
+        }
+        match self.custom_emoji.get(&id) {
+            Some(emoji) if !emoji.is_empty() => Some(emoji.clone()),
+            Some(_) => None,
+            None => {
+                self.custom_emoji_wanted.borrow_mut().push(id);
+                None
+            }
+        }
+    }
+
+    /// A round video message as the row shows it: its still, its length, whether it plays.
+    fn round_note(&self, message: &api::Message) -> RoundNote {
+        let Some(still) = round_picture(&message.content) else { return self.no_round() };
+        let picture = self.picture_image(&still);
+        RoundNote {
+            shown: true,
+            has_picture: still.file.is_some_and(|file| self.pictures.get(&file.id).is_some()) || still.preview.is_some(),
+            picture,
+            duration: duration_text(still.duration).into(),
+            playing: self.round_playing == Some(message.id),
+            loading: self.round_loading == Some(message.id),
+        }
+    }
+
+    /// A contact card as the row shows it.
+    fn contact_card(&self, message: &api::Message) -> ContactCard {
+        let M::Contact { contact } = &message.content else { return ContactCard::default() };
+        let name = contact.name();
+        let registered = contact.user_id != 0;
+        let added = self.added_contacts.contains(&contact.phone_number)
+            || (registered && self.users.get(&contact.user_id).is_some_and(|user| user.is_contact));
+        ContactCard {
+            shown: true,
+            initial: initial(&name),
+            name: name.into(),
+            phone: phone_text(&contact.phone_number).into(),
+            registered,
+            added,
+        }
+    }
+
+    /// Words left in a chat's composer: those kept here until Telegram has them, else Telegram's.
+    pub fn draft_of(&self, chat: &api::Chat) -> String {
+        if let Some(words) = self.drafts.get(&chat.id) {
+            return words.clone();
+        }
+        chat.draft_message.as_ref().map(|draft| draft.words().to_string()).unwrap_or_default()
+    }
+
+    /// A group with topics (topics.rs).
+    pub fn is_forum(&self, chat: &api::Chat) -> bool {
+        self.supergroup_of(chat).is_some_and(|group| group.is_forum)
+    }
+
+    /// We own or administer the group: slow mode does not hold us, and the settings panel lets
+    /// us change the group's rules.
+    pub fn is_admin(&self, chat: &api::Chat) -> bool {
+        let status = match chat.kind {
+            ChatType::BasicGroup { basic_group_id } => self.basic_groups.get(&basic_group_id).map(|group| &group.status),
+            ChatType::Supergroup { supergroup_id, .. } => self.supergroups.get(&supergroup_id).map(|group| &group.status),
+            _ => None,
+        };
+        matches!(status, Some(ChatMemberStatus::Creator | ChatMemberStatus::Administrator { .. }))
+    }
+
+    /// Slow mode: the seconds a member waits between messages (0: off), and whether that holds us.
+    pub fn slow_mode(&self, chat: &api::Chat) -> (i32, bool) {
+        let ChatType::Supergroup { supergroup_id, .. } = chat.kind else { return (0, false) };
+        let delay = self.supergroup_full.get(&supergroup_id).map_or(0, |info| info.slow_mode_delay);
+        (delay, delay > 0 && !self.is_admin(chat))
+    }
+
+    /// How many reactions one person may give a message in the chat.
+    pub fn reaction_max(&self, chat: &api::Chat) -> i32 {
+        match &chat.available_reactions {
+            Some(api::ChatAvailableReactions::All { max_reaction_count } | api::ChatAvailableReactions::Some { max_reaction_count, .. }) => {
+                (*max_reaction_count).max(1)
+            }
+            None => 1,
+        }
+    }
+
+    /// The topics of a group with topics, as rows, in TDLib's order.
+    fn topic_rows(&self, chat: &api::Chat, names: &Names) -> Vec<TopicRow> {
+        let Some(topics) = self.topics.get(&chat.id) else { return Vec::new() };
+        topics
+            .iter()
+            .filter(|topic| !topic.info.is_hidden)
+            .map(|topic| {
+                let last = topic.last_message.as_deref();
+                let last_line = last
+                    .map(|message| {
+                        let (content, text, detail) = self.content(message, names);
+                        let words = if text.is_empty() { detail } else { text };
+                        let sender = self.sender_first_name(&message.sender_id, names);
+                        let line = if words.is_empty() { format!("{content:?}") } else { first_line(&words).to_string() };
+                        if sender.is_empty() || is_service(content) { line } else { format!("{sender}: {line}") }
+                    })
+                    .unwrap_or_default();
+                TopicRow {
+                    id: topic.info.forum_topic_id.to_string().into(),
+                    icon: self.topic_emoji(&topic.info).into(),
+                    color: topic_colour(topic.info.icon.color),
+                    title: topic.info.name.clone().into(),
+                    last: last_line.into(),
+                    time: last.map(|message| time::moment(message.date)).unwrap_or_default(),
+                    unread: topic.unread_count,
+                    pinned: topic.is_pinned,
+                    closed: topic.info.is_closed,
+                }
+            })
+            .collect()
+    }
+
+    /// A topic's icon as an emoji: its custom emoji's, once known; "" for the general topic and
+    /// for one with a colour alone (the pages draw "#").
+    pub fn topic_emoji(&self, info: &api::ForumTopicInfo) -> String {
+        if info.is_general {
+            return String::new();
+        }
+        self.custom_emoji_text(info.icon.custom_emoji_id).unwrap_or_default()
+    }
+
+    /// The settings panel's group part: the rules a member reads, or what an administrator may
+    /// change (admin.rs).
+    fn admin_panel(&self, chat: &api::Chat) -> AdminPanel {
+        let supergroup = match chat.kind {
+            ChatType::Supergroup { supergroup_id, is_channel: false } => Some(supergroup_id),
+            ChatType::BasicGroup { .. } => None,
+            _ => return AdminPanel::default(),
+        };
+        let full = supergroup.and_then(|id| self.supergroup_full.get(&id));
+        let group = supergroup.and_then(|id| self.supergroups.get(&id));
+        let permissions = &chat.permissions;
+        AdminPanel {
+            shown: true,
+            admin: self.is_admin(chat),
+            supergroup: supergroup.is_some(),
+            members: self.members(chat),
+            slow_mode: full.map_or(0, |info| info.slow_mode_delay),
+            can_send: permissions.can_send_basic_messages,
+            can_media: permissions.can_send_photos || permissions.can_send_videos,
+            can_stickers: permissions.can_send_other_messages,
+            can_links: permissions.can_add_link_previews,
+            can_polls: permissions.can_send_polls,
+            can_invite: permissions.can_invite_users,
+            can_pin: permissions.can_pin_messages,
+            can_info: permissions.can_change_info,
+            join_request: group.is_some_and(|group| group.join_by_request),
+            protected: chat.has_protected_content,
+            history: full.is_none_or(|info| info.is_all_history_available),
+            hidden_members: full.is_some_and(|info| info.has_hidden_members),
+            hidden_members_allowed: full.is_some_and(|info| info.can_hide_members || info.has_hidden_members),
+            anti_spam: full.is_some_and(|info| info.has_aggressive_anti_spam_enabled),
+            anti_spam_allowed: full.is_some_and(|info| info.can_toggle_aggressive_anti_spam || info.has_aggressive_anti_spam_enabled),
+            busy: self.admin_busy.clone().into(),
+            error: self.admin_error.clone().into(),
+        }
     }
 
     /// A chat row with no picture (a folder's header).
@@ -2035,6 +2449,13 @@ pub enum Followup {
     /// The open chat's content became protected, or stopped being: the window follows
     /// (conversation.rs).
     ProtectionChanged,
+    /// A topic of a group whose topics are here changed, or has a new message: its row is
+    /// fetched anew (topics.rs).
+    TopicChanged { chat_id: i64, topic_id: i32 },
+    /// The open chat's draft came from another device: the composer takes it (drafts.rs).
+    DraftChanged { chat_id: i64 },
+    /// The open supergroup's slow mode may have changed: the wait is counted anew (admin.rs).
+    SlowModeChanged,
 }
 
 /// What a message with a photo, a video or a GIF shows before it is played: the file with its
@@ -2070,6 +2491,66 @@ pub fn picture(content: &M) -> Option<Picture<'_>> {
         )),
         _ => None,
     }
+}
+
+/// A round video message's still: its thumbnail, square, with its length.
+pub fn round_picture(content: &M) -> Option<Picture<'_>> {
+    match content {
+        M::VideoNote { video_note, .. } => Some(still(
+            video_note.thumbnail.as_ref(),
+            (video_note.length, video_note.length),
+            video_note.duration,
+            video_note.minithumbnail.as_ref(),
+        )),
+        _ => None,
+    }
+}
+
+/// A count as a reaction's chip writes it: 999, 1.2K, 12K, 1.2M.
+pub fn count_text(count: i32) -> String {
+    let short = |value: f64, unit: &str| {
+        let rounded = (value * 10.0).round() / 10.0;
+        if rounded >= 10.0 || rounded.fract() == 0.0 { format!("{}{unit}", rounded.round() as i64) } else { format!("{rounded:.1}{unit}") }
+    };
+    match count {
+        ..=999 => count.to_string(),
+        1000..=999_999 => short(f64::from(count) / 1000.0, "K"),
+        _ => short(f64::from(count) / 1_000_000.0, "M"),
+    }
+}
+
+/// Seconds as "0:14" or "1:02:03".
+pub fn duration_text(seconds: i32) -> String {
+    let seconds = seconds.max(0);
+    if seconds >= 3600 {
+        format!("{}:{:02}:{:02}", seconds / 3600, seconds % 3600 / 60, seconds % 60)
+    } else {
+        format!("{}:{:02}", seconds / 60, seconds % 60)
+    }
+}
+
+/// A topic's colour, which TDLib gives as 0xRRGGBB.
+pub fn topic_colour(color: i32) -> slint::Color {
+    let value = u32::try_from(color).unwrap_or(0x6FB9F0);
+    slint::Color::from_rgb_u8((value >> 16) as u8, (value >> 8) as u8, value as u8)
+}
+
+/// A phone number with spaces: "+86 139 0571 2233" for 8613905712233 (country code, then groups
+/// of three, four, four as Telegram's apps print them), "+" and the digits as they are when
+/// the number is shorter.
+pub fn phone_text(number: &str) -> String {
+    let digits: String = number.chars().filter(char::is_ascii_digit).collect();
+    if digits.is_empty() {
+        return number.to_string();
+    }
+    let country = match digits.len() {
+        12.. => digits.len() - 10,
+        _ => return format!("+{digits}"),
+    };
+    let (code, rest) = digits.split_at(country.min(3));
+    let (a, rest) = rest.split_at(rest.len().saturating_sub(8));
+    let (b, c) = rest.split_at(rest.len().saturating_sub(4));
+    format!("+{code} {a} {b} {c}").split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 /// A message's own words with their formatting: a text, or the caption of a photo, video, GIF,
@@ -2322,6 +2803,7 @@ mod tests {
         let file = |id: i32| api::File { id, size: 0, expected_size: 0, local: api::LocalFile::default(), remote: api::RemoteFile::default() };
         let sticker = |format: api::StickerFormat, thumbnail: Option<api::ThumbnailFormat>| M::Sticker {
             sticker: api::Sticker {
+                id: 0,
                 width: 512,
                 height: 480,
                 emoji: "😀".into(),

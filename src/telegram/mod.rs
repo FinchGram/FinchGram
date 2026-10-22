@@ -22,12 +22,15 @@
 
 mod account;
 mod actions;
+mod admin;
 mod api;
 mod avatars;
 mod bots;
 mod chats;
 mod contacts;
 mod conversation;
+mod drafts;
+mod errors;
 mod files;
 mod global_search;
 mod login;
@@ -36,13 +39,16 @@ mod notifications;
 mod online;
 mod password;
 mod process;
+mod reactions;
 mod rich_text;
 mod search;
+mod share;
 mod store;
 mod time;
 #[cfg(test)]
 mod timing;
 pub mod tools;
+mod topics;
 mod attachments;
 mod viewer;
 
@@ -138,6 +144,12 @@ pub fn start(ui: &MainWindow) {
     global_search::connect(ui);
     new_chat::connect(ui);
     bots::connect(ui);
+    reactions::connect(ui);
+    topics::connect(ui);
+    share::connect(ui);
+    admin::connect(ui);
+    contacts::connect(ui);
+    viewer::connect_round(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {
@@ -352,6 +364,9 @@ fn on_update(update: Update) {
             Some(Followup::Deleted { chat_id, message_ids }) => actions::deleted(chat_id, &message_ids),
             Some(Followup::PinnedChanged { chat_id }) => bots::pinned_changed(chat_id),
             Some(Followup::KeyboardChanged { chat_id }) => bots::keyboard_changed(chat_id),
+            Some(Followup::TopicChanged { chat_id, topic_id }) => topics::topic_changed(chat_id, topic_id),
+            Some(Followup::DraftChanged { chat_id }) => drafts::draft_changed(chat_id),
+            Some(Followup::SlowModeChanged) => admin::slow_mode_changed(),
             Some(Followup::ProtectionChanged) => conversation::protect_window(),
             Some(Followup::None) | None => {}
         },
@@ -411,6 +426,10 @@ fn on_authorization_state(state: AuthorizationState) {
             global_search::forget();
             new_chat::forget();
             bots::forget();
+            topics::forget();
+            drafts::forget();
+            share::forget();
+            admin::forget();
             account::forget();
             password::forget();
             files::forget();

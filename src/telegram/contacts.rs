@@ -7,9 +7,13 @@ use std::cell::RefCell;
 
 use serde_json::json;
 
-use super::api::Users;
+use serde_json::Value;
+use slint::ComponentHandle;
+
+use super::api::{self, Users};
 use super::store::{self, Names};
-use super::{Error, send};
+use super::{Error, actions, conversation, send, with_ui};
+use crate::{Conversation, ExtraWords, MainWindow};
 
 type Then = Box<dyn FnOnce()>;
 
@@ -113,6 +117,89 @@ pub fn is_phone(words: &str) -> bool {
         && !rest.is_empty()
         && rest.chars().all(|c| c.is_ascii_digit() || matches!(c, ' ' | '-' | '(' | ')'))
         && digits(words).len() >= 5
+}
+
+// ---- contact cards in messages (the design's fifth round) ----------------------------------
+
+pub fn connect(ui: &MainWindow) {
+    let conversation = ui.global::<Conversation>();
+    conversation.on_contact_message(|id| {
+        if let Ok(message_id) = id.parse() {
+            card_message(message_id);
+        }
+    });
+    conversation.on_contact_invite(|id| {
+        if let Ok(message_id) = id.parse() {
+            card_invite(message_id);
+        }
+    });
+    conversation.on_contact_add(|id| {
+        if let Ok(message_id) = id.parse() {
+            card_add(message_id);
+        }
+    });
+}
+
+/// The contact a card in the open chat holds.
+fn card_contact(message_id: i64) -> Option<api::Contact> {
+    store::with(|store| match &store.histories.get(&store.open?)?.messages.get(&message_id)?.content {
+        api::MessageContent::Contact { contact } => Some(contact.clone()),
+        _ => None,
+    })
+    .flatten()
+}
+
+/// "Message": a chat with them.
+fn card_message(message_id: i64) {
+    let Some(contact) = card_contact(message_id) else { return };
+    if contact.user_id != 0 {
+        conversation::open_user(contact.user_id);
+    }
+}
+
+/// "Invite", for someone not on Telegram: Telegram's invitation onto the clipboard, to send them
+/// any way one likes (a desktop has no text messages to send).
+fn card_invite(message_id: i64) {
+    let Some(contact) = card_contact(message_id) else { return };
+    let (mut invitation, mut notice) = (String::new(), String::new());
+    with_ui(|ui| {
+        let words = ui.global::<ExtraWords>();
+        invitation = words.invoke_invitation().to_string();
+        notice = words.invoke_invite_copied(contact.name().into()).to_string();
+    });
+    actions::copy_saying(&invitation, &notice);
+}
+
+/// "Add contact": into the account's contacts, as the card names them (addContact for someone
+/// on Telegram, importContacts by the number otherwise).
+fn card_add(message_id: i64) {
+    let Some(contact) = card_contact(message_id) else { return };
+    let imported = serde_json::json!({
+        "@type": "importedContact", "phone_number": contact.phone_number, "first_name": contact.first_name,
+        "last_name": contact.last_name, "note": null,
+    });
+    let request = if contact.user_id != 0 {
+        serde_json::json!({ "@type": "addContact", "user_id": contact.user_id, "contact": imported, "share_phone_number": false })
+    } else {
+        serde_json::json!({ "@type": "importContacts", "contacts": [imported] })
+    };
+    let name = contact.name();
+    let phone = contact.phone_number.clone();
+    send(request, move |answer: Result<Value, Error>| match answer {
+        Ok(_) => {
+            store::with(|store| {
+                store.added_contacts.insert(phone);
+                store.dirty.conversation = true;
+            });
+            store::refresh();
+            changed();
+            let mut notice = String::new();
+            with_ui(|ui| notice = ui.global::<ExtraWords>().invoke_contact_added(name.into()).to_string());
+            actions::show_words(&notice);
+        }
+        Err(Error::Stopped) => {}
+        Err(Error::Telegram { message, .. }) => actions::show_failure(&super::errors::explain(&message)),
+    });
 }
 
 #[cfg(test)]

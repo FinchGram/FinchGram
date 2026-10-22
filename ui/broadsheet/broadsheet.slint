@@ -13,6 +13,7 @@ import {
     ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope, AttachWords, FileCardView, ChatMenuWords,
     SearchInput, SearchWords, ButtonGrid, BotWords,
 } from "../chat.slint";
+import { ExtraWords, ReactionChips, ReactionPicker, RoundNoteView, ContactCardView, TopicList, AdminPanelView } from "../extras.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 import { BroadsheetActions } from "actions.slint";
 import { BroadsheetAttachments } from "attachments.slint";
@@ -758,9 +759,17 @@ component ChatLine inherits Rectangle {
             }
             HorizontalLayout {
                 spacing: 6px;
+                // The last message, or the words left in the composer (src/telegram/drafts.rs).
+                if root.chat.draft != "": Text {
+                    text: ExtraWords.draft();
+                    color: P.accent-ink;
+                    font-size: 14px;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                }
                 Text {
                     horizontal-stretch: 1;
-                    text: Fmt.preview(root.chat);
+                    text: root.chat.draft != "" ? root.chat.draft : Fmt.preview(root.chat);
                     color: P.muted;
                     font-size: 14px;
                     overflow: elide;
@@ -838,11 +847,22 @@ component ChannelLine inherits Rectangle {
                     muted: true;
                 }
             }
-            Text {
-                text: Fmt.body(root.chat.content, root.chat.text, root.chat.detail);
-                color: P.muted;
-                font-size: 14px;
-                overflow: elide;
+            // The last message, or the words left in the composer (src/telegram/drafts.rs).
+            HorizontalLayout {
+                spacing: 6px;
+                if root.chat.draft != "": Text {
+                    text: ExtraWords.draft();
+                    color: P.accent-ink;
+                    font-size: 14px;
+                    font-weight: 600;
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: root.chat.draft != "" ? root.chat.draft : Fmt.body(root.chat.content, root.chat.text, root.chat.detail);
+                    color: P.muted;
+                    font-size: 14px;
+                    overflow: elide;
+                }
             }
             Text {
                 text: root.chat.members > 0 ? @tr("{n} subscriber" | "{n} subscribers" % root.chat.members) : "";
@@ -1628,7 +1648,7 @@ component Bubble {
                 default-font-size: 16px;
                 link-color: P.accent-ink;
             }
-            if !root.message.rich && !root.has-sticker && (!root.has-media || root.message.text != ""): Paragraph {
+            if !root.message.rich && !root.has-sticker && !root.message.round.shown && !root.message.contact.shown && (!root.has-media || root.message.text != ""): Paragraph {
                 text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
                 color: root.mine ? P.tint-ink : root.has-media || root.message.content == Content.text ? P.text : P.muted;
                 font-size: 16px;
@@ -1654,6 +1674,85 @@ component Bubble {
                     font-size: 14px;
                     pressed(row, column) => {
                         Actions.press(root.message.id, row, column);
+                    }
+                }
+            }
+            // The design's fifth round, inside the bubble before the time (1a): a round video
+            // message, a contact card, the reactions and their picker (extras.slint).
+            if root.message.round.shown: RoundNoteView {
+                note: root.message.round;
+                line: P.line;
+                accent: P.accent;
+                side: P.surface;
+                faint: root.mine ? P.accent-ink : P.faint;
+                mono: P.mono;
+                font-family: P.font;
+                font-size: 12px;
+                clicked => {
+                    Conversation.play-round(root.message.id);
+                }
+            }
+            if root.message.contact.shown: HorizontalLayout {
+                alignment: start;
+                padding-top: 2px;
+                ContactCardView {
+                    card: root.message.contact;
+                    bg: P.panel;
+                    line: P.line;
+                    soft: P.tint;
+                    soft-ink: P.tint-ink;
+                    accent: P.accent-ink;
+                    text-color: P.text;
+                    muted: P.muted;
+                    faint: P.faint;
+                    radius: 4px;
+                    av-radius: 2px;
+                    font-family: P.font;
+                    font-size: 15px;
+                    small: 13px;
+                    message => {
+                        Conversation.contact-message(root.message.id);
+                    }
+                    invite => {
+                        Conversation.contact-invite(root.message.id);
+                    }
+                    add => {
+                        Conversation.contact-add(root.message.id);
+                    }
+                    share => {
+                        Conversation.contact-share(root.message.id);
+                    }
+                }
+            }
+            // The chips sit on the bubble, a step lighter or darker than it, as the contact card
+            // does (P.surface is all but the bubble's own grey).
+            if root.message.reactions.length > 0: ReactionChips {
+                reactions: root.message.reactions;
+                fill: P.panel;
+                ink: P.muted;
+                chosen-fill: P.tint;
+                chosen-ink: P.tint-ink;
+                ring: P.accent;
+                radius: 2px;
+                font-family: P.font;
+                react(emoji) => {
+                    Conversation.react(root.message.id, emoji);
+                }
+            }
+            if Conversation.reaction-picker == root.message.id: HorizontalLayout {
+                alignment: start;
+                ReactionPicker {
+                    choices: Conversation.reaction-choices;
+                    max: Conversation.reaction-max;
+                    bg: P.panel;
+                    line: P.line;
+                    soft: P.tint;
+                    note-color: P.faint;
+                    shadow: P.shadow;
+                    radius: 4px;
+                    font-family: P.font;
+                    pick(emoji) => {
+                        Conversation.react(root.message.id, emoji);
                     }
                 }
             }
@@ -1712,6 +1811,8 @@ component Bubble {
                     }
                 }
             }
+            // The time, the ticks on ours, and the smiley that opens the reactions' picker (a
+            // double click reacts at once).
             HorizontalLayout {
                 alignment: root.mine ? end : start;
                 spacing: 4px;
@@ -1719,6 +1820,7 @@ component Bubble {
                     text: root.message.edited ? @tr("edited") + " " + root.message.time : root.message.time;
                     color: root.mine ? P.accent-ink : P.faint;
                     font-size: 12px;
+                    vertical-alignment: center;
                 }
                 if root.mine: VerticalLayout {
                     alignment: center;
@@ -1726,6 +1828,29 @@ component Bubble {
                         name: root.message.sending ? "clock" : root.message.seen ? "checks" : "check";
                         size: 13px;
                         color: P.accent-ink;
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 16px;
+                        height: 16px;
+                        DuoIcon {
+                            name: "smiley";
+                            size: 14px;
+                            color: smile.has-hover || Conversation.reaction-picker == root.message.id ? P.accent : P.faint;
+                            opacity: smile.has-hover || Conversation.reaction-picker == root.message.id ? 1 : 0.7;
+                        }
+                        smile := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                if Conversation.reaction-picker == root.message.id {
+                                    Conversation.close-reactions();
+                                } else {
+                                    Conversation.open-reactions(root.message.id);
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -1810,7 +1935,7 @@ component Post inherits Capped {
         default-font-size: 16px;
         link-color: P.accent-ink;
     }
-    if !root.message.rich && !root.has-sticker && (!root.has-media || root.message.text != ""): Paragraph {
+    if !root.message.rich && !root.has-sticker && !root.message.round.shown && !root.message.contact.shown && (!root.has-media || root.message.text != ""): Paragraph {
         text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
         color: P.text;
         font-size: 16px;
@@ -1837,10 +1962,139 @@ component Post inherits Capped {
             }
         }
     }
-    Text {
-        text: root.message.edited ? @tr("edited") + " " + root.message.time : root.message.time;
-        color: P.faint;
+    // The design's fifth round: a round video message, a contact card, the reactions and their
+    // picker (extras.slint).
+    if root.message.round.shown: RoundNoteView {
+        note: root.message.round;
+        line: P.line;
+        accent: P.accent;
+        side: P.surface;
+        faint: P.faint;
+        mono: P.mono;
+        font-family: P.font;
         font-size: 12px;
+        clicked => {
+            Conversation.play-round(root.message.id);
+        }
+    }
+    if root.message.contact.shown: HorizontalLayout {
+        alignment: start;
+        ContactCardView {
+            card: root.message.contact;
+            bg: P.panel;
+            line: P.line;
+            soft: P.tint;
+            soft-ink: P.tint-ink;
+            accent: P.accent-ink;
+            text-color: P.text;
+            muted: P.muted;
+            faint: P.faint;
+            radius: 4px;
+            av-radius: 2px;
+            font-family: P.font;
+            font-size: 15px;
+            small: 13px;
+            message => {
+                Conversation.contact-message(root.message.id);
+            }
+            invite => {
+                Conversation.contact-invite(root.message.id);
+            }
+            add => {
+                Conversation.contact-add(root.message.id);
+            }
+            share => {
+                Conversation.contact-share(root.message.id);
+            }
+        }
+    }
+    if root.message.reactions.length > 0: ReactionChips {
+        reactions: root.message.reactions;
+        fill: P.surface;
+        ink: P.muted;
+        chosen-fill: P.tint;
+        chosen-ink: P.tint-ink;
+        ring: P.accent;
+        radius: 2px;
+        font-family: P.font;
+        react(emoji) => {
+            Conversation.react(root.message.id, emoji);
+        }
+    }
+    if Conversation.reaction-picker == root.message.id: HorizontalLayout {
+        alignment: start;
+        ReactionPicker {
+            choices: Conversation.reaction-choices;
+            max: Conversation.reaction-max;
+            bg: P.panel;
+            line: P.line;
+            soft: P.tint;
+            note-color: P.faint;
+            shadow: P.shadow;
+            radius: 4px;
+            font-family: P.font;
+            pick(emoji) => {
+                Conversation.react(root.message.id, emoji);
+            }
+        }
+    }
+    // The time, the smiley for a reaction, and Share for a post (src/telegram/share.rs).
+    HorizontalLayout {
+        alignment: start;
+        spacing: 10px;
+        Text {
+            text: root.message.edited ? @tr("edited") + " " + root.message.time : root.message.time;
+            color: P.faint;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+        Rectangle {
+            width: 16px;
+            height: 16px;
+            DuoIcon {
+                name: "smiley";
+                size: 14px;
+                color: smile.has-hover || Conversation.reaction-picker == root.message.id ? P.accent : P.faint;
+                opacity: smile.has-hover || Conversation.reaction-picker == root.message.id ? 1 : 0.7;
+            }
+            smile := TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    if Conversation.reaction-picker == root.message.id {
+                        Conversation.close-reactions();
+                    } else {
+                        Conversation.open-reactions(root.message.id);
+                    }
+                }
+            }
+        }
+        if root.message.can-share: Rectangle {
+            width: share-words.preferred-width;
+            height: 16px;
+            share-words := HorizontalLayout {
+                spacing: 5px;
+                VerticalLayout {
+                    alignment: center;
+                    DuoIcon {
+                        name: "share-fat";
+                        size: 13px;
+                        color: share-touch.has-hover ? P.accent : P.muted;
+                    }
+                }
+                Text {
+                    text: ExtraWords.share();
+                    color: share-touch.has-hover ? P.accent-ink : P.muted;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                }
+            }
+            share-touch := TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Conversation.share-message(root.message.id);
+                }
+            }
+        }
     }
     Rectangle { height: 4px; }
 }
@@ -2431,6 +2685,189 @@ component CommandList inherits Rectangle {
     }
 }
 
+// A topic open in a group with topics: the way back to the list, and the topic's name.
+component TopicBar inherits Rectangle {
+    height: 40px;
+    background: P.panel;
+
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: P.line;
+    }
+    HorizontalLayout {
+        padding-left: 24px;
+        padding-right: 24px;
+        spacing: 8px;
+        Rectangle {
+            width: back.preferred-width;
+            back := HorizontalLayout {
+                spacing: 4px;
+                VerticalLayout {
+                    alignment: center;
+                    DuoIcon {
+                        name: "caret-left";
+                        size: 14px;
+                        color: P.accent-ink;
+                    }
+                }
+                Text {
+                    text: ExtraWords.all-topics();
+                    color: P.accent-ink;
+                    font-size: 14px;
+                    vertical-alignment: center;
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Conversation.back-to-topics();
+                }
+            }
+        }
+        Text {
+            text: "/";
+            color: P.faint;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+        if Conversation.topic-icon != "": Text {
+            text: Conversation.topic-icon;
+            font-size: 15px;
+            vertical-alignment: center;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: Conversation.topic-title;
+            color: P.text;
+            font-size: 14px;
+            font-weight: 600;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        if Conversation.topic-closed: VerticalLayout {
+            alignment: center;
+            DuoIcon {
+                name: "lock-simple";
+                size: 14px;
+                color: P.faint;
+            }
+        }
+    }
+}
+
+// A closed topic, in place of the composer.
+component ClosedTopicNote inherits HorizontalLayout {
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    Rectangle {
+        height: note.preferred-height + 16px;
+        border-radius: 4px;
+        background: P.surface;
+        note := HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            spacing: 8px;
+            VerticalLayout {
+                alignment: center;
+                DuoIcon {
+                    name: "lock-simple";
+                    size: 16px;
+                    color: P.muted;
+                }
+            }
+            Text {
+                horizontal-stretch: 1;
+                text: ExtraWords.topic-closed();
+                color: P.muted;
+                font-size: 14px;
+                wrap: word-wrap;
+                vertical-alignment: center;
+            }
+        }
+    }
+}
+
+// The chat's settings panel, over the right of the pane: a group's rules, or what its
+// administrators may change (admin.rs); nothing yet for other chats.
+component SettingsPanel inherits Rectangle {
+    background: P.panel;
+
+    // Clicks on the panel stay on it: the messages under it take none.
+    TouchArea { }
+
+    Rectangle {
+        x: 0;
+        width: 1px;
+        background: P.line;
+    }
+    VerticalLayout {
+        HorizontalLayout {
+            padding-left: 24px;
+            padding-right: 20px;
+            padding-top: 20px;
+            padding-bottom: 12px;
+            spacing: 8px;
+            SectionTitle {
+                horizontal-stretch: 1;
+                text: ExtraWords.settings().to-uppercase();
+                font-weight: 600;
+                vertical-alignment: center;
+            }
+            Rectangle {
+                width: 22px;
+                height: 22px;
+                Icon {
+                    name: "x";
+                    size: 18px;
+                    color: P.faint;
+                    duotone: false;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Conversation.toggle-settings();
+                    }
+                }
+            }
+        }
+        Flickable {
+            vertical-stretch: 1;
+            mouse-drag-pan-enabled: false;
+            content-width: self.width;
+            content-height: body.preferred-height;
+            body := VerticalLayout {
+                width: parent.width;
+                alignment: start;
+                padding-left: 24px;
+                padding-right: 24px;
+                padding-bottom: 20px;
+                if Conversation.admin.shown: AdminPanelView {
+                    side: P.surface;
+                    accent: P.accent;
+                    on-accent: P.on-accent;
+                    text-color: P.text;
+                    muted: P.muted;
+                    faint: P.faint;
+                    off: P.off;
+                    danger: P.danger;
+                    font-family: P.font;
+                    font-size: 15px;
+                    small: 13px;
+                }
+                if !Conversation.admin.shown: Text {
+                    text: ExtraWords.nothing-here();
+                    color: P.faint;
+                    font-size: 13px;
+                    wrap: word-wrap;
+                }
+            }
+        }
+    }
+}
+
 component ConversationPane inherits Rectangle {
     background: P.panel;
 
@@ -2486,14 +2923,29 @@ component ConversationPane inherits Rectangle {
                     }
                 }
             }
-            // Calls and the chat's settings panel are still to come.
-            for name in ["phone", "sidebar-simple"]: VerticalLayout {
+            // Calls are still to come.
+            VerticalLayout {
                 alignment: center;
                 DuoIcon {
-                    name: name;
+                    name: "phone";
                     size: 20px;
                     color: P.muted;
                     opacity: 0.4;
+                }
+            }
+            // The chat's settings panel: a group's rules, or its administration (admin.rs).
+            VerticalLayout {
+                alignment: center;
+                DuoIcon {
+                    name: "sidebar-simple";
+                    size: 20px;
+                    color: Conversation.settings-open ? P.accent : settings-touch.has-hover ? P.text : P.muted;
+                    settings-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Conversation.toggle-settings();
+                        }
+                    }
                 }
             }
             VerticalLayout {
@@ -2513,15 +2965,38 @@ component ConversationPane inherits Rectangle {
         }
         if Conversation.search-open: SearchLine { }
         if Conversation.pinned-message.shown: PinnedBar { }
+        if Conversation.topic-id != "": TopicBar { }
 
         scroll := ChatScroll {
             vertical-stretch: 1;
+            from-top: Conversation.showing-topics;
             // 10px between messages, less their rows' room (Line).
             spacing: 4px;
             margin-left: 24px;
             margin-right: 24px;
             margin-top: 4px;
             margin-bottom: 16px;
+            // A group with topics opens on them (src/telegram/topics.rs).
+            if Conversation.showing-topics: TopicList {
+                bg: P.panel;
+                side: P.surface;
+                soft: P.tint;
+                soft-ink: P.tint-ink;
+                line: P.line;
+                accent: P.accent;
+                accent-ink: P.accent-ink;
+                on-accent: P.on-accent;
+                text-color: P.text;
+                muted: P.muted;
+                faint: P.faint;
+                danger: P.danger;
+                selection: P.input-sel;
+                radius: 2px;
+                big-radius: 4px;
+                font-family: P.font;
+                font-size: 15px;
+                small: 13px;
+            }
             for row in Conversation.messages: Line {
                 message: row;
                 reveal(top, bottom) => {
@@ -2559,7 +3034,20 @@ component ConversationPane inherits Rectangle {
             padding-top: 8px;
             CommandList { }
         }
-        if Conversation.can-write && !Actions.selecting: VerticalLayout {
+        // A closed topic takes no messages; what Telegram refused is said above the composer.
+        if Conversation.topic-closed && !Actions.selecting: ClosedTopicNote { }
+        if Conversation.send-error != "" && Conversation.can-write && !Actions.selecting && !Conversation.topic-closed: HorizontalLayout {
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-top: 8px;
+            Text {
+                text: Conversation.send-error;
+                color: P.danger;
+                font-size: 13px;
+                wrap: word-wrap;
+            }
+        }
+        if Conversation.can-write && !Actions.selecting && !Conversation.showing-topics && !Conversation.topic-closed: VerticalLayout {
             padding-left: 24px;
             padding-right: 24px;
             padding-top: 8px;
@@ -2574,6 +3062,7 @@ component ConversationPane inherits Rectangle {
                 input.focus-text();
             }
             HorizontalLayout {
+                alignment: start;
                 spacing: 6px;
                 VerticalLayout {
                     alignment: center;
@@ -2584,10 +3073,18 @@ component ConversationPane inherits Rectangle {
                         background: P.accent;
                     }
                 }
-                Text {
-                    text: @tr("Sending as {0}", Account.name);
-                    color: P.accent-ink;
-                    font-size: 12px;
+                HorizontalLayout {
+                    Text {
+                        text: @tr("Sending as {0}", Account.name);
+                        color: P.accent-ink;
+                        font-size: 12px;
+                    }
+                    // Slow mode: how long still to wait, or the group's pace (the design's 1a).
+                    if Conversation.slow-wait > 0 || Conversation.slow-limited: Text {
+                        text: " · " + (Conversation.slow-wait > 0 ? ExtraWords.slow-wait-hint(Conversation.slow-wait) : ExtraWords.slow-hint(Conversation.slow-mode));
+                        color: P.accent2-ink;
+                        font-size: 12px;
+                    }
                 }
             }
             if Actions.bar != ComposeBar.none: ComposeStrip { }
@@ -2602,7 +3099,8 @@ component ConversationPane inherits Rectangle {
                     input := MessageInput {
                         text <=> Conversation.draft;
                         allow-empty: Actions.bar == ComposeBar.forward;
-                        placeholder: Conversation.keyboard-placeholder != "" ? Conversation.keyboard-placeholder : @tr("Write a message…");
+                        placeholder: Conversation.slow-wait > 0 ? ExtraWords.slow-wait-placeholder(Conversation.slow-wait)
+                            : Conversation.keyboard-placeholder != "" ? Conversation.keyboard-placeholder : @tr("Write a message…");
                         text-color: P.text;
                         placeholder-color: P.faint;
                         selection-color: P.input-sel;
@@ -2782,11 +3280,12 @@ component ConversationPane inherits Rectangle {
                         }
                     }
                 }
-                VerticalLayout {
+                // Scheduling and voice messages are still to come.
+                for name in ["clock", "microphone"]: VerticalLayout {
                     alignment: end;
                     padding-bottom: 9px;
                     DuoIcon {
-                        name: "clock";
+                        name: name;
                         size: 22px;
                         color: P.muted;
                         opacity: 0.4;
@@ -2854,6 +3353,14 @@ component ConversationPane inherits Rectangle {
                 }
             }
         }
+    }
+
+    // The chat's settings, over the right of the pane.
+    if Conversation.settings-open && Conversation.chat-id != "": SettingsPanel {
+        x: root.width - self.width;
+        y: 0;
+        width: min(340px, root.width * 0.4);
+        height: root.height;
     }
 
     menu := PopupWindow {

@@ -48,6 +48,7 @@ export struct ChatRow {
     detail: string,
     unread: int,
     mention: bool,          // an unread message mentions us
+    draft: string,          // words left in its composer: the preview shows them as a draft
     marked: bool,           // marked as unread by hand while it has no unread messages: a dot
     muted: bool,
     pinned: bool,
@@ -242,6 +243,34 @@ export struct BotCommand {
 
 // One line of the open chat: a message, a service message, the day it starts, or a sponsored
 // message (channels show Telegram's own; they are never hidden).
+// A reaction to a message: the emoji, how many gave it (as written: "1.2K"), and whether we did
+// (the design's fifth round; src/telegram/reactions.rs).
+export struct Reaction {
+    emoji: string,
+    count: string,
+    chosen: bool,
+}
+
+// A round video message (a video note): its still and length; it plays in its circle.
+export struct RoundNote {
+    shown: bool,
+    picture: image,
+    has-picture: bool,
+    duration: string,       // "0:14"
+    playing: bool,          // the one that plays now (Conversation.round-playing)
+    loading: bool,          // its file is on its way
+}
+
+// A contact card in a message: who, their number, whether they are on Telegram.
+export struct ContactCard {
+    shown: bool,
+    name: string,
+    initial: string,
+    phone: string,          // "+86 139 0571 2233"
+    registered: bool,       // they have a Telegram account: Message instead of Invite
+    added: bool,            // already among our contacts
+}
+
 export struct MessageRow {
     kind: RowKind,
     id: string,
@@ -271,6 +300,51 @@ export struct MessageRow {
     reply: ReplyQuote,      // the message it replies to
     selected: bool,         // chosen, while choosing messages (Actions.selecting)
     buttons: [ButtonRow],   // a bot's buttons under it, row by row
+    reactions: [Reaction],  // the reactions to it, most given first
+    round: RoundNote,       // a round video message
+    contact: ContactCard,   // a contact card
+    can-share: bool,        // a channel's post: the share link under it (Share)
+}
+
+// A topic of a group with topics (src/telegram/topics.rs): the list the group opens on.
+export struct TopicRow {
+    id: string,             // the forum topic id
+    icon: string,           // its emoji; "" for the general topic, which shows "#"
+    color: color,           // Telegram's colour for it
+    title: string,
+    last: string,           // "Jie: the last message"
+    time: Moment,
+    unread: int,
+    pinned: bool,
+    closed: bool,
+}
+
+// A group's rules and, for its administrators, what they may change (src/telegram/admin.rs):
+// the design's GroupAdmin, in the chat's settings panel.
+export struct AdminPanel {
+    shown: bool,            // a group: there is something to show
+    admin: bool,            // we may change these; else the rules are read-only
+    supergroup: bool,       // the options below the permissions need a supergroup
+    members: int,
+    slow-mode: int,         // seconds between a member's messages; 0 off
+    // What members may do (the group's default permissions).
+    can-send: bool,
+    can-media: bool,        // photos and videos
+    can-stickers: bool,     // stickers and GIFs
+    can-links: bool,
+    can-polls: bool,
+    can-invite: bool,
+    can-pin: bool,
+    can-info: bool,         // change the group's name, photo and description
+    join-request: bool,     // joining by link waits for an administrator
+    protected: bool,        // no saving, no forwarding
+    history: bool,          // new members see the messages before they joined
+    hidden-members: bool,
+    hidden-members-allowed: bool,   // 100 members or more
+    anti-spam: bool,
+    anti-spam-allowed: bool,        // 200 members or more
+    busy: string,           // the setting waiting for Telegram: "slow", a permission's or option's name
+    error: string,          // what Telegram refused, in its words; "" for nothing
 }
 
 
@@ -366,6 +440,104 @@ export global Conversation {
     callback send-command(string);
     in-out property <string> menu-button;
     callback open-bot-menu();
+
+    // Reactions (src/telegram/reactions.rs): the smiley by a message opens the picker for it; a
+    // double click gives the default reaction. The choices are what the chat allows, as Telegram
+    // orders them; max is how many one person may give a message here.
+    in-out property <string> reaction-picker;    // the message the picker is open for, "" for none
+    in-out property <[string]> reaction-choices;
+    in-out property <int> reaction-max;
+    callback open-reactions(string);
+    callback close-reactions();
+    callback react(string, string);              // a message, an emoji: given, or taken back when it was ours
+    callback quick-react(string);                // a double click: the default reaction
+
+    // Round video messages play in place, through the player (src/telegram/viewer.rs); the
+    // frame is Viewer.frame while round-playing is the message.
+    in-out property <string> round-playing;
+    in-out property <string> round-loading;
+    callback play-round(string);                 // play it, or pause it when it plays
+
+    // A contact card's buttons (src/telegram/contacts.rs).
+    callback contact-message(string);            // open a chat with them
+    callback contact-invite(string);             // not on Telegram: an invitation onto the clipboard
+    callback contact-add(string);
+    callback contact-share(string);
+    // A channel's post: the share link under it (Share).
+    callback share-message(string);
+
+    // Topics (src/telegram/topics.rs): a group with topics opens on their list; a topic opened
+    // shows its messages, with the way back to the list in the header.
+    in-out property <bool> is-forum;
+    in-out property <bool> showing-topics;       // the list is in the pane, not messages
+    in-out property <[TopicRow]> topics;
+    in-out property <int> topic-count;
+    in-out property <bool> topics-loading;
+    in-out property <string> topic-id;           // the topic open, "" for none
+    in-out property <string> topic-title;
+    in-out property <string> topic-icon;
+    in-out property <color> topic-color;
+    in-out property <bool> topic-closed;         // no composer, a line saying so
+    callback open-topic(string);
+    callback back-to-topics();
+    // A new topic: its name and one of Telegram's icons.
+    in-out property <bool> new-topic-open;
+    in-out property <string> new-topic-name;
+    in-out property <[string]> topic-icons;      // emoji to choose from
+    in-out property <int> new-topic-icon;        // the one chosen, -1 for none
+    in-out property <bool> new-topic-busy;
+    in-out property <string> new-topic-error;
+    callback start-new-topic();
+    callback cancel-new-topic();
+    callback create-topic();
+
+    // Slow mode (src/telegram/admin.rs): how long members wait between messages, whether that
+    // is us, and how long we still wait after our last one.
+    in-out property <int> slow-mode;
+    in-out property <bool> slow-limited;
+    in-out property <int> slow-wait;
+    // What Telegram refused when sending, shown by the composer until the next try.
+    in-out property <string> send-error;
+
+    // The chat's settings panel (the header's sidebar icon): the group's rules, or its
+    // administration (src/telegram/admin.rs).
+    in-out property <bool> settings-open;
+    callback toggle-settings();
+    in-out property <AdminPanel> admin;
+    callback set-slow-mode(int);
+    callback toggle-permission(string);          // "send", "media", "stickers", "links", "polls", "invite", "pin", "info"
+    callback toggle-option(string);              // "join", "protect", "history", "hide-members", "anti-spam"
+}
+
+// Sharing to other chats (the design's XOverlay; src/telegram/share.rs): a channel's post, or a
+// contact card, to several chats at once, with words of our own first.
+export enum ShareKind { message, contact }
+
+export struct ShareRow {
+    id: string,
+    title: string,
+    initial: string,
+    picture: image,
+    has-picture: bool,
+    kind: ChatKind,
+    sub: string,            // "486 members", "online", …
+    picked: bool,
+}
+
+export global Share {
+    in-out property <bool> open;
+    in-out property <ShareKind> kind;
+    in-out property <string> preview;            // what is shared, in a line
+    in-out property <string> query;
+    in-out property <[ShareRow]> rows;
+    in-out property <int> picked;                // how many chats are chosen
+    in-out property <string> comment;            // words to send first
+    in-out property <bool> busy;
+    in-out property <string> error;              // what Telegram refused
+    callback search(string);
+    callback toggle(string);
+    callback send();
+    callback close();
 }
 
 // The media viewer (the design's media-viewer.js): the open chat's photos and videos, one at a time,

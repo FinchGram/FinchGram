@@ -131,7 +131,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   lay every row out and measure it again at each change among them, so their number is what each
   new message costs. `login.rs`, `chats.rs`,
   `conversation.rs`, `actions.rs` (what can be done with a message), `bots.rs` (what bots put in a
-  chat beyond messages, and the pinned message bar), `account.rs` and
+  chat beyond messages, and the pinned message bar), `reactions.rs`, `topics.rs`, `drafts.rs`,
+  `share.rs`, `admin.rs` (the fifth round, below; `errors.rs` puts Telegram's refusals into the
+  pages' words), `account.rs` and
   `password.rs` (two-step verification) do what the pages ask for; `files.rs` downloads files,
   `avatars.rs` fetches the photos of chats and people for the rows that show them (a letter square
   until then, or for good when there is no photo), `viewer.rs` fills the media viewer and keeps its volume (the
@@ -256,6 +258,62 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   saving, and Telegram's apps keep it out of screenshots) is kept out of screen captures while it
   is in front: the window's sharing type is set to none (`platform::set_window_capturable`), so
   that screenshots and screen recordings show it blank, as macOS does for such windows.
+- The design's fifth round (ui/extras.slint holds what the themes share: the chips, the picker,
+  the round video message, the contact card, the topics, the settings panel's group part, the
+  share panel, and their words):
+  - Reactions (`reactions.rs`): the reactions to a message are chips under it, ours lit; the
+    smiley by the message opens a picker with what the chat allows, in Telegram's order for the
+    message (getMessageAvailableReactions), and a double click gives the account's default
+    reaction (updateDefaultReactionType). addMessageReaction and removeMessageReaction; TDLib keeps
+    to how many one person may give here (chatAvailableReactions.max_reaction_count: one, three
+    with Premium, fewer where the chat says), and the picker says so. A custom emoji reaction is
+    drawn as the emoji it stands for (getCustomEmojiStickers, asked once), a paid one as a star.
+    Channel posts take reactions too.
+  - Topics (`topics.rs`): a group with topics (supergroup.is_forum) opens on its list of topics
+    (getForumTopics): icon, name, last message, unread count, pinned, closed. A topic opened
+    shows its messages alone (getForumTopicHistory; `History::topic_id` keeps messages of other
+    topics out of the rows) with "All topics / the topic" under the header; what we send there
+    goes with the topic (messageTopicForum). A closed topic takes no messages, and a line says so
+    in place of the composer. A new topic takes a name and one of Telegram's icons
+    (getForumTopicDefaultIcons, createForumTopic). updateForumTopicInfo and updateForumTopic are
+    followed, and a changed topic's row is fetched whole (getForumTopic), since its unread count
+    is not in the updates. A topic's icon is its custom emoji's emoji, "#" for the general one.
+  - Round video messages (messageVideoNote): a 180 px circle with the still, the play button and
+    the length; a click plays it in place through the same player as the viewer (`viewer.rs`:
+    the frame is Viewer.frame while Conversation.round-playing names the message), with the ring
+    in the accent while it plays; TDLib is told it was watched (openMessageContent). Recording
+    voice or video messages is not in FinchGram: there is no capture and no Opus encoder yet, so
+    the composer's microphone button is greyed.
+  - Contact cards (messageContact; `contacts.rs`): who, their number, whether they are on
+    Telegram; Message opens a chat with them (Invite, for someone not on Telegram, puts
+    Telegram's invitation on the clipboard: a desktop sends no text messages), Add contact
+    (addContact, or importContacts by the number), Share (the share panel).
+  - Sharing (`share.rs`): a post's share link, or a card's Share, opens the panel: what is
+    shared, a search over the chats we can write in (channels and groups with topics left out),
+    several chosen at once, words of our own sent first, "Send to N chats". Posts and messages
+    are forwarded (forwardMessages), a contact goes as a card (inputMessageContact). A chat that
+    protects its content (has_protected_content) cannot be shared from, and the page says so;
+    what Telegram refuses (CHAT_FORWARDS_RESTRICTED, FLOOD_WAIT_N) stays in the panel.
+  - Drafts (`drafts.rs`): the composer is one; when another chat comes to the front, its words
+    are saved for the chat that leaves (setChatDraftMessage) and the chat that comes puts its own
+    back; writing saves after a pause too. updateChatDraftMessage brings what was written on
+    another device. The chat list shows a draft in place of the last message (Workbench's tree
+    marks the chat "Draft"; Terminal's list "✎").
+  - Slow mode and the group's administration (`admin.rs`): where a group has slow mode, the
+    composer counts the wait down after a message (supergroupFullInfo.slow_mode_delay_expires_in,
+    and SLOWMODE_WAIT_N when Telegram refuses one) and takes none until it is over;
+    administrators are not held. The chat's settings panel (the header's sidebar icon) shows a
+    member the group's rules (slow mode, what administrators turned off) and an owner or
+    administrator the controls: slow mode (setChatSlowModeDelay), what members may do
+    (setChatPermissions), approving new members (toggleSupergroupJoinByRequest), restricting
+    saving and forwarding (toggleChatHasProtectedContent), the history for new members
+    (toggleSupergroupIsAllHistoryAvailable), hiding the member list (100 members or more,
+    toggleSupergroupHasHiddenMembers) and aggressive anti-spam (200 or more,
+    toggleSupergroupHasAggressiveAntiSpamEnabled). What Telegram refuses (CHAT_ADMIN_REQUIRED,
+    …) is shown in the panel; the rest of the design's panel (files, scheduled messages,
+    per-chat privacy) is not in FinchGram yet.
+  - Not in this round: payments (a Buy button says so), polls, locations and choosing a chat for
+    a bot; the mobile themes (FinchGram has no mobile app).
 - The MCP server (`src/mcp/`, [mcp.md](mcp.md)): AI assistants' apps (Claude Desktop, Claude
   Code, …) read the user's chats and act in them through the running app, with the Model Context
   Protocol. The app listens on a Unix socket in its own folder; `finchgram mcp` (the same

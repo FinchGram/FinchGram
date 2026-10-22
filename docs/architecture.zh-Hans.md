@@ -102,7 +102,7 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   分发回复、重新启动和转交更新。`store.rs` 保存 TDLib 告诉我们的东西（聊天、用户、群组、文件夹、打开的聊天的消息），
   每批更新之后把页面用的 model 更新到最新，只动真正变了的行。打开的聊天只显示最新的 100 条消息，往上翻时再增加：
   页面会把每一行都排出来，其中任何一行一变就要把所有行重新量一遍，所以行数就是每条新消息的代价。
-  `login.rs`、`chats.rs`、`conversation.rs`、`actions.rs`（消息操作）、`bots.rs`（机器人在聊天里除消息之外的东西，以及置顶消息条）、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`avatars.rs` 负责给要显示头像的行取来聊天和联系人的头像（取到之前是首字母色块，没有头像的一直是色块），`viewer.rs` 给媒体查看器提供内容并记住它的音量（喇叭旁的音量托盘、↑ ↓ 和滚轮；settings.toml 里的 `video_volume` 和 `video_muted`，下一个视频和下次启动沿用），`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
+  `login.rs`、`chats.rs`、`conversation.rs`、`actions.rs`（消息操作）、`bots.rs`（机器人在聊天里除消息之外的东西，以及置顶消息条）、`reactions.rs`、`topics.rs`、`drafts.rs`、`share.rs`、`admin.rs`（第五轮，见下；`errors.rs` 把 Telegram 的拒绝换成页面的话）、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`avatars.rs` 负责给要显示头像的行取来聊天和联系人的头像（取到之前是首字母色块，没有头像的一直是色块），`viewer.rs` 给媒体查看器提供内容并记住它的音量（喇叭旁的音量托盘、↑ ↓ 和滚轮；settings.toml 里的 `video_volume` 和 `video_muted`，下一个视频和下次启动沿用），`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
   菜单也能做 Telegram 官方应用对聊天能做的事：拉黑或取消拉黑用户（setMessageSenderBlockList）、举报聊天（reportChat，和举报消息走同样的步骤）、
   退出群组或频道（leaveChat）、删除和某个用户或机器人的聊天（deleteChatHistory，TDLib 允许时也可以同时删掉对方那边的）；
   拉黑、退出和删除都会先问一句，退出或删除后聊天的标签页随即关闭。
@@ -178,6 +178,42 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   （has_protected_content：不能转发、不能保存，Telegram 的应用截图时也不显示它）在前台时窗口不参与屏幕捕捉：
   窗口的 sharing type 设为 none（`platform::set_window_capturable`），截图和录屏里它是空白，和 macOS 对这类窗口的
   做法一样。
+- 设计稿第五轮（ui/extras.slint 放三套主题共用的部分：回应条、表情选择器、圆形视频消息、名片、话题、设置栏里的群管理、
+  分享面板，以及它们的文字）：
+  - 表情回应（`reactions.rs`）：消息下面是回应条，每个表情一个小标签带数字，自己点过的高亮；消息旁的笑脸打开选择器，
+    列的是这个聊天允许的表情，按 Telegram 给这条消息排的顺序（getMessageAvailableReactions）；双击消息用账号的默认表情
+    （updateDefaultReactionType）。addMessageReaction 和 removeMessageReaction；每条消息能回应几个由 TDLib 把关
+    （chatAvailableReactions.max_reaction_count：1 个，Premium 3 个，聊天另有限制时更少），选择器里写着。自定义表情的
+    回应显示成它代表的 emoji（getCustomEmojiStickers，问一次），付费回应显示成星星。频道帖子也能回应。
+  - 话题（`topics.rs`）：开了话题的群（supergroup.is_forum）打开先是话题列表（getForumTopics）：图标、名称、最后一条
+    消息、未读数、置顶和关闭。进入话题只显示这个话题的消息（getForumTopicHistory；`History::topic_id` 把别的话题的消息
+    挡在外面），标题下面是「全部话题 / 话题名」；在里面发的消息带着话题（messageTopicForum）。关闭的话题不能发消息，
+    输入框的位置是一行说明。新建话题填名称、选 Telegram 的图标之一（getForumTopicDefaultIcons，createForumTopic）。
+    跟着 updateForumTopicInfo 和 updateForumTopic 走，变了的话题整行重新取（getForumTopic），因为更新里没有未读数。
+    话题的图标是它自定义表情对应的 emoji，综合话题是「#」。
+  - 圆形视频消息（messageVideoNote）：180 px 的圆，里面是静帧、播放按钮和时长；点击就地播放，用的是和查看器同一个
+    播放器（`viewer.rs`：Conversation.round-playing 指着这条消息时画面是 Viewer.frame），播放时外圈是强调色；
+    会告诉 TDLib 看过了（openMessageContent）。录语音和录视频消息 FinchGram 还没有：没有采集，也没有 Opus 编码器，
+    所以输入框的麦克风按钮是灰的。
+  - 联系人名片（messageContact；`contacts.rs`）：谁、号码、是否注册了 Telegram；「发消息」打开和这个人的聊天
+    （没注册的换成「邀请」，把 Telegram 的邀请语复制到剪贴板：桌面发不了短信），「添加联系人」（addContact，没注册的
+    按号码 importContacts），「分享」（分享面板）。
+  - 分享（`share.rs`）：帖子的「分享」或名片的「分享」打开面板：要分享的内容、能写消息的聊天的搜索（频道和开了话题
+    的群不列）、可以多选、先发一句自己的话、「发送给 N 个聊天」。帖子和消息转发（forwardMessages），名片作为名片发
+    （inputMessageContact）。保护内容的聊天（has_protected_content）不能从里面分享，页面会说明；Telegram 拒绝的
+    （CHAT_FORWARDS_RESTRICTED、FLOOD_WAIT_N）留在面板里。
+  - 草稿（`drafts.rs`）：输入框只有一个；切到别的聊天时，里面的字替离开的聊天存起来（setChatDraftMessage），
+    来的聊天把自己的放回去；打字停一会儿也会存。updateChatDraftMessage 带来别的设备上写的。聊天列表里有草稿的聊天用
+    草稿代替最后一条消息（Workbench 的树上标「草稿」；Terminal 的列表是「✎」）。
+  - 慢速模式和群管理（`admin.rs`）：群开了慢速模式时，发一条之后输入区倒计时
+    （supergroupFullInfo.slow_mode_delay_expires_in，以及 Telegram 拒绝时的 SLOWMODE_WAIT_N），结束前不收消息；
+    管理员不受限。聊天设置栏（标题栏的侧栏图标）给普通成员看只读的群规则（慢速模式、管理员关掉了什么），给群主和
+    管理员看控制项：慢速模式（setChatSlowModeDelay）、成员可以做什么（setChatPermissions）、入群需要批准
+    （toggleSupergroupJoinByRequest）、禁止保存和转发（toggleChatHasProtectedContent）、新成员能看之前的消息
+    （toggleSupergroupIsAllHistoryAvailable）、隐藏成员列表（100 人以上，toggleSupergroupHasHiddenMembers）、
+    强力反垃圾（200 人以上，toggleSupergroupHasAggressiveAntiSpamEnabled）。Telegram 拒绝的
+    （CHAT_ADMIN_REQUIRED 等）显示在栏里；设计稿这个栏的其余部分（文件、定时消息、单聊天的隐私开关）FinchGram 还没有。
+  - 这一轮没做的：付款（付款按钮会说明）、投票、位置、替机器人选聊天；手机三主题（FinchGram 没有手机版）。
 - Saved Messages（和自己的聊天）在三个主题里都是聊天列表上方固定的一行，账号还没用过它也在：点这一行时由 TDLib
   建出这个聊天（createPrivateChat）。它不会在下面的文件夹里重复出现；全局搜索匹配的是列表显示的名字（Saved Messages、
   Deleted Account），不是 TDLib 的标题。
