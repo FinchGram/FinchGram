@@ -200,8 +200,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   say). One choice for all folders, `chat_order` in settings.toml; `store.rs` sorts (chats_in).
 - Saved Messages, the chat with oneself, is a fixed row above the chat list in the three themes,
   there before the account has used it: TDLib makes the chat (createPrivateChat) when the row is
-  clicked. It is not repeated in the folders below, and the search matches the names the lists
-  show (Saved Messages, Deleted Account), not TDLib's titles.
+  clicked. It is not repeated in the folders below, and the search over everything matches the
+  names the lists show (Saved Messages, Deleted Account), not TDLib's titles.
 - Searching in the open chat (`search.rs`: the header's magnifying glass, Terminal's "[search]",
   ⌘F) asks TDLib for the messages with the words (searchChatMessages, a hundred at a time, newest
   first; Telegram's servers answer, so the search is theirs, by whole words) and goes to them one
@@ -210,6 +210,28 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   `History::has_newer`), older pages come as before and newer ones as the view comes down, until
   the chat's end; a message sent from there, or the chat opened again, starts from the end anew.
   A reply's original more than two pages up is reached the same way.
+- The search over everything (`global_search.rs`, the design's compose.js round: the title bar's
+  box, ⌘K, Terminal's /search) is a window over the chats. With nothing typed it shows the chats
+  used last; with words, the chats here whose names have them and the contacts (`contacts.rs`:
+  TDLib's getContacts, matched by name, username, or phone number when the words are one), then
+  what Telegram's servers find after a pause: public users, groups and channels by username and
+  title (searchPublicChats, less those joined and the contacts), a person by their whole phone
+  number (searchUserByPhoneNumber, which finds only those who let others find them so; a number
+  nobody has offers to add them as a contact), and messages (searchMessages). A public group or
+  channel shows a card first, with its description (getSupergroupFullInfo), and joins from there
+  (joinChat); a person opens as a chat (createPrivateChat), a message opens its chat at the
+  message. ↑↓ choose, ⏎ opens, Esc closes.
+- The pencil's menu (`new_chat.rs`; Terminal's /group, /channel, /dm, /contact): a new group takes
+  its members, then its name and photo, and is a basic group with its members
+  (createNewBasicGroupChat) or a supergroup without any or with more than a basic group holds
+  (createNewSupergroupChat, the members added after); a new channel is made at its first step, as
+  Telegram's own apps make it, so that the second can check and set its public link
+  (checkChatUsername after Telegram's own rules, setSupergroupUsername) or show its invite link
+  (the primary one, else replacePrimaryChatInviteLink, with a copy button), and the third invites
+  subscribers (addChatMembers); a new chat is a contact's; a new contact is added by phone number
+  (importContacts), a number with no account said so. A photo chosen goes up once the chat exists
+  (setChatPhoto, cut square and made 640 pixels wide first). What Telegram refuses is shown in the
+  dialog, which stays open; the service messages a new chat shows are the servers' own.
 - The MCP server (`src/mcp/`, [mcp.md](mcp.md)): AI assistants' apps (Claude Desktop, Claude
   Code, …) read the user's chats and act in them through the running app, with the Model Context
   Protocol. The app listens on a Unix socket in its own folder; `finchgram mcp` (the same

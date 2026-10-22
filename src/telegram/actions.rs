@@ -1311,7 +1311,7 @@ pub(super) fn show_failure(message: &str) {
 
 /// Esc closes the topmost of the menu, a dialog, the strip and choosing; false when none is open.
 fn escape() -> bool {
-    if super::attachments::escape() || super::chats::escape() {
+    if super::attachments::escape() || super::chats::escape() || super::new_chat::escape() || super::global_search::escape() {
         return true;
     }
     let (menu, deleting, report, picking, bar, selection) = STATE.with(|state| {

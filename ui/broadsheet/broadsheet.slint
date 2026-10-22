@@ -16,6 +16,8 @@ import {
 import { BroadsheetPalette as P } from "palette.slint";
 import { BroadsheetActions } from "actions.slint";
 import { BroadsheetAttachments } from "attachments.slint";
+import { BroadsheetCompose } from "compose.slint";
+import { Search, NewChat, NewDialog, ComposeWords } from "../compose.slint";
 
 export enum BroadsheetView { chats, channels, bots, filters, scheduled }
 
@@ -303,6 +305,7 @@ component Views {
     }
 }
 
+// The search box above the folders: a click, or ⌘K, opens the search over everything (compose.slint).
 component SearchField inherits Rectangle {
     height: 34px;
     border-radius: 4px;
@@ -320,46 +323,13 @@ component SearchField inherits Rectangle {
                 color: P.faint;
             }
         }
-        Rectangle {
+        Text {
             horizontal-stretch: 1;
-            Text {
-                width: parent.width;
-                visible: input.text == "";
-                text: @tr("Search");
-                color: P.faint;
-                font-size: 14px;
-                vertical-alignment: center;
-            }
-            input := TextInput {
-                width: parent.width;
-                height: parent.height;
-                text: Chats.query;
-                color: P.text;
-                font-size: 14px;
-                vertical-alignment: center;
-                selection-background-color: P.input-sel;
-                selection-foreground-color: P.text;
-                text-cursor-width: Look.cursor-width;
-                edited => {
-                    Chats.search(self.text);
-                }
-                accepted => {
-                    // The first row shown: Saved Messages when it matches the words, else the list's first.
-                    if Chats.saved-messages-shown && Chats.query != "" {
-                        Conversation.open(Chats.saved-messages.id);
-                    } else if Chats.list.length > 0 {
-                        Conversation.open(Chats.list[0].id);
-                    }
-                }
-                key-pressed(event) => {
-                    if event.text == Key.Escape {
-                        self.text = "";
-                        Chats.search("");
-                        return accept;
-                    }
-                    return reject;
-                }
-            }
+            text: @tr("Search");
+            color: P.faint;
+            font-size: 14px;
+            vertical-alignment: center;
+            overflow: elide;
         }
         Text {
             text: "⌘K";
@@ -370,14 +340,16 @@ component SearchField inherits Rectangle {
         }
     }
 
-    property <int> search-requests: AppState.search-requests;
-    changed search-requests => {
-        root.focus-search();
+    TouchArea {
+        mouse-cursor: text;
+        clicked => {
+            Search.show();
+        }
     }
 
-    public function focus-search() {
-        input.focus();
-        input.select-all();
+    property <int> search-requests: AppState.search-requests;
+    changed search-requests => {
+        Search.show();
     }
 }
 
@@ -999,10 +971,6 @@ component ListColumn inherits Rectangle {
         chat-menu.show();
     }
 
-    public function focus-search() {
-        search.focus-search();
-    }
-
     VerticalLayout {
         VerticalLayout {
             vertical-stretch: 0;
@@ -1025,12 +993,69 @@ component ListColumn inherits Rectangle {
                 }
                 VerticalLayout {
                     alignment: center;
-                    if root.view == BroadsheetView.chats: DuoIcon {
-                        // Writing to someone new is still to come.
-                        name: "note-pencil";
-                        size: 20px;
-                        color: P.accent;
-                        opacity: 0.4;
+                    // The pencil: a new group, channel or chat, or a new contact (compose.slint).
+                    if root.view == BroadsheetView.chats: Rectangle {
+                        width: 20px;
+                        height: 20px;
+                        DuoIcon {
+                            name: "note-pencil";
+                            size: 20px;
+                            color: P.accent;
+                        }
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                new-menu.show();
+                            }
+                        }
+                        new-menu := PopupWindow {
+                            x: parent.width + 4px - 200px;
+                            y: 30px;
+                            width: 200px;
+                            close-policy: PopupClosePolicy.close-on-click-outside;
+                            Rectangle {
+                                border-radius: 4px;
+                                background: P.panel;
+                                drop-shadow-blur: 32px;
+                                drop-shadow-offset-y: 12px;
+                                drop-shadow-color: P.shadow;
+                                VerticalLayout {
+                                    padding: 6px;
+                                    MenuEntry {
+                                        icon: "users-three";
+                                        label: ComposeWords.new-group();
+                                        activated => {
+                                            new-menu.close();
+                                            NewChat.start(NewDialog.group);
+                                        }
+                                    }
+                                    MenuEntry {
+                                        icon: "megaphone";
+                                        label: ComposeWords.new-channel();
+                                        activated => {
+                                            new-menu.close();
+                                            NewChat.start(NewDialog.channel);
+                                        }
+                                    }
+                                    MenuEntry {
+                                        icon: "chat-circle";
+                                        label: ComposeWords.new-chat();
+                                        activated => {
+                                            new-menu.close();
+                                            NewChat.start(NewDialog.direct);
+                                        }
+                                    }
+                                    MenuEntry {
+                                        icon: "user-plus";
+                                        label: ComposeWords.add-contact();
+                                        activated => {
+                                            new-menu.close();
+                                            NewChat.start(NewDialog.contact);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                     if root.view != BroadsheetView.chats: DuoIcon {
                         name: "x";
@@ -1059,7 +1084,7 @@ component ListColumn inherits Rectangle {
             }
             VerticalLayout {
                 padding-top: root.view == BroadsheetView.chats ? 8px : 0px;
-                search := SearchField {
+                SearchField {
                     visible: root.view == BroadsheetView.chats;
                     height: root.view == BroadsheetView.chats ? 34px : 0px;
                 }
@@ -2646,18 +2671,12 @@ export component BroadsheetWindow inherits Rectangle {
     property <BroadsheetView> view: BroadsheetView.chats;
     background: P.bg;
 
-    // ⌘K, from the menu bar (app.slint).
-    public function focus-search() {
-        root.view = BroadsheetView.chats;
-        list.focus-search();
-    }
-
     VerticalLayout {
         TitleBar { }
         HorizontalLayout {
             vertical-stretch: 1;
             Rail { }
-            list := ListColumn {
+            ListColumn {
                 view <=> root.view;
             }
             ConversationPane {
@@ -2666,7 +2685,9 @@ export component BroadsheetWindow inherits Rectangle {
         }
     }
 
-    // A message's menu and the dialogs of its actions, over everything.
+    // A message's menu and the dialogs of its actions, over everything; the search over everything
+    // and the pencil's dialogs.
     BroadsheetActions { }
     BroadsheetAttachments { }
+    BroadsheetCompose { }
 }

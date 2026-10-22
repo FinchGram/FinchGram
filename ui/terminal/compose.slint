@@ -1,0 +1,1536 @@
+// Terminal's search over everything and the dialogs of the pencil's menu (the design's compose.js
+// round, 1b): the search as a window over the chats, a new group, a new channel, a new chat with a
+// contact, a new contact. The state and the words are shared (ui/compose.slint); this is the look.
+import { ChatKind, Status } from "../telegram.slint";
+import { Search, NewChat, NewDialog, LinkCheck, FoundKind, FoundRow, FoundSection, ComposeWords } from "../compose.slint";
+import { Fmt } from "../format.slint";
+import { Icon, Spinner, Avatar, Paragraph } from "../widgets.slint";
+import { SearchInput } from "../chat.slint";
+import { Look } from "../look.slint";
+import { TerminalPalette as P } from "palette.slint";
+
+// The letter squares of people and chats found: the selection colour, the accents for ink.
+global Squares {
+    public pure function fill(kind: ChatKind) -> color {
+        return P.sel;
+    }
+    public pure function ink(kind: ChatKind) -> color {
+        if kind == ChatKind.channel { return P.accent2; }
+        if kind == ChatKind.bot || kind == ChatKind.saved { return P.accent3; }
+        return P.accent;
+    }
+}
+
+// The small heading above a group of rows: "RECENT", "CHATS AND CONTACTS 3".
+component Label inherits HorizontalLayout {
+    in property <string> text;
+    in property <int> count;
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: 10px;
+    padding-bottom: 4px;
+    spacing: 6px;
+    alignment: start;
+    Text {
+        text: root.text;
+        color: P.faint;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.88px;
+    }
+    if root.count > 0: Text {
+        text: root.count;
+        color: P.faint;
+        font-size: 11px;
+    }
+}
+
+// A chat, a person or a message found: lit while ↑↓ are at it or the pointer is over it.
+component ResultLine inherits Rectangle {
+    in property <FoundRow> item;
+    height: 42px;
+    background: Search.selected == root.item.index ? P.sel : transparent;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Avatar {
+                size: 28px;
+                radius: 3px;
+                fill: Squares.fill(root.item.kind);
+                ink: Squares.ink(root.item.kind);
+                initial: root.item.initial;
+                picture: root.item.picture;
+                has-picture: root.item.has-picture;
+                font-size: 12px;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            Text {
+                text: root.item.title;
+                color: P.text;
+                font-size: 13px;
+                font-weight: 500;
+                overflow: elide;
+            }
+            if ComposeWords.line(root.item) != "": Text {
+                text: ComposeWords.line(root.item);
+                color: P.muted;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        Text {
+            text: ComposeWords.label(root.item);
+            color: P.faint;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Search.choose(root.item.index);
+        }
+        changed has-hover => {
+            if self.has-hover {
+                Search.selected = root.item.index;
+            }
+        }
+    }
+}
+
+// One of the two hints under the recent chats: what a username and a phone number find.
+component Hint inherits HorizontalLayout {
+    in property <string> icon;
+    in property <string> text;
+    spacing: 8px;
+    alignment: start;
+    VerticalLayout {
+        alignment: start;
+        padding-top: 2px;
+        Icon {
+            name: root.icon;
+            size: 14px;
+            color: P.accent;
+        }
+    }
+    Paragraph {
+        horizontal-stretch: 1;
+        text: root.text;
+        color: P.muted;
+        font-size: 12px;
+        line-height-factor: P.leading(1.5);
+    }
+}
+
+// A filled button: the search's "Add as contact", the card's "Join group".
+component FilledButton inherits Rectangle {
+    in property <string> label;
+    in property <string> icon;
+    in property <string> keys;
+    in property <bool> enabled: true;
+    in property <bool> busy;
+    callback clicked();
+    height: 34px;
+    width: words.preferred-width + 32px;
+    border-radius: 3px;
+    background: root.enabled ? P.accent : P.line;
+    words := HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 8px;
+        if root.icon != "" && !root.busy: VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 15px;
+                color: P.on-accent;
+            }
+        }
+        if root.busy: VerticalLayout {
+            alignment: center;
+            Spinner {
+                size: 15px;
+                color: P.on-accent;
+            }
+        }
+        Text {
+            text: root.label;
+            color: root.enabled ? P.on-accent : P.faint;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+        if root.keys != "": Text {
+            text: root.keys;
+            color: P.on-accent;
+            opacity: 0.8;
+            font-family: P.font;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+    TouchArea {
+        enabled: root.enabled && !root.busy;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A plain button with a hairline: "Cancel", "Back".
+component PlainButton inherits Rectangle {
+    in property <string> label;
+    callback clicked();
+    height: 34px;
+    width: words.preferred-width + 28px;
+    border-radius: 3px;
+    border-width: 1px;
+    border-color: P.line;
+    background: touch.has-hover ? P.side : transparent;
+    words := Text {
+        text: root.label;
+        color: P.muted;
+        font-size: 13px;
+        vertical-alignment: center;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// The search over everything: a window at the top of the chats, with the words at its head, the
+// results (or the chats used last, with nothing typed), a public chat's card, and the keys at its foot.
+component SearchPalette inherits Rectangle {
+    background: #1b1f242e;
+
+    TouchArea {
+        clicked => {
+            Search.close();
+        }
+    }
+
+    box := Rectangle {
+        property <length> body-height: Search.card-open ? card.preferred-height : list.preferred-height;
+        property <length> body-shown: min(538px, body-height);
+        x: (parent.width - self.width) / 2;
+        y: 46px;
+        width: 600px;
+        height: 48px + body-shown + 34px;
+        border-radius: 3px;
+        background: P.bg;
+        border-width: 1px;
+        border-color: P.line;
+        drop-shadow-blur: 60px;
+        drop-shadow-offset-y: 24px;
+        drop-shadow-color: #1b1f2447;
+        clip: true;
+
+        TouchArea { }
+
+        VerticalLayout {
+            // The words.
+            Rectangle {
+                height: 48px;
+                Rectangle {
+                    y: parent.height - 1px;
+                    height: 1px;
+                    background: P.line;
+                }
+                HorizontalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    spacing: 10px;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "magnifying-glass";
+                            size: 17px;
+                            color: P.faint;
+                        }
+                    }
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        Text {
+                            width: parent.width;
+                            height: parent.height;
+                            visible: input.text == "" && input.preedit-text == "";
+                            text: ComposeWords.placeholder();
+                            color: P.faint;
+                            font-size: 15px;
+                            vertical-alignment: center;
+                            overflow: elide;
+                        }
+                        input := TextInput {
+                            width: parent.width;
+                            height: parent.height;
+                            single-line: true;
+                            text <=> Search.query;
+                            color: P.text;
+                            font-size: 15px;
+                            vertical-alignment: center;
+                            selection-background-color: P.accent;
+                            selection-foreground-color: P.on-accent;
+                            text-cursor-width: Look.cursor-width;
+                            init => {
+                                self.focus();
+                            }
+                            edited => {
+                                Search.edited(self.text);
+                            }
+                            key-pressed(event) => {
+                                if event.text == Key.Escape {
+                                    if Search.card-open {
+                                        Search.back();
+                                    } else {
+                                        Search.close();
+                                    }
+                                    return accept;
+                                }
+                                if event.text == Key.UpArrow {
+                                    Search.move(-1);
+                                    return accept;
+                                }
+                                if event.text == Key.DownArrow {
+                                    Search.move(1);
+                                    return accept;
+                                }
+                                if event.text == Key.Return && self.preedit-text == "" {
+                                    if Search.card-open {
+                                        Search.join();
+                                    } else {
+                                        Search.choose(-1);
+                                    }
+                                    return accept;
+                                }
+                                return reject;
+                            }
+                        }
+                    }
+                    if Search.waiting: VerticalLayout {
+                        alignment: center;
+                        Spinner {
+                            size: 14px;
+                            color: P.faint;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: esc.preferred-width + 12px;
+                            height: esc.preferred-height + 4px;
+                            border-radius: 3px;
+                            border-width: 1px;
+                            border-color: P.line;
+                            esc := Text {
+                                text: "esc";
+                                color: P.faint;
+                                font-family: P.font;
+                                font-size: 11px;
+                            }
+                            TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    Search.close();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // The results, or the card.
+            Rectangle {
+                height: box.body-shown;
+                clip: true;
+                Flickable {
+                    visible: !Search.card-open;
+                    width: parent.width;
+                    height: parent.height;
+                    mouse-drag-pan-enabled: false;
+                    content-width: self.width;
+                    content-height: list.preferred-height;
+                    list := VerticalLayout {
+                        width: parent.width;
+                        alignment: start;
+                        padding-top: 4px;
+                        padding-bottom: 8px;
+                        if Search.empty: Label {
+                            text: ComposeWords.recent();
+                        }
+                        if Search.empty: VerticalLayout {
+                            for row in Search.recent: ResultLine {
+                                item: row;
+                            }
+                        }
+                        if Search.empty: HorizontalLayout {
+                            padding-left: 16px;
+                            padding-right: 16px;
+                            padding-top: 10px;
+                            padding-bottom: 2px;
+                            Rectangle {
+                                height: hints.preferred-height;
+                                border-radius: 3px;
+                                background: P.side;
+                                hints := VerticalLayout {
+                                    padding-left: 12px;
+                                    padding-right: 12px;
+                                    padding-top: 10px;
+                                    padding-bottom: 10px;
+                                    spacing: 6px;
+                                    Hint {
+                                        icon: "at";
+                                        text: ComposeWords.hint-username();
+                                    }
+                                    Hint {
+                                        icon: "phone";
+                                        text: ComposeWords.hint-phone();
+                                    }
+                                }
+                            }
+                        }
+                        for section in Search.sections: VerticalLayout {
+                            Label {
+                                text: ComposeWords.section(section.kind);
+                                count: section.count;
+                            }
+                            for row in section.rows: ResultLine {
+                                item: row;
+                            }
+                        }
+                        if Search.phone-missed: VerticalLayout {
+                            padding-left: 16px;
+                            padding-right: 16px;
+                            padding-top: 10px;
+                            spacing: 10px;
+                            Text {
+                                text: ComposeWords.phone-missed(Search.query);
+                                color: P.text;
+                                font-size: 13px;
+                                font-weight: 600;
+                            }
+                            Paragraph {
+                                text: ComposeWords.phone-note();
+                                color: P.muted;
+                                font-size: 12px;
+                                line-height-factor: P.leading(1.5);
+                            }
+                            HorizontalLayout {
+                                alignment: start;
+                                FilledButton {
+                                    height: 32px;
+                                    icon: "user-plus";
+                                    label: ComposeWords.add-as-contact();
+                                    keys: "⏎";
+                                    clicked => {
+                                        Search.add-contact();
+                                    }
+                                }
+                            }
+                        }
+                        if Search.none: VerticalLayout {
+                            padding-left: 16px;
+                            padding-right: 16px;
+                            padding-top: 22px;
+                            padding-bottom: 10px;
+                            spacing: 6px;
+                            Text {
+                                text: ComposeWords.none(Search.query);
+                                color: P.text;
+                                font-size: 13px;
+                                font-weight: 600;
+                                wrap: word-wrap;
+                            }
+                            Paragraph {
+                                text: ComposeWords.none-note();
+                                color: P.muted;
+                                font-size: 12px;
+                                line-height-factor: P.leading(1.5);
+                            }
+                        }
+                        if Search.error != "" && !Search.card-open: HorizontalLayout {
+                            padding-left: 16px;
+                            padding-right: 16px;
+                            padding-top: 8px;
+                            Paragraph {
+                                text: Search.error;
+                                color: P.danger;
+                                font-size: 12px;
+                            }
+                        }
+                    }
+                }
+                Flickable {
+                    visible: Search.card-open;
+                    width: parent.width;
+                    height: parent.height;
+                    mouse-drag-pan-enabled: false;
+                    content-width: self.width;
+                    content-height: card.preferred-height;
+                    card := VerticalLayout {
+                        width: parent.width;
+                        alignment: start;
+                        padding-left: 20px;
+                        padding-right: 20px;
+                        padding-top: 16px;
+                        padding-bottom: 20px;
+                        spacing: 14px;
+                        HorizontalLayout {
+                            alignment: start;
+                            Rectangle {
+                                width: back.preferred-width;
+                                height: back.preferred-height;
+                                back := HorizontalLayout {
+                                    spacing: 6px;
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Icon {
+                                            name: "arrow-left";
+                                            size: 12px;
+                                            color: P.accent;
+                                        }
+                                    }
+                                    Text {
+                                        text: ComposeWords.back-to-results();
+                                        color: P.accent;
+                                        font-size: 12px;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                                TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => {
+                                        Search.back();
+                                    }
+                                }
+                            }
+                        }
+                        HorizontalLayout {
+                            spacing: 14px;
+                            Avatar {
+                                size: 56px;
+                                radius: 3px;
+                                fill: Squares.fill(Search.card.kind);
+                                ink: Squares.ink(Search.card.kind);
+                                initial: Search.card.initial;
+                                picture: Search.card.picture;
+                                has-picture: Search.card.has-picture;
+                                font-size: 22px;
+                            }
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 3px;
+                                Text {
+                                    text: Search.card.title;
+                                    color: P.text;
+                                    font-size: 17px;
+                                    font-weight: 600;
+                                    overflow: elide;
+                                }
+                                Text {
+                                    text: ComposeWords.card-line(Search.card);
+                                    color: P.muted;
+                                    font-size: 12px;
+                                    overflow: elide;
+                                }
+                            }
+                        }
+                        if Search.card-about != "": Paragraph {
+                            text: Search.card-about;
+                            color: P.text;
+                            font-size: 13px;
+                            line-height-factor: P.leading(1.55);
+                        }
+                        HorizontalLayout {
+                            alignment: start;
+                            spacing: 8px;
+                            FilledButton {
+                                label: ComposeWords.join(Search.card.kind);
+                                busy: Search.card-busy;
+                                clicked => {
+                                    Search.join();
+                                }
+                            }
+                            PlainButton {
+                                label: ComposeWords.cancel();
+                                clicked => {
+                                    Search.back();
+                                }
+                            }
+                        }
+                        if Search.error != "": Paragraph {
+                            text: Search.error;
+                            color: P.danger;
+                            font-size: 12px;
+                            line-height-factor: P.leading(1.5);
+                        }
+                        Paragraph {
+                            text: ComposeWords.join-note(Search.card.kind);
+                            color: P.faint;
+                            font-size: 12px;
+                            line-height-factor: P.leading(1.5);
+                        }
+                    }
+                }
+            }
+
+            // The keys.
+            Rectangle {
+                height: 34px;
+                background: P.side;
+                Rectangle {
+                    y: 0;
+                    height: 1px;
+                    background: P.line;
+                }
+                HorizontalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    spacing: 16px;
+                    Text {
+                        text: ComposeWords.keys-select();
+                        color: P.faint;
+                        font-family: P.font;
+                        font-size: 11px;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: ComposeWords.keys-open();
+                        color: P.faint;
+                        font-family: P.font;
+                        font-size: 11px;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: ComposeWords.keys-close();
+                        color: P.faint;
+                        font-family: P.font;
+                        font-size: 11px;
+                        vertical-alignment: center;
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    Text {
+                        text: "⌘K";
+                        color: P.faint;
+                        font-family: P.font;
+                        font-size: 11px;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// A one-line box of the dialogs: a name, a link, a phone number.
+component LineInput inherits Rectangle {
+    in property <string> placeholder;
+    in property <string> lead;                  // words before the input: "t.me/"
+    in property <bool> take-focus;
+    in property <int> longest: 0;               // 0: no limit
+    in-out property <string> text <=> input.text;
+    callback edited();
+    callback accepted();
+    height: 36px;
+    border-radius: 3px;
+    background: P.bg;
+    border-width: 1px;
+    border-color: input.has-focus ? P.accent.transparentize(0.4) : P.line;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        if root.lead != "": Text {
+            text: root.lead;
+            color: P.faint;
+            font-size: 14px;
+            vertical-alignment: center;
+        }
+        Rectangle {
+            horizontal-stretch: 1;
+            Text {
+                width: parent.width;
+                height: parent.height;
+                visible: input.text == "" && input.preedit-text == "";
+                text: root.placeholder;
+                color: P.faint;
+                font-size: 14px;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            input := TextInput {
+                width: parent.width;
+                height: parent.height;
+                single-line: true;
+                color: P.text;
+                font-size: 14px;
+                vertical-alignment: center;
+                selection-background-color: P.accent;
+                selection-foreground-color: P.on-accent;
+                text-cursor-width: Look.cursor-width;
+                init => {
+                    if root.take-focus {
+                        self.focus();
+                    }
+                }
+                edited => {
+                    if root.longest > 0 && self.text.character-count > root.longest {
+                        self.text = root.kept;
+                    }
+                    root.kept = self.text;
+                    root.edited();
+                }
+                accepted => {
+                    root.accepted();
+                }
+                key-pressed(event) => {
+                    if event.text == Key.Escape {
+                        NewChat.close();
+                        return accept;
+                    }
+                    return reject;
+                }
+            }
+        }
+    }
+    property <string> kept;
+}
+
+// The channel's description: a few lines.
+component AboutInput inherits Rectangle {
+    in property <string> placeholder;
+    in-out property <string> text <=> input.text;
+    height: 79px;
+    border-radius: 3px;
+    background: P.bg;
+    border-width: 1px;
+    border-color: input.has-focus ? P.accent.transparentize(0.4) : P.line;
+
+    Text {
+        x: 10px;
+        y: 8px;
+        width: parent.width - 20px;
+        visible: input.text == "" && input.preedit-text == "";
+        text: root.placeholder;
+        color: P.faint;
+        font-size: 14px;
+        line-height-factor: P.leading(1.5);
+    }
+    Flickable {
+        x: 10px;
+        y: 8px;
+        width: parent.width - 20px;
+        height: parent.height - 16px;
+        mouse-drag-pan-enabled: false;
+        content-height: max(self.height, input.preferred-height);
+        content-y: min(0px, self.height - self.content-height);
+        input := TextInput {
+            width: parent.width;
+            single-line: false;
+            wrap: word-wrap;
+            color: P.text;
+            font-size: 14px;
+            line-height-factor: P.leading(1.5);
+            selection-background-color: P.accent;
+            selection-foreground-color: P.on-accent;
+            text-cursor-width: Look.cursor-width;
+            edited => {
+                if self.text.character-count > 255 {
+                    self.text = root.kept;
+                }
+                root.kept = self.text;
+            }
+            key-pressed(event) => {
+                if event.text == Key.Escape {
+                    NewChat.close();
+                    return accept;
+                }
+                return reject;
+            }
+        }
+    }
+    property <string> kept;
+}
+
+// A contact in the dialogs' lists, with a box to pick it for a group or channel.
+component ContactLine inherits Rectangle {
+    in property <FoundRow> item;
+    in property <bool> pick;
+    height: 42px;
+    border-radius: 3px;
+    background: touch.has-hover ? P.side : transparent;
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Avatar {
+                size: 30px;
+                radius: 3px;
+                fill: Squares.fill(root.item.kind);
+                ink: Squares.ink(root.item.kind);
+                initial: root.item.initial;
+                picture: root.item.picture;
+                has-picture: root.item.has-picture;
+                font-size: 12px;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            Text {
+                text: root.item.title;
+                color: P.text;
+                font-size: 13px;
+                font-weight: 500;
+                overflow: elide;
+            }
+            Text {
+                text: ComposeWords.contact-line(root.item);
+                color: P.faint;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        if root.pick: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 18px;
+                height: 18px;
+                border-radius: 2px;
+                background: root.item.picked ? P.accent : transparent;
+                border-width: root.item.picked ? 0 : 1.5px;
+                border-color: P.faint;
+                if root.item.picked: Icon {
+                    name: "check";
+                    size: 12px;
+                    color: P.on-accent;
+                }
+            }
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            if root.pick {
+                NewChat.toggle(root.item.user-id);
+            } else {
+                NewChat.open-contact(root.item.user-id);
+            }
+        }
+    }
+}
+
+// One of the new chat dialog's three ways out: a new group, a new channel, a new contact.
+component Entry inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    callback activated();
+    height: 32px;
+    border-radius: 3px;
+    background: touch.has-hover ? P.side : transparent;
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 10px;
+        Rectangle {
+            width: 30px;
+            Icon {
+                name: root.icon;
+                size: 17px;
+                color: P.accent;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.label;
+            color: P.accent;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+// A chip for a contact picked: its name, and × to let it go.
+component Chip inherits Rectangle {
+    in property <FoundRow> item;
+    height: 26px;
+    width: words.preferred-width + 16px + 6px + 15px;
+    border-radius: 3px;
+    background: P.sel;
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 6px;
+        spacing: 6px;
+        words := Text {
+            text: root.item.title;
+            color: P.accent;
+            font-size: 12px;
+            font-weight: 500;
+            vertical-alignment: center;
+        }
+        Rectangle {
+            width: 15px;
+            Icon {
+                name: "x";
+                size: 11px;
+                color: P.accent;
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    NewChat.toggle(root.item.user-id);
+                }
+            }
+        }
+    }
+}
+
+// The square for the group's or channel's photo: the photo chosen, else the camera, or the name's
+// first letter once there is a name. A click opens the system's panel.
+component PhotoSquare inherits Rectangle {
+    in property <color> fill;
+    in property <color> ink;
+    width: 56px;
+    height: 56px;
+    border-radius: 3px;
+    background: root.fill;
+    clip: NewChat.has-photo;
+    if NewChat.has-photo: Image {
+        width: parent.width;
+        height: parent.height;
+        source: NewChat.photo;
+        image-fit: cover;
+    }
+    if !NewChat.has-photo && NewChat.name == "": Icon {
+        name: "camera-plus";
+        size: 22px;
+        color: root.ink;
+    }
+    if !NewChat.has-photo && NewChat.name != "": Text {
+        text: NewChat.name-initial;
+        color: root.ink;
+        font-size: 22px;
+        font-weight: 600;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            NewChat.choose-photo();
+        }
+    }
+}
+
+// A choice of the channel's type: a radio button, a name and a line.
+component TypeChoice inherits Rectangle {
+    in property <string> title;
+    in property <string> note;
+    in property <bool> chosen;
+    callback activated();
+    height: words.preferred-height;
+    border-radius: 3px;
+    border-width: 1px;
+    border-color: root.chosen ? P.accent : P.line;
+    words := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: start;
+            padding-top: 1px;
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: 3px;
+                border-width: 1.5px;
+                border-color: root.chosen ? P.accent : P.line;
+                if root.chosen: Rectangle {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 3px;
+                    background: P.accent;
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            Text {
+                text: root.title;
+                color: P.text;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            Paragraph {
+                text: root.note;
+                color: P.muted;
+                font-size: 12px;
+                line-height-factor: P.leading(1.45);
+            }
+        }
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+// What went wrong, in the dialog.
+component ErrorBox inherits Rectangle {
+    in property <string> text;
+    height: words.preferred-height;
+    border-radius: 3px;
+    background: P.sel;
+    words := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 9px;
+        padding-bottom: 9px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: start;
+            padding-top: 1px;
+            Icon {
+                name: "warning-circle";
+                size: 15px;
+                color: P.accent2;
+            }
+        }
+        Paragraph {
+            horizontal-stretch: 1;
+            text: root.text;
+            color: P.accent2;
+            font-size: 12px;
+            line-height-factor: P.leading(1.5);
+        }
+    }
+}
+
+// A dialog of the pencil's menu.
+component NewChatDialog inherits Rectangle {
+    property <bool> group: NewChat.dialog == NewDialog.group;
+    property <bool> channel: NewChat.dialog == NewDialog.channel;
+    property <bool> direct: NewChat.dialog == NewDialog.direct;
+    property <bool> contact: NewChat.dialog == NewDialog.contact;
+    // Choosing contacts: a group's members, a channel's subscribers.
+    property <bool> pick: (group && NewChat.step == 1) || (channel && NewChat.step == 3);
+    property <bool> has-search: pick || direct;
+    property <bool> primary-enabled: !NewChat.busy && ComposeWords.primary-enabled(NewChat.dialog, NewChat.step, NewChat.name, NewChat.link-check, NewChat.public, NewChat.first-name, NewChat.phone-ok);
+    background: #00000059;
+
+    function go() {
+        if !root.primary-enabled {
+            return;
+        }
+        if root.contact {
+            NewChat.add-contact();
+        } else if (root.group && NewChat.step == 2) || (root.channel && NewChat.step == 3) {
+            NewChat.create();
+        } else {
+            NewChat.next();
+        }
+    }
+
+    TouchArea {
+        clicked => {
+            NewChat.close();
+        }
+    }
+
+    box := Rectangle {
+        property <length> body-shown: min(640px - head.preferred-height - foot.preferred-height, body.preferred-height);
+        x: (parent.width - self.width) / 2;
+        y: 96px;
+        width: 440px;
+        height: head.preferred-height + body-shown + foot.preferred-height;
+        border-radius: 3px;
+        background: P.bg;
+        border-width: 1px;
+        border-color: P.line;
+        drop-shadow-blur: 60px;
+        drop-shadow-offset-y: 24px;
+        drop-shadow-color: #0000004d;
+        clip: true;
+
+        TouchArea { }
+
+        VerticalLayout {
+            head := HorizontalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                padding-top: 18px;
+                padding-bottom: 12px;
+                spacing: 12px;
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 3px;
+                    Text {
+                        text: ComposeWords.title(NewChat.dialog);
+                        color: P.text;
+                        font-size: 16px;
+                        font-weight: 600;
+                    }
+                    Text {
+                        text: ComposeWords.subtitle(NewChat.dialog, NewChat.step, NewChat.picked.length);
+                        color: P.faint;
+                        font-size: 12px;
+                        overflow: elide;
+                    }
+                }
+                VerticalLayout {
+                    alignment: start;
+                    Rectangle {
+                        width: 20px;
+                        height: 20px;
+                        Icon {
+                            name: "x";
+                            size: 16px;
+                            color: P.faint;
+                        }
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                NewChat.close();
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                height: box.body-shown;
+                clip: true;
+                Flickable {
+                    width: parent.width;
+                    height: parent.height;
+                    mouse-drag-pan-enabled: false;
+                    content-width: self.width;
+                    content-height: body.preferred-height;
+                    body := VerticalLayout {
+                        width: parent.width;
+                        alignment: start;
+                        padding-left: 20px;
+                        padding-right: 20px;
+                        padding-top: 2px;
+                        padding-bottom: 4px;
+                        spacing: 12px;
+
+                        if root.has-search: Rectangle {
+                            height: 34px;
+                            border-radius: 3px;
+                            border-width: 1px;
+                            border-color: P.line;
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                spacing: 8px;
+                                VerticalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        name: "magnifying-glass";
+                                        size: 14px;
+                                        color: P.faint;
+                                    }
+                                }
+                                SearchInput {
+                                    horizontal-stretch: 1;
+                                    placeholder: ComposeWords.search-contacts();
+                                    text-color: P.text;
+                                    placeholder-color: P.faint;
+                                    selection-color: P.accent;
+                                    selection-text-color: P.on-accent;
+                                    font-family: P.font;
+                                    font-size: 13px;
+                                    edited(words) => {
+                                        NewChat.search(words);
+                                    }
+                                    accepted => {
+                                        if root.direct && NewChat.contacts.length > 0 {
+                                            NewChat.open-contact(NewChat.contacts[0].user-id);
+                                        } else if root.pick {
+                                            root.go();
+                                        }
+                                    }
+                                    escape => {
+                                        NewChat.close();
+                                    }
+                                }
+                            }
+                        }
+                        if root.pick && NewChat.picked.length > 0: Flickable {
+                            height: 26px;
+                            mouse-drag-pan-enabled: false;
+                            content-height: 26px;
+                            content-width: chips.preferred-width;
+                            chips := HorizontalLayout {
+                                alignment: start;
+                                spacing: 6px;
+                                for row in NewChat.picked: Chip {
+                                    item: row;
+                                }
+                            }
+                        }
+                        if root.direct: VerticalLayout {
+                            spacing: 12px;
+                            VerticalLayout {
+                                Entry {
+                                    icon: "users-three";
+                                    label: ComposeWords.new-group();
+                                    activated => {
+                                        NewChat.start(NewDialog.group);
+                                    }
+                                }
+                                Entry {
+                                    icon: "megaphone";
+                                    label: ComposeWords.new-channel();
+                                    activated => {
+                                        NewChat.start(NewDialog.channel);
+                                    }
+                                }
+                                Entry {
+                                    icon: "user-plus";
+                                    label: ComposeWords.add-contact();
+                                    activated => {
+                                        NewChat.start(NewDialog.contact);
+                                    }
+                                }
+                            }
+                            Text {
+                                text: ComposeWords.contacts();
+                                color: P.faint;
+                                font-size: 11px;
+                                font-weight: 600;
+                                letter-spacing: 0.88px;
+                            }
+                        }
+                        if root.has-search: VerticalLayout {
+                            for row in NewChat.contacts: ContactLine {
+                                item: row;
+                                pick: root.pick;
+                            }
+                            if NewChat.contacts.length == 0: Text {
+                                text: ComposeWords.no-contacts(NewChat.query);
+                                color: P.faint;
+                                font-size: 12px;
+                                wrap: word-wrap;
+                            }
+                        }
+
+                        // The group's name and photo.
+                        if root.group && NewChat.step == 2: HorizontalLayout {
+                            spacing: 14px;
+                            PhotoSquare {
+                                fill: P.sel;
+                                ink: P.accent;
+                            }
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 4px;
+                                LineInput {
+                                    placeholder: ComposeWords.group-name();
+                                    take-focus: true;
+                                    longest: 128;
+                                    text <=> NewChat.name;
+                                    edited => {
+                                        NewChat.name-edited();
+                                    }
+                                    accepted => {
+                                        root.go();
+                                    }
+                                }
+                                Text {
+                                    text: NewChat.name.character-count + "/128";
+                                    color: P.faint;
+                                    font-size: 11px;
+                                    horizontal-alignment: right;
+                                }
+                            }
+                        }
+                        if root.group && NewChat.step == 2: Rectangle {
+                            height: members.preferred-height;
+                            border-radius: 3px;
+                            background: P.side;
+                            members := VerticalLayout {
+                                padding-left: 12px;
+                                padding-right: 12px;
+                                padding-top: 10px;
+                                padding-bottom: 10px;
+                                spacing: 4px;
+                                Text {
+                                    text: ComposeWords.members();
+                                    color: P.faint;
+                                    font-size: 11px;
+                                    font-weight: 600;
+                                    letter-spacing: 0.88px;
+                                }
+                                Paragraph {
+                                    text: ComposeWords.member-line(NewChat.picked-names);
+                                    color: P.text;
+                                    font-size: 13px;
+                                    line-height-factor: P.leading(1.5);
+                                }
+                            }
+                        }
+
+                        // The channel's name and description.
+                        if root.channel && NewChat.step == 1: HorizontalLayout {
+                            spacing: 14px;
+                            PhotoSquare {
+                                fill: P.sel;
+                                ink: P.accent2;
+                            }
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                spacing: 4px;
+                                LineInput {
+                                    placeholder: ComposeWords.channel-name();
+                                    take-focus: true;
+                                    longest: 128;
+                                    text <=> NewChat.name;
+                                    edited => {
+                                        NewChat.name-edited();
+                                    }
+                                    accepted => {
+                                        root.go();
+                                    }
+                                }
+                                Text {
+                                    text: NewChat.name.character-count + "/128";
+                                    color: P.faint;
+                                    font-size: 11px;
+                                    horizontal-alignment: right;
+                                }
+                            }
+                        }
+                        if root.channel && NewChat.step == 1: VerticalLayout {
+                            spacing: 4px;
+                            AboutInput {
+                                placeholder: ComposeWords.description();
+                                text <=> NewChat.about;
+                            }
+                            HorizontalLayout {
+                                spacing: 8px;
+                                Text {
+                                    horizontal-stretch: 1;
+                                    text: ComposeWords.description-note();
+                                    color: P.faint;
+                                    font-size: 11px;
+                                    overflow: elide;
+                                }
+                                Text {
+                                    text: NewChat.about.character-count + "/255";
+                                    color: P.faint;
+                                    font-size: 11px;
+                                }
+                            }
+                        }
+
+                        // Public or private.
+                        if root.channel && NewChat.step == 2: TypeChoice {
+                            title: ComposeWords.public-channel();
+                            note: ComposeWords.public-note();
+                            chosen: NewChat.public;
+                            activated => {
+                                NewChat.set-public(true);
+                            }
+                        }
+                        if root.channel && NewChat.step == 2: TypeChoice {
+                            title: ComposeWords.private-channel();
+                            note: ComposeWords.private-note();
+                            chosen: !NewChat.public;
+                            activated => {
+                                NewChat.set-public(false);
+                            }
+                        }
+                        if root.channel && NewChat.step == 2 && NewChat.public: VerticalLayout {
+                            spacing: 6px;
+                            Text {
+                                text: ComposeWords.public-link();
+                                color: P.muted;
+                                font-size: 12px;
+                                font-weight: 600;
+                            }
+                            LineInput {
+                                placeholder: ComposeWords.link-placeholder();
+                                lead: "t.me/";
+                                take-focus: true;
+                                longest: 32;
+                                text <=> NewChat.username;
+                                edited => {
+                                    NewChat.username-edited();
+                                }
+                                accepted => {
+                                    root.go();
+                                }
+                            }
+                            Paragraph {
+                                text: ComposeWords.link-check(NewChat.link-check, NewChat.username, NewChat.error);
+                                color: ComposeWords.link-tone(NewChat.link-check) == 2 ? P.accent : ComposeWords.link-tone(NewChat.link-check) == 1 ? P.danger : P.faint;
+                                font-size: 12px;
+                            }
+                        }
+                        if root.channel && NewChat.step == 2 && !NewChat.public: VerticalLayout {
+                            spacing: 6px;
+                            Text {
+                                text: ComposeWords.invite-link();
+                                color: P.muted;
+                                font-size: 12px;
+                                font-weight: 600;
+                            }
+                            Rectangle {
+                                height: 36px;
+                                border-radius: 3px;
+                                background: P.side;
+                                HorizontalLayout {
+                                    padding-left: 10px;
+                                    padding-right: 10px;
+                                    spacing: 8px;
+                                    Text {
+                                        horizontal-stretch: 1;
+                                        text: NewChat.invite-link == "" ? "…" : NewChat.invite-link;
+                                        color: P.text;
+                                        font-family: P.font;
+                                        font-size: 13px;
+                                        vertical-alignment: center;
+                                        overflow: elide;
+                                    }
+                                    if NewChat.link-copied: Text {
+                                        text: ComposeWords.copied();
+                                        color: P.accent;
+                                        font-size: 12px;
+                                        vertical-alignment: center;
+                                    }
+                                    VerticalLayout {
+                                        alignment: center;
+                                        Rectangle {
+                                            width: 20px;
+                                            height: 20px;
+                                            Icon {
+                                                name: "copy";
+                                                size: 15px;
+                                                color: copy-touch.has-hover ? P.accent : P.muted;
+                                            }
+                                            copy-touch := TouchArea {
+                                                enabled: NewChat.invite-link != "";
+                                                mouse-cursor: pointer;
+                                                clicked => {
+                                                    NewChat.copy-invite-link();
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            Paragraph {
+                                text: ComposeWords.invite-note();
+                                color: P.faint;
+                                font-size: 12px;
+                                line-height-factor: P.leading(1.45);
+                            }
+                        }
+
+                        // A new contact.
+                        if root.contact: HorizontalLayout {
+                            spacing: 8px;
+                            LineInput {
+                                placeholder: ComposeWords.first-name();
+                                take-focus: true;
+                                longest: 64;
+                                text <=> NewChat.first-name;
+                                accepted => {
+                                    root.go();
+                                }
+                            }
+                            LineInput {
+                                placeholder: ComposeWords.last-name();
+                                longest: 64;
+                                text <=> NewChat.last-name;
+                                accepted => {
+                                    root.go();
+                                }
+                            }
+                        }
+                        if root.contact: LineInput {
+                            placeholder: ComposeWords.phone-placeholder();
+                            text <=> NewChat.phone;
+                            edited => {
+                                NewChat.phone-edited();
+                            }
+                            accepted => {
+                                root.go();
+                            }
+                        }
+                        if NewChat.error != "" && !(root.channel && NewChat.step == 2 && NewChat.public && NewChat.link-check == LinkCheck.failed): ErrorBox {
+                            text: NewChat.error;
+                        }
+                        if root.contact: Paragraph {
+                            text: ComposeWords.phone-tip();
+                            color: P.faint;
+                            font-size: 12px;
+                            line-height-factor: P.leading(1.5);
+                        }
+                    }
+                }
+            }
+
+            foot := HorizontalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                padding-top: 14px;
+                padding-bottom: 18px;
+                spacing: 8px;
+                alignment: end;
+                PlainButton {
+                    label: NewChat.can-go-back ? ComposeWords.back() : ComposeWords.cancel();
+                    clicked => {
+                        if NewChat.can-go-back {
+                            NewChat.back();
+                        } else {
+                            NewChat.close();
+                        }
+                    }
+                }
+                if !root.direct: FilledButton {
+                    label: ComposeWords.primary(NewChat.dialog, NewChat.step, NewChat.picked.length);
+                    enabled: root.primary-enabled;
+                    busy: NewChat.busy;
+                    clicked => {
+                        root.go();
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component TerminalCompose inherits Rectangle {
+    if Search.open: SearchPalette { }
+    if NewChat.dialog != NewDialog.none: NewChatDialog { }
+}

@@ -752,6 +752,191 @@ fn message_actions(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn F
     actions.set_flash(SharedString::new());
 }
 
+/// A person, a chat or a message as the search and the dialogs list it.
+fn found(section: FoundKind, index: i32, title: &str, kind: ChatKind, hue: Option<f32>) -> FoundRow {
+    FoundRow {
+        section,
+        index,
+        id: title.to_lowercase().replace(' ', "-").into(),
+        user_id: if matches!(kind, ChatKind::User | ChatKind::Bot) { "7".into() } else { SharedString::new() },
+        title: title.into(),
+        initial: title.chars().next().map(|c| c.to_uppercase().to_string()).unwrap_or_default().into(),
+        picture: hue.map(portrait).unwrap_or_default(),
+        has_picture: hue.is_some(),
+        kind,
+        status: match kind {
+            ChatKind::Group => Status::Members,
+            ChatKind::Channel => Status::Subscribers,
+            ChatKind::Bot => Status::Bot,
+            _ => Status::Recently,
+        },
+        ..FoundRow::default()
+    }
+}
+
+/// The search over everything (the design's compose.js round): the chats used last, the results
+/// for words, a phone number nobody has, a public group's card; the pencil's menu; the dialogs that
+/// make a group (its members, its name), a channel (its name, its type public and private, its
+/// subscribers), a chat, a contact (with a number that has no account).
+fn compose(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: &dyn Fn(&str) -> String) {
+    let search = ui.global::<Search>();
+    let recent = [
+        found(FoundKind::Chat, 0, "Keyboard Lab", ChatKind::Group, None),
+        found(FoundKind::Chat, 1, "Lin Xia", ChatKind::User, Some(200.0)),
+        found(FoundKind::Chat, 2, "Alex Chen", ChatKind::User, Some(120.0)),
+        found(FoundKind::Chat, 3, "Tech Morning", ChatKind::Channel, Some(25.0)),
+        found(FoundKind::Chat, 4, "Mom", ChatKind::User, None),
+        found(FoundKind::Chat, 5, "Wednesday Book Club", ChatKind::Group, None),
+    ];
+    search.set_query(SharedString::new());
+    search.set_empty(true);
+    search.set_recent(model(recent.iter().map(|row| FoundRow { members: if row.kind == ChatKind::Group { 486 } else { 0 }, ..row.clone() }).collect()));
+    search.set_sections(ModelRc::default());
+    search.set_count(6);
+    search.set_selected(1);
+    search.set_none(false);
+    search.set_phone_missed(false);
+    search.set_error(SharedString::new());
+    search.set_card_open(false);
+    search.set_open(true);
+    save(window, &name("search-recent"));
+
+    let section = |kind: FoundKind, rows: Vec<FoundRow>| FoundSection { kind, count: rows.len() as i32, rows: model(rows) };
+    let keyboards = FoundRow { members: 486, ..found(FoundKind::Chat, 0, "Keyboard Lab", ChatKind::Group, None) };
+    let kai = FoundRow { username: "kai_hikes".into(), status: Status::Online, ..found(FoundKind::Contact, 1, "Kai", ChatKind::User, None) };
+    let keebcn = FoundRow { username: "keebcn".into(), members: 12384, ..found(FoundKind::Public, 2, "Mechanical keyboards", ChatKind::Group, None) };
+    let keeb_daily = FoundRow { username: "keeb_daily".into(), members: 36000, ..found(FoundKind::Public, 3, "Keyboard Daily", ChatKind::Channel, Some(300.0)) };
+    let kiro = FoundRow { username: "kiro_caps".into(), ..found(FoundKind::Public, 4, "Kiro", ChatKind::User, None) };
+    let message = |index: i32, chat: &str, kind: ChatKind, sender: &str, text: &str| FoundRow {
+        message_id: "42".into(),
+        sender: sender.into(),
+        text: text.into(),
+        time: moment(Day::Today, 14, 20),
+        ..found(FoundKind::Message, index, chat, kind, None)
+    };
+    search.set_query("keeb".into());
+    search.set_empty(false);
+    search.set_recent(ModelRc::default());
+    search.set_sections(model(vec![
+        section(FoundKind::Chat, vec![keyboards, kai]),
+        section(FoundKind::Public, vec![keebcn.clone(), keeb_daily, kiro]),
+        section(FoundKind::Message, vec![
+            message(5, "Keyboard Lab", ChatKind::Group, "Jie", "the keeb meetup is on Saturday, bring the 75%"),
+            message(6, "Lin Xia", ChatKind::User, "", "saw your keeb photos, the dark keycaps look great"),
+        ]),
+    ]));
+    search.set_count(7);
+    search.set_selected(2);
+    save(window, &name("search-results"));
+
+    search.set_query("+86 139 1234 5678".into());
+    search.set_sections(ModelRc::default());
+    search.set_count(0);
+    search.set_selected(0);
+    search.set_phone_missed(true);
+    save(window, &name("search-phone"));
+    search.set_phone_missed(false);
+
+    search.set_query("keeb".into());
+    search.set_card(keebcn);
+    search.set_card_about("Custom builds, switches and keycaps; questions from beginners are welcome too.".into());
+    search.set_card_busy(false);
+    search.set_card_open(true);
+    save(window, &name("search-card"));
+    search.set_card_open(false);
+    search.set_open(false);
+
+    // The pencil's menu: a click on the pencil.
+    let (px, py) = match theme {
+        Theme::Workbench => (278.0, 61.0),
+        Theme::Broadsheet => (358.0, 76.0),
+        Theme::Terminal => (224.0, 89.0),
+    };
+    click(window, px, py);
+    save(window, &name("new-menu"));
+    escape(window);
+
+    let new_chat = ui.global::<NewChat>();
+    let contact = |index: i32, name: &str, username: &str, status: Status, hue: Option<f32>, picked: bool| FoundRow {
+        username: username.into(),
+        status,
+        picked,
+        ..found(FoundKind::Contact, index, name, ChatKind::User, hue)
+    };
+    let contacts = vec![
+        contact(0, "Lin Xia", "linxia_lx", Status::Online, Some(200.0), true),
+        contact(1, "Alex Chen", "alexc", Status::Recently, Some(120.0), false),
+        contact(2, "Mom", "", Status::LastWeek, None, false),
+        contact(3, "Jie", "ajie_keys", Status::Online, None, true),
+        contact(4, "Mika", "mika_t", Status::Recently, None, false),
+        contact(5, "Chen", "chen_reads", Status::LastWeek, None, false),
+        contact(6, "Kai", "kai_hikes", Status::Online, None, false),
+    ];
+    let picked: Vec<FoundRow> = contacts.iter().filter(|row| row.picked).cloned().collect();
+    new_chat.set_contacts(model(contacts.clone()));
+    new_chat.set_picked(model(picked));
+    new_chat.set_picked_names("Lin Xia, Jie".into());
+    new_chat.set_query(SharedString::new());
+    new_chat.set_name(SharedString::new());
+    new_chat.set_name_initial(SharedString::new());
+    new_chat.set_about(SharedString::new());
+    new_chat.set_has_photo(false);
+    new_chat.set_public(true);
+    new_chat.set_username(SharedString::new());
+    new_chat.set_link_check(LinkCheck::Empty);
+    new_chat.set_invite_link(SharedString::new());
+    new_chat.set_first_name(SharedString::new());
+    new_chat.set_last_name(SharedString::new());
+    new_chat.set_phone(SharedString::new());
+    new_chat.set_phone_ok(false);
+    new_chat.set_busy(false);
+    new_chat.set_error(SharedString::new());
+    new_chat.set_link_copied(false);
+    new_chat.set_can_go_back(false);
+    new_chat.set_step(1);
+    new_chat.set_dialog(NewDialog::Group);
+    save(window, &name("new-group-members"));
+    new_chat.set_step(2);
+    new_chat.set_can_go_back(true);
+    new_chat.set_name("Keycap Swap".into());
+    new_chat.set_name_initial("K".into());
+    save(window, &name("new-group-name"));
+
+    new_chat.set_dialog(NewDialog::Channel);
+    new_chat.set_step(1);
+    new_chat.set_can_go_back(false);
+    new_chat.set_name("Keyboard Daily".into());
+    new_chat.set_about("One piece of keyboard news a day, and when a group buy opens.".into());
+    save(window, &name("new-channel-info"));
+    new_chat.set_step(2);
+    new_chat.set_username("keeb_daily".into());
+    new_chat.set_link_check(LinkCheck::Taken);
+    save(window, &name("new-channel-public"));
+    new_chat.set_public(false);
+    new_chat.set_invite_link("https://t.me/+Hq3kT9xWm2Y4NzE0".into());
+    save(window, &name("new-channel-private"));
+    new_chat.set_step(3);
+    new_chat.set_can_go_back(true);
+    new_chat.set_picked(ModelRc::default());
+    new_chat.set_contacts(model(contacts.iter().map(|row| FoundRow { picked: false, ..row.clone() }).collect()));
+    save(window, &name("new-channel-invite"));
+
+    new_chat.set_dialog(NewDialog::Direct);
+    new_chat.set_step(1);
+    new_chat.set_can_go_back(false);
+    save(window, &name("new-chat"));
+
+    new_chat.set_dialog(NewDialog::Contact);
+    new_chat.set_first_name("Song".into());
+    new_chat.set_last_name("Yi".into());
+    new_chat.set_phone("+86 139 1234 5670".into());
+    new_chat.set_phone_ok(true);
+    new_chat.set_error("This number is not on Telegram yet.".into());
+    save(window, &name("new-contact"));
+    new_chat.set_error(SharedString::new());
+    new_chat.set_dialog(NewDialog::None);
+}
+
 /// The screenshot tool (the design's seventh round): in the window, the card when the system has
 /// not let FinchGram see the screen, the send card with a screenshot and the notice after saving
 /// one; on the overlay, each step from the window under the pointer to the annotations.
@@ -1428,6 +1613,7 @@ fn screenshots() {
                 escape(&window);
             }
             message_actions(&ui, &window, &name);
+            compose(&ui, &window, theme, &name);
             attachments(&ui, &window, theme, &name);
             screenshot_tool(&ui, &window, &overlay, &overlay_window, &name);
             open_viewer(&ui, 1);
@@ -1498,6 +1684,7 @@ fn screenshots() {
             escape(&window);
         }
         message_actions(&ui, &window, &|page: &str| format!("zh-{theme_name}-{page}"));
+        compose(&ui, &window, theme, &|page: &str| format!("zh-{theme_name}-{page}"));
     }
     app.set_theme(Theme::Workbench);
     app.set_telegram_state(TelegramState::WaitPhoneNumber);

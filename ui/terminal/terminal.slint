@@ -15,6 +15,8 @@ import { TerminalPalette as P } from "palette.slint";
 import { Sign } from "signs.slint";
 import { TerminalActions } from "actions.slint";
 import { TerminalAttachments } from "attachments.slint";
+import { TerminalCompose } from "compose.slint";
+import { Search, NewChat, NewDialog, ComposeWords } from "../compose.slint";
 
 export enum TerminalView { chats, channels, bots, rules, scheduled }
 
@@ -80,96 +82,9 @@ component IconAction {
     }
 }
 
-// The search box in the title bar, as the other themes have it (⌘K): the lists show the chats
-// whose names have the words; ⏎ opens the first of them.
-component SearchBox inherits Rectangle {
-    width: 360px;
-    height: 24px;
-    border-radius: 3px;
-    background: P.bg;
-    border-width: 1px;
-    border-color: input.has-focus ? P.accent.transparentize(0.4) : P.line;
-    // ⏎ or esc: the keyboard goes back to the command line.
-    callback done();
-
-    HorizontalLayout {
-        padding-left: 8px;
-        padding-right: 8px;
-        spacing: 8px;
-        VerticalLayout {
-            alignment: center;
-            Icon {
-                name: "magnifying-glass";
-                size: 12px;
-                color: P.faint;
-            }
-        }
-        Rectangle {
-            horizontal-stretch: 1;
-            T {
-                width: parent.width;
-                visible: input.text == "" && input.preedit-text == "";
-                text: @tr("Search chats");
-                color: P.faint;
-                overflow: elide;
-            }
-            input := TextInput {
-                width: parent.width;
-                height: parent.height;
-                text: Chats.query;
-                color: P.text;
-                font-family: P.font;
-                font-size: 13px;
-                vertical-alignment: center;
-                single-line: true;
-                selection-background-color: P.accent;
-                selection-foreground-color: P.on-accent;
-                text-cursor-width: Look.cursor-width;
-                edited => {
-                    Chats.search(self.text);
-                }
-                accepted => {
-                    // The first row shown: Saved Messages when it matches the words, else the list's first.
-                    if Chats.saved-messages-shown && Chats.query != "" {
-                        Conversation.open(Chats.saved-messages.id);
-                    } else if Chats.list.length > 0 {
-                        Conversation.open(Chats.list[0].id);
-                    }
-                    root.done();
-                }
-                key-pressed(event) => {
-                    if event.text == Key.Escape {
-                        self.text = "";
-                        Chats.search("");
-                        root.done();
-                        return accept;
-                    }
-                    return reject;
-                }
-            }
-        }
-        T {
-            text: "⌘K";
-            color: P.faint;
-            font-size: 11px;
-        }
-    }
-
-    property <int> search-requests: AppState.search-requests;
-    changed search-requests => {
-        root.focus-search();
-    }
-
-    public function focus-search() {
-        input.focus();
-        input.select-all();
-    }
-}
-
 component TitleBar inherits Rectangle {
     height: 34px;
     background: P.side;
-    callback done();          // the search box gave the keyboard back
 
     WindowMover { }
 
@@ -193,21 +108,10 @@ component TitleBar inherits Rectangle {
             }
         }
         T {
+            horizontal-stretch: 1;
             text: "FinchGram — " + Account.name;
             color: P.muted;
             overflow: elide;
-        }
-        HorizontalLayout {
-            horizontal-stretch: 1;
-            alignment: center;
-            VerticalLayout {
-                alignment: center;
-                search := SearchBox {
-                    done => {
-                        root.done();
-                    }
-                }
-            }
         }
         // What was just done (copied, saved, reported).
         if Actions.notice != ActionNotice.none: T {
@@ -220,10 +124,6 @@ component TitleBar inherits Rectangle {
                 AppState.change-appearance(P.dark ? "light" : "dark");
             }
         }
-    }
-
-    public function focus-search() {
-        search.focus-search();
     }
 }
 
@@ -599,6 +499,108 @@ component Side inherits Rectangle {
                 SideTab {
                     label: "SCHED";
                     enabled: false;
+                }
+            }
+            // The search over everything ("? search / @username", also /search) and the pencil's
+            // menu as "[+ new]" (compose.slint).
+            HorizontalLayout {
+                spacing: 8px;
+                Rectangle {
+                    horizontal-stretch: 1;
+                    height: 26px;
+                    border-radius: 3px;
+                    background: P.bg;
+                    border-width: 1px;
+                    border-color: search-touch.has-hover ? P.accent.transparentize(0.4) : P.line;
+                    HorizontalLayout {
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        spacing: 6px;
+                        T {
+                            text: "?";
+                            color: P.accent;
+                        }
+                        T {
+                            horizontal-stretch: 1;
+                            text: ComposeWords.terminal-box();
+                            color: P.faint;
+                            overflow: elide;
+                        }
+                    }
+                    search-touch := TouchArea {
+                        mouse-cursor: text;
+                        clicked => {
+                            Search.show();
+                        }
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    new-word := Rectangle {
+                        width: new-label.preferred-width;
+                        height: new-label.preferred-height;
+                        new-label := T {
+                            text: "[+ " + @tr("terminal" => "new") + "]";
+                            color: new-touch.has-hover ? P.text : P.accent;
+                        }
+                        new-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                new-menu.show();
+                            }
+                        }
+                        new-menu := PopupWindow {
+                            x: parent.width - 170px;
+                            y: parent.height + 4px;
+                            width: 170px;
+                            close-policy: PopupClosePolicy.close-on-click-outside;
+                            Rectangle {
+                                border-radius: 3px;
+                                background: P.bg;
+                                border-width: 1px;
+                                border-color: P.line;
+                                drop-shadow-blur: 30px;
+                                drop-shadow-offset-y: 12px;
+                                drop-shadow-color: P.shadow;
+                                VerticalLayout {
+                                    padding-top: 4px;
+                                    padding-bottom: 4px;
+                                    MenuEntry {
+                                        label: ComposeWords.new-group();
+                                        command: "/group";
+                                        activated => {
+                                            new-menu.close();
+                                            NewChat.start(NewDialog.group);
+                                        }
+                                    }
+                                    MenuEntry {
+                                        label: ComposeWords.new-channel();
+                                        command: "/channel";
+                                        activated => {
+                                            new-menu.close();
+                                            NewChat.start(NewDialog.channel);
+                                        }
+                                    }
+                                    MenuEntry {
+                                        label: ComposeWords.new-chat();
+                                        command: "/dm";
+                                        activated => {
+                                            new-menu.close();
+                                            NewChat.start(NewDialog.direct);
+                                        }
+                                    }
+                                    MenuEntry {
+                                        label: ComposeWords.add-contact();
+                                        command: "/contact";
+                                        activated => {
+                                            new-menu.close();
+                                            NewChat.start(NewDialog.contact);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
             if root.view == TerminalView.chats: Folders { }
@@ -1459,6 +1461,11 @@ component CommandLine inherits Rectangle {
         { command: "/pin", description: @tr("Pin or unpin this chat") },
         { command: "/readall", description: @tr("Mark every chat in this folder as read") },
         { command: "/id", description: @tr("Copy this chat's ID") },
+        { command: "/search", description: @tr("Search chats, contacts, @usernames and messages") },
+        { command: "/group", description: ComposeWords.new-group() },
+        { command: "/channel", description: ComposeWords.new-channel() },
+        { command: "/dm", description: ComposeWords.new-chat() },
+        { command: "/contact", description: ComposeWords.add-contact() },
     ];
     property <string> typed: input.text;
 
@@ -1481,6 +1488,17 @@ component CommandLine inherits Rectangle {
             Chats.mark-all-read(Chats.folder);
         } else if line.starts-with("/id") {
             Conversation.copy-id();
+        } else if line.starts-with("/search") {
+            // "/search keeb": the search over everything, with the words.
+            Search.show-with(line);
+        } else if line.starts-with("/group") {
+            NewChat.start(NewDialog.group);
+        } else if line.starts-with("/channel") {
+            NewChat.start(NewDialog.channel);
+        } else if line.starts-with("/dm") {
+            NewChat.start(NewDialog.direct);
+        } else if line.starts-with("/contact") {
+            NewChat.start(NewDialog.contact);
         } else if !line.starts-with("/") {
             Conversation.send(line);
         }
@@ -1717,7 +1735,7 @@ component StatusBar inherits Rectangle {
             width: hint.preferred-width;
             hint := T {
                 x: 0;
-                text: "[⌘K " + @tr("search") + "]";
+                text: "[⌘K " + @tr("terminal" => "cmd") + "]";
                 color: P.on-accent;
                 font-size: 12px;
             }
@@ -1735,22 +1753,14 @@ export component TerminalWindow inherits Rectangle {
     property <TerminalView> view: TerminalView.chats;
     background: P.bg;
 
-    // ⌘K, from the menu bar (app.slint): the search box in the title bar, as in the other themes.
+    // ⌘K, from the menu bar (app.slint): the command line, which has /search (the design's 1b).
     property <int> search-requests: AppState.search-requests;
     changed search-requests => {
-        root.focus-search();
-    }
-
-    public function focus-search() {
-        title.focus-search();
+        line.focus-line();
     }
 
     VerticalLayout {
-        title := TitleBar {
-            done => {
-                line.focus-line();
-            }
-        }
+        TitleBar { }
         HorizontalLayout {
             vertical-stretch: 1;
             Side {
@@ -1773,12 +1783,14 @@ export component TerminalWindow inherits Rectangle {
         }
         StatusBar {
             search => {
-                title.focus-search();
+                line.focus-line();
             }
         }
     }
 
-    // A message's menu and the dialogs of its actions, over everything.
+    // A message's menu and the dialogs of its actions, over everything; the search over everything
+    // and the pencil's dialogs.
     TerminalActions { }
     TerminalAttachments { }
+    TerminalCompose { }
 }

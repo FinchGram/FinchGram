@@ -191,7 +191,7 @@ export global Fmt {
     }
 
     public pure function is-service(c: Content) -> bool {
-        return c == Content.chat-created || c == Content.title-changed || c == Content.photo-changed
+        return c == Content.chat-created || c == Content.channel-created || c == Content.title-changed || c == Content.photo-changed
             || c == Content.photo-removed || c == Content.members-added || c == Content.member-joined
             || c == Content.member-left || c == Content.member-removed || c == Content.message-pinned
             || c == Content.screenshot-taken || c == Content.contact-joined || c == Content.other-service;
@@ -228,6 +228,7 @@ export global Fmt {
     // What happened, and who did it: "Alice joined the group".
     public pure function service(c: Content, actor: string, detail: string) -> string {
         if c == Content.chat-created { return @tr("{0} created the group “{1}”", actor, detail); }
+        if c == Content.channel-created { return @tr("Channel “{0}” created", detail); }
         if c == Content.title-changed { return @tr("{0} changed the name to “{1}”", actor, detail); }
         if c == Content.photo-changed { return @tr("{0} changed the photo", actor); }
         if c == Content.photo-removed { return @tr("{0} removed the photo", actor); }

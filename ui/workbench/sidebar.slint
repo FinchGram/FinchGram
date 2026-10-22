@@ -9,10 +9,12 @@ import { ChatIcons, ChatMenuWords } from "../chat.slint";
 import { MenuEntry } from "conversation.slint";
 import { UnreadBadge, MentionBadge, UnreadDot } from "badges.slint";
 import { WorkbenchPalette as P } from "palette.slint";
+import { NewChat, NewDialog, ComposeWords } from "../compose.slint";
 
 export enum WorkbenchView { chats, channels, bots, filters, scheduled }
 
-// The small uppercase heading above the side bar's list.
+// The small uppercase heading above the side bar's list, with the pencil at its end: a new group,
+// channel or chat, or a new contact (compose.slint).
 component SideHeading {
     in property <string> title;
 
@@ -46,6 +48,75 @@ component SideHeading {
             color: P.faint;
             font-size: 11px;
             vertical-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            padding-left: 4px;
+            pencil := Rectangle {
+                width: 20px;
+                height: 20px;
+                Icon {
+                    name: "note-pencil";
+                    size: 16px;
+                    color: pencil-touch.has-hover ? P.accent : P.muted;
+                }
+                pencil-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        new-menu.show();
+                    }
+                }
+                new-menu := PopupWindow {
+                    x: parent.width + 8px - 196px;
+                    y: 26px;
+                    width: 196px;
+                    close-policy: PopupClosePolicy.close-on-click-outside;
+                    Rectangle {
+                        border-radius: 8px;
+                        background: P.bg;
+                        border-width: 1px;
+                        border-color: P.line;
+                        drop-shadow-blur: 32px;
+                        drop-shadow-offset-y: 12px;
+                        drop-shadow-color: P.shadow;
+                        VerticalLayout {
+                            padding: 6px;
+                            MenuEntry {
+                                icon: "users-three";
+                                label: ComposeWords.new-group();
+                                activated => {
+                                    new-menu.close();
+                                    NewChat.start(NewDialog.group);
+                                }
+                            }
+                            MenuEntry {
+                                icon: "megaphone";
+                                label: ComposeWords.new-channel();
+                                activated => {
+                                    new-menu.close();
+                                    NewChat.start(NewDialog.channel);
+                                }
+                            }
+                            MenuEntry {
+                                icon: "chat-circle";
+                                label: ComposeWords.new-chat();
+                                activated => {
+                                    new-menu.close();
+                                    NewChat.start(NewDialog.direct);
+                                }
+                            }
+                            MenuEntry {
+                                icon: "user-plus";
+                                label: ComposeWords.add-contact();
+                                activated => {
+                                    new-menu.close();
+                                    NewChat.start(NewDialog.contact);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -433,7 +504,7 @@ export component WorkbenchSidebar inherits Rectangle {
             }
         }
 
-        if root.view == WorkbenchView.chats && Chats.loaded && Chats.list.length == 0 && Chats.query == "": HorizontalLayout {
+        if root.view == WorkbenchView.chats && Chats.loaded && Chats.list.length == 0: HorizontalLayout {
             padding: 12px;
             Rectangle {
                 border-radius: 8px;

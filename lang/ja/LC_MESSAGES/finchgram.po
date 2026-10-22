@@ -3,55 +3,55 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-21 05:35+0000\n"
+"POT-Creation-Date: 2026-10-22 07:53+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ui/app.slint:44
+#: ui/app.slint:46
 msgid "View"
 msgstr "表示"
 
-#: ui/app.slint:46 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
+#: ui/app.slint:48 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
 #: ui/workbench/actions.slint:172
 msgid "Search"
 msgstr "検索"
 
-#: ui/app.slint:56
+#: ui/app.slint:58
 msgid "Search in Chat"
 msgstr "チャット内を検索"
 
-#: ui/app.slint:68 ui/pages/settings.slint:406
+#: ui/app.slint:70 ui/pages/settings.slint:406
 msgid "Workbench"
 msgstr "ワークベンチ"
 
-#: ui/app.slint:76 ui/pages/settings.slint:414
+#: ui/app.slint:78 ui/pages/settings.slint:414
 msgid "Terminal"
 msgstr "ターミナル"
 
-#: ui/app.slint:84 ui/pages/settings.slint:422
+#: ui/app.slint:86 ui/pages/settings.slint:422
 msgid "Broadsheet"
 msgstr "ブロードシート"
 
-#: ui/app.slint:93 ui/pages/downloads.slint:402 ui/pages/downloads.slint:765
+#: ui/app.slint:95 ui/pages/downloads.slint:402 ui/pages/downloads.slint:765
 msgid "Downloads"
 msgstr "ダウンロード"
 
-#: ui/app.slint:101
+#: ui/app.slint:103
 msgid "Settings…"
 msgstr "設定…"
 
-#: ui/app.slint:110
+#: ui/app.slint:112
 msgid "Help"
 msgstr "ヘルプ"
 
-#: ui/app.slint:113
+#: ui/app.slint:115
 msgid "Update to {}…"
 msgstr "{} にアップデート…"
 
-#: ui/app.slint:114
+#: ui/app.slint:116
 msgid "Check for Updates…"
 msgstr "アップデートを確認…"
 
@@ -59,12 +59,13 @@ msgstr "アップデートを確認…"
 msgid "Choose recipient…"
 msgstr "転送先を選択…"
 
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:685
+#: ui/broadsheet/actions.slint:226 ui/telegram.slint:683
 #: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "保存済みメッセージ"
 
-#: ui/broadsheet/actions.slint:239 ui/terminal/actions.slint:220
+#: ui/broadsheet/actions.slint:239 ui/compose.slint:129
+#: ui/workbench/actions.slint:241
 msgid "Recent"
 msgstr "最近のチャット"
 
@@ -81,112 +82,112 @@ msgid "Add a comment (optional)"
 msgstr "コメントを入力（任意）"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:2235 ui/pages/downloads.slint:1390
-#: ui/pages/profile.slint:174 ui/terminal/actions.slint:385
-#: ui/terminal/actions.slint:642 ui/workbench/actions.slint:457
-#: ui/workbench/actions.slint:727
+#: ui/broadsheet/broadsheet.slint:2260 ui/compose.slint:244
+#: ui/pages/downloads.slint:1390 ui/pages/profile.slint:174
+#: ui/terminal/actions.slint:385 ui/terminal/actions.slint:642
+#: ui/workbench/actions.slint:457 ui/workbench/actions.slint:727
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2226
-#: ui/chat.slint:806 ui/chat.slint:887 ui/terminal/terminal.slint:1417
+#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2251
+#: ui/chat.slint:806 ui/chat.slint:887 ui/terminal/terminal.slint:1419
 #: ui/workbench/conversation.slint:1390
 msgid "Report"
 msgstr "報告"
 
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2217
-#: ui/chat.slint:379 ui/chat.slint:807 ui/terminal/terminal.slint:1409
+#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2242
+#: ui/chat.slint:379 ui/chat.slint:807 ui/terminal/terminal.slint:1411
 #: ui/workbench/conversation.slint:1378
 msgid "Delete"
 msgstr "削除"
 
-#: ui/broadsheet/broadsheet.slint:97 ui/pages/settings.slint:445
+#: ui/broadsheet/broadsheet.slint:99 ui/pages/settings.slint:445
 msgid "Light"
 msgstr "ライト"
 
-#: ui/broadsheet/broadsheet.slint:97 ui/pages/settings.slint:453
+#: ui/broadsheet/broadsheet.slint:99 ui/pages/settings.slint:453
 msgid "Dark"
 msgstr "ダーク"
 
-#: ui/broadsheet/broadsheet.slint:131 ui/pages/profile.slint:72
+#: ui/broadsheet/broadsheet.slint:133 ui/pages/profile.slint:72
 msgid "Accounts"
 msgstr "アカウント"
 
-#: ui/broadsheet/broadsheet.slint:270 ui/pages/downloads.slint:792
-#: ui/workbench/sidebar.slint:417
+#: ui/broadsheet/broadsheet.slint:272 ui/pages/downloads.slint:792
+#: ui/workbench/sidebar.slint:488
 msgid "Chats"
 msgstr "チャット"
 
-#: ui/broadsheet/broadsheet.slint:278 ui/broadsheet/broadsheet.slint:1018
-#: ui/workbench/sidebar.slint:415
+#: ui/broadsheet/broadsheet.slint:280 ui/broadsheet/broadsheet.slint:986
+#: ui/workbench/sidebar.slint:486
 msgid "Channels"
 msgstr "チャンネル"
 
-#: ui/broadsheet/broadsheet.slint:286 ui/broadsheet/broadsheet.slint:1019
+#: ui/broadsheet/broadsheet.slint:288 ui/broadsheet/broadsheet.slint:987
 msgid "Bots"
 msgstr "ボット"
 
-#: ui/broadsheet/broadsheet.slint:295
+#: ui/broadsheet/broadsheet.slint:297
 msgid "Filters"
 msgstr "フィルタ"
 
-#: ui/broadsheet/broadsheet.slint:300
+#: ui/broadsheet/broadsheet.slint:302
 msgid "Scheduled"
 msgstr "予約送信"
 
-#: ui/broadsheet/broadsheet.slint:444 ui/terminal/terminal.slint:355
+#: ui/broadsheet/broadsheet.slint:416 ui/terminal/terminal.slint:255
 msgid "All"
 msgstr "すべて"
 
-#: ui/broadsheet/broadsheet.slint:493 ui/pages/ai-access.slint:102
-#: ui/telegram.slint:687 ui/workbench/sidebar.slint:410
+#: ui/broadsheet/broadsheet.slint:465 ui/pages/ai-access.slint:102
+#: ui/telegram.slint:685 ui/workbench/sidebar.slint:481
 msgid "All chats"
 msgstr "すべてのチャット"
 
-#: ui/broadsheet/broadsheet.slint:516
+#: ui/broadsheet/broadsheet.slint:488
 msgid "More"
 msgstr "その他"
 
-#: ui/broadsheet/broadsheet.slint:617 ui/terminal/terminal.slint:478
+#: ui/broadsheet/broadsheet.slint:589 ui/terminal/terminal.slint:378
 msgid "Mark all as read"
 msgstr "すべて既読にする"
 
-#: ui/broadsheet/broadsheet.slint:634 ui/terminal/terminal.slint:498
+#: ui/broadsheet/broadsheet.slint:606 ui/terminal/terminal.slint:398
 msgid "Sort by"
 msgstr "並び順"
 
-#: ui/broadsheet/broadsheet.slint:642 ui/terminal/terminal.slint:504
+#: ui/broadsheet/broadsheet.slint:614 ui/terminal/terminal.slint:404
 msgid "Latest message"
 msgstr "最新のメッセージ"
 
-#: ui/broadsheet/broadsheet.slint:651 ui/pages/downloads.slint:1006
-#: ui/terminal/terminal.slint:512
+#: ui/broadsheet/broadsheet.slint:623 ui/pages/downloads.slint:1006
+#: ui/terminal/terminal.slint:412
 msgid "Name"
 msgstr "名前"
 
-#: ui/broadsheet/broadsheet.slint:660 ui/terminal/terminal.slint:520
+#: ui/broadsheet/broadsheet.slint:632 ui/terminal/terminal.slint:420
 msgid "Unread"
 msgstr "未読"
 
-#: ui/broadsheet/broadsheet.slint:876 ui/format.slint:163
-#: ui/workbench/sidebar.slint:234
+#: ui/broadsheet/broadsheet.slint:848 ui/format.slint:163
+#: ui/workbench/sidebar.slint:305
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
 msgstr[0] "{n}人の登録者"
 
-#: ui/broadsheet/broadsheet.slint:1049
+#: ui/broadsheet/broadsheet.slint:1074
 msgid "Telegram bots"
 msgstr "Telegram のボット"
 
-#: ui/broadsheet/broadsheet.slint:1116 ui/terminal/terminal.slint:630
+#: ui/broadsheet/broadsheet.slint:1141 ui/terminal/terminal.slint:632
 msgid "No chats yet"
 msgstr "チャットはまだありません"
 
-#: ui/broadsheet/broadsheet.slint:1116 ui/terminal/terminal.slint:630
+#: ui/broadsheet/broadsheet.slint:1141 ui/terminal/terminal.slint:632
 msgid "No chats in this folder"
 msgstr "このフォルダにチャットはありません"
 
-#: ui/broadsheet/broadsheet.slint:1122 ui/workbench/sidebar.slint:454
+#: ui/broadsheet/broadsheet.slint:1147 ui/workbench/sidebar.slint:525
 msgid ""
 "Search for a username or phone number, or open an invite link someone sent "
 "you, to start chatting."
@@ -194,116 +195,116 @@ msgstr ""
 "ユーザー名や電話番号で検索するか、誰かから送られた招待リンクを開くと、チャッ"
 "トを始められます。"
 
-#: ui/broadsheet/broadsheet.slint:1123
+#: ui/broadsheet/broadsheet.slint:1148
 msgid "Chats you add to this folder in Telegram show up here."
 msgstr "Telegram でこのフォルダに追加したチャットがここに表示されます。"
 
-#: ui/broadsheet/broadsheet.slint:1162 ui/terminal/terminal.slint:665
+#: ui/broadsheet/broadsheet.slint:1187 ui/terminal/terminal.slint:667
 msgid "Official bots"
 msgstr "公式ボット"
 
-#: ui/broadsheet/broadsheet.slint:1176 ui/terminal/terminal.slint:677
+#: ui/broadsheet/broadsheet.slint:1201 ui/terminal/terminal.slint:679
 msgid "Other bots"
 msgstr "その他のボット"
 
-#: ui/broadsheet/broadsheet.slint:1188 ui/workbench/sidebar.slint:523
+#: ui/broadsheet/broadsheet.slint:1213 ui/workbench/sidebar.slint:594
 msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr ""
 "チェックマークの付いたボットは Telegram 公式のものです。それ以外のボットは、"
 "送信した内容を読むことができます。"
 
-#: ui/broadsheet/broadsheet.slint:1233 ui/broadsheet/broadsheet.slint:2575
-#: ui/terminal/terminal.slint:782 ui/workbench/conversation.slint:261
+#: ui/broadsheet/broadsheet.slint:1258 ui/broadsheet/broadsheet.slint:2600
+#: ui/terminal/terminal.slint:784 ui/workbench/conversation.slint:261
 #: ui/workbench/conversation.slint:1722
 msgid "Unmute"
 msgstr "ミュート解除"
 
-#: ui/broadsheet/broadsheet.slint:1233 ui/broadsheet/broadsheet.slint:2575
-#: ui/terminal/terminal.slint:782 ui/workbench/conversation.slint:261
+#: ui/broadsheet/broadsheet.slint:1258 ui/broadsheet/broadsheet.slint:2600
+#: ui/terminal/terminal.slint:784 ui/workbench/conversation.slint:261
 #: ui/workbench/conversation.slint:1722
 msgid "Mute"
 msgstr "ミュート"
 
-#: ui/broadsheet/broadsheet.slint:1241 ui/broadsheet/broadsheet.slint:2626
-#: ui/terminal/terminal.slint:1300 ui/workbench/sidebar.slint:579
+#: ui/broadsheet/broadsheet.slint:1266 ui/broadsheet/broadsheet.slint:2651
+#: ui/terminal/terminal.slint:1302 ui/workbench/sidebar.slint:650
 msgid "Unpin"
 msgstr "ピン留めを解除"
 
-#: ui/broadsheet/broadsheet.slint:1241 ui/broadsheet/broadsheet.slint:2626
-#: ui/terminal/terminal.slint:1300 ui/workbench/sidebar.slint:579
+#: ui/broadsheet/broadsheet.slint:1266 ui/broadsheet/broadsheet.slint:2651
+#: ui/terminal/terminal.slint:1302 ui/workbench/sidebar.slint:650
 msgid "Pin"
 msgstr "ピン留め"
 
-#: ui/broadsheet/broadsheet.slint:1250 ui/terminal/terminal.slint:797
+#: ui/broadsheet/broadsheet.slint:1275 ui/terminal/terminal.slint:799
 msgid "Add to folder"
 msgstr "フォルダに追加"
 
-#: ui/broadsheet/broadsheet.slint:1257 ui/broadsheet/broadsheet.slint:2634
-#: ui/terminal/terminal.slint:1308 ui/workbench/sidebar.slint:595
+#: ui/broadsheet/broadsheet.slint:1282 ui/broadsheet/broadsheet.slint:2659
+#: ui/terminal/terminal.slint:1310 ui/workbench/sidebar.slint:666
 msgid "Copy ID"
 msgstr "IDをコピー"
 
-#: ui/broadsheet/broadsheet.slint:1305 ui/pages/login.slint:524
-#: ui/pages/login.slint:629 ui/pages/login.slint:676 ui/pages/login.slint:800
-#: ui/pages/login.slint:841 ui/pages/login.slint:901
+#: ui/broadsheet/broadsheet.slint:1330 ui/compose.slint:243
+#: ui/pages/login.slint:579 ui/pages/login.slint:629 ui/pages/login.slint:695
+#: ui/pages/login.slint:800 ui/pages/login.slint:872 ui/pages/login.slint:901
 #: ui/pages/settings.slint:1467 ui/terminal/actions.slint:285
-#: ui/workbench/sidebar.slint:645
+#: ui/workbench/sidebar.slint:716
 msgid "Back"
 msgstr "戻る"
 
-#: ui/broadsheet/broadsheet.slint:1383 ui/workbench/conversation.slint:621
+#: ui/broadsheet/broadsheet.slint:1408 ui/workbench/conversation.slint:621
 msgid "Instant View"
 msgstr "Instant View"
 
-#: ui/broadsheet/broadsheet.slint:1415 ui/terminal/terminal.slint:899
+#: ui/broadsheet/broadsheet.slint:1440 ui/terminal/terminal.slint:901
 msgid "Forwarded from {0}"
 msgstr "転送元：{0}"
 
-#: ui/broadsheet/broadsheet.slint:1677 ui/broadsheet/broadsheet.slint:1784
+#: ui/broadsheet/broadsheet.slint:1702 ui/broadsheet/broadsheet.slint:1809
 #: ui/workbench/conversation.slint:881
 msgid "edited"
 msgstr "編集済み"
 
-#: ui/broadsheet/broadsheet.slint:1804
+#: ui/broadsheet/broadsheet.slint:1829
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr "スポンサー · Telegram による掲載 · Premium ユーザーは非表示にできます"
 
-#: ui/broadsheet/broadsheet.slint:1870 ui/format.slint:261
+#: ui/broadsheet/broadsheet.slint:1895 ui/format.slint:262
 #: ui/workbench/conversation.slint:979
 msgid "You"
 msgstr "自分"
 
-#: ui/broadsheet/broadsheet.slint:1981 ui/terminal/terminal.slint:1520
+#: ui/broadsheet/broadsheet.slint:2006 ui/terminal/terminal.slint:1538
 msgid "Hide sender's name"
 msgstr "送信者名を非表示"
 
-#: ui/broadsheet/broadsheet.slint:2193 ui/terminal/terminal.slint:1432
+#: ui/broadsheet/broadsheet.slint:2218 ui/terminal/terminal.slint:1434
 msgid "Shift-click to select a range"
 msgstr "Shift を押しながらクリックで範囲を選択"
 
-#: ui/broadsheet/broadsheet.slint:2201 ui/chat.slint:805
+#: ui/broadsheet/broadsheet.slint:2226 ui/chat.slint:805
 #: ui/workbench/conversation.slint:1356
 msgid "Forward"
 msgstr "転送"
 
-#: ui/broadsheet/broadsheet.slint:2255 ui/terminal/terminal.slint:1767
+#: ui/broadsheet/broadsheet.slint:2280 ui/terminal/terminal.slint:1777
 msgid "Choose a chat on the left"
 msgstr "左のリストからチャットを選択してください"
 
-#: ui/broadsheet/broadsheet.slint:2278 ui/terminal/terminal.slint:1227
+#: ui/broadsheet/broadsheet.slint:2303 ui/terminal/terminal.slint:1229
 msgid "typing…"
 msgstr "入力中…"
 
-#: ui/broadsheet/broadsheet.slint:2348 ui/terminal/terminal.slint:1335
+#: ui/broadsheet/broadsheet.slint:2373 ui/terminal/terminal.slint:1337
 msgid "{0} is typing…"
 msgstr "{0} が入力中…"
 
-#: ui/broadsheet/broadsheet.slint:2380
+#: ui/broadsheet/broadsheet.slint:2405
 msgid "Sending as {0}"
 msgstr "{0} として送信"
 
-#: ui/broadsheet/broadsheet.slint:2397
+#: ui/broadsheet/broadsheet.slint:2422
 msgid "Write a message…"
 msgstr "メッセージを入力…"
 
@@ -633,7 +634,7 @@ msgstr "Finder に表示"
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
-#: ui/chat.slint:684 ui/terminal/terminal.slint:964
+#: ui/chat.slint:684 ui/terminal/terminal.slint:966
 msgid "Tap to view"
 msgstr "クリックして表示"
 
@@ -751,6 +752,400 @@ msgstr "チャット内を検索"
 #: ui/chat.slint:975
 msgid "No results"
 msgstr "結果なし"
+
+#: ui/compose.slint:126
+msgid "Search chats, contacts, @username or messages"
+msgstr "チャット、連絡先、@ユーザー名、メッセージを検索"
+
+#: ui/compose.slint:127
+msgctxt "terminal"
+msgid "search / @username"
+msgstr "検索 / @ユーザー名"
+
+#: ui/compose.slint:128
+msgid "Search chats, contacts, @username, phone number or messages"
+msgstr "チャット、連絡先、@ユーザー名、電話番号、メッセージを検索"
+
+#: ui/compose.slint:130
+msgid "Type a username to find public users, groups and channels"
+msgstr "ユーザー名を入力すると、公開のユーザー、グループ、チャンネルを探せます"
+
+#: ui/compose.slint:131
+msgid "Type a phone number to find a contact; one nobody has can be added"
+msgstr "電話番号を入力すると連絡先を探せます。連絡先にない番号は追加できます"
+
+#: ui/compose.slint:133
+msgid "Chats and contacts"
+msgstr "チャットと連絡先"
+
+#: ui/compose.slint:134
+msgid "Global search"
+msgstr "グローバル検索"
+
+#: ui/compose.slint:135
+msgid "Found by phone number"
+msgstr "電話番号による検索"
+
+#: ui/compose.slint:136
+msgid "Messages"
+msgstr "メッセージ"
+
+#: ui/compose.slint:140
+msgid "Contact"
+msgstr "連絡先"
+
+#: ui/compose.slint:145
+msgctxt "kind of chat"
+msgid "Group"
+msgstr "グループ"
+
+#: ui/compose.slint:146
+msgctxt "kind of chat"
+msgid "Channel"
+msgstr "チャンネル"
+
+#: ui/compose.slint:147
+msgctxt "kind of chat"
+msgid "Bot"
+msgstr "ボット"
+
+#: ui/compose.slint:149
+msgctxt "kind of chat"
+msgid "User"
+msgstr "ユーザー"
+
+#: ui/compose.slint:154 ui/format.slint:265
+msgid "You: {0}"
+msgstr "自分：{0}"
+
+#: ui/compose.slint:155 ui/format.slint:268
+msgctxt "sender and message"
+msgid "{0}: {1}"
+msgstr "{0}：{1}"
+
+#: ui/compose.slint:158
+msgid "{0} · lets others find them by phone number"
+msgstr "{0} · 電話番号での検索を許可しています"
+
+#: ui/compose.slint:173
+msgid "No results for {0}"
+msgstr "{0} に一致する結果はありません"
+
+#: ui/compose.slint:174
+msgid ""
+"A phone number finds people in your contacts, and users who let others find "
+"them by it."
+msgstr ""
+"電話番号で見つかるのは、連絡先に登録している人と、電話番号での検索を許可して"
+"いるユーザーです。"
+
+#: ui/compose.slint:175
+msgid "Add as contact"
+msgstr "連絡先に追加"
+
+#: ui/compose.slint:176
+msgid "No results for “{0}”"
+msgstr "「{0}」に一致する結果はありません"
+
+#: ui/compose.slint:177
+msgid ""
+"Public usernames have at least 5 characters. Private groups and channels are "
+"joined with an invite link."
+msgstr ""
+"公開ユーザー名は 5 文字以上です。非公開のグループやチャンネルには招待リンクか"
+"ら参加します。"
+
+#: ui/compose.slint:178
+msgid "Back to results"
+msgstr "結果に戻る"
+
+#: ui/compose.slint:184
+msgid "Subscribe to channel"
+msgstr "チャンネルに登録"
+
+#: ui/compose.slint:184
+msgid "Join group"
+msgstr "グループに参加"
+
+#: ui/compose.slint:186
+msgid ""
+"Once subscribed, the channel is in your chat list; its other subscribers "
+"cannot see you."
+msgstr ""
+"登録するとチャンネルがチャット一覧に加わります。ほかの登録者にあなたは見えま"
+"せん。"
+
+#: ui/compose.slint:187
+msgid "Its members can see your name and photo once you join."
+msgstr "参加すると、メンバーにあなたの名前と写真が見えるようになります。"
+
+#. The card, when the group's administrators have to let one in.
+#: ui/compose.slint:190
+msgid "Your request to join was sent to the group's administrators."
+msgstr "参加リクエストをグループの管理者に送信しました。"
+
+#: ui/compose.slint:191
+msgid "↑↓ Select"
+msgstr "↑↓ 選択"
+
+#: ui/compose.slint:192
+msgid "⏎ Open"
+msgstr "⏎ 開く"
+
+#: ui/compose.slint:193
+msgid "esc Close"
+msgstr "esc 閉じる"
+
+#. The pencil's menu.
+#: ui/compose.slint:196
+msgid "New group"
+msgstr "新しいグループ"
+
+#: ui/compose.slint:197
+msgid "New channel"
+msgstr "新しいチャンネル"
+
+#: ui/compose.slint:198
+msgid "New chat"
+msgstr "新しいチャット"
+
+#: ui/compose.slint:199
+msgid "Add contact"
+msgstr "連絡先を追加"
+
+#: ui/compose.slint:200
+msgid "New group, channel or chat"
+msgstr "新しいグループ、チャンネル、チャット"
+
+#: ui/compose.slint:211
+msgid "Add members · {n} chosen"
+msgid_plural "Add members · {n} chosen"
+msgstr[0] "メンバーを追加 · {n} 人を選択中"
+
+#: ui/compose.slint:212
+msgid "Name and photo · {n} member"
+msgid_plural "Name and photo · {n} members"
+msgstr[0] "名前と写真 · メンバー {n} 人"
+
+#: ui/compose.slint:215
+msgid "Step 1 of 3 · Name and description"
+msgstr "ステップ 1/3 · 名前と説明"
+
+#: ui/compose.slint:216
+msgid "Step 2 of 3 · Channel type"
+msgstr "ステップ 2/3 · チャンネルの種類"
+
+#: ui/compose.slint:217
+msgid "Step 3 of 3 · Invite subscribers"
+msgstr "ステップ 3/3 · 登録者を招待"
+
+#: ui/compose.slint:219
+msgid "Choose a contact, or find them by username or phone number"
+msgstr "連絡先を選ぶか、ユーザー名または電話番号で探してください"
+
+#: ui/compose.slint:220
+msgid "They need to be on Telegram"
+msgstr "相手が Telegram を使っている必要があります"
+
+#: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406
+#: ui/pages/login.slint:613 ui/pages/login.slint:834
+#: ui/pages/settings.slint:1387
+msgid "Next"
+msgstr "次へ"
+
+#: ui/compose.slint:225
+msgid "Skip"
+msgstr "スキップ"
+
+#: ui/compose.slint:225
+msgid "Create"
+msgstr "作成"
+
+#: ui/compose.slint:229
+msgid "Invite {n} person"
+msgid_plural "Invite {n} people"
+msgstr[0] "{n} 人を招待"
+
+#: ui/compose.slint:229
+msgid "Done"
+msgstr "完了"
+
+#: ui/compose.slint:231 ui/pages/downloads.slint:1370
+msgid "Add"
+msgstr "追加"
+
+#: ui/compose.slint:245
+msgid "Search contacts, @username or phone number"
+msgstr "連絡先、@ユーザー名、電話番号で検索"
+
+#: ui/compose.slint:246
+msgid "Contacts"
+msgstr "連絡先"
+
+#: ui/compose.slint:247
+msgid "No contacts yet"
+msgstr "連絡先はまだありません"
+
+#: ui/compose.slint:247
+msgid "No “{0}” among your contacts"
+msgstr "連絡先に「{0}」はありません"
+
+#: ui/compose.slint:248
+msgid "Group name"
+msgstr "グループ名"
+
+#: ui/compose.slint:249
+msgid "Channel name"
+msgstr "チャンネル名"
+
+#: ui/compose.slint:250
+msgid "Members"
+msgstr "メンバー"
+
+#: ui/compose.slint:253
+msgid "You · members can be invited later too"
+msgstr "自分 · メンバーは後からでも招待できます"
+
+#: ui/compose.slint:253
+msgid "You, {0}"
+msgstr "自分、{0}"
+
+#: ui/compose.slint:255
+msgid "Set channel photo"
+msgstr "チャンネルの写真を設定"
+
+#: ui/compose.slint:255
+msgid "Set group photo"
+msgstr "グループの写真を設定"
+
+#: ui/compose.slint:256
+msgid "Description (optional)"
+msgstr "説明（任意）"
+
+#: ui/compose.slint:257
+msgid "The description shows in the channel's profile"
+msgstr "説明はチャンネルのプロフィールに表示されます"
+
+#: ui/compose.slint:258
+msgid "Public channel"
+msgstr "公開チャンネル"
+
+#: ui/compose.slint:259
+msgid "Has a permanent link; anyone can find it and subscribe."
+msgstr "固定のリンクがあり、誰でも見つけて登録できます。"
+
+#: ui/compose.slint:260
+msgid "Private channel"
+msgstr "非公開チャンネル"
+
+#: ui/compose.slint:261
+msgid "Cannot be found; people join with an invite link."
+msgstr "検索では見つからず、招待リンクから参加します。"
+
+#: ui/compose.slint:262
+msgid "Public link"
+msgstr "公開リンク"
+
+#: ui/compose.slint:263
+msgid "link"
+msgstr "リンク"
+
+#: ui/compose.slint:265
+msgid "5–32 characters: a–z, 0–9 and underscores"
+msgstr "5〜32 文字：a〜z、0〜9、アンダースコア"
+
+#: ui/compose.slint:266
+msgid "Only a–z, 0–9 and underscores"
+msgstr "使えるのは a〜z、0〜9、アンダースコアだけです"
+
+#: ui/compose.slint:267
+msgid "Must start with a letter"
+msgstr "先頭は英字にしてください"
+
+#: ui/compose.slint:268
+msgid "At least 5 characters"
+msgstr "5 文字以上にしてください"
+
+#: ui/compose.slint:269
+msgid "At most 32 characters"
+msgstr "32 文字以内にしてください"
+
+#: ui/compose.slint:270
+msgid "Cannot end with an underscore"
+msgstr "末尾にアンダースコアは使えません"
+
+#: ui/compose.slint:271 ui/pages/downloads.slint:17
+msgid "Checking…"
+msgstr "確認中…"
+
+#: ui/compose.slint:272
+msgid "t.me/{0} is available"
+msgstr "t.me/{0} は利用できます"
+
+#: ui/compose.slint:273
+msgid "This link is taken"
+msgstr "このリンクはすでに使われています"
+
+#: ui/compose.slint:274
+msgid "This link is taken; it is for sale on fragment.com"
+msgstr "このリンクはすでに使われています。fragment.com で販売中です"
+
+#: ui/compose.slint:275
+msgid ""
+"You have too many public groups and channels; make one of them private first"
+msgstr ""
+"公開のグループとチャンネルが多すぎます。先にどれかを非公開にしてください"
+
+#: ui/compose.slint:276
+msgid "This account cannot make a chat public"
+msgstr "このアカウントではチャットを公開にできません"
+
+#: ui/compose.slint:277
+msgid "Could not check the link: {0}"
+msgstr "リンクを確認できませんでした：{0}"
+
+#: ui/compose.slint:285
+msgid "Invite link"
+msgstr "招待リンク"
+
+#: ui/compose.slint:286
+msgid "It can be revoked and made anew in the channel's settings."
+msgstr "チャンネルの設定で無効にして作り直せます。"
+
+#: ui/compose.slint:287 ui/pages/ai-access.slint:559 ui/pages/profile.slint:379
+msgid "Copy"
+msgstr "コピー"
+
+#: ui/compose.slint:288 ui/pages/ai-access.slint:559 ui/pages/profile.slint:379
+msgid "Copied"
+msgstr "コピーしました"
+
+#: ui/compose.slint:289 ui/pages/login.slint:753 ui/pages/profile.slint:272
+msgid "First name"
+msgstr "名"
+
+#: ui/compose.slint:290 ui/pages/login.slint:765
+msgid "Last name (optional)"
+msgstr "姓（任意）"
+
+#: ui/compose.slint:291
+msgid "Phone number with country code, like +86 139 1234 5678"
+msgstr "国番号付きの電話番号（例：+86 139 1234 5678）"
+
+#: ui/compose.slint:292
+msgid ""
+"They may have chosen who can find them by phone number. Once added, they are "
+"among your contacts, but they do not see your phone number unless you let "
+"them."
+msgstr ""
+"相手は電話番号で自分を見つけられる人を制限している場合があります。追加すると"
+"相手はあなたの連絡先に入りますが、あなたが許可しない限り、相手にあなたの電話"
+"番号は見えません。"
+
+#. What TDLib said when a number has no account.
+#: ui/compose.slint:294
+msgid "This number is not on Telegram yet."
+msgstr "この番号はまだ Telegram に登録されていません。"
 
 #: ui/format.slint:38
 msgctxt "weekday"
@@ -1115,62 +1510,57 @@ msgid "{0} created the group “{1}”"
 msgstr "{0} がグループ「{1}」を作成しました"
 
 #: ui/format.slint:231
+msgid "Channel “{0}” created"
+msgstr "チャンネル「{0}」を作成しました"
+
+#: ui/format.slint:232
 msgid "{0} changed the name to “{1}”"
 msgstr "{0} が名前を「{1}」に変更しました"
 
-#: ui/format.slint:232
+#: ui/format.slint:233
 msgid "{0} changed the photo"
 msgstr "{0} が写真を変更しました"
 
-#: ui/format.slint:233
+#: ui/format.slint:234
 msgid "{0} removed the photo"
 msgstr "{0} が写真を削除しました"
 
-#: ui/format.slint:234
+#: ui/format.slint:235
 msgid "{0} added {1}"
 msgstr "{0} が {1} を追加しました"
 
-#: ui/format.slint:235
+#: ui/format.slint:236
 msgid "{0} joined"
 msgstr "{0} が参加しました"
 
-#: ui/format.slint:236
+#: ui/format.slint:237
 msgid "{0} left"
 msgstr "{0} が退出しました"
 
-#: ui/format.slint:237
+#: ui/format.slint:238
 msgid "{0} removed {1}"
 msgstr "{0} が {1} を退出させました"
 
-#: ui/format.slint:238
+#: ui/format.slint:239
 msgid "{0} pinned a message"
 msgstr "{0} がメッセージをピン留めしました"
 
-#: ui/format.slint:239
+#: ui/format.slint:240
 msgid "{0} took a screenshot"
 msgstr "{0} がスクリーンショットを撮影しました"
 
-#: ui/format.slint:240
+#: ui/format.slint:241
 msgid "{0} joined Telegram"
 msgstr "{0} が Telegram に参加しました"
 
-#: ui/format.slint:241
+#: ui/format.slint:242
 msgid "{0} changed something in the chat"
 msgstr "{0} がチャットの設定を変更しました"
 
-#: ui/format.slint:252
+#: ui/format.slint:253
 msgctxt "content with caption"
 msgid "{0} · {1}"
 msgstr "{0} · {1}"
-
-#: ui/format.slint:264
-msgid "You: {0}"
-msgstr "自分：{0}"
-
-#: ui/format.slint:267
-msgctxt "sender and message"
-msgid "{0}: {1}"
-msgstr "{0}：{1}"
 
 #: ui/pages/ai-access.slint:22
 msgid "Secret chat · never shown"
@@ -1300,7 +1690,7 @@ msgstr "下書きのみ"
 msgid "Read only"
 msgstr "読み取りのみ"
 
-#: ui/pages/ai-access.slint:374 ui/terminal/terminal.slint:112
+#: ui/pages/ai-access.slint:374
 msgid "Search chats"
 msgstr "チャットを検索"
 
@@ -1376,14 +1766,6 @@ msgstr ""
 #: ui/pages/ai-access.slint:551
 msgid "Connect an app"
 msgstr "アプリを接続"
-
-#: ui/pages/ai-access.slint:559 ui/pages/ai-access.slint:570
-msgid "Copied"
-msgstr "コピーしました"
-
-#: ui/pages/ai-access.slint:559 ui/pages/ai-access.slint:570
-msgid "Copy"
-msgstr "コピー"
 
 #: ui/pages/ai-access.slint:567
 msgid "Claude Desktop and other apps"
@@ -1468,10 +1850,6 @@ msgstr "設定で変更"
 #: ui/pages/ai-access.slint:850
 msgid "Don't Allow"
 msgstr "許可しない"
-
-#: ui/pages/downloads.slint:17 ui/pages/settings.slint:345
-msgid "Checking…"
-msgstr "確認中…"
 
 #: ui/pages/downloads.slint:18
 msgid "Password rejected"
@@ -1703,10 +2081,6 @@ msgstr "テスト中…"
 msgid "Save"
 msgstr "保存"
 
-#: ui/pages/downloads.slint:1370
-msgid "Add"
-msgstr "追加"
-
 #: ui/pages/downloads.slint:1380
 msgid "Test connection"
 msgstr "接続をテスト"
@@ -1840,11 +2214,6 @@ msgstr "Telegram アプリにコードを送信します"
 #: ui/pages/login.slint:385 ui/pages/profile.slint:354
 msgid "Phone number"
 msgstr "電話番号"
-
-#: ui/pages/login.slint:406 ui/pages/login.slint:565 ui/pages/login.slint:613
-#: ui/pages/settings.slint:1254 ui/pages/settings.slint:1451
-msgid "Next"
-msgstr "次へ"
 
 #: ui/pages/login.slint:414
 msgid "Sign in with QR code"
@@ -1983,14 +2352,6 @@ msgstr ""
 msgid "Add photo"
 msgstr "写真を追加"
 
-#: ui/pages/login.slint:753 ui/pages/profile.slint:272
-msgid "First name"
-msgstr "名"
-
-#: ui/pages/login.slint:765
-msgid "Last name (optional)"
-msgstr "姓（任意）"
-
 #: ui/pages/login.slint:776
 msgid "Sign up"
 msgstr "登録"
@@ -2103,7 +2464,7 @@ msgstr ""
 msgid "Current"
 msgstr "使用中"
 
-#: ui/pages/profile.slint:119 ui/workbench/workbench.slint:322
+#: ui/pages/profile.slint:119 ui/workbench/workbench.slint:289
 msgid "Add account"
 msgstr "アカウントを追加"
 
@@ -2599,83 +2960,97 @@ msgstr "FinchGram を終了"
 msgid "New message"
 msgstr "新着メッセージ"
 
-#: ui/telegram.slint:686
+#: ui/telegram.slint:684
 msgid "Deleted Account"
 msgstr "削除されたアカウント"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:689
+#: ui/telegram.slint:687
 msgctxt "list separator"
 msgid ", "
 msgstr "、"
 
-#: ui/terminal/terminal.slint:218
+#: ui/terminal/terminal.slint:122
 msgid "light"
 msgstr "ライト"
 
-#: ui/terminal/terminal.slint:218
+#: ui/terminal/terminal.slint:122
 msgid "dark"
 msgstr "ダーク"
 
-#: ui/terminal/terminal.slint:392
+#: ui/terminal/terminal.slint:292
 msgid "more"
 msgstr "その他"
 
-#: ui/terminal/terminal.slint:946 ui/terminal/terminal.slint:951
+#: ui/terminal/terminal.slint:543
+msgctxt "terminal"
+msgid "new"
+msgstr "新規"
+
+#: ui/terminal/terminal.slint:948 ui/terminal/terminal.slint:953
 msgid "(edited)"
 msgstr "（編集済み）"
 
-#: ui/terminal/terminal.slint:1094
+#: ui/terminal/terminal.slint:1096
 msgid "sponsored"
 msgstr "スポンサー"
 
-#: ui/terminal/terminal.slint:1147 ui/terminal/terminal.slint:1235
+#: ui/terminal/terminal.slint:1149 ui/terminal/terminal.slint:1237
 msgid "search"
 msgstr "検索"
 
-#: ui/terminal/terminal.slint:1247
+#: ui/terminal/terminal.slint:1249
 msgid "chat settings"
 msgstr "チャット設定"
 
-#: ui/terminal/terminal.slint:1458
+#: ui/terminal/terminal.slint:1460
 msgid "Mute or unmute this chat"
 msgstr "このチャットをミュート/ミュート解除"
 
-#: ui/terminal/terminal.slint:1459
+#: ui/terminal/terminal.slint:1461
 msgid "Pin or unpin this chat"
 msgstr "このチャットをピン留め/ピン留め解除"
 
-#: ui/terminal/terminal.slint:1460
+#: ui/terminal/terminal.slint:1462
 msgid "Mark every chat in this folder as read"
 msgstr "このフォルダのチャットをすべて既読にする"
 
-#: ui/terminal/terminal.slint:1461
+#: ui/terminal/terminal.slint:1463
 msgid "Copy this chat's ID"
 msgstr "このチャットのIDをコピー"
 
-#: ui/terminal/terminal.slint:1552
+#: ui/terminal/terminal.slint:1464
+msgid "Search chats, contacts, @usernames and messages"
+msgstr "チャット、連絡先、@ユーザー名、メッセージを検索"
+
+#: ui/terminal/terminal.slint:1570
 msgid "unmute"
 msgstr "ミュート解除"
 
-#: ui/terminal/terminal.slint:1552
+#: ui/terminal/terminal.slint:1570
 msgid "mute"
 msgstr "ミュート"
 
-#: ui/terminal/terminal.slint:1616
+#: ui/terminal/terminal.slint:1634
 msgid "Write a message, or / for commands"
 msgstr "メッセージを入力、または / でコマンド"
 
-#: ui/terminal/terminal.slint:1641
+#: ui/terminal/terminal.slint:1659
 msgid "save"
 msgstr "保存"
 
-#: ui/terminal/terminal.slint:1641
+#: ui/terminal/terminal.slint:1659
 msgid "send"
 msgstr "送信"
 
-#: ui/terminal/terminal.slint:1712
+#: ui/terminal/terminal.slint:1730
 msgid "connected"
 msgstr "接続済み"
+
+#: ui/terminal/terminal.slint:1738
+msgctxt "terminal"
+msgid "cmd"
+msgstr "コマンド"
 
 #: ui/viewer.slint:17
 msgctxt "zoom"
@@ -2763,14 +3138,14 @@ msgstr "⏎ 送信 · ⇧⏎ 改行"
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ 送信 · ⏎ 改行"
 
-#: ui/workbench/sidebar.slint:491
+#: ui/workbench/sidebar.slint:562
 msgid "This account has no channels."
 msgstr "このアカウントにはチャンネルがありません。"
 
-#: ui/workbench/sidebar.slint:491
+#: ui/workbench/sidebar.slint:562
 msgid "Channels open in reading mode: long posts, set for reading."
 msgstr "チャンネルはリーダーモードで開きます。長い投稿を読むための表示です。"
 
-#: ui/workbench/workbench.slint:346
+#: ui/workbench/workbench.slint:313
 msgid "Manage accounts"
 msgstr "アカウントを管理"

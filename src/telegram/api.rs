@@ -295,6 +295,9 @@ pub struct User {
     #[serde(default)]
     pub profile_photo: Option<ChatPhoto>,
     pub status: UserStatus,
+    /// Among the account's contacts.
+    #[serde(default)]
+    pub is_contact: bool,
     #[serde(default)]
     pub verification_status: Option<VerificationStatus>,
     #[serde(rename = "type")]
@@ -369,6 +372,17 @@ pub struct Supergroup {
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct SupergroupFullInfo {
     pub member_count: i32,
+    #[serde(default)]
+    pub description: String,
+    /// The chat's primary invite link, for an administrator who may invite; none otherwise.
+    #[serde(default)]
+    pub invite_link: Option<ChatInviteLink>,
+}
+
+/// An invite link of a chat (chatInviteLink).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct ChatInviteLink {
+    pub invite_link: String,
 }
 
 /// What we are in a group or channel: who may write where.
@@ -1180,6 +1194,73 @@ pub struct AdvertisementSponsor {
 #[derive(Debug, Clone, Deserialize)]
 pub struct SponsoredMessages {
     pub messages: Vec<SponsoredMessage>,
+}
+
+// ---- finding people and chats, making chats ---------------------------------------------------
+
+/// A list of chats by their ids (searchPublicChats, getChats). TDLib sends each chat itself
+/// (updateNewChat) before it answers.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Chats {
+    pub chat_ids: Vec<i64>,
+}
+
+/// A list of users by their ids (getContacts, searchContacts); each user was sent before.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Users {
+    pub user_ids: Vec<i64>,
+}
+
+/// importContacts's answer: each contact's user, in the order given; 0 for a number that has no
+/// account.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ImportedContacts {
+    pub user_ids: Vec<i64>,
+}
+
+/// What searchMessages finds across the chats: the messages, newest first (its next_offset, for
+/// the page after, is not asked for: one page is shown).
+#[derive(Debug, Clone, Deserialize)]
+pub struct FoundMessages {
+    pub messages: Vec<Message>,
+}
+
+/// createNewBasicGroupChat's answer: the chat made.
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreatedBasicGroupChat {
+    pub chat_id: i64,
+}
+
+/// Whether a username can be a chat's (checkChatUsername).
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum CheckChatUsernameResult {
+    #[serde(rename = "checkChatUsernameResultOk")]
+    Ok,
+    #[serde(rename = "checkChatUsernameResultUsernameInvalid")]
+    UsernameInvalid,
+    #[serde(rename = "checkChatUsernameResultUsernameOccupied")]
+    UsernameOccupied,
+    /// Taken, and for sale on fragment.com.
+    #[serde(rename = "checkChatUsernameResultUsernamePurchasable")]
+    UsernamePurchasable,
+    #[serde(rename = "checkChatUsernameResultPublicChatsTooMany")]
+    PublicChatsTooMany,
+    #[serde(rename = "checkChatUsernameResultPublicGroupsUnavailable")]
+    PublicGroupsUnavailable,
+}
+
+/// joinChat's answer: in, or waiting for an administrator (a group that approves its members), or
+/// turned away.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum ChatJoinResult {
+    #[serde(rename = "chatJoinResultSuccess")]
+    Success { chat_id: i64 },
+    #[serde(rename = "chatJoinResultRequestSent")]
+    RequestSent,
+    #[serde(other)]
+    Other,
 }
 
 // ---- notifications ----------------------------------------------------------------------------

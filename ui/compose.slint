@@ -1,0 +1,295 @@
+// New groups, channels, chats and contacts, and the search over everything (the design's compose.js
+// round: the pencil's menu, the search box and ⌘K). Rust fills these globals
+// (src/telegram/global_search.rs, src/telegram/new_chat.rs); each theme draws them in its own way
+// (ui/<theme>/compose.slint). The words are here, once for the three themes.
+import { ChatKind, Status, Moment, Content } from "telegram.slint";
+import { Fmt } from "format.slint";
+
+// Where a row of the search's results stands: among the chats here and the contacts, among the
+// public chats Telegram found, found by a phone number, or among the messages found.
+export enum FoundKind { chat, contact, public, by-phone, message }
+
+// A chat, a person or a message in the search's lists, and a contact in the dialogs' lists.
+export struct FoundRow {
+    section: FoundKind,
+    index: int,             // among every row shown, from 0: ↑↓ go by it
+    id: string,             // the chat; "" for a person whose chat is not made yet (user-id then)
+    user-id: string,        // a person: their id
+    message-id: string,     // a message found: its id, in the chat `id`
+    title: string,
+    initial: string,
+    picture: image,
+    has-picture: bool,
+    kind: ChatKind,
+    username: string,       // without the @
+    status: Status,         // a person: online, last seen …; a group or channel: its size
+    last-seen: Moment,
+    members: int,
+    phone: string,          // one found by phone number: the number
+    sender: string,         // a message: who wrote it; "" for ours
+    outgoing: bool,
+    content: Content,       // a message: what it holds, its first line, its detail (Fmt.body)
+    text: string,
+    detail: string,
+    time: Moment,           // a message: when
+    picked: bool,           // a contact chosen for a new group or channel
+}
+
+export struct FoundSection {
+    kind: FoundKind,
+    count: int,
+    rows: [FoundRow],
+}
+
+// The search over everything (the title bar's box, ⌘K): the chats here, the contacts, Telegram's
+// public users, groups and channels, people found by their phone number, and messages.
+export global Search {
+    in-out property <bool> open;
+    in-out property <string> query;             // the words typed; Rust sets them for Terminal's /search
+    in-out property <bool> empty: true;         // no words: the recent chats and the two hints show
+    in-out property <[FoundRow]> recent;
+    in-out property <[FoundSection]> sections;
+    in-out property <int> selected;             // the row ↑↓ are at, among every section's rows, from 0
+    in-out property <int> count;                // rows in all
+    in-out property <bool> waiting;             // Telegram's answer is on its way
+    in-out property <bool> none;                // words, and nothing found anywhere
+    in-out property <bool> phone-missed;        // a phone number, and nobody with it: offer adding a contact
+    in-out property <string> error;             // what Telegram refused, if anything
+    // A public group or channel found: its card, before joining it.
+    in-out property <bool> card-open;
+    in-out property <FoundRow> card;
+    in-out property <string> card-about;
+    in-out property <bool> card-busy;
+    callback show();                            // ⌘K, the search box: open, with nothing typed
+    callback show-with(string);                 // Terminal's "/search words": open, with the words
+    callback close();
+    callback edited(string);                    // the words changed
+    callback move(int);                         // ↑ -1, ↓ +1
+    callback choose(int);                       // a row, by its index; -1: the one selected (⏎)
+    callback add-contact();                     // the number nobody has: the Add contact dialog, with it
+    callback join();                            // the card's button
+    callback back();                            // from the card to the results
+}
+
+// Which dialog of the pencil's menu is open.
+export enum NewDialog { none, group, channel, direct, contact }
+
+// What the public link typed for a channel is worth, so far.
+export enum LinkCheck { empty, bad-characters, bad-start, short, long, bad-end, checking, ok, taken, purchasable, too-many, unavailable, failed }
+
+// New group (two steps: members, then its name and photo), new channel (three: name and
+// description, public or private, subscribers), new chat (a contact), add contact.
+export global NewChat {
+    in-out property <NewDialog> dialog;
+    in-out property <int> step: 1;
+    in-out property <string> query;             // the contacts search
+    in-out property <[FoundRow]> contacts;      // the contacts matching it, the picked ones ticked
+    in-out property <[FoundRow]> picked;        // chosen for the new group or channel, in the order chosen
+    in-out property <string> picked-names;      // their names, "Lin Xia, Alex Chen"
+    in-out property <string> name;              // the group's or channel's name, as typed
+    in-out property <string> name-initial;      // its first letter, for the photo's square (Rust takes it)
+    in-out property <string> about;             // the channel's description
+    in-out property <image> photo;              // the photo chosen for it, if any
+    in-out property <bool> has-photo;
+    in-out property <bool> public: true;        // a channel: public, with a link, or private
+    in-out property <string> username;          // the part after t.me/
+    in-out property <LinkCheck> link-check;
+    in-out property <string> invite-link;       // a private channel's, once the channel is made
+    in-out property <string> first-name;        // a new contact
+    in-out property <string> last-name;
+    in-out property <string> phone;
+    in-out property <bool> phone-ok;            // the number has enough digits (Rust counts them)
+    in-out property <bool> busy;                // Telegram is at work: the main button waits
+    in-out property <string> error;             // what went wrong, shown in the dialog
+    in-out property <bool> link-copied;         // the invite link was just copied: say so for a moment
+    in-out property <bool> can-go-back;         // the step before can be gone back to (a channel, once made, cannot)
+    callback start(NewDialog);                  // the menu, Terminal's commands, the new chat's three entries
+    callback close();
+    callback search(string);                    // the contacts search's words changed
+    callback toggle(string);                    // a contact (its user id) picked, or no longer
+    callback open-contact(string);              // new chat: the chat with the contact (user id)
+    callback choose-photo();                    // the system's open panel, for the photo
+    callback next();                            // group: to the name; channel: the channel is made, then its type; its type set, then its subscribers
+    callback back();                            // a step back
+    callback create();                          // group: make it; channel: invite the subscribers and open it
+    callback set-public(bool);
+    callback username-edited();                 // the link's part typed changed: checked
+    callback copy-invite-link();
+    callback name-edited();                     // the name typed changed: name-initial follows
+    callback phone-edited();                    // the number typed changed: phone-ok follows
+    callback add-contact();                     // the fields filled: add
+}
+
+// The words of the search and the dialogs, in the UI language. The first three are the search
+// box's: in the title bar in Workbench, in the list in Broadsheet and Terminal.
+export global ComposeWords {
+    public pure function box-placeholder() -> string { return @tr("Search chats, contacts, @username or messages"); }
+    public pure function terminal-box() -> string { return @tr("terminal" => "search / @username"); }
+    public pure function placeholder() -> string { return @tr("Search chats, contacts, @username, phone number or messages"); }
+    public pure function recent() -> string { return @tr("Recent"); }
+    public pure function hint-username() -> string { return @tr("Type a username to find public users, groups and channels"); }
+    public pure function hint-phone() -> string { return @tr("Type a phone number to find a contact; one nobody has can be added"); }
+    public pure function section(kind: FoundKind) -> string {
+        if kind == FoundKind.chat || kind == FoundKind.contact { return @tr("Chats and contacts"); }
+        if kind == FoundKind.public { return @tr("Global search"); }
+        if kind == FoundKind.by-phone { return @tr("Found by phone number"); }
+        return @tr("Messages");
+    }
+    // At the right of a row: what it is.
+    public pure function label(row: FoundRow) -> string {
+        if row.section == FoundKind.contact { return @tr("Contact"); }
+        if row.section == FoundKind.message { return Fmt.list-time(row.time); }
+        return kind-label(row.kind);
+    }
+    public pure function kind-label(kind: ChatKind) -> string {
+        if kind == ChatKind.group { return @tr("kind of chat" => "Group"); }
+        if kind == ChatKind.channel { return @tr("kind of chat" => "Channel"); }
+        if kind == ChatKind.bot { return @tr("kind of chat" => "Bot"); }
+        if kind == ChatKind.saved { return ""; }
+        return @tr("kind of chat" => "User");
+    }
+    // Under a row's name.
+    public pure function line(row: FoundRow) -> string {
+        if row.section == FoundKind.message {
+            if row.outgoing { return @tr("You: {0}", Fmt.body(row.content, row.text, row.detail)); }
+            if row.sender != "" { return @tr("sender and message" => "{0}: {1}", row.sender, Fmt.body(row.content, row.text, row.detail)); }
+            return Fmt.body(row.content, row.text, row.detail);
+        }
+        if row.section == FoundKind.by-phone { return @tr("{0} · lets others find them by phone number", row.phone); }
+        if row.section == FoundKind.public && row.username != "" {
+            return (row.kind == ChatKind.group || row.kind == ChatKind.channel) && row.members > 0
+                ? "@" + row.username + " · " + Fmt.status(row.status, row.last-seen, row.members, 0)
+                : "@" + row.username;
+        }
+        if row.section == FoundKind.contact && row.username != "" { return "@" + row.username; }
+        if (row.status == Status.members || row.status == Status.subscribers) && row.members == 0 { return ""; }
+        return Fmt.status(row.status, row.last-seen, row.members, 0);
+    }
+    // Under a contact's name in the dialogs: "@linxia_lx · online".
+    public pure function contact-line(row: FoundRow) -> string {
+        if row.username == "" { return Fmt.status(row.status, row.last-seen, 0, 0); }
+        return Fmt.status(row.status, row.last-seen, 0, 0) == "" ? "@" + row.username : "@" + row.username + " · " + Fmt.status(row.status, row.last-seen, 0, 0);
+    }
+    public pure function phone-missed(phone: string) -> string { return @tr("No results for {0}", phone); }
+    public pure function phone-note() -> string { return @tr("A phone number finds people in your contacts, and users who let others find them by it."); }
+    public pure function add-as-contact() -> string { return @tr("Add as contact"); }
+    public pure function none(words: string) -> string { return @tr("No results for “{0}”", words); }
+    public pure function none-note() -> string { return @tr("Public usernames have at least 5 characters. Private groups and channels are joined with an invite link."); }
+    public pure function back-to-results() -> string { return @tr("Back to results"); }
+    // The card: "Group · @keebcn · 12,384 members".
+    public pure function card-line(row: FoundRow) -> string {
+        return kind-label(row.kind) + (row.username == "" ? "" : " · @" + row.username)
+            + (row.members > 0 ? " · " + Fmt.status(row.status, row.last-seen, row.members, 0) : "");
+    }
+    public pure function join(kind: ChatKind) -> string { return kind == ChatKind.channel ? @tr("Subscribe to channel") : @tr("Join group"); }
+    public pure function join-note(kind: ChatKind) -> string {
+        return kind == ChatKind.channel ? @tr("Once subscribed, the channel is in your chat list; its other subscribers cannot see you.")
+            : @tr("Its members can see your name and photo once you join.");
+    }
+    // The card, when the group's administrators have to let one in.
+    public pure function request-sent() -> string { return @tr("Your request to join was sent to the group's administrators."); }
+    public pure function keys-select() -> string { return @tr("↑↓ Select"); }
+    public pure function keys-open() -> string { return @tr("⏎ Open"); }
+    public pure function keys-close() -> string { return @tr("esc Close"); }
+
+    // The pencil's menu.
+    public pure function new-group() -> string { return @tr("New group"); }
+    public pure function new-channel() -> string { return @tr("New channel"); }
+    public pure function new-chat() -> string { return @tr("New chat"); }
+    public pure function add-contact() -> string { return @tr("Add contact"); }
+    public pure function pencil-tip() -> string { return @tr("New group, channel or chat"); }
+
+    // The dialogs.
+    public pure function title(dialog: NewDialog) -> string {
+        if dialog == NewDialog.group { return new-group(); }
+        if dialog == NewDialog.channel { return new-channel(); }
+        if dialog == NewDialog.direct { return new-chat(); }
+        return add-contact();
+    }
+    public pure function subtitle(dialog: NewDialog, step: int, picked: int) -> string {
+        if dialog == NewDialog.group {
+            return step == 1 ? @tr("Add members · {n} chosen" | "Add members · {n} chosen" % picked)
+                : @tr("Name and photo · {n} member" | "Name and photo · {n} members" % (picked + 1));
+        }
+        if dialog == NewDialog.channel {
+            if step == 1 { return @tr("Step 1 of 3 · Name and description"); }
+            if step == 2 { return @tr("Step 2 of 3 · Channel type"); }
+            return @tr("Step 3 of 3 · Invite subscribers");
+        }
+        if dialog == NewDialog.direct { return @tr("Choose a contact, or find them by username or phone number"); }
+        return @tr("They need to be on Telegram");
+    }
+    // The main button, and whether it can be pressed.
+    public pure function primary(dialog: NewDialog, step: int, picked: int) -> string {
+        if dialog == NewDialog.group {
+            return step == 1 ? (picked > 0 ? @tr("Next") : @tr("Skip")) : @tr("Create");
+        }
+        if dialog == NewDialog.channel {
+            if step < 3 { return @tr("Next"); }
+            return picked > 0 ? @tr("Invite {n} person" | "Invite {n} people" % picked) : @tr("Done");
+        }
+        return @tr("Add");
+    }
+    public pure function primary-enabled(dialog: NewDialog, step: int, name: string, link: LinkCheck, public: bool, first-name: string, phone-ok: bool) -> bool {
+        if dialog == NewDialog.group { return step == 1 || name != ""; }
+        if dialog == NewDialog.channel {
+            if step == 1 { return name != ""; }
+            if step == 2 { return !public || link == LinkCheck.ok; }
+            return true;
+        }
+        if dialog == NewDialog.contact { return first-name != "" && phone-ok; }
+        return false;
+    }
+    public pure function back() -> string { return @tr("Back"); }
+    public pure function cancel() -> string { return @tr("Cancel"); }
+    public pure function search-contacts() -> string { return @tr("Search contacts, @username or phone number"); }
+    public pure function contacts() -> string { return @tr("Contacts"); }
+    public pure function no-contacts(words: string) -> string { return words == "" ? @tr("No contacts yet") : @tr("No “{0}” among your contacts", words); }
+    public pure function group-name() -> string { return @tr("Group name"); }
+    public pure function channel-name() -> string { return @tr("Channel name"); }
+    public pure function members() -> string { return @tr("Members"); }
+    // "You, Lin Xia, Alex Chen", or alone: "You · members can be invited later too".
+    public pure function member-line(names: string) -> string {
+        return names == "" ? @tr("You · members can be invited later too") : @tr("You, {0}", names);
+    }
+    public pure function set-photo(dialog: NewDialog) -> string { return dialog == NewDialog.channel ? @tr("Set channel photo") : @tr("Set group photo"); }
+    public pure function description() -> string { return @tr("Description (optional)"); }
+    public pure function description-note() -> string { return @tr("The description shows in the channel's profile"); }
+    public pure function public-channel() -> string { return @tr("Public channel"); }
+    public pure function public-note() -> string { return @tr("Has a permanent link; anyone can find it and subscribe."); }
+    public pure function private-channel() -> string { return @tr("Private channel"); }
+    public pure function private-note() -> string { return @tr("Cannot be found; people join with an invite link."); }
+    public pure function public-link() -> string { return @tr("Public link"); }
+    public pure function link-placeholder() -> string { return @tr("link"); }
+    public pure function link-check(check: LinkCheck, username: string, error: string) -> string {
+        if check == LinkCheck.empty { return @tr("5–32 characters: a–z, 0–9 and underscores"); }
+        if check == LinkCheck.bad-characters { return @tr("Only a–z, 0–9 and underscores"); }
+        if check == LinkCheck.bad-start { return @tr("Must start with a letter"); }
+        if check == LinkCheck.short { return @tr("At least 5 characters"); }
+        if check == LinkCheck.long { return @tr("At most 32 characters"); }
+        if check == LinkCheck.bad-end { return @tr("Cannot end with an underscore"); }
+        if check == LinkCheck.checking { return @tr("Checking…"); }
+        if check == LinkCheck.ok { return @tr("t.me/{0} is available", username); }
+        if check == LinkCheck.taken { return @tr("This link is taken"); }
+        if check == LinkCheck.purchasable { return @tr("This link is taken; it is for sale on fragment.com"); }
+        if check == LinkCheck.too-many { return @tr("You have too many public groups and channels; make one of them private first"); }
+        if check == LinkCheck.unavailable { return @tr("This account cannot make a chat public"); }
+        return @tr("Could not check the link: {0}", error);
+    }
+    // Faint words, a warning, or a good word: which the check deserves.
+    public pure function link-tone(check: LinkCheck) -> int {
+        if check == LinkCheck.empty || check == LinkCheck.checking { return 0; }
+        if check == LinkCheck.ok { return 2; }
+        return 1;
+    }
+    public pure function invite-link() -> string { return @tr("Invite link"); }
+    public pure function invite-note() -> string { return @tr("It can be revoked and made anew in the channel's settings."); }
+    public pure function copy() -> string { return @tr("Copy"); }
+    public pure function copied() -> string { return @tr("Copied"); }
+    public pure function first-name() -> string { return @tr("First name"); }
+    public pure function last-name() -> string { return @tr("Last name (optional)"); }
+    public pure function phone-placeholder() -> string { return @tr("Phone number with country code, like +86 139 1234 5678"); }
+    public pure function phone-tip() -> string { return @tr("They may have chosen who can find them by phone number. Once added, they are among your contacts, but they do not see your phone number unless you let them."); }
+    // What TDLib said when a number has no account.
+    public pure function not-on-telegram() -> string { return @tr("This number is not on Telegram yet."); }
+}

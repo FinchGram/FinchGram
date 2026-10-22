@@ -1,5 +1,5 @@
 //! The chat list: loading its chats from TDLib, and what the pages do with it: show a folder
-//! (Broadsheet, Terminal), expand or collapse a folder in the tree (Workbench), search, a
+//! (Broadsheet, Terminal), expand or collapse a folder in the tree (Workbench), a
 //! chat's menu (a right click on it: mute, pin, copy its id, put it into one of the account's
 //! folders or take it out), and a folder's (a right click on its tab: every chat of it read).
 //!
@@ -97,14 +97,6 @@ pub fn connect(ui: &MainWindow) {
     });
     chats.on_confirm(confirm);
     chats.on_cancel_confirm(close_question);
-    chats.on_search(|words| {
-        store::with(|store| {
-            store.query = words.trim().to_lowercase();
-            store.dirty.chats = true;
-        });
-        store::refresh();
-        super::with_ui(|ui| ui.global::<Chats>().set_query(words.trim().into()));
-    });
 }
 
 /// How the folders' chats are ordered under the pinned ones: the settings' choice at the start,

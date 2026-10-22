@@ -17,8 +17,10 @@ client, not made by Telegram.
 
 - **Chats.** Log in with your phone number, the code and your two-step password, or by scanning a
   QR code; sign up for a new account. The chat list with Telegram's folders, pinned chats, unread
-  counts and mentions; a search box (⌘K), and a search within a chat (⌘F); a view of your channels
-  and one of your bots.
+  counts and mentions; a search over everything (⌘K): your chats and contacts, public users, groups
+  and channels by username, people by phone number, and messages; a search within a chat (⌘F); a
+  view of your channels and one of your bots. The pencil makes a new group, channel or chat, or adds
+  a contact.
 - **Messages.** Text with its formatting (bold, italic, code, links), replies and forwards, photos,
   videos, GIFs, stickers, files, and a card for a link's preview. A right click on a message gives
   its menu: reply, edit, copy, copy its link, forward, report, delete, or choose several. Photos

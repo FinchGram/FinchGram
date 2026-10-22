@@ -253,6 +253,40 @@ pub fn open(chat_id: i64) {
     store::refresh();
 }
 
+/// The chat with a person (a contact, someone found), made by TDLib when the account has none yet
+/// (createPrivateChat), and brought to the front.
+pub(super) fn open_user(user_id: i64) {
+    send(json!({ "@type": "createPrivateChat", "user_id": user_id, "force": false }), move |answer| match answer {
+        Ok(chat) => {
+            if let Some(chat_id) = chat["id"].as_i64() {
+                open(chat_id);
+            }
+        }
+        Err(err) => log_error("open a chat with a user", Err(err)),
+    });
+}
+
+/// Bring a chat to the front at one of its messages (a message the search found): the chat opens,
+/// and the view goes to the message once the chat's first page is here (actions.rs finds it
+/// among the messages loaded, or loads the page around it).
+pub(super) fn open_at(chat_id: i64, message_id: i64) {
+    open(chat_id);
+    once_loaded(chat_id, 50, move || actions::jump(message_id));
+}
+
+/// Run `then` once no page of `chat_id` is on its way, looking again every 100 ms up to `tries`;
+/// not at all once another chat is in front.
+fn once_loaded(chat_id: i64, tries: u32, then: impl FnOnce() + 'static) {
+    let state = store::with(|store| (store.open == Some(chat_id), store.histories.get(&chat_id).is_some_and(|history| history.loading)));
+    match state {
+        Some((true, true)) if tries > 0 => {
+            slint::Timer::single_shot(Duration::from_millis(100), move || once_loaded(chat_id, tries - 1, then));
+        }
+        Some((true, false)) => then(),
+        _ => {}
+    }
+}
+
 /// Close a tab. When it was the front one, the tab next to it comes to the front.
 pub(super) fn close(chat_id: i64) {
     enum Then {
@@ -864,7 +898,7 @@ pub(super) fn open_link(url: &str) {
     if let Some(username) = public_username(url) {
         send(json!({ "@type": "searchPublicChat", "username": username }), open_answer("open a chat by its username"));
     } else if let Some(user_id) = url.strip_prefix("tg://user?id=").and_then(|id| id.parse::<i64>().ok()) {
-        send(json!({ "@type": "createPrivateChat", "user_id": user_id, "force": false }), open_answer("open a chat with a user"));
+        open_user(user_id);
     } else {
         crate::platform::open_link(url);
     }

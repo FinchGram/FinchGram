@@ -147,8 +147,6 @@ pub struct Store {
     pub shown_folder: usize,
     /// Workbench's tree: folders the user expanded or collapsed, by folder id (0 for All chats).
     pub expanded: HashMap<i32, bool>,
-    /// The search box's words, lower case.
-    pub query: String,
 
     /// Workbench's tabs, in order; the others show only the front one.
     pub tabs: Vec<i64>,
@@ -172,6 +170,9 @@ pub struct Store {
     pub is_premium: bool,
     /// Telegram's limit on a caption (TDLib's `message_caption_length_max` option).
     pub caption_length_max: i32,
+    /// How many members a basic group takes (TDLib's `basic_group_size_max` option); a new group
+    /// with more is made as a supergroup (new_chat.rs).
+    pub basic_group_size_max: i32,
     /// Files on their way up or down, by file id: how much has moved, and how much there is.
     transfers: HashMap<i32, (i64, i64)>,
     /// The files the rows shown hold, by id: a change to one of them redraws the rows.
@@ -243,7 +244,6 @@ pub fn install(ui: &MainWindow) {
             folders: Vec::new(),
             shown_folder: 0,
             expanded: HashMap::new(),
-            query: String::new(),
             tabs: Vec::new(),
             open: None,
             histories: HashMap::new(),
@@ -256,6 +256,7 @@ pub fn install(ui: &MainWindow) {
             wanted_photos: RefCell::new(Vec::new()),
             is_premium: false,
             caption_length_max: 1024,
+            basic_group_size_max: 200,
             transfers: HashMap::new(),
             row_files: RefCell::new(HashSet::new()),
             media_models: RefCell::new(HashMap::new()),
@@ -291,7 +292,6 @@ pub fn clear() {
         store.folders.clear();
         store.shown_folder = 0;
         store.expanded.clear();
-        store.query.clear();
         store.tabs.clear();
         store.open = None;
         store.histories.clear();
@@ -396,9 +396,9 @@ pub struct Names {
     all_chats: String,
     pub list_separator: String,
     /// How a folder's chats are ordered under the pinned ones (Chats.order), and the order of
-    /// names in the UI language, for the order by name.
+    /// names in the UI language, for the order by name (and for the lists of contacts).
     order: ChatOrder,
-    name_order: NameOrder,
+    pub name_order: NameOrder,
 }
 
 impl Names {
@@ -545,6 +545,9 @@ impl Store {
                 ("is_premium", api::OptionValue::Boolean { value }) => self.is_premium = value,
                 ("message_caption_length_max", api::OptionValue::Integer { value }) => {
                     self.caption_length_max = i32::try_from(value).unwrap_or(1024);
+                }
+                ("basic_group_size_max", api::OptionValue::Integer { value }) => {
+                    self.basic_group_size_max = i32::try_from(value).unwrap_or(200);
                 }
                 _ => {}
             },
@@ -997,7 +1000,11 @@ impl Store {
             M::Call {} => (Content::Call, none(), none()),
             M::Story {} => (Content::Story, none(), none()),
             M::Gift {} => (Content::Gift, none(), none()),
-            M::BasicGroupChatCreate { title } | M::SupergroupChatCreate { title } => (Content::ChatCreated, none(), title.clone()),
+            M::BasicGroupChatCreate { title } => (Content::ChatCreated, none(), title.clone()),
+            M::SupergroupChatCreate { title } => {
+                let channel = matches!(sender, MessageSender::Chat { chat_id } if self.chats.get(chat_id).is_some_and(|chat| self.kind(chat) == ChatKind::Channel));
+                (if channel { Content::ChannelCreated } else { Content::ChatCreated }, none(), title.clone())
+            }
             M::ChatChangeTitle { title } => (Content::TitleChanged, none(), title.clone()),
             M::ChatChangePhoto {} => (Content::PhotoChanged, none(), none()),
             M::ChatDeletePhoto {} => (Content::PhotoRemoved, none(), none()),
@@ -1106,9 +1113,8 @@ impl Store {
     }
 
     /// The chats of `list`, in the chosen order (`compare`: the pinned ones first, then by the
-    /// newest message, by name or by unread messages), matching the search words by the names the
-    /// pages show (Saved Messages, Deleted Account), not TDLib's titles. Saved Messages is left
-    /// out: it is the fixed row above every list.
+    /// newest message, by name or by unread messages). Saved Messages is left out: it is the fixed
+    /// row above every list.
     pub fn chats_in(&self, list: ChatList, names: &Names) -> Vec<&api::Chat> {
         let mut chats: Vec<(&api::Chat, SortKey)> = self
             .chats
@@ -1116,7 +1122,6 @@ impl Store {
             .filter(|chat| chat.id != self.my_id)
             .filter_map(|chat| position(chat, list).map(|position| (chat, position)))
             .map(|(chat, position)| (chat, SortKey { pinned: position.is_pinned, order: position.order, id: chat.id, title: self.title(chat, names), unread: self.unread_for_order(chat) }))
-            .filter(|(_, key)| self.query.is_empty() || key.title.to_lowercase().contains(&self.query))
             .collect();
         chats.sort_by(|(_, a), (_, b)| compare(a, b, names.order, &names.name_order));
         chats.into_iter().map(|(chat, _)| chat).collect()
@@ -1162,11 +1167,8 @@ impl Store {
         let order: Vec<usize> = (1..lists.len()).chain(std::iter::once(0)).collect();
         for index in order {
             let chats: Vec<&api::Chat> = self.chats_in(lists[index], names).into_iter().filter(|chat| !at_top.contains(&chat.id)).collect();
-            if index > 0 && chats.is_empty() && !self.query.is_empty() {
-                continue;
-            }
             let id = folders[index].id;
-            let expanded = !self.query.is_empty() || self.expanded.get(&id).copied().unwrap_or(index > 0 || self.folders.is_empty());
+            let expanded = self.expanded.get(&id).copied().unwrap_or(index > 0 || self.folders.is_empty());
             tree.push(TreeRow { header: true, folder: index as i32, expanded, count: chats.len() as i32, chat: self.blank_chat() });
             if expanded {
                 tree.extend(chats.iter().map(|chat| TreeRow {
@@ -1191,7 +1193,7 @@ impl Store {
 
         let chats = ui.global::<Chats>();
         // Saved Messages: the fixed row above every list, there before the account has the chat
-        // (TDLib makes it when the row is clicked, conversation.rs). The search hides it like any chat.
+        // (TDLib makes it when the row is clicked, conversation.rs).
         let saved_messages = match self.chats.get(&self.my_id) {
             Some(chat) => self.chat_row(chat, ChatList::Main, names),
             None => ChatRow {
@@ -1203,7 +1205,7 @@ impl Store {
             },
         };
         chats.set_saved_messages(saved_messages);
-        chats.set_saved_messages_shown(self.my_id != 0 && (self.query.is_empty() || names.saved_messages.to_lowercase().contains(&self.query)));
+        chats.set_saved_messages_shown(self.my_id != 0);
         // The dot on Workbench's channels button: muted channels do not count, as in Telegram's own
         // badges, or the dot never goes out.
         chats.set_unread_channels(channels.iter().filter(|channel| channel.unread > 0 && !channel.muted).count() as i32);
@@ -1293,18 +1295,37 @@ impl Store {
         match kind {
             ChatKind::Saved => (Status::Saved, Moment::default(), 0),
             ChatKind::Bot => (Status::Bot, Moment::default(), 0),
-            ChatKind::User => match self.user_of(chat).map(|user| user.status) {
-                Some(UserStatus::Online { .. }) => (Status::Online, Moment::default(), 0),
-                Some(UserStatus::Offline { was_online }) => (Status::LastSeen, time::moment(was_online), 0),
-                Some(UserStatus::Recently) => (Status::Recently, Moment::default(), 0),
-                Some(UserStatus::LastWeek) => (Status::LastWeek, Moment::default(), 0),
-                Some(UserStatus::LastMonth) => (Status::LastMonth, Moment::default(), 0),
-                Some(UserStatus::Empty) => (Status::LongAgo, Moment::default(), 0),
+            ChatKind::User => match self.user_of(chat) {
+                Some(user) => {
+                    let (status, last_seen) = user_status(user);
+                    (status, last_seen, 0)
+                }
                 None => (Status::None, Moment::default(), 0),
             },
             ChatKind::Group => (Status::Members, Moment::default(), self.members(chat)),
             ChatKind::Channel => (Status::Subscribers, Moment::default(), self.members(chat)),
         }
+    }
+
+    /// How a chat is described in a list of people and chats found (global_search.rs): a person's
+    /// status, a group's or channel's size.
+    pub fn status_of(&self, chat: &api::Chat) -> (Status, Moment, i32) {
+        self.status(chat, self.kind(chat))
+    }
+
+    /// The photo of a person, as far as it is here, and whether there is one (else their letter).
+    pub fn user_avatar(&self, user: &api::User) -> (Image, bool) {
+        self.avatar(user.profile_photo.as_ref(), false)
+    }
+
+    /// The photo of a chat, the same way.
+    pub fn chat_avatar(&self, chat: &api::Chat) -> (Image, bool) {
+        self.avatar(chat.photo.as_ref(), false)
+    }
+
+    /// No picture: the one empty image every row without a picture shares.
+    pub fn blank_image(&self) -> Image {
+        self.blank.clone()
     }
 
     /// The open chat's rows; the messages of each message row (several for an album); and the
@@ -1736,6 +1757,21 @@ impl Store {
     }
 }
 
+/// A person's status, as the pages say it: online, when they were last seen, or a bot.
+pub fn user_status(user: &api::User) -> (Status, Moment) {
+    if user.kind == UserType::Bot {
+        return (Status::Bot, Moment::default());
+    }
+    match user.status {
+        UserStatus::Online { .. } => (Status::Online, Moment::default()),
+        UserStatus::Offline { was_online } => (Status::LastSeen, time::moment(was_online)),
+        UserStatus::Recently => (Status::Recently, Moment::default()),
+        UserStatus::LastWeek => (Status::LastWeek, Moment::default()),
+        UserStatus::LastMonth => (Status::LastMonth, Moment::default()),
+        UserStatus::Empty => (Status::LongAgo, Moment::default()),
+    }
+}
+
 /// What an update asks for beyond the store; telegram/mod.rs sends it.
 pub enum Followup {
     None,
@@ -1959,6 +1995,7 @@ pub fn is_service(content: Content) -> bool {
     matches!(
         content,
         Content::ChatCreated
+            | Content::ChannelCreated
             | Content::TitleChanged
             | Content::PhotoChanged
             | Content::PhotoRemoved

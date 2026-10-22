@@ -12,14 +12,17 @@ import { WorkbenchSidebar, WorkbenchView } from "sidebar.slint";
 import { WorkbenchMain } from "conversation.slint";
 import { WorkbenchActions } from "actions.slint";
 import { WorkbenchAttachments } from "attachments.slint";
+import { WorkbenchCompose } from "compose.slint";
+import { Search, ComposeWords } from "../compose.slint";
 
+// The search box in the title bar: a click, or ⌘K, opens the search over everything (compose.slint).
 component SearchBox inherits Rectangle {
     width: 420px;
     height: 26px;
     border-radius: 6px;
     background: P.bg;
     border-width: 1px;
-    border-color: input.has-focus ? P.accent.transparentize(0.4) : P.line;
+    border-color: touch.has-hover ? P.accent.transparentize(0.4) : P.line;
 
     HorizontalLayout {
         padding-left: 10px;
@@ -33,48 +36,13 @@ component SearchBox inherits Rectangle {
                 color: P.faint;
             }
         }
-        Rectangle {
+        Text {
             horizontal-stretch: 1;
-            Text {
-                width: parent.width;
-                visible: input.text == "";
-                text: @tr("Search chats");
-                color: P.faint;
-                font-size: 13px;
-                vertical-alignment: center;
-                overflow: elide;
-            }
-            input := TextInput {
-                width: parent.width;
-                height: parent.height;
-                text: Chats.query;
-                color: P.text;
-                font-size: 13px;
-                vertical-alignment: center;
-                single-line: true;
-                selection-background-color: P.input-sel;
-                selection-foreground-color: P.text;
-                text-cursor-width: Look.cursor-width;
-                edited => {
-                    Chats.search(self.text);
-                }
-                accepted => {
-                    // The first row shown: Saved Messages when it matches the words, else the list's first.
-                    if Chats.saved-messages-shown && Chats.query != "" {
-                        Conversation.open(Chats.saved-messages.id);
-                    } else if Chats.list.length > 0 {
-                        Conversation.open(Chats.list[0].id);
-                    }
-                }
-                key-pressed(event) => {
-                    if event.text == Key.Escape {
-                        self.text = "";
-                        Chats.search("");
-                        return accept;
-                    }
-                    return reject;
-                }
-            }
+            text: ComposeWords.box-placeholder();
+            color: P.faint;
+            font-size: 13px;
+            vertical-alignment: center;
+            overflow: elide;
         }
         Text {
             text: "⌘K";
@@ -85,14 +53,16 @@ component SearchBox inherits Rectangle {
         }
     }
 
-    property <int> search-requests: AppState.search-requests;
-    changed search-requests => {
-        root.focus-search();
+    touch := TouchArea {
+        mouse-cursor: text;
+        clicked => {
+            Search.show();
+        }
     }
 
-    public function focus-search() {
-        input.focus();
-        input.select-all();
+    property <int> search-requests: AppState.search-requests;
+    changed search-requests => {
+        Search.show();
     }
 }
 
@@ -138,7 +108,7 @@ component TitleBar inherits Rectangle {
             alignment: center;
             VerticalLayout {
                 alignment: center;
-                search := SearchBox { }
+                SearchBox { }
             }
         }
         Rectangle {
@@ -168,9 +138,6 @@ component TitleBar inherits Rectangle {
         }
     }
 
-    public function focus-search() {
-        search.focus-search();
-    }
 }
 
 component ActivityButton inherits Rectangle {
@@ -564,13 +531,8 @@ export component WorkbenchWindow inherits Rectangle {
     property <WorkbenchView> view: WorkbenchView.chats;
     background: P.bg;
 
-    // ⌘K, from the menu bar (app.slint).
-    public function focus-search() {
-        title.focus-search();
-    }
-
     VerticalLayout {
-        title := TitleBar { }
+        TitleBar { }
         HorizontalLayout {
             vertical-stretch: 1;
             ActivityBar {
@@ -590,7 +552,9 @@ export component WorkbenchWindow inherits Rectangle {
         StatusBar { }
     }
 
-    // A message's menu and the dialogs of its actions, over everything.
+    // A message's menu and the dialogs of its actions, over everything; the search over everything
+    // and the pencil's dialogs.
     WorkbenchActions { }
     WorkbenchAttachments { }
+    WorkbenchCompose { }
 }

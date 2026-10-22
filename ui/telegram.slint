@@ -27,7 +27,7 @@ export enum Content {
     // Self-destructing content that is gone: it was opened once, or its time ran out.
     expired-photo, expired-video, expired-video-note, expired-voice-note,
     // Service messages: something happened in the chat. The sender is who did it.
-    chat-created, title-changed, photo-changed, photo-removed, members-added, member-joined,
+    chat-created, channel-created, title-changed, photo-changed, photo-removed, members-added, member-joined,
     member-left, member-removed, message-pinned, screenshot-taken, contact-joined, other-service,
 }
 
@@ -98,16 +98,14 @@ export global Chats {
     in-out property <[ChatRow]> list;            // its chats, in Telegram's order
     in-out property <[TreeRow]> tree;            // Workbench: every folder, with its chats when expanded
     in-out property <ChatRow> saved-messages;    // the chat with oneself: the fixed row above every list
-    in-out property <bool> saved-messages-shown; // there is an account, and the row matches the search
+    in-out property <bool> saved-messages-shown; // there is an account: the row shows
     in-out property <[ChatRow]> channels;        // every channel, for the Channels view
     in-out property <int> unread-channels;       // how many of them, not muted, have unread posts
     in-out property <[ChatRow]> official-bots;   // chats with Telegram's own bots, for the Bots view
     in-out property <[ChatRow]> bots;            // chats with every other bot
     in-out property <bool> loaded;               // TDLib has sent the chat list
-    in-out property <string> query;              // the search box's words; the lists show what matches
     callback show-folder(int);                   // index into folders
     callback toggle-folder(int);                 // Workbench: expand or collapse
-    callback search(string);
     // A chat's menu (a right click on it in a list, or on its tab in Workbench), by the chat's id.
     callback open-menu(string);                  // it opens: fill menu-folders for the chat
     in-out property <[FolderChoice]> menu-folders;  // the account's folders, and whether the chat is in each

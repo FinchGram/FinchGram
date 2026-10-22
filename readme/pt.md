@@ -17,8 +17,10 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
 
 - **Chats.** Entre com o número de telefone, o código e a senha da verificação em duas etapas, ou
   lendo um código QR; ou crie uma conta nova. A lista de chats com as pastas do Telegram, os chats
-  fixados, as contagens de não lidos e as menções; uma busca (⌘K) e uma busca dentro do chat (⌘F);
-  uma visão dos seus canais e outra dos seus bots.
+  fixados, as contagens de não lidos e as menções; uma busca em tudo (⌘K): seus chats e contatos,
+  usuários, grupos e canais públicos pelo nome de usuário, pessoas pelo número de telefone e
+  mensagens; uma busca dentro do chat (⌘F); uma visão dos seus canais e outra dos seus bots.
+  O lápis cria um novo grupo, canal ou chat, ou adiciona um contato.
 - **Mensagens.** Texto com formatação (negrito, itálico, código, links), respostas e encaminhamentos,
   fotos, vídeos, GIFs, figurinhas, arquivos e um cartão com a prévia de um link. Um clique direito
   numa mensagem abre o menu dela: responder, editar, copiar, copiar o link, encaminhar, denunciar,

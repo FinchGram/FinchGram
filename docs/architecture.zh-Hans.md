@@ -149,8 +149,22 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   ⏎ 往上、⇧⏎ 往下，每条都像回复的原消息那样亮一下。离已加载消息很远的匹配不是一页页翻过去的：围绕它的那一页取代已加载
   的消息（`conversation.rs`，`History::has_newer`），往上照旧一页页加载，往下滚时再加载更新的，直到聊天末尾；从那里
   发出消息，或再次打开这个聊天，都从末尾重新开始。回复的原消息在两页之外时也这样到达。
+- 全局搜索（`global_search.rs`，设计稿的 compose.js 一轮：标题栏的搜索框、⌘K、Terminal 的 /search）是盖在聊天上的一个
+  窗口。什么都没输入时显示最近用过的聊天；输入了词，先列本地名字里带这些词的聊天和联系人（`contacts.rs`：TDLib 的
+  getContacts，按名字、用户名匹配，输入是手机号时按号码匹配），停顿一下后再列 Telegram 服务器找到的：按用户名和标题
+  找到的公开用户、群组和频道（searchPublicChats，去掉已加入的和已有的联系人）、按完整手机号找到的人
+  （searchUserByPhoneNumber，只能找到允许别人用手机号找到自己的用户；谁都没有的号码可以直接添加为联系人），以及消息
+  （searchMessages）。公开群组或频道先显示资料卡，带简介（getSupergroupFullInfo），从那里加入（joinChat）；人直接打开
+  私聊（createPrivateChat）；消息打开它所在的聊天并定位到它。↑↓ 选择，⏎ 打开，Esc 关闭。
+- 铅笔菜单（`new_chat.rs`；Terminal 的 /group、/channel、/dm、/contact）：新建群组先选成员，再填名称和头像，有成员时是
+  普通群（createNewBasicGroupChat），没有成员或人数超过普通群上限时是超级群（createNewSupergroupChat，成员随后添加）；
+  新建频道在第一步就建出来，和 Telegram 官方应用一样，这样第二步才能检查并设置公开链接（先按 Telegram 自己的规则，再
+  checkChatUsername，然后 setSupergroupUsername）或显示邀请链接（主邀请链接，没有就 replacePrimaryChatInviteLink，旁边
+  有复制按钮），第三步邀请订阅者（addChatMembers）；新建私聊是选一个联系人；添加联系人按手机号（importContacts），没注册
+  的号码会说明。选好的头像在聊天建出后上传（setChatPhoto，先裁成正方形、缩到 640 像素）。Telegram 拒绝的都显示在对话框里，
+  对话框不关；新聊天里的系统消息是服务器自己发的。
 - Saved Messages（和自己的聊天）在三个主题里都是聊天列表上方固定的一行，账号还没用过它也在：点这一行时由 TDLib
-  建出这个聊天（createPrivateChat）。它不会在下面的文件夹里重复出现；搜索匹配的是列表显示的名字（Saved Messages、
+  建出这个聊天（createPrivateChat）。它不会在下面的文件夹里重复出现；全局搜索匹配的是列表显示的名字（Saved Messages、
   Deleted Account），不是 TDLib 的标题。
 - MCP 服务端（`src/mcp/`，[mcp.zh-Hans.md](mcp.zh-Hans.md)）：AI 助手的应用（Claude Desktop、Claude Code 等）通过
   正在运行的 app、用 Model Context Protocol 读用户的聊天并在其中行动。app 监听自己文件夹里的一个 Unix socket；

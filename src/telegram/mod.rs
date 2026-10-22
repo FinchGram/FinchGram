@@ -9,8 +9,9 @@
 //! authorization state (login.rs), notifications and the unread count go to notifications.rs,
 //! everything else goes into the store (store.rs), and after each batch the pages are brought up to
 //! date. chats.rs, conversation.rs, actions.rs, account.rs and password.rs do what the pages ask
-//! for; avatars.rs fetches the photos of chats and people; online.rs tells TDLib whether the
-//! account is online.
+//! for; global_search.rs and new_chat.rs (with contacts.rs) search everything and make new chats;
+//! avatars.rs fetches the photos of chats and people; online.rs tells TDLib whether the account
+//! is online.
 //!
 //! When finchgram-tdlib ends unexpectedly, the requests still waiting fail and it is started
 //! again: TDLib's database is on disk, so it carries on where it was. After a log out TDLib closes
@@ -23,9 +24,12 @@ mod actions;
 mod api;
 mod avatars;
 mod chats;
+mod contacts;
 mod conversation;
 mod files;
+mod global_search;
 mod login;
+mod new_chat;
 mod notifications;
 mod online;
 mod password;
@@ -129,6 +133,8 @@ pub fn start(ui: &MainWindow) {
     notifications::connect(ui);
     attachments::connect(ui);
     search::connect(ui);
+    global_search::connect(ui);
+    new_chat::connect(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {
@@ -395,6 +401,9 @@ fn on_authorization_state(state: AuthorizationState) {
             });
             store::clear();
             chats::forget();
+            contacts::forget();
+            global_search::forget();
+            new_chat::forget();
             account::forget();
             password::forget();
             files::forget();
