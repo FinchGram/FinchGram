@@ -353,7 +353,7 @@ fn fill() {
                     rows.push((Found::Chat(chat.id), chat_row(store, chat, FoundKind::Chat, &names)));
                 }
             }
-            let found: Vec<i64> = contacts::matching(&words, digits.as_deref(), &names).into_iter().filter(|id| !shown_users.contains(id)).take(LOCAL).collect();
+            let found: Vec<i64> = contacts::matching(store, &words, digits.as_deref(), &names).into_iter().filter(|id| !shown_users.contains(id)).take(LOCAL).collect();
             for user_id in found {
                 if let Some(user) = store.users.get(&user_id) {
                     shown_users.insert(user_id);
@@ -369,9 +369,12 @@ fn fill() {
 
         if digits.is_some() {
             // The person with the number, unless they are a contact (shown above already).
-            let hit = by_phone.filter(|id| !shown_users.contains(id) && !contacts::is_contact(*id));
             let rows = store::with(|store| {
-                hit.and_then(|id| store.users.get(&id)).map(|user| vec![(Found::User(user.id), user_row(store, user, FoundKind::ByPhone, &names))]).unwrap_or_default()
+                by_phone
+                    .filter(|id| !shown_users.contains(id) && !contacts::is_contact(store, *id))
+                    .and_then(|id| store.users.get(&id))
+                    .map(|user| vec![(Found::User(user.id), user_row(store, user, FoundKind::ByPhone, &names))])
+                    .unwrap_or_default()
             })
             .unwrap_or_default();
             let found_one = !rows.is_empty();
@@ -389,7 +392,7 @@ fn fill() {
                     .filter_map(|id| store.chats.get(id))
                     .filter(|chat| store::position(chat, ChatList::Main).is_none())
                     .filter(|chat| match chat.kind {
-                        ChatType::Private { user_id } | ChatType::Secret { user_id } => !contacts::is_contact(user_id) && !shown_users.contains(&user_id),
+                        ChatType::Private { user_id } | ChatType::Secret { user_id } => !contacts::is_contact(store, user_id) && !shown_users.contains(&user_id),
                         _ => true,
                     })
                     .map(|chat| {

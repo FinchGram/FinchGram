@@ -227,8 +227,8 @@ fn fill_contacts() {
             (state.query.clone(), state.picked.clone())
         });
         let digits = contacts::is_phone(&query).then(|| contacts::digits(&query));
-        let ids = contacts::matching(&query, digits.as_deref(), &names);
         let (rows, chips) = store::with(|store| {
+            let ids = contacts::matching(store, &query, digits.as_deref(), &names);
             let rows: Vec<FoundRow> = ids
                 .iter()
                 .filter_map(|id| store.users.get(id))

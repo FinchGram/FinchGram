@@ -102,6 +102,12 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
   (`upgrade_in_event_loop`), where the store, TDLib and the page are, and its outcome comes back
   on a channel. So does the question whether a program may connect: the thread waits while the
   dialog asks the user.
+- A panic on the UI thread ends the app: Slint calls into the app through `extern "C"` functions,
+  which no panic unwinds through, so Rust aborts there, and macOS's crash report shows abort() and
+  nothing of the cause. The panic's message and place go into `panic.log` next to settings.toml
+  first (`src/main.rs`), since the app started from the Dock has no terminal to print them to. The
+  store (`store.rs`) is one RefCell: `store::with` inside `store::with` is such a panic, so a helper
+  that needs the store while its caller holds it takes `&Store` (contacts::matching).
 
 ## The pages: three themes
 

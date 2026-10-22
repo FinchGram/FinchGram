@@ -363,7 +363,10 @@ pub fn install(ui: &MainWindow) {
     });
 }
 
-/// Run `change` with the store, if it is installed.
+/// Run `change` with the store, if it is installed. Not from within another `change`: the store is
+/// one RefCell, and borrowing it a second time panics, which ends the app (docs/architecture.md,
+/// Threads). A helper that needs the store while its caller holds it takes `&Store` instead
+/// (contacts::matching).
 pub fn with<R>(change: impl FnOnce(&mut Store) -> R) -> Option<R> {
     STORE.with(|store| store.borrow_mut().as_mut().map(change))
 }

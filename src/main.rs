@@ -40,6 +40,7 @@ fn main() -> Result<(), slint::PlatformError> {
     if std::env::args().nth(1).as_deref() == Some("mcp") {
         std::process::exit(mcp::bridge::run());
     }
+    log_panics();
     platform::select_backend()?;
     // Our own fonts, before the first text is laid out.
     fonts::register();
@@ -375,6 +376,37 @@ fn show_launch_at_login(state: &AppState) {
     state.set_launch_at_login(launch.unwrap_or(false));
 }
 
+/// A panic's message and place go into `panic.log` next to settings.toml, besides the terminal (the
+/// default hook), since the app started from the Dock has no terminal. Slint calls into the app
+/// through `extern "C"` functions, which no panic unwinds through, so a panic in a callback ends
+/// the app, and macOS's crash report shows abort() and nothing of the cause (docs/architecture.md,
+/// Threads).
+fn log_panics() {
+    let Some(path) = dirs::config_dir().map(|folder| folder.join("FinchGram").join("panic.log")) else { return };
+    log_panics_to(path);
+}
+
+/// The hook: the default one (the terminal), then a line in the file.
+fn log_panics_to(path: std::path::PathBuf) {
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        default_hook(info);
+        let thread = std::thread::current();
+        let line = format!(
+            "{} {} thread {} panicked at {}: {}",
+            chrono::Local::now().format("%Y-%m-%d %H:%M:%S"),
+            update::CURRENT_VERSION,
+            thread.name().unwrap_or("?"),
+            info.location().map(|at| at.to_string()).unwrap_or_default(),
+            info.payload_as_str().unwrap_or("(no message)")
+        );
+        if let Ok(mut file) = std::fs::OpenOptions::new().create(true).append(true).open(&path) {
+            use std::io::Write;
+            let _ = writeln!(file, "{line}");
+        }
+    }));
+}
+
 fn theme_from_name(name: &str) -> Theme {
     match name {
         "broadsheet" => Theme::Broadsheet,
@@ -516,4 +548,20 @@ fn install_update(ui: slint::Weak<MainWindow>, pending: Arc<Mutex<Option<update:
             }
         });
     });
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn a_panic_is_written_to_the_log() {
+        let path = std::env::temp_dir().join(format!("finchgram-panic-{}.log", std::process::id()));
+        let _ = std::fs::remove_file(&path);
+        super::log_panics_to(path.clone());
+        let _ = std::thread::Builder::new().name("tested".into()).spawn(|| panic!("boom")).expect("a thread").join();
+        let _ = std::panic::take_hook();
+        let log = std::fs::read_to_string(&path).expect("the log");
+        let _ = std::fs::remove_file(&path);
+        assert!(log.contains(" thread tested panicked at src/main.rs:"), "{log}");
+        assert!(log.trim_end().ends_with(": boom"), "{log}");
+    }
 }

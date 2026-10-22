@@ -11,7 +11,7 @@ use serde_json::Value;
 use slint::ComponentHandle;
 
 use super::api::{self, Users};
-use super::store::{self, Names};
+use super::store::{self, Names, Store};
 use super::{Error, actions, conversation, send, with_ui};
 use crate::{Conversation, ExtraWords, MainWindow};
 
@@ -62,36 +62,35 @@ pub fn forget() {
     WAITING.with(|waiting| waiting.borrow_mut().clear());
 }
 
-/// Whether the user is among the contacts, as TDLib's list or the user's own flag says.
-pub fn is_contact(user_id: i64) -> bool {
+/// Whether the user is among the contacts, as TDLib's list or the user's own flag says. The store
+/// is the caller's: this is asked while the caller holds it (global_search.rs builds its rows
+/// inside `store::with`), and the store, one RefCell, cannot be borrowed a second time.
+pub fn is_contact(store: &Store, user_id: i64) -> bool {
     CONTACTS.with(|contacts| contacts.borrow().as_ref().is_some_and(|contacts| contacts.contains(&user_id)))
-        || store::with(|store| store.users.get(&user_id).is_some_and(|user| user.is_contact)).unwrap_or(false)
+        || store.users.get(&user_id).is_some_and(|user| user.is_contact)
 }
 
 /// The contacts whose name or username has `words` (lower case, without a leading @), or whose
 /// phone number has `digits` when the words are a phone number, ordered by name as the UI language
-/// orders names. Every contact when the words are empty.
-pub fn matching(words: &str, digits: Option<&str>, names: &Names) -> Vec<i64> {
+/// orders names. Every contact when the words are empty. The store is the caller's (is_contact).
+pub fn matching(store: &Store, words: &str, digits: Option<&str>, names: &Names) -> Vec<i64> {
     let ids = CONTACTS.with(|contacts| contacts.borrow().clone()).unwrap_or_default();
-    store::with(|store| {
-        let mut found: Vec<(i64, String)> = ids
-            .iter()
-            .filter_map(|id| store.users.get(id))
-            .filter(|user| user.kind != super::api::UserType::Deleted)
-            .filter(|user| match digits {
-                Some(digits) => user.phone_number.contains(digits),
-                None => {
-                    words.is_empty()
-                        || store.user_name(user.id, names).to_lowercase().contains(words)
-                        || user.usernames.as_ref().is_some_and(|names| names.active_usernames.iter().any(|name| name.to_lowercase().contains(words)))
-                }
-            })
-            .map(|user| (user.id, store.user_name(user.id, names)))
-            .collect();
-        found.sort_by(|(a_id, a), (b_id, b)| names.name_order.compare(a, b).then(a_id.cmp(b_id)));
-        found.into_iter().map(|(id, _)| id).collect()
-    })
-    .unwrap_or_default()
+    let mut found: Vec<(i64, String)> = ids
+        .iter()
+        .filter_map(|id| store.users.get(id))
+        .filter(|user| user.kind != super::api::UserType::Deleted)
+        .filter(|user| match digits {
+            Some(digits) => user.phone_number.contains(digits),
+            None => {
+                words.is_empty()
+                    || store.user_name(user.id, names).to_lowercase().contains(words)
+                    || user.usernames.as_ref().is_some_and(|names| names.active_usernames.iter().any(|name| name.to_lowercase().contains(words)))
+            }
+        })
+        .map(|user| (user.id, store.user_name(user.id, names)))
+        .collect();
+    found.sort_by(|(a_id, a), (b_id, b)| names.name_order.compare(a, b).then(a_id.cmp(b_id)));
+    found.into_iter().map(|(id, _)| id).collect()
 }
 
 /// The contact with exactly this phone number (its digits), if any.
