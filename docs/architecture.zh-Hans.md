@@ -84,7 +84,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   对话框问用户的时候，连接线程等着。
 - UI 线程上的 panic 会结束整个 app：Slint 通过 `extern "C"` 函数调进 app 的代码，panic 不能穿过这样的函数，Rust 在那里
   直接 abort，macOS 的崩溃报告里只看得到 abort()，看不到原因。所以 panic 的内容和位置先写进 settings.toml 旁边的
-  `panic.log`（`src/main.rs`）：从 Dock 启动的 app 没有终端可以打印。store（`store.rs`）是一个 RefCell：`store::with`
+  `panic.log`（`src/main.rs`）：从 Dock 启动的 app 没有终端可以打印。崩溃留下什么、报告怎么读，见
+  docs/crash-reports.md。store（`store.rs`）是一个 RefCell：`store::with`
   里再调 `store::with` 就是这样一个 panic，所以调用方已经持有 store 时要用的辅助函数改为接收 `&Store`（contacts::matching）。
 
 ## 页面：三套主题

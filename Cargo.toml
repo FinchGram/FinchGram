@@ -78,3 +78,8 @@ slint-build = "~1.18"
 [profile.release]
 strip = true
 lto = "thin"
+# The names and line tables go into finchgram.dSYM next to the binary (dsymutil, at link time),
+# which the release keeps for reading crash reports (docs/crash-reports.md); the binary itself
+# carries none of it and stays stripped.
+debug = "line-tables-only"
+split-debuginfo = "packed"

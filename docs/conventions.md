@@ -126,6 +126,9 @@ As in Coova Studio.
   ships signed but not notarized, and macOS asks once on the first launch. Locally,
   `SIGN_IDENTITY="Developer ID Application: …" scripts/bundle.sh` signs the same way, without
   notarizing.
+- Every release keeps its symbols: `finchgram-<version>-macos-arm64.dSYM.zip`, the names and line
+  tables of exactly that binary, next to the app in the release and in `SHA256SUMS`. The app itself
+  stays stripped. `scripts/crash-report.py` reads a crash report with them (docs/crash-reports.md).
 
 ## 4. Telegram API credentials
 

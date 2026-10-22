@@ -44,6 +44,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "zip=FinchGram-$VERSION-macos-arm64.zip" >> "$GITHUB_OUTPUT" # the name the app looks for
+          echo "symbols=finchgram-$VERSION-macos-arm64.dSYM.zip" >> "$GITHUB_OUTPUT" # its symbols (docs/crash-reports.md)
           echo "version $VERSION, tag ${TAG:-none}"
 
       - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master, 2026-10-16
@@ -161,12 +162,28 @@ jobs:
           spctl -a -vv -t exec "dist/$APP_NAME.app" 2>&1 | tee "$RUNNER_TEMP/spctl.txt"
           grep -q "source=Notarized Developer ID" "$RUNNER_TEMP/spctl.txt"
 
+      # The symbols too: cargo packed the names and line tables of this very binary into
+      # finchgram.dSYM next to it (Cargo.toml, [profile.release]), which is what reads a crash report
+      # of this release (docs/crash-reports.md). The app stays stripped.
       - name: Archive
         env:
           ZIP: ${{ steps.meta.outputs.zip }}
+          SYMBOLS: ${{ steps.meta.outputs.symbols }}
         run: |
           ditto -c -k --keepParent "dist/$APP_NAME.app" "dist/$ZIP"
-          (cd dist && shasum -a 256 "$ZIP" > SHA256SUMS)
+          [ -d target/release/finchgram.dSYM ] || { echo "::error::target/release/finchgram.dSYM is missing: did the build pack the symbols (Cargo.toml, split-debuginfo)?"; exit 1; }
+          # cargo's finchgram.dSYM is a link to deps/finchgram-<hash>.dSYM, the DWARF file inside
+          # named the same; the release gets a plain copy with the file named finchgram.
+          rm -rf dist/finchgram.dSYM
+          ditto "target/release/$(readlink target/release/finchgram.dSYM || echo finchgram.dSYM)" dist/finchgram.dSYM
+          DWARF="$(ls dist/finchgram.dSYM/Contents/Resources/DWARF/)"
+          [ "$(echo "$DWARF" | wc -l)" -eq 1 ] || { echo "::error::finchgram.dSYM holds more than one file: $DWARF"; exit 1; }
+          mv "dist/finchgram.dSYM/Contents/Resources/DWARF/$DWARF" dist/finchgram.dSYM/Contents/Resources/DWARF/finchgram
+          APP_UUID="$(dwarfdump --uuid "dist/$APP_NAME.app/Contents/MacOS/finchgram" | awk '{print $2}')"
+          SYMBOLS_UUID="$(dwarfdump --uuid dist/finchgram.dSYM/Contents/Resources/DWARF/finchgram | awk '{print $2}')"
+          [ -n "$APP_UUID" ] && [ "$APP_UUID" = "$SYMBOLS_UUID" ] || { echo "::error::finchgram.dSYM ($SYMBOLS_UUID) is not the symbols of the binary in the app ($APP_UUID)"; exit 1; }
+          (cd dist && ditto -c -k --keepParent finchgram.dSYM "$SYMBOLS" && rm -rf finchgram.dSYM)
+          (cd dist && shasum -a 256 "$ZIP" "$SYMBOLS" > SHA256SUMS)
 
       # Ed25519 signature of SHA256SUMS; the app only installs releases it can verify with the
       # public key in release-signing.pub (src/bin/finchgram-release-sign.rs).
@@ -199,6 +216,7 @@ jobs:
           TAG: ${{ steps.meta.outputs.tag }}
           VERSION: ${{ steps.meta.outputs.version }}
           ZIP: ${{ steps.meta.outputs.zip }}
+          SYMBOLS: ${{ steps.meta.outputs.symbols }}
         run: |
           # The tag message holds the notes (scripts/release.sh), in English. The app shows only
           # what comes before the first "---" line (src/update.rs); the footer below is for the
@@ -208,7 +226,7 @@ jobs:
           cat >> notes.md <<NOTES
 
           ---
-          **This release contains** \`$ZIP\` (the app, with finchgram-tdlib and libmpv inside), \`SHA256SUMS\` and \`SHA256SUMS.sig\` (its Ed25519 signature, which the app checks before installing). The "Source code" archives below are this repository at \`$TAG\`.
+          **This release contains** \`$ZIP\` (the app, with finchgram-tdlib and libmpv inside), \`$SYMBOLS\` (the app's symbols, which read a crash report of this version: docs/crash-reports.md), \`SHA256SUMS\` and \`SHA256SUMS.sig\` (its Ed25519 signature, which the app checks before installing). The "Source code" archives below are this repository at \`$TAG\`.
           NOTES
           cat notes.md
 
@@ -221,11 +239,12 @@ jobs:
           TAG: ${{ steps.meta.outputs.tag }}
           VERSION: ${{ steps.meta.outputs.version }}
           ZIP: ${{ steps.meta.outputs.zip }}
+          SYMBOLS: ${{ steps.meta.outputs.symbols }}
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::error::release $TAG already exists"
             exit 1
           fi
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --latest --title "$APP_NAME $VERSION" \
-            --notes-file notes.md "dist/$ZIP" dist/SHA256SUMS dist/SHA256SUMS.sig
+            --notes-file notes.md "dist/$ZIP" "dist/$SYMBOLS" dist/SHA256SUMS dist/SHA256SUMS.sig
           echo "released **$TAG**: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"

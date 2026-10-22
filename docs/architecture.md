@@ -105,8 +105,9 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
 - A panic on the UI thread ends the app: Slint calls into the app through `extern "C"` functions,
   which no panic unwinds through, so Rust aborts there, and macOS's crash report shows abort() and
   nothing of the cause. The panic's message and place go into `panic.log` next to settings.toml
-  first (`src/main.rs`), since the app started from the Dock has no terminal to print them to. The
-  store (`store.rs`) is one RefCell: `store::with` inside `store::with` is such a panic, so a helper
+  first (`src/main.rs`), since the app started from the Dock has no terminal to print them to;
+  docs/crash-reports.md has what is kept of a crash and how a report is read. The store
+  (`store.rs`) is one RefCell: `store::with` inside `store::with` is such a panic, so a helper
   that needs the store while its caller holds it takes `&Store` (contacts::matching).
 
 ## The pages: three themes

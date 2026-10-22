@@ -96,6 +96,9 @@ libmpv 跟 finchgram-tdlib 一样照这个做：`vendor/mpv/build.sh` 按锁定�
   `NOTARY_KEY`、`NOTARY_KEY_ID`、`NOTARY_ISSUER_ID`），把票据钉进 app 包，再用 `spctl` 问一遍 Gatekeeper 的结论，
   然后才打 zip，所以下载的 app 直接能开。没有这几个 secret（比如 fork）时 app 只签名不公证，第一次打开 macOS 会问
   一次。本地 `SIGN_IDENTITY="Developer ID Application: …" scripts/bundle.sh` 签法相同，只是不公证。
+- 每个 release 都留下符号表：`finchgram-<version>-macos-arm64.dSYM.zip`，正是那个二进制的函数名和行号表，跟 app
+  一起放在 release 里，也列在 `SHA256SUMS` 中。app 本身仍然去掉符号。`scripts/crash-report.py` 用它读崩溃报告
+  （docs/crash-reports.md）。
 
 ## 4. Telegram API 凭据
 
