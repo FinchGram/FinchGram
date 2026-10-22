@@ -5,9 +5,12 @@
 //! vendor/fonts/ (scripts/fetch-fonts.sh); build.rs fails early when they are missing.
 //!
 //! A letter the requested font does not have is looked up in the generic families, which are set
-//! here to our own fonts: IBM Plex Sans, then the Noto fonts, the UI language's own first (a
-//! character the Chinese and Japanese fonts both have is drawn differently by each). What none of
-//! them has (other scripts, emoji in messages) comes from the system's fallback fonts.
+//! here to our own fonts: IBM Plex Sans, then the system's colour emoji font (Apple Color Emoji on
+//! macOS), then the Noto fonts, the UI language's own first (a character the Chinese and Japanese
+//! fonts both have is drawn differently by each). The emoji font comes before the Noto fonts
+//! because those have black-and-white glyphs for some emoji (🆕, ㊙, ☺) and would otherwise be
+//! found first; the text layout tries the emoji font last of all on its own. What none of them has
+//! (other scripts) comes from the system's fallback fonts.
 
 use std::sync::{Arc, OnceLock};
 
@@ -85,8 +88,8 @@ pub fn register() {
     prefer("en");
 }
 
-/// Order the fallbacks for the UI language `code` ("ja", "zh_Hant", …): IBM Plex Sans, then the
-/// language's own script's font, then the other Noto fonts.
+/// Order the fallbacks for the UI language `code` ("ja", "zh_Hant", …): IBM Plex Sans, the
+/// system's colour emoji font, then the language's own script's font, then the other Noto fonts.
 pub fn prefer(code: &str) {
     let Some(families) = FAMILIES.get() else { return };
     let scripts: [&Vec<FamilyId>; 4] = match code.split(['-', '_']).next().unwrap_or_default() {
@@ -95,8 +98,11 @@ pub fn prefer(code: &str) {
         "ar" => [&families.arabic, &families.chinese, &families.japanese, &families.korean],
         _ => [&families.chinese, &families.japanese, &families.korean, &families.arabic],
     };
-    let order: Vec<FamilyId> = families.latin.into_iter().chain(scripts.into_iter().flatten().copied()).collect();
     let mut collection = slint::fontique_011::shared_collection();
+    // The system's emoji font, as fontique names it for the platform (Apple Color Emoji, Segoe UI
+    // Emoji, fontconfig's "emoji").
+    let emoji: Vec<FamilyId> = collection.generic_families(GenericFamily::Emoji).collect();
+    let order: Vec<FamilyId> = families.latin.into_iter().chain(emoji).chain(scripts.into_iter().flatten().copied()).collect();
     for generic in [GenericFamily::SansSerif, GenericFamily::SystemUi, GenericFamily::UiSansSerif] {
         collection.set_generic_families(generic, order.iter().copied());
     }

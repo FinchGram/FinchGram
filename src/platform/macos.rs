@@ -516,6 +516,16 @@ fn ns_window(window: &slint::Window) -> Option<Retained<NSWindow>> {
         .flatten()
 }
 
+/// NSWindow's sharingType: none, or read-only (the default), as the system names them.
+pub fn set_window_capturable(window: &slint::Window, capturable: bool) {
+    use objc2_app_kit::NSWindowSharingType;
+    let Some(ns_window) = ns_window(window) else { return };
+    let sharing = if capturable { NSWindowSharingType::ReadOnly } else { NSWindowSharingType::None };
+    if ns_window.sharingType() != sharing {
+        ns_window.setSharingType(sharing);
+    }
+}
+
 /// In every Space, and over full-screen apps.
 fn overlay_behaviour() -> NSWindowCollectionBehavior {
     NSWindowCollectionBehavior::CanJoinAllSpaces | NSWindowCollectionBehavior::FullScreenAuxiliary

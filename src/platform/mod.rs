@@ -96,6 +96,18 @@ impl NameOrder {
     }
 }
 
+/// Whether the window's contents may be captured (screenshots, screen recording, other apps).
+/// Off while a chat whose content Telegram protects is open, as Telegram's own apps do it; macOS
+/// then shows the window blank in captures.
+pub fn set_window_capturable(window: &slint::Window, capturable: bool) {
+    #[cfg(target_os = "macos")]
+    macos::set_window_capturable(window, capturable);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (window, capturable);
+    }
+}
+
 /// Put `text` on the clipboard.
 pub fn copy_text(text: &str) -> Result<(), String> {
     #[cfg(target_os = "macos")]

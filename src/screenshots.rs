@@ -778,6 +778,91 @@ fn found(section: FoundKind, index: i32, title: &str, kind: ChatKind, hue: Optio
 /// for words, a phone number nobody has, a public group's card; the pencil's menu; the dialogs that
 /// make a group (its members, its name), a channel (its name, its type public and private, its
 /// subscribers), a chat, a contact (with a number that has no account).
+/// Bots (src/telegram/bots.rs): the group's pinned message as the bar under the header; a bot's
+/// chat with the buttons under its messages (one waiting for the bot's answer), its keyboard, its
+/// menu button; its commands offered for "/"; its answer as a dialog.
+fn bots(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    let conversation = ui.global::<Conversation>();
+    let actions = ui.global::<Actions>();
+    conversation.set_pinned_message(ReplyQuote {
+        shown: true,
+        id: "5".into(),
+        sender: "Mi".into(),
+        content: Content::Text,
+        text: "Thursday 15:00 at the usual place. Who's coming?".into(),
+        ..ReplyQuote::default()
+    });
+    save(window, &name("pinned"));
+    conversation.set_pinned_message(ReplyQuote::default());
+
+    let button = |text: &str, kind: ButtonKind, row: i32, column: i32| ChatButton { text: text.into(), kind, row, column };
+    let rows = |rows: Vec<Vec<ChatButton>>| model(rows.into_iter().map(|buttons| ButtonRow { buttons: model(buttons) }).collect());
+    conversation.set_chat_id("groupbuy".into());
+    conversation.set_title("GroupBuy Bot".into());
+    conversation.set_initial("G".into());
+    conversation.set_kind(ChatKind::Bot);
+    conversation.set_status(Status::Bot);
+    conversation.set_members(0);
+    conversation.set_online_members(0);
+    conversation.set_can_write(true);
+    conversation.set_can_send_photos(true);
+    conversation.set_can_send_videos(true);
+    conversation.set_can_send_files(true);
+    conversation.set_messages(model(vec![
+        day_row(Day::Today),
+        message("1", "Zhou Ye", "09:40", "/start"),
+        MessageRow {
+            buttons: rows(vec![
+                vec![button("Open orders", ButtonKind::Callback, 0, 0), button("My orders", ButtonKind::Callback, 0, 1)],
+                vec![button("Delivery list", ButtonKind::Url, 1, 0)],
+                vec![button("Copy my order code", ButtonKind::Copy, 2, 0), button("Share the group buy", ButtonKind::SwitchInline, 2, 1)],
+            ]),
+            ..message("2", "GroupBuy Bot", "09:40", "Welcome to the Keyboard Lab group buy. What would you like to do?")
+        },
+        message("3", "Zhou Ye", "09:41", "Dark PBT keycaps, one set"),
+        MessageRow {
+            buttons: rows(vec![vec![button("Pay now", ButtonKind::Buy, 0, 0), button("Cancel the order", ButtonKind::Callback, 0, 1)]]),
+            ..message("4", "GroupBuy Bot", "09:41", "Order #1045: dark PBT keycaps × 1, 48 USD. Orders close on October 8.")
+        },
+    ]));
+    conversation.set_keyboard(rows(vec![
+        vec![button("📦 My orders", ButtonKind::Text, 0, 0), button("🧾 Invoice", ButtonKind::Text, 0, 1)],
+        vec![button("📞 Share my number", ButtonKind::RequestPhone, 1, 0)],
+    ]));
+    conversation.set_keyboard_placeholder("Choose what to do…".into());
+    conversation.set_keyboard_hidden(false);
+    conversation.set_menu_button("/".into());
+    // "Cancel the order" is waiting for the bot.
+    actions.set_busy_button("4:0:1".into());
+    save(window, &name("bot"));
+    actions.set_busy_button(SharedString::new());
+
+    // "/" typed, the keyboard folded away: the bot's commands.
+    conversation.set_keyboard_hidden(true);
+    conversation.set_draft("/".into());
+    conversation.set_commands(model(vec![
+        BotCommand { command: "/start".into(), description: "Start over".into() },
+        BotCommand { command: "/orders".into(), description: "Your orders in this group buy".into() },
+        BotCommand { command: "/status".into(), description: "Where the shipment is".into() },
+        BotCommand { command: "/help".into(), description: "What this bot does".into() },
+    ]));
+    save(window, &name("bot-commands"));
+    conversation.set_commands(ModelRc::default());
+    conversation.set_draft(SharedString::new());
+
+    // The bot's answer to a button, as the dialog it asked for.
+    actions.set_alert_text("Orders close on October 8 at 23:59. Yours is in: #1045, dark PBT keycaps × 1.".into());
+    actions.set_alert_open(true);
+    save(window, &name("bot-alert"));
+    actions.set_alert_open(false);
+
+    conversation.set_keyboard(ModelRc::default());
+    conversation.set_keyboard_placeholder(SharedString::new());
+    conversation.set_keyboard_hidden(false);
+    conversation.set_menu_button(SharedString::new());
+    open_keyboards(ui);
+}
+
 fn compose(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: &dyn Fn(&str) -> String) {
     let search = ui.global::<Search>();
     let recent = [
@@ -1613,6 +1698,7 @@ fn screenshots() {
                 escape(&window);
             }
             message_actions(&ui, &window, &name);
+            bots(&ui, &window, &name);
             compose(&ui, &window, theme, &name);
             attachments(&ui, &window, theme, &name);
             screenshot_tool(&ui, &window, &overlay, &overlay_window, &name);

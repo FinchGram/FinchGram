@@ -25,6 +25,9 @@ client, not made by Telegram.
   videos, GIFs, stickers, files, and a card for a link's preview. A right click on a message gives
   its menu: reply, edit, copy, copy its link, forward, report, delete, or choose several. Photos
   and videos sent to self-destruct are shown blurred and opened once, as in Telegram's own apps.
+  Bots' buttons under their messages, their keyboards, commands and menu button; the chat's pinned
+  message under the header. A chat that protects its content is left out of screenshots and screen
+  recordings while it is in front.
 - **Media.** Photos and videos open in a viewer over the window, with the rest of their album;
   video plays through mpv, built from source. Saving to Downloads where the chat allows it.
 - **Downloads.** A WebDAV client in the media center: your NAS, a seedbox, PikPak, Alist/OpenList

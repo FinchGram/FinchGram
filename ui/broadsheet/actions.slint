@@ -3,7 +3,7 @@
 import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment, Chats, ChatConfirm } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Spinner, Avatar } from "../widgets.slint";
-import { ActionWords, AttachWords, ChatMenuWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
+import { ActionWords, AttachWords, ChatMenuWords, MenuPlace, KeyScope, SearchInput, CommentInput, BotWords } from "../chat.slint";
 import { Screenshot } from "../state.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 
@@ -770,6 +770,50 @@ component ChatQuestion inherits Dialog {
     }
 }
 
+// A bot's answer to a button, when it asks for a dialog rather than a notice (bots.rs).
+component BotAlert inherits Dialog {
+    box-width: 380px;
+    box-height: body.preferred-height;
+    close => {
+        Actions.close-alert();
+    }
+
+    KeyScope {
+        width: 0;
+        height: 0;
+        escape => {
+            Actions.close-alert();
+        }
+        enter => {
+            Actions.close-alert();
+        }
+    }
+
+    body := VerticalLayout {
+        padding-left: 22px;
+        padding-right: 22px;
+        padding-top: 22px;
+        padding-bottom: 18px;
+        spacing: 16px;
+        Text {
+            text: Actions.alert-text;
+            color: P.text;
+            font-size: 15px;
+            wrap: word-wrap;
+        }
+        HorizontalLayout {
+            alignment: end;
+            DialogButton {
+                label: BotWords.ok();
+                filled: true;
+                clicked => {
+                    Actions.close-alert();
+                }
+            }
+        }
+    }
+}
+
 export component BroadsheetActions inherits Rectangle {
     // A message's menu, where it was clicked; a click anywhere else closes it.
     if Actions.menu-open: TouchArea {
@@ -810,4 +854,5 @@ export component BroadsheetActions inherits Rectangle {
     if Actions.delete-open: DeleteDialog { }
     if Screenshot.permission-card: PermissionCard { }
     if Chats.question != ChatConfirm.none: ChatQuestion { }
+    if Actions.alert-open: BotAlert { }
 }

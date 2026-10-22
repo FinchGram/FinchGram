@@ -3,7 +3,7 @@
 import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment, Chats, ChatConfirm } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Spinner, Avatar } from "../widgets.slint";
-import { ActionWords, AttachWords, ChatMenuWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
+import { ActionWords, AttachWords, ChatMenuWords, MenuPlace, KeyScope, SearchInput, CommentInput, BotWords } from "../chat.slint";
 import { Screenshot } from "../state.slint";
 import { MenuEntry } from "conversation.slint";
 import { WorkbenchPalette as P } from "palette.slint";
@@ -732,9 +732,53 @@ component ChatQuestion inherits Dialog {
             DialogButton {
                 label: ChatMenuWords.action(Chats.question);
                 filled: true;
-                fill: Chats.question == ChatConfirm.link ? P.accent : P.danger;
+                fill: Chats.question == ChatConfirm.link || Chats.question == ChatConfirm.share-phone || Chats.question == ChatConfirm.login ? P.accent : P.danger;
                 clicked => {
                     Chats.confirm();
+                }
+            }
+        }
+    }
+}
+
+// A bot's answer to a button, when it asks for a dialog rather than a notice (bots.rs).
+component BotAlert inherits Dialog {
+    box-width: 360px;
+    box-height: body.preferred-height;
+    close => {
+        Actions.close-alert();
+    }
+
+    KeyScope {
+        width: 0;
+        height: 0;
+        escape => {
+            Actions.close-alert();
+        }
+        enter => {
+            Actions.close-alert();
+        }
+    }
+
+    body := VerticalLayout {
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-top: 20px;
+        padding-bottom: 16px;
+        spacing: 16px;
+        Text {
+            text: Actions.alert-text;
+            color: P.text;
+            font-size: 14px;
+            wrap: word-wrap;
+        }
+        HorizontalLayout {
+            alignment: end;
+            DialogButton {
+                label: BotWords.ok();
+                filled: true;
+                clicked => {
+                    Actions.close-alert();
                 }
             }
         }
@@ -788,4 +832,5 @@ export component WorkbenchActions inherits Rectangle {
     if Actions.delete-open: DeleteDialog { }
     if Screenshot.permission-card: PermissionCard { }
     if Chats.question != ChatConfirm.none: ChatQuestion { }
+    if Actions.alert-open: BotAlert { }
 }

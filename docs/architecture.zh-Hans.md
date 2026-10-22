@@ -102,7 +102,7 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   分发回复、重新启动和转交更新。`store.rs` 保存 TDLib 告诉我们的东西（聊天、用户、群组、文件夹、打开的聊天的消息），
   每批更新之后把页面用的 model 更新到最新，只动真正变了的行。打开的聊天只显示最新的 100 条消息，往上翻时再增加：
   页面会把每一行都排出来，其中任何一行一变就要把所有行重新量一遍，所以行数就是每条新消息的代价。
-  `login.rs`、`chats.rs`、`conversation.rs`、`actions.rs`（消息操作）、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`avatars.rs` 负责给要显示头像的行取来聊天和联系人的头像（取到之前是首字母色块，没有头像的一直是色块），`viewer.rs` 给媒体查看器提供内容并记住它的音量（喇叭旁的音量托盘、↑ ↓ 和滚轮；settings.toml 里的 `video_volume` 和 `video_muted`，下一个视频和下次启动沿用），`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
+  `login.rs`、`chats.rs`、`conversation.rs`、`actions.rs`（消息操作）、`bots.rs`（机器人在聊天里除消息之外的东西，以及置顶消息条）、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`files.rs` 负责下载文件，`avatars.rs` 负责给要显示头像的行取来聊天和联系人的头像（取到之前是首字母色块，没有头像的一直是色块），`viewer.rs` 给媒体查看器提供内容并记住它的音量（喇叭旁的音量托盘、↑ ↓ 和滚轮；settings.toml 里的 `video_volume` 和 `video_muted`，下一个视频和下次启动沿用），`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
   菜单也能做 Telegram 官方应用对聊天能做的事：拉黑或取消拉黑用户（setMessageSenderBlockList）、举报聊天（reportChat，和举报消息走同样的步骤）、
   退出群组或频道（leaveChat）、删除和某个用户或机器人的聊天（deleteChatHistory，TDLib 允许时也可以同时删掉对方那边的）；
   拉黑、退出和删除都会先问一句，退出或删除后聊天的标签页随即关闭。
@@ -163,6 +163,21 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   有复制按钮），第三步邀请订阅者（addChatMembers）；新建私聊是选一个联系人；添加联系人按手机号（importContacts），没注册
   的号码会说明。选好的头像在聊天建出后上传（setChatPhoto，先裁成正方形、缩到 640 像素）。Telegram 拒绝的都显示在对话框里，
   对话框不关；新聊天里的系统消息是服务器自己发的。
+- 机器人（`bots.rs`；还没有设计稿，所以各页面用自己的颜色朴素地画）：机器人消息下面的按钮（replyMarkupInlineKeyboard）
+  在气泡下面按行平分宽度，按它的类型做 Telegram 官方应用做的事。callback 问机器人（getCallbackQueryAnswer，等待时按钮
+  转圈），回的话作为轻提示显示，机器人要求弹窗时作为对话框显示，回链接就打开；链接按钮（↗）先确认、显示它的站点，
+  和文字不是地址的链接一样；登录按钮先问 Telegram 站点要什么（getLoginUrlInfo），再问用户，同意后登录（getLoginUrl）；
+  小程序在浏览器里打开（地址来自 openWebApp 或 getWebAppUrl：FinchGram 没有 web view）；switch-inline 把"@bot 词"写进
+  当前聊天，或写进从转发选择器里挑的聊天；copy 复制；用户按钮打开那个人的聊天。按钮跟着消息的编辑走
+  （updateMessageEdited 带着新的 markup），消息没了按钮就不显示。机器人的键盘（replyMarkupShowKeyboard）在输入框上方，
+  用键盘按钮收起，机器人要求用一次就收起的用过就收起，机器人收回时（updateChatReplyMarkup）消失；按键发出它的文字，
+  要手机号的先确认再发一张联系人名片，要位置、投票、选聊天的说明 FinchGram 还做不了，付款也是。输入框里只有"/"或
+  "/词"时（Terminal：在命令行上，混在它自己的命令里）列出这个机器人或群里机器人的命令（botInfo 来自 getUserFullInfo
+  和群的完整信息），机器人的菜单按钮在输入框工具的左边：它的小程序，或它的命令。聊天最新的置顶消息
+  （getChatPinnedMessage，updateMessageIsPinned 时再问一次）是标题下面的一条，点它跳过去。保护内容的聊天
+  （has_protected_content：不能转发、不能保存，Telegram 的应用截图时也不显示它）在前台时窗口不参与屏幕捕捉：
+  窗口的 sharing type 设为 none（`platform::set_window_capturable`），截图和录屏里它是空白，和 macOS 对这类窗口的
+  做法一样。
 - Saved Messages（和自己的聊天）在三个主题里都是聊天列表上方固定的一行，账号还没用过它也在：点这一行时由 TDLib
   建出这个聊天（createPrivateChat）。它不会在下面的文件夹里重复出现；全局搜索匹配的是列表显示的名字（Saved Messages、
   Deleted Account），不是 TDLib 的标题。
@@ -238,7 +253,8 @@ FinchGram 自己要留的、既不是偏好设置也不是 Telegram 的东西，
    （macOS 上用 IOSurface）。Lottie 贴纸要另想办法（rlottie），WebM 贴纸要能保留透明通道的 VP9 解码（libvpx；
    FFmpeg 自带的 VP9 解码器会丢掉透明通道）。在那之前，动态贴纸只显示它的静态缩略图；静态贴纸照原样显示。
 4. **渲染**：暂时用 Slint 的默认渲染器（FemtoVG）。设计稿的字体都已打包，界面用到的中文、日文、韩文和阿拉伯文由
-   Noto Sans SC、JP、KR、Arabic 提供（回退顺序里界面语言自己的字体排在前面，`fonts.rs`）；消息里的彩色 emoji 和
-   其他文字暂时用系统字体。Skia 得从源码构建才行：它的 Rust 绑定默认会
+   Noto Sans SC、JP、KR、Arabic 提供（回退顺序里界面语言自己的字体排在前面，`fonts.rs`）；emoji 用系统的彩色 emoji
+   字体，`fonts.rs` 把它紧排在正文字体后面，免得 CJK 字体里黑白的 emoji 抢先（自己带心形、箭头字形的字体仍会画
+   自己的，Source Sans 3 的 ❤ 就是）；消息里的其他文字暂时用系统字体。Skia 得从源码构建才行：它的 Rust 绑定默认会
    下载预编译的库，这是 conventions.md 不允许的。改用由我们自己的 CI 构建的 Skia 2026-10-11 列入计划、次日暂停：
    计划、原因，以及它对 tiny-skia 和 resvg 意味着什么，见 [skia.zh-Hans.md](skia.zh-Hans.md)。

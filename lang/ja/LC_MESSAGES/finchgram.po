@@ -3,55 +3,55 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-22 07:53+0000\n"
+"POT-Creation-Date: 2026-10-22 08:46+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ui/app.slint:46
+#: ui/app.slint:49
 msgid "View"
 msgstr "表示"
 
-#: ui/app.slint:48 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
+#: ui/app.slint:51 ui/broadsheet/actions.slint:170 ui/pages/login.slint:316
 #: ui/workbench/actions.slint:172
 msgid "Search"
 msgstr "検索"
 
-#: ui/app.slint:58
+#: ui/app.slint:61
 msgid "Search in Chat"
 msgstr "チャット内を検索"
 
-#: ui/app.slint:70 ui/pages/settings.slint:406
+#: ui/app.slint:73 ui/pages/settings.slint:406
 msgid "Workbench"
 msgstr "ワークベンチ"
 
-#: ui/app.slint:78 ui/pages/settings.slint:414
+#: ui/app.slint:81 ui/pages/settings.slint:414
 msgid "Terminal"
 msgstr "ターミナル"
 
-#: ui/app.slint:86 ui/pages/settings.slint:422
+#: ui/app.slint:89 ui/pages/settings.slint:422
 msgid "Broadsheet"
 msgstr "ブロードシート"
 
-#: ui/app.slint:95 ui/pages/downloads.slint:402 ui/pages/downloads.slint:765
+#: ui/app.slint:98 ui/pages/downloads.slint:402 ui/pages/downloads.slint:765
 msgid "Downloads"
 msgstr "ダウンロード"
 
-#: ui/app.slint:103
+#: ui/app.slint:106
 msgid "Settings…"
 msgstr "設定…"
 
-#: ui/app.slint:112
+#: ui/app.slint:115
 msgid "Help"
 msgstr "ヘルプ"
 
-#: ui/app.slint:115
+#: ui/app.slint:118
 msgid "Update to {}…"
 msgstr "{} にアップデート…"
 
-#: ui/app.slint:116
+#: ui/app.slint:119
 msgid "Check for Updates…"
 msgstr "アップデートを確認…"
 
@@ -59,7 +59,7 @@ msgstr "アップデートを確認…"
 msgid "Choose recipient…"
 msgstr "転送先を選択…"
 
-#: ui/broadsheet/actions.slint:226 ui/telegram.slint:683
+#: ui/broadsheet/actions.slint:226 ui/telegram.slint:737
 #: ui/workbench/actions.slint:228
 msgid "Saved Messages"
 msgstr "保存済みメッセージ"
@@ -82,22 +82,22 @@ msgid "Add a comment (optional)"
 msgstr "コメントを入力（任意）"
 
 #: ui/broadsheet/actions.slint:448 ui/broadsheet/actions.slint:538
-#: ui/broadsheet/broadsheet.slint:2260 ui/compose.slint:244
+#: ui/broadsheet/broadsheet.slint:2292 ui/compose.slint:244
 #: ui/pages/downloads.slint:1390 ui/pages/profile.slint:174
 #: ui/terminal/actions.slint:385 ui/terminal/actions.slint:642
 #: ui/workbench/actions.slint:457 ui/workbench/actions.slint:727
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2251
-#: ui/chat.slint:806 ui/chat.slint:887 ui/terminal/terminal.slint:1419
-#: ui/workbench/conversation.slint:1390
+#: ui/broadsheet/actions.slint:454 ui/broadsheet/broadsheet.slint:2283
+#: ui/chat.slint:812 ui/chat.slint:894 ui/terminal/terminal.slint:1489
+#: ui/workbench/conversation.slint:1417
 msgid "Report"
 msgstr "報告"
 
-#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2242
-#: ui/chat.slint:379 ui/chat.slint:807 ui/terminal/terminal.slint:1411
-#: ui/workbench/conversation.slint:1378
+#: ui/broadsheet/actions.slint:544 ui/broadsheet/broadsheet.slint:2274
+#: ui/chat.slint:385 ui/chat.slint:813 ui/terminal/terminal.slint:1481
+#: ui/workbench/conversation.slint:1405
 msgid "Delete"
 msgstr "削除"
 
@@ -140,7 +140,7 @@ msgid "All"
 msgstr "すべて"
 
 #: ui/broadsheet/broadsheet.slint:465 ui/pages/ai-access.slint:102
-#: ui/telegram.slint:685 ui/workbench/sidebar.slint:481
+#: ui/telegram.slint:739 ui/workbench/sidebar.slint:481
 msgid "All chats"
 msgstr "すべてのチャット"
 
@@ -214,25 +214,25 @@ msgstr ""
 "チェックマークの付いたボットは Telegram 公式のものです。それ以外のボットは、"
 "送信した内容を読むことができます。"
 
-#: ui/broadsheet/broadsheet.slint:1258 ui/broadsheet/broadsheet.slint:2600
+#: ui/broadsheet/broadsheet.slint:1258 ui/broadsheet/broadsheet.slint:2842
 #: ui/terminal/terminal.slint:784 ui/workbench/conversation.slint:261
-#: ui/workbench/conversation.slint:1722
+#: ui/workbench/conversation.slint:1959
 msgid "Unmute"
 msgstr "ミュート解除"
 
-#: ui/broadsheet/broadsheet.slint:1258 ui/broadsheet/broadsheet.slint:2600
+#: ui/broadsheet/broadsheet.slint:1258 ui/broadsheet/broadsheet.slint:2842
 #: ui/terminal/terminal.slint:784 ui/workbench/conversation.slint:261
-#: ui/workbench/conversation.slint:1722
+#: ui/workbench/conversation.slint:1959
 msgid "Mute"
 msgstr "ミュート"
 
-#: ui/broadsheet/broadsheet.slint:1266 ui/broadsheet/broadsheet.slint:2651
-#: ui/terminal/terminal.slint:1302 ui/workbench/sidebar.slint:650
+#: ui/broadsheet/broadsheet.slint:1266 ui/broadsheet/broadsheet.slint:2893
+#: ui/terminal/terminal.slint:1353 ui/workbench/sidebar.slint:650
 msgid "Unpin"
 msgstr "ピン留めを解除"
 
-#: ui/broadsheet/broadsheet.slint:1266 ui/broadsheet/broadsheet.slint:2651
-#: ui/terminal/terminal.slint:1302 ui/workbench/sidebar.slint:650
+#: ui/broadsheet/broadsheet.slint:1266 ui/broadsheet/broadsheet.slint:2893
+#: ui/terminal/terminal.slint:1353 ui/workbench/sidebar.slint:650
 msgid "Pin"
 msgstr "ピン留め"
 
@@ -240,8 +240,8 @@ msgstr "ピン留め"
 msgid "Add to folder"
 msgstr "フォルダに追加"
 
-#: ui/broadsheet/broadsheet.slint:1282 ui/broadsheet/broadsheet.slint:2659
-#: ui/terminal/terminal.slint:1310 ui/workbench/sidebar.slint:666
+#: ui/broadsheet/broadsheet.slint:1282 ui/broadsheet/broadsheet.slint:2901
+#: ui/terminal/terminal.slint:1361 ui/workbench/sidebar.slint:666
 msgid "Copy ID"
 msgstr "IDをコピー"
 
@@ -261,50 +261,50 @@ msgstr "Instant View"
 msgid "Forwarded from {0}"
 msgstr "転送元：{0}"
 
-#: ui/broadsheet/broadsheet.slint:1702 ui/broadsheet/broadsheet.slint:1809
-#: ui/workbench/conversation.slint:881
+#: ui/broadsheet/broadsheet.slint:1719 ui/broadsheet/broadsheet.slint:1841
+#: ui/workbench/conversation.slint:908
 msgid "edited"
 msgstr "編集済み"
 
-#: ui/broadsheet/broadsheet.slint:1829
+#: ui/broadsheet/broadsheet.slint:1861
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr "スポンサー · Telegram による掲載 · Premium ユーザーは非表示にできます"
 
-#: ui/broadsheet/broadsheet.slint:1895 ui/format.slint:262
-#: ui/workbench/conversation.slint:979
+#: ui/broadsheet/broadsheet.slint:1927 ui/format.slint:262
+#: ui/workbench/conversation.slint:1006
 msgid "You"
 msgstr "自分"
 
-#: ui/broadsheet/broadsheet.slint:2006 ui/terminal/terminal.slint:1538
+#: ui/broadsheet/broadsheet.slint:2038 ui/terminal/terminal.slint:1611
 msgid "Hide sender's name"
 msgstr "送信者名を非表示"
 
-#: ui/broadsheet/broadsheet.slint:2218 ui/terminal/terminal.slint:1434
+#: ui/broadsheet/broadsheet.slint:2250 ui/terminal/terminal.slint:1504
 msgid "Shift-click to select a range"
 msgstr "Shift を押しながらクリックで範囲を選択"
 
-#: ui/broadsheet/broadsheet.slint:2226 ui/chat.slint:805
-#: ui/workbench/conversation.slint:1356
+#: ui/broadsheet/broadsheet.slint:2258 ui/chat.slint:811
+#: ui/workbench/conversation.slint:1383
 msgid "Forward"
 msgstr "転送"
 
-#: ui/broadsheet/broadsheet.slint:2280 ui/terminal/terminal.slint:1777
+#: ui/broadsheet/broadsheet.slint:2438 ui/terminal/terminal.slint:1902
 msgid "Choose a chat on the left"
 msgstr "左のリストからチャットを選択してください"
 
-#: ui/broadsheet/broadsheet.slint:2303 ui/terminal/terminal.slint:1229
+#: ui/broadsheet/broadsheet.slint:2461 ui/terminal/terminal.slint:1280
 msgid "typing…"
 msgstr "入力中…"
 
-#: ui/broadsheet/broadsheet.slint:2373 ui/terminal/terminal.slint:1337
+#: ui/broadsheet/broadsheet.slint:2532 ui/terminal/terminal.slint:1389
 msgid "{0} is typing…"
 msgstr "{0} が入力中…"
 
-#: ui/broadsheet/broadsheet.slint:2405
+#: ui/broadsheet/broadsheet.slint:2588
 msgid "Sending as {0}"
 msgstr "{0} として送信"
 
-#: ui/broadsheet/broadsheet.slint:2422
+#: ui/broadsheet/broadsheet.slint:2605
 msgid "Write a message…"
 msgstr "メッセージを入力…"
 
@@ -341,26 +341,47 @@ msgid "Open this link?"
 msgstr "このリンクを開きますか？"
 
 #: ui/chat.slint:282
+msgid "Share your phone number with {0}?"
+msgstr "{0} に電話番号を共有しますか？"
+
+#: ui/chat.slint:283
+msgid "Log in to {0}?"
+msgstr "{0} にログインしますか？"
+
+#: ui/chat.slint:284
 msgid "Block {0}?"
 msgstr "{0} をブロックしますか？"
 
-#: ui/chat.slint:283
+#: ui/chat.slint:285
 msgid "Leave the channel {0}?"
 msgstr "チャンネル「{0}」を退出しますか？"
 
-#: ui/chat.slint:283
+#: ui/chat.slint:285
 msgid "Leave the group {0}?"
 msgstr "グループ「{0}」を退出しますか？"
 
-#: ui/chat.slint:284
+#: ui/chat.slint:286
 msgid "Delete the chat with {0}?"
 msgstr "{0} とのチャットを削除しますか？"
 
-#: ui/chat.slint:288
+#: ui/chat.slint:290
 msgid "The message shows other words for it. It goes to {0}."
 msgstr "メッセージには別の文字が表示されています。リンク先は {0} です。"
 
-#: ui/chat.slint:291
+#: ui/chat.slint:293
+msgid "The bot asked for it. It is sent as a contact card with your name."
+msgstr ""
+"ボットから求められました。あなたの名前を添えた連絡先カードとして送信されま"
+"す。"
+
+#: ui/chat.slint:294
+msgid ""
+"The site asks Telegram who you are. The bot's link opens once you agree."
+msgstr ""
+"このサイトは Telegram に、あなたが誰なのかを問い合わせます。同意するとボット"
+"のリンクが開きます。"
+
+#: ui/chat.slint:295
 msgid ""
 "They will not be able to send you messages. You can unblock them from this "
 "menu."
@@ -368,73 +389,81 @@ msgstr ""
 "相手はあなたにメッセージを送れなくなります。ブロックはこのメニューから解除で"
 "きます。"
 
-#: ui/chat.slint:292
+#: ui/chat.slint:296
 msgid "You will stop getting its posts."
 msgstr "このチャンネルの投稿は届かなくなります。"
 
-#: ui/chat.slint:292
+#: ui/chat.slint:296
 msgid "You will stop getting its messages."
 msgstr "このグループのメッセージは届かなくなります。"
 
-#: ui/chat.slint:293
+#: ui/chat.slint:297
 msgid "The chat and its messages go from your list."
 msgstr "このチャットとメッセージがリストから削除されます。"
 
-#: ui/chat.slint:295 ui/chat.slint:882
+#: ui/chat.slint:299 ui/chat.slint:889
 msgid "Also delete for {0}"
 msgstr "{0} のチャットからも削除"
 
-#: ui/chat.slint:297 ui/pages/downloads.slint:1076
+#: ui/chat.slint:301 ui/pages/downloads.slint:1076
 #: ui/pages/downloads.slint:1652
 msgid "Open"
 msgstr "開く"
 
-#: ui/chat.slint:298
+#: ui/chat.slint:302
+msgid "Share"
+msgstr "共有"
+
+#: ui/chat.slint:303
+msgid "Log in"
+msgstr "ログイン"
+
+#: ui/chat.slint:304
 msgid "Block"
 msgstr "ブロック"
 
-#: ui/chat.slint:299
+#: ui/chat.slint:305
 msgid "Leave"
 msgstr "退出"
 
-#: ui/chat.slint:305
+#: ui/chat.slint:311
 msgid "Attach"
 msgstr "添付"
 
-#: ui/chat.slint:306
+#: ui/chat.slint:312
 msgid "Photo or Video"
 msgstr "写真または動画"
 
-#: ui/chat.slint:307 ui/format.slint:212
+#: ui/chat.slint:313 ui/format.slint:212
 msgid "File"
 msgstr "ファイル"
 
-#: ui/chat.slint:308
+#: ui/chat.slint:314
 msgid "Poll"
 msgstr "投票"
 
-#: ui/chat.slint:309
+#: ui/chat.slint:315
 msgid "Not available yet"
 msgstr "まだ利用できません"
 
-#: ui/chat.slint:310 ui/chat.slint:313
+#: ui/chat.slint:316 ui/chat.slint:319
 msgid "Not allowed in this group"
 msgstr "このグループでは許可されていません"
 
-#: ui/chat.slint:311
+#: ui/chat.slint:317
 msgid "You can't send messages in this group"
 msgstr "このグループではメッセージを送信できません"
 
-#: ui/chat.slint:312
+#: ui/chat.slint:318
 msgid "Screenshot"
 msgstr "スクリーンショット"
 
 #. The card shown when the system has not let FinchGram see the screen.
-#: ui/chat.slint:315
+#: ui/chat.slint:321
 msgid "Screen Recording is off for FinchGram"
 msgstr "FinchGram の画面収録が許可されていません"
 
-#: ui/chat.slint:316
+#: ui/chat.slint:322
 msgid ""
 "Screenshots need Screen Recording in System Settings → Privacy & Security. "
 "If FinchGram is already in the list, turn it off and on again."
@@ -443,313 +472,354 @@ msgstr ""
 "を許可する必要があります。FinchGram がすでにリストにある場合は、いったんオフ"
 "にしてからもう一度オンにしてください。"
 
-#: ui/chat.slint:317
+#: ui/chat.slint:323
 msgid "Open System Settings"
 msgstr "システム設定を開く"
 
-#: ui/chat.slint:318
+#: ui/chat.slint:324
 msgid "Not now"
 msgstr "今はしない"
 
-#: ui/chat.slint:319
+#: ui/chat.slint:325
 msgid "↑↓ Choose · Return Open · Esc Close"
 msgstr "↑↓ 選択 · Return 開く · Esc 閉じる"
 
-#: ui/chat.slint:325
+#: ui/chat.slint:331
 msgid "Send Screenshot"
 msgstr "スクリーンショットを送信"
 
-#: ui/chat.slint:328
+#: ui/chat.slint:334
 msgid "Send File"
 msgstr "ファイルを送信"
 
-#: ui/chat.slint:328
+#: ui/chat.slint:334
 msgid "Send {n} Files"
 msgid_plural "Send {n} Files"
 msgstr[0] "{n}個のファイルを送信"
 
-#: ui/chat.slint:331
+#: ui/chat.slint:337
 msgid "Send Video"
 msgstr "動画を送信"
 
-#: ui/chat.slint:331
+#: ui/chat.slint:337
 msgid "Send {n} Videos"
 msgid_plural "Send {n} Videos"
 msgstr[0] "{n}本の動画を送信"
 
-#: ui/chat.slint:333
+#: ui/chat.slint:339
 msgid "Send Photo"
 msgstr "写真を送信"
 
-#: ui/chat.slint:333
+#: ui/chat.slint:339
 msgid "Send {n} Photos"
 msgid_plural "Send {n} Photos"
 msgstr[0] "{n}枚の写真を送信"
 
-#: ui/chat.slint:335
+#: ui/chat.slint:341
 msgid "Will be sent as {n} albums"
 msgid_plural "Will be sent as {n} albums"
 msgstr[0] "{n}個のアルバムに分けて送信されます"
 
-#: ui/chat.slint:336
+#: ui/chat.slint:342
 msgid "Album {0} · {1}"
 msgstr "アルバム {0} · {1}"
 
-#: ui/chat.slint:337
+#: ui/chat.slint:343
 msgid "Add more"
 msgstr "さらに追加"
 
-#: ui/chat.slint:338 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
+#: ui/chat.slint:344 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
 #: ui/pages/downloads.slint:1611
 msgid "Remove"
 msgstr "取り除く"
 
-#: ui/chat.slint:339
+#: ui/chat.slint:345
 msgid "Add a caption…"
 msgstr "キャプションを追加…"
 
-#: ui/chat.slint:340
+#: ui/chat.slint:346
 msgid "Send as photo"
 msgstr "写真として送信"
 
-#: ui/chat.slint:341
+#: ui/chat.slint:347
 msgid "Send as video"
 msgstr "動画として送信"
 
-#: ui/chat.slint:342
+#: ui/chat.slint:348
 msgid "Send as file"
 msgstr "ファイルとして送信"
 
-#: ui/chat.slint:343
+#: ui/chat.slint:349
 msgid "Group items"
 msgstr "アルバムにまとめる"
 
-#: ui/chat.slint:344
+#: ui/chat.slint:350
 msgid "Self-destruct timer"
 msgstr "自動消滅タイマー"
 
-#: ui/chat.slint:345
+#: ui/chat.slint:351
 msgid "Disappears after it's opened."
 msgstr "開封後に消えます。"
 
-#: ui/chat.slint:347 ui/pages/settings.slint:767 ui/pages/settings.slint:778
+#: ui/chat.slint:353 ui/pages/settings.slint:767 ui/pages/settings.slint:778
 #: ui/pages/settings.slint:1036
 msgid "Off"
 msgstr "オフ"
 
-#: ui/chat.slint:348
+#: ui/chat.slint:354
 msgid "View once"
 msgstr "1回だけ表示"
 
-#: ui/chat.slint:349
+#: ui/chat.slint:355
 msgid "{0} s"
 msgstr "{0}秒"
 
-#: ui/chat.slint:351
+#: ui/chat.slint:357
 msgid "Hide with spoiler"
 msgstr "ネタバレで隠す"
 
-#: ui/chat.slint:353
+#: ui/chat.slint:359
 msgid "Send"
 msgstr "送信"
 
-#: ui/chat.slint:354
+#: ui/chat.slint:360
 msgid "More send options"
 msgstr "その他の送信オプション"
 
-#: ui/chat.slint:355
+#: ui/chat.slint:361
 msgid "Send without sound"
 msgstr "サイレント送信"
 
-#: ui/chat.slint:356
+#: ui/chat.slint:362
 msgid "Schedule message"
 msgstr "送信を予約"
 
-#: ui/chat.slint:359
+#: ui/chat.slint:365
 msgid "Return to send · Esc to cancel"
 msgstr "Return で送信 · Esc でキャンセル"
 
-#: ui/chat.slint:359
+#: ui/chat.slint:365
 msgid "⌘Return to send · Return for a new line · Esc to cancel"
 msgstr "⌘Return で送信 · Return で改行 · Esc でキャンセル"
 
-#: ui/chat.slint:361
+#: ui/chat.slint:367
 msgid "Remove the marked items to send"
 msgstr "印の付いた項目を取り除くと送信できます"
 
-#: ui/chat.slint:362
+#: ui/chat.slint:368
 msgid "Caption is too long"
 msgstr "キャプションが長すぎます"
 
-#: ui/chat.slint:366 ui/chat.slint:367
+#: ui/chat.slint:372 ui/chat.slint:373
 msgid "Files over {0} GB can't be sent"
 msgstr "{0} GB を超えるファイルは送信できません"
 
-#: ui/chat.slint:368
+#: ui/chat.slint:374
 msgid "Can't read this file"
 msgstr "このファイルを読み込めません"
 
-#: ui/chat.slint:372
+#: ui/chat.slint:378
 msgid "Drop to send as photos"
 msgstr "ドロップして写真として送信"
 
-#: ui/chat.slint:373
+#: ui/chat.slint:379
 msgid "Drop to send as files"
 msgstr "ドロップしてファイルとして送信"
 
-#: ui/chat.slint:374
+#: ui/chat.slint:380
 msgid "Compressed"
 msgstr "圧縮"
 
-#: ui/chat.slint:375
+#: ui/chat.slint:381
 msgid "Original quality"
 msgstr "オリジナル画質"
 
-#: ui/chat.slint:376
+#: ui/chat.slint:382
 msgid "Cancel upload"
 msgstr "アップロードをキャンセル"
 
-#: ui/chat.slint:377
+#: ui/chat.slint:383
 msgid "Not sent"
 msgstr "未送信"
 
-#: ui/chat.slint:378 ui/pages/downloads.slint:651 ui/pages/downloads.slint:1677
+#: ui/chat.slint:384 ui/pages/downloads.slint:651 ui/pages/downloads.slint:1677
 msgid "Retry"
 msgstr "再試行"
 
-#: ui/chat.slint:380 ui/pages/downloads.slint:1082
+#: ui/chat.slint:386 ui/pages/downloads.slint:1082
 msgid "Download"
 msgstr "ダウンロード"
 
-#: ui/chat.slint:381
+#: ui/chat.slint:387
 msgid "Cancel download"
 msgstr "ダウンロードをキャンセル"
 
-#: ui/chat.slint:382 ui/pages/downloads.slint:642
+#: ui/chat.slint:388 ui/pages/downloads.slint:642
 msgid "Show in Finder"
 msgstr "Finder に表示"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:384 ui/pages/downloads.slint:50
+#: ui/chat.slint:390 ui/pages/downloads.slint:50
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
-#: ui/chat.slint:684 ui/terminal/terminal.slint:966
+#: ui/chat.slint:690 ui/terminal/terminal.slint:966
 msgid "Tap to view"
 msgstr "クリックして表示"
 
-#: ui/chat.slint:797
+#: ui/chat.slint:803
 msgid "Reply"
 msgstr "返信"
 
-#: ui/chat.slint:798 ui/pages/downloads.slint:1603
+#: ui/chat.slint:804 ui/pages/downloads.slint:1603
 msgid "Edit"
 msgstr "編集"
 
-#: ui/chat.slint:799
+#: ui/chat.slint:805
 msgid "Copy Image"
 msgstr "画像をコピー"
 
-#: ui/chat.slint:800
+#: ui/chat.slint:806
 msgid "Save Image"
 msgstr "画像を保存"
 
-#: ui/chat.slint:801
+#: ui/chat.slint:807
 msgid "Save Video"
 msgstr "動画を保存"
 
-#: ui/chat.slint:803
+#: ui/chat.slint:809
 msgctxt "words of a photo or video"
 msgid "Copy Text"
 msgstr "テキストをコピー"
 
-#: ui/chat.slint:804
+#: ui/chat.slint:810
 msgid "Copy Message Link"
 msgstr "メッセージリンクをコピー"
 
-#: ui/chat.slint:808
+#: ui/chat.slint:814
 msgid "Select"
 msgstr "選択"
 
-#: ui/chat.slint:813
+#: ui/chat.slint:819
 msgctxt "words of a message"
 msgid "Copy Text"
 msgstr "コピー"
 
-#: ui/chat.slint:843
+#: ui/chat.slint:849
 msgid "Text copied to clipboard."
 msgstr "テキストをコピーしました"
 
-#: ui/chat.slint:844
+#: ui/chat.slint:850
 msgid "Link copied to clipboard."
 msgstr "リンクをコピーしました"
 
-#: ui/chat.slint:845
+#: ui/chat.slint:851
 msgid "Image copied to clipboard."
 msgstr "画像をコピーしました"
 
-#: ui/chat.slint:846
+#: ui/chat.slint:852
 msgid "ID copied to clipboard."
 msgstr "IDをコピーしました"
 
-#: ui/chat.slint:847
+#: ui/chat.slint:853
 msgid "Saved to Downloads"
 msgstr "「ダウンロード」に保存しました"
 
-#: ui/chat.slint:847 ui/viewer.slint:30
+#: ui/chat.slint:853 ui/viewer.slint:30
 msgid "Saved to Downloads · {0}"
 msgstr "「ダウンロード」に保存しました · {0}"
 
-#: ui/chat.slint:848
+#: ui/chat.slint:854
 msgid "Reported"
 msgstr "報告しました"
 
-#: ui/chat.slint:849
+#: ui/chat.slint:855
 msgid "A folder must keep at least one chat."
 msgstr "フォルダには少なくとも1つのチャットが必要です。"
 
-#: ui/chat.slint:856
+#: ui/chat.slint:863
 msgid "Reply to {0}"
 msgstr "{0} に返信"
 
-#: ui/chat.slint:857
+#: ui/chat.slint:864
 msgid "Edit message"
 msgstr "メッセージを編集"
 
-#: ui/chat.slint:858
+#: ui/chat.slint:865
 msgid "Forward {n} message"
 msgid_plural "Forward {n} messages"
 msgstr[0] "{n}件のメッセージを転送"
 
-#: ui/chat.slint:862
+#: ui/chat.slint:869
 msgid "From: {0}"
 msgstr "送信者：{0}"
 
-#: ui/chat.slint:868
+#: ui/chat.slint:875
 msgid "Deleted message"
 msgstr "削除されたメッセージ"
 
-#: ui/chat.slint:873
+#: ui/chat.slint:880
 msgid "{0} selected"
 msgstr "{0}件を選択中"
 
-#: ui/chat.slint:877
+#: ui/chat.slint:884
 msgid "Delete this message?"
 msgstr "このメッセージを削除しますか？"
 
-#: ui/chat.slint:878
+#: ui/chat.slint:885
 msgid "Delete {0} messages?"
 msgstr "{0}件のメッセージを削除しますか？"
 
-#: ui/chat.slint:883
+#: ui/chat.slint:890
 msgid "Also delete for everyone"
 msgstr "全員のチャットからも削除"
 
-#: ui/chat.slint:973
+#: ui/chat.slint:901
+msgid "Pinned message"
+msgstr "ピン留めされたメッセージ"
+
+#: ui/chat.slint:902
+msgid "Show the bot's keyboard"
+msgstr "ボットのキーボードを表示"
+
+#: ui/chat.slint:902
+msgid "Hide the bot's keyboard"
+msgstr "ボットのキーボードを隠す"
+
+#: ui/chat.slint:903
+msgid "Menu"
+msgstr "メニュー"
+
+#: ui/chat.slint:904
+msgid "Commands"
+msgstr "コマンド"
+
+#: ui/chat.slint:905
+msgid "OK"
+msgstr "OK"
+
+#: ui/chat.slint:908
+msgid "FinchGram cannot send a location."
+msgstr "FinchGram は位置情報を送信できません。"
+
+#: ui/chat.slint:909
+msgid "Polls cannot be made in FinchGram yet."
+msgstr "FinchGram ではまだ投票を作成できません。"
+
+#: ui/chat.slint:910
+msgid "Choosing a chat for a bot is not in FinchGram yet."
+msgstr "FinchGram ではまだ、ボットのためにチャットを選べません。"
+
+#: ui/chat.slint:911
+msgid "Payments are not in FinchGram yet; use Telegram's own app."
+msgstr ""
+"FinchGram ではまだ支払いができません。Telegram の公式アプリを使ってください。"
+
+#: ui/chat.slint:1066
 msgid "Search in chat"
 msgstr "チャット内を検索"
 
-#: ui/chat.slint:975
+#: ui/chat.slint:1068
 msgid "No results"
 msgstr "結果なし"
 
@@ -2171,7 +2241,7 @@ msgstr "自動翻訳"
 msgid "Translate foreign-language messages into your UI language"
 msgstr "外国語のメッセージを UI の言語に翻訳"
 
-#: ui/pages/login.slint:133 ui/workbench/conversation.slint:1460
+#: ui/pages/login.slint:133 ui/workbench/conversation.slint:1616
 msgid "Reading mode"
 msgstr "リーダーモード"
 
@@ -2960,12 +3030,12 @@ msgstr "FinchGram を終了"
 msgid "New message"
 msgstr "新着メッセージ"
 
-#: ui/telegram.slint:684
+#: ui/telegram.slint:738
 msgid "Deleted Account"
 msgstr "削除されたアカウント"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:687
+#: ui/telegram.slint:741
 msgctxt "list separator"
 msgid ", "
 msgstr "、"
@@ -2991,63 +3061,63 @@ msgstr "新規"
 msgid "(edited)"
 msgstr "（編集済み）"
 
-#: ui/terminal/terminal.slint:1096
+#: ui/terminal/terminal.slint:1114
 msgid "sponsored"
 msgstr "スポンサー"
 
-#: ui/terminal/terminal.slint:1149 ui/terminal/terminal.slint:1237
+#: ui/terminal/terminal.slint:1167 ui/terminal/terminal.slint:1288
 msgid "search"
 msgstr "検索"
 
-#: ui/terminal/terminal.slint:1249
+#: ui/terminal/terminal.slint:1300
 msgid "chat settings"
 msgstr "チャット設定"
 
-#: ui/terminal/terminal.slint:1460
+#: ui/terminal/terminal.slint:1530
 msgid "Mute or unmute this chat"
 msgstr "このチャットをミュート/ミュート解除"
 
-#: ui/terminal/terminal.slint:1461
+#: ui/terminal/terminal.slint:1531
 msgid "Pin or unpin this chat"
 msgstr "このチャットをピン留め/ピン留め解除"
 
-#: ui/terminal/terminal.slint:1462
+#: ui/terminal/terminal.slint:1532
 msgid "Mark every chat in this folder as read"
 msgstr "このフォルダのチャットをすべて既読にする"
 
-#: ui/terminal/terminal.slint:1463
+#: ui/terminal/terminal.slint:1533
 msgid "Copy this chat's ID"
 msgstr "このチャットのIDをコピー"
 
-#: ui/terminal/terminal.slint:1464
+#: ui/terminal/terminal.slint:1534
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "チャット、連絡先、@ユーザー名、メッセージを検索"
 
-#: ui/terminal/terminal.slint:1570
+#: ui/terminal/terminal.slint:1643
 msgid "unmute"
 msgstr "ミュート解除"
 
-#: ui/terminal/terminal.slint:1570
+#: ui/terminal/terminal.slint:1643
 msgid "mute"
 msgstr "ミュート"
 
-#: ui/terminal/terminal.slint:1634
+#: ui/terminal/terminal.slint:1728
 msgid "Write a message, or / for commands"
 msgstr "メッセージを入力、または / でコマンド"
 
-#: ui/terminal/terminal.slint:1659
+#: ui/terminal/terminal.slint:1756
 msgid "save"
 msgstr "保存"
 
-#: ui/terminal/terminal.slint:1659
+#: ui/terminal/terminal.slint:1756
 msgid "send"
 msgstr "送信"
 
-#: ui/terminal/terminal.slint:1730
+#: ui/terminal/terminal.slint:1855
 msgid "connected"
 msgstr "接続済み"
 
-#: ui/terminal/terminal.slint:1738
+#: ui/terminal/terminal.slint:1863
 msgctxt "terminal"
 msgid "cmd"
 msgstr "コマンド"
@@ -3102,39 +3172,39 @@ msgstr "タブを閉じる"
 msgid "Close all tabs"
 msgstr "すべてのタブを閉じる"
 
-#: ui/workbench/conversation.slint:906
+#: ui/workbench/conversation.slint:933
 msgid "Sponsored"
 msgstr "スポンサー"
 
-#: ui/workbench/conversation.slint:913
+#: ui/workbench/conversation.slint:940
 msgid "Premium users can turn these off"
 msgstr "Premium ユーザーは非表示にできます"
 
-#: ui/workbench/conversation.slint:953
+#: ui/workbench/conversation.slint:980
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
 msgstr "Telegram のスポンサーメッセージ · FinchGram はそのまま表示します"
 
-#: ui/workbench/conversation.slint:1539
+#: ui/workbench/conversation.slint:1719
 msgid "Send to {0}"
 msgstr "{0} に送信"
 
-#: ui/workbench/conversation.slint:1672
+#: ui/workbench/conversation.slint:1909
 msgid "Esc to cancel"
 msgstr "Esc でキャンセル"
 
-#: ui/workbench/conversation.slint:1680
+#: ui/workbench/conversation.slint:1917
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ 保存 · ⇧⏎ 改行"
 
-#: ui/workbench/conversation.slint:1680
+#: ui/workbench/conversation.slint:1917
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ 保存 · ⏎ 改行"
 
-#: ui/workbench/conversation.slint:1681
+#: ui/workbench/conversation.slint:1918
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ 送信 · ⇧⏎ 改行"
 
-#: ui/workbench/conversation.slint:1681
+#: ui/workbench/conversation.slint:1918
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ 送信 · ⏎ 改行"
 

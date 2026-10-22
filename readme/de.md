@@ -25,7 +25,10 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   Fotos, Videos, GIFs, Sticker, Dateien und eine Karte mit der Linkvorschau. Ein Rechtsklick auf eine
   Nachricht öffnet ihr Menü: antworten, bearbeiten, kopieren, Link kopieren, weiterleiten, melden,
   löschen oder mehrere auswählen. Fotos und Videos, die sich selbst zerstören, werden verschwommen
-  gezeigt und einmal geöffnet, wie in Telegrams eigenen Apps.
+  gezeigt und einmal geöffnet, wie in Telegrams eigenen Apps. Die Schaltflächen der Bots unter ihren
+  Nachrichten, ihre Tastaturen, Befehle und Menü-Schaltfläche; die angeheftete Nachricht des Chats
+  unter der Kopfzeile. Ein Chat, der seinen Inhalt schützt, erscheint nicht in Bildschirmfotos und
+  Bildschirmaufnahmen, solange er im Vordergrund steht.
 - **Medien.** Fotos und Videos öffnen sich in einem Betrachter über dem Fenster, mit dem Rest ihres
   Albums; Video läuft über mpv, aus den Quellen gebaut. Speichern in Downloads, wo der Chat es erlaubt.
 - **Downloads.** Ein WebDAV-Client im Mediencenter: dein NAS, eine Seedbox, PikPak, Alist/OpenList

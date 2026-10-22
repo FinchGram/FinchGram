@@ -2,9 +2,9 @@
 import { AppState } from "state.slint";
 import {
     Conversation, ChatKind, Media, Sticker, MessageRow, RowKind, Actions, MessageAction, ActionNotice, ComposeBar, ReplyQuote,
-    DeleteChoice, Attachments, AttachKind, AttachProblem, AttachHint, FileCard, FileState, FileType, ChatConfirm } from "telegram.slint";
+    DeleteChoice, Attachments, AttachKind, AttachProblem, AttachHint, FileCard, FileState, FileType, ChatConfirm, ButtonKind, ButtonRow } from "telegram.slint";
 import { Fmt } from "format.slint";
-import { Icon } from "widgets.slint";
+import { Icon, Spinner } from "widgets.slint";
 import { Look } from "look.slint";
 
 // The open chat's messages, scrolled. New messages are followed while the view is at the end;
@@ -279,6 +279,8 @@ export global ChatMenuWords {
     public pure function delete() -> string { return @tr("Delete chat"); }
     public pure function title(what: ChatConfirm, kind: ChatKind, name: string) -> string {
         if what == ChatConfirm.link { return @tr("Open this link?"); }
+        if what == ChatConfirm.share-phone { return @tr("Share your phone number with {0}?", name); }
+        if what == ChatConfirm.login { return @tr("Log in to {0}?", name); }
         if what == ChatConfirm.block { return @tr("Block {0}?", name); }
         if what == ChatConfirm.leave { return kind == ChatKind.channel ? @tr("Leave the channel {0}?", name) : @tr("Leave the group {0}?", name); }
         return @tr("Delete the chat with {0}?", name);
@@ -288,6 +290,8 @@ export global ChatMenuWords {
         return @tr("The message shows other words for it. It goes to {0}.", site);
     }
     public pure function lead(what: ChatConfirm, kind: ChatKind) -> string {
+        if what == ChatConfirm.share-phone { return @tr("The bot asked for it. It is sent as a contact card with your name."); }
+        if what == ChatConfirm.login { return @tr("The site asks Telegram who you are. The bot's link opens once you agree."); }
         if what == ChatConfirm.block { return @tr("They will not be able to send you messages. You can unblock them from this menu."); }
         if what == ChatConfirm.leave { return kind == ChatKind.channel ? @tr("You will stop getting its posts.") : @tr("You will stop getting its messages."); }
         return @tr("The chat and its messages go from your list.");
@@ -295,6 +299,8 @@ export global ChatMenuWords {
     public pure function revoke(name: string) -> string { return @tr("Also delete for {0}", name); }
     public pure function action(what: ChatConfirm) -> string {
         if what == ChatConfirm.link { return @tr("Open"); }
+        if what == ChatConfirm.share-phone { return @tr("Share"); }
+        if what == ChatConfirm.login { return @tr("Log in"); }
         if what == ChatConfirm.block { return @tr("Block"); }
         if what == ChatConfirm.leave { return @tr("Leave"); }
         return @tr("Delete");
@@ -848,6 +854,7 @@ export global ActionWords {
         if notice == ActionNotice.reported { return @tr("Reported"); }
         if notice == ActionNotice.folder-empty { return @tr("A folder must keep at least one chat."); }
         if notice == ActionNotice.failed { return Actions.failure; }
+        if notice == ActionNotice.words { return Actions.words; }
         return "";
     }
 
@@ -885,6 +892,92 @@ export global ActionWords {
 
     public pure function report-title() -> string {
         return Actions.report-title == "" ? @tr("Report") : Actions.report-title;
+    }
+}
+
+// A bot's buttons and keyboards (src/telegram/bots.rs): what the pages say around them. No design
+// yet: the buttons take the theme's soft accent, their words in the middle, cut when too long.
+export global BotWords {
+    public pure function pinned() -> string { return @tr("Pinned message"); }
+    public pure function keyboard-tip(hidden: bool) -> string { return hidden ? @tr("Show the bot's keyboard") : @tr("Hide the bot's keyboard"); }
+    public pure function menu() -> string { return @tr("Menu"); }
+    public pure function commands() -> string { return @tr("Commands"); }
+    public pure function ok() -> string { return @tr("OK"); }
+    // What cannot be done here yet: a bot asks for a location, a poll, a chat to choose, a payment.
+    public pure function not-here(kind: ButtonKind) -> string {
+        if kind == ButtonKind.request-location { return @tr("FinchGram cannot send a location."); }
+        if kind == ButtonKind.request-poll { return @tr("Polls cannot be made in FinchGram yet."); }
+        if kind == ButtonKind.request-users || kind == ButtonKind.request-chat { return @tr("Choosing a chat for a bot is not in FinchGram yet."); }
+        if kind == ButtonKind.buy { return @tr("Payments are not in FinchGram yet; use Telegram's own app."); }
+        return "";
+    }
+}
+
+// A bot's buttons, row by row: under its message (an inline keyboard), or its keyboard by the
+// composer. No design yet: the theme's soft accent, the words in the middle, cut when too long,
+// the theme's corners; a row's buttons share its width, 4px apart. A link's button carries a small
+// ↗; the button waiting for the bot's answer (Actions.busy-button, "message:row:column") turns.
+export component ButtonGrid {
+    in property <[ButtonRow]> rows;
+    in property <string> busy-prefix;           // "message:" of the message these are under; "" for a keyboard
+    in property <color> fill;
+    in property <color> ink;
+    in property <length> radius: 6px;
+    in property <length> row-height: 32px;
+    in property <length> gap: 4px;
+    in property <string> font-family;
+    in property <length> font-size: 13px;
+    callback pressed(int, int);                 // a button: its row and its place in it
+    height: grid.preferred-height;
+
+    grid := VerticalLayout {
+        spacing: root.gap;
+        for row in root.rows: HorizontalLayout {
+            spacing: root.gap;
+            for button in row.buttons: Rectangle {
+                property <bool> busy: root.busy-prefix != "" && Actions.busy-button == root.busy-prefix + button.row + ":" + button.column;
+                property <bool> dead: button.kind == ButtonKind.disabled;
+                horizontal-stretch: 1;
+                preferred-width: 0px;
+                min-width: 24px;
+                height: root.row-height;
+                border-radius: root.radius;
+                background: touch.has-hover && !self.dead ? root.fill.mix(root.ink, 0.88) : root.fill;
+                opacity: self.dead ? 0.5 : 1;
+                clip: true;
+                if !self.busy: Text {
+                    width: parent.width - 20px;
+                    height: parent.height;
+                    text: button.text;
+                    color: root.ink;
+                    font-family: root.font-family;
+                    font-size: root.font-size;
+                    font-weight: 500;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                if self.busy: Spinner {
+                    size: 14px;
+                    color: root.ink;
+                }
+                if button.kind == ButtonKind.url || button.kind == ButtonKind.login || button.kind == ButtonKind.web-app: Icon {
+                    x: parent.width - 13px;
+                    y: 4px;
+                    name: "arrow-up-right";
+                    size: 9px;
+                    color: root.ink;
+                    duotone: false;
+                }
+                touch := TouchArea {
+                    enabled: !parent.dead && !parent.busy;
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.pressed(button.row, button.column);
+                    }
+                }
+            }
+        }
     }
 }
 

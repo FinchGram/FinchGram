@@ -25,7 +25,9 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
   fotos, vídeos, GIFs, figurinhas, arquivos e um cartão com a prévia de um link. Um clique direito
   numa mensagem abre o menu dela: responder, editar, copiar, copiar o link, encaminhar, denunciar,
   apagar ou selecionar várias. Fotos e vídeos enviados para se autodestruir aparecem desfocados e
-  abrem uma única vez, como nos apps do Telegram.
+  abrem uma única vez, como nos apps do Telegram. Os botões dos bots sob as mensagens deles, os
+  teclados, os comandos e o botão de menu; a mensagem fixada do chat sob o cabeçalho. Um chat com
+  conteúdo protegido fica de fora das capturas e gravações de tela enquanto está em primeiro plano.
 - **Mídia.** Fotos e vídeos abrem num visualizador sobre a janela, com o resto do álbum; o vídeo toca
   com o mpv, compilado do código-fonte. Salvar em Downloads onde o chat permite.
 - **Downloads.** Um cliente WebDAV na central de mídia: o seu NAS, um seedbox, o PikPak, o

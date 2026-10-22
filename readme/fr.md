@@ -27,6 +27,10 @@ un client non officiel, qui n'est pas fait par Telegram.
   message ouvre son menu : répondre, modifier, copier, copier le lien, transférer, signaler,
   supprimer ou en sélectionner plusieurs. Les photos et vidéos envoyées pour s'autodétruire
   s'affichent floutées et s'ouvrent une seule fois, comme dans les applications de Telegram.
+  Les boutons des bots sous leurs messages, leurs claviers, leurs commandes et leur bouton de menu ;
+  le message épinglé de la discussion sous l'en-tête. Une discussion qui protège son contenu
+  n'apparaît ni dans les captures d'écran ni dans les enregistrements de l'écran tant qu'elle est au
+  premier plan.
 - **Médias.** Les photos et vidéos s'ouvrent dans une visionneuse par-dessus la fenêtre, avec le reste
   de leur album ; la vidéo passe par mpv, compilé depuis les sources. Enregistrement dans
   Téléchargements là où la discussion le permet.

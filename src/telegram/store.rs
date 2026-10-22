@@ -25,10 +25,13 @@ use super::time;
 use crate::images;
 use crate::platform::NameOrder;
 use crate::{
-    Account, AppState, ChatKind, ChatOrder, ChatRow, Chats, Content, Conversation, FileCard, FileState, FileType, Folder, FolderChoice,
-    LinkPreview, MainWindow, Media, MessageRow, Moment, NotificationScopes, ReplyQuote, RowKind, Status, Sticker, Tab, TreeRow, Viewer,
-    ViewerItem, Words,
+    Account, AppState, BotCommand, ButtonKind, ButtonRow, ChatButton, ChatKind, ChatOrder, ChatRow, Chats, Content, Conversation, FileCard,
+    FileState, FileType, Folder, FolderChoice, LinkPreview, MainWindow, Media, MessageRow, Moment, NotificationScopes, ReplyQuote, RowKind,
+    Status, Sticker, Tab, TreeRow, Viewer, ViewerItem, Words,
 };
+
+/// Commands shown at most when "/" is typed.
+const COMMANDS_SHOWN: usize = 20;
 
 /// How long someone counts as typing after TDLib last said so.
 pub const TYPING_LASTS: Duration = Duration::from_secs(6);
@@ -198,6 +201,27 @@ pub struct Store {
     /// Such messages asked for.
     pub asking_replies: HashSet<(i64, i64)>,
 
+    /// The newest pinned message of each chat opened, as TDLib said (bots.rs); None: it has none.
+    pub pinned: HashMap<i64, Option<api::Message>>,
+    /// The message whose keyboard a chat shows by the composer (a bot's), by chat; None: none.
+    pub keyboards: HashMap<i64, Option<api::Message>>,
+    /// Chats whose keyboard the user folded away, or that was used once (one_time).
+    pub keyboard_hidden: HashSet<i64>,
+    /// What bots say they can do, by their user id (their full info).
+    pub bot_infos: HashMap<i64, api::BotInfo>,
+    /// The commands of the bots in a group, by chat (the group's full info).
+    pub group_commands: HashMap<i64, Vec<api::BotCommands>>,
+    /// What is typed after "/" in the composer, lower case, while the draft is a command alone:
+    /// the commands shown are those starting with it.
+    pub command_filter: Option<String>,
+    /// The buttons under each message row, by row id, with a hash of what they were built from:
+    /// the same model while the buttons stay, so that a row changes only when they do.
+    button_models: RefCell<HashMap<SharedString, (u64, ModelRc<ButtonRow>)>>,
+    /// The keyboard's model, with the chat and message it was built from.
+    keyboard_model: RefCell<Option<(i64, i64, ModelRc<ButtonRow>)>>,
+    /// The commands shown, as last set.
+    commands_shown: RefCell<Vec<BotCommand>>,
+
     pub dirty: Dirty,
     models: Models,
 }
@@ -266,6 +290,15 @@ pub fn install(ui: &MainWindow) {
             replied: HashMap::new(),
             missing_replies: Vec::new(),
             asking_replies: HashSet::new(),
+            pinned: HashMap::new(),
+            keyboards: HashMap::new(),
+            keyboard_hidden: HashSet::new(),
+            bot_infos: HashMap::new(),
+            group_commands: HashMap::new(),
+            command_filter: None,
+            button_models: RefCell::new(HashMap::new()),
+            keyboard_model: RefCell::new(None),
+            commands_shown: RefCell::new(Vec::new()),
             dirty: Dirty::default(),
             models,
         })
@@ -308,6 +341,15 @@ pub fn clear() {
         store.replied.clear();
         store.missing_replies.clear();
         store.asking_replies.clear();
+        store.pinned.clear();
+        store.keyboards.clear();
+        store.keyboard_hidden.clear();
+        store.bot_infos.clear();
+        store.group_commands.clear();
+        store.command_filter = None;
+        store.button_models.borrow_mut().clear();
+        *store.keyboard_model.borrow_mut() = None;
+        store.commands_shown.borrow_mut().clear();
         store.dirty = Dirty {
             chats: true,
             conversation: true,
@@ -578,6 +620,13 @@ impl Store {
                     self.my_bio = user_full_info.bio.map(|bio| bio.text).unwrap_or_default();
                     self.dirty.account = true;
                 }
+                // A bot's menu button and commands, for the composer.
+                if let Some(bot_info) = user_full_info.bot_info {
+                    self.bot_infos.insert(user_id, bot_info);
+                    self.dirty.header |= self.open.and_then(|id| self.chats.get(&id)).is_some_and(|chat| {
+                        matches!(chat.kind, ChatType::Private { user_id: bot } if bot == user_id)
+                    });
+                }
             }
             Update::BasicGroup { basic_group } => {
                 self.basic_groups.insert(basic_group.id, basic_group);
@@ -747,10 +796,45 @@ impl Store {
                     self.dirty.conversation |= self.open == Some(chat_id);
                 }
             }
-            Update::MessageEdited { chat_id, message_id, edit_date } => {
+            Update::MessageEdited { chat_id, message_id, edit_date, reply_markup } => {
                 if let Some(message) = self.histories.get_mut(&chat_id).and_then(|history| history.messages.get_mut(&message_id)) {
                     message.edit_date = edit_date;
+                    // The buttons under it changed, or went.
+                    message.reply_markup = reply_markup;
                     self.dirty.conversation |= self.open == Some(chat_id);
+                }
+            }
+            Update::MessageIsPinned { chat_id, message_id, is_pinned } => {
+                if let Some(message) = self.histories.get_mut(&chat_id).and_then(|history| history.messages.get_mut(&message_id)) {
+                    message.is_pinned = is_pinned;
+                }
+                // The bar under the header shows the newest pinned message: asked again (bots.rs).
+                if self.open == Some(chat_id) {
+                    followup = Followup::PinnedChanged { chat_id };
+                }
+            }
+            Update::ChatReplyMarkup { chat_id, reply_markup_message_id } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.reply_markup_message_id = reply_markup_message_id;
+                }
+                // A new keyboard shows, even where the user had folded the last away; the message
+                // it is on is fetched anew (bots.rs) when the chat is in front.
+                self.keyboard_hidden.remove(&chat_id);
+                self.keyboards.remove(&chat_id);
+                if reply_markup_message_id == 0 {
+                    self.keyboards.insert(chat_id, None);
+                }
+                if self.open == Some(chat_id) {
+                    self.dirty.header = true;
+                    followup = Followup::KeyboardChanged { chat_id };
+                }
+            }
+            Update::ChatHasProtectedContent { chat_id, has_protected_content } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.has_protected_content = has_protected_content;
+                    if self.open == Some(chat_id) {
+                        followup = Followup::ProtectionChanged;
+                    }
                 }
             }
             Update::DeleteMessages { chat_id, message_ids, is_permanent } => {
@@ -1273,6 +1357,26 @@ impl Store {
             })
             .unwrap_or_default();
         conversation.set_typing(typing.join(", ").into());
+
+        // The newest pinned message, the bot's keyboard, its commands and its menu button.
+        let me = self.user_name(self.my_id, names);
+        let pinned = match self.pinned.get(&chat.id) {
+            Some(Some(message)) => self.quote(message, &me, names),
+            _ => self.no_quote(),
+        };
+        if conversation.get_pinned_message() != pinned {
+            conversation.set_pinned_message(pinned);
+        }
+        let (keyboard, placeholder) = self.keyboard(chat);
+        conversation.set_keyboard(keyboard);
+        conversation.set_keyboard_placeholder(placeholder.into());
+        conversation.set_keyboard_hidden(self.keyboard_hidden.contains(&chat.id));
+        let commands = self.bot_commands(chat);
+        if *self.commands_shown.borrow() != commands {
+            conversation.set_commands(ModelRc::new(VecModel::from(commands.clone())));
+            *self.commands_shown.borrow_mut() = commands;
+        }
+        conversation.set_menu_button(self.menu_button(chat).into());
         if !rows {
             return;
         }
@@ -1422,7 +1526,8 @@ impl Store {
                 seen: message.is_outgoing && message.id <= chat.last_read_outbox_message_id,
                 button: SharedString::new(),
                 media: ModelRc::default(),
-                files: ModelRc::new(VecModel::from(files)),
+                files: if files.is_empty() { ModelRc::default() } else { ModelRc::new(VecModel::from(files)) },
+                buttons: self.button_rows(message),
                 sticker,
                 rich: rich_text.is_some(),
                 rich_text: rich_text.unwrap_or_default(),
@@ -1581,6 +1686,115 @@ impl Store {
     fn secret_timed_out(&self, message_id: &str) -> bool {
         let Some(message) = message_id.parse().ok().and_then(|id| self.histories.get(&self.open?)?.messages.get(&id)) else { return false };
         is_expired(&message.content) && matches!(message.self_destruct_type, Some(api::MessageSelfDestructType::Timer { .. }))
+    }
+
+    /// A bot's buttons under a message, row by row; none for most messages. The model is kept
+    /// from one refresh to the next while the buttons stay the same, so that the row does not
+    /// count as changed (a model compares by identity).
+    fn button_rows(&self, message: &api::Message) -> ModelRc<ButtonRow> {
+        let Some(api::ReplyMarkup::InlineKeyboard { rows }) = &message.reply_markup else { return ModelRc::default() };
+        if rows.is_empty() {
+            return ModelRc::default();
+        }
+        let id: SharedString = message.id.to_string().into();
+        let mut hasher = DefaultHasher::new();
+        format!("{rows:?}").hash(&mut hasher);
+        let hash = hasher.finish();
+        let mut models = self.button_models.borrow_mut();
+        if let Some((kept, model)) = models.get(&id)
+            && *kept == hash
+        {
+            return model.clone();
+        }
+        let built: Vec<ButtonRow> = rows
+            .iter()
+            .enumerate()
+            .map(|(row, buttons)| ButtonRow {
+                buttons: ModelRc::new(VecModel::from(
+                    buttons
+                        .iter()
+                        .enumerate()
+                        .map(|(column, button)| ChatButton {
+                            text: button.text.clone().into(),
+                            kind: inline_kind(&button.kind),
+                            row: row as i32,
+                            column: column as i32,
+                        })
+                        .collect::<Vec<_>>(),
+                )),
+            })
+            .collect();
+        let model = ModelRc::new(VecModel::from(built));
+        models.insert(id, (hash, model.clone()));
+        model
+    }
+
+    /// The keyboard a bot asked the chat to show by the composer, row by row, and the words it
+    /// puts in the empty composer; nothing when the chat has none, or it was taken away.
+    fn keyboard(&self, chat: &api::Chat) -> (ModelRc<ButtonRow>, String) {
+        let Some(Some(message)) = self.keyboards.get(&chat.id) else { return (ModelRc::default(), String::new()) };
+        let (rows, placeholder) = match &message.reply_markup {
+            Some(api::ReplyMarkup::ShowKeyboard { rows, input_field_placeholder, .. }) => (rows, input_field_placeholder.clone()),
+            Some(api::ReplyMarkup::ForceReply { input_field_placeholder, .. }) => return (ModelRc::default(), input_field_placeholder.clone()),
+            _ => return (ModelRc::default(), String::new()),
+        };
+        if let Some((chat_id, message_id, model)) = &*self.keyboard_model.borrow()
+            && *chat_id == chat.id
+            && *message_id == message.id
+        {
+            return (model.clone(), placeholder);
+        }
+        let built: Vec<ButtonRow> = rows
+            .iter()
+            .enumerate()
+            .map(|(row, buttons)| ButtonRow {
+                buttons: ModelRc::new(VecModel::from(
+                    buttons
+                        .iter()
+                        .enumerate()
+                        .map(|(column, button)| ChatButton {
+                            text: button.text.clone().into(),
+                            kind: key_kind(&button.kind),
+                            row: row as i32,
+                            column: column as i32,
+                        })
+                        .collect::<Vec<_>>(),
+                )),
+            })
+            .collect();
+        let model = ModelRc::new(VecModel::from(built));
+        *self.keyboard_model.borrow_mut() = Some((chat.id, message.id, model.clone()));
+        (model, placeholder)
+    }
+
+    /// The commands of the chat's bot (or bots, in a group) that start with what is typed after
+    /// "/"; none while the draft is no command.
+    fn bot_commands(&self, chat: &api::Chat) -> Vec<BotCommand> {
+        let Some(filter) = &self.command_filter else { return Vec::new() };
+        let commands: Vec<&api::BotCommand> = match chat.kind {
+            ChatType::Private { user_id } | ChatType::Secret { user_id } => {
+                self.bot_infos.get(&user_id).map(|info| info.commands.iter().collect()).unwrap_or_default()
+            }
+            _ => self.group_commands.get(&chat.id).map(|bots| bots.iter().flat_map(|bot| bot.commands.iter()).collect()).unwrap_or_default(),
+        };
+        commands
+            .into_iter()
+            .filter(|command| command.command.to_lowercase().starts_with(filter.as_str()))
+            .take(COMMANDS_SHOWN)
+            .map(|command| BotCommand { command: format!("/{}", command.command).into(), description: command.description.clone().into() })
+            .collect()
+    }
+
+    /// The bot's menu button at the composer's left: a web app's name, "/" for the commands
+    /// menu (the pages word it), "" for none (not a bot, or a bot with neither).
+    fn menu_button(&self, chat: &api::Chat) -> String {
+        let (ChatType::Private { user_id } | ChatType::Secret { user_id }) = chat.kind else { return String::new() };
+        let Some(info) = self.bot_infos.get(&user_id) else { return String::new() };
+        match &info.menu_button {
+            Some(button) if !button.url.is_empty() => if button.text.is_empty() { "/".to_string() } else { button.text.clone() },
+            _ if !info.commands.is_empty() => "/".to_string(),
+            _ => String::new(),
+        }
     }
 
     /// Give each row the model of its media, the same one as last time, brought up to date.
@@ -1772,6 +1986,37 @@ pub fn user_status(user: &api::User) -> (Status, Moment) {
     }
 }
 
+/// What a button under a message does, for the pages.
+fn inline_kind(kind: &api::InlineKeyboardButtonType) -> ButtonKind {
+    use api::InlineKeyboardButtonType as T;
+    match kind {
+        T::Url { .. } => ButtonKind::Url,
+        T::LoginUrl { .. } => ButtonKind::Login,
+        T::WebApp { .. } => ButtonKind::WebApp,
+        T::Callback { .. } | T::CallbackWithPassword { .. } => ButtonKind::Callback,
+        T::CallbackGame => ButtonKind::Game,
+        T::SwitchInline { .. } => ButtonKind::SwitchInline,
+        T::Buy => ButtonKind::Buy,
+        T::User { .. } => ButtonKind::User,
+        T::CopyText { .. } => ButtonKind::Copy,
+        T::Disabled => ButtonKind::Disabled,
+    }
+}
+
+/// What a key of a bot's keyboard does, for the pages.
+fn key_kind(kind: &api::KeyboardButtonType) -> ButtonKind {
+    use api::KeyboardButtonType as T;
+    match kind {
+        T::Text | T::Other => ButtonKind::Text,
+        T::RequestPhoneNumber => ButtonKind::RequestPhone,
+        T::RequestLocation => ButtonKind::RequestLocation,
+        T::RequestPoll {} => ButtonKind::RequestPoll,
+        T::RequestUsers {} => ButtonKind::RequestUsers,
+        T::RequestChat {} => ButtonKind::RequestChat,
+        T::WebApp { .. } => ButtonKind::WebApp,
+    }
+}
+
 /// What an update asks for beyond the store; telegram/mod.rs sends it.
 pub enum Followup {
     None,
@@ -1783,6 +2028,13 @@ pub enum Followup {
     TypingExpires,
     /// Messages were deleted: what was being done with them stops (actions.rs).
     Deleted { chat_id: i64, message_ids: Vec<i64> },
+    /// A message of the open chat was pinned or unpinned: the bar asks for the newest (bots.rs).
+    PinnedChanged { chat_id: i64 },
+    /// The open chat's keyboard is on another message, or gone: fetched anew (bots.rs).
+    KeyboardChanged { chat_id: i64 },
+    /// The open chat's content became protected, or stopped being: the window follows
+    /// (conversation.rs).
+    ProtectionChanged,
 }
 
 /// What a message with a photo, a video or a GIF shows before it is played: the file with its

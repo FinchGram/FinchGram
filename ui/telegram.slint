@@ -61,8 +61,9 @@ export struct ChatRow {
 }
 
 // What a chat's menu asks before doing: blocking a user, leaving a group or channel, deleting a
-// chat (chats.rs).
-export enum ChatConfirm { none, block, leave, delete, link }
+// chat (chats.rs); a link whose words hide its address; a bot's key that asks for the phone
+// number; a bot's button that logs in to a site (confirm-title: the site).
+export enum ChatConfirm { none, block, leave, delete, link, share-phone, login }
 
 // How a folder's chats are ordered under the pinned ones, which stay on top: by the newest message
 // (Telegram's own order), by name, or by unread messages, muted chats counting as read. One choice
@@ -214,6 +215,31 @@ export struct ReplyQuote {
     has-picture: bool,
 }
 
+// A bot's button: under its message (an inline keyboard), or on the keyboard it asks the chat to
+// show by the composer. What pressing it does is its kind's (src/telegram/actions.rs, bots.rs).
+export enum ButtonKind {
+    callback, url, web-app, switch-inline, copy, buy, game, login, user, disabled,
+    // The keyboard's: words sent as a message, or something asked of the user.
+    text, request-phone, request-location, request-poll, request-users, request-chat,
+}
+
+export struct ChatButton {
+    text: string,
+    kind: ButtonKind,
+    row: int,               // where it is: the row, and its place in the row
+    column: int,
+}
+
+export struct ButtonRow {
+    buttons: [ChatButton],
+}
+
+// A bot's command, as it lists them: "/start", and what it does.
+export struct BotCommand {
+    command: string,
+    description: string,
+}
+
 // One line of the open chat: a message, a service message, the day it starts, or a sponsored
 // message (channels show Telegram's own; they are never hidden).
 export struct MessageRow {
@@ -244,6 +270,7 @@ export struct MessageRow {
     forwarded-from: string, // who first wrote it, when it was forwarded; "" otherwise
     reply: ReplyQuote,      // the message it replies to
     selected: bool,         // chosen, while choosing messages (Actions.selecting)
+    buttons: [ButtonRow],   // a bot's buttons under it, row by row
 }
 
 
@@ -321,6 +348,24 @@ export global Conversation {
     callback search(string);                     // the words changed
     callback search-step(bool);                  // true: the next match up the chat (older); false: down
     callback close-search();
+    // The newest pinned message, as a bar under the header (src/telegram/bots.rs): shown when
+    // there is one; a click goes to it.
+    in-out property <ReplyQuote> pinned-message;
+    callback open-pinned();
+    // A bot's keyboard by the composer (its replyMarkupShowKeyboard): its rows, the words it puts
+    // in the empty composer, and whether the user folded it away (the keyboard icon).
+    in-out property <[ButtonRow]> keyboard;
+    in-out property <string> keyboard-placeholder;
+    in-out property <bool> keyboard-hidden;
+    callback press-key(int, int);                // a key of it: row, column
+    callback toggle-keyboard();                  // fold it away, or bring it back
+    callback command-typed(string);              // Terminal: "/…" typed on its command line, for the commands
+    // A bot's commands matching the words typed after "/", and the bot's menu button (a web app
+    // of its own, or its commands) at the composer's left; "" for no button.
+    in-out property <[BotCommand]> commands;
+    callback send-command(string);
+    in-out property <string> menu-button;
+    callback open-bot-menu();
 }
 
 // The media viewer (the design's media-viewer.js): the open chat's photos and videos, one at a time,
@@ -453,8 +498,9 @@ export enum MessageAction { reply, edit, copy-image, save-image, save-video, cop
 export enum ComposeBar { none, reply, edit, forward }
 
 // What was just done, said for a moment; or what could not be done: a folder that would be left
-// empty, or anything else Telegram refused (failed: in Telegram's words, Actions.failure).
-export enum ActionNotice { none, copied, link-copied, image-copied, id-copied, saved, reported, folder-empty, failed }
+// empty, or anything else Telegram refused (failed: in Telegram's words, Actions.failure); or a
+// bot's own words after a button (words: Actions.words).
+export enum ActionNotice { none, copied, link-copied, image-copied, id-copied, saved, reported, folder-empty, failed, words }
 
 // Deleting: whether the messages can go for the others too (a box to tick), and who they are.
 export enum DeleteChoice { none, for-them, for-everyone }
@@ -541,6 +587,14 @@ export global Actions {
 
     in-out property <ActionNotice> notice;
     in-out property <string> failure;               // what Telegram said, for the failed notice
+    in-out property <string> words;                 // a bot's words, for the words notice
+    // A bot's buttons under its message (src/telegram/bots.rs): one pressed, by its place; the
+    // one waiting for the bot's answer ("message:row:column"); the bot's answer as a dialog.
+    callback press(string, int, int);
+    in-out property <string> busy-button;
+    in-out property <bool> alert-open;
+    in-out property <string> alert-text;
+    callback close-alert();
     in-out property <string> saved-name;            // what the saved notice names, if anything: a screenshot's file
     // A row lit up for a moment: the message a reply answers, jumped to.
     in-out property <string> flash;

@@ -10,6 +10,7 @@
 //! everything else goes into the store (store.rs), and after each batch the pages are brought up to
 //! date. chats.rs, conversation.rs, actions.rs, account.rs and password.rs do what the pages ask
 //! for; global_search.rs and new_chat.rs (with contacts.rs) search everything and make new chats;
+//! bots.rs does what bots' buttons, keyboards and commands ask, and keeps the pinned message bar;
 //! avatars.rs fetches the photos of chats and people; online.rs tells TDLib whether the account
 //! is online.
 //!
@@ -23,6 +24,7 @@ mod account;
 mod actions;
 mod api;
 mod avatars;
+mod bots;
 mod chats;
 mod contacts;
 mod conversation;
@@ -135,6 +137,7 @@ pub fn start(ui: &MainWindow) {
     search::connect(ui);
     global_search::connect(ui);
     new_chat::connect(ui);
+    bots::connect(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {
@@ -347,6 +350,9 @@ fn on_update(update: Update) {
                 store::refresh();
             }),
             Some(Followup::Deleted { chat_id, message_ids }) => actions::deleted(chat_id, &message_ids),
+            Some(Followup::PinnedChanged { chat_id }) => bots::pinned_changed(chat_id),
+            Some(Followup::KeyboardChanged { chat_id }) => bots::keyboard_changed(chat_id),
+            Some(Followup::ProtectionChanged) => conversation::protect_window(),
             Some(Followup::None) | None => {}
         },
     }
@@ -404,6 +410,7 @@ fn on_authorization_state(state: AuthorizationState) {
             contacts::forget();
             global_search::forget();
             new_chat::forget();
+            bots::forget();
             account::forget();
             password::forget();
             files::forget();

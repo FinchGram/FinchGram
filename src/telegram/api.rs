@@ -96,8 +96,26 @@ pub enum Update {
     MessageSendFailed { message: Box<Message>, old_message_id: i64 },
     #[serde(rename = "updateMessageContent")]
     MessageContent { chat_id: i64, message_id: i64, new_content: MessageContent },
+    /// Edited: its new buttons come with it (none when they went).
     #[serde(rename = "updateMessageEdited")]
-    MessageEdited { chat_id: i64, message_id: i64, edit_date: i32 },
+    MessageEdited {
+        chat_id: i64,
+        message_id: i64,
+        edit_date: i32,
+        #[serde(default)]
+        reply_markup: Option<ReplyMarkup>,
+    },
+    #[serde(rename = "updateMessageIsPinned")]
+    MessageIsPinned { chat_id: i64, message_id: i64, is_pinned: bool },
+    /// The message whose keyboard the chat shows under the composer (a bot's), or none.
+    #[serde(rename = "updateChatReplyMarkup")]
+    ChatReplyMarkup {
+        chat_id: i64,
+        /// The message whose keyboard the chat now shows; 0 for none.
+        reply_markup_message_id: i64,
+    },
+    #[serde(rename = "updateChatHasProtectedContent")]
+    ChatHasProtectedContent { chat_id: i64, has_protected_content: bool },
     #[serde(rename = "updateDeleteMessages")]
     DeleteMessages { chat_id: i64, message_ids: Vec<i64>, is_permanent: bool },
 
@@ -349,6 +367,9 @@ pub enum UserStatus {
 pub struct UserFullInfo {
     #[serde(default)]
     pub bio: Option<FormattedText>,
+    /// For a bot: its menu button and its commands.
+    #[serde(default)]
+    pub bot_info: Option<BotInfo>,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -377,6 +398,9 @@ pub struct SupergroupFullInfo {
     /// The chat's primary invite link, for an administrator who may invite; none otherwise.
     #[serde(default)]
     pub invite_link: Option<ChatInviteLink>,
+    /// The commands of the bots in the group.
+    #[serde(default)]
+    pub bot_commands: Vec<BotCommands>,
 }
 
 /// An invite link of a chat (chatInviteLink).
@@ -448,6 +472,13 @@ pub struct Chat {
     pub can_be_deleted_for_all_users: bool,
     #[serde(default)]
     pub can_be_reported: bool,
+    /// Its content may not be saved, forwarded or captured: the window hides from screen
+    /// capture while the chat is open (conversation.rs).
+    #[serde(default)]
+    pub has_protected_content: bool,
+    /// The message whose keyboard (a bot's) the chat shows under the composer; 0 for none.
+    #[serde(default)]
+    pub reply_markup_message_id: i64,
 }
 
 /// Where a user is blocked (TDLib's BlockList): from sending us messages, or only from our stories.
@@ -675,7 +706,202 @@ pub struct Message {
     /// Its content self-destructs: the moment it is opened, or so long after.
     #[serde(default)]
     pub self_destruct_type: Option<MessageSelfDestructType>,
+    #[serde(default)]
+    pub is_pinned: bool,
+    /// A bot's buttons under it, or the keyboard it asks the chat to show.
+    #[serde(default)]
+    pub reply_markup: Option<ReplyMarkup>,
     pub content: MessageContent,
+}
+
+/// What a bot attached to a message: buttons under it (an inline keyboard), a keyboard for the
+/// chat to show under the composer, that keyboard taken away, or a reply asked for.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum ReplyMarkup {
+    #[serde(rename = "replyMarkupInlineKeyboard")]
+    InlineKeyboard { rows: Vec<Vec<InlineKeyboardButton>> },
+    #[serde(rename = "replyMarkupShowKeyboard")]
+    ShowKeyboard {
+        rows: Vec<Vec<KeyboardButton>>,
+        #[serde(default)]
+        is_persistent: bool,
+        #[serde(default)]
+        resize_keyboard: bool,
+        #[serde(default)]
+        one_time: bool,
+        #[serde(default)]
+        is_personal: bool,
+        #[serde(default)]
+        input_field_placeholder: String,
+    },
+    #[serde(rename = "replyMarkupRemoveKeyboard")]
+    RemoveKeyboard {
+        #[serde(default)]
+        is_personal: bool,
+    },
+    #[serde(rename = "replyMarkupForceReply")]
+    ForceReply {
+        #[serde(default)]
+        is_personal: bool,
+        #[serde(default)]
+        input_field_placeholder: String,
+    },
+}
+
+/// A button under a bot's message.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct InlineKeyboardButton {
+    pub text: String,
+    #[serde(rename = "type")]
+    pub kind: InlineKeyboardButtonType,
+}
+
+/// What a button under a message does when pressed.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum InlineKeyboardButtonType {
+    #[serde(rename = "inlineKeyboardButtonTypeUrl")]
+    Url { url: String },
+    /// Logging in to a site through Telegram: asked about first (getLoginUrlInfo).
+    #[serde(rename = "inlineKeyboardButtonTypeLoginUrl")]
+    LoginUrl { url: String, id: i64, forward_text: String },
+    #[serde(rename = "inlineKeyboardButtonTypeWebApp")]
+    WebApp { url: String },
+    /// `data` is TDLib's bytes, base64 in its JSON.
+    #[serde(rename = "inlineKeyboardButtonTypeCallback")]
+    Callback { data: String },
+    #[serde(rename = "inlineKeyboardButtonTypeCallbackWithPassword")]
+    CallbackWithPassword { data: String },
+    #[serde(rename = "inlineKeyboardButtonTypeCallbackGame")]
+    CallbackGame,
+    #[serde(rename = "inlineKeyboardButtonTypeSwitchInline")]
+    SwitchInline { query: String, target_chat: TargetChat },
+    #[serde(rename = "inlineKeyboardButtonTypeBuy")]
+    Buy,
+    #[serde(rename = "inlineKeyboardButtonTypeUser")]
+    User { user_id: i64 },
+    #[serde(rename = "inlineKeyboardButtonTypeCopyText")]
+    CopyText { text: String },
+    #[serde(other)]
+    Disabled,
+}
+
+/// Where a switch-to-inline button takes the words: this chat, or one the user chooses.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum TargetChat {
+    #[serde(rename = "targetChatCurrent")]
+    Current,
+    #[serde(other)]
+    Chosen,
+}
+
+/// A button of a bot's keyboard under the composer.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct KeyboardButton {
+    pub text: String,
+    #[serde(rename = "type")]
+    pub kind: KeyboardButtonType,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum KeyboardButtonType {
+    /// The words are sent as a message.
+    #[serde(rename = "keyboardButtonTypeText")]
+    Text,
+    #[serde(rename = "keyboardButtonTypeRequestPhoneNumber")]
+    RequestPhoneNumber,
+    #[serde(rename = "keyboardButtonTypeRequestLocation")]
+    RequestLocation,
+    #[serde(rename = "keyboardButtonTypeRequestPoll")]
+    RequestPoll {},
+    #[serde(rename = "keyboardButtonTypeRequestUsers")]
+    RequestUsers {},
+    #[serde(rename = "keyboardButtonTypeRequestChat")]
+    RequestChat {},
+    #[serde(rename = "keyboardButtonTypeWebApp")]
+    WebApp { url: String },
+    #[serde(other)]
+    Other,
+}
+
+/// A bot's answer to a button pressed (getCallbackQueryAnswer): words to show, as a notice or as
+/// a dialog, or a link to open; or nothing.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+#[serde(default)]
+pub struct CallbackQueryAnswer {
+    pub text: String,
+    pub show_alert: bool,
+    pub url: String,
+}
+
+/// What a login button leads to (getLoginUrlInfo): the site at once, or a question first.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum LoginUrlInfo {
+    #[serde(rename = "loginUrlInfoOpen")]
+    Open { url: String },
+    #[serde(rename = "loginUrlInfoRequestConfirmation")]
+    RequestConfirmation { url: String, domain: String, bot_user_id: i64, request_write_access: bool },
+}
+
+/// A link (getLoginUrl).
+#[derive(Debug, Clone, Deserialize)]
+pub struct HttpUrl {
+    pub url: String,
+}
+
+/// A bot's web app, opened (openWebApp).
+#[derive(Debug, Clone, Deserialize)]
+pub struct WebAppInfo {
+    pub url: WebAppUrl,
+}
+
+/// A bot's web app's address (getWebAppUrl).
+#[derive(Debug, Clone, Deserialize)]
+pub struct WebAppUrl {
+    pub url: String,
+}
+
+/// What a bot says it can do: the button at the composer's left, and its commands.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+pub struct BotInfo {
+    #[serde(default)]
+    pub menu_button: Option<BotMenuButton>,
+    #[serde(default)]
+    pub commands: Vec<BotCommand>,
+}
+
+/// The button at the composer's left: a web app with a name of its own, or (empty) the commands.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+pub struct BotMenuButton {
+    #[serde(default)]
+    pub text: String,
+    #[serde(default)]
+    pub url: String,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+pub struct BotCommand {
+    pub command: String,
+    #[serde(default)]
+    pub description: String,
+}
+
+/// The commands of one bot in a group.
+#[derive(Debug, Clone, Default, PartialEq, Deserialize)]
+pub struct BotCommands {
+    pub bot_user_id: i64,
+    #[serde(default)]
+    pub commands: Vec<BotCommand>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct BasicGroupFullInfo {
+    #[serde(default)]
+    pub bot_commands: Vec<BotCommands>,
 }
 
 /// How a message's content self-destructs once the user opens it: at once (it can be seen only
@@ -1157,6 +1383,9 @@ pub struct Poll {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct Game {
     pub title: String,
+    /// What a game button asks the bot about (callbackQueryPayloadGame).
+    #[serde(default)]
+    pub short_name: String,
 }
 
 /// getChatHistory's answer. TDLib may leave out messages it no longer has.

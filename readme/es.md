@@ -25,7 +25,10 @@ Es un cliente no oficial, no hecho por Telegram.
   fotos, vídeos, GIF, stickers, archivos y una tarjeta con la vista previa de un enlace. Con un clic
   derecho en un mensaje se abre su menú: responder, editar, copiar, copiar su enlace, reenviar,
   reportar, eliminar o seleccionar varios. Las fotos y los vídeos enviados para autodestruirse se
-  muestran difuminados y se abren una sola vez, como en las apps de Telegram.
+  muestran difuminados y se abren una sola vez, como en las apps de Telegram. Los botones de los
+  bots bajo sus mensajes, sus teclados, comandos y botón de menú; el mensaje fijado del chat bajo el
+  encabezado. Un chat que protege su contenido no aparece en las capturas ni en las grabaciones de
+  pantalla mientras está en primer plano.
 - **Multimedia.** Las fotos y los vídeos se abren en un visor sobre la ventana, con el resto de su
   álbum; el vídeo se reproduce con mpv, compilado desde el código fuente. Se guardan en Descargas
   donde el chat lo permite.

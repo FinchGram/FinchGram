@@ -3,7 +3,7 @@
 import { Actions, MessageAction, ChatRow, ChatKind, Status, DeleteChoice, Moment, Chats, ChatConfirm } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Spinner } from "../widgets.slint";
-import { ActionWords, AttachWords, ChatMenuWords, MenuPlace, KeyScope, SearchInput, CommentInput } from "../chat.slint";
+import { ActionWords, AttachWords, ChatMenuWords, MenuPlace, KeyScope, SearchInput, CommentInput, BotWords } from "../chat.slint";
 import { Screenshot } from "../state.slint";
 import { TerminalPalette as P } from "palette.slint";
 import { Sign } from "signs.slint";
@@ -647,9 +647,58 @@ component ChatQuestion inherits Dialog {
             }
             Word {
                 label: ChatMenuWords.action(Chats.question) + " ⏎";
-                color: P.accent3;
+                color: Chats.question == ChatConfirm.link || Chats.question == ChatConfirm.share-phone || Chats.question == ChatConfirm.login ? P.accent : P.accent3;
                 activated => {
                     Chats.confirm();
+                }
+            }
+        }
+    }
+}
+
+// A bot's answer to a button, when it asks for a dialog rather than a line (bots.rs).
+component BotAlert inherits Dialog {
+    box-width: 400px;
+    box-height: body.preferred-height;
+    close => {
+        Actions.close-alert();
+    }
+
+    KeyScope {
+        width: 0;
+        height: 0;
+        escape => {
+            Actions.close-alert();
+        }
+        enter => {
+            Actions.close-alert();
+        }
+    }
+
+    body := VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 14px;
+        padding-bottom: 14px;
+        spacing: 12px;
+        HorizontalLayout {
+            T {
+                text: "── ";
+                color: P.faint;
+            }
+            T {
+                horizontal-stretch: 1;
+                text: Actions.alert-text;
+                wrap: word-wrap;
+            }
+        }
+        HorizontalLayout {
+            alignment: end;
+            Word {
+                label: BotWords.ok() + " ⏎";
+                color: P.accent;
+                activated => {
+                    Actions.close-alert();
                 }
             }
         }
@@ -711,4 +760,5 @@ export component TerminalActions inherits Rectangle {
     if Actions.delete-open: DeleteDialog { }
     if Screenshot.permission-card: PermissionCard { }
     if Chats.question != ChatConfirm.none: ChatQuestion { }
+    if Actions.alert-open: BotAlert { }
 }

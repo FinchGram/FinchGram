@@ -91,6 +91,9 @@ struct State {
     waiting: HashMap<(i64, i64), Vec<Waiting>>,
     /// Forwarding: the chat and the messages, until a chat is picked to forward them to.
     picking: Option<(i64, Vec<i64>)>,
+    /// The picker is open for a bot's switch-inline button instead: the words to put in the chat
+    /// picked ("@bot query").
+    inline_draft: Option<String>,
     picker_query: String,
     report: Option<Report>,
     deleting: Option<Deleting>,
@@ -661,6 +664,11 @@ pub(super) fn copy_id(id: &str) {
     copy(id, ActionNotice::IdCopied);
 }
 
+/// Words a bot's copy button holds, onto the clipboard (bots.rs).
+pub(super) fn copy_words_of(text: &str) {
+    copy(text, ActionNotice::Copied);
+}
+
 /// The message's link (t.me/…): an album's, for the whole of it.
 fn copy_link(chat_id: i64, message_id: i64, album: bool) {
     let request = json!({
@@ -894,8 +902,37 @@ pub fn photos_arrived() {
     }
 }
 
-/// Forward to a chat: it opens with the strip that forwards there.
+/// The picker, for a bot's switch-inline button (bots.rs): the chat picked opens with `draft` in
+/// its composer.
+pub(super) fn open_picker_for_draft(draft: String) {
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        state.picking = Some((0, Vec::new()));
+        state.inline_draft = Some(draft);
+        state.picker_query.clear();
+    });
+    fill_picker();
+    with_actions(|actions| actions.set_picker_open(true));
+}
+
+/// Forward to a chat: it opens with the strip that forwards there. For a switch-inline button,
+/// it opens with the button's words written.
 fn pick(id: &str) {
+    if let Some(draft) = STATE.with(|state| state.borrow_mut().inline_draft.take()) {
+        STATE.with(|state| state.borrow_mut().picking = None);
+        with_actions(|actions| actions.set_picker_open(false));
+        let open = move |chat_id: i64| {
+            conversation::open(chat_id);
+            set_draft(&draft);
+            focus_composer();
+        };
+        if id == "saved" {
+            conversation::with_saved_messages(open);
+        } else if let Ok(chat_id) = id.parse() {
+            open(chat_id);
+        }
+        return;
+    }
     let Some((from_chat_id, message_ids)) = STATE.with(|state| state.borrow_mut().picking.take()) else { return };
     with_actions(|actions| actions.set_picker_open(false));
     end_selection();
@@ -935,7 +972,11 @@ fn pick_first() {
 }
 
 fn close_picker() {
-    STATE.with(|state| state.borrow_mut().picking = None);
+    STATE.with(|state| {
+        let mut state = state.borrow_mut();
+        state.picking = None;
+        state.inline_draft = None;
+    });
     with_actions(|actions| {
         actions.set_picker_open(false);
         actions.set_picker_chats(ModelRc::default());
@@ -1309,9 +1350,21 @@ pub(super) fn show_failure(message: &str) {
     show_notice(ActionNotice::Failed);
 }
 
+/// A bot answered a button with words, or something could not be done for it: said for a moment.
+pub(super) fn show_words(words: &str) {
+    with_actions(|actions| actions.set_words(words.into()));
+    show_notice(ActionNotice::Words);
+}
+
+/// Put `words` into the composer (a bot's switch-inline button, its menu).
+pub(super) fn put_draft(words: &str) {
+    set_draft(words);
+    focus_composer();
+}
+
 /// Esc closes the topmost of the menu, a dialog, the strip and choosing; false when none is open.
 fn escape() -> bool {
-    if super::attachments::escape() || super::chats::escape() || super::new_chat::escape() || super::global_search::escape() {
+    if super::attachments::escape() || super::chats::escape() || super::new_chat::escape() || super::global_search::escape() || super::bots::escape() {
         return true;
     }
     let (menu, deleting, report, picking, bar, selection) = STATE.with(|state| {

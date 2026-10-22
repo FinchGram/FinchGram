@@ -130,7 +130,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   changed. The open chat's rows are its newest 100 messages, more as the view goes up: the pages
   lay every row out and measure it again at each change among them, so their number is what each
   new message costs. `login.rs`, `chats.rs`,
-  `conversation.rs`, `actions.rs` (what can be done with a message), `account.rs` and
+  `conversation.rs`, `actions.rs` (what can be done with a message), `bots.rs` (what bots put in a
+  chat beyond messages, and the pinned message bar), `account.rs` and
   `password.rs` (two-step verification) do what the pages ask for; `files.rs` downloads files,
   `avatars.rs` fetches the photos of chats and people for the rows that show them (a letter square
   until then, or for good when there is no photo), `viewer.rs` fills the media viewer and keeps its volume (the
@@ -232,6 +233,29 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   (importContacts), a number with no account said so. A photo chosen goes up once the chat exists
   (setChatPhoto, cut square and made 640 pixels wide first). What Telegram refuses is shown in the
   dialog, which stays open; the service messages a new chat shows are the servers' own.
+- Bots (`bots.rs`; no design yet, so the pages draw these plainly in their own colours): the
+  buttons under a bot's message (replyMarkupInlineKeyboard) share their row's width under the
+  bubble, and do what their kind says as Telegram's own apps do it. A callback asks the bot
+  (getCallbackQueryAnswer; the button turns meanwhile) and shows its words as a notice, or as a
+  dialog when the bot asks for one, or opens its link; a link (↗) asks first, with its site, as any
+  link whose words are not its address does; a login button asks Telegram what the site wants
+  (getLoginUrlInfo) and the user before logging in (getLoginUrl); a web app opens in the browser
+  (openWebApp or getWebAppUrl for the address: FinchGram has no web view); switch-inline writes
+  "@bot words" into this chat or one picked from the forward picker; copy copies; a user button
+  opens their chat. The buttons follow the message's edits (updateMessageEdited carries the new
+  markup) and go when it loses them. A bot's keyboard (replyMarkupShowKeyboard) sits above the
+  composer, folded away with the keyboard button or after one use when the bot asked for that, and
+  goes when the bot takes it back (updateChatReplyMarkup); its keys send their words, the one for
+  the phone number asks first and sends a contact card, a location, a poll or a chat to choose are
+  said to be beyond FinchGram yet, as paying is. "/" alone or "/words" in the composer (Terminal:
+  on its command line, among its own commands) offers the commands of the chat's bot, or of the
+  bots in the group (botInfo from getUserFullInfo, the groups' full info), and a bot's menu
+  button stands left of the composer's tools: its web app, or its commands. A chat's newest pinned
+  message (getChatPinnedMessage, asked again at updateMessageIsPinned) is a bar under the header
+  that goes to it. A chat that protects its content (has_protected_content: no forwarding, no
+  saving, and Telegram's apps keep it out of screenshots) is kept out of screen captures while it
+  is in front: the window's sharing type is set to none (`platform::set_window_capturable`), so
+  that screenshots and screen recordings show it blank, as macOS does for such windows.
 - The MCP server (`src/mcp/`, [mcp.md](mcp.md)): AI assistants' apps (Claude Desktop, Claude
   Code, …) read the user's chats and act in them through the running app, with the Model Context
   Protocol. The app listens on a Unix socket in its own folder; `finchgram mcp` (the same
@@ -332,8 +356,11 @@ of layout then comes with its migration, told apart by SQLite's own `user_versio
    thumbnail; still stickers show as they are.
 4. **Rendering**: Slint's default renderer (FemtoVG) for now. The design's typefaces are bundled,
    with Noto Sans SC, JP, KR and Arabic for the UI's Chinese, Japanese, Korean and Arabic (the UI
-   language's own first among the fallbacks, `fonts.rs`); colour emoji and other scripts in
-   messages come from the system's fonts. Skia would need building from source: its
+   language's own first among the fallbacks, `fonts.rs`); emoji come from the system's colour
+   emoji font, which `fonts.rs` puts right after the body font so that the CJK fonts' black-and-
+   white emoji do not win (a font that has its own glyph for a heart or an arrow still draws it, as
+   Source Sans 3 does ❤); other scripts in messages come from the system's fonts. Skia would need
+   building from source: its
    Rust bindings download a prebuilt library by default, which conventions.md does not allow.
    Moving to Skia, built by our own CI, was planned on 2026-10-11 and paused the next day: the plan,
    why, and what it means for tiny-skia and resvg, is in [skia.md](skia.md).

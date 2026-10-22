@@ -17,7 +17,7 @@ use slint::ComponentHandle;
 
 use super::api::{self, ChatList, ChatType, Messages, SponsoredMessages, SupergroupFullInfo};
 use super::store::{self, History};
-use super::{Error, actions, files, send};
+use super::{Error, actions, bots, files, send};
 use crate::images;
 use crate::{Conversation, MainWindow};
 
@@ -237,12 +237,15 @@ pub fn open(chat_id: i64) {
         view_newest(chat_id);
     }
     if let ChatType::Supergroup { supergroup_id, is_channel } = kind {
-        // The member count, which the supergroup itself mostly leaves at 0.
+        // The member count, which the supergroup itself mostly leaves at 0; and the commands of
+        // the group's bots (bots.rs).
         send(json!({ "@type": "getSupergroupFullInfo", "supergroup_id": supergroup_id }), move |answer| {
             let Ok(Ok(info)) = answer.map(serde_json::from_value::<SupergroupFullInfo>) else { return };
             store::with(|store| {
                 store.supergroup_members.insert(supergroup_id, info.member_count);
+                store.group_commands.insert(chat_id, info.bot_commands);
                 store.dirty.chats = true;
+                store.dirty.header = true;
             });
             store::refresh();
         });
@@ -250,7 +253,17 @@ pub fn open(chat_id: i64) {
             load_sponsored(chat_id);
         }
     }
+    bots::chat_opened(chat_id);
+    protect_window();
     store::refresh();
+}
+
+/// The window may be captured (screenshots, screen recordings) unless the chat in front protects
+/// its content, as Telegram's own apps keep it: then the system shows the window blank in captures
+/// (src/platform/). Called whenever the chat in front changes, or its protection does.
+pub fn protect_window() {
+    let protected = store::with(|store| store.open.and_then(|id| store.chats.get(&id)).is_some_and(|chat| chat.has_protected_content)).unwrap_or(false);
+    super::with_ui(|ui| crate::platform::set_window_capturable(ui.window(), !protected));
 }
 
 /// The chat with a person (a contact, someone found), made by TDLib when the account has none yet
@@ -318,6 +331,7 @@ pub(super) fn close(chat_id: i64) {
         Then::Open(next) => open(next),
         Then::ShowNone => {
             actions::chat_changed(None);
+            protect_window();
             store::refresh();
         }
         Then::Nothing => store::refresh(),
@@ -365,6 +379,7 @@ fn close_all() {
         send(json!({ "@type": "closeChat", "chat_id": chat_id }), |_| {});
     }
     actions::chat_changed(None);
+    protect_window();
     store::refresh();
 }
 
@@ -758,6 +773,8 @@ fn write(text: &str) {
 /// the words are gone. Editing a message is no typing.
 fn edited(words: &str) {
     let Some(chat_id) = open_chat() else { return };
+    // "/…" alone: the bot's commands that start so are offered.
+    bots::draft_changed(words);
     if actions::editing(chat_id) {
         return;
     }

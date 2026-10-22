@@ -8,7 +8,7 @@ import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState, ChatOrder } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
-import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords, SearchInput, SearchWords } from "../chat.slint";
+import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords, SearchInput, SearchWords, ButtonGrid, BotWords } from "../chat.slint";
 import { Look } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { TerminalPalette as P } from "palette.slint";
@@ -1006,6 +1006,24 @@ component LogLine {
                     }
                 }
             }
+            // A bot's buttons: cells sharing the line, row by row (chat.slint's ButtonGrid; bots.rs).
+            if root.message.buttons.length > 0: VerticalLayout {
+                padding-top: 2px;
+                ButtonGrid {
+                    max-width: 480px;
+                    rows: root.message.buttons;
+                    busy-prefix: root.message.id + ":";
+                    fill: P.sel;
+                    ink: P.accent;
+                    radius: 2px;
+                    row-height: 26px;
+                    font-family: P.font;
+                    font-size: 12px;
+                    pressed(row, column) => {
+                        Actions.press(root.message.id, row, column);
+                    }
+                }
+            }
             // Its file: "↳ [pdf] October screenings.pdf  1.2 MB  [▼ download]".
             for file in root.message.files: file-line := Rectangle {
                 height: line.preferred-height;
@@ -1199,6 +1217,39 @@ component SearchLine inherits Rectangle {
     }
 }
 
+// The chat's newest pinned message, as a line under the pane head: a click goes to it (bots.rs).
+component PinnedLine inherits Rectangle {
+    height: 28px;
+    background: P.pane-head;
+
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: P.line;
+    }
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 8px;
+        T {
+            text: "[" + BotWords.pinned().to-lowercase() + "]";
+            color: P.accent2;
+        }
+        T {
+            horizontal-stretch: 1;
+            text: (Conversation.pinned-message.sender == "" ? "" : Conversation.pinned-message.sender + ": ") + ActionWords.quote-line(Conversation.pinned-message);
+            color: P.muted;
+            overflow: elide;
+        }
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Conversation.open-pinned();
+        }
+    }
+}
+
 component Pane inherits Rectangle {
     background: P.bg;
 
@@ -1319,6 +1370,7 @@ component Pane inherits Rectangle {
             }
         }
         if Conversation.search-open: SearchLine { }
+        if Conversation.pinned-message.shown: PinnedLine { }
 
         scroll := ChatScroll {
             vertical-stretch: 1;
@@ -1336,6 +1388,24 @@ component Pane inherits Rectangle {
             if Conversation.typing != "": T {
                 text: "…… " + @tr("{0} is typing…", Conversation.typing);
                 color: P.faint;
+            }
+        }
+        // A bot's keyboard, above the command line (bots.rs).
+        if Conversation.can-write && !Actions.selecting && Conversation.keyboard.length > 0 && !Conversation.keyboard-hidden: HorizontalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-bottom: 10px;
+            ButtonGrid {
+                rows: Conversation.keyboard;
+                fill: P.sel;
+                ink: P.accent;
+                radius: 2px;
+                row-height: 28px;
+                font-family: P.font;
+                font-size: 12px;
+                pressed(row, column) => {
+                    Conversation.press-key(row, column);
+                }
             }
         }
     }
@@ -1501,6 +1571,9 @@ component CommandLine inherits Rectangle {
             NewChat.start(NewDialog.contact);
         } else if !line.starts-with("/") {
             Conversation.send(line);
+        } else if Conversation.can-write {
+            // A bot's command, or any other "/words": sent as they are, as Telegram's apps do.
+            Conversation.send-command(line);
         }
     }
 
@@ -1622,6 +1695,27 @@ component CommandLine inherits Rectangle {
                 }
             }
         }
+        // A bot's menu button, and the fold for its keyboard (bots.rs).
+        if Conversation.chat-id != "" && Conversation.can-write && Conversation.menu-button != "": VerticalLayout {
+            alignment: center;
+            Action {
+                label: Conversation.menu-button == "/" ? BotWords.menu().to-lowercase() : Conversation.menu-button;
+                color: P.accent;
+                activated => {
+                    Conversation.open-bot-menu();
+                }
+            }
+        }
+        if Conversation.chat-id != "" && Conversation.can-write && Conversation.keyboard.length > 0: VerticalLayout {
+            alignment: center;
+            IconAction {
+                icon: "keyboard";
+                color: Conversation.keyboard-hidden ? P.faint : P.accent;
+                activated => {
+                    Conversation.toggle-keyboard();
+                }
+            }
+        }
         VerticalLayout {
             horizontal-stretch: 1;
             alignment: center;
@@ -1631,7 +1725,7 @@ component CommandLine inherits Rectangle {
                 text <=> Conversation.draft;
                 allow-empty: Actions.bar == ComposeBar.forward;
                 enabled: Conversation.chat-id != "" && !Actions.selecting && !root.read-only;
-                placeholder: @tr("Write a message, or / for commands");
+                placeholder: Conversation.keyboard-placeholder != "" ? Conversation.keyboard-placeholder : @tr("Write a message, or / for commands");
                 text-color: P.text;
                 placeholder-color: P.faint;
                 // The accent: on macOS the cursor is painted in the selection's colour (chat.slint),
@@ -1647,9 +1741,12 @@ component CommandLine inherits Rectangle {
                 send(words) => {
                     root.run(words);
                 }
-                // A command is no message: writing one is no typing.
+                // A command is no message: writing one is no typing; the bot's commands that
+                // start so are offered among the line's own.
                 edited(words) => {
-                    if !words.starts-with("/") {
+                    if words.starts-with("/") {
+                        Conversation.command-typed(words);
+                    } else {
                         Conversation.edited(words);
                     }
                 }
@@ -1702,6 +1799,34 @@ component CommandLine inherits Rectangle {
                 pick := TouchArea {
                     clicked => {
                         root.run(command.command);
+                        input.text = "";
+                    }
+                }
+            }
+            // The chat's bot's own (src/telegram/bots.rs), already sifted by what is typed.
+            for command in Conversation.commands: Rectangle {
+                height: 26px;
+                background: pick-bot.has-hover ? P.sel : transparent;
+                HorizontalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    spacing: 8px;
+                    T {
+                        width: 140px;
+                        text: command.command;
+                        color: P.accent2;
+                        overflow: elide;
+                    }
+                    T {
+                        horizontal-stretch: 1;
+                        text: command.description;
+                        color: P.muted;
+                        overflow: elide;
+                    }
+                }
+                pick-bot := TouchArea {
+                    clicked => {
+                        Conversation.send-command(command.command);
                         input.text = "";
                     }
                 }

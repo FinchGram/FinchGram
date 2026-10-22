@@ -211,6 +211,20 @@ pub(super) fn link_site(url: &str) -> String {
     host.split(':').next().unwrap_or(host).to_string()
 }
 
+/// A bot's question (bots.rs): sharing the phone number with it, logging in to a site through
+/// it. `title` names the bot, or the site.
+pub(super) fn ask_bot(chat_id: i64, what: crate::ChatConfirm, title: &str) {
+    super::with_ui(|ui| {
+        QUESTION.with(|question| *question.borrow_mut() = Some((chat_id, what)));
+        let chats = ui.global::<Chats>();
+        chats.set_confirm_title(title.into());
+        chats.set_confirm_kind(crate::ChatKind::Bot);
+        chats.set_confirm_revoke_choice(false);
+        chats.set_confirm_revoke(false);
+        chats.set_question(what);
+    });
+}
+
 /// The question before something that cannot be undone: the chat's name, its kind, and for a
 /// deletion whether the messages can go for the other side too.
 fn ask(chat_id: i64, what: crate::ChatConfirm) {
@@ -266,6 +280,8 @@ fn confirm() {
             super::send(request, |answer| log_error("delete a chat", answer));
             conversation::close(chat_id);
         }
+        crate::ChatConfirm::SharePhone => super::bots::share_phone(chat_id),
+        crate::ChatConfirm::Login => super::bots::login_confirmed(chat_id),
         crate::ChatConfirm::None => {}
     }
 }
