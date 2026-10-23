@@ -17,7 +17,10 @@ on:
 
 concurrency:
   group: release
-  cancel-in-progress: false # a release build must never be cancelled by the next push
+  # A release (the "Release v…" commit scripts/release.sh pushes) cancels the plain build of the
+  # push before it, which would otherwise run first and publish nothing: the release builds the
+  # same code. A plain push never cancels a release build.
+  cancel-in-progress: ${{ startsWith(github.event.head_commit.message, 'Release v') }}
 
 env:
   APP_NAME: FinchGram
