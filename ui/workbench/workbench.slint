@@ -477,16 +477,6 @@ component ActivityBar inherits Rectangle {
         }
         HorizontalLayout {
             alignment: center;
-            ActivityButton {
-                icon: "gear-six";
-                activated => {
-                    Drawer.close();
-                    AppState.page = Page.settings;
-                }
-            }
-        }
-        HorizontalLayout {
-            alignment: center;
             avatar := Rectangle {
                 width: 32px;
                 height: 32px;

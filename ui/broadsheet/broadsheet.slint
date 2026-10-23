@@ -267,20 +267,6 @@ component Rail inherits Rectangle {
                 }
             }
         }
-        HorizontalLayout {
-            alignment: center;
-            DuoIcon {
-                name: "gear-six";
-                size: 22px;
-                color: P.muted;
-                TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => {
-                        AppState.page = Page.settings;
-                    }
-                }
-            }
-        }
     }
 }
 

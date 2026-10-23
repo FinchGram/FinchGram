@@ -2,7 +2,8 @@
 //! the logo in Workbench and Broadsheet, a pane under /tools and /accounts in Terminal. Its
 //! toolbox lists every tool with a switch that pins it to the bar: the activity bar, the rail
 //! and Terminal's bottom bar show only the pinned tools, one list for the three themes
-//! (`[toolbox] pinned` in settings.toml; downloads and the screenshot by default). The tools the
+//! (`[toolbox] pinned` in settings.toml; downloads by default). The screenshot is not a tool of
+//! the toolbox: its scissors stay under the composer, at the maintainer's word (2026-10-23). The tools the
 //! design draws but FinchGram does not have yet (live streams, Jellyfin, keyword hiding,
 //! scheduled messages) are listed faded, and cannot be pinned. The accounts part shows the one
 //! account; adding another waits for several accounts.
@@ -13,12 +14,11 @@ use std::rc::Rc;
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
 use crate::settings::Settings;
-use crate::{AppState, Drawer, DrawerWords, MainWindow, Page, Screenshot, ToolRow};
+use crate::{AppState, Drawer, DrawerWords, MainWindow, Page, ToolRow};
 
 /// The tools, in the toolbox's order: id, icon, Terminal's mark, and whether FinchGram has it.
-const TOOLS: [(&str, &str, &str, bool); 6] = [
+const TOOLS: [(&str, &str, &str, bool); 5] = [
     ("downloads", "download-simple", "↓", true),
-    ("screenshot", "scissors", "▣", true),
     ("live", "broadcast", "▶", false),
     ("jellyfin", "television", "■", false),
     ("hiding", "eye-slash", "⊘", false),
@@ -69,10 +69,8 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         move |id| {
             let Some(ui) = ui.upgrade() else { return };
             ui.global::<Drawer>().set_open(false);
-            match id.as_str() {
-                "downloads" => ui.global::<AppState>().set_page(Page::Downloads),
-                "screenshot" => ui.global::<Screenshot>().invoke_start(),
-                _ => {}
+            if id.as_str() == "downloads" {
+                ui.global::<AppState>().set_page(Page::Downloads);
             }
         }
     });
@@ -86,7 +84,6 @@ fn fill(ui: &MainWindow, pinned: &[String]) {
         .map(|(id, icon, sigil, built)| {
             let (name, line): (SharedString, SharedString) = match *id {
                 "downloads" => (words.invoke_downloads(), words.invoke_downloads_line()),
-                "screenshot" => (words.invoke_screenshot(), words.invoke_screenshot_line()),
                 "live" => (words.invoke_live(), words.invoke_live_line()),
                 "jellyfin" => (words.invoke_jellyfin(), words.invoke_jellyfin_line()),
                 "hiding" => (words.invoke_hiding(), words.invoke_hiding_line()),

@@ -708,7 +708,6 @@ fn set_toolbox(ui: &MainWindow) {
     };
     let tools = vec![
         tool("downloads", "Downloads", "Files from your WebDAV servers", "download-simple", "↓", true),
-        tool("screenshot", "Screenshot", "Capture the screen, mark it up, send it", "scissors", "▣", true),
         tool("live", "Live", "Watch live streams", "broadcast", "▶", false),
         tool("jellyfin", "Jellyfin", "Your own media server", "television", "■", false),
         tool("hiding", "Keyword hiding", "Hide messages by keyword, on this Mac only", "eye-slash", "⊘", false),

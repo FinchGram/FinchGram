@@ -318,13 +318,16 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     parts: the accounts (the one in front; adding another waits for several accounts), the
     toolbox (every tool with a line about it and a switch that pins it to the bar: the activity
     bar, the rail and Terminal's bottom bar show only the pinned tools, in the toolbox's order,
-    one list for the three themes in `[toolbox] pinned` of settings.toml, downloads and the
-    screenshot by default; a name opens the tool and shuts the drawer, a switch only pins), and
-    the settings, the AI settings (still to come) and the profile at the foot. The tools the
-    design draws but FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled
-    messages) are listed faded and cannot be pinned; the greyed filters and scheduled views left
-    the bars for the toolbox. The logo carries a dot while an unpinned tool has something going
-    on (downloads on their way); a pinned tool's dot sits on its own icon.
+    one list for the three themes in `[toolbox] pinned` of settings.toml, downloads by default;
+    a name opens the tool and shuts the drawer, a switch only pins), and the settings, the AI
+    settings (still to come) and the profile at the foot. The tools the design draws but
+    FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled messages) are
+    listed faded and cannot be pinned; the greyed filters and scheduled views left the bars for
+    the toolbox. Two of the maintainer's decisions of 2026-10-23 depart from the design: the
+    screenshot is not in the toolbox (its scissors stay under the composer, with their shortcut),
+    and the gear left the bars (the settings are in the drawer, the menu bar and ⌘,). The logo
+    carries a dot while an unpinned tool has something going on (downloads on their way); a
+    pinned tool's dot sits on its own icon.
   - The chat's info panel (`chat_info.rs`, the design's chat-info round): ⌘I, the header's sidebar
     icon (Terminal's "[chat info]") opens it beside the messages, squeezing them (the list yields
     down to 220px first), in every theme, and it stays open across chats and restarts

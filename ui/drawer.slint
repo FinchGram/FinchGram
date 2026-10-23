@@ -9,7 +9,7 @@ import { Accounts } from "telegram.slint";
 
 // A tool of the toolbox.
 export struct ToolRow {
-    id: string,             // "downloads", "screenshot", "live", "jellyfin", "hiding", "scheduled"
+    id: string,             // "downloads", "live", "jellyfin", "hiding", "scheduled"
     name: string,
     line: string,           // what it is, in a few words
     icon: string,           // its Phosphor icon
@@ -56,8 +56,6 @@ export global DrawerWords {
     public pure function downloads() -> string { return @tr("Downloads"); }
     public pure function downloads-line() -> string { return @tr("Files from your WebDAV servers"); }
     public pure function downloading(n: int) -> string { return @tr("{n} on its way" | "{n} on their way" % n); }
-    public pure function screenshot() -> string { return @tr("Screenshot"); }
-    public pure function screenshot-line() -> string { return @tr("Capture the screen, mark it up, send it"); }
     public pure function live() -> string { return @tr("Live"); }
     public pure function live-line() -> string { return @tr("Watch live streams"); }
     public pure function jellyfin() -> string { return "Jellyfin"; }

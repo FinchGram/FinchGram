@@ -755,20 +755,14 @@ component Side inherits Rectangle {
                     text: Account.phone == "" ? Account.name : Account.name + " · " + Account.phone;
                     overflow: elide;
                 }
-                // The profile and the settings, where the other themes have them: the same two
-                // icons, in brackets, one size and so one width.
+                // The profile, where the other themes have it: the icon in brackets. (The settings
+                // are in the drawer, /settings and the menu bar: the maintainer took the gear off
+                // the bars on 2026-10-23.)
                 IconAction {
                     icon: "user";
                     color: P.accent;
                     activated => {
                         AppState.page = Page.profile;
-                    }
-                }
-                IconAction {
-                    icon: "gear-six";
-                    color: P.accent;
-                    activated => {
-                        AppState.page = Page.settings;
                     }
                 }
             }
