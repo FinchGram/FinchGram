@@ -20,7 +20,11 @@ concurrency:
 jobs:
   macos-arm64:
     runs-on: macos-latest # Apple silicon
-    timeout-minutes: 30
+    # A cold run (no cache yet, or the lock file changed) takes about 35 minutes on the 3-core
+    # runner: the whole dependency tree twice, once for clippy's check and once for the tests'
+    # build. A warm one takes under ten. The cache is only saved by a run that finishes, so the
+    # limit leaves a cold run room.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 

@@ -18,8 +18,11 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: release
-  cancel-in-progress: false # a release build is never cancelled
+  # Release builds run one after the other and are never cancelled. The runs of other pushes
+  # (whose job is skipped below) get a group of their own: GitHub keeps only one pending run per
+  # group, and one of them queued behind a release could otherwise push a pending release out.
+  group: ${{ startsWith(github.event.head_commit.message, 'Release v') && 'release' || format('push-{0}', github.run_id) }}
+  cancel-in-progress: false
 
 env:
   APP_NAME: FinchGram
