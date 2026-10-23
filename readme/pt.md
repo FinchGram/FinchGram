@@ -198,7 +198,8 @@ O banco de dados do TDLib e os arquivos baixados ficam em
 ```
 .github/workflows/
   mpv.yml                # compila a libmpv numa máquina limpa; publica as tags mpv-* como releases
-  release.yml            # compila o app a cada push na main; publica as tags v* como releases
+  check.yml              # clippy e os testes a cada push na main
+  release.yml            # compila e publica o app para os commits Release v*
   tdlib.yml              # compila o finchgram-tdlib numa máquina limpa; publica as tags tdlib-* como releases
 Cargo.toml
 build.rs                 # compila ui/app.slint, empacota lang/, copia vendor/tdlib/bin/ para junto do executável

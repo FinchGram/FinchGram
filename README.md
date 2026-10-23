@@ -194,7 +194,8 @@ settings in `~/Library/Application Support/FinchGram/settings.toml`.
 ```
 .github/workflows/
   mpv.yml                # builds libmpv on a clean runner; publishes mpv-* tags as releases
-  release.yml            # builds the app on every push to main; publishes v* tags as releases
+  check.yml              # clippy and the tests on every push to main
+  release.yml            # builds and publishes the app for the Release v* commits
   tdlib.yml              # builds finchgram-tdlib on a clean runner; publishes tdlib-* tags as releases
 Cargo.toml
 build.rs                 # compiles ui/app.slint, bundles lang/, copies vendor/tdlib/bin/ next to the executable

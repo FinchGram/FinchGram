@@ -168,7 +168,8 @@ TDLib のデータベースとダウンロードしたファイルは `~/Library
 ```
 .github/workflows/
   mpv.yml                # クリーンなマシンで libmpv をビルドし、mpv-* タグをリリースとして公開
-  release.yml            # main への push ごとにアプリをビルドし、v* タグをリリースとして公開
+  check.yml              # main への push ごとに clippy とテストを実行
+  release.yml            # Release v* コミットでアプリをビルドして公開
   tdlib.yml              # クリーンなマシンで finchgram-tdlib をビルドし、tdlib-* タグをリリースとして公開
 Cargo.toml
 build.rs                 # ui/app.slint をコンパイルし、lang/ を同梱し、vendor/tdlib/bin/ を実行ファイルの隣にコピー

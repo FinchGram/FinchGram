@@ -1,11 +1,13 @@
 name: release
 
-# Every push to main builds the app on a clean Apple-silicon runner and keeps the result as an
-# artifact for a week. That also keeps the Rust build cache warm: GitHub only shares caches from
-# the default branch, so a build triggered by a tag alone would always start cold.
-# When the pushed commit carries a v<version> tag (made by scripts/release.sh), the build is also
-# published as a release of this repository, from which installed copies of the app update
-# themselves (src/update.rs). Nothing is ever built on a developer machine.
+# A "Release v<version>" commit pushed to main (made by scripts/release.sh, with its v<version>
+# tag) builds the app on a clean Apple-silicon runner, keeps the result as an artifact for a week,
+# and publishes it as a release of this repository, from which installed copies of the app update
+# themselves (src/update.rs). Other pushes only run check.yml (clippy and the tests): since
+# 2026-10-23, at the maintainer's word, no app is built for them. The job runs on the push to main
+# rather than on the tag so that its Rust build cache is saved on the default branch, the only
+# place GitHub shares caches from: the next release starts warm. Nothing is ever built on a
+# developer machine.
 #
 # Every Action is pinned to a commit (its full SHA, the version beside it), never to a tag or a
 # branch, which can be moved: this job builds, signs and publishes what users install, and what runs
@@ -17,16 +19,15 @@ on:
 
 concurrency:
   group: release
-  # A release (the "Release v…" commit scripts/release.sh pushes) cancels the plain build of the
-  # push before it, which would otherwise run first and publish nothing: the release builds the
-  # same code. A plain push never cancels a release build.
-  cancel-in-progress: ${{ startsWith(github.event.head_commit.message, 'Release v') }}
+  cancel-in-progress: false # a release build is never cancelled
 
 env:
   APP_NAME: FinchGram
 
 jobs:
   macos-arm64:
+    # Only the release commits, and a run started by hand.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Release v')
     runs-on: macos-latest # Apple silicon
     permissions:
       contents: write # gh release create needs it; the default token is read-only

@@ -162,7 +162,8 @@ TDLib의 데이터베이스와 내려받은 파일은 `~/Library/Application Sup
 ```
 .github/workflows/
   mpv.yml                # 깨끗한 머신에서 libmpv를 빌드하고, mpv-* 태그를 릴리스로 공개
-  release.yml            # main에 push할 때마다 앱을 빌드하고, v* 태그를 릴리스로 공개
+  check.yml              # main에 push할 때마다 clippy와 테스트 실행
+  release.yml            # Release v* 커밋에서 앱을 빌드해 릴리스로 공개
   tdlib.yml              # 깨끗한 머신에서 finchgram-tdlib을 빌드하고, tdlib-* 태그를 릴리스로 공개
 Cargo.toml
 build.rs                 # ui/app.slint를 컴파일하고, lang/을 포함하며, vendor/tdlib/bin/을 실행 파일 옆에 복사

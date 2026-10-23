@@ -1,0 +1,49 @@
+name: check
+
+# Every push to main is checked on a clean Apple-silicon runner: clippy and the tests, in a few
+# minutes. The app itself is built, signed and published only by release.yml, for the "Release
+# v<version>" commits scripts/release.sh makes (the maintainer's choice of 2026-10-23: a full build
+# for every push cost the same 40 minutes as a release and published nothing).
+#
+# Every Action is pinned to a commit (its full SHA, the version beside it), never to a tag or a
+# branch, which can be moved (docs/conventions.md, Release first). To update one, change the SHA.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true # only the newest push of a branch needs checking
+
+jobs:
+  macos-arm64:
+    runs-on: macos-latest # Apple silicon
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master, 2026-10-16
+        with:
+          toolchain: stable
+
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          shared-key: check
+
+      - name: finchgram-tdlib, pinned, from this repository's tdlib-* release
+        run: scripts/fetch-tdlib.sh
+
+      - name: libmpv, pinned, from this repository's mpv-* release
+        run: scripts/fetch-mpv.sh
+
+      - name: The UI fonts, pinned, from google/fonts
+        run: scripts/fetch-fonts.sh
+
+      # Without an api_id (option_env!) the app compiles and says so at run time; the checks need none.
+      - name: Clippy
+        run: cargo clippy --all-targets
+
+      - name: Tests
+        run: cargo test

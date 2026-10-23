@@ -150,7 +150,8 @@ TDLib 的資料庫和下載的檔案在 `~/Library/Application Support/FinchGram
 ```
 .github/workflows/
   mpv.yml                # 在乾淨的機器上建置 libmpv；mpv-* tag 發佈為 release
-  release.yml            # 每次 push 到 main 都建置 app；v* tag 發佈為 release
+  check.yml              # 每次 push 到 main 跑 clippy 和測試
+  release.yml            # Release v* 提交時建置並發佈 app
   tdlib.yml              # 在乾淨的機器上建置 finchgram-tdlib；tdlib-* tag 發佈為 release
 Cargo.toml
 build.rs                 # 編譯 ui/app.slint，打包 lang/，把 vendor/tdlib/bin/ 複製到執行檔旁邊
