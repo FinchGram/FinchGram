@@ -1,6 +1,8 @@
 // Broadsheet (the design's "1a 报纸"): a newspaper's calm. A rail with the accounts, the chat list
 // with its folders as tabs, and the conversation in bubbles. The accent is the account's colour.
 import { ListView } from "std-widgets.slint";
+import { Drawer } from "../drawer.slint";
+import { BroadsheetDrawer } from "drawer.slint";
 import { InfoPanel } from "chat-info.slint";
 import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
@@ -125,11 +127,42 @@ component Rail inherits Rectangle {
         padding-bottom: 14px;
         spacing: 14px;
         alignment: start;
+        // The logo opens the drawer (drawer.slint): ringed while it is open, with a dot while an
+        // unpinned tool has something going on.
         HorizontalLayout {
             alignment: center;
-            Logo {
-                size: 40px;
-                radius: 10px;
+            Rectangle {
+                width: 40px;
+                height: 40px;
+                Rectangle {
+                    x: -2px;
+                    y: -2px;
+                    width: 44px;
+                    height: 44px;
+                    border-radius: 12px;
+                    border-width: 2px;
+                    border-color: Drawer.open ? P.accent : transparent;
+                }
+                Logo {
+                    size: 40px;
+                    radius: 10px;
+                }
+                if Drawer.logo-dot: Rectangle {
+                    x: parent.width - 7px;
+                    y: -3px;
+                    width: 10px;
+                    height: 10px;
+                    border-radius: 5px;
+                    background: P.accent2;
+                    border-width: 2px;
+                    border-color: P.rail;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Drawer.toggle();
+                    }
+                }
             }
         }
         Text {
@@ -182,18 +215,19 @@ component Rail inherits Rectangle {
         padding-bottom: 16px;
         spacing: 16px;
         alignment: end;
-        // Downloads (the design's third round of the pages), with a dot while some are on their way.
-        HorizontalLayout {
+        // The tools pinned in the drawer's toolbox (drawer.slint), in its order; downloads carry a
+        // dot while some are on their way.
+        for tool in Drawer.pinned: HorizontalLayout {
             alignment: center;
             Rectangle {
                 width: 22px;
                 height: 22px;
                 DuoIcon {
-                    name: "download-simple";
+                    name: tool.icon;
                     size: 22px;
                     color: P.muted;
                 }
-                if Downloads.active-count > 0: Rectangle {
+                if tool.id == "downloads" && Downloads.active-count > 0: Rectangle {
                     x: parent.width / 2 + 6px;
                     y: -2px;
                     width: 7px;
@@ -204,7 +238,7 @@ component Rail inherits Rectangle {
                 TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
-                        AppState.page = Page.downloads;
+                        Drawer.open-tool(tool.id);
                     }
                 }
             }
@@ -293,17 +327,6 @@ component Views {
             activated => {
                 root.view = BroadsheetView.bots;
             }
-        }
-        // Keyword filters and scheduled messages are still to come.
-        ViewButton {
-            icon: "funnel-simple";
-            label: @tr("Filters");
-            enabled: false;
-        }
-        ViewButton {
-            icon: "clock";
-            label: @tr("Scheduled");
-            enabled: false;
         }
     }
 }
@@ -3456,6 +3479,14 @@ export component BroadsheetWindow inherits Rectangle {
                 horizontal-stretch: 1;
             }
         }
+    }
+
+    // The drawer, from the rail's right over the list, under the title bar.
+    BroadsheetDrawer {
+        x: 80px;
+        y: 40px;
+        width: root.width - 80px;
+        height: root.height - 40px;
     }
 
     // A message's menu and the dialogs of its actions, over everything; the search over everything

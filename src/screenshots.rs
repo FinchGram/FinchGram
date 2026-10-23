@@ -540,6 +540,31 @@ fn fill_chats(ui: &MainWindow) {
     conversation.set_tabs(model(vec![tab(&keyboards), tab(&news), tab(&alex)]));
 }
 
+/// The toolbox as src/drawer.rs fills it: downloads and the screenshot pinned, the rest to come.
+fn set_toolbox(ui: &MainWindow) {
+    let tool = |id: &str, name: &str, line: &str, icon: &str, sigil: &str, pinned: bool| ToolRow {
+        id: id.into(),
+        name: name.into(),
+        line: line.into(),
+        icon: icon.into(),
+        sigil: sigil.into(),
+        pinned,
+        grey: !pinned,
+    };
+    let tools = vec![
+        tool("downloads", "Downloads", "Files from your WebDAV servers", "download-simple", "↓", true),
+        tool("screenshot", "Screenshot", "Capture the screen, mark it up, send it", "scissors", "▣", true),
+        tool("live", "Live", "Watch live streams", "broadcast", "▶", false),
+        tool("jellyfin", "Jellyfin", "Your own media server", "television", "■", false),
+        tool("hiding", "Keyword hiding", "Hide messages by keyword, on this Mac only", "eye-slash", "⊘", false),
+        tool("scheduled", "Scheduled messages", "Messages set to go out later", "clock", "○", false),
+    ];
+    let drawer = ui.global::<Drawer>();
+    drawer.set_pinned(model(tools.iter().filter(|tool| tool.pinned).cloned().collect()));
+    drawer.set_tools(model(tools));
+    drawer.set_downloads_pinned(true);
+}
+
 fn info_row(id: &str, kind: InfoRowKind, icon: &str, label: &str, key: &str) -> InfoRow {
     InfoRow {
         id: id.into(),
@@ -1900,6 +1925,7 @@ fn screenshots() {
 
             app.set_telegram_state(TelegramState::Ready);
             app.set_page(Page::Chats);
+            set_toolbox(&ui);
             open_keyboards(&ui);
             save(&window, &name("chats"));
             // Searching in the chat: the line under the header, at the third of 14 matches.
@@ -1923,6 +1949,15 @@ fn screenshots() {
                 save(&window, &name("chat-info"));
                 info.set_open(false);
                 info.set_cursor(SharedString::new());
+            }
+            // The drawer from the logo (the sixth round): the accounts, the toolbox with its pin
+            // switches, the foot; Terminal's pane under /tools.
+            {
+                let drawer = ui.global::<Drawer>();
+                drawer.set_accounts_shown(false);
+                drawer.set_open(true);
+                save(&window, &name("drawer"));
+                drawer.set_open(false);
             }
             // A right click on the first chat of the list: its menu.
             let (x, y) = match theme {

@@ -13,6 +13,7 @@ import { Fmt } from "format.slint";
 import { BotWords } from "chat.slint";
 import { ExtraWords } from "extras.slint";
 import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "chat-info.slint";
+import { Drawer, DrawerWords, ToolRow } from "drawer.slint";
 import { LoginPage } from "pages/login.slint";
 import { WorkbenchWindow } from "workbench/workbench.slint";
 import { BroadsheetWindow } from "broadsheet/broadsheet.slint";
@@ -35,6 +36,7 @@ export { AiAccess, AiScope, AiWriting, AiChat, AiApp, AiActivity, AiActivityKind
 export { Search, NewChat, NewDialog, LinkCheck, FoundKind, FoundRow, FoundSection, ComposeWords, BotWords, ExtraWords }
 export { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError }
 export { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember }
+export { Drawer, DrawerWords, ToolRow }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";

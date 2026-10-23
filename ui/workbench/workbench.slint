@@ -2,6 +2,9 @@
 // account and a search box, an activity bar, the side bar with the chat tree, the chats as tabs,
 // and a status bar.
 import { AppState, Page, Connection } from "../state.slint";
+import { Drawer } from "../drawer.slint";
+import { WorkbenchDrawer } from "drawer.slint";
+import { Downloads } from "../downloads.slint";
 import { ChatInfo } from "../chat-info.slint";
 import { Chats, Conversation, Account } from "../telegram.slint";
 import { Fmt } from "../format.slint";
@@ -345,12 +348,43 @@ component ActivityBar inherits Rectangle {
         spacing: 6px;
         alignment: start;
 
+        // The logo opens the drawer (drawer.slint): ringed while it is open, with a dot while an
+        // unpinned tool has something going on.
         HorizontalLayout {
             alignment: center;
             padding-bottom: 8px;
-            Logo {
-                size: 32px;
-                radius: 8px;
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                Rectangle {
+                    x: -2px;
+                    y: -2px;
+                    width: 36px;
+                    height: 36px;
+                    border-radius: 10px;
+                    border-width: 2px;
+                    border-color: Drawer.open ? P.accent : transparent;
+                }
+                Logo {
+                    size: 32px;
+                    radius: 8px;
+                }
+                if Drawer.logo-dot: Rectangle {
+                    x: parent.width - 6px;
+                    y: -3px;
+                    width: 9px;
+                    height: 9px;
+                    border-radius: 4.5px;
+                    background: P.warn;
+                    border-width: 2px;
+                    border-color: P.chrome;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Drawer.toggle();
+                    }
+                }
             }
         }
         HorizontalLayout {
@@ -359,6 +393,7 @@ component ActivityBar inherits Rectangle {
                 icon: "chats";
                 active: root.view == WorkbenchView.chats;
                 activated => {
+                    Drawer.close();
                     root.view = WorkbenchView.chats;
                 }
             }
@@ -370,6 +405,7 @@ component ActivityBar inherits Rectangle {
                 active: root.view == WorkbenchView.channels;
                 dot: root.view != WorkbenchView.channels && Chats.unread-channels > 0;
                 activated => {
+                    Drawer.close();
                     root.view = WorkbenchView.channels;
                 }
             }
@@ -380,23 +416,9 @@ component ActivityBar inherits Rectangle {
                 icon: "robot";
                 active: root.view == WorkbenchView.bots;
                 activated => {
+                    Drawer.close();
                     root.view = WorkbenchView.bots;
                 }
-            }
-        }
-        // Keyword filters and scheduled messages are still to come.
-        HorizontalLayout {
-            alignment: center;
-            ActivityButton {
-                icon: "funnel-simple";
-                enabled: false;
-            }
-        }
-        HorizontalLayout {
-            alignment: center;
-            ActivityButton {
-                icon: "clock";
-                enabled: false;
             }
         }
     }
@@ -405,14 +427,15 @@ component ActivityBar inherits Rectangle {
         padding-bottom: 10px;
         spacing: 6px;
         alignment: end;
-        // Downloads (the design's third round of the pages), with a dot while some are on their way.
-        HorizontalLayout {
+        // The tools pinned in the drawer's toolbox (drawer.slint), in its order; downloads carry a
+        // dot while some are on their way.
+        for tool in Drawer.pinned: HorizontalLayout {
             alignment: center;
             ActivityButton {
-                icon: "download-simple";
-                dot: Downloads.active-count > 0;
+                icon: tool.icon;
+                dot: tool.id == "downloads" && Downloads.active-count > 0;
                 activated => {
-                    AppState.page = Page.downloads;
+                    Drawer.open-tool(tool.id);
                 }
             }
         }
@@ -421,6 +444,7 @@ component ActivityBar inherits Rectangle {
             ActivityButton {
                 icon: "gear-six";
                 activated => {
+                    Drawer.close();
                     AppState.page = Page.settings;
                 }
             }
@@ -443,6 +467,7 @@ component ActivityBar inherits Rectangle {
                 TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
+                        Drawer.close();
                         menu.show();
                     }
                 }
@@ -552,6 +577,14 @@ export component WorkbenchWindow inherits Rectangle {
             }
         }
         StatusBar { }
+    }
+
+    // The drawer, over the sidebar and the messages, under the title bar and above the status bar.
+    WorkbenchDrawer {
+        x: 52px;
+        y: 40px;
+        width: root.width - 52px;
+        height: root.height - 40px - 24px;
     }
 
     // A message's menu and the dialogs of its actions, over everything; the search over everything

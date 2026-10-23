@@ -3,6 +3,8 @@
 // bookmark; a pin before a pinned one); the chat reads as a log; one command line writes messages
 // and runs commands ("/mute", "/pin", …).
 import { ListView } from "std-widgets.slint";
+import { Drawer, DrawerWords } from "../drawer.slint";
+import { ToolsPane } from "drawer.slint";
 import { InfoPanel } from "chat-info.slint";
 import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
@@ -106,12 +108,33 @@ component TitleBar inherits Rectangle {
         padding-right: 14px;
         spacing: 8px;
         WindowButtonsSpace { }
+        // The mark opens the tools pane (/tools), with a dot while an unpinned tool has
+        // something going on.
         VerticalLayout {
             alignment: center;
-            Mark {
+            Rectangle {
                 width: 16px;
                 height: 14px;
-                color: P.accent;
+                Mark {
+                    width: 16px;
+                    height: 14px;
+                    color: P.accent;
+                }
+                if Drawer.logo-dot: Rectangle {
+                    x: parent.width - 4px;
+                    y: -3px;
+                    width: 7px;
+                    height: 7px;
+                    border-radius: 3.5px;
+                    background: P.accent2;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Drawer.accounts-shown = false;
+                        Drawer.toggle();
+                    }
+                }
             }
         }
         T {
@@ -526,15 +549,6 @@ component Side inherits Rectangle {
                         root.view = TerminalView.bots;
                     }
                 }
-                // Keyword rules and scheduled messages are still to come.
-                SideTab {
-                    label: "RULES";
-                    enabled: false;
-                }
-                SideTab {
-                    label: "SCHED";
-                    enabled: false;
-                }
             }
             // The search over everything ("? search / @username", also /search) and the pencil's
             // menu as "[+ new]" (compose.slint).
@@ -740,15 +754,6 @@ component Side inherits Rectangle {
                     horizontal-stretch: 1;
                     text: Account.phone == "" ? Account.name : Account.name + " · " + Account.phone;
                     overflow: elide;
-                }
-                // Downloads (the design's third round of the pages): "[↓]", with how many are on
-                // their way.
-                Action {
-                    label: Downloads.active-count > 0 ? "↓ " + Downloads.active-count : "↓";
-                    color: P.accent;
-                    activated => {
-                        AppState.page = Page.downloads;
-                    }
                 }
                 // The profile and the settings, where the other themes have them: the same two
                 // icons, in brackets, one size and so one width.
@@ -1859,6 +1864,10 @@ component CommandLine inherits Rectangle {
         { command: "/channel", description: ComposeWords.new-channel() },
         { command: "/dm", description: ComposeWords.new-chat() },
         { command: "/contact", description: ComposeWords.add-contact() },
+        { command: "/tools", description: DrawerWords.toolbox() },
+        { command: "/accounts", description: DrawerWords.accounts() },
+        { command: "/settings", description: DrawerWords.settings() },
+        { command: "/me", description: DrawerWords.profile() },
     ];
     property <string> typed: input.text;
 
@@ -1892,6 +1901,25 @@ component CommandLine inherits Rectangle {
             NewChat.start(NewDialog.direct);
         } else if line.starts-with("/contact") {
             NewChat.start(NewDialog.contact);
+        } else if line.starts-with("/tools") {
+            // The pane at the right (drawer.slint); the same command again closes it.
+            if Drawer.open && !Drawer.accounts-shown {
+                Drawer.close();
+            } else {
+                Drawer.accounts-shown = false;
+                Drawer.open = true;
+            }
+        } else if line.starts-with("/accounts") {
+            if Drawer.open && Drawer.accounts-shown {
+                Drawer.close();
+            } else {
+                Drawer.accounts-shown = true;
+                Drawer.open = true;
+            }
+        } else if line.starts-with("/settings") {
+            AppState.page = Page.settings;
+        } else if line.starts-with("/me") {
+            AppState.page = Page.profile;
         } else if !line.starts-with("/") {
             // Slow mode still holds (the hint says for how long): the words stay on the line.
             if Conversation.slow-wait > 0 {
@@ -2221,6 +2249,23 @@ component StatusBar inherits Rectangle {
             color: P.on-accent;
             font-size: 12px;
         }
+        // The tools pinned in the toolbox (drawer.slint): their mark and name, and how many
+        // downloads are on their way.
+        for tool in Drawer.pinned: Rectangle {
+            width: pinned-label.preferred-width;
+            pinned-label := T {
+                x: 0;
+                text: "[" + tool.sigil + " " + tool.name + (tool.id == "downloads" && Downloads.active-count > 0 ? " " + Downloads.active-count : "") + "]";
+                color: P.on-accent;
+                font-size: 12px;
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Drawer.open-tool(tool.id);
+                }
+            }
+        }
         Rectangle {
             width: hint.preferred-width;
             hint := T {
@@ -2255,7 +2300,7 @@ export component TerminalWindow inherits Rectangle {
             vertical-stretch: 1;
             Side {
                 view <=> root.view;
-                room: root.width - 388px - (Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open) ? 320px : 0px);
+                room: root.width - 388px - (Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open) ? 320px : 0px) - (Drawer.open ? 320px : 0px);
             }
             VerticalLayout {
                 horizontal-stretch: 1;
@@ -2270,6 +2315,9 @@ export component TerminalWindow inherits Rectangle {
                     }
                 }
                 line := CommandLine { }
+            }
+            if Drawer.open: ToolsPane {
+                width: 320px;
             }
         }
         StatusBar {

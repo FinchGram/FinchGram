@@ -1,0 +1,245 @@
+// The drawer, Terminal (the design's sixth round, 1b): no drawer, but a pane at the right under
+// /tools and /accounts, 320px wide; the title's brackets switch between the two, the same command
+// again or Esc closes it. The pinned tools sit in the bottom bar before [⌘K cmd]. The state and
+// the words are in ui/drawer.slint; src/drawer.rs fills and acts.
+import { Drawer, DrawerWords, ToolRow } from "../drawer.slint";
+import { AppState, Page } from "../state.slint";
+import { Account } from "../telegram.slint";
+import { Downloads } from "../downloads.slint";
+import { TerminalPalette as P } from "palette.slint";
+
+component T inherits Text {
+    font-family: P.font;
+    font-size: 13px;
+    color: P.text;
+    vertical-alignment: center;
+}
+
+// A tool: [x] pins it (the box alone), its mark, its name (which opens it), a line about it,
+// and what goes on, after a star.
+component ToolLine inherits Rectangle {
+    in property <ToolRow> tool;
+    property <bool> live: !tool.grey;
+    property <bool> active: tool.id == "downloads" && Downloads.active-count > 0;
+    height: line.preferred-height;
+    border-radius: 2px;
+    background: open-touch.has-hover && live ? P.sel : transparent;
+    opacity: live ? 1 : 0.42;
+
+    line := HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 6px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        spacing: 8px;
+        T {
+            width: 24px;
+            text: root.tool.pinned ? "[x]" : "[ ]";
+            color: root.tool.pinned ? P.accent : P.faint;
+            TouchArea {
+                enabled: root.live;
+                mouse-cursor: pointer;
+                clicked => {
+                    Drawer.pin(root.tool.id, !root.tool.pinned);
+                }
+            }
+        }
+        T {
+            width: 16px;
+            text: root.tool.sigil;
+            color: P.faint;
+        }
+        T {
+            width: 90px;
+            text: root.tool.name;
+            color: open-touch.has-hover && root.live ? P.accent : P.text;
+            overflow: elide;
+            open-touch := TouchArea {
+                enabled: root.live;
+                mouse-cursor: pointer;
+                clicked => {
+                    Drawer.open-tool(root.tool.id);
+                }
+            }
+        }
+        T {
+            horizontal-stretch: 1;
+            text: root.tool.line;
+            color: P.muted;
+            overflow: elide;
+        }
+        if root.active: T {
+            text: "* " + DrawerWords.downloading(Downloads.active-count);
+            color: P.accent2;
+        }
+    }
+}
+
+export component ToolsPane inherits Rectangle {
+    background: P.bg;
+    property <bool> tools: !Drawer.accounts-shown;
+
+    Rectangle {
+        x: 0;
+        width: 1px;
+        background: P.line;
+    }
+    keys := FocusScope {
+        init => {
+            self.focus();
+        }
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                Drawer.close();
+                return accept;
+            }
+            return reject;
+        }
+    }
+    VerticalLayout {
+        Rectangle {
+            height: 34px;
+            background: P.pane-head;
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                spacing: 10px;
+                T {
+                    text: root.tools ? DrawerWords.toolbox() : DrawerWords.accounts();
+                    color: P.accent;
+                    font-weight: 600;
+                }
+                T {
+                    horizontal-stretch: 1;
+                    text: root.tools ? DrawerWords.pinned-count(Drawer.pinned.length) : "1/10";
+                    color: P.faint;
+                    overflow: elide;
+                }
+                T {
+                    text: "[" + (root.tools ? DrawerWords.accounts() : DrawerWords.toolbox()) + "]";
+                    color: swap.has-hover ? P.accent : P.muted;
+                    swap := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Drawer.accounts-shown = !Drawer.accounts-shown;
+                        }
+                    }
+                }
+                T {
+                    text: "[esc]";
+                    color: close.has-hover ? P.accent : P.faint;
+                    close := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Drawer.close();
+                        }
+                    }
+                }
+            }
+        }
+        Flickable {
+            vertical-stretch: 1;
+            content-height: body.preferred-height;
+            body := VerticalLayout {
+                width: parent.width;
+                alignment: start;
+                padding-left: 10px;
+                padding-right: 10px;
+                padding-top: 10px;
+                padding-bottom: 14px;
+                spacing: 4px;
+                if root.tools: T {
+                    text: "── " + DrawerWords.pin-legend() + " ──";
+                    color: P.faint;
+                    overflow: elide;
+                }
+                if root.tools: VerticalLayout {
+                    for tool in Drawer.tools: ToolLine {
+                        tool: tool;
+                    }
+                }
+                if root.tools: T {
+                    text: "── " + DrawerWords.bottom-bar() + " ──";
+                    color: P.faint;
+                }
+                if root.tools: HorizontalLayout {
+                    padding-left: 6px;
+                    spacing: 8px;
+                    alignment: start;
+                    for tool in Drawer.pinned: T {
+                        text: "[" + tool.sigil + " " + tool.name + (tool.id == "downloads" && Downloads.active-count > 0 ? " " + Downloads.active-count : "") + "]";
+                        color: P.muted;
+                    }
+                    T {
+                        text: "[⌘K " + @tr("terminal" => "cmd") + "]";
+                        color: P.muted;
+                    }
+                }
+                if root.tools: HorizontalLayout {
+                    padding-left: 6px;
+                    padding-top: 8px;
+                    spacing: 6px;
+                    alignment: start;
+                    T { text: "/settings"; color: P.accent; }
+                    T { text: DrawerWords.settings() + " ·"; color: P.faint; }
+                    T { text: "/me"; color: P.accent; }
+                    T { text: DrawerWords.profile(); color: P.faint; }
+                }
+                // The accounts: the one in front; adding another is still to come.
+                if !root.tools: T {
+                    text: "── 1/10 · " + DrawerWords.accounts-legend() + " ──";
+                    color: P.faint;
+                    overflow: elide;
+                }
+                if !root.tools: HorizontalLayout {
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    spacing: 8px;
+                    T {
+                        width: 12px;
+                        text: "›";
+                        color: P.accent;
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 8px;
+                            height: 8px;
+                            border-radius: 2px;
+                            background: P.accent;
+                        }
+                    }
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        T {
+                            text: Account.name;
+                            color: P.accent;
+                            overflow: elide;
+                        }
+                        T {
+                            text: Account.phone != "" ? Account.phone : "@" + Account.username;
+                            color: P.faint;
+                            font-size: 11px;
+                            overflow: elide;
+                        }
+                    }
+                    T {
+                        text: DrawerWords.current();
+                        color: P.accent2;
+                    }
+                    T {
+                        width: 28px;
+                        text: "⌃1";
+                        color: P.faint;
+                        horizontal-alignment: right;
+                    }
+                }
+                if !root.tools: T {
+                    text: "[+ " + DrawerWords.add-account() + "]  " + DrawerWords.not-yet();
+                    color: P.faint;
+                    opacity: 0.42;
+                }
+            }
+        }
+    }
+}

@@ -3,59 +3,61 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-23 00:45+0000\n"
+"POT-Creation-Date: 2026-10-23 02:00+0000\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ui/app.slint:52
+#: ui/app.slint:54
 msgid "View"
 msgstr "Visualización"
 
-#: ui/app.slint:54 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
+#: ui/app.slint:56 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
 #: ui/terminal/actions.slint:166
 msgid "Search"
 msgstr "Buscar"
 
-#: ui/app.slint:64
+#: ui/app.slint:66
 msgid "Search in Chat"
 msgstr "Buscar en el chat"
 
-#: ui/app.slint:75 ui/chat-info.slint:67
+#: ui/app.slint:77 ui/chat-info.slint:67
 msgid "Chat Info"
 msgstr "Información del chat"
 
-#: ui/app.slint:86 ui/pages/settings.slint:406
+#: ui/app.slint:88 ui/pages/settings.slint:406
 msgid "Workbench"
 msgstr "Mesa de trabajo"
 
-#: ui/app.slint:94 ui/pages/settings.slint:414
+#: ui/app.slint:96 ui/pages/settings.slint:414
 msgid "Terminal"
 msgstr "Terminal"
 
-#: ui/app.slint:102 ui/pages/settings.slint:422
+#: ui/app.slint:104 ui/pages/settings.slint:422
 msgid "Broadsheet"
 msgstr "Prensa"
 
-#: ui/app.slint:111 ui/pages/downloads.slint:402 ui/pages/downloads.slint:765
+#. The tools.
+#: ui/app.slint:113 ui/drawer.slint:54 ui/pages/downloads.slint:402
+#: ui/pages/downloads.slint:1439
 msgid "Downloads"
 msgstr "Descargas"
 
-#: ui/app.slint:119
+#: ui/app.slint:121
 msgid "Settings…"
 msgstr "Ajustes…"
 
-#: ui/app.slint:128
+#: ui/app.slint:130
 msgid "Help"
 msgstr "Ayuda"
 
-#: ui/app.slint:131
+#: ui/app.slint:133
 msgid "Update to {}…"
 msgstr "Actualizar a {}…"
 
-#: ui/app.slint:132
+#: ui/app.slint:134
 msgid "Check for Updates…"
 msgstr "Buscar actualizaciones…"
 
@@ -86,113 +88,106 @@ msgid "Add a comment (optional)"
 msgstr "Añade un comentario (opcional)"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
-#: ui/broadsheet/broadsheet.slint:2551 ui/compose.slint:244 ui/extras.slint:36
+#: ui/broadsheet/broadsheet.slint:2574 ui/compose.slint:244 ui/extras.slint:36
 #: ui/pages/downloads.slint:1668 ui/pages/settings.slint:1218
-#: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1813
+#: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1818
 #: ui/workbench/actions.slint:548 ui/workbench/conversation.slint:1655
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2542
+#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2565
 #: ui/chat.slint:279 ui/chat.slint:820 ui/chat.slint:902
-#: ui/terminal/terminal.slint:1806 ui/workbench/conversation.slint:1630
+#: ui/terminal/terminal.slint:1811 ui/workbench/conversation.slint:1630
 msgid "Report"
 msgstr "Reportar"
 
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2533
-#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1798
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2556
+#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1803
 #: ui/workbench/conversation.slint:1618
 msgid "Delete"
 msgstr "Eliminar"
 
-#: ui/broadsheet/broadsheet.slint:102 ui/pages/settings.slint:445
+#: ui/broadsheet/broadsheet.slint:104 ui/pages/settings.slint:445
 msgid "Light"
 msgstr "Claro"
 
-#: ui/broadsheet/broadsheet.slint:102 ui/pages/settings.slint:453
+#: ui/broadsheet/broadsheet.slint:104 ui/pages/settings.slint:453
 msgid "Dark"
 msgstr "Oscuro"
 
-#: ui/broadsheet/broadsheet.slint:136 ui/pages/profile.slint:72
+#: ui/broadsheet/broadsheet.slint:169 ui/drawer.slint:36
+#: ui/workbench/workbench.slint:203
 msgid "Accounts"
 msgstr "Cuentas"
 
-#: ui/broadsheet/broadsheet.slint:275 ui/pages/downloads.slint:792
+#: ui/broadsheet/broadsheet.slint:309 ui/pages/downloads.slint:792
 #: ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "Chats"
 
-#: ui/broadsheet/broadsheet.slint:283 ui/broadsheet/broadsheet.slint:1011
+#: ui/broadsheet/broadsheet.slint:317 ui/broadsheet/broadsheet.slint:1034
 #: ui/workbench/sidebar.slint:553
 msgid "Channels"
 msgstr "Canales"
 
-#: ui/broadsheet/broadsheet.slint:291 ui/broadsheet/broadsheet.slint:1012
+#: ui/broadsheet/broadsheet.slint:325 ui/broadsheet/broadsheet.slint:1035
 msgid "Bots"
 msgstr "Bots"
 
-#: ui/broadsheet/broadsheet.slint:300
-msgid "Filters"
-msgstr "Filtros"
-
-#: ui/broadsheet/broadsheet.slint:305
-msgid "Scheduled"
-msgstr "Programados"
-
-#: ui/broadsheet/broadsheet.slint:419 ui/terminal/terminal.slint:287
+#: ui/broadsheet/broadsheet.slint:442 ui/terminal/terminal.slint:310
 msgid "All"
 msgstr "Todos"
 
-#: ui/broadsheet/broadsheet.slint:468 ui/pages/ai-access.slint:102
+#: ui/broadsheet/broadsheet.slint:491 ui/pages/ai-access.slint:102
 #: ui/telegram.slint:911 ui/workbench/sidebar.slint:548
 msgid "All chats"
 msgstr "Todos los chats"
 
-#: ui/broadsheet/broadsheet.slint:491
+#: ui/broadsheet/broadsheet.slint:514
 msgid "More"
 msgstr "Más"
 
-#: ui/broadsheet/broadsheet.slint:592 ui/terminal/terminal.slint:410
+#: ui/broadsheet/broadsheet.slint:615 ui/terminal/terminal.slint:433
 msgid "Mark all as read"
 msgstr "Marcar todo como leído"
 
-#: ui/broadsheet/broadsheet.slint:609 ui/terminal/terminal.slint:430
+#: ui/broadsheet/broadsheet.slint:632 ui/terminal/terminal.slint:453
 msgid "Sort by"
 msgstr "Ordenar por"
 
-#: ui/broadsheet/broadsheet.slint:617 ui/terminal/terminal.slint:436
+#: ui/broadsheet/broadsheet.slint:640 ui/terminal/terminal.slint:459
 msgid "Latest message"
 msgstr "Último mensaje"
 
-#: ui/broadsheet/broadsheet.slint:626 ui/pages/downloads.slint:1006
-#: ui/terminal/terminal.slint:444
+#: ui/broadsheet/broadsheet.slint:649 ui/pages/downloads.slint:1006
+#: ui/terminal/terminal.slint:467
 msgid "Name"
 msgstr "Nombre"
 
-#: ui/broadsheet/broadsheet.slint:635 ui/terminal/terminal.slint:452
+#: ui/broadsheet/broadsheet.slint:658 ui/terminal/terminal.slint:475
 msgid "Unread"
 msgstr "No leídos"
 
-#: ui/broadsheet/broadsheet.slint:870 ui/format.slint:163
+#: ui/broadsheet/broadsheet.slint:893 ui/format.slint:163
 #: ui/workbench/sidebar.slint:369
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
 msgstr[0] "{n} suscriptor"
 msgstr[1] "{n} suscriptores"
 
-#: ui/broadsheet/broadsheet.slint:1099
+#: ui/broadsheet/broadsheet.slint:1122
 msgid "Telegram bots"
 msgstr "Bots de Telegram"
 
-#: ui/broadsheet/broadsheet.slint:1166 ui/terminal/terminal.slint:667
+#: ui/broadsheet/broadsheet.slint:1189 ui/terminal/terminal.slint:681
 msgid "No chats yet"
 msgstr "Aún no hay chats"
 
-#: ui/broadsheet/broadsheet.slint:1166 ui/terminal/terminal.slint:667
+#: ui/broadsheet/broadsheet.slint:1189 ui/terminal/terminal.slint:681
 msgid "No chats in this folder"
 msgstr "No hay chats en esta carpeta"
 
-#: ui/broadsheet/broadsheet.slint:1172 ui/workbench/sidebar.slint:592
+#: ui/broadsheet/broadsheet.slint:1195 ui/workbench/sidebar.slint:592
 msgid ""
 "Search for a username or phone number, or open an invite link someone sent "
 "you, to start chatting."
@@ -200,58 +195,58 @@ msgstr ""
 "Busca un nombre de usuario o un número de teléfono, o abre un enlace de "
 "invitación que te hayan enviado, para empezar a chatear."
 
-#: ui/broadsheet/broadsheet.slint:1173
+#: ui/broadsheet/broadsheet.slint:1196
 msgid "Chats you add to this folder in Telegram show up here."
 msgstr "Los chats que añadas a esta carpeta en Telegram aparecerán aquí."
 
-#: ui/broadsheet/broadsheet.slint:1212 ui/terminal/terminal.slint:702
+#: ui/broadsheet/broadsheet.slint:1235 ui/terminal/terminal.slint:716
 msgid "Official bots"
 msgstr "Bots oficiales"
 
-#: ui/broadsheet/broadsheet.slint:1226 ui/terminal/terminal.slint:714
+#: ui/broadsheet/broadsheet.slint:1249 ui/terminal/terminal.slint:728
 msgid "Other bots"
 msgstr "Otros bots"
 
-#: ui/broadsheet/broadsheet.slint:1238 ui/workbench/sidebar.slint:661
+#: ui/broadsheet/broadsheet.slint:1261 ui/workbench/sidebar.slint:661
 msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr ""
 "Los bots con marca de verificación son de Telegram. Los demás bots ven lo "
 "que les envías."
 
-#: ui/broadsheet/broadsheet.slint:1283 ui/broadsheet/broadsheet.slint:3348
-#: ui/terminal/terminal.slint:819 ui/workbench/conversation.slint:276
+#: ui/broadsheet/broadsheet.slint:1306 ui/broadsheet/broadsheet.slint:3371
+#: ui/terminal/terminal.slint:824 ui/workbench/conversation.slint:276
 #: ui/workbench/conversation.slint:2391
 msgid "Unmute"
 msgstr "Activar notificaciones"
 
-#: ui/broadsheet/broadsheet.slint:1283 ui/broadsheet/broadsheet.slint:3348
-#: ui/terminal/terminal.slint:819 ui/workbench/conversation.slint:276
+#: ui/broadsheet/broadsheet.slint:1306 ui/broadsheet/broadsheet.slint:3371
+#: ui/terminal/terminal.slint:824 ui/workbench/conversation.slint:276
 #: ui/workbench/conversation.slint:2391
 msgid "Mute"
 msgstr "Silenciar"
 
-#: ui/broadsheet/broadsheet.slint:1291 ui/broadsheet/broadsheet.slint:3423
-#: ui/terminal/terminal.slint:1621 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1314 ui/broadsheet/broadsheet.slint:3446
+#: ui/terminal/terminal.slint:1626 ui/workbench/sidebar.slint:717
 msgid "Unpin"
 msgstr "Desfijar"
 
-#: ui/broadsheet/broadsheet.slint:1291 ui/broadsheet/broadsheet.slint:3423
-#: ui/terminal/terminal.slint:1621 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1314 ui/broadsheet/broadsheet.slint:3446
+#: ui/terminal/terminal.slint:1626 ui/workbench/sidebar.slint:717
 msgid "Pin"
 msgstr "Fijar"
 
-#: ui/broadsheet/broadsheet.slint:1300 ui/chat-info.slint:86
+#: ui/broadsheet/broadsheet.slint:1323 ui/chat-info.slint:86
 #: ui/workbench/sidebar.slint:726
 msgid "Add to folder"
 msgstr "Añadir a una carpeta"
 
-#: ui/broadsheet/broadsheet.slint:1307 ui/broadsheet/broadsheet.slint:3431
-#: ui/terminal/terminal.slint:1629 ui/workbench/sidebar.slint:733
+#: ui/broadsheet/broadsheet.slint:1330 ui/broadsheet/broadsheet.slint:3454
+#: ui/terminal/terminal.slint:1634 ui/workbench/sidebar.slint:733
 msgid "Copy ID"
 msgstr "Copiar ID"
 
-#: ui/broadsheet/broadsheet.slint:1355 ui/compose.slint:243
+#: ui/broadsheet/broadsheet.slint:1378 ui/compose.slint:243
 #: ui/pages/login.slint:579 ui/pages/login.slint:629 ui/pages/login.slint:695
 #: ui/pages/login.slint:800 ui/pages/login.slint:872 ui/pages/login.slint:901
 #: ui/pages/settings.slint:1467 ui/terminal/actions.slint:286
@@ -259,60 +254,60 @@ msgstr "Copiar ID"
 msgid "Back"
 msgstr "Atrás"
 
-#: ui/broadsheet/broadsheet.slint:1433 ui/workbench/conversation.slint:657
+#: ui/broadsheet/broadsheet.slint:1456 ui/workbench/conversation.slint:657
 msgid "Instant View"
 msgstr "Instant View"
 
-#: ui/broadsheet/broadsheet.slint:1465 ui/terminal/terminal.slint:936
+#: ui/broadsheet/broadsheet.slint:1488 ui/terminal/terminal.slint:941
 msgid "Forwarded from {0}"
 msgstr "Reenviado de {0}"
 
-#: ui/broadsheet/broadsheet.slint:1825 ui/broadsheet/broadsheet.slint:2051
+#: ui/broadsheet/broadsheet.slint:1848 ui/broadsheet/broadsheet.slint:2074
 #: ui/workbench/conversation.slint:1072
 msgid "edited"
 msgstr "editado"
 
-#: ui/broadsheet/broadsheet.slint:2120
+#: ui/broadsheet/broadsheet.slint:2143
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr ""
 "Patrocinado · publicado por Telegram · Los usuarios Premium pueden "
 "desactivarlos"
 
-#: ui/broadsheet/broadsheet.slint:2186 ui/format.slint:262
+#: ui/broadsheet/broadsheet.slint:2209 ui/format.slint:262
 #: ui/workbench/conversation.slint:1219
 msgid "You"
 msgstr "Tú"
 
-#: ui/broadsheet/broadsheet.slint:2297 ui/terminal/terminal.slint:1939
+#: ui/broadsheet/broadsheet.slint:2320 ui/terminal/terminal.slint:1967
 msgid "Hide sender's name"
 msgstr "Ocultar el nombre del remitente"
 
-#: ui/broadsheet/broadsheet.slint:2509 ui/terminal/terminal.slint:1821
+#: ui/broadsheet/broadsheet.slint:2532 ui/terminal/terminal.slint:1826
 msgid "Shift-click to select a range"
 msgstr "Mayús + clic para seleccionar un rango"
 
-#: ui/broadsheet/broadsheet.slint:2517 ui/chat.slint:819
+#: ui/broadsheet/broadsheet.slint:2540 ui/chat.slint:819
 #: ui/workbench/conversation.slint:1596
 msgid "Forward"
 msgstr "Reenviar"
 
-#: ui/broadsheet/broadsheet.slint:2880 ui/terminal/terminal.slint:2268
+#: ui/broadsheet/broadsheet.slint:2903 ui/terminal/terminal.slint:2313
 msgid "Choose a chat on the left"
 msgstr "Elige un chat a la izquierda"
 
-#: ui/broadsheet/broadsheet.slint:2905 ui/terminal/terminal.slint:1543
+#: ui/broadsheet/broadsheet.slint:2928 ui/terminal/terminal.slint:1548
 msgid "typing…"
 msgstr "escribiendo…"
 
-#: ui/broadsheet/broadsheet.slint:3014 ui/terminal/terminal.slint:1682
+#: ui/broadsheet/broadsheet.slint:3037 ui/terminal/terminal.slint:1687
 msgid "{0} is typing…"
 msgstr "{0} está escribiendo…"
 
-#: ui/broadsheet/broadsheet.slint:3085
+#: ui/broadsheet/broadsheet.slint:3108
 msgid "Sending as {0}"
 msgstr "Enviando como {0}"
 
-#: ui/broadsheet/broadsheet.slint:3110
+#: ui/broadsheet/broadsheet.slint:3133
 msgid "Write a message…"
 msgstr "Escribe un mensaje…"
 
@@ -349,7 +344,7 @@ msgctxt "the chat's facts"
 msgid "Info"
 msgstr "Información"
 
-#: ui/chat-info.slint:77 ui/pages/settings.slint:101
+#: ui/chat-info.slint:77 ui/drawer.slint:43 ui/pages/settings.slint:101
 msgid "Settings"
 msgstr "Ajustes"
 
@@ -482,7 +477,7 @@ msgstr "Eliminar chat"
 msgid "Clear history"
 msgstr "Borrar historial"
 
-#: ui/chat-info.slint:111
+#: ui/chat-info.slint:111 ui/drawer.slint:48
 msgid "Not available in this version"
 msgstr "No disponible en esta versión"
 
@@ -631,7 +626,7 @@ msgstr "No permitido en este grupo"
 msgid "You can't send messages in this group"
 msgstr "No puedes enviar mensajes en este grupo"
 
-#: ui/chat.slint:320
+#: ui/chat.slint:320 ui/drawer.slint:57
 msgid "Screenshot"
 msgstr "Captura de pantalla"
 
@@ -839,7 +834,7 @@ msgstr "Mostrar en el Finder"
 msgid "{0} of {1}"
 msgstr "{0} de {1}"
 
-#: ui/chat.slint:692 ui/terminal/terminal.slint:1001
+#: ui/chat.slint:692 ui/terminal/terminal.slint:1006
 msgid "Tap to view"
 msgstr "Pulsa para ver"
 
@@ -1396,6 +1391,105 @@ msgstr ""
 #: ui/compose.slint:294
 msgid "This number is not on Telegram yet."
 msgstr "Este número aún no está en Telegram."
+
+#: ui/drawer.slint:37
+msgid "Toolbox"
+msgstr "Herramientas"
+
+#: ui/drawer.slint:38
+msgid "Pin to the bar"
+msgstr "Fijar a la barra"
+
+#: ui/drawer.slint:39
+msgid "{n} pinned"
+msgid_plural "{n} pinned"
+msgstr[0] "{n} fijados"
+msgstr[1] "{n} fijados"
+
+#: ui/drawer.slint:40 ui/pages/profile.slint:119
+msgid "Add account"
+msgstr "Añadir cuenta"
+
+#: ui/drawer.slint:41
+msgid "Current account"
+msgstr "Cuenta actual"
+
+#: ui/drawer.slint:42
+msgctxt "the account in front"
+msgid "Current"
+msgstr "Actual"
+
+#: ui/drawer.slint:44
+msgid "AI settings"
+msgstr "Ajustes de IA"
+
+#: ui/drawer.slint:45
+msgid "My profile"
+msgstr "Mi perfil"
+
+#: ui/drawer.slint:46
+msgctxt "Broadsheet's drawer"
+msgid "Section index"
+msgstr "Índice de secciones"
+
+#: ui/drawer.slint:47
+msgid "Esc closes"
+msgstr "Esc cierra"
+
+#. Terminal's pane.
+#: ui/drawer.slint:50
+msgid "[x] = pinned to the bottom bar · click a name to open"
+msgstr "[x] = fijado abajo · el nombre abre"
+
+#: ui/drawer.slint:51
+msgid "Bottom bar"
+msgstr "Barra inferior"
+
+#: ui/drawer.slint:52
+msgid "click a row to switch · ⌃1–⌃0"
+msgstr "clic en una fila para cambiar · ⌃1–⌃0"
+
+#: ui/drawer.slint:55
+msgid "Files from your WebDAV servers"
+msgstr "Archivos de tus servidores WebDAV"
+
+#: ui/drawer.slint:56
+msgid "{n} on its way"
+msgid_plural "{n} on their way"
+msgstr[0] "{n} en curso"
+msgstr[1] "{n} en curso"
+
+#: ui/drawer.slint:58
+msgid "Capture the screen, mark it up, send it"
+msgstr "Capturar la pantalla, anotar, enviar"
+
+#: ui/drawer.slint:59
+msgid "Live"
+msgstr "En directo"
+
+#: ui/drawer.slint:60
+msgid "Watch live streams"
+msgstr "Ver transmisiones en directo"
+
+#: ui/drawer.slint:62
+msgid "Your own media server"
+msgstr "Tu propio servidor multimedia"
+
+#: ui/drawer.slint:63
+msgid "Keyword hiding"
+msgstr "Ocultar por palabras clave"
+
+#: ui/drawer.slint:64
+msgid "Hide messages by keyword, on this Mac only"
+msgstr "Ocultar mensajes por palabras clave, solo en este Mac"
+
+#: ui/drawer.slint:65
+msgid "Scheduled messages"
+msgstr "Mensajes programados"
+
+#: ui/drawer.slint:66
+msgid "Messages set to go out later"
+msgstr "Mensajes que saldrán más tarde"
 
 #: ui/extras.slint:15
 msgid ""
@@ -3065,10 +3159,6 @@ msgstr ""
 msgid "Current"
 msgstr "Actual"
 
-#: ui/pages/profile.slint:119 ui/workbench/workbench.slint:290
-msgid "Add account"
-msgstr "Añadir cuenta"
-
 #: ui/pages/profile.slint:128 ui/pages/profile.slint:192
 msgid "Log out"
 msgstr "Cerrar sesión"
@@ -3565,91 +3655,91 @@ msgstr "Mensaje nuevo"
 msgid "Deleted Account"
 msgstr "Cuenta eliminada"
 
-#: ui/terminal/terminal.slint:129
+#: ui/terminal/drawer.slint:174 ui/terminal/terminal.slint:2273
+msgctxt "terminal"
+msgid "cmd"
+msgstr "comandos"
+
+#: ui/terminal/terminal.slint:152
 msgid "light"
 msgstr "claro"
 
-#: ui/terminal/terminal.slint:129
+#: ui/terminal/terminal.slint:152
 msgid "dark"
 msgstr "oscuro"
 
-#: ui/terminal/terminal.slint:324
+#: ui/terminal/terminal.slint:347
 msgid "more"
 msgstr "más"
 
-#: ui/terminal/terminal.slint:578
+#: ui/terminal/terminal.slint:592
 msgctxt "terminal"
 msgid "new"
 msgstr "nuevo"
 
-#: ui/terminal/terminal.slint:983 ui/terminal/terminal.slint:988
+#: ui/terminal/terminal.slint:988 ui/terminal/terminal.slint:993
 msgid "(edited)"
 msgstr "(editado)"
 
-#: ui/terminal/terminal.slint:1266
+#: ui/terminal/terminal.slint:1271
 msgid "sponsored"
 msgstr "patrocinado"
 
-#: ui/terminal/terminal.slint:1319 ui/terminal/terminal.slint:1551
+#: ui/terminal/terminal.slint:1324 ui/terminal/terminal.slint:1556
 msgid "search"
 msgstr "buscar"
 
-#: ui/terminal/terminal.slint:1467
+#: ui/terminal/terminal.slint:1472
 msgid "chat settings"
 msgstr "ajustes del chat"
 
-#: ui/terminal/terminal.slint:1564
+#: ui/terminal/terminal.slint:1569
 msgid "chat info"
 msgstr "info del chat"
 
-#: ui/terminal/terminal.slint:1853
+#: ui/terminal/terminal.slint:1858
 msgid "Mute or unmute this chat"
 msgstr "Silenciar este chat o activar sus notificaciones"
 
-#: ui/terminal/terminal.slint:1854
+#: ui/terminal/terminal.slint:1859
 msgid "Pin or unpin this chat"
 msgstr "Fijar o desfijar este chat"
 
-#: ui/terminal/terminal.slint:1855
+#: ui/terminal/terminal.slint:1860
 msgid "Mark every chat in this folder as read"
 msgstr "Marcar todos los chats de esta carpeta como leídos"
 
-#: ui/terminal/terminal.slint:1856
+#: ui/terminal/terminal.slint:1861
 msgid "Copy this chat's ID"
 msgstr "Copiar el ID de este chat"
 
-#: ui/terminal/terminal.slint:1857
+#: ui/terminal/terminal.slint:1862
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "Buscar chats, contactos, @usuarios y mensajes"
 
-#: ui/terminal/terminal.slint:1985
+#: ui/terminal/terminal.slint:2013
 msgid "unmute"
 msgstr "activar notificaciones"
 
-#: ui/terminal/terminal.slint:1985
+#: ui/terminal/terminal.slint:2013
 msgid "mute"
 msgstr "silenciar"
 
-#: ui/terminal/terminal.slint:2090
+#: ui/terminal/terminal.slint:2118
 msgid "Write a message, or / for commands"
 msgstr "Escribe un mensaje, o / para los comandos"
 
-#: ui/terminal/terminal.slint:2121
+#: ui/terminal/terminal.slint:2149
 msgid "save"
 msgstr "guardar"
 
-#: ui/terminal/terminal.slint:2121
+#: ui/terminal/terminal.slint:2149
 msgid "send"
 msgstr "enviar"
 
-#: ui/terminal/terminal.slint:2220
+#: ui/terminal/terminal.slint:2248
 msgid "connected"
 msgstr "conectado"
-
-#: ui/terminal/terminal.slint:2228
-msgctxt "terminal"
-msgid "cmd"
-msgstr "comandos"
 
 #: ui/viewer.slint:17
 msgctxt "zoom"
@@ -3747,6 +3837,12 @@ msgstr ""
 "Los canales se abren en modo lectura: publicaciones largas, preparadas para "
 "leer."
 
-#: ui/workbench/workbench.slint:314
+#: ui/workbench/workbench.slint:317
 msgid "Manage accounts"
 msgstr "Gestionar cuentas"
+
+#~ msgid "Filters"
+#~ msgstr "Filtros"
+
+#~ msgid "Scheduled"
+#~ msgstr "Programados"

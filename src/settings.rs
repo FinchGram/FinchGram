@@ -49,6 +49,22 @@ pub struct Settings {
     /// The downloads page (src/downloads/, docs/downloads.md): where files go, how many connections
     /// a file comes over, whether the queue column shows.
     pub downloads: Downloads,
+    /// The drawer's toolbox (src/drawer.rs): which tools are pinned to the activity bar, in the
+    /// toolbox's order; one list for the three themes.
+    pub toolbox: Toolbox,
+}
+
+/// The toolbox's own setting: the tools pinned to the bar, by id ("downloads", "screenshot", …).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Toolbox {
+    pub pinned: Vec<String>,
+}
+
+impl Default for Toolbox {
+    fn default() -> Self {
+        Toolbox { pinned: vec!["downloads".to_string(), "screenshot".to_string()] }
+    }
 }
 
 /// The downloads page's own settings.
@@ -314,6 +330,7 @@ impl Default for Settings {
             screenshots: Screenshots::default(),
             mcp: Mcp::default(),
             downloads: Downloads::default(),
+            toolbox: Toolbox::default(),
         }
     }
 }

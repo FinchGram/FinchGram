@@ -6,6 +6,7 @@
 
 mod database;
 mod downloads;
+mod drawer;
 mod fonts;
 mod i18n;
 mod images;
@@ -91,6 +92,7 @@ fn main() -> Result<(), slint::PlatformError> {
                 if settings.borrow().show_in_menu_bar {
                     platform::set_menu_bar_icon(&ui, true);
                 }
+                drawer::language_changed(&ui, &settings.borrow());
             }
             telegram::language_changed();
         }
@@ -147,6 +149,7 @@ fn main() -> Result<(), slint::PlatformError> {
     telegram::connect_viewer_settings(&ui, settings.clone());
     telegram::connect_chat_order(&ui, settings.clone());
     telegram::connect_chat_info(&ui, settings.clone());
+    drawer::connect(&ui, settings.clone());
     state.on_check_launch_at_login({
         let ui = ui.as_weak();
         move || {
