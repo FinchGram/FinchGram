@@ -34,7 +34,9 @@ jobs:
     runs-on: macos-latest # Apple silicon
     permissions:
       contents: write # gh release create needs it; the default token is read-only
-    timeout-minutes: 60
+    # The release build takes about 56 minutes on the 3-core runner (v0.5.7: 58½ for the job);
+    # the limit leaves it room, and the notarization wait after it.
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
