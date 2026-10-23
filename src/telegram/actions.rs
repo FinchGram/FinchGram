@@ -1398,7 +1398,7 @@ fn escape() -> bool {
         focus_composer();
     } else if selection {
         end_selection();
-    } else {
+    } else if !super::chat_info::escape() {
         return false;
     }
     true

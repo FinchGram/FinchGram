@@ -504,7 +504,10 @@ component Footnote inherits Text {
 
 export component WorkbenchSidebar inherits Rectangle {
     in property <WorkbenchView> view;
-    width: max(200px, min(560px, AppState.workbench-list-width));
+    // What the window leaves it beside the messages and the info panel: while the panel is open
+    // it yields down to 220px, without changing the width the user dragged out.
+    in property <length> room: 560px;
+    width: max(200px, min(560px, min(AppState.workbench-list-width, max(220px, root.room))));
     background: P.side;
 
     // A chat's menu, from a right click on it: the chat header's menu, for any chat in the lists.

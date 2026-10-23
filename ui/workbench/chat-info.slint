@@ -1,0 +1,441 @@
+// The chat's info panel, Workbench (the design's chat-info round, 1c): an editor's side bar
+// beside the messages, 300px wide, its sections folding. The rows come from src/telegram/
+// chat_info.rs (ui/chat-info.slint); this draws them.
+import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "../chat-info.slint";
+import { Conversation, ChatKind, Status } from "../telegram.slint";
+import { Fmt } from "../format.slint";
+import { Icon, Avatar } from "../widgets.slint";
+import { WorkbenchPalette as P } from "palette.slint";
+
+// One row: a fact to copy, a switch, a step into something, or an action. A folder under the
+// folders row is a box to tick.
+component InfoLine inherits Rectangle {
+    in property <InfoRow> item;
+    property <bool> live: item.enabled && !item.grey;
+    height: line.preferred-height;
+    border-radius: 6px;
+    background: touch.has-hover && live ? P.chrome : transparent;
+    opacity: live ? 1 : 0.42;
+
+    line := HorizontalLayout {
+        padding-left: root.item.child ? 36px : 10px;
+        padding-right: 10px;
+        padding-top: root.item.child ? 5px : 7px;
+        padding-bottom: root.item.child ? 5px : 7px;
+        spacing: 10px;
+        if root.item.child: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: 4px;
+                background: root.item.on ? P.accent : transparent;
+                border-width: root.item.on ? 0px : 1.5px;
+                border-color: P.faint;
+                if root.item.on: Icon {
+                    name: "check";
+                    size: 11px;
+                    color: P.on-accent;
+                }
+            }
+        }
+        if !root.item.child && root.item.icon != "": VerticalLayout {
+            alignment: start;
+            padding-top: 1px;
+            Icon {
+                name: root.item.icon;
+                size: 16px;
+                color: root.item.danger ? P.danger : P.muted;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            if root.item.kind == InfoRowKind.info: Text {
+                text: root.item.value;
+                color: P.text;
+                font-size: 13px;
+                wrap: word-wrap;
+            }
+            if root.item.kind == InfoRowKind.info: Text {
+                text: root.item.label;
+                color: P.faint;
+                font-size: 11px;
+                wrap: word-wrap;
+            }
+            if root.item.kind != InfoRowKind.info: Text {
+                text: root.item.label;
+                color: root.item.danger ? P.danger : P.text;
+                font-size: 13px;
+                wrap: word-wrap;
+            }
+            if root.item.kind != InfoRowKind.info && root.item.sub != "": Text {
+                text: root.item.sub;
+                color: P.faint;
+                font-size: 11px;
+                wrap: word-wrap;
+            }
+        }
+        if root.item.kind != InfoRowKind.info && root.item.value != "": Text {
+            max-width: 120px;
+            text: root.item.value;
+            color: P.faint;
+            font-size: 12px;
+            horizontal-alignment: right;
+            overflow: elide;
+        }
+        if root.item.kind == InfoRowKind.toggle && !root.item.child: VerticalLayout {
+            alignment: start;
+            padding-top: 1px;
+            Rectangle {
+                width: 30px;
+                height: 18px;
+                border-radius: 9px;
+                background: root.item.on ? P.accent : P.off;
+                animate background { duration: 200ms; }
+                Rectangle {
+                    x: root.item.on ? 15px : 3px;
+                    y: 3px;
+                    width: 12px;
+                    height: 12px;
+                    border-radius: 6px;
+                    background: #ffffff;
+                    drop-shadow-blur: 2px;
+                    drop-shadow-offset-y: 1px;
+                    drop-shadow-color: #00000033;
+                    animate x { duration: 200ms; }
+                }
+            }
+        }
+        if root.item.kind == InfoRowKind.nav: VerticalLayout {
+            alignment: start;
+            padding-top: 3px;
+            Icon {
+                name: root.item.open ? "caret-down" : "caret-right";
+                size: 12px;
+                color: P.faint;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.live;
+        mouse-cursor: pointer;
+        clicked => {
+            ChatInfo.run(root.item.id);
+        }
+    }
+}
+
+// One of a group's first members.
+component MemberLine inherits Rectangle {
+    in property <InfoMember> member;
+    height: line.preferred-height;
+
+    line := HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Avatar {
+                size: 26px;
+                radius: 6px;
+                fill: P.chrome;
+                ink: P.muted;
+                initial: root.member.initial;
+                picture: root.member.picture;
+                has-picture: root.member.has-picture;
+                font-size: 12px;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            Text {
+                text: root.member.name;
+                color: P.text;
+                font-size: 13px;
+                overflow: elide;
+            }
+            Text {
+                text: Fmt.status(root.member.status, root.member.last-seen, 0, 0);
+                color: root.member.status == Status.online ? P.accent : P.faint;
+                font-size: 11px;
+                overflow: elide;
+            }
+        }
+        if root.member.role != "": Text {
+            text: root.member.role;
+            color: P.faint;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// A section: its heading folds it; under it the rows, a group's members, or the shared media's
+// tabs. What is for later is faded.
+component Section inherits Rectangle {
+    in property <InfoSection> item;
+    height: body.preferred-height;
+
+    Rectangle {
+        y: 0;
+        height: 1px;
+        background: P.line;
+    }
+    body := VerticalLayout {
+        padding-bottom: 6px;
+        Rectangle {
+            height: head.preferred-height;
+            head := HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-top: 10px;
+                padding-bottom: 6px;
+                spacing: 6px;
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: root.item.collapsed ? "caret-right" : "caret-down";
+                        size: 11px;
+                        color: P.faint;
+                    }
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: root.item.title.to-uppercase();
+                    color: P.faint;
+                    font-size: 11px;
+                    font-weight: 600;
+                    letter-spacing: 0.9px;
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    ChatInfo.collapse(root.item.id);
+                }
+            }
+        }
+        if !root.item.collapsed: VerticalLayout {
+            padding-left: 6px;
+            padding-right: 6px;
+            if root.item.shared: HorizontalLayout {
+                padding-left: 4px;
+                padding-right: 4px;
+                padding-top: 4px;
+                padding-bottom: 8px;
+                opacity: 0.42;
+                Rectangle {
+                    border-radius: 7px;
+                    background: P.chrome;
+                    height: tabs.preferred-height;
+                    tabs := HorizontalLayout {
+                        padding: 3px;
+                        spacing: 3px;
+                        for tab[index] in root.item.tabs: Rectangle {
+                            horizontal-stretch: 1;
+                            border-radius: 5px;
+                            background: index == 0 ? P.bg : transparent;
+                            height: label.preferred-height + 8px;
+                            label := Text {
+                                text: tab;
+                                font-size: 11px;
+                                font-weight: index == 0 ? 600 : 400;
+                                color: index == 0 ? P.text : P.muted;
+                                horizontal-alignment: center;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                        }
+                    }
+                }
+            }
+            for member in root.item.members: MemberLine {
+                member: member;
+                opacity: root.item.grey ? 0.42 : 1;
+            }
+            for row in root.item.rows: InfoLine {
+                item: row;
+            }
+        }
+    }
+}
+
+// Under the name: the search in the chat, a call.
+component QuickButton inherits Rectangle {
+    in property <InfoRow> item;
+    property <bool> live: item.enabled && !item.grey;
+    horizontal-stretch: 1;
+    height: 30px;
+    border-radius: 6px;
+    background: touch.has-hover && live ? P.chrome : P.bg;
+    border-width: 1px;
+    border-color: P.line;
+
+    HorizontalLayout {
+        alignment: center;
+        spacing: 6px;
+        padding-left: 8px;
+        padding-right: 8px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.item.icon;
+                size: 15px;
+                color: P.muted;
+                opacity: root.live ? 1 : 0.42;
+            }
+        }
+        Text {
+            text: root.item.label;
+            font-size: 12px;
+            color: P.text;
+            opacity: root.live ? 1 : 0.42;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+    }
+    touch := TouchArea {
+        enabled: root.live;
+        mouse-cursor: pointer;
+        clicked => {
+            ChatInfo.run(root.item.id);
+        }
+    }
+}
+
+export component InfoPanel inherits Rectangle {
+    background: P.side;
+    property <bool> saved: Conversation.kind == ChatKind.saved;
+
+    // Clicks on the panel stay on it.
+    TouchArea { }
+    Rectangle {
+        x: 0;
+        width: 1px;
+        background: P.line;
+    }
+    VerticalLayout {
+        Rectangle {
+            height: 38px;
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 8px;
+                spacing: 8px;
+                Text {
+                    horizontal-stretch: 1;
+                    text: InfoWords.title().to-uppercase();
+                    color: P.faint;
+                    font-size: 11px;
+                    font-weight: 600;
+                    letter-spacing: 0.9px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                Text {
+                    text: "⌘I";
+                    color: P.faint;
+                    font-family: P.mono;
+                    font-size: 11px;
+                    vertical-alignment: center;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 25px;
+                        height: 25px;
+                        border-radius: 5px;
+                        background: close.has-hover ? P.chrome : transparent;
+                        Icon {
+                            name: "x";
+                            size: 15px;
+                            color: P.muted;
+                        }
+                        close := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                ChatInfo.toggle();
+                            }
+                        }
+                    }
+                }
+            }
+            Rectangle {
+                y: parent.height - 1px;
+                height: 1px;
+                background: P.line;
+            }
+        }
+        Flickable {
+            vertical-stretch: 1;
+            content-height: body.preferred-height;
+            body := VerticalLayout {
+                width: parent.width;
+                alignment: start;
+                padding-bottom: 18px;
+                // The head: the picture, the name, the status, the quick actions.
+                VerticalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    padding-top: 18px;
+                    padding-bottom: 16px;
+                    spacing: 10px;
+                    alignment: start;
+                    HorizontalLayout {
+                        alignment: start;
+                        Rectangle {
+                            width: 56px;
+                            height: 56px;
+                            Avatar {
+                                size: 56px;
+                                radius: 12px;
+                                fill: root.saved ? P.accent : Conversation.kind == ChatKind.channel ? P.teal-soft : Conversation.kind == ChatKind.bot ? P.chrome : P.accent-soft;
+                                ink: root.saved ? P.on-accent : Conversation.kind == ChatKind.channel ? P.teal : Conversation.kind == ChatKind.bot ? P.text : P.accent-ink;
+                                initial: root.saved ? "" : Conversation.initial;
+                                picture: ChatInfo.picture;
+                                has-picture: ChatInfo.has-picture && !root.saved;
+                                font-size: 22px;
+                            }
+                            if root.saved: Icon {
+                                name: "bookmark-simple";
+                                size: 26px;
+                                color: P.on-accent;
+                            }
+                        }
+                    }
+                    Text {
+                        text: Conversation.title;
+                        color: P.text;
+                        font-size: 16px;
+                        font-weight: 600;
+                        wrap: word-wrap;
+                    }
+                    Text {
+                        text: root.saved ? InfoWords.saved-sub()
+                            : Fmt.status(Conversation.status, Conversation.last-seen, Conversation.members, Conversation.online-members);
+                        color: Conversation.status == Status.online ? P.accent-ink : P.muted;
+                        font-size: 12px;
+                        wrap: word-wrap;
+                    }
+                    HorizontalLayout {
+                        spacing: 6px;
+                        padding-top: 2px;
+                        for item in ChatInfo.quick: QuickButton {
+                            item: item;
+                        }
+                    }
+                }
+                for section in ChatInfo.sections: Section {
+                    item: section;
+                }
+            }
+        }
+    }
+}

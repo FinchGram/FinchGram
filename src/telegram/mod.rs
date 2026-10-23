@@ -26,6 +26,7 @@ mod admin;
 mod api;
 mod avatars;
 mod bots;
+mod chat_info;
 mod chats;
 mod contacts;
 mod conversation;
@@ -222,6 +223,11 @@ pub fn connect_viewer_settings(ui: &MainWindow, settings: Rc<RefCell<Settings>>)
 /// changes it.
 pub fn connect_chat_order(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     chats::connect_order(ui, settings);
+}
+
+/// The chat's info panel remembers whether it is open (chat_info.rs).
+pub fn connect_chat_info(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
+    chat_info::connect(ui, settings);
 }
 
 /// The app is quitting: let TDLib write its database out and finchgram-tdlib end, for at most
@@ -425,6 +431,7 @@ fn on_authorization_state(state: AuthorizationState) {
             contacts::forget();
             global_search::forget();
             new_chat::forget();
+            chat_info::forget();
             bots::forget();
             topics::forget();
             drafts::forget();

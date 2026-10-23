@@ -121,6 +121,8 @@ pub struct Dirty {
     pub scroll_to_end: bool,
     /// The open group's list of topics (topics.rs).
     pub topics: bool,
+    /// A full info came for the open chat: the info panel asks for its facts anew (chat_info.rs).
+    pub chat_info: bool,
 }
 
 /// The models the pages show, kept so that they can be updated in place.
@@ -436,6 +438,7 @@ pub fn clear() {
             notification_scopes: true,
             scroll_to_end: false,
             topics: true,
+            chat_info: false,
         };
     });
     refresh();
@@ -476,11 +479,16 @@ pub fn refresh() {
                 }
             }
         }
-        (std::mem::take(&mut store.missing_replies), store.take_wanted_photos(), close_viewer, store.custom_emoji_wanted.take())
+        let info = (dirty.chats || dirty.header || dirty.conversation || dirty.chat_info, dirty.chat_info);
+        (std::mem::take(&mut store.missing_replies), store.take_wanted_photos(), close_viewer, store.custom_emoji_wanted.take(), info)
     });
-    let (missing, wanted, close_viewer, custom_emoji) = followups.unwrap_or_default();
+    let (missing, wanted, close_viewer, custom_emoji, (info_rows, info_facts)) = followups.unwrap_or_default();
     if close_viewer {
         super::viewer::close();
+    }
+    // The chat's info panel follows the chat (outside the borrow: it reads the store itself).
+    if info_rows {
+        super::chat_info::changed(info_facts);
     }
     if !missing.is_empty() {
         super::conversation::load_replied(missing);
@@ -701,12 +709,14 @@ impl Store {
                     self.my_bio = user_full_info.bio.map(|bio| bio.text).unwrap_or_default();
                     self.dirty.account = true;
                 }
+                let open = self.open.and_then(|id| self.chats.get(&id)).is_some_and(|chat| {
+                    matches!(chat.kind, ChatType::Private { user_id: id } | ChatType::Secret { user_id: id } if id == user_id)
+                });
+                self.dirty.chat_info |= open;
                 // A bot's menu button and commands, for the composer.
                 if let Some(bot_info) = user_full_info.bot_info {
                     self.bot_infos.insert(user_id, bot_info);
-                    self.dirty.header |= self.open.and_then(|id| self.chats.get(&id)).is_some_and(|chat| {
-                        matches!(chat.kind, ChatType::Private { user_id: bot } if bot == user_id)
-                    });
+                    self.dirty.header |= open;
                 }
             }
             Update::BasicGroup { basic_group } => {
@@ -727,8 +737,9 @@ impl Store {
                 self.supergroup_full.insert(supergroup_id, supergroup_full_info);
                 self.dirty.chats = true;
                 if open {
-                    // Slow mode and the settings panel follow it (admin.rs).
+                    // Slow mode and the settings panel follow it (admin.rs), and the info panel.
                     self.dirty.header = true;
+                    self.dirty.chat_info = true;
                     followup = Followup::SlowModeChanged;
                 }
             }

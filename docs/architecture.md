@@ -140,7 +140,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   `conversation.rs`, `actions.rs` (what can be done with a message), `bots.rs` (what bots put in a
   chat beyond messages, and the pinned message bar), `reactions.rs`, `topics.rs`, `drafts.rs`,
   `share.rs`, `admin.rs` (the fifth round, below; `errors.rs` puts Telegram's refusals into the
-  pages' words), `account.rs` and
+  pages' words), `chat_info.rs` (the chat's info panel, below), `account.rs` and
   `password.rs` (two-step verification) do what the pages ask for; `files.rs` downloads files,
   `avatars.rs` fetches the photos of chats and people for the rows that show them (a letter square
   until then, or for good when there is no photo), `viewer.rs` fills the media viewer and keeps its volume (the
@@ -306,10 +306,23 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     back; writing saves after a pause too. updateChatDraftMessage brings what was written on
     another device. The chat list shows a draft in place of the last message, after the word
     "Draft" (Terminal's list: "✎").
+  - The chat's info panel (`chat_info.rs`, the design's chat-info round): ⌘I, the header's sidebar
+    icon (Terminal's "[chat info]") opens it beside the messages, squeezing them (the list yields
+    down to 220px first), in every theme, and it stays open across chats and restarts
+    (`chat_info_open` in settings.toml). It heads the chat with its picture, name and status, then
+    its facts (a user's phone, username and bio; a bot's or group's description; a public group's
+    link; getUserFullInfo, getSupergroupFullInfo, getBasicGroupFullInfo), its settings
+    (notifications, pin, the folders it is in, mark as read: viewMessages with force_read), and
+    the actions (block, report, leave, delete), which ask as the chat menu does. Shared media,
+    the members (getSupergroupMembers, the first five) and the invite link are drawn greyed, as
+    the design has them in this version; editing the chat's name, photo, description, link and
+    members waits for the design's "Manage group / channel" round. The rows are built in Rust and
+    drawn by each theme, so Terminal's keyboard walks them: ↑ ↓, ⏎, a row's letter, Esc.
   - Slow mode and the group's administration (`admin.rs`): where a group has slow mode, the
     composer counts the wait down after a message (supergroupFullInfo.slow_mode_delay_expires_in,
     and SLOWMODE_WAIT_N when Telegram refuses one) and takes none until it is over;
-    administrators are not held. The chat's settings panel (the header's sidebar icon) shows a
+    administrators are not held. The group's administration panel (the Manage row of the chat's
+    info panel, below, in the panel's place) shows a
     member the group's rules (slow mode, what administrators turned off) and an owner or
     administrator the controls: slow mode (setChatSlowModeDelay), what members may do
     (setChatPermissions), approving new members (toggleSupergroupJoinByRequest), restricting

@@ -1,0 +1,115 @@
+// The chat's info panel (the design's chat-info round): beside the conversation in every theme,
+// opened with ⌘I or the header's sidebar icon. Its rows are built in Rust (src/telegram/
+// chat_info.rs) from the open chat, and the themes draw them (ui/<theme>/chat-info.slint), so
+// that Terminal's keyboard can walk the same list the pointer sees.
+import { ChatKind, Status, Moment } from "telegram.slint";
+
+// What a row does when chosen: a fact to copy, a switch, a step into something, or an action.
+export enum InfoRowKind { info, toggle, nav, action }
+
+export struct InfoRow {
+    id: string,             // what chat_info.rs runs: "notif", "pin", "folders", "fold-2", "block", …
+    key: string,            // Terminal's letter for it, "" for none
+    icon: string,
+    label: string,
+    sub: string,            // a second line under the label, "" for none
+    value: string,          // an info row's fact, or what stands at the right of the row
+    kind: InfoRowKind,
+    on: bool,               // a switch that is on
+    open: bool,             // a step whose choices show under it (the folders)
+    danger: bool,           // in the danger colour: blocking, reporting, leaving, deleting
+    grey: bool,             // drawn, not yet usable in this version
+    enabled: bool,          // false: nothing to do (no unread messages to mark read)
+    child: bool,            // one of the choices under the row before it: a folder
+}
+
+// A member of a group, as the panel lists the first few.
+export struct InfoMember {
+    name: string,
+    initial: string,
+    picture: image,
+    has-picture: bool,
+    status: Status,
+    last-seen: Moment,
+    role: string,           // owner, admin, or ""
+}
+
+export struct InfoSection {
+    id: string,             // "info", "settings", "shared", "members", "invite", "actions"
+    title: string,
+    grey: bool,             // the whole section is for later: faded
+    collapsed: bool,        // Workbench folds a section away
+    shared: bool,           // the shared media's tabs, not rows
+    rows: [InfoRow],
+    members: [InfoMember],
+    tabs: [string],
+}
+
+export global ChatInfo {
+    in-out property <bool> open;                 // the panel shows (remembered: chat_info_open in settings.toml)
+    // The open chat, as the panel heads it.
+    in-out property <image> picture;
+    in-out property <bool> has-picture;
+    in-out property <[InfoRow]> quick;           // under the name: search, call
+    in-out property <[InfoSection]> sections;
+    in-out property <string> cursor;             // Terminal: the row the keyboard is at (its id), "" for none
+    callback toggle();                           // ⌘I, the header's icon, the panel's ×, Esc
+    callback run(string);                        // a row chosen: its id
+    callback collapse(string);                   // Workbench: fold a section away, or open it again
+    callback move(int);                          // Terminal: ↑ (-1) and ↓ (+1)
+    callback run-cursor();                       // Terminal: ⏎ on the row the cursor is at
+    callback key(string);                        // Terminal: a row's letter
+}
+
+// The panel's words, from the design's chat-info.js (chat_info.rs asks for them, so that the rows
+// are built once for every theme).
+export global InfoWords {
+    public pure function title() -> string { return @tr("Chat Info"); }
+    public pure function close() -> string { return @tr("Close"); }
+    public pure function search() -> string { return @tr("Search"); }
+    public pure function call() -> string { return @tr("Call"); }
+    public pure function mobile() -> string { return @tr("Mobile"); }
+    public pure function username() -> string { return @tr("Username"); }
+    public pure function bio() -> string { return @tr("Bio"); }
+    public pure function description() -> string { return @tr("Description"); }
+    public pure function link() -> string { return @tr("Link"); }
+    public pure function info() -> string { return @tr("the chat's facts" => "Info"); }
+    public pure function settings() -> string { return @tr("Settings"); }
+    public pure function shared() -> string { return @tr("Shared Media"); }
+    public pure function members() -> string { return @tr("Members"); }
+    public pure function invite() -> string { return @tr("Invite"); }
+    public pure function actions() -> string { return @tr("Actions"); }
+    public pure function notifications() -> string { return @tr("Notifications"); }
+    public pure function muted-forever() -> string { return @tr("Muted forever"); }
+    public pure function mute-for() -> string { return @tr("Mute duration & exceptions"); }
+    public pure function pin-chat() -> string { return @tr("Pin chat"); }
+    public pure function add-to-folder() -> string { return @tr("Add to folder"); }
+    public pure function no-folders() -> string { return @tr("Not in any folder"); }
+    public pure function mark-read() -> string { return @tr("Mark as read"); }
+    public pure function unread(n: int) -> string { return @tr("{n} unread" | "{n} unread" % n); }
+    public pure function no-unread() -> string { return @tr("No unread messages"); }
+    public pure function auto-delete() -> string { return @tr("Auto-delete messages"); }
+    public pure function off() -> string { return @tr("Off"); }
+    public pure function tab-media() -> string { return @tr("Photos & Videos"); }
+    public pure function tab-files() -> string { return @tr("Files"); }
+    public pure function tab-links() -> string { return @tr("Links"); }
+    public pure function administrators() -> string { return @tr("Administrators"); }
+    public pure function all-members() -> string { return @tr("Show all members"); }
+    public pure function owner() -> string { return @tr("a member's role" => "owner"); }
+    public pure function admin() -> string { return @tr("a member's role" => "admin"); }
+    public pure function invite-link() -> string { return @tr("Invite link"); }
+    public pure function manage-group() -> string { return @tr("Manage group"); }
+    public pure function manage-channel() -> string { return @tr("Manage channel"); }
+    public pure function block-user() -> string { return @tr("Block user"); }
+    public pure function block-bot() -> string { return @tr("Block bot"); }
+    public pure function unblock() -> string { return @tr("Unblock"); }
+    public pure function report() -> string { return @tr("Report"); }
+    public pure function leave-group() -> string { return @tr("Leave group"); }
+    public pure function leave-channel() -> string { return @tr("Leave channel"); }
+    public pure function delete-chat() -> string { return @tr("Delete chat"); }
+    public pure function clear-history() -> string { return @tr("Clear history"); }
+    public pure function not-yet() -> string { return @tr("Not available in this version"); }
+    public pure function saved-sub() -> string { return @tr("Cloud storage · synced across devices"); }
+    // Terminal's hint line under the panel.
+    public pure function hint() -> string { return "↑↓ " + @tr("keyboard hint: move the cursor" => "move") + " · ⏎ " + @tr("keyboard hint: run the row" => "open") + " · Esc " + @tr("keyboard hint" => "close"); }
+}

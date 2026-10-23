@@ -427,6 +427,8 @@ pub struct Supergroup {
 pub struct SupergroupFullInfo {
     pub member_count: i32,
     #[serde(default)]
+    pub administrator_count: i32,
+    #[serde(default)]
     pub description: String,
     /// Slow mode: how many seconds a member waits between messages (0: off), and how long we
     /// still wait after our last one (admin.rs).
@@ -456,6 +458,22 @@ pub struct SupergroupFullInfo {
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct ChatInviteLink {
     pub invite_link: String,
+}
+
+/// A member of a group or channel (chatMember), as getSupergroupMembers and a basic group's full
+/// info list them (chat_info.rs).
+#[derive(Debug, Clone, Deserialize)]
+pub struct ChatMember {
+    pub member_id: MessageSender,
+    pub status: ChatMemberStatus,
+}
+
+/// Members found (chatMembers): how many there are in all, and those asked for.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct ChatMembers {
+    pub total_count: i32,
+    #[serde(default)]
+    pub members: Vec<ChatMember>,
 }
 
 /// What we are in a group or channel: who may write where.
@@ -1181,6 +1199,9 @@ pub struct WebAppUrl {
 /// What a bot says it can do: the button at the composer's left, and its commands.
 #[derive(Debug, Clone, Default, PartialEq, Deserialize)]
 pub struct BotInfo {
+    /// What the bot does, as its maker wrote it (the info panel's description row).
+    #[serde(default)]
+    pub description: String,
     #[serde(default)]
     pub menu_button: Option<BotMenuButton>,
     #[serde(default)]
@@ -1213,6 +1234,13 @@ pub struct BotCommands {
 
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct BasicGroupFullInfo {
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub members: Vec<ChatMember>,
+    /// The group's primary invite link, for an administrator who may invite; none otherwise.
+    #[serde(default)]
+    pub invite_link: Option<ChatInviteLink>,
     #[serde(default)]
     pub bot_commands: Vec<BotCommands>,
 }

@@ -1,6 +1,8 @@
 // Broadsheet (the design's "1a 报纸"): a newspaper's calm. A rail with the accounts, the chat list
 // with its folders as tabs, and the conversation in bubbles. The accent is the account's colour.
 import { ListView } from "std-widgets.slint";
+import { InfoPanel } from "chat-info.slint";
+import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer, LinkPreview, ReplyQuote,
@@ -969,7 +971,10 @@ component SectionTitle inherits Text {
 
 component ListColumn inherits Rectangle {
     in-out property <BroadsheetView> view;
-    width: max(240px, min(560px, AppState.broadsheet-list-width));
+    // What the window leaves it beside the messages and the info panel: while the panel is open
+    // it yields down to 220px, without changing the width the user dragged out.
+    in property <length> room: 560px;
+    width: max(220px, min(560px, min(AppState.broadsheet-list-width, max(220px, root.room))));
     background: P.bg;
 
     // A chat's menu, from a right click on it: the chat header's menu, for any chat in the lists.
@@ -2878,6 +2883,8 @@ component ConversationPane inherits Rectangle {
     }
 
     if Conversation.chat-id != "": VerticalLayout {
+        x: 0;
+        width: parent.width - side.width;
         HorizontalLayout {
             padding-left: 24px;
             padding-right: 24px;
@@ -2933,17 +2940,17 @@ component ConversationPane inherits Rectangle {
                     opacity: 0.4;
                 }
             }
-            // The chat's settings panel: a group's rules, or its administration (admin.rs).
+            // The chat's info panel (chat_info.rs; ⌘I), lit while it is open.
             VerticalLayout {
                 alignment: center;
                 DuoIcon {
                     name: "sidebar-simple";
                     size: 20px;
-                    color: Conversation.settings-open ? P.accent : settings-touch.has-hover ? P.text : P.muted;
-                    settings-touch := TouchArea {
+                    color: ChatInfo.open ? P.accent : info-touch.has-hover ? P.text : P.muted;
+                    info-touch := TouchArea {
                         mouse-cursor: pointer;
                         clicked => {
-                            Conversation.toggle-settings();
+                            ChatInfo.toggle();
                         }
                     }
                 }
@@ -3355,12 +3362,28 @@ component ConversationPane inherits Rectangle {
         }
     }
 
-    // The chat's settings, over the right of the pane.
-    if Conversation.settings-open && Conversation.chat-id != "": SettingsPanel {
-        x: root.width - self.width;
+    // The chat's info panel, or its administration in the panel's place (admin.rs), beside the
+    // messages: the design's column squeezes them, 320px wide, and slides open and shut.
+    side := Rectangle {
+        property <bool> shown: Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open);
+        x: parent.width - self.width;
         y: 0;
-        width: min(340px, root.width * 0.4);
-        height: root.height;
+        width: shown ? 320px : 0px;
+        height: parent.height;
+        clip: true;
+        animate width { duration: 180ms; easing: cubic-bezier(0.2, 0.8, 0.2, 1); }
+        if Conversation.settings-open: SettingsPanel {
+            x: 0;
+            y: 0;
+            width: 320px;
+            height: parent.height;
+        }
+        if !Conversation.settings-open && (ChatInfo.open || side.width > 0px): InfoPanel {
+            x: 0;
+            y: 0;
+            width: 320px;
+            height: parent.height;
+        }
     }
 
     menu := PopupWindow {
@@ -3424,9 +3447,10 @@ export component BroadsheetWindow inherits Rectangle {
         TitleBar { }
         HorizontalLayout {
             vertical-stretch: 1;
-            Rail { }
+            rail := Rail { }
             ListColumn {
                 view <=> root.view;
+                room: root.width - rail.width - 388px - (Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open) ? 320px : 0px);
             }
             ConversationPane {
                 horizontal-stretch: 1;

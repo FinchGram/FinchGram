@@ -1,6 +1,8 @@
 // Workbench's main area: the tabs of the open chats, and the chat in front — its header, the
 // messages as rows (a letter, the sender and time, the text), and where to write.
 import { AppState, Screenshot } from "../state.slint";
+import { InfoPanel } from "chat-info.slint";
+import { ChatInfo } from "../chat-info.slint";
 import {
     Conversation, MessageRow, RowKind, ChatKind, Content, Account, Viewer, LinkPreview, ReplyQuote, Actions, ComposeBar,
     ActionNotice, Tab, Chats, Attachments,
@@ -195,24 +197,24 @@ component TabBar inherits Rectangle {
             padding-left: 14px;
             padding-right: 14px;
             spacing: 12px;
-            // The chat's settings panel: a group's rules, or its administration (admin.rs).
+            // The chat's info panel (chat_info.rs; ⌘I), lit while it is open.
             VerticalLayout {
                 alignment: center;
                 Rectangle {
                     width: 22px;
                     height: 22px;
                     border-radius: 4px;
-                    background: Conversation.settings-open ? P.accent-soft : settings-touch.has-hover ? P.line : transparent;
+                    background: ChatInfo.open ? P.accent-soft : info-touch.has-hover ? P.line : transparent;
                     Icon {
                         name: "sidebar-simple";
                         size: 17px;
-                        color: Conversation.chat-id == "" ? P.faint : Conversation.settings-open ? P.accent-ink : P.muted;
+                        color: Conversation.chat-id == "" ? P.faint : ChatInfo.open ? P.accent-ink : P.muted;
                     }
-                    settings-touch := TouchArea {
+                    info-touch := TouchArea {
                         enabled: Conversation.chat-id != "";
                         mouse-cursor: pointer;
                         clicked => {
-                            Conversation.toggle-settings();
+                            ChatInfo.toggle();
                         }
                     }
                 }
@@ -1976,6 +1978,8 @@ component SettingsPanel inherits Rectangle {
 
 component Pane {
     VerticalLayout {
+        x: 0;
+        width: parent.width - side.width;
         HorizontalLayout {
             padding-left: 20px;
             padding-right: 20px;
@@ -2401,11 +2405,28 @@ component Pane {
         }
     }
 
-    if Conversation.settings-open && Conversation.chat-id != "": SettingsPanel {
-        x: root.width - self.width;
+    // The chat's info panel, or its administration in the panel's place (admin.rs), beside the
+    // messages: the design's column squeezes them, 300px wide, and slides open and shut.
+    side := Rectangle {
+        property <bool> shown: Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open);
+        x: parent.width - self.width;
         y: 0;
-        width: min(320px, root.width * 0.4);
-        height: root.height;
+        width: shown ? 300px : 0px;
+        height: parent.height;
+        clip: true;
+        animate width { duration: 180ms; easing: cubic-bezier(0.2, 0.8, 0.2, 1); }
+        if Conversation.settings-open: SettingsPanel {
+            x: 0;
+            y: 0;
+            width: 300px;
+            height: parent.height;
+        }
+        if !Conversation.settings-open && (ChatInfo.open || side.width > 0px): InfoPanel {
+            x: 0;
+            y: 0;
+            width: 300px;
+            height: parent.height;
+        }
     }
 }
 

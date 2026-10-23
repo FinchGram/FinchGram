@@ -12,6 +12,7 @@ import { Look } from "look.slint";
 import { Fmt } from "format.slint";
 import { BotWords } from "chat.slint";
 import { ExtraWords } from "extras.slint";
+import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "chat-info.slint";
 import { LoginPage } from "pages/login.slint";
 import { WorkbenchWindow } from "workbench/workbench.slint";
 import { BroadsheetWindow } from "broadsheet/broadsheet.slint";
@@ -33,6 +34,7 @@ export { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme,
 export { AiAccess, AiScope, AiWriting, AiChat, AiApp, AiActivity, AiActivityKind }
 export { Search, NewChat, NewDialog, LinkCheck, FoundKind, FoundRow, FoundSection, ComposeWords, BotWords, ExtraWords }
 export { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError }
+export { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";
@@ -67,6 +69,16 @@ export component MainWindow inherits Window {
                     AppState.page = Page.chats;
                     Conversation.search-open = true;
                     Conversation.search-requests += 1;
+                }
+            }
+            MenuItem {
+                title: @tr("Chat Info");
+                shortcut: @keys(Control + I);
+                enabled: root.ready && Conversation.chat-id != "";
+                activated => {
+                    AppState.show-window();
+                    AppState.page = Page.chats;
+                    ChatInfo.toggle();
                 }
             }
             MenuSeparator { }

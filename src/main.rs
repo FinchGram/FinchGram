@@ -146,6 +146,7 @@ fn main() -> Result<(), slint::PlatformError> {
     downloads::connect(&ui, settings.clone());
     telegram::connect_viewer_settings(&ui, settings.clone());
     telegram::connect_chat_order(&ui, settings.clone());
+    telegram::connect_chat_info(&ui, settings.clone());
     state.on_check_launch_at_login({
         let ui = ui.as_weak();
         move || {

@@ -2,6 +2,7 @@
 // account and a search box, an activity bar, the side bar with the chat tree, the chats as tabs,
 // and a status bar.
 import { AppState, Page, Connection } from "../state.slint";
+import { ChatInfo } from "../chat-info.slint";
 import { Chats, Conversation, Account } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
@@ -540,6 +541,7 @@ export component WorkbenchWindow inherits Rectangle {
             }
             WorkbenchSidebar {
                 view: root.view;
+                room: root.width - 52px - 388px - (Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open) ? 300px : 0px);
             }
             Rectangle {
                 width: 1px;

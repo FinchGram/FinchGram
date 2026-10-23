@@ -25,6 +25,9 @@ pub struct Settings {
     pub quit_on_close: bool,
     pub show_in_menu_bar: bool,
     pub send_with_enter: bool,
+    /// The chat's info panel stays open or shut across chats and restarts (⌘I; src/telegram/
+    /// chat_info.rs).
+    pub chat_info_open: bool,
     /// How the chats of every folder are ordered under the pinned ones (a folder's menu).
     pub chat_order: ChatOrder,
     /// The media viewer's video volume, 0 … 100, and whether its sound is off: as the user last
@@ -301,6 +304,7 @@ impl Default for Settings {
             quit_on_close: false,
             show_in_menu_bar: true,
             send_with_enter: true,
+            chat_info_open: false,
             chat_order: ChatOrder::LatestMessage,
             video_volume: 100,
             video_muted: false,

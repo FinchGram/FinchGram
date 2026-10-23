@@ -1,0 +1,286 @@
+// The chat's info panel, Terminal (the design's chat-info round, 1b): a monospace column beside
+// the messages, 320px wide, that the keyboard walks: ↑ ↓ move the cursor (›), ⏎ runs the row, a
+// row's letter runs it at once, Esc closes. The rows come from src/telegram/chat_info.rs
+// (ui/chat-info.slint); this draws them.
+import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "../chat-info.slint";
+import { Conversation, ChatKind, Status, Actions } from "../telegram.slint";
+import { Fmt } from "../format.slint";
+import { TerminalPalette as P } from "palette.slint";
+import { Sign } from "signs.slint";
+
+component T inherits Text {
+    font-family: P.font;
+    font-size: 13px;
+    color: P.text;
+}
+
+// One row: the cursor's mark, the row's letter in brackets, the label (or a fact and its name),
+// and at the right what it holds: a value, a box ticked or not, a triangle for a step.
+component InfoLine inherits Rectangle {
+    in property <InfoRow> item;
+    property <bool> live: item.enabled && !item.grey;
+    property <bool> at-cursor: ChatInfo.cursor == item.id;
+    height: line.preferred-height;
+    border-radius: 2px;
+    background: at-cursor ? P.sel : touch.has-hover && live ? P.sel.transparentize(0.5) : transparent;
+
+    line := HorizontalLayout {
+        padding-left: 4px;
+        padding-right: 4px;
+        padding-top: 1px;
+        padding-bottom: 1px;
+        spacing: 8px;
+        T {
+            width: 8px;
+            text: root.at-cursor ? "›" : "";
+            color: P.accent;
+        }
+        T {
+            width: root.item.child ? 56px : 24px;
+            text: root.item.child ? (root.item.on ? "[x]" : "[ ]") : root.item.key != "" ? "[" + root.item.key + "]" : "";
+            color: root.item.child ? (root.item.on ? P.accent : P.faint) : P.faint;
+            horizontal-alignment: root.item.child ? right : left;
+            opacity: root.live ? 1 : 0.42;
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            opacity: root.live ? 1 : 0.42;
+            if root.item.kind == InfoRowKind.info: T {
+                text: root.item.label;
+                color: P.faint;
+                font-size: 12px;
+                wrap: word-wrap;
+            }
+            if root.item.kind == InfoRowKind.info: T {
+                text: root.item.value;
+                wrap: word-wrap;
+            }
+            if root.item.kind != InfoRowKind.info: T {
+                text: root.item.label;
+                color: root.item.danger ? P.danger : P.text;
+                wrap: word-wrap;
+            }
+            if root.item.kind != InfoRowKind.info && root.item.sub != "": T {
+                text: "↳ " + root.item.sub;
+                color: P.faint;
+                font-size: 12px;
+                wrap: word-wrap;
+            }
+        }
+        if root.item.kind != InfoRowKind.info && root.item.value != "": T {
+            max-width: 110px;
+            text: root.item.value;
+            color: P.muted;
+            overflow: elide;
+            horizontal-alignment: right;
+            opacity: root.live ? 1 : 0.42;
+        }
+        if root.item.kind == InfoRowKind.toggle && !root.item.child: T {
+            text: root.item.on ? "[x]" : "[ ]";
+            color: root.item.on ? P.accent : P.faint;
+            opacity: root.live ? 1 : 0.42;
+        }
+        if root.item.kind == InfoRowKind.nav: T {
+            text: root.item.open ? "▾" : "▸";
+            color: P.faint;
+            opacity: root.live ? 1 : 0.42;
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.live;
+        mouse-cursor: pointer;
+        clicked => {
+            ChatInfo.run(root.item.id);
+        }
+    }
+}
+
+// One of a group's first members: a sigil for the owner (★) and administrators (☆).
+component MemberLine inherits HorizontalLayout {
+    in property <InfoMember> member;
+    spacing: 8px;
+    T {
+        width: 16px;
+        text: root.member.role == InfoWords.owner() ? "★" : root.member.role == InfoWords.admin() ? "☆" : "·";
+        color: P.accent2;
+    }
+    T {
+        horizontal-stretch: 1;
+        text: root.member.role == "" ? root.member.name : root.member.name + " " + root.member.role;
+        overflow: elide;
+    }
+    T {
+        text: Fmt.status(root.member.status, root.member.last-seen, 0, 0);
+        color: root.member.status == Status.online ? P.accent : P.faint;
+        font-size: 12px;
+    }
+}
+
+// A section: "── title ──", then its rows, a group's members, or the shared media's tabs.
+component Section inherits VerticalLayout {
+    in property <InfoSection> item;
+    spacing: 2px;
+    T {
+        text: "── " + root.item.title + " ──";
+        color: P.faint;
+        overflow: elide;
+    }
+    if root.item.shared: HorizontalLayout {
+        alignment: start;
+        spacing: 6px;
+        opacity: 0.42;
+        for tab[index] in root.item.tabs: T {
+            text: (index == 0 ? "" : "│ ") + tab;
+            color: index == 0 ? P.text : P.muted;
+            font-weight: index == 0 ? 600 : 400;
+        }
+    }
+    if root.item.shared: T {
+        text: "--";
+        color: P.faint;
+        opacity: 0.42;
+    }
+    for member in root.item.members: MemberLine {
+        member: member;
+        opacity: root.item.grey ? 0.42 : 1;
+    }
+    for row in root.item.rows: InfoLine {
+        item: row;
+    }
+}
+
+export component InfoPanel inherits Rectangle {
+    background: P.side;
+    property <bool> saved: Conversation.kind == ChatKind.saved;
+
+    TouchArea { }
+    Rectangle {
+        x: 0;
+        width: 1px;
+        background: P.line;
+    }
+    // The keyboard: ↑ ↓ ⏎ and the rows' letters while the panel is open; Esc goes up the chain
+    // (the folders' choices first, then the administration, then the panel).
+    keys := FocusScope {
+        init => {
+            self.focus();
+        }
+        key-pressed(event) => {
+            if event.text == Key.UpArrow {
+                ChatInfo.move(-1);
+                return accept;
+            }
+            if event.text == Key.DownArrow {
+                ChatInfo.move(1);
+                return accept;
+            }
+            if event.text == Key.Return || event.text == " " {
+                ChatInfo.run-cursor();
+                return accept;
+            }
+            if event.text == Key.Escape {
+                if Actions.escape() {
+                    return accept;
+                }
+                return reject;
+            }
+            if event.text.character-count == 1 && !event.modifiers.control && !event.modifiers.meta && !event.modifiers.alt {
+                ChatInfo.key(event.text);
+                return accept;
+            }
+            return reject;
+        }
+    }
+    Flickable {
+        content-height: body.preferred-height;
+        body := VerticalLayout {
+            width: parent.width;
+            alignment: start;
+            padding-left: 14px;
+            padding-right: 14px;
+            padding-top: 10px;
+            padding-bottom: 16px;
+            spacing: 14px;
+            HorizontalLayout {
+                spacing: 8px;
+                T {
+                    horizontal-stretch: 1;
+                    text: "── " + InfoWords.title() + " ──";
+                    color: keys.has-focus ? P.accent : P.faint;
+                    overflow: elide;
+                }
+                T {
+                    text: "[esc]";
+                    color: close.has-hover ? P.accent : P.faint;
+                    close := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            ChatInfo.toggle();
+                        }
+                    }
+                }
+            }
+            // The head: the chat's sigil and name, its status, the quick actions.
+            VerticalLayout {
+                HorizontalLayout {
+                    spacing: 4px;
+                    alignment: start;
+                    Sign {
+                        kind: Conversation.kind;
+                        color: P.accent;
+                    }
+                    T {
+                        text: Conversation.title;
+                        color: P.accent;
+                        font-weight: 600;
+                        wrap: word-wrap;
+                    }
+                }
+                T {
+                    text: root.saved ? InfoWords.saved-sub()
+                        : Fmt.status(Conversation.status, Conversation.last-seen, Conversation.members, Conversation.online-members);
+                    color: P.faint;
+                    wrap: word-wrap;
+                }
+                HorizontalLayout {
+                    padding-top: 6px;
+                    alignment: start;
+                    spacing: 12px;
+                    for item in ChatInfo.quick: HorizontalLayout {
+                        spacing: 6px;
+                        T {
+                            text: ChatInfo.cursor == item.id ? "›" : " ";
+                            color: P.accent;
+                        }
+                        T {
+                            text: "[" + item.label + "]";
+                            color: item.enabled && !item.grey ? (quick-touch.has-hover ? P.accent : P.text) : P.faint;
+                            opacity: item.enabled && !item.grey ? 1 : 0.42;
+                            quick-touch := TouchArea {
+                                enabled: item.enabled && !item.grey;
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    ChatInfo.run(item.id);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            for section in ChatInfo.sections: Section {
+                item: section;
+            }
+            Rectangle {
+                height: 1px;
+                background: P.line;
+            }
+            T {
+                text: InfoWords.hint();
+                color: P.faint;
+                font-size: 12px;
+                wrap: word-wrap;
+            }
+        }
+    }
+}

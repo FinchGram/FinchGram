@@ -3,6 +3,8 @@
 // bookmark; a pin before a pinned one); the chat reads as a log; one command line writes messages
 // and runs commands ("/mute", "/pin", …).
 import { ListView } from "std-widgets.slint";
+import { InfoPanel } from "chat-info.slint";
+import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState, ChatOrder } from "../telegram.slint";
@@ -460,7 +462,10 @@ component Folders {
 
 component Side inherits Rectangle {
     in-out property <TerminalView> view;
-    width: max(220px, min(560px, AppState.terminal-list-width));
+    // What the window leaves it beside the messages and the info panel: while the panel is open
+    // it yields down to 220px, without changing the width the user dragged out.
+    in property <length> room: 560px;
+    width: max(220px, min(560px, min(AppState.terminal-list-width, max(220px, root.room))));
     background: P.side;
 
     // A chat's menu, from a right click on it: the chat header's menu, for any chat in the lists.
@@ -1510,6 +1515,8 @@ component Pane inherits Rectangle {
     background: P.bg;
 
     VerticalLayout {
+        x: 0;
+        width: parent.width - side.width;
         Rectangle {
             height: 34px;
             background: P.pane-head;
@@ -1552,12 +1559,13 @@ component Pane inherits Rectangle {
                         }
                     }
                 }
+                // The chat's info panel (chat_info.rs; ⌘I), lit while it is open.
                 Action {
-                    label: @tr("chat settings");
+                    label: @tr("chat info");
                     enabled: Conversation.chat-id != "";
-                    color: Conversation.settings-open ? P.accent : P.muted;
+                    color: ChatInfo.open ? P.accent : P.muted;
                     activated => {
-                        Conversation.toggle-settings();
+                        ChatInfo.toggle();
                     }
                 }
                 Action {
@@ -1695,12 +1703,28 @@ component Pane inherits Rectangle {
         }
     }
 
-    // Under the head, so "[chat settings]" stays in sight, lit.
-    if Conversation.settings-open && Conversation.chat-id != "": SettingsPanel {
-        x: root.width - self.width;
-        y: 34px;
-        width: min(340px, root.width * 0.4);
-        height: root.height - 34px;
+    // The chat's info panel, or its administration in the panel's place (admin.rs), beside the
+    // messages: the design's column squeezes them, 320px wide, and slides open and shut.
+    side := Rectangle {
+        property <bool> shown: Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open);
+        x: parent.width - self.width;
+        y: 0;
+        width: shown ? 320px : 0px;
+        height: parent.height;
+        clip: true;
+        animate width { duration: 180ms; easing: cubic-bezier(0.2, 0.8, 0.2, 1); }
+        if Conversation.settings-open: SettingsPanel {
+            x: 0;
+            y: 0;
+            width: 320px;
+            height: parent.height;
+        }
+        if !Conversation.settings-open && (ChatInfo.open || side.width > 0px): InfoPanel {
+            x: 0;
+            y: 0;
+            width: 320px;
+            height: parent.height;
+        }
     }
 }
 
@@ -2231,6 +2255,7 @@ export component TerminalWindow inherits Rectangle {
             vertical-stretch: 1;
             Side {
                 view <=> root.view;
+                room: root.width - 388px - (Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open) ? 320px : 0px);
             }
             VerticalLayout {
                 horizontal-stretch: 1;

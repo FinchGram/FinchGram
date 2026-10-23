@@ -540,6 +540,88 @@ fn fill_chats(ui: &MainWindow) {
     conversation.set_tabs(model(vec![tab(&keyboards), tab(&news), tab(&alex)]));
 }
 
+fn info_row(id: &str, kind: InfoRowKind, icon: &str, label: &str, key: &str) -> InfoRow {
+    InfoRow {
+        id: id.into(),
+        key: key.into(),
+        icon: icon.into(),
+        label: label.into(),
+        sub: SharedString::new(),
+        value: SharedString::new(),
+        kind,
+        on: false,
+        open: false,
+        danger: false,
+        grey: false,
+        enabled: true,
+        child: false,
+    }
+}
+
+fn info_section(id: &str, title: &str, rows: Vec<InfoRow>) -> InfoSection {
+    InfoSection {
+        id: id.into(),
+        title: title.into(),
+        grey: false,
+        collapsed: false,
+        shared: false,
+        rows: model(rows),
+        members: ModelRc::default(),
+        tabs: ModelRc::default(),
+    }
+}
+
+/// The info panel's sections for Keyboard Lab, as chat_info.rs would build them.
+fn info_sections() -> Vec<InfoSection> {
+    let member = |name: &str, role: &str, status: Status, hour: i32| InfoMember {
+        name: name.into(),
+        initial: name.chars().next().map(|c| c.to_string()).unwrap_or_default().into(),
+        picture: Image::default(),
+        has_picture: false,
+        status,
+        last_seen: moment(Day::Today, hour, 5),
+        role: role.into(),
+    };
+    vec![
+        info_section("info", "Info", vec![
+            InfoRow { value: "Custom builds, switches and keycaps. No ads; trades go to @kbd_market.\nGroup call every Thursday at 21:00.".into(), ..info_row("desc", InfoRowKind::Info, "info", "Description", "") },
+            InfoRow { value: "t.me/kbd_lab".into(), ..info_row("link", InfoRowKind::Info, "link", "Link", "") },
+        ]),
+        info_section("settings", "Settings", vec![
+            InfoRow { on: true, ..info_row("notif", InfoRowKind::Toggle, "bell", "Notifications", "m") },
+            InfoRow { grey: true, ..info_row("mutefor", InfoRowKind::Nav, "clock", "Mute duration & exceptions", "") },
+            InfoRow { on: true, ..info_row("pin", InfoRowKind::Toggle, "push-pin", "Pin chat", "p") },
+            InfoRow { value: "Keyboards".into(), ..info_row("folders", InfoRowKind::Nav, "folder-simple", "Add to folder", "f") },
+            InfoRow { value: "42 unread".into(), ..info_row("read", InfoRowKind::Action, "checks", "Mark as read", "r") },
+            InfoRow { grey: true, value: "Off".into(), ..info_row("autodel", InfoRowKind::Nav, "timer", "Auto-delete messages", "") },
+        ]),
+        InfoSection { grey: true, shared: true, tabs: model(vec!["Photos & Videos".into(), "Files".into(), "Links".into()]), ..info_section("shared", "Shared Media", Vec::new()) },
+        InfoSection {
+            grey: true,
+            members: model(vec![
+                member("Jie", "owner", Status::Online, 14),
+                member("Mika", "admin", Status::LastSeen, 13),
+                member("Mi", "", Status::Online, 14),
+                member("Yuki", "admin", Status::LastSeen, 11),
+                member("Ken", "", Status::LastSeen, 9),
+            ]),
+            ..info_section("members", "Members · 486", vec![
+                InfoRow { grey: true, value: "3".into(), ..info_row("admins", InfoRowKind::Nav, "shield-check", "Administrators", "") },
+                InfoRow { grey: true, value: "486".into(), ..info_row("allm", InfoRowKind::Nav, "users", "Show all members", "") },
+            ])
+        },
+        info_section("invite", "Invite", vec![
+            InfoRow { grey: true, value: "t.me/+Kx7bQ2mL0aZj".into(), ..info_row("invite", InfoRowKind::Info, "link-simple", "Invite link", "") },
+            info_row("manage", InfoRowKind::Nav, "gear-six", "Manage group", ""),
+        ]),
+        info_section("actions", "Actions", vec![
+            InfoRow { danger: true, ..info_row("report", InfoRowKind::Action, "flag", "Report", "x") },
+            InfoRow { danger: true, grey: true, ..info_row("clear", InfoRowKind::Action, "broom", "Clear history", "") },
+            InfoRow { danger: true, ..info_row("leave", InfoRowKind::Action, "sign-out", "Leave group", "l") },
+        ]),
+    ]
+}
+
 fn open_keyboards(ui: &MainWindow) {
     let conversation = ui.global::<Conversation>();
     conversation.set_chat_id("keyboards".into());
@@ -1830,6 +1912,17 @@ fn screenshots() {
                 conversation.set_search_open(false);
                 conversation.set_search_count(-1);
                 conversation.set_search_at(0);
+            }
+            // The chat's info panel beside the messages (the chat-info round), for the group.
+            {
+                let info = ui.global::<ChatInfo>();
+                info.set_quick(model(vec![info_row("q-search", InfoRowKind::Action, "magnifying-glass", "Search", "s")]));
+                info.set_sections(model(info_sections()));
+                info.set_cursor("notif".into());
+                info.set_open(true);
+                save(&window, &name("chat-info"));
+                info.set_open(false);
+                info.set_cursor(SharedString::new());
             }
             // A right click on the first chat of the list: its menu.
             let (x, y) = match theme {
