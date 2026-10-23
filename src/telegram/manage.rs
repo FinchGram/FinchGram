@@ -324,7 +324,14 @@ pub fn open() {
 
 /// The page shuts: the info panel shows again.
 pub fn close() {
-    STATE.with(|state| *state.borrow_mut() = State { lookups: state.borrow().lookups, ..State::default() });
+    STATE.with(|state| {
+        // One borrow: a `borrow()` for the count in the same statement as the `borrow_mut()` is
+        // still alive when the latter runs (the right side goes first, its temporaries last to the
+        // end of the statement), and RefCell panics. v0.5.7 crashed on every close for it.
+        let mut state = state.borrow_mut();
+        let lookups = state.lookups;
+        *state = State { lookups, ..State::default() };
+    });
     CHECK_TIMER.with(Timer::stop);
     TITLE_TIMER.with(Timer::stop);
     with_ui(|ui| ui.global::<ChatManage>().set_open(false));
@@ -1940,6 +1947,15 @@ mod tests {
         assert_eq!((left, top), (350, 150));
         let (left, top, side) = crop_rect(1000, 600, 3.0, 1.0, 0.0);
         assert_eq!((left, top, side), (800, 0, 200));
+    }
+
+    #[test]
+    fn closing_keeps_the_lookup_count_and_nothing_else() {
+        STATE.with(|state| *state.borrow_mut() = State { chat_id: 7, lookups: 3, page: Page::Rights, ..State::default() });
+        close();
+        assert!(!is_open());
+        assert_eq!(lookups(), 3);
+        assert!(STATE.with(|state| state.borrow().page == Page::Main));
     }
 
     #[test]
