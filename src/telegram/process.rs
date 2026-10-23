@@ -116,19 +116,27 @@ impl Process {
         self.child.wait().ok()
     }
 
-    /// End the program, giving TDLib up to `timeout` to close, then stop it the hard way.
-    pub fn shut_down(mut self, timeout: Duration) {
-        self.close_input();
-        let deadline = Instant::now() + timeout;
-        while Instant::now() < deadline {
-            match self.child.try_wait() {
-                Ok(Some(_)) | Err(_) => return,
-                Ok(None) => std::thread::sleep(Duration::from_millis(20)),
-            }
+}
+
+/// End several programs at once, giving their TDLibs up to `timeout` all together to close, then
+/// stopping the rest the hard way.
+pub fn shut_down_all(processes: Vec<Process>, timeout: Duration) {
+    let mut processes = processes;
+    for process in &mut processes {
+        process.close_input();
+    }
+    let deadline = Instant::now() + timeout;
+    while Instant::now() < deadline {
+        processes.retain_mut(|process| !matches!(process.child.try_wait(), Ok(Some(_)) | Err(_)));
+        if processes.is_empty() {
+            return;
         }
-        eprintln!("telegram: {PROGRAM} did not end within {} s, stopping it", timeout.as_secs());
-        let _ = self.child.kill();
-        let _ = self.child.wait();
+        std::thread::sleep(Duration::from_millis(20));
+    }
+    eprintln!("telegram: {} {PROGRAM} did not end within {} s, stopping them", processes.len(), timeout.as_secs());
+    for mut process in processes {
+        let _ = process.child.kill();
+        let _ = process.child.wait();
     }
 }
 

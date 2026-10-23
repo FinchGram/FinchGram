@@ -13,7 +13,7 @@
 //! waiting only for the password. It is thrown away ([`discard_unfinished`]) and logging in starts
 //! again at the phone number. Within one run of the app, a restarted finchgram-tdlib carries on.
 
-use std::cell::{Cell, RefCell};
+use std::cell::RefCell;
 
 use serde_json::json;
 use slint::{ComponentHandle, Image, ModelRc, Rgba8Pixel, SharedPixelBuffer, SharedString, VecModel};
@@ -38,15 +38,12 @@ struct State {
 
 thread_local! {
     static STATE: RefCell<State> = RefCell::new(State::default());
-    /// TDLib has not yet said where logging in is since the app started.
-    static FIRST_STATE: Cell<bool> = const { Cell::new(true) };
-    /// A login left half done is being thrown away: TDLib closes, and a fresh one starts.
-    static DISCARDING: Cell<bool> = const { Cell::new(false) };
 }
 
-/// Called with every authorization state before anything else sees it. The first one since the app
-/// started is a login left half done by an earlier run: TDLib drops it (logOut destroys the keys of
-/// a session that is not logged in, without the network), and true says to show nothing of it.
+/// Called with every authorization state before anything else sees it. The first one since the
+/// account's finchgram-tdlib was first started is a login left half done by an earlier run: TDLib
+/// drops it (logOut destroys the keys of a session that is not logged in, without the network),
+/// and true says to show nothing of it. (mod.rs keeps the flags, one set per account.)
 pub fn discard_unfinished(state: &AuthorizationState) -> bool {
     if matches!(
         state,
@@ -58,11 +55,11 @@ pub fn discard_unfinished(state: &AuthorizationState) -> bool {
         return false;
     }
     // A fresh TDLib says where it is: whatever was thrown away is gone.
-    DISCARDING.with(|discarding| discarding.set(false));
-    if !FIRST_STATE.with(|first| first.replace(false)) || !is_unfinished(state) {
+    super::set_discarding(false);
+    if !super::take_first_state() || !is_unfinished(state) {
         return false;
     }
-    DISCARDING.with(|discarding| discarding.set(true));
+    super::set_discarding(true);
     send(json!({ "@type": "logOut" }), |answer| {
         if let Err(err @ Error::Telegram { .. }) = answer {
             eprintln!("telegram: cannot drop the unfinished login: {err}");
@@ -73,7 +70,20 @@ pub fn discard_unfinished(state: &AuthorizationState) -> bool {
 
 /// A login left half done is being thrown away (see [`discard_unfinished`]).
 pub fn discarding() -> bool {
-    DISCARDING.with(Cell::get)
+    super::discarding()
+}
+
+/// Another account came to the front (mod.rs): the page shows where its login is, from TDLib's
+/// last word for it; at the phone number when it has said nothing yet.
+pub fn show(state: Option<&AuthorizationState>) {
+    busy(false);
+    match state {
+        Some(state) => on_state(state),
+        None => with_login(|login| {
+            login.set_error(SharedString::new());
+            login.set_step(LoginStep::Phone);
+        }),
+    }
 }
 
 /// Somewhere between the phone number and being logged in.
@@ -99,6 +109,8 @@ pub fn connect(ui: &MainWindow) {
     login.on_submit_phone(|calling_code, number| submit_phone(&calling_code, &number));
     login.on_use_qr_code(use_qr_code);
     login.on_use_phone_number(use_phone_number);
+    // "Back" while adding an account: to the account that was in front, dropping this one.
+    login.on_cancel_adding(super::cancel_adding);
     login.on_submit_code(|code| {
         let code: String = code.chars().filter(char::is_ascii_digit).collect();
         request(json!({ "@type": "checkAuthenticationCode", "code": code }));

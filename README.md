@@ -21,6 +21,8 @@ client, not made by Telegram.
   and channels by username, people by phone number, and messages; a search within a chat (⌘F); a
   view of your channels and one of your bots. The pencil makes a new group, channel or chat, or adds
   a contact.
+  Several accounts, up to ten, each with a TDLib of its own: switch from the account menu or with
+  ⌘1 … ⌘0.
 - **Messages.** Text with its formatting (bold, italic, code, links), replies and forwards, photos,
   videos, GIFs, stickers, files, and a card for a link's preview. A right click on a message gives
   its menu: reply, edit, copy, copy its link, forward, report, delete, or choose several. Photos
@@ -61,7 +63,7 @@ client, not made by Telegram.
   a question the first time an app connects. See [docs/mcp.md](docs/mcp.md).
 - **Languages.** The interface and this README in eleven languages.
 
-Not there yet: secret chats, voice messages and calls, several accounts, polls and scheduled
+Not there yet: secret chats, voice messages and calls, polls and scheduled
 messages, keyword filters, Windows and Linux. See [what comes next](docs/architecture.md#not-now).
 
 ## Download

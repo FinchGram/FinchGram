@@ -20,6 +20,7 @@ use super::api::{
     MessageSendingState, NotificationSettingsScope, Update, UserStatus, UserType,
 };
 use super::avatars;
+use super::Slot;
 use super::rich_text;
 use super::time;
 use crate::images;
@@ -123,6 +124,15 @@ pub struct Dirty {
     pub topics: bool,
     /// A full info came for the open chat: the info panel asks for its facts anew (chat_info.rs).
     pub chat_info: bool,
+    /// The account's name, photo or number changed: the list of accounts shows it (accounts.rs).
+    pub accounts: bool,
+}
+
+impl Dirty {
+    /// Whether the list of accounts is to be built again; asked once.
+    pub fn take_accounts(&mut self) -> bool {
+        std::mem::take(&mut self.accounts)
+    }
 }
 
 /// The models the pages show, kept so that they can be updated in place.
@@ -138,9 +148,10 @@ struct Models {
 }
 
 pub struct Store {
-    ui: slint::Weak<MainWindow>,
     pub my_id: i64,
     pub my_bio: String,
+    /// The account's number as people write it there ("+86 138 0013 2046"), once TDLib has said.
+    pub my_phone: String,
     pub chats: HashMap<i64, api::Chat>,
     pub users: HashMap<i64, api::User>,
     pub basic_groups: HashMap<i64, api::BasicGroup>,
@@ -270,11 +281,13 @@ pub struct Store {
 }
 
 thread_local! {
-    static STORE: RefCell<Option<Store>> = const { RefCell::new(None) };
+    /// One store per account (mod.rs), by slot, in the order of the slots.
+    static STORES: RefCell<Vec<(Slot, Store)>> = const { RefCell::new(Vec::new()) };
 }
 
-/// Set the store up for `ui` and give the pages its models. Call once, on the UI thread.
-pub fn install(ui: &MainWindow) {
+/// A store for the account in `slot`, with models of its own. The pages show them once the
+/// account comes to the front ([`show`]).
+pub fn add(slot: Slot) {
     let models = Models {
         folders: Rc::new(VecModel::default()),
         list: Rc::new(VecModel::default()),
@@ -285,22 +298,60 @@ pub fn install(ui: &MainWindow) {
         tabs: Rc::new(VecModel::default()),
         messages: Rc::new(VecModel::default()),
     };
-    let chats = ui.global::<Chats>();
-    chats.set_folders(ModelRc::from(models.folders.clone()));
-    chats.set_list(ModelRc::from(models.list.clone()));
-    chats.set_tree(ModelRc::from(models.tree.clone()));
-    chats.set_channels(ModelRc::from(models.channels.clone()));
-    chats.set_official_bots(ModelRc::from(models.official_bots.clone()));
-    chats.set_bots(ModelRc::from(models.bots.clone()));
-    let conversation = ui.global::<Conversation>();
-    conversation.set_tabs(ModelRc::from(models.tabs.clone()));
-    conversation.set_messages(ModelRc::from(models.messages.clone()));
+    STORES.with(|stores| {
+        let mut stores = stores.borrow_mut();
+        stores.retain(|(kept, _)| *kept != slot);
+        stores.push((slot, Store::new(models)));
+        stores.sort_by_key(|(slot, _)| *slot);
+    });
+}
 
-    STORE.with(|store| {
-        *store.borrow_mut() = Some(Store {
-            ui: ui.as_weak(),
+/// The account is gone: its store with it.
+pub fn remove(slot: Slot) {
+    STORES.with(|stores| stores.borrow_mut().retain(|(kept, _)| *kept != slot));
+}
+
+/// The account in `slot` is in front: the pages show its models, built again from its store.
+/// Call as that account (mod.rs sets it as the context).
+pub fn show(slot: Slot) {
+    let Some(ui) = super::window() else { return };
+    with_slot(slot, |store| {
+        let chats = ui.global::<Chats>();
+        chats.set_folders(ModelRc::from(store.models.folders.clone()));
+        chats.set_list(ModelRc::from(store.models.list.clone()));
+        chats.set_tree(ModelRc::from(store.models.tree.clone()));
+        chats.set_channels(ModelRc::from(store.models.channels.clone()));
+        chats.set_official_bots(ModelRc::from(store.models.official_bots.clone()));
+        chats.set_bots(ModelRc::from(store.models.bots.clone()));
+        let conversation = ui.global::<Conversation>();
+        conversation.set_tabs(ModelRc::from(store.models.tabs.clone()));
+        conversation.set_messages(ModelRc::from(store.models.messages.clone()));
+        // What the refresh sets only when it differs from the last time is another account's now.
+        store.topics_shown.borrow_mut().clear();
+        store.commands_shown.borrow_mut().clear();
+        *store.keyboard_model.borrow_mut() = None;
+        store.dirty = Dirty {
+            chats: true,
+            conversation: true,
+            header: true,
+            account: true,
+            viewer: true,
+            notification_scopes: true,
+            scroll_to_end: true,
+            topics: true,
+            chat_info: true,
+            accounts: false,
+        };
+    });
+    refresh();
+}
+
+impl Store {
+    fn new(models: Models) -> Store {
+        Store {
             my_id: 0,
             my_bio: String::new(),
+            my_phone: String::new(),
             chats: HashMap::new(),
             users: HashMap::new(),
             basic_groups: HashMap::new(),
@@ -361,8 +412,8 @@ pub fn install(ui: &MainWindow) {
             topics_shown: RefCell::new(Vec::new()),
             dirty: Dirty::default(),
             models,
-        })
-    });
+        }
+    }
 }
 
 /// Run `change` with the store, if it is installed. Not from within another `change`: the store is
@@ -370,7 +421,13 @@ pub fn install(ui: &MainWindow) {
 /// Threads). A helper that needs the store while its caller holds it takes `&Store` instead
 /// (contacts::matching).
 pub fn with<R>(change: impl FnOnce(&mut Store) -> R) -> Option<R> {
-    STORE.with(|store| store.borrow_mut().as_mut().map(change))
+    with_slot(super::context(), change)
+}
+
+/// The store of the account in `slot`, whichever account is meant right now (accounts.rs builds
+/// its rows from every store). None when there is no such account.
+pub fn with_slot<R>(slot: Slot, change: impl FnOnce(&mut Store) -> R) -> Option<R> {
+    STORES.with(|stores| stores.borrow_mut().iter_mut().find(|(kept, _)| *kept == slot).map(|(_, store)| change(store)))
 }
 
 /// Forget the account (it logged out): every chat, user and message, and what the pages show.
@@ -378,6 +435,7 @@ pub fn clear() {
     with(|store| {
         store.my_id = 0;
         store.my_bio.clear();
+        store.my_phone.clear();
         store.chats.clear();
         store.users.clear();
         store.basic_groups.clear();
@@ -439,6 +497,7 @@ pub fn clear() {
             scroll_to_end: false,
             topics: true,
             chat_info: false,
+            accounts: true,
         };
     });
     refresh();
@@ -446,12 +505,18 @@ pub fn clear() {
 
 /// Bring the pages' models up to date with what changed.
 pub fn refresh() {
-    let Some(ui) = STORE.with(|store| store.borrow().as_ref().and_then(|store| store.ui.upgrade())) else {
+    // Only the account in front has pages to bring up to date: another's store keeps what is dirty
+    // for when it comes to the front.
+    if !super::is_front() {
         return;
-    };
+    }
+    let Some(ui) = super::window() else { return };
     let words = Names::from(&ui);
     let followups = with(|store| {
         let dirty = std::mem::take(&mut store.dirty);
+        if dirty.accounts {
+            super::accounts::changed();
+        }
         if dirty.chats {
             store.refresh_chats(&ui, &words);
         }
@@ -685,6 +750,7 @@ impl Store {
             Update::User { user } => {
                 if user.id == self.my_id {
                     self.dirty.account = true;
+                    self.dirty.accounts = true;
                 }
                 // The message rows name their senders and show their photos: a name or a photo
                 // that changed shows in them.
@@ -708,6 +774,7 @@ impl Store {
                 if user_id == self.my_id {
                     self.my_bio = user_full_info.bio.map(|bio| bio.text).unwrap_or_default();
                     self.dirty.account = true;
+                    self.dirty.accounts = true;
                 }
                 let open = self.open.and_then(|id| self.chats.get(&id)).is_some_and(|chat| {
                     matches!(chat.kind, ChatType::Private { user_id: id } | ChatType::Secret { user_id: id } if id == user_id)
@@ -761,6 +828,7 @@ impl Store {
                     chat.photo = photo;
                     self.dirty.chats = true;
                     self.dirty.account |= chat_id == self.my_id;
+                    self.dirty.accounts |= chat_id == self.my_id;
                     // A message sent in the chat's name (a channel's post, an anonymous admin's)
                     // shows the chat's photo.
                     self.dirty.conversation |= self.open.is_some();
@@ -2378,6 +2446,7 @@ impl Store {
             account.set_picture(self.blank.clone());
             account.set_large_picture(self.blank.clone());
             account.set_has_picture(false);
+            account.set_phone(SharedString::new());
             return;
         };
         let name = format!("{} {}", me.first_name, me.last_name).trim().to_string();
@@ -2393,9 +2462,33 @@ impl Store {
         account.set_last_name(me.last_name.clone().into());
         account.set_username(me.usernames.as_ref().map(|names| names.editable_username.clone()).unwrap_or_default().into());
         account.set_bio(self.my_bio.clone().into());
-        if account.get_phone().is_empty() {
-            account.set_phone(format!("+{}", me.phone_number).into());
+        account.set_phone(self.phone_text().into());
+    }
+
+    /// The account's number as people write it there, or "+number" until TDLib has said how.
+    fn phone_text(&self) -> String {
+        if !self.my_phone.is_empty() {
+            return self.my_phone.clone();
         }
+        self.users.get(&self.my_id).map(|me| format!("+{}", me.phone_number)).unwrap_or_default()
+    }
+
+    /// What the list of accounts shows of this one (accounts.rs): its name, "+86 138 0013 2046"
+    /// (or "@name" when it has no number), its initial and its photo. None before getMe answered.
+    pub fn account_row(&self) -> Option<super::accounts::RowFacts> {
+        let me = self.users.get(&self.my_id)?;
+        let name = format!("{} {}", me.first_name, me.last_name).trim().to_string();
+        let username = me.usernames.as_ref().map(|names| names.editable_username.clone()).unwrap_or_default();
+        let sub = if !me.phone_number.is_empty() {
+            self.phone_text()
+        } else if !username.is_empty() {
+            format!("@{username}")
+        } else {
+            String::new()
+        };
+        let (picture, has_picture) = self.avatar(me.profile_photo.as_ref(), false);
+        let first = initial(&name).to_string();
+        Some((name, sub, first, picture, has_picture))
     }
 }
 

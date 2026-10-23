@@ -149,6 +149,11 @@ pub fn signed_in(id: i64) {
     access::signed_in(id);
 }
 
+/// The Telegram account the settings are for, by its user id; 0 until one has signed in.
+pub fn bound_account() -> i64 {
+    access::bound_account()
+}
+
 /// The socket goes with the app. (A stale one is removed at the next start all the same.)
 pub fn shut_down() {
     let _ = fs::remove_file(socket_path());

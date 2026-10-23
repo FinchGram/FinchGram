@@ -13,6 +13,7 @@ use std::rc::Rc;
 use serde_json::{Value, json};
 use slint::{ComponentHandle, ModelRc, VecModel};
 
+use super::Slot;
 use super::api::ChatList;
 use super::{Error, send};
 use super::{actions, conversation, store};
@@ -23,8 +24,8 @@ use crate::{ActionNotice, ChatOrder, Chats, MainWindow};
 const PAGE: i32 = 100;
 
 thread_local! {
-    /// Lists being loaded or loaded completely: each is asked for once.
-    static LOADED: RefCell<HashSet<ChatList>> = RefCell::new(HashSet::new());
+    /// Lists being loaded or loaded completely, by account: each is asked for once.
+    static LOADED: RefCell<HashSet<(Slot, ChatList)>> = RefCell::new(HashSet::new());
 }
 
 pub fn connect(ui: &MainWindow) {
@@ -328,11 +329,12 @@ pub fn load_folders() {
 
 /// Logged out: the next account's lists are asked for anew.
 pub fn forget() {
-    LOADED.with(|loaded| loaded.borrow_mut().clear());
+    let slot = super::context();
+    LOADED.with(|loaded| loaded.borrow_mut().retain(|(kept, _)| *kept != slot));
 }
 
 fn load(list: ChatList) {
-    if LOADED.with(|loaded| !loaded.borrow_mut().insert(list)) {
+    if LOADED.with(|loaded| !loaded.borrow_mut().insert((super::context(), list))) {
         return;
     }
     load_page(list);
@@ -348,7 +350,7 @@ fn load_page(list: ChatList) {
             }
         }
         Err(Error::Stopped) => {
-            LOADED.with(|loaded| loaded.borrow_mut().remove(&list));
+            LOADED.with(|loaded| loaded.borrow_mut().remove(&(super::context(), list)));
         }
         Err(err) => {
             eprintln!("telegram: cannot load the chats of {list:?}: {err}");

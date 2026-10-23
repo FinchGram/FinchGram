@@ -50,8 +50,10 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
 2. TDLib keeps its own JSON interface, as FFmpeg keeps its command line: requests, answers and
    updates are TDLib's objects exactly as its td_api.tl defines them, one per line. There is no
    protocol of our own on top.
-3. One program runs one TDLib client, that is one account. It ends when its standard input closes,
-   after TDLib has closed and written its database out; after a log out it ends by itself.
+3. One program runs one TDLib client, that is one account. The app runs one per account signed
+   in, ten at most as in Telegram's own apps, each with a database folder and a key of its own
+   (Several accounts, below). It ends when its standard input closes, after TDLib has closed and
+   written its database out; after a log out it ends by itself.
 4. A crash does not take the window down. When finchgram-tdlib ends unexpectedly, the requests still
    waiting fail and the adapter starts it again: TDLib's database is on disk, so it carries on. One
    that ends within 30 seconds of starting is broken, and the app says so instead of starting it
@@ -141,7 +143,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   chat beyond messages, and the pinned message bar), `reactions.rs`, `topics.rs`, `drafts.rs`,
   `share.rs`, `admin.rs` (the fifth round, below; `errors.rs` puts Telegram's refusals into the
   pages' words), `chat_info.rs` (the chat's info panel, below), `account.rs` and
-  `password.rs` (two-step verification) do what the pages ask for; `files.rs` downloads files,
+  `password.rs` (two-step verification) do what the pages ask for; `accounts.rs` lists the
+  accounts signed in for the account menu, the drawer and Broadsheet's rail and switches between
+  them (Several accounts, below); `files.rs` downloads files,
   `avatars.rs` fetches the photos of chats and people for the rows that show them (a letter square
   until then, or for good when there is no photo), `viewer.rs` fills the media viewer and keeps its volume (the
   speaker's tray, ↑ ↓ and the wheel; `video_volume` and `video_muted` in settings.toml, for the next
@@ -390,6 +394,47 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   counts and kinds of message in the UI language), `widgets.slint` and `chat.slint` (shared parts),
   `viewer.slint` (the media viewer, over the whole window), `pages/`, and the three themes' folders.
 
+## Several accounts
+
+Up to ten accounts are signed in at once (`src/telegram/mod.rs`, `accounts.rs`), as in Telegram's
+own apps. Each has a finchgram-tdlib of its own, running all the time, so that every account's
+messages arrive and notify; one account is in front, the one the pages show, and the others keep
+their chats, tabs and drafts for when they come back.
+
+- **Slots.** An account's place on disk is its slot, 1 … 10: slot 1 has `tdlib` and
+  `media_cache`, slot 2 has `tdlib-2` and `media_cache-2`, and so on, each with a key in the
+  Keychain named like its database folder ("tdlib", "tdlib-2"). At the start every slot that has a
+  folder is started; the account in front is the one that was when the app last ran (`account` in
+  settings.toml). "Add account" takes the first free slot and shows the login page for it; an
+  account left before logging in is dropped, and a slot found empty at the start while other
+  accounts are there goes too. Logging out of an account while others are there removes it,
+  folders and all (TDLib emptied them); the only account's slot stays for the next login, as it
+  always did.
+- **Context.** Which account a piece of code means is a matter of context (`telegram::context`):
+  while a batch from one account's finchgram-tdlib is handled, `send` and `store::with` are that
+  account's; at any other time (a click, a timer) they are the account in front's. Work an account
+  does later on its own (a timer it set, a photo decoded off the UI thread) keeps its account with
+  `in_context`. The pages follow only the account in front: `store::refresh` does nothing for
+  another account, whose store keeps its dirty flags until it comes to the front, when its models
+  are given to the pages and everything is built again. What is per account beyond the store
+  (which chat lists are loaded, the contacts, the downloads waited for, the unread count, where
+  the login is) is keyed by the slot, or kept with the account in `mod.rs`.
+- **Switching.** A click on an account in the account menu, the drawer or Broadsheet's rail;
+  ⌘1 … ⌘0 (the Account menu; in Terminal ⌃1 … ⌃0 too, as its pane says); or a click on another
+  account's notification. The account leaving keeps the composer's words with its chat
+  (`drafts.rs`), closes its menus, dialogs and the viewer, and goes offline; the one arriving
+  shows its store, its login step when it has no account yet, and is online while the window is
+  in use.
+- **Notifications and the Dock.** Every account notifies. A notification's name begins with the
+  account's slot, and a click brings that account to the front, with the chat. The Dock's number
+  is every account's unread messages added up; the logo of the activity bar and of the rail
+  carries a dot while an account not in front has unread messages.
+- **AI access.** The MCP server's settings ([mcp.md](mcp.md)) are one account's: the first that
+  signed in, and that one as long as it is signed in here, whichever account is in front;
+  assistants work with that account. Once it is gone (logged out), the account in front takes its
+  place, and the apps allowed ask again, as they do when another account logs in with one account.
+- **Not yet.** A window per account.
+
 ## The app's database
 
 What FinchGram keeps that is neither a preference nor Telegram's goes into a database of its own:
@@ -416,8 +461,6 @@ of layout then comes with its migration, told apart by SQLite's own `user_versio
 
 ## Not now
 
-- **Several accounts.** One finchgram-tdlib per account, each with a database directory of its own,
-  and the shell switching between them. Needs a design first.
 - **Calls.** TDLib only does the signalling; the media part (tgcalls) is a large project of its own.
 - **Plugins by other people.** They first need a trust model: who signs them, what the user
   approves, how they are sandboxed.

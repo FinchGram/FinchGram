@@ -4,6 +4,7 @@
 //! and again after a contact is added.
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 
 use serde_json::json;
 
@@ -12,40 +13,44 @@ use slint::ComponentHandle;
 
 use super::api::{self, Users};
 use super::store::{self, Names, Store};
-use super::{Error, actions, conversation, send, with_ui};
+use super::{Error, Slot, actions, conversation, send, with_ui};
 use crate::{Conversation, ExtraWords, MainWindow};
 
 type Then = Box<dyn FnOnce()>;
 
 thread_local! {
-    /// The contacts' user ids, once TDLib has said.
-    static CONTACTS: RefCell<Option<Vec<i64>>> = const { RefCell::new(None) };
-    /// What waits for them while they are asked for.
-    static WAITING: RefCell<Vec<Then>> = const { RefCell::new(Vec::new()) };
+    /// Each account's contacts' user ids, once TDLib has said.
+    static CONTACTS: RefCell<HashMap<Slot, Vec<i64>>> = RefCell::new(HashMap::new());
+    /// What waits for them while they are asked for, by account.
+    static WAITING: RefCell<HashMap<Slot, Vec<Then>>> = RefCell::new(HashMap::new());
 }
 
 /// Run `then` once the contacts are known: at once when they are, else after TDLib has answered.
 pub fn load(then: impl FnOnce() + 'static) {
-    if CONTACTS.with(|contacts| contacts.borrow().is_some()) {
+    let slot = super::context();
+    if CONTACTS.with(|contacts| contacts.borrow().contains_key(&slot)) {
         then();
         return;
     }
     let asked = WAITING.with(|waiting| {
         let mut waiting = waiting.borrow_mut();
-        waiting.push(Box::new(then));
-        waiting.len() > 1
+        let list = waiting.entry(slot).or_default();
+        list.push(Box::new(then));
+        list.len() > 1
     });
     if asked {
         return;
     }
-    send(json!({ "@type": "getContacts" }), |answer| {
+    send(json!({ "@type": "getContacts" }), move |answer| {
         match answer.map(serde_json::from_value::<Users>) {
-            Ok(Ok(users)) => CONTACTS.with(|contacts| *contacts.borrow_mut() = Some(users.user_ids)),
+            Ok(Ok(users)) => {
+                CONTACTS.with(|contacts| contacts.borrow_mut().insert(slot, users.user_ids));
+            }
             Ok(Err(err)) => eprintln!("telegram: cannot read the contacts: {err}"),
             Err(Error::Stopped) => {}
             Err(err) => eprintln!("telegram: cannot load the contacts: {err}"),
         }
-        for then in WAITING.with(|waiting| std::mem::take(&mut *waiting.borrow_mut())) {
+        for then in WAITING.with(|waiting| waiting.borrow_mut().remove(&slot).unwrap_or_default()) {
             then();
         }
     });
@@ -53,20 +58,22 @@ pub fn load(then: impl FnOnce() + 'static) {
 
 /// A contact was added: the list is asked for anew next time.
 pub fn changed() {
-    CONTACTS.with(|contacts| *contacts.borrow_mut() = None);
+    let slot = super::context();
+    CONTACTS.with(|contacts| contacts.borrow_mut().remove(&slot));
 }
 
-/// Logged out: the next account's contacts are its own.
+/// Logged out: the account's contacts go with it.
 pub fn forget() {
     changed();
-    WAITING.with(|waiting| waiting.borrow_mut().clear());
+    let slot = super::context();
+    WAITING.with(|waiting| waiting.borrow_mut().remove(&slot));
 }
 
 /// Whether the user is among the contacts, as TDLib's list or the user's own flag says. The store
 /// is the caller's: this is asked while the caller holds it (global_search.rs builds its rows
 /// inside `store::with`), and the store, one RefCell, cannot be borrowed a second time.
 pub fn is_contact(store: &Store, user_id: i64) -> bool {
-    CONTACTS.with(|contacts| contacts.borrow().as_ref().is_some_and(|contacts| contacts.contains(&user_id)))
+    CONTACTS.with(|contacts| contacts.borrow().get(&super::context()).is_some_and(|contacts| contacts.contains(&user_id)))
         || store.users.get(&user_id).is_some_and(|user| user.is_contact)
 }
 
@@ -74,7 +81,7 @@ pub fn is_contact(store: &Store, user_id: i64) -> bool {
 /// phone number has `digits` when the words are a phone number, ordered by name as the UI language
 /// orders names. Every contact when the words are empty. The store is the caller's (is_contact).
 pub fn matching(store: &Store, words: &str, digits: Option<&str>, names: &Names) -> Vec<i64> {
-    let ids = CONTACTS.with(|contacts| contacts.borrow().clone()).unwrap_or_default();
+    let ids = CONTACTS.with(|contacts| contacts.borrow().get(&super::context()).cloned()).unwrap_or_default();
     let mut found: Vec<(i64, String)> = ids
         .iter()
         .filter_map(|id| store.users.get(id))
@@ -95,7 +102,7 @@ pub fn matching(store: &Store, words: &str, digits: Option<&str>, names: &Names)
 
 /// The contact with exactly this phone number (its digits), if any.
 pub fn by_phone(digits: &str) -> Option<i64> {
-    let ids = CONTACTS.with(|contacts| contacts.borrow().clone()).unwrap_or_default();
+    let ids = CONTACTS.with(|contacts| contacts.borrow().get(&super::context()).cloned()).unwrap_or_default();
     store::with(|store| {
         ids.iter().copied().find(|id| store.users.get(id).is_some_and(|user| user.phone_number.trim_start_matches('+') == digits))
     })

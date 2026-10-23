@@ -2232,6 +2232,7 @@ component StatusBar inherits Rectangle {
     height: 26px;
     background: P.accent;
     callback search();
+    callback accounts();
 
     HorizontalLayout {
         padding-left: 14px;
@@ -2281,6 +2282,35 @@ component StatusBar inherits Rectangle {
                 }
             }
         }
+        // The account in front, as the design's 1b: a click opens the accounts pane (/accounts).
+        Rectangle {
+            background: P.on-accent.transparentize(0.85);
+            HorizontalLayout {
+                padding-left: 6px;
+                padding-right: 6px;
+                spacing: 6px;
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 7px;
+                        height: 7px;
+                        border-radius: 2px;
+                        background: P.on-accent;
+                    }
+                }
+                T {
+                    text: Account.name + (Account.phone != "" ? " · " + Account.phone : (Account.username != "" ? " · @" + Account.username : ""));
+                    color: P.on-accent;
+                    font-size: 12px;
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    root.accounts();
+                }
+            }
+        }
     }
 }
 
@@ -2323,6 +2353,14 @@ export component TerminalWindow inherits Rectangle {
         StatusBar {
             search => {
                 line.focus-line();
+            }
+            accounts => {
+                if Drawer.open && Drawer.accounts-shown {
+                    Drawer.close();
+                } else {
+                    Drawer.accounts-shown = true;
+                    Drawer.open = true;
+                }
             }
         }
     }

@@ -46,11 +46,13 @@ pub fn load() {
             store.my_id = id;
             store.users.insert(id, me);
             store.dirty.account = true;
+            store.dirty.accounts = true;
             store.dirty.chats = true;
         });
         store::refresh();
-        // What the user allows AI assistants is this account's (src/mcp/access.rs).
-        crate::mcp::signed_in(id);
+        // The account is known by its id now: to the list of accounts, and to the AI access
+        // settings, which are one account's (mod.rs, src/mcp/access.rs).
+        super::account_signed_in(id);
         send(json!({ "@type": "getUserFullInfo", "user_id": id }), move |answer| {
             let Ok(Ok(info)) = answer.map(serde_json::from_value::<UserFullInfo>) else { return };
             store::with(|store| {
@@ -62,8 +64,13 @@ pub fn load() {
         // The number as people write it there: "+86 138 0013 2046".
         send(json!({ "@type": "getPhoneNumberInfo", "phone_number_prefix": phone }), |answer| {
             let Ok(Ok(info)) = answer.map(serde_json::from_value::<PhoneNumberInfo>) else { return };
-            let phone = format!("+{} {}", info.country_calling_code, info.formatted_phone_number);
-            with_ui(|ui| ui.global::<Account>().set_phone(phone.trim().into()));
+            let phone = format!("+{} {}", info.country_calling_code, info.formatted_phone_number).trim().to_string();
+            store::with(|store| {
+                store.my_phone = phone;
+                store.dirty.account = true;
+                store.dirty.accounts = true;
+            });
+            store::refresh();
         });
     });
 }

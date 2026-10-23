@@ -65,6 +65,17 @@ pub fn input() {
     }
 }
 
+/// The account in front is about to be another (mod.rs): this one goes offline now, whatever the
+/// window does, and is told nothing more until it is in front again. Call as this account.
+pub fn leaving() {
+    if TOLD.get() == Some(true) {
+        tell(false);
+    }
+    READY.set(false);
+    TOLD.set(None);
+    CHECK.with(slint::Timer::stop);
+}
+
 /// Tell TDLib when the account goes online or offline.
 fn update() {
     if !READY.get() {
@@ -75,17 +86,21 @@ fn update() {
         return;
     }
     TOLD.set(Some(online));
-    let request = json!({ "@type": "setOption", "name": "online", "value": { "@type": "optionValueBoolean", "value": online } });
-    send(request, |answer| match answer {
-        Ok(_) | Err(Error::Stopped) => {}
-        Err(err) => eprintln!("telegram: cannot change the online status: {err}"),
-    });
+    tell(online);
     CHECK.with(|check| {
         if online {
             check.start(slint::TimerMode::Repeated, CHECK_EVERY, update);
         } else {
             check.stop();
         }
+    });
+}
+
+fn tell(online: bool) {
+    let request = json!({ "@type": "setOption", "name": "online", "value": { "@type": "optionValueBoolean", "value": online } });
+    send(request, |answer| match answer {
+        Ok(_) | Err(Error::Stopped) => {}
+        Err(err) => eprintln!("telegram: cannot change the online status: {err}"),
     });
 }
 

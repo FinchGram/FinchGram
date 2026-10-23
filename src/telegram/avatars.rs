@@ -23,18 +23,23 @@ thread_local! {
 
 /// Download and decode `files`, the photos the rows wanted; the pages show them as they arrive.
 pub fn fetch(files: Vec<File>) {
+    // The photos are one account's (its file ids, its store): decoded later, they go back to it.
+    let slot = super::context();
     for file in files {
         let id = file.id;
         files::download(&file, files::IN_LISTS, move |path| {
             images::load(path, move |picture| {
                 let Some(picture) = picture else { return };
-                store::with(|store| {
-                    store.avatars.insert(id, picture);
-                    store.dirty.chats = true;
-                    store.dirty.account = true;
-                    store.dirty.viewer = true;
-                    // The rows of the open chat show their senders' photos.
-                    store.dirty.conversation |= store.open.is_some();
+                super::in_context(slot, || {
+                    store::with(|store| {
+                        store.avatars.insert(id, picture);
+                        store.dirty.chats = true;
+                        store.dirty.account = true;
+                        store.dirty.accounts = true;
+                        store.dirty.viewer = true;
+                        // The rows of the open chat show their senders' photos.
+                        store.dirty.conversation |= store.open.is_some();
+                    });
                 });
                 refresh_soon();
             });
@@ -55,6 +60,7 @@ fn refresh_soon() {
     slint::Timer::single_shot(REFRESH_AFTER, || {
         REFRESH_PENDING.set(false);
         store::refresh();
+        super::accounts::refresh_if_changed();
         super::actions::photos_arrived();
         super::global_search::photos_arrived();
         super::new_chat::photos_arrived();

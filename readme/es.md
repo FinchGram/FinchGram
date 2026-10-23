@@ -21,6 +21,7 @@ Es un cliente no oficial, no hecho por Telegram.
   (⌘K): tus chats y contactos, usuarios, grupos y canales públicos por nombre de usuario, personas
   por número de teléfono y mensajes; una búsqueda dentro del chat (⌘F); una vista de tus canales y
   otra de tus bots. El lápiz crea un nuevo grupo, canal o chat, o añade un contacto.
+  Varias cuentas, hasta diez, cada una con su propio TDLib: cambia desde el menú de la cuenta o con ⌘1 … ⌘0.
 - **Mensajes.** Texto con su formato (negrita, cursiva, código, enlaces), respuestas y reenvíos,
   fotos, vídeos, GIF, stickers, archivos y una tarjeta con la vista previa de un enlace. Con un clic
   derecho en un mensaje se abre su menú: responder, editar, copiar, copiar su enlace, reenviar,
@@ -65,7 +66,7 @@ Es un cliente no oficial, no hecho por Telegram.
   [docs/mcp.md](../docs/mcp.md).
 - **Idiomas.** La interfaz y este README en once idiomas.
 
-Todavía no: chats secretos, mensajes de voz y llamadas, varias cuentas, encuestas y mensajes
+Todavía no: chats secretos, mensajes de voz y llamadas, encuestas y mensajes
 programados, filtros por palabras clave, Windows y Linux. Mira
 [qué viene después](../docs/architecture.md#not-now).
 

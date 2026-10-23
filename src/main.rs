@@ -297,7 +297,7 @@ fn main() -> Result<(), slint::PlatformError> {
     });
 
     player::install(&ui);
-    telegram::start(&ui);
+    telegram::start(&ui, settings.clone());
     mcp::start(&ui, settings.clone());
 
     // Updates: the newest release found by the last check, kept here so "install" knows what

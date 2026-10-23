@@ -4,7 +4,8 @@
 // the words are in ui/drawer.slint; src/drawer.rs fills and acts.
 import { Drawer, DrawerWords, ToolRow } from "../drawer.slint";
 import { AppState, Page } from "../state.slint";
-import { Account } from "../telegram.slint";
+import { Account, Accounts } from "../telegram.slint";
+import { AccountColors } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { TerminalPalette as P } from "palette.slint";
 
@@ -111,7 +112,7 @@ export component ToolsPane inherits Rectangle {
                 }
                 T {
                     horizontal-stretch: 1;
-                    text: root.tools ? DrawerWords.pinned-count(Drawer.pinned.length) : "1/10";
+                    text: root.tools ? DrawerWords.pinned-count(Drawer.pinned.length) : Accounts.count + "/10";
                     color: P.faint;
                     overflow: elide;
                 }
@@ -185,59 +186,95 @@ export component ToolsPane inherits Rectangle {
                     T { text: "/me"; color: P.accent; }
                     T { text: DrawerWords.profile(); color: P.faint; }
                 }
-                // The accounts: the one in front; adding another is still to come.
+                // The accounts, a row each: the one in front marked, the others with their unread
+                // messages; a click brings one to the front. Adding one; greyed with ten.
                 if !root.tools: T {
-                    text: "── 1/10 · " + DrawerWords.accounts-legend() + " ──";
+                    text: "── " + Accounts.count + "/10 · " + DrawerWords.accounts-legend() + " ──";
                     color: P.faint;
                     overflow: elide;
                 }
-                if !root.tools: HorizontalLayout {
-                    padding-left: 6px;
-                    padding-right: 6px;
-                    spacing: 8px;
-                    T {
-                        width: 12px;
-                        text: "›";
-                        color: P.accent;
-                    }
-                    VerticalLayout {
-                        alignment: center;
-                        Rectangle {
-                            width: 8px;
-                            height: 8px;
-                            border-radius: 2px;
-                            background: P.accent;
+                if !root.tools: VerticalLayout {
+                    for row in Accounts.rows: Rectangle {
+                        height: 36px;
+                        border-radius: 2px;
+                        background: row.current ? P.sel : (row-touch.has-hover ? P.sel.transparentize(0.5) : transparent);
+                        HorizontalLayout {
+                            padding-left: 6px;
+                            padding-right: 6px;
+                            spacing: 8px;
+                            T {
+                                width: 12px;
+                                text: row.current ? "›" : "";
+                                color: P.accent;
+                            }
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle {
+                                    width: 8px;
+                                    height: 8px;
+                                    border-radius: 2px;
+                                    background: AccountColors.accent(row.index, P.dark);
+                                }
+                            }
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: center;
+                                T {
+                                    text: row.name;
+                                    color: row.current ? P.accent : P.text;
+                                    overflow: elide;
+                                }
+                                T {
+                                    text: row.sub;
+                                    color: P.faint;
+                                    font-size: 11px;
+                                    overflow: elide;
+                                }
+                            }
+                            T {
+                                text: row.current ? DrawerWords.current() : (row.unread > 0 ? "" + row.unread : "");
+                                color: P.accent2;
+                            }
+                            T {
+                                width: 28px;
+                                text: "⌃" + (row.index == 9 ? 0 : row.index + 1);
+                                color: P.faint;
+                                horizontal-alignment: right;
+                            }
                         }
-                    }
-                    VerticalLayout {
-                        horizontal-stretch: 1;
-                        T {
-                            text: Account.name;
-                            color: P.accent;
-                            overflow: elide;
+                        row-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                if !row.current {
+                                    Accounts.switch(row.slot);
+                                }
+                            }
                         }
-                        T {
-                            text: Account.phone != "" ? Account.phone : "@" + Account.username;
-                            color: P.faint;
-                            font-size: 11px;
-                            overflow: elide;
-                        }
-                    }
-                    T {
-                        text: DrawerWords.current();
-                        color: P.accent2;
-                    }
-                    T {
-                        width: 28px;
-                        text: "⌃1";
-                        color: P.faint;
-                        horizontal-alignment: right;
                     }
                 }
-                if !root.tools: T {
-                    text: "[+ " + DrawerWords.add-account() + "]  " + DrawerWords.not-yet();
-                    color: P.faint;
-                    opacity: 0.42;
+                if !root.tools: Rectangle {
+                    height: 24px;
+                    opacity: Accounts.full ? 0.42 : 1;
+                    HorizontalLayout {
+                        alignment: start;
+                        spacing: 8px;
+                        T {
+                            text: "[+ " + DrawerWords.add-account() + "]";
+                            color: Accounts.full ? P.faint : P.accent;
+                        }
+                        if Accounts.full: T {
+                            text: DrawerWords.full();
+                            color: P.faint;
+                        }
+                    }
+                    TouchArea {
+                        mouse-cursor: Accounts.full ? MouseCursor.default : MouseCursor.pointer;
+                        clicked => {
+                            if !Accounts.full {
+                                Accounts.add();
+                            }
+                        }
+                    }
                 }
             }
         }

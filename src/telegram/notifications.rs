@@ -16,7 +16,7 @@ use slint::ComponentHandle;
 
 use super::api::{self, ChatList, NotificationSettingsScope, NotificationType};
 use super::store::{self, Names};
-use super::{Error, send, with_ui};
+use super::{Error, Slot, send, with_ui};
 use crate::platform::{self, Notification};
 use crate::{AppState, ChatKind, Fmt, MainWindow, NotificationScope, NotificationScopes, Page, PlatformWords, TelegramState, Viewer};
 
@@ -27,11 +27,9 @@ const SHOWN_CHATS: i32 = 25;
 const MUTE_FOREVER: i32 = i32::MAX;
 
 thread_local! {
-    /// Unread messages in the main chat list: all of them, and those in chats that are not muted.
-    static UNREAD: Cell<(i32, i32)> = const { Cell::new((0, 0)) };
-    /// A chat that a click on a notification asked for before TDLib had said what it is (the
-    /// click started FinchGram).
-    static WANTED: Cell<Option<i64>> = const { Cell::new(None) };
+    /// A chat (of an account) that a click on a notification asked for before TDLib had said what
+    /// it is (the click started FinchGram).
+    static WANTED: Cell<Option<(Slot, i64)>> = const { Cell::new(None) };
 }
 
 pub fn connect(ui: &MainWindow) {
@@ -58,12 +56,15 @@ pub fn start() {
     }
 }
 
-/// The account is gone (a log out): its notifications go, and its unread count.
+/// The account is gone (a log out): its notifications go, and its unread count. Call as it.
 pub fn forget() {
-    UNREAD.set((0, 0));
-    WANTED.set(None);
-    platform::remove_all_notifications();
-    platform::set_badge(0);
+    let slot = super::context();
+    super::set_unread((0, 0));
+    if WANTED.get().is_some_and(|(wanted, _)| wanted == slot) {
+        WANTED.set(None);
+    }
+    platform::keep_only_notifications(&prefix(slot), Vec::new());
+    show_unread_count();
 }
 
 /// Settings → Notifications & sounds changed: the unread count follows, and the system is asked
@@ -86,16 +87,18 @@ pub fn group_changed(
     added: Vec<api::Notification>,
     removed: Vec<i32>,
 ) {
+    let slot = super::context();
     if !removed.is_empty() {
-        let ids: Vec<String> = removed.iter().map(|id| identifier(group_id, *id)).collect();
+        let ids: Vec<String> = removed.iter().map(|id| identifier(slot, group_id, *id)).collect();
         platform::remove_notifications(&ids);
     }
     // A group that had made room for others shows again: nothing new in it.
     if settings_chat_id == 0 || added.is_empty() {
         return;
     }
-    // The user is looking at the chat: TDLib takes the notification back once its message is seen.
-    if super::window_is_in_front() && store::with(|store| store.open) == Some(Some(chat_id)) {
+    // The user is looking at the chat (the account is in front, the window too): TDLib takes the
+    // notification back once its message is seen.
+    if super::is_front() && super::window_is_in_front() && store::with(|store| store.open) == Some(Some(chat_id)) {
         return;
     }
     let Some((desktop, previews, sounds, flash)) = read_state(|app| {
@@ -115,7 +118,7 @@ pub fn group_changed(
         .filter_map(|notification| {
             let NotificationType::NewMessage { message, show_preview } = &notification.kind else { return None };
             let (title, subtitle, body) = words(message, previews && *show_preview)?;
-            Some(Notification { id: identifier(group_id, notification.id), chat_id, title, subtitle, body, sound: false })
+            Some(Notification { id: identifier(slot, group_id, notification.id), account: slot, chat_id, title, subtitle, body, sound: false })
         })
         .collect();
     // Several at once sound once.
@@ -130,37 +133,50 @@ pub fn group_changed(
 /// The notifications still shown from before TDLib started: the system takes back the others
 /// (their messages were read meanwhile, or the user logged out).
 pub fn active(groups: Vec<api::NotificationGroup>) {
+    let slot = super::context();
     let ids = groups
         .iter()
-        .flat_map(|group| group.notifications.iter().map(|notification| identifier(group.id, notification.id)))
+        .flat_map(|group| group.notifications.iter().map(|notification| identifier(slot, group.id, notification.id)))
         .collect();
-    platform::keep_only_notifications(ids);
+    platform::keep_only_notifications(&prefix(slot), ids);
 }
 
-/// The number of unread messages changed. The main chat list's is the one on the Dock icon.
+/// The number of unread messages changed. The main chat list's counts on the Dock icon, every
+/// account's added up (mod.rs keeps each account's).
 pub fn unread_changed(list: ChatList, unread: i32, unmuted: i32) {
     if list == ChatList::Main {
-        UNREAD.set((unread, unmuted));
+        super::set_unread((unread, unmuted));
         show_unread_count();
     }
 }
 
 /// After each batch from TDLib: a chat a click on a notification asked for, once it is known.
 pub fn open_wanted() {
-    if let Some(chat_id) = WANTED.get()
-        && can_open(chat_id)
-    {
+    let Some((slot, chat_id)) = WANTED.get() else { return };
+    // The user turned to another account meanwhile: the click is spent.
+    if slot != super::shown() {
+        WANTED.set(None);
+        return;
+    }
+    if can_open(chat_id) {
         WANTED.set(None);
         open(chat_id);
     }
 }
 
-/// A click on a notification, the window already shown: its chat.
-fn clicked(chat_id: i64) {
+/// A click on a notification, the window already shown: the account the notification was for
+/// comes to the front, with its chat.
+fn clicked(slot: Slot, chat_id: i64) {
+    if slot != super::shown() {
+        super::switch_to(slot);
+    }
+    if slot != super::shown() {
+        return; // no such account any more
+    }
     if can_open(chat_id) {
         open(chat_id);
     } else {
-        WANTED.set(Some(chat_id));
+        WANTED.set(Some((slot, chat_id)));
     }
 }
 
@@ -181,8 +197,7 @@ fn open(chat_id: i64) {
 }
 
 fn show_unread_count() {
-    let (unread, unmuted) = UNREAD.get();
-    platform::set_badge(if read_state(|app| app.get_count_muted_chats()) { unread } else { unmuted });
+    platform::set_badge(super::unread_sum(read_state(|app| app.get_count_muted_chats())));
 }
 
 /// What a notification says: the chat's name; who wrote, in a group; and the message, or only that
@@ -228,9 +243,14 @@ fn toggle_scope(scope: NotificationSettingsScope) {
 }
 
 /// The name a notification has in the system: TDLib's notification ids are unique only within
-/// their group.
-fn identifier(group_id: i32, notification_id: i32) -> String {
-    format!("{group_id}.{notification_id}")
+/// their group, and each account's groups are its own.
+fn identifier(slot: Slot, group_id: i32, notification_id: i32) -> String {
+    format!("{}{group_id}.{notification_id}", prefix(slot))
+}
+
+/// What the names of an account's notifications begin with.
+fn prefix(slot: Slot) -> String {
+    format!("{slot}/")
 }
 
 /// Read the app's state (Settings → Notifications & sounds, how far Telegram is), when the window
@@ -277,7 +297,7 @@ mod tests {
         };
         assert!(*show_preview && message.id == 3_145_728 && !added_notifications[0].is_silent);
         assert!(matches!(added_notifications[1].kind, NotificationType::Other) && added_notifications[1].is_silent);
-        assert_eq!(identifier(notification_group_id, added_notifications[0].id), "7.42");
+        assert_eq!(identifier(3, notification_group_id, added_notifications[0].id), "3/7.42");
 
         let update: api::Update = serde_json::from_str(
             r#"{"@type":"updateActiveNotifications","groups":[{"@type":"notificationGroup","id":7,"type":{"@type":"notificationGroupTypeMentions"},"chat_id":1048576,"total_count":2,"notifications":[{"@type":"notification","id":42,"date":1791387600,"is_silent":false,"type":{"@type":"notificationTypeNewCall","call_id":5}}]}]}"#,

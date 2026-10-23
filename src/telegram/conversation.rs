@@ -17,13 +17,14 @@ use slint::ComponentHandle;
 
 use super::api::{self, ChatList, ChatType, Messages, SponsoredMessages, SupergroupFullInfo};
 use super::store::{self, History};
-use super::{Error, actions, admin, bots, drafts, errors, files, reactions, send, topics};
+use super::{Error, actions, admin, bots, drafts, errors, files, reactions, send, topics, Slot};
 use crate::images;
 use crate::{Conversation, MainWindow};
 
 thread_local! {
-    /// Messages that arrived in the open chat while the window was in the background.
-    static UNSEEN: RefCell<Vec<(i64, Vec<i64>)>> = const { RefCell::new(Vec::new()) };
+    /// Messages that arrived in an account's open chat while the window was in the background, or
+    /// the account was not in front: the account, the chat, the messages.
+    static UNSEEN: RefCell<Vec<(Slot, i64, Vec<i64>)>> = const { RefCell::new(Vec::new()) };
     /// The chat last told that we are typing, and when.
     static TYPING: Cell<Option<(i64, Instant)>> = const { Cell::new(None) };
 }
@@ -32,9 +33,16 @@ thread_local! {
 /// request (a busy chat gathers thousands of messages in a day). Messages of a chat that is no
 /// longer open stay unread.
 pub fn window_came_to_front() {
-    let unseen = UNSEEN.with(|unseen| std::mem::take(&mut *unseen.borrow_mut()));
+    // The account in front's; another account's wait for it to come to the front (mod.rs).
+    let slot = super::context();
+    let unseen = UNSEEN.with(|unseen| {
+        let mut unseen = unseen.borrow_mut();
+        let (mine, others): (Vec<_>, Vec<_>) = std::mem::take(&mut *unseen).into_iter().partition(|(kept, _, _)| *kept == slot);
+        *unseen = others;
+        mine
+    });
     let Some(open) = open_chat() else { return };
-    let mut seen: Vec<i64> = unseen.into_iter().filter(|(chat_id, _)| *chat_id == open).flat_map(|(_, ids)| ids).collect();
+    let mut seen: Vec<i64> = unseen.into_iter().filter(|(_, chat_id, _)| *chat_id == open).flat_map(|(_, _, ids)| ids).collect();
     seen.sort_unstable();
     seen.dedup();
     if !seen.is_empty() {
@@ -741,8 +749,8 @@ fn view_newest(chat_id: i64) {
 /// The messages are on the screen of the open chat. While the window is in the background they
 /// are not seen yet: they wait until it comes to the front, as in Telegram's own apps.
 pub fn view(chat_id: i64, message_ids: Vec<i64>) {
-    if !super::window_is_in_front() {
-        UNSEEN.with(|unseen| unseen.borrow_mut().push((chat_id, message_ids)));
+    if !super::window_is_in_front() || !super::is_front() {
+        UNSEEN.with(|unseen| unseen.borrow_mut().push((super::context(), chat_id, message_ids)));
         return;
     }
     let request = json!({

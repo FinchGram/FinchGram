@@ -88,7 +88,7 @@ const MODAL_OK: NSModalResponse = 1;
 const MEDIA_EXTENSIONS: [&str; 7] = ["jpg", "jpeg", "png", "webp", "mp4", "m4v", "mov"];
 
 /// What a click on a notification opens (`handle_notification_clicks`).
-static OPEN_CHAT: OnceLock<fn(i64)> = OnceLock::new();
+static OPEN_CHAT: OnceLock<fn(u32, i64)> = OnceLock::new();
 
 pub fn install(ui: &MainWindow, before_quit: fn()) {
     WINDOW.with(|window| *window.borrow_mut() = Some(ui.as_weak()));
@@ -719,14 +719,16 @@ define_class!(
         ) {
             // SAFETY: a constant of the framework, there for the life of the process.
             let clicked = response.actionIdentifier().isEqualToString(unsafe { UNNotificationDefaultActionIdentifier });
-            let chat_id = response.notification().request().content().threadIdentifier().to_string().parse::<i64>();
-            if clicked && let Ok(chat_id) = chat_id {
+            // The thread names the account and the chat: "2/-1001234567890".
+            let thread = response.notification().request().content().threadIdentifier().to_string();
+            let target = thread.split_once('/').and_then(|(account, chat)| Some((account.parse::<u32>().ok()?, chat.parse::<i64>().ok()?)));
+            if clicked && let Some((account, chat_id)) = target {
                 let _ = slint::invoke_from_event_loop(move || {
                     if let Some(ui) = WINDOW.with(|window| window.borrow().as_ref().and_then(slint::Weak::upgrade)) {
                         super::show_window(&ui);
                     }
                     if let Some(open_chat) = OPEN_CHAT.get() {
-                        open_chat(chat_id);
+                        open_chat(account, chat_id);
                     }
                 });
             }
@@ -750,7 +752,7 @@ fn notification_center() -> Option<Retained<UNUserNotificationCenter>> {
     Some(UNUserNotificationCenter::currentNotificationCenter())
 }
 
-pub fn handle_notification_clicks(open_chat: fn(i64)) {
+pub fn handle_notification_clicks(open_chat: fn(u32, i64)) {
     let _ = OPEN_CHAT.set(open_chat);
     let Some(center) = notification_center() else { return };
     let delegate = NotificationDelegate::new();
@@ -777,7 +779,7 @@ pub fn show_notification(notification: &super::Notification) {
     content.setTitle(&NSString::from_str(&notification.title));
     content.setSubtitle(&NSString::from_str(&notification.subtitle));
     content.setBody(&NSString::from_str(&notification.body));
-    content.setThreadIdentifier(&NSString::from_str(&notification.chat_id.to_string()));
+    content.setThreadIdentifier(&NSString::from_str(&format!("{}/{}", notification.account, notification.chat_id)));
     if notification.sound {
         content.setSound(Some(&UNNotificationSound::defaultSound()));
     }
@@ -797,8 +799,9 @@ pub fn remove_notifications(ids: &[String]) {
     center.removeDeliveredNotificationsWithIdentifiers(&NSArray::from_retained_slice(&ids));
 }
 
-pub fn keep_only_notifications(ids: Vec<String>) {
+pub fn keep_only_notifications(prefix: &str, ids: Vec<String>) {
     let Some(center) = notification_center() else { return };
+    let prefix = prefix.to_string();
     let keep: HashSet<String> = ids.into_iter().collect();
     // The system answers later: notifications shown meanwhile are new, and stay.
     let asked = NSDate::now();
@@ -810,7 +813,10 @@ pub fn keep_only_notifications(ids: Vec<String>) {
             .iter()
             .filter(|notification| notification.date().timeIntervalSinceDate(&asked) < 0.0)
             .map(|notification| notification.request().identifier())
-            .filter(|id| !keep.contains(&id.to_string()))
+            .filter(|id| {
+                let id = id.to_string();
+                id.starts_with(&prefix) && !keep.contains(&id)
+            })
             .collect();
         if !stale.is_empty() {
             remover.removeDeliveredNotificationsWithIdentifiers(&NSArray::from_retained_slice(&stale));
@@ -819,11 +825,6 @@ pub fn keep_only_notifications(ids: Vec<String>) {
     center.getDeliveredNotificationsWithCompletionHandler(&delivered);
 }
 
-pub fn remove_all_notifications() {
-    if let Some(center) = notification_center() {
-        center.removeAllDeliveredNotifications();
-    }
-}
 
 pub fn set_badge(count: i32) {
     let Some(mtm) = MainThreadMarker::new() else { return };

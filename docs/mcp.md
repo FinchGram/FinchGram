@@ -46,8 +46,10 @@ reading that nobody can see, sending that the user controls.
    to use your Telegram account?", with the program as macOS reports it, where it is, and what the
    settings would let it see and write. Allow, or Don't Allow; either is remembered, under Apps on
    the page, where an app can be allowed later or removed so that it asks again. The answer is for
-   the Telegram account signed in: when another account logs in, every app asks again, and the
-   chosen chats, which were the other account's, start empty.
+   one Telegram account: the first that signed in, and that one as long as it is signed in here,
+   whichever account is in front (docs/architecture.md, Several accounts); assistants work with
+   that account. Once it is gone (logged out), the account in front takes its place: every app asks
+   again, and the chosen chats, which were the other account's, start empty.
 
 An assistant that connects while the server is off, or that the user has not allowed, is told so,
 in words the user sees in their app's MCP log.
@@ -143,8 +145,9 @@ credentials from the environment". FinchGram's answer has three layers:
    inside the VS Code extension are one app, allowed once. A program without such a signature
    (unsigned, signed ad hoc, or under a certificate Apple did not issue; Apple's own programs carry
    no team) is remembered by where it is instead, its app bundle or its path. The answer is also
-   for the Telegram account signed in: another account logging in drops every answer and the chosen
-   chats, so that nothing allowed for one account carries over to the next. When the system cannot
+   for one Telegram account, the one the settings are for: when that account is gone and another
+   takes its place, every answer and the chosen chats are dropped, so that nothing allowed for one
+   account carries over to the next. When the system cannot
    name the program, the
    dialog says so and makes Don't Allow the safe choice. Such a program's answer lasts for the run
    and for that process only (its pid and when it started); one the system cannot place at all, not

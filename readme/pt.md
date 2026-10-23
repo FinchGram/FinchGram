@@ -21,6 +21,7 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
   usuários, grupos e canais públicos pelo nome de usuário, pessoas pelo número de telefone e
   mensagens; uma busca dentro do chat (⌘F); uma visão dos seus canais e outra dos seus bots.
   O lápis cria um novo grupo, canal ou chat, ou adiciona um contato.
+  Várias contas, até dez, cada uma com o seu próprio TDLib: troque pelo menu da conta ou com ⌘1 … ⌘0.
 - **Mensagens.** Texto com formatação (negrito, itálico, código, links), respostas e encaminhamentos,
   fotos, vídeos, GIFs, figurinhas, arquivos e um cartão com a prévia de um link. Um clique direito
   numa mensagem abre o menu dela: responder, editar, copiar, copiar o link, encaminhar, denunciar,
@@ -64,7 +65,7 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
   [docs/mcp.md](../docs/mcp.md).
 - **Idiomas.** A interface e este README em onze idiomas.
 
-Ainda não: chats secretos, mensagens de voz e chamadas, várias contas, enquetes e mensagens
+Ainda não: chats secretos, mensagens de voz e chamadas, enquetes e mensagens
 agendadas, filtros por palavra-chave, Windows e Linux. Veja
 [o que vem a seguir](../docs/architecture.md#not-now).
 

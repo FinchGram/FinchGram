@@ -241,8 +241,9 @@ pub fn raise_overlay(window: &slint::Window) {
 pub struct Notification {
     /// Its name, by which it is taken back.
     pub id: String,
-    /// The chat it is from: the system keeps a chat's notifications together, and a click on one
-    /// opens the chat.
+    /// The account it is for (src/telegram/mod.rs's slot), and the chat it is from: the system
+    /// keeps a chat's notifications together, and a click on one opens the chat, in its account.
+    pub account: u32,
     pub chat_id: i64,
     pub title: String,
     /// Who wrote it, in a group; else empty.
@@ -252,9 +253,10 @@ pub struct Notification {
     pub sound: bool,
 }
 
-/// Clicks on FinchGram's notifications show the window and hand their chat to `open_chat`. Call
-/// before the event loop runs, so that the click that started FinchGram counts too.
-pub fn handle_notification_clicks(open_chat: fn(i64)) {
+/// Clicks on FinchGram's notifications show the window and hand their account and chat to
+/// `open_chat`. Call before the event loop runs, so that the click that started FinchGram counts
+/// too.
+pub fn handle_notification_clicks(open_chat: fn(u32, i64)) {
     #[cfg(target_os = "macos")]
     macos::handle_notification_clicks(open_chat);
     #[cfg(not(target_os = "macos"))]
@@ -283,18 +285,15 @@ pub fn remove_notifications(ids: &[String]) {
     let _ = ids;
 }
 
-/// Take back every notification shown so far but those with these ids.
-pub fn keep_only_notifications(ids: Vec<String>) {
+/// Take back every notification shown so far whose id begins with `prefix` (one account's) but
+/// those with these ids.
+pub fn keep_only_notifications(prefix: &str, ids: Vec<String>) {
     #[cfg(target_os = "macos")]
-    macos::keep_only_notifications(ids);
+    macos::keep_only_notifications(prefix, ids);
     #[cfg(not(target_os = "macos"))]
-    let _ = ids;
+    let _ = (prefix, ids);
 }
 
-pub fn remove_all_notifications() {
-    #[cfg(target_os = "macos")]
-    macos::remove_all_notifications();
-}
 
 /// The number on FinchGram's icon (the Dock's on macOS); none for 0.
 pub fn set_badge(count: i32) {

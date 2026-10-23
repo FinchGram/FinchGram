@@ -482,6 +482,51 @@ fn fill_chats(ui: &MainWindow) {
     account.set_phone("+86 138 0013 2046".into());
     account.set_id("6130081346".into());
     account.set_bio("Design, and a little code. Shanghai.".into());
+    // Three accounts signed in: the account menu, the drawers and Broadsheet's rail show them.
+    let rows = vec![
+        AccountRow {
+            slot: 1,
+            index: 0,
+            name: "Zhou Ye".into(),
+            sub: "+86 138 0013 2046".into(),
+            initial: "Z".into(),
+            picture: portrait(330.0),
+            has_picture: true,
+            unread: 0,
+            current: true,
+            ready: true,
+        },
+        AccountRow {
+            slot: 2,
+            index: 1,
+            name: "Lin Xia".into(),
+            sub: "@linxia".into(),
+            initial: "L".into(),
+            picture: Image::default(),
+            has_picture: false,
+            unread: 3,
+            current: false,
+            ready: true,
+        },
+        AccountRow {
+            slot: 3,
+            index: 2,
+            name: "Keycap Studio".into(),
+            sub: "+86 21 5555 0199".into(),
+            initial: "K".into(),
+            picture: Image::default(),
+            has_picture: false,
+            unread: 0,
+            current: false,
+            ready: true,
+        },
+    ];
+    let accounts = ui.global::<Accounts>();
+    accounts.set_count(3);
+    accounts.set_index(0);
+    accounts.set_others_unread(3);
+    accounts.set_others(model(rows.iter().filter(|row| !row.current).cloned().collect()));
+    accounts.set_rows(model(rows));
 
     // Some chats have photos, the others their letters, as in any account.
     let keyboards = ChatRow {
@@ -1958,6 +2003,14 @@ fn screenshots() {
                 drawer.set_open(true);
                 save(&window, &name("drawer"));
                 drawer.set_open(false);
+                // Terminal's pane under /accounts: the accounts, the one in front marked.
+                if theme == Theme::Terminal {
+                    drawer.set_accounts_shown(true);
+                    drawer.set_open(true);
+                    save(&window, &name("accounts"));
+                    drawer.set_open(false);
+                    drawer.set_accounts_shown(false);
+                }
             }
             // A right click on the first chat of the list: its menu.
             let (x, y) = match theme {

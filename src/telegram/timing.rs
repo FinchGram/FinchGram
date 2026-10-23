@@ -55,7 +55,7 @@ fn refresh_timing() {
     let app = ui.global::<AppState>();
     app.set_telegram_state(TelegramState::Ready);
     app.set_page(Page::Chats);
-    store::install(&ui);
+    super::start_alone_for_test(&ui);
 
     let took = timed(|| {
         store::with(|store| {

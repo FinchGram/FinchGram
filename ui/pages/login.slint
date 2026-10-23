@@ -418,6 +418,14 @@ component PhoneStep {
                 Login.use-qr-code();
             }
         }
+        // One more account being added: back to the one that was in front.
+        if Login.adding: Link {
+            text: @tr("Back");
+            enabled: !Login.busy;
+            clicked => {
+                Login.cancel-adding();
+            }
+        }
     }
 }
 

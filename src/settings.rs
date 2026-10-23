@@ -28,6 +28,9 @@ pub struct Settings {
     /// The chat's info panel stays open or shut across chats and restarts (⌘I; src/telegram/
     /// chat_info.rs).
     pub chat_info_open: bool,
+    /// The account in front when the app last ran, by its slot (src/telegram/mod.rs): the one the
+    /// next start shows.
+    pub account: u32,
     /// How the chats of every folder are ordered under the pinned ones (a folder's menu).
     pub chat_order: ChatOrder,
     /// The media viewer's video volume, 0 … 100, and whether its sound is off: as the user last
@@ -321,6 +324,7 @@ impl Default for Settings {
             show_in_menu_bar: true,
             send_with_enter: true,
             chat_info_open: false,
+            account: 1,
             chat_order: ChatOrder::LatestMessage,
             video_volume: 100,
             video_muted: false,

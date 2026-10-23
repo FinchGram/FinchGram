@@ -1,11 +1,12 @@
 // Broadsheet's colours (the design's first round, "1a 报纸": TA). The accent is the account's own
 // colour (AccountColors), as in the design; the chat window only, the shared pages use Look.
 import { Look, AccountColors } from "../look.slint";
+import { Accounts } from "../telegram.slint";
 
 export global BroadsheetPalette {
     out property <bool> dark: Look.dark;
-    // Which account's colour (several accounts are still to come: the first).
-    out property <int> account: 0;
+    // Which account's colour: the one in front's place (src/telegram/accounts.rs).
+    out property <int> account: Accounts.index;
 
     out property <color> bg: dark ? #1b1a19 : #f3f2f2;
     out property <color> rail: dark ? #151413 : #eae9e9;

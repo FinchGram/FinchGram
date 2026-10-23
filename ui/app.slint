@@ -1,6 +1,6 @@
 import { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language, NotificationSetting, Screenshot } from "state.slint";
 import { ShotWindow, Shot, ShotTool, ShotCursor, ShotBox, ShotPath, ShotText, ShotCell } from "shot.slint";
-import { Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
+import { Chats, Conversation, Account, Accounts, AccountRow, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, LinkPreview, RowKind, Content, ChatKind, Status, Moment,
     Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice, NotificationScope,
     NotificationScopes, FileCard, FileState, FileType, Attachments, Attachment, AttachKind, AttachProblem, AttachHint, ChatConfirm,
@@ -27,7 +27,7 @@ import { DownloadsPage } from "pages/downloads.slint";
 // Re-exported so Rust can reach them through slint::include_modules!().
 export { ShotWindow, Shot, ShotTool, ShotCursor, ShotBox, ShotPath, ShotText, ShotCell, Screenshot }
 export { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language,
-    NotificationSetting, Chats, Conversation, Account, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
+    NotificationSetting, Chats, Conversation, Account, Accounts, AccountRow, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, LinkPreview, RowKind, Content, ChatKind, Status, Moment,
     Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice, NotificationScope,
     NotificationScopes, FileCard, FileState, FileType, Attachments, Attachment, AttachKind, AttachProblem, AttachHint, ChatConfirm, Fmt,
@@ -123,6 +123,30 @@ export component MainWindow inherits Window {
                 activated => {
                     AppState.show-window();
                     AppState.page = Page.settings;
+                }
+            }
+        }
+        // The accounts signed in, ⌘1 … ⌘0 by their places (src/telegram/accounts.rs).
+        Menu {
+            title: @tr("menu" => "Account");
+            if Accounts.count > 0: MenuItem { title: Accounts.rows[0].name; shortcut: @keys(Control + Digit1); activated => { Accounts.switch-index(0); } }
+            if Accounts.count > 1: MenuItem { title: Accounts.rows[1].name; shortcut: @keys(Control + Digit2); activated => { Accounts.switch-index(1); } }
+            if Accounts.count > 2: MenuItem { title: Accounts.rows[2].name; shortcut: @keys(Control + Digit3); activated => { Accounts.switch-index(2); } }
+            if Accounts.count > 3: MenuItem { title: Accounts.rows[3].name; shortcut: @keys(Control + Digit4); activated => { Accounts.switch-index(3); } }
+            if Accounts.count > 4: MenuItem { title: Accounts.rows[4].name; shortcut: @keys(Control + Digit5); activated => { Accounts.switch-index(4); } }
+            if Accounts.count > 5: MenuItem { title: Accounts.rows[5].name; shortcut: @keys(Control + Digit6); activated => { Accounts.switch-index(5); } }
+            if Accounts.count > 6: MenuItem { title: Accounts.rows[6].name; shortcut: @keys(Control + Digit7); activated => { Accounts.switch-index(6); } }
+            if Accounts.count > 7: MenuItem { title: Accounts.rows[7].name; shortcut: @keys(Control + Digit8); activated => { Accounts.switch-index(7); } }
+            if Accounts.count > 8: MenuItem { title: Accounts.rows[8].name; shortcut: @keys(Control + Digit9); activated => { Accounts.switch-index(8); } }
+            if Accounts.count > 9: MenuItem { title: Accounts.rows[9].name; shortcut: @keys(Control + Digit0); activated => { Accounts.switch-index(9); } }
+            MenuSeparator { }
+            MenuItem {
+                title: @tr("Add Account…");
+                enabled: !Accounts.full && AppState.telegram-state == TelegramState.ready;
+                activated => {
+                    AppState.show-window();
+                    AppState.page = Page.chats;
+                    Accounts.add();
                 }
             }
         }

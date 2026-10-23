@@ -7,7 +7,7 @@ import { InfoPanel } from "chat-info.slint";
 import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
-    Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer, LinkPreview, ReplyQuote,
+    Chats, Conversation, Account, Accounts, ChatRow, MessageRow, RowKind, ChatKind, Content, Status, Viewer, LinkPreview, ReplyQuote,
     Actions, ComposeBar, ActionNotice, Attachments, ChatOrder } from "../telegram.slint";
 import { Look, AccountColors } from "../look.slint";
 import { Downloads } from "../downloads.slint";
@@ -68,7 +68,7 @@ component TitleBar inherits Rectangle {
                 vertical-alignment: center;
             }
             Text {
-                text: AccountColors.key(0);
+                text: AccountColors.key(Accounts.index);
                 color: P.accent-ink;
                 font-family: P.mono;
                 font-size: 12px;
@@ -166,46 +166,70 @@ component Rail inherits Rectangle {
             }
         }
         Text {
-            text: @tr("Accounts") + " 1/10";
+            text: @tr("Accounts") + " " + Accounts.count + "/10";
             color: P.faint;
             font-size: 11px;
             horizontal-alignment: center;
         }
-        VerticalLayout {
+        // Every account, a square in its colour with its key under it: the one in front filled and
+        // ringed (a click: the profile), the others tinted, with their unread messages (a click
+        // brings one to the front).
+        for row in Accounts.rows: VerticalLayout {
             spacing: 4px;
             HorizontalLayout {
                 alignment: center;
-                // The account in front: its colour, ringed.
                 Rectangle {
                     width: 40px;
                     height: 40px;
                     border-radius: 7px;
-                    border-width: 2px;
-                    border-color: P.accent;
+                    border-width: row.current ? 2px : 0px;
+                    border-color: AccountColors.accent(row.index, P.dark);
                     Avatar {
                         size: 32px;
                         radius: 4px;
-                        fill: P.accent;
-                        ink: P.on-accent;
-                        initial: Account.initial;
-                        picture: Account.picture;
-                        has-picture: Account.has-picture;
+                        fill: row.current ? AccountColors.accent(row.index, P.dark) : AccountColors.tint(row.index, P.dark);
+                        ink: row.current ? P.on-accent : AccountColors.tint-ink(row.index, P.dark);
+                        initial: row.initial;
+                        picture: row.picture;
+                        has-picture: row.has-picture;
                         font-size: 14px;
+                    }
+                    if row.unread > 0 && !row.current: Rectangle {
+                        x: parent.width - 14px;
+                        y: -2px;
+                        width: max(18px, unread-label.preferred-width + 8px);
+                        height: 18px;
+                        border-radius: 2px;
+                        background: AccountColors.accent(row.index, P.dark);
+                        border-width: 2px;
+                        border-color: P.rail;
+                        unread-label := Text {
+                            text: row.unread > 99 ? "99+" : "" + row.unread;
+                            color: #ffffff;
+                            font-size: 10px;
+                            font-weight: 600;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
                     }
                     TouchArea {
                         mouse-cursor: pointer;
                         clicked => {
-                            AppState.page = Page.profile;
+                            if row.current {
+                                AppState.page = Page.profile;
+                            } else {
+                                Accounts.switch(row.slot);
+                            }
                         }
                     }
                 }
             }
             Text {
-                text: AccountColors.key(0);
-                color: P.accent-ink;
+                text: AccountColors.key(row.index);
+                color: row.current ? P.accent-ink : P.faint;
                 font-family: P.mono;
                 font-size: 10px;
-                font-weight: 600;
+                font-weight: row.current ? 600 : 400;
                 horizontal-alignment: center;
             }
         }

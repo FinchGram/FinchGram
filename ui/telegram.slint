@@ -797,6 +797,33 @@ export global Account {
     callback log-out();
 }
 
+// One of the accounts signed in at once (src/telegram/accounts.rs): a row of the account menu,
+// the drawer and Broadsheet's rail.
+export struct AccountRow {
+    slot: int,               // which account, for Accounts.switch
+    index: int,              // its place, 0 … 9: its colour (AccountColors) and its key, ⌘1 … ⌘0
+    name: string,
+    sub: string,             // "+86 138 0013 2046", or "@name" without a number
+    initial: string,
+    picture: image,
+    has-picture: bool,
+    unread: int,             // unread messages, counted as the Dock's number counts them
+    current: bool,           // the one in front
+    ready: bool,             // logged in (else still starting, or being added)
+}
+
+export global Accounts {
+    in-out property <[AccountRow]> rows;         // every account, in the order of their places
+    in-out property <[AccountRow]> others;       // those not in front, in the same order
+    in-out property <int> count;
+    in-out property <int> index;                 // the one in front's place
+    in-out property <int> others-unread;         // unread messages in the accounts not in front
+    out property <bool> full: count >= 10;       // ten at most, as in Telegram's own apps
+    callback switch(int);                        // a slot: that account comes to the front
+    callback switch-index(int);                  // a place (⌘1 … ⌘0)
+    callback add();                              // the login page for a new account
+}
+
 // Settings → Notifications & sounds → By chat type: whether the chats of each kind notify, those
 // that do not say otherwise (a chat's own mute is in its menu). Telegram keeps this for the
 // account, the same in all its apps.
@@ -863,6 +890,10 @@ export global Login {
     callback sign-up(string, string);            // first name, last name
     pure callback initial(string) -> string;     // "zhou" → "Z", for the new account's picture
     callback back();                             // to the phone number
+    // The account being logged in is one more (Accounts.add): "Back" on the phone number returns
+    // to the account that was in front and drops this one.
+    in-out property <bool> adding;
+    callback cancel-adding();
 }
 
 // Settings → Privacy & security → Two-step verification (src/telegram/password.rs). What changes

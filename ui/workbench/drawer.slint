@@ -4,7 +4,8 @@
 // are in ui/drawer.slint; src/drawer.rs fills and acts.
 import { Drawer, DrawerWords, ToolRow } from "../drawer.slint";
 import { AppState, Page } from "../state.slint";
-import { Account } from "../telegram.slint";
+import { Account, Accounts } from "../telegram.slint";
+import { AccountColors } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { Icon, Avatar } from "../widgets.slint";
 import { WorkbenchPalette as P } from "palette.slint";
@@ -218,7 +219,7 @@ export component WorkbenchDrawer inherits Rectangle {
                     width: parent.width;
                     alignment: start;
                     padding-bottom: 6px;
-                    // The accounts: the one in front as a card; adding another is still to come.
+                    // The accounts: the one in front as a card, the others a row each; adding one.
                     HorizontalLayout {
                         padding-left: 16px;
                         padding-right: 14px;
@@ -235,7 +236,7 @@ export component WorkbenchDrawer inherits Rectangle {
                         }
                         Text {
                             horizontal-stretch: 1;
-                            text: "1/10";
+                            text: Accounts.count + "/10";
                             color: P.faint;
                             font-size: 11px;
                             vertical-alignment: center;
@@ -317,39 +318,117 @@ export component WorkbenchDrawer inherits Rectangle {
                             }
                         }
                     }
-                    HorizontalLayout {
+                    // The other accounts, a row each: its colour, its name, its unread messages, its
+                    // key. A click brings it to the front, and the drawer shuts.
+                    for row in Accounts.others: Rectangle {
                         height: 28px;
-                        padding-left: 16px;
-                        padding-right: 14px;
-                        spacing: 10px;
-                        opacity: 0.42;
-                        VerticalLayout {
-                            alignment: center;
-                            Rectangle {
-                                width: 20px;
-                                height: 20px;
-                                border-radius: 5px;
-                                border-width: 1px;
-                                border-color: P.line;
-                                Icon {
-                                    name: "plus";
-                                    size: 12px;
-                                    color: P.text;
+                        background: other-touch.has-hover ? P.side : transparent;
+                        HorizontalLayout {
+                            padding-left: 16px;
+                            padding-right: 14px;
+                            spacing: 10px;
+                            VerticalLayout {
+                                alignment: center;
+                                Avatar {
+                                    size: 20px;
+                                    radius: 5px;
+                                    fill: AccountColors.accent(row.index, P.dark);
+                                    ink: #ffffff;
+                                    initial: row.initial;
+                                    picture: row.picture;
+                                    has-picture: row.has-picture;
+                                    font-size: 10px;
                                 }
                             }
+                            Text {
+                                horizontal-stretch: 1;
+                                text: row.name;
+                                color: P.text;
+                                font-size: 13px;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                            if row.unread > 0: VerticalLayout {
+                                alignment: center;
+                                Rectangle {
+                                    width: max(18px, unread-label.preferred-width + 10px);
+                                    height: 16px;
+                                    border-radius: 8px;
+                                    background: P.chrome;
+                                    unread-label := Text {
+                                        text: row.unread;
+                                        color: P.text;
+                                        font-size: 11px;
+                                        font-weight: 600;
+                                        horizontal-alignment: center;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                            }
+                            Text {
+                                width: 22px;
+                                text: AccountColors.key(row.index);
+                                color: P.faint;
+                                font-family: P.mono;
+                                font-size: 11px;
+                                horizontal-alignment: right;
+                                vertical-alignment: center;
+                            }
                         }
-                        Text {
-                            horizontal-stretch: 1;
-                            text: DrawerWords.add-account();
-                            color: P.text;
-                            font-size: 13px;
-                            vertical-alignment: center;
+                        other-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                Drawer.close();
+                                Accounts.switch(row.slot);
+                            }
                         }
-                        Text {
-                            text: DrawerWords.not-yet();
-                            color: P.faint;
-                            font-size: 11px;
-                            vertical-alignment: center;
+                    }
+                    // Adding one; greyed with ten accounts.
+                    Rectangle {
+                        height: 28px;
+                        background: add-touch.has-hover && !Accounts.full ? P.side : transparent;
+                        opacity: Accounts.full ? 0.42 : 1;
+                        HorizontalLayout {
+                            padding-left: 16px;
+                            padding-right: 14px;
+                            spacing: 10px;
+                            VerticalLayout {
+                                alignment: center;
+                                Rectangle {
+                                    width: 20px;
+                                    height: 20px;
+                                    border-radius: 5px;
+                                    border-width: 1px;
+                                    border-color: P.line;
+                                    Icon {
+                                        name: "plus";
+                                        size: 12px;
+                                        color: P.text;
+                                    }
+                                }
+                            }
+                            Text {
+                                horizontal-stretch: 1;
+                                text: DrawerWords.add-account();
+                                color: P.text;
+                                font-size: 13px;
+                                vertical-alignment: center;
+                            }
+                            if Accounts.full: Text {
+                                text: DrawerWords.full();
+                                color: P.faint;
+                                font-size: 11px;
+                                vertical-alignment: center;
+                            }
+                        }
+                        add-touch := TouchArea {
+                            mouse-cursor: Accounts.full ? MouseCursor.default : MouseCursor.pointer;
+                            clicked => {
+                                if !Accounts.full {
+                                    Drawer.close();
+                                    Accounts.add();
+                                }
+                            }
                         }
                     }
                     HorizontalLayout {

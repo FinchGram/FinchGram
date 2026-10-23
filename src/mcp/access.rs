@@ -257,6 +257,11 @@ pub fn signed_in(id: i64) {
     }
 }
 
+/// The Telegram account the settings are for (`settings::Mcp::account`); 0 until one signed in.
+pub fn bound_account() -> i64 {
+    STATE.with(|slot| slot.borrow().as_ref().map_or(0, |state| state.settings.borrow().mcp.account))
+}
+
 /// The user's standing answer about `host`, without asking: allowed, and the server on.
 pub fn admitted(host: &Host) -> bool {
     STATE.with(|slot| {
@@ -452,8 +457,10 @@ fn show_policy(ui: &MainWindow) {
         McpSending::Off => AiWriting::Nothing,
     });
     ai.set_chosen_count(i32::try_from(mcp.chats.len()).unwrap_or(i32::MAX));
-    replace(&ai.get_chosen(), chosen_chats(ui, &mcp.chats));
-    replace(&ai.get_all_chats(), picker_chats(ui, &query, &mcp.chats));
+    // The chats are the account's the settings are for, whichever account is in front; none
+    // while it is not signed in here.
+    replace(&ai.get_chosen(), crate::telegram::in_account(mcp.account, || chosen_chats(ui, &mcp.chats)).unwrap_or_default());
+    replace(&ai.get_all_chats(), crate::telegram::in_account(mcp.account, || picker_chats(ui, &query, &mcp.chats)).unwrap_or_default());
 }
 
 /// The programs that have connected, the remembered ones first, then this run's unnamed ones.

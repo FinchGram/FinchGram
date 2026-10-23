@@ -21,6 +21,7 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   Kontakte, öffentliche Benutzer, Gruppen und Kanäle per Benutzername, Personen per Telefonnummer und
   Nachrichten; die Suche im Chat (⌘F); eine Ansicht der Kanäle und eine der Bots. Der Stift legt eine
   neue Gruppe, einen neuen Kanal oder Chat an oder fügt einen Kontakt hinzu.
+  Mehrere Konten, bis zu zehn, jedes mit eigenem TDLib: Wechsel über das Kontomenü oder mit ⌘1 … ⌘0.
 - **Nachrichten.** Text mit Formatierung (fett, kursiv, Code, Links), Antworten und Weiterleitungen,
   Fotos, Videos, GIFs, Sticker, Dateien und eine Karte mit der Linkvorschau. Ein Rechtsklick auf eine
   Nachricht öffnet ihr Menü: antworten, bearbeiten, kopieren, Link kopieren, weiterleiten, melden,
@@ -66,7 +67,7 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   [docs/mcp.md](../docs/mcp.md).
 - **Sprachen.** Die Oberfläche und dieses README in elf Sprachen.
 
-Noch nicht da: geheime Chats, Sprachnachrichten und Anrufe, mehrere Konten, Umfragen und geplante
+Noch nicht da: geheime Chats, Sprachnachrichten und Anrufe, Umfragen und geplante
 Nachrichten, Schlüsselwortfilter, Windows und Linux. Siehe
 [was als Nächstes kommt](../docs/architecture.md#not-now).
 

@@ -2,15 +2,15 @@
 // account and a search box, an activity bar, the side bar with the chat tree, the chats as tabs,
 // and a status bar.
 import { AppState, Page, Connection } from "../state.slint";
-import { Drawer } from "../drawer.slint";
+import { Drawer, DrawerWords } from "../drawer.slint";
 import { WorkbenchDrawer } from "drawer.slint";
 import { Downloads } from "../downloads.slint";
 import { ChatInfo } from "../chat-info.slint";
-import { Chats, Conversation, Account } from "../telegram.slint";
+import { Chats, Conversation, Account, Accounts } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
 import { WorkbenchPalette as P } from "palette.slint";
-import { Look } from "../look.slint";
+import { Look, AccountColors } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { WorkbenchSidebar, WorkbenchView } from "sidebar.slint";
 import { WorkbenchMain } from "conversation.slint";
@@ -182,7 +182,8 @@ component ActivityButton inherits Rectangle {
     }
 }
 
-// The account menu, from the letter at the foot of the activity bar.
+// The account menu, from the letter at the foot of the activity bar: every account, the one in
+// front ticked, each with its colour and its key; adding one (greyed with ten); managing them.
 component AccountMenu inherits Rectangle {
     width: 300px;
     height: list.preferred-height;
@@ -200,17 +201,17 @@ component AccountMenu inherits Rectangle {
         Text {
             height: 30px;
             x: 10px;
-            text: (@tr("Accounts") + " · 1/10").to-uppercase();
+            text: (@tr("Accounts") + " · " + Accounts.count + "/10").to-uppercase();
             color: P.faint;
             font-size: 11px;
             font-weight: 600;
             letter-spacing: 0.88px;
             vertical-alignment: center;
         }
-        Rectangle {
+        for row in Accounts.rows: Rectangle {
             height: 42px;
             border-radius: 6px;
-            background: P.side;
+            background: row.current || row-touch.has-hover ? P.side : transparent;
             HorizontalLayout {
                 padding-left: 10px;
                 padding-right: 10px;
@@ -220,11 +221,11 @@ component AccountMenu inherits Rectangle {
                     Avatar {
                         size: 26px;
                         radius: 6px;
-                        fill: P.accent;
+                        fill: AccountColors.accent(row.index, P.dark);
                         ink: #ffffff;
-                        initial: Account.initial;
-                        picture: Account.picture;
-                        has-picture: Account.has-picture;
+                        initial: row.initial;
+                        picture: row.picture;
+                        has-picture: row.has-picture;
                         font-size: 12px;
                     }
                 }
@@ -232,20 +233,29 @@ component AccountMenu inherits Rectangle {
                     horizontal-stretch: 1;
                     alignment: center;
                     Text {
-                        text: Account.name;
+                        text: row.name;
                         color: P.text;
                         font-size: 13px;
-                        font-weight: 600;
+                        font-weight: row.current ? 600 : 400;
                         overflow: elide;
                     }
                     Text {
-                        text: Account.username == "" ? Account.phone : "@" + Account.username + " · " + Account.phone;
+                        text: row.sub;
                         color: P.faint;
                         font-size: 11px;
                         overflow: elide;
                     }
                 }
-                VerticalLayout {
+                if row.unread > 0 && !row.current: VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 4px;
+                        background: AccountColors.accent(row.index, P.dark);
+                    }
+                }
+                if row.current: VerticalLayout {
                     alignment: center;
                     Icon {
                         name: "check";
@@ -255,12 +265,21 @@ component AccountMenu inherits Rectangle {
                 }
                 Text {
                     width: 24px;
-                    text: "⌘1";
+                    text: AccountColors.key(row.index);
                     color: P.faint;
                     font-family: P.mono;
                     font-size: 11px;
                     horizontal-alignment: right;
                     vertical-alignment: center;
+                }
+            }
+            row-touch := TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    if !row.current {
+                        Accounts.switch(row.slot);
+                    }
+                    root.done();
                 }
             }
         }
@@ -273,10 +292,11 @@ component AccountMenu inherits Rectangle {
                 background: P.line;
             }
         }
-        // Several accounts are still to come.
         Rectangle {
             height: 32px;
-            opacity: 0.45;
+            border-radius: 6px;
+            background: add-touch.has-hover && !Accounts.full ? P.side : transparent;
+            opacity: Accounts.full ? 0.45 : 1;
             HorizontalLayout {
                 padding-left: 10px;
                 padding-right: 10px;
@@ -290,10 +310,26 @@ component AccountMenu inherits Rectangle {
                     }
                 }
                 Text {
+                    horizontal-stretch: 1;
                     text: @tr("Add account");
-                    color: P.muted;
+                    color: P.text;
                     font-size: 13px;
                     vertical-alignment: center;
+                }
+                if Accounts.full: Text {
+                    text: DrawerWords.full();
+                    color: P.faint;
+                    font-size: 11px;
+                    vertical-alignment: center;
+                }
+            }
+            add-touch := TouchArea {
+                mouse-cursor: Accounts.full ? MouseCursor.default : MouseCursor.pointer;
+                clicked => {
+                    if !Accounts.full {
+                        Accounts.add();
+                        root.done();
+                    }
                 }
             }
         }
@@ -473,7 +509,8 @@ component ActivityBar inherits Rectangle {
                 }
                 menu := PopupWindow {
                     x: 48px;
-                    y: parent.height - 190px;
+                    // The menu grows upwards with the accounts: 42px a row, its foot where it was.
+                    y: parent.height - 148px - Accounts.count * 42px;
                     close-policy: PopupClosePolicy.close-on-click-outside;
                     AccountMenu {
                         done => {

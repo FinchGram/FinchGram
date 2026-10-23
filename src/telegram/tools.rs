@@ -21,7 +21,7 @@ use slint::ComponentHandle;
 
 use super::api::{self, Chat, ChatList, ChatType, Message, MessageContent as M, MessageReplyTo, MessageSender, StickerFormat, TextEntityType, UserType};
 use super::store::{self, Names, Store};
-use super::{Error, send};
+use super::{Error, send, Slot};
 use crate::mcp::tools::{Activity, ActivityKind, Content, Outcome, ToolCall};
 use crate::settings::{Mcp, McpScope, McpSending};
 use crate::{AiChat, ChatKind, Chats, MainWindow};
@@ -49,15 +49,15 @@ type Confirmed = Box<dyn FnOnce(Result<Message, String>)>;
 type SentAnswer = Rc<dyn Fn(Result<(i64, bool), String>)>;
 
 thread_local! {
-    /// Messages an assistant sent that Telegram has not confirmed yet, by their temporary id, and
-    /// what to do once it has (mod.rs brings updateMessageSendSucceeded and Failed here).
-    static SENDING: RefCell<HashMap<i64, Confirmed>> = RefCell::new(HashMap::new());
+    /// Messages an assistant sent that Telegram has not confirmed yet, by account and temporary
+    /// id, and what to do once it has (mod.rs brings updateMessageSendSucceeded and Failed here).
+    static SENDING: RefCell<HashMap<(Slot, i64), Confirmed>> = RefCell::new(HashMap::new());
 }
 
 /// Telegram confirmed a message that was being sent (`succeeded`: it has its final id now), or
-/// would not send it. UI thread.
+/// would not send it. UI thread, as the account.
 pub fn message_sent(old_message_id: i64, message: &Message, succeeded: bool) {
-    let Some(then) = SENDING.with(|sending| sending.borrow_mut().remove(&old_message_id)) else { return };
+    let Some(then) = SENDING.with(|sending| sending.borrow_mut().remove(&(super::context(), old_message_id))) else { return };
     then(if succeeded { Ok(message.clone()) } else { Err("Telegram did not send the message.".to_string()) });
 }
 
@@ -151,6 +151,15 @@ pub fn call(ui: &MainWindow, call: ToolCall, policy: Mcp, guard: Guard, reply: i
     if !policy.enabled {
         return reply.failed(crate::mcp::protocol::OFF);
     }
+    // The settings are one account's (docs/mcp.md): assistants work with that account, whichever
+    // is in front, and only while it is signed in here.
+    let Some(slot) = super::slot_of_user(policy.account) else {
+        return reply.failed("FinchGram is not signed in to the Telegram account these settings are for, or is still starting; try again in a moment.");
+    };
+    super::in_context(slot, move || call_as_account(ui, call, policy, reply));
+}
+
+fn call_as_account(ui: &MainWindow, call: ToolCall, policy: Mcp, reply: Reply) {
     if store::with(|store| store.my_id == 0).unwrap_or(true) {
         return reply.failed("FinchGram is not signed in to Telegram, or is still starting; try again in a moment.");
     }
@@ -653,14 +662,17 @@ fn write_message(policy: Mcp, names: Names, chat_id: i64, text: String, reply_to
                             Err(reason) => reply.failed(reason),
                         }
                     });
+                    let slot = super::context();
                     SENDING.with(|sending| {
                         let done = done.clone();
-                        sending.borrow_mut().insert(temporary, Box::new(move |confirmed| done(confirmed.map(|message| (message.id, true)))));
+                        sending.borrow_mut().insert((slot, temporary), Box::new(move |confirmed| done(confirmed.map(|message| (message.id, true)))));
                     });
                     slint::Timer::single_shot(SENT_CONFIRMATION, move || {
-                        if SENDING.with(|sending| sending.borrow_mut().remove(&temporary)).is_some() {
-                            done(Ok((temporary, false)));
-                        }
+                        super::in_context(slot, || {
+                            if SENDING.with(|sending| sending.borrow_mut().remove(&(slot, temporary))).is_some() {
+                                done(Ok((temporary, false)));
+                            }
+                        });
                     });
                 });
             } else {
@@ -1198,7 +1210,7 @@ mod tests {
         let seen = Rc::new(RefCell::new(Vec::new()));
         SENDING.with(|sending| {
             let seen = seen.clone();
-            sending.borrow_mut().insert(5, Box::new(move |confirmed| seen.borrow_mut().push(confirmed.map(|message| message.id))));
+            sending.borrow_mut().insert((super::super::context(), 5), Box::new(move |confirmed| seen.borrow_mut().push(confirmed.map(|message| message.id))));
         });
         // Another temporary id: not ours.
         message_sent(6, &message(r#"{"@type":"messageText","text":{"@type":"formattedText","text":"hi","entities":[]}}"#), true);
@@ -1210,7 +1222,7 @@ mod tests {
         assert_eq!(seen.borrow().len(), 1);
         SENDING.with(|sending| {
             let seen = seen.clone();
-            sending.borrow_mut().insert(8, Box::new(move |confirmed| seen.borrow_mut().push(confirmed.map(|message| message.id))));
+            sending.borrow_mut().insert((super::super::context(), 8), Box::new(move |confirmed| seen.borrow_mut().push(confirmed.map(|message| message.id))));
         });
         message_sent(8, &message(r#"{"@type":"messageText","text":{"@type":"formattedText","text":"hi","entities":[]}}"#), false);
         assert_eq!(seen.borrow().last(), Some(&Err("Telegram did not send the message.".to_string())));

@@ -22,6 +22,7 @@ un client non officiel, qui n'est pas fait par Telegram.
   et chaînes publics par nom d'utilisateur, les personnes par numéro de téléphone, et les messages ;
   une recherche dans la discussion (⌘F) ; une vue de vos chaînes et une de vos bots. Le crayon crée
   un nouveau groupe, une chaîne ou une discussion, ou ajoute un contact.
+  Plusieurs comptes, jusqu’à dix, chacun avec son propre TDLib : on passe de l’un à l’autre depuis le menu du compte ou avec ⌘1 … ⌘0.
 - **Messages.** Du texte avec sa mise en forme (gras, italique, code, liens), réponses et transferts,
   photos, vidéos, GIF, stickers, fichiers et une carte d'aperçu pour un lien. Un clic droit sur un
   message ouvre son menu : répondre, modifier, copier, copier le lien, transférer, signaler,
@@ -72,7 +73,7 @@ un client non officiel, qui n'est pas fait par Telegram.
   Voir [docs/mcp.md](../docs/mcp.md).
 - **Langues.** L'interface et ce README en onze langues.
 
-Pas encore : discussions secrètes, messages vocaux et appels, plusieurs comptes, sondages et messages
+Pas encore : discussions secrètes, messages vocaux et appels, sondages et messages
 programmés, filtres par mots-clés, Windows et Linux. Voir
 [ce qui vient ensuite](../docs/architecture.md#not-now).
 

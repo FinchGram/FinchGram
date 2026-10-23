@@ -5,6 +5,7 @@
 // settings.toml), and the settings and the profile. What is drawn here is the state and the words;
 // the themes draw it (ui/<theme>/drawer.slint), src/drawer.rs fills and acts.
 import { Downloads } from "downloads.slint";
+import { Accounts } from "telegram.slint";
 
 // A tool of the toolbox.
 export struct ToolRow {
@@ -25,7 +26,7 @@ export global Drawer {
     in-out property <bool> accounts-shown;         // Terminal: the pane shows the accounts, else the toolbox
     // An unpinned tool has something going on (downloads on their way), or another account has
     // unread messages: a dot on the logo. A pinned tool's dot sits on its own icon.
-    out property <bool> logo-dot: !downloads-pinned && Downloads.active-count > 0;
+    out property <bool> logo-dot: (!downloads-pinned && Downloads.active-count > 0) || Accounts.others-unread > 0;
     callback toggle();
     callback close();
     callback pin(string, bool);                    // a tool, and whether it is pinned now
@@ -46,6 +47,7 @@ export global DrawerWords {
     public pure function index() -> string { return @tr("Broadsheet's drawer" => "Section index"); }
     public pure function esc-closes() -> string { return @tr("Esc closes"); }
     public pure function not-yet() -> string { return @tr("Not available in this version"); }
+    public pure function full() -> string { return @tr("ten accounts are signed in, no more can be added" => "Ten at most"); }
     // Terminal's pane.
     public pure function pin-legend() -> string { return @tr("[x] = pinned to the bottom bar · click a name to open"); }
     public pure function bottom-bar() -> string { return @tr("Bottom bar"); }

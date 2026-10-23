@@ -4,7 +4,8 @@
 // The state and the words are in ui/drawer.slint; src/drawer.rs fills and acts.
 import { Drawer, DrawerWords, ToolRow } from "../drawer.slint";
 import { AppState, Page } from "../state.slint";
-import { Account } from "../telegram.slint";
+import { Account, Accounts } from "../telegram.slint";
+import { AccountColors } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { Icon } from "../widgets.slint";
 import { BroadsheetPalette as P } from "palette.slint";
@@ -247,7 +248,7 @@ export component BroadsheetDrawer inherits Rectangle {
                     padding-left: 22px;
                     padding-right: 22px;
                     padding-bottom: 10px;
-                    // A · the accounts: the one in front, and adding another, still to come.
+                    // A · the accounts: the one in front, the others a line each, adding one.
                     Rectangle {
                         height: a.preferred-height;
                         a := HorizontalLayout {
@@ -264,7 +265,7 @@ export component BroadsheetDrawer inherits Rectangle {
                                 vertical-alignment: bottom;
                             }
                             Text {
-                                text: "1/10";
+                                text: Accounts.count + "/10";
                                 color: P.faint;
                                 font-size: 12px;
                                 vertical-alignment: bottom;
@@ -323,38 +324,110 @@ export component BroadsheetDrawer inherits Rectangle {
                             vertical-alignment: center;
                         }
                     }
-                    HorizontalLayout {
-                        height: 24px;
-                        spacing: 6px;
-                        opacity: 0.42;
-                        Text {
-                            width: 24px;
-                            text: "＋";
-                            color: P.text;
-                            font-size: 15px;
-                            vertical-alignment: center;
-                        }
-                        Text {
-                            text: DrawerWords.add-account();
-                            color: P.text;
-                            font-size: 14px;
-                            vertical-alignment: center;
-                        }
-                        Rectangle {
-                            horizontal-stretch: 1;
+                    // The other accounts, a line each: its colour, its name, a leader to its unread
+                    // messages and its key. A click brings it to the front, and the drawer shuts.
+                    for row in Accounts.others: Rectangle {
+                        height: 22px;
+                        HorizontalLayout {
+                            spacing: 6px;
                             Rectangle {
-                                y: parent.height / 2;
-                                height: 1px;
-                                width: parent.width;
-                                background: P.faint;
-                                opacity: 0.45;
+                                width: 24px;
+                                Rectangle {
+                                    x: 0;
+                                    width: 8px;
+                                    height: 8px;
+                                    border-radius: 2px;
+                                    background: AccountColors.accent(row.index, P.dark);
+                                }
+                            }
+                            Text {
+                                max-width: 170px;
+                                text: row.name;
+                                color: other-touch.has-hover ? P.accent-ink : P.text;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                min-width: 14px;
+                                Rectangle {
+                                    y: parent.height / 2;
+                                    height: 1px;
+                                    width: parent.width;
+                                    background: P.faint;
+                                    opacity: 0.45;
+                                }
+                            }
+                            if row.unread > 0: Text {
+                                text: row.unread;
+                                color: AccountColors.accent-ink(row.index, P.dark);
+                                font-size: 14px;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                            }
+                            Text {
+                                width: 24px;
+                                text: AccountColors.key(row.index);
+                                color: P.faint;
+                                font-family: P.mono;
+                                font-size: 11px;
+                                horizontal-alignment: right;
+                                vertical-alignment: center;
                             }
                         }
-                        Text {
-                            text: DrawerWords.not-yet();
-                            color: P.faint;
-                            font-size: 12px;
-                            vertical-alignment: center;
+                        other-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                Drawer.close();
+                                Accounts.switch(row.slot);
+                            }
+                        }
+                    }
+                    // Adding one; greyed with ten accounts.
+                    Rectangle {
+                        height: 24px;
+                        opacity: Accounts.full ? 0.42 : 1;
+                        HorizontalLayout {
+                            spacing: 6px;
+                            Text {
+                                width: 24px;
+                                text: "＋";
+                                color: P.text;
+                                font-size: 15px;
+                                vertical-alignment: center;
+                            }
+                            Text {
+                                text: DrawerWords.add-account();
+                                color: add-touch.has-hover && !Accounts.full ? P.accent-ink : P.text;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                            }
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                Rectangle {
+                                    y: parent.height / 2;
+                                    height: 1px;
+                                    width: parent.width;
+                                    background: P.faint;
+                                    opacity: 0.45;
+                                }
+                            }
+                            if Accounts.full: Text {
+                                text: DrawerWords.full();
+                                color: P.faint;
+                                font-size: 12px;
+                                vertical-alignment: center;
+                            }
+                        }
+                        add-touch := TouchArea {
+                            mouse-cursor: Accounts.full ? MouseCursor.default : MouseCursor.pointer;
+                            clicked => {
+                                if !Accounts.full {
+                                    Drawer.close();
+                                    Accounts.add();
+                                }
+                            }
                         }
                     }
                     // B · the toolbox.
