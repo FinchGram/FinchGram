@@ -388,8 +388,9 @@ component TabBar inherits Rectangle {
     }
 }
 
-// Colours of the letter squares, by kind of chat and sender (the design's avC).
-global Avatars {
+// Colours of the letter squares, by kind of chat and sender (the design's avC): a message's here,
+// and a chat's in the sidebar's tree (sidebar.slint).
+export global Avatars {
     public pure function fill(row: MessageRow, kind: ChatKind) -> color {
         if row.outgoing || kind == ChatKind.bot {
             return P.accent-soft;
@@ -402,6 +403,26 @@ global Avatars {
 
     public pure function ink(row: MessageRow, kind: ChatKind) -> color {
         if row.outgoing || kind == ChatKind.bot {
+            return P.accent-ink;
+        }
+        if kind == ChatKind.saved {
+            return P.teal;
+        }
+        return P.text;
+    }
+
+    public pure function chat-fill(kind: ChatKind) -> color {
+        if kind == ChatKind.bot {
+            return P.accent-soft;
+        }
+        if kind == ChatKind.saved {
+            return P.teal-soft;
+        }
+        return P.chrome;
+    }
+
+    public pure function chat-ink(kind: ChatKind) -> color {
+        if kind == ChatKind.bot {
             return P.accent-ink;
         }
         if kind == ChatKind.saved {

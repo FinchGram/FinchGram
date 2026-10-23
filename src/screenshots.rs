@@ -1833,7 +1833,7 @@ fn screenshots() {
             }
             // A right click on the first chat of the list: its menu.
             let (x, y) = match theme {
-                Theme::Workbench => (150.0, 91.0),
+                Theme::Workbench => (150.0, 166.0),
                 Theme::Broadsheet => (230.0, 310.0),
                 Theme::Terminal => (140.0, 110.0),
             };
@@ -1846,7 +1846,7 @@ fn screenshots() {
             // The menu of a chat with a person (Lin Xia, under the Personal folder's header in
             // Workbench): blocking, reporting, deleting.
             let (ux, uy) = match theme {
-                Theme::Workbench => (150.0, 177.0),
+                Theme::Workbench => (150.0, 255.0),
                 Theme::Broadsheet => (230.0, 443.0),
                 Theme::Terminal => (140.0, 170.0),
             };
@@ -1856,7 +1856,7 @@ fn screenshots() {
             // A right click on the Personal folder's tab (its header in Workbench's tree): the
             // folder's menu.
             let (fx, fy) = match theme {
-                Theme::Workbench => (110.0, 150.0),
+                Theme::Workbench => (110.0, 211.0),
                 Theme::Broadsheet => (170.0, 252.0),
                 Theme::Terminal => (97.0, 83.0),
             };
@@ -1957,8 +1957,8 @@ fn screenshots() {
             right_click(&window, 520.0, 59.0);
             save(&window, "zh-workbench-tab-menu");
             escape(&window);
-            right_click(&window, 150.0, 91.0);
-            click(&window, 190.0, 91.0 + add_to_folder(theme));
+            right_click(&window, 150.0, 166.0);
+            click(&window, 190.0, 166.0 + add_to_folder(theme));
             save(&window, "zh-workbench-chat-menu-folders");
             escape(&window);
         }

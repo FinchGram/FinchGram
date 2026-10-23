@@ -209,7 +209,7 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
     （CHAT_FORWARDS_RESTRICTED、FLOOD_WAIT_N）留在面板里。
   - 草稿（`drafts.rs`）：输入框只有一个；切到别的聊天时，里面的字替离开的聊天存起来（setChatDraftMessage），
     来的聊天把自己的放回去；打字停一会儿也会存。updateChatDraftMessage 带来别的设备上写的。聊天列表里有草稿的聊天用
-    草稿代替最后一条消息（Workbench 的树上标「草稿」；Terminal 的列表是「✎」）。
+    草稿代替最后一条消息，前面标「草稿」（Terminal 的列表是「✎」）。
   - 慢速模式和群管理（`admin.rs`）：群开了慢速模式时，发一条之后输入区倒计时
     （supergroupFullInfo.slow_mode_delay_expires_in，以及 Telegram 拒绝时的 SLOWMODE_WAIT_N），结束前不收消息；
     管理员不受限。聊天设置栏（标题栏的侧栏图标）给普通成员看只读的群规则（慢速模式、管理员关掉了什么），给群主和

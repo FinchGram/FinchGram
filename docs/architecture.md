@@ -304,8 +304,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   - Drafts (`drafts.rs`): the composer is one; when another chat comes to the front, its words
     are saved for the chat that leaves (setChatDraftMessage) and the chat that comes puts its own
     back; writing saves after a pause too. updateChatDraftMessage brings what was written on
-    another device. The chat list shows a draft in place of the last message (Workbench's tree
-    marks the chat "Draft"; Terminal's list "✎").
+    another device. The chat list shows a draft in place of the last message, after the word
+    "Draft" (Terminal's list: "✎").
   - Slow mode and the group's administration (`admin.rs`): where a group has slow mode, the
     composer counts the wait down after a message (supergroupFullInfo.slow_mode_delay_expires_in,
     and SLOWMODE_WAIT_N when Telegram refuses one) and takes none until it is over;

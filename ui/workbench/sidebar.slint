@@ -5,8 +5,8 @@ import { AppState, Connection, Theme } from "../state.slint";
 import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind, ChatOrder } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, ListEdge, Avatar } from "../widgets.slint";
-import { ChatIcons, ChatMenuWords } from "../chat.slint";
-import { MenuEntry } from "conversation.slint";
+import { ChatMenuWords } from "../chat.slint";
+import { MenuEntry, Avatars } from "conversation.slint";
 import { UnreadBadge, MentionBadge, UnreadDot } from "badges.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 import { NewChat, NewDialog, ComposeWords } from "../compose.slint";
@@ -150,20 +150,22 @@ component NetworkBanner inherits Rectangle {
     }
 }
 
-// One line of the tree: a folder's header, a chat in it, or a pinned chat at the top, in no folder.
+// One line of the tree: a folder's header, or a chat (pinned at the top, in no folder, or one of a
+// folder's). A chat's row is the design's: its picture or letter square, its name with the time of
+// the last message, and under them that message (or the draft) with the unread count and the pin.
 component TreeLine inherits Rectangle {
     in property <TreeRow> item;
     callback menu(length, length);          // a right click on a chat, where it is in the window
     callback folder-menu(length, length);   // a right click on a folder's header
     property <bool> open: !item.header && item.chat.id == Conversation.chat-id;
     property <bool> unread: item.chat.unread > 0 || item.chat.mention || item.chat.marked;
-    height: item.header ? 32px : 28px;
+    height: item.header ? 34px : 55px;
     background: open ? P.sel : touch.has-hover && !item.header ? P.chrome.transparentize(0.4) : transparent;
 
     if root.item.header: HorizontalLayout {
         padding-left: 14px;
         padding-right: 14px;
-        padding-top: 8px;
+        padding-top: 12px;
         padding-bottom: 4px;
         spacing: 6px;
         VerticalLayout {
@@ -192,50 +194,90 @@ component TreeLine inherits Rectangle {
     }
 
     if !root.item.header: HorizontalLayout {
-        padding-left: root.item.folder < 0 ? 14px : 26px;
-        padding-right: 14px;
-        spacing: 8px;
+        padding-left: 14px;
+        padding-right: 12px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        spacing: 10px;
         VerticalLayout {
             alignment: center;
-            Icon {
-                name: root.item.chat.pinned && root.item.chat.kind != ChatKind.saved ? "push-pin" : ChatIcons.kind(root.item.chat.kind);
-                size: 15px;
-                color: P.faint;
+            Avatar {
+                size: 36px;
+                radius: 8px;
+                fill: Avatars.chat-fill(root.item.chat.kind);
+                ink: Avatars.chat-ink(root.item.chat.kind);
+                initial: root.item.chat.initial;
+                picture: root.item.chat.picture;
+                has-picture: root.item.chat.has-picture;
+                font-size: 14px;
             }
         }
-        Text {
+        VerticalLayout {
             horizontal-stretch: 1;
-            text: root.item.chat.title;
-            color: root.open ? P.accent-ink : P.text;
-            font-size: 14px;
-            font-weight: root.open || root.unread ? 600 : 400;
-            vertical-alignment: center;
-            overflow: elide;
-        }
-        // Words left in its composer (src/telegram/drafts.rs).
-        if root.item.chat.draft != "": VerticalLayout {
             alignment: center;
-            Text {
-                text: ExtraWords.draft();
-                color: P.accent-ink;
-                font-size: 11px;
-                font-weight: 600;
+            spacing: 2px;
+            HorizontalLayout {
+                spacing: 4px;
+                Text {
+                    horizontal-stretch: 1;
+                    height: 20px;
+                    text: root.item.chat.title;
+                    color: root.open ? P.accent-ink : P.text;
+                    font-size: 14px;
+                    font-weight: root.open || root.unread ? 600 : 400;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                Text {
+                    text: root.item.chat.has-message ? Fmt.list-time(root.item.chat.time) : "";
+                    color: P.faint;
+                    font-size: 11px;
+                    vertical-alignment: center;
+                }
             }
-        }
-        if root.item.chat.mention: VerticalLayout {
-            alignment: center;
-            MentionBadge { }
-        }
-        if root.item.chat.unread > 0: VerticalLayout {
-            alignment: center;
-            UnreadBadge {
-                count: root.item.chat.unread;
-                muted: root.item.chat.muted;
+            HorizontalLayout {
+                spacing: 6px;
+                // The last message, or the words left in the composer (src/telegram/drafts.rs).
+                if root.item.chat.draft != "": Text {
+                    height: 17px;
+                    text: ExtraWords.draft();
+                    color: P.danger;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    height: 17px;
+                    text: root.item.chat.draft != "" ? root.item.chat.draft : Fmt.preview(root.item.chat);
+                    color: P.muted;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                if root.item.chat.mention: VerticalLayout {
+                    alignment: center;
+                    MentionBadge { }
+                }
+                if root.item.chat.unread > 0: VerticalLayout {
+                    alignment: center;
+                    UnreadBadge {
+                        count: root.item.chat.unread;
+                        muted: root.item.chat.muted;
+                    }
+                }
+                if root.item.chat.marked && root.item.chat.unread == 0: VerticalLayout {
+                    alignment: center;
+                    UnreadDot { }
+                }
+                if root.item.chat.pinned && root.item.chat.kind != ChatKind.saved: VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "push-pin";
+                        size: 12px;
+                        color: P.faint;
+                    }
+                }
             }
-        }
-        if root.item.chat.marked && root.item.chat.unread == 0: VerticalLayout {
-            alignment: center;
-            UnreadDot { }
         }
     }
 
