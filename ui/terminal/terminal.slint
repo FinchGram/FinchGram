@@ -13,7 +13,7 @@ import {
 import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords, SearchInput, SearchWords, ButtonGrid, BotWords } from "../chat.slint";
-import { ExtraWords, ReactionChips, ReactionPicker, RoundNoteView, ContactCardView, TopicList, AdminPanelView } from "../extras.slint";
+import { ExtraWords, ReactionChips, ReactionPicker, RoundNoteView, ContactCardView, TopicList } from "../extras.slint";
 import { Look } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { TerminalPalette as P } from "palette.slint";
@@ -1450,72 +1450,6 @@ component TopicLine inherits Rectangle {
     }
 }
 
-// The chat's settings panel, over the right of the pane: a group's rules, or what its
-// administrators may change (src/telegram/admin.rs); nothing yet for other chats.
-component SettingsPanel inherits Rectangle {
-    background: P.side;
-
-    Rectangle {
-        x: 0;
-        width: 1px;
-        background: P.line;
-    }
-    VerticalLayout {
-        HorizontalLayout {
-            padding-left: 16px;
-            padding-right: 16px;
-            padding-top: 9px;
-            padding-bottom: 8px;
-            spacing: 8px;
-            T {
-                horizontal-stretch: 1;
-                text: "── " + @tr("chat settings") + " ──";
-                color: P.faint;
-                overflow: elide;
-            }
-            Action {
-                label: "x";
-                color: P.faint;
-                activated => {
-                    Conversation.toggle-settings();
-                }
-            }
-        }
-        Flickable {
-            vertical-stretch: 1;
-            mouse-drag-pan-enabled: false;
-            content-width: self.width;
-            content-height: body.preferred-height;
-            body := VerticalLayout {
-                width: parent.width;
-                alignment: start;
-                padding-left: 16px;
-                padding-right: 16px;
-                padding-bottom: 16px;
-                if Conversation.admin.shown: AdminPanelView {
-                    side: P.bg;
-                    accent: P.accent;
-                    on-accent: P.on-accent;
-                    text-color: P.text;
-                    muted: P.muted;
-                    faint: P.faint;
-                    off: P.line;
-                    danger: P.accent3;
-                    font-family: P.font;
-                    font-size: 13px;
-                    small: 12px;
-                }
-                if !Conversation.admin.shown: Paragraph {
-                    text: ExtraWords.nothing-here();
-                    color: P.faint;
-                    font-family: P.font;
-                    font-size: 12px;
-                }
-            }
-        }
-    }
-}
-
 component Pane inherits Rectangle {
     background: P.bg;
 
@@ -1550,8 +1484,7 @@ component Pane inherits Rectangle {
                     color: P.faint;
                     overflow: elide;
                 }
-                // Searching in the chat: the line under the head (SearchLine); the chat's settings
-                // panel, over the right of the pane (SettingsPanel).
+                // Searching in the chat: the line under the head (SearchLine).
                 Action {
                     label: @tr("search");
                     color: Conversation.search-open ? P.accent : P.muted;
@@ -1708,23 +1641,17 @@ component Pane inherits Rectangle {
         }
     }
 
-    // The chat's info panel, or its administration in the panel's place (admin.rs), beside the
+    // The chat's info panel (or the management page in its place, manage.rs) beside the
     // messages: the design's column squeezes them, 320px wide, and slides open and shut.
     side := Rectangle {
-        property <bool> shown: Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open);
+        property <bool> shown: Conversation.chat-id != "" && ChatInfo.open;
         x: parent.width - self.width;
         y: 0;
         width: shown ? 320px : 0px;
         height: parent.height;
         clip: true;
         animate width { duration: 180ms; easing: cubic-bezier(0.2, 0.8, 0.2, 1); }
-        if Conversation.settings-open: SettingsPanel {
-            x: 0;
-            y: 0;
-            width: 320px;
-            height: parent.height;
-        }
-        if !Conversation.settings-open && (ChatInfo.open || side.width > 0px): InfoPanel {
+        if ChatInfo.open || side.width > 0px: InfoPanel {
             x: 0;
             y: 0;
             width: 320px;
@@ -2330,7 +2257,7 @@ export component TerminalWindow inherits Rectangle {
             vertical-stretch: 1;
             Side {
                 view <=> root.view;
-                room: root.width - 388px - (Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open) ? 320px : 0px) - (Drawer.open ? 320px : 0px);
+                room: root.width - 388px - (Conversation.chat-id != "" && ChatInfo.open ? 320px : 0px) - (Drawer.open ? 320px : 0px);
             }
             VerticalLayout {
                 horizontal-stretch: 1;

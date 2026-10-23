@@ -1,0 +1,378 @@
+// Managing a group or channel (the design's "管理群组 / 频道" round, ChatManage): the page the
+// info panel's Manage row opens in the panel's place, in every theme. The state and the words are
+// here; the page is drawn once, with each theme's tokens (ManageLook, set in ui/<theme>/
+// chat-info.slint), in chat-manage-panel.slint, as the design draws it; src/telegram/manage.rs
+// fills it and acts.
+
+export enum ManagePage { main, rights, crop }
+
+// Where the username typed stands.
+export enum UsernameCheck { same, ok, taken, checking, short, chars, start, empty, invalid, too-many }
+
+// A switch: what members may do, a group's or channel's option, an administrator's right.
+export struct ManageToggle {
+    id: string,
+    label: string,
+    note: string,            // a line under the label, "" for none
+    on: bool,
+    enabled: bool,           // we may change it; else faded, with a lock
+    lock: string,            // why not, for the lock's tip; "" when we may
+}
+
+// A choice among a few: slow mode's delays, a link's expiry and limit, a username to try.
+export struct ManageChip {
+    id: string,
+    label: string,
+    on: bool,
+}
+
+// A member, an administrator, or a contact to add.
+export struct ManagePerson {
+    id: string,              // the user id
+    name: string,
+    initial: string,
+    picture: image,
+    has-picture: bool,
+    you: bool,
+    tag: string,             // "Group owner", "Administrator", or ""
+    owner: bool,
+    admin: bool,
+    can-promote: bool,       // the shield: we may make them an administrator
+    promote-lock: string,    // why not, for the shield's tip
+    can-remove: bool,
+    confirming: bool,        // the row asks whether to remove them
+    sub: string,             // an administrator's second line: their rights, who made them one
+}
+
+export struct ManageLink {
+    link: string,
+    name: string,
+    meta: string,            // "5 days left · no limit · 12 joined"
+}
+
+// A group the channel may link as its discussion group.
+export struct ManageChoice {
+    id: string,
+    name: string,
+    on: bool,
+}
+
+export global ChatManage {
+    in-out property <bool> open;             // the page shows in the info panel's place
+    in-out property <ManagePage> page;
+    in-out property <bool> group;            // a group; else a channel
+    in-out property <bool> supergroup;
+    in-out property <string> title;          // the head: Manage group, Administrator rights, Change photo
+    in-out property <bool> can-save;
+    in-out property <bool> saving;
+    // The profile.
+    in-out property <string> name;
+    in-out property <string> description;
+    in-out property <string> initial;
+    in-out property <image> picture;
+    in-out property <bool> has-picture;
+    in-out property <string> name-error;
+    in-out property <string> profile-error;
+    in-out property <bool> can-info;         // we may change the name, photo, description and type
+    // The type.
+    in-out property <bool> public;
+    in-out property <string> username;
+    in-out property <UsernameCheck> check;
+    in-out property <string> check-text;
+    in-out property <[ManageChip]> suggestions;
+    in-out property <string> type-error;
+    in-out property <bool> can-invite;
+    // The invite links, of a private chat.
+    in-out property <string> primary-link;
+    in-out property <bool> revoking;
+    in-out property <[ManageLink]> links;
+    in-out property <bool> link-form;
+    in-out property <string> link-name;
+    in-out property <[ManageChip]> expiries;
+    in-out property <[ManageChip]> limits;
+    // The members and the administrators.
+    in-out property <string> count-line;
+    in-out property <string> members-error;
+    in-out property <bool> adding;
+    in-out property <string> query;
+    in-out property <[ManagePerson]> candidates;
+    in-out property <[ManagePerson]> members;
+    in-out property <[ManagePerson]> admins;
+    // The group's settings, or the channel's.
+    in-out property <string> group-error;
+    in-out property <bool> perms-open;
+    in-out property <string> perms-summary;
+    in-out property <[ManageToggle]> perms;
+    in-out property <[[ManageChip]]> slow-rows;  // slow mode's delays, in two rows
+    in-out property <string> slow-note;
+    in-out property <[ManageToggle]> options;
+    in-out property <string> pending;        // "3 requests await your approval", or ""
+    in-out property <string> discussion;     // the linked group's name, or "Not linked"
+    in-out property <bool> discussion-linked;
+    in-out property <bool> discussion-open;
+    in-out property <[ManageChoice]> discussion-options;
+    // The rights page.
+    in-out property <ManagePerson> who;
+    in-out property <string> lock-note;
+    in-out property <string> rights-error;
+    in-out property <string> custom-title;
+    in-out property <bool> title-editable;
+    in-out property <[ManageToggle]> rights;
+    in-out property <bool> can-dismiss;
+    // The crop page: the picture picked, the zoom (1 … 3) and where the frame sits in it (0 … 1).
+    in-out property <image> source;
+    in-out property <float> zoom: 1.2;
+    in-out property <float> offset-x: 0.5;
+    in-out property <float> offset-y: 0.5;
+
+    callback back();
+    callback save();
+    callback dismiss-error(string);          // a section: "profile", "type", "members", "group", "rights"
+    callback edit-name(string);
+    callback edit-description(string);
+    callback change-photo();
+    callback set-public(bool);
+    callback edit-username(string);
+    callback take-suggestion(string);
+    callback copy-primary();
+    callback revoke-primary();
+    callback confirm-revoke();
+    callback cancel-revoke();
+    callback new-link();
+    callback edit-link-name(string);
+    callback choose-expiry(string);
+    callback choose-limit(string);
+    callback create-link();
+    callback cancel-link();
+    callback copy-link(string);
+    callback revoke-link(string);
+    callback toggle-adding();
+    callback edit-query(string);
+    callback add-member(string);
+    callback promote(string);
+    callback remove(string);
+    callback confirm-remove();
+    callback cancel-remove();
+    callback open-admin(string);
+    callback toggle-perms();
+    callback toggle-permission(string);
+    callback set-slow(string);
+    callback toggle-option(string);
+    callback toggle-discussion();
+    callback choose-discussion(string);
+    callback unlink-discussion();
+    callback edit-title(string);
+    callback toggle-right(string);
+    callback dismiss-admin();
+    callback use-photo();
+    callback cancel-crop();
+    callback pick-photo();
+}
+
+// How a theme draws the page: the design's tokens (chat-manage.js, `k`), one set per theme.
+export struct ManageLook {
+    font: string,
+    mono: string,
+    fs: length,              // the body
+    fs-s: length,            // notes, buttons
+    fs-xs: length,           // labels, counters
+    fs-t: length,            // the head's title
+    r: length,               // small corners: inputs, buttons
+    rl: length,              // large corners: cards
+    av-r: length,            // the photo's corners
+    chip-r: length,
+    panel: color,
+    text: color,
+    muted: color,
+    faint: color,
+    accent: color,
+    on-accent: color,
+    link: color,             // links and the Back
+    hover: color,
+    line: color,
+    off: color,              // a switch that is off
+    ok: color,
+    bad: color,
+    bad-soft: color,         // an error line's background
+    soft: color,             // an administrator's avatar, a chosen chip
+    soft-ink: color,
+    in-bg: color,            // inputs
+    ring: color,             // inputs' ring; transparent for none
+    ring-width: length,
+    in-h: length,
+    card: color,
+    card-ring: color,
+    sec-fs: length,          // section headers
+    sec-weight: int,
+    sec-spacing: length,
+    sec-upper: bool,
+    sec-color: color,
+    sec-rule: bool,          // Broadsheet's rule under the header
+    head-rule: length,       // the head's rule: 1px, Broadsheet's 2px
+    pad: length,             // the page's side padding
+    sw-w: length,            // switches
+    sw-h: length,
+    sw-r: length,
+    knob-r: length,
+    av-font: length,
+    icons: bool,             // Phosphor icons; Terminal draws words and brackets instead
+    brackets: bool,          // Terminal: buttons are [words]
+    text-switches: bool,     // Terminal: switches are [on ] and [off]
+}
+
+export global ManageWords {
+    public pure function manage-group() -> string { return @tr("Manage group"); }
+    public pure function manage-channel() -> string { return @tr("Manage channel"); }
+    public pure function admin-rights() -> string { return @tr("Administrator rights"); }
+    public pure function change-photo() -> string { return @tr("Change photo"); }
+    public pure function back() -> string { return @tr("Back"); }
+    public pure function save() -> string { return @tr("Save"); }
+    public pure function got-it() -> string { return @tr("Got it"); }
+    public pure function cancel() -> string { return @tr("Cancel"); }
+    public pure function change() -> string { return @tr("on the photo" => "Change"); }
+    public pure function name() -> string { return @tr("Name"); }
+    public pure function description() -> string { return @tr("Description"); }
+    public pure function name-empty() -> string { return @tr("The name cannot be empty"); }
+    public pure function needs-right(right: string) -> string { return @tr("You need the “{0}” right for that.", right); }
+    public pure function not-available() -> string { return @tr("Not available for this chat"); }
+    // The type.
+    public pure function type() -> string { return @tr("Type"); }
+    public pure function public() -> string { return @tr("Public"); }
+    public pure function public-group-note() -> string { return @tr("Has a permanent link; anyone can find and join it."); }
+    public pure function public-channel-note() -> string { return @tr("Has a permanent link; anyone can find and subscribe."); }
+    public pure function private() -> string { return @tr("Private"); }
+    public pure function private-note() -> string { return @tr("Cannot be found; people join by invite link."); }
+    public pure function username() -> string { return @tr("Username"); }
+    public pure function check-same() -> string { return @tr("This is the current username"); }
+    public pure function check-ok(name: string) -> string { return @tr("“{0}” is free", name); }
+    public pure function check-taken(name: string) -> string { return @tr("“{0}” is taken, try another", name); }
+    public pure function check-checking(name: string) -> string { return @tr("Checking “{0}”…", name); }
+    public pure function check-short() -> string { return @tr("At least 5 characters"); }
+    public pure function check-chars() -> string { return @tr("Only a–z, 0–9 and underscore"); }
+    public pure function check-start() -> string { return @tr("Must begin with a letter"); }
+    public pure function check-empty-group() -> string { return @tr("A public group needs a username"); }
+    public pure function check-empty-channel() -> string { return @tr("A public channel needs a username"); }
+    public pure function check-invalid() -> string { return @tr("This username is not allowed"); }
+    public pure function check-too-many() -> string { return @tr("You have too many public groups and channels"); }
+    public pure function try-these() -> string { return @tr("usernames to try" => "Try"); }
+    // The links.
+    public pure function primary-link() -> string { return @tr("Primary invite link"); }
+    public pure function copy() -> string { return @tr("Copy"); }
+    public pure function revoke-regenerate() -> string { return @tr("Revoke and make a new one"); }
+    public pure function revoke-note() -> string { return @tr("The old link stops working at once; those who already joined stay."); }
+    public pure function revoke-confirm() -> string { return @tr("Revoke and make a new link"); }
+    public pure function other-links() -> string { return @tr("Other invite links"); }
+    public pure function revoke() -> string { return @tr("Revoke"); }
+    public pure function new-link() -> string { return @tr("New invite link"); }
+    public pure function link-name-placeholder() -> string { return @tr("Name (optional), e.g. “Weekend meetup”"); }
+    public pure function expires() -> string { return @tr("Expires"); }
+    public pure function member-limit() -> string { return @tr("Member limit"); }
+    public pure function create() -> string { return @tr("Create"); }
+    public pure function unnamed-link() -> string { return @tr("Unnamed link"); }
+    public pure function never-expires() -> string { return @tr("Never expires"); }
+    public pure function expired() -> string { return @tr("Expired"); }
+    public pure function days-left(n: int) -> string { return @tr("{n} day left" | "{n} days left" % n); }
+    public pure function hours-left(n: int) -> string { return @tr("{n} hour left" | "{n} hours left" % n); }
+    public pure function minutes-left(n: int) -> string { return @tr("{n} minute left" | "{n} minutes left" % n); }
+    public pure function no-limit() -> string { return @tr("No limit"); }
+    public pure function up-to(n: int) -> string { return @tr("Up to {0}", n); }
+    public pure function joined(n: int) -> string { return @tr("how many joined by the link" => "{0} joined", n); }
+    public pure function one-hour() -> string { return @tr("1 hour"); }
+    public pure function one-day() -> string { return @tr("1 day"); }
+    public pure function one-week() -> string { return @tr("1 week"); }
+    public pure function people(n: int) -> string { return @tr("{n} person" | "{n} people" % n); }
+    // The members.
+    public pure function members() -> string { return @tr("Members"); }
+    public pure function subscribers() -> string { return @tr("Subscribers"); }
+    public pure function members-count(n: string) -> string { return @tr("{0} members", n); }
+    public pure function subscribers-count(n: string) -> string { return @tr("{0} subscribers", n); }
+    public pure function add-member() -> string { return @tr("Add member"); }
+    public pure function add-subscriber() -> string { return @tr("Add subscriber"); }
+    public pure function search-contacts() -> string { return @tr("Search contacts"); }
+    public pure function no-candidates() -> string { return @tr("No contacts to add"); }
+    public pure function add() -> string { return @tr("Add"); }
+    public pure function you() -> string { return @tr("you"); }
+    public pure function make-admin() -> string { return @tr("Make administrator"); }
+    public pure function remove-from-group() -> string { return @tr("Remove from group"); }
+    public pure function remove-from-channel() -> string { return @tr("Remove from channel"); }
+    public pure function remove-group-q(name: string) -> string { return @tr("Remove {0} from the group?", name); }
+    public pure function remove-channel-q(name: string) -> string { return @tr("Remove {0} from the channel?", name); }
+    public pure function remove() -> string { return @tr("Remove"); }
+    public pure function administrators() -> string { return @tr("Administrators"); }
+    public pure function administrator() -> string { return @tr("Administrator"); }
+    public pure function group-owner() -> string { return @tr("Group owner"); }
+    public pure function channel-owner() -> string { return @tr("Channel owner"); }
+    public pure function owner-all-rights(owner: string) -> string { return @tr("{0} · every right", owner); }
+    public pure function rights-count(n: int) -> string { return @tr("{n} right" | "{n} rights" % n); }
+    public pure function set-by(name: string) -> string { return @tr("set by {0}", name); }
+    // The group's settings, and the channel's.
+    public pure function group-settings() -> string { return @tr("Group settings"); }
+    public pure function channel-settings() -> string { return @tr("Channel settings"); }
+    public pure function member-permissions() -> string { return @tr("Member permissions"); }
+    public pure function perms-summary(n: int, total: int) -> string { return @tr("{0} of {1} allowed · what members can do", n, total); }
+    public pure function perm-send() -> string { return @tr("Send messages"); }
+    public pure function perm-media() -> string { return @tr("Send photos and videos"); }
+    public pure function perm-stickers() -> string { return @tr("Send stickers and GIFs"); }
+    public pure function perm-links() -> string { return @tr("Add link previews"); }
+    public pure function perm-polls() -> string { return @tr("Send polls"); }
+    public pure function perm-invite() -> string { return @tr("Invite members"); }
+    public pure function perm-pin() -> string { return @tr("Pin messages"); }
+    public pure function perm-info() -> string { return @tr("Change group info"); }
+    public pure function slow-mode() -> string { return @tr("Slow mode"); }
+    public pure function off() -> string { return @tr("slow mode" => "Off"); }
+    public pure function seconds-short(n: int) -> string { return @tr("{0} s", n); }
+    public pure function minutes-short(n: int) -> string { return @tr("{0} min", n); }
+    public pure function hours-short(n: int) -> string { return @tr("{n} hour" | "{n} hours" % n); }
+    public pure function slow-note-on(every: string) -> string { return @tr("Each member can send one message every {0}.", every); }
+    public pure function slow-note-off() -> string { return @tr("Off: members can send messages one after another."); }
+    public pure function approve() -> string { return @tr("Approve new members"); }
+    public pure function approve-note() -> string { return @tr("New members join once an administrator approves them"); }
+    public pure function pending(n: int) -> string { return @tr("{n} request awaits your approval" | "{n} requests await your approval" % n); }
+    public pure function topics() -> string { return @tr("Topics"); }
+    public pure function topics-note() -> string { return @tr("Split the group into topics, each with its own chat"); }
+    public pure function protect() -> string { return @tr("Protected content"); }
+    public pure function protect-note() -> string { return @tr("Members cannot forward or save what is posted here"); }
+    public pure function protect-channel-note() -> string { return @tr("Subscribers cannot forward or save what is posted here"); }
+    public pure function history() -> string { return @tr("History for new members"); }
+    public pure function history-note() -> string { return @tr("New members see the messages from before they joined"); }
+    public pure function hidden() -> string { return @tr("Hide members"); }
+    public pure function hidden-note() -> string { return @tr("Members cannot see the member list; needs 100 members"); }
+    public pure function anti-spam() -> string { return @tr("Aggressive anti-spam"); }
+    public pure function anti-spam-note() -> string { return @tr("Telegram deletes spam on its own; needs 200 members"); }
+    public pure function signatures() -> string { return @tr("Signatures"); }
+    public pure function signatures-note() -> string { return @tr("Show the author's name under every post"); }
+    public pure function discussion() -> string { return @tr("Discussion group"); }
+    public pure function discussion-note(name: string) -> string { return @tr("{0} · linked, posts can be commented on", name); }
+    public pure function not-linked() -> string { return @tr("Not linked"); }
+    public pure function unlink() -> string { return @tr("Unlink"); }
+    public pure function choose() -> string { return @tr("Choose"); }
+    // The rights page.
+    public pure function title-label() -> string { return @tr("an administrator's title" => "Title"); }
+    public pure function title-placeholder() -> string { return @tr("E.g. “Keycap advisor”, shown beside the name"); }
+    public pure function can-do() -> string { return @tr("What they can do"); }
+    public pure function dismiss-admin() -> string { return @tr("Dismiss administrator"); }
+    public pure function owner-locked() -> string { return @tr("The owner has every right; they cannot be changed."); }
+    public pure function own-rights-locked(by: string) -> string { return @tr("These are your own rights, set by {0}; only they can change them.", by); }
+    public pure function view-only(owner: string) -> string { return @tr("You do not have the “Add administrators” right: view only. Ask the owner, {0}.", owner); }
+    public pure function cannot-give(right: string) -> string { return @tr("You do not have “{0}” yourself, so you cannot give it.", right); }
+    public pure function right-group-info() -> string { return @tr("Change group info"); }
+    public pure function right-channel-info() -> string { return @tr("Change channel info"); }
+    public pure function right-delete() -> string { return @tr("Delete messages"); }
+    public pure function right-delete-others() -> string { return @tr("Delete others' messages"); }
+    public pure function right-ban() -> string { return @tr("Ban members"); }
+    public pure function right-invite() -> string { return @tr("Invite members"); }
+    public pure function right-invite-subscribers() -> string { return @tr("Invite subscribers"); }
+    public pure function right-pin() -> string { return @tr("Pin messages"); }
+    public pure function right-topics() -> string { return @tr("Manage topics"); }
+    public pure function right-video-chats() -> string { return @tr("Manage video chats"); }
+    public pure function right-live-streams() -> string { return @tr("Manage live streams"); }
+    public pure function right-anonymous() -> string { return @tr("Remain anonymous"); }
+    public pure function right-promote() -> string { return @tr("Add administrators"); }
+    public pure function right-post() -> string { return @tr("Post messages"); }
+    public pure function right-edit() -> string { return @tr("Edit others' messages"); }
+    public pure function right-stories() -> string { return @tr("Post and edit stories"); }
+    // The crop page.
+    public pure function crop-hint() -> string { return @tr("Drag the picture and set the zoom; what is in the frame becomes the photo, cropped square."); }
+    public pure function pick-another() -> string { return @tr("Choose another"); }
+    public pure function use-photo() -> string { return @tr("Use"); }
+}

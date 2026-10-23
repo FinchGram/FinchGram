@@ -321,33 +321,6 @@ export struct TopicRow {
 
 // A group's rules and, for its administrators, what they may change (src/telegram/admin.rs):
 // the design's GroupAdmin, in the chat's settings panel.
-export struct AdminPanel {
-    shown: bool,            // a group: there is something to show
-    admin: bool,            // we may change these; else the rules are read-only
-    supergroup: bool,       // the options below the permissions need a supergroup
-    members: int,
-    slow-mode: int,         // seconds between a member's messages; 0 off
-    // What members may do (the group's default permissions).
-    can-send: bool,
-    can-media: bool,        // photos and videos
-    can-stickers: bool,     // stickers and GIFs
-    can-links: bool,
-    can-polls: bool,
-    can-invite: bool,
-    can-pin: bool,
-    can-info: bool,         // change the group's name, photo and description
-    join-request: bool,     // joining by link waits for an administrator
-    protected: bool,        // no saving, no forwarding
-    history: bool,          // new members see the messages before they joined
-    hidden-members: bool,
-    hidden-members-allowed: bool,   // 100 members or more
-    anti-spam: bool,
-    anti-spam-allowed: bool,        // 200 members or more
-    busy: string,           // the setting waiting for Telegram: "slow", a permission's or option's name
-    error: string,          // what Telegram refused, in its words; "" for nothing
-}
-
-
 // How the open chat's header describes it.
 export enum Status {
     none, online, last-seen, recently, last-week, last-month, long-ago,
@@ -501,12 +474,6 @@ export global Conversation {
 
     // The chat's settings panel (the header's sidebar icon): the group's rules, or its
     // administration (src/telegram/admin.rs).
-    in-out property <bool> settings-open;
-    callback toggle-settings();
-    in-out property <AdminPanel> admin;
-    callback set-slow-mode(int);
-    callback toggle-permission(string);          // "send", "media", "stickers", "links", "polls", "invite", "pin", "info"
-    callback toggle-option(string);              // "join", "protect", "history", "hide-members", "anti-spam"
 }
 
 // Sharing to other chats (the design's XOverlay; src/telegram/share.rs): a channel's post, or a

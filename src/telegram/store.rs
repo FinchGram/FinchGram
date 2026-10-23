@@ -26,7 +26,7 @@ use super::time;
 use crate::images;
 use crate::platform::NameOrder;
 use crate::{
-    Account, AdminPanel, AppState, BotCommand, ButtonKind, ButtonRow, ChatButton, ChatKind, ChatOrder, ChatRow, Chats, ContactCard, Content,
+    Account, AppState, BotCommand, ButtonKind, ButtonRow, ChatButton, ChatKind, ChatOrder, ChatRow, Chats, ContactCard, Content,
     Conversation, FileCard, FileState, FileType, Folder, FolderChoice, LinkPreview, MainWindow, Media, MessageRow, Moment, NotificationScopes,
     Reaction, ReplyQuote, RoundNote, RowKind, Status, Sticker, Tab, TopicRow, TreeRow, Viewer, ViewerItem, Words,
 };
@@ -261,9 +261,6 @@ pub struct Store {
     pub supergroup_full: HashMap<i64, api::SupergroupFullInfo>,
     /// When slow mode lets us send again, by chat (admin.rs).
     pub slow_until: HashMap<i64, Instant>,
-    /// The settings panel's control waiting for Telegram, and what Telegram refused (admin.rs).
-    pub admin_busy: String,
-    pub admin_error: String,
     /// Words the composer holds for chats not in front, until Telegram has them (drafts.rs).
     pub drafts: HashMap<i64, String>,
     /// Contacts added from cards this session, by phone number: their cards say so.
@@ -402,8 +399,6 @@ impl Store {
             topic_icons: Vec::new(),
             supergroup_full: HashMap::new(),
             slow_until: HashMap::new(),
-            admin_busy: String::new(),
-            admin_error: String::new(),
             drafts: HashMap::new(),
             added_contacts: HashSet::new(),
             round_playing: None,
@@ -479,8 +474,6 @@ pub fn clear() {
         store.topic_icons.clear();
         store.supergroup_full.clear();
         store.slow_until.clear();
-        store.admin_busy.clear();
-        store.admin_error.clear();
         store.drafts.clear();
         store.added_contacts.clear();
         store.round_playing = None;
@@ -551,9 +544,11 @@ pub fn refresh() {
     if close_viewer {
         super::viewer::close();
     }
-    // The chat's info panel follows the chat (outside the borrow: it reads the store itself).
+    // The chat's info panel follows the chat (outside the borrow: it reads the store itself), and
+    // the management page with it.
     if info_rows {
         super::chat_info::changed(info_facts);
+        super::manage::facts_changed();
     }
     if !missing.is_empty() {
         super::conversation::load_replied(missing);
@@ -1236,7 +1231,7 @@ impl Store {
             ChatType::Supergroup { supergroup_id, is_channel } => {
                 match self.supergroups.get(&supergroup_id).map(|group| &group.status) {
                     Some(ChatMemberStatus::Creator) => true,
-                    Some(ChatMemberStatus::Administrator { rights }) => !is_channel || rights.can_post_messages,
+                    Some(ChatMemberStatus::Administrator { rights, .. }) => !is_channel || rights.can_post_messages,
                     Some(ChatMemberStatus::Member) => !is_channel && chat.permissions.can_send_basic_messages,
                     Some(ChatMemberStatus::Restricted { is_member, permissions }) => {
                         !is_channel && *is_member && permissions.can_send_basic_messages
@@ -1639,10 +1634,6 @@ impl Store {
         let wait = self.slow_until.get(&chat.id).map_or(0, |until| until.saturating_duration_since(Instant::now()).as_secs_f64().ceil() as i32);
         conversation.set_slow_wait(if limited { wait } else { 0 });
         conversation.set_reaction_max(self.reaction_max(chat));
-        let admin = self.admin_panel(chat);
-        if conversation.get_admin() != admin {
-            conversation.set_admin(admin);
-        }
         if !rows {
             return;
         }
@@ -2307,43 +2298,6 @@ impl Store {
         self.custom_emoji_text(info.icon.custom_emoji_id).unwrap_or_default()
     }
 
-    /// The settings panel's group part: the rules a member reads, or what an administrator may
-    /// change (admin.rs).
-    fn admin_panel(&self, chat: &api::Chat) -> AdminPanel {
-        let supergroup = match chat.kind {
-            ChatType::Supergroup { supergroup_id, is_channel: false } => Some(supergroup_id),
-            ChatType::BasicGroup { .. } => None,
-            _ => return AdminPanel::default(),
-        };
-        let full = supergroup.and_then(|id| self.supergroup_full.get(&id));
-        let group = supergroup.and_then(|id| self.supergroups.get(&id));
-        let permissions = &chat.permissions;
-        AdminPanel {
-            shown: true,
-            admin: self.is_admin(chat),
-            supergroup: supergroup.is_some(),
-            members: self.members(chat),
-            slow_mode: full.map_or(0, |info| info.slow_mode_delay),
-            can_send: permissions.can_send_basic_messages,
-            can_media: permissions.can_send_photos || permissions.can_send_videos,
-            can_stickers: permissions.can_send_other_messages,
-            can_links: permissions.can_add_link_previews,
-            can_polls: permissions.can_send_polls,
-            can_invite: permissions.can_invite_users,
-            can_pin: permissions.can_pin_messages,
-            can_info: permissions.can_change_info,
-            join_request: group.is_some_and(|group| group.join_by_request),
-            protected: chat.has_protected_content,
-            history: full.is_none_or(|info| info.is_all_history_available),
-            hidden_members: full.is_some_and(|info| info.has_hidden_members),
-            hidden_members_allowed: full.is_some_and(|info| info.can_hide_members || info.has_hidden_members),
-            anti_spam: full.is_some_and(|info| info.has_aggressive_anti_spam_enabled),
-            anti_spam_allowed: full.is_some_and(|info| info.can_toggle_aggressive_anti_spam || info.has_aggressive_anti_spam_enabled),
-            busy: self.admin_busy.clone().into(),
-            error: self.admin_error.clone().into(),
-        }
-    }
-
     /// A chat row with no picture (a folder's header).
     fn blank_chat(&self) -> ChatRow {
         ChatRow { picture: self.blank.clone(), ..ChatRow::default() }
@@ -2353,7 +2307,7 @@ impl Store {
     /// (else its letter): the photo once downloaded, until then its tiny preview. `large`: in its
     /// big size, for the profile page, the small one until that is here. A photo not here yet is
     /// noted, to download after the refresh (avatars.rs).
-    fn avatar(&self, photo: Option<&api::ChatPhoto>, large: bool) -> (Image, bool) {
+    pub(super) fn avatar(&self, photo: Option<&api::ChatPhoto>, large: bool) -> (Image, bool) {
         let Some(photo) = photo else { return (self.blank.clone(), false) };
         let file = if large { &photo.big } else { &photo.small };
         if let Some(image) = self.avatars.get(&file.id) {

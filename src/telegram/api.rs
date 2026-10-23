@@ -421,6 +421,9 @@ pub struct Supergroup {
     /// Those who come by an invite link wait for an administrator's word.
     #[serde(default)]
     pub join_by_request: bool,
+    /// A channel whose posts carry their author's name (manage.rs).
+    #[serde(default)]
+    pub sign_messages: bool,
 }
 
 #[derive(Debug, Clone, Default, Deserialize)]
@@ -452,19 +455,56 @@ pub struct SupergroupFullInfo {
     /// The commands of the bots in the group.
     #[serde(default)]
     pub bot_commands: Vec<BotCommands>,
+    /// A channel's discussion group, or a group's channel; 0 for none (manage.rs).
+    #[serde(default)]
+    pub linked_chat_id: i64,
+    /// The owner may give the chat a username (make it public).
+    #[serde(default)]
+    pub can_set_username: bool,
 }
 
-/// An invite link of a chat (chatInviteLink).
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+/// An invite link of a chat (chatInviteLink): the primary one, or one made with a name, an expiry
+/// and a limit (manage.rs).
+#[derive(Debug, Clone, PartialEq, Default, Deserialize)]
 pub struct ChatInviteLink {
     pub invite_link: String,
+    #[serde(default)]
+    pub name: String,
+    #[serde(default)]
+    pub creator_user_id: i64,
+    #[serde(default)]
+    pub date: i32,
+    /// When it stops working, as seconds since the epoch; 0 for never.
+    #[serde(default)]
+    pub expiration_date: i32,
+    /// How many may join by it; 0 for no limit.
+    #[serde(default)]
+    pub member_limit: i32,
+    #[serde(default)]
+    pub member_count: i32,
+    #[serde(default)]
+    pub creates_join_request: bool,
+    #[serde(default)]
+    pub is_primary: bool,
+    #[serde(default)]
+    pub is_revoked: bool,
+}
+
+/// Invite links found (chatInviteLinks).
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct ChatInviteLinks {
+    #[serde(default)]
+    pub invite_links: Vec<ChatInviteLink>,
 }
 
 /// A member of a group or channel (chatMember), as getSupergroupMembers and a basic group's full
-/// info list them (chat_info.rs).
+/// info list them (chat_info.rs, manage.rs).
 #[derive(Debug, Clone, Deserialize)]
 pub struct ChatMember {
     pub member_id: MessageSender,
+    /// Who brought them in; for an administrator, who made them one. 0 when unknown.
+    #[serde(default)]
+    pub inviter_user_id: i64,
     pub status: ChatMemberStatus,
 }
 
@@ -483,7 +523,15 @@ pub enum ChatMemberStatus {
     #[serde(rename = "chatMemberStatusCreator")]
     Creator,
     #[serde(rename = "chatMemberStatusAdministrator")]
-    Administrator { rights: AdministratorRights },
+    Administrator {
+        /// Shown beside their name in the group; "" for the plain "admin".
+        #[serde(default)]
+        custom_title: String,
+        /// We may change their rights or dismiss them.
+        #[serde(default)]
+        can_be_edited: bool,
+        rights: AdministratorRights,
+    },
     #[serde(rename = "chatMemberStatusMember")]
     Member,
     #[serde(rename = "chatMemberStatusRestricted")]
@@ -494,13 +542,63 @@ pub enum ChatMemberStatus {
     Banned,
 }
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+/// What an administrator may do (chatAdministratorRights). Every field, so that a status can be
+/// sent back changed (setChatMemberStatus, manage.rs).
+#[derive(Debug, Clone, PartialEq, Default, Deserialize)]
 pub struct AdministratorRights {
+    #[serde(default)]
+    pub can_manage_chat: bool,
+    #[serde(default)]
+    pub can_change_info: bool,
+    #[serde(default)]
     pub can_post_messages: bool,
+    #[serde(default)]
+    pub can_edit_messages: bool,
+    #[serde(default)]
+    pub can_delete_messages: bool,
+    #[serde(default)]
+    pub can_invite_users: bool,
     #[serde(default)]
     pub can_restrict_members: bool,
     #[serde(default)]
-    pub can_change_info: bool,
+    pub can_pin_messages: bool,
+    #[serde(default)]
+    pub can_manage_topics: bool,
+    #[serde(default)]
+    pub can_promote_members: bool,
+    #[serde(default)]
+    pub can_manage_video_chats: bool,
+    #[serde(default)]
+    pub can_post_stories: bool,
+    #[serde(default)]
+    pub can_edit_stories: bool,
+    #[serde(default)]
+    pub can_delete_stories: bool,
+    #[serde(default)]
+    pub is_anonymous: bool,
+}
+
+impl AdministratorRights {
+    pub fn to_json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "@type": "chatAdministratorRights",
+            "can_manage_chat": self.can_manage_chat,
+            "can_change_info": self.can_change_info,
+            "can_post_messages": self.can_post_messages,
+            "can_edit_messages": self.can_edit_messages,
+            "can_delete_messages": self.can_delete_messages,
+            "can_invite_users": self.can_invite_users,
+            "can_restrict_members": self.can_restrict_members,
+            "can_pin_messages": self.can_pin_messages,
+            "can_manage_topics": self.can_manage_topics,
+            "can_promote_members": self.can_promote_members,
+            "can_manage_video_chats": self.can_manage_video_chats,
+            "can_post_stories": self.can_post_stories,
+            "can_edit_stories": self.can_edit_stories,
+            "can_delete_stories": self.can_delete_stories,
+            "is_anonymous": self.is_anonymous,
+        })
+    }
 }
 
 /// What a chat's members may do (chatPermissions): the group's defaults, or one member's. Every
@@ -600,6 +698,15 @@ pub struct Chat {
     /// Words left in the composer, kept by Telegram for every device (drafts.rs).
     #[serde(default)]
     pub draft_message: Option<DraftMessage>,
+    /// People waiting for an administrator's approval to join (manage.rs); none for no requests.
+    #[serde(default)]
+    pub pending_join_requests: Option<ChatJoinRequestsInfo>,
+}
+
+/// Requests to join a chat that wait for approval (chatJoinRequestsInfo).
+#[derive(Debug, Clone, PartialEq, Default, Deserialize)]
+pub struct ChatJoinRequestsInfo {
+    pub total_count: i32,
 }
 
 /// Which reactions a chat allows: all of Telegram's, or some of them; and how many one person

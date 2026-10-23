@@ -7,7 +7,7 @@
 //! them in this version), and the actions (block, report, leave, delete), which ask as the chat
 //! menu does (chats.rs). The rows are built here and drawn by the themes (ui/<theme>/
 //! chat-info.slint), so that Terminal's keyboard walks the same list the pointer sees. A group's
-//! or channel's Manage row opens its administration (admin.rs) in the panel's place.
+//! or channel's Manage row opens its management page (manage.rs) in the panel's place.
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -80,11 +80,11 @@ fn toggle(settings: &RefCell<Settings>) {
         let info = ui.global::<ChatInfo>();
         open = !info.get_open();
         info.set_open(open);
-        // The administration shown in the panel's place goes with it.
-        if !open {
-            ui.global::<Conversation>().set_settings_open(false);
-        }
     });
+    // The management page shown in the panel's place goes with it.
+    if !open {
+        super::manage::close();
+    }
     settings.borrow_mut().chat_info_open = open;
     settings.borrow().save();
     if open {
@@ -108,6 +108,7 @@ pub fn chat_changed() {
         fetch(chat_id);
         refresh();
     }
+    super::manage::chat_changed();
 }
 
 /// The store changed (store.rs): the rows follow while the panel shows; with `facts`, a full info
@@ -129,20 +130,18 @@ pub fn forget() {
     STATE.with(|state| *state.borrow_mut() = State::default());
 }
 
-/// Esc: the folders' choices fold first, then the administration gives the panel back, then the
-/// panel shuts. False when it is not open.
+/// Esc: the management page steps back first (and gives the panel back), then the folders'
+/// choices fold, then the panel shuts. False when it is not open.
 pub(super) fn escape() -> bool {
-    let (open, administration) =
-        with_ui_value(|ui| (ui.global::<ChatInfo>().get_open(), ui.global::<Conversation>().get_settings_open())).unwrap_or((false, false));
+    let open = with_ui_value(|ui| ui.global::<ChatInfo>().get_open()).unwrap_or(false);
     if !open {
         return false;
     }
-    if STATE.with(|state| state.borrow().folders_open) {
-        run("folders");
+    if super::manage::escape() {
         return true;
     }
-    if administration {
-        with_ui(|ui| ui.global::<Conversation>().set_settings_open(false));
+    if STATE.with(|state| state.borrow().folders_open) {
+        run("folders");
         return true;
     }
     with_ui(|ui| ui.global::<ChatInfo>().invoke_toggle());
@@ -534,7 +533,7 @@ fn run(id: &str) {
             refresh();
         }
         "read" => mark_read(chat_id),
-        "manage" => with_ui(|ui| ui.global::<Conversation>().set_settings_open(true)),
+        "manage" => super::manage::open(),
         "block" => with_ui(|ui| ui.global::<Chats>().invoke_toggle_block(chat.clone())),
         "report" => with_ui(|ui| ui.global::<Chats>().invoke_report(chat.clone())),
         "leave" => with_ui(|ui| ui.global::<Chats>().invoke_leave(chat.clone())),

@@ -17,7 +17,7 @@ import {
     ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope, AttachWords, FileCardView, ChatMenuWords,
     SearchInput, SearchWords, ButtonGrid, BotWords,
 } from "../chat.slint";
-import { ExtraWords, ReactionChips, ReactionPicker, RoundNoteView, ContactCardView, TopicList, AdminPanelView } from "../extras.slint";
+import { ExtraWords, ReactionChips, ReactionPicker, RoundNoteView, ContactCardView, TopicList } from "../extras.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 import { BroadsheetActions } from "actions.slint";
 import { BroadsheetAttachments } from "attachments.slint";
@@ -2842,84 +2842,6 @@ component ClosedTopicNote inherits HorizontalLayout {
     }
 }
 
-// The chat's settings panel, over the right of the pane: a group's rules, or what its
-// administrators may change (admin.rs); nothing yet for other chats.
-component SettingsPanel inherits Rectangle {
-    background: P.panel;
-
-    // Clicks on the panel stay on it: the messages under it take none.
-    TouchArea { }
-
-    Rectangle {
-        x: 0;
-        width: 1px;
-        background: P.line;
-    }
-    VerticalLayout {
-        HorizontalLayout {
-            padding-left: 24px;
-            padding-right: 20px;
-            padding-top: 20px;
-            padding-bottom: 12px;
-            spacing: 8px;
-            SectionTitle {
-                horizontal-stretch: 1;
-                text: ExtraWords.settings().to-uppercase();
-                font-weight: 600;
-                vertical-alignment: center;
-            }
-            Rectangle {
-                width: 22px;
-                height: 22px;
-                Icon {
-                    name: "x";
-                    size: 18px;
-                    color: P.faint;
-                    duotone: false;
-                }
-                TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => {
-                        Conversation.toggle-settings();
-                    }
-                }
-            }
-        }
-        Flickable {
-            vertical-stretch: 1;
-            mouse-drag-pan-enabled: false;
-            content-width: self.width;
-            content-height: body.preferred-height;
-            body := VerticalLayout {
-                width: parent.width;
-                alignment: start;
-                padding-left: 24px;
-                padding-right: 24px;
-                padding-bottom: 20px;
-                if Conversation.admin.shown: AdminPanelView {
-                    side: P.surface;
-                    accent: P.accent;
-                    on-accent: P.on-accent;
-                    text-color: P.text;
-                    muted: P.muted;
-                    faint: P.faint;
-                    off: P.off;
-                    danger: P.danger;
-                    font-family: P.font;
-                    font-size: 15px;
-                    small: 13px;
-                }
-                if !Conversation.admin.shown: Text {
-                    text: ExtraWords.nothing-here();
-                    color: P.faint;
-                    font-size: 13px;
-                    wrap: word-wrap;
-                }
-            }
-        }
-    }
-}
-
 component ConversationPane inherits Rectangle {
     background: P.panel;
 
@@ -3409,23 +3331,17 @@ component ConversationPane inherits Rectangle {
         }
     }
 
-    // The chat's info panel, or its administration in the panel's place (admin.rs), beside the
+    // The chat's info panel (or the management page in its place, manage.rs) beside the
     // messages: the design's column squeezes them, 320px wide, and slides open and shut.
     side := Rectangle {
-        property <bool> shown: Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open);
+        property <bool> shown: Conversation.chat-id != "" && ChatInfo.open;
         x: parent.width - self.width;
         y: 0;
         width: shown ? 320px : 0px;
         height: parent.height;
         clip: true;
         animate width { duration: 180ms; easing: cubic-bezier(0.2, 0.8, 0.2, 1); }
-        if Conversation.settings-open: SettingsPanel {
-            x: 0;
-            y: 0;
-            width: 320px;
-            height: parent.height;
-        }
-        if !Conversation.settings-open && (ChatInfo.open || side.width > 0px): InfoPanel {
+        if ChatInfo.open || side.width > 0px: InfoPanel {
             x: 0;
             y: 0;
             width: 320px;
@@ -3497,7 +3413,7 @@ export component BroadsheetWindow inherits Rectangle {
             rail := Rail { }
             ListColumn {
                 view <=> root.view;
-                room: root.width - rail.width - 388px - (Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open) ? 320px : 0px);
+                room: root.width - rail.width - 388px - (Conversation.chat-id != "" && ChatInfo.open ? 320px : 0px);
             }
             ConversationPane {
                 horizontal-stretch: 1;

@@ -23,6 +23,9 @@ client, not made by Telegram.
   a contact.
   Several accounts, up to ten, each with a TDLib of its own: switch from the account menu or with
   ⌘1 … ⌘0.
+  Manage your groups and channels: photo, name and description, public username or invite links,
+  members and administrators with their rights, member permissions, slow mode, join approval and
+  topics; a channel's signatures and discussion group.
 - **Messages.** Text with its formatting (bold, italic, code, links), replies and forwards, photos,
   videos, GIFs, stickers, files, and a card for a link's preview. A right click on a message gives
   its menu: reply, edit, copy, copy its link, forward, report, delete, or choose several. Photos

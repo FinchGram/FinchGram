@@ -2,6 +2,8 @@
 // beside the messages, 300px wide, its sections folding. The rows come from src/telegram/
 // chat_info.rs (ui/chat-info.slint); this draws them.
 import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "../chat-info.slint";
+import { ChatManage, ManageLook } from "../chat-manage.slint";
+import { ManagePanel } from "../chat-manage-panel.slint";
 import { Conversation, ChatKind, Status } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Avatar } from "../widgets.slint";
@@ -311,6 +313,20 @@ component QuickButton inherits Rectangle {
     }
 }
 
+// The page's tokens for this theme (ui/chat-manage-panel.slint draws it with them).
+export global WorkbenchManage {
+    out property <ManageLook> look: {
+        font: P.font, mono: P.mono, fs: 13px, fs-s: 12px, fs-xs: 11px, fs-t: 14px,
+        r: 6px, rl: 8px, av-r: 14px, chip-r: 12px,
+        panel: P.side, text: P.text, muted: P.muted, faint: P.faint, accent: P.accent, on-accent: P.on-accent, link: P.accent-ink,
+        hover: P.chrome, line: P.line, off: P.off, ok: P.teal, bad: P.danger, bad-soft: P.danger-soft, soft: P.accent-soft, soft-ink: P.accent-ink,
+        in-bg: P.bg, ring: P.line, ring-width: 1px, in-h: 32px, card: P.bg, card-ring: P.line,
+        sec-fs: 11px, sec-weight: 600, sec-spacing: 0.9px, sec-upper: true, sec-color: P.faint, sec-rule: false, head-rule: 1px,
+        pad: 16px, sw-w: 32px, sw-h: 18px, sw-r: 9px, knob-r: 7px, av-font: 22px,
+        icons: true, brackets: false, text-switches: false,
+    };
+}
+
 export component InfoPanel inherits Rectangle {
     background: P.side;
     property <bool> saved: Conversation.kind == ChatKind.saved;
@@ -322,7 +338,8 @@ export component InfoPanel inherits Rectangle {
         width: 1px;
         background: P.line;
     }
-    VerticalLayout {
+    if ChatManage.open: ManagePanel { look: WorkbenchManage.look; }
+    if !ChatManage.open: VerticalLayout {
         Rectangle {
             height: 38px;
             HorizontalLayout {

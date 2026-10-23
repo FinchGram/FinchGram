@@ -3,70 +3,70 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-23 03:43+0000\n"
+"POT-Creation-Date: 2026-10-23 04:45+0000\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ui/app.slint:54
+#: ui/app.slint:56
 msgid "View"
 msgstr "Visualización"
 
-#: ui/app.slint:56 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
+#: ui/app.slint:58 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
 #: ui/terminal/actions.slint:166
 msgid "Search"
 msgstr "Buscar"
 
-#: ui/app.slint:66
+#: ui/app.slint:68
 msgid "Search in Chat"
 msgstr "Buscar en el chat"
 
-#: ui/app.slint:77 ui/chat-info.slint:67
+#: ui/app.slint:79 ui/chat-info.slint:67
 msgid "Chat Info"
 msgstr "Información del chat"
 
-#: ui/app.slint:88 ui/pages/settings.slint:406
+#: ui/app.slint:90 ui/pages/settings.slint:406
 msgid "Workbench"
 msgstr "Mesa de trabajo"
 
-#: ui/app.slint:96 ui/pages/settings.slint:414
+#: ui/app.slint:98 ui/pages/settings.slint:414
 msgid "Terminal"
 msgstr "Terminal"
 
-#: ui/app.slint:104 ui/pages/settings.slint:422
+#: ui/app.slint:106 ui/pages/settings.slint:422
 msgid "Broadsheet"
 msgstr "Prensa"
 
 #. The tools.
-#: ui/app.slint:113 ui/drawer.slint:56 ui/pages/downloads.slint:402
+#: ui/app.slint:115 ui/drawer.slint:56 ui/pages/downloads.slint:402
 #: ui/pages/downloads.slint:1439
 msgid "Downloads"
 msgstr "Descargas"
 
-#: ui/app.slint:121
+#: ui/app.slint:123
 msgid "Settings…"
 msgstr "Ajustes…"
 
-#: ui/app.slint:131
+#: ui/app.slint:133
 msgctxt "menu"
 msgid "Account"
 msgstr "Cuenta"
 
-#: ui/app.slint:144
+#: ui/app.slint:146
 msgid "Add Account…"
 msgstr "Añadir cuenta…"
 
-#: ui/app.slint:153
+#: ui/app.slint:156
 msgid "Help"
 msgstr "Ayuda"
 
-#: ui/app.slint:156
+#: ui/app.slint:159
 msgid "Update to {}…"
 msgstr "Actualizar a {}…"
 
-#: ui/app.slint:157
+#: ui/app.slint:160
 msgid "Check for Updates…"
 msgstr "Buscar actualizaciones…"
 
@@ -74,7 +74,7 @@ msgstr "Buscar actualizaciones…"
 msgid "Choose recipient…"
 msgstr "Elegir destinatario…"
 
-#: ui/broadsheet/actions.slint:227 ui/telegram.slint:940
+#: ui/broadsheet/actions.slint:227 ui/telegram.slint:907
 #: ui/workbench/actions.slint:229
 msgid "Saved Messages"
 msgstr "Mensajes guardados"
@@ -97,21 +97,21 @@ msgid "Add a comment (optional)"
 msgstr "Añade un comentario (opcional)"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
-#: ui/broadsheet/broadsheet.slint:2598 ui/compose.slint:244 ui/extras.slint:36
-#: ui/pages/downloads.slint:1668 ui/pages/settings.slint:1218
-#: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1818
-#: ui/workbench/actions.slint:548 ui/workbench/conversation.slint:1655
+#: ui/broadsheet/broadsheet.slint:2598 ui/chat.slint:360 ui/compose.slint:244
+#: ui/pages/downloads.slint:1390 ui/pages/profile.slint:174
+#: ui/terminal/actions.slint:386 ui/terminal/actions.slint:643
+#: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
 msgstr "Cancelar"
 
 #: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2589
 #: ui/chat.slint:279 ui/chat.slint:820 ui/chat.slint:902
-#: ui/terminal/terminal.slint:1811 ui/workbench/conversation.slint:1630
+#: ui/terminal/terminal.slint:1738 ui/workbench/conversation.slint:1630
 msgid "Report"
 msgstr "Reportar"
 
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2580
-#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1803
+#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1730
 #: ui/workbench/conversation.slint:1618
 msgid "Delete"
 msgstr "Eliminar"
@@ -148,7 +148,7 @@ msgid "All"
 msgstr "Todos"
 
 #: ui/broadsheet/broadsheet.slint:515 ui/pages/ai-access.slint:102
-#: ui/telegram.slint:942 ui/workbench/sidebar.slint:548
+#: ui/telegram.slint:909 ui/workbench/sidebar.slint:548
 msgid "All chats"
 msgstr "Todos los chats"
 
@@ -168,8 +168,8 @@ msgstr "Ordenar por"
 msgid "Latest message"
 msgstr "Último mensaje"
 
-#: ui/broadsheet/broadsheet.slint:673 ui/pages/downloads.slint:1006
-#: ui/terminal/terminal.slint:467
+#: ui/broadsheet/broadsheet.slint:673 ui/chat-manage.slint:233
+#: ui/pages/downloads.slint:1259 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "Nombre"
 
@@ -223,25 +223,25 @@ msgstr ""
 "Los bots con marca de verificación son de Telegram. Los demás bots ven lo "
 "que les envías."
 
-#: ui/broadsheet/broadsheet.slint:1330 ui/broadsheet/broadsheet.slint:3395
+#: ui/broadsheet/broadsheet.slint:1330 ui/broadsheet/broadsheet.slint:3317
 #: ui/terminal/terminal.slint:824 ui/workbench/conversation.slint:276
-#: ui/workbench/conversation.slint:2391
+#: ui/workbench/conversation.slint:2316
 msgid "Unmute"
 msgstr "Activar notificaciones"
 
-#: ui/broadsheet/broadsheet.slint:1330 ui/broadsheet/broadsheet.slint:3395
+#: ui/broadsheet/broadsheet.slint:1330 ui/broadsheet/broadsheet.slint:3317
 #: ui/terminal/terminal.slint:824 ui/workbench/conversation.slint:276
-#: ui/workbench/conversation.slint:2391
+#: ui/workbench/conversation.slint:2316
 msgid "Mute"
 msgstr "Silenciar"
 
-#: ui/broadsheet/broadsheet.slint:1338 ui/broadsheet/broadsheet.slint:3470
-#: ui/terminal/terminal.slint:1626 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1338 ui/broadsheet/broadsheet.slint:3386
+#: ui/terminal/terminal.slint:1559 ui/workbench/sidebar.slint:717
 msgid "Unpin"
 msgstr "Desfijar"
 
-#: ui/broadsheet/broadsheet.slint:1338 ui/broadsheet/broadsheet.slint:3470
-#: ui/terminal/terminal.slint:1626 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1338 ui/broadsheet/broadsheet.slint:3386
+#: ui/terminal/terminal.slint:1559 ui/workbench/sidebar.slint:717
 msgid "Pin"
 msgstr "Fijar"
 
@@ -250,16 +250,16 @@ msgstr "Fijar"
 msgid "Add to folder"
 msgstr "Añadir a una carpeta"
 
-#: ui/broadsheet/broadsheet.slint:1354 ui/broadsheet/broadsheet.slint:3478
-#: ui/terminal/terminal.slint:1634 ui/workbench/sidebar.slint:733
+#: ui/broadsheet/broadsheet.slint:1354 ui/broadsheet/broadsheet.slint:3394
+#: ui/terminal/terminal.slint:1567 ui/workbench/sidebar.slint:733
 msgid "Copy ID"
 msgstr "Copiar ID"
 
-#: ui/broadsheet/broadsheet.slint:1402 ui/compose.slint:243
-#: ui/pages/login.slint:532 ui/pages/login.slint:587 ui/pages/login.slint:684
-#: ui/pages/login.slint:703 ui/pages/login.slint:849 ui/pages/login.slint:880
-#: ui/pages/settings.slint:1395 ui/pages/settings.slint:1496
-#: ui/terminal/terminal.slint:888
+#: ui/broadsheet/broadsheet.slint:1402 ui/chat-manage.slint:228
+#: ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637
+#: ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849
+#: ui/pages/login.slint:909 ui/pages/settings.slint:1467
+#: ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:783
 msgid "Back"
 msgstr "Atrás"
 
@@ -287,11 +287,11 @@ msgstr ""
 msgid "You"
 msgstr "Tú"
 
-#: ui/broadsheet/broadsheet.slint:2344 ui/terminal/terminal.slint:1967
+#: ui/broadsheet/broadsheet.slint:2344 ui/terminal/terminal.slint:1894
 msgid "Hide sender's name"
 msgstr "Ocultar el nombre del remitente"
 
-#: ui/broadsheet/broadsheet.slint:2556 ui/terminal/terminal.slint:1826
+#: ui/broadsheet/broadsheet.slint:2556 ui/terminal/terminal.slint:1753
 msgid "Shift-click to select a range"
 msgstr "Mayús + clic para seleccionar un rango"
 
@@ -300,23 +300,23 @@ msgstr "Mayús + clic para seleccionar un rango"
 msgid "Forward"
 msgstr "Reenviar"
 
-#: ui/broadsheet/broadsheet.slint:2927 ui/terminal/terminal.slint:2343
+#: ui/broadsheet/broadsheet.slint:2849 ui/terminal/terminal.slint:2270
 msgid "Choose a chat on the left"
 msgstr "Elige un chat a la izquierda"
 
-#: ui/broadsheet/broadsheet.slint:2952 ui/terminal/terminal.slint:1548
+#: ui/broadsheet/broadsheet.slint:2874 ui/terminal/terminal.slint:1482
 msgid "typing…"
 msgstr "escribiendo…"
 
-#: ui/broadsheet/broadsheet.slint:3061 ui/terminal/terminal.slint:1687
+#: ui/broadsheet/broadsheet.slint:2983 ui/terminal/terminal.slint:1620
 msgid "{0} is typing…"
 msgstr "{0} está escribiendo…"
 
-#: ui/broadsheet/broadsheet.slint:3132
+#: ui/broadsheet/broadsheet.slint:3054
 msgid "Sending as {0}"
 msgstr "Enviando como {0}"
 
-#: ui/broadsheet/broadsheet.slint:3157
+#: ui/broadsheet/broadsheet.slint:3079
 msgid "Write a message…"
 msgstr "Escribe un mensaje…"
 
@@ -332,7 +332,7 @@ msgstr "Llamada"
 msgid "Mobile"
 msgstr "Móvil"
 
-#: ui/chat-info.slint:72 ui/pages/downloads.slint:1276
+#: ui/chat-info.slint:72 ui/chat-manage.slint:245 ui/pages/profile.slint:300
 msgid "Username"
 msgstr "Nombre de usuario"
 
@@ -340,7 +340,7 @@ msgstr "Nombre de usuario"
 msgid "Bio"
 msgstr "Biografía"
 
-#: ui/chat-info.slint:74
+#: ui/chat-info.slint:74 ui/chat-manage.slint:234
 msgid "Description"
 msgstr "Descripción"
 
@@ -361,7 +361,8 @@ msgstr "Ajustes"
 msgid "Shared Media"
 msgstr "Multimedia compartida"
 
-#: ui/chat-info.slint:79 ui/compose.slint:250
+#. The members.
+#: ui/chat-info.slint:79 ui/chat-manage.slint:285 ui/compose.slint:250
 msgid "Members"
 msgstr "Miembros"
 
@@ -428,7 +429,7 @@ msgstr "Archivos"
 msgid "Links"
 msgstr "Enlaces"
 
-#: ui/chat-info.slint:96
+#: ui/chat-info.slint:96 ui/chat-manage.slint:301
 msgid "Administrators"
 msgstr "Administradores"
 
@@ -450,11 +451,11 @@ msgstr "admin"
 msgid "Invite link"
 msgstr "Enlace de invitación"
 
-#: ui/chat-info.slint:101
+#: ui/chat-info.slint:101 ui/chat-manage.slint:224
 msgid "Manage group"
 msgstr "Administrar grupo"
 
-#: ui/chat-info.slint:102
+#: ui/chat-info.slint:102 ui/chat-manage.slint:225
 msgid "Manage channel"
 msgstr "Administrar canal"
 
@@ -511,6 +512,590 @@ msgstr "abrir"
 msgctxt "keyboard hint"
 msgid "close"
 msgstr "cerrar"
+
+#: ui/chat-manage.slint:226
+msgid "Administrator rights"
+msgstr "Permisos de administrador"
+
+#: ui/chat-manage.slint:227
+msgid "Change photo"
+msgstr "Cambiar foto"
+
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1370
+#: ui/pages/settings.slint:1278
+msgid "Save"
+msgstr "Guardar"
+
+#: ui/chat-manage.slint:230
+msgid "Got it"
+msgstr "Entendido"
+
+#: ui/chat-manage.slint:232
+msgctxt "on the photo"
+msgid "Change"
+msgstr "Cambiar"
+
+#: ui/chat-manage.slint:235
+msgid "The name cannot be empty"
+msgstr "El nombre no puede estar vacío"
+
+#: ui/chat-manage.slint:236
+msgid "You need the “{0}” right for that."
+msgstr "Para eso necesitas el permiso «{0}»."
+
+#: ui/chat-manage.slint:237
+msgid "Not available for this chat"
+msgstr "No disponible para este chat"
+
+#. The type.
+#: ui/chat-manage.slint:239
+msgid "Type"
+msgstr "Tipo"
+
+#: ui/chat-manage.slint:240
+msgid "Public"
+msgstr "Público"
+
+#: ui/chat-manage.slint:241
+msgid "Has a permanent link; anyone can find and join it."
+msgstr "Tiene un enlace permanente; cualquiera puede encontrarlo y unirse."
+
+#: ui/chat-manage.slint:242
+msgid "Has a permanent link; anyone can find and subscribe."
+msgstr ""
+"Tiene un enlace permanente; cualquiera puede encontrarlo y suscribirse."
+
+#: ui/chat-manage.slint:243
+msgid "Private"
+msgstr "Privado"
+
+#: ui/chat-manage.slint:244
+msgid "Cannot be found; people join by invite link."
+msgstr "No se puede encontrar; la gente se une con un enlace de invitación."
+
+#: ui/chat-manage.slint:246
+msgid "This is the current username"
+msgstr "Este es el nombre de usuario actual"
+
+#: ui/chat-manage.slint:247
+msgid "“{0}” is free"
+msgstr "«{0}» está libre"
+
+#: ui/chat-manage.slint:248
+msgid "“{0}” is taken, try another"
+msgstr "«{0}» ya está ocupado, prueba otro"
+
+#: ui/chat-manage.slint:249
+msgid "Checking “{0}”…"
+msgstr "Comprobando «{0}»…"
+
+#: ui/chat-manage.slint:250 ui/compose.slint:268
+msgid "At least 5 characters"
+msgstr "Al menos 5 caracteres"
+
+#: ui/chat-manage.slint:251
+msgid "Only a–z, 0–9 and underscore"
+msgstr "Solo a–z, 0–9 y guion bajo"
+
+#: ui/chat-manage.slint:252
+msgid "Must begin with a letter"
+msgstr "Debe empezar por una letra"
+
+#: ui/chat-manage.slint:253
+msgid "A public group needs a username"
+msgstr "Un grupo público necesita un nombre de usuario"
+
+#: ui/chat-manage.slint:254
+msgid "A public channel needs a username"
+msgstr "Un canal público necesita un nombre de usuario"
+
+#: ui/chat-manage.slint:255
+msgid "This username is not allowed"
+msgstr "Este nombre de usuario no está permitido"
+
+#: ui/chat-manage.slint:256
+msgid "You have too many public groups and channels"
+msgstr "Tienes demasiados grupos y canales públicos"
+
+#: ui/chat-manage.slint:257
+msgctxt "usernames to try"
+msgid "Try"
+msgstr "Prueba"
+
+#. The links.
+#: ui/chat-manage.slint:259
+msgid "Primary invite link"
+msgstr "Enlace de invitación principal"
+
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:559
+#: ui/pages/profile.slint:379
+msgid "Copy"
+msgstr "Copiar"
+
+#: ui/chat-manage.slint:261
+msgid "Revoke and make a new one"
+msgstr "Revocar y crear uno nuevo"
+
+#: ui/chat-manage.slint:262
+msgid "The old link stops working at once; those who already joined stay."
+msgstr ""
+"El enlace antiguo deja de funcionar al instante; quienes ya se unieron se "
+"quedan."
+
+#: ui/chat-manage.slint:263
+msgid "Revoke and make a new link"
+msgstr "Revocar y crear un enlace nuevo"
+
+#: ui/chat-manage.slint:264
+msgid "Other invite links"
+msgstr "Otros enlaces de invitación"
+
+#: ui/chat-manage.slint:265
+msgid "Revoke"
+msgstr "Revocar"
+
+#: ui/chat-manage.slint:266
+msgid "New invite link"
+msgstr "Nuevo enlace de invitación"
+
+#: ui/chat-manage.slint:267
+msgid "Name (optional), e.g. “Weekend meetup”"
+msgstr "Nombre (opcional), p. ej. «Quedada del fin de semana»"
+
+#: ui/chat-manage.slint:268
+msgid "Expires"
+msgstr "Caduca"
+
+#: ui/chat-manage.slint:269
+msgid "Member limit"
+msgstr "Límite de miembros"
+
+#: ui/chat-manage.slint:270 ui/compose.slint:225 ui/extras.slint:37
+msgid "Create"
+msgstr "Crear"
+
+#: ui/chat-manage.slint:271
+msgid "Unnamed link"
+msgstr "Enlace sin nombre"
+
+#: ui/chat-manage.slint:272
+msgid "Never expires"
+msgstr "No caduca nunca"
+
+#: ui/chat-manage.slint:273
+msgid "Expired"
+msgstr "Caducado"
+
+#: ui/chat-manage.slint:274
+msgid "{n} day left"
+msgid_plural "{n} days left"
+msgstr[0] "queda {n} día"
+msgstr[1] "quedan {n} días"
+
+#: ui/chat-manage.slint:275
+msgid "{n} hour left"
+msgid_plural "{n} hours left"
+msgstr[0] "queda {n} hora"
+msgstr[1] "quedan {n} horas"
+
+#: ui/chat-manage.slint:276
+msgid "{n} minute left"
+msgid_plural "{n} minutes left"
+msgstr[0] "queda {n} minuto"
+msgstr[1] "quedan {n} minutos"
+
+#: ui/chat-manage.slint:277
+msgid "No limit"
+msgstr "Sin límite"
+
+#: ui/chat-manage.slint:278
+msgid "Up to {0}"
+msgstr "Hasta {0}"
+
+#: ui/chat-manage.slint:279
+msgctxt "how many joined by the link"
+msgid "{0} joined"
+msgstr "se unieron: {0}"
+
+#: ui/chat-manage.slint:280 ui/extras.slint:75
+msgid "1 hour"
+msgstr "1 hora"
+
+#: ui/chat-manage.slint:281
+msgid "1 day"
+msgstr "1 día"
+
+#: ui/chat-manage.slint:282
+msgid "1 week"
+msgstr "1 semana"
+
+#: ui/chat-manage.slint:283
+msgid "{n} person"
+msgid_plural "{n} people"
+msgstr[0] "{n} persona"
+msgstr[1] "{n} personas"
+
+#: ui/chat-manage.slint:286
+msgid "Subscribers"
+msgstr "Suscriptores"
+
+#: ui/chat-manage.slint:287
+msgid "{0} members"
+msgstr "{0} miembros"
+
+#: ui/chat-manage.slint:288
+msgid "{0} subscribers"
+msgstr "{0} suscriptores"
+
+#: ui/chat-manage.slint:289
+msgid "Add member"
+msgstr "Añadir miembro"
+
+#: ui/chat-manage.slint:290
+msgid "Add subscriber"
+msgstr "Añadir suscriptor"
+
+#: ui/chat-manage.slint:291
+msgid "Search contacts"
+msgstr "Buscar contactos"
+
+#: ui/chat-manage.slint:292
+msgid "No contacts to add"
+msgstr "No hay contactos que añadir"
+
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1370
+msgid "Add"
+msgstr "Añadir"
+
+#: ui/chat-manage.slint:294
+msgid "you"
+msgstr "tú"
+
+#: ui/chat-manage.slint:295
+msgid "Make administrator"
+msgstr "Hacer administrador"
+
+#: ui/chat-manage.slint:296
+msgid "Remove from group"
+msgstr "Quitar del grupo"
+
+#: ui/chat-manage.slint:297
+msgid "Remove from channel"
+msgstr "Quitar del canal"
+
+#: ui/chat-manage.slint:298
+msgid "Remove {0} from the group?"
+msgstr "¿Quitar a {0} del grupo?"
+
+#: ui/chat-manage.slint:299
+msgid "Remove {0} from the channel?"
+msgstr "¿Quitar a {0} del canal?"
+
+#: ui/chat-manage.slint:300 ui/chat.slint:346 ui/pages/ai-access.slint:458
+#: ui/pages/downloads.slint:1401
+msgid "Remove"
+msgstr "Quitar"
+
+#: ui/chat-manage.slint:302
+msgid "Administrator"
+msgstr "Administrador"
+
+#: ui/chat-manage.slint:303
+msgid "Group owner"
+msgstr "Propietario del grupo"
+
+#: ui/chat-manage.slint:304
+msgid "Channel owner"
+msgstr "Propietario del canal"
+
+#: ui/chat-manage.slint:305
+msgid "{0} · every right"
+msgstr "{0} · todos los permisos"
+
+#: ui/chat-manage.slint:306
+msgid "{n} right"
+msgid_plural "{n} rights"
+msgstr[0] "{n} permiso"
+msgstr[1] "{n} permisos"
+
+#: ui/chat-manage.slint:307
+msgid "set by {0}"
+msgstr "nombrado por {0}"
+
+#. The group's settings, and the channel's.
+#: ui/chat-manage.slint:309
+msgid "Group settings"
+msgstr "Ajustes del grupo"
+
+#: ui/chat-manage.slint:310
+msgid "Channel settings"
+msgstr "Ajustes del canal"
+
+#: ui/chat-manage.slint:311
+msgid "Member permissions"
+msgstr "Permisos de los miembros"
+
+#: ui/chat-manage.slint:312
+msgid "{0} of {1} allowed · what members can do"
+msgstr "{0} de {1} permitidos · lo que pueden hacer los miembros"
+
+#: ui/chat-manage.slint:313 ui/pages/ai-access.slint:108
+msgid "Send messages"
+msgstr "Enviar mensajes"
+
+#: ui/chat-manage.slint:314
+msgid "Send photos and videos"
+msgstr "Enviar fotos y vídeos"
+
+#: ui/chat-manage.slint:315
+msgid "Send stickers and GIFs"
+msgstr "Enviar stickers y GIF"
+
+#: ui/chat-manage.slint:316
+msgid "Add link previews"
+msgstr "Añadir vistas previas de enlaces"
+
+#: ui/chat-manage.slint:317
+msgid "Send polls"
+msgstr "Enviar encuestas"
+
+#: ui/chat-manage.slint:318 ui/chat-manage.slint:363
+msgid "Invite members"
+msgstr "Invitar miembros"
+
+#: ui/chat-manage.slint:319 ui/chat-manage.slint:365
+msgid "Pin messages"
+msgstr "Fijar mensajes"
+
+#: ui/chat-manage.slint:320 ui/chat-manage.slint:358
+msgid "Change group info"
+msgstr "Cambiar la información del grupo"
+
+#: ui/chat-manage.slint:321
+msgid "Slow mode"
+msgstr "Modo lento"
+
+#: ui/chat-manage.slint:322 ui/extras.slint:69
+msgctxt "slow mode"
+msgid "Off"
+msgstr "Desactivado"
+
+#: ui/chat-manage.slint:323 ui/chat.slint:357
+msgid "{0} s"
+msgstr "{0} s"
+
+#: ui/chat-manage.slint:324
+msgid "{0} min"
+msgstr "{0} min"
+
+#: ui/chat-manage.slint:325
+msgid "{n} hour"
+msgid_plural "{n} hours"
+msgstr[0] "{n} hora"
+msgstr[1] "{n} horas"
+
+#: ui/chat-manage.slint:326
+msgid "Each member can send one message every {0}."
+msgstr "Cada miembro puede enviar un mensaje cada {0}."
+
+#: ui/chat-manage.slint:327
+msgid "Off: members can send messages one after another."
+msgstr "Desactivado: los miembros pueden enviar mensajes uno tras otro."
+
+#: ui/chat-manage.slint:328
+msgid "Approve new members"
+msgstr "Aprobar nuevos miembros"
+
+#: ui/chat-manage.slint:329
+msgid "New members join once an administrator approves them"
+msgstr "Los nuevos miembros entran cuando un administrador los aprueba"
+
+#: ui/chat-manage.slint:330
+msgid "{n} request awaits your approval"
+msgid_plural "{n} requests await your approval"
+msgstr[0] "{n} solicitud espera tu aprobación"
+msgstr[1] "{n} solicitudes esperan tu aprobación"
+
+#: ui/chat-manage.slint:331
+msgid "Topics"
+msgstr "Temas"
+
+#: ui/chat-manage.slint:332
+msgid "Split the group into topics, each with its own chat"
+msgstr "Dividir el grupo en temas, cada uno con su propio chat"
+
+#: ui/chat-manage.slint:333
+msgid "Protected content"
+msgstr "Contenido protegido"
+
+#: ui/chat-manage.slint:334
+msgid "Members cannot forward or save what is posted here"
+msgstr "Los miembros no pueden reenviar ni guardar lo que se publica aquí"
+
+#: ui/chat-manage.slint:335
+msgid "Subscribers cannot forward or save what is posted here"
+msgstr "Los suscriptores no pueden reenviar ni guardar lo que se publica aquí"
+
+#: ui/chat-manage.slint:336
+msgid "History for new members"
+msgstr "Historial para nuevos miembros"
+
+#: ui/chat-manage.slint:337
+msgid "New members see the messages from before they joined"
+msgstr "Los nuevos miembros ven los mensajes de antes de unirse"
+
+#: ui/chat-manage.slint:338
+msgid "Hide members"
+msgstr "Ocultar miembros"
+
+#: ui/chat-manage.slint:339
+msgid "Members cannot see the member list; needs 100 members"
+msgstr "Los miembros no ven la lista de miembros; requiere 100 miembros"
+
+#: ui/chat-manage.slint:340
+msgid "Aggressive anti-spam"
+msgstr "Antispam agresivo"
+
+#: ui/chat-manage.slint:341
+msgid "Telegram deletes spam on its own; needs 200 members"
+msgstr "Telegram elimina el spam por sí mismo; requiere 200 miembros"
+
+#: ui/chat-manage.slint:342
+msgid "Signatures"
+msgstr "Firmas"
+
+#: ui/chat-manage.slint:343
+msgid "Show the author's name under every post"
+msgstr "Mostrar el nombre del autor debajo de cada publicación"
+
+#: ui/chat-manage.slint:344
+msgid "Discussion group"
+msgstr "Grupo de debate"
+
+#: ui/chat-manage.slint:345
+msgid "{0} · linked, posts can be commented on"
+msgstr "{0} · vinculado, las publicaciones se pueden comentar"
+
+#: ui/chat-manage.slint:346
+msgid "Not linked"
+msgstr "Sin vincular"
+
+#: ui/chat-manage.slint:347
+msgid "Unlink"
+msgstr "Desvincular"
+
+#: ui/chat-manage.slint:348
+msgid "Choose"
+msgstr "Elegir"
+
+#. The rights page.
+#: ui/chat-manage.slint:350
+msgctxt "an administrator's title"
+msgid "Title"
+msgstr "Título"
+
+#: ui/chat-manage.slint:351
+msgid "E.g. “Keycap advisor”, shown beside the name"
+msgstr "P. ej. «Asesor de keycaps», se muestra junto al nombre"
+
+#: ui/chat-manage.slint:352
+msgid "What they can do"
+msgstr "Qué puede hacer"
+
+#: ui/chat-manage.slint:353
+msgid "Dismiss administrator"
+msgstr "Destituir administrador"
+
+#: ui/chat-manage.slint:354
+msgid "The owner has every right; they cannot be changed."
+msgstr "El propietario tiene todos los permisos; no se pueden cambiar."
+
+#: ui/chat-manage.slint:355
+msgid "These are your own rights, set by {0}; only they can change them."
+msgstr ""
+"Estos son tus propios permisos, establecidos por {0}; solo esa persona puede "
+"cambiarlos."
+
+#: ui/chat-manage.slint:356
+msgid ""
+"You do not have the “Add administrators” right: view only. Ask the owner, "
+"{0}."
+msgstr ""
+"No tienes el permiso «Añadir administradores»: solo lectura. Pídeselo al "
+"propietario, {0}."
+
+#: ui/chat-manage.slint:357
+msgid "You do not have “{0}” yourself, so you cannot give it."
+msgstr "Tú mismo no tienes «{0}», así que no puedes concederlo."
+
+#: ui/chat-manage.slint:359
+msgid "Change channel info"
+msgstr "Cambiar la información del canal"
+
+#: ui/chat-manage.slint:360
+msgid "Delete messages"
+msgstr "Eliminar mensajes"
+
+#: ui/chat-manage.slint:361
+msgid "Delete others' messages"
+msgstr "Eliminar mensajes de otros"
+
+#: ui/chat-manage.slint:362
+msgid "Ban members"
+msgstr "Expulsar miembros"
+
+#: ui/chat-manage.slint:364
+msgid "Invite subscribers"
+msgstr "Invitar suscriptores"
+
+#: ui/chat-manage.slint:366
+msgid "Manage topics"
+msgstr "Gestionar temas"
+
+#: ui/chat-manage.slint:367
+msgid "Manage video chats"
+msgstr "Gestionar videochats"
+
+#: ui/chat-manage.slint:368
+msgid "Manage live streams"
+msgstr "Gestionar transmisiones en directo"
+
+#: ui/chat-manage.slint:369
+msgid "Remain anonymous"
+msgstr "Permanecer anónimo"
+
+#: ui/chat-manage.slint:370
+msgid "Add administrators"
+msgstr "Añadir administradores"
+
+#: ui/chat-manage.slint:371
+msgid "Post messages"
+msgstr "Publicar mensajes"
+
+#: ui/chat-manage.slint:372
+msgid "Edit others' messages"
+msgstr "Editar mensajes de otros"
+
+#: ui/chat-manage.slint:373
+msgid "Post and edit stories"
+msgstr "Publicar y editar historias"
+
+#. The crop page.
+#: ui/chat-manage.slint:375
+msgid ""
+"Drag the picture and set the zoom; what is in the frame becomes the photo, "
+"cropped square."
+msgstr ""
+"Arrastra la imagen y ajusta el zoom; lo que quede en el marco será la foto, "
+"recortada en cuadrado."
+
+#: ui/chat-manage.slint:376
+msgid "Choose another"
+msgstr "Elegir otra"
+
+#: ui/chat-manage.slint:377
+msgid "Use"
+msgstr "Usar"
 
 #: ui/chat.slint:276
 msgid "Unblock bot"
@@ -713,11 +1298,6 @@ msgstr "Álbum {0} · {1}"
 msgid "Add more"
 msgstr "Añadir más"
 
-#: ui/chat.slint:346 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
-#: ui/pages/downloads.slint:1611
-msgid "Remove"
-msgstr "Quitar"
-
 #: ui/chat.slint:347
 msgid "Add a caption…"
 msgstr "Añade una descripción…"
@@ -749,10 +1329,6 @@ msgstr "Desaparece después de abrirse."
 #: ui/chat.slint:356
 msgid "View once"
 msgstr "Ver una vez"
-
-#: ui/chat.slint:357
-msgid "{0} s"
-msgstr "{0} s"
 
 #: ui/chat.slint:359
 msgid "Hide with spoiler"
@@ -1217,10 +1793,6 @@ msgstr "Siguiente"
 msgid "Skip"
 msgstr "Omitir"
 
-#: ui/compose.slint:225 ui/extras.slint:37
-msgid "Create"
-msgstr "Crear"
-
 #: ui/compose.slint:229
 msgid "Invite {n} person"
 msgid_plural "Invite {n} people"
@@ -1230,10 +1802,6 @@ msgstr[1] "Invitar a {n} personas"
 #: ui/compose.slint:229
 msgid "Done"
 msgstr "Listo"
-
-#: ui/compose.slint:231 ui/pages/downloads.slint:1370
-msgid "Add"
-msgstr "Añadir"
 
 #: ui/compose.slint:245
 msgid "Search contacts, @username or phone number"
@@ -1320,10 +1888,6 @@ msgstr "Solo a–z, 0–9 y guiones bajos"
 msgid "Must start with a letter"
 msgstr "Debe empezar por una letra"
 
-#: ui/compose.slint:268
-msgid "At least 5 characters"
-msgstr "Al menos 5 caracteres"
-
 #: ui/compose.slint:269
 msgid "At most 32 characters"
 msgstr "Como máximo 32 caracteres"
@@ -1365,10 +1929,6 @@ msgstr "No se pudo comprobar el enlace: {0}"
 #: ui/compose.slint:286
 msgid "It can be revoked and made anew in the channel's settings."
 msgstr "Se puede revocar y crear uno nuevo en los ajustes del canal."
-
-#: ui/compose.slint:287 ui/pages/ai-access.slint:559 ui/pages/profile.slint:379
-msgid "Copy"
-msgstr "Copiar"
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:559 ui/pages/profile.slint:379
 msgid "Copied"
@@ -1646,7 +2206,7 @@ msgid_plural "Sent to {n} chats"
 msgstr[0] "Enviado a {n} chat"
 msgstr[1] "Enviado a {n} chats"
 
-#: ui/extras.slint:51 ui/extras.slint:137
+#: ui/extras.slint:51 ui/extras.slint:86
 msgid "This chat does not allow forwarding."
 msgstr "Este chat no permite el reenvío."
 
@@ -1685,11 +2245,6 @@ msgstr "Modo lento · {0} de espera"
 msgid "Slow mode · one message every {0}"
 msgstr "Modo lento · un mensaje cada {0}"
 
-#: ui/extras.slint:69
-msgctxt "slow mode"
-msgid "Off"
-msgstr "Desactivado"
-
 #: ui/extras.slint:70
 msgid "10 seconds"
 msgstr "10 segundos"
@@ -1710,177 +2265,41 @@ msgstr "5 minutos"
 msgid "15 minutes"
 msgstr "15 minutos"
 
-#: ui/extras.slint:75
-msgid "1 hour"
-msgstr "1 hora"
-
 #: ui/extras.slint:76
 msgid "{n} second"
 msgid_plural "{n} seconds"
 msgstr[0] "{n} segundo"
 msgstr[1] "{n} segundos"
 
-#. The settings panel.
-#: ui/extras.slint:79
-msgid "Chat settings"
-msgstr "Ajustes del chat"
-
-#: ui/extras.slint:80
-msgid "Nothing to set for this chat yet."
-msgstr "Aún no hay nada que ajustar en este chat."
-
 #: ui/extras.slint:81
-msgid "Group administration · you are an administrator"
-msgstr "Administración del grupo · eres administrador"
-
-#: ui/extras.slint:81
-msgid "Group rules"
-msgstr "Reglas del grupo"
-
-#: ui/extras.slint:82
-msgid "Slow mode"
-msgstr "Modo lento"
-
-#: ui/extras.slint:84
-msgid "Members can send messages at any time."
-msgstr "Los miembros pueden enviar mensajes en cualquier momento."
-
-#: ui/extras.slint:85
-msgid "Members can send one message every {0}. Administrators are not limited."
-msgstr ""
-"Los miembros pueden enviar un mensaje cada {0}. Los administradores no "
-"tienen límite."
-
-#: ui/extras.slint:87
-msgid "Members can"
-msgstr "Los miembros pueden"
-
-#: ui/extras.slint:89
-msgctxt "group permission"
-msgid "Send messages"
-msgstr "Enviar mensajes"
-
-#: ui/extras.slint:90
-msgid "Send photos and videos"
-msgstr "Enviar fotos y vídeos"
-
-#: ui/extras.slint:91
-msgid "Send stickers and GIFs"
-msgstr "Enviar stickers y GIF"
-
-#: ui/extras.slint:92
-msgid "Send links"
-msgstr "Enviar enlaces"
-
-#: ui/extras.slint:93
-msgid "Create polls"
-msgstr "Crear encuestas"
-
-#: ui/extras.slint:94
-msgid "Add members"
-msgstr "Añadir miembros"
-
-#: ui/extras.slint:95
-msgid "Pin messages"
-msgstr "Fijar mensajes"
-
-#: ui/extras.slint:96
-msgid "Change group info"
-msgstr "Cambiar la información del grupo"
-
-#: ui/extras.slint:100
-msgid "Approve new members"
-msgstr "Aprobar nuevos miembros"
-
-#: ui/extras.slint:101
-msgid "Restrict saving and forwarding"
-msgstr "Restringir el guardado y el reenvío"
-
-#: ui/extras.slint:102
-msgid "New members see earlier messages"
-msgstr "Los nuevos miembros ven los mensajes anteriores"
-
-#: ui/extras.slint:103
-msgid "Hide the member list"
-msgstr "Ocultar la lista de miembros"
-
-#: ui/extras.slint:104
-msgid "Aggressive anti-spam"
-msgstr "Antispam agresivo"
-
-#: ui/extras.slint:108
-msgid "People who join by invite link wait for an administrator's approval."
-msgstr ""
-"Las personas que se unen con un enlace de invitación esperan la aprobación "
-"de un administrador."
-
-#: ui/extras.slint:109
-msgid "Members cannot forward, save or copy content from this group."
-msgstr ""
-"Los miembros no pueden reenviar, guardar ni copiar el contenido de este "
-"grupo."
-
-#: ui/extras.slint:110
-msgid "When off, new members see only messages sent after they joined."
-msgstr ""
-"Si está desactivado, los nuevos miembros solo ven los mensajes enviados "
-"después de unirse."
-
-#: ui/extras.slint:111
-msgid "Only administrators can see the member list."
-msgstr "Solo los administradores pueden ver la lista de miembros."
-
-#: ui/extras.slint:112
-msgid "Suspected spam is deleted automatically."
-msgstr "El spam sospechoso se elimina automáticamente."
-
-#: ui/extras.slint:115
-msgid "({0} members or more)"
-msgstr "({0} miembros o más)"
-
-#: ui/extras.slint:116
-msgid "Slow mode: one message every {0}"
-msgstr "Modo lento: un mensaje cada {0}"
-
-#: ui/extras.slint:117
-msgid "Administrators turned off: {0}"
-msgstr "Los administradores han desactivado: {0}"
-
-#. Between names in a list: "Jie, Mika".
-#: ui/extras.slint:129 ui/telegram.slint:944
-msgctxt "list separator"
-msgid ", "
-msgstr ", "
-
-#: ui/extras.slint:132
 msgid "Too many requests. Try again in {n} second."
 msgid_plural "Too many requests. Try again in {n} seconds."
 msgstr[0] "Demasiadas solicitudes. Inténtalo de nuevo en {n} segundo."
 msgstr[1] "Demasiadas solicitudes. Inténtalo de nuevo en {n} segundos."
 
-#: ui/extras.slint:133
+#: ui/extras.slint:82
 msgid "Slow mode: you can send again in {n} second."
 msgid_plural "Slow mode: you can send again in {n} seconds."
 msgstr[0] "Modo lento: podrás volver a enviar en {n} segundo."
 msgstr[1] "Modo lento: podrás volver a enviar en {n} segundos."
 
-#: ui/extras.slint:134
+#: ui/extras.slint:83
 msgid "Only administrators can do this."
 msgstr "Solo los administradores pueden hacer esto."
 
-#: ui/extras.slint:135
+#: ui/extras.slint:84
 msgid "This reaction is not allowed here."
 msgstr "Esta reacción no está permitida aquí."
 
-#: ui/extras.slint:136
+#: ui/extras.slint:85
 msgid "This topic is closed."
 msgstr "Este tema está cerrado."
 
-#: ui/extras.slint:138
+#: ui/extras.slint:87
 msgid "Members cannot send messages in this group."
 msgstr "Los miembros no pueden enviar mensajes en este grupo."
 
-#: ui/extras.slint:139
+#: ui/extras.slint:88
 msgid "You cannot write in this group."
 msgstr "No puedes escribir en este grupo."
 
@@ -2399,10 +2818,6 @@ msgstr "{0} chats que elegiste"
 msgid "None chosen yet: assistants see nothing"
 msgstr "Ninguno elegido: los asistentes no ven nada"
 
-#: ui/pages/ai-access.slint:108 ui/pages/ai-access.slint:485
-msgid "Send messages"
-msgstr "Enviar mensajes"
-
 #: ui/pages/ai-access.slint:108 ui/pages/ai-access.slint:494
 msgid "Drafts only"
 msgstr "Solo borradores"
@@ -2780,11 +3195,6 @@ msgstr ""
 msgid "Testing…"
 msgstr "Probando…"
 
-#: ui/pages/downloads.slint:1370 ui/pages/profile.slint:429
-#: ui/pages/settings.slint:1316
-msgid "Save"
-msgstr "Guardar"
-
 #: ui/pages/downloads.slint:1380
 msgid "Test connection"
 msgstr "Probar conexión"
@@ -2875,7 +3285,7 @@ msgstr "Traducción automática"
 msgid "Translate foreign-language messages into your UI language"
 msgstr "Traduce los mensajes en otros idiomas al idioma de la interfaz"
 
-#: ui/pages/login.slint:133 ui/workbench/conversation.slint:2010
+#: ui/pages/login.slint:133 ui/workbench/conversation.slint:1935
 msgid "Reading mode"
 msgstr "Modo lectura"
 
@@ -3665,11 +4075,17 @@ msgstr "Salir de FinchGram"
 msgid "New message"
 msgstr "Mensaje nuevo"
 
-#: ui/telegram.slint:941
+#: ui/telegram.slint:908
 msgid "Deleted Account"
 msgstr "Cuenta eliminada"
 
-#: ui/terminal/drawer.slint:175 ui/terminal/terminal.slint:2274
+#. Between names in a list: "Jie, Mika".
+#: ui/telegram.slint:911
+msgctxt "list separator"
+msgid ", "
+msgstr ", "
+
+#: ui/terminal/drawer.slint:175 ui/terminal/terminal.slint:2201
 msgctxt "terminal"
 msgid "cmd"
 msgstr "comandos"
@@ -3699,59 +4115,55 @@ msgstr "(editado)"
 msgid "sponsored"
 msgstr "patrocinado"
 
-#: ui/terminal/terminal.slint:1324 ui/terminal/terminal.slint:1556
+#: ui/terminal/terminal.slint:1324 ui/terminal/terminal.slint:1489
 msgid "search"
 msgstr "buscar"
 
-#: ui/terminal/terminal.slint:1472
-msgid "chat settings"
-msgstr "ajustes del chat"
-
-#: ui/terminal/terminal.slint:1569
+#: ui/terminal/terminal.slint:1502
 msgid "chat info"
 msgstr "info del chat"
 
-#: ui/terminal/terminal.slint:1858
+#: ui/terminal/terminal.slint:1785
 msgid "Mute or unmute this chat"
 msgstr "Silenciar este chat o activar sus notificaciones"
 
-#: ui/terminal/terminal.slint:1859
+#: ui/terminal/terminal.slint:1786
 msgid "Pin or unpin this chat"
 msgstr "Fijar o desfijar este chat"
 
-#: ui/terminal/terminal.slint:1860
+#: ui/terminal/terminal.slint:1787
 msgid "Mark every chat in this folder as read"
 msgstr "Marcar todos los chats de esta carpeta como leídos"
 
-#: ui/terminal/terminal.slint:1861
+#: ui/terminal/terminal.slint:1788
 msgid "Copy this chat's ID"
 msgstr "Copiar el ID de este chat"
 
-#: ui/terminal/terminal.slint:1862
+#: ui/terminal/terminal.slint:1789
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "Buscar chats, contactos, @usuarios y mensajes"
 
-#: ui/terminal/terminal.slint:2013
+#: ui/terminal/terminal.slint:1940
 msgid "unmute"
 msgstr "activar notificaciones"
 
-#: ui/terminal/terminal.slint:2013
+#: ui/terminal/terminal.slint:1940
 msgid "mute"
 msgstr "silenciar"
 
-#: ui/terminal/terminal.slint:2118
+#: ui/terminal/terminal.slint:2045
 msgid "Write a message, or / for commands"
 msgstr "Escribe un mensaje, o / para los comandos"
 
-#: ui/terminal/terminal.slint:2149
+#: ui/terminal/terminal.slint:2076
 msgid "save"
 msgstr "guardar"
 
-#: ui/terminal/terminal.slint:2149
+#: ui/terminal/terminal.slint:2076
 msgid "send"
 msgstr "enviar"
 
-#: ui/terminal/terminal.slint:2249
+#: ui/terminal/terminal.slint:2176
 msgid "connected"
 msgstr "conectado"
 
@@ -3817,27 +4229,27 @@ msgstr "Los usuarios Premium pueden desactivarlos"
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
 msgstr "Mensaje patrocinado de Telegram · FinchGram lo muestra tal cual"
 
-#: ui/workbench/conversation.slint:2148
+#: ui/workbench/conversation.slint:2073
 msgid "Send to {0}"
 msgstr "Enviar a {0}"
 
-#: ui/workbench/conversation.slint:2339
+#: ui/workbench/conversation.slint:2264
 msgid "Esc to cancel"
 msgstr "Esc para cancelar"
 
-#: ui/workbench/conversation.slint:2349
+#: ui/workbench/conversation.slint:2274
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ guardar · ⇧⏎ nueva línea"
 
-#: ui/workbench/conversation.slint:2349
+#: ui/workbench/conversation.slint:2274
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ guardar · ⏎ nueva línea"
 
-#: ui/workbench/conversation.slint:2350
+#: ui/workbench/conversation.slint:2275
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ enviar · ⇧⏎ nueva línea"
 
-#: ui/workbench/conversation.slint:2350
+#: ui/workbench/conversation.slint:2275
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ enviar · ⏎ nueva línea"
 
@@ -3854,9 +4266,3 @@ msgstr ""
 #: ui/workbench/workbench.slint:353
 msgid "Manage accounts"
 msgstr "Gestionar cuentas"
-
-#~ msgid "Filters"
-#~ msgstr "Filtros"
-
-#~ msgid "Scheduled"
-#~ msgstr "Programados"

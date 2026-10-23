@@ -3,6 +3,8 @@
 // row's letter runs it at once, Esc closes. The rows come from src/telegram/chat_info.rs
 // (ui/chat-info.slint); this draws them.
 import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "../chat-info.slint";
+import { ChatManage, ManageLook } from "../chat-manage.slint";
+import { ManagePanel } from "../chat-manage-panel.slint";
 import { Conversation, ChatKind, Status, Actions } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { TerminalPalette as P } from "palette.slint";
@@ -150,6 +152,20 @@ component Section inherits VerticalLayout {
     }
 }
 
+// The page's tokens for this theme (ui/chat-manage-panel.slint draws it with them).
+export global TerminalManage {
+    out property <ManageLook> look: {
+        font: P.font, mono: P.font, fs: 12px, fs-s: 12px, fs-xs: 11px, fs-t: 12px,
+        r: 2px, rl: 2px, av-r: 2px, chip-r: 2px,
+        panel: P.side, text: P.text, muted: P.muted, faint: P.faint, accent: P.accent, on-accent: P.on-accent, link: P.accent,
+        hover: P.sel, line: P.line, off: P.line, ok: P.accent, bad: P.accent3, bad-soft: transparent, soft: transparent, soft-ink: P.accent,
+        in-bg: transparent, ring: P.line, ring-width: 1px, in-h: 26px, card: transparent, card-ring: P.line,
+        sec-fs: 12px, sec-weight: 400, sec-spacing: 0px, sec-upper: false, sec-color: P.faint, sec-rule: false, head-rule: 1px,
+        pad: 14px, sw-w: 32px, sw-h: 18px, sw-r: 2px, knob-r: 1px, av-font: 22px,
+        icons: false, brackets: true, text-switches: true,
+    };
+}
+
 export component InfoPanel inherits Rectangle {
     background: P.side;
     property <bool> saved: Conversation.kind == ChatKind.saved;
@@ -192,7 +208,8 @@ export component InfoPanel inherits Rectangle {
             return reject;
         }
     }
-    Flickable {
+    if ChatManage.open: ManagePanel { look: TerminalManage.look; }
+    if !ChatManage.open: Flickable {
         content-height: body.preferred-height;
         body := VerticalLayout {
             width: parent.width;

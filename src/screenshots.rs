@@ -464,6 +464,116 @@ fn quote(id: &str, sender: &str, text: &str) -> ReplyQuote {
     ReplyQuote { shown: true, id: id.into(), sender: sender.into(), content: Content::Text, text: text.into(), ..ReplyQuote::default() }
 }
 
+/// The management page as src/telegram/manage.rs fills it for the keyboard group: Zhou Ye an
+/// administrator made by Ah Jie, without the right to add administrators (the design's demo).
+fn set_manage(ui: &MainWindow) {
+    let manage = ui.global::<ChatManage>();
+    manage.set_open(true);
+    manage.set_page(ManagePage::Main);
+    manage.set_group(true);
+    manage.set_supergroup(true);
+    manage.set_title("Manage group".into());
+    manage.set_can_save(false);
+    manage.set_name("Keyboard Lab".into());
+    manage.set_description("Custom builds, switches and keycaps. No ads; trades go to @kbd_market.".into());
+    manage.set_initial("K".into());
+    manage.set_has_picture(false);
+    manage.set_can_info(true);
+    manage.set_public(true);
+    manage.set_username("kbd_lab".into());
+    manage.set_check(UsernameCheck::Same);
+    manage.set_check_text("This is the current username".into());
+    manage.set_can_invite(true);
+    manage.set_primary_link("t.me/+kM3pQ8rTz1aX".into());
+    manage.set_links(model(vec![ManageLink { link: "t.me/+a1".into(), name: "Thursday voice chat".into(), meta: "5 days left · No limit · 12 joined".into() }]));
+    manage.set_expiries(model(vec![chip("3600", "1 hour", false), chip("86400", "1 day", true), chip("604800", "1 week", false), chip("0", "No limit", false)]));
+    manage.set_limits(model(vec![chip("1", "1 person", false), chip("10", "10 people", false), chip("100", "100 people", false), chip("0", "No limit", true)]));
+    manage.set_count_line("486 members".into());
+    let people = vec![
+        person("aj", "Ah Jie", "Group owner", true, false, false),
+        person("xz", "Xiao Zhou", "Administrator", false, true, false),
+        person("me", "Zhou Ye", "Administrator", false, true, true),
+        person("yk", "Yuki", "Administrator", false, true, false),
+        person("mm", "Momo", "", false, false, false),
+        person("ken", "Ken", "", false, false, false),
+    ];
+    manage.set_members(model(people.clone()));
+    manage.set_admins(model(vec![
+        ManagePerson { sub: "Group owner · every right".into(), ..people[0].clone() },
+        ManagePerson { sub: "5 rights · set by Ah Jie".into(), ..people[1].clone() },
+        ManagePerson { sub: "6 rights · set by Ah Jie".into(), ..people[2].clone() },
+        ManagePerson { sub: "2 rights · set by Zhou Ye".into(), ..people[3].clone() },
+    ]));
+    manage.set_perms_summary("5 of 8 allowed · what members can do".into());
+    manage.set_perms(model(vec![
+        toggle("send", "Send messages", "", true, true),
+        toggle("media", "Send photos and videos", "", true, true),
+        toggle("stickers", "Send stickers and GIFs", "", true, true),
+        toggle("links", "Add link previews", "", true, true),
+        toggle("polls", "Send polls", "", true, true),
+        toggle("invite", "Invite members", "", false, true),
+        toggle("pin", "Pin messages", "", false, true),
+        toggle("info", "Change group info", "", false, true),
+    ]));
+    manage.set_slow_rows(model(vec![
+        model(vec![chip("0", "Off", true), chip("10", "10 s", false), chip("30", "30 s", false), chip("60", "1 min", false)]),
+        model(vec![chip("300", "5 min", false), chip("900", "15 min", false), chip("3600", "1 hour", false)]),
+    ]));
+    manage.set_slow_note("Off: members can send messages one after another.".into());
+    manage.set_options(model(vec![
+        toggle("approve", "Approve new members", "New members join once an administrator approves them", false, true),
+        toggle("topics", "Topics", "Split the group into topics, each with its own chat", false, true),
+        toggle("protect", "Protected content", "Members cannot forward or save what is posted here", false, true),
+        toggle("history", "History for new members", "New members see the messages from before they joined", true, true),
+        toggle("hidden", "Hide members", "Members cannot see the member list; needs 100 members", false, true),
+        toggle("antispam", "Aggressive anti-spam", "Telegram deletes spam on its own; needs 200 members", true, false),
+    ]));
+    // The rights page: Xiao Zhou, made by Ah Jie: Zhou Ye may only look.
+    manage.set_who(ManagePerson { sub: "Administrator · set by Ah Jie".into(), ..people[1].clone() });
+    manage.set_lock_note("You do not have the “Add administrators” right: view only. Ask the owner, Ah Jie.".into());
+    manage.set_custom_title("Keycap advisor".into());
+    manage.set_title_editable(false);
+    manage.set_rights(model(vec![
+        toggle("info", "Change group info", "", true, false),
+        toggle("del", "Delete messages", "", true, false),
+        toggle("ban", "Ban members", "", true, false),
+        toggle("invite", "Invite members", "", true, false),
+        toggle("pin", "Pin messages", "", true, false),
+        toggle("topics", "Manage topics", "", false, false),
+        toggle("call", "Manage video chats", "", false, false),
+        toggle("anon", "Remain anonymous", "", false, false),
+        toggle("promote", "Add administrators", "", false, false),
+    ]));
+    manage.set_can_dismiss(false);
+}
+
+fn chip(id: &str, label: &str, on: bool) -> ManageChip {
+    ManageChip { id: id.into(), label: label.into(), on }
+}
+
+fn toggle(id: &str, label: &str, note: &str, on: bool, enabled: bool) -> ManageToggle {
+    ManageToggle { id: id.into(), label: label.into(), note: note.into(), on, enabled, lock: if enabled { SharedString::new() } else { "You need the “Add administrators” right for that.".into() } }
+}
+
+fn person(id: &str, name: &str, tag: &str, owner: bool, admin: bool, you: bool) -> ManagePerson {
+    ManagePerson {
+        id: id.into(),
+        name: name.into(),
+        initial: name.chars().next().map(|c| c.to_string()).unwrap_or_default().into(),
+        picture: Image::default(),
+        has_picture: false,
+        you,
+        tag: tag.into(),
+        owner,
+        admin,
+        can_promote: false,
+        promote_lock: "You need the “Add administrators” right for that.".into(),
+        can_remove: !owner && !you && !admin,
+        confirming: false,
+        sub: SharedString::new(),
+    }
+}
+
 fn day_row(day: Day) -> MessageRow {
     MessageRow { kind: RowKind::Day, day: moment(day, 0, 0), ..message("", "", "", "") }
 }
@@ -1062,38 +1172,21 @@ fn extras(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -
     conversation.set_reaction_picker(SharedString::new());
     save(window, &name("extras"));
 
-    // The settings panel: as the group's administrator, then as a member reading its rules.
-    let admin = AdminPanel {
-        shown: true,
-        admin: true,
-        supergroup: true,
-        members: 486,
-        slow_mode: 30,
-        can_send: true,
-        can_media: true,
-        can_stickers: true,
-        can_links: false,
-        can_polls: true,
-        can_invite: false,
-        can_pin: false,
-        can_info: false,
-        join_request: true,
-        protected: false,
-        history: true,
-        hidden_members: false,
-        hidden_members_allowed: true,
-        anti_spam: true,
-        anti_spam_allowed: true,
-        busy: SharedString::new(),
-        error: SharedString::new(),
-    };
-    conversation.set_admin(admin.clone());
-    conversation.set_settings_open(true);
-    save(window, &name("settings-admin"));
-    conversation.set_admin(AdminPanel { admin: false, ..admin });
-    save(window, &name("settings-rules"));
-    conversation.set_settings_open(false);
-    conversation.set_admin(AdminPanel::default());
+    // The management page in the info panel's place (the design's "管理群组 / 频道" round): the
+    // group as one of its administrators, then an administrator's rights page.
+    {
+        let info = ui.global::<ChatInfo>();
+        info.set_open(true);
+        set_manage(ui);
+        save(window, &name("manage"));
+        let manage = ui.global::<ChatManage>();
+        manage.set_page(ManagePage::Rights);
+        manage.set_title("Administrator rights".into());
+        save(window, &name("manage-rights"));
+        manage.set_page(ManagePage::Main);
+        manage.set_open(false);
+        info.set_open(false);
+    }
 
     // Slow mode holds the composer: one message every 30 seconds, 22 still to wait.
     conversation.set_slow_mode(30);

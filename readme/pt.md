@@ -22,6 +22,7 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
   mensagens; uma busca dentro do chat (⌘F); uma visão dos seus canais e outra dos seus bots.
   O lápis cria um novo grupo, canal ou chat, ou adiciona um contato.
   Várias contas, até dez, cada uma com o seu próprio TDLib: troque pelo menu da conta ou com ⌘1 … ⌘0.
+  Gerencie seus grupos e canais: foto, nome e descrição, nome de usuário público ou links de convite, membros e administradores com seus direitos, permissões dos membros, modo lento, aprovação de entrada e tópicos; assinaturas e grupo de discussão de um canal.
 - **Mensagens.** Texto com formatação (negrito, itálico, código, links), respostas e encaminhamentos,
   fotos, vídeos, GIFs, figurinhas, arquivos e um cartão com a prévia de um link. Um clique direito
   numa mensagem abre o menu dela: responder, editar, copiar, copiar o link, encaminhar, denunciar,

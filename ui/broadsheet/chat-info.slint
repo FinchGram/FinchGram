@@ -2,6 +2,8 @@
 // column beside the messages, 320px wide, thin rules and large headings. The rows come from
 // src/telegram/chat_info.rs (ui/chat-info.slint); this draws them.
 import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "../chat-info.slint";
+import { ChatManage, ManageLook } from "../chat-manage.slint";
+import { ManagePanel } from "../chat-manage-panel.slint";
 import { Conversation, ChatKind, Status } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Avatar } from "../widgets.slint";
@@ -265,6 +267,20 @@ component QuickLink inherits Rectangle {
     }
 }
 
+// The page's tokens for this theme (ui/chat-manage-panel.slint draws it with them).
+export global BroadsheetManage {
+    out property <ManageLook> look: {
+        font: P.font, mono: P.mono, fs: 15px, fs-s: 13px, fs-xs: 12px, fs-t: 17px,
+        r: 2px, rl: 4px, av-r: 4px, chip-r: 2px,
+        panel: P.bg, text: P.text, muted: P.muted, faint: P.faint, accent: P.accent, on-accent: P.on-accent, link: P.accent,
+        hover: P.surface, line: P.line, off: P.off, ok: P.accent, bad: P.accent2-ink, bad-soft: P.danger-soft, soft: P.tint, soft-ink: P.tint-ink,
+        in-bg: P.surface, ring: transparent, ring-width: 0px, in-h: 36px, card: P.surface, card-ring: transparent,
+        sec-fs: 17px, sec-weight: 600, sec-spacing: 0px, sec-upper: false, sec-color: P.text, sec-rule: true, head-rule: 2px,
+        pad: 20px, sw-w: 34px, sw-h: 20px, sw-r: 2px, knob-r: 1px, av-font: 24px,
+        icons: true, brackets: false, text-switches: false,
+    };
+}
+
 export component InfoPanel inherits Rectangle {
     background: P.bg;
     property <bool> saved: Conversation.kind == ChatKind.saved;
@@ -275,7 +291,8 @@ export component InfoPanel inherits Rectangle {
         width: 1px;
         background: P.line;
     }
-    Flickable {
+    if ChatManage.open: ManagePanel { look: BroadsheetManage.look; }
+    if !ChatManage.open: Flickable {
         content-height: body.preferred-height;
         body := VerticalLayout {
             width: parent.width;

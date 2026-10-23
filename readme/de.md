@@ -22,6 +22,7 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   Nachrichten; die Suche im Chat (⌘F); eine Ansicht der Kanäle und eine der Bots. Der Stift legt eine
   neue Gruppe, einen neuen Kanal oder Chat an oder fügt einen Kontakt hinzu.
   Mehrere Konten, bis zu zehn, jedes mit eigenem TDLib: Wechsel über das Kontomenü oder mit ⌘1 … ⌘0.
+  Gruppen und Kanäle verwalten: Foto, Name und Beschreibung, öffentlicher Benutzername oder Einladungslinks, Mitglieder und Administratoren mit ihren Rechten, Mitgliederrechte, langsamer Modus, Beitrittsfreigabe und Themen; Signaturen und Diskussionsgruppe eines Kanals.
 - **Nachrichten.** Text mit Formatierung (fett, kursiv, Code, Links), Antworten und Weiterleitungen,
   Fotos, Videos, GIFs, Sticker, Dateien und eine Karte mit der Linkvorschau. Ein Rechtsklick auf eine
   Nachricht öffnet ihr Menü: antworten, bearbeiten, kopieren, Link kopieren, weiterleiten, melden,

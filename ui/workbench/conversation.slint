@@ -14,7 +14,7 @@ import {
     AttachWords, FileCardView, SearchInput, SearchWords, ButtonGrid, BotWords,
 } from "../chat.slint";
 import { WorkbenchPalette as P } from "palette.slint";
-import { ExtraWords, ReactionChips, ReactionPicker, RoundNoteView, ContactCardView, TopicList, AdminPanelView } from "../extras.slint";
+import { ExtraWords, ReactionChips, ReactionPicker, RoundNoteView, ContactCardView, TopicList } from "../extras.slint";
 
 component TabItem inherits Rectangle {
     in property <string> id;
@@ -1901,81 +1901,6 @@ component ClosedTopicNote inherits HorizontalLayout {
     }
 }
 
-// The chat's settings panel, over the right of the pane: a group's rules, or what its
-// administrators may change (admin.rs); nothing yet for other chats.
-component SettingsPanel inherits Rectangle {
-    background: P.bg;
-
-    // Clicks on the panel stay on it: the messages lie under it.
-    TouchArea { }
-    Rectangle {
-        x: 0;
-        width: 1px;
-        background: P.line;
-    }
-    VerticalLayout {
-        HorizontalLayout {
-            padding-left: 18px;
-            padding-right: 14px;
-            padding-top: 14px;
-            padding-bottom: 10px;
-            spacing: 8px;
-            Text {
-                horizontal-stretch: 1;
-                text: ExtraWords.settings().to-uppercase();
-                color: P.faint;
-                font-size: 11px;
-                font-weight: 600;
-                letter-spacing: 0.9px;
-                vertical-alignment: center;
-            }
-            Rectangle {
-                width: 22px;
-                height: 22px;
-                Icon {
-                    name: "x";
-                    size: 15px;
-                    color: P.faint;
-                }
-                TouchArea {
-                    mouse-cursor: pointer;
-                    clicked => {
-                        Conversation.toggle-settings();
-                    }
-                }
-            }
-        }
-        Flickable {
-            vertical-stretch: 1;
-            content-height: body.preferred-height;
-            body := VerticalLayout {
-                width: parent.width;
-                alignment: start;
-                padding-left: 18px;
-                padding-right: 18px;
-                padding-bottom: 18px;
-                if Conversation.admin.shown: AdminPanelView {
-                    side: P.side;
-                    accent: P.accent;
-                    on-accent: P.on-accent;
-                    text-color: P.text;
-                    muted: P.muted;
-                    faint: P.faint;
-                    off: P.line;
-                    danger: P.danger;
-                    font-family: P.font;
-                }
-                if !Conversation.admin.shown: Text {
-                    text: ExtraWords.nothing-here();
-                    color: P.faint;
-                    font-size: 12px;
-                    wrap: word-wrap;
-                }
-            }
-        }
-    }
-}
-
 component Pane {
     VerticalLayout {
         x: 0;
@@ -2405,23 +2330,17 @@ component Pane {
         }
     }
 
-    // The chat's info panel, or its administration in the panel's place (admin.rs), beside the
+    // The chat's info panel (or the management page in its place, manage.rs) beside the
     // messages: the design's column squeezes them, 300px wide, and slides open and shut.
     side := Rectangle {
-        property <bool> shown: Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open);
+        property <bool> shown: Conversation.chat-id != "" && ChatInfo.open;
         x: parent.width - self.width;
         y: 0;
         width: shown ? 300px : 0px;
         height: parent.height;
         clip: true;
         animate width { duration: 180ms; easing: cubic-bezier(0.2, 0.8, 0.2, 1); }
-        if Conversation.settings-open: SettingsPanel {
-            x: 0;
-            y: 0;
-            width: 300px;
-            height: parent.height;
-        }
-        if !Conversation.settings-open && (ChatInfo.open || side.width > 0px): InfoPanel {
+        if ChatInfo.open || side.width > 0px: InfoPanel {
             x: 0;
             y: 0;
             width: 300px;

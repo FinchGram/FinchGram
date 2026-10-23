@@ -1,0 +1,1688 @@
+// The management page of a group or channel (the design's ChatManage), drawn once for the three
+// themes: each hands it its tokens (ManageLook), as the design's one markup takes `v.k`. Shown in
+// the info panel's place by ui/<theme>/chat-info.slint; the state and the words are in
+// chat-manage.slint, src/telegram/manage.rs fills and acts.
+import { ChatManage, ManageWords, ManageLook, ManagePage, UsernameCheck, ManageToggle, ManageChip, ManagePerson, ManageLink, ManageChoice } from "chat-manage.slint";
+import { Icon, Avatar, Switch, Field } from "widgets.slint";
+import { Look } from "look.slint";
+
+// A section's header: small capitals in Workbench, a newspaper's heading in Broadsheet, a
+// "── rule ──" in Terminal.
+component SectionHead inherits Rectangle {
+    in property <ManageLook> look;
+    in property <string> title;
+    in property <string> aside;
+    height: column.preferred-height;
+    column := VerticalLayout {
+        padding-top: 18px;
+        padding-bottom: 6px;
+        HorizontalLayout {
+        spacing: 8px;
+        Text {
+            horizontal-stretch: 1;
+            text: (root.look.brackets ? "── " : "") + (root.look.sec-upper ? root.title.to-uppercase() : root.title) + (root.look.brackets ? " ──" : "");
+            color: root.look.sec-color;
+            font-family: root.look.font;
+            font-size: root.look.sec-fs;
+            font-weight: root.look.sec-weight;
+            letter-spacing: root.look.sec-spacing;
+            vertical-alignment: bottom;
+            overflow: elide;
+        }
+        if root.aside != "": Text {
+            text: root.aside;
+            color: root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs-xs;
+            vertical-alignment: bottom;
+        }
+        }
+    }
+    if root.look.sec-rule: Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: root.look.line;
+    }
+}
+
+// What Telegram refused, at the top of its section, with "Got it".
+component ErrorLine inherits Rectangle {
+    in property <ManageLook> look;
+    in property <string> text;
+    in property <string> section;
+    in property <bool> soft;      // the rights page's lock note: muted, not an error
+    height: line.preferred-height;
+    line := HorizontalLayout {
+        padding-top: 6px;
+        Rectangle {
+            border-radius: root.look.r;
+            background: root.soft ? root.look.hover : root.look.bad-soft;
+            HorizontalLayout {
+                padding: 8px;
+                padding-left: 10px;
+                padding-right: 10px;
+                spacing: 8px;
+                if root.look.icons: VerticalLayout {
+                    alignment: start;
+                    padding-top: 1px;
+                    Icon {
+                        name: "lock-simple";
+                        size: 14px;
+                        color: root.soft ? root.look.muted : root.look.bad;
+                    }
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: root.text;
+                    color: root.soft ? root.look.muted : root.look.bad;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-s;
+                    wrap: word-wrap;
+                }
+                if !root.soft: Text {
+                    text: root.look.brackets ? "[" + ManageWords.got-it() + "]" : ManageWords.got-it();
+                    color: root.look.bad;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-s;
+                    font-weight: 600;
+                    vertical-alignment: top;
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            ChatManage.dismiss-error(root.section);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// A small label over an input.
+component Label inherits Text {
+    in property <ManageLook> look;
+    color: look.faint;
+    font-family: look.font;
+    font-size: look.fs-xs;
+}
+
+// A one-line input in the theme's box.
+component Input inherits Field {
+    in property <ManageLook> look;
+    in property <bool> bad;
+    height: look.in-h;
+    font-size: look.fs;
+    font-family: look.font;
+    fill: look.in-bg;
+    ring: bad ? look.bad : look.ring;
+    ring-width: bad || look.ring-width > 0px ? max(1px, look.ring-width) : 0px;
+    border-radius: look.r;
+    padding-x: look.brackets ? 2px : 10px;
+    text-color: look.text;
+}
+
+// A button: the main one in the accent, the others ringed; Terminal's are [words].
+component Button inherits Rectangle {
+    in property <ManageLook> look;
+    in property <string> text;
+    in property <bool> primary;
+    in property <bool> danger;
+    in property <bool> quiet;     // no ring: Cancel
+    in property <bool> enabled: true;
+    callback clicked();
+    width: label.preferred-width + (root.look.brackets ? 0px : 24px);
+    height: root.look.brackets ? label.preferred-height : (root.look.fs > 13px ? 34px : 30px);
+    border-radius: root.look.r;
+    background: root.look.brackets ? transparent : root.primary ? (root.enabled ? root.look.accent : root.look.hover) : root.danger ? root.look.bad-soft : transparent;
+    border-width: !root.look.brackets && !root.primary && !root.danger && !root.quiet ? 1px : 0px;
+    border-color: root.look.line;
+    opacity: root.enabled ? 1 : 0.5;
+    label := Text {
+        text: root.look.brackets ? "[" + root.text + "]" : root.text;
+        color: root.primary ? (root.look.brackets ? root.look.accent : (root.enabled ? root.look.on-accent : root.look.faint))
+            : root.danger ? root.look.bad : root.quiet ? root.look.muted : (root.look.brackets ? root.look.muted : root.look.text);
+        font-family: root.look.font;
+        font-size: root.look.fs-s;
+        font-weight: root.quiet ? 400 : 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A link-like action: "New invite link", "Add member".
+component Action inherits Rectangle {
+    in property <ManageLook> look;
+    in property <string> text;
+    in property <string> icon;
+    in property <color> ink: look.link;
+    in property <bool> bold: true;
+    callback clicked();
+    width: row.preferred-width;
+    height: row.preferred-height;
+    row := HorizontalLayout {
+        spacing: 6px;
+        if root.look.icons && root.icon != "": VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 15px;
+                color: root.ink;
+            }
+        }
+        Text {
+            text: root.look.brackets ? "[" + root.text + "]" : root.text;
+            color: root.ink;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+            font-weight: root.bold ? 600 : 400;
+            vertical-alignment: center;
+        }
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A choice chip: slow mode's delays, a link's expiry, a username to try.
+component Chip inherits Rectangle {
+    in property <ManageLook> look;
+    in property <ManageChip> chip;
+    callback clicked();
+    width: label.preferred-width + (root.look.brackets ? 4px : 18px);
+    height: 24px;
+    border-radius: root.look.chip-r;
+    background: !root.look.brackets && root.chip.on ? root.look.soft : transparent;
+    border-width: !root.look.brackets && !root.chip.on ? 1px : 0px;
+    border-color: root.look.line;
+    label := Text {
+        text: root.look.brackets && root.chip.on ? "[" + root.chip.label + "]" : root.chip.label;
+        color: root.chip.on ? root.look.soft-ink : root.look.muted;
+        font-family: root.look.font;
+        font-size: root.look.fs-s;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+component Chips inherits HorizontalLayout {
+    in property <ManageLook> look;
+    in property <[ManageChip]> chips;
+    callback chosen(string);
+    spacing: 6px;
+    alignment: start;
+    for chip in root.chips: Chip {
+        look: root.look;
+        chip: chip;
+        clicked => {
+            root.chosen(chip.id);
+        }
+    }
+}
+
+// A switch row: a label (and a note), the switch at the right; faded with a lock when we may not.
+component ToggleRow inherits Rectangle {
+    in property <ManageLook> look;
+    in property <ManageToggle> toggle;
+    in property <string> pending;         // the approve row's "3 requests await your approval"
+    in property <bool> small;             // the permissions under their fold: smaller words
+    callback toggled();
+    height: row.preferred-height;
+    hover := TouchArea {
+        // Only looks (the lock's tip): the switch takes the click.
+    }
+    row := HorizontalLayout {
+        padding-top: root.small ? 5px : 8px;
+        padding-bottom: root.small ? 5px : 8px;
+        spacing: 10px;
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 1px;
+            Text {
+                text: root.toggle.label;
+                color: root.look.text;
+                font-family: root.look.font;
+                font-size: root.small ? root.look.fs-s : root.look.fs;
+                font-weight: root.small ? 400 : 600;
+                wrap: word-wrap;
+            }
+            if root.toggle.note != "": Text {
+                text: root.toggle.note;
+                color: root.look.muted;
+                font-family: root.look.font;
+                font-size: root.look.fs-s;
+                wrap: word-wrap;
+            }
+            if root.pending != "": Text {
+                text: root.pending;
+                color: root.look.link;
+                font-family: root.look.font;
+                font-size: root.look.fs-s;
+                font-weight: 600;
+                wrap: word-wrap;
+            }
+            if root.toggle.lock != "" && hover.has-hover: Text {
+                text: root.toggle.lock;
+                color: root.look.faint;
+                font-family: root.look.font;
+                font-size: root.look.fs-xs;
+                wrap: word-wrap;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Switch {
+                on: root.toggle.on;
+                enabled: true;
+                opacity: root.toggle.enabled ? 1 : 0.45;
+                accent: root.look.accent;
+                off-color: root.look.off;
+                as-text: root.look.text-switches;
+                track-width: root.look.sw-w;
+                track-height: root.look.sw-h;
+                knob-size: 14px;
+                track-radius: root.look.sw-r;
+                knob-radius: root.look.knob-r;
+                toggled => {
+                    root.toggled();
+                }
+            }
+        }
+    }
+}
+
+// A person's row: in the member list, among the administrators, or among the contacts to add.
+component PersonRow inherits Rectangle {
+    in property <ManageLook> look;
+    in property <ManagePerson> person;
+    in property <bool> soft;      // an administrator's row: the avatar in the soft colour, a caret
+    in property <bool> candidate; // a contact to add
+    callback add();
+    callback promote();
+    callback remove();
+    callback open();
+    height: column.preferred-height;
+    background: root.soft && open-touch.has-hover ? root.look.hover : transparent;
+    column := VerticalLayout {
+        padding-top: root.soft ? 6px : 4px;
+        padding-bottom: root.soft ? 6px : 4px;
+        HorizontalLayout {
+            spacing: 10px;
+            VerticalLayout {
+                alignment: center;
+                Avatar {
+                    size: root.candidate ? 24px : 28px;
+                    radius: root.look.r;
+                    fill: root.soft ? root.look.soft : root.look.hover;
+                    ink: root.soft ? root.look.soft-ink : root.look.text;
+                    initial: root.person.initial;
+                    picture: root.person.picture;
+                    has-picture: root.person.has-picture;
+                    font-size: root.candidate ? 11px : 12px;
+                    font-family: root.look.font;
+                }
+            }
+            VerticalLayout {
+                horizontal-stretch: 1;
+                alignment: center;
+                spacing: 1px;
+                HorizontalLayout {
+                    spacing: 6px;
+                    alignment: start;
+                    Text {
+                        text: root.person.name;
+                        color: root.look.text;
+                        font-family: root.look.font;
+                        font-size: root.look.fs;
+                        vertical-alignment: center;
+                        overflow: elide;
+                    }
+                    if root.person.you && !root.soft: Text {
+                        text: ManageWords.you();
+                        color: root.look.faint;
+                        font-family: root.look.font;
+                        font-size: root.look.fs-xs;
+                        vertical-alignment: center;
+                    }
+                    if root.person.you && root.soft: Text {
+                        text: "· " + ManageWords.you();
+                        color: root.look.faint;
+                        font-family: root.look.font;
+                        font-size: root.look.fs-xs;
+                        vertical-alignment: center;
+                    }
+                    if root.person.tag != "" && !root.soft: Text {
+                        text: root.person.tag;
+                        color: root.person.owner ? root.look.soft-ink : root.look.muted;
+                        font-family: root.look.font;
+                        font-size: root.look.fs-xs;
+                        vertical-alignment: center;
+                    }
+                }
+                if root.soft && root.person.sub != "": Text {
+                    text: root.person.sub;
+                    color: root.look.faint;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-xs;
+                    overflow: elide;
+                }
+            }
+            if root.candidate: Text {
+                text: root.look.brackets ? "[" + ManageWords.add() + "]" : ManageWords.add();
+                color: root.look.link;
+                font-family: root.look.font;
+                font-size: root.look.fs-s;
+                font-weight: 600;
+                vertical-alignment: center;
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.add();
+                    }
+                }
+            }
+            // The shield makes an administrator (faded with a lock when we may not); the minus
+            // removes.
+            if !root.candidate && !root.soft && !root.person.you && !root.person.owner && !root.person.admin: Rectangle {
+                width: root.look.icons ? 28px : promote-label.preferred-width;
+                height: 28px;
+                border-radius: root.look.r;
+                background: root.look.icons && promote-touch.has-hover ? root.look.hover : transparent;
+                if root.look.icons: Icon {
+                    name: "shield-plus";
+                    size: 16px;
+                    color: root.person.can-promote ? root.look.muted : root.look.faint;
+                }
+                if root.look.icons && !root.person.can-promote: Icon {
+                    x: parent.width - 11px;
+                    y: parent.height - 11px;
+                    name: "lock-simple";
+                    size: 10px;
+                    color: root.look.faint;
+                }
+                promote-label := Text {
+                    visible: !root.look.icons;
+                    text: root.person.can-promote ? "[" + ManageWords.administrator() + "]" : "[" + ManageWords.administrator() + " 🔒]";
+                    color: root.person.can-promote ? root.look.muted : root.look.faint;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-s;
+                    vertical-alignment: center;
+                }
+                promote-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.promote();
+                    }
+                }
+            }
+            if !root.candidate && !root.soft && !root.person.you && !root.person.owner: Rectangle {
+                width: root.look.icons ? 28px : remove-label.preferred-width;
+                height: 28px;
+                border-radius: root.look.r;
+                background: root.look.icons && remove-touch.has-hover ? root.look.hover : transparent;
+                opacity: root.person.can-remove ? 1 : 0.45;
+                if root.look.icons: Icon {
+                    name: "user-minus";
+                    size: 16px;
+                    color: root.look.muted;
+                }
+                remove-label := Text {
+                    visible: !root.look.icons;
+                    text: "[" + ManageWords.remove() + "]";
+                    color: root.look.muted;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-s;
+                    vertical-alignment: center;
+                }
+                remove-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.remove();
+                    }
+                }
+            }
+            if root.soft && root.look.icons: VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "caret-right";
+                    size: 12px;
+                    color: root.look.faint;
+                }
+            }
+            if root.soft && !root.look.icons: Text {
+                text: "›";
+                color: root.look.faint;
+                font-family: root.look.font;
+                font-size: root.look.fs;
+                vertical-alignment: center;
+            }
+        }
+        // The word before removing.
+        if root.person.confirming: HorizontalLayout {
+            padding-top: 6px;
+            padding-bottom: 2px;
+            padding-left: 38px;
+            spacing: 8px;
+            Text {
+                horizontal-stretch: 1;
+                text: ChatManage.group ? ManageWords.remove-group-q(root.person.name) : ManageWords.remove-channel-q(root.person.name);
+                color: root.look.text;
+                font-family: root.look.font;
+                font-size: root.look.fs-s;
+                vertical-alignment: center;
+                wrap: word-wrap;
+            }
+            Text {
+                text: root.look.brackets ? "[" + ManageWords.cancel() + "]" : ManageWords.cancel();
+                color: root.look.muted;
+                font-family: root.look.font;
+                font-size: root.look.fs-s;
+                vertical-alignment: center;
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        ChatManage.cancel-remove();
+                    }
+                }
+            }
+            Text {
+                text: root.look.brackets ? "[" + ManageWords.remove() + "]" : ManageWords.remove();
+                color: root.look.bad;
+                font-family: root.look.font;
+                font-size: root.look.fs-s;
+                font-weight: 600;
+                vertical-alignment: center;
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        ChatManage.confirm-remove();
+                    }
+                }
+            }
+        }
+    }
+    open-touch := TouchArea {
+        enabled: root.soft;
+        mouse-cursor: pointer;
+        clicked => {
+            root.open();
+        }
+    }
+}
+
+// An invite link's row: its name and meta, Copy, Revoke.
+component LinkRow inherits Rectangle {
+    in property <ManageLook> look;
+    in property <ManageLink> item;
+    height: row.preferred-height;
+    row := HorizontalLayout {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        spacing: 8px;
+        if root.look.icons: VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "link-simple";
+                size: 15px;
+                color: root.look.muted;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 1px;
+            Text {
+                text: root.item.name;
+                color: root.look.text;
+                font-family: root.look.font;
+                font-size: root.look.fs;
+                font-weight: 600;
+                overflow: elide;
+            }
+            Text {
+                text: root.item.meta;
+                color: root.look.faint;
+                font-family: root.look.font;
+                font-size: root.look.fs-xs;
+                overflow: elide;
+            }
+        }
+        Text {
+            text: root.look.brackets ? "[" + ManageWords.copy() + "]" : ManageWords.copy();
+            color: root.look.link;
+            font-family: root.look.font;
+            font-size: root.look.fs-s;
+            vertical-alignment: center;
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    ChatManage.copy-link(root.item.link);
+                }
+            }
+        }
+        Text {
+            text: root.look.brackets ? "[" + ManageWords.revoke() + "]" : ManageWords.revoke();
+            color: root.look.bad;
+            font-family: root.look.font;
+            font-size: root.look.fs-s;
+            vertical-alignment: center;
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    ChatManage.revoke-link(root.item.link);
+                }
+            }
+        }
+    }
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: root.look.line;
+    }
+}
+
+// One of the two type choices: a radio and two lines.
+component TypeRow inherits Rectangle {
+    in property <ManageLook> look;
+    in property <string> label;
+    in property <string> note;
+    in property <bool> on;
+    callback clicked();
+    height: row.preferred-height;
+    row := HorizontalLayout {
+        padding-top: 4px;
+        padding-bottom: 4px;
+        spacing: 10px;
+        if root.look.icons: VerticalLayout {
+            alignment: start;
+            padding-top: 2px;
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: 8px;
+                border-width: 1.5px;
+                border-color: root.on ? root.look.accent : root.look.line;
+                Rectangle {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 4px;
+                    background: root.on ? root.look.accent : transparent;
+                }
+            }
+        }
+        if !root.look.icons: Text {
+            text: root.on ? "(•)" : "( )";
+            color: root.on ? root.look.accent : root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+            vertical-alignment: top;
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 1px;
+            Text {
+                text: root.label;
+                color: root.look.text;
+                font-family: root.look.font;
+                font-size: root.look.fs;
+                font-weight: 600;
+            }
+            Text {
+                text: root.note;
+                color: root.look.muted;
+                font-family: root.look.font;
+                font-size: root.look.fs-s;
+                wrap: word-wrap;
+            }
+        }
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A card: the primary link, the new link's form.
+component Card inherits Rectangle {
+    in property <ManageLook> look;
+    border-radius: look.rl;
+    background: look.card;
+    border-width: look.card-ring == transparent ? 0px : 1px;
+    border-color: look.card-ring;
+}
+
+component MainPage inherits VerticalLayout {
+    in property <ManageLook> look;
+    alignment: start;
+
+    // The profile: the photo, the name, the description.
+    HorizontalLayout {
+        padding-top: 16px;
+        spacing: 14px;
+        Rectangle {
+            width: 64px;
+            height: 64px;
+            border-radius: root.look.av-r;
+            clip: true;
+            Avatar {
+                size: 64px;
+                radius: root.look.av-r;
+                fill: root.look.soft == transparent ? root.look.hover : root.look.soft;
+                ink: root.look.soft-ink;
+                initial: ChatManage.initial;
+                picture: ChatManage.picture;
+                has-picture: ChatManage.has-picture;
+                font-size: root.look.av-font;
+                font-family: root.look.font;
+            }
+            Rectangle {
+                y: parent.height - 20px;
+                height: 20px;
+                background: #000000.with-alpha(0.5);
+                HorizontalLayout {
+                    alignment: center;
+                    spacing: 3px;
+                    if root.look.icons: VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "camera";
+                            size: 11px;
+                            color: #ffffff;
+                        }
+                    }
+                    Text {
+                        text: ManageWords.change();
+                        color: #ffffff;
+                        font-family: root.look.font;
+                        font-size: 10px;
+                        font-weight: 500;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    ChatManage.change-photo();
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 4px;
+            Label { look: root.look; text: ManageWords.name(); }
+            name-field := Input {
+                look: root.look;
+                text: ChatManage.name;
+                bad: ChatManage.name-error != "";
+                edited(value) => {
+                    ChatManage.edit-name(value);
+                }
+            }
+            HorizontalLayout {
+                spacing: 8px;
+                if ChatManage.name-error != "": Text {
+                    text: ChatManage.name-error;
+                    color: root.look.bad;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-xs;
+                }
+                Rectangle { horizontal-stretch: 1; }
+                Text {
+                    text: ChatManage.name.character-count + "/128";
+                    color: root.look.faint;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-xs;
+                }
+            }
+        }
+    }
+    VerticalLayout {
+        padding-top: 8px;
+        spacing: 4px;
+        Label { look: root.look; text: ManageWords.description(); }
+        Rectangle {
+            height: 72px;
+            border-radius: root.look.r;
+            background: root.look.in-bg;
+            border-width: root.look.ring-width;
+            border-color: root.look.ring;
+            description := TextInput {
+                x: root.look.brackets ? 2px : 10px;
+                y: 8px;
+                width: parent.width - 2 * self.x;
+                height: parent.height - 16px;
+                text: ChatManage.description;
+                wrap: word-wrap;
+                single-line: false;
+                color: root.look.text;
+                font-family: root.look.font;
+                font-size: root.look.fs;
+                selection-background-color: Look.input-sel;
+                selection-foreground-color: root.look.text;
+                text-cursor-width: Look.cursor-width;
+                edited => {
+                    ChatManage.edit-description(self.text);
+                }
+            }
+        }
+        Text {
+            horizontal-alignment: right;
+            text: ChatManage.description.character-count + "/255";
+            color: root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs-xs;
+        }
+    }
+    if ChatManage.profile-error != "": ErrorLine { look: root.look; text: ChatManage.profile-error; section: "profile"; }
+
+    // The type: public with a username, or private with its links.
+    SectionHead { look: root.look; title: ManageWords.type(); }
+    VerticalLayout {
+        padding-top: 6px;
+        spacing: 4px;
+        TypeRow {
+            look: root.look;
+            label: ManageWords.public();
+            note: ChatManage.group ? ManageWords.public-group-note() : ManageWords.public-channel-note();
+            on: ChatManage.public;
+            clicked => {
+                ChatManage.set-public(true);
+            }
+        }
+        TypeRow {
+            look: root.look;
+            label: ManageWords.private();
+            note: ManageWords.private-note();
+            on: !ChatManage.public;
+            clicked => {
+                ChatManage.set-public(false);
+            }
+        }
+        if ChatManage.public: VerticalLayout {
+            padding-top: 6px;
+            spacing: 6px;
+            Label { look: root.look; text: ManageWords.username(); }
+            Rectangle {
+                height: root.look.in-h;
+                border-radius: root.look.r;
+                background: root.look.in-bg;
+                border-width: ChatManage.check == UsernameCheck.taken || ChatManage.check == UsernameCheck.short || ChatManage.check == UsernameCheck.chars
+                    || ChatManage.check == UsernameCheck.start || ChatManage.check == UsernameCheck.empty || ChatManage.check == UsernameCheck.invalid
+                    || ChatManage.check == UsernameCheck.too-many ? 1px : root.look.ring-width;
+                border-color: ChatManage.check == UsernameCheck.same || ChatManage.check == UsernameCheck.ok || ChatManage.check == UsernameCheck.checking ? root.look.ring : root.look.bad;
+                HorizontalLayout {
+                    padding-left: root.look.brackets ? 2px : 10px;
+                    padding-right: root.look.brackets ? 2px : 10px;
+                    spacing: 0px;
+                    Text {
+                        text: "t.me/";
+                        color: root.look.faint;
+                        font-family: root.look.font;
+                        font-size: root.look.fs;
+                        vertical-alignment: center;
+                    }
+                    username := TextInput {
+                        horizontal-stretch: 1;
+                        text: ChatManage.username;
+                        single-line: true;
+                        color: root.look.text;
+                        font-family: root.look.font;
+                        font-size: root.look.fs;
+                        vertical-alignment: center;
+                        selection-background-color: Look.input-sel;
+                        selection-foreground-color: root.look.text;
+                        text-cursor-width: Look.cursor-width;
+                        edited => {
+                            ChatManage.edit-username(self.text);
+                        }
+                    }
+                }
+            }
+            if ChatManage.check-text != "": HorizontalLayout {
+                spacing: 5px;
+                alignment: start;
+                if root.look.icons: VerticalLayout {
+                    alignment: start;
+                    padding-top: 1px;
+                    Icon {
+                        name: ChatManage.check == UsernameCheck.same ? "check" : ChatManage.check == UsernameCheck.ok ? "check-circle"
+                            : ChatManage.check == UsernameCheck.checking ? "circle-notch" : ChatManage.check == UsernameCheck.taken ? "x-circle" : "warning-circle";
+                        size: 14px;
+                        color: ChatManage.check == UsernameCheck.ok ? root.look.ok : ChatManage.check == UsernameCheck.same ? root.look.faint
+                            : ChatManage.check == UsernameCheck.checking ? root.look.muted : root.look.bad;
+                    }
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: (root.look.brackets ? (ChatManage.check == UsernameCheck.ok || ChatManage.check == UsernameCheck.same ? "✓ " : ChatManage.check == UsernameCheck.checking ? "… " : "✗ ") : "") + ChatManage.check-text;
+                    color: ChatManage.check == UsernameCheck.ok ? root.look.ok : ChatManage.check == UsernameCheck.same ? root.look.faint
+                        : ChatManage.check == UsernameCheck.checking ? root.look.muted : root.look.bad;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-s;
+                    wrap: word-wrap;
+                }
+            }
+            if ChatManage.suggestions.length > 0: HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+                Text {
+                    text: ManageWords.try-these();
+                    color: root.look.faint;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-xs;
+                    vertical-alignment: center;
+                }
+                Chips {
+                    look: root.look;
+                    chips: ChatManage.suggestions;
+                    chosen(id) => {
+                        username.text = id;
+                        ChatManage.take-suggestion(id);
+                    }
+                }
+            }
+        }
+        if !ChatManage.public: VerticalLayout {
+            padding-top: 6px;
+            spacing: 0px;
+            Card {
+                look: root.look;
+                VerticalLayout {
+                    padding: root.look.brackets ? 2px : 10px;
+                    padding-left: root.look.brackets ? 10px : 12px;
+                    padding-right: root.look.brackets ? 0px : 12px;
+                    spacing: 8px;
+                    Label { look: root.look; text: ManageWords.primary-link(); }
+                    Text {
+                        text: ChatManage.primary-link;
+                        color: root.look.text;
+                        font-family: root.look.mono;
+                        font-size: root.look.fs-s;
+                        wrap: char-wrap;
+                    }
+                    if !ChatManage.revoking: HorizontalLayout {
+                        spacing: 8px;
+                        alignment: start;
+                        Button {
+                            look: root.look;
+                            text: ManageWords.copy();
+                            primary: true;
+                            clicked => {
+                                ChatManage.copy-primary();
+                            }
+                        }
+                        Button {
+                            look: root.look;
+                            text: ManageWords.revoke-regenerate();
+                            clicked => {
+                                ChatManage.revoke-primary();
+                            }
+                        }
+                    }
+                    if ChatManage.revoking: VerticalLayout {
+                        spacing: 6px;
+                        Text {
+                            text: ManageWords.revoke-note();
+                            color: root.look.bad;
+                            font-family: root.look.font;
+                            font-size: root.look.fs-s;
+                            wrap: word-wrap;
+                        }
+                        HorizontalLayout {
+                            spacing: 8px;
+                            alignment: start;
+                            Button {
+                                look: root.look;
+                                text: ManageWords.revoke-confirm();
+                                danger: true;
+                                clicked => {
+                                    ChatManage.confirm-revoke();
+                                }
+                            }
+                            Button {
+                                look: root.look;
+                                text: ManageWords.cancel();
+                                quiet: true;
+                                clicked => {
+                                    ChatManage.cancel-revoke();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            VerticalLayout {
+                padding-top: 10px;
+                Label { look: root.look; text: ManageWords.other-links(); }
+            }
+            for item in ChatManage.links: LinkRow {
+                look: root.look;
+                item: item;
+            }
+            if !ChatManage.link-form: HorizontalLayout {
+                padding-top: 8px;
+                alignment: start;
+                Action {
+                    look: root.look;
+                    text: ManageWords.new-link();
+                    icon: "plus";
+                    clicked => {
+                        ChatManage.new-link();
+                    }
+                }
+            }
+            if ChatManage.link-form: VerticalLayout {
+                padding-top: 8px;
+                Card {
+                    look: root.look;
+                    VerticalLayout {
+                        padding: root.look.brackets ? 2px : 10px;
+                        padding-left: root.look.brackets ? 10px : 12px;
+                        padding-right: root.look.brackets ? 0px : 12px;
+                        spacing: 8px;
+                        Text {
+                            text: ManageWords.new-link();
+                            color: root.look.text;
+                            font-family: root.look.font;
+                            font-size: root.look.fs;
+                            font-weight: 600;
+                        }
+                        Input {
+                            look: root.look;
+                            fill: root.look.panel;
+                            text: ChatManage.link-name;
+                            placeholder: ManageWords.link-name-placeholder();
+                            edited(value) => {
+                                ChatManage.edit-link-name(value);
+                            }
+                        }
+                        Label { look: root.look; text: ManageWords.expires(); }
+                        Chips {
+                            look: root.look;
+                            chips: ChatManage.expiries;
+                            chosen(id) => {
+                                ChatManage.choose-expiry(id);
+                            }
+                        }
+                        Label { look: root.look; text: ManageWords.member-limit(); }
+                        Chips {
+                            look: root.look;
+                            chips: ChatManage.limits;
+                            chosen(id) => {
+                                ChatManage.choose-limit(id);
+                            }
+                        }
+                        HorizontalLayout {
+                            padding-top: 2px;
+                            spacing: 8px;
+                            alignment: end;
+                            Button {
+                                look: root.look;
+                                text: ManageWords.cancel();
+                                quiet: true;
+                                clicked => {
+                                    ChatManage.cancel-link();
+                                }
+                            }
+                            Button {
+                                look: root.look;
+                                text: ManageWords.create();
+                                primary: true;
+                                clicked => {
+                                    ChatManage.create-link();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if ChatManage.type-error != "": ErrorLine { look: root.look; text: ChatManage.type-error; section: "type"; }
+    }
+
+    // The members, and the administrators.
+    SectionHead { look: root.look; title: ChatManage.group ? ManageWords.members() : ManageWords.subscribers(); aside: ChatManage.count-line; }
+    if ChatManage.members-error != "": ErrorLine { look: root.look; text: ChatManage.members-error; section: "members"; }
+    HorizontalLayout {
+        padding-top: 8px;
+        padding-bottom: 4px;
+        alignment: start;
+        Action {
+            look: root.look;
+            text: ChatManage.group ? ManageWords.add-member() : ManageWords.add-subscriber();
+            icon: "user-plus";
+            clicked => {
+                ChatManage.toggle-adding();
+            }
+        }
+    }
+    if ChatManage.adding: VerticalLayout {
+        padding-top: 6px;
+        padding-bottom: 8px;
+        spacing: 4px;
+        Input {
+            look: root.look;
+            text: ChatManage.query;
+            placeholder: ManageWords.search-contacts();
+            edited(value) => {
+                ChatManage.edit-query(value);
+            }
+        }
+        for person in ChatManage.candidates: PersonRow {
+            look: root.look;
+            person: person;
+            candidate: true;
+            add => {
+                ChatManage.add-member(person.id);
+            }
+        }
+        if ChatManage.candidates.length == 0: Text {
+            text: ManageWords.no-candidates();
+            color: root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs-s;
+        }
+    }
+    for person in ChatManage.members: PersonRow {
+        look: root.look;
+        person: person;
+        promote => {
+            ChatManage.promote(person.id);
+        }
+        remove => {
+            ChatManage.remove(person.id);
+        }
+    }
+
+    SectionHead { look: root.look; title: ManageWords.administrators(); }
+    for person in ChatManage.admins: PersonRow {
+        look: root.look;
+        person: person;
+        soft: true;
+        open => {
+            ChatManage.open-admin(person.id);
+        }
+    }
+
+    // The group's settings.
+    if ChatManage.group: SectionHead { look: root.look; title: ManageWords.group-settings(); }
+    if !ChatManage.group: SectionHead { look: root.look; title: ManageWords.channel-settings(); }
+    if ChatManage.group-error != "": ErrorLine { look: root.look; text: ChatManage.group-error; section: "group"; }
+    if ChatManage.group: Rectangle {
+        height: perms-row.preferred-height;
+        perms-row := HorizontalLayout {
+            padding-top: 8px;
+            padding-bottom: 8px;
+            spacing: 8px;
+            VerticalLayout {
+                horizontal-stretch: 1;
+                spacing: 1px;
+                Text {
+                    text: ManageWords.member-permissions();
+                    color: root.look.text;
+                    font-family: root.look.font;
+                    font-size: root.look.fs;
+                    font-weight: 600;
+                }
+                Text {
+                    text: ChatManage.perms-summary;
+                    color: root.look.muted;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-s;
+                    wrap: word-wrap;
+                }
+            }
+            if root.look.icons: VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: ChatManage.perms-open ? "caret-up" : "caret-down";
+                    size: 13px;
+                    color: root.look.faint;
+                }
+            }
+            if !root.look.icons: Text {
+                text: ChatManage.perms-open ? "[−]" : "[+]";
+                color: root.look.accent;
+                font-family: root.look.font;
+                font-size: root.look.fs;
+                vertical-alignment: center;
+            }
+        }
+        TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                ChatManage.toggle-perms();
+            }
+        }
+    }
+    if ChatManage.group && ChatManage.perms-open: Rectangle {
+        height: perms-list.preferred-height;
+        Rectangle {
+            x: 0;
+            width: 1px;
+            background: root.look.line;
+        }
+        perms-list := VerticalLayout {
+            padding-left: 12px;
+            padding-bottom: 6px;
+            for toggle in ChatManage.perms: ToggleRow {
+                look: root.look;
+                toggle: toggle;
+                small: true;
+                toggled => {
+                    ChatManage.toggle-permission(toggle.id);
+                }
+            }
+        }
+    }
+    if ChatManage.group: VerticalLayout {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        spacing: 6px;
+        Text {
+            text: ManageWords.slow-mode();
+            color: root.look.text;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+            font-weight: 600;
+        }
+        for row in ChatManage.slow-rows: Chips {
+            look: root.look;
+            chips: row;
+            chosen(id) => {
+                ChatManage.set-slow(id);
+            }
+        }
+        Text {
+            text: ChatManage.slow-note;
+            color: root.look.muted;
+            font-family: root.look.font;
+            font-size: root.look.fs-s;
+            wrap: word-wrap;
+        }
+    }
+    for toggle in ChatManage.options: ToggleRow {
+        look: root.look;
+        toggle: toggle;
+        pending: toggle.id == "approve" ? ChatManage.pending : "";
+        toggled => {
+            ChatManage.toggle-option(toggle.id);
+        }
+    }
+    // The channel's discussion group.
+    if !ChatManage.group: Rectangle {
+        height: discussion-row.preferred-height;
+        discussion-row := HorizontalLayout {
+            padding-top: 8px;
+            padding-bottom: 8px;
+            spacing: 8px;
+            VerticalLayout {
+                horizontal-stretch: 1;
+                spacing: 1px;
+                Text {
+                    text: ManageWords.discussion();
+                    color: root.look.text;
+                    font-family: root.look.font;
+                    font-size: root.look.fs;
+                    font-weight: 600;
+                }
+                Text {
+                    text: ManageWords.discussion-note(ChatManage.discussion);
+                    color: root.look.muted;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-s;
+                    wrap: word-wrap;
+                }
+            }
+            if root.look.icons: VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: ChatManage.discussion-open ? "caret-up" : "caret-down";
+                    size: 13px;
+                    color: root.look.faint;
+                }
+            }
+            if !root.look.icons: Text {
+                text: "[" + ManageWords.choose() + "]";
+                color: root.look.accent;
+                font-family: root.look.font;
+                font-size: root.look.fs;
+                vertical-alignment: center;
+            }
+        }
+        TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                ChatManage.toggle-discussion();
+            }
+        }
+    }
+    if !ChatManage.group && ChatManage.discussion-open: Rectangle {
+        height: choices.preferred-height;
+        Rectangle {
+            x: 0;
+            width: 1px;
+            background: root.look.line;
+        }
+        choices := VerticalLayout {
+            padding-left: 12px;
+            padding-bottom: 6px;
+            for choice in ChatManage.discussion-options: Rectangle {
+                height: 30px;
+                HorizontalLayout {
+                    spacing: 8px;
+                    Text {
+                        horizontal-stretch: 1;
+                        text: choice.name;
+                        color: root.look.text;
+                        font-family: root.look.font;
+                        font-size: root.look.fs-s;
+                        vertical-alignment: center;
+                        overflow: elide;
+                    }
+                    Text {
+                        text: choice.on ? "✓" : "";
+                        color: root.look.accent;
+                        font-family: root.look.font;
+                        font-size: root.look.fs;
+                        vertical-alignment: center;
+                    }
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        ChatManage.choose-discussion(choice.id);
+                    }
+                }
+            }
+            if ChatManage.discussion-linked: HorizontalLayout {
+                padding-top: 4px;
+                alignment: start;
+                Action {
+                    look: root.look;
+                    text: ManageWords.unlink();
+                    ink: root.look.bad;
+                    bold: false;
+                    clicked => {
+                        ChatManage.unlink-discussion();
+                    }
+                }
+            }
+        }
+    }
+}
+
+component RightsPage inherits VerticalLayout {
+    in property <ManageLook> look;
+    alignment: start;
+    HorizontalLayout {
+        padding-top: 16px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Avatar {
+                size: 44px;
+                radius: root.look.rl;
+                fill: root.look.soft == transparent ? root.look.hover : root.look.soft;
+                ink: root.look.soft-ink;
+                initial: ChatManage.who.initial;
+                picture: ChatManage.who.picture;
+                has-picture: ChatManage.who.has-picture;
+                font-size: 18px;
+                font-family: root.look.font;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 1px;
+            Text {
+                text: ChatManage.who.name;
+                color: root.look.text;
+                font-family: root.look.font;
+                font-size: root.look.fs-t;
+                font-weight: 600;
+                overflow: elide;
+            }
+            Text {
+                text: ChatManage.who.sub;
+                color: root.look.muted;
+                font-family: root.look.font;
+                font-size: root.look.fs-s;
+                wrap: word-wrap;
+            }
+        }
+    }
+    if ChatManage.lock-note != "": VerticalLayout {
+        padding-top: 6px;
+        ErrorLine { look: root.look; text: ChatManage.lock-note; soft: true; }
+    }
+    if ChatManage.rights-error != "": ErrorLine { look: root.look; text: ChatManage.rights-error; section: "rights"; }
+    VerticalLayout {
+        padding-top: 14px;
+        spacing: 4px;
+        Label { look: root.look; text: ManageWords.title-label(); }
+        Input {
+            look: root.look;
+            text: ChatManage.custom-title;
+            placeholder: ManageWords.title-placeholder();
+            enabled: ChatManage.title-editable;
+            edited(value) => {
+                ChatManage.edit-title(value);
+            }
+        }
+        Text {
+            horizontal-alignment: right;
+            text: ChatManage.custom-title.character-count + "/16";
+            color: root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs-xs;
+        }
+    }
+    SectionHead { look: root.look; title: ManageWords.can-do(); }
+    for toggle in ChatManage.rights: ToggleRow {
+        look: root.look;
+        toggle: toggle;
+        small: true;
+        toggled => {
+            ChatManage.toggle-right(toggle.id);
+        }
+    }
+    if ChatManage.can-dismiss: HorizontalLayout {
+        padding-top: 14px;
+        alignment: start;
+        Action {
+            look: root.look;
+            text: ManageWords.dismiss-admin();
+            ink: root.look.bad;
+            clicked => {
+                ChatManage.dismiss-admin();
+            }
+        }
+    }
+}
+
+component CropPage inherits VerticalLayout {
+    in property <ManageLook> look;
+    alignment: start;
+    spacing: 12px;
+    padding-top: 16px;
+    // The frame: the design insets it 12% on each side of the square; what it shows is the photo.
+    property <float> frame: 0.76;
+    property <float> image-width: ChatManage.source.width;
+    property <float> image-height: ChatManage.source.height;
+    Text {
+        text: ManageWords.crop-hint();
+        color: root.look.muted;
+        font-family: root.look.font;
+        font-size: root.look.fs-s;
+        wrap: word-wrap;
+    }
+    area := Rectangle {
+        height: self.width;
+        border-radius: root.look.rl;
+        clip: true;
+        background: #15171a;
+        // The picture: its shorter side fills the frame at zoom 1, more as the zoom grows; the
+        // overflow is placed by the offsets. src/telegram/manage.rs crops by the same sums.
+        property <length> frame-side: self.width * root.frame;
+        property <length> frame-x: self.width * (1 - root.frame) / 2;
+        property <length> scale: root.image-width > 0 && root.image-height > 0 ? frame-side / min(root.image-width, root.image-height) * ChatManage.zoom : 0px;
+        property <length> shown-width: root.image-width * scale;
+        property <length> shown-height: root.image-height * scale;
+        Image {
+            x: area.frame-x - (area.shown-width - area.frame-side) * ChatManage.offset-x;
+            y: area.frame-x - (area.shown-height - area.frame-side) * ChatManage.offset-y;
+            width: area.shown-width;
+            height: area.shown-height;
+            source: ChatManage.source;
+            image-fit: fill;
+        }
+        // The mask outside the frame, the frame's edge and its thirds.
+        Rectangle { x: 0; y: 0; width: parent.width; height: area.frame-x; background: #000000.with-alpha(0.5); }
+        Rectangle { x: 0; y: parent.height - area.frame-x; width: parent.width; height: area.frame-x; background: #000000.with-alpha(0.5); }
+        Rectangle { x: 0; y: area.frame-x; width: area.frame-x; height: area.frame-side; background: #000000.with-alpha(0.5); }
+        Rectangle { x: parent.width - area.frame-x; y: area.frame-x; width: area.frame-x; height: area.frame-side; background: #000000.with-alpha(0.5); }
+        Rectangle {
+            x: area.frame-x;
+            y: area.frame-x;
+            width: area.frame-side;
+            height: area.frame-side;
+            border-width: 1px;
+            border-color: #ffffff.with-alpha(0.9);
+            Rectangle { x: parent.width / 3; width: 1px; height: parent.height; background: #ffffff.with-alpha(0.35); }
+            Rectangle { x: parent.width * 2 / 3; width: 1px; height: parent.height; background: #ffffff.with-alpha(0.35); }
+            Rectangle { y: parent.height / 3; height: 1px; width: parent.width; background: #ffffff.with-alpha(0.35); }
+            Rectangle { y: parent.height * 2 / 3; height: 1px; width: parent.width; background: #ffffff.with-alpha(0.35); }
+        }
+        drag := TouchArea {
+            mouse-cursor: move;
+            property <length> last-x;
+            property <length> last-y;
+            pointer-event(event) => {
+                if event.kind == PointerEventKind.down {
+                    self.last-x = self.mouse-x;
+                    self.last-y = self.mouse-y;
+                }
+            }
+            moved => {
+                if area.shown-width > area.frame-side {
+                    ChatManage.offset-x = clamp(ChatManage.offset-x - (self.mouse-x - self.last-x) / (area.shown-width - area.frame-side), 0, 1);
+                }
+                if area.shown-height > area.frame-side {
+                    ChatManage.offset-y = clamp(ChatManage.offset-y - (self.mouse-y - self.last-y) / (area.shown-height - area.frame-side), 0, 1);
+                }
+                self.last-x = self.mouse-x;
+                self.last-y = self.mouse-y;
+            }
+        }
+    }
+    // The zoom: a slider from 1 to 3.
+    HorizontalLayout {
+        spacing: 10px;
+        Text {
+            text: "−";
+            color: root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+            vertical-alignment: center;
+        }
+        slider := Rectangle {
+            horizontal-stretch: 1;
+            height: 24px;
+            Rectangle {
+                y: 10px;
+                height: 4px;
+                border-radius: 2px;
+                background: root.look.off;
+            }
+            Rectangle {
+                y: 10px;
+                x: 0;
+                width: (ChatManage.zoom - 1) / 2 * (parent.width - 14px) + 7px;
+                height: 4px;
+                border-radius: 2px;
+                background: root.look.accent;
+            }
+            Rectangle {
+                x: (ChatManage.zoom - 1) / 2 * (parent.width - 14px);
+                y: 5px;
+                width: 14px;
+                height: 14px;
+                border-radius: 7px;
+                background: root.look.accent;
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                property <float> at: clamp((self.mouse-x - 7px) / (slider.width - 14px), 0, 1);
+                pointer-event(event) => {
+                    if event.kind == PointerEventKind.down {
+                        ChatManage.zoom = 1 + 2 * self.at;
+                    }
+                }
+                moved => {
+                    ChatManage.zoom = 1 + 2 * self.at;
+                }
+            }
+        }
+        Text {
+            text: "+";
+            color: root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+            vertical-alignment: center;
+        }
+        Text {
+            width: 40px;
+            text: round(ChatManage.zoom * 100) + "%";
+            color: root.look.muted;
+            font-family: root.look.font;
+            font-size: root.look.fs-s;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+    }
+    HorizontalLayout {
+        spacing: 8px;
+        Action {
+            look: root.look;
+            text: ManageWords.pick-another();
+            bold: false;
+            clicked => {
+                ChatManage.pick-photo();
+            }
+        }
+        Rectangle { horizontal-stretch: 1; }
+        Button {
+            look: root.look;
+            text: ManageWords.cancel();
+            quiet: true;
+            clicked => {
+                ChatManage.cancel-crop();
+            }
+        }
+        Button {
+            look: root.look;
+            text: ManageWords.use-photo();
+            primary: true;
+            clicked => {
+                ChatManage.use-photo();
+            }
+        }
+    }
+}
+
+export component ManagePanel inherits Rectangle {
+    in property <ManageLook> look;
+    background: root.look.panel;
+
+    // Clicks on the page stay on it.
+    TouchArea { }
+    Rectangle {
+        x: 0;
+        width: 1px;
+        background: root.look.line;
+    }
+    VerticalLayout {
+        // The head: Back, the title, Save.
+        Rectangle {
+            height: 40px;
+            HorizontalLayout {
+                padding-left: 6px;
+                padding-right: 10px;
+                spacing: 6px;
+                Rectangle {
+                    width: back-row.preferred-width + 12px;
+                    border-radius: root.look.r;
+                    background: back-touch.has-hover ? root.look.hover : transparent;
+                    back-row := HorizontalLayout {
+                        padding-left: 4px;
+                        padding-right: 8px;
+                        spacing: 3px;
+                        if root.look.icons: VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "caret-left";
+                                size: 15px;
+                                color: root.look.link;
+                            }
+                        }
+                        Text {
+                            text: root.look.brackets ? "[‹ " + ManageWords.back() + "]" : ManageWords.back();
+                            color: root.look.link;
+                            font-family: root.look.font;
+                            font-size: root.look.fs;
+                            vertical-alignment: center;
+                        }
+                    }
+                    back-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            ChatManage.back();
+                        }
+                    }
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: ChatManage.title;
+                    color: root.look.text;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-t;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                if ChatManage.page == ManagePage.main: VerticalLayout {
+                    alignment: center;
+                    Button {
+                        look: root.look;
+                        text: ManageWords.save();
+                        primary: true;
+                        enabled: ChatManage.can-save;
+                        clicked => {
+                            ChatManage.save();
+                        }
+                    }
+                }
+            }
+            Rectangle {
+                y: parent.height - self.height;
+                height: root.look.head-rule;
+                background: root.look.head-rule > 1px ? root.look.text : root.look.line;
+            }
+        }
+        Flickable {
+            vertical-stretch: 1;
+            content-height: body.preferred-height;
+            body := VerticalLayout {
+                width: parent.width;
+                alignment: start;
+                padding-left: root.look.pad;
+                padding-right: root.look.pad;
+                padding-bottom: 20px;
+                if ChatManage.page == ManagePage.main: MainPage { look: root.look; }
+                if ChatManage.page == ManagePage.rights: RightsPage { look: root.look; }
+                if ChatManage.page == ManagePage.crop: CropPage { look: root.look; }
+            }
+        }
+    }
+}

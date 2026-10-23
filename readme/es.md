@@ -22,6 +22,7 @@ Es un cliente no oficial, no hecho por Telegram.
   por número de teléfono y mensajes; una búsqueda dentro del chat (⌘F); una vista de tus canales y
   otra de tus bots. El lápiz crea un nuevo grupo, canal o chat, o añade un contacto.
   Varias cuentas, hasta diez, cada una con su propio TDLib: cambia desde el menú de la cuenta o con ⌘1 … ⌘0.
+  Administra tus grupos y canales: foto, nombre y descripción, nombre de usuario público o enlaces de invitación, miembros y administradores con sus permisos, permisos de los miembros, modo lento, aprobación de solicitudes y temas; firmas y grupo de debate de un canal.
 - **Mensajes.** Texto con su formato (negrita, cursiva, código, enlaces), respuestas y reenvíos,
   fotos, vídeos, GIF, stickers, archivos y una tarjeta con la vista previa de un enlace. Con un clic
   derecho en un mensaje se abre su menú: responder, editar, copiar, copiar su enlace, reenviar,

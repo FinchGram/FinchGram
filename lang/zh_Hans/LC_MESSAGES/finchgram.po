@@ -3,70 +3,70 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-23 03:43+0000\n"
+"POT-Creation-Date: 2026-10-23 04:45+0000\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ui/app.slint:54
+#: ui/app.slint:56
 msgid "View"
 msgstr "视图"
 
-#: ui/app.slint:56 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
+#: ui/app.slint:58 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
 #: ui/terminal/actions.slint:166
 msgid "Search"
 msgstr "搜索"
 
-#: ui/app.slint:66
+#: ui/app.slint:68
 msgid "Search in Chat"
 msgstr "在聊天中搜索"
 
-#: ui/app.slint:77 ui/chat-info.slint:67
+#: ui/app.slint:79 ui/chat-info.slint:67
 msgid "Chat Info"
 msgstr "聊天资料"
 
-#: ui/app.slint:88 ui/pages/settings.slint:406
+#: ui/app.slint:90 ui/pages/settings.slint:406
 msgid "Workbench"
 msgstr "工作台"
 
-#: ui/app.slint:96 ui/pages/settings.slint:414
+#: ui/app.slint:98 ui/pages/settings.slint:414
 msgid "Terminal"
 msgstr "终端"
 
-#: ui/app.slint:104 ui/pages/settings.slint:422
+#: ui/app.slint:106 ui/pages/settings.slint:422
 msgid "Broadsheet"
 msgstr "报纸"
 
 #. The tools.
-#: ui/app.slint:113 ui/drawer.slint:56 ui/pages/downloads.slint:402
+#: ui/app.slint:115 ui/drawer.slint:56 ui/pages/downloads.slint:402
 #: ui/pages/downloads.slint:1439
 msgid "Downloads"
 msgstr "下载"
 
-#: ui/app.slint:121
+#: ui/app.slint:123
 msgid "Settings…"
 msgstr "设置…"
 
-#: ui/app.slint:131
+#: ui/app.slint:133
 msgctxt "menu"
 msgid "Account"
 msgstr "账号"
 
-#: ui/app.slint:144
+#: ui/app.slint:146
 msgid "Add Account…"
 msgstr "添加账号…"
 
-#: ui/app.slint:153
+#: ui/app.slint:156
 msgid "Help"
 msgstr "帮助"
 
-#: ui/app.slint:156
+#: ui/app.slint:159
 msgid "Update to {}…"
 msgstr "更新到 {}…"
 
-#: ui/app.slint:157
+#: ui/app.slint:160
 msgid "Check for Updates…"
 msgstr "检查更新…"
 
@@ -74,7 +74,7 @@ msgstr "检查更新…"
 msgid "Choose recipient…"
 msgstr "转发到…"
 
-#: ui/broadsheet/actions.slint:227 ui/telegram.slint:940
+#: ui/broadsheet/actions.slint:227 ui/telegram.slint:907
 #: ui/workbench/actions.slint:229
 msgid "Saved Messages"
 msgstr "收藏夹"
@@ -97,21 +97,21 @@ msgid "Add a comment (optional)"
 msgstr "补充说明（可选）"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
-#: ui/broadsheet/broadsheet.slint:2598 ui/compose.slint:244 ui/extras.slint:36
-#: ui/pages/downloads.slint:1668 ui/pages/settings.slint:1218
-#: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1818
-#: ui/workbench/actions.slint:548 ui/workbench/conversation.slint:1655
+#: ui/broadsheet/broadsheet.slint:2598 ui/chat.slint:360 ui/compose.slint:244
+#: ui/pages/downloads.slint:1390 ui/pages/profile.slint:174
+#: ui/terminal/actions.slint:386 ui/terminal/actions.slint:643
+#: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
 msgstr "取消"
 
 #: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2589
 #: ui/chat.slint:279 ui/chat.slint:820 ui/chat.slint:902
-#: ui/terminal/terminal.slint:1811 ui/workbench/conversation.slint:1630
+#: ui/terminal/terminal.slint:1738 ui/workbench/conversation.slint:1630
 msgid "Report"
 msgstr "举报"
 
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2580
-#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1803
+#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1730
 #: ui/workbench/conversation.slint:1618
 msgid "Delete"
 msgstr "删除"
@@ -148,7 +148,7 @@ msgid "All"
 msgstr "全部"
 
 #: ui/broadsheet/broadsheet.slint:515 ui/pages/ai-access.slint:102
-#: ui/telegram.slint:942 ui/workbench/sidebar.slint:548
+#: ui/telegram.slint:909 ui/workbench/sidebar.slint:548
 msgid "All chats"
 msgstr "全部聊天"
 
@@ -168,8 +168,8 @@ msgstr "排序方式"
 msgid "Latest message"
 msgstr "最新消息"
 
-#: ui/broadsheet/broadsheet.slint:673 ui/pages/downloads.slint:1006
-#: ui/terminal/terminal.slint:467
+#: ui/broadsheet/broadsheet.slint:673 ui/chat-manage.slint:233
+#: ui/pages/downloads.slint:1259 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "名称"
 
@@ -218,25 +218,25 @@ msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr "带认证标记的是 Telegram 官方机器人。其他机器人能看到你发给它的消息。"
 
-#: ui/broadsheet/broadsheet.slint:1330 ui/broadsheet/broadsheet.slint:3395
+#: ui/broadsheet/broadsheet.slint:1330 ui/broadsheet/broadsheet.slint:3317
 #: ui/terminal/terminal.slint:824 ui/workbench/conversation.slint:276
-#: ui/workbench/conversation.slint:2391
+#: ui/workbench/conversation.slint:2316
 msgid "Unmute"
 msgstr "取消静音"
 
-#: ui/broadsheet/broadsheet.slint:1330 ui/broadsheet/broadsheet.slint:3395
+#: ui/broadsheet/broadsheet.slint:1330 ui/broadsheet/broadsheet.slint:3317
 #: ui/terminal/terminal.slint:824 ui/workbench/conversation.slint:276
-#: ui/workbench/conversation.slint:2391
+#: ui/workbench/conversation.slint:2316
 msgid "Mute"
 msgstr "静音"
 
-#: ui/broadsheet/broadsheet.slint:1338 ui/broadsheet/broadsheet.slint:3470
-#: ui/terminal/terminal.slint:1626 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1338 ui/broadsheet/broadsheet.slint:3386
+#: ui/terminal/terminal.slint:1559 ui/workbench/sidebar.slint:717
 msgid "Unpin"
 msgstr "取消置顶"
 
-#: ui/broadsheet/broadsheet.slint:1338 ui/broadsheet/broadsheet.slint:3470
-#: ui/terminal/terminal.slint:1626 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1338 ui/broadsheet/broadsheet.slint:3386
+#: ui/terminal/terminal.slint:1559 ui/workbench/sidebar.slint:717
 msgid "Pin"
 msgstr "置顶"
 
@@ -245,16 +245,16 @@ msgstr "置顶"
 msgid "Add to folder"
 msgstr "加入文件夹"
 
-#: ui/broadsheet/broadsheet.slint:1354 ui/broadsheet/broadsheet.slint:3478
-#: ui/terminal/terminal.slint:1634 ui/workbench/sidebar.slint:733
+#: ui/broadsheet/broadsheet.slint:1354 ui/broadsheet/broadsheet.slint:3394
+#: ui/terminal/terminal.slint:1567 ui/workbench/sidebar.slint:733
 msgid "Copy ID"
 msgstr "复制 ID"
 
-#: ui/broadsheet/broadsheet.slint:1402 ui/compose.slint:243
-#: ui/pages/login.slint:532 ui/pages/login.slint:587 ui/pages/login.slint:684
-#: ui/pages/login.slint:703 ui/pages/login.slint:849 ui/pages/login.slint:880
-#: ui/pages/settings.slint:1395 ui/pages/settings.slint:1496
-#: ui/terminal/terminal.slint:888
+#: ui/broadsheet/broadsheet.slint:1402 ui/chat-manage.slint:228
+#: ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637
+#: ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849
+#: ui/pages/login.slint:909 ui/pages/settings.slint:1467
+#: ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:783
 msgid "Back"
 msgstr "返回"
 
@@ -280,11 +280,11 @@ msgstr "赞助消息 · Telegram 官方投放 · Premium 用户可关闭"
 msgid "You"
 msgstr "你"
 
-#: ui/broadsheet/broadsheet.slint:2344 ui/terminal/terminal.slint:1967
+#: ui/broadsheet/broadsheet.slint:2344 ui/terminal/terminal.slint:1894
 msgid "Hide sender's name"
 msgstr "隐藏发送者"
 
-#: ui/broadsheet/broadsheet.slint:2556 ui/terminal/terminal.slint:1826
+#: ui/broadsheet/broadsheet.slint:2556 ui/terminal/terminal.slint:1753
 msgid "Shift-click to select a range"
 msgstr "Shift + 点击：选中一段"
 
@@ -293,23 +293,23 @@ msgstr "Shift + 点击：选中一段"
 msgid "Forward"
 msgstr "转发"
 
-#: ui/broadsheet/broadsheet.slint:2927 ui/terminal/terminal.slint:2343
+#: ui/broadsheet/broadsheet.slint:2849 ui/terminal/terminal.slint:2270
 msgid "Choose a chat on the left"
 msgstr "在左侧选择一个聊天"
 
-#: ui/broadsheet/broadsheet.slint:2952 ui/terminal/terminal.slint:1548
+#: ui/broadsheet/broadsheet.slint:2874 ui/terminal/terminal.slint:1482
 msgid "typing…"
 msgstr "正在输入…"
 
-#: ui/broadsheet/broadsheet.slint:3061 ui/terminal/terminal.slint:1687
+#: ui/broadsheet/broadsheet.slint:2983 ui/terminal/terminal.slint:1620
 msgid "{0} is typing…"
 msgstr "{0} 正在输入…"
 
-#: ui/broadsheet/broadsheet.slint:3132
+#: ui/broadsheet/broadsheet.slint:3054
 msgid "Sending as {0}"
 msgstr "以 {0} 发送"
 
-#: ui/broadsheet/broadsheet.slint:3157
+#: ui/broadsheet/broadsheet.slint:3079
 msgid "Write a message…"
 msgstr "写点什么…"
 
@@ -325,7 +325,7 @@ msgstr "通话"
 msgid "Mobile"
 msgstr "手机"
 
-#: ui/chat-info.slint:72 ui/pages/downloads.slint:1276
+#: ui/chat-info.slint:72 ui/chat-manage.slint:245 ui/pages/profile.slint:300
 msgid "Username"
 msgstr "用户名"
 
@@ -333,7 +333,7 @@ msgstr "用户名"
 msgid "Bio"
 msgstr "个人简介"
 
-#: ui/chat-info.slint:74
+#: ui/chat-info.slint:74 ui/chat-manage.slint:234
 msgid "Description"
 msgstr "描述"
 
@@ -354,7 +354,8 @@ msgstr "设置"
 msgid "Shared Media"
 msgstr "共享内容"
 
-#: ui/chat-info.slint:79 ui/compose.slint:250
+#. The members.
+#: ui/chat-info.slint:79 ui/chat-manage.slint:285 ui/compose.slint:250
 msgid "Members"
 msgstr "成员"
 
@@ -420,7 +421,7 @@ msgstr "文件"
 msgid "Links"
 msgstr "链接"
 
-#: ui/chat-info.slint:96
+#: ui/chat-info.slint:96 ui/chat-manage.slint:301
 msgid "Administrators"
 msgstr "管理员"
 
@@ -442,11 +443,11 @@ msgstr "管理员"
 msgid "Invite link"
 msgstr "邀请链接"
 
-#: ui/chat-info.slint:101
+#: ui/chat-info.slint:101 ui/chat-manage.slint:224
 msgid "Manage group"
 msgstr "管理群组"
 
-#: ui/chat-info.slint:102
+#: ui/chat-info.slint:102 ui/chat-manage.slint:225
 msgid "Manage channel"
 msgstr "管理频道"
 
@@ -503,6 +504,574 @@ msgstr "执行"
 msgctxt "keyboard hint"
 msgid "close"
 msgstr "关闭"
+
+#: ui/chat-manage.slint:226
+msgid "Administrator rights"
+msgstr "管理员权限"
+
+#: ui/chat-manage.slint:227
+msgid "Change photo"
+msgstr "更换头像"
+
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1370
+#: ui/pages/settings.slint:1278
+msgid "Save"
+msgstr "保存"
+
+#: ui/chat-manage.slint:230
+msgid "Got it"
+msgstr "知道了"
+
+#: ui/chat-manage.slint:232
+msgctxt "on the photo"
+msgid "Change"
+msgstr "更换"
+
+#: ui/chat-manage.slint:235
+msgid "The name cannot be empty"
+msgstr "名字不能为空"
+
+#: ui/chat-manage.slint:236
+msgid "You need the “{0}” right for that."
+msgstr "没有权限：需要「{0}」权限。"
+
+#: ui/chat-manage.slint:237
+msgid "Not available for this chat"
+msgstr "这个聊天不支持"
+
+#. The type.
+#: ui/chat-manage.slint:239
+msgid "Type"
+msgstr "类型"
+
+#: ui/chat-manage.slint:240
+msgid "Public"
+msgstr "公开"
+
+#: ui/chat-manage.slint:241
+msgid "Has a permanent link; anyone can find and join it."
+msgstr "有固定链接，任何人都能搜到并加入。"
+
+#: ui/chat-manage.slint:242
+msgid "Has a permanent link; anyone can find and subscribe."
+msgstr "有固定链接，任何人都能搜到并订阅。"
+
+#: ui/chat-manage.slint:243
+msgid "Private"
+msgstr "私有"
+
+#: ui/chat-manage.slint:244
+msgid "Cannot be found; people join by invite link."
+msgstr "搜不到，只能通过邀请链接加入。"
+
+#: ui/chat-manage.slint:246
+msgid "This is the current username"
+msgstr "这是现在的用户名"
+
+#: ui/chat-manage.slint:247
+msgid "“{0}” is free"
+msgstr "「{0}」可以用"
+
+#: ui/chat-manage.slint:248
+msgid "“{0}” is taken, try another"
+msgstr "「{0}」已被占用，换一个"
+
+#: ui/chat-manage.slint:249
+msgid "Checking “{0}”…"
+msgstr "正在检查「{0}」…"
+
+#: ui/chat-manage.slint:250 ui/compose.slint:268
+msgid "At least 5 characters"
+msgstr "至少需要 5 个字符"
+
+#: ui/chat-manage.slint:251
+msgid "Only a–z, 0–9 and underscore"
+msgstr "只能用 a–z、0–9 和下划线"
+
+#: ui/chat-manage.slint:252
+msgid "Must begin with a letter"
+msgstr "要以字母开头"
+
+#: ui/chat-manage.slint:253
+msgid "A public group needs a username"
+msgstr "公开群组需要一个用户名"
+
+#: ui/chat-manage.slint:254
+msgid "A public channel needs a username"
+msgstr "公开频道需要一个用户名"
+
+#: ui/chat-manage.slint:255
+msgid "This username is not allowed"
+msgstr "这个用户名不能用"
+
+#: ui/chat-manage.slint:256
+msgid "You have too many public groups and channels"
+msgstr "你的公开群组和频道太多了"
+
+#: ui/chat-manage.slint:257
+msgctxt "usernames to try"
+msgid "Try"
+msgstr "可以试试"
+
+#. The links.
+#: ui/chat-manage.slint:259
+msgid "Primary invite link"
+msgstr "主邀请链接"
+
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:559
+#: ui/pages/profile.slint:379
+msgid "Copy"
+msgstr "复制"
+
+#: ui/chat-manage.slint:261
+msgid "Revoke and make a new one"
+msgstr "撤销并重新生成"
+
+#: ui/chat-manage.slint:262
+msgid "The old link stops working at once; those who already joined stay."
+msgstr "撤销后旧链接立刻失效；已经加入的人不受影响。"
+
+#: ui/chat-manage.slint:263
+msgid "Revoke and make a new link"
+msgstr "撤销并生成新链接"
+
+#: ui/chat-manage.slint:264
+msgid "Other invite links"
+msgstr "其他邀请链接"
+
+#: ui/chat-manage.slint:265
+msgid "Revoke"
+msgstr "撤销"
+
+#: ui/chat-manage.slint:266
+msgid "New invite link"
+msgstr "新建邀请链接"
+
+#: ui/chat-manage.slint:267
+msgid "Name (optional), e.g. “Weekend meetup”"
+msgstr "名称（可选），比如「周末聚会」"
+
+#: ui/chat-manage.slint:268
+msgid "Expires"
+msgstr "过期时间"
+
+#: ui/chat-manage.slint:269
+msgid "Member limit"
+msgstr "人数上限"
+
+#: ui/chat-manage.slint:270 ui/compose.slint:225 ui/extras.slint:37
+msgid "Create"
+msgstr "创建"
+
+#: ui/chat-manage.slint:271
+msgid "Unnamed link"
+msgstr "未命名链接"
+
+#: ui/chat-manage.slint:272
+msgid "Never expires"
+msgstr "永不过期"
+
+#: ui/chat-manage.slint:273
+msgid "Expired"
+msgstr "已过期"
+
+#: ui/chat-manage.slint:274
+msgid "{n} day left"
+msgid_plural "{n} days left"
+msgstr[0] "还剩 {n} 天"
+
+#: ui/chat-manage.slint:275
+msgid "{n} hour left"
+msgid_plural "{n} hours left"
+msgstr[0] "还剩 {n} 小时"
+
+#: ui/chat-manage.slint:276
+msgid "{n} minute left"
+msgid_plural "{n} minutes left"
+msgstr[0] "还剩 {n} 分钟"
+
+#: ui/chat-manage.slint:277
+msgid "No limit"
+msgstr "不限"
+
+#: ui/chat-manage.slint:278
+msgid "Up to {0}"
+msgstr "上限 {0} 人"
+
+#: ui/chat-manage.slint:279
+msgctxt "how many joined by the link"
+msgid "{0} joined"
+msgstr "已加入 {0}"
+
+#: ui/chat-manage.slint:280 ui/extras.slint:75
+msgid "1 hour"
+msgstr "1 小时"
+
+#: ui/chat-manage.slint:281
+msgid "1 day"
+msgstr "1 天"
+
+#: ui/chat-manage.slint:282
+msgid "1 week"
+msgstr "1 周"
+
+#: ui/chat-manage.slint:283
+msgid "{n} person"
+msgid_plural "{n} people"
+msgstr[0] "{n} 人"
+
+#: ui/chat-manage.slint:286
+msgid "Subscribers"
+msgstr "订阅者"
+
+#: ui/chat-manage.slint:287
+msgid "{0} members"
+msgstr "{0} 位成员"
+
+#: ui/chat-manage.slint:288
+msgid "{0} subscribers"
+msgstr "{0} 位订阅者"
+
+#: ui/chat-manage.slint:289
+msgid "Add member"
+msgstr "添加成员"
+
+#: ui/chat-manage.slint:290
+msgid "Add subscriber"
+msgstr "添加订阅者"
+
+#: ui/chat-manage.slint:291
+msgid "Search contacts"
+msgstr "搜索联系人"
+
+#: ui/chat-manage.slint:292
+msgid "No contacts to add"
+msgstr "没有可以添加的联系人"
+
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1370
+msgid "Add"
+msgstr "添加"
+
+#: ui/chat-manage.slint:294
+msgid "you"
+msgstr "你"
+
+#: ui/chat-manage.slint:295
+msgid "Make administrator"
+msgstr "设为管理员"
+
+#: ui/chat-manage.slint:296
+msgid "Remove from group"
+msgstr "移出群组"
+
+#: ui/chat-manage.slint:297
+msgid "Remove from channel"
+msgstr "移出频道"
+
+#: ui/chat-manage.slint:298
+msgid "Remove {0} from the group?"
+msgstr "把 {0} 移出群组？"
+
+#: ui/chat-manage.slint:299
+msgid "Remove {0} from the channel?"
+msgstr "把 {0} 移出频道？"
+
+#: ui/chat-manage.slint:300 ui/chat.slint:346 ui/pages/ai-access.slint:458
+#: ui/pages/downloads.slint:1401
+msgid "Remove"
+msgstr "移除"
+
+#: ui/chat-manage.slint:302
+msgid "Administrator"
+msgstr "管理员"
+
+#: ui/chat-manage.slint:303
+msgid "Group owner"
+msgstr "群主"
+
+#: ui/chat-manage.slint:304
+msgid "Channel owner"
+msgstr "频道主"
+
+#: ui/chat-manage.slint:305
+msgid "{0} · every right"
+msgstr "{0} · 全部权限"
+
+#: ui/chat-manage.slint:306
+msgid "{n} right"
+msgid_plural "{n} rights"
+msgstr[0] "{n} 项权限"
+
+#: ui/chat-manage.slint:307
+msgid "set by {0}"
+msgstr "{0} 设的"
+
+#. The group's settings, and the channel's.
+#: ui/chat-manage.slint:309
+msgid "Group settings"
+msgstr "群组设置"
+
+#: ui/chat-manage.slint:310
+msgid "Channel settings"
+msgstr "频道设置"
+
+#: ui/chat-manage.slint:311
+msgid "Member permissions"
+msgstr "成员权限"
+
+#: ui/chat-manage.slint:312
+msgid "{0} of {1} allowed · what members can do"
+msgstr "允许 {0} / {1} 项 · 普通成员能做什么"
+
+#: ui/chat-manage.slint:313 ui/pages/ai-access.slint:108
+msgid "Send messages"
+msgstr "可以发消息"
+
+#: ui/chat-manage.slint:314
+msgid "Send photos and videos"
+msgstr "发送照片和视频"
+
+#: ui/chat-manage.slint:315
+msgid "Send stickers and GIFs"
+msgstr "发送贴纸和 GIF"
+
+#: ui/chat-manage.slint:316
+msgid "Add link previews"
+msgstr "发链接预览"
+
+#: ui/chat-manage.slint:317
+msgid "Send polls"
+msgstr "发投票"
+
+#: ui/chat-manage.slint:318 ui/chat-manage.slint:363
+msgid "Invite members"
+msgstr "邀请成员"
+
+#: ui/chat-manage.slint:319 ui/chat-manage.slint:365
+msgid "Pin messages"
+msgstr "置顶消息"
+
+#: ui/chat-manage.slint:320 ui/chat-manage.slint:358
+msgid "Change group info"
+msgstr "修改群组信息"
+
+#: ui/chat-manage.slint:321
+msgid "Slow mode"
+msgstr "慢速模式"
+
+#: ui/chat-manage.slint:322 ui/extras.slint:69
+msgctxt "slow mode"
+msgid "Off"
+msgstr "关"
+
+#: ui/chat-manage.slint:323 ui/chat.slint:357
+msgid "{0} s"
+msgstr "{0} 秒"
+
+#: ui/chat-manage.slint:324
+msgid "{0} min"
+msgstr "{0} 分"
+
+#: ui/chat-manage.slint:325
+msgid "{n} hour"
+msgid_plural "{n} hours"
+msgstr[0] "{n} 小时"
+
+#: ui/chat-manage.slint:326
+msgid "Each member can send one message every {0}."
+msgstr "每人每 {0} 只能发一条。"
+
+#: ui/chat-manage.slint:327
+msgid "Off: members can send messages one after another."
+msgstr "关闭：大家可以连续发。"
+
+#: ui/chat-manage.slint:328
+msgid "Approve new members"
+msgstr "入群需要批准"
+
+#: ui/chat-manage.slint:329
+msgid "New members join once an administrator approves them"
+msgstr "新成员要管理员批准才能进群"
+
+#: ui/chat-manage.slint:330
+msgid "{n} request awaits your approval"
+msgid_plural "{n} requests await your approval"
+msgstr[0] "{n} 个申请等你批准"
+
+#: ui/chat-manage.slint:331
+msgid "Topics"
+msgstr "话题"
+
+#: ui/chat-manage.slint:332
+msgid "Split the group into topics, each with its own chat"
+msgstr "把群组分成多个话题，各聊各的"
+
+#: ui/chat-manage.slint:333
+msgid "Protected content"
+msgstr "保护内容"
+
+#: ui/chat-manage.slint:334
+msgid "Members cannot forward or save what is posted here"
+msgstr "成员不能转发或保存这里的内容"
+
+#: ui/chat-manage.slint:335
+msgid "Subscribers cannot forward or save what is posted here"
+msgstr "订阅者不能转发或保存这里的内容"
+
+#: ui/chat-manage.slint:336
+msgid "History for new members"
+msgstr "新成员可见历史"
+
+#: ui/chat-manage.slint:337
+msgid "New members see the messages from before they joined"
+msgstr "新成员能看到加入之前的消息"
+
+#: ui/chat-manage.slint:338
+msgid "Hide members"
+msgstr "隐藏成员"
+
+#: ui/chat-manage.slint:339
+msgid "Members cannot see the member list; needs 100 members"
+msgstr "成员看不到成员列表；需要 100 人"
+
+#: ui/chat-manage.slint:340
+msgid "Aggressive anti-spam"
+msgstr "强力反垃圾"
+
+#: ui/chat-manage.slint:341
+msgid "Telegram deletes spam on its own; needs 200 members"
+msgstr "Telegram 自动删除垃圾消息；需要 200 人"
+
+#: ui/chat-manage.slint:342
+msgid "Signatures"
+msgstr "签名"
+
+#: ui/chat-manage.slint:343
+msgid "Show the author's name under every post"
+msgstr "在每条消息下显示发布者的名字"
+
+#: ui/chat-manage.slint:344
+msgid "Discussion group"
+msgstr "评论群"
+
+#: ui/chat-manage.slint:345
+msgid "{0} · linked, posts can be commented on"
+msgstr "{0} · 关联后，帖子下面可以评论"
+
+#: ui/chat-manage.slint:346
+msgid "Not linked"
+msgstr "未关联"
+
+#: ui/chat-manage.slint:347
+msgid "Unlink"
+msgstr "解除关联"
+
+#: ui/chat-manage.slint:348
+msgid "Choose"
+msgstr "选"
+
+#. The rights page.
+#: ui/chat-manage.slint:350
+msgctxt "an administrator's title"
+msgid "Title"
+msgstr "头衔"
+
+#: ui/chat-manage.slint:351
+msgid "E.g. “Keycap advisor”, shown beside the name"
+msgstr "比如「键帽顾问」，显示在名字旁边"
+
+#: ui/chat-manage.slint:352
+msgid "What they can do"
+msgstr "能做什么"
+
+#: ui/chat-manage.slint:353
+msgid "Dismiss administrator"
+msgstr "撤销管理员"
+
+#: ui/chat-manage.slint:354
+msgid "The owner has every right; they cannot be changed."
+msgstr "群主拥有全部权限，不能修改。"
+
+#: ui/chat-manage.slint:355
+msgid "These are your own rights, set by {0}; only they can change them."
+msgstr "这是你自己的权限，由 {0} 设置；只有 {0} 能改。"
+
+#: ui/chat-manage.slint:356
+msgid ""
+"You do not have the “Add administrators” right: view only. Ask the owner, "
+"{0}."
+msgstr "你没有「添加管理员」权限，只能查看。可以请群主 {0} 修改。"
+
+#: ui/chat-manage.slint:357
+msgid "You do not have “{0}” yourself, so you cannot give it."
+msgstr "你自己没有「{0}」权限，不能给别人。"
+
+#: ui/chat-manage.slint:359
+msgid "Change channel info"
+msgstr "修改频道资料"
+
+#: ui/chat-manage.slint:360
+msgid "Delete messages"
+msgstr "删除消息"
+
+#: ui/chat-manage.slint:361
+msgid "Delete others' messages"
+msgstr "删除他人消息"
+
+#: ui/chat-manage.slint:362
+msgid "Ban members"
+msgstr "封禁成员"
+
+#: ui/chat-manage.slint:364
+msgid "Invite subscribers"
+msgstr "邀请订阅者"
+
+#: ui/chat-manage.slint:366
+msgid "Manage topics"
+msgstr "管理话题"
+
+#: ui/chat-manage.slint:367
+msgid "Manage video chats"
+msgstr "管理语音聊天"
+
+#: ui/chat-manage.slint:368
+msgid "Manage live streams"
+msgstr "管理直播"
+
+#: ui/chat-manage.slint:369
+msgid "Remain anonymous"
+msgstr "匿名发言"
+
+#: ui/chat-manage.slint:370
+msgid "Add administrators"
+msgstr "添加管理员"
+
+#: ui/chat-manage.slint:371
+msgid "Post messages"
+msgstr "发布消息"
+
+#: ui/chat-manage.slint:372
+msgid "Edit others' messages"
+msgstr "编辑他人消息"
+
+#: ui/chat-manage.slint:373
+msgid "Post and edit stories"
+msgstr "发布和编辑动态"
+
+#. The crop page.
+#: ui/chat-manage.slint:375
+msgid ""
+"Drag the picture and set the zoom; what is in the frame becomes the photo, "
+"cropped square."
+msgstr "拖动图片、调缩放，方框里的部分就是新头像，裁成正方形。"
+
+#: ui/chat-manage.slint:376
+msgid "Choose another"
+msgstr "换一张"
+
+#: ui/chat-manage.slint:377
+msgid "Use"
+msgstr "使用"
 
 #: ui/chat.slint:276
 msgid "Unblock bot"
@@ -697,11 +1266,6 @@ msgstr "相册 {0} · {1}"
 msgid "Add more"
 msgstr "再添加"
 
-#: ui/chat.slint:346 ui/pages/ai-access.slint:458 ui/pages/ai-access.slint:530
-#: ui/pages/downloads.slint:1611
-msgid "Remove"
-msgstr "移除"
-
 #: ui/chat.slint:347
 msgid "Add a caption…"
 msgstr "添加说明…"
@@ -733,10 +1297,6 @@ msgstr "对方打开后销毁。"
 #: ui/chat.slint:356
 msgid "View once"
 msgstr "看一次"
-
-#: ui/chat.slint:357
-msgid "{0} s"
-msgstr "{0} 秒"
 
 #: ui/chat.slint:359
 msgid "Hide with spoiler"
@@ -1185,10 +1745,6 @@ msgstr "下一步"
 msgid "Skip"
 msgstr "跳过"
 
-#: ui/compose.slint:225 ui/extras.slint:37
-msgid "Create"
-msgstr "创建"
-
 #: ui/compose.slint:229
 msgid "Invite {n} person"
 msgid_plural "Invite {n} people"
@@ -1197,10 +1753,6 @@ msgstr[0] "邀请 {n} 人"
 #: ui/compose.slint:229
 msgid "Done"
 msgstr "完成"
-
-#: ui/compose.slint:231 ui/pages/downloads.slint:1370
-msgid "Add"
-msgstr "添加"
 
 #: ui/compose.slint:245
 msgid "Search contacts, @username or phone number"
@@ -1286,10 +1838,6 @@ msgstr "只能使用 a–z、0–9 和下划线"
 msgid "Must start with a letter"
 msgstr "必须以字母开头"
 
-#: ui/compose.slint:268
-msgid "At least 5 characters"
-msgstr "至少需要 5 个字符"
-
 #: ui/compose.slint:269
 msgid "At most 32 characters"
 msgstr "最多 32 个字符"
@@ -1330,10 +1878,6 @@ msgstr "无法检查链接：{0}"
 #: ui/compose.slint:286
 msgid "It can be revoked and made anew in the channel's settings."
 msgstr "可以在频道设置里撤销并重新生成。"
-
-#: ui/compose.slint:287 ui/pages/ai-access.slint:559 ui/pages/profile.slint:379
-msgid "Copy"
-msgstr "复制"
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:559 ui/pages/profile.slint:379
 msgid "Copied"
@@ -1595,7 +2139,7 @@ msgid "Sent to {n} chat"
 msgid_plural "Sent to {n} chats"
 msgstr[0] "已发送给 {n} 个聊天"
 
-#: ui/extras.slint:51 ui/extras.slint:137
+#: ui/extras.slint:51 ui/extras.slint:86
 msgid "This chat does not allow forwarding."
 msgstr "这个聊天不允许转发。"
 
@@ -1633,11 +2177,6 @@ msgstr "慢速模式 · 还需等待 {0}"
 msgid "Slow mode · one message every {0}"
 msgstr "慢速模式 · 每 {0} 可发一条消息"
 
-#: ui/extras.slint:69
-msgctxt "slow mode"
-msgid "Off"
-msgstr "关"
-
 #: ui/extras.slint:70
 msgid "10 seconds"
 msgstr "10 秒"
@@ -1658,166 +2197,38 @@ msgstr "5 分钟"
 msgid "15 minutes"
 msgstr "15 分钟"
 
-#: ui/extras.slint:75
-msgid "1 hour"
-msgstr "1 小时"
-
 #: ui/extras.slint:76
 msgid "{n} second"
 msgid_plural "{n} seconds"
 msgstr[0] "{n} 秒"
 
-#. The settings panel.
-#: ui/extras.slint:79
-msgid "Chat settings"
-msgstr "聊天设置"
-
-#: ui/extras.slint:80
-msgid "Nothing to set for this chat yet."
-msgstr "这个聊天暂时没有可设置的内容。"
-
 #: ui/extras.slint:81
-msgid "Group administration · you are an administrator"
-msgstr "群管理 · 你是管理员"
-
-#: ui/extras.slint:81
-msgid "Group rules"
-msgstr "群规则"
-
-#: ui/extras.slint:82
-msgid "Slow mode"
-msgstr "慢速模式"
-
-#: ui/extras.slint:84
-msgid "Members can send messages at any time."
-msgstr "成员可以随时发消息。"
-
-#: ui/extras.slint:85
-msgid "Members can send one message every {0}. Administrators are not limited."
-msgstr "成员每 {0} 可发一条消息，管理员不受限制。"
-
-#: ui/extras.slint:87
-msgid "Members can"
-msgstr "成员可以"
-
-#: ui/extras.slint:89
-msgctxt "group permission"
-msgid "Send messages"
-msgstr "发送消息"
-
-#: ui/extras.slint:90
-msgid "Send photos and videos"
-msgstr "发送照片和视频"
-
-#: ui/extras.slint:91
-msgid "Send stickers and GIFs"
-msgstr "发送贴纸和 GIF"
-
-#: ui/extras.slint:92
-msgid "Send links"
-msgstr "发送链接"
-
-#: ui/extras.slint:93
-msgid "Create polls"
-msgstr "创建投票"
-
-#: ui/extras.slint:94
-msgid "Add members"
-msgstr "添加成员"
-
-#: ui/extras.slint:95
-msgid "Pin messages"
-msgstr "置顶消息"
-
-#: ui/extras.slint:96
-msgid "Change group info"
-msgstr "修改群组信息"
-
-#: ui/extras.slint:100
-msgid "Approve new members"
-msgstr "入群需要批准"
-
-#: ui/extras.slint:101
-msgid "Restrict saving and forwarding"
-msgstr "禁止保存和转发"
-
-#: ui/extras.slint:102
-msgid "New members see earlier messages"
-msgstr "新成员能看到之前的消息"
-
-#: ui/extras.slint:103
-msgid "Hide the member list"
-msgstr "隐藏成员列表"
-
-#: ui/extras.slint:104
-msgid "Aggressive anti-spam"
-msgstr "强力反垃圾"
-
-#: ui/extras.slint:108
-msgid "People who join by invite link wait for an administrator's approval."
-msgstr "通过邀请链接加入的人，要等管理员批准。"
-
-#: ui/extras.slint:109
-msgid "Members cannot forward, save or copy content from this group."
-msgstr "成员无法转发、保存或拷贝本群的内容。"
-
-#: ui/extras.slint:110
-msgid "When off, new members see only messages sent after they joined."
-msgstr "关闭后，新成员只能看到加入之后发的消息。"
-
-#: ui/extras.slint:111
-msgid "Only administrators can see the member list."
-msgstr "只有管理员能看到成员列表。"
-
-#: ui/extras.slint:112
-msgid "Suspected spam is deleted automatically."
-msgstr "疑似垃圾消息会被自动删除。"
-
-#: ui/extras.slint:115
-msgid "({0} members or more)"
-msgstr "（需 {0} 人及以上）"
-
-#: ui/extras.slint:116
-msgid "Slow mode: one message every {0}"
-msgstr "慢速模式：每 {0} 可发一条消息"
-
-#: ui/extras.slint:117
-msgid "Administrators turned off: {0}"
-msgstr "管理员已关闭：{0}"
-
-#. Between names in a list: "Jie, Mika".
-#: ui/extras.slint:129 ui/telegram.slint:944
-msgctxt "list separator"
-msgid ", "
-msgstr "、"
-
-#: ui/extras.slint:132
 msgid "Too many requests. Try again in {n} second."
 msgid_plural "Too many requests. Try again in {n} seconds."
 msgstr[0] "请求太频繁，请 {n} 秒后再试。"
 
-#: ui/extras.slint:133
+#: ui/extras.slint:82
 msgid "Slow mode: you can send again in {n} second."
 msgid_plural "Slow mode: you can send again in {n} seconds."
 msgstr[0] "慢速模式：{n} 秒后才能再次发送。"
 
-#: ui/extras.slint:134
+#: ui/extras.slint:83
 msgid "Only administrators can do this."
 msgstr "只有管理员才能这样做。"
 
-#: ui/extras.slint:135
+#: ui/extras.slint:84
 msgid "This reaction is not allowed here."
 msgstr "这里不允许使用这个表情回应。"
 
-#: ui/extras.slint:136
+#: ui/extras.slint:85
 msgid "This topic is closed."
 msgstr "这个话题已关闭。"
 
-#: ui/extras.slint:138
+#: ui/extras.slint:87
 msgid "Members cannot send messages in this group."
 msgstr "本群成员不能发送消息。"
 
-#: ui/extras.slint:139
+#: ui/extras.slint:88
 msgid "You cannot write in this group."
 msgstr "你不能在本群发言。"
 
@@ -2335,10 +2746,6 @@ msgstr "你选的 {0} 个聊天"
 msgid "None chosen yet: assistants see nothing"
 msgstr "还没选：助手什么也看不到"
 
-#: ui/pages/ai-access.slint:108 ui/pages/ai-access.slint:485
-msgid "Send messages"
-msgstr "可以发消息"
-
 #: ui/pages/ai-access.slint:108 ui/pages/ai-access.slint:494
 msgid "Drafts only"
 msgstr "只写草稿"
@@ -2704,11 +3111,6 @@ msgstr "走 http 时密码和文件都是明文传输：这个服务器只在你
 msgid "Testing…"
 msgstr "正在测试…"
 
-#: ui/pages/downloads.slint:1370 ui/pages/profile.slint:429
-#: ui/pages/settings.slint:1316
-msgid "Save"
-msgstr "保存"
-
 #: ui/pages/downloads.slint:1380
 msgid "Test connection"
 msgstr "测试连接"
@@ -2797,7 +3199,7 @@ msgstr "自动翻译"
 msgid "Translate foreign-language messages into your UI language"
 msgstr "外语消息自动译为界面语言"
 
-#: ui/pages/login.slint:133 ui/workbench/conversation.slint:2010
+#: ui/pages/login.slint:133 ui/workbench/conversation.slint:1935
 msgid "Reading mode"
 msgstr "阅读模式"
 
@@ -3554,11 +3956,17 @@ msgstr "退出 FinchGram"
 msgid "New message"
 msgstr "新消息"
 
-#: ui/telegram.slint:941
+#: ui/telegram.slint:908
 msgid "Deleted Account"
 msgstr "已注销账号"
 
-#: ui/terminal/drawer.slint:175 ui/terminal/terminal.slint:2274
+#. Between names in a list: "Jie, Mika".
+#: ui/telegram.slint:911
+msgctxt "list separator"
+msgid ", "
+msgstr "、"
+
+#: ui/terminal/drawer.slint:175 ui/terminal/terminal.slint:2201
 msgctxt "terminal"
 msgid "cmd"
 msgstr "命令"
@@ -3588,59 +3996,55 @@ msgstr "（已编辑）"
 msgid "sponsored"
 msgstr "赞助"
 
-#: ui/terminal/terminal.slint:1324 ui/terminal/terminal.slint:1556
+#: ui/terminal/terminal.slint:1324 ui/terminal/terminal.slint:1489
 msgid "search"
 msgstr "搜索"
 
-#: ui/terminal/terminal.slint:1472
-msgid "chat settings"
-msgstr "聊天设置"
-
-#: ui/terminal/terminal.slint:1569
+#: ui/terminal/terminal.slint:1502
 msgid "chat info"
 msgstr "聊天资料"
 
-#: ui/terminal/terminal.slint:1858
+#: ui/terminal/terminal.slint:1785
 msgid "Mute or unmute this chat"
 msgstr "静音或取消静音当前聊天"
 
-#: ui/terminal/terminal.slint:1859
+#: ui/terminal/terminal.slint:1786
 msgid "Pin or unpin this chat"
 msgstr "置顶或取消置顶当前聊天"
 
-#: ui/terminal/terminal.slint:1860
+#: ui/terminal/terminal.slint:1787
 msgid "Mark every chat in this folder as read"
 msgstr "把这个文件夹里的聊天全部标为已读"
 
-#: ui/terminal/terminal.slint:1861
+#: ui/terminal/terminal.slint:1788
 msgid "Copy this chat's ID"
 msgstr "复制当前聊天的 ID"
 
-#: ui/terminal/terminal.slint:1862
+#: ui/terminal/terminal.slint:1789
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "搜索聊天、联系人、@用户名和消息"
 
-#: ui/terminal/terminal.slint:2013
+#: ui/terminal/terminal.slint:1940
 msgid "unmute"
 msgstr "取消静音"
 
-#: ui/terminal/terminal.slint:2013
+#: ui/terminal/terminal.slint:1940
 msgid "mute"
 msgstr "静音"
 
-#: ui/terminal/terminal.slint:2118
+#: ui/terminal/terminal.slint:2045
 msgid "Write a message, or / for commands"
 msgstr "输入消息，或 / 调出命令"
 
-#: ui/terminal/terminal.slint:2149
+#: ui/terminal/terminal.slint:2076
 msgid "save"
 msgstr "保存"
 
-#: ui/terminal/terminal.slint:2149
+#: ui/terminal/terminal.slint:2076
 msgid "send"
 msgstr "发送"
 
-#: ui/terminal/terminal.slint:2249
+#: ui/terminal/terminal.slint:2176
 msgid "connected"
 msgstr "已连接"
 
@@ -3706,27 +4110,27 @@ msgstr "Premium 用户可关闭"
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
 msgstr "官方赞助消息 · FinchGram 照常显示，不做屏蔽"
 
-#: ui/workbench/conversation.slint:2148
+#: ui/workbench/conversation.slint:2073
 msgid "Send to {0}"
 msgstr "发送到 {0}"
 
-#: ui/workbench/conversation.slint:2339
+#: ui/workbench/conversation.slint:2264
 msgid "Esc to cancel"
 msgstr "Esc 取消"
 
-#: ui/workbench/conversation.slint:2349
+#: ui/workbench/conversation.slint:2274
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ 保存 · ⇧⏎ 换行"
 
-#: ui/workbench/conversation.slint:2349
+#: ui/workbench/conversation.slint:2274
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ 保存 · ⏎ 换行"
 
-#: ui/workbench/conversation.slint:2350
+#: ui/workbench/conversation.slint:2275
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ 发送 · ⇧⏎ 换行"
 
-#: ui/workbench/conversation.slint:2350
+#: ui/workbench/conversation.slint:2275
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ 发送 · ⏎ 换行"
 
@@ -3741,9 +4145,3 @@ msgstr "频道默认以阅读模式打开：长文排版，方便阅读。"
 #: ui/workbench/workbench.slint:353
 msgid "Manage accounts"
 msgstr "管理账号"
-
-#~ msgid "Filters"
-#~ msgstr "过滤"
-
-#~ msgid "Scheduled"
-#~ msgstr "定时"

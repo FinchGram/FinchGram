@@ -603,7 +603,7 @@ export component WorkbenchWindow inherits Rectangle {
             }
             WorkbenchSidebar {
                 view: root.view;
-                room: root.width - 52px - 388px - (Conversation.chat-id != "" && (ChatInfo.open || Conversation.settings-open) ? 300px : 0px);
+                room: root.width - 52px - 388px - (Conversation.chat-id != "" && ChatInfo.open ? 300px : 0px);
             }
             Rectangle {
                 width: 1px;

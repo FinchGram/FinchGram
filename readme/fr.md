@@ -23,6 +23,7 @@ un client non officiel, qui n'est pas fait par Telegram.
   une recherche dans la discussion (⌘F) ; une vue de vos chaînes et une de vos bots. Le crayon crée
   un nouveau groupe, une chaîne ou une discussion, ou ajoute un contact.
   Plusieurs comptes, jusqu’à dix, chacun avec son propre TDLib : on passe de l’un à l’autre depuis le menu du compte ou avec ⌘1 … ⌘0.
+  Gérer ses groupes et chaînes : photo, nom et description, nom d’utilisateur public ou liens d’invitation, membres et administrateurs avec leurs droits, permissions des membres, mode lent, approbation des demandes et sujets ; signatures et groupe de discussion d’une chaîne.
 - **Messages.** Du texte avec sa mise en forme (gras, italique, code, liens), réponses et transferts,
   photos, vidéos, GIF, stickers, fichiers et une carte d'aperçu pour un lien. Un clic droit sur un
   message ouvre son menu : répondre, modifier, copier, copier le lien, transférer, signaler,

@@ -44,6 +44,7 @@ mod errors;
 mod files;
 mod global_search;
 mod login;
+mod manage;
 mod new_chat;
 mod notifications;
 mod online;
@@ -225,7 +226,7 @@ pub fn start(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     reactions::connect(ui);
     topics::connect(ui);
     share::connect(ui);
-    admin::connect(ui);
+    manage::connect(ui);
     contacts::connect(ui);
     viewer::connect_round(ui);
     {
@@ -497,6 +498,7 @@ fn leave_front() {
     global_search::forget();
     new_chat::forget();
     chat_info::forget();
+    manage::forget();
     bots::forget();
     topics::forget();
     drafts::forget();
@@ -849,6 +851,7 @@ fn on_authorization_state(state: AuthorizationState) {
                 global_search::forget();
                 new_chat::forget();
                 chat_info::forget();
+                manage::forget();
                 bots::forget();
                 topics::forget();
                 drafts::forget();

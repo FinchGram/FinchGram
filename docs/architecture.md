@@ -141,8 +141,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   new message costs. `login.rs`, `chats.rs`,
   `conversation.rs`, `actions.rs` (what can be done with a message), `bots.rs` (what bots put in a
   chat beyond messages, and the pinned message bar), `reactions.rs`, `topics.rs`, `drafts.rs`,
-  `share.rs`, `admin.rs` (the fifth round, below; `errors.rs` puts Telegram's refusals into the
-  pages' words), `chat_info.rs` (the chat's info panel, below), `account.rs` and
+  `share.rs`, `admin.rs` (slow mode, below; `errors.rs` puts Telegram's refusals into the
+  pages' words), `chat_info.rs` (the chat's info panel, below), `manage.rs` (managing a group or
+  channel, below), `account.rs` and
   `password.rs` (two-step verification) do what the pages ask for; `accounts.rs` lists the
   accounts signed in for the account menu, the drawer and Broadsheet's rail and switches between
   them (Several accounts, below); `files.rs` downloads files,
@@ -270,8 +271,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   is in front: the window's sharing type is set to none (`platform::set_window_capturable`), so
   that screenshots and screen recordings show it blank, as macOS does for such windows.
 - The design's fifth round (ui/extras.slint holds what the themes share: the chips, the picker,
-  the round video message, the contact card, the topics, the settings panel's group part, the
-  share panel, and their words):
+  the round video message, the contact card, the topics, the share panel, and their words):
   - Reactions (`reactions.rs`): the reactions to a message are chips under it, ours lit; the
     smiley by the message opens a picker with what the chat allows, in Telegram's order for the
     message (getMessageAvailableReactions), and a double click gives the account's default
@@ -334,23 +334,39 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     (notifications, pin, the folders it is in, mark as read: viewMessages with force_read), and
     the actions (block, report, leave, delete), which ask as the chat menu does. Shared media,
     the members (getSupergroupMembers, the first five) and the invite link are drawn greyed, as
-    the design has them in this version; editing the chat's name, photo, description, link and
-    members waits for the design's "Manage group / channel" round. The rows are built in Rust and
-    drawn by each theme, so Terminal's keyboard walks them: ↑ ↓, ⏎, a row's letter, Esc.
-  - Slow mode and the group's administration (`admin.rs`): where a group has slow mode, the
-    composer counts the wait down after a message (supergroupFullInfo.slow_mode_delay_expires_in,
-    and SLOWMODE_WAIT_N when Telegram refuses one) and takes none until it is over;
-    administrators are not held. The group's administration panel (the Manage row of the chat's
-    info panel, below, in the panel's place) shows a
-    member the group's rules (slow mode, what administrators turned off) and an owner or
-    administrator the controls: slow mode (setChatSlowModeDelay), what members may do
-    (setChatPermissions), approving new members (toggleSupergroupJoinByRequest), restricting
-    saving and forwarding (toggleChatHasProtectedContent), the history for new members
-    (toggleSupergroupIsAllHistoryAvailable), hiding the member list (100 members or more,
-    toggleSupergroupHasHiddenMembers) and aggressive anti-spam (200 or more,
-    toggleSupergroupHasAggressiveAntiSpamEnabled). What Telegram refuses (CHAT_ADMIN_REQUIRED,
-    …) is shown in the panel; the rest of the design's panel (files, scheduled messages,
-    per-chat privacy) is not in FinchGram yet.
+    the design has them in this version; an owner or administrator has the Manage row, which
+    opens the management page below. The rows are built in Rust and drawn by each theme, so
+    Terminal's keyboard walks them: ↑ ↓, ⏎, a row's letter, Esc.
+  - Managing a group or channel (`manage.rs`, the design's "管理群组 / 频道" round, ChatManage):
+    the Manage row swaps the info panel for the page, in the same column; Back or Esc gives the
+    panel back. The page is drawn once for the three themes (ui/chat-manage-panel.slint), each
+    handing it its tokens (ManageLook, in ui/<theme>/chat-info.slint), as the design's one markup
+    takes a token set per theme. On it: the photo (a picture from the system's file panel, cropped
+    square on the crop page with a zoom and a drag, scaled to 640 pixels, setChatPhoto), the name
+    and the description, saved together by the head's Save (setChatTitle, setChatDescription);
+    public or private (checkChatUsername as the username is typed, after a pause, with three
+    usernames to try when it is taken; setSupergroupUsername), and for a private chat the primary
+    invite link (replacePrimaryChatInviteLink after a word) and further links with a name, an
+    expiry and a limit (getChatInviteLinks, createChatInviteLink, revokeChatInviteLink); the
+    members (getSupergroupMembers, or a basic group's full info; addChatMembers from the contacts,
+    setChatMemberStatus banned after a word in the row, administrator with the design's first
+    rights) and the administrators, each with a page of their rights and their title
+    (chatAdministratorRights sent whole at every switch; a title saved a moment after typing;
+    dismissed back to a member); the group's settings (what members may do, setChatPermissions,
+    folded into one line; slow mode, setChatSlowModeDelay; approving new members,
+    toggleSupergroupJoinByRequest, with the requests waiting; topics, toggleSupergroupIsForum;
+    and the fifth round's protected content, history for new members, hidden members and
+    aggressive anti-spam) or the channel's (signatures, toggleSupergroupSignMessages; the
+    discussion group among getSuitableDiscussionChats, setChatDiscussionGroup). What the user
+    may not do is drawn faded with a lock (its tip names the right); what Telegram refuses is
+    said at the top of the section it was asked in, with "Got it". A basic group becomes a
+    supergroup (upgradeBasicGroupChatToSupergroupChat) when something only a supergroup has is
+    asked of it, as Telegram's own apps do, and the conversation follows it into its new chat.
+  - Slow mode (`admin.rs`): where a group has slow mode, the composer counts the wait down after
+    a message (supergroupFullInfo.slow_mode_delay_expires_in, and SLOWMODE_WAIT_N when Telegram
+    refuses one) and takes none until it is over; administrators are not held. (The design's
+    fifth-round panel of rules and controls was replaced by the management page above; the rest
+    of that panel, files, scheduled messages and per-chat privacy, is not in FinchGram yet.)
   - Not in this round: payments (a Buy button says so), polls, locations and choosing a chat for
     a bot; the mobile themes (FinchGram has no mobile app).
 - The MCP server (`src/mcp/`, [mcp.md](mcp.md)): AI assistants' apps (Claude Desktop, Claude
