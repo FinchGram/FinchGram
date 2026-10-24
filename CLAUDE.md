@@ -39,7 +39,7 @@ things fit together.
   AI assistants' apps work with the user's Telegram through the running app, over a Unix socket
   with `finchgram mcp` as the stdio bridge, inside the one TDLib session and without an async
   runtime. What an assistant may do is the toolbox's AI access page (the design's "AI 访问" round,
-  drawn as a section of Settings, a page of the toolbox since 2026-10-24; built in
+  drawn as a section of Settings, a panel inside the toolbox since 2026-10-24; built in
   every theme: `src/mcp/access.rs`, ui/pages/ai-access.slint), off by default; each app is allowed
   by the user the first time it connects, through the dialog, and remembered by its code signature
   as macOS validates it (Team ID and signing identifier, the same through updates and for every

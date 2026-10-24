@@ -1791,7 +1791,6 @@ component CommandLine inherits Rectangle {
         { command: "/tools", description: ToolboxWords.title() },
         { command: "/accounts", description: ToolboxWords.accounts() },
         { command: "/settings", description: ToolboxWords.settings() },
-        { command: "/ai", description: ToolboxWords.ai-settings() + " · " + ToolboxWords.not-yet() },
         { command: "/me", description: ToolboxWords.profile() },
     ];
     property <string> typed: input.text;
@@ -1832,8 +1831,6 @@ component CommandLine inherits Rectangle {
             Toolbox.command(line);
         } else if line.starts-with("/accounts") {
             Toolbox.command("accounts");
-        } else if line.starts-with("/ai") {
-            // The AI settings are not in this version: the list of commands says so.
         } else if line.starts-with("/settings") {
             AppState.page = Page.settings;
         } else if line.starts-with("/me") {

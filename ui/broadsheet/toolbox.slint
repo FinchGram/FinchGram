@@ -8,6 +8,7 @@ import { AppState, Page } from "../state.slint";
 import { Accounts, AccountRow } from "../telegram.slint";
 import { AccountColors, Look } from "../look.slint";
 import { Downloads } from "../downloads.slint";
+import { AiPanel } from "../pages/ai-access.slint";
 import { Icon, Avatar } from "../widgets.slint";
 import { BroadsheetPalette as P } from "palette.slint";
 
@@ -501,7 +502,7 @@ component PinList {
     }
 }
 
-// A link at the foot: the settings, the AI settings (still to come), the profile.
+// A link at the foot: the settings, the profile.
 component FootLink inherits Rectangle {
     in property <string> icon;
     in property <string> label;
@@ -744,6 +745,8 @@ export component BroadsheetToolbox inherits Rectangle {
                             padding-top: 10px;
                             padding-bottom: 18px;
                             spacing: 22px;
+                            // AI in the column, or the AI access card: the configuration itself, in the sections' place.
+                            if Toolbox.category == "ai" && !Toolbox.searching: AiPanel { }
                             for section in Toolbox.sections: VerticalLayout {
                                 spacing: 8px;
                                 Rectangle {
@@ -797,7 +800,7 @@ export component BroadsheetToolbox inherits Rectangle {
                         }
                     }
                 }
-                // The foot: the settings, the AI settings (still to come), the profile; the keys.
+                // The foot: the settings and the profile; the keys.
                 Rectangle {
                     height: foot.preferred-height;
                     Rectangle {
@@ -818,11 +821,6 @@ export component BroadsheetToolbox inherits Rectangle {
                                 Toolbox.close();
                                 AppState.page = Page.settings;
                             }
-                        }
-                        FootLink {
-                            icon: "sparkle";
-                            label: ToolboxWords.ai-settings();
-                            enabled: false;
                         }
                         FootLink {
                             icon: "user-circle";

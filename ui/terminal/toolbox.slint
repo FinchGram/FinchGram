@@ -10,6 +10,7 @@ import { AppState, Page } from "../state.slint";
 import { Accounts, AccountRow } from "../telegram.slint";
 import { AccountColors, Look } from "../look.slint";
 import { Downloads } from "../downloads.slint";
+import { AiPanel } from "../pages/ai-access.slint";
 import { TerminalPalette as P } from "palette.slint";
 
 component T inherits Text {
@@ -264,7 +265,7 @@ component ToolLine inherits Rectangle {
     }
 }
 
-// A command at the foot: /settings, /ai (still to come), /me.
+// A command at the foot: /settings, /me.
 component FootCommand inherits Rectangle {
     in property <string> command;
     in property <string> label;
@@ -450,6 +451,8 @@ export component TerminalToolbox inherits Rectangle {
                         padding-top: 10px;
                         padding-bottom: 14px;
                         spacing: 12px;
+                        // AI in the column, or the AI access card: the configuration itself, in the sections' place.
+                        if Toolbox.category == "ai" && !Toolbox.searching: AiPanel { }
                         for section in Toolbox.sections: VerticalLayout {
                             spacing: 4px;
                             HorizontalLayout {
@@ -538,7 +541,7 @@ export component TerminalToolbox inherits Rectangle {
                     }
                 }
             }
-            // The foot: /settings, /ai (still to come), /me; the command's ways.
+            // The foot: /settings, /me; the command's ways.
             Rectangle {
                 height: 34px;
                 Rectangle {
@@ -557,11 +560,6 @@ export component TerminalToolbox inherits Rectangle {
                             Toolbox.close();
                             AppState.page = Page.settings;
                         }
-                    }
-                    FootCommand {
-                        command: "/ai";
-                        label: ToolboxWords.ai-settings();
-                        enabled: false;
                     }
                     FootCommand {
                         command: "/me";

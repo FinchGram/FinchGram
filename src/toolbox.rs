@@ -9,8 +9,9 @@
 //! when a server is added (src/downloads/), never a tool of its own. The tools the design draws
 //! but FinchGram does not have yet (live streams, Jellyfin, keyword hiding, scheduled messages)
 //! are listed faded, and cannot be pinned; so is Emby, which the maintainer added beside
-//! Jellyfin on 2026-10-24, beyond the design's round. The screenshot is not a tool of the
-//! toolbox: its scissors stay under the composer, at the maintainer's word (2026-10-23).
+//! Jellyfin on 2026-10-24, beyond the design's round. AI access is the toolbox's own panel: AI in
+//! the column, or its card, shows the configuration in the sections' place. The screenshot is not
+//! a tool of the toolbox: its scissors stay under the composer, at the maintainer's word (2026-10-23).
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -213,13 +214,18 @@ fn open(ui: &MainWindow) {
     toolbox.set_opened(toolbox.get_opened() + 1);
 }
 
-/// The toolbox shuts and the tool's page comes.
+/// The tool's page comes and the toolbox shuts; AI access is the toolbox's own panel, so the
+/// toolbox opens at AI instead.
 fn open_tool(ui: &MainWindow, id: &str) {
-    ui.global::<Toolbox>().set_open(false);
-    let app = ui.global::<AppState>();
     match id {
-        "downloads" => app.set_page(Page::Downloads),
-        "ai-access" => app.set_page(Page::AiAccess),
+        "downloads" => {
+            ui.global::<Toolbox>().set_open(false);
+            ui.global::<AppState>().set_page(Page::Downloads);
+        }
+        "ai-access" => {
+            set_view("ai", "");
+            open(ui);
+        }
         _ => {}
     }
 }
@@ -378,6 +384,10 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
             }
             sections.push(ToolSection { id: id.into(), label, letter: letter.into(), icon: icon.into(), accounts: false, pins: false, tools: ModelRc::new(VecModel::from(its)), families, others });
         }
+    }
+    // AI in the column is the AI access panel itself (the themes draw it): no sections there.
+    if category == "ai" && !searching {
+        sections.clear();
     }
     let everything = if searching { hits } else { tools.len() as i32 + i32::from(signed_in > 0) };
     nav.insert(0, NavRow { id: "all".into(), label: words.invoke_all(), letter: "·".into(), icon: "squares-four".into(), count: everything, accounts: false });

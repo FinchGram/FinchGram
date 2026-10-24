@@ -9,8 +9,11 @@
 //! macOS), then the Noto fonts, the UI language's own first (a character the Chinese and Japanese
 //! fonts both have is drawn differently by each). The emoji font comes before the Noto fonts
 //! because those have black-and-white glyphs for some emoji (🆕, ㊙, ☺) and would otherwise be
-//! found first; the text layout tries the emoji font last of all on its own. What none of them has
-//! (other scripts) comes from the system's fallback fonts.
+//! found first; the text layout tries the emoji font last of all on its own. After them come Noto
+//! Sans Math and Symbols 2, for the symbol blocks no script owns (the styled letters 𝐇𝐞𝐢𝐠𝐡𝐭 of
+//! Telegram's ads, enclosed alphanumerics, arrows): fontique looks those up in the generic
+//! families only, never in the system's fonts, so without them they were boxes (2026-10-24). What
+//! none of them has (other scripts) comes from the system's fallback fonts.
 
 use std::sync::{Arc, OnceLock};
 
@@ -40,6 +43,8 @@ static CHINESE: &[&[u8]] = &[font!("NotoSansSC-Variable.ttf")];
 static JAPANESE: &[&[u8]] = &[font!("NotoSansJP-Variable.ttf")];
 static KOREAN: &[&[u8]] = &[font!("NotoSansKR-Variable.ttf")];
 static ARABIC: &[&[u8]] = &[font!("NotoSansArabic-Variable.ttf")];
+/// The symbol blocks no script owns, looked up last.
+static SYMBOLS: &[&[u8]] = &[font!("NotoSansMath-Regular.ttf"), font!("NotoSansSymbols2-Regular.ttf")];
 
 /// The fonts the screenshot tool draws its words with, into the picture (src/screenshot/export.rs):
 /// IBM Plex Sans, and the Noto fonts for the other scripts.
@@ -55,6 +60,7 @@ struct Families {
     japanese: Vec<FamilyId>,
     korean: Vec<FamilyId>,
     arabic: Vec<FamilyId>,
+    symbols: Vec<FamilyId>,
 }
 
 static FAMILIES: OnceLock<Families> = OnceLock::new();
@@ -82,6 +88,7 @@ pub fn register() {
             japanese: register(JAPANESE),
             korean: register(KOREAN),
             arabic: register(ARABIC),
+            symbols: register(SYMBOLS),
         }
     };
     let _ = FAMILIES.set(families);
@@ -89,7 +96,8 @@ pub fn register() {
 }
 
 /// Order the fallbacks for the UI language `code` ("ja", "zh_Hant", …): IBM Plex Sans, the
-/// system's colour emoji font, then the language's own script's font, then the other Noto fonts.
+/// system's colour emoji font, then the language's own script's font, then the other Noto fonts,
+/// then the symbol fonts.
 pub fn prefer(code: &str) {
     let Some(families) = FAMILIES.get() else { return };
     let scripts: [&Vec<FamilyId>; 4] = match code.split(['-', '_']).next().unwrap_or_default() {
@@ -102,7 +110,7 @@ pub fn prefer(code: &str) {
     // The system's emoji font, as fontique names it for the platform (Apple Color Emoji, Segoe UI
     // Emoji, fontconfig's "emoji").
     let emoji: Vec<FamilyId> = collection.generic_families(GenericFamily::Emoji).collect();
-    let order: Vec<FamilyId> = families.latin.into_iter().chain(emoji).chain(scripts.into_iter().flatten().copied()).collect();
+    let order: Vec<FamilyId> = families.latin.into_iter().chain(emoji).chain(scripts.into_iter().flatten().copied()).chain(families.symbols.iter().copied()).collect();
     for generic in [GenericFamily::SansSerif, GenericFamily::SystemUi, GenericFamily::UiSansSerif] {
         collection.set_generic_families(generic, order.iter().copied());
     }

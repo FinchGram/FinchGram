@@ -3,7 +3,8 @@
 // Broadsheet; the pane's place under /tools in Terminal. The search box at the top, the categories
 // at the left, the sections at the right: the accounts, then the tools of each category, each
 // with a switch that pins it to the bar (the bars show only what the user pinned, one list for
-// the three themes, settings.toml), and the settings and the profile at the foot. Downloads is a
+// the three themes, settings.toml), and the settings and the profile at the foot (the design's
+// "AI settings" button left on 2026-10-24, at the maintainer's word). Downloads is a
 // family: the protocols a server can speak are listed under it; a protocol is a server's
 // property, never a tool of its own. What is drawn here is the state and the words; the themes
 // draw it (ui/<theme>/toolbox.slint), src/toolbox.rs fills and acts.
@@ -143,7 +144,6 @@ export global ToolboxWords {
     public pure function current() -> string { return @tr("the account in front" => "Current"); }
     // The foot.
     public pure function settings() -> string { return @tr("Settings"); }
-    public pure function ai-settings() -> string { return @tr("AI settings"); }
     public pure function profile() -> string { return @tr("My profile"); }
     public pure function hint(key: string) -> string { return @tr("{} to open · Esc to close", key); }
     // The search.

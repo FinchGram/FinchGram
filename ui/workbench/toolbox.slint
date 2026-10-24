@@ -8,6 +8,7 @@ import { AppState, Page } from "../state.slint";
 import { Accounts, AccountRow } from "../telegram.slint";
 import { AccountColors, Look } from "../look.slint";
 import { Downloads } from "../downloads.slint";
+import { AiPanel } from "../pages/ai-access.slint";
 import { Icon, Avatar } from "../widgets.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 
@@ -526,7 +527,7 @@ component PinList {
     }
 }
 
-// One of the three at the foot: the settings, the AI settings (still to come), the profile.
+// One of the two at the foot: the settings, the profile.
 component FootButton inherits Rectangle {
     in property <string> icon;
     in property <string> label;
@@ -766,6 +767,8 @@ export component WorkbenchToolbox inherits Rectangle {
                             padding-top: 14px;
                             padding-bottom: 18px;
                             spacing: 20px;
+                            // AI in the column, or the AI access card: the configuration itself, in the sections' place.
+                            if Toolbox.category == "ai" && !Toolbox.searching: AiPanel { }
                             for section in Toolbox.sections: VerticalLayout {
                                 spacing: 8px;
                                 HorizontalLayout {
@@ -810,7 +813,7 @@ export component WorkbenchToolbox inherits Rectangle {
                         }
                     }
                 }
-                // The foot: the settings, the AI settings (still to come), the profile; the keys.
+                // The foot: the settings and the profile; the keys.
                 Rectangle {
                     height: foot.preferred-height;
                     Rectangle {
@@ -831,11 +834,6 @@ export component WorkbenchToolbox inherits Rectangle {
                                 Toolbox.close();
                                 AppState.page = Page.settings;
                             }
-                        }
-                        FootButton {
-                            icon: "sparkle";
-                            label: ToolboxWords.ai-settings();
-                            enabled: false;
                         }
                         FootButton {
                             icon: "user-circle";

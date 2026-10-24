@@ -897,6 +897,8 @@ fn open_news(ui: &MainWindow) {
             },
             ..post("1", "07:00", "New chip export rules take effect\n\nApprovals for advanced equipment are now split into three tiers by type and end use, with a clear upper limit on how long a review may take. Most orders already in transit are unaffected.")
         },
+        // Styled letters and symbols from blocks no script owns: the symbol fonts draw them.
+        post("2", "07:08", "𝐌𝐨𝐫𝐧𝐢𝐧𝐠 𝐛𝐫𝐢𝐞𝐟 ➤ ① chips ② keyboards ③ storage ✦ 𝑟𝑒𝑎𝑑 𝑚𝑜𝑟𝑒 ⇢"),
         MessageRow {
             kind: RowKind::Sponsored,
             sender: "Keyboard Autumn Launch".into(),
@@ -1759,7 +1761,10 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
         chat: chat.into(),
         count,
     };
-    app.set_page(Page::AiAccess);
+    // AI access is the toolbox's panel: the chats behind, the toolbox open at AI.
+    app.set_page(Page::Chats);
+    crate::toolbox::show_for_pictures(ui, &["downloads"], "ai", "");
+    ui.global::<Toolbox>().set_open(true);
     ai.set_on(true);
     ai.set_scope(AiScope::Chosen);
     ai.set_writing(AiWriting::Drafts);
@@ -1829,6 +1834,8 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
     ai.set_ask_path("pid 48213".into());
     save(window, &name("ai-allow-unidentified"));
     ai.set_ask_open(false);
+    ui.global::<Toolbox>().set_open(false);
+    set_toolbox(ui);
     app.set_page(Page::Settings);
 }
 

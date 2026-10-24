@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-24 06:22+0000\n"
+"POT-Creation-Date: 2026-10-24 08:01+0000\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -28,7 +28,7 @@ msgstr "Поиск в чате"
 msgid "Chat Info"
 msgstr "Информация о чате"
 
-#: ui/app.slint:89 ui/toolbox.slint:99
+#: ui/app.slint:89 ui/toolbox.slint:100
 msgid "Toolbox"
 msgstr "Инструменты"
 
@@ -46,7 +46,7 @@ msgstr "Газета"
 
 #. The tools.
 #: ui/app.slint:125 ui/pages/downloads.slint:502 ui/pages/downloads.slint:865
-#: ui/toolbox.slint:112
+#: ui/toolbox.slint:113
 msgid "Downloads"
 msgstr "Загрузки"
 
@@ -134,8 +134,8 @@ msgstr "Тёмная"
 msgid "Accounts"
 msgstr "Аккаунты"
 
-#: ui/broadsheet/broadsheet.slint:327 ui/pages/ai-access.slint:896
-#: ui/pages/settings.slint:126
+#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:892
+#: ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "Чаты"
 
@@ -149,7 +149,7 @@ msgid "Bots"
 msgstr "Боты"
 
 #: ui/broadsheet/broadsheet.slint:460 ui/terminal/terminal.slint:313
-#: ui/toolbox.slint:101
+#: ui/toolbox.slint:102
 msgid "All"
 msgstr "Все"
 
@@ -292,7 +292,7 @@ msgstr "Реклама · размещена Telegram · пользовател�
 msgid "You"
 msgstr "Вы"
 
-#: ui/broadsheet/broadsheet.slint:2338 ui/terminal/terminal.slint:1885
+#: ui/broadsheet/broadsheet.slint:2338 ui/terminal/terminal.slint:1882
 msgid "Hide sender's name"
 msgstr "Скрыть имя отправителя"
 
@@ -305,7 +305,7 @@ msgstr "Щёлкните с Shift, чтобы выделить диапазон"
 msgid "Forward"
 msgstr "Переслать"
 
-#: ui/broadsheet/broadsheet.slint:2843 ui/terminal/terminal.slint:2231
+#: ui/broadsheet/broadsheet.slint:2843 ui/terminal/terminal.slint:2228
 msgid "Choose a chat on the left"
 msgstr "Выберите чат слева"
 
@@ -359,7 +359,7 @@ msgid "Info"
 msgstr "Информация"
 
 #. The foot.
-#: ui/chat-info.slint:77 ui/pages/settings.slint:98 ui/toolbox.slint:145
+#: ui/chat-info.slint:77 ui/pages/settings.slint:98 ui/toolbox.slint:146
 msgid "Settings"
 msgstr "Настройки"
 
@@ -1633,7 +1633,7 @@ msgstr "Глобальный поиск"
 msgid "Found by phone number"
 msgstr "Найдено по номеру телефона"
 
-#: ui/compose.slint:136 ui/toolbox.slint:105
+#: ui/compose.slint:136 ui/toolbox.slint:106
 msgid "Messages"
 msgstr "Сообщения"
 
@@ -2803,7 +2803,7 @@ msgstr "Приложения"
 msgid "No app has connected yet"
 msgstr "Ни одно приложение ещё не подключалось"
 
-#: ui/pages/ai-access.slint:533 ui/pages/ai-access.slint:859
+#: ui/pages/ai-access.slint:533 ui/pages/ai-access.slint:860
 msgid "Allow"
 msgstr "Разрешить"
 
@@ -2897,16 +2897,15 @@ msgstr "Пишет"
 msgid "Change in AI access"
 msgstr "Изменить в «Доступе для ИИ»"
 
-#: ui/pages/ai-access.slint:852
+#: ui/pages/ai-access.slint:853
 msgid "Don't Allow"
 msgstr "Не разрешать"
 
-#: ui/pages/ai-access.slint:874 ui/pages/ai-access.slint:903
-#: ui/toolbox.slint:124
+#: ui/pages/ai-access.slint:882 ui/pages/ai-access.slint:889
 msgid "AI access"
 msgstr "Доступ для ИИ"
 
-#: ui/pages/ai-access.slint:913
+#: ui/pages/ai-access.slint:892
 msgid ""
 "An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
 "chats and act in them through FinchGram, with your account. FinchGram itself "
@@ -3598,7 +3597,7 @@ msgid "Current"
 msgstr "Текущий"
 
 #. The accounts.
-#: ui/pages/profile.slint:119 ui/toolbox.slint:141
+#: ui/pages/profile.slint:119 ui/toolbox.slint:142
 msgid "Add account"
 msgstr "Добавить аккаунт"
 
@@ -4136,139 +4135,139 @@ msgstr "Копировать ID этого чата"
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "Поиск по чатам, контактам, @username и сообщениям"
 
-#: ui/terminal/terminal.slint:1931
+#: ui/terminal/terminal.slint:1928
 msgid "unmute"
 msgstr "включить уведомления"
 
-#: ui/terminal/terminal.slint:1931
+#: ui/terminal/terminal.slint:1928
 msgid "mute"
 msgstr "выключить уведомления"
 
-#: ui/terminal/terminal.slint:2036
+#: ui/terminal/terminal.slint:2033
 msgid "Write a message, or / for commands"
 msgstr "Напишите сообщение или / для команд"
 
-#: ui/terminal/terminal.slint:2067
+#: ui/terminal/terminal.slint:2064
 msgid "save"
 msgstr "сохранить"
 
-#: ui/terminal/terminal.slint:2067
+#: ui/terminal/terminal.slint:2064
 msgid "send"
 msgstr "отправить"
 
-#: ui/terminal/terminal.slint:2166
+#: ui/terminal/terminal.slint:2163
 msgid "connected"
 msgstr "подключено"
 
-#: ui/terminal/terminal.slint:2191
+#: ui/terminal/terminal.slint:2188
 msgctxt "terminal"
 msgid "cmd"
 msgstr "команды"
 
 #
-#: ui/toolbox.slint:100
+#: ui/toolbox.slint:101
 msgid "Search the toolbox"
 msgstr "Поиск по инструментам"
 
-#: ui/toolbox.slint:103
+#: ui/toolbox.slint:104
 msgid "Transfers"
 msgstr "Передача"
 
-#: ui/toolbox.slint:104
+#: ui/toolbox.slint:105
 msgid "Media"
 msgstr "Медиа"
 
 #
 #
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:108
+#: ui/toolbox.slint:109
 msgid "Status bar"
 msgstr "Нижняя панель"
 
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:108
+#: ui/toolbox.slint:109
 msgid "Rail"
 msgstr "Боковая панель"
 
 #
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:108
+#: ui/toolbox.slint:109
 msgid "Activity bar"
 msgstr "Панель действий"
 
-#: ui/toolbox.slint:110
+#: ui/toolbox.slint:111
 msgid "Switch a tool on here to show it on the {}."
 msgstr "Включите здесь инструмент, чтобы он появился на {}."
 
-#: ui/toolbox.slint:113
+#: ui/toolbox.slint:114
 msgid "Pick files from your own servers and download them"
 msgstr "Выбирайте файлы на своих серверах и скачивайте"
 
 #
-#: ui/toolbox.slint:114
+#: ui/toolbox.slint:115
 msgid "Live streams"
 msgstr "Трансляции"
 
 #
-#: ui/toolbox.slint:115
+#: ui/toolbox.slint:116
 msgid "Live streams going on in your groups and channels"
 msgstr "Идущие трансляции в ваших группах и каналах"
 
-#: ui/toolbox.slint:117
+#: ui/toolbox.slint:118
 msgid "Your own media library, played in the built-in player"
 msgstr "Своя медиатека во встроенном плеере"
 
 #
-#: ui/toolbox.slint:119
+#: ui/toolbox.slint:120
 msgid "Your own media library on Emby, played in the built-in player"
 msgstr "Своя медиатека на Emby во встроенном плеере"
 
-#: ui/toolbox.slint:120
+#: ui/toolbox.slint:121
 msgid "Keyword hiding"
 msgstr "Скрытие по словам"
 
 #
-#: ui/toolbox.slint:121
+#: ui/toolbox.slint:122
 msgid "Tuck away messages by keyword; unhide any time"
 msgstr "Сворачивает сообщения по словам; можно вернуть"
 
-#: ui/toolbox.slint:122
+#: ui/toolbox.slint:123
 msgid "Scheduled messages"
 msgstr "Отложенные сообщения"
 
-#: ui/toolbox.slint:123
+#: ui/toolbox.slint:124
 msgid "Sent by the server on time, even with your computer off"
 msgstr "Сервер отправит вовремя, даже если компьютер выключен"
 
-#: ui/toolbox.slint:125
+#: ui/toolbox.slint:126
 msgid "Let other apps read the chats you allow, through FinchGram"
 msgstr "Другие приложения читают разрешённые вами чаты через FinchGram"
 
 #. The protocols under Downloads.
-#: ui/toolbox.slint:127
+#: ui/toolbox.slint:128
 msgid "Protocol · chosen when you add a server"
 msgstr "Протокол · выбирается при добавлении сервера"
 
-#: ui/toolbox.slint:128
+#: ui/toolbox.slint:129
 msgid "Common on NAS boxes, cloud drives and seedboxes"
 msgstr "Обычен для NAS, облаков и сидбоксов"
 
-#: ui/toolbox.slint:129
+#: ui/toolbox.slint:130
 msgid "The old one, unencrypted"
 msgstr "Старый, без шифрования"
 
-#: ui/toolbox.slint:130
+#: ui/toolbox.slint:131
 msgid "FTP with TLS encryption"
 msgstr "FTP с шифрованием TLS"
 
-#: ui/toolbox.slint:131
+#: ui/toolbox.slint:132
 msgid ""
 "Over SSH; on seedboxes it usually doesn’t count against your traffic quota"
 msgstr "Через SSH; на сидбоксах обычно не расходует квоту трафика"
 
 #
 #. What goes on.
-#: ui/toolbox.slint:133
+#: ui/toolbox.slint:134
 msgid "{n} downloading"
 msgid_plural "{n} downloading"
 msgstr[0] "загружается: {n}"
@@ -4277,7 +4276,7 @@ msgstr[2] "загружается: {n}"
 
 #
 #
-#: ui/toolbox.slint:134
+#: ui/toolbox.slint:135
 msgid "{n} server"
 msgid_plural "{n} servers"
 msgstr[0] "серверов: {n}"
@@ -4285,41 +4284,37 @@ msgstr[1] "серверов: {n}"
 msgstr[2] "серверов: {n}"
 
 #
-#: ui/toolbox.slint:135
+#: ui/toolbox.slint:136
 msgid "Not in this version"
 msgstr "Нет в этой версии"
 
 #
-#: ui/toolbox.slint:136
+#: ui/toolbox.slint:137
 msgid "Pinned to the {}"
 msgstr "Закреплено на {}"
 
-#: ui/toolbox.slint:137
+#: ui/toolbox.slint:138
 msgid "activity bar"
 msgstr "панели действий"
 
-#: ui/toolbox.slint:138
+#: ui/toolbox.slint:139
 msgid "rail"
 msgstr "боковой панели"
 
 #
-#: ui/toolbox.slint:139
+#: ui/toolbox.slint:140
 msgid "status bar"
 msgstr "нижней панели"
 
 #
-#: ui/toolbox.slint:142
+#: ui/toolbox.slint:143
 msgid "Limit reached"
 msgstr "Достигнут предел"
 
-#: ui/toolbox.slint:143
+#: ui/toolbox.slint:144
 msgctxt "the account in front"
 msgid "Current"
 msgstr "Текущий"
-
-#: ui/toolbox.slint:146
-msgid "AI settings"
-msgstr "Настройки ИИ"
 
 #: ui/toolbox.slint:147
 msgid "My profile"

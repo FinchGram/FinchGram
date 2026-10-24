@@ -331,13 +331,15 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     Downloads is a family: the protocols a server can speak are listed under it (WebDAV, FTP,
     FTPS and SFTP, each with its default port and how many servers speak it); a protocol is a
     server's property, chosen when a server is added (docs/downloads.md), never a tool of its own.
-    AI access is a tool too, under AI, and its page is the toolbox's (ui/pages/ai-access.slint,
-    AiAccessPage: the switch, the chats, the apps, the log), no longer a section of Settings, which
-    keeps FinchGram's own preferences (the maintainer's word of 2026-10-24). The tools the design draws
+    AI access is a tool too, under AI, and its panel is the toolbox's: AI in the column, or the
+    card, shows the configuration itself in the sections' place (ui/pages/ai-access.slint's AiPanel:
+    the switch, the chats, the apps, the log), no longer a section of Settings, which keeps
+    FinchGram's own preferences (the maintainer's word of 2026-10-24). The tools the design draws
     but FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled messages) are
     listed faded and cannot be pinned; so is Emby, which the maintainer added beside Jellyfin on
-    2026-10-24, beyond the design's round (a media server page is still to be designed). At the foot: the settings, the AI settings (faded) and the
-    profile. Two of the maintainer's decisions of 2026-10-23 stand: the screenshot is not in the
+    2026-10-24, beyond the design's round (a media server page is still to be designed). At the
+    foot: the settings and the profile (the design's faded "AI settings" button left the same day,
+    at the maintainer's word). Two of the maintainer's decisions of 2026-10-23 stand: the screenshot is not in the
     toolbox (its scissors stay under the composer, with their shortcut), and the gear stays off
     the bars (the settings are in the toolbox, the menu bar and ⌘,). The logo carries a dot while
     an unpinned tool has something going on (downloads on their way) or another account has unread
@@ -534,7 +536,9 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
    transparency (libvpx; FFmpeg's own leaves it out). Until then a moving sticker shows its still
    thumbnail; still stickers show as they are.
 4. **Rendering**: Slint's default renderer (FemtoVG) for now. The design's typefaces are bundled,
-   with Noto Sans SC, JP, KR and Arabic for the UI's Chinese, Japanese, Korean and Arabic (the UI
+   with Noto Sans SC, JP, KR and Arabic for the UI's Chinese, Japanese, Korean and Arabic, and Noto
+   Sans Math and Symbols 2 for the symbol blocks no script owns, which the text layout never looks
+   up in the system's fonts (the UI
    language's own first among the fallbacks, `fonts.rs`); emoji come from the system's colour
    emoji font, which `fonts.rs` puts right after the body font so that the CJK fonts' black-and-
    white emoji do not win (a font that has its own glyph for a heart or an arrow still draws it, as
