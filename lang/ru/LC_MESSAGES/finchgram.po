@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-24 03:44+0000\n"
+"POT-Creation-Date: 2026-10-24 04:30+0000\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -359,7 +359,7 @@ msgid "Info"
 msgstr "Информация"
 
 #. The foot.
-#: ui/chat-info.slint:77 ui/pages/settings.slint:101 ui/toolbox.slint:131
+#: ui/chat-info.slint:77 ui/pages/settings.slint:101 ui/toolbox.slint:133
 msgid "Settings"
 msgstr "Настройки"
 
@@ -3582,7 +3582,7 @@ msgid "Current"
 msgstr "Текущий"
 
 #. The accounts.
-#: ui/pages/profile.slint:119 ui/toolbox.slint:127
+#: ui/pages/profile.slint:119 ui/toolbox.slint:129
 msgid "Add account"
 msgstr "Добавить аккаунт"
 
@@ -3639,7 +3639,7 @@ msgid "Privacy & security"
 msgstr "Конфиденциальность и безопасность"
 
 #: ui/pages/settings.slint:129 ui/pages/settings.slint:1568
-#: ui/toolbox.slint:110
+#: ui/toolbox.slint:112
 msgid "AI access"
 msgstr "Доступ для ИИ"
 
@@ -4200,52 +4200,57 @@ msgstr "Идущие трансляции в ваших группах и кан
 msgid "Your own media library, played in the built-in player"
 msgstr "Своя медиатека во встроенном плеере"
 
-#: ui/toolbox.slint:106
+#
+#: ui/toolbox.slint:107
+msgid "Your own media library on Emby, played in the built-in player"
+msgstr "Своя медиатека на Emby во встроенном плеере"
+
+#: ui/toolbox.slint:108
 msgid "Keyword hiding"
 msgstr "Скрытие по словам"
 
 #
-#: ui/toolbox.slint:107
+#: ui/toolbox.slint:109
 msgid "Tuck away messages by keyword; unhide any time"
 msgstr "Сворачивает сообщения по словам; можно вернуть"
 
-#: ui/toolbox.slint:108
+#: ui/toolbox.slint:110
 msgid "Scheduled messages"
 msgstr "Отложенные сообщения"
 
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:111
 msgid "Sent by the server on time, even with your computer off"
 msgstr "Сервер отправит вовремя, даже если компьютер выключен"
 
-#: ui/toolbox.slint:111
+#: ui/toolbox.slint:113
 msgid "Let other apps read the chats you allow, through FinchGram"
 msgstr "Другие приложения читают разрешённые вами чаты через FinchGram"
 
 #. The protocols under Downloads.
-#: ui/toolbox.slint:113
+#: ui/toolbox.slint:115
 msgid "Protocol · chosen when you add a server"
 msgstr "Протокол · выбирается при добавлении сервера"
 
-#: ui/toolbox.slint:114
+#: ui/toolbox.slint:116
 msgid "Common on NAS boxes, cloud drives and seedboxes"
 msgstr "Обычен для NAS, облаков и сидбоксов"
 
-#: ui/toolbox.slint:115
+#: ui/toolbox.slint:117
 msgid "The old one, unencrypted"
 msgstr "Старый, без шифрования"
 
-#: ui/toolbox.slint:116
+#: ui/toolbox.slint:118
 msgid "FTP with TLS encryption"
 msgstr "FTP с шифрованием TLS"
 
-#: ui/toolbox.slint:117
+#: ui/toolbox.slint:119
 msgid ""
 "Over SSH; on seedboxes it usually doesn’t count against your traffic quota"
 msgstr "Через SSH; на сидбоксах обычно не расходует квоту трафика"
 
 #
 #. What goes on.
-#: ui/toolbox.slint:119
+#: ui/toolbox.slint:121
 msgid "{n} downloading"
 msgid_plural "{n} downloading"
 msgstr[0] "загружается: {n}"
@@ -4254,7 +4259,7 @@ msgstr[2] "загружается: {n}"
 
 #
 #
-#: ui/toolbox.slint:120
+#: ui/toolbox.slint:122
 msgid "{n} server"
 msgid_plural "{n} servers"
 msgstr[0] "серверов: {n}"
@@ -4262,60 +4267,60 @@ msgstr[1] "серверов: {n}"
 msgstr[2] "серверов: {n}"
 
 #
-#: ui/toolbox.slint:121
+#: ui/toolbox.slint:123
 msgid "Not in this version"
 msgstr "Нет в этой версии"
 
 #
-#: ui/toolbox.slint:122
+#: ui/toolbox.slint:124
 msgid "Pinned to the {}"
 msgstr "Закреплено на {}"
 
-#: ui/toolbox.slint:123
+#: ui/toolbox.slint:125
 msgid "activity bar"
 msgstr "панели действий"
 
-#: ui/toolbox.slint:124
+#: ui/toolbox.slint:126
 msgid "rail"
 msgstr "боковой панели"
 
 #
-#: ui/toolbox.slint:125
+#: ui/toolbox.slint:127
 msgid "status bar"
 msgstr "нижней панели"
 
 #
-#: ui/toolbox.slint:128
+#: ui/toolbox.slint:130
 msgid "Limit reached"
 msgstr "Достигнут предел"
 
-#: ui/toolbox.slint:129
+#: ui/toolbox.slint:131
 msgctxt "the account in front"
 msgid "Current"
 msgstr "Текущий"
 
-#: ui/toolbox.slint:132
+#: ui/toolbox.slint:134
 msgid "AI settings"
 msgstr "Настройки ИИ"
 
-#: ui/toolbox.slint:133
+#: ui/toolbox.slint:135
 msgid "My profile"
 msgstr "Мой профиль"
 
 #
-#: ui/toolbox.slint:134
+#: ui/toolbox.slint:136
 msgid "{} to open · Esc to close"
 msgstr "{} — открыть · Esc — закрыть"
 
 #
 #. The search.
-#: ui/toolbox.slint:136
+#: ui/toolbox.slint:138
 msgid "Nothing called “{}”"
 msgstr "Ничего с названием «{}»"
 
 #
 #
-#: ui/toolbox.slint:137
+#: ui/toolbox.slint:139
 msgid "{n} item"
 msgid_plural "{n} items"
 msgstr[0] "элементов: {n}"
@@ -4324,11 +4329,11 @@ msgstr[2] "элементов: {n}"
 
 #
 #. Terminal.
-#: ui/toolbox.slint:139
+#: ui/toolbox.slint:141
 msgid "[x] pins to the status bar · click a name to open"
 msgstr "[x] закрепляет на нижней панели · нажмите на название, чтобы открыть"
 
-#: ui/toolbox.slint:140
+#: ui/toolbox.slint:142
 msgid "/tools <category> jumps there · type it again to close"
 msgstr "/tools <раздел> — перейти · ещё раз — закрыть"
 

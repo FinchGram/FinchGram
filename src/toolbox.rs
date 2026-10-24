@@ -5,8 +5,9 @@
 //! (`[toolbox] pinned` in settings.toml; downloads by default). Downloads is a family: the
 //! protocols a server can speak are listed under it; a protocol is a server's property, chosen
 //! when a server is added (src/downloads/), never a tool of its own. The tools the design draws
-//! but FinchGram does not have yet (live streams, Jellyfin, keyword hiding, scheduled messages;
-//! FTP, FTPS and SFTP) are listed faded, and cannot be pinned. The screenshot is not a tool of the
+//! but FinchGram does not have yet (live streams, Jellyfin, keyword hiding, scheduled messages)
+//! are listed faded, and cannot be pinned; so is Emby, which the maintainer added beside
+//! Jellyfin on 2026-10-24, beyond the design's round. The screenshot is not a tool of the
 //! toolbox: its scissors stay under the composer, at the maintainer's word (2026-10-23).
 
 use std::cell::RefCell;
@@ -30,10 +31,11 @@ struct Tool {
 }
 
 /// The tools, in the toolbox's order.
-const TOOLS: [Tool; 6] = [
+const TOOLS: [Tool; 7] = [
     Tool { id: "downloads", category: "transfers", icon: "download-simple", sigil: "↓", key: "⌥⌘L", built: true, family: true },
     Tool { id: "live", category: "media", icon: "broadcast", sigil: "◉", key: "", built: false, family: false },
     Tool { id: "jellyfin", category: "media", icon: "film-reel", sigil: "▷", key: "", built: false, family: false },
+    Tool { id: "emby", category: "media", icon: "television", sigil: "■", key: "", built: false, family: false },
     Tool { id: "hiding", category: "messages", icon: "funnel-simple", sigil: "⊘", key: "", built: false, family: false },
     Tool { id: "scheduled", category: "messages", icon: "clock", sigil: "○", key: "", built: false, family: false },
     Tool { id: "ai-access", category: "connections", icon: "plugs-connected", sigil: "◆", key: "", built: true, family: false },
@@ -270,6 +272,7 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
                 "downloads" => (words.invoke_downloads(), words.invoke_downloads_line()),
                 "live" => (words.invoke_live(), words.invoke_live_line()),
                 "jellyfin" => (words.invoke_jellyfin(), words.invoke_jellyfin_line()),
+                "emby" => (words.invoke_emby(), words.invoke_emby_line()),
                 "hiding" => (words.invoke_hiding(), words.invoke_hiding_line()),
                 "scheduled" => (words.invoke_scheduled(), words.invoke_scheduled_line()),
                 _ => (words.invoke_ai_access(), words.invoke_ai_access_line()),

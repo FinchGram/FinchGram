@@ -13,7 +13,7 @@ import { Look } from "look.slint";
 
 // A tool of the toolbox.
 export struct ToolRow {
-    id: string,             // "downloads", "live", "jellyfin", "hiding", "scheduled", "ai-access"
+    id: string,             // "downloads", "live", "jellyfin", "emby", "hiding", "scheduled", "ai-access"
     category: string,       // "transfers", "media", "messages", "connections"
     name: string,
     line: string,           // what it is, in a few words
@@ -103,6 +103,8 @@ export global ToolboxWords {
     public pure function live-line() -> string { return @tr("Live streams going on in your groups and channels"); }
     public pure function jellyfin() -> string { return "Jellyfin"; }
     public pure function jellyfin-line() -> string { return @tr("Your own media library, played in the built-in player"); }
+    public pure function emby() -> string { return "Emby"; }
+    public pure function emby-line() -> string { return @tr("Your own media library on Emby, played in the built-in player"); }
     public pure function hiding() -> string { return @tr("Keyword hiding"); }
     public pure function hiding-line() -> string { return @tr("Tuck away messages by keyword; unhide any time"); }
     public pure function scheduled() -> string { return @tr("Scheduled messages"); }

@@ -330,7 +330,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     server's property, chosen when a server is added (docs/downloads.md), never a tool of its own.
     AI access (Settings → AI access) is a tool too, under connections. The tools the design draws
     but FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled messages) are
-    listed faded and cannot be pinned. At the foot: the settings, the AI settings (faded) and the
+    listed faded and cannot be pinned; so is Emby, which the maintainer added beside Jellyfin on
+    2026-10-24, beyond the design's round (a media server page is still to be designed). At the foot: the settings, the AI settings (faded) and the
     profile. Two of the maintainer's decisions of 2026-10-23 stand: the screenshot is not in the
     toolbox (its scissors stay under the composer, with their shortcut), and the gear stays off
     the bars (the settings are in the toolbox, the menu bar and ⌘,). The logo carries a dot while
