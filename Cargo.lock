@@ -1305,7 +1305,7 @@ dependencies = [
 
 [[package]]
 name = "finchgram"
-version = "0.5.8"
+version = "0.5.9"
 dependencies = [
  "base64",
  "block2 0.6.2",
