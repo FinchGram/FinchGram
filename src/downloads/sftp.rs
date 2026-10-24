@@ -1,13 +1,14 @@
 //! SFTP for the downloads page, over russh and russh-sftp (SSH in Rust, on the downloads'
 //! tokio runtime; remote.rs says who calls what). The account signs in with its password; the
 //! server's key is trusted the first time it is met and remembered (the `ssh_hosts` table of
-//! the database, by host and port), so that another key later is refused, as ssh itself does.
-//! A file comes in 8 MB chunks over several sessions at once, each its own SSH connection, the
+//! the database, by host and port), so that another key later is refused, as ssh itself does;
+//! the sessions of one server opened side by side (a file's chunks, a tree's listings) are all
+//! held to the key the first of them met (`KnownKey`), so that none of them trusts a key of its
+//! own. A file comes in 8 MB chunks over several sessions at once, each its own SSH connection, the
 //! `.part` and `.part.json` of the WebDAV engine marking what is done, so a stopped file goes on
 //! where it was. Paths are relative to the folder the account lands in: "host/films" lists
 //! "films" there. FinchGram only reads: opendir, stat and read, nothing else.
 
-use std::fs;
 use std::os::unix::fs::FileExt as _;
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -34,6 +35,11 @@ const PIECE: usize = 256 * 1024;
 /// What is done with a key the server shows for the first time: kept for next time.
 pub type Learned = Arc<dyn Fn(&str, u16, &str) + Send + Sync>;
 
+/// The key the server is held to: the one the database has for it, or none until it is met, and
+/// from then on the one it showed first. Shared by every copy of the `Server`, so that the
+/// sessions opened side by side hold it to one key.
+pub type KnownKey = Arc<Mutex<Option<String>>>;
+
 #[derive(Clone)]
 pub struct Server {
     pub host: String,
@@ -44,8 +50,9 @@ pub struct Server {
     pub username: String,
     pub password: String,
     /// The key the server showed when it was first met, in OpenSSH's one-line form; none when it
-    /// has not been met: then the key it shows is trusted and handed to `learned`.
-    pub known_key: Option<String>,
+    /// has not been met: then the key it shows first is trusted, held to from there on, and
+    /// handed to `learned` once it has signed the account in.
+    pub known_key: KnownKey,
     pub learned: Learned,
 }
 
@@ -79,6 +86,7 @@ impl Server {
 
     /// A session: connected, the key checked, signed in, the SFTP subsystem up.
     async fn session(&self) -> Result<Session, Error> {
+        let first_met = self.known_key.lock().unwrap().is_none();
         let trust = Arc::new(Trust { known: self.known_key.clone(), shown: Mutex::new(None), changed: AtomicBool::new(false) });
         let config = Arc::new(client::Config {
             inactivity_timeout: Some(Duration::from_secs(READ_PATIENCE * 2)),
@@ -105,9 +113,7 @@ impl Server {
         channel.request_subsystem(true, "sftp").await.map_err(ssh_error)?;
         let sftp = SftpSession::new(channel.into_stream()).await.map_err(sftp_error)?;
         sftp.set_timeout(READ_PATIENCE);
-        if self.known_key.is_none()
-            && let Some(shown) = trust.shown.lock().unwrap().clone()
-        {
+        if first_met && let Some(shown) = trust.shown.lock().unwrap().clone() {
             (self.learned)(&self.host, self.port(), &shown);
         }
         Ok(Session { handle, sftp })
@@ -140,22 +146,21 @@ impl Server {
         })
     }
 
-    /// The file into `dest`, in chunks over up to `streams.count` sessions at once, going on
-    /// from the chunks a `.part` has.
+    /// The file into `dest`, under the download folder `root`, in chunks over up to
+    /// `streams.count` sessions at once, going on from the chunks a `.part` has.
     #[allow(clippy::too_many_arguments)]
     pub fn download(
         &self,
         http: &Http,
         path: &[String],
         name: &str,
+        root: &Path,
         dest: &Path,
         streams: &transfer::Streams,
         cancel: &AtomicBool,
         progress: &(dyn Fn(transfer::Progress) + Sync),
     ) -> Result<PathBuf, transfer::Error> {
-        if let Some(folder) = dest.parent() {
-            fs::create_dir_all(folder).map_err(|err| transfer::Error::Disk(err.to_string()))?;
-        }
+        transfer::make_folder(root, dest)?;
         let started = Instant::now();
         let remote = self.remote_path(path, Some(name));
         let link = self.link(path, Some(name));
@@ -167,7 +172,7 @@ impl Server {
         let total = meta.size.unwrap_or(0);
         let modified = format!("{total}-{}", meta.mtime.unwrap_or(0));
         let report = |done: u64| progress(transfer::Progress { done, total, protocol: transfer::Protocol::Unknown, waiting: 0 });
-        let file = transfer::open_own(&part, false)?;
+        let file = transfer::open_own(root, &part, false)?;
         let chunks = usize::try_from(total.div_ceil(CHUNK)).unwrap_or(usize::MAX);
         let mut done = transfer::resume_state(&state_path, &link, &modified, total, CHUNK).filter(|_| file.metadata().map(|meta| meta.len() == total).unwrap_or(false)).unwrap_or_default();
         if done.len() != chunks {
@@ -228,7 +233,7 @@ impl Server {
                             }
                             let mut done = done.lock().unwrap();
                             done[index] = true;
-                            transfer::write_resume(&state_path, &link, &modified, total, CHUNK, &done);
+                            transfer::write_resume(root, &state_path, &link, &modified, total, CHUNK, &done);
                         }
                         session.close().await;
                         Ok::<(), transfer::Error>(())
@@ -251,9 +256,7 @@ impl Server {
         file.sync_all().map_err(|err| transfer::Error::Disk(err.to_string()))?;
         drop(file);
         report(total);
-        let _ = fs::remove_file(&state_path);
-        let target = transfer::free_path(dest);
-        fs::rename(&part, &target).map_err(|err| transfer::Error::Disk(err.to_string()))?;
+        let target = transfer::finish(root, dest)?;
         log::line(format!("done {}: {:.1} MB in {:.1} s over {workers} sessions", log::shown(&link), total as f64 / (1024.0 * 1024.0), started.elapsed().as_secs_f64()));
         Ok(target)
     }
@@ -279,7 +282,7 @@ impl Session {
 
 /// Whether the server's key is the one known, and the key it showed.
 struct Trust {
-    known: Option<String>,
+    known: KnownKey,
     shown: Mutex<Option<String>>,
     changed: AtomicBool,
 }
@@ -297,13 +300,18 @@ impl client::Handler for Handler {
             PublicKeyOrCertificate::Certificate(certificate) => certificate.to_openssh().unwrap_or_default(),
         };
         *self.trust.shown.lock().unwrap() = Some(shown.clone());
-        match &self.trust.known {
+        let mut known = self.trust.known.lock().unwrap();
+        match &*known {
             Some(known) if *known == shown => Ok(true),
             Some(_) => {
                 self.trust.changed.store(true, Ordering::Relaxed);
                 Ok(false)
             }
-            None => Ok(true),
+            None => {
+                // Met for the first time: this is the server's key, for every session from here.
+                *known = Some(shown);
+                Ok(true)
+            }
         }
     }
 }

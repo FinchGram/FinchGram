@@ -389,6 +389,17 @@ pub fn keychain_read(service: &str, account: &str) -> Result<Option<String>, Str
 /// ("tdlib", "database", …).
 pub const KEYCHAIN_SERVICE: &str = "FinchGram";
 
+/// Mark the file at `path` as a download from the internet, from `source` when known: macOS's
+/// quarantine (the Finder says where a file came from, and Gatekeeper looks at what is opened),
+/// as a browser marks what it saves. Nothing happens on other systems, or when the system
+/// refuses, which is said on stderr.
+pub fn mark_downloaded(path: &std::path::Path, source: Option<&str>) {
+    #[cfg(target_os = "macos")]
+    macos::mark_downloaded(path, source);
+    #[cfg(not(target_os = "macos"))]
+    let _ = (path, source);
+}
+
 /// 32 random bytes from the system, as base64: a key for a database.
 pub fn random_key() -> Option<String> {
     use base64::Engine as _;
@@ -423,6 +434,34 @@ mod tests {
 
     use super::*;
     use std::cmp::Ordering;
+
+    #[test]
+    fn a_download_is_marked_as_one_with_where_it_came_from() {
+        let folder = std::env::temp_dir().join(format!("finchgram-quarantine-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&folder);
+        std::fs::create_dir_all(&folder).expect("a folder");
+        let file = folder.join("film.mkv");
+        std::fs::write(&file, b"not a film").expect("a file");
+        mark_downloaded(&file, Some("https://nas.home/dav/films/film.mkv"));
+        // "0281;6adc7624;;UUID": the flags in hex, the time, the agent's name (empty for a bare
+        // program, the test's; "FinchGram" for the bundle), the event's id. Bit 0 of the flags is
+        // what makes the file a download to Gatekeeper.
+        let flags = |file: &std::path::Path| -> u32 {
+            let shown = std::process::Command::new("/usr/bin/xattr").arg("-p").arg("com.apple.quarantine").arg(file).output().expect("xattr");
+            let value = String::from_utf8_lossy(&shown.stdout).trim().to_string();
+            assert!(shown.status.success() && value.split(';').count() == 4, "{value}");
+            u32::from_str_radix(value.split(';').next().unwrap_or_default(), 16).expect("the flags")
+        };
+        assert_eq!(flags(&file) & 1, 1);
+        // Without an address, as a file saved from a chat is: marked all the same.
+        let other = folder.join("photo.jpg");
+        std::fs::write(&other, b"not a photo").expect("a file");
+        mark_downloaded(&other, None);
+        assert_eq!(flags(&other) & 1, 1);
+        // A file that is not there: said on stderr, nothing more.
+        mark_downloaded(&folder.join("missing.bin"), None);
+        let _ = std::fs::remove_dir_all(&folder);
+    }
 
     #[test]
     fn names_follow_the_language_not_the_code_points() {

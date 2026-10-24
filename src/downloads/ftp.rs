@@ -3,11 +3,12 @@
 //! FTPS is TLS from the first byte on port 990 (implicit), and AUTH TLS on any other port
 //! (explicit), with the same trust as the HTTP client's: the Mac's own store. A file comes over
 //! one stream (FTP gives a start, never an end: no ranges), REST going on from where a `.part`
-//! stopped. Paths are relative to the folder the account lands in: "host/films" lists "films"
-//! there. FinchGram only reads: RETR and LIST, nothing else.
+//! stopped, when the `.part.json` beside it says the `.part` is this file's, in this version (the
+//! WebDAV engine's state file, with no chunks in it). Paths are relative to the folder the
+//! account lands in: "host/films" lists "films" there. FinchGram only reads: RETR and LIST,
+//! nothing else.
 
-use std::fs;
-use std::io::{Read, Seek as _, Write as _};
+use std::io::{BufRead as _, Read, Seek as _, Write as _};
 use std::net::ToSocketAddrs as _;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -28,6 +29,12 @@ const CONNECT_PATIENCE: Duration = Duration::from_secs(20);
 const READ_PATIENCE: Duration = Duration::from_secs(60);
 /// A piece of the file read at a time.
 const PIECE: usize = 256 * 1024;
+/// How much of a listing is taken: this many bytes in all (as much as a WebDAV listing may be,
+/// webdav.rs), a line this long, this many entries. A server could otherwise send a listing that
+/// never ends, and the app would keep it all.
+const LARGEST_LISTING: usize = 32 * 1024 * 1024;
+const LONGEST_LINE: usize = 64 * 1024;
+const MOST_ENTRIES: usize = 200_000;
 
 #[derive(Debug, Clone)]
 pub struct Server {
@@ -94,11 +101,17 @@ impl Server {
         let mut stream = self.connect()?;
         let folder = self.remote_path(path, None);
         let where_ = if folder.is_empty() { None } else { Some(folder.as_str()) };
-        let entries = match stream.mlsd(where_) {
+        let entries: Vec<Entry> = match listing(&mut stream, "MLSD", where_) {
             Ok(lines) => lines.iter().filter_map(|line| ListParser::parse_mlsd(line).ok()).map(entry_of).collect(),
-            Err(_) => {
-                let lines = stream.list(where_).map_err(ftp_error)?;
-                lines.iter().filter_map(|line| ListParser::parse_posix(line).or_else(|_| ListParser::parse_dos(line)).ok()).map(entry_of).collect::<Vec<Entry>>()
+            // A listing beyond the bounds is not asked for again another way.
+            Err(Listing::Bounds(why)) => return Err(Error::Unreadable(why)),
+            // A server without MLSD says so: LIST, then.
+            Err(Listing::Ftp(_)) => {
+                let lines = listing(&mut stream, "LIST", where_).map_err(|failure| match failure {
+                    Listing::Ftp(err) => ftp_error(err),
+                    Listing::Bounds(why) => Error::Unreadable(why),
+                })?;
+                lines.iter().filter_map(|line| ListParser::parse_posix(line).or_else(|_| ListParser::parse_dos(line)).ok()).map(entry_of).collect()
             }
         };
         let _ = stream.quit();
@@ -112,24 +125,33 @@ impl Server {
         Ok(())
     }
 
-    /// The file into `dest` over one stream, going on from where its `.part` stopped.
-    pub fn download(&self, path: &[String], name: &str, dest: &Path, cancel: &AtomicBool, progress: &(dyn Fn(transfer::Progress) + Sync)) -> Result<PathBuf, transfer::Error> {
-        if let Some(folder) = dest.parent() {
-            fs::create_dir_all(folder).map_err(|err| transfer::Error::Disk(err.to_string()))?;
-        }
+    /// The file into `dest`, under the download folder `root`, over one stream, going on from
+    /// where its `.part` stopped when that `.part` is this file's.
+    pub fn download(&self, path: &[String], name: &str, root: &Path, dest: &Path, cancel: &AtomicBool, progress: &(dyn Fn(transfer::Progress) + Sync)) -> Result<PathBuf, transfer::Error> {
+        transfer::make_folder(root, dest)?;
         let started = Instant::now();
         let remote = self.remote_path(path, Some(name));
         let link = self.link(path, Some(name));
         let mut stream = self.connect().map_err(super::remote::transfer_error)?;
         let total = stream.size(&remote).ok().map(|size| size as u64);
+        // The file's version, as far as the server tells it: its size, and when it was last
+        // changed (MDTM, where the server has it). A `.part` of another version is not gone on
+        // from.
+        let modified = format!("{}-{}", total.map(|total| total.to_string()).unwrap_or_default(), stream.mdtm(&remote).map(|time| time.to_string()).unwrap_or_default());
         let part = transfer::with_suffix(dest, ".part");
-        let mut file = transfer::open_own(&part, false)?;
+        let state_path = transfer::with_suffix(dest, ".part.json");
+        let mut file = transfer::open_own(root, &part, false)?;
         let mut done = file.metadata().map_err(|err| transfer::Error::Disk(err.to_string()))?.len();
+        // An earlier try's bytes are gone on from only when its `.part.json` names this file at
+        // this address, in this version, and the `.part` is no longer than the file; anything
+        // else (a `.part` left by another file of the same name, or put there by someone) starts
+        // afresh, from the first byte.
+        if !transfer::resume_sequential(&state_path, &link, &modified) || total.is_some_and(|total| done > total) {
+            file.set_len(0).map_err(|err| transfer::Error::Disk(err.to_string()))?;
+            done = 0;
+        }
+        transfer::write_sequential(root, &state_path, &link, &modified, total);
         if let Some(total) = total {
-            if done > total {
-                file.set_len(0).map_err(|err| transfer::Error::Disk(err.to_string()))?;
-                done = 0;
-            }
             transfer::check_space(dest, total.saturating_sub(done))?;
         }
         file.seek(std::io::SeekFrom::End(0)).map_err(|err| transfer::Error::Disk(err.to_string()))?;
@@ -140,6 +162,8 @@ impl Server {
                 stream.resume_transfer(done as usize).map_err(|err| super::remote::transfer_error(ftp_error(err)))?;
             }
             let mut body = stream.retr_as_stream(&remote).map_err(|err| super::remote::transfer_error(ftp_error(err)))?;
+            // The data connection waits no longer for a byte than the control connection does.
+            let _ = body.get_ref().get_ref().set_read_timeout(Some(READ_PATIENCE));
             let mut buffer = vec![0u8; PIECE];
             let mut reported = Instant::now();
             loop {
@@ -170,16 +194,66 @@ impl Server {
         file.sync_all().map_err(|err| transfer::Error::Disk(err.to_string()))?;
         drop(file);
         report(done);
-        let target = transfer::free_path(dest);
-        fs::rename(&part, &target).map_err(|err| transfer::Error::Disk(err.to_string()))?;
+        let target = transfer::finish(root, dest)?;
         log::line(format!("done {}: {:.1} MB in {:.1} s", log::shown(&link), done as f64 / (1024.0 * 1024.0), started.elapsed().as_secs_f64()));
         Ok(target)
     }
 }
 
-/// Bytes of `dest` already here from an earlier try: its `.part`, as far as it goes.
-pub fn kept(dest: &Path) -> u64 {
-    fs::metadata(transfer::with_suffix(dest, ".part")).map(|meta| meta.len()).unwrap_or(0)
+/// Why a listing did not come: the server's refusal, or the listing beyond the bounds.
+enum Listing {
+    Ftp(FtpError),
+    Bounds(String),
+}
+
+/// The lines of `command` ("MLSD", "LIST") on `folder` (the account's own for none), read from
+/// the data connection as they come and held to the bounds (LARGEST_LISTING, LONGEST_LINE,
+/// MOST_ENTRIES), in place of suppaftp's own listing, which keeps whatever the server sends: a
+/// server that never ends its listing, or a line of it, would fill the memory.
+fn listing(stream: &mut RustlsFtpStream, command: &str, folder: Option<&str>) -> Result<Vec<String>, Listing> {
+    let command = match folder {
+        Some(folder) => format!("{command} {folder}"),
+        None => command.to_string(),
+    };
+    let (_, data) = stream.custom_data_command(command, &[Status::AboutToSend, Status::AlreadyOpen]).map_err(Listing::Ftp)?;
+    let _ = data.get_ref().get_ref().set_read_timeout(Some(READ_PATIENCE));
+    let mut reader = std::io::BufReader::new(data);
+    let mut lines = Vec::new();
+    let mut bytes = 0usize;
+    let mut line = Vec::new();
+    let beyond = loop {
+        line.clear();
+        let read = match (&mut reader).take(LONGEST_LINE as u64 + 1).read_until(b'\n', &mut line) {
+            Ok(0) => break None,
+            Ok(read) => read,
+            Err(err) => return Err(Listing::Ftp(FtpError::ConnectionError(err))),
+        };
+        if line.len() > LONGEST_LINE {
+            break Some(format!("a line of the listing is longer than {} KB", LONGEST_LINE / 1024));
+        }
+        bytes += read;
+        if bytes > LARGEST_LISTING {
+            break Some(format!("the listing is longer than {} MB", LARGEST_LISTING / (1024 * 1024)));
+        }
+        if lines.len() >= MOST_ENTRIES {
+            break Some(format!("the listing has more than {MOST_ENTRIES} entries"));
+        }
+        let text = String::from_utf8_lossy(&line);
+        let text = text.trim_end_matches(['\r', '\n']);
+        if !text.is_empty() {
+            lines.push(text.to_string());
+        }
+    };
+    match beyond {
+        None => {
+            reader.into_inner().finish().map_err(Listing::Ftp)?;
+            Ok(lines)
+        }
+        Some(why) => {
+            let _ = stream.abort(reader.into_inner());
+            Err(Listing::Bounds(why))
+        }
+    }
 }
 
 /// TLS as the HTTP client has it: the Mac's own trust store.

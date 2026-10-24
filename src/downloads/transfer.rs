@@ -13,11 +13,14 @@
 //! the caller's closure from there.
 
 use std::collections::{HashMap, VecDeque};
+use std::ffi::{CString, OsStr, OsString};
 use std::fmt;
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, File};
 use std::io::Write as _;
-use std::os::unix::fs::{FileExt, OpenOptionsExt};
-use std::path::{Path, PathBuf};
+use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+use std::os::unix::ffi::OsStrExt as _;
+use std::os::unix::fs::FileExt;
+use std::path::{Component, Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -63,14 +66,46 @@ const BUSY_PATIENCE: Duration = Duration::from_secs(5 * 60);
 const SPACE_MARGIN: u64 = 256 * 1024 * 1024;
 /// A file of unknown size is checked against the room left this often, by bytes written.
 const SPACE_CHECK_EVERY: u64 = 256 * 1024 * 1024;
-/// open(2)'s O_NOFOLLOW: the path's last part may not be a symbolic link, so that a link put
-/// into the download folder cannot make the engine write into another file (`open_own`).
-#[cfg(any(target_os = "macos", target_os = "ios"))]
-const O_NOFOLLOW: i32 = 0x0100;
-#[cfg(target_os = "linux")]
-const O_NOFOLLOW: i32 = 0o400000;
-#[cfg(not(any(target_os = "macos", target_os = "ios", target_os = "linux")))]
-const O_NOFOLLOW: i32 = 0;
+
+/// What the download folder is walked with (`Folder`): open(2)'s flags, and the calls that take
+/// a folder's descriptor and a name, by the system.
+mod sys {
+    use std::os::raw::{c_char, c_int};
+
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    pub mod flags {
+        pub const O_RDONLY: i32 = 0x0000;
+        pub const O_RDWR: i32 = 0x0002;
+        pub const O_NOFOLLOW: i32 = 0x0100;
+        pub const O_CREAT: i32 = 0x0200;
+        pub const O_TRUNC: i32 = 0x0400;
+        pub const O_DIRECTORY: i32 = 0x0010_0000;
+        pub const O_CLOEXEC: i32 = 0x0100_0000;
+        /// mode_t.
+        pub type Mode = u16;
+    }
+
+    /// Linux's values; the app is built for macOS (docs/architecture.md, Platforms).
+    #[cfg(not(any(target_os = "macos", target_os = "ios")))]
+    pub mod flags {
+        pub const O_RDONLY: i32 = 0;
+        pub const O_RDWR: i32 = 2;
+        pub const O_CREAT: i32 = 0o100;
+        pub const O_TRUNC: i32 = 0o1000;
+        pub const O_DIRECTORY: i32 = 0o200000;
+        pub const O_NOFOLLOW: i32 = 0o400000;
+        pub const O_CLOEXEC: i32 = 0o2000000;
+        /// mode_t.
+        pub type Mode = u32;
+    }
+
+    unsafe extern "C" {
+        pub fn openat(dirfd: c_int, path: *const c_char, flags: c_int, ...) -> c_int;
+        pub fn mkdirat(dirfd: c_int, path: *const c_char, mode: flags::Mode) -> c_int;
+        pub fn renameat(from_dirfd: c_int, from: *const c_char, to_dirfd: c_int, to: *const c_char) -> c_int;
+        pub fn unlinkat(dirfd: c_int, path: *const c_char, flags: c_int) -> c_int;
+    }
+}
 /// How many streams a transfer may use: `count` per file, and a budget shared by every file of
 /// a folder being downloaded at once, so that several files together use no more than one.
 #[derive(Clone)]
@@ -547,14 +582,12 @@ async fn drain(body: &mut Incoming, most: usize) {
     }
 }
 
-/// Fetch the file at `source` into `dest`, over up to `streams.count` streams, reporting how far
-/// it is to `progress` as it goes. A `dest` that is taken gets " (2)" and so on; the path the
-/// file got is returned. `cancel` stops it and leaves the `.part` files for a later try.
-/// Blocks: call it on a thread of the file's own.
-pub fn download(http: &Http, source: &Source, dest: &Path, streams: &Streams, cancel: &AtomicBool, progress: &(dyn Fn(Progress) + Sync)) -> Result<PathBuf, Error> {
-    if let Some(folder) = dest.parent() {
-        fs::create_dir_all(folder).map_err(disk)?;
-    }
+/// Fetch the file at `source` into `dest`, which is under the download folder `root` (`Folder`),
+/// over up to `streams.count` streams, reporting how far it is to `progress` as it goes. A `dest`
+/// that is taken gets " (2)" and so on; the path the file got is returned. `cancel` stops it and
+/// leaves the `.part` files for a later try. Blocks: call it on a thread of the file's own.
+pub fn download(http: &Http, source: &Source, root: &Path, dest: &Path, streams: &Streams, cancel: &AtomicBool, progress: &(dyn Fn(Progress) + Sync)) -> Result<PathBuf, Error> {
+    make_folder(root, dest)?;
     let part = with_suffix(dest, ".part");
     let state_path = with_suffix(dest, ".part.json");
     let started = Instant::now();
@@ -571,22 +604,20 @@ pub fn download(http: &Http, source: &Source, dest: &Path, streams: &Streams, ca
     let report = |done, total, waiting| progress(Progress { done, total, protocol, waiting });
     match head.probe {
         Probe { size: Some(total), ranges: true, .. } if total > 0 => {
-            http.block_on(multi(http, source, &modified, &part, &state_path, total, streams, cancel, &report, head, permit))?;
+            http.block_on(multi(http, source, root, &modified, &part, &state_path, total, streams, cancel, &report, head, permit))?;
         }
         Probe { size: Some(0), .. } => {
             drop(permit);
-            open_own(&part, true)?;
+            open_own(root, &part, true)?;
             report(0, 0, 0);
         }
         Probe { size, .. } => {
-            let outcome = http.block_on(single(&part, size, cancel, &report, head.response));
+            let outcome = http.block_on(single(root, &part, size, cancel, &report, head.response));
             drop(permit);
             outcome?;
         }
     }
-    let _ = fs::remove_file(&state_path);
-    let target = free_path(dest);
-    fs::rename(&part, &target).map_err(disk)?;
+    let target = finish(root, dest)?;
     log::line(format!("done {}: {} in {:.1} s", source.shown(), size_words(fs::metadata(&target).map(|meta| meta.len()).unwrap_or(0)), started.elapsed().as_secs_f64()));
     Ok(target)
 }
@@ -620,6 +651,7 @@ pub fn kept(dest: &Path, source: &str) -> u64 {
 async fn multi(
     http: &Http,
     source: &Source,
+    root: &Path,
     modified: &str,
     part: &Path,
     state_path: &Path,
@@ -632,7 +664,7 @@ async fn multi(
 ) -> Result<(), Error> {
     let chunk = chunk_size(total);
     let chunks = usize::try_from(total.div_ceil(chunk)).unwrap_or(usize::MAX);
-    let file = open_own(part, false)?;
+    let file = open_own(root, part, false)?;
     // An earlier try of the same file, from the same address and unchanged on the server, goes
     // on; anything else starts afresh.
     let earlier = read_state(state_path)
@@ -684,7 +716,7 @@ async fn multi(
     progress(already, total, 0);
     let (sender, receiver) = mpsc::channel::<Write>(WRITES_IN_FLIGHT);
     let named = Named { source: source.url.clone(), modified: modified.to_string() };
-    let writer = Writer::start(file, state_path.to_path_buf(), named, total, chunk, done, receiver, shared.clone());
+    let writer = Writer::start(file, root.to_path_buf(), state_path.to_path_buf(), named, total, chunk, done, receiver, shared.clone());
     let workers = streams.count.min(chunks.max(1));
     log::line(format!("start {}: {}, {} chunks of {}, {} streams, {} kept", source.shown(), size_words(total), chunks, size_words(chunk), workers, size_words(already)));
     let source = Arc::new(source.clone());
@@ -748,7 +780,7 @@ struct Named {
 
 impl Writer {
     #[allow(clippy::too_many_arguments)]
-    fn start(file: File, state_path: PathBuf, named: Named, total: u64, chunk_size: u64, mut done: Vec<bool>, mut receiver: mpsc::Receiver<Write>, shared: Arc<Shared>) -> Writer {
+    fn start(file: File, root: PathBuf, state_path: PathBuf, named: Named, total: u64, chunk_size: u64, mut done: Vec<bool>, mut receiver: mpsc::Receiver<Write>, shared: Arc<Shared>) -> Writer {
         let thread = std::thread::Builder::new()
             .name("writer".into())
             .spawn(move || {
@@ -764,7 +796,7 @@ impl Writer {
                         }
                         Write::Done { index, ack } => {
                             done[index] = true;
-                            write_state(&state_path, &named, total, chunk_size, &done);
+                            write_state(&root, &state_path, &named, total, chunk_size, &done);
                             let _ = ack.send(());
                         }
                     }
@@ -993,12 +1025,12 @@ async fn wait(pause: Duration, stop: &AtomicBool) -> Result<(), Error> {
 
 /// One stream, from the start: the answer of a server that does not do ranges is the whole
 /// file, and here it is streamed in. Nothing to go on from when it fails.
-async fn single(part: &Path, size: Option<u64>, cancel: &AtomicBool, progress: &dyn Fn(u64, u64, u16), mut response: Response<Incoming>) -> Result<(), Error> {
+async fn single(root: &Path, part: &Path, size: Option<u64>, cancel: &AtomicBool, progress: &dyn Fn(u64, u64, u16), mut response: Response<Incoming>) -> Result<(), Error> {
     if !response.status().is_success() {
         return Err(status_error(response.status().as_u16()));
     }
     let total = content_length(&response).or(size).unwrap_or(0);
-    let mut file = open_own(part, true)?;
+    let mut file = open_own(root, part, true)?;
     let body = response.body_mut();
     let mut done: u64 = 0;
     let mut checked: u64 = 0;
@@ -1051,15 +1083,40 @@ pub(crate) fn resume_state(path: &Path, source: &str, modified: &str, total: u64
 }
 
 /// The `.part.json` of a file cut as this engine cuts it, for sftp.rs.
-pub(crate) fn write_resume(path: &Path, source: &str, modified: &str, total: u64, chunk_size: u64, done: &[bool]) {
-    write_state(path, &Named { source: source.to_string(), modified: modified.to_string() }, total, chunk_size, done);
+pub(crate) fn write_resume(root: &Path, path: &Path, source: &str, modified: &str, total: u64, chunk_size: u64, done: &[bool]) {
+    write_state(root, path, &Named { source: source.to_string(), modified: modified.to_string() }, total, chunk_size, done);
 }
 
-fn write_state(path: &Path, named: &Named, total: u64, chunk_size: u64, done: &[bool]) {
+/// Whether the `.part.json` at `path` says the `.part` beside it is `source`'s, in the version
+/// `modified`, written in one piece from the start (ftp.rs, whose server gives no ranges): then
+/// its bytes are gone on from. A `.part` of another file, of another version, or without the
+/// `.part.json` that says whose it is, is not.
+pub(crate) fn resume_sequential(path: &Path, source: &str, modified: &str) -> bool {
+    read_state(path).is_some_and(|state| state.is_of(source, modified) && state.chunk_size == 0)
+}
+
+/// The `.part.json` of a file written in one piece from the start (ftp.rs): whose it is, its
+/// size when the server said, no chunks.
+pub(crate) fn write_sequential(root: &Path, path: &Path, source: &str, modified: &str, total: Option<u64>) {
+    write_state(root, path, &Named { source: source.to_string(), modified: modified.to_string() }, total.unwrap_or(0), 0, &[]);
+}
+
+/// Bytes of `dest` that are there from an earlier try of the file at `source`, written in one
+/// piece (ftp.rs): its `.part`, as far as it goes, when the `.part.json` beside it says it is that
+/// file's. (Whether the file changed on the server meanwhile shows when the download starts.)
+pub fn kept_sequential(dest: &Path, source: &str) -> u64 {
+    let Some(state) = read_state(&with_suffix(dest, ".part.json")) else { return 0 };
+    if state.source != source || state.chunk_size != 0 {
+        return 0;
+    }
+    fs::metadata(with_suffix(dest, ".part")).map(|meta| meta.len()).unwrap_or(0)
+}
+
+fn write_state(root: &Path, path: &Path, named: &Named, total: u64, chunk_size: u64, done: &[bool]) {
     let state = State { size: total, chunk_size, chunks: done.len(), done: done.to_vec(), source: named.source.clone(), modified: named.modified.clone() };
     match serde_json::to_string(&state) {
         Ok(text) => {
-            if let Err(err) = open_own(path, true).and_then(|mut file| file.write_all(text.as_bytes()).map_err(disk)) {
+            if let Err(err) = open_own(root, path, true).and_then(|mut file| file.write_all(text.as_bytes()).map_err(disk)) {
                 eprintln!("downloads: cannot write {}: {err}", path.display());
             }
         }
@@ -1077,34 +1134,198 @@ pub fn check_space(dest: &Path, needed: u64) -> Result<(), Error> {
     Ok(())
 }
 
-/// Open, or make, one of the transfer's own files (`.part`, `.part.json`), `truncate`d or not:
-/// never through a symbolic link, and a regular file once open. A link put into the download
-/// folder under the file's name would otherwise have the engine write into whatever it points at.
-pub(crate) fn open_own(path: &Path, truncate: bool) -> Result<File, Error> {
-    let file = OpenOptions::new().read(true).write(true).create(true).truncate(truncate).custom_flags(O_NOFOLLOW).open(path).map_err(disk)?;
-    if !file.metadata().map_err(disk)?.file_type().is_file() {
-        return Err(Error::Disk(format!("{} is not a regular file", path.display())));
+// ---- the download folder ---------------------------------------------------------------------------
+
+/// A folder under the download folder, reached from the root one name at a time without
+/// following a symbolic link (openat with O_NOFOLLOW and O_DIRECTORY), each folder missing on the
+/// way made. Everything the engines write, rename or remove goes through one, by name within it:
+/// a link put under the download folder, in place of a file (O_NOFOLLOW again, `file`) or of a
+/// folder (this), cannot send them elsewhere; and `..` has no place in a path under the root. The
+/// root is the folder the user chose, theirs: it is followed wherever it leads.
+pub(crate) struct Folder(OwnedFd);
+
+impl Folder {
+    /// The folder `path`, which is under `root` (or is it), `make`ing what is missing on the way;
+    /// without `make`, a folder that is not there is an error.
+    pub(crate) fn under(root: &Path, path: &Path, make: bool) -> Result<Folder, Error> {
+        let relative = path.strip_prefix(root).map_err(|_| Error::Disk(format!("{} is not under the download folder {}", path.display(), root.display())))?;
+        if make {
+            fs::create_dir_all(root).map_err(disk)?;
+        }
+        let mut folder = Folder(OwnedFd::from(File::open(root).map_err(disk)?));
+        for part in relative.components() {
+            let Component::Normal(name) = part else {
+                return Err(Error::Disk(format!("{} is not a plain path under the download folder", path.display())));
+            };
+            folder = folder.child(name, make)?;
+        }
+        Ok(folder)
     }
-    Ok(file)
+
+    /// The folder `name` within this one, `make`ing it when it is not there: a folder, never a
+    /// link to one.
+    fn child(&self, name: &OsStr, make: bool) -> Result<Folder, Error> {
+        let c_name = c_string(name)?;
+        if make {
+            // SAFETY: a valid folder descriptor and a NUL-terminated name.
+            let made = unsafe { sys::mkdirat(self.0.as_raw_fd(), c_name.as_ptr(), 0o755) };
+            if made != 0 {
+                let err = std::io::Error::last_os_error();
+                if err.kind() != std::io::ErrorKind::AlreadyExists {
+                    return Err(disk(err));
+                }
+            }
+        }
+        use sys::flags::{O_CLOEXEC, O_DIRECTORY, O_NOFOLLOW, O_RDONLY};
+        // SAFETY: as above; the flags take a folder only, and no link.
+        let fd = unsafe { sys::openat(self.0.as_raw_fd(), c_name.as_ptr(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC) };
+        if fd < 0 {
+            let err = std::io::Error::last_os_error();
+            return Err(Error::Disk(format!("{} in the download folder is not a folder, or is a link: {err}", name.to_string_lossy())));
+        }
+        // SAFETY: a descriptor openat just gave, owned by nothing else.
+        Ok(Folder(unsafe { OwnedFd::from_raw_fd(fd) }))
+    }
+
+    /// The file `name` within this folder, made when it is not there, `truncate`d or not: a
+    /// regular file, never a link, for reading and writing.
+    fn file(&self, name: &OsStr, truncate: bool) -> Result<File, Error> {
+        use sys::flags::{O_CLOEXEC, O_CREAT, O_NOFOLLOW, O_RDWR, O_TRUNC};
+        let c_name = c_string(name)?;
+        let flags = O_RDWR | O_CREAT | O_NOFOLLOW | O_CLOEXEC | if truncate { O_TRUNC } else { 0 };
+        // SAFETY: a valid folder descriptor and a NUL-terminated name; the mode is a new file's.
+        let fd = unsafe { sys::openat(self.0.as_raw_fd(), c_name.as_ptr(), flags, 0o644 as std::os::raw::c_uint) };
+        if fd < 0 {
+            return Err(disk(std::io::Error::last_os_error()));
+        }
+        // SAFETY: a descriptor openat just gave, owned by nothing else.
+        let file = unsafe { File::from_raw_fd(fd) };
+        if !file.metadata().map_err(disk)?.file_type().is_file() {
+            return Err(Error::Disk(format!("{} is not a regular file", name.to_string_lossy())));
+        }
+        Ok(file)
+    }
+
+    /// Whether there is something called `name` within this folder, a link included.
+    fn has(&self, name: &OsStr) -> bool {
+        use sys::flags::{O_CLOEXEC, O_NOFOLLOW, O_RDONLY};
+        let Ok(c_name) = c_string(name) else { return true };
+        // SAFETY: a valid folder descriptor and a NUL-terminated name.
+        let fd = unsafe { sys::openat(self.0.as_raw_fd(), c_name.as_ptr(), O_RDONLY | O_NOFOLLOW | O_CLOEXEC) };
+        if fd >= 0 {
+            // SAFETY: a descriptor openat just gave, closed here.
+            drop(unsafe { OwnedFd::from_raw_fd(fd) });
+            return true;
+        }
+        // A link is refused (ELOOP), a file that may not be read too (EACCES): both are there.
+        std::io::Error::last_os_error().kind() != std::io::ErrorKind::NotFound
+    }
+
+    /// `from` renamed `to`, both within this folder.
+    fn rename(&self, from: &OsStr, to: &OsStr) -> Result<(), Error> {
+        let (from, to) = (c_string(from)?, c_string(to)?);
+        // SAFETY: a valid folder descriptor and two NUL-terminated names.
+        if unsafe { sys::renameat(self.0.as_raw_fd(), from.as_ptr(), self.0.as_raw_fd(), to.as_ptr()) } != 0 {
+            return Err(disk(std::io::Error::last_os_error()));
+        }
+        Ok(())
+    }
+
+    /// The file `name` within this folder removed; nothing happens when there is none.
+    fn remove(&self, name: &OsStr) {
+        if let Ok(name) = c_string(name) {
+            // SAFETY: a valid folder descriptor and a NUL-terminated name; no flags: a file.
+            unsafe { sys::unlinkat(self.0.as_raw_fd(), name.as_ptr(), 0) };
+        }
+    }
 }
 
-/// The partial files of `dest` go: its `.part` and `.part.json`; or, when `dest` is a folder (a
-/// folder download stopped half way), every one under it.
-pub fn remove_partials(dest: &Path) {
-    if dest.is_dir() {
-        let Ok(entries) = fs::read_dir(dest) else { return };
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                remove_partials(&path);
-            } else if path.to_string_lossy().ends_with(".part") || path.to_string_lossy().ends_with(".part.json") {
-                let _ = fs::remove_file(&path);
-            }
+fn c_string(name: &OsStr) -> Result<CString, Error> {
+    CString::new(name.as_bytes()).map_err(|_| Error::Disk(format!("{} has a NUL in its name", name.to_string_lossy())))
+}
+
+/// The folder of `path` under `root`, and the name of `path` within it.
+fn place(root: &Path, path: &Path, make: bool) -> Result<(Folder, OsString), Error> {
+    let name = path.file_name().ok_or_else(|| Error::Disk(format!("{} has no name", path.display())))?;
+    let parent = path.parent().unwrap_or(root);
+    Ok((Folder::under(root, parent, make)?, name.to_os_string()))
+}
+
+/// The folder `dest` goes into, made as far as it is missing: before a download starts, so that
+/// the room on its volume can be asked about.
+pub(crate) fn make_folder(root: &Path, dest: &Path) -> Result<(), Error> {
+    place(root, dest, true).map(drop)
+}
+
+/// Open, or make, one of the transfer's own files (`.part`, `.part.json`) at `path`, under the
+/// download folder `root`, `truncate`d or not: through no symbolic link on the way or in its
+/// place, and a regular file once open (`Folder`). A link put into the download folder under the
+/// file's name, or in place of a folder on the way, would otherwise have the engine write into
+/// whatever it points at.
+pub(crate) fn open_own(root: &Path, path: &Path, truncate: bool) -> Result<File, Error> {
+    let (folder, name) = place(root, path, true)?;
+    folder.file(&name, truncate)
+}
+
+/// A finished `.part` in its place: `dest` itself, or "name (2).ext", "name (3).ext" … when that
+/// is taken; its `.part.json` gone. The path the file got.
+pub(crate) fn finish(root: &Path, dest: &Path) -> Result<PathBuf, Error> {
+    let (folder, name) = place(root, dest, true)?;
+    folder.remove(&with_suffix_name(&name, ".part.json"));
+    let target = free_name(|candidate| folder.has(candidate), &name);
+    folder.rename(&with_suffix_name(&name, ".part"), &target)?;
+    Ok(dest.with_file_name(target))
+}
+
+/// `name` itself, or "name (2).ext", "name (3).ext" … when `taken` says it is.
+fn free_name(taken: impl Fn(&OsStr) -> bool, name: &OsStr) -> OsString {
+    if !taken(name) {
+        return name.to_os_string();
+    }
+    let text = name.to_string_lossy();
+    let (stem, extension) = match text.rsplit_once('.') {
+        Some((stem, extension)) if !stem.is_empty() => (stem.to_string(), format!(".{extension}")),
+        _ => (text.to_string(), String::new()),
+    };
+    (2..)
+        .map(|n| OsString::from(format!("{stem} ({n}){extension}")))
+        .find(|candidate| !taken(candidate))
+        .unwrap_or_else(|| name.to_os_string())
+}
+
+/// The partial files of `dest`, under the download folder `root`, go: its `.part` and
+/// `.part.json`; or, when `dest` is a folder (a folder download stopped half way), every one
+/// under it, however deep. Through no link on the way (`Folder`), and never into a linked folder.
+pub fn remove_partials(root: &Path, dest: &Path) {
+    if fs::symlink_metadata(dest).is_ok_and(|meta| meta.is_dir()) {
+        if let Ok(folder) = Folder::under(root, dest, false) {
+            remove_partials_in(&folder, dest);
         }
         return;
     }
-    let _ = fs::remove_file(with_suffix(dest, ".part"));
-    let _ = fs::remove_file(with_suffix(dest, ".part.json"));
+    let Ok((folder, name)) = place(root, dest, false) else { return };
+    folder.remove(&with_suffix_name(&name, ".part"));
+    folder.remove(&with_suffix_name(&name, ".part.json"));
+}
+
+/// Every partial file within `folder` (which is at `path`) and the folders under it; a link is
+/// left alone, wherever it points.
+fn remove_partials_in(folder: &Folder, path: &Path) {
+    let Ok(entries) = fs::read_dir(path) else { return };
+    for entry in entries.flatten() {
+        let Ok(kind) = entry.file_type() else { continue };
+        let name = entry.file_name();
+        if kind.is_dir() {
+            if let Ok(child) = folder.child(&name, false) {
+                remove_partials_in(&child, &path.join(&name));
+            }
+        } else if kind.is_file() {
+            let text = name.to_string_lossy();
+            if text.ends_with(".part") || text.ends_with(".part.json") {
+                folder.remove(&name);
+            }
+        }
+    }
 }
 
 /// `path` with `suffix` after its name: "film.mkv" → "film.mkv.part".
@@ -1114,21 +1335,11 @@ pub fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
     PathBuf::from(name)
 }
 
-/// `dest` itself, or "name (2).ext", "name (3).ext" … when that is taken.
-pub fn free_path(dest: &Path) -> PathBuf {
-    if !dest.exists() {
-        return dest.to_path_buf();
-    }
-    let folder = dest.parent().map(Path::to_path_buf).unwrap_or_default();
-    let name = dest.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_else(|| "file".into());
-    let (stem, extension) = match name.rsplit_once('.') {
-        Some((stem, extension)) if !stem.is_empty() => (stem.to_string(), format!(".{extension}")),
-        _ => (name.clone(), String::new()),
-    };
-    (2..)
-        .map(|n| folder.join(format!("{stem} ({n}){extension}")))
-        .find(|candidate| !candidate.exists())
-        .unwrap_or_else(|| folder.join(name))
+/// A name with `suffix` after it: "film.mkv" → "film.mkv.part".
+fn with_suffix_name(name: &OsStr, suffix: &str) -> OsString {
+    let mut whole = name.to_os_string();
+    whole.push(suffix);
+    whole
 }
 
 #[cfg(test)]
@@ -1280,7 +1491,7 @@ mod tests {
     }
 
     fn fetch(server: &FileServer, dest: &Path, connections: usize) -> Result<PathBuf, Error> {
-        download(http::client(), &source(server), dest, &Streams::new(connections), &AtomicBool::new(false), &|_| {})
+        download(http::client(), &source(server), dest.parent().expect("a folder"), dest, &Streams::new(connections), &AtomicBool::new(false), &|_| {})
     }
 
     #[test]
@@ -1303,7 +1514,7 @@ mod tests {
         let scratch = Scratch::new("chunks");
         let dest = scratch.path("film.mkv");
         let seen = Mutex::new(Vec::new());
-        let got = download(http::client(), &source(&server), &dest, &Streams::new(4), &AtomicBool::new(false), &|progress| seen.lock().unwrap().push((progress.done, progress.total))).expect("the file");
+        let got = download(http::client(), &source(&server), &scratch.0, &dest, &Streams::new(4), &AtomicBool::new(false), &|progress| seen.lock().unwrap().push((progress.done, progress.total))).expect("the file");
         assert_eq!(got, dest);
         assert_eq!(fs::read(&dest).unwrap(), content);
         assert!(!with_suffix(&dest, ".part").exists());
@@ -1361,7 +1572,7 @@ mod tests {
         earlier[..CHUNK_SIZE as usize].copy_from_slice(&content[..CHUNK_SIZE as usize]);
         fs::write(&part, &earlier).unwrap();
         let named = Named { source: source(&server).url, modified: String::new() };
-        write_state(&with_suffix(&dest, ".part.json"), &named, content.len() as u64, CHUNK_SIZE, &[true, false, false]);
+        write_state(&scratch.0, &with_suffix(&dest, ".part.json"), &named, content.len() as u64, CHUNK_SIZE, &[true, false, false]);
         assert_eq!(kept(&dest, &named.source), CHUNK_SIZE);
         let got = fetch(&server, &dest, 2).expect("the file");
         assert_eq!(got, dest);
@@ -1384,7 +1595,7 @@ mod tests {
         let dest = scratch.path("film.mkv");
         fs::write(with_suffix(&dest, ".part"), vec![b'A'; content.len()]).unwrap();
         let elsewhere = Named { source: "http://elsewhere.example/film.mkv".into(), modified: String::new() };
-        write_state(&with_suffix(&dest, ".part.json"), &elsewhere, content.len() as u64, CHUNK_SIZE, &[true, false, false]);
+        write_state(&scratch.0, &with_suffix(&dest, ".part.json"), &elsewhere, content.len() as u64, CHUNK_SIZE, &[true, false, false]);
         assert_eq!(kept(&dest, &source(&server).url), 0);
         fetch(&server, &dest, 2).expect("the file");
         assert_eq!(fs::read(&dest).unwrap(), content);
@@ -1441,7 +1652,7 @@ mod tests {
         let scratch = Scratch::new("probe-retry");
         let dest = scratch.path("film.mkv");
         let waited = Mutex::new(Vec::new());
-        download(http::client(), &source(&server), &dest, &Streams::new(4), &AtomicBool::new(false), &|progress| waited.lock().unwrap().push(progress.waiting)).expect("the file");
+        download(http::client(), &source(&server), &scratch.0, &dest, &Streams::new(4), &AtomicBool::new(false), &|progress| waited.lock().unwrap().push(progress.waiting)).expect("the file");
         assert_eq!(fs::read(&dest).unwrap(), content);
         // Twelve answers of 503, then the one that worked, which was the whole file; the page
         // was told the 503 meanwhile, and that it was over.
@@ -1457,9 +1668,9 @@ mod tests {
         assert_eq!(fetch(&server, &scratch.path("film.mkv"), 2), Err(Error::Unauthorized));
         let http = http::client();
         let right = Source { url: server.url.clone(), authorization: Some("Basic abc".into()) };
-        assert_eq!(download(http, &right, &scratch.path("film.mkv"), &Streams::new(2), &AtomicBool::new(false), &|_| {}), Ok(scratch.path("film.mkv")));
+        assert_eq!(download(http, &right, &scratch.0, &scratch.path("film.mkv"), &Streams::new(2), &AtomicBool::new(false), &|_| {}), Ok(scratch.path("film.mkv")));
         let gone = Source { url: "http://127.0.0.1:1/film.mkv".into(), authorization: None };
-        assert!(matches!(download(http, &gone, &scratch.path("gone.mkv"), &Streams::new(2), &AtomicBool::new(false), &|_| {}), Err(Error::Connection(_))));
+        assert!(matches!(download(http, &gone, &scratch.0, &scratch.path("gone.mkv"), &Streams::new(2), &AtomicBool::new(false), &|_| {}), Err(Error::Connection(_))));
     }
 
     #[test]
@@ -1469,7 +1680,7 @@ mod tests {
         let scratch = Scratch::new("cancel");
         let dest = scratch.path("film.mkv");
         let cancel = AtomicBool::new(true);
-        assert_eq!(download(http::client(), &source(&server), &dest, &Streams::new(2), &cancel, &|_| {}), Err(Error::Cancelled));
+        assert_eq!(download(http::client(), &source(&server), &scratch.0, &dest, &Streams::new(2), &cancel, &|_| {}), Err(Error::Cancelled));
         assert!(!dest.exists());
         assert_eq!(kept(&dest, &source(&server).url), 0);
         assert!(server.requests.lock().unwrap().is_empty());
@@ -1508,7 +1719,7 @@ mod tests {
         let scratch = Scratch::new("h2");
         let dest = scratch.path("film.mkv");
         let seen = Mutex::new(Protocol::Unknown);
-        download(&http, &source, &dest, &Streams::new(4), &AtomicBool::new(false), &|progress| *seen.lock().unwrap() = progress.protocol).expect("the file");
+        download(&http, &source, &scratch.0, &dest, &Streams::new(4), &AtomicBool::new(false), &|progress| *seen.lock().unwrap() = progress.protocol).expect("the file");
         assert_eq!(fs::read(&dest).unwrap(), *content);
         assert_eq!(connections.load(Ordering::SeqCst), 1);
         assert_eq!(*seen.lock().unwrap(), Protocol::Http2);
@@ -1544,7 +1755,7 @@ mod tests {
         assert!(matches!(response.status().as_u16(), 200 | 206), "{}", response.status());
         let scratch = Scratch::new("real");
         let dest = scratch.path("jquery.min.js");
-        download(http, &source, &dest, &Streams::new(4), &AtomicBool::new(false), &|_| {}).expect("the file");
+        download(http, &source, &scratch.0, &dest, &Streams::new(4), &AtomicBool::new(false), &|_| {}).expect("the file");
         let text = fs::read_to_string(&dest).unwrap();
         assert!(text.starts_with("/*! jQuery v3.7.1"), "{}", &text[..40.min(text.len())]);
     }
@@ -1573,7 +1784,7 @@ mod tests {
         let dest = scratch.path(name);
         let started = Instant::now();
         let last = Mutex::new((Instant::now(), 0u64));
-        let result = download(http::client(), &source, &dest, &streams, &AtomicBool::new(false), &|progress| {
+        let result = download(http::client(), &source, &scratch.0, &dest, &streams, &AtomicBool::new(false), &|progress| {
             let mut last = last.lock().unwrap();
             if last.0.elapsed() >= Duration::from_secs(2) {
                 let rate = progress.done.saturating_sub(last.1) as f64 / 1048576.0 / last.0.elapsed().as_secs_f64();
@@ -1614,15 +1825,15 @@ mod tests {
         let scratch = Scratch::new("misranged");
         let dest = scratch.path("sample.bin");
         let url = misanswering_server("206 Partial Content", "bytes 2-3/4", b"BBBB");
-        let outcome = download(http::client(), &Source { url, authorization: None }, &dest, &Streams::new(1), &AtomicBool::new(false), &|_| {});
+        let outcome = download(http::client(), &Source { url, authorization: None }, &scratch.0, &dest, &Streams::new(1), &AtomicBool::new(false), &|_| {});
         assert!(matches!(&outcome, Err(Error::Protocol(why)) if why.contains("from 0")), "{outcome:?}");
         assert!(!dest.exists());
         // A Content-Range that cannot be read, and one whose body is not as long as it says.
         let url = misanswering_server("206 Partial Content", "bytes=0-3/4", b"BBBB");
-        let outcome = download(http::client(), &Source { url, authorization: None }, &scratch.path("odd.bin"), &Streams::new(1), &AtomicBool::new(false), &|_| {});
+        let outcome = download(http::client(), &Source { url, authorization: None }, &scratch.0, &scratch.path("odd.bin"), &Streams::new(1), &AtomicBool::new(false), &|_| {});
         assert!(matches!(&outcome, Err(Error::Protocol(why)) if why.contains("cannot be read")), "{outcome:?}");
         let url = misanswering_server("206 Partial Content", "bytes 0-1/4", b"BBBB");
-        let outcome = download(http::client(), &Source { url, authorization: None }, &scratch.path("short.bin"), &Streams::new(1), &AtomicBool::new(false), &|_| {});
+        let outcome = download(http::client(), &Source { url, authorization: None }, &scratch.0, &scratch.path("short.bin"), &Streams::new(1), &AtomicBool::new(false), &|_| {});
         assert!(matches!(&outcome, Err(Error::Protocol(why)) if why.contains("Content-Length")), "{outcome:?}");
     }
 
@@ -1647,7 +1858,7 @@ mod tests {
         fs::write(with_suffix(&dest, ".part"), b"half").unwrap();
         fs::write(with_suffix(&dest, ".part.json"), b"{}").unwrap();
         fs::write(scratch.path("notes.txt"), b"kept").unwrap();
-        remove_partials(&dest);
+        remove_partials(&scratch.0, &dest);
         assert!(!with_suffix(&dest, ".part").exists() && !with_suffix(&dest, ".part.json").exists());
         assert!(scratch.path("notes.txt").exists());
         // A folder: every partial file under it, however deep; the finished ones stay.
@@ -1657,24 +1868,92 @@ mod tests {
         fs::write(folder.join("e1.mkv.part.json"), b"{}").unwrap();
         fs::write(folder.join("e2.mkv"), b"whole").unwrap();
         fs::write(folder.join("Extras").join("x.mkv.part"), b"half").unwrap();
-        remove_partials(&folder);
+        remove_partials(&scratch.0, &folder);
         assert!(!folder.join("e1.mkv.part").exists() && !folder.join("e1.mkv.part.json").exists() && !folder.join("Extras").join("x.mkv.part").exists());
         assert!(folder.join("e2.mkv").exists());
     }
 
     #[test]
+    fn a_folder_that_is_a_link_is_neither_written_nor_cleaned_through() {
+        let scratch = Scratch::new("linked-folder");
+        let victim = scratch.path("victim");
+        fs::create_dir_all(&victim).unwrap();
+        fs::write(victim.join("x.mkv.part"), b"theirs").unwrap();
+        let root = scratch.path("downloads");
+        fs::create_dir_all(&root).unwrap();
+        std::os::unix::fs::symlink(&victim, root.join("server")).unwrap();
+        // Writing: the link in the way is refused, before anything is asked of the server.
+        let dest = root.join("server").join("film.mkv");
+        let outcome = open_own(&root, &with_suffix(&dest, ".part"), true);
+        assert!(matches!(&outcome, Err(Error::Disk(why)) if why.contains("link")), "{outcome:?}");
+        let server = serve(pattern(10_000), true, None);
+        let outcome = download(http::client(), &source(&server), &root, &dest, &Streams::new(1), &AtomicBool::new(false), &|_| {});
+        assert!(matches!(&outcome, Err(Error::Disk(_))), "{outcome:?}");
+        assert!(!victim.join("film.mkv.part").exists() && !victim.join("film.mkv").exists());
+        assert_eq!(server.requests.lock().unwrap().len(), 0);
+        // Cleaning: nothing through the link, however it is named.
+        remove_partials(&root, &dest.with_file_name("x.mkv"));
+        remove_partials(&root, &root.join("server"));
+        remove_partials(&root, &root);
+        assert_eq!(fs::read(victim.join("x.mkv.part")).unwrap(), b"theirs");
+        // A path that climbs out of the root, or is not under it, is refused too.
+        assert!(open_own(&root, &root.join("..").join("victim").join("y.part"), true).is_err());
+        assert!(open_own(&scratch.path("elsewhere"), &dest, true).is_err());
+        assert!(!victim.join("y.part").exists());
+        // Real folders on the way are made and used.
+        let real = root.join("real").join("deeper").join("film.mkv");
+        open_own(&root, &with_suffix(&real, ".part"), true).expect("made on the way");
+        assert!(with_suffix(&real, ".part").is_file());
+        assert_eq!(finish(&root, &real).expect("finished"), real);
+        assert!(real.is_file() && !with_suffix(&real, ".part").exists());
+    }
+
+    #[test]
     fn a_taken_name_counts_up() {
         let scratch = Scratch::new("names");
-        assert_eq!(free_path(&scratch.path("film.mkv")), scratch.path("film.mkv"));
+        let folder = Folder::under(&scratch.0, &scratch.0, false).expect("the folder");
+        let free = |name: &str| free_name(|candidate| folder.has(candidate), OsStr::new(name));
+        assert_eq!(free("film.mkv"), OsString::from("film.mkv"));
         fs::write(scratch.path("film.mkv"), b"").unwrap();
-        assert_eq!(free_path(&scratch.path("film.mkv")), scratch.path("film (2).mkv"));
+        assert_eq!(free("film.mkv"), OsString::from("film (2).mkv"));
         fs::write(scratch.path("film (2).mkv"), b"").unwrap();
-        assert_eq!(free_path(&scratch.path("film.mkv")), scratch.path("film (3).mkv"));
+        assert_eq!(free("film.mkv"), OsString::from("film (3).mkv"));
         fs::write(scratch.path("README"), b"").unwrap();
-        assert_eq!(free_path(&scratch.path("README")), scratch.path("README (2)"));
+        assert_eq!(free("README"), OsString::from("README (2)"));
         fs::write(scratch.path(".hidden"), b"").unwrap();
-        assert_eq!(free_path(&scratch.path(".hidden")), scratch.path(".hidden (2)"));
+        assert_eq!(free(".hidden"), OsString::from(".hidden (2)"));
+        // A link counts as taken: the finished file never goes through one.
+        std::os::unix::fs::symlink("/nowhere", scratch.path("linked")).unwrap();
+        assert_eq!(free("linked"), OsString::from("linked (2)"));
         assert_eq!(with_suffix(Path::new("/a/film.mkv"), ".part"), PathBuf::from("/a/film.mkv.part"));
+        // A finished file takes the free name, and the taken one stays as it was.
+        fs::write(scratch.path("film.mkv.part"), b"new").unwrap();
+        assert_eq!(finish(&scratch.0, &scratch.path("film.mkv")).expect("finished"), scratch.path("film (3).mkv"));
+        assert_eq!(fs::read(scratch.path("film (3).mkv")).unwrap(), b"new");
+        assert_eq!(fs::read(scratch.path("film.mkv")).unwrap(), b"");
+    }
+
+    #[test]
+    fn a_file_written_in_one_piece_is_gone_on_from_only_as_its_own() {
+        let scratch = Scratch::new("sequential");
+        let dest = scratch.path("film.mkv");
+        let state = with_suffix(&dest, ".part.json");
+        fs::write(with_suffix(&dest, ".part"), b"half of it").unwrap();
+        // No `.part.json`: nothing says whose the `.part` is.
+        assert!(!resume_sequential(&state, "ftp://host/film.mkv", "100-2026"));
+        assert_eq!(kept_sequential(&dest, "ftp://host/film.mkv"), 0);
+        write_sequential(&scratch.0, &state, "ftp://host/film.mkv", "100-2026", Some(100));
+        assert!(resume_sequential(&state, "ftp://host/film.mkv", "100-2026"));
+        assert_eq!(kept_sequential(&dest, "ftp://host/film.mkv"), 10);
+        // Another file of the same name, or this one changed on the server: not gone on from.
+        assert!(!resume_sequential(&state, "ftp://host/other/film.mkv", "100-2026"));
+        assert!(!resume_sequential(&state, "ftp://host/film.mkv", "100-2027"));
+        assert_eq!(kept_sequential(&dest, "ftp://host/other/film.mkv"), 0);
+        // The chunked engine's state and this one's do not pass for each other.
+        assert_eq!(kept(&dest, "ftp://host/film.mkv"), 0);
+        write_state(&scratch.0, &state, &Named { source: "ftp://host/film.mkv".into(), modified: "100-2026".into() }, 100, CHUNK_SIZE, &[true]);
+        assert!(!resume_sequential(&state, "ftp://host/film.mkv", "100-2026"));
+        assert_eq!(kept_sequential(&dest, "ftp://host/film.mkv"), 0);
     }
 
     #[test]

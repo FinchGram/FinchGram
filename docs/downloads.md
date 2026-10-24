@@ -77,7 +77,12 @@ The engine, `src/downloads/transfer.rs`, follows vget:
    stream taking over the tail of a slow one, and a crawling stream replaced were all tried on
    2026-10-16, and every request more was one more that PikPak answered with 503. `<name>.part` and
    `<name>.part.json` are opened without following a symbolic link, and must be regular files: a
-   link put under those names in the download folder is refused, not written through.
+   link put under those names in the download folder is refused, not written through. The folders
+   on the way are reached from the download folder one name at a time, without following a link
+   either (openat with O_NOFOLLOW, `transfer::Folder`), and the finished file is renamed, and the
+   partial files removed, within the folder so reached: a link put in place of a folder under the
+   download folder, or a path that climbs out of it, sends nothing anywhere else. The download
+   folder itself is the user's choice and is followed wherever it leads.
 3. `<name>.part.json` records which chunks are done, the address they came from and the server's
    Last-Modified for the file. Retry, or a later download of the same file, goes on from there:
    "12 MB of 48 MB kept"; a `.part` of another file of the same size, or of this file changed on
@@ -94,7 +99,11 @@ The engine, `src/downloads/transfer.rs`, follows vget:
    as tries, and the page says "Server busy (HTTP 503), trying again…" only once the server has been
    busy for five seconds (a 503 or two in passing is nothing to tell of). A server that answers 200
    to a range gets the file over one connection.
-5. Done, `.part` takes the file's name, or "name (2).ext" when that name is taken.
+5. Done, `.part` takes the file's name, or "name (2).ext" when that name is taken, and the file is
+   marked as the download it is (macOS's quarantine, as a browser marks what it saves, with the
+   file's address and without the account): the Finder says where it came from, and Gatekeeper
+   looks at it as at any download. A photo or video saved from a chat into the user's Downloads
+   folder is marked the same way.
 
 Two files are on their way at a time; the others wait their turn, and one whose destination is in
 use by a file on its way (the same name from elsewhere; a folder and a file within it) waits for
@@ -146,14 +155,21 @@ puts one face on the three clients, and the page and the queue do not care which
   folder under the one the account lands in ("sb.example.net/films"); the port is 21, or 990 for
   FTPS, unless given. FTPS is TLS from the first byte on 990 and AUTH TLS on any other port,
   trusting what the Mac trusts, as the HTTP client does. A listing is MLSD where the server has
-  it, LIST parsed otherwise. A file comes over one stream, since FTP gives a start but never an
-  end: no chunks, no several connections; a stopped file goes on from the end of its `.part` with
-  REST. Plain FTP sends the password in the clear, and the form says so in red.
+  it, LIST parsed otherwise; a listing is read as it comes and held to 32 MB, 64 KB a line and
+  200,000 entries, so that a server that never ends its listing is cut off, not kept in memory. A
+  file comes over one stream, since FTP gives a start but never an end: no chunks, no several
+  connections; a stopped file goes on from the end of its `.part` with REST, when the `.part.json`
+  beside it says the `.part` is this file's, at this address and in this version (its size and
+  its MDTM time); a `.part` of another file of the same name, of this file changed on the server,
+  or with no `.part.json` to say whose it is, starts afresh. Plain FTP sends the password in the
+  clear, and the form says so in red.
 - **SFTP** (`sftp.rs`, over russh and russh-sftp: SSH in Rust, on the downloads' tokio runtime):
   the address is a host and a folder as for FTP, the port 22 unless given; the account signs in
   with its password (a key waits for another version). The server's key is trusted the first time
   it is met and kept in the database (`ssh_hosts`, by host and port); a server showing another key
-  later is refused and the page says so, as ssh itself does. A file comes in 8 MB chunks over up
+  later is refused and the page says so, as ssh itself does; and the sessions of one transfer or
+  one folder walk, opened side by side, are all held to the key the first of them met, so that
+  none of them trusts a key of its own. A file comes in 8 MB chunks over up
   to as many sessions as the connections setting, each its own SSH connection, written at their
   places in the `.part` and marked in the `.part.json` of the WebDAV engine, so a stopped file
   goes on where it was. On a seedbox, SFTP is also the way that does not count against the monthly
@@ -171,7 +187,12 @@ Copy link gives `sftp://me@host:2222/films/film.mkv` or `ftps://…` for those s
   plain SQLite file any tool opens, the `servers` table with the protocol, the address, the port
   and the account of each; only the password column is sealed (AES-256-GCM) under a random key
   kept in the macOS Keychain under "FinchGram" (the account "database"), in the login keychain
-  only, where only this app reads it (docs/architecture.md, The app's database): Keychain items
+  only, where only this app reads it (docs/architecture.md, The app's database), and sealed to its
+  server: the protocol, the address, the port and the account are the seal's additional data, so
+  that the sealed text moved into a row that names another server does not open there (a program
+  that could write the file could otherwise point a server at itself and have the app send it the
+  password; the passwords of 0.6.0 to 0.6.2 were sealed again that way at the first start of the
+  layout after). Keychain items
   belong to the app's signing identity, and releases are signed with North Brookville LLC's Apple
   Developer ID (docs/conventions.md), which macOS trusts across updates. The SSH servers' keys are
   in the `ssh_hosts` table, in the clear. On the wire a WebDAV password is Basic authentication:
@@ -191,6 +212,10 @@ Copy link gives `sftp://me@host:2222/films/film.mkv` or `ftps://…` for those s
   certificate in Keychain Access and set it to Always Trust. A "trust this certificate" choice in
   the app is not built.
 - Basic authentication only: no Digest, no tokens, no proxy settings.
+- SFTP's first contact takes the server's key as it is shown, as ssh does with
+  `StrictHostKeyChecking=accept-new`, and the password goes to whichever server showed it; a check
+  of the fingerprint before that, as ssh asks by default, needs a dialog the design does not have
+  yet.
 - A file is fetched whole before it opens; nothing streams.
 - No sorting of the table beyond folders first and names in order, no sizes of folders.
 

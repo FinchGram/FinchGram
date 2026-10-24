@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::AtomicBool;
 
 use super::http::{Failure, Http};
-use super::{ftp, sftp, transfer, webdav};
+use super::{ftp, log, sftp, transfer, webdav};
 
 /// What a server speaks (the design's seventh round): chosen when the server is added.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -233,36 +233,41 @@ impl Remote {
         self.folder_link(&[]) == other.folder_link(&[])
     }
 
-    /// Bytes of `dest` already here from an earlier try of this file: the done chunks of its
-    /// `.part` (WebDAV, SFTP), or the `.part` as far as it goes (FTP).
+    /// Bytes of `dest` already here from an earlier try of this file, as its `.part.json` names
+    /// it: the done chunks of its `.part` (WebDAV, SFTP), or the `.part` as far as it goes (FTP).
     pub fn kept(&self, dest: &Path, path: &[String], name: &str) -> u64 {
         match self {
             Remote::WebDav(_) | Remote::Sftp(_) => transfer::kept(dest, &self.file_link(path, name)),
-            Remote::Ftp(_) => ftp::kept(dest),
+            Remote::Ftp(_) => transfer::kept_sequential(dest, &self.file_link(path, name)),
         }
     }
 
-    /// The file into `dest`, reporting to `progress` as it goes (transfer::download for what the
-    /// words mean). Blocks: call it on a thread of the file's own.
+    /// The file into `dest`, under the download folder `root`, reporting to `progress` as it goes
+    /// (transfer::download for what the words mean). The file is marked as the download it is
+    /// (platform::mark_downloaded: macOS's quarantine, with its address, without the account), so
+    /// that the system treats it as one. Blocks: call it on a thread of the file's own.
     #[allow(clippy::too_many_arguments)]
     pub fn download(
         &self,
         http: &Http,
         path: &[String],
         name: &str,
+        root: &Path,
         dest: &Path,
         streams: &transfer::Streams,
         cancel: &AtomicBool,
         progress: &(dyn Fn(transfer::Progress) + Sync),
     ) -> Result<PathBuf, transfer::Error> {
-        match self {
+        let target = match self {
             Remote::WebDav(server) => {
                 let source = transfer::Source { url: server.file_url(path, name), authorization: server.authorization() };
-                transfer::download(http, &source, dest, streams, cancel, progress)
+                transfer::download(http, &source, root, dest, streams, cancel, progress)
             }
-            Remote::Ftp(server) => server.download(path, name, dest, cancel, progress),
-            Remote::Sftp(server) => server.download(http, path, name, dest, streams, cancel, progress),
-        }
+            Remote::Ftp(server) => server.download(path, name, root, dest, cancel, progress),
+            Remote::Sftp(server) => server.download(http, path, name, root, dest, streams, cancel, progress),
+        }?;
+        crate::platform::mark_downloaded(&target, Some(&log::shown(&self.file_link(path, name))));
+        Ok(target)
     }
 }
 

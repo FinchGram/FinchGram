@@ -145,7 +145,12 @@ credentials from the environment". FinchGram's answer has three layers:
    every update and for every copy of the program: Claude Code installed on its own and the one
    inside the VS Code extension are one app, allowed once. A program without such a signature
    (unsigned, signed ad hoc, or under a certificate Apple did not issue; Apple's own programs carry
-   no team) is remembered by where it is instead, its app bundle or its path. The answer is also
+   no team) is remembered by its path instead: the program itself, with its links followed, and
+   not its app bundle, which may hold other programs that are not it. The answers are rows of the
+   app's database (docs/architecture.md, The app's database), each with a tag under the key the
+   Keychain holds for this app alone: a row written into the file by anything else, or whose
+   answer was turned since, is not believed, and the program is asked about as if it were new. The
+   answer is also
    for one Telegram account, the one the settings are for: when that account is gone and another
    takes its place, every answer and the chosen chats are dropped, so that nothing allowed for one
    account carries over to the next. When the system cannot
@@ -156,7 +161,10 @@ credentials from the environment". FinchGram's answer has three layers:
    and what a client says of itself goes into the log without its control characters.
 3. **Settings decide what it may do**: the switch, the chats, the sending choice. They are read
    again before each side effect of a call under way (a send, a draft, a deletion, marking read, a
-   file handed over): a change takes effect on calls already waiting on Telegram.
+   file handed over), and before what was read is handed over: the messages of a chat the user
+   took out of the choice while Telegram answered are not handed over, and what was gathered from
+   several chats is held to the choice as it is then. A change takes effect on calls already
+   waiting on Telegram.
 
 The assistant needs no Telegram credentials: it works through the session FinchGram is signed in
 with, and FinchGram's api_id is nowhere in this.

@@ -477,8 +477,11 @@ What FinchGram keeps that is neither a preference nor Telegram's goes into a dat
 opens, since the user's data is the user's (the maintainer's word of 2026-10-24; up to 0.5.9 the
 file was encrypted as a whole with SQLCipher). Only the password column is sealed, with AES-256-GCM
 under a random key made the first time and kept in the Keychain under "FinchGram" (the account
-"database"), where only this app reads it; the app shows a password in the server's form, so the
-user can read it there. TDLib's database has a key of its own kept the same way (the account
+"database"), where only this app reads it, and sealed to the server it is for (its protocol,
+address, port and account are the seal's additional data, so that the sealed text does not open in
+a row naming another server); the app shows a password in the server's form, so the user can read
+it there. The rows of the programs allowed at AI access carry a tag under the same key, so that a
+row written by anything but FinchGram, or changed since, is not believed. TDLib's database has a key of its own kept the same way (the account
 "tdlib"), since 0.4.18. The rule: preferences go into settings.toml, which stays small and
 readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
 database holds the servers of the downloads page with their passwords (docs/downloads.md), the
@@ -494,6 +497,8 @@ without a dialog; a file from a newer FinchGram is refused with a message, so th
 layout stays as it is. Steps add columns with defaults wherever they can, so that an older
 FinchGram still opens a newer file. The file of 0.5.9 and before is not read: it is moved into
 that backup folder and a new file made, at the maintainer's word (the app had six stars that day).
+Layout 2 (after 0.6.2) sealed the passwords to their servers and gave the programs' rows their tag;
+the rows of before were dropped, since nothing vouched for them, so every program asked again once.
 Settings keys are never renamed without a serde alias, and the Keychain items keep their names.
 
 ## Platforms

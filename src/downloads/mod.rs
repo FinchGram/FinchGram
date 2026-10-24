@@ -106,7 +106,7 @@ impl Server {
                         }
                     });
                 });
-                Remote::Sftp(sftp::Server { host, port: self.port, folder, username: self.username.clone(), password: self.password.clone(), known_key, learned })
+                Remote::Sftp(sftp::Server { host, port: self.port, folder, username: self.username.clone(), password: self.password.clone(), known_key: Arc::new(Mutex::new(known_key)), learned })
             }
         }
     }
@@ -134,10 +134,11 @@ enum Folder {
 /// What a download fetches.
 #[derive(Clone)]
 enum Kind {
-    /// The file `name` in the folder `path` of the server, into `dest`.
-    File { remote: Remote, path: Vec<String>, name: String, dest: PathBuf },
-    /// A whole folder, file by file, into `dest`.
-    Folder { remote: Remote, path: Vec<String>, dest: PathBuf },
+    /// The file `name` in the folder `path` of the server, into `dest`, under the download folder
+    /// `root`.
+    File { remote: Remote, path: Vec<String>, name: String, root: PathBuf, dest: PathBuf },
+    /// A whole folder, file by file, into `dest`, under the download folder `root`.
+    Folder { remote: Remote, path: Vec<String>, root: PathBuf, dest: PathBuf },
 }
 
 impl Kind {
@@ -145,6 +146,14 @@ impl Kind {
     fn dest(&self) -> &Path {
         match self {
             Kind::File { dest, .. } | Kind::Folder { dest, .. } => dest,
+        }
+    }
+
+    /// The download folder as it was when the download was queued; `dest` is under it, and the
+    /// engines write nothing outside it (transfer::Folder).
+    fn root(&self) -> &Path {
+        match self {
+            Kind::File { root, .. } | Kind::Folder { root, .. } => root,
         }
     }
 }
@@ -776,7 +785,10 @@ fn enqueue_entry(name: &str, open: bool) {
             existing.open_when_done |= open;
             return Some(false);
         }
-        let dest = server_folder(&state.settings.borrow(), &server_name).join(&entry.name);
+        let (root, dest) = {
+            let settings = state.settings.borrow();
+            (download_folder(&settings), server_folder(&settings, &server_name).join(&entry.name))
+        };
         let done = remote.kept(&dest, &state.path, &entry.name);
         let id = state.next_id;
         state.next_id += 1;
@@ -784,7 +796,7 @@ fn enqueue_entry(name: &str, open: bool) {
             id,
             name: entry.name.clone(),
             icon: icon_for(&entry.name),
-            kind: Kind::File { remote, path: state.path.clone(), name: entry.name.clone(), dest: dest.clone() },
+            kind: Kind::File { remote, path: state.path.clone(), name: entry.name.clone(), root, dest: dest.clone() },
             state: TransferState::Waiting,
             done,
             total: entry.size,
@@ -818,14 +830,17 @@ fn enqueue_folder(name: &str) {
         if state.queue.iter().any(|transfer| transfer.live() && matches!(&transfer.kind, Kind::Folder { path: theirs, remote: that, .. } if *theirs == path && that.same_as(&remote))) {
             return Some(false);
         }
-        let dest = server_folder(&state.settings.borrow(), &server_name).join(name);
+        let (root, dest) = {
+            let settings = state.settings.borrow();
+            (download_folder(&settings), server_folder(&settings, &server_name).join(name))
+        };
         let id = state.next_id;
         state.next_id += 1;
         state.queue.push(Transfer {
             id,
             name: name.to_string(),
             icon: "folder",
-            kind: Kind::Folder { remote, path, dest },
+            kind: Kind::Folder { remote, path, root, dest },
             state: TransferState::Waiting,
             done: 0,
             total: 0,
@@ -900,8 +915,8 @@ fn run(id: i32, kind: Kind, cancel: Arc<AtomicBool>, connections: usize) {
             let _ = slint::invoke_from_event_loop(move || progressed(id, progress));
         };
         let result = match kind {
-            Kind::File { remote, path, name, dest } => remote.download(http, &path, &name, &dest, &streams, &cancel, &progress),
-            Kind::Folder { remote, path, dest } => download_tree(http, &remote, &path, &dest, &streams, &cancel, &progress),
+            Kind::File { remote, path, name, root, dest } => remote.download(http, &path, &name, &root, &dest, &streams, &cancel, &progress),
+            Kind::Folder { remote, path, root, dest } => download_tree(http, &remote, &path, &root, &dest, &streams, &cancel, &progress),
         };
         let _ = slint::invoke_from_event_loop(move || finished(id, result));
     });
@@ -946,14 +961,16 @@ impl TreeFile {
     }
 }
 
-/// A folder and everything in it, into `dest`: the tree listed first, several folders at a time,
-/// the total growing on the page as files are found; then the files, several at a time over the
-/// transfer's budget of streams. A file already there with its size is not fetched again: a
-/// stopped folder goes on where it was.
+/// A folder and everything in it, into `dest`, under the download folder `root`: the tree listed
+/// first, several folders at a time, the total growing on the page as files are found; then the
+/// files, several at a time over the transfer's budget of streams. A file already there with its
+/// size is not fetched again: a stopped folder goes on where it was.
+#[allow(clippy::too_many_arguments)]
 fn download_tree(
     http: &'static http::Http,
     remote: &Remote,
     path: &[String],
+    root: &Path,
     dest: &Path,
     streams: &transfer::Streams,
     cancel: &AtomicBool,
@@ -999,7 +1016,7 @@ fn download_tree(
                     };
                     let already = std::fs::metadata(&file_dest).map(|meta| meta.is_file() && meta.len() == file.size).unwrap_or(false);
                     if !already
-                        && let Err(err) = remote.download(http, &whole, &file.name, &file_dest, streams, cancel, &|progress| report(slot, progress.done, progress.waiting))
+                        && let Err(err) = remote.download(http, &whole, &file.name, root, &file_dest, streams, cancel, &|progress| report(slot, progress.done, progress.waiting))
                     {
                         let mut failed = failure.lock().unwrap();
                         if failed.is_none() {
@@ -1189,7 +1206,7 @@ fn retry(id: i32) {
             transfer.state = TransferState::Waiting;
             transfer.problem = Problem::None;
             transfer.detail.clear();
-            if let Kind::File { remote, path, name, dest } = &transfer.kind {
+            if let Kind::File { remote, path, name, dest, .. } = &transfer.kind {
                 transfer.done = remote.kept(dest, path, name);
             }
         }
@@ -1210,12 +1227,12 @@ fn show_in_finder(id: i32) {
 fn remove_transfer(id: i32) {
     let partial = with_state(|state| {
         let transfer = state.queue.iter().find(|transfer| transfer.id == id && !transfer.live())?;
-        Some((transfer.state == TransferState::Stopped).then(|| transfer.kind.dest().to_path_buf()))
+        Some((transfer.state == TransferState::Stopped).then(|| (transfer.kind.root().to_path_buf(), transfer.kind.dest().to_path_buf())))
     })
     .flatten()
     .flatten();
-    if let Some(dest) = partial {
-        transfer::remove_partials(&dest);
+    if let Some((root, dest)) = partial {
+        transfer::remove_partials(&root, &dest);
     }
     with_state(|state| state.queue.retain(|transfer| transfer.id != id || transfer.live()));
     show_queue();

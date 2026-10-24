@@ -912,7 +912,10 @@ fn set_parameters() {
         Ok(media) => media,
         Err(err) => return fail(err),
     };
-    let key = database_key(test_dc, slot);
+    let key = match database_key(test_dc, slot) {
+        Ok(key) => key,
+        Err(err) => return fail(err),
+    };
     let parameters = json!({
         "@type": "setTdlibParameters",
         "use_test_dc": test_dc,
@@ -935,37 +938,30 @@ fn set_parameters() {
 
 /// The key TDLib encrypts the account's database with: random, made the first time and kept in
 /// the Keychain under FinchGram's name (src/platform/, the database folder's name as the account),
-/// where only this app reads it. None when the Keychain would not give or keep one: then the
-/// database is opened without. The key is never logged.
-fn database_key(test_dc: bool, slot: Slot) -> Option<String> {
+/// where only this app reads it. Err, with what to tell the user, when the Keychain would not
+/// give or keep one: the account is not started then, since a database opened without a key would
+/// be in the clear on the disk. The key is never logged.
+fn database_key(test_dc: bool, slot: Slot) -> Result<String, String> {
     let account = database_folder(test_dc, slot);
+    let again = "Quit FinchGram and open it again; if the Keychain is locked, unlock it in Keychain Access first.";
     match crate::platform::keychain_read(crate::platform::KEYCHAIN_SERVICE, &account) {
-        Ok(Some(key)) if !key.is_empty() => return Some(key),
+        Ok(Some(key)) if !key.is_empty() => return Ok(key),
         Ok(_) => {}
-        Err(err) => {
-            eprintln!("telegram: cannot read the database key from the Keychain: {err}");
-            return None;
-        }
+        Err(err) => return Err(format!("The Keychain would not give FinchGram the key of its Telegram database ({err}). {again}")),
     }
-    let key = crate::platform::random_key()?;
-    match crate::platform::keychain_store(crate::platform::KEYCHAIN_SERVICE, &account, &key) {
-        Ok(()) => Some(key),
-        Err(err) => {
-            eprintln!("telegram: cannot keep a database key in the Keychain: {err}");
-            None
-        }
-    }
+    let key = crate::platform::random_key().ok_or_else(|| format!("The system gave no random bytes for a database key. {again}"))?;
+    crate::platform::keychain_store(crate::platform::KEYCHAIN_SERVICE, &account, &key)
+        .map_err(|err| format!("The Keychain would not keep the key of FinchGram's Telegram database ({err}). {again}"))?;
+    Ok(key)
 }
 
-/// setTdlibParameters with the key, or without when the Keychain gave none. A database that does
-/// not open with the key is encrypted with another, gone from the Keychain: the app says so, and
-/// how to log in again.
-fn open_database(mut parameters: Value, database: PathBuf, key: Option<String>) {
-    let with_key = key.is_some();
-    parameters["database_encryption_key"] = key.unwrap_or_default().into();
+/// setTdlibParameters with the key. A database that does not open with it is encrypted with
+/// another, gone from the Keychain: the app says so, and how to log in again.
+fn open_database(mut parameters: Value, database: PathBuf, key: String) {
+    parameters["database_encryption_key"] = key.into();
     send(parameters, move |answer| match answer {
         Ok(_) => {}
-        Err(Error::Telegram { code: 401, .. }) if with_key => fail(format!(
+        Err(Error::Telegram { code: 401, .. }) => fail(format!(
             "The Telegram database is encrypted with a key that is not in the Keychain. To log in again, quit FinchGram, delete the folder {} and open FinchGram.",
             database.display()
         )),

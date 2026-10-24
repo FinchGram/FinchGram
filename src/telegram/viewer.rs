@@ -509,12 +509,14 @@ fn photo_name(unix: i32) -> String {
     }
 }
 
-/// Copy `from` into the Downloads folder as `name`, or as "name (2).ext" … when that is taken.
-/// Returns the name it got.
+/// Copy `from` into the Downloads folder as `name`, or as "name (2).ext" … when that is taken,
+/// marked as the download it is (platform::mark_downloaded), as a browser would. Returns the name
+/// it got.
 pub fn save_to_downloads(from: &Path, name: &str) -> std::io::Result<String> {
     let folder = dirs::download_dir().ok_or_else(|| std::io::Error::other("no Downloads folder"))?;
     let target = free_path(&folder, name);
     std::fs::copy(from, &target)?;
+    crate::platform::mark_downloaded(&target, None);
     Ok(target.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default())
 }
 

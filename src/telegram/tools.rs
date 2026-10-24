@@ -112,12 +112,30 @@ pub struct Reply {
 }
 
 impl Reply {
-    /// The outcome, handed over unless the settings have changed meanwhile (`Guard`).
+    /// The outcome, handed over unless the settings have changed meanwhile (`Guard`): the server
+    /// off, or the program turned away. For what was read from one chat, `done_for` asks about
+    /// the chat too; what was gathered from several is held to `policy` by the caller.
     fn done(self, outcome: Outcome, activity: Activity) {
         if let Some(why) = self.guard.revoked(None, None) {
             return (self.send)(Outcome::failed(why), None);
         }
         (self.send)(outcome, Some(activity));
+    }
+
+    /// The outcome about `chat_id`, handed over unless the settings have changed meanwhile, the
+    /// chat's place among them included: what was read while the user took the chat out of the
+    /// assistant's reach is not handed over.
+    fn done_for(self, chat_id: i64, outcome: Outcome, activity: Activity) {
+        if let Some(why) = self.guard.revoked(Some(chat_id), None) {
+            return (self.send)(Outcome::failed(why), None);
+        }
+        (self.send)(outcome, Some(activity));
+    }
+
+    /// The settings as they are now: what was gathered from several chats while Telegram
+    /// answered is held to them before it is handed over.
+    fn policy(&self) -> Mcp {
+        (self.guard.policy)()
     }
 
     /// Why the call may not go on, if it may not, as the settings are now (`Guard::revoked`).
@@ -167,7 +185,7 @@ fn call_as_account(ui: &MainWindow, call: ToolCall, policy: Mcp, reply: Reply) {
     let loaded = ui.global::<Chats>().get_loaded();
     match call {
         ToolCall::ListChats { limit, unread_only } => list_chats(&policy, &names, loaded, limit, unread_only, reply),
-        ToolCall::SearchChats { query, limit } => search_chats(policy, names, query, limit, reply),
+        ToolCall::SearchChats { query, limit } => search_chats(names, query, limit, reply),
         ToolCall::GetChat { chat_id } => get_chat(policy, names, chat_id, reply),
         ToolCall::GetMessages { chat_id, limit, before_message_id } => {
             get_messages(policy, names, chat_id, limit, before_message_id, reply)
@@ -192,6 +210,12 @@ fn call_as_account(ui: &MainWindow, call: ToolCall, policy: Mcp, reply: Reply) {
 /// Whether the assistant may see `chat`: within the user's choice, and never a secret chat.
 fn allowed(policy: &Mcp, chat: &Chat) -> bool {
     !matches!(chat.kind, ChatType::Secret { .. }) && policy.allows(chat.id)
+}
+
+/// Whether the assistant may see the chat `chat_id`, as the store knows it; one the store does not
+/// know is held to the user's choice alone.
+fn allowed_id(store: &Store, policy: &Mcp, chat_id: i64) -> bool {
+    policy.allows(chat_id) && store.chats.get(&chat_id).is_none_or(|chat| allowed(policy, chat))
 }
 
 /// The chat with `chat_id`, from the store or from TDLib, when the assistant may see it; else why
@@ -253,18 +277,20 @@ fn main_list<'a>(store: &'a Store, policy: &Mcp, keep: impl Fn(&Chat) -> bool) -
     chats.into_iter().map(|(chat, _)| chat).collect()
 }
 
-fn search_chats(policy: Mcp, names: Names, query: String, limit: usize, reply: Reply) {
+fn search_chats(names: Names, query: String, limit: usize, reply: Reply) {
     let query = query.trim_start_matches('@').to_string();
     send(json!({ "@type": "searchChats", "query": query, "limit": limit as i32 }), move |answer| {
         let ids: Vec<i64> = match answer {
             Ok(found) => found["chat_ids"].as_array().map(|ids| ids.iter().filter_map(Value::as_i64).collect()).unwrap_or_default(),
             Err(err) => return reply.failed(telegram_error("search the chats", err)),
         };
-        // TDLib has sent every chat it names before it answers.
+        // TDLib has sent every chat it names before it answers. The user's choice as it is now,
+        // not as it was when the call began.
+        let now = reply.policy();
         let rows: Vec<Value> = store::with(|store| {
             ids.iter()
                 .filter_map(|id| store.chats.get(id))
-                .filter(|chat| allowed(&policy, chat))
+                .filter(|chat| allowed(&now, chat))
                 .map(|chat| chat_json(store, &names, chat))
                 .collect()
         })
@@ -279,7 +305,7 @@ fn get_chat(policy: Mcp, names: Names, chat_id: i64, reply: Reply) {
         Err(refusal) => reply.refuse(refusal),
         Ok(chat) => {
             let (value, title) = store::with(|store| (chat_json(store, &names, &chat), store.title(&chat, &names))).unwrap_or_default();
-            reply.done(Outcome::json(&value), Activity::about(ActivityKind::Looked, title));
+            reply.done_for(chat.id, Outcome::json(&value), Activity::about(ActivityKind::Looked, title));
         }
     });
 }
@@ -308,7 +334,7 @@ fn get_messages(policy: Mcp, names: Names, chat_id: i64, limit: usize, before: i
                 (value, title)
             })
             .unwrap_or_default();
-            reply.done(Outcome::json(&value), Activity::counted(ActivityKind::Read, title, messages.len()));
+            reply.done_for(chat.id, Outcome::json(&value), Activity::counted(ActivityKind::Read, title, messages.len()));
         }));
     });
 }
@@ -355,7 +381,7 @@ fn search_messages(policy: Mcp, names: Names, query: String, chat_id: Option<i64
             let title = store::with(|store| store.title(&chat, &names)).unwrap_or_default();
             search_in(chat.id, query, limit, Box::new(move |found| match found {
                 Err(err) => reply.failed(telegram_error("search the messages", err)),
-                Ok(messages) => reply.done(found_json(&names, &messages, true), Activity::counted(ActivityKind::Searched, title, 1)),
+                Ok(messages) => reply.done_for(chat.id, found_json(&names, &messages, true), Activity::counted(ActivityKind::Searched, title, 1)),
             }));
         });
     }
@@ -369,13 +395,9 @@ fn search_messages(policy: Mcp, names: Names, query: String, chat_id: Option<i64
                 Err(err) => reply.failed(telegram_error("search the messages", err)),
                 Ok(found) => {
                     let messages: Vec<Message> = serde_json::from_value(found["messages"].clone()).unwrap_or_default();
-                    let messages: Vec<Message> = store::with(|store| {
-                        messages
-                            .into_iter()
-                            .filter(|message| store.chats.get(&message.chat_id).is_none_or(|chat| allowed(&policy, chat)))
-                            .collect()
-                    })
-                    .unwrap_or_default();
+                    // Held to the user's choice as it is now: the search may have taken a while.
+                    let now = reply.policy();
+                    let messages: Vec<Message> = store::with(|store| messages.into_iter().filter(|message| allowed_id(store, &now, message.chat_id)).collect()).unwrap_or_default();
                     reply.done(found_json(&names, &messages, false), Activity::new(ActivityKind::SearchedAll));
                 }
             });
@@ -387,7 +409,10 @@ fn search_messages(policy: Mcp, names: Names, query: String, chat_id: Option<i64
             }
             let searched = chats.len();
             let gather = Gather::new(chats.len(), move |pages: Vec<Vec<Message>>| {
-                let mut messages: Vec<Message> = pages.into_iter().flatten().collect();
+                // A chat the user took out of the choice while Telegram searched is left out.
+                let now = reply.policy();
+                let mut messages: Vec<Message> =
+                    store::with(|store| pages.into_iter().flatten().filter(|message| allowed_id(store, &now, message.chat_id)).collect()).unwrap_or_default();
                 messages.sort_by(|a, b| b.date.cmp(&a.date).then(b.id.cmp(&a.id)));
                 messages.truncate(limit);
                 reply.done(found_json(&names, &messages, false), Activity::counted(ActivityKind::Searched, "", searched));
@@ -446,11 +471,13 @@ fn get_unread(policy: Mcp, names: Names, chats_limit: usize, per_chat: usize, re
         return reply.done(Outcome::json(&json!({ "chats": [], "note": "Nothing is unread." })), Activity::counted(ActivityKind::Unread, "", 0));
     }
     let gather = Gather::new(chats.len(), move |pages: Vec<(i64, i64, Vec<Message>)>| {
+        // A chat the user took out of the choice while Telegram answered is left out.
+        let now = reply.policy();
         let rows: Vec<Value> = store::with(|store| {
             pages
                 .iter()
                 .filter_map(|(chat_id, last_read, messages)| {
-                    let chat = store.chats.get(chat_id)?;
+                    let chat = store.chats.get(chat_id).filter(|chat| allowed(&now, chat))?;
                     // Unread: what came in after the last message read, not what the user sent.
                     let unread: Vec<Value> = messages
                         .iter()
@@ -517,7 +544,7 @@ fn download_media(policy: Mcp, names: Names, chat_id: i64, message_id: i64, repl
                         return reply.failed(why);
                     }
                     match deliver(&target, &file) {
-                        Ok(outcome) => reply.done(outcome, Activity::about(ActivityKind::Media, title)),
+                        Ok(outcome) => reply.done_for(chat.id, outcome, Activity::about(ActivityKind::Media, title)),
                         Err(reason) => reply.failed(reason),
                     }
                 });
@@ -1256,6 +1283,37 @@ mod tests {
         assert_eq!(guard.revoked(None, None).as_deref(), Some(crate::mcp::protocol::TURNED_AWAY));
         policy.borrow_mut().enabled = false;
         assert_eq!(guard.revoked(None, None).as_deref(), Some(crate::mcp::protocol::OFF));
+    }
+
+    #[test]
+    fn what_was_read_from_a_chat_taken_out_of_reach_meanwhile_is_not_handed_over() {
+        let policy = Rc::new(RefCell::new(Mcp { enabled: true, ..Mcp::default() }));
+        let guard = Guard::new(|| true, {
+            let policy = policy.clone();
+            move || policy.borrow().clone()
+        });
+        type Seen = Rc<RefCell<Vec<(Outcome, Option<Activity>)>>>;
+        let seen: Seen = Rc::new(RefCell::new(Vec::new()));
+        let reply = |seen: &Seen| {
+            let seen = seen.clone();
+            Reply { send: Box::new(move |outcome, activity| seen.borrow_mut().push((outcome, activity))), guard: guard.clone() }
+        };
+        // Allowed when the call began, still allowed: handed over, and logged.
+        reply(&seen).done_for(42, Outcome::text("hello"), Activity::about(ActivityKind::Read, "Alice"));
+        assert!(matches!(&seen.borrow()[0], (Outcome::Done(_), Some(activity)) if activity.chat == "Alice"));
+        // The user narrowed the choice to other chats while Telegram answered: not handed over.
+        policy.borrow_mut().scope = McpScope::Chosen;
+        policy.borrow_mut().chats = vec![7];
+        reply(&seen).done_for(42, Outcome::text("hello"), Activity::about(ActivityKind::Read, "Alice"));
+        assert!(matches!(&seen.borrow()[1], (Outcome::Failed(why), None) if why == NOT_ALLOWED));
+        reply(&seen).done_for(7, Outcome::text("hello"), Activity::about(ActivityKind::Read, "Bob"));
+        assert!(matches!(&seen.borrow()[2], (Outcome::Done(_), Some(_))));
+        // What is about no chat in particular only asks whether the server is on.
+        reply(&seen).done(Outcome::text("me"), Activity::new(ActivityKind::Account));
+        assert!(matches!(&seen.borrow()[3], (Outcome::Done(_), Some(_))));
+        policy.borrow_mut().enabled = false;
+        reply(&seen).done(Outcome::text("me"), Activity::new(ActivityKind::Account));
+        assert!(matches!(&seen.borrow()[4], (Outcome::Failed(why), None) if why == crate::mcp::protocol::OFF));
     }
 
     #[test]

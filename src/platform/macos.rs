@@ -388,6 +388,35 @@ pub fn choose_folder(chosen: impl FnOnce(Option<std::path::PathBuf>) + 'static) 
     panel.beginWithCompletionHandler(&handler);
 }
 
+/// The quarantine macOS puts on a download (com.apple.quarantine, asked for through NSURL's
+/// quarantine properties, which is the way the system gives apps): the agent FinchGram, the kind
+/// "other download", and the address it came from when there is one (without the account,
+/// remote.rs). The system adds the time and FinchGram's bundle identifier when it runs as a
+/// bundle, and writes the agent's name into the attribute from that; run bare (`cargo run`, the
+/// tests), the name's place in the attribute stays empty, while the download flag is set all the
+/// same.
+pub fn mark_downloaded(path: &std::path::Path, source: Option<&str>) {
+    use objc2_foundation::NSURLQuarantinePropertiesKey;
+    let url = NSURL::fileURLWithPath(&NSString::from_str(&path.to_string_lossy()));
+    let mut keys = vec![NSString::from_str("LSQuarantineAgentName"), NSString::from_str("LSQuarantineType")];
+    let mut values: Vec<Retained<AnyObject>> = vec![
+        Retained::into_super(Retained::into_super(NSString::from_str("FinchGram"))),
+        Retained::into_super(Retained::into_super(NSString::from_str("LSQuarantineTypeOtherDownload"))),
+    ];
+    if let Some(origin) = source.and_then(|source| NSURL::URLWithString(&NSString::from_str(source))) {
+        keys.push(NSString::from_str("LSQuarantineDataURL"));
+        values.push(Retained::into_super(Retained::into_super(origin)));
+    }
+    let keys: Vec<&NSString> = keys.iter().map(|key| &**key).collect();
+    let properties = NSDictionary::from_retained_objects(&keys, &values);
+    // SAFETY: the framework's key is only read; the dictionary holds the keys and values the
+    // framework documents for the quarantine properties.
+    let outcome = unsafe { url.setResourceValue_forKey_error(Some(AsRef::<AnyObject>::as_ref(&*properties)), NSURLQuarantinePropertiesKey) };
+    if let Err(err) = outcome {
+        eprintln!("downloads: cannot mark {} as a download: {err}", path.display());
+    }
+}
+
 /// Show a file in the Finder, selected.
 pub fn reveal_file(path: &str) {
     let url = NSURL::fileURLWithPath(&NSString::from_str(path));

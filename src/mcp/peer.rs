@@ -89,12 +89,15 @@ impl Host {
 
     /// What the user's answer is remembered by: the program's signature
     /// ("Q6L2SF6YDW/com.anthropic.claude-code"), the same for every version and every copy of it;
-    /// for a program without one from a team, where it is; for one the system would not name, its
-    /// process id, which lasts as long as it runs.
+    /// for a program without one from a team, the program itself, by its path, and not its app
+    /// bundle, which may hold other programs that are not it (`host_of` has the path with its
+    /// links followed); for one the system would not name, its process id, which lasts as long
+    /// as it runs.
     pub fn key(&self) -> String {
-        match &self.signature {
-            Some(signature) => signature.key(),
-            None => self.location(),
+        match (&self.signature, &self.path) {
+            (Some(signature), _) => signature.key(),
+            (None, Some(path)) => path.display().to_string(),
+            (None, None) => self.location(),
         }
     }
 
@@ -128,7 +131,8 @@ pub fn host_of(stream: &UnixStream) -> Host {
         ours.as_ref().is_some_and(|ours| current.canonicalize().ok().as_ref() == Some(ours))
             || current.file_name().and_then(|name| name.to_str()).is_some_and(|name| WRAPPERS.contains(&name))
     });
-    let path = if ours_or_wrapper { None } else { path };
+    // The path with its links followed: a program without a signature is remembered by it.
+    let path = if ours_or_wrapper { None } else { path.map(|path| path.canonicalize().unwrap_or(path)) };
     let signature = if path.is_some() { system::signature_of(pid) } else { None };
     Host { pid, path, signature, started: system::started_at(pid).unwrap_or(0) }
 }
@@ -357,7 +361,12 @@ mod tests {
         assert_eq!(claude.describe(), "Claude (/Applications/Claude.app)");
         let tool = Host { pid: 8, path: Some(PathBuf::from("/Users/x/.local/bin/claude")), signature: None, started: 0 };
         assert_eq!(tool.describe(), "claude (/Users/x/.local/bin/claude)");
-        assert_eq!((claude.name(), claude.key()), ("Claude".to_string(), "/Applications/Claude.app".to_string()));
+        // Without a signature from a team, the program itself is the key, not its bundle: two
+        // programs in one unsigned bundle are two answers.
+        assert_eq!((claude.name(), claude.location(), claude.key()), ("Claude".to_string(), "/Applications/Claude.app".to_string(), "/Applications/Claude.app/Contents/MacOS/Claude".to_string()));
+        let helper = Host { pid: 7, path: Some(PathBuf::from("/Applications/Claude.app/Contents/Helpers/other")), signature: None, started: 0 };
+        assert_eq!((helper.name(), helper.location()), (claude.name(), claude.location()));
+        assert_ne!(helper.key(), claude.key());
         assert_eq!((tool.name(), tool.key()), ("claude".to_string(), "/Users/x/.local/bin/claude".to_string()));
         let nameless = Host { pid: 9, path: None, signature: None, started: 0 };
         assert_eq!((nameless.describe(), nameless.name(), nameless.key(), nameless.identified()), ("pid 9".into(), String::new(), "pid 9".into(), false));
