@@ -5,7 +5,7 @@
 import { AppState, Page } from "../state.slint";
 import { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError } from "../downloads.slint";
 import { Look } from "../look.slint";
-import { Icon, Spinner, Field, PrimaryButton, Heading, Paragraph, Link } from "../widgets.slint";
+import { Icon, Spinner, Field, PrimaryButton, Heading, Paragraph, Link, Logo } from "../widgets.slint";
 import { PageFrame } from "frame.slint";
 import { SmallButton } from "rows.slint";
 import { KeyScope } from "../chat.slint";
@@ -17,6 +17,8 @@ export global DownloadWords {
         if status == ServerStatus.checking { return @tr("Checking…"); }
         if status == ServerStatus.password-rejected { return @tr("Password rejected"); }
         if status == ServerStatus.not-reachable { return @tr("Not reachable"); }
+        if status == ServerStatus.key-unchecked { return @tr("Key not checked"); }
+        if status == ServerStatus.key-changed { return @tr("Key changed"); }
         return "";
     }
 
@@ -30,7 +32,8 @@ export global DownloadWords {
         if problem == Problem.connection { return @tr("The connection was lost"); }
         if problem == Problem.disk { return @tr("The file could not be written"); }
         if problem == Problem.missing { return @tr("The server has no such file or folder"); }
-        if problem == Problem.key-changed { return @tr("The server's SSH key is not the one it showed before: another server, or something between you and it"); }
+        if problem == Problem.key-unchecked { return @tr("Not connected: you didn’t trust the server’s key. Your password wasn’t sent."); }
+        if problem == Problem.key-changed { return @tr("Not connected. This server’s key has changed."); }
         return "";
     }
 
@@ -42,13 +45,14 @@ export global DownloadWords {
         if problem == Problem.unreadable { return @tr("the server did not answer with the file"); }
         if problem == Problem.disk { return @tr("the file could not be written"); }
         if problem == Problem.missing { return @tr("the server has no such file"); }
-        if problem == Problem.key-changed { return @tr("the server's SSH key changed"); }
+        if problem == Problem.key-changed { return @tr("the server’s key changed"); }
         return @tr("the server closed the connection");
     }
 
     public pure function transfer(row: TransferRow) -> string {
         if row.state == TransferState.waiting { return @tr("Waiting · {0}", row.total); }
         if row.state == TransferState.done { return @tr("Done · {0}", row.total); }
+        if row.state == TransferState.stopped && row.problem == Problem.key-unchecked { return @tr("Paused until you check the server’s key. {0} of {1} kept.", row.done, row.total); }
         if row.state == TransferState.stopped { return @tr("Stopped: {0}. {1} of {2} kept.", reason(row.problem, row.detail), row.done, row.total); }
         if row.waiting != 0 { return @tr("Server busy (HTTP {0}), trying again…", row.waiting); }
         if row.speed == "" { return @tr("{0} of {1}", row.done, row.total); }
@@ -365,7 +369,7 @@ component ServerItem inherits Rectangle {
                 }
                 Text {
                     text: DownloadWords.status(root.server.status);
-                    color: root.server.status == ServerStatus.password-rejected ? Look.danger : Look.faint;
+                    color: root.server.status == ServerStatus.password-rejected || root.server.status == ServerStatus.key-changed ? Look.danger : Look.faint;
                     font-size: 12px;
                     line-height-factor: Look.leading(1.45);
                 }
@@ -658,6 +662,8 @@ component TransferItem inherits Rectangle {
     in property <TransferRow> item;
     callback menu(length, length);
     property <bool> live: item.state == TransferState.active || item.state == TransferState.waiting;
+    // Paused for the server's key to be checked (the eighth round): Check key instead of Retry.
+    property <bool> key-stopped: item.state == TransferState.stopped && (item.problem == Problem.key-unchecked || item.problem == Problem.key-changed);
     height: content.preferred-height;
     border-radius: Look.radius;
     background: touch.has-hover ? Look.sel : transparent;
@@ -710,12 +716,12 @@ component TransferItem inherits Rectangle {
             }
             Paragraph {
                 text: DownloadWords.transfer(root.item);
-                color: root.item.state == TransferState.stopped ? Look.danger : Look.muted;
+                color: root.item.state == TransferState.stopped ? (root.item.problem == Problem.key-unchecked ? Look.accent-ink : Look.danger) : Look.muted;
                 font-size: 12px;
                 line-height-factor: Look.leading(1.45);
             }
         }
-        if root.live: VerticalLayout {
+        if root.live || root.key-stopped: VerticalLayout {
             alignment: start;
             Rectangle {
                 width: max(24px, cross.preferred-width + 4px);
@@ -731,7 +737,11 @@ component TransferItem inherits Rectangle {
                 cancel := TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
-                        Downloads.cancel(root.item.id);
+                        if root.key-stopped {
+                            Downloads.remove-transfer(root.item.id);
+                        } else {
+                            Downloads.cancel(root.item.id);
+                        }
                     }
                 }
             }
@@ -745,12 +755,21 @@ component TransferItem inherits Rectangle {
                 }
             }
         }
-        if root.item.state == TransferState.stopped: VerticalLayout {
+        if root.item.state == TransferState.stopped && !root.key-stopped: VerticalLayout {
             alignment: start;
             TinyButton {
                 text: @tr("Retry");
                 clicked => {
                     Downloads.retry(root.item.id);
+                }
+            }
+        }
+        if root.key-stopped: VerticalLayout {
+            alignment: start;
+            TinyButton {
+                text: @tr("Check key");
+                clicked => {
+                    Downloads.check-key-transfer(root.item.id);
                 }
             }
         }
@@ -826,6 +845,279 @@ component FormField {
             text: root.hint;
             color: Look.faint;
             font-size: 12px;
+        }
+    }
+}
+
+// The answers of the key dialog: the safe one is filled; Trust new key, the unsafe one when the
+// key changed, is an outline in the danger colour.
+component AnswerButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> primary;
+    in property <bool> danger;
+    callback clicked();
+    height: 38px;
+    width: label.preferred-width + 36px;
+    border-radius: Look.button-radius;
+    background: primary ? (touch.has-hover ? Look.accent.mix(Look.text, 0.88) : Look.accent) : touch.has-hover ? Look.sel : danger ? transparent : Look.field;
+    border-width: primary ? 0px : 1px;
+    border-color: danger ? Look.danger : Look.line-strong;
+
+    label := Text {
+        text: root.text;
+        color: root.primary ? Look.on-accent : root.danger ? Look.danger : Look.text;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A key's fingerprint in the dialog, with what it is and a Copy link: the one shown now, or the
+// one trusted before; the new one, when the key changed, is outlined in the danger colour.
+component FingerprintBox inherits VerticalLayout {
+    in property <string> label;
+    in property <string> fingerprint;
+    in property <bool> warn;
+    in property <string> which;             // "new" or "old": what Copy copies (Downloads.key-copied)
+    spacing: 6px;
+    HorizontalLayout {
+        spacing: 8px;
+        Text {
+            horizontal-stretch: 1;
+            text: root.label;
+            color: root.warn ? Look.danger : Look.muted;
+            font-size: 13px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        Link {
+            text: Downloads.key-copied == root.which ? @tr("Copied") : @tr("Copy");
+            font-size: 13px;
+            font-weight: 500;
+            clicked => {
+                Downloads.copy-fingerprint(root.which);
+            }
+        }
+    }
+    Rectangle {
+        border-radius: Look.radius;
+        background: Look.side;
+        border-width: root.warn ? 1.5px : Look.field-border;
+        border-color: root.warn ? Look.danger : Look.line;
+        VerticalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 10px;
+            padding-bottom: 10px;
+            Paragraph {
+                text: root.fingerprint;
+                color: Look.text;
+                font-family: Look.mono;
+                font-size: 13px;
+                line-height-factor: Look.leading(1.5);
+                wrap: char-wrap;
+            }
+        }
+    }
+}
+
+// An SFTP server's key, to trust or not (the design's eighth round): FinchGram and the server,
+// the question, the key's fingerprint (and the one trusted before, when it changed), a word on
+// what has been sent (nothing), and the two answers, the safe one filled. ⏎ is the filled one,
+// Esc the other; the page behind is dimmed and keeps its clicks. It follows the AI access dialog.
+component KeyDialog inherits Rectangle {
+    property <bool> changed: Downloads.key-ask-changed;
+    background: #00000059;
+
+    // Clicks on the backdrop stay there.
+    TouchArea { }
+
+    KeyScope {
+        enter => {
+            if root.changed {
+                Downloads.refuse-key();
+            } else {
+                Downloads.trust-key();
+            }
+        }
+        escape => {
+            Downloads.refuse-key();
+        }
+    }
+
+    box := Rectangle {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        width: min(480px, parent.width - 48px);
+        height: body.preferred-height;
+        border-radius: Look.dialog-radius;
+        background: Look.bg;
+        border-width: 1px;
+        border-color: Look.line-strong;
+        drop-shadow-blur: 80px;
+        drop-shadow-offset-y: 30px;
+        drop-shadow-color: #00000057;
+
+        TouchArea { }
+
+        body := VerticalLayout {
+            padding-left: 26px;
+            padding-right: 26px;
+            padding-top: 26px;
+            padding-bottom: 20px;
+            spacing: 18px;
+            HorizontalLayout {
+                spacing: 12px;
+                alignment: start;
+                Logo {
+                    size: 44px;
+                    radius: Look.logo-radius;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: root.changed ? "warning" : "arrows-left-right";
+                        size: 18px;
+                        color: root.changed ? Look.danger : Look.faint;
+                    }
+                }
+                Rectangle {
+                    width: 44px;
+                    height: 44px;
+                    border-radius: Look.radius;
+                    background: root.changed ? transparent : Look.soft;
+                    border-width: root.changed ? 1.5px : 0px;
+                    border-color: Look.danger;
+                    Icon {
+                        name: "hard-drives";
+                        size: 22px;
+                        color: root.changed ? Look.danger : Look.soft-ink;
+                    }
+                }
+            }
+            VerticalLayout {
+                spacing: 6px;
+                Paragraph {
+                    text: Look.heading-prefix + (root.changed ? @tr("This server’s key has changed") : @tr("Trust this server’s key?"));
+                    color: Look.text;
+                    font-size: 18px;
+                    font-weight: 600;
+                    letter-spacing: Look.heading-tracking * 18px;
+                    line-height-factor: Look.leading(1.35);
+                }
+                Paragraph {
+                    text: root.changed ? @tr("It isn’t the server you connected to before, or someone is between you and it.")
+                        : @tr("This is the first time you connect to this server. Compare the fingerprint with the one its owner gave you. If you can’t, don’t continue.");
+                    color: root.changed ? Look.danger : Look.muted;
+                    font-size: 14px;
+                    line-height-factor: Look.leading(1.5);
+                }
+            }
+            HorizontalLayout {
+                spacing: 12px;
+                Text {
+                    width: 64px;
+                    text: @tr("Server");
+                    color: Look.muted;
+                    font-size: 14px;
+                }
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 1px;
+                    alignment: start;
+                    Text {
+                        text: Downloads.key-ask-name;
+                        color: Look.text;
+                        font-size: 14px;
+                        font-weight: 600;
+                        overflow: elide;
+                    }
+                    Paragraph {
+                        text: Downloads.key-ask-address;
+                        color: Look.muted;
+                        font-family: Look.mono;
+                        font-size: 13px;
+                        wrap: char-wrap;
+                    }
+                }
+            }
+            if root.changed: FingerprintBox {
+                label: Downloads.key-ask-old-since == "" ? @tr("Trusted earlier · {0}", Downloads.key-ask-old-type)
+                    : @tr("Trusted since {0} · {1}", Downloads.key-ask-old-since, Downloads.key-ask-old-type);
+                fingerprint: Downloads.key-ask-old-fingerprint;
+                which: "old";
+            }
+            FingerprintBox {
+                label: root.changed ? @tr("Shown now · {0}", Downloads.key-ask-type) : @tr("{0} key · SHA256 fingerprint", Downloads.key-ask-type);
+                fingerprint: Downloads.key-ask-fingerprint;
+                warn: root.changed;
+                which: "new";
+            }
+            HorizontalLayout {
+                spacing: 8px;
+                alignment: start;
+                VerticalLayout {
+                    alignment: start;
+                    padding-top: 1px;
+                    Icon {
+                        name: root.changed ? "info" : "lock-simple";
+                        size: 15px;
+                        color: Look.muted;
+                    }
+                }
+                Paragraph {
+                    text: root.changed ? @tr("Nothing has been sent. If the owner says the key changed, check the new fingerprint with them first.")
+                        : @tr("Your password isn’t sent until you trust the key.");
+                    color: Look.muted;
+                    font-size: 13px;
+                    line-height-factor: Look.leading(1.5);
+                }
+            }
+            VerticalLayout {
+                spacing: 8px;
+                padding-top: 2px;
+                // Terminal says what Esc does, as its other dialogs do.
+                if Look.terminal: Text {
+                    text: root.changed ? @tr("esc  don’t connect") : @tr("esc  cancel");
+                    color: Look.faint;
+                    font-family: Look.mono;
+                    font-size: 12px;
+                }
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: 10px;
+                    if !root.changed: AnswerButton {
+                        text: @tr("Cancel");
+                        clicked => {
+                            Downloads.refuse-key();
+                        }
+                    }
+                    if root.changed: AnswerButton {
+                        text: @tr("Trust new key");
+                        danger: true;
+                        clicked => {
+                            Downloads.trust-key();
+                        }
+                    }
+                    AnswerButton {
+                        text: (root.changed ? @tr("Don’t connect") : @tr("Trust and continue")) + Look.enter-hint;
+                        primary: true;
+                        clicked => {
+                            if root.changed {
+                                Downloads.refuse-key();
+                            } else {
+                                Downloads.trust-key();
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -1255,6 +1547,42 @@ export component DownloadsPage inherits Rectangle {
                     }
                 }
 
+                // An SFTP server whose key waits to be checked (the eighth round): nothing is
+                // listed until it is trusted; Check key asks again.
+                if root.has-head && Downloads.folder-state == FolderState.key-wait: VerticalLayout {
+                    padding-top: 120px;
+                    spacing: 14px;
+                    alignment: start;
+                    HorizontalLayout {
+                        alignment: center;
+                        Icon {
+                            name: Downloads.key-wait-changed ? "warning" : "key";
+                            size: 32px;
+                            color: Downloads.key-wait-changed ? Look.danger : Look.muted;
+                        }
+                    }
+                    HorizontalLayout {
+                        alignment: center;
+                        Paragraph {
+                            max-width: 380px;
+                            text: Downloads.key-wait-changed ? @tr("Not connected. This server’s key has changed.") : @tr("Not connected yet. Check this server’s key first.");
+                            color: Look.text;
+                            font-size: 15px;
+                            horizontal-alignment: center;
+                            line-height-factor: Look.leading(1.5);
+                        }
+                    }
+                    HorizontalLayout {
+                        alignment: center;
+                        SmallButton {
+                            text: @tr("Check key");
+                            clicked => {
+                                Downloads.check-key();
+                            }
+                        }
+                    }
+                }
+
                 // No server yet: what this page is for.
                 if !Downloads.form-open && Downloads.current < 0: HorizontalLayout {
                     alignment: start;
@@ -1415,6 +1743,95 @@ export component DownloadsPage inherits Rectangle {
                                 text: DownloadWords.address-hint(Downloads.form-protocol, Downloads.form-address);
                                 color: Look.faint;
                                 font-size: 12px;
+                            }
+                        }
+                        // An SFTP server's key (the eighth round): the one trusted, with its
+                        // fingerprint, since when, and a way to forget it; or that none is yet.
+                        if Downloads.form-protocol == "sftp": VerticalLayout {
+                            spacing: 6px;
+                            Text {
+                                text: @tr("Server key");
+                                color: Look.muted;
+                                font-size: 13px;
+                            }
+                            if Downloads.form-key-known: Rectangle {
+                                border-radius: Look.radius;
+                                background: Look.side;
+                                border-width: Look.field-border;
+                                border-color: Look.line;
+                                VerticalLayout {
+                                    padding-left: 14px;
+                                    padding-right: 14px;
+                                    padding-top: 10px;
+                                    padding-bottom: 10px;
+                                    spacing: 6px;
+                                    Text {
+                                        text: Downloads.form-key-fingerprint;
+                                        color: Look.text;
+                                        font-family: Look.mono;
+                                        font-size: 13px;
+                                        overflow: elide;
+                                    }
+                                    HorizontalLayout {
+                                        spacing: 8px;
+                                        HorizontalLayout {
+                                            horizontal-stretch: 1;
+                                            spacing: 4px;
+                                            alignment: start;
+                                            Text {
+                                                text: Downloads.form-key-type;
+                                                color: Look.text;
+                                                font-size: 12px;
+                                                font-weight: 600;
+                                                vertical-alignment: center;
+                                            }
+                                            if Downloads.form-key-since != "": Text {
+                                                text: "· " + @tr("First seen {0}", Downloads.form-key-since);
+                                                color: Look.faint;
+                                                font-size: 12px;
+                                                vertical-alignment: center;
+                                                overflow: elide;
+                                            }
+                                        }
+                                        Link {
+                                            text: @tr("Forget this key");
+                                            color: Look.danger;
+                                            font-size: 13px;
+                                            font-weight: 600;
+                                            clicked => {
+                                                Downloads.forget-key();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if !Downloads.form-key-known: Rectangle {
+                                border-radius: Look.radius;
+                                border-width: 1px;
+                                border-color: Look.line-strong;
+                                HorizontalLayout {
+                                    padding-left: 14px;
+                                    padding-right: 14px;
+                                    padding-top: 10px;
+                                    padding-bottom: 10px;
+                                    spacing: 8px;
+                                    alignment: start;
+                                    VerticalLayout {
+                                        alignment: start;
+                                        padding-top: 1px;
+                                        Icon {
+                                            name: "key";
+                                            size: 16px;
+                                            color: Look.faint;
+                                        }
+                                    }
+                                    Paragraph {
+                                        text: Downloads.form-key-forgotten ? @tr("Forgotten. You’ll check it again on the next connection.") : @tr("Not seen yet. You’ll check it the first time you connect.");
+                                        color: Look.muted;
+                                        font-size: 13px;
+                                        line-height-factor: Look.leading(1.5);
+                                    }
+                                }
                             }
                         }
                         FormField {
@@ -1875,4 +2292,7 @@ export component DownloadsPage inherits Rectangle {
             }
         }
     }
+
+    // The question about an SFTP server's key, over the page.
+    if Downloads.key-ask-open: KeyDialog { }
 }

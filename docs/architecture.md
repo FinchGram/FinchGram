@@ -485,7 +485,8 @@ row written by anything but FinchGram, or changed since, is not believed. TDLib'
 "tdlib"), since 0.4.18. The rule: preferences go into settings.toml, which stays small and
 readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
 database holds the servers of the downloads page with their passwords (docs/downloads.md), the
-programs allowed or turned away at AI access (docs/mcp.md) and the keys of the SSH servers met;
+programs allowed or turned away at AI access (docs/mcp.md) and the keys of the SSH servers the
+user trusted, with the day (docs/downloads.md);
 what comes after (a download queue that outlives a restart, logs, per-chat settings) gets a table
 when it is built.
 
@@ -497,8 +498,9 @@ without a dialog; a file from a newer FinchGram is refused with a message, so th
 layout stays as it is. Steps add columns with defaults wherever they can, so that an older
 FinchGram still opens a newer file. The file of 0.5.9 and before is not read: it is moved into
 that backup folder and a new file made, at the maintainer's word (the app had six stars that day).
-Layout 2 (after 0.6.2) sealed the passwords to their servers and gave the programs' rows their tag;
-the rows of before were dropped, since nothing vouched for them, so every program asked again once.
+Layout 2 (after 0.6.2) sealed the passwords to their servers, gave the programs' rows their tag
+(the rows of before were dropped, since nothing vouched for them, so every program asked again
+once) and the SSH servers' keys the day they were trusted.
 Settings keys are never renamed without a serde alias, and the Keychain items keep their names.
 
 ## Platforms

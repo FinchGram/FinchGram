@@ -3,8 +3,10 @@
 // (src/downloads/) and does what its callbacks ask; the page (pages/downloads.slint) shows it in
 // every theme. FinchGram only reads from a server: nothing is uploaded, synced, renamed or deleted.
 
-// Whether a server answers: asked when the page opens, and whenever the server is looked at.
-export enum ServerStatus { unknown, checking, connected, password-rejected, not-reachable }
+// Whether a server answers: asked when the page opens, and whenever the server is looked at. An
+// SFTP server's key not trusted yet, or not the trusted one, is a state of its own (the eighth
+// round): nothing goes to it until the user has checked the key.
+export enum ServerStatus { unknown, checking, connected, password-rejected, not-reachable, key-unchecked, key-changed }
 
 export struct ServerRow {
     name: string,
@@ -13,12 +15,13 @@ export struct ServerRow {
     status: ServerStatus,
 }
 
-// Why a folder could not be read, a server not reached, or a file not fetched.
-export enum Problem { none, password, forbidden, unreachable, http, unreadable, connection, disk, missing, key-changed }
+// Why a folder could not be read, a server not reached, or a file not fetched. key-unchecked: the
+// SFTP server's key waits for the user's trust; key-changed: it is not the one trusted.
+export enum Problem { none, password, forbidden, unreachable, http, unreadable, connection, disk, missing, key-changed, key-unchecked }
 
 // What the middle column shows of the folder: a spinner, its entries (none for an empty folder),
-// or why it could not be read.
-export enum FolderState { loading, listed, error }
+// why it could not be read, or that the server's key waits to be checked (key-wait).
+export enum FolderState { loading, listed, error, key-wait }
 
 export struct FolderEntry {
     name: string,
@@ -62,6 +65,7 @@ export global Downloads {
     in-out property <FolderState> folder-state: FolderState.loading;
     in-out property <Problem> problem;              // when folder-state is error
     in-out property <string> problem-detail;        // the host, or an HTTP code
+    in-out property <bool> key-wait-changed;        // when folder-state is key-wait: the key changed (else not trusted yet)
     in-out property <[FolderEntry]> entries;        // those the filter lets through, folders first
     in-out property <bool> has-entries;             // the folder is not empty (the filter may hide them all)
     in-out property <string> filter;
@@ -94,6 +98,25 @@ export global Downloads {
     in-out property <bool> test-probed;             // there was a file to ask that of
     in-out property <Problem> test-problem;
     in-out property <string> test-detail;
+    // An SFTP server's key, in the form: the one trusted, or that none is yet.
+    in-out property <bool> form-key-known;
+    in-out property <string> form-key-type;         // "ED25519"
+    in-out property <string> form-key-fingerprint;  // "SHA256:…"
+    in-out property <string> form-key-since;        // "Oct 3, 2026"; "" when the day is not known
+    in-out property <bool> form-key-forgotten;      // Forget this key was pressed: the next connection asks again
+
+    // The question about an SFTP server's key (the eighth round), over the page while it is open:
+    // the key the server showed, and the one trusted before when it is another.
+    in-out property <bool> key-ask-open;
+    in-out property <bool> key-ask-changed;         // not the trusted key; else the server's first
+    in-out property <string> key-ask-name;          // the server's name
+    in-out property <string> key-ask-address;       // "host:port"
+    in-out property <string> key-ask-type;          // "ED25519"
+    in-out property <string> key-ask-fingerprint;   // "SHA256:…", the key shown now
+    in-out property <string> key-ask-old-type;
+    in-out property <string> key-ask-old-fingerprint;
+    in-out property <string> key-ask-old-since;     // "Oct 3, 2026"; "" when the day is not known
+    in-out property <string> key-copied;            // "new" or "old" for a moment after Copy; "" otherwise
 
     callback opened();                              // the page is shown
     callback select-server(int);
@@ -125,4 +148,10 @@ export global Downloads {
     callback submit-form();                         // Add, or Save
     callback cancel-form();
     callback remove-from-form();                    // editing: the server goes
+    callback forget-key();                          // the form's Forget this key
+    callback check-key();                           // the folder's Check key: the server is asked for its key again
+    callback check-key-transfer(int);               // a download's Check key, by id
+    callback trust-key();                           // the dialog: the key shown is the server's from now
+    callback refuse-key();                          // the dialog: nothing is sent
+    callback copy-fingerprint(string);              // the dialog: "new" or "old"
 }

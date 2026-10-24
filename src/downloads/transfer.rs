@@ -206,8 +206,10 @@ pub enum Error {
     Protocol(String),
     /// The file is not there any more (FTP's 550, SFTP's no such file).
     Missing,
-    /// An SSH server showed another key than the one it was first met with (sftp.rs).
-    KeyChanged,
+    /// An SSH server showed another key than the one the user trusted (sftp.rs). The key shown.
+    KeyChanged(String),
+    /// An SSH server not trusted yet showed its key (sftp.rs): the user is asked first. The key.
+    KeyUnknown(String),
 }
 
 impl fmt::Display for Error {
@@ -221,7 +223,8 @@ impl fmt::Display for Error {
             Error::Disk(why) => write!(f, "the file could not be written: {why}"),
             Error::Protocol(why) => write!(f, "{why}"),
             Error::Missing => write!(f, "the server has no such file"),
-            Error::KeyChanged => write!(f, "the server's key is not the one it showed before"),
+            Error::KeyChanged(_) => write!(f, "the server's key is not the one it showed before"),
+            Error::KeyUnknown(_) => write!(f, "the server's key is not trusted yet"),
         }
     }
 }

@@ -3,7 +3,8 @@
 //! It holds what FinchGram keeps that is neither a preference (settings.toml is for those, and
 //! only those) nor Telegram's (that is TDLib's database): the servers of the downloads page with
 //! their passwords, the programs the user has allowed or turned away at AI access, and the keys
-//! of the SSH servers met. Only the password column is sealed (AES-256-GCM, `cipher` below) under
+//! of the SSH servers the user trusted, with when. Only the password column is sealed
+//! (AES-256-GCM, `cipher` below) under
 //! a random key made the first time and kept in the Keychain under FinchGram's name
 //! (platform::KEYCHAIN_SERVICE, the account "database"), where only this app reads it; every
 //! other column is in the clear. TDLib's database key is kept the same way (src/telegram/mod.rs).
@@ -39,7 +40,8 @@ const KEY_ACCOUNT: &str = "database";
 /// 1 (0.6.0): `servers` (protocol, address, port; the password sealed), `mcp_apps`, `ssh_hosts`.
 /// 2 (after 0.6.2): the password sealed to its server (v2 of `cipher`), the passwords of layout 1
 ///    sealed again that way; `mcp_apps.seal`, the row's tag, the rows of before dropped (every
-///    program asks again, once).
+///    program asks again, once); `ssh_hosts.first_seen`, when the user trusted the key (0 for one
+///    that 0.6.2 or before took on its own, without asking).
 pub const LAYOUT: i32 = 2;
 
 /// The tables of layout 1, as 0.6.0 made them.
@@ -248,9 +250,13 @@ fn upgrade(connection: &Connection, from: i32, key: &[u8; 32]) -> Result<(), Str
                 2 => {
                     // The programs' rows get their tag. The rows of before were open to anything
                     // that could write the file, so none of them is carried over: each program
-                    // asks again, once. The passwords are sealed to their servers.
+                    // asks again, once. The passwords are sealed to their servers. The SSH
+                    // servers' keys get the day they were trusted; the ones of before keep 0.
                     connection
-                        .execute_batch("ALTER TABLE mcp_apps ADD COLUMN seal TEXT NOT NULL DEFAULT ''; DELETE FROM mcp_apps;")
+                        .execute_batch(
+                            "ALTER TABLE mcp_apps ADD COLUMN seal TEXT NOT NULL DEFAULT ''; DELETE FROM mcp_apps;
+                             ALTER TABLE ssh_hosts ADD COLUMN first_seen INTEGER NOT NULL DEFAULT 0;",
+                        )
                         .map_err(|err| err.to_string())?;
                     reseal_servers(connection, key)
                 }
@@ -479,29 +485,57 @@ fn write_servers(connection: &Connection, servers: &[ServerRecord]) -> rusqlite:
 
 // ---- the SSH servers' keys ---------------------------------------------------------------------
 
-/// The public key an SSH server showed when it was first met, in OpenSSH's one-line form; none
-/// for a server not met yet.
-pub fn ssh_host_key(host: &str, port: u16) -> Option<String> {
-    with(|connection| read_ssh_host_key(connection, host, port)).unwrap_or_else(|err| {
+/// The key an SSH server is trusted by (src/downloads/sftp.rs), and since when.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct SshHost {
+    /// The public key, in OpenSSH's one-line form.
+    pub key: String,
+    /// When the user trusted it, in seconds since the epoch; 0 for a key that FinchGram 0.6.2 or
+    /// before took on its own, without asking.
+    pub first_seen: i64,
+}
+
+/// The key the SSH server at `host`:`port` is trusted by; none for a server not trusted yet.
+pub fn ssh_host(host: &str, port: u16) -> Option<SshHost> {
+    with(|connection| read_ssh_host(connection, host, port)).unwrap_or_else(|err| {
         eprintln!("database: cannot read a server's key: {err}");
         None
     })
 }
 
-/// Remember `key` as the server's, in place of what was kept before.
-pub fn save_ssh_host_key(host: &str, port: u16, key: &str) -> Result<(), String> {
-    with(|connection| {
-        connection
-            .execute(
-                "INSERT INTO ssh_hosts (host, port, key) VALUES (?1, ?2, ?3) ON CONFLICT(host, port) DO UPDATE SET key = excluded.key",
-                params![host, i64::from(port), key],
-            )
-            .map(|_| ())
-    })
+/// Trust `key` as the server's, from now, in place of what was kept before; the date stays when
+/// the key is the one kept already.
+pub fn trust_ssh_host(host: &str, port: u16, key: &str) -> Result<(), String> {
+    with(|connection| write_ssh_host(connection, host, port, key, chrono::Local::now().timestamp()))
 }
 
-fn read_ssh_host_key(connection: &Connection, host: &str, port: u16) -> rusqlite::Result<Option<String>> {
-    connection.query_row("SELECT key FROM ssh_hosts WHERE host = ?1 AND port = ?2", params![host, i64::from(port)], |row| row.get(0)).optional()
+/// The server's key forgotten: the next connection asks the user about the key it shows.
+pub fn forget_ssh_host(host: &str, port: u16) -> Result<(), String> {
+    with(|connection| delete_ssh_host(connection, host, port))
+}
+
+fn read_ssh_host(connection: &Connection, host: &str, port: u16) -> rusqlite::Result<Option<SshHost>> {
+    connection
+        .query_row("SELECT key, first_seen FROM ssh_hosts WHERE host = ?1 AND port = ?2", params![host, i64::from(port)], |row| {
+            Ok(SshHost { key: row.get(0)?, first_seen: row.get(1)? })
+        })
+        .optional()
+}
+
+fn write_ssh_host(connection: &Connection, host: &str, port: u16, key: &str, now: i64) -> rusqlite::Result<()> {
+    connection
+        .execute(
+            "INSERT INTO ssh_hosts (host, port, key, first_seen) VALUES (?1, ?2, ?3, ?4)
+             ON CONFLICT(host, port) DO UPDATE SET
+                 first_seen = CASE WHEN ssh_hosts.key = excluded.key THEN ssh_hosts.first_seen ELSE excluded.first_seen END,
+                 key = excluded.key",
+            params![host, i64::from(port), key, now],
+        )
+        .map(|_| ())
+}
+
+fn delete_ssh_host(connection: &Connection, host: &str, port: u16) -> rusqlite::Result<()> {
+    connection.execute("DELETE FROM ssh_hosts WHERE host = ?1 AND port = ?2", params![host, i64::from(port)]).map(|_| ())
 }
 
 // ---- the programs at AI access -----------------------------------------------------------------
@@ -619,6 +653,7 @@ mod tests {
         connection
             .execute("INSERT INTO mcp_apps (key, path, name, allowed, last_used) VALUES ('Q6L2SF6YDW/com.anthropic.claude-code', '/x', 'claude', 1, 10)", [])
             .expect("a program");
+        connection.execute("INSERT INTO ssh_hosts (host, port, key) VALUES ('sb-ams.example.net', 22, 'ssh-ed25519 AAAA1')", []).expect("a key");
         connection.execute_batch("PRAGMA user_version = 1;").expect("stamped");
     }
 
@@ -765,6 +800,8 @@ mod tests {
         // The programs of before are not carried over: nothing vouches for their rows.
         assert_eq!(read_mcp_apps(&connection, &key).expect("read"), vec![]);
         assert_eq!(connection.query_row("SELECT count(*) FROM mcp_apps", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
+        // A server's key taken on by 0.6.2 stays trusted, with no day to it.
+        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), Some(SshHost { key: "ssh-ed25519 AAAA1".into(), first_seen: 0 }));
         // The file as it was is in the backup folder, the password sealed as before.
         let copies: Vec<PathBuf> = std::fs::read_dir(&backup).expect("the backup folder").flatten().map(|entry| entry.path()).collect();
         assert_eq!(copies.len(), 1);
@@ -863,21 +900,25 @@ mod tests {
     }
 
     #[test]
-    fn ssh_servers_keys_are_kept_by_host_and_port() {
+    fn ssh_servers_keys_are_kept_by_host_and_port_with_the_day_they_were_trusted() {
         let (path, backup) = scratch("ssh");
         let connection = open_at(&path, &a_key(10), &backup).expect("a new database");
-        assert_eq!(read_ssh_host_key(&connection, "sb-ams.example.net", 22).expect("read"), None);
-        let save = |host: &str, port: u16, key: &str| {
-            connection
-                .execute("INSERT INTO ssh_hosts (host, port, key) VALUES (?1, ?2, ?3) ON CONFLICT(host, port) DO UPDATE SET key = excluded.key", params![host, i64::from(port), key])
-                .expect("saved")
-        };
-        save("sb-ams.example.net", 22, "ssh-ed25519 AAAA1");
-        save("sb-ams.example.net", 2222, "ssh-ed25519 AAAA2");
-        assert_eq!(read_ssh_host_key(&connection, "sb-ams.example.net", 22).expect("read"), Some("ssh-ed25519 AAAA1".into()));
-        assert_eq!(read_ssh_host_key(&connection, "sb-ams.example.net", 2222).expect("read"), Some("ssh-ed25519 AAAA2".into()));
-        save("sb-ams.example.net", 22, "ssh-ed25519 BBBB");
-        assert_eq!(read_ssh_host_key(&connection, "sb-ams.example.net", 22).expect("read"), Some("ssh-ed25519 BBBB".into()));
+        let host = |key: &str, first_seen: i64| Some(SshHost { key: key.into(), first_seen });
+        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), None);
+        write_ssh_host(&connection, "sb-ams.example.net", 22, "ssh-ed25519 AAAA1", 1_000).expect("trusted");
+        write_ssh_host(&connection, "sb-ams.example.net", 2222, "ssh-ed25519 AAAA2", 2_000).expect("trusted");
+        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), host("ssh-ed25519 AAAA1", 1_000));
+        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 2222).expect("read"), host("ssh-ed25519 AAAA2", 2_000));
+        // Trusted again, the same key: the day stays. Another key: the day is this one.
+        write_ssh_host(&connection, "sb-ams.example.net", 22, "ssh-ed25519 AAAA1", 3_000).expect("trusted again");
+        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), host("ssh-ed25519 AAAA1", 1_000));
+        write_ssh_host(&connection, "sb-ams.example.net", 22, "ssh-ed25519 BBBB", 4_000).expect("a new key");
+        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), host("ssh-ed25519 BBBB", 4_000));
+        // Forgotten: nothing is known, and forgetting twice is nothing.
+        delete_ssh_host(&connection, "sb-ams.example.net", 22).expect("forgotten");
+        delete_ssh_host(&connection, "sb-ams.example.net", 22).expect("forgotten again");
+        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), None);
+        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 2222).expect("read"), host("ssh-ed25519 AAAA2", 2_000));
         drop(connection);
         let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
     }

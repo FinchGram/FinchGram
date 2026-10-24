@@ -1909,10 +1909,17 @@ fn fill_downloads(ui: &MainWindow) {
     downloads.set_form_editing(false);
     downloads.set_form_error(FormError::None);
     downloads.set_test_state(TestState::None);
+    downloads.set_form_key_known(false);
+    downloads.set_form_key_forgotten(false);
+    downloads.set_key_wait_changed(false);
+    downloads.set_key_ask_open(false);
+    downloads.set_key_copied(SharedString::new());
 }
 
 /// The Downloads page's scenes: browsing, the queue hidden, a file's menu, the folder loading,
-/// empty and unreadable, the form for a new server and for one being edited, and no server yet.
+/// empty and unreadable, the form for a new server and for one being edited, an SFTP server's key
+/// asked about (first met, changed, the folder waiting, the form, a download paused on it), and
+/// no server yet.
 fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: &dyn Fn(&str) -> String) {
     let app = ui.global::<AppState>();
     let downloads = ui.global::<Downloads>();
@@ -1992,6 +1999,94 @@ fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name
     save(window, &name("downloads-edit-refused"));
     downloads.set_test_state(TestState::None);
     downloads.set_form_open(false);
+    // The eighth round: an SFTP server's key. Met for the first time: the folder waits for the key
+    // to be checked, and the dialog asks, with its fingerprint.
+    let server = |name: &str, host: &str, protocol: &str, status: ServerStatus| ServerRow { name: name.into(), host: host.into(), protocol: protocol.into(), status };
+    let transfer = |id: i32, name: &str, icon: &str, state: TransferState, fraction: f32, done: &str, total: &str, speed: &str, seconds: i32, problem: Problem| TransferRow {
+        id,
+        name: name.into(),
+        icon: icon.into(),
+        state,
+        fraction,
+        done: done.into(),
+        total: total.into(),
+        speed: speed.into(),
+        seconds_left: seconds,
+        minutes_left: if seconds < 0 { -1 } else { (seconds + 59) / 60 },
+        problem,
+        detail: SharedString::new(),
+        waiting: 0,
+    };
+    let seedbox = |status: ServerStatus| {
+        model(vec![
+            server("Home NAS", "nas.home", "WebDAV", ServerStatus::Connected),
+            server("Studio", "files.studio.example", "FTPS", ServerStatus::Connected),
+            server("Seedbox", "sb-ams.example.net", "SFTP", status),
+        ])
+    };
+    let (old_key, new_key) = ("SHA256:k7Vq2mXbR9fN4tLw0pHcY8sJdE1aUo6iZgT3vKxQn5M", "SHA256:Hc2pL0wq9ZrT7yBn4kVdM1sXeG6uJa8fQiR3oN5tYbE");
+    downloads.set_servers(seedbox(ServerStatus::KeyUnchecked));
+    downloads.set_current(2);
+    downloads.set_crumbs(model(vec!["Seedbox".into()]));
+    downloads.set_title("Seedbox".into());
+    downloads.set_folder_state(FolderState::KeyWait);
+    downloads.set_key_wait_changed(false);
+    downloads.set_entries(model(Vec::new()));
+    downloads.set_has_entries(false);
+    downloads.set_key_ask_name("Seedbox".into());
+    downloads.set_key_ask_address("sb-ams.example.net:22".into());
+    downloads.set_key_ask_type("ED25519".into());
+    downloads.set_key_ask_fingerprint(old_key.into());
+    downloads.set_key_ask_changed(false);
+    downloads.set_key_ask_open(true);
+    save(window, &name("downloads-key-new"));
+    // The key changed: the one trusted and the one shown now, the safe answer in front.
+    downloads.set_servers(seedbox(ServerStatus::KeyChanged));
+    downloads.set_key_wait_changed(true);
+    downloads.set_key_ask_changed(true);
+    downloads.set_key_ask_old_type("ED25519".into());
+    downloads.set_key_ask_old_fingerprint(old_key.into());
+    downloads.set_key_ask_old_since("Oct 3, 2026".into());
+    downloads.set_key_ask_fingerprint(new_key.into());
+    save(window, &name("downloads-key-changed"));
+    // Not trusted: the folder says what to do.
+    downloads.set_key_ask_open(false);
+    save(window, &name("downloads-key-wait"));
+    // The SFTP server's form: its key, as trusted.
+    downloads.set_servers(seedbox(ServerStatus::Connected));
+    downloads.set_folder_state(FolderState::Listed);
+    downloads.set_key_wait_changed(false);
+    downloads.set_form_open(true);
+    downloads.set_form_editing(true);
+    downloads.set_form_name("Seedbox".into());
+    downloads.set_form_protocol("sftp".into());
+    downloads.set_form_address("sb-ams.example.net".into());
+    downloads.set_form_port(SharedString::new());
+    downloads.set_form_username("zhouye".into());
+    downloads.set_form_password("saved-password".into());
+    downloads.set_form_key_known(true);
+    downloads.set_form_key_type("ED25519".into());
+    downloads.set_form_key_fingerprint(old_key.into());
+    downloads.set_form_key_since("Oct 3, 2026".into());
+    downloads.set_form_key_forgotten(false);
+    save(window, &name("downloads-key-form"));
+    downloads.set_form_open(false);
+    downloads.set_form_key_known(false);
+    // Downloads paused on a key, beside the others: Check key on their rows.
+    downloads.set_servers(seedbox(ServerStatus::KeyUnchecked));
+    downloads.set_current(0);
+    downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into(), "2026".into()]));
+    downloads.set_title("2026".into());
+    fill_downloads(ui);
+    downloads.set_servers(seedbox(ServerStatus::KeyUnchecked));
+    downloads.set_queue(model(vec![
+        transfer(1, "Dune Part Three (2026).mkv", "film-strip", TransferState::Active, 0.38, "4.1 GB", "10.8 GB", "24.3 MB/s", 275, Problem::None),
+        transfer(2, "poster.jpg", "file-image", TransferState::Waiting, 0.0, "", "2.4 MB", "", -1, Problem::None),
+        transfer(5, "Shogun S01E07 1080p.mkv", "film-strip", TransferState::Stopped, 0.38, "1.3 GB", "3.4 GB", "", -1, Problem::KeyUnchecked),
+        transfer(6, "Shogun S01E08 1080p.mkv", "film-strip", TransferState::Stopped, 0.0, "0 B", "3.5 GB", "", -1, Problem::KeyChanged),
+        transfer(4, "notes.pdf", "file-pdf", TransferState::Done, 1.0, "1.1 MB", "1.1 MB", "", -1, Problem::None),
+    ]));
+    save(window, &name("downloads-key-queue"));
     // No server yet.
     downloads.set_servers(model(Vec::new()));
     downloads.set_current(-1);

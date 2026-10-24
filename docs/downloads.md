@@ -165,11 +165,21 @@ puts one face on the three clients, and the page and the queue do not care which
   clear, and the form says so in red.
 - **SFTP** (`sftp.rs`, over russh and russh-sftp: SSH in Rust, on the downloads' tokio runtime):
   the address is a host and a folder as for FTP, the port 22 unless given; the account signs in
-  with its password (a key waits for another version). The server's key is trusted the first time
-  it is met and kept in the database (`ssh_hosts`, by host and port); a server showing another key
-  later is refused and the page says so, as ssh itself does; and the sessions of one transfer or
-  one folder walk, opened side by side, are all held to the key the first of them met, so that
-  none of them trusts a key of its own. A file comes in 8 MB chunks over up
+  with its password (a key waits for another version). The server's key is shown to the user
+  before the password goes out (the design's eighth round, "SSH 服务器密钥确认"): the first time a
+  server is reached, at Test connection or the first listing, a dialog asks, with the key's kind
+  and its SHA256 fingerprint to compare with the one the server's owner gave, as ssh asks; trusted,
+  the key goes into the database (`ssh_hosts`, by host and port, with the day) and is not asked
+  about again; a server showing another key later is refused the same way, the trusted and the
+  shown fingerprints one above the other, Don't connect the safe answer and Trust new key an
+  outline in red. Not trusted, the folder says "Not connected yet. Check this server's key first"
+  with a Check key button, the server's row "Key not checked" (or "Key changed", in red), and a
+  test "Not connected: you didn't trust the server's key. Your password wasn't sent." A download
+  that meets such a key in the background stops with "Paused until you check the server's key"
+  and a Check key button of its own, without a dialog; trusting the key, from anywhere, lets the
+  downloads paused on it go on. The server's form shows the trusted key (kind, fingerprint, the
+  day) with Forget this key, which has the next connection ask again. The sessions of one transfer
+  or one folder walk share the trusted key, so none of them trusts a key of its own. A file comes in 8 MB chunks over up
   to as many sessions as the connections setting, each its own SSH connection, written at their
   places in the `.part` and marked in the `.part.json` of the WebDAV engine, so a stopped file
   goes on where it was. On a seedbox, SFTP is also the way that does not count against the monthly
@@ -194,8 +204,9 @@ Copy link gives `sftp://me@host:2222/films/film.mkv` or `ftps://…` for those s
   password; the passwords of 0.6.0 to 0.6.2 were sealed again that way at the first start of the
   layout after). Keychain items
   belong to the app's signing identity, and releases are signed with North Brookville LLC's Apple
-  Developer ID (docs/conventions.md), which macOS trusts across updates. The SSH servers' keys are
-  in the `ssh_hosts` table, in the clear. On the wire a WebDAV password is Basic authentication:
+  Developer ID (docs/conventions.md), which macOS trusts across updates. The SSH servers' keys the
+  user trusted are in the `ssh_hosts` table, in the clear, with the day each was trusted (0 for a
+  key 0.6.2 or before took on its own). On the wire a WebDAV password is Basic authentication:
   base64, so plain over http on the LAN, and encrypted only by TLS over https; plain FTP sends it
   in the clear too, FTPS and SFTP never do.
   Versions 0.4.11 to 0.4.13 gave the item an access list open to any application as a way around
@@ -212,10 +223,6 @@ Copy link gives `sftp://me@host:2222/films/film.mkv` or `ftps://…` for those s
   certificate in Keychain Access and set it to Always Trust. A "trust this certificate" choice in
   the app is not built.
 - Basic authentication only: no Digest, no tokens, no proxy settings.
-- SFTP's first contact takes the server's key as it is shown, as ssh does with
-  `StrictHostKeyChecking=accept-new`, and the password goes to whichever server showed it; a check
-  of the fingerprint before that, as ssh asks by default, needs a dialog the design does not have
-  yet.
 - A file is fetched whole before it opens; nothing streams.
 - No sorting of the table beyond folders first and names in order, no sizes of folders.
 

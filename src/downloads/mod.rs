@@ -20,7 +20,7 @@ pub mod transfer;
 pub mod webdav;
 
 use std::cell::RefCell;
-use std::collections::{BTreeSet, VecDeque};
+use std::collections::{BTreeSet, HashMap, VecDeque};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
@@ -40,6 +40,8 @@ use crate::{AppState, Downloads, FolderEntry, FolderState, FormError, MainWindow
 const MOST_ACTIVE: usize = 2;
 /// The speed shown is over this long.
 const SPEED_WINDOW: Duration = Duration::from_secs(10);
+/// "Copied" stays on the key dialog's link this long.
+const COPIED_FOR: Duration = Duration::from_millis(1600);
 
 /// A server as the page keeps it.
 #[derive(Clone)]
@@ -82,8 +84,8 @@ impl Server {
         }
     }
 
-    /// The client for the worker and the downloads, by what the server speaks. An SFTP server's
-    /// known key comes from the database, and one met for the first time is kept there.
+    /// The client for the worker and the downloads, by what the server speaks. An SFTP server
+    /// gets the slot its trusted key is held in (`known_key_slot`), the database's key in it.
     fn remote(&self) -> Remote {
         match self.protocol {
             Protocol::Webdav => {
@@ -97,16 +99,8 @@ impl Server {
             }
             Protocol::Sftp => {
                 let (host, folder) = remote::host_and_folder(&self.address);
-                let known_key = database::ssh_host_key(&host, if self.port == 0 { 22 } else { self.port });
-                let learned: sftp::Learned = Arc::new(|host: &str, port: u16, key: &str| {
-                    let (host, key) = (host.to_string(), key.to_string());
-                    let _ = slint::invoke_from_event_loop(move || {
-                        if let Err(err) = database::save_ssh_host_key(&host, port, &key) {
-                            eprintln!("downloads: cannot keep the server's key: {err}");
-                        }
-                    });
-                });
-                Remote::Sftp(sftp::Server { host, port: self.port, folder, username: self.username.clone(), password: self.password.clone(), known_key: Arc::new(Mutex::new(known_key)), learned })
+                let known_key = known_key_slot(&host, if self.port == 0 { 22 } else { self.port });
+                Remote::Sftp(sftp::Server { host, port: self.port, folder, username: self.username.clone(), password: self.password.clone(), known_key })
             }
         }
     }
@@ -119,6 +113,11 @@ impl Server {
         }
     }
 
+    /// An SFTP server's host and port: what its key is trusted by.
+    fn ssh_host(&self) -> Option<(String, u16)> {
+        (self.protocol == Protocol::Sftp).then(|| (remote::host_and_folder(&self.address).0, if self.port == 0 { 22 } else { self.port }))
+    }
+
     fn row(&self) -> ServerRow {
         ServerRow { name: self.name.clone().into(), host: self.host().into(), protocol: self.protocol.name().into(), status: self.status }
     }
@@ -129,6 +128,8 @@ enum Folder {
     Loading,
     Listed,
     Error(Problem, String),
+    /// Nothing, until the SFTP server's key is trusted: not trusted yet, or `changed`.
+    KeyWait { changed: bool },
 }
 
 /// What a download fetches.
@@ -156,6 +157,12 @@ impl Kind {
             Kind::File { root, .. } | Kind::Folder { root, .. } => root,
         }
     }
+
+    fn remote(&self) -> &Remote {
+        match self {
+            Kind::File { remote, .. } | Kind::Folder { remote, .. } => remote,
+        }
+    }
 }
 
 /// A download in the queue.
@@ -178,6 +185,8 @@ struct Transfer {
     result: Option<PathBuf>,
     /// Shown (a photo or video) or revealed once done: "Open".
     open_when_done: bool,
+    /// The key the SFTP server showed when the download stopped for it to be checked.
+    key_shown: Option<String>,
 }
 
 impl Transfer {
@@ -265,6 +274,10 @@ struct State {
     worker: Option<Sender<Task>>,
     /// The system is told the app is busy while a file is on its way (no App Nap, no sleep).
     activity: Option<platform::Activity>,
+    /// The question about an SFTP server's key, while its dialog is open.
+    key_question: Option<KeyQuestion>,
+    /// Takes "Copied" off the dialog's link again.
+    copied: slint::Timer,
 }
 
 thread_local! {
@@ -291,6 +304,8 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
             editing: None,
             worker: None,
             activity: None,
+            key_question: None,
+            copied: slint::Timer::default(),
         })
     });
     let downloads = ui.global::<Downloads>();
@@ -331,6 +346,12 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     downloads.on_submit_form(submit_form);
     downloads.on_cancel_form(cancel_form);
     downloads.on_remove_from_form(remove_from_form);
+    downloads.on_check_key(check_key);
+    downloads.on_check_key_transfer(check_key_transfer);
+    downloads.on_trust_key(trust_key);
+    downloads.on_refuse_key(refuse_key);
+    downloads.on_copy_fingerprint(|which| copy_fingerprint(&which));
+    downloads.on_forget_key(forget_key);
 }
 
 // ---- reaching the state and the page ----------------------------------------------------------
@@ -469,7 +490,9 @@ fn status_of(error: &Option<remote::Error>) -> ServerStatus {
     match error {
         None => ServerStatus::Connected,
         Some(remote::Error::Unauthorized) => ServerStatus::PasswordRejected,
-        Some(remote::Error::Unreachable(_) | remote::Error::KeyChanged(_)) => ServerStatus::NotReachable,
+        Some(remote::Error::Unreachable(_)) => ServerStatus::NotReachable,
+        Some(remote::Error::KeyUnknown(_)) => ServerStatus::KeyUnchecked,
+        Some(remote::Error::KeyChanged(_)) => ServerStatus::KeyChanged,
         // The root may be forbidden or odd while the server is there.
         Some(_) => ServerStatus::Connected,
     }
@@ -523,9 +546,9 @@ fn listed(request: u64, result: Result<Vec<remote::Entry>, remote::Error>) {
         .map(|ui| ui.global::<AppState>().get_language().to_string())
         .unwrap_or_else(|| "en".to_string());
     let order = platform::NameOrder::new(&language);
-    with_state(|state| {
+    let question = with_state(|state| {
         if request != state.request {
-            return;
+            return None;
         }
         let status = status_of(&result.as_ref().err().cloned());
         if let Some(server) = state.current.and_then(|index| state.servers.get_mut(index)) {
@@ -536,17 +559,28 @@ fn listed(request: u64, result: Result<Vec<remote::Entry>, remote::Error>) {
                 entries.sort_by(|a, b| b.is_dir.cmp(&a.is_dir).then_with(|| order.compare(&a.name, &b.name)));
                 state.entries = entries;
                 state.folder = Folder::Listed;
+                None
             }
             Err(err) => {
-                let host = state.current.and_then(|index| state.servers.get(index)).map(Server::host).unwrap_or_default();
-                let (problem, detail) = problem_of(&err, &host);
                 state.entries.clear();
+                let server = state.current.and_then(|index| state.servers.get(index));
+                // The server's key is to be checked: the folder waits, and the user is asked.
+                if let Some((changed, shown)) = key_problem(&err) {
+                    state.folder = Folder::KeyWait { changed };
+                    return server.and_then(|server| server.ssh_host().map(|(host, port)| (host, port, server.name.clone(), shown)));
+                }
+                let (problem, detail) = problem_of(&err, &server.map(Server::host).unwrap_or_default());
                 state.folder = Folder::Error(problem, detail);
+                None
             }
         }
-    });
+    })
+    .flatten();
     show_servers();
     show_folder();
+    if let Some((host, port, name, shown)) = question {
+        ask_key(host, port, name, shown, KeyThen::List);
+    }
 }
 
 /// Why a server could not be read, as the page says it.
@@ -559,6 +593,7 @@ fn problem_of(error: &remote::Error, host: &str) -> (Problem, String) {
         remote::Error::Unreadable(_) => (Problem::Unreadable, String::new()),
         remote::Error::Missing => (Problem::Missing, String::new()),
         remote::Error::KeyChanged(_) => (Problem::KeyChanged, String::new()),
+        remote::Error::KeyUnknown(_) => (Problem::KeyUnchecked, String::new()),
     }
 }
 
@@ -576,6 +611,7 @@ fn show_folder() {
         state: FolderState,
         problem: Problem,
         detail: String,
+        key_wait_changed: bool,
         rows: Vec<FolderEntry>,
         has_entries: bool,
         selected_count: i32,
@@ -594,6 +630,7 @@ fn show_folder() {
             Folder::Loading => (FolderState::Loading, Problem::None, String::new()),
             Folder::Listed => (FolderState::Listed, Problem::None, String::new()),
             Folder::Error(problem, detail) => (FolderState::Error, *problem, detail.clone()),
+            Folder::KeyWait { .. } => (FolderState::KeyWait, Problem::None, String::new()),
         };
         let now = Local::now();
         let rows: Vec<FolderEntry> = visible(state)
@@ -615,6 +652,7 @@ fn show_folder() {
             state: folder_state,
             problem,
             detail,
+            key_wait_changed: matches!(state.folder, Folder::KeyWait { changed: true }),
             rows,
             has_entries: !state.entries.is_empty(),
             selected_count: chosen.len() as i32,
@@ -629,6 +667,7 @@ fn show_folder() {
         downloads.set_crumbs(ModelRc::new(VecModel::from(shown.crumbs)));
         downloads.set_title(shown.title.into());
         downloads.set_folder_state(shown.state);
+        downloads.set_key_wait_changed(shown.key_wait_changed);
         downloads.set_problem(shown.problem);
         downloads.set_problem_detail(shown.detail.into());
         downloads.set_entries(ModelRc::new(VecModel::from(shown.rows)));
@@ -807,6 +846,7 @@ fn enqueue_entry(name: &str, open: bool) {
             cancel: Arc::new(AtomicBool::new(false)),
             result: None,
             open_when_done: open,
+            key_shown: None,
         });
         Some(true)
     })
@@ -851,6 +891,7 @@ fn enqueue_folder(name: &str) {
             cancel: Arc::new(AtomicBool::new(false)),
             result: None,
             open_when_done: false,
+            key_shown: None,
         });
         Some(true)
     })
@@ -1113,16 +1154,16 @@ fn progressed(id: i32, progress: transfer::Progress) {
 }
 
 fn finished(id: i32, result: Result<PathBuf, transfer::Error>) {
-    let open = with_state(|state| {
+    let (open, key_stop) = with_state(|state| {
         let transfer = state.queue.iter_mut().find(|transfer| transfer.id == id && transfer.state == TransferState::Active)?;
         match result {
             Ok(path) => {
                 transfer.state = TransferState::Done;
                 transfer.done = transfer.total;
                 transfer.result = Some(path.clone());
-                transfer.open_when_done.then_some((path, transfer.icon))
+                Some((transfer.open_when_done.then_some((path, transfer.icon)), None))
             }
-            Err(transfer::Error::Cancelled) => None,
+            Err(transfer::Error::Cancelled) => Some((None, None)),
             Err(err) => {
                 transfer.state = TransferState::Stopped;
                 let (problem, detail) = match &err {
@@ -1133,17 +1174,35 @@ fn finished(id: i32, result: Result<PathBuf, transfer::Error>) {
                     transfer::Error::Disk(_) => (Problem::Disk, String::new()),
                     transfer::Error::Protocol(_) => (Problem::Unreadable, String::new()),
                     transfer::Error::Missing => (Problem::Missing, String::new()),
-                    transfer::Error::KeyChanged => (Problem::KeyChanged, String::new()),
+                    transfer::Error::KeyChanged(_) => (Problem::KeyChanged, String::new()),
+                    transfer::Error::KeyUnknown(_) => (Problem::KeyUnchecked, String::new()),
                     transfer::Error::Cancelled => (Problem::None, String::new()),
                 };
                 eprintln!("downloads: {} stopped: {err}", transfer.name);
                 transfer.problem = problem;
                 transfer.detail = detail;
-                None
+                // Stopped for the server's key to be checked: the key it showed is kept for the
+                // row's Check key, and the server's row says so too. No dialog comes up on its
+                // own: the download started in the background.
+                transfer.key_shown = match &err {
+                    transfer::Error::KeyChanged(shown) | transfer::Error::KeyUnknown(shown) => Some(shown.clone()),
+                    _ => None,
+                };
+                let key_stop = transfer.key_shown.as_ref().and_then(|_| transfer.kind.remote().ssh_host().map(|(host, port)| (host.to_string(), port, problem == Problem::KeyChanged)));
+                Some((None, key_stop))
             }
         }
     })
-    .flatten();
+    .flatten()
+    .unwrap_or((None, None));
+    if let Some((host, port, changed)) = key_stop {
+        with_state(|state| {
+            for index in servers_at(state, &host, port) {
+                state.servers[index].status = if changed { ServerStatus::KeyChanged } else { ServerStatus::KeyUnchecked };
+            }
+        });
+        show_servers();
+    }
     start_next();
     show_queue();
     if let Some((path, icon)) = open {
@@ -1206,6 +1265,7 @@ fn retry(id: i32) {
             transfer.state = TransferState::Waiting;
             transfer.problem = Problem::None;
             transfer.detail.clear();
+            transfer.key_shown = None;
             if let Kind::File { remote, path, name, dest, .. } = &transfer.kind {
                 transfer.done = remote.kept(dest, path, name);
             }
@@ -1285,8 +1345,10 @@ fn add_server() {
         downloads.set_form_password(SharedString::new());
         downloads.set_form_error(FormError::None);
         downloads.set_test_state(TestState::None);
+        downloads.set_form_key_forgotten(false);
         downloads.set_form_open(true);
     });
+    show_form_key();
 }
 
 fn edit_server(index: i32) {
@@ -1314,8 +1376,10 @@ fn edit_server(index: i32) {
         downloads.set_form_password(server.password.clone().into());
         downloads.set_form_error(FormError::None);
         downloads.set_test_state(TestState::None);
+        downloads.set_form_key_forgotten(false);
         downloads.set_form_open(true);
     });
+    show_form_key();
 }
 
 /// The form's fields, as typed.
@@ -1402,12 +1466,26 @@ fn test_connection() {
         downloads.set_form_error(FormError::None);
         downloads.set_test_state(TestState::Testing);
     });
+    // The Server key row follows the address as it is typed now.
+    show_form_key();
     send(Task::Test { request, remote: server.remote() });
 }
 
 fn tested(request: u64, result: Result<TestResult, remote::Error>) {
     let current = with_state(|state| state.test_request).unwrap_or(0);
     if request != current {
+        return;
+    }
+    // The server's key is to be checked first: the user is asked, and the test runs again once
+    // they trust it (or says why not, when they do not).
+    if let Err(err) = &result
+        && let Some((_, shown)) = key_problem(err)
+        && let Some(server) = form_fields().and_then(|form| form_server(form).ok())
+        && let Some((host, port)) = server.ssh_host()
+    {
+        with_downloads(|downloads| downloads.set_test_state(TestState::None));
+        let name = if server.name.is_empty() { host.clone() } else { server.name.clone() };
+        ask_key(host, port, name, shown, KeyThen::Test);
         return;
     }
     let host = form_fields().and_then(|form| form_server(form).ok()).map(|server| server.host()).unwrap_or_default();
@@ -1534,6 +1612,236 @@ fn save_servers(state: &State) {
     }
 }
 
+// ---- the SSH servers' keys --------------------------------------------------------------------
+// The design's eighth round: an SFTP server's key is shown to the user before the password goes
+// out, the first time, and whenever it is not the one trusted. The key trusted is the database's
+// (`ssh_hosts`); the sessions hold it through one slot per server.
+
+thread_local! {
+    /// The slot each SFTP server's trusted key is held in (sftp::KnownKey), by host and port,
+    /// shared by every `Remote` made for the server, so that trusting or forgetting a key reaches
+    /// the sessions under way and the downloads queued. Filled from the database when the server
+    /// is first reached for.
+    static KNOWN_KEYS: RefCell<HashMap<(String, u16), sftp::KnownKey>> = RefCell::new(HashMap::new());
+}
+
+/// The slot of the server at `host`:`port`.
+fn known_key_slot(host: &str, port: u16) -> sftp::KnownKey {
+    KNOWN_KEYS.with(|slots| {
+        slots
+            .borrow_mut()
+            .entry((host.to_string(), port))
+            .or_insert_with(|| Arc::new(Mutex::new(database::ssh_host(host, port).map(|known| known.key))))
+            .clone()
+    })
+}
+
+/// The question the dialog asks: whose key, what the server showed, and what goes on once it is
+/// trusted.
+struct KeyQuestion {
+    host: String,
+    port: u16,
+    shown: String,
+    then: KeyThen,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum KeyThen {
+    /// The folder looked at is listed.
+    List,
+    /// The form's Test connection runs again.
+    Test,
+    /// Nothing more than what every trust does: the downloads paused on the key go on.
+    Queue,
+}
+
+/// A refusal that is about the server's key, and the key it showed: not trusted yet (`false`),
+/// or another than the one trusted (`true`).
+fn key_problem(error: &remote::Error) -> Option<(bool, String)> {
+    match error {
+        remote::Error::KeyUnknown(shown) => Some((false, shown.clone())),
+        remote::Error::KeyChanged(shown) => Some((true, shown.clone())),
+        _ => None,
+    }
+}
+
+/// The servers of the list at `host`:`port` (two entries may name one server).
+fn servers_at(state: &State, host: &str, port: u16) -> Vec<usize> {
+    state
+        .servers
+        .iter()
+        .enumerate()
+        .filter(|(_, server)| server.ssh_host().is_some_and(|(theirs, their_port)| theirs == host && their_port == port))
+        .map(|(index, _)| index)
+        .collect()
+}
+
+/// Ask the user about the key the server at `host`:`port` showed: the dialog, over the page, with
+/// the key's fingerprint, and the one trusted before when there is one and it is another.
+fn ask_key(host: String, port: u16, name: String, shown: String, then: KeyThen) {
+    let known = database::ssh_host(&host, port);
+    let changed = known.as_ref().is_some_and(|known| known.key != shown);
+    let facts = sftp::key_facts(&shown);
+    let old = known.as_ref().and_then(|known| sftp::key_facts(&known.key));
+    with_downloads(|downloads| {
+        downloads.set_key_ask_changed(changed);
+        downloads.set_key_ask_name(name.into());
+        downloads.set_key_ask_address(format!("{host}:{port}").into());
+        downloads.set_key_ask_type(facts.as_ref().map(|facts| facts.kind.clone()).unwrap_or_default().into());
+        downloads.set_key_ask_fingerprint(facts.as_ref().map(|facts| facts.fingerprint.clone()).unwrap_or_else(|| shown.clone()).into());
+        downloads.set_key_ask_old_type(old.as_ref().map(|facts| facts.kind.clone()).unwrap_or_default().into());
+        downloads.set_key_ask_old_fingerprint(old.as_ref().map(|facts| facts.fingerprint.clone()).or_else(|| known.as_ref().map(|known| known.key.clone())).unwrap_or_default().into());
+        downloads.set_key_ask_old_since(known.as_ref().filter(|known| known.first_seen > 0).map(|known| full_date_text(known.first_seen)).unwrap_or_default().into());
+        downloads.set_key_copied(SharedString::new());
+        downloads.set_key_ask_open(true);
+    });
+    with_state(|state| state.key_question = Some(KeyQuestion { host, port, shown, then }));
+}
+
+/// The user trusts the key asked about: kept, from now, as the server's; the sessions get it,
+/// the rows that waited for it go on.
+fn trust_key() {
+    let Some(question) = with_state(|state| state.key_question.take()).flatten() else { return };
+    with_downloads(|downloads| downloads.set_key_ask_open(false));
+    if let Err(err) = database::trust_ssh_host(&question.host, question.port, &question.shown) {
+        eprintln!("downloads: cannot keep the server's key: {err}");
+    }
+    *known_key_slot(&question.host, question.port).lock().unwrap() = Some(question.shown.clone());
+    // The servers at that address: their rows no longer say the key is in question; those not
+    // looked at are asked whether they answer now.
+    let checks = with_state(|state| {
+        let mut checks = Vec::new();
+        for index in servers_at(state, &question.host, question.port) {
+            let current = state.current == Some(index);
+            let server = &mut state.servers[index];
+            if matches!(server.status, ServerStatus::KeyUnchecked | ServerStatus::KeyChanged) {
+                server.status = ServerStatus::Checking;
+                if !current {
+                    checks.push(Task::Check { index, remote: server.remote() });
+                }
+            }
+        }
+        checks
+    })
+    .unwrap_or_default();
+    for check in checks {
+        send(check);
+    }
+    show_servers();
+    resume_key_paused(&question.host, question.port);
+    show_form_key();
+    match question.then {
+        KeyThen::List => list(),
+        KeyThen::Test => test_connection(),
+        KeyThen::Queue => {}
+    }
+}
+
+/// The user does not trust the key: nothing was sent, nothing goes on. The folder keeps saying
+/// to check the key, a test says why it did not connect, a download stays paused.
+fn refuse_key() {
+    let Some(question) = with_state(|state| state.key_question.take()).flatten() else { return };
+    with_downloads(|downloads| {
+        downloads.set_key_ask_open(false);
+        if question.then == KeyThen::Test {
+            downloads.set_test_problem(Problem::KeyUnchecked);
+            downloads.set_test_detail(SharedString::new());
+            downloads.set_test_state(TestState::Failed);
+        }
+    });
+}
+
+/// The folder's Check key: the server is asked for its key again, and the user about it.
+fn check_key() {
+    list();
+}
+
+/// A download's Check key: the user is asked about the key the server showed it.
+fn check_key_transfer(id: i32) {
+    let asked = with_state(|state| {
+        let transfer = state.queue.iter().find(|transfer| transfer.id == id && transfer.state == TransferState::Stopped)?;
+        let (host, port) = transfer.kind.remote().ssh_host()?;
+        let shown = transfer.key_shown.clone()?;
+        let name = servers_at(state, host, port).first().map(|index| state.servers[*index].name.clone()).unwrap_or_else(|| host.to_string());
+        Some((host.to_string(), port, name, shown))
+    })
+    .flatten();
+    match asked {
+        Some((host, port, name, shown)) => ask_key(host, port, name, shown, KeyThen::Queue),
+        None => retry(id),
+    }
+}
+
+/// The downloads paused on the key of the server at `host`:`port` go on, from where they were.
+fn resume_key_paused(host: &str, port: u16) {
+    with_state(|state| {
+        for transfer in state.queue.iter_mut() {
+            let paused = transfer.state == TransferState::Stopped && matches!(transfer.problem, Problem::KeyUnchecked | Problem::KeyChanged);
+            if !paused || transfer.kind.remote().ssh_host() != Some((host, port)) {
+                continue;
+            }
+            transfer.state = TransferState::Waiting;
+            transfer.problem = Problem::None;
+            transfer.detail.clear();
+            transfer.key_shown = None;
+            if let Kind::File { remote, path, name, dest, .. } = &transfer.kind {
+                transfer.done = remote.kept(dest, path, name);
+            }
+        }
+    });
+    start_next();
+    show_queue();
+}
+
+/// Copy a fingerprint of the dialog: "new", the key shown, or "old", the one trusted before. The
+/// link says "Copied" for a moment.
+fn copy_fingerprint(which: &str) {
+    let Some(ui) = STATE.with(|state| state.borrow().as_ref().and_then(|state| state.ui.upgrade())) else { return };
+    let downloads = ui.global::<Downloads>();
+    let text = if which == "old" { downloads.get_key_ask_old_fingerprint() } else { downloads.get_key_ask_fingerprint() };
+    if let Err(err) = platform::copy_text(&text) {
+        eprintln!("downloads: cannot copy: {err}");
+        return;
+    }
+    downloads.set_key_copied(which.into());
+    with_state(|state| {
+        state.copied.start(slint::TimerMode::SingleShot, COPIED_FOR, || with_downloads(|downloads| downloads.set_key_copied(SharedString::new())));
+    });
+}
+
+/// The form's Forget this key: the server's key goes from the database and from the sessions;
+/// the next connection asks the user again.
+fn forget_key() {
+    let Some((host, port)) = form_ssh_host() else { return };
+    if let Err(err) = database::forget_ssh_host(&host, port) {
+        eprintln!("downloads: cannot forget the server's key: {err}");
+    }
+    *known_key_slot(&host, port).lock().unwrap() = None;
+    with_downloads(|downloads| {
+        downloads.set_form_key_known(false);
+        downloads.set_form_key_forgotten(true);
+        downloads.set_test_state(TestState::None);
+    });
+}
+
+/// The SFTP server the form names, by host and port; none for another protocol, or an address
+/// that is not one.
+fn form_ssh_host() -> Option<(String, u16)> {
+    form_server(form_fields()?).ok()?.ssh_host()
+}
+
+/// The form's Server key row: the key trusted for the server the form names, if any.
+fn show_form_key() {
+    let known = form_ssh_host().and_then(|(host, port)| database::ssh_host(&host, port));
+    let facts = known.as_ref().and_then(|known| sftp::key_facts(&known.key));
+    with_downloads(|downloads| {
+        downloads.set_form_key_known(known.is_some());
+        downloads.set_form_key_type(facts.as_ref().map(|facts| facts.kind.clone()).unwrap_or_default().into());
+        downloads.set_form_key_fingerprint(facts.as_ref().map(|facts| facts.fingerprint.clone()).or_else(|| known.as_ref().map(|known| known.key.clone())).unwrap_or_default().into());
+        downloads.set_form_key_since(known.as_ref().filter(|known| known.first_seen > 0).map(|known| full_date_text(known.first_seen)).unwrap_or_default().into());
+    });
+}
+
 // ---- words and pictures -----------------------------------------------------------------------
 
 /// The icon for a file, by its extension, as the design has them.
@@ -1581,6 +1889,11 @@ fn date_text(unix: i64, this_year: i32) -> String {
         Some(time) => time.format("%b %-d, %Y").to_string(),
         None => String::new(),
     }
+}
+
+/// "Oct 3, 2026": the day a server's key was trusted.
+fn full_date_text(unix: i64) -> String {
+    Local.timestamp_opt(unix, 0).single().map(|time| time.format("%b %-d, %Y").to_string()).unwrap_or_default()
 }
 
 #[cfg(test)]

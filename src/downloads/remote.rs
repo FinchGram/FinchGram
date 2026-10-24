@@ -79,9 +79,12 @@ pub enum Error {
     Unreadable(String),
     /// The file or folder is not there (FTP's 550, SFTP's no such file).
     Missing,
-    /// An SSH server showed another key than the one it was first met with: not the same
-    /// server, or someone in between. The key it showed now.
+    /// An SSH server showed another key than the one the user trusted: not the same server, or
+    /// someone in between. The key it showed now.
     KeyChanged(String),
+    /// An SSH server not trusted yet showed its key: the user is asked before the password goes
+    /// out. The key it showed.
+    KeyUnknown(String),
 }
 
 impl fmt::Display for Error {
@@ -94,6 +97,7 @@ impl fmt::Display for Error {
             Error::Unreadable(why) => write!(f, "the answer is not an answer: {why}"),
             Error::Missing => write!(f, "the server has no such file or folder"),
             Error::KeyChanged(_) => write!(f, "the server's key is not the one it showed before"),
+            Error::KeyUnknown(_) => write!(f, "the server's key is not trusted yet"),
         }
     }
 }
@@ -233,6 +237,14 @@ impl Remote {
         self.folder_link(&[]) == other.folder_link(&[])
     }
 
+    /// An SFTP server's host and port: what its key is trusted by.
+    pub fn ssh_host(&self) -> Option<(&str, u16)> {
+        match self {
+            Remote::Sftp(server) => Some((server.host.as_str(), server.port())),
+            _ => None,
+        }
+    }
+
     /// Bytes of `dest` already here from an earlier try of this file, as its `.part.json` names
     /// it: the done chunks of its `.part` (WebDAV, SFTP), or the `.part` as far as it goes (FTP).
     pub fn kept(&self, dest: &Path, path: &[String], name: &str) -> u64 {
@@ -280,7 +292,8 @@ pub fn transfer_error(error: Error) -> transfer::Error {
         Error::Unreachable(why) => transfer::Error::Connection(why),
         Error::Unreadable(why) => transfer::Error::Protocol(why),
         Error::Missing => transfer::Error::Missing,
-        Error::KeyChanged(_) => transfer::Error::KeyChanged,
+        Error::KeyChanged(shown) => transfer::Error::KeyChanged(shown),
+        Error::KeyUnknown(shown) => transfer::Error::KeyUnknown(shown),
     }
 }
 

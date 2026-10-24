@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-24 08:01+0000\n"
+"POT-Creation-Date: 2026-10-24 14:21+0000\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -44,7 +44,7 @@ msgid "Broadsheet"
 msgstr "브로드시트"
 
 #. The tools.
-#: ui/app.slint:125 ui/pages/downloads.slint:502 ui/pages/downloads.slint:865
+#: ui/app.slint:125 ui/pages/downloads.slint:506 ui/pages/downloads.slint:1157
 #: ui/toolbox.slint:113
 msgid "Downloads"
 msgstr "다운로드"
@@ -102,9 +102,10 @@ msgstr "설명 추가 (선택 사항)"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/broadsheet.slint:2592 ui/chat.slint:360 ui/compose.slint:244
-#: ui/pages/downloads.slint:1563 ui/pages/profile.slint:174
-#: ui/terminal/actions.slint:386 ui/terminal/actions.slint:643
-#: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/pages/downloads.slint:1096 ui/pages/downloads.slint:2258
+#: ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
+#: ui/terminal/terminal.slint:1742 ui/workbench/actions.slint:548
+#: ui/workbench/conversation.slint:1655
 msgid "Cancel"
 msgstr "취소"
 
@@ -133,7 +134,7 @@ msgstr "다크"
 msgid "Accounts"
 msgstr "계정"
 
-#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:892
+#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:1184
 #: ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "채팅"
@@ -174,7 +175,7 @@ msgid "Latest message"
 msgstr "최신 메시지"
 
 #: ui/broadsheet/broadsheet.slint:667 ui/chat-manage.slint:233
-#: ui/pages/downloads.slint:1381 ui/workbench/sidebar.slint:868
+#: ui/pages/downloads.slint:1709 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "이름"
 
@@ -523,7 +524,7 @@ msgstr "관리자 권한"
 msgid "Change photo"
 msgstr "사진 변경"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1543
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1960
 #: ui/pages/settings.slint:1269
 msgid "Save"
 msgstr "저장"
@@ -629,7 +630,7 @@ msgid "Primary invite link"
 msgstr "기본 초대 링크"
 
 #: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562
-#: ui/pages/profile.slint:379
+#: ui/pages/downloads.slint:900
 msgid "Copy"
 msgstr "복사"
 
@@ -759,7 +760,7 @@ msgstr "연락처 검색"
 msgid "No contacts to add"
 msgstr "추가할 연락처가 없습니다"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1543
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1960
 msgid "Add"
 msgstr "추가"
 
@@ -788,7 +789,7 @@ msgid "Remove {0} from the channel?"
 msgstr "{0}님을 채널에서 제거하시겠습니까?"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:346 ui/pages/ai-access.slint:461
-#: ui/pages/downloads.slint:1574
+#: ui/pages/downloads.slint:1991
 msgid "Remove"
 msgstr "제거"
 
@@ -1161,8 +1162,8 @@ msgstr "채팅과 메시지가 목록에서 사라집니다."
 msgid "Also delete for {0}"
 msgstr "{0}님에게서도 삭제"
 
-#: ui/chat.slint:303 ui/pages/downloads.slint:1176
-#: ui/pages/downloads.slint:1825
+#: ui/chat.slint:303 ui/pages/downloads.slint:1468
+#: ui/pages/downloads.slint:2242
 msgid "Open"
 msgstr "열기"
 
@@ -1383,11 +1384,11 @@ msgstr "업로드 취소"
 msgid "Not sent"
 msgstr "전송되지 않음"
 
-#: ui/chat.slint:386 ui/pages/downloads.slint:751 ui/pages/downloads.slint:1850
+#: ui/chat.slint:386 ui/pages/downloads.slint:761 ui/pages/downloads.slint:2267
 msgid "Retry"
 msgstr "다시 시도"
 
-#: ui/chat.slint:388 ui/pages/downloads.slint:1182
+#: ui/chat.slint:388 ui/pages/downloads.slint:1474
 msgid "Download"
 msgstr "다운로드"
 
@@ -1395,12 +1396,12 @@ msgstr "다운로드"
 msgid "Cancel download"
 msgstr "다운로드 취소"
 
-#: ui/chat.slint:390 ui/pages/downloads.slint:742
+#: ui/chat.slint:390 ui/pages/downloads.slint:752
 msgid "Show in Finder"
 msgstr "Finder에서 보기"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:392 ui/pages/downloads.slint:54
+#: ui/chat.slint:392 ui/pages/downloads.slint:58
 msgid "{0} of {1}"
 msgstr "{1} 중 {0}"
 
@@ -1412,7 +1413,7 @@ msgstr "클릭하여 보기"
 msgid "Reply"
 msgstr "답장"
 
-#: ui/chat.slint:812 ui/pages/downloads.slint:1776
+#: ui/chat.slint:812 ui/pages/downloads.slint:2193
 msgid "Edit"
 msgstr "편집"
 
@@ -1902,7 +1903,8 @@ msgstr "링크를 확인할 수 없습니다: {0}"
 msgid "It can be revoked and made anew in the channel's settings."
 msgstr "채널 설정에서 취소하고 새로 만들 수 있습니다."
 
-#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/profile.slint:379
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562
+#: ui/pages/downloads.slint:900
 msgid "Copied"
 msgstr "복사됨"
 
@@ -2856,115 +2858,129 @@ msgstr "암호 거부됨"
 msgid "Not reachable"
 msgstr "연결할 수 없음"
 
-#: ui/pages/downloads.slint:25
+#: ui/pages/downloads.slint:20
+msgid "Key not checked"
+msgstr "키 미확인"
+
+#: ui/pages/downloads.slint:21
+msgid "Key changed"
+msgstr "키 바뀜"
+
+#: ui/pages/downloads.slint:27
 msgid "The server refused the password (401)"
 msgstr "서버가 암호를 거부했습니다 (401)"
 
-#: ui/pages/downloads.slint:26
+#: ui/pages/downloads.slint:28
 msgid "The server refused access (403)"
 msgstr "서버가 접근을 거부했습니다 (403)"
 
-#: ui/pages/downloads.slint:27
+#: ui/pages/downloads.slint:29
 msgid "Cannot reach {0}"
 msgstr "{0}에 연결할 수 없습니다"
 
-#: ui/pages/downloads.slint:28
+#: ui/pages/downloads.slint:30
 msgid "The server answered HTTP {0}"
 msgstr "서버가 HTTP {0} 응답을 보냈습니다"
 
-#: ui/pages/downloads.slint:29
+#: ui/pages/downloads.slint:31
 msgid "The server did not answer with a WebDAV listing"
 msgstr "서버의 응답이 WebDAV 목록이 아닙니다"
 
-#: ui/pages/downloads.slint:30
+#: ui/pages/downloads.slint:32
 msgid "The connection was lost"
 msgstr "연결이 끊어졌습니다"
 
-#: ui/pages/downloads.slint:31
+#: ui/pages/downloads.slint:33
 msgid "The file could not be written"
 msgstr "파일을 저장할 수 없습니다"
 
-#: ui/pages/downloads.slint:32
+#: ui/pages/downloads.slint:34
 msgid "The server has no such file or folder"
 msgstr "서버에 그런 파일이나 폴더가 없습니다"
 
-#: ui/pages/downloads.slint:33
+#: ui/pages/downloads.slint:35
 msgid ""
-"The server's SSH key is not the one it showed before: another server, or "
-"something between you and it"
-msgstr ""
-"서버의 SSH 키가 전과 다릅니다: 다른 서버이거나, 둘 사이에 무언가가 있습니다"
+"Not connected: you didn’t trust the server’s key. Your password wasn’t sent."
+msgstr "연결 안 됨: 서버 키를 신뢰하지 않아 비밀번호를 보내지 않았습니다."
 
-#: ui/pages/downloads.slint:39
+#: ui/pages/downloads.slint:36 ui/pages/downloads.slint:1568
+msgid "Not connected. This server’s key has changed."
+msgstr "연결 안 됨. 이 서버의 키가 바뀌었습니다."
+
+#: ui/pages/downloads.slint:42
 msgid "the server refused the password (401)"
 msgstr "서버가 암호를 거부함 (401)"
 
-#: ui/pages/downloads.slint:40
+#: ui/pages/downloads.slint:43
 msgid "the server refused access (403)"
 msgstr "서버가 접근을 거부함 (403)"
 
-#: ui/pages/downloads.slint:41
+#: ui/pages/downloads.slint:44
 msgid "the server answered HTTP {0}"
 msgstr "서버가 HTTP {0} 응답을 보냄"
 
-#: ui/pages/downloads.slint:42
+#: ui/pages/downloads.slint:45
 msgid "the server did not answer with the file"
 msgstr "서버가 파일을 보내지 않음"
 
-#: ui/pages/downloads.slint:43
+#: ui/pages/downloads.slint:46
 msgid "the file could not be written"
 msgstr "파일을 저장할 수 없음"
 
 #
-#: ui/pages/downloads.slint:44
+#: ui/pages/downloads.slint:47
 msgid "the server has no such file"
 msgstr "서버에 그런 파일이 없습니다"
 
-#: ui/pages/downloads.slint:45
-msgid "the server's SSH key changed"
-msgstr "서버의 SSH 키가 바뀌었습니다"
+#: ui/pages/downloads.slint:48
+msgid "the server’s key changed"
+msgstr "서버 키가 바뀜"
 
-#: ui/pages/downloads.slint:46
+#: ui/pages/downloads.slint:49
 msgid "the server closed the connection"
 msgstr "서버가 연결을 끊음"
 
-#: ui/pages/downloads.slint:50
+#: ui/pages/downloads.slint:53
 msgid "Waiting · {0}"
 msgstr "대기 중 · {0}"
 
-#: ui/pages/downloads.slint:51
+#: ui/pages/downloads.slint:54
 msgid "Done · {0}"
 msgstr "완료 · {0}"
 
-#: ui/pages/downloads.slint:52
+#: ui/pages/downloads.slint:55
+msgid "Paused until you check the server’s key. {0} of {1} kept."
+msgstr "서버 키를 확인할 때까지 일시정지. {1} 중 {0} 보관됨."
+
+#: ui/pages/downloads.slint:56
 msgid "Stopped: {0}. {1} of {2} kept."
 msgstr "중단됨: {0}. {2} 중 {1} 보관됨."
 
-#: ui/pages/downloads.slint:53
+#: ui/pages/downloads.slint:57
 msgid "Server busy (HTTP {0}), trying again…"
 msgstr "서버가 바쁩니다 (HTTP {0}), 다시 시도 중…"
 
-#: ui/pages/downloads.slint:55
+#: ui/pages/downloads.slint:59
 msgid "{0} of {1} · {2} · {3}"
 msgstr "{1} 중 {0} · {2} · {3}"
 
-#: ui/pages/downloads.slint:59
+#: ui/pages/downloads.slint:63
 msgid "estimating…"
 msgstr "계산 중…"
 
-#: ui/pages/downloads.slint:60
+#: ui/pages/downloads.slint:64
 msgid "{0} s left"
 msgstr "{0}초 남음"
 
-#: ui/pages/downloads.slint:61
+#: ui/pages/downloads.slint:65
 msgid "{0} min left"
 msgstr "{0}분 남음"
 
-#: ui/pages/downloads.slint:70
+#: ui/pages/downloads.slint:74
 msgid "Reached: {0} folders and {1} files at the root."
 msgstr "연결됨: 최상위 폴더에 폴더 {0}개와 파일 {1}개가 있습니다."
 
-#: ui/pages/downloads.slint:73
+#: ui/pages/downloads.slint:77
 msgid ""
 "Reached: {0} folders and {1} files at the root. Ranges supported, so "
 "downloads can use several connections."
@@ -2972,7 +2988,7 @@ msgstr ""
 "연결됨: 최상위 폴더에 폴더 {0}개와 파일 {1}개가 있습니다. 범위 요청을 지원하"
 "므로 다운로드에 여러 연결을 사용할 수 있습니다."
 
-#: ui/pages/downloads.slint:75
+#: ui/pages/downloads.slint:79
 msgid ""
 "Reached: {0} folders and {1} files at the root. No ranges, so each file "
 "comes over one connection."
@@ -2980,85 +2996,163 @@ msgstr ""
 "연결됨: 최상위 폴더에 폴더 {0}개와 파일 {1}개가 있습니다. 범위 요청을 지원하"
 "지 않으므로 파일마다 연결을 하나만 사용합니다."
 
-#: ui/pages/downloads.slint:79
+#: ui/pages/downloads.slint:83
 msgid "Give the server a name."
 msgstr "서버 이름을 입력하세요."
 
-#: ui/pages/downloads.slint:80
+#: ui/pages/downloads.slint:84
 msgid "The address needs to start with http:// or https://."
 msgstr "주소는 http:// 또는 https://로 시작해야 합니다."
 
 #
-#: ui/pages/downloads.slint:81
+#: ui/pages/downloads.slint:85
 msgid "Give the server's host name or IP."
 msgstr "서버의 호스트 이름이나 IP를 적으세요."
 
-#: ui/pages/downloads.slint:82
+#: ui/pages/downloads.slint:86
 msgid "The port needs to be a number from 1 to 65535."
 msgstr "포트는 1에서 65535 사이의 숫자여야 합니다."
 
-#: ui/pages/downloads.slint:110
+#: ui/pages/downloads.slint:114
 msgid "Host name or IP. A folder may follow after a /."
 msgstr "호스트 이름 또는 IP. / 뒤에 폴더를 이어 쓸 수 있습니다."
 
-#: ui/pages/downloads.slint:111
+#: ui/pages/downloads.slint:115
 msgid "Host name or IP. Implicit TLS on the default port."
 msgstr "호스트 이름 또는 IP. 기본 포트에서 암시적 TLS."
 
-#: ui/pages/downloads.slint:112
+#: ui/pages/downloads.slint:116
 msgid "Host name or IP of the SSH server."
 msgstr "SSH 서버의 호스트 이름 또는 IP."
 
-#: ui/pages/downloads.slint:113
+#: ui/pages/downloads.slint:117
 msgid "http:// or https://. A folder may be part of the address."
 msgstr "http:// 또는 https://. 주소에 폴더 경로를 포함할 수 있습니다."
 
-#: ui/pages/downloads.slint:117
+#: ui/pages/downloads.slint:121
 msgid "Default port {}."
 msgstr "기본 포트는 {}입니다."
 
-#: ui/pages/downloads.slint:400 ui/pages/downloads.slint:1284
+#: ui/pages/downloads.slint:404 ui/pages/downloads.slint:1612
 msgid "Add server"
 msgstr "서버 추가"
 
-#: ui/pages/downloads.slint:442
+#: ui/pages/downloads.slint:446
 msgid "Filter this folder"
 msgstr "이 폴더 필터링"
 
-#: ui/pages/downloads.slint:904
+#: ui/pages/downloads.slint:770 ui/pages/downloads.slint:1578
+msgid "Check key"
+msgstr "키 확인"
+
+#: ui/pages/downloads.slint:1007
+msgid "This server’s key has changed"
+msgstr "이 서버의 키가 바뀌었습니다"
+
+#: ui/pages/downloads.slint:1007
+msgid "Trust this server’s key?"
+msgstr "이 서버의 키를 신뢰할까요?"
+
+#: ui/pages/downloads.slint:1015
+msgid ""
+"It isn’t the server you connected to before, or someone is between you and "
+"it."
+msgstr "이전에 연결했던 서버가 아니거나, 중간에 누군가 있습니다."
+
+#: ui/pages/downloads.slint:1016
+msgid ""
+"This is the first time you connect to this server. Compare the fingerprint "
+"with the one its owner gave you. If you can’t, don’t continue."
+msgstr "이 서버에 처음 연결합니다. 서버 관리자가 알려 준 지문과 비교하세요. 비교할 수 없다면 계속하지 마세요."
+
+#: ui/pages/downloads.slint:1026
+msgid "Server"
+msgstr "서버"
+
+#: ui/pages/downloads.slint:1051
+msgid "Trusted earlier · {0}"
+msgstr "이전부터 신뢰 · {0}"
+
+#: ui/pages/downloads.slint:1052
+msgid "Trusted since {0} · {1}"
+msgstr "{0}부터 신뢰 · {1}"
+
+#: ui/pages/downloads.slint:1057
+msgid "Shown now · {0}"
+msgstr "지금 제시됨 · {0}"
+
+#: ui/pages/downloads.slint:1057
+msgid "{0} key · SHA256 fingerprint"
+msgstr "{0} 키 · SHA256 지문"
+
+#: ui/pages/downloads.slint:1075
+msgid ""
+"Nothing has been sent. If the owner says the key changed, check the new "
+"fingerprint with them first."
+msgstr "아무것도 보내지 않았습니다. 관리자가 키를 바꿨다고 하면 먼저 새 지문을 확인하세요."
+
+#: ui/pages/downloads.slint:1076
+msgid "Your password isn’t sent until you trust the key."
+msgstr "키를 신뢰하기 전에는 비밀번호를 보내지 않습니다."
+
+#: ui/pages/downloads.slint:1087
+msgid "esc  don’t connect"
+msgstr "esc  연결 안 함"
+
+#: ui/pages/downloads.slint:1087
+msgid "esc  cancel"
+msgstr "esc  취소"
+
+#: ui/pages/downloads.slint:1102
+msgid "Trust new key"
+msgstr "새 키 신뢰"
+
+#: ui/pages/downloads.slint:1109
+msgid "Don’t connect"
+msgstr "연결 안 함"
+
+#: ui/pages/downloads.slint:1109
+msgid "Trust and continue"
+msgstr "신뢰하고 계속"
+
+#: ui/pages/downloads.slint:1196
 msgid "Servers"
 msgstr "서버"
 
-#: ui/pages/downloads.slint:1110
+#: ui/pages/downloads.slint:1402
 msgid "Modified"
 msgstr "수정일"
 
-#: ui/pages/downloads.slint:1115
+#: ui/pages/downloads.slint:1407
 msgid "Size"
 msgstr "크기"
 
-#: ui/pages/downloads.slint:1139
+#: ui/pages/downloads.slint:1431
 msgid "Nothing in this folder matches “{0}”"
 msgstr "이 폴더에는 “{0}”에 해당하는 항목이 없습니다"
 
-#: ui/pages/downloads.slint:1161
+#: ui/pages/downloads.slint:1453
 msgid "{0} selected · {1}"
 msgstr "{0}개 선택됨 · {1}"
 
-#: ui/pages/downloads.slint:1169
+#: ui/pages/downloads.slint:1461
 msgid "Clear"
 msgstr "선택 해제"
 
-#: ui/pages/downloads.slint:1218
+#: ui/pages/downloads.slint:1510
 msgid "This folder is empty"
 msgstr "이 폴더는 비어 있습니다"
 
+#: ui/pages/downloads.slint:1568
+msgid "Not connected yet. Check this server’s key first."
+msgstr "아직 연결되지 않았습니다. 먼저 이 서버의 키를 확인하세요."
+
 #
-#: ui/pages/downloads.slint:1267
+#: ui/pages/downloads.slint:1595
 msgid "No servers yet"
 msgstr "아직 서버가 없습니다"
 
-#: ui/pages/downloads.slint:1270
+#: ui/pages/downloads.slint:1598
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -3067,7 +3161,7 @@ msgstr ""
 "NAS, 시드박스, PikPak, Alist / OpenList의 WebDAV 주소나 vget serve로 공유하"
 "는 폴더를 추가하세요. 그런 다음 여기에서 둘러보고 원하는 파일을 고르세요."
 
-#: ui/pages/downloads.slint:1276
+#: ui/pages/downloads.slint:1604
 msgid ""
 "Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
 "reads: nothing is uploaded, synced, renamed or deleted on the server."
@@ -3076,13 +3170,13 @@ msgstr ""
 "다. FinchGram은 읽기만 합니다: 서버의 파일을 업로드, 동기화, 이름 변경, 삭제"
 "하지 않습니다."
 
-#: ui/pages/downloads.slint:1349
+#: ui/pages/downloads.slint:1677
 msgid "Edit server"
 msgstr "서버 편집"
 
 #
 #
-#: ui/pages/downloads.slint:1352
+#: ui/pages/downloads.slint:1680
 msgid ""
 "The address of the server, and the account it gave you. The password is kept "
 "sealed in FinchGram's database on this Mac."
@@ -3090,39 +3184,59 @@ msgstr ""
 "서버 주소와 서버가 준 계정. 비밀번호는 봉인된 채 이 Mac의 FinchGram 데이터베"
 "이스에 보관됩니다."
 
-#: ui/pages/downloads.slint:1362
+#: ui/pages/downloads.slint:1690
 msgid "Protocol"
 msgstr "프로토콜"
 
-#: ui/pages/downloads.slint:1396
+#: ui/pages/downloads.slint:1724
 msgid "Address"
 msgstr "주소"
 
-#: ui/pages/downloads.slint:1405
+#: ui/pages/downloads.slint:1733
 msgid "Port"
 msgstr "포트"
 
+#: ui/pages/downloads.slint:1753
+msgid "Server key"
+msgstr "서버 키"
+
+#: ui/pages/downloads.slint:1789
+msgid "First seen {0}"
+msgstr "처음 본 날 {0}"
+
+#: ui/pages/downloads.slint:1797
+msgid "Forget this key"
+msgstr "이 키 잊기"
+
+#: ui/pages/downloads.slint:1829
+msgid "Forgotten. You’ll check it again on the next connection."
+msgstr "잊었습니다. 다음 연결 때 다시 확인합니다."
+
+#: ui/pages/downloads.slint:1829
+msgid "Not seen yet. You’ll check it the first time you connect."
+msgstr "아직 본 적 없습니다. 처음 연결할 때 확인합니다."
+
 #
-#: ui/pages/downloads.slint:1431
+#: ui/pages/downloads.slint:1848
 msgid "Sign in with"
 msgstr "로그인 방식"
 
-#: ui/pages/downloads.slint:1439 ui/pages/downloads.slint:1454
+#: ui/pages/downloads.slint:1856 ui/pages/downloads.slint:1871
 #: ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "암호"
 
-#: ui/pages/downloads.slint:1443
+#: ui/pages/downloads.slint:1860
 msgid "Key"
 msgstr "키"
 
 #
-#: ui/pages/downloads.slint:1448
+#: ui/pages/downloads.slint:1865
 msgid "Key sign-in isn’t in this version."
 msgstr "키 로그인은 이 버전에서 지원하지 않습니다."
 
 #
-#: ui/pages/downloads.slint:1477
+#: ui/pages/downloads.slint:1894
 msgid ""
 "Over FTP the password and the files travel in the clear: use this server "
 "only on a network you trust, or FTPS."
@@ -3130,7 +3244,7 @@ msgstr ""
 "FTP에서는 비밀번호와 파일이 평문으로 오갑니다: 이 서버는 믿을 수 있는 네트워"
 "크에서만 쓰거나 FTPS를 쓰세요."
 
-#: ui/pages/downloads.slint:1478
+#: ui/pages/downloads.slint:1895
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
@@ -3138,47 +3252,47 @@ msgstr ""
 "http로는 비밀번호와 파일이 평문으로 전송됩니다. 이 서버는 신뢰할 수 있는 네트"
 "워크에서만 사용하세요."
 
-#: ui/pages/downloads.slint:1514
+#: ui/pages/downloads.slint:1931
 msgid "Testing…"
 msgstr "테스트 중…"
 
-#: ui/pages/downloads.slint:1553
+#: ui/pages/downloads.slint:1970
 msgid "Test connection"
 msgstr "연결 테스트"
 
-#: ui/pages/downloads.slint:1618
+#: ui/pages/downloads.slint:2035
 msgid "{0} active"
 msgstr "{0}개 진행 중"
 
-#: ui/pages/downloads.slint:1631
+#: ui/pages/downloads.slint:2048
 msgid "Clear finished"
 msgstr "완료 항목 지우기"
 
-#: ui/pages/downloads.slint:1654
+#: ui/pages/downloads.slint:2071
 msgid "Hide"
 msgstr "가리기"
 
-#: ui/pages/downloads.slint:1722
+#: ui/pages/downloads.slint:2139
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "파일당 연결 {0}개 · 다운로드 위치: {1}"
 
-#: ui/pages/downloads.slint:1728
+#: ui/pages/downloads.slint:2145
 msgid "Change"
 msgstr "변경"
 
-#: ui/pages/downloads.slint:1793
+#: ui/pages/downloads.slint:2210
 msgid "Copy address"
 msgstr "주소 복사"
 
-#: ui/pages/downloads.slint:1809
+#: ui/pages/downloads.slint:2226
 msgid "Download folder"
 msgstr "폴더 다운로드"
 
-#: ui/pages/downloads.slint:1833
+#: ui/pages/downloads.slint:2250
 msgid "Copy link"
 msgstr "링크 복사"
 
-#: ui/pages/downloads.slint:1868
+#: ui/pages/downloads.slint:2285
 msgid "Remove from list"
 msgstr "목록에서 제거"
 

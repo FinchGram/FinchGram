@@ -1,10 +1,12 @@
 //! SFTP for the downloads page, over russh and russh-sftp (SSH in Rust, on the downloads'
-//! tokio runtime; remote.rs says who calls what). The account signs in with its password; the
-//! server's key is trusted the first time it is met and remembered (the `ssh_hosts` table of
-//! the database, by host and port), so that another key later is refused, as ssh itself does;
-//! the sessions of one server opened side by side (a file's chunks, a tree's listings) are all
-//! held to the key the first of them met (`KnownKey`), so that none of them trusts a key of its
-//! own. A file comes in 8 MB chunks over several sessions at once, each its own SSH connection, the
+//! tokio runtime; remote.rs says who calls what). The account signs in with its password, once
+//! the server's key is the one trusted (`KnownKey`: the `ssh_hosts` table of the database, by
+//! host and port, as ssh's known_hosts). A server not trusted yet ends the session before the
+//! password goes out, with the key it showed (`Error::KeyUnknown`), for the page to ask the user
+//! (src/downloads/mod.rs, the design's eighth round); one showing another key than the trusted
+//! is refused the same way (`Error::KeyChanged`), as ssh itself does. The sessions of one server
+//! opened side by side (a file's chunks, a tree's listings) share the one slot, so that a key
+//! trusted reaches them all. A file comes in 8 MB chunks over several sessions at once, each its own SSH connection, the
 //! `.part` and `.part.json` of the WebDAV engine marking what is done, so a stopped file goes on
 //! where it was. Paths are relative to the folder the account lands in: "host/films" lists
 //! "films" there. FinchGram only reads: opendir, stat and read, nothing else.
@@ -32,13 +34,43 @@ const READ_PATIENCE: u64 = 60;
 const CHUNK: u64 = 8 * 1024 * 1024;
 const PIECE: usize = 256 * 1024;
 
-/// What is done with a key the server shows for the first time: kept for next time.
-pub type Learned = Arc<dyn Fn(&str, u16, &str) + Send + Sync>;
-
-/// The key the server is held to: the one the database has for it, or none until it is met, and
-/// from then on the one it showed first. Shared by every copy of the `Server`, so that the
-/// sessions opened side by side hold it to one key.
+/// The key the server is held to, in OpenSSH's one-line form: the one the user trusted, or none
+/// until they have. One slot per server (host and port), shared by every `Server` made for it
+/// (src/downloads/mod.rs keeps them), so that trusting or forgetting a key reaches the sessions
+/// under way.
 pub type KnownKey = Arc<Mutex<Option<String>>>;
+
+/// What a key is, for the user to compare: its kind and its SHA256 fingerprint, as ssh-keygen -l
+/// prints them.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct KeyFacts {
+    /// "ED25519", "RSA", "ECDSA" …
+    pub kind: String,
+    /// "SHA256:…", base64 without padding.
+    pub fingerprint: String,
+}
+
+/// The facts of a key in OpenSSH's one-line form; none for a line that is not one.
+pub fn key_facts(openssh: &str) -> Option<KeyFacts> {
+    use russh::keys::{Algorithm, Certificate, HashAlg, PublicKey};
+    let (algorithm, fingerprint) = match PublicKey::from_openssh(openssh) {
+        Ok(key) => (key.algorithm(), key.fingerprint(HashAlg::Sha256)),
+        Err(_) => {
+            let certificate = Certificate::from_openssh(openssh).ok()?;
+            (certificate.public_key().algorithm(), certificate.public_key().fingerprint(HashAlg::Sha256))
+        }
+    };
+    let kind = match algorithm {
+        Algorithm::Ed25519 => "ED25519".to_string(),
+        Algorithm::Rsa { .. } => "RSA".to_string(),
+        Algorithm::Ecdsa { .. } => "ECDSA".to_string(),
+        Algorithm::Dsa => "DSA".to_string(),
+        Algorithm::SkEd25519 => "ED25519-SK".to_string(),
+        Algorithm::SkEcdsaSha2NistP256 => "ECDSA-SK".to_string(),
+        other => other.as_str().to_uppercase(),
+    };
+    Some(KeyFacts { kind, fingerprint: fingerprint.to_string() })
+}
 
 #[derive(Clone)]
 pub struct Server {
@@ -49,11 +81,9 @@ pub struct Server {
     pub folder: Vec<String>,
     pub username: String,
     pub password: String,
-    /// The key the server showed when it was first met, in OpenSSH's one-line form; none when it
-    /// has not been met: then the key it shows first is trusted, held to from there on, and
-    /// handed to `learned` once it has signed the account in.
+    /// The key the server is trusted by; none until the user has trusted one, and then no
+    /// session gets as far as the password.
     pub known_key: KnownKey,
-    pub learned: Learned,
 }
 
 impl Server {
@@ -84,10 +114,11 @@ impl Server {
         format!("sftp://{account}{}{port}/{remote}{tail}", self.host)
     }
 
-    /// A session: connected, the key checked, signed in, the SFTP subsystem up.
+    /// A session: connected, the key checked against the one trusted, signed in, the SFTP
+    /// subsystem up. A key not trusted, or another than the trusted one, ends it before the
+    /// password goes out, with the key the server showed.
     async fn session(&self) -> Result<Session, Error> {
-        let first_met = self.known_key.lock().unwrap().is_none();
-        let trust = Arc::new(Trust { known: self.known_key.clone(), shown: Mutex::new(None), changed: AtomicBool::new(false) });
+        let trust = Arc::new(Trust { known: self.known_key.clone(), shown: Mutex::new(None), changed: AtomicBool::new(false), unknown: AtomicBool::new(false) });
         let config = Arc::new(client::Config {
             inactivity_timeout: Some(Duration::from_secs(READ_PATIENCE * 2)),
             keepalive_interval: Some(Duration::from_secs(15)),
@@ -97,8 +128,12 @@ impl Server {
         let mut handle = match tokio::time::timeout(CONNECT_PATIENCE, connecting).await {
             Ok(Ok(handle)) => handle,
             Ok(Err(err)) => {
+                let shown = trust.shown.lock().unwrap().clone().unwrap_or_default();
                 if trust.changed.load(Ordering::Relaxed) {
-                    return Err(Error::KeyChanged(trust.shown.lock().unwrap().clone().unwrap_or_default()));
+                    return Err(Error::KeyChanged(shown));
+                }
+                if trust.unknown.load(Ordering::Relaxed) {
+                    return Err(Error::KeyUnknown(shown));
                 }
                 return Err(ssh_error(err));
             }
@@ -113,9 +148,6 @@ impl Server {
         channel.request_subsystem(true, "sftp").await.map_err(ssh_error)?;
         let sftp = SftpSession::new(channel.into_stream()).await.map_err(sftp_error)?;
         sftp.set_timeout(READ_PATIENCE);
-        if first_met && let Some(shown) = trust.shown.lock().unwrap().clone() {
-            (self.learned)(&self.host, self.port(), &shown);
-        }
         Ok(Session { handle, sftp })
     }
 
@@ -280,11 +312,13 @@ impl Session {
     }
 }
 
-/// Whether the server's key is the one known, and the key it showed.
+/// Whether the server's key is the one trusted, and the key it showed: another one (`changed`),
+/// or one while none is trusted yet (`unknown`).
 struct Trust {
     known: KnownKey,
     shown: Mutex<Option<String>>,
     changed: AtomicBool,
+    unknown: AtomicBool,
 }
 
 struct Handler {
@@ -300,17 +334,16 @@ impl client::Handler for Handler {
             PublicKeyOrCertificate::Certificate(certificate) => certificate.to_openssh().unwrap_or_default(),
         };
         *self.trust.shown.lock().unwrap() = Some(shown.clone());
-        let mut known = self.trust.known.lock().unwrap();
-        match &*known {
+        match &*self.trust.known.lock().unwrap() {
             Some(known) if *known == shown => Ok(true),
             Some(_) => {
                 self.trust.changed.store(true, Ordering::Relaxed);
                 Ok(false)
             }
+            // Not trusted yet: the user is asked first, and nothing more is sent now.
             None => {
-                // Met for the first time: this is the server's key, for every session from here.
-                *known = Some(shown);
-                Ok(true)
+                self.trust.unknown.store(true, Ordering::Relaxed);
+                Ok(false)
             }
         }
     }
@@ -321,7 +354,7 @@ fn ssh_error(error: russh::Error) -> Error {
     match error {
         russh::Error::IO(err) => Error::Unreachable(err.to_string()),
         russh::Error::ConnectionTimeout | russh::Error::InactivityTimeout => Error::Unreachable("the server did not answer in time".into()),
-        russh::Error::UnknownKey => Error::KeyChanged(String::new()),
+        russh::Error::UnknownKey => Error::KeyUnknown(String::new()),
         russh::Error::NotAuthenticated | russh::Error::NoAuthMethod => Error::Unauthorized,
         other => Error::Unreadable(other.to_string()),
     }
@@ -337,5 +370,20 @@ fn sftp_error(error: russh_sftp::client::error::Error) -> Error {
         },
         russh_sftp::client::error::Error::Timeout => Error::Unreachable("the server did not answer in time".into()),
         other => Error::Unreadable(other.to_string()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_key_is_told_by_its_kind_and_its_sha256_fingerprint_as_ssh_keygen_prints_them() {
+        // ssh-keygen -t ed25519; ssh-keygen -lf: "256 SHA256:d4zw… (ED25519)".
+        let line = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAX3y3IcQy0VO2E+SEQHMiZ9vTaYqU6JQqpXbOaPFa1f";
+        assert_eq!(key_facts(line), Some(KeyFacts { kind: "ED25519".into(), fingerprint: "SHA256:d4zwBycdXMo0aTCD+wahlolKFXLBphBuPnq52cJYlwo".into() }));
+        assert_eq!(key_facts(&format!("{line} comment")).map(|facts| facts.kind), Some("ED25519".into()));
+        assert_eq!(key_facts("not a key"), None);
+        assert_eq!(key_facts(""), None);
     }
 }
