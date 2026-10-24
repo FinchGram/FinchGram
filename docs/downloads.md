@@ -7,9 +7,9 @@ theme; released in v0.4.0.
 
 ## What it is
 
-A page where files come from WebDAV servers: a NAS (Synology, QNAP), a seedbox, PikPak, Alist or
-OpenList (which put cloud drives behind WebDAV), Nextcloud, `rclone serve webdav`, or a folder shared
-with `vget serve`. The user adds a server, browses it in the app, picks files or whole folders, and
+A page where files come from servers over WebDAV, FTP, FTPS or SFTP: a NAS (Synology, QNAP), a
+seedbox, PikPak, Alist or OpenList (which put cloud drives behind WebDAV), Nextcloud, `rclone serve
+webdav`, or a folder shared with `vget serve`. The user adds a server, browses it in the app, picks files or whole folders, and
 they arrive in the downloads folder over several connections at once, the way the maintainer's
 command-line tool vget fetches them. Photos and videos open in the media viewer when they arrive.
 
@@ -25,14 +25,13 @@ before logging in.
 
 Three columns:
 
-- **Servers**, on the left: each with its name, a badge with the protocol it speaks (WebDAV, the
-  only one this version speaks), its host and its status, checked when the page opens: Connected,
+- **Servers**, on the left: each with its name, a badge with the protocol it speaks, its host and
+  its status, checked when the page opens: Connected,
   Password rejected, Not reachable. A right click gives Edit, Remove and Copy address. Add server
-  is the last row. Its form asks for the protocol first (WebDAV; FTP, FTPS and SFTP are drawn
-  faded: the form can be filled in under them, and says it cannot be saved), then the name, the
-  address with the port beside it (the protocol's default stands in the empty field: 80 or 443
-  for WebDAV, 21, 990, 22; a port typed goes into the address), the account, and for SFTP how to
-  sign in, with a password, the key waiting for another version.
+  is the last row. Its form asks for the protocol first (WebDAV, FTP, FTPS or SFTP, see below),
+  then the name, the address with the port beside it (the protocol's default stands in the empty
+  field: 80 or 443 for WebDAV, 21, 990, 22; a port typed in the address goes into the field), the
+  account, and for SFTP how to sign in, with a password, the key waiting for another version.
 - **The folder**, in the middle: where we are as a path, "Home NAS /Movies/2026", each folder of it
   a step back, then the folder's name, a box
   that filters the listing by name, a refresh button, and the "Downloads" button that shows or hides
@@ -137,18 +136,47 @@ at the same speed as with vget in the same minute (35 to 40 MB/s on average, the
 More streams, larger chunks and a taken tail bought 60 on average, and 503s with it; the maintainer
 chose vget's parameters and no 503s.
 
+## FTP, FTPS and SFTP
+
+Since 0.6.0 a server speaks one of four protocols, chosen when it is added; `src/downloads/remote.rs`
+puts one face on the three clients, and the page and the queue do not care which:
+
+- **WebDAV** as above: `webdav.rs`, with the engine of `transfer.rs`.
+- **FTP and FTPS** (`ftp.rs`, over suppaftp, blocking): the address is a host and, after a /, a
+  folder under the one the account lands in ("sb.example.net/films"); the port is 21, or 990 for
+  FTPS, unless given. FTPS is TLS from the first byte on 990 and AUTH TLS on any other port,
+  trusting what the Mac trusts, as the HTTP client does. A listing is MLSD where the server has
+  it, LIST parsed otherwise. A file comes over one stream, since FTP gives a start but never an
+  end: no chunks, no several connections; a stopped file goes on from the end of its `.part` with
+  REST. Plain FTP sends the password in the clear, and the form says so in red.
+- **SFTP** (`sftp.rs`, over russh and russh-sftp: SSH in Rust, on the downloads' tokio runtime):
+  the address is a host and a folder as for FTP, the port 22 unless given; the account signs in
+  with its password (a key waits for another version). The server's key is trusted the first time
+  it is met and kept in the database (`ssh_hosts`, by host and port); a server showing another key
+  later is refused and the page says so, as ssh itself does. A file comes in 8 MB chunks over up
+  to as many sessions as the connections setting, each its own SSH connection, written at their
+  places in the `.part` and marked in the `.part.json` of the WebDAV engine, so a stopped file
+  goes on where it was. On a seedbox, SFTP is also the way that does not count against the monthly
+  upload quota that WebDAV and HTTP downloads do (2026-10-23, ultra.cc's own docs).
+
+Test connection lists the root whatever the protocol; "ranges" is SFTP's always and FTP's never.
+Copy link gives `sftp://me@host:2222/films/film.mkv` or `ftps://…` for those servers.
+
 ## Where things are kept
 
 - `settings.toml`: `[downloads]` has `folder` (empty for the default, `~/Documents/FinchGram/webdav`;
   each server's files go into a folder named after it under there), `connections` and
   `queue_shown`. That is all of it: the file is for preferences.
-- The servers, with their passwords, are in the app's database, `finchgram.db` next to it: SQLite
-  encrypted as a whole with SQLCipher (docs/architecture.md, The app's database). Its key is a
-  random one kept in the macOS Keychain under "FinchGram" (the account "database"), in the login
-  keychain only, where only this app reads it: Keychain items belong to the app's signing identity,
-  and releases are signed with North Brookville LLC's Apple Developer ID (docs/conventions.md),
-  which macOS trusts across updates. On the wire the password is Basic authentication: base64, so
-  plain over http on the LAN, and encrypted only by TLS over https.
+- The servers, with their passwords, are in the app's database, `finchgram.db` next to it: a
+  plain SQLite file any tool opens, the `servers` table with the protocol, the address, the port
+  and the account of each; only the password column is sealed (AES-256-GCM) under a random key
+  kept in the macOS Keychain under "FinchGram" (the account "database"), in the login keychain
+  only, where only this app reads it (docs/architecture.md, The app's database): Keychain items
+  belong to the app's signing identity, and releases are signed with North Brookville LLC's Apple
+  Developer ID (docs/conventions.md), which macOS trusts across updates. The SSH servers' keys are
+  in the `ssh_hosts` table, in the clear. On the wire a WebDAV password is Basic authentication:
+  base64, so plain over http on the LAN, and encrypted only by TLS over https; plain FTP sends it
+  in the clear too, FTPS and SFTP never do.
   Versions 0.4.11 to 0.4.13 gave the item an access list open to any application as a way around
   it; the prompt stayed, so 0.4.14 took that out again. An item those versions stored keeps the
   list it was given; saving the server again in the form stores a fresh one under the usual list,
@@ -168,7 +196,7 @@ chose vget's parameters and no 503s.
 
 ## How it is built
 
-- `src/downloads/mod.rs`: the page's state on the UI thread, one worker thread ("webdav") for
+- `src/downloads/mod.rs`: the page's state on the UI thread, one worker thread ("servers") for
   listings, checks and the form's test, and one thread per file on its way, with the engine's own
   chunk workers inside it. Answers come back through `slint::invoke_from_event_loop`; there is no
   async runtime, as everywhere in the app.

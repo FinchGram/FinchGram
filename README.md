@@ -39,10 +39,10 @@ client, not made by Telegram.
   its administrators, its permissions and options in the chat settings panel.
 - **Media.** Photos and videos open in a viewer over the window, with the rest of their album;
   video plays through mpv, built from source. Saving to Downloads where the chat allows it.
-- **Downloads.** A WebDAV client in the media center: your NAS, a seedbox, PikPak, Alist/OpenList
-  or a folder shared with `vget serve`, browsed in the app. Files come over several connections at
+- **Downloads.** A download client in the media center, over WebDAV, FTP, FTPS or SFTP: your NAS, a seedbox,
+  PikPak, Alist/OpenList or a folder shared with `vget serve`, browsed in the app. Files come over several connections at
   once and go on after a stop; photos and videos open in the viewer when they arrive; passwords
-  stay in FinchGram's encrypted database. See [docs/downloads.md](docs/downloads.md).
+  stay sealed in FinchGram's database. See [docs/downloads.md](docs/downloads.md).
 - **Sending.** Photos, videos and files from the paperclip, by dragging them onto the window, or by
   pasting them. A card shows them before they go: with a caption, as a photo or as a file, together
   as an album of up to ten, with a self-destruct timer in a private chat, without sound.
@@ -123,13 +123,13 @@ details.
 
 <p align="center"><img src="docs/screenshots/workbench-light-downloads.png" width="800" alt="The Downloads page"></p>
 
-View → Downloads, or the download icon above the gear. Add a WebDAV server (a NAS, a seedbox,
-PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav`, or a folder shared with `vget serve`),
+View → Downloads, or the download icon above the gear. Add a server over WebDAV, FTP, FTPS or SFTP (a
+NAS, a seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav`, or a folder shared with `vget serve`),
 browse its folders, tick files or take a whole folder, and they arrive in ~/Documents/FinchGram/webdav:
 each file in 8 MB chunks over up to twelve connections, going on from where it stopped after a
 Retry, as the maintainer's command-line tool vget does. The queue on the right shows the speed and
 what is left; Open fetches a photo or video and shows it in the viewer. FinchGram only reads from
-the server, and the password goes into FinchGram's encrypted database, never into a plain file.
+the server, and the password goes sealed into FinchGram's database, never into a plain file.
 [docs/downloads.md](docs/downloads.md) has the details and what is not there yet (a self-signed
 certificate is refused: use http on the LAN, or a real certificate).
 
@@ -235,8 +235,11 @@ src/
   platform/              # what differs from one operating system to another
   player/                # video through libmpv, drawn into the window with OpenGL
   screenshot/            # the screenshot tool: capture, the overlay, annotations, the picture
-  downloads/             # the Downloads page: a WebDAV client with a multi-connection engine
+  downloads/             # the Downloads page: WebDAV, FTP, FTPS and SFTP, with a multi-connection engine
+    remote.rs            #   one face on the three clients: list a folder, check a server, fetch a file
     webdav.rs            #   PROPFIND listings, addresses, Basic authentication
+    ftp.rs               #   FTP and FTPS over suppaftp: one stream, REST to go on after a stop
+    sftp.rs              #   SFTP over russh: chunks over several sessions, the server's key remembered
     transfer.rs          #   a file in chunks over several connections, going on after a stop
     mod.rs               #   the page's state, its threads, the queue, the servers' form
   update.rs              # the self-updater: GitHub Releases, signature check, swap, relaunch

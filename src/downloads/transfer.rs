@@ -84,6 +84,11 @@ impl Streams {
         let count = count.clamp(1, MOST_CONNECTIONS);
         Streams { count, budget: Arc::new(Semaphore::new(count)) }
     }
+
+    /// One of the budget's streams, held until the permit is dropped (sftp.rs's sessions).
+    pub async fn acquire(&self) -> Result<tokio::sync::OwnedSemaphorePermit, Error> {
+        self.budget.clone().acquire_owned().await.map_err(|_| Error::Cancelled)
+    }
 }
 
 /// What the server speaks, for the page.
@@ -164,6 +169,10 @@ pub enum Error {
     Disk(String),
     /// The server did not do what it said it would (a range ignored), or the address is bad.
     Protocol(String),
+    /// The file is not there any more (FTP's 550, SFTP's no such file).
+    Missing,
+    /// An SSH server showed another key than the one it was first met with (sftp.rs).
+    KeyChanged,
 }
 
 impl fmt::Display for Error {
@@ -176,6 +185,8 @@ impl fmt::Display for Error {
             Error::Connection(why) => write!(f, "the connection failed: {why}"),
             Error::Disk(why) => write!(f, "the file could not be written: {why}"),
             Error::Protocol(why) => write!(f, "{why}"),
+            Error::Missing => write!(f, "the server has no such file"),
+            Error::KeyChanged => write!(f, "the server's key is not the one it showed before"),
         }
     }
 }
@@ -1030,6 +1041,20 @@ fn read_state(path: &Path) -> Option<State> {
     serde_json::from_str(&fs::read_to_string(path).ok()?).ok()
 }
 
+/// Which chunks of a file are done, from an earlier try's `.part.json` that names the same
+/// file (`source` and `modified`), size and chunk; none otherwise. For engines that cut a file
+/// as this one does (sftp.rs).
+pub(crate) fn resume_state(path: &Path, source: &str, modified: &str, total: u64, chunk_size: u64) -> Option<Vec<bool>> {
+    let state = read_state(path)?;
+    let chunks = usize::try_from(total.div_ceil(chunk_size)).ok()?;
+    (state.is_of(source, modified) && state.size == total && state.chunk_size == chunk_size && state.chunks == chunks && state.done.len() == chunks).then_some(state.done)
+}
+
+/// The `.part.json` of a file cut as this engine cuts it, for sftp.rs.
+pub(crate) fn write_resume(path: &Path, source: &str, modified: &str, total: u64, chunk_size: u64, done: &[bool]) {
+    write_state(path, &Named { source: source.to_string(), modified: modified.to_string() }, total, chunk_size, done);
+}
+
 fn write_state(path: &Path, named: &Named, total: u64, chunk_size: u64, done: &[bool]) {
     let state = State { size: total, chunk_size, chunks: done.len(), done: done.to_vec(), source: named.source.clone(), modified: named.modified.clone() };
     match serde_json::to_string(&state) {
@@ -1055,7 +1080,7 @@ pub fn check_space(dest: &Path, needed: u64) -> Result<(), Error> {
 /// Open, or make, one of the transfer's own files (`.part`, `.part.json`), `truncate`d or not:
 /// never through a symbolic link, and a regular file once open. A link put into the download
 /// folder under the file's name would otherwise have the engine write into whatever it points at.
-fn open_own(path: &Path, truncate: bool) -> Result<File, Error> {
+pub(crate) fn open_own(path: &Path, truncate: bool) -> Result<File, Error> {
     let file = OpenOptions::new().read(true).write(true).create(true).truncate(truncate).custom_flags(O_NOFOLLOW).open(path).map_err(disk)?;
     if !file.metadata().map_err(disk)?.file_type().is_file() {
         return Err(Error::Disk(format!("{} is not a regular file", path.display())));

@@ -29,6 +29,8 @@ export global DownloadWords {
         if problem == Problem.unreadable { return @tr("The server did not answer with a WebDAV listing"); }
         if problem == Problem.connection { return @tr("The connection was lost"); }
         if problem == Problem.disk { return @tr("The file could not be written"); }
+        if problem == Problem.missing { return @tr("The server has no such file or folder"); }
+        if problem == Problem.key-changed { return @tr("The server's SSH key is not the one it showed before: another server, or something between you and it"); }
         return "";
     }
 
@@ -39,6 +41,8 @@ export global DownloadWords {
         if problem == Problem.http { return @tr("the server answered HTTP {0}", detail); }
         if problem == Problem.unreadable { return @tr("the server did not answer with the file"); }
         if problem == Problem.disk { return @tr("the file could not be written"); }
+        if problem == Problem.missing { return @tr("the server has no such file"); }
+        if problem == Problem.key-changed { return @tr("the server's SSH key changed"); }
         return @tr("the server closed the connection");
     }
 
@@ -71,11 +75,11 @@ export global DownloadWords {
         return @tr("Reached: {0} folders and {1} files at the root. No ranges, so each file comes over one connection.", Downloads.test-folders, Downloads.test-files);
     }
 
-    public pure function form-error(error: FormError, protocol: string) -> string {
+    public pure function form-error(error: FormError) -> string {
         if error == FormError.name { return @tr("Give the server a name."); }
         if error == FormError.address { return @tr("The address needs to start with http:// or https://."); }
+        if error == FormError.host { return @tr("Give the server's host name or IP."); }
         if error == FormError.port { return @tr("The port needs to be a number from 1 to 65535."); }
-        if error == FormError.protocol { return cannot-connect(protocol); }
         return "";
     }
 
@@ -111,10 +115,6 @@ export global DownloadWords {
 
     public pure function default-port(id: string, address: string) -> string {
         return @tr("Default port {}.", protocol-port(id, address));
-    }
-
-    public pure function cannot-connect(protocol: string) -> string {
-        return @tr("This version can’t connect to {} servers yet.", protocol);
     }
 }
 
@@ -1349,14 +1349,13 @@ export component DownloadsPage inherits Rectangle {
                                 label: Downloads.form-editing ? @tr("Edit server") : @tr("Add server");
                             }
                             Paragraph {
-                                text: @tr("The address of the server, and the account it gave you. The password is kept in FinchGram's encrypted database on this Mac.");
+                                text: @tr("The address of the server, and the account it gave you. The password is kept sealed in FinchGram's database on this Mac.");
                                 color: Look.muted;
                                 font-size: 15px;
                                 line-height-factor: Look.leading(1.55);
                             }
                         }
-                        // The protocol: WebDAV, or one this version does not speak yet, faded; the
-                        // form can be filled in under it, not saved.
+                        // The protocol: WebDAV, FTP, FTPS or SFTP.
                         VerticalLayout {
                             spacing: 6px;
                             Text {
@@ -1370,31 +1369,11 @@ export component DownloadsPage inherits Rectangle {
                                 for id in ["webdav", "ftp", "ftps", "sftp"]: Chip {
                                     label: DownloadWords.protocol-name(id);
                                     on: Downloads.form-protocol == id;
-                                    grey: id != "webdav";
                                     clicked => {
                                         Downloads.form-protocol = id;
                                         Downloads.form-error = FormError.none;
                                         Downloads.test-state = TestState.none;
                                     }
-                                }
-                            }
-                            if Downloads.form-protocol != "webdav": HorizontalLayout {
-                                spacing: 6px;
-                                alignment: start;
-                                VerticalLayout {
-                                    alignment: start;
-                                    padding-top: 1px;
-                                    Icon {
-                                        name: "info";
-                                        size: 14px;
-                                        color: Look.faint;
-                                    }
-                                }
-                                Paragraph {
-                                    text: DownloadWords.cannot-connect(DownloadWords.protocol-name(Downloads.form-protocol)) + " " + @tr("You can fill the form in; it can’t be saved.");
-                                    color: Look.faint;
-                                    font-size: 12px;
-                                    line-height-factor: Look.leading(1.45);
                                 }
                             }
                         }
@@ -1479,9 +1458,9 @@ export component DownloadsPage inherits Rectangle {
                                 Downloads.submit-form();
                             }
                         }
-                        // Basic authentication over http is the password in the clear (docs/downloads.md):
-                        // allowed, for a NAS at home, and said in red.
-                        if Downloads.form-address.to-lowercase().starts-with("http://"): HorizontalLayout {
+                        // Basic authentication over http, and plain FTP, send the password in the clear
+                        // (docs/downloads.md): allowed, for a NAS at home, and said in red.
+                        if (Downloads.form-protocol == "webdav" && Downloads.form-address.to-lowercase().starts-with("http://")) || Downloads.form-protocol == "ftp": HorizontalLayout {
                             spacing: 8px;
                             alignment: start;
                             VerticalLayout {
@@ -1494,7 +1473,9 @@ export component DownloadsPage inherits Rectangle {
                                 }
                             }
                             Paragraph {
-                                text: @tr("Over http the password and the files travel in the clear: use this server only on a network you trust.");
+                                text: Downloads.form-protocol == "ftp"
+                                    ? @tr("Over FTP the password and the files travel in the clear: use this server only on a network you trust, or FTPS.")
+                                    : @tr("Over http the password and the files travel in the clear: use this server only on a network you trust.");
                                 color: Look.danger;
                                 font-size: 14px;
                                 line-height-factor: Look.leading(1.5);
@@ -1513,7 +1494,7 @@ export component DownloadsPage inherits Rectangle {
                                 }
                             }
                             Paragraph {
-                                text: DownloadWords.form-error(Downloads.form-error, DownloadWords.protocol-name(Downloads.form-protocol));
+                                text: DownloadWords.form-error(Downloads.form-error);
                                 color: Look.danger;
                                 font-size: 14px;
                                 line-height-factor: Look.leading(1.5);

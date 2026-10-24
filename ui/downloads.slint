@@ -14,7 +14,7 @@ export struct ServerRow {
 }
 
 // Why a folder could not be read, a server not reached, or a file not fetched.
-export enum Problem { none, password, forbidden, unreachable, http, unreadable, connection, disk }
+export enum Problem { none, password, forbidden, unreachable, http, unreadable, connection, disk, missing, key-changed }
 
 // What the middle column shows of the folder: a spinner, its entries (none for an empty folder),
 // or why it could not be read.
@@ -50,9 +50,9 @@ export struct TransferRow {
 // The form's "Test connection".
 export enum TestState { none, testing, ok, failed }
 
-// What is wrong with the form when Add, Save or Test connection is pressed: no name, an address
-// that is not one, a port that is not one, or a protocol this version does not speak.
-export enum FormError { none, name, address, port, protocol }
+// What is wrong with the form when Add, Save or Test connection is pressed: no name, a WebDAV
+// address that is not one, no host for the others, a port that is not one.
+export enum FormError { none, name, address, host, port }
 
 export global Downloads {
     in-out property <[ServerRow]> servers;

@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-24 02:02+0000\n"
+"POT-Creation-Date: 2026-10-24 03:44+0000\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -27,7 +27,7 @@ msgstr "Rechercher dans la discussion"
 msgid "Chat Info"
 msgstr "Infos de la discussion"
 
-#: ui/app.slint:89 ui/toolbox.slint:90
+#: ui/app.slint:89 ui/toolbox.slint:91
 msgid "Toolbox"
 msgstr "Boîte à outils"
 
@@ -45,7 +45,7 @@ msgstr "Journal"
 
 #. The tools.
 #: ui/app.slint:125 ui/pages/downloads.slint:502 ui/pages/downloads.slint:865
-#: ui/toolbox.slint:99
+#: ui/toolbox.slint:100
 msgid "Downloads"
 msgstr "Téléchargements"
 
@@ -102,7 +102,7 @@ msgstr "Ajouter un commentaire (facultatif)"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/broadsheet.slint:2592 ui/chat.slint:360 ui/compose.slint:244
-#: ui/pages/downloads.slint:1582 ui/pages/profile.slint:174
+#: ui/pages/downloads.slint:1563 ui/pages/profile.slint:174
 #: ui/terminal/actions.slint:386 ui/terminal/actions.slint:643
 #: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
@@ -148,7 +148,7 @@ msgid "Bots"
 msgstr "Bots"
 
 #: ui/broadsheet/broadsheet.slint:460 ui/terminal/terminal.slint:309
-#: ui/toolbox.slint:92
+#: ui/toolbox.slint:93
 msgid "All"
 msgstr "Toutes"
 
@@ -174,7 +174,7 @@ msgid "Latest message"
 msgstr "Dernier message"
 
 #: ui/broadsheet/broadsheet.slint:667 ui/chat-manage.slint:233
-#: ui/pages/downloads.slint:1402 ui/workbench/sidebar.slint:868
+#: ui/pages/downloads.slint:1381 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "Nom"
 
@@ -360,7 +360,7 @@ msgid "Info"
 msgstr "Infos"
 
 #. The foot.
-#: ui/chat-info.slint:77 ui/pages/settings.slint:101 ui/toolbox.slint:130
+#: ui/chat-info.slint:77 ui/pages/settings.slint:101 ui/toolbox.slint:131
 msgid "Settings"
 msgstr "Réglages"
 
@@ -528,7 +528,7 @@ msgstr "Droits d'administrateur"
 msgid "Change photo"
 msgstr "Changer la photo"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1562
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1543
 #: ui/pages/settings.slint:1278
 msgid "Save"
 msgstr "Enregistrer"
@@ -771,7 +771,7 @@ msgstr "Rechercher des contacts"
 msgid "No contacts to add"
 msgstr "Aucun contact à ajouter"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1562
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1543
 msgid "Add"
 msgstr "Ajouter"
 
@@ -800,7 +800,7 @@ msgid "Remove {0} from the channel?"
 msgstr "Retirer {0} de la chaîne ?"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:346 ui/pages/ai-access.slint:458
-#: ui/pages/downloads.slint:1593
+#: ui/pages/downloads.slint:1574
 msgid "Remove"
 msgstr "Retirer"
 
@@ -1186,7 +1186,7 @@ msgid "Also delete for {0}"
 msgstr "Supprimer aussi pour {0}"
 
 #: ui/chat.slint:303 ui/pages/downloads.slint:1176
-#: ui/pages/downloads.slint:1844
+#: ui/pages/downloads.slint:1825
 msgid "Open"
 msgstr "Ouvrir"
 
@@ -1413,7 +1413,7 @@ msgstr "Annuler l'envoi"
 msgid "Not sent"
 msgstr "Non envoyé"
 
-#: ui/chat.slint:386 ui/pages/downloads.slint:751 ui/pages/downloads.slint:1869
+#: ui/chat.slint:386 ui/pages/downloads.slint:751 ui/pages/downloads.slint:1850
 msgid "Retry"
 msgstr "Réessayer"
 
@@ -1430,7 +1430,7 @@ msgid "Show in Finder"
 msgstr "Afficher dans le Finder"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:392 ui/pages/downloads.slint:50
+#: ui/chat.slint:392 ui/pages/downloads.slint:54
 msgid "{0} of {1}"
 msgstr "{0} sur {1}"
 
@@ -1442,7 +1442,7 @@ msgstr "Cliquez pour voir"
 msgid "Reply"
 msgstr "Répondre"
 
-#: ui/chat.slint:812 ui/pages/downloads.slint:1795
+#: ui/chat.slint:812 ui/pages/downloads.slint:1776
 msgid "Edit"
 msgstr "Modifier"
 
@@ -1636,7 +1636,7 @@ msgstr "Recherche globale"
 msgid "Found by phone number"
 msgstr "Par numéro de téléphone"
 
-#: ui/compose.slint:136 ui/toolbox.slint:96
+#: ui/compose.slint:136 ui/toolbox.slint:97
 msgid "Messages"
 msgstr "Messages"
 
@@ -2934,67 +2934,88 @@ msgstr "La connexion a été perdue"
 msgid "The file could not be written"
 msgstr "Impossible d'écrire le fichier"
 
-#: ui/pages/downloads.slint:37
+#: ui/pages/downloads.slint:32
+msgid "The server has no such file or folder"
+msgstr "Le serveur n’a pas ce fichier ou ce dossier"
+
+#: ui/pages/downloads.slint:33
+msgid ""
+"The server's SSH key is not the one it showed before: another server, or "
+"something between you and it"
+msgstr ""
+"La clé SSH du serveur n’est pas celle qu’il montrait avant : un autre "
+"serveur, ou quelque chose entre vous et lui"
+
+#: ui/pages/downloads.slint:39
 msgid "the server refused the password (401)"
 msgstr "le serveur a refusé le mot de passe (401)"
 
-#: ui/pages/downloads.slint:38
+#: ui/pages/downloads.slint:40
 msgid "the server refused access (403)"
 msgstr "le serveur a refusé l'accès (403)"
 
-#: ui/pages/downloads.slint:39
+#: ui/pages/downloads.slint:41
 msgid "the server answered HTTP {0}"
 msgstr "le serveur a répondu HTTP {0}"
 
-#: ui/pages/downloads.slint:40
+#: ui/pages/downloads.slint:42
 msgid "the server did not answer with the file"
 msgstr "le serveur n'a pas renvoyé le fichier"
 
-#: ui/pages/downloads.slint:41
+#: ui/pages/downloads.slint:43
 msgid "the file could not be written"
 msgstr "le fichier n'a pas pu être écrit"
 
-#: ui/pages/downloads.slint:42
+#
+#: ui/pages/downloads.slint:44
+msgid "the server has no such file"
+msgstr "le serveur n’a pas ce fichier"
+
+#: ui/pages/downloads.slint:45
+msgid "the server's SSH key changed"
+msgstr "la clé SSH du serveur a changé"
+
+#: ui/pages/downloads.slint:46
 msgid "the server closed the connection"
 msgstr "le serveur a fermé la connexion"
 
-#: ui/pages/downloads.slint:46
+#: ui/pages/downloads.slint:50
 msgid "Waiting · {0}"
 msgstr "En attente · {0}"
 
-#: ui/pages/downloads.slint:47
+#: ui/pages/downloads.slint:51
 msgid "Done · {0}"
 msgstr "Terminé · {0}"
 
-#: ui/pages/downloads.slint:48
+#: ui/pages/downloads.slint:52
 msgid "Stopped: {0}. {1} of {2} kept."
 msgstr "Interrompu : {0}. {1} sur {2} conservés."
 
-#: ui/pages/downloads.slint:49
+#: ui/pages/downloads.slint:53
 msgid "Server busy (HTTP {0}), trying again…"
 msgstr "Serveur occupé (HTTP {0}), nouvel essai…"
 
-#: ui/pages/downloads.slint:51
+#: ui/pages/downloads.slint:55
 msgid "{0} of {1} · {2} · {3}"
 msgstr "{0} sur {1} · {2} · {3}"
 
-#: ui/pages/downloads.slint:55
+#: ui/pages/downloads.slint:59
 msgid "estimating…"
 msgstr "estimation…"
 
-#: ui/pages/downloads.slint:56
+#: ui/pages/downloads.slint:60
 msgid "{0} s left"
 msgstr "{0} s restantes"
 
-#: ui/pages/downloads.slint:57
+#: ui/pages/downloads.slint:61
 msgid "{0} min left"
 msgstr "{0} min restantes"
 
-#: ui/pages/downloads.slint:66
+#: ui/pages/downloads.slint:70
 msgid "Reached: {0} folders and {1} files at the root."
 msgstr "Connexion réussie : {0} dossiers et {1} fichiers à la racine."
 
-#: ui/pages/downloads.slint:69
+#: ui/pages/downloads.slint:73
 msgid ""
 "Reached: {0} folders and {1} files at the root. Ranges supported, so "
 "downloads can use several connections."
@@ -3003,7 +3024,7 @@ msgstr ""
 "d'octets sont prises en charge, les téléchargements peuvent donc utiliser "
 "plusieurs connexions."
 
-#: ui/pages/downloads.slint:71
+#: ui/pages/downloads.slint:75
 msgid ""
 "Reached: {0} folders and {1} files at the root. No ranges, so each file "
 "comes over one connection."
@@ -3011,42 +3032,42 @@ msgstr ""
 "Connexion réussie : {0} dossiers et {1} fichiers à la racine. Pas de plages "
 "d'octets, chaque fichier passe donc par une seule connexion."
 
-#: ui/pages/downloads.slint:75
+#: ui/pages/downloads.slint:79
 msgid "Give the server a name."
 msgstr "Donnez un nom au serveur."
 
-#: ui/pages/downloads.slint:76
+#: ui/pages/downloads.slint:80
 msgid "The address needs to start with http:// or https://."
 msgstr "L'adresse doit commencer par http:// ou https://."
 
-#: ui/pages/downloads.slint:77
+#
+#: ui/pages/downloads.slint:81
+msgid "Give the server's host name or IP."
+msgstr "Indiquez le nom d’hôte ou l’IP du serveur."
+
+#: ui/pages/downloads.slint:82
 msgid "The port needs to be a number from 1 to 65535."
 msgstr "Le port doit être un nombre entre 1 et 65535."
 
-#: ui/pages/downloads.slint:106
+#: ui/pages/downloads.slint:110
 msgid "Host name or IP. A folder may follow after a /."
 msgstr "Nom d’hôte ou IP. Un dossier peut suivre après un /."
 
-#: ui/pages/downloads.slint:107
+#: ui/pages/downloads.slint:111
 msgid "Host name or IP. Implicit TLS on the default port."
 msgstr "Nom d’hôte ou IP. TLS implicite sur le port par défaut."
 
-#: ui/pages/downloads.slint:108
+#: ui/pages/downloads.slint:112
 msgid "Host name or IP of the SSH server."
 msgstr "Nom d’hôte ou IP du serveur SSH."
 
-#: ui/pages/downloads.slint:109
+#: ui/pages/downloads.slint:113
 msgid "http:// or https://. A folder may be part of the address."
 msgstr "http:// ou https://. L'adresse peut inclure un dossier."
 
-#: ui/pages/downloads.slint:113
+#: ui/pages/downloads.slint:117
 msgid "Default port {}."
 msgstr "Port par défaut : {}."
-
-#
-#: ui/pages/downloads.slint:117
-msgid "This version can’t connect to {} servers yet."
-msgstr "Cette version ne se connecte pas encore aux serveurs {}."
 
 #: ui/pages/downloads.slint:400 ui/pages/downloads.slint:1284
 msgid "Add server"
@@ -3113,50 +3134,56 @@ msgid "Edit server"
 msgstr "Modifier le serveur"
 
 #
+#
 #: ui/pages/downloads.slint:1352
 msgid ""
 "The address of the server, and the account it gave you. The password is kept "
-"in FinchGram's encrypted database on this Mac."
+"sealed in FinchGram's database on this Mac."
 msgstr ""
 "L’adresse du serveur et le compte qu’il vous a donné. Le mot de passe est "
-"conservé dans la base de données chiffrée de FinchGram sur ce Mac."
+"conservé scellé dans la base de données de FinchGram sur ce Mac."
 
-#: ui/pages/downloads.slint:1363
+#: ui/pages/downloads.slint:1362
 msgid "Protocol"
 msgstr "Protocole"
 
-#: ui/pages/downloads.slint:1394
-msgid "You can fill the form in; it can’t be saved."
-msgstr "Vous pouvez remplir le formulaire ; il ne pourra pas être enregistré."
-
-#: ui/pages/downloads.slint:1417
+#: ui/pages/downloads.slint:1396
 msgid "Address"
 msgstr "Adresse"
 
-#: ui/pages/downloads.slint:1426
+#: ui/pages/downloads.slint:1405
 msgid "Port"
 msgstr "Port"
 
 #
-#: ui/pages/downloads.slint:1452
+#: ui/pages/downloads.slint:1431
 msgid "Sign in with"
 msgstr "Se connecter avec"
 
-#: ui/pages/downloads.slint:1460 ui/pages/downloads.slint:1475
+#: ui/pages/downloads.slint:1439 ui/pages/downloads.slint:1454
 #: ui/pages/settings.slint:1236
 msgid "Password"
 msgstr "Mot de passe"
 
-#: ui/pages/downloads.slint:1464
+#: ui/pages/downloads.slint:1443
 msgid "Key"
 msgstr "Clé"
 
 #
-#: ui/pages/downloads.slint:1469
+#: ui/pages/downloads.slint:1448
 msgid "Key sign-in isn’t in this version."
 msgstr "Connexion par clé absente de cette version."
 
-#: ui/pages/downloads.slint:1497
+#
+#: ui/pages/downloads.slint:1477
+msgid ""
+"Over FTP the password and the files travel in the clear: use this server "
+"only on a network you trust, or FTPS."
+msgstr ""
+"En FTP, le mot de passe et les fichiers circulent en clair : n’utilisez ce "
+"serveur que sur un réseau de confiance, ou passez en FTPS."
+
+#: ui/pages/downloads.slint:1478
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
@@ -3164,47 +3191,47 @@ msgstr ""
 "En http, le mot de passe et les fichiers circulent en clair : n'utilisez ce "
 "serveur que sur un réseau de confiance."
 
-#: ui/pages/downloads.slint:1533
+#: ui/pages/downloads.slint:1514
 msgid "Testing…"
 msgstr "Test en cours…"
 
-#: ui/pages/downloads.slint:1572
+#: ui/pages/downloads.slint:1553
 msgid "Test connection"
 msgstr "Tester la connexion"
 
-#: ui/pages/downloads.slint:1637
+#: ui/pages/downloads.slint:1618
 msgid "{0} active"
 msgstr "{0} en cours"
 
-#: ui/pages/downloads.slint:1650
+#: ui/pages/downloads.slint:1631
 msgid "Clear finished"
 msgstr "Retirer les terminés"
 
-#: ui/pages/downloads.slint:1673
+#: ui/pages/downloads.slint:1654
 msgid "Hide"
 msgstr "Masquer"
 
-#: ui/pages/downloads.slint:1741
+#: ui/pages/downloads.slint:1722
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "{0} connexions par fichier · Téléchargements dans {1}"
 
-#: ui/pages/downloads.slint:1747
+#: ui/pages/downloads.slint:1728
 msgid "Change"
 msgstr "Modifier"
 
-#: ui/pages/downloads.slint:1812
+#: ui/pages/downloads.slint:1793
 msgid "Copy address"
 msgstr "Copier l'adresse"
 
-#: ui/pages/downloads.slint:1828
+#: ui/pages/downloads.slint:1809
 msgid "Download folder"
 msgstr "Télécharger le dossier"
 
-#: ui/pages/downloads.slint:1852
+#: ui/pages/downloads.slint:1833
 msgid "Copy link"
 msgstr "Copier le lien"
 
-#: ui/pages/downloads.slint:1887
+#: ui/pages/downloads.slint:1868
 msgid "Remove from list"
 msgstr "Retirer de la liste"
 
@@ -3559,7 +3586,7 @@ msgid "Current"
 msgstr "Actuel"
 
 #. The accounts.
-#: ui/pages/profile.slint:119 ui/toolbox.slint:126
+#: ui/pages/profile.slint:119 ui/toolbox.slint:127
 msgid "Add account"
 msgstr "Ajouter un compte"
 
@@ -3616,7 +3643,7 @@ msgid "Privacy & security"
 msgstr "Confidentialité et sécurité"
 
 #: ui/pages/settings.slint:129 ui/pages/settings.slint:1568
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:110
 msgid "AI access"
 msgstr "Accès IA"
 
@@ -4148,87 +4175,87 @@ msgid "cmd"
 msgstr "cmd"
 
 #
-#: ui/toolbox.slint:91
+#: ui/toolbox.slint:92
 msgid "Search the toolbox"
 msgstr "Rechercher dans la boîte"
 
-#: ui/toolbox.slint:94
+#: ui/toolbox.slint:95
 msgid "Transfers"
 msgstr "Transferts"
 
-#: ui/toolbox.slint:95
+#: ui/toolbox.slint:96
 msgid "Media"
 msgstr "Médias"
 
 #
-#: ui/toolbox.slint:97
+#: ui/toolbox.slint:98
 msgid "Connections"
 msgstr "Connexions"
 
-#: ui/toolbox.slint:100
+#: ui/toolbox.slint:101
 msgid "Pick files from your own servers and download them"
 msgstr "Choisissez des fichiers sur vos serveurs et téléchargez-les"
 
 #
-#: ui/toolbox.slint:101
+#: ui/toolbox.slint:102
 msgid "Live streams"
 msgstr "Directs"
 
 #
-#: ui/toolbox.slint:102
+#: ui/toolbox.slint:103
 msgid "Live streams going on in your groups and channels"
 msgstr "Directs en cours dans vos groupes et chaînes"
 
-#: ui/toolbox.slint:104
+#: ui/toolbox.slint:105
 msgid "Your own media library, played in the built-in player"
 msgstr "Votre médiathèque, dans le lecteur intégré"
 
-#: ui/toolbox.slint:105
+#: ui/toolbox.slint:106
 msgid "Keyword hiding"
 msgstr "Masquage par mots-clés"
 
 #
-#: ui/toolbox.slint:106
+#: ui/toolbox.slint:107
 msgid "Tuck away messages by keyword; unhide any time"
 msgstr "Repliez les messages par mot-clé, rétablissez-les à tout moment"
 
-#: ui/toolbox.slint:107
+#: ui/toolbox.slint:108
 msgid "Scheduled messages"
 msgstr "Messages programmés"
 
-#: ui/toolbox.slint:108
+#: ui/toolbox.slint:109
 msgid "Sent by the server on time, even with your computer off"
 msgstr "Envoyés par le serveur à l’heure, même ordinateur éteint"
 
-#: ui/toolbox.slint:110
+#: ui/toolbox.slint:111
 msgid "Let other apps read the chats you allow, through FinchGram"
 msgstr "D’autres apps lisent via FinchGram les discussions que vous autorisez"
 
 #. The protocols under Downloads.
-#: ui/toolbox.slint:112
+#: ui/toolbox.slint:113
 msgid "Protocol · chosen when you add a server"
 msgstr "Protocole · choisi à l’ajout d’un serveur"
 
-#: ui/toolbox.slint:113
+#: ui/toolbox.slint:114
 msgid "Common on NAS boxes, cloud drives and seedboxes"
 msgstr "Courant sur NAS, clouds et seedbox"
 
-#: ui/toolbox.slint:114
+#: ui/toolbox.slint:115
 msgid "The old one, unencrypted"
 msgstr "Le classique, non chiffré"
 
-#: ui/toolbox.slint:115
+#: ui/toolbox.slint:116
 msgid "FTP with TLS encryption"
 msgstr "FTP avec chiffrement TLS"
 
-#: ui/toolbox.slint:116
+#: ui/toolbox.slint:117
 msgid ""
 "Over SSH; on seedboxes it usually doesn’t count against your traffic quota"
 msgstr "Via SSH ; sur les seedbox, ne compte généralement pas dans le quota"
 
 #
 #. What goes on.
-#: ui/toolbox.slint:118
+#: ui/toolbox.slint:119
 msgid "{n} downloading"
 msgid_plural "{n} downloading"
 msgstr[0] "{n} en cours"
@@ -4236,67 +4263,67 @@ msgstr[1] "{n} en cours"
 
 #
 #
-#: ui/toolbox.slint:119
+#: ui/toolbox.slint:120
 msgid "{n} server"
 msgid_plural "{n} servers"
 msgstr[0] "{n} serveurs"
 msgstr[1] "{n} serveurs"
 
 #
-#: ui/toolbox.slint:120
+#: ui/toolbox.slint:121
 msgid "Not in this version"
 msgstr "Pas dans cette version"
 
 #
-#: ui/toolbox.slint:121
+#: ui/toolbox.slint:122
 msgid "Pinned to the {}"
 msgstr "Épinglé à la {}"
 
-#: ui/toolbox.slint:122
+#: ui/toolbox.slint:123
 msgid "activity bar"
 msgstr "barre d’activité"
 
-#: ui/toolbox.slint:123
+#: ui/toolbox.slint:124
 msgid "rail"
 msgstr "barre latérale"
 
 #
-#: ui/toolbox.slint:124
+#: ui/toolbox.slint:125
 msgid "status bar"
 msgstr "barre d’état"
 
 #
-#: ui/toolbox.slint:127
+#: ui/toolbox.slint:128
 msgid "Limit reached"
 msgstr "Limite atteinte"
 
-#: ui/toolbox.slint:128
+#: ui/toolbox.slint:129
 msgctxt "the account in front"
 msgid "Current"
 msgstr "Actuel"
 
-#: ui/toolbox.slint:131
+#: ui/toolbox.slint:132
 msgid "AI settings"
 msgstr "Réglages IA"
 
-#: ui/toolbox.slint:132
+#: ui/toolbox.slint:133
 msgid "My profile"
 msgstr "Mon profil"
 
 #
-#: ui/toolbox.slint:133
+#: ui/toolbox.slint:134
 msgid "{} to open · Esc to close"
 msgstr "{} ouvre · Échap ferme"
 
 #
 #. The search.
-#: ui/toolbox.slint:135
+#: ui/toolbox.slint:136
 msgid "Nothing called “{}”"
 msgstr "Rien ne s’appelle « {} »"
 
 #
 #
-#: ui/toolbox.slint:136
+#: ui/toolbox.slint:137
 msgid "{n} item"
 msgid_plural "{n} items"
 msgstr[0] "{n} éléments"
@@ -4304,11 +4331,11 @@ msgstr[1] "{n} éléments"
 
 #
 #. Terminal.
-#: ui/toolbox.slint:138
+#: ui/toolbox.slint:139
 msgid "[x] pins to the status bar · click a name to open"
 msgstr "[x] épingle à la barre d’état · cliquez un nom pour ouvrir"
 
-#: ui/toolbox.slint:139
+#: ui/toolbox.slint:140
 msgid "/tools <category> jumps there · type it again to close"
 msgstr "/tools <catégorie> y va · retapez pour fermer"
 

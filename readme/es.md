@@ -39,10 +39,10 @@ Es un cliente no oficial, no hecho por Telegram.
 - **Multimedia.** Las fotos y los vídeos se abren en un visor sobre la ventana, con el resto de su
   álbum; el vídeo se reproduce con mpv, compilado desde el código fuente. Se guardan en Descargas
   donde el chat lo permite.
-- **Descargas.** Un cliente WebDAV en el centro multimedia: tu NAS, un seedbox, PikPak,
-  Alist/OpenList o una carpeta compartida con `vget serve`, explorados desde la app. Los archivos
+- **Descargas.** Un cliente de descargas en el centro multimedia, por WebDAV, FTP, FTPS o SFTP: tu
+  NAS, un seedbox, PikPak, Alist/OpenList o una carpeta compartida con `vget serve`, explorados desde la app. Los archivos
   llegan por varias conexiones a la vez y continúan tras una interrupción; las fotos y los vídeos se
-  abren en el visor cuando llegan; las contraseñas se guardan en la base de datos cifrada de FinchGram. Ver
+  abren en el visor cuando llegan; las contraseñas se guardan selladas en la base de datos de FinchGram. Ver
   [docs/downloads.md](../docs/downloads.md).
 - **Envío.** Fotos, vídeos y archivos desde el clip, arrastrándolos a la ventana o pegándolos. Una
   tarjeta los muestra antes de enviarlos: con un pie, como foto o como archivo, juntos en un álbum de
@@ -124,14 +124,14 @@ para una IA. La página da la línea para pegar en Claude Code o Claude Desktop;
 
 <p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="La página de Descargas"></p>
 
-Visualización → Descargas, o el icono de descarga encima del engranaje. Añade un servidor WebDAV (un
-NAS, un seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` o una carpeta compartida
+Visualización → Descargas, o el icono de descarga encima del engranaje. Añade un servidor por WebDAV, FTP, FTPS o SFTP
+(un NAS, un seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` o una carpeta compartida
 con `vget serve`), explora sus carpetas, marca archivos o toma una carpeta entera, y llegan a
 ~/Documents/FinchGram/webdav: cada archivo en bloques de 8 MB con hasta doce conexiones, y tras un
 Reintentar sigue desde donde se quedó, como hace vget, la herramienta de línea de comandos del
 mantenedor. La cola de la derecha muestra la velocidad y lo que queda; Abrir trae una foto o un
-vídeo y lo muestra en el visor. FinchGram solo lee del servidor, y la contraseña va a la base de datos
-cifrada de FinchGram, nunca a un archivo de texto. En [docs/downloads.md](../docs/downloads.md) están los detalles y lo que
+vídeo y lo muestra en el visor. FinchGram solo lee del servidor, y la contraseña va sellada a la base de
+datos de FinchGram, nunca a un archivo de texto. En [docs/downloads.md](../docs/downloads.md) están los detalles y lo que
 aún falta (un certificado autofirmado se rechaza: usa http en la red local o un certificado real).
 
 ## Cómo está hecho
@@ -239,8 +239,11 @@ src/
   platform/              # lo que cambia de un sistema operativo a otro
   player/                # el vídeo con libmpv, dibujado en la ventana con OpenGL
   screenshot/            # la herramienta de captura: la captura, la capa, las anotaciones, la imagen
-  downloads/             # la página de Descargas: un cliente WebDAV con un motor de varias conexiones
+  downloads/             # la página de Descargas: WebDAV, FTP, FTPS y SFTP, con un motor de varias conexiones
+    remote.rs            #   una sola cara para los tres clientes: listar, comprobar, traer
     webdav.rs            #   listados PROPFIND, direcciones, autenticación Basic
+    ftp.rs               #   FTP y FTPS con suppaftp: un flujo, REST para continuar
+    sftp.rs              #   SFTP con russh: bloques por varias sesiones, clave del servidor recordada
     transfer.rs          #   un archivo por bloques en varias conexiones, que continúa tras una interrupción
     mod.rs               #   el estado de la página, sus hilos, la cola, el formulario de los servidores
   update.rs              # la autoactualización: GitHub Releases, firma, sustitución, reinicio

@@ -28,9 +28,9 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
   聊天设置栏里，成员看到群规则，管理员看到权限和选项。
 - **媒体。** 照片和视频在盖住整个窗口的查看器里打开，可以翻看同一相册的其他图片；视频用从源码构建的 mpv
   播放。聊天允许时可以保存到“下载”。
-- **下载。** 媒体中心里的 WebDAV 客户端：你的 NAS、seedbox、PikPak、Alist/OpenList，或者用 `vget serve` 共享的
-  文件夹，在 app 里直接浏览。文件多连接并发下载，停了能接着来；照片和视频下完直接在查看器里打开；密码存在 FinchGram
-  的加密数据库里。见 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
+- **下载。** 媒体中心里的下载客户端，走 WebDAV、FTP、FTPS 或 SFTP：你的 NAS、seedbox、PikPak、Alist/OpenList，或者用 `vget serve` 共享的
+  文件夹，在 app 里直接浏览。文件多连接并发下载，停了能接着来；照片和视频下完直接在查看器里打开；密码封在 FinchGram
+  的数据库里。见 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
 - **发送。** 照片、视频和文件可以从回形针菜单发送，也可以拖进窗口或直接粘贴。发出去之前先在一张卡片里显示：
   可以加说明文字，按照片发或按文件发，最多十个合成一个相册，私聊里可以设自毁计时器，也可以静默发送。
 - **截图。** 输入栏里的剪刀或 ⌘⇧A 会定住屏幕：取一个窗口或拖一个选区，画上方框、椭圆、箭头、画笔、文字和马赛克，
@@ -89,11 +89,11 @@ FinchGram 是一个 MCP 服务端：你 Mac 上的 AI 助手应用（Claude Desk
 
 <p align="center"><img src="../docs/screenshots/zh-workbench-downloads.png" width="800" alt="下载页面"></p>
 
-显示 → 下载，或者齿轮上方的下载图标。添加一个 WebDAV 服务器（NAS、seedbox、PikPak、Alist/OpenList、Nextcloud、
+显示 → 下载，或者齿轮上方的下载图标。添加一个服务器，WebDAV、FTP、FTPS 或 SFTP（NAS、seedbox、PikPak、Alist/OpenList、Nextcloud、
 `rclone serve webdav`，或者用 `vget serve` 共享的文件夹），浏览它的文件夹，勾选文件或整个文件夹拿走，文件就到了
 ~/Documents/FinchGram/webdav：每个文件切成 8 MB 的块、最多十二条连接并发，重试时从停下的地方接着来，和维护者的命令行
 工具 vget 一个做法。右边的队列显示速度和还剩多少；“打开”把照片或视频取下来后在查看器里显示。FinchGram 只从服务器
-读，密码进 FinchGram 的加密数据库，从不以明文写进文件。细节和还没做的部分见 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
+读，密码封起来进 FinchGram 的数据库，从不以明文写进文件。细节和还没做的部分见 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
 （自签名证书会被拒绝：局域网用 http，或者配正规证书）。
 
 ## 怎么做的
@@ -190,8 +190,11 @@ src/
   platform/              # 随操作系统而不同的部分
   player/                # 用 libmpv 播放视频，经 OpenGL 画进窗口
   screenshot/            # 截图工具：截取、覆盖层、标注、成图
-  downloads/             # 下载页面：WebDAV 客户端，带多连接下载引擎
+  downloads/             # 下载页面：WebDAV、FTP、FTPS 和 SFTP，带多连接下载引擎
+    remote.rs            #   三个客户端的同一张脸：列目录、检查服务器、取文件
     webdav.rs            #   PROPFIND 列目录、地址、Basic 认证
+    ftp.rs               #   FTP 和 FTPS，用 suppaftp：单流，REST 接着下
+    sftp.rs              #   SFTP，用 russh：多个会话分块下载，记住服务器密钥
     transfer.rs          #   一个文件分块多连接下载，停了接着来
     mod.rs               #   页面状态、线程、队列、服务器表单
   update.rs              # 自动更新：GitHub Releases、校验签名、替换、重启

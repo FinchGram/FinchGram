@@ -1,8 +1,9 @@
-//! Downloads (the design's third round of the shared pages, "FinchGram Desktop 下载"): WebDAV
-//! servers, their folders, and files fetched over several connections at once
-//! (docs/downloads.md). `webdav.rs` speaks to a server and `transfer.rs` fetches a file; this
-//! module keeps the page's state on the UI thread and fills the Downloads global
-//! (ui/downloads.slint), which the page (ui/pages/downloads.slint) shows in every theme.
+//! Downloads (the design's third round of the shared pages, "FinchGram Desktop 下载", and the
+//! protocols of the seventh): servers over WebDAV, FTP, FTPS or SFTP, their folders, and files
+//! fetched over several connections at once (docs/downloads.md). `remote.rs` puts one face on
+//! the three clients (`webdav.rs` with `transfer.rs`, `ftp.rs`, `sftp.rs`); this module keeps the
+//! page's state on the UI thread and fills the Downloads global (ui/downloads.slint), which the
+//! page (ui/pages/downloads.slint) shows in every theme.
 //!
 //! Threads (docs/architecture.md): one worker lists folders, checks servers and tests the form's
 //! server, one request at a time in the order asked, and answers through the event loop; a
@@ -10,8 +11,11 @@
 //! on a thread of its own, two at a time, and reports its progress the same way. The servers,
 //! with their passwords, are the app's database's (src/database.rs).
 
+pub mod ftp;
 pub mod http;
 pub mod log;
+pub mod remote;
+pub mod sftp;
 pub mod transfer;
 pub mod webdav;
 
@@ -27,6 +31,8 @@ use std::time::{Duration, Instant};
 use chrono::{Datelike, Local, TimeZone};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
 
+use remote::{Protocol, Remote};
+
 use crate::settings::Settings;
 use crate::{AppState, Downloads, FolderEntry, FolderState, FormError, MainWindow, Problem, ServerRow, ServerStatus, TestState, TransferRow, TransferState, database, platform, telegram};
 
@@ -36,9 +42,15 @@ const MOST_ACTIVE: usize = 2;
 const SPEED_WINDOW: Duration = Duration::from_secs(10);
 
 /// A server as the page keeps it.
+#[derive(Clone)]
 struct Server {
     name: String,
-    url: String,
+    protocol: Protocol,
+    /// As typed: "https://nas.home/dav" for WebDAV, "host" or "host/folder" for the others;
+    /// never with a port in it.
+    address: String,
+    /// 0 for the protocol's default.
+    port: u16,
     username: String,
     /// "" for a server that asks for none.
     password: String,
@@ -46,22 +58,69 @@ struct Server {
 }
 
 impl Server {
-    fn from_record(record: database::WebdavServer) -> Server {
-        Server { name: record.name, url: record.url, username: record.username, password: record.password, status: ServerStatus::Unknown }
+    fn from_record(record: database::ServerRecord) -> Server {
+        Server {
+            name: record.name,
+            protocol: Protocol::parse(&record.protocol).unwrap_or(Protocol::Webdav),
+            address: record.address,
+            port: record.port,
+            username: record.username,
+            password: record.password,
+            status: ServerStatus::Unknown,
+        }
     }
 
     /// The server as the database keeps it.
-    fn record(&self) -> database::WebdavServer {
-        database::WebdavServer { name: self.name.clone(), url: self.url.clone(), username: self.username.clone(), password: self.password.clone() }
+    fn record(&self) -> database::ServerRecord {
+        database::ServerRecord {
+            name: self.name.clone(),
+            protocol: self.protocol.id().to_string(),
+            address: self.address.clone(),
+            port: self.port,
+            username: self.username.clone(),
+            password: self.password.clone(),
+        }
     }
 
-    /// The server for the worker.
-    fn client(&self) -> webdav::Server {
-        webdav::Server { url: self.url.clone(), username: self.username.clone(), password: self.password.clone() }
+    /// The client for the worker and the downloads, by what the server speaks. An SFTP server's
+    /// known key comes from the database, and one met for the first time is kept there.
+    fn remote(&self) -> Remote {
+        match self.protocol {
+            Protocol::Webdav => {
+                let port = if self.port == 0 { String::new() } else { self.port.to_string() };
+                let url = webdav::Server::normalized_url(&webdav::Server::with_port(&self.address, &port));
+                Remote::WebDav(webdav::Server { url, username: self.username.clone(), password: self.password.clone() })
+            }
+            Protocol::Ftp | Protocol::Ftps => {
+                let (host, folder) = remote::host_and_folder(&self.address);
+                Remote::Ftp(ftp::Server { host, port: self.port, folder, tls: self.protocol == Protocol::Ftps, username: self.username.clone(), password: self.password.clone() })
+            }
+            Protocol::Sftp => {
+                let (host, folder) = remote::host_and_folder(&self.address);
+                let known_key = database::ssh_host_key(&host, if self.port == 0 { 22 } else { self.port });
+                let learned: sftp::Learned = Arc::new(|host: &str, port: u16, key: &str| {
+                    let (host, key) = (host.to_string(), key.to_string());
+                    let _ = slint::invoke_from_event_loop(move || {
+                        if let Err(err) = database::save_ssh_host_key(&host, port, &key) {
+                            eprintln!("downloads: cannot keep the server's key: {err}");
+                        }
+                    });
+                });
+                Remote::Sftp(sftp::Server { host, port: self.port, folder, username: self.username.clone(), password: self.password.clone(), known_key, learned })
+            }
+        }
+    }
+
+    /// The host, for the page: "nas.home" out of the address.
+    fn host(&self) -> String {
+        match self.protocol {
+            Protocol::Webdav => webdav::Server::host(&self.address),
+            _ => remote::host_and_folder(&self.address).0,
+        }
     }
 
     fn row(&self) -> ServerRow {
-        ServerRow { name: self.name.clone().into(), host: webdav::Server::host(&self.url).into(), protocol: "WebDAV".into(), status: self.status }
+        ServerRow { name: self.name.clone().into(), host: self.host().into(), protocol: self.protocol.name().into(), status: self.status }
     }
 }
 
@@ -75,9 +134,10 @@ enum Folder {
 /// What a download fetches.
 #[derive(Clone)]
 enum Kind {
-    File { source: transfer::Source, dest: PathBuf },
+    /// The file `name` in the folder `path` of the server, into `dest`.
+    File { remote: Remote, path: Vec<String>, name: String, dest: PathBuf },
     /// A whole folder, file by file, into `dest`.
-    Folder { server: webdav::Server, path: Vec<String>, dest: PathBuf },
+    Folder { remote: Remote, path: Vec<String>, dest: PathBuf },
 }
 
 impl Kind {
@@ -160,9 +220,9 @@ impl Transfer {
 
 /// What the worker thread does, one at a time.
 enum Task {
-    List { request: u64, server: webdav::Server, path: Vec<String> },
-    Check { index: usize, server: webdav::Server },
-    Test { request: u64, server: webdav::Server },
+    List { request: u64, remote: Remote, path: Vec<String> },
+    Check { index: usize, remote: Remote },
+    Test { request: u64, remote: Remote },
 }
 
 /// What Test connection found: folders and files at the root, and whether the server does ranges
@@ -181,7 +241,7 @@ struct State {
     current: Option<usize>,
     /// The folder looked at, from the server's root.
     path: Vec<String>,
-    entries: Vec<webdav::Entry>,
+    entries: Vec<remote::Entry>,
     folder: Folder,
     /// The files chosen in the folder, by name.
     selected: BTreeSet<String>,
@@ -203,7 +263,7 @@ thread_local! {
 }
 
 pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
-    let servers: Vec<Server> = database::webdav_servers().into_iter().map(Server::from_record).collect();
+    let servers: Vec<Server> = database::servers().into_iter().map(Server::from_record).collect();
     STATE.with(|state| {
         *state.borrow_mut() = Some(State {
             ui: ui.as_weak(),
@@ -292,40 +352,37 @@ fn send(task: Task) {
 
 fn start_worker() -> Sender<Task> {
     let (sender, tasks) = mpsc::channel::<Task>();
-    let started = std::thread::Builder::new().name("webdav".into()).spawn(move || {
+    let started = std::thread::Builder::new().name("servers".into()).spawn(move || {
         let http = http::client();
         for task in tasks {
             match task {
-                Task::List { request, server, path } => {
-                    let result = server.list(http, &path);
+                Task::List { request, remote, path } => {
+                    let result = remote.list(http, &path);
                     let _ = slint::invoke_from_event_loop(move || listed(request, result));
                 }
-                Task::Check { index, server } => {
-                    let result = server.check(http);
+                Task::Check { index, remote } => {
+                    let result = remote.check(http);
                     let _ = slint::invoke_from_event_loop(move || checked(index, result));
                 }
-                Task::Test { request, server } => {
-                    let result = test(http, &server);
+                Task::Test { request, remote } => {
+                    let result = test(http, &remote);
                     let _ = slint::invoke_from_event_loop(move || tested(request, result));
                 }
             }
         }
     });
     if let Err(err) = started {
-        eprintln!("downloads: cannot start the WebDAV thread: {err}");
+        eprintln!("downloads: cannot start the servers' thread: {err}");
     }
     sender
 }
 
 /// Test connection, on the worker: the root's listing, and whether the first file comes in ranges.
-fn test(http: &http::Http, server: &webdav::Server) -> Result<TestResult, webdav::Error> {
-    let entries = server.list(http, &[])?;
+fn test(http: &http::Http, remote: &Remote) -> Result<TestResult, remote::Error> {
+    let entries = remote.list(http, &[])?;
     let folders = entries.iter().filter(|entry| entry.is_dir).count() as i32;
     let files = entries.len() as i32 - folders;
-    let ranges = entries.iter().find(|entry| !entry.is_dir && entry.size > 0).and_then(|file| {
-        let source = transfer::Source { url: server.file_url(&[], &file.name), authorization: server.authorization() };
-        transfer::probe(http, &source).ok().map(|probe| probe.ranges)
-    });
+    let ranges = entries.iter().find(|entry| !entry.is_dir && entry.size > 0).and_then(|file| remote.ranges(http, &file.name));
     Ok(TestResult { folders, files, ranges })
 }
 
@@ -339,7 +396,7 @@ fn opened() {
         for (index, server) in state.servers.iter_mut().enumerate() {
             if state.current != Some(index) {
                 server.status = ServerStatus::Checking;
-                checks.push(Task::Check { index, server: server.client() });
+                checks.push(Task::Check { index, remote: server.remote() });
             }
         }
         (state.current, checks)
@@ -387,7 +444,7 @@ fn select_server(index: i32) {
     list();
 }
 
-fn checked(index: usize, result: Result<(), webdav::Error>) {
+fn checked(index: usize, result: Result<(), remote::Error>) {
     with_state(|state| {
         if let Some(server) = state.servers.get_mut(index)
             && server.status == ServerStatus::Checking
@@ -399,11 +456,11 @@ fn checked(index: usize, result: Result<(), webdav::Error>) {
 }
 
 /// What a server's answer says about it: nothing bad, the password, or no connection.
-fn status_of(error: &Option<webdav::Error>) -> ServerStatus {
+fn status_of(error: &Option<remote::Error>) -> ServerStatus {
     match error {
         None => ServerStatus::Connected,
-        Some(webdav::Error::Unauthorized) => ServerStatus::PasswordRejected,
-        Some(webdav::Error::Unreachable(_)) => ServerStatus::NotReachable,
+        Some(remote::Error::Unauthorized) => ServerStatus::PasswordRejected,
+        Some(remote::Error::Unreachable(_) | remote::Error::KeyChanged(_)) => ServerStatus::NotReachable,
         // The root may be forbidden or odd while the server is there.
         Some(_) => ServerStatus::Connected,
     }
@@ -415,10 +472,11 @@ fn show_servers() {
         downloads.set_servers(ModelRc::new(VecModel::from(rows)));
         downloads.set_current(current.map_or(-1, |index| index as i32));
     });
+    crate::toolbox::servers_changed();
 }
 
 fn copy_address(index: i32) {
-    let url = with_state(|state| usize::try_from(index).ok().and_then(|index| state.servers.get(index)).map(|server| format!("{}/", server.url))).flatten();
+    let url = with_state(|state| usize::try_from(index).ok().and_then(|index| state.servers.get(index)).map(|server| server.remote().folder_link(&[]))).flatten();
     if let Some(url) = url
         && let Err(err) = platform::copy_text(&url)
     {
@@ -438,7 +496,7 @@ fn list() {
         }
         state.request += 1;
         state.folder = Folder::Loading;
-        Some(Task::List { request: state.request, server: server.client(), path: state.path.clone() })
+        Some(Task::List { request: state.request, remote: server.remote(), path: state.path.clone() })
     })
     .flatten();
     let Some(task) = task else {
@@ -450,7 +508,7 @@ fn list() {
     show_folder();
 }
 
-fn listed(request: u64, result: Result<Vec<webdav::Entry>, webdav::Error>) {
+fn listed(request: u64, result: Result<Vec<remote::Entry>, remote::Error>) {
     let language = STATE
         .with(|state| state.borrow().as_ref().and_then(|state| state.ui.upgrade()))
         .map(|ui| ui.global::<AppState>().get_language().to_string())
@@ -471,7 +529,7 @@ fn listed(request: u64, result: Result<Vec<webdav::Entry>, webdav::Error>) {
                 state.folder = Folder::Listed;
             }
             Err(err) => {
-                let host = state.current.and_then(|index| state.servers.get(index)).map(|server| webdav::Server::host(&server.url)).unwrap_or_default();
+                let host = state.current.and_then(|index| state.servers.get(index)).map(Server::host).unwrap_or_default();
                 let (problem, detail) = problem_of(&err, &host);
                 state.entries.clear();
                 state.folder = Folder::Error(problem, detail);
@@ -483,18 +541,20 @@ fn listed(request: u64, result: Result<Vec<webdav::Entry>, webdav::Error>) {
 }
 
 /// Why a server could not be read, as the page says it.
-fn problem_of(error: &webdav::Error, host: &str) -> (Problem, String) {
+fn problem_of(error: &remote::Error, host: &str) -> (Problem, String) {
     match error {
-        webdav::Error::Unauthorized => (Problem::Password, String::new()),
-        webdav::Error::Forbidden => (Problem::Forbidden, String::new()),
-        webdav::Error::Status(code) => (Problem::Http, code.to_string()),
-        webdav::Error::Unreachable(_) => (Problem::Unreachable, host.to_string()),
-        webdav::Error::Unreadable(_) => (Problem::Unreadable, String::new()),
+        remote::Error::Unauthorized => (Problem::Password, String::new()),
+        remote::Error::Forbidden => (Problem::Forbidden, String::new()),
+        remote::Error::Status(code) => (Problem::Http, code.to_string()),
+        remote::Error::Unreachable(_) => (Problem::Unreachable, host.to_string()),
+        remote::Error::Unreadable(_) => (Problem::Unreadable, String::new()),
+        remote::Error::Missing => (Problem::Missing, String::new()),
+        remote::Error::KeyChanged(_) => (Problem::KeyChanged, String::new()),
     }
 }
 
 /// The entries the filter lets through.
-fn visible<'a>(state: &'a State) -> impl Iterator<Item = &'a webdav::Entry> + 'a {
+fn visible<'a>(state: &'a State) -> impl Iterator<Item = &'a remote::Entry> + 'a {
     let filter = state.filter.trim().to_lowercase();
     state.entries.iter().filter(move |entry| filter.is_empty() || entry.name.to_lowercase().contains(&filter))
 }
@@ -537,8 +597,8 @@ fn show_folder() {
                 selected: !entry.is_dir && state.selected.contains(&entry.name),
             })
             .collect();
-        let files: Vec<&webdav::Entry> = visible(state).filter(|entry| !entry.is_dir).collect();
-        let chosen: Vec<&webdav::Entry> = state.entries.iter().filter(|entry| !entry.is_dir && state.selected.contains(&entry.name)).collect();
+        let files: Vec<&remote::Entry> = visible(state).filter(|entry| !entry.is_dir).collect();
+        let chosen: Vec<&remote::Entry> = state.entries.iter().filter(|entry| !entry.is_dir && state.selected.contains(&entry.name)).collect();
         let chosen_shown = files.iter().filter(|entry| state.selected.contains(&entry.name)).count();
         Shown {
             crumbs,
@@ -639,13 +699,13 @@ fn copy_link(name: &str) {
     let url = with_state(|state| {
         let server = state.servers.get(state.current?)?;
         let entry = state.entries.iter().find(|entry| entry.name == name)?;
-        let client = webdav::Server { url: server.url.clone(), username: String::new(), password: String::new() };
+        let remote = server.remote();
         Some(if entry.is_dir {
             let mut path = state.path.clone();
             path.push(entry.name.clone());
-            client.folder_url(&path)
+            remote.folder_link(&path)
         } else {
-            client.file_url(&state.path, &entry.name)
+            remote.file_link(&state.path, &entry.name)
         })
     })
     .flatten();
@@ -706,22 +766,25 @@ fn enqueue_entry(name: &str, open: bool) {
             return None;
         }
         let server = state.servers.get(index)?;
-        let (client, server_name) = (server.client(), server.name.clone());
-        let source = transfer::Source { url: client.file_url(&state.path, &entry.name), authorization: client.authorization() };
+        let (remote, server_name) = (server.remote(), server.name.clone());
         // One at a time per file: a second request only asks to open it.
-        if let Some(existing) = state.queue.iter_mut().find(|transfer| transfer.live() && matches!(&transfer.kind, Kind::File { source: theirs, .. } if *theirs == source)) {
+        if let Some(existing) = state
+            .queue
+            .iter_mut()
+            .find(|transfer| transfer.live() && matches!(&transfer.kind, Kind::File { remote: theirs, path, name, .. } if theirs.same_as(&remote) && *path == state.path && *name == entry.name))
+        {
             existing.open_when_done |= open;
             return Some(false);
         }
         let dest = server_folder(&state.settings.borrow(), &server_name).join(&entry.name);
-        let done = transfer::kept(&dest, &source.url);
+        let done = remote.kept(&dest, &state.path, &entry.name);
         let id = state.next_id;
         state.next_id += 1;
         state.queue.push(Transfer {
             id,
             name: entry.name.clone(),
             icon: icon_for(&entry.name),
-            kind: Kind::File { source, dest: dest.clone() },
+            kind: Kind::File { remote, path: state.path.clone(), name: entry.name.clone(), dest: dest.clone() },
             state: TransferState::Waiting,
             done,
             total: entry.size,
@@ -749,10 +812,10 @@ fn enqueue_folder(name: &str) {
             return None;
         }
         let server = state.servers.get(index)?;
-        let (client, server_name) = (server.client(), server.name.clone());
+        let (remote, server_name) = (server.remote(), server.name.clone());
         let mut path = state.path.clone();
         path.push(name.to_string());
-        if state.queue.iter().any(|transfer| transfer.live() && matches!(&transfer.kind, Kind::Folder { path: theirs, server, .. } if *theirs == path && server.url == client.url)) {
+        if state.queue.iter().any(|transfer| transfer.live() && matches!(&transfer.kind, Kind::Folder { path: theirs, remote: that, .. } if *theirs == path && that.same_as(&remote))) {
             return Some(false);
         }
         let dest = server_folder(&state.settings.borrow(), &server_name).join(name);
@@ -762,7 +825,7 @@ fn enqueue_folder(name: &str) {
             id,
             name: name.to_string(),
             icon: "folder",
-            kind: Kind::Folder { server: client, path, dest },
+            kind: Kind::Folder { remote, path, dest },
             state: TransferState::Waiting,
             done: 0,
             total: 0,
@@ -837,8 +900,8 @@ fn run(id: i32, kind: Kind, cancel: Arc<AtomicBool>, connections: usize) {
             let _ = slint::invoke_from_event_loop(move || progressed(id, progress));
         };
         let result = match kind {
-            Kind::File { source, dest } => transfer::download(http, &source, &dest, &streams, &cancel, &progress),
-            Kind::Folder { server, path, dest } => download_tree(http, &server, &path, &dest, &streams, &cancel, &progress),
+            Kind::File { remote, path, name, dest } => remote.download(http, &path, &name, &dest, &streams, &cancel, &progress),
+            Kind::Folder { remote, path, dest } => download_tree(http, &remote, &path, &dest, &streams, &cancel, &progress),
         };
         let _ = slint::invoke_from_event_loop(move || finished(id, result));
     });
@@ -888,17 +951,17 @@ impl TreeFile {
 /// transfer's budget of streams. A file already there with its size is not fetched again: a
 /// stopped folder goes on where it was.
 fn download_tree(
-    http: &http::Http,
-    server: &webdav::Server,
+    http: &'static http::Http,
+    remote: &Remote,
     path: &[String],
     dest: &Path,
     streams: &transfer::Streams,
     cancel: &AtomicBool,
     progress: &(dyn Fn(transfer::Progress) + Sync),
 ) -> Result<PathBuf, transfer::Error> {
-    let files = http.block_on(list_tree(http, server, path, cancel, progress))?;
+    let files = http.block_on(list_tree(http, remote, path, cancel, progress))?;
     let total: u64 = files.iter().map(|file| file.size).sum();
-    log::line(format!("folder {}: {} files, {:.1} MB", log::shown(&server.folder_url(path)), files.len(), total as f64 / (1024.0 * 1024.0)));
+    log::line(format!("folder {}: {} files, {:.1} MB", log::shown(&remote.folder_link(path)), files.len(), total as f64 / (1024.0 * 1024.0)));
     transfer::check_space(dest, total)?;
     progress(transfer::Progress { done: 0, total, protocol: transfer::Protocol::Unknown, waiting: 0 });
     let workers = FILES_AT_ONCE.min(files.len().max(1));
@@ -935,15 +998,14 @@ fn download_tree(
                         return;
                     };
                     let already = std::fs::metadata(&file_dest).map(|meta| meta.is_file() && meta.len() == file.size).unwrap_or(false);
-                    if !already {
-                        let source = transfer::Source { url: server.file_url(&whole, &file.name), authorization: server.authorization() };
-                        if let Err(err) = transfer::download(http, &source, &file_dest, streams, cancel, &|progress| report(slot, progress.done, progress.waiting)) {
-                            let mut failed = failure.lock().unwrap();
-                            if failed.is_none() {
-                                *failed = Some(err);
-                            }
-                            return;
+                    if !already
+                        && let Err(err) = remote.download(http, &whole, &file.name, &file_dest, streams, cancel, &|progress| report(slot, progress.done, progress.waiting))
+                    {
+                        let mut failed = failure.lock().unwrap();
+                        if failed.is_none() {
+                            *failed = Some(err);
                         }
+                        return;
                     }
                     finished.fetch_add(file.size, Ordering::Relaxed);
                     report(slot, 0, 0);
@@ -962,7 +1024,7 @@ fn download_tree(
 
 /// The files of the tree under `path`, listed several folders at a time; the total so far goes to
 /// the page as it grows.
-async fn list_tree(http: &http::Http, server: &webdav::Server, path: &[String], cancel: &AtomicBool, progress: &(dyn Fn(transfer::Progress) + Sync)) -> Result<Vec<TreeFile>, transfer::Error> {
+async fn list_tree(http: &'static http::Http, remote: &Remote, path: &[String], cancel: &AtomicBool, progress: &(dyn Fn(transfer::Progress) + Sync)) -> Result<Vec<TreeFile>, transfer::Error> {
     let mut files = Vec::new();
     let mut pending: VecDeque<Vec<String>> = VecDeque::from([Vec::new()]);
     // Each folder once, whatever a server lists twice.
@@ -973,14 +1035,14 @@ async fn list_tree(http: &http::Http, server: &webdav::Server, path: &[String], 
         while set.len() < LISTINGS_AT_ONCE
             && let Some(folder) = pending.pop_front()
         {
-            let (client, server) = (http.clone(), server.clone());
+            let remote = remote.clone();
             let mut whole = path.to_vec();
             whole.extend(folder.iter().cloned());
-            set.spawn_on(async move { (folder, server.list_in(&client, &whole).await) }, http.handle());
+            set.spawn_on(async move { (folder, remote.list_in(http, &whole).await) }, http.handle());
         }
         let Some(next) = set.join_next().await else { break };
         let (folder, listed) = next.map_err(|err| transfer::Error::Connection(format!("a listing's task failed: {err}")))?;
-        for entry in listed.map_err(transfer_error)? {
+        for entry in listed.map_err(remote::transfer_error)? {
             let mut within = folder.clone();
             if entry.is_dir {
                 within.push(entry.name);
@@ -1004,17 +1066,6 @@ async fn list_tree(http: &http::Http, server: &webdav::Server, path: &[String], 
         }
     }
     Ok(files)
-}
-
-/// A server's refusal, as the transfer engine words it.
-fn transfer_error(error: webdav::Error) -> transfer::Error {
-    match error {
-        webdav::Error::Unauthorized => transfer::Error::Unauthorized,
-        webdav::Error::Forbidden => transfer::Error::Forbidden,
-        webdav::Error::Status(code) => transfer::Error::Status(code),
-        webdav::Error::Unreachable(why) => transfer::Error::Connection(why),
-        webdav::Error::Unreadable(why) => transfer::Error::Protocol(why),
-    }
 }
 
 fn progressed(id: i32, progress: transfer::Progress) {
@@ -1064,6 +1115,8 @@ fn finished(id: i32, result: Result<PathBuf, transfer::Error>) {
                     transfer::Error::Connection(_) => (Problem::Connection, String::new()),
                     transfer::Error::Disk(_) => (Problem::Disk, String::new()),
                     transfer::Error::Protocol(_) => (Problem::Unreadable, String::new()),
+                    transfer::Error::Missing => (Problem::Missing, String::new()),
+                    transfer::Error::KeyChanged => (Problem::KeyChanged, String::new()),
                     transfer::Error::Cancelled => (Problem::None, String::new()),
                 };
                 eprintln!("downloads: {} stopped: {err}", transfer.name);
@@ -1136,8 +1189,8 @@ fn retry(id: i32) {
             transfer.state = TransferState::Waiting;
             transfer.problem = Problem::None;
             transfer.detail.clear();
-            if let Kind::File { source, dest } = &transfer.kind {
-                transfer.done = transfer::kept(dest, &source.url);
+            if let Kind::File { remote, path, name, dest } = &transfer.kind {
+                transfer.done = remote.kept(dest, path, name);
             }
         }
     });
@@ -1221,27 +1274,27 @@ fn add_server() {
 
 fn edit_server(index: i32) {
     let Ok(index) = usize::try_from(index) else { return };
-    let fields = with_state(|state| {
-        let server = state.servers.get_mut(index)?;
-        let client = server.client();
+    let server = with_state(|state| {
+        let server = state.servers.get(index)?.clone();
         state.editing = Some(index);
         state.current = Some(index);
-        // The port written in the address goes to its own field.
-        let port = webdav::Server::port(&server.url);
-        let address = if port.is_empty() { server.url.clone() } else { server.url.replacen(&format!(":{port}"), "", 1) };
-        Some((server.name.clone(), format!("{address}/"), port, server.username.clone(), client.password))
+        Some(server)
     })
     .flatten();
-    let Some((name, address, port, username, password)) = fields else { return };
+    let Some(server) = server else { return };
+    let address = match server.protocol {
+        Protocol::Webdav => format!("{}/", server.address),
+        _ => server.address.clone(),
+    };
     with_downloads(|downloads| {
         downloads.set_current(index as i32);
         downloads.set_form_editing(true);
-        downloads.set_form_name(name.into());
-        downloads.set_form_protocol("webdav".into());
+        downloads.set_form_name(server.name.clone().into());
+        downloads.set_form_protocol(server.protocol.id().into());
         downloads.set_form_address(address.into());
-        downloads.set_form_port(port.into());
-        downloads.set_form_username(username.into());
-        downloads.set_form_password(password.into());
+        downloads.set_form_port(if server.port == 0 { SharedString::new() } else { server.port.to_string().into() });
+        downloads.set_form_username(server.username.clone().into());
+        downloads.set_form_password(server.password.clone().into());
         downloads.set_form_error(FormError::None);
         downloads.set_test_state(TestState::None);
         downloads.set_form_open(true);
@@ -1273,25 +1326,51 @@ fn form_fields() -> Option<Form> {
     })
 }
 
-/// The address the form names, with its port in it, or what is wrong: a protocol this version
-/// does not speak (only WebDAV), an address that is not http(s), a port that is not one.
-fn form_address(form: &Form) -> Result<String, FormError> {
-    if form.protocol != "webdav" {
-        return Err(FormError::Protocol);
-    }
-    if !webdav::Server::is_address(&form.address) {
-        return Err(FormError::Address);
-    }
-    if !form.port.is_empty() && !matches!(form.port.parse::<u32>(), Ok(1..=65535)) {
-        return Err(FormError::Port);
-    }
-    Ok(webdav::Server::normalized_url(&webdav::Server::with_port(&form.address, &form.port)))
+/// What the form names, checked: the protocol, the address as it is kept (a port written in it
+/// taken out), the port (0 for the protocol's default); or what is wrong: a WebDAV address that
+/// is not http(s), no host for the others, a port that is not one.
+fn form_address(form: &Form) -> Result<(Protocol, String, u16), FormError> {
+    let protocol = Protocol::parse(&form.protocol).unwrap_or(Protocol::Webdav);
+    let (address, inline) = match protocol {
+        Protocol::Webdav => {
+            if !webdav::Server::is_address(&form.address) {
+                return Err(FormError::Address);
+            }
+            let inline = webdav::Server::port(&form.address);
+            let address = if inline.is_empty() { form.address.clone() } else { form.address.replacen(&format!(":{inline}"), "", 1) };
+            (webdav::Server::normalized_url(&address), inline)
+        }
+        _ => {
+            if !remote::is_host_address(&form.address) {
+                return Err(FormError::Host);
+            }
+            let (host, folder) = remote::host_and_folder(&form.address);
+            let address = if folder.is_empty() { host } else { format!("{host}/{}", folder.join("/")) };
+            (address, remote::inline_port(&form.address))
+        }
+    };
+    let typed = if form.port.is_empty() { inline } else { form.port.clone() };
+    let port = if typed.is_empty() {
+        0
+    } else {
+        match typed.parse::<u32>() {
+            Ok(port @ 1..=65535) => port as u16,
+            _ => return Err(FormError::Port),
+        }
+    };
+    Ok((protocol, address, port))
+}
+
+/// The form as a server, checked, for a test or for keeping.
+fn form_server(form: Form) -> Result<Server, FormError> {
+    let (protocol, address, port) = form_address(&form)?;
+    Ok(Server { name: form.name, protocol, address, port, username: form.username, password: form.password, status: ServerStatus::Unknown })
 }
 
 fn test_connection() {
     let Some(form) = form_fields() else { return };
-    let url = match form_address(&form) {
-        Ok(url) => url,
+    let server = match form_server(form) {
+        Ok(server) => server,
         Err(error) => {
             with_downloads(|downloads| downloads.set_form_error(error));
             return;
@@ -1306,15 +1385,15 @@ fn test_connection() {
         downloads.set_form_error(FormError::None);
         downloads.set_test_state(TestState::Testing);
     });
-    send(Task::Test { request, server: webdav::Server { url, username: form.username, password: form.password } });
+    send(Task::Test { request, remote: server.remote() });
 }
 
-fn tested(request: u64, result: Result<TestResult, webdav::Error>) {
+fn tested(request: u64, result: Result<TestResult, remote::Error>) {
     let current = with_state(|state| state.test_request).unwrap_or(0);
     if request != current {
         return;
     }
-    let host = form_fields().map(|form| webdav::Server::host(&form.address)).unwrap_or_default();
+    let host = form_fields().and_then(|form| form_server(form).ok()).map(|server| server.host()).unwrap_or_default();
     with_downloads(|downloads| match result {
         Ok(found) => {
             downloads.set_test_folders(found.folders);
@@ -1340,27 +1419,21 @@ fn submit_form() {
         with_downloads(|downloads| downloads.set_form_error(FormError::Name));
         return;
     }
-    let url = match form_address(&form) {
-        Ok(url) => url,
+    let server = match form_server(form) {
+        Ok(server) => server,
         Err(error) => {
             with_downloads(|downloads| downloads.set_form_error(error));
             return;
         }
     };
-    let Form { name, username, password, .. } = form;
     let index = with_state(|state| {
         let index = match state.editing.filter(|index| *index < state.servers.len()) {
             Some(index) => {
-                let server = &mut state.servers[index];
-                server.name = name.clone();
-                server.url = url.clone();
-                server.username = username.clone();
-                server.password = password.clone();
-                server.status = ServerStatus::Unknown;
+                state.servers[index] = server;
                 index
             }
             None => {
-                state.servers.push(Server { name: name.clone(), url: url.clone(), username: username.clone(), password: password.clone(), status: ServerStatus::Unknown });
+                state.servers.push(server);
                 state.servers.len() - 1
             }
         };
@@ -1438,8 +1511,8 @@ fn remove_server(index: i32) {
 
 /// The servers into the database, as they are now.
 fn save_servers(state: &State) {
-    let records: Vec<database::WebdavServer> = state.servers.iter().map(Server::record).collect();
-    if let Err(err) = database::save_webdav_servers(&records) {
+    let records: Vec<database::ServerRecord> = state.servers.iter().map(Server::record).collect();
+    if let Err(err) = database::save_servers(&records) {
         eprintln!("downloads: cannot keep the servers in the database: {err}");
     }
 }

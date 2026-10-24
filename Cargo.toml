@@ -41,7 +41,17 @@ bytes = "1"
 sha2 = "0.11"
 ed25519-dalek = "3"
 hex = "0.4"
-rusqlite = { version = "0.40.2", features = ["bundled-sqlcipher"] }
+rusqlite = { version = "0.40.2", features = ["bundled"] }
+# The password column of the database is sealed with AES-256-GCM under the key in the Keychain
+# (src/database.rs); ring is already here through rustls.
+ring = "0.17"
+# The downloads page's other protocols (docs/downloads.md): SFTP over russh, SSH in Rust on the
+# downloads' tokio runtime; FTP and FTPS over suppaftp, blocking, with TLS through rustls.
+russh = { version = "0.64", default-features = false, features = ["ring", "rsa", "flate2"] }
+russh-sftp = "3"
+suppaftp = { version = "12", default-features = false, features = ["rustls-ring", "deprecated"] }
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+rustls-platform-verifier = "0.7"
 
 [dev-dependencies]
 # The HTTP/2 server of the transfer engine's test (src/downloads/transfer.rs).

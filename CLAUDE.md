@@ -44,16 +44,24 @@ things fit together.
   as macOS validates it (Team ID and signing identifier, the same through updates and for every
   copy), or by its path when it has no signature from a team.
 - The Downloads page (`src/downloads/`, docs/downloads.md, the design's "FinchGram Desktop 下载"
-  round, built in every theme) is a read-only WebDAV client whose engine follows the maintainer's
-  vget: 8 MB chunks over up to 12 connections, `.part` + `.part.json` for going on after a stop.
-  The servers with their passwords live in the app's encrypted database (`src/database.rs`), never
-  in settings.toml, at the maintainer's word of 2026-10-20 (the Keychain holds the database keys).
+  round, built in every theme) is a read-only client over WebDAV, FTP, FTPS or SFTP (the last
+  three since 0.6.0) whose WebDAV engine follows the maintainer's vget: 8 MB chunks over up to 12
+  connections, `.part` + `.part.json` for going on after a stop.
+  The servers with their passwords live in the app's database (`src/database.rs`), never in
+  settings.toml, at the maintainer's word of 2026-10-20; since 0.6.0 the file is plain SQLite and
+  only the password column is sealed, with the key the Keychain holds.
   It needs no Telegram account. Its HTTP client
   (`src/downloads/http.rs`) is hyper with HTTP/2 where a server offers it, on a tokio runtime of
   its own, the one async corner of the app: the maintainer required HTTP/2 on 2026-10-16, knowing
   the "no async runtime" line was a simplification from the first day, not a need. (PikPak itself
   redirects every file request to a CDN that speaks HTTP/1.1 only; what its speed depends on is
   the number of streams and the tail, docs/downloads.md.)
+- Backward compatibility, since 2026-10-24 (the app is public): every change to the database's
+  layout, to settings.toml's keys or to the Keychain items comes with its migration. The database
+  carries `PRAGMA user_version` (LAYOUT in `src/database.rs`); an older file is first copied as it
+  is into `~/Documents/FinchGram/backup/`, then upgraded in place, step by step, automatically and
+  without a dialog. Settings keys are never renamed without a serde alias. The database is a plain
+  SQLite file anyone can open; only the password column is sealed with the key in the Keychain.
 - Telegram API credentials are never in the repository. Every developer uses their own
   (`FINCHGRAM_API_ID`, `FINCHGRAM_API_HASH` at build time); the release workflow uses secrets.
 

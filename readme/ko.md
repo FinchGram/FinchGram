@@ -31,9 +31,9 @@ FinchGram은 Telegram 공식 라이브러리 [TDLib](https://core.telegram.org/t
   그룹의 규칙이, 관리자에게는 그룹의 권한과 옵션이 표시됩니다.
 - **미디어.** 사진과 동영상은 창 전체를 덮는 뷰어에서 열리고, 같은 앨범의 다른 사진도 볼 수 있습니다. 동영상은 소스에서
   빌드한 mpv로 재생합니다. 채팅이 허용하면 '다운로드'에 저장할 수 있습니다.
-- **다운로드.** 미디어 센터의 WebDAV 클라이언트: 내 NAS, 시드박스, PikPak, Alist/OpenList, 또는 `vget serve`로 공유한
+- **다운로드.** 미디어 센터의 다운로드 클라이언트, WebDAV·FTP·FTPS·SFTP 지원: 내 NAS, 시드박스, PikPak, Alist/OpenList, 또는 `vget serve`로 공유한
   폴더를 앱 안에서 둘러봅니다. 파일은 여러 연결로 한꺼번에 받고 멈춘 뒤에도 이어서 받으며, 사진과 동영상은 도착하면
-  뷰어에서 열리고, 비밀번호는 FinchGram의 암호화된 데이터베이스에 보관됩니다. [docs/downloads.md](../docs/downloads.md) 참고.
+  뷰어에서 열리고, 비밀번호는 봉인된 채 FinchGram의 데이터베이스에 보관됩니다. [docs/downloads.md](../docs/downloads.md) 참고.
 - **보내기.** 사진, 동영상, 파일은 클립 메뉴에서 보내거나 창에 끌어다 놓거나 붙여 넣어 보낼 수 있습니다. 보내기 전에
   카드로 확인합니다: 설명 추가, 사진으로 또는 파일로, 최대 10개를 앨범으로 묶기, 개인 채팅에서는 자동 삭제 타이머,
   소리 없이 보내기.
@@ -96,12 +96,12 @@ FinchGram은 MCP 서버입니다. Mac의 AI 어시스턴트 앱(Claude Desktop, 
 
 <p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="다운로드 페이지"></p>
 
-보기 → 다운로드, 또는 톱니바퀴 위의 다운로드 아이콘. WebDAV 서버(NAS, 시드박스, PikPak, Alist/OpenList, Nextcloud,
+보기 → 다운로드, 또는 톱니바퀴 위의 다운로드 아이콘. WebDAV, FTP, FTPS 또는 SFTP 서버(NAS, 시드박스, PikPak, Alist/OpenList, Nextcloud,
 `rclone serve webdav`, 또는 `vget serve`로 공유한 폴더)를 추가하고, 폴더를 둘러보며 파일을 체크하거나 폴더를 통째로
 고르면 ~/Documents/FinchGram/webdav에 도착합니다: 파일마다 8 MB 조각으로 최대 12개 연결을 써서 받고, '다시 시도'를 누르면
 멈춘 곳부터 이어서 받습니다. 메인테이너의 명령줄 도구 vget과 같은 방식입니다. 오른쪽의 대기열에는 속도와 남은 양이
 표시되고, '열기'는 사진이나 동영상을 받아 뷰어에 보여 줍니다. FinchGram은 서버에서 읽기만 하며, 비밀번호는 평문 파일이
-아니라 FinchGram의 암호화된 데이터베이스에 들어갑니다. 자세한 내용과 아직 없는 것(자체 서명 인증서는 거부됩니다: LAN에서는 http를, 아니면
+아니라 봉인된 채 FinchGram의 데이터베이스에 들어갑니다. 자세한 내용과 아직 없는 것(자체 서명 인증서는 거부됩니다: LAN에서는 http를, 아니면
 정식 인증서를 쓰세요)은 [docs/downloads.md](../docs/downloads.md)에 있습니다.
 
 ## 어떻게 만들었나
@@ -203,8 +203,11 @@ src/
   platform/              # 운영 체제마다 달라지는 부분
   player/                # libmpv로 동영상 재생. OpenGL로 창에 그림
   screenshot/            # 스크린샷 도구: 캡처, 오버레이, 주석, 그림
-  downloads/             # 다운로드 페이지: 다중 연결 엔진을 갖춘 WebDAV 클라이언트
+  downloads/             # 다운로드 페이지: WebDAV, FTP, FTPS, SFTP, 다중 연결 엔진
+    remote.rs            #   세 클라이언트의 공통 얼굴: 목록, 확인, 받기
     webdav.rs            #   PROPFIND 목록, 주소, Basic 인증
+    ftp.rs               #   suppaftp로 FTP와 FTPS: 단일 스트림, REST로 이어받기
+    sftp.rs              #   russh로 SFTP: 여러 세션으로 조각 받기, 서버 키 기억
     transfer.rs          #   파일 하나를 조각으로 여러 연결에 나눠 받음. 멈춘 뒤에도 이어서 받음
     mod.rs               #   페이지의 상태, 스레드, 대기열, 서버 폼
   update.rs              # 자동 업데이트: GitHub Releases, 서명 확인, 교체, 재시작

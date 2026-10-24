@@ -218,8 +218,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
     一个工具是另一张表的一行），右边是各段：账号排成一格一格（⌘1–⌘0；添加账号），然后每一类的每个工具，各带一句说明、正在
     发生的事和一个“钉到栏上”的开关：活动栏、窄栏和 Terminal 的底栏只显示钉住的工具，按百宝箱的顺序，三套主题共用
     settings.toml 里的 `[toolbox] pinned`，默认钉下载；点名字打开工具并关上百宝箱，拨开关只改钉住；正在下的文件数显示在
-    钉住的按钮上。下载是一个家族：服务器能说的协议列在它下面（WebDAV，这一版会说；FTP、FTPS、SFTP 灰着），各带默认端口；
-    协议是服务器的属性，添加服务器时选（docs/downloads.zh-Hans.md），不是单独的工具。AI 访问（设置 → AI 访问）也是一个
+    钉住的按钮上。下载是一个家族：服务器能说的协议列在它下面（WebDAV、FTP、FTPS、SFTP，各带默认端口和说这种协议的服务器
+    数）；协议是服务器的属性，添加服务器时选（docs/downloads.zh-Hans.md），不是单独的工具。AI 访问（设置 → AI 访问）也是一个
     工具，在“连接”里。设计画了而 FinchGram 还没有的工具（直播、Jellyfin、关键词隐藏、定时消息）灰着列出、不能钉。底部是
     设置、AI 设置（灰）和我的资料。维护者 2026-10-23 定的两条照旧：截图不进百宝箱（剪刀留在输入框下面，快捷键照旧），齿轮
     不回到各栏上（设置在百宝箱、菜单栏和 ⌘, 里）。没钉住的工具有动静时（下载在进行）或别的账号有未读时（Broadsheet 除外，
@@ -264,7 +264,7 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - 下载页面（`src/downloads/`，[downloads.zh-Hans.md](downloads.zh-Hans.md)）：WebDAV 客户端，对着 NAS、seedbox、
   PikPak、Alist/OpenList 或 `vget serve` 共享的文件夹，只读。`webdav.rs` 列目录（PROPFIND），`transfer.rs` 把一个文件
   切成 8 MB 的块、最多 12 条连接并发取进 `.part` 文件，停了接着来，照 vget 的做法；`mod.rs` 是 UI 线程上的页面状态、
-  一个负责列目录的“webdav”线程，以及每个在下的文件一个线程，同时两个。密码进 macOS 钥匙串，服务器和下载目录进
+  一个负责列目录的“servers”线程，以及每个在下的文件一个线程，同时两个。密码进 macOS 钥匙串，服务器和下载目录进
   settings.toml；下好的照片或视频在媒体查看器里打开（`viewer.rs` 的 `view_file`）。这个页面不需要账号。
 - `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）。
 - `src/platform/`：平台层。目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接、剪贴板（文字和图片）；以及 macOS 上
@@ -313,13 +313,19 @@ finchgram-tdlib，一直跑着，所以每个账号的消息都会到、都会�
 ## app 自己的数据库
 
 FinchGram 自己要留的、既不是偏好设置也不是 Telegram 的东西，进它自己的数据库：settings.toml 旁边的 `finchgram.db`
-（`src/database.rs`），SQLite，用 SQLCipher 整库加密，从 rusqlite crate 自带的源码构建，macOS 上用系统的 CommonCrypto。
-密钥是随机的，第一次生成后存进钥匙串 "FinchGram" 名下（account 是“database”），只有本应用能读；TDLib 的数据库从
-0.4.18 起也有一把自己的密钥，同样存法（account 是“tdlib”）。规矩：偏好设置进 settings.toml，它要小、要能手改；记录进
-数据库；Telegram 自己的状态归 TDLib。现在数据库里放的是 WebDAV 服务器和它们的密码（docs/downloads.md），以及 AI 访问里允许过或
-拒绝过的程序（docs/mcp.md）；以后的东西（重启后还在的下载队列、日志、每个聊天的设置）建的时候再加表。表不做旧格式的
-搬迁，也不记录结构的版本号：维护者是唯一的用户，重新填一条记录比养着搬迁代码划算。有了其他用户就反过来：结构一变就得
-带上搬迁代码，用 SQLite 自带的 `user_version` 区分新旧。
+（`src/database.rs`），一个普通的 SQLite 文件，任何 SQLite 工具都能打开，因为用户的数据是用户的（维护者 2026-10-24 的
+决定；0.5.9 及以前整库用 SQLCipher 加密）。只有密码那一列是封起来的：AES-256-GCM，密钥随机生成、第一次就存进钥匙串
+"FinchGram" 名下（account 是“database”），只有本应用能读；app 在服务器的表单里显示密码，用户要看在那儿看。TDLib 的
+数据库从 0.4.18 起也有一把自己的密钥，同样存法（account 是“tdlib”）。规矩：偏好设置进 settings.toml，它要小、要能手改；
+记录进数据库；Telegram 自己的状态归 TDLib。现在数据库里放的是下载页的服务器和它们的密码（docs/downloads.zh-Hans.md）、
+AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md），以及连过的 SSH 服务器的密钥；以后的东西（重启后还在的下载队列、
+日志、每个聊天的设置）建的时候再加表。
+
+从 0.6.0 起表结构有编号：SQLite 自带的 `PRAGMA user_version` 存着 `LAYOUT`，每改一次表就加一，每一步在
+`database::upgrade` 里有对应的迁移。旧版本的文件先原样复制一份到 `~/Documents/FinchGram/backup/`（副本里密码仍是封着的），
+再一步一步升上来，每步一个事务，自动进行、不弹框；新版本的文件拒绝打开并说明，不碰它。能加列就只加列、带默认值，
+这样旧版本的 app 也能打开新文件。0.5.9 及以前的文件不读：搬进那个备份文件夹，另建新文件，这是维护者定的（那天 app
+有六颗星）。settings 的键名改动必须带 serde alias，钥匙串条目的名字永远不改。
 
 ## 平台
 

@@ -325,8 +325,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     only the pinned tools, in the toolbox's order, one list for the three themes in
     `[toolbox] pinned` of settings.toml, downloads by default; a name opens the tool and shuts the
     toolbox, a switch only pins; the files on their way show as a number on the pinned button.
-    Downloads is a family: the protocols a server can speak are listed under it (WebDAV, which
-    this version speaks; FTP, FTPS and SFTP, faded), each with its default port; a protocol is a
+    Downloads is a family: the protocols a server can speak are listed under it (WebDAV, FTP,
+    FTPS and SFTP, each with its default port and how many servers speak it); a protocol is a
     server's property, chosen when a server is added (docs/downloads.md), never a tool of its own.
     AI access (Settings → AI access) is a tool too, under connections. The tools the design draws
     but FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled messages) are
@@ -395,7 +395,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   a seedbox, PikPak, Alist/OpenList or a folder shared with `vget serve`, read-only. `webdav.rs`
   lists folders (PROPFIND), `transfer.rs` fetches a file in chunks of 8 MB over up to 12 connections
   into a `.part` file, going on from where it stopped, as vget does; `mod.rs` is the page's state on
-  the UI thread, a "webdav" thread for listings and one thread per file on its way, two at a time.
+  the UI thread, a "servers" thread for listings and one thread per file on its way, two at a time.
   The servers with their passwords go into the app's database (below), the folder into settings.toml; a downloaded
   photo or video opens in the media viewer (`viewer.rs`, `view_file`). The page needs no account.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
@@ -465,18 +465,28 @@ their chats, tabs and drafts for when they come back.
 ## The app's database
 
 What FinchGram keeps that is neither a preference nor Telegram's goes into a database of its own:
-`finchgram.db` next to settings.toml (`src/database.rs`), SQLite encrypted as a whole with
-SQLCipher, built from the rusqlite crate's bundled sources with Apple's CommonCrypto on macOS. Its
-key is random, made the first time and kept in the Keychain under "FinchGram" (the account
-"database"), where only this app reads it; TDLib's database has a key of its own kept the same way
-(the account "tdlib"), since 0.4.18. The rule: preferences go into settings.toml, which stays small
-and readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
-database holds the WebDAV servers with their passwords (docs/downloads.md) and the programs
-allowed or turned away at AI access (docs/mcp.md); what comes after (a download queue that outlives
-a restart, logs, per-chat settings) gets a table when it is built. No table carries data over
-from an earlier layout, and nothing stamps the layout's version: the maintainer is the one user,
-and re-entering a record beats keeping code for it. With other users that turns around: a change
-of layout then comes with its migration, told apart by SQLite's own `user_version`.
+`finchgram.db` next to settings.toml (`src/database.rs`), a plain SQLite file that any SQLite tool
+opens, since the user's data is the user's (the maintainer's word of 2026-10-24; up to 0.5.9 the
+file was encrypted as a whole with SQLCipher). Only the password column is sealed, with AES-256-GCM
+under a random key made the first time and kept in the Keychain under "FinchGram" (the account
+"database"), where only this app reads it; the app shows a password in the server's form, so the
+user can read it there. TDLib's database has a key of its own kept the same way (the account
+"tdlib"), since 0.4.18. The rule: preferences go into settings.toml, which stays small and
+readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
+database holds the servers of the downloads page with their passwords (docs/downloads.md), the
+programs allowed or turned away at AI access (docs/mcp.md) and the keys of the SSH servers met;
+what comes after (a download queue that outlives a restart, logs, per-chat settings) gets a table
+when it is built.
+
+Since 0.6.0 the layout is numbered: SQLite's own `PRAGMA user_version` holds `LAYOUT`, counted up
+with every change to a table, each with its step in `database::upgrade`. A file from an older
+FinchGram is first copied as it is into `~/Documents/FinchGram/backup/` (the passwords stay
+sealed in the copy), then brought up step by step, each step one transaction, automatically and
+without a dialog; a file from a newer FinchGram is refused with a message, so that the newer
+layout stays as it is. Steps add columns with defaults wherever they can, so that an older
+FinchGram still opens a newer file. The file of 0.5.9 and before is not read: it is moved into
+that backup folder and a new file made, at the maintainer's word (the app had six stars that day).
+Settings keys are never renamed without a serde alias, and the Keychain items keep their names.
 
 ## Platforms
 

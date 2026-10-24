@@ -1836,7 +1836,7 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
 /// and a queue with a file on its way, one waiting, one stopped and one done.
 fn fill_downloads(ui: &MainWindow) {
     let downloads = ui.global::<Downloads>();
-    let server = |name: &str, host: &str, status: ServerStatus| ServerRow { name: name.into(), host: host.into(), protocol: "WebDAV".into(), status };
+    let server = |name: &str, host: &str, protocol: &str, status: ServerStatus| ServerRow { name: name.into(), host: host.into(), protocol: protocol.into(), status };
     let entry = |name: &str, folder: bool, icon: &str, date: &str, size: &str, selected: bool| FolderEntry {
         name: name.into(),
         folder,
@@ -1861,9 +1861,9 @@ fn fill_downloads(ui: &MainWindow) {
         waiting: 0,
     };
     downloads.set_servers(model(vec![
-        server("Home NAS", "nas.home", ServerStatus::Connected),
-        server("Studio", "files.studio.example", ServerStatus::Connected),
-        server("Seedbox", "box.example.net", ServerStatus::NotReachable),
+        server("Home NAS", "nas.home", "WebDAV", ServerStatus::Connected),
+        server("Studio", "files.studio.example", "FTPS", ServerStatus::Connected),
+        server("Seedbox", "box.example.net", "SFTP", ServerStatus::NotReachable),
     ]));
     downloads.set_current(0);
     downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into(), "2026".into()]));

@@ -34,9 +34,9 @@ FinchGram は Telegram 公式のライブラリ [TDLib](https://core.telegram.or
   管理者は権限とオプションを設定できます。
 - **メディア。** 写真と動画はウィンドウ全体のビューアで開き、同じアルバムの他の写真も見られます。動画はソースから
   ビルドした mpv で再生します。チャットが許可していれば「ダウンロード」に保存できます。
-- **ダウンロード。** メディアセンターの WebDAV クライアント：NAS、シードボックス、PikPak、Alist/OpenList、あるいは
+- **ダウンロード。** メディアセンターのダウンロードクライアント、WebDAV・FTP・FTPS・SFTP 対応：NAS、シードボックス、PikPak、Alist/OpenList、あるいは
   `vget serve` で共有しているフォルダを、アプリの中で閲覧できます。ファイルは複数の接続で同時に受け取り、止まっても続きから
-  再開します。写真と動画は届くとビューアで開き、パスワードは FinchGram の暗号化データベースに保存されます。
+  再開します。写真と動画は届くとビューアで開き、パスワードは封印して FinchGram のデータベースに保存されます。
   [docs/downloads.md](../docs/downloads.md) を参照。
 - **送信。** 写真、動画、ファイルはクリップから送信できるほか、ウィンドウにドラッグするか貼り付けても送れます。送る前に
   カードで確認：キャプションを付ける、写真として送るかファイルとして送るか、最大 10 個をアルバムにまとめる、個人チャットでは
@@ -101,12 +101,12 @@ FinchGram は MCP サーバーです。Mac 上の AI アシスタントのアプ
 
 <p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="ダウンロードページ"></p>
 
-表示 → ダウンロード、または歯車の上のダウンロードアイコンから開きます。WebDAV サーバー（NAS、シードボックス、PikPak、
+表示 → ダウンロード、または歯車の上のダウンロードアイコンから開きます。WebDAV・FTP・FTPS・SFTP のサーバー（NAS、シードボックス、PikPak、
 Alist/OpenList、Nextcloud、`rclone serve webdav`、あるいは `vget serve` で共有しているフォルダ）を追加し、そのフォルダを
 閲覧して、ファイルにチェックを付けるか、フォルダをまるごと選ぶと、ファイルは ~/Documents/FinchGram/webdav に届きます：ファイルごとに
 8 MB のチャンクを最大 12 本の接続で受け取り、「再試行」の後は止まったところから続きます。メンテナーのコマンドラインツール
 vget と同じ仕組みです。右側のキューには速度と残りが表示されます。「開く」は写真や動画を取得してビューアで表示します。
-FinchGram はサーバーから読み取るだけで、パスワードは平文のファイルではなく FinchGram の暗号化データベースに保存されます。詳細と、まだないもの
+FinchGram はサーバーから読み取るだけで、パスワードは平文のファイルではなく、封印して FinchGram のデータベースに保存されます。詳細と、まだないもの
 （自己署名証明書は拒否されます：LAN では http を、あるいは正規の証明書を使ってください）は
 [docs/downloads.md](../docs/downloads.md) にあります。
 
@@ -209,8 +209,11 @@ src/
   platform/              # OS ごとに異なる部分
   player/                # libmpv による動画再生。OpenGL でウィンドウに描画
   screenshot/            # スクリーンショット機能：撮影、オーバーレイ、書き込み、画像
-  downloads/             # ダウンロードページ：複数接続のエンジンを備えた WebDAV クライアント
+  downloads/             # ダウンロードページ：WebDAV・FTP・FTPS・SFTP、複数接続のエンジン付き
+    remote.rs            #   三つのクライアントの共通の顔：一覧、確認、取得
     webdav.rs            #   PROPFIND の一覧、アドレス、Basic 認証
+    ftp.rs               #   suppaftp による FTP と FTPS：単一ストリーム、REST で再開
+    sftp.rs              #   russh による SFTP：複数セッションでチャンク取得、サーバー鍵を記憶
     transfer.rs          #   ファイルをチャンクに分けて複数の接続で受け取る。止まっても続きから
     mod.rs               #   ページの状態、そのスレッド、キュー、サーバーのフォーム
   update.rs              # 自動アップデート：GitHub Releases、署名の検証、入れ替え、再起動

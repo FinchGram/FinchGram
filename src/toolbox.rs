@@ -15,7 +15,7 @@ use std::rc::Rc;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 
 use crate::settings::Settings;
-use crate::{AccountRow, Accounts, AppState, MainWindow, NavRow, Page, ProtocolRow, SettingsSection, ToolRow, ToolSection, Toolbox, ToolboxWords};
+use crate::{AccountRow, Accounts, AppState, Downloads, MainWindow, NavRow, Page, ProtocolRow, SettingsSection, ToolRow, ToolSection, Toolbox, ToolboxWords};
 
 /// A tool: its id, its category, its Phosphor icon, Terminal's mark, its shortcut, whether
 /// FinchGram has it, and whether it is a family (the protocols are listed under it).
@@ -48,12 +48,13 @@ const CATEGORIES: [(&str, &str, &str); 5] = [
     ("connections", "plugs-connected", "E"),
 ];
 
-/// The protocols of the downloads family: id, name, default port, whether FinchGram speaks it.
+/// The protocols of the downloads family: id, name, default port, whether FinchGram speaks it
+/// (all four since 0.6.0).
 const PROTOCOLS: [(&str, &str, &str, bool); 4] = [
     ("webdav", "WebDAV", "80 / 443", true),
-    ("ftp", "FTP", "21", false),
-    ("ftps", "FTPS", "990", false),
-    ("sftp", "SFTP", "22", false),
+    ("ftp", "FTP", "21", true),
+    ("ftps", "FTPS", "990", true),
+    ("sftp", "SFTP", "22", true),
 ];
 
 /// What the toolbox shows: the category chosen in the column and the words in the search box.
@@ -171,6 +172,11 @@ pub fn language_changed() {
 
 /// The accounts signed in changed (src/telegram/accounts.rs): the accounts section with them.
 pub fn accounts_changed() {
+    refresh();
+}
+
+/// The servers of the downloads page changed (src/downloads/): how many speak each protocol.
+pub fn servers_changed() {
     refresh();
 }
 
@@ -342,6 +348,7 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
     nav.insert(0, NavRow { id: "all".into(), label: words.invoke_all(), letter: "·".into(), icon: "squares-four".into(), count: everything, accounts: false });
 
     let bar: Vec<ToolRow> = tools.iter().filter(|(tool, _)| tool.pinned).map(|(tool, _)| tool.clone()).collect();
+    let servers = ui.global::<Downloads>().get_servers();
     let protocols: Vec<ProtocolRow> = PROTOCOLS
         .iter()
         .map(|(id, name, port, built)| {
@@ -351,7 +358,8 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
                 "ftps" => words.invoke_ftps_line(),
                 _ => words.invoke_sftp_line(),
             };
-            ProtocolRow { id: (*id).into(), name: (*name).into(), port: (*port).into(), line, grey: !built }
+            let count = servers.iter().filter(|server| server.protocol == *name).count() as i32;
+            ProtocolRow { id: (*id).into(), name: (*name).into(), port: (*port).into(), line, count, grey: !built }
         })
         .collect();
 

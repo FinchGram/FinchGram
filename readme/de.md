@@ -39,10 +39,10 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   Administratoren, ihre Berechtigungen und Optionen.
 - **Medien.** Fotos und Videos öffnen sich in einem Betrachter über dem Fenster, mit dem Rest ihres
   Albums; Video läuft über mpv, aus den Quellen gebaut. Speichern in Downloads, wo der Chat es erlaubt.
-- **Downloads.** Ein WebDAV-Client im Mediencenter: dein NAS, eine Seedbox, PikPak, Alist/OpenList
-  oder ein mit `vget serve` freigegebener Ordner, in der App durchstöbert. Dateien kommen über mehrere
+- **Downloads.** Ein Download-Client im Mediencenter, über WebDAV, FTP, FTPS oder SFTP: dein NAS, eine
+  Seedbox, PikPak, Alist/OpenList oder ein mit `vget serve` freigegebener Ordner, in der App durchstöbert. Dateien kommen über mehrere
   Verbindungen zugleich und laufen nach einer Unterbrechung weiter; Fotos und Videos öffnen sich im
-  Betrachter, sobald sie da sind; Passwörter liegen in der verschlüsselten Datenbank von FinchGram. Siehe
+  Betrachter, sobald sie da sind; Passwörter liegen versiegelt in der Datenbank von FinchGram. Siehe
   [docs/downloads.md](../docs/downloads.md).
 - **Senden.** Fotos, Videos und Dateien über die Büroklammer, per Ziehen ins Fenster oder per
   Einfügen. Eine Karte zeigt sie vor dem Senden: mit Bildunterschrift, als Foto oder als Datei,
@@ -128,14 +128,14 @@ Zeile zum Einfügen in Claude Code oder Claude Desktop; die Einzelheiten stehen 
 
 <p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="Die Downloads-Seite"></p>
 
-Darstellung → Downloads, oder das Download-Symbol über dem Zahnrad. Füge einen WebDAV-Server hinzu
-(ein NAS, eine Seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` oder einen mit
+Darstellung → Downloads, oder das Download-Symbol über dem Zahnrad. Füge einen Server über WebDAV, FTP, FTPS oder
+SFTP hinzu (ein NAS, eine Seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` oder einen mit
 `vget serve` freigegebenen Ordner), durchstöbere seine Ordner, kreuze Dateien an oder nimm einen
 ganzen Ordner, und sie landen in ~/Documents/FinchGram/webdav: jede Datei in Stücken von 8 MB über bis zu
 zwölf Verbindungen, und nach „Erneut versuchen“ geht es dort weiter, wo es stehen geblieben ist,
 wie bei vget, dem Kommandozeilenwerkzeug des Maintainers. Die Warteschlange rechts zeigt die
 Geschwindigkeit und was noch aussteht; „Öffnen“ holt ein Foto oder Video und zeigt es im Betrachter.
-FinchGram liest nur vom Server, und das Passwort kommt in die verschlüsselte Datenbank von FinchGram, nie in eine Klartextdatei.
+FinchGram liest nur vom Server, und das Passwort kommt versiegelt in die Datenbank von FinchGram, nie in eine Klartextdatei.
 [docs/downloads.md](../docs/downloads.md) hat die Einzelheiten und was noch fehlt (ein
 selbstsigniertes Zertifikat wird abgelehnt: im LAN http nehmen, oder ein echtes Zertifikat).
 
@@ -244,8 +244,11 @@ src/
   platform/              # was sich von Betriebssystem zu Betriebssystem unterscheidet
   player/                # Video mit libmpv, per OpenGL ins Fenster gezeichnet
   screenshot/            # das Bildschirmfoto-Werkzeug: Aufnahme, Overlay, Anmerkungen, das Bild
-  downloads/             # die Downloads-Seite: ein WebDAV-Client mit einer Engine für mehrere Verbindungen
+  downloads/             # die Downloads-Seite: WebDAV, FTP, FTPS und SFTP, mit einer Engine für mehrere Verbindungen
+    remote.rs            #   ein Gesicht für die drei Clients: auflisten, prüfen, holen
     webdav.rs            #   PROPFIND-Listen, Adressen, Basic-Authentifizierung
+    ftp.rs               #   FTP und FTPS über suppaftp: ein Strom, REST zum Weitermachen
+    sftp.rs              #   SFTP über russh: Stücke über mehrere Sitzungen, Serverschlüssel gemerkt
     transfer.rs          #   eine Datei in Stücken über mehrere Verbindungen; nach einer Unterbrechung geht es weiter
     mod.rs               #   der Zustand der Seite, ihre Threads, die Warteschlange, das Formular für die Server
   update.rs              # die Selbstaktualisierung: GitHub Releases, Signatur, Austausch, Neustart

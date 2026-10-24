@@ -42,11 +42,11 @@ un client non officiel, qui n'est pas fait par Telegram.
 - **Médias.** Les photos et vidéos s'ouvrent dans une visionneuse par-dessus la fenêtre, avec le reste
   de leur album ; la vidéo passe par mpv, compilé depuis les sources. Enregistrement dans
   Téléchargements là où la discussion le permet.
-- **Téléchargements.** Un client WebDAV dans le centre multimédia : votre NAS, une seedbox, PikPak,
-  Alist/OpenList ou un dossier partagé avec `vget serve`, parcourus dans l'application. Les fichiers
+- **Téléchargements.** Un client de téléchargement dans le centre multimédia, en WebDAV, FTP, FTPS ou SFTP :
+  votre NAS, une seedbox, PikPak, Alist/OpenList ou un dossier partagé avec `vget serve`, parcourus dans l'application. Les fichiers
   arrivent par plusieurs connexions à la fois et reprennent après un arrêt ; les photos et vidéos
-  s'ouvrent dans la visionneuse dès qu'elles arrivent ; les mots de passe sont conservés dans la base de
-  données chiffrée de FinchGram. Voir [docs/downloads.md](../docs/downloads.md).
+  s'ouvrent dans la visionneuse dès qu'elles arrivent ; les mots de passe sont conservés scellés dans la
+  base de données de FinchGram. Voir [docs/downloads.md](../docs/downloads.md).
 - **Envoi.** Photos, vidéos et fichiers depuis le trombone, en les glissant dans la fenêtre ou en les
   collant. Une carte les montre avant l'envoi : avec une légende, en photo ou en fichier, ensemble
   dans un album de dix au plus, avec un minuteur d'autodestruction dans une discussion privée, sans
@@ -136,13 +136,13 @@ détails sont dans [docs/mcp.md](../docs/mcp.md).
 <p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="La page Téléchargements"></p>
 
 Présentation → Téléchargements, ou l'icône de téléchargement au-dessus de la roue dentée. Ajoutez un
-serveur WebDAV (un NAS, une seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` ou un
+serveur en WebDAV, FTP, FTPS ou SFTP (un NAS, une seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` ou un
 dossier partagé avec `vget serve`), parcourez ses dossiers, cochez des fichiers ou prenez un dossier
 entier, et ils arrivent dans ~/Documents/FinchGram/webdav : chaque fichier par morceaux de 8 Mo, sur douze
 connexions au plus, en reprenant là où il s'était arrêté après un Réessayer, comme le fait vget,
 l'outil en ligne de commande du mainteneur. La file d'attente à droite montre la vitesse et ce qui
 reste ; Ouvrir récupère une photo ou une vidéo et la montre dans la visionneuse. FinchGram ne fait
-que lire sur le serveur, et le mot de passe va dans la base de données chiffrée de FinchGram, jamais en clair dans un fichier.
+que lire sur le serveur, et le mot de passe va scellé dans la base de données de FinchGram, jamais en clair dans un fichier.
 [docs/downloads.md](../docs/downloads.md) donne les détails et ce qui manque encore (un certificat
 autosigné est refusé : utilisez http sur le réseau local, ou un vrai certificat).
 
@@ -252,8 +252,11 @@ src/
   platform/              # ce qui change d'un système d'exploitation à l'autre
   player/                # la vidéo avec libmpv, dessinée dans la fenêtre par OpenGL
   screenshot/            # l'outil de capture : la capture, le calque, les annotations, l'image
-  downloads/             # la page Téléchargements : un client WebDAV avec un moteur à plusieurs connexions
+  downloads/             # la page Téléchargements : WebDAV, FTP, FTPS et SFTP, avec un moteur à plusieurs connexions
+    remote.rs            #   une seule façade pour les trois clients : lister, vérifier, récupérer
     webdav.rs            #   les listes PROPFIND, les adresses, l'authentification Basic
+    ftp.rs               #   FTP et FTPS via suppaftp : un flux, REST pour reprendre
+    sftp.rs              #   SFTP via russh : morceaux sur plusieurs sessions, clé du serveur mémorisée
     transfer.rs          #   un fichier par morceaux sur plusieurs connexions, qui reprend après un arrêt
     mod.rs               #   l'état de la page, ses fils, la file d'attente, le formulaire des serveurs
   update.rs              # la mise à jour automatique : GitHub Releases, signature, remplacement, relance

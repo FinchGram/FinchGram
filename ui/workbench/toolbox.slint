@@ -254,7 +254,7 @@ component ProtocolLine inherits Rectangle {
             overflow: elide;
         }
         Text {
-            text: root.protocol.grey ? ToolboxWords.not-yet() : ToolboxWords.servers(Downloads.servers.length);
+            text: root.protocol.grey ? ToolboxWords.not-yet() : ToolboxWords.servers(root.protocol.count);
             color: P.faint;
             font-size: 11px;
             vertical-alignment: center;

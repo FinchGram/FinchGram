@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-24 02:02+0000\n"
+"POT-Creation-Date: 2026-10-24 03:44+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -27,7 +27,7 @@ msgstr "チャット内を検索"
 msgid "Chat Info"
 msgstr "チャット情報"
 
-#: ui/app.slint:89 ui/toolbox.slint:90
+#: ui/app.slint:89 ui/toolbox.slint:91
 msgid "Toolbox"
 msgstr "ツールボックス"
 
@@ -45,7 +45,7 @@ msgstr "ブロードシート"
 
 #. The tools.
 #: ui/app.slint:125 ui/pages/downloads.slint:502 ui/pages/downloads.slint:865
-#: ui/toolbox.slint:99
+#: ui/toolbox.slint:100
 msgid "Downloads"
 msgstr "ダウンロード"
 
@@ -102,7 +102,7 @@ msgstr "コメントを入力（任意）"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/broadsheet.slint:2592 ui/chat.slint:360 ui/compose.slint:244
-#: ui/pages/downloads.slint:1582 ui/pages/profile.slint:174
+#: ui/pages/downloads.slint:1563 ui/pages/profile.slint:174
 #: ui/terminal/actions.slint:386 ui/terminal/actions.slint:643
 #: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
@@ -148,7 +148,7 @@ msgid "Bots"
 msgstr "ボット"
 
 #: ui/broadsheet/broadsheet.slint:460 ui/terminal/terminal.slint:309
-#: ui/toolbox.slint:92
+#: ui/toolbox.slint:93
 msgid "All"
 msgstr "すべて"
 
@@ -174,7 +174,7 @@ msgid "Latest message"
 msgstr "最新のメッセージ"
 
 #: ui/broadsheet/broadsheet.slint:667 ui/chat-manage.slint:233
-#: ui/pages/downloads.slint:1402 ui/workbench/sidebar.slint:868
+#: ui/pages/downloads.slint:1381 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "名前"
 
@@ -356,7 +356,7 @@ msgid "Info"
 msgstr "情報"
 
 #. The foot.
-#: ui/chat-info.slint:77 ui/pages/settings.slint:101 ui/toolbox.slint:130
+#: ui/chat-info.slint:77 ui/pages/settings.slint:101 ui/toolbox.slint:131
 msgid "Settings"
 msgstr "設定"
 
@@ -523,7 +523,7 @@ msgstr "管理者の権限"
 msgid "Change photo"
 msgstr "写真を変更"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1562
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1543
 #: ui/pages/settings.slint:1278
 msgid "Save"
 msgstr "保存"
@@ -761,7 +761,7 @@ msgstr "連絡先を検索"
 msgid "No contacts to add"
 msgstr "追加できる連絡先がありません"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1562
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1543
 msgid "Add"
 msgstr "追加"
 
@@ -790,7 +790,7 @@ msgid "Remove {0} from the channel?"
 msgstr "{0} をチャンネルから削除しますか？"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:346 ui/pages/ai-access.slint:458
-#: ui/pages/downloads.slint:1593
+#: ui/pages/downloads.slint:1574
 msgid "Remove"
 msgstr "取り除く"
 
@@ -1173,7 +1173,7 @@ msgid "Also delete for {0}"
 msgstr "{0} のチャットからも削除"
 
 #: ui/chat.slint:303 ui/pages/downloads.slint:1176
-#: ui/pages/downloads.slint:1844
+#: ui/pages/downloads.slint:1825
 msgid "Open"
 msgstr "開く"
 
@@ -1395,7 +1395,7 @@ msgstr "アップロードをキャンセル"
 msgid "Not sent"
 msgstr "未送信"
 
-#: ui/chat.slint:386 ui/pages/downloads.slint:751 ui/pages/downloads.slint:1869
+#: ui/chat.slint:386 ui/pages/downloads.slint:751 ui/pages/downloads.slint:1850
 msgid "Retry"
 msgstr "再試行"
 
@@ -1412,7 +1412,7 @@ msgid "Show in Finder"
 msgstr "Finder に表示"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:392 ui/pages/downloads.slint:50
+#: ui/chat.slint:392 ui/pages/downloads.slint:54
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
@@ -1424,7 +1424,7 @@ msgstr "クリックして表示"
 msgid "Reply"
 msgstr "返信"
 
-#: ui/chat.slint:812 ui/pages/downloads.slint:1795
+#: ui/chat.slint:812 ui/pages/downloads.slint:1776
 msgid "Edit"
 msgstr "編集"
 
@@ -1609,7 +1609,7 @@ msgstr "グローバル検索"
 msgid "Found by phone number"
 msgstr "電話番号による検索"
 
-#: ui/compose.slint:136 ui/toolbox.slint:96
+#: ui/compose.slint:136 ui/toolbox.slint:97
 msgid "Messages"
 msgstr "メッセージ"
 
@@ -2887,67 +2887,88 @@ msgstr "接続が切断されました"
 msgid "The file could not be written"
 msgstr "ファイルを書き込めませんでした"
 
-#: ui/pages/downloads.slint:37
+#: ui/pages/downloads.slint:32
+msgid "The server has no such file or folder"
+msgstr "サーバーにそのファイルやフォルダーはありません"
+
+#: ui/pages/downloads.slint:33
+msgid ""
+"The server's SSH key is not the one it showed before: another server, or "
+"something between you and it"
+msgstr ""
+"サーバーの SSH 鍵が以前と違います：別のサーバーか、あなたとサーバーの間に何か"
+"があります"
+
+#: ui/pages/downloads.slint:39
 msgid "the server refused the password (401)"
 msgstr "サーバーがパスワードを拒否しました（401）"
 
-#: ui/pages/downloads.slint:38
+#: ui/pages/downloads.slint:40
 msgid "the server refused access (403)"
 msgstr "サーバーがアクセスを拒否しました（403）"
 
-#: ui/pages/downloads.slint:39
+#: ui/pages/downloads.slint:41
 msgid "the server answered HTTP {0}"
 msgstr "サーバーが HTTP {0} を返しました"
 
-#: ui/pages/downloads.slint:40
+#: ui/pages/downloads.slint:42
 msgid "the server did not answer with the file"
 msgstr "サーバーからファイルが返されませんでした"
 
-#: ui/pages/downloads.slint:41
+#: ui/pages/downloads.slint:43
 msgid "the file could not be written"
 msgstr "ファイルを書き込めませんでした"
 
-#: ui/pages/downloads.slint:42
+#
+#: ui/pages/downloads.slint:44
+msgid "the server has no such file"
+msgstr "サーバーにそのファイルはありません"
+
+#: ui/pages/downloads.slint:45
+msgid "the server's SSH key changed"
+msgstr "サーバーの SSH 鍵が変わりました"
+
+#: ui/pages/downloads.slint:46
 msgid "the server closed the connection"
 msgstr "サーバーが接続を切断しました"
 
-#: ui/pages/downloads.slint:46
+#: ui/pages/downloads.slint:50
 msgid "Waiting · {0}"
 msgstr "待機中 · {0}"
 
-#: ui/pages/downloads.slint:47
+#: ui/pages/downloads.slint:51
 msgid "Done · {0}"
 msgstr "完了 · {0}"
 
-#: ui/pages/downloads.slint:48
+#: ui/pages/downloads.slint:52
 msgid "Stopped: {0}. {1} of {2} kept."
 msgstr "停止：{0}。{2} のうち {1} を保持しています。"
 
-#: ui/pages/downloads.slint:49
+#: ui/pages/downloads.slint:53
 msgid "Server busy (HTTP {0}), trying again…"
 msgstr "サーバーが混み合っています（HTTP {0}）、再試行中…"
 
-#: ui/pages/downloads.slint:51
+#: ui/pages/downloads.slint:55
 msgid "{0} of {1} · {2} · {3}"
 msgstr "{0} / {1} · {2} · {3}"
 
-#: ui/pages/downloads.slint:55
+#: ui/pages/downloads.slint:59
 msgid "estimating…"
 msgstr "計算中…"
 
-#: ui/pages/downloads.slint:56
+#: ui/pages/downloads.slint:60
 msgid "{0} s left"
 msgstr "残り{0}秒"
 
-#: ui/pages/downloads.slint:57
+#: ui/pages/downloads.slint:61
 msgid "{0} min left"
 msgstr "残り{0}分"
 
-#: ui/pages/downloads.slint:66
+#: ui/pages/downloads.slint:70
 msgid "Reached: {0} folders and {1} files at the root."
 msgstr "接続できました。ルートにフォルダが {0} 個、ファイルが {1} 個あります。"
 
-#: ui/pages/downloads.slint:69
+#: ui/pages/downloads.slint:73
 msgid ""
 "Reached: {0} folders and {1} files at the root. Ranges supported, so "
 "downloads can use several connections."
@@ -2955,7 +2976,7 @@ msgstr ""
 "接続できました。ルートにフォルダが {0} 個、ファイルが {1} 個あります。Range "
 "リクエストに対応しているため、ダウンロードには複数の接続を使えます。"
 
-#: ui/pages/downloads.slint:71
+#: ui/pages/downloads.slint:75
 msgid ""
 "Reached: {0} folders and {1} files at the root. No ranges, so each file "
 "comes over one connection."
@@ -2963,44 +2984,44 @@ msgstr ""
 "接続できました。ルートにフォルダが {0} 個、ファイルが {1} 個あります。Range "
 "リクエストに対応していないため、各ファイルは1つの接続で転送されます。"
 
-#: ui/pages/downloads.slint:75
+#: ui/pages/downloads.slint:79
 msgid "Give the server a name."
 msgstr "サーバーに名前を付けてください。"
 
-#: ui/pages/downloads.slint:76
+#: ui/pages/downloads.slint:80
 msgid "The address needs to start with http:// or https://."
 msgstr "アドレスは http:// または https:// で始まる必要があります。"
 
-#: ui/pages/downloads.slint:77
+#
+#: ui/pages/downloads.slint:81
+msgid "Give the server's host name or IP."
+msgstr "サーバーのホスト名または IP を入力してください。"
+
+#: ui/pages/downloads.slint:82
 msgid "The port needs to be a number from 1 to 65535."
 msgstr "ポートは 1 から 65535 までの数字にしてください。"
 
-#: ui/pages/downloads.slint:106
+#: ui/pages/downloads.slint:110
 msgid "Host name or IP. A folder may follow after a /."
 msgstr "ホスト名または IP。/ の後にフォルダーを続けられます。"
 
-#: ui/pages/downloads.slint:107
+#: ui/pages/downloads.slint:111
 msgid "Host name or IP. Implicit TLS on the default port."
 msgstr "ホスト名または IP。既定のポートで暗黙の TLS。"
 
-#: ui/pages/downloads.slint:108
+#: ui/pages/downloads.slint:112
 msgid "Host name or IP of the SSH server."
 msgstr "SSH サーバーのホスト名または IP。"
 
-#: ui/pages/downloads.slint:109
+#: ui/pages/downloads.slint:113
 msgid "http:// or https://. A folder may be part of the address."
 msgstr ""
 "http:// または https:// で始めます。アドレスにフォルダを含めることもできま"
 "す。"
 
-#: ui/pages/downloads.slint:113
+#: ui/pages/downloads.slint:117
 msgid "Default port {}."
 msgstr "既定のポートは {} です。"
-
-#
-#: ui/pages/downloads.slint:117
-msgid "This version can’t connect to {} servers yet."
-msgstr "このバージョンはまだ {} サーバーに接続できません。"
 
 #: ui/pages/downloads.slint:400 ui/pages/downloads.slint:1284
 msgid "Add server"
@@ -3067,50 +3088,56 @@ msgid "Edit server"
 msgstr "サーバーを編集"
 
 #
+#
 #: ui/pages/downloads.slint:1352
 msgid ""
 "The address of the server, and the account it gave you. The password is kept "
-"in FinchGram's encrypted database on this Mac."
+"sealed in FinchGram's database on this Mac."
 msgstr ""
-"サーバーのアドレスと、サーバーから受け取ったアカウント。パスワードはこの Mac "
-"上の FinchGram の暗号化データベースに保存されます。"
+"サーバーのアドレスと、サーバーから受け取ったアカウント。パスワードは封印し"
+"て、この Mac 上の FinchGram のデータベースに保存されます。"
 
-#: ui/pages/downloads.slint:1363
+#: ui/pages/downloads.slint:1362
 msgid "Protocol"
 msgstr "プロトコル"
 
-#: ui/pages/downloads.slint:1394
-msgid "You can fill the form in; it can’t be saved."
-msgstr "フォームは入力できますが、保存はできません。"
-
-#: ui/pages/downloads.slint:1417
+#: ui/pages/downloads.slint:1396
 msgid "Address"
 msgstr "アドレス"
 
-#: ui/pages/downloads.slint:1426
+#: ui/pages/downloads.slint:1405
 msgid "Port"
 msgstr "ポート"
 
 #
-#: ui/pages/downloads.slint:1452
+#: ui/pages/downloads.slint:1431
 msgid "Sign in with"
 msgstr "ログイン方法"
 
-#: ui/pages/downloads.slint:1460 ui/pages/downloads.slint:1475
+#: ui/pages/downloads.slint:1439 ui/pages/downloads.slint:1454
 #: ui/pages/settings.slint:1236
 msgid "Password"
 msgstr "パスワード"
 
-#: ui/pages/downloads.slint:1464
+#: ui/pages/downloads.slint:1443
 msgid "Key"
 msgstr "鍵"
 
 #
-#: ui/pages/downloads.slint:1469
+#: ui/pages/downloads.slint:1448
 msgid "Key sign-in isn’t in this version."
 msgstr "鍵でのログインはこのバージョンでは未対応です。"
 
-#: ui/pages/downloads.slint:1497
+#
+#: ui/pages/downloads.slint:1477
+msgid ""
+"Over FTP the password and the files travel in the clear: use this server "
+"only on a network you trust, or FTPS."
+msgstr ""
+"FTP ではパスワードもファイルも平文で流れます：このサーバーは信頼できるネット"
+"ワークでだけ使うか、FTPS にしてください。"
+
+#: ui/pages/downloads.slint:1478
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
@@ -3118,47 +3145,47 @@ msgstr ""
 "http ではパスワードもファイルも平文で流れます。このサーバーは信頼できるネット"
 "ワークでだけ使ってください。"
 
-#: ui/pages/downloads.slint:1533
+#: ui/pages/downloads.slint:1514
 msgid "Testing…"
 msgstr "テスト中…"
 
-#: ui/pages/downloads.slint:1572
+#: ui/pages/downloads.slint:1553
 msgid "Test connection"
 msgstr "接続をテスト"
 
-#: ui/pages/downloads.slint:1637
+#: ui/pages/downloads.slint:1618
 msgid "{0} active"
 msgstr "{0}件がダウンロード中"
 
-#: ui/pages/downloads.slint:1650
+#: ui/pages/downloads.slint:1631
 msgid "Clear finished"
 msgstr "完了済みを消去"
 
-#: ui/pages/downloads.slint:1673
+#: ui/pages/downloads.slint:1654
 msgid "Hide"
 msgstr "隠す"
 
-#: ui/pages/downloads.slint:1741
+#: ui/pages/downloads.slint:1722
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "1ファイルあたり {0} 接続 · ダウンロード先：{1}"
 
-#: ui/pages/downloads.slint:1747
+#: ui/pages/downloads.slint:1728
 msgid "Change"
 msgstr "変更"
 
-#: ui/pages/downloads.slint:1812
+#: ui/pages/downloads.slint:1793
 msgid "Copy address"
 msgstr "アドレスをコピー"
 
-#: ui/pages/downloads.slint:1828
+#: ui/pages/downloads.slint:1809
 msgid "Download folder"
 msgstr "フォルダをダウンロード"
 
-#: ui/pages/downloads.slint:1852
+#: ui/pages/downloads.slint:1833
 msgid "Copy link"
 msgstr "リンクをコピー"
 
-#: ui/pages/downloads.slint:1887
+#: ui/pages/downloads.slint:1868
 msgid "Remove from list"
 msgstr "リストから取り除く"
 
@@ -3506,7 +3533,7 @@ msgid "Current"
 msgstr "使用中"
 
 #. The accounts.
-#: ui/pages/profile.slint:119 ui/toolbox.slint:126
+#: ui/pages/profile.slint:119 ui/toolbox.slint:127
 msgid "Add account"
 msgstr "アカウントを追加"
 
@@ -3563,7 +3590,7 @@ msgid "Privacy & security"
 msgstr "プライバシーとセキュリティ"
 
 #: ui/pages/settings.slint:129 ui/pages/settings.slint:1568
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:110
 msgid "AI access"
 msgstr "AI アクセス"
 
@@ -4088,164 +4115,164 @@ msgid "cmd"
 msgstr "コマンド"
 
 #
-#: ui/toolbox.slint:91
+#: ui/toolbox.slint:92
 msgid "Search the toolbox"
 msgstr "ツールボックスを検索"
 
-#: ui/toolbox.slint:94
+#: ui/toolbox.slint:95
 msgid "Transfers"
 msgstr "転送"
 
-#: ui/toolbox.slint:95
+#: ui/toolbox.slint:96
 msgid "Media"
 msgstr "メディア"
 
 #
-#: ui/toolbox.slint:97
+#: ui/toolbox.slint:98
 msgid "Connections"
 msgstr "接続"
 
-#: ui/toolbox.slint:100
+#: ui/toolbox.slint:101
 msgid "Pick files from your own servers and download them"
 msgstr "自分のサーバーからファイルを選んでダウンロード"
 
 #
-#: ui/toolbox.slint:101
+#: ui/toolbox.slint:102
 msgid "Live streams"
 msgstr "ライブ配信"
 
 #
-#: ui/toolbox.slint:102
+#: ui/toolbox.slint:103
 msgid "Live streams going on in your groups and channels"
 msgstr "グループやチャンネルで配信中のライブ"
 
-#: ui/toolbox.slint:104
+#: ui/toolbox.slint:105
 msgid "Your own media library, played in the built-in player"
 msgstr "自分のライブラリを内蔵プレーヤーで"
 
-#: ui/toolbox.slint:105
+#: ui/toolbox.slint:106
 msgid "Keyword hiding"
 msgstr "キーワード非表示"
 
 #
-#: ui/toolbox.slint:106
+#: ui/toolbox.slint:107
 msgid "Tuck away messages by keyword; unhide any time"
 msgstr "キーワードでメッセージをしまう・いつでも戻せる"
 
-#: ui/toolbox.slint:107
+#: ui/toolbox.slint:108
 msgid "Scheduled messages"
 msgstr "予約メッセージ"
 
-#: ui/toolbox.slint:108
+#: ui/toolbox.slint:109
 msgid "Sent by the server on time, even with your computer off"
 msgstr "パソコンが切れていてもサーバーが時間どおりに送信"
 
-#: ui/toolbox.slint:110
+#: ui/toolbox.slint:111
 msgid "Let other apps read the chats you allow, through FinchGram"
 msgstr "許可したチャットを FinchGram 経由で他のアプリが読む"
 
 #. The protocols under Downloads.
-#: ui/toolbox.slint:112
+#: ui/toolbox.slint:113
 msgid "Protocol · chosen when you add a server"
 msgstr "プロトコル · サーバー追加時に選択"
 
-#: ui/toolbox.slint:113
+#: ui/toolbox.slint:114
 msgid "Common on NAS boxes, cloud drives and seedboxes"
 msgstr "NAS・クラウド・シードボックスで一般的"
 
-#: ui/toolbox.slint:114
+#: ui/toolbox.slint:115
 msgid "The old one, unencrypted"
 msgstr "昔からの方式、暗号化なし"
 
-#: ui/toolbox.slint:115
+#: ui/toolbox.slint:116
 msgid "FTP with TLS encryption"
 msgstr "TLS で暗号化した FTP"
 
-#: ui/toolbox.slint:116
+#: ui/toolbox.slint:117
 msgid ""
 "Over SSH; on seedboxes it usually doesn’t count against your traffic quota"
 msgstr "SSH 経由。シードボックスでは通常、転送量に数えられない"
 
 #
 #. What goes on.
-#: ui/toolbox.slint:118
+#: ui/toolbox.slint:119
 msgid "{n} downloading"
 msgid_plural "{n} downloading"
 msgstr[0] "{n} 件ダウンロード中"
 
 #
 #
-#: ui/toolbox.slint:119
+#: ui/toolbox.slint:120
 msgid "{n} server"
 msgid_plural "{n} servers"
 msgstr[0] "サーバー {n} 台"
 
 #
-#: ui/toolbox.slint:120
+#: ui/toolbox.slint:121
 msgid "Not in this version"
 msgstr "このバージョンでは未対応"
 
 #
-#: ui/toolbox.slint:121
+#: ui/toolbox.slint:122
 msgid "Pinned to the {}"
 msgstr "{}に固定済み"
 
-#: ui/toolbox.slint:122
+#: ui/toolbox.slint:123
 msgid "activity bar"
 msgstr "アクティビティバー"
 
-#: ui/toolbox.slint:123
+#: ui/toolbox.slint:124
 msgid "rail"
 msgstr "サイドバー"
 
 #
-#: ui/toolbox.slint:124
+#: ui/toolbox.slint:125
 msgid "status bar"
 msgstr "下部バー"
 
 #
-#: ui/toolbox.slint:127
+#: ui/toolbox.slint:128
 msgid "Limit reached"
 msgstr "上限に達しました"
 
-#: ui/toolbox.slint:128
+#: ui/toolbox.slint:129
 msgctxt "the account in front"
 msgid "Current"
 msgstr "現在"
 
-#: ui/toolbox.slint:131
+#: ui/toolbox.slint:132
 msgid "AI settings"
 msgstr "AI 設定"
 
-#: ui/toolbox.slint:132
+#: ui/toolbox.slint:133
 msgid "My profile"
 msgstr "マイプロフィール"
 
 #
-#: ui/toolbox.slint:133
+#: ui/toolbox.slint:134
 msgid "{} to open · Esc to close"
 msgstr "{} で開く · Esc で閉じる"
 
 #
 #. The search.
-#: ui/toolbox.slint:135
+#: ui/toolbox.slint:136
 msgid "Nothing called “{}”"
 msgstr "「{}」を含む項目はありません"
 
 #
 #
-#: ui/toolbox.slint:136
+#: ui/toolbox.slint:137
 msgid "{n} item"
 msgid_plural "{n} items"
 msgstr[0] "{n} 件"
 
 #
 #. Terminal.
-#: ui/toolbox.slint:138
+#: ui/toolbox.slint:139
 msgid "[x] pins to the status bar · click a name to open"
 msgstr "[x] で下部バーに固定 · 名前をクリックで開く"
 
-#: ui/toolbox.slint:139
+#: ui/toolbox.slint:140
 msgid "/tools <category> jumps there · type it again to close"
 msgstr "/tools <分類> でジャンプ · もう一度入力で閉じる"
 

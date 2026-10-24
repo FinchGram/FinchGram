@@ -6,7 +6,7 @@
 
 ## 是什么
 
-一个从 WebDAV 服务器取文件的页面：NAS（群晖、威联通）、seedbox、PikPak、Alist 或 OpenList（把网盘套上
+一个从服务器取文件的页面，走 WebDAV、FTP、FTPS 或 SFTP：NAS（群晖、威联通）、seedbox、PikPak、Alist 或 OpenList（把网盘套上
 WebDAV）、Nextcloud、`rclone serve webdav`，或者用 `vget serve` 共享出来的文件夹。用户添加服务器，在 app 里浏览，
 挑文件或整个文件夹，文件就多连接并发地下到下载文件夹里，和维护者的命令行工具 vget 一个取法。照片和视频下完直接在
 媒体查看器里打开。
@@ -20,11 +20,10 @@ FinchGram 只读：不上传、不同步、不重命名、不删除服务器上�
 
 三栏：
 
-- **服务器**，左栏：每个服务器的名称、它说的协议（一个小标签：WebDAV，这一版只会说这一种）、主机名和状态，页面打开时
-  检查一遍：已连接、密码被拒绝、无法连接。右键有编辑、移除、复制地址。最后一行是添加服务器：表单先选协议（WebDAV；FTP、
-  FTPS、SFTP 灰着画出来，表单可以在它们下面填，但会说明存不了），然后是名称、地址和旁边的端口（空着就用协议的默认端口：
-  WebDAV 是 80 或 443，FTP 21、FTPS 990、SFTP 22；填了的端口写进地址里）、账号；选 SFTP 时还有登录方式，用密码，密钥
-  登录留给以后的版本。
+- **服务器**，左栏：每个服务器的名称、它说的协议（一个小标签）、主机名和状态，页面打开时检查一遍：已连接、密码被拒绝、
+  无法连接。右键有编辑、移除、复制地址。最后一行是添加服务器：表单先选协议（WebDAV、FTP、FTPS 或 SFTP，见下），然后是
+  名称、地址和旁边的端口（空着就用协议的默认端口：WebDAV 是 80 或 443，FTP 21、FTPS 990、SFTP 22；写在地址里的端口会
+  挪到端口栏）、账号；选 SFTP 时还有登录方式，用密码，密钥登录留给以后的版本。
 - **文件夹**，中间：当前位置写成路径，“Home NAS /Movies/2026”，点路径里的文件夹就回到那一层；然后是文件夹的名称、按名字筛选列表的输入框，刷新按钮，以及显示或隐藏队列的
   “下载”按钮，上面带正在下的文件数。列表是一张表：每个文件一个勾选框、按类型的图标、名称、修改日期、大小；文件夹在前，
   然后按界面语言的顺序排名称。点一下文件夹就进去。选中的文件在表尾计数并加总大小：清除、下载，选中的唯一一个文件是
@@ -86,15 +85,36 @@ PikPak 的实际情况，2026-10-16 实测：它的 WebDAV 主机（HTTP/2，在
 ，跟协议无关：同一个 1 GB 文件同一分钟里，用 vget 的 12 条流、8 MB 块，和 vget 一样快（算上收尾平均 35 到 40 MB/s）。
 更多的流、更大的块、接手收尾能换来平均 60，也换来 503；维护者选了 vget 的参数和没有 503。
 
+## FTP、FTPS 和 SFTP
+
+从 0.6.0 起每台服务器说四种协议之一，添加时选；`src/downloads/remote.rs` 给三个客户端一张同样的脸，页面和队列不管是哪种：
+
+- **WebDAV** 同上：`webdav.rs`，配 `transfer.rs` 的引擎。
+- **FTP 和 FTPS**（`ftp.rs`，用 suppaftp，阻塞式）：地址是主机名，斜杠后面可以接账号登录目录下的一个文件夹
+  （"sb.example.net/films"）；端口不填就是 21，FTPS 是 990。FTPS 在 990 上从第一个字节起就是 TLS，其他端口走
+  AUTH TLS，信任的和 HTTP 客户端一样：Mac 信任的证书。列目录先试 MLSD，服务器没有就解析 LIST。文件只走一条流，因为
+  FTP 只能给起点给不了终点：不分块、不多连接；停下的文件从 `.part` 的末尾用 REST 接着下。普通 FTP 的密码是明文，表单
+  会用红字说明。
+- **SFTP**（`sftp.rs`，用 russh 和 russh-sftp：Rust 写的 SSH，跑在下载页的 tokio 运行时上）：地址和 FTP 一样是主机名
+  加文件夹，端口不填就是 22；账号用密码登录（密钥登录留给以后的版本）。服务器的密钥第一次连上时信任并存进数据库
+  （`ssh_hosts` 表，按主机和端口）；以后它换了密钥就拒绝连接并在页面上说明，和 ssh 自己一样。文件切成 8 MB 的块，最多开
+  连接数设置那么多个会话同时下，每个会话是一条独立的 SSH 连接，块写进 `.part` 各自的位置、在 WebDAV 引擎那个
+  `.part.json` 里记下，所以停下的文件能接着来。在做种机上，SFTP 也是不扣每月上传额度的那条路，WebDAV 和 HTTP 下载
+  都扣（2026-10-23，ultra.cc 自己的文档）。
+
+测试连接对每种协议都是列根目录；“支持 Range”对 SFTP 永远是，对 FTP 永远不是。复制链接给的是
+`sftp://me@host:2222/films/film.mkv` 或 `ftps://…`。
+
 ## 东西存在哪
 
 - `settings.toml`：`[downloads]` 有 `folder`（空就是默认的 `~/Documents/FinchGram/webdav`；每个服务器的文件进它名下
   的一个文件夹）、`connections`、`queue_shown`。就这些：这个文件只放偏好设置。
-- 服务器连同密码在 app 自己的数据库里，旁边的 `finchgram.db`：SQLite，用 SQLCipher 整库加密
-  （docs/architecture.md，“app 自己的数据库”）。密钥是随机生成的，存在 macOS 钥匙串里 "FinchGram" 名下（account 是
-  “database”），只在登录钥匙串里，只有本应用能读：钥匙串条目归应用的签名身份所有，发布版用 North Brookville LLC 的
-  Apple Developer ID 签名（docs/conventions.md），macOS 跨版本都信任它。线上走的是 Basic 认证：只是 base64，局域网
-  http 就是明文，https 才由 TLS 加密。
+- 服务器连同密码在 app 自己的数据库里，旁边的 `finchgram.db`：一个普通的 SQLite 文件，任何工具都能打开，`servers`
+  表里有每台的协议、地址、端口和账号；只有密码那一列是封起来的（AES-256-GCM），密钥随机生成，存在 macOS 钥匙串里
+  "FinchGram" 名下（account 是“database”），只在登录钥匙串里，只有本应用能读（docs/architecture.zh-Hans.md，“app 自己的
+  数据库”）：钥匙串条目归应用的签名身份所有，发布版用 North Brookville LLC 的 Apple Developer ID 签名
+  （docs/conventions.md），macOS 跨版本都信任它。SSH 服务器的密钥在 `ssh_hosts` 表里，明文。线上 WebDAV 走的是 Basic
+  认证：只是 base64，局域网 http 就是明文，https 才由 TLS 加密；普通 FTP 同样是明文，FTPS 和 SFTP 从不。
 - 删掉 FinchGram 不会删这些，Mac 应用都这样：Application Support 文件夹留着，钥匙串条目也留着
   （钥匙串访问 → 搜“FinchGram” → 删除）。
 
@@ -108,7 +128,7 @@ PikPak 的实际情况，2026-10-16 实测：它的 WebDAV 主机（HTTP/2，在
 
 ## 怎么做的
 
-- `src/downloads/mod.rs`：页面状态在 UI 线程上，一个 worker 线程（“webdav”）负责列目录、检查服务器和表单的测试，
+- `src/downloads/mod.rs`：页面状态在 UI 线程上，一个 worker 线程（“servers”）负责列目录、检查服务器和表单的测试，
   每个在下的文件一个线程，引擎自己的分块 worker 在它里面。回答通过 `slint::invoke_from_event_loop` 送回；
   和 app 其他地方一样，没有 async 运行时。
 - `src/platform/`：选目录的面板（NSOpenPanel）和钥匙串（objc2-security）。

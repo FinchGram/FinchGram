@@ -3,7 +3,6 @@
 //! (transfer.rs). Basic authentication over whatever the address says, http or https; the
 //! password comes from the Keychain (src/platform/). Nothing is ever written to the server.
 
-use std::fmt;
 use std::time::Duration;
 
 use base64::Engine;
@@ -13,7 +12,7 @@ use hyper::body::Incoming;
 use hyper::Method;
 use hyper::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 
-use super::http::{Failure, Http};
+use super::http::Http;
 
 /// A server as the page knows it: its address without a trailing slash, and the account.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,53 +22,7 @@ pub struct Server {
     pub password: String,
 }
 
-/// A folder's entry, as PROPFIND describes it.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Entry {
-    pub name: String,
-    pub is_dir: bool,
-    /// A file's size in bytes; 0 for a folder.
-    pub size: u64,
-    /// When it was last modified, in seconds since the epoch; none when the server did not say.
-    pub modified: Option<i64>,
-}
-
-/// Why a server could not be read.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Error {
-    /// 401: the account was refused.
-    Unauthorized,
-    /// 403: the account may not see this.
-    Forbidden,
-    /// Any other HTTP error.
-    Status(u16),
-    /// No connection: the host is unknown, refuses, times out, or its certificate is not trusted.
-    Unreachable(String),
-    /// The server answered something that is not a WebDAV answer.
-    Unreadable(String),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Error::Unauthorized => write!(f, "the server refused the password (401)"),
-            Error::Forbidden => write!(f, "the server refused access (403)"),
-            Error::Status(code) => write!(f, "the server answered HTTP {code}"),
-            Error::Unreachable(why) => write!(f, "cannot reach the server: {why}"),
-            Error::Unreadable(why) => write!(f, "the answer is not a WebDAV answer: {why}"),
-        }
-    }
-}
-
-impl From<Failure> for Error {
-    fn from(failure: Failure) -> Self {
-        match failure {
-            Failure::Connection(why) => Error::Unreachable(why),
-            Failure::Timeout => Error::Unreachable("the server did not answer in time".into()),
-            Failure::Redirect(why) => Error::Unreadable(why),
-        }
-    }
-}
+pub use super::remote::{Entry, Error};
 
 /// A folder's listing larger than this is not read: it would be thousands of entries.
 const LARGEST_LISTING: usize = 32 * 1024 * 1024;

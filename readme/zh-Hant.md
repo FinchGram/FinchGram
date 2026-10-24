@@ -29,9 +29,9 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
   慢速模式在輸入框裡倒數計時；聊天設定面板裡有群組的規則，管理員則是群組的權限和選項。
 - **媒體。** 照片和影片在蓋住整個視窗的檢視器裡打開，可以翻看同一相簿的其他圖片；影片用從原始碼建置的 mpv
   播放。聊天允許時可以儲存到「下載項目」。
-- **下載。** 媒體中心裡的 WebDAV 客戶端：你的 NAS、seedbox、PikPak、Alist/OpenList，或者用 `vget serve` 分享的
-  資料夾，都能在 app 裡瀏覽。檔案走多條連線同時下載，中斷後可以接著下；照片和影片一到就在檢視器裡打開；密碼存在 FinchGram
-  的加密資料庫裡。見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
+- **下載。** 媒體中心裡的下載客戶端，走 WebDAV、FTP、FTPS 或 SFTP：你的 NAS、seedbox、PikPak、Alist/OpenList，或者用 `vget serve` 分享的
+  資料夾，都能在 app 裡瀏覽。檔案走多條連線同時下載，中斷後可以接著下；照片和影片一到就在檢視器裡打開；密碼封在 FinchGram
+  的資料庫裡。見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
 - **傳送。** 照片、影片和檔案可以從迴紋針選單傳送，也可以拖進視窗或直接貼上。送出之前先在一張卡片裡顯示：
   可以加說明文字，按照片傳或按檔案傳，最多十個合成一個相簿，私訊裡可以設自毀計時器，也可以靜音傳送。
 - **截圖。** 輸入列裡的剪刀或 ⌘⇧A 會定住螢幕：取一個視窗或拖一個選取範圍，畫上方框、橢圓、箭頭、畫筆、文字和馬賽克，
@@ -90,11 +90,11 @@ FinchGram 是一個 MCP 伺服器：你 Mac 上的 AI 助理應用程式（Claud
 
 <p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="下載頁面"></p>
 
-檢視 → 下載，或者點齒輪上方的下載圖示。加一個 WebDAV 伺服器（NAS、seedbox、PikPak、Alist/OpenList、Nextcloud、
+檢視 → 下載，或者點齒輪上方的下載圖示。加一個伺服器，WebDAV、FTP、FTPS 或 SFTP（NAS、seedbox、PikPak、Alist/OpenList、Nextcloud、
 `rclone serve webdav`，或者用 `vget serve` 分享的資料夾），瀏覽它的資料夾，勾選檔案或整個資料夾一起拿，檔案就會到
 ~/Documents/FinchGram/webdav 裡：每個檔案切成 8 MB 的區塊、最多同時走十二條連線，按「重試」後從停下的地方接著下，和維護者的
 命令列工具 vget 一個做法。右邊的佇列顯示速度和還剩多少；「打開」會把照片或影片取回來，在檢視器裡顯示。FinchGram 只從
-伺服器讀取，密碼存進 FinchGram 的加密資料庫，永遠不以明文寫進檔案。細節和還沒做的部分見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
+伺服器讀取，密碼封起來存進 FinchGram 的資料庫，永遠不以明文寫進檔案。細節和還沒做的部分見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
 （自簽憑證會被拒絕：區域網路裡用 http，或者用正式的憑證）。
 
 ## 怎麼做的
@@ -191,8 +191,11 @@ src/
   platform/              # 隨作業系統而不同的部分
   player/                # 用 libmpv 播放影片，經 OpenGL 畫進視窗
   screenshot/            # 截圖工具：截取、覆蓋層、標註、成圖
-  downloads/             # 下載頁面：WebDAV 客戶端，帶多連線下載引擎
+  downloads/             # 下載頁面：WebDAV、FTP、FTPS 和 SFTP，帶多連線下載引擎
+    remote.rs            #   三個客戶端的同一張臉：列目錄、檢查伺服器、取檔案
     webdav.rs            #   PROPFIND 目錄列表、位址、Basic 驗證
+    ftp.rs               #   FTP 和 FTPS，用 suppaftp：單一串流，REST 接著下
+    sftp.rs              #   SFTP，用 russh：多個工作階段分塊下載，記住伺服器金鑰
     transfer.rs          #   一個檔案切塊、走多條連線，中斷後接著下
     mod.rs               #   頁面的狀態、它的執行緒、佇列、伺服器表單
   update.rs              # 自動更新：GitHub Releases、驗證簽名、替換、重新啟動

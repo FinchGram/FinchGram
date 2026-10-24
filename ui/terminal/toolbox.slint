@@ -150,7 +150,7 @@ component ProtocolLine inherits Rectangle {
             overflow: elide;
         }
         T {
-            text: root.protocol.grey ? ToolboxWords.not-yet() : ToolboxWords.servers(Downloads.servers.length);
+            text: root.protocol.grey ? ToolboxWords.not-yet() : ToolboxWords.servers(root.protocol.count);
             color: P.faint;
         }
     }
