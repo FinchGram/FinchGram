@@ -163,7 +163,43 @@ component ProtocolLine inherits Rectangle {
     }
 }
 
-// A tool, a row: [x] pins it (the box alone), its mark, its name (which opens it), a line about
+// A tool in the bar's section: [x] puts it on the status bar, then its mark and its name.
+component PinLine inherits Rectangle {
+    in property <ToolRow> tool;
+    height: 26px;
+    border-radius: 2px;
+    background: touch.has-hover ? P.sel : transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Toolbox.pin(root.tool.id, !root.tool.pinned);
+        }
+    }
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 6px;
+        spacing: 8px;
+        T {
+            width: 24px;
+            text: root.tool.pinned ? "[x]" : "[ ]";
+            color: root.tool.pinned ? P.accent : P.faint;
+        }
+        T {
+            width: 16px;
+            text: root.tool.sigil;
+            color: P.faint;
+        }
+        T {
+            horizontal-stretch: 1;
+            text: root.tool.name;
+            font-weight: 600;
+            overflow: elide;
+        }
+    }
+}
+
+// A tool, a row: its switch when it has one, its mark, its name (which opens it), a line about
 // it, and what goes on, after a star.
 component ToolLine inherits Rectangle {
     in property <ToolRow> tool;
@@ -177,15 +213,16 @@ component ToolLine inherits Rectangle {
         padding-left: 6px;
         padding-right: 6px;
         spacing: 8px;
+        // A tool that can be off has its switch here, the same as on its page.
         T {
-            width: 24px;
-            text: root.tool.grey ? "[-]" : root.tool.pinned ? "[x]" : "[ ]";
-            color: root.tool.pinned ? P.accent : P.faint;
+            width: 40px;
+            text: root.tool.switchable ? (Toolbox.is-on(root.tool.id) ? "[on ]" : "[off]") : "";
+            color: root.tool.switchable && Toolbox.is-on(root.tool.id) ? P.accent : P.faint;
             TouchArea {
-                enabled: root.live;
+                enabled: root.live && root.tool.switchable;
                 mouse-cursor: pointer;
                 clicked => {
-                    Toolbox.pin(root.tool.id, !root.tool.pinned);
+                    Toolbox.enable(root.tool.id, !Toolbox.is-on(root.tool.id));
                 }
             }
         }
@@ -273,7 +310,8 @@ export component TerminalToolbox inherits Rectangle {
         if id == "transfers" { return ToolboxWords.transfers(); }
         if id == "media" { return ToolboxWords.media(); }
         if id == "messages" { return ToolboxWords.messages(); }
-        if id == "connections" { return ToolboxWords.connections(); }
+        if id == "ai" { return ToolboxWords.ai(); }
+        if id == "bar" { return ToolboxWords.bar(); }
         return "";
     }
 
@@ -412,11 +450,6 @@ export component TerminalToolbox inherits Rectangle {
                         padding-top: 10px;
                         padding-bottom: 14px;
                         spacing: 12px;
-                        T {
-                            text: ToolboxWords.pin-legend();
-                            color: P.faint;
-                            overflow: elide;
-                        }
                         for section in Toolbox.sections: VerticalLayout {
                             spacing: 4px;
                             HorizontalLayout {
@@ -464,7 +497,18 @@ export component TerminalToolbox inherits Rectangle {
                                     }
                                 }
                             }
-                            if !section.accounts: VerticalLayout {
+                            if section.pins: VerticalLayout {
+                                T {
+                                    height: 24px;
+                                    text: ToolboxWords.pin-legend();
+                                    color: P.faint;
+                                    overflow: elide;
+                                }
+                                for tool in section.tools: PinLine {
+                                    tool: tool;
+                                }
+                            }
+                            if !section.accounts && !section.pins: VerticalLayout {
                                 for tool in section.tools: VerticalLayout {
                                     ToolLine {
                                         tool: tool;

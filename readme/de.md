@@ -63,7 +63,7 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   aktualisiert sich selbst aus GitHub Releases und installiert nichts, was sie nicht prüfen kann.
 - **KI-Assistenten.** Claude Desktop, Claude Code und andere Apps, die das Model Context Protocol
   sprechen, können über FinchGram deine Chats lesen und darin handeln, sobald du es erlaubst:
-  Einstellungen → KI-Zugriff, aus, bis du es einschaltest, mit den Chats, die du wählst, und ob ein
+  Werkzeuge → KI-Zugriff, aus, bis du es einschaltest, mit den Chats, die du wählst, und ob ein
   Assistent senden darf; beim ersten Verbinden fragt eine App nach. Siehe
   [docs/mcp.md](../docs/mcp.md).
 - **Sprachen.** Die Oberfläche und dieses README in elf Sprachen.
@@ -111,11 +111,11 @@ wo eine Bildunterschrift dazukommen kann; ⌘C kopiert es; ⌘S speichert es in 
 
 ## KI-Assistenten
 
-<p align="center"><img src="../docs/screenshots/workbench-light-settings-ai.png" width="800" alt="Einstellungen → KI-Zugriff"></p>
+<p align="center"><img src="../docs/screenshots/workbench-light-ai-access.png" width="800" alt="Werkzeuge → KI-Zugriff"></p>
 
 FinchGram ist ein MCP-Server: Die App eines KI-Assistenten auf deinem Mac (Claude Desktop, Claude
 Code, Cursor …) kann über die laufende App mit deinem eigenen Konto dein Telegram lesen und darin
-handeln. Einstellungen → KI-Zugriff ist der Schalter, standardmäßig aus. Dort wählst du, welche
+handeln. Werkzeuge → KI-Zugriff ist der Schalter, standardmäßig aus. Dort wählst du, welche
 Chats ein Assistent sehen darf (alle außer geheimen, oder nur gewählte) und was er schreiben darf
 (Nachrichten in deinem Namen, nur Entwürfe, die du sendest, oder nichts), und du siehst, welche Apps
 sich verbunden haben, mit dem Namen, den macOS für sie nennt, und was sie angefragt haben. Beim

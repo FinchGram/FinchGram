@@ -18,7 +18,7 @@ PICTURES=(
   workbench-light-shot-annotated
   workbench-light-shot-send-card
   workbench-light-settings-general
-  workbench-light-settings-ai
+  workbench-light-ai-access
   workbench-light-downloads
   zh-workbench-chats
   zh-workbench-downloads

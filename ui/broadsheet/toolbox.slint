@@ -26,6 +26,35 @@ global Grid {
     out property <length> tile: 40px;
 }
 
+// A switch, square as the newspaper's: the accent while on, the knob sliding over.
+component Knob inherits Rectangle {
+    in property <bool> on;
+    in property <bool> enabled: true;
+    callback toggled();
+    width: 34px;
+    height: 20px;
+    border-radius: 2px;
+    background: on ? P.accent : P.off;
+    animate background { duration: 200ms; }
+
+    Rectangle {
+        x: root.on ? 17px : 3px;
+        y: 3px;
+        width: 14px;
+        height: 14px;
+        border-radius: 1px;
+        background: #ffffff;
+        animate x { duration: 200ms; }
+    }
+    TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.toggled();
+        }
+    }
+}
+
 component Letter inherits Text {
     width: 14px;
     color: P.accent-ink;
@@ -344,29 +373,14 @@ component ToolCard inherits Rectangle {
                         overflow: elide;
                     }
                 }
-                VerticalLayout {
+                // A tool that can be off has its switch here, the same as on its page.
+                if root.tool.switchable: VerticalLayout {
                     alignment: center;
-                    Rectangle {
-                        width: 34px;
-                        height: 20px;
-                        border-radius: 2px;
-                        background: root.tool.pinned ? P.accent : P.off;
-                        animate background { duration: 200ms; }
-                        Rectangle {
-                            x: root.tool.pinned ? 17px : 3px;
-                            y: 3px;
-                            width: 14px;
-                            height: 14px;
-                            border-radius: 1px;
-                            background: #ffffff;
-                            animate x { duration: 200ms; }
-                        }
-                        TouchArea {
-                            enabled: root.live;
-                            mouse-cursor: pointer;
-                            clicked => {
-                                Toolbox.pin(root.tool.id, !root.tool.pinned);
-                            }
+                    Knob {
+                        on: Toolbox.is-on(root.tool.id);
+                        enabled: root.live;
+                        toggled => {
+                            Toolbox.enable(root.tool.id, !Toolbox.is-on(root.tool.id));
                         }
                     }
                 }
@@ -412,6 +426,76 @@ component ToolGrid inherits Rectangle {
         width: tool.family ? root.width : root.card-width;
         height: tool.family ? Grid.family : Grid.card;
         ToolCard {
+            tool: tool;
+        }
+    }
+}
+
+// A tool in the bar's section: its icon, its name, and the switch that puts it on the rail,
+// over a hairline.
+component PinLine inherits Rectangle {
+    in property <ToolRow> tool;
+    height: 40px;
+    background: touch.has-hover ? P.hover : transparent;
+
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: P.line;
+        opacity: 0.5;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Toolbox.pin(root.tool.id, !root.tool.pinned);
+        }
+    }
+    HorizontalLayout {
+        padding-right: 4px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            DuoIcon {
+                name: root.tool.icon;
+                size: 24px;
+                color: root.tool.pinned ? P.accent : P.faint;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.tool.name;
+            color: P.text;
+            font-size: 15px;
+            font-weight: 600;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        VerticalLayout {
+            alignment: center;
+            Knob {
+                on: root.tool.pinned;
+                toggled => {
+                    Toolbox.pin(root.tool.id, !root.tool.pinned);
+                }
+            }
+        }
+    }
+}
+
+// The bar's section: a word about it, then a tool a row.
+component PinList {
+    in property <ToolSection> section;
+
+    VerticalLayout {
+        spacing: 2px;
+        Text {
+            text: ToolboxWords.pin-here();
+            color: P.muted;
+            font-size: 13px;
+            wrap: word-wrap;
+        }
+        Rectangle { height: 6px; }
+        for tool in root.section.tools: PinLine {
             tool: tool;
         }
     }
@@ -693,7 +777,10 @@ export component BroadsheetToolbox inherits Rectangle {
                                     }
                                 }
                                 if section.accounts: AccountGrid { }
-                                if !section.accounts: ToolGrid {
+                                if section.pins: PinList {
+                                    section: section;
+                                }
+                                if !section.accounts && !section.pins: ToolGrid {
                                     section: section;
                                 }
                             }

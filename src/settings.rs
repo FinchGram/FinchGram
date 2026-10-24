@@ -57,17 +57,12 @@ pub struct Settings {
     pub toolbox: Toolbox,
 }
 
-/// The toolbox's own setting: the tools pinned to the bar, by id ("downloads", …).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// The toolbox's own setting: the tools pinned to the bar, by id ("downloads", …); nothing
+/// until the user pins something (the maintainer's word of 2026-10-24).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Toolbox {
     pub pinned: Vec<String>,
-}
-
-impl Default for Toolbox {
-    fn default() -> Self {
-        Toolbox { pinned: vec!["downloads".to_string()] }
-    }
 }
 
 /// The downloads page's own settings.

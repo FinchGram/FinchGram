@@ -62,7 +62,7 @@ Es un cliente no oficial, no hecho por Telegram.
   app se actualiza sola desde GitHub Releases y no instala nada que no pueda verificar.
 - **Asistentes de IA.** Claude Desktop, Claude Code y otras apps que hablan el Model Context
   Protocol pueden leer tus chats y actuar en ellos a través de FinchGram, cuando tú lo permites:
-  Ajustes → Acceso de IA, desactivado hasta que lo actives, con los chats que elijas y si un
+  Herramientas → Acceso de IA, desactivado hasta que lo actives, con los chats que elijas y si un
   asistente puede enviar o no, y una pregunta la primera vez que una app se conecta. Ver
   [docs/mcp.md](../docs/mcp.md).
 - **Idiomas.** La interfaz y este README en once idiomas.
@@ -108,11 +108,11 @@ atajo y si la ventana de FinchGram se oculta mientras tanto.
 
 ## Asistentes de IA
 
-<p align="center"><img src="../docs/screenshots/workbench-light-settings-ai.png" width="800" alt="Ajustes → Acceso de IA"></p>
+<p align="center"><img src="../docs/screenshots/workbench-light-ai-access.png" width="800" alt="Herramientas → Acceso de IA"></p>
 
 FinchGram es un servidor MCP: la app de un asistente de IA en tu Mac (Claude Desktop, Claude Code,
 Cursor…) puede leer tu Telegram y actuar en él a través de la app en marcha, con tu propia cuenta.
-Ajustes → Acceso de IA es el interruptor, desactivado por defecto. Ahí eliges qué chats puede ver un
+Herramientas → Acceso de IA es el interruptor, desactivado por defecto. Ahí eliges qué chats puede ver un
 asistente (todos menos los secretos, o solo los elegidos) y qué puede escribir (mensajes con tu
 nombre, solo borradores que envías tú, o nada), y ves qué apps se han conectado, con el nombre que
 macOS les da, y qué pidieron. La primera vez que una app se conecta, FinchGram pregunta si

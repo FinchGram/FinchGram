@@ -113,22 +113,26 @@ component TitleBar inherits Rectangle {
         VerticalLayout {
             alignment: center;
             Rectangle {
-                width: 16px;
-                height: 14px;
+                width: 28px;
+                height: 24px;
+                border-radius: 4px;
+                background: mark-touch.has-hover || Toolbox.open ? P.sel : transparent;
                 Mark {
+                    x: 6px;
+                    y: 5px;
                     width: 16px;
                     height: 14px;
                     color: P.accent;
                 }
                 if Toolbox.logo-dot: Rectangle {
-                    x: parent.width - 4px;
-                    y: -3px;
+                    x: parent.width - 9px;
+                    y: 2px;
                     width: 7px;
                     height: 7px;
                     border-radius: 3.5px;
                     background: P.accent2;
                 }
-                TouchArea {
+                mark-touch := TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
                         Toolbox.toggle();
@@ -2146,7 +2150,6 @@ component StatusBar inherits Rectangle {
     height: 26px;
     background: P.accent;
     callback search();
-    callback accounts();
 
     HorizontalLayout {
         padding-left: 14px;
@@ -2196,35 +2199,6 @@ component StatusBar inherits Rectangle {
                 }
             }
         }
-        // The account in front, as the design's 1b: a click opens the accounts pane (/accounts).
-        Rectangle {
-            background: P.on-accent.transparentize(0.85);
-            HorizontalLayout {
-                padding-left: 6px;
-                padding-right: 6px;
-                spacing: 6px;
-                VerticalLayout {
-                    alignment: center;
-                    Rectangle {
-                        width: 7px;
-                        height: 7px;
-                        border-radius: 2px;
-                        background: P.on-accent;
-                    }
-                }
-                T {
-                    text: Account.name + (Account.phone != "" ? " · " + Account.phone : (Account.username != "" ? " · @" + Account.username : ""));
-                    color: P.on-accent;
-                    font-size: 12px;
-                }
-            }
-            TouchArea {
-                mouse-cursor: pointer;
-                clicked => {
-                    root.accounts();
-                }
-            }
-        }
     }
 }
 
@@ -2266,9 +2240,6 @@ export component TerminalWindow inherits Rectangle {
         StatusBar {
             search => {
                 line.focus-line();
-            }
-            accounts => {
-                Toolbox.command("accounts");
             }
         }
     }

@@ -127,6 +127,7 @@ fn main() -> Result<(), slint::PlatformError> {
             if let Some(ui) = ui.upgrade() {
                 let state = ui.global::<AppState>();
                 state.set_theme(theme);
+                toolbox::refresh();
                 // The theme's own light or dark comes with it, the window's buttons to match.
                 state.set_appearance(appearance.clone().into());
                 apply_window_appearance(&ui, &appearance);

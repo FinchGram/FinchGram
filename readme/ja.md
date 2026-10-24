@@ -51,7 +51,7 @@ FinchGram は Telegram 公式のライブラリ [TDLib](https://core.telegram.or
 - **3 つのテーマ。** Workbench、Broadsheet、Terminal。それぞれライトとダークがあり、再起動なしで切り替えられます。
 - **設定。** ログイン時に起動、Enter で送信、スクリーンショットのショートカット、通知のサウンドとプレビュー、2 段階認証、
   表示言語、そして更新：アプリは GitHub Releases から自動更新し、検証できないものは一切インストールしません。
-- **AI アシスタント。** Claude Desktop、Claude Code など Model Context Protocol を話すアプリは、あなたが許可すれば FinchGram を通じてチャットを読み、操作できます。設定 → AI アクセスで、オンにするまでオフ。見せるチャットと送信を許すかどうかを選び、アプリは初めて接続するときに確認を求めます。[docs/mcp.md](../docs/mcp.md) を参照。
+- **AI アシスタント。** Claude Desktop、Claude Code など Model Context Protocol を話すアプリは、あなたが許可すれば FinchGram を通じてチャットを読み、操作できます。ツールボックス → AI アクセスで、オンにするまでオフ。見せるチャットと送信を許すかどうかを選び、アプリは初めて接続するときに確認を求めます。[docs/mcp.md](../docs/mcp.md) を参照。
 - **言語。** インターフェースとこの README は 11 言語。
 
 まだないもの：秘密のチャット、音声メッセージと通話、投票と予約送信、キーワードフィルター、Windows と Linux。
@@ -93,9 +93,9 @@ Terminal は等幅フォントの画面でコマンドが使えます。どれ�
 
 ## AI アシスタント
 
-<p align="center"><img src="../docs/screenshots/workbench-light-settings-ai.png" width="800" alt="設定 → AI アクセス"></p>
+<p align="center"><img src="../docs/screenshots/workbench-light-ai-access.png" width="800" alt="ツールボックス → AI アクセス"></p>
 
-FinchGram は MCP サーバーです。Mac 上の AI アシスタントのアプリ（Claude Desktop、Claude Code、Cursor など）が、起動中の FinchGram を通じて、あなた自身のアカウントで Telegram を読み、操作できます。設定 → AI アクセスがそのスイッチで、既定ではオフです。そこで、アシスタントが見られるチャット（シークレットチャット以外のすべて、または選んだものだけ）と書けること（あなたの名前でメッセージを送る、下書きだけ残してあなたが送る、何も書かない）を選び、どのアプリが接続したか（名前は macOS が報告するもの）と何を求めたかを確認できます。アプリが初めて接続するとき、FinchGram は許可するかを尋ねます。読んでも既読にはならず、シークレットチャットは決して見せず、AI のために何も保存しません。Claude Code や Claude Desktop に貼る 1 行はページに用意されています。詳しくは [docs/mcp.md](../docs/mcp.md)。
+FinchGram は MCP サーバーです。Mac 上の AI アシスタントのアプリ（Claude Desktop、Claude Code、Cursor など）が、起動中の FinchGram を通じて、あなた自身のアカウントで Telegram を読み、操作できます。ツールボックス → AI アクセスがそのスイッチで、既定ではオフです。そこで、アシスタントが見られるチャット（シークレットチャット以外のすべて、または選んだものだけ）と書けること（あなたの名前でメッセージを送る、下書きだけ残してあなたが送る、何も書かない）を選び、どのアプリが接続したか（名前は macOS が報告するもの）と何を求めたかを確認できます。アプリが初めて接続するとき、FinchGram は許可するかを尋ねます。読んでも既読にはならず、シークレットチャットは決して見せず、AI のために何も保存しません。Claude Code や Claude Desktop に貼る 1 行はページに用意されています。詳しくは [docs/mcp.md](../docs/mcp.md)。
 
 ## ダウンロードページ
 
@@ -122,7 +122,7 @@ FinchGram はサーバーから読み取るだけで、パスワードは平文�
 
 FinchGram は Telegram 公式アプリがすることだけをし、禁じられていることはしません。メッセージは見た時点で既読になり、
 相手には他の Telegram アプリと同じように入力中やオンラインが見え、チャンネルのスポンサーメッセージは表示され、自動消滅の
-メディアは一度だけ開け、Telegram から得たものは、設定 → AI アクセスであなたがアシスタントを許可しない限り、どの AI にも渡しません。Telegram と、更新のための GitHub 以外に、
+メディアは一度だけ開け、Telegram から得たものは、ツールボックス → AI アクセスであなたがアシスタントを許可しない限り、どの AI にも渡しません。Telegram と、更新のための GitHub 以外に、
 あなたのマシンから出ていくものはありません。
 
 ## 開発

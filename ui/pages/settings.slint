@@ -7,11 +7,9 @@ import { NotificationScope, NotificationScopes, PasswordSettings, PasswordStep, 
 import { Look } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, Spinner, Field, PrimaryButton, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
-import { AiAccess } from "../ai-access.slint";
 import { FormHeading, FormError, HintLine, EmailCodeField, LinkRow, NewPasswordForm } from "password.slint";
 import { PageFrame, SideColumn } from "frame.slint";
 import { Card, Separator, SwitchRow, NavRow, SmallButton } from "rows.slint";
-import { AiSection, AiPickSection } from "ai-access.slint";
 
 component Category inherits Rectangle {
     in property <SettingsSection> section;
@@ -54,7 +52,6 @@ component Category inherits Rectangle {
                 PasswordSettings.cancel();
                 PasswordSettings.open = false;
             }
-            AiAccess.picking = false;
         }
     }
 }
@@ -122,12 +119,6 @@ component Categories {
             label: @tr("Privacy & security");
             // These settings are the account's, kept by Telegram.
             enabled: AppState.telegram-state == TelegramState.ready;
-        }
-        Category {
-            section: SettingsSection.ai;
-            icon: "robot";
-            label: @tr("AI access");
-            enabled: true;
         }
         Category {
             section: SettingsSection.chats;
@@ -1521,10 +1512,6 @@ component PasswordSection {
 
 export component SettingsPage inherits PageFrame {
     property <bool> two-step: AppState.settings-section == SettingsSection.privacy && PasswordSettings.open;
-    property <bool> ai: AppState.settings-section == SettingsSection.ai;
-    // Choosing the chats an assistant may see is a page within AI access, as two-step
-    // verification is within Privacy & security.
-    property <bool> picking: ai && AiAccess.picking;
     title: @tr("Settings");
 
     SideColumn {
@@ -1564,28 +1551,13 @@ export component SettingsPage inherits PageFrame {
                             PasswordSettings.open = false;
                         }
                     }
-                    if root.picking: Link {
-                        text: @tr("AI access");
-                        icon: "caret-left";
-                        clicked => {
-                            AiAccess.picking = false;
-                        }
-                    }
                     Heading {
                         label: root.two-step ? @tr("Two-step verification")
-                            : root.picking ? @tr("Choose chats")
                             : AppState.settings-section == SettingsSection.general ? @tr("General")
                             : AppState.settings-section == SettingsSection.notifications ? @tr("Notifications & sounds")
                             : AppState.settings-section == SettingsSection.language ? @tr("Language")
                             : AppState.settings-section == SettingsSection.privacy ? @tr("Privacy & security")
-                            : AppState.settings-section == SettingsSection.ai ? @tr("AI access")
                             : AppState.settings-section == SettingsSection.about ? @tr("About") : @tr("Appearance");
-                    }
-                    if root.ai && !root.picking: Paragraph {
-                        text: @tr("An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your chats and act in them through FinchGram, with your account. FinchGram itself calls no AI and keeps nothing for one.");
-                        color: Look.muted;
-                        font-size: 15px;
-                        line-height-factor: Look.leading(1.6);
                     }
                     if root.two-step && PasswordSettings.step == PasswordStep.overview && PasswordSettings.done != PasswordChange.nothing: HorizontalLayout {
                         spacing: 6px;
@@ -1613,8 +1585,6 @@ export component SettingsPage inherits PageFrame {
                 if AppState.settings-section == SettingsSection.language: LanguageSection { }
                 if AppState.settings-section == SettingsSection.privacy && !root.two-step: PrivacySection { }
                 if root.two-step: PasswordSection { }
-                if root.ai && !root.picking: AiSection { }
-                if root.picking: AiPickSection { }
                 if AppState.settings-section == SettingsSection.about: AboutSection { }
             }
         }

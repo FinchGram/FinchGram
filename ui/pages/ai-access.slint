@@ -1,14 +1,17 @@
-// Settings → AI access, from the design's second round ("AI 访问"): the switch, which chats an
-// assistant may see (with the picker, a page within the page), what it may write, the apps that
-// have connected, how to connect one, the log, and what holds whatever the settings. And the
-// dialog that asks the user to allow an app the first time it connects, over whichever page is
-// open. One set of rows for the three themes, in Look's colours and shapes.
-import { AppState, Page, SettingsSection } from "../state.slint";
+// AI access, the toolbox's tool (⌘J → AI access), from the design's second round ("AI 访问",
+// drawn there as a section of Settings; a page of its own since 2026-10-24, at the maintainer's
+// word: Settings is for FinchGram's own preferences, a tool is a tool): the switch, which chats
+// an assistant may see (with the picker, a page within the page), what it may write, the apps
+// that have connected, how to connect one, the log, and what holds whatever the settings. And
+// the dialog that asks the user to allow an app the first time it connects, over whichever page
+// is open. One set of rows for the three themes, in Look's colours and shapes.
+import { AppState, Page } from "../state.slint";
 import { ChatKind, Words } from "../telegram.slint";
 import { AiAccess, AiScope, AiWriting, AiChat, AiApp, AiActivity, AiActivityKind } from "../ai-access.slint";
 import { Look } from "../look.slint";
 import { Fmt } from "../format.slint";
-import { Icon, Logo, SectionLabel, Paragraph, Link } from "../widgets.slint";
+import { Icon, Logo, SectionLabel, Paragraph, Link, Heading } from "../widgets.slint";
+import { PageFrame } from "frame.slint";
 import { Card, Separator, SwitchRow, NavRow, SmallButton } from "rows.slint";
 
 // How chats, apps and what an assistant asked for are worded.
@@ -834,11 +837,10 @@ export component AllowDialog inherits Rectangle {
                     }
                 }
                 Link {
-                    text: @tr("Change in Settings");
+                    text: @tr("Change in AI access");
                     clicked => {
                         AiAccess.picking = false;
-                        AppState.settings-section = SettingsSection.ai;
-                        AppState.page = Page.settings;
+                        AppState.page = Page.ai-access;
                     }
                 }
             }
@@ -860,6 +862,62 @@ export component AllowDialog inherits Rectangle {
                         AiAccess.answer(true);
                     }
                 }
+            }
+        }
+    }
+}
+
+// The page, from the toolbox: the way back to the chats, the heading and a word about it, then
+// the sections; choosing the chats is a page within it, as two-step verification is within
+// Privacy & security. As wide as the design's column, where the window has room for it.
+export component AiAccessPage inherits PageFrame {
+    title: @tr("AI access");
+
+    Flickable {
+        horizontal-stretch: 1;
+        mouse-drag-pan-enabled: false;
+        content-height: max(self.height, page.preferred-height);
+
+        page := HorizontalLayout {
+            width: parent.width;
+            padding-left: 56px;
+            padding-right: 56px;
+            padding-top: 32px;
+            padding-bottom: 40px;
+            alignment: start;
+            VerticalLayout {
+                preferred-width: 600px;
+                max-width: 600px;
+                spacing: 26px;
+                alignment: start;
+                VerticalLayout {
+                    spacing: 12px;
+                    if !AiAccess.picking: Link {
+                        text: @tr("Chats");
+                        icon: "arrow-left";
+                        clicked => {
+                            AppState.page = Page.chats;
+                        }
+                    }
+                    if AiAccess.picking: Link {
+                        text: @tr("AI access");
+                        icon: "caret-left";
+                        clicked => {
+                            AiAccess.picking = false;
+                        }
+                    }
+                    Heading {
+                        label: AiAccess.picking ? @tr("Choose chats") : @tr("AI access");
+                    }
+                    if !AiAccess.picking: Paragraph {
+                        text: @tr("An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your chats and act in them through FinchGram, with your account. FinchGram itself calls no AI and keeps nothing for one.");
+                        color: Look.muted;
+                        font-size: 15px;
+                        line-height-factor: Look.leading(1.6);
+                    }
+                }
+                if !AiAccess.picking: AiSection { }
+                if AiAccess.picking: AiPickSection { }
             }
         }
     }

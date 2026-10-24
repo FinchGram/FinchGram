@@ -23,8 +23,40 @@ global Grid {
     out property <length> tile: 44px;
 }
 
+// A switch: the accent while on, the knob sliding over.
+component Knob inherits Rectangle {
+    in property <bool> on;
+    in property <bool> enabled: true;
+    callback toggled();
+    width: 32px;
+    height: 18px;
+    border-radius: 9px;
+    background: on ? P.accent : P.off;
+    animate background { duration: 200ms; }
+
+    Rectangle {
+        x: root.on ? 16px : 2px;
+        y: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 7px;
+        background: #ffffff;
+        drop-shadow-blur: 2px;
+        drop-shadow-offset-y: 1px;
+        drop-shadow-color: #00000033;
+        animate x { duration: 200ms; }
+    }
+    TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.toggled();
+        }
+    }
+}
+
 // A row of the column at the left: All, or a category, with how many tools it has (hits while
-// searching; the accounts: how many of ten).
+// searching; the accounts: how many of ten; the bar: how many stand on it).
 component NavLine inherits Rectangle {
     in property <NavRow> nav;
     property <bool> on: (Toolbox.searching ? "all" : Toolbox.category) == nav.id;
@@ -363,32 +395,14 @@ component ToolCard inherits Rectangle {
                         overflow: elide;
                     }
                 }
-                VerticalLayout {
+                // A tool that can be off has its switch here, the same as on its page.
+                if root.tool.switchable: VerticalLayout {
                     alignment: center;
-                    Rectangle {
-                        width: 32px;
-                        height: 18px;
-                        border-radius: 9px;
-                        background: root.tool.pinned ? P.accent : P.off;
-                        animate background { duration: 200ms; }
-                        Rectangle {
-                            x: root.tool.pinned ? 16px : 2px;
-                            y: 2px;
-                            width: 14px;
-                            height: 14px;
-                            border-radius: 7px;
-                            background: #ffffff;
-                            drop-shadow-blur: 2px;
-                            drop-shadow-offset-y: 1px;
-                            drop-shadow-color: #00000033;
-                            animate x { duration: 200ms; }
-                        }
-                        TouchArea {
-                            enabled: root.live;
-                            mouse-cursor: pointer;
-                            clicked => {
-                                Toolbox.pin(root.tool.id, !root.tool.pinned);
-                            }
+                    Knob {
+                        on: Toolbox.is-on(root.tool.id);
+                        enabled: root.live;
+                        toggled => {
+                            Toolbox.enable(root.tool.id, !Toolbox.is-on(root.tool.id));
                         }
                     }
                 }
@@ -434,6 +448,79 @@ component ToolGrid inherits Rectangle {
         width: tool.family ? root.width : root.card-width;
         height: tool.family ? Grid.family : Grid.card;
         ToolCard {
+            tool: tool;
+        }
+    }
+}
+
+// A tool in the bar's section: its icon block, its name, and the switch that puts it on the
+// activity bar.
+component PinLine inherits Rectangle {
+    in property <ToolRow> tool;
+    height: 44px;
+    border-radius: 8px;
+    background: touch.has-hover ? P.side : transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Toolbox.pin(root.tool.id, !root.tool.pinned);
+        }
+    }
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 12px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 32px;
+                height: 32px;
+                border-radius: 8px;
+                background: root.tool.pinned ? P.accent-soft : P.chrome;
+                animate background { duration: 200ms; }
+                Icon {
+                    name: root.tool.icon;
+                    size: 17px;
+                    color: root.tool.pinned ? P.accent-ink : P.muted;
+                }
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.tool.name;
+            color: P.text;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        VerticalLayout {
+            alignment: center;
+            Knob {
+                on: root.tool.pinned;
+                toggled => {
+                    Toolbox.pin(root.tool.id, !root.tool.pinned);
+                }
+            }
+        }
+    }
+}
+
+// The bar's section: a word about it, then a tool a row.
+component PinList {
+    in property <ToolSection> section;
+
+    VerticalLayout {
+        spacing: 2px;
+        Text {
+            text: ToolboxWords.pin-here();
+            color: P.muted;
+            font-size: 12px;
+            wrap: word-wrap;
+        }
+        Rectangle { height: 4px; }
+        for tool in root.section.tools: PinLine {
             tool: tool;
         }
     }
@@ -703,7 +790,10 @@ export component WorkbenchToolbox inherits Rectangle {
                                     }
                                 }
                                 if section.accounts: AccountGrid { }
-                                if !section.accounts: ToolGrid {
+                                if section.pins: PinList {
+                                    section: section;
+                                }
+                                if !section.accounts && !section.pins: ToolGrid {
                                     section: section;
                                 }
                             }

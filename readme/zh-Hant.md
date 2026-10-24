@@ -43,7 +43,7 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
 - **三套主題。** 工作台、報紙和終端，各有淺色和深色，切換不用重新啟動。
 - **設定。** 開機時啟動、按 Enter 傳送、截圖快捷鍵、通知的聲音和預覽、兩步驟驗證、介面語言，還有更新：app 從
   GitHub Releases 自動更新，驗證不過的一律不裝。
-- **AI 助理。** Claude Desktop、Claude Code 以及其他會說 Model Context Protocol 的應用程式，可以在你允許後透過 FinchGram 讀你的聊天並代你操作：設定 → AI 存取，預設關著，由你選哪些聊天、助理能不能傳訊息，應用程式第一次連線時會先問你。見 [docs/mcp.md](../docs/mcp.md)。
+- **AI 助理。** Claude Desktop、Claude Code 以及其他會說 Model Context Protocol 的應用程式，可以在你允許後透過 FinchGram 讀你的聊天並代你操作：百寶箱 → AI 存取，預設關著，由你選哪些聊天、助理能不能傳訊息，應用程式第一次連線時會先問你。見 [docs/mcp.md](../docs/mcp.md)。
 - **語言。** 介面和這份 README 都有十一種語言。
 
 還沒有的：秘密聊天、語音訊息和通話、投票和排程訊息、關鍵字過濾、Windows 和 Linux。見
@@ -82,9 +82,9 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
 
 ## AI 助理
 
-<p align="center"><img src="../docs/screenshots/workbench-light-settings-ai.png" width="800" alt="設定 → AI 存取"></p>
+<p align="center"><img src="../docs/screenshots/workbench-light-ai-access.png" width="800" alt="百寶箱 → AI 存取"></p>
 
-FinchGram 是一個 MCP 伺服器：你 Mac 上的 AI 助理應用程式（Claude Desktop、Claude Code、Cursor……）可以透過正在執行的 FinchGram、用你自己的帳號讀你的 Telegram 並在其中操作。設定 → AI 存取 是開關，預設關著。在那裡你選助理能看到哪些聊天（除秘密聊天外的全部，或只限選定的）、能寫什麼（以你的名義傳訊息、只留草稿由你傳、或什麼都不寫），也能看到哪些應用程式連線過——名稱是 macOS 回報的——以及它們要過什麼。應用程式第一次連線時，FinchGram 會問你允不允許。讀取不會標已讀，秘密聊天永遠不給看，也不為 AI 儲存任何東西。頁面上備好了貼進 Claude Code 或 Claude Desktop 的那一行；細節見 [docs/mcp.md](../docs/mcp.md)。
+FinchGram 是一個 MCP 伺服器：你 Mac 上的 AI 助理應用程式（Claude Desktop、Claude Code、Cursor……）可以透過正在執行的 FinchGram、用你自己的帳號讀你的 Telegram 並在其中操作。百寶箱 → AI 存取 是開關，預設關著。在那裡你選助理能看到哪些聊天（除秘密聊天外的全部，或只限選定的）、能寫什麼（以你的名義傳訊息、只留草稿由你傳、或什麼都不寫），也能看到哪些應用程式連線過——名稱是 macOS 回報的——以及它們要過什麼。應用程式第一次連線時，FinchGram 會問你允不允許。讀取不會標已讀，秘密聊天永遠不給看，也不為 AI 儲存任何東西。頁面上備好了貼進 Claude Code 或 Claude Desktop 的那一行；細節見 [docs/mcp.md](../docs/mcp.md)。
 
 ## 下載頁面
 
@@ -108,7 +108,7 @@ app 是一個外殼。Telegram 本身交給 TDLib，它作為一個獨立程式�
 ## Telegram 的規矩
 
 FinchGram 只做 Telegram 官方應用程式做的事，不做它們禁止的事。訊息在你看到時標為已讀，對方像在任何 Telegram 應用程式裡一樣
-能看到你正在輸入和在線上，頻道裡的贊助訊息照常顯示，自毀媒體只能打開一次，來自 Telegram 的內容不會交給任何 AI，除非你在設定 → AI 存取裡放一個助理進來。
+能看到你正在輸入和在線上，頻道裡的贊助訊息照常顯示，自毀媒體只能打開一次，來自 Telegram 的內容不會交給任何 AI，除非你在百寶箱 → AI 存取裡放一個助理進來。
 除了 Telegram 和用來更新的 GitHub，什麼都不會離開你的機器。
 
 ## 開發

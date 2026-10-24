@@ -1759,7 +1759,7 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
         chat: chat.into(),
         count,
     };
-    app.set_settings_section(SettingsSection::Ai);
+    app.set_page(Page::AiAccess);
     ai.set_on(true);
     ai.set_scope(AiScope::Chosen);
     ai.set_writing(AiWriting::Drafts);
@@ -1786,12 +1786,12 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
     ai.set_claude_desktop_config(
         r#"{ "mcpServers": { "finchgram": { "command": "/Applications/FinchGram.app/Contents/MacOS/finchgram", "args": ["mcp"] } } }"#.into(),
     );
-    save(window, &name("settings-ai"));
+    save(window, &name("ai-access"));
     // The rest of the page: the apps and how to connect one, then the log and the rules.
     scroll(window, 800.0, 400.0, 760.0);
-    save(window, &name("settings-ai-apps"));
+    save(window, &name("ai-access-apps"));
     scroll(window, 800.0, 400.0, 760.0);
-    save(window, &name("settings-ai-log"));
+    save(window, &name("ai-access-log"));
     scroll(window, 800.0, 400.0, -1520.0);
     // The picker: every chat, the chosen ones ticked, a secret chat dimmed; then searched.
     ai.set_all_chats(model(vec![
@@ -1805,17 +1805,17 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
         chat("8", "Deer", ChatKind::User, 0, true, false),
     ]));
     ai.set_picking(true);
-    save(window, &name("settings-ai-chats"));
+    save(window, &name("ai-access-chats"));
     ai.set_all_chats(model(vec![
         chat("2", "Weekend Hikers", ChatKind::Group, 23, false, true),
         chat("3", "Mika", ChatKind::User, 0, false, true),
         chat("8", "Deer", ChatKind::User, 0, true, false),
     ]));
-    save(window, &name("settings-ai-chats-searched"));
+    save(window, &name("ai-access-chats-searched"));
     ai.set_picking(false);
     // Off: the switch and the rules only.
     ai.set_on(false);
-    save(window, &name("settings-ai-off"));
+    save(window, &name("ai-access-off"));
     ai.set_on(true);
     // The dialog, over the chats.
     app.set_page(Page::Chats);
@@ -2095,6 +2095,8 @@ fn screenshots() {
                 save(&window, &name("toolbox-search"));
                 crate::toolbox::show_for_pictures(&ui, &["downloads"], "accounts", "");
                 save(&window, &name("toolbox-accounts"));
+                crate::toolbox::show_for_pictures(&ui, &["downloads"], "bar", "");
+                save(&window, &name("toolbox-bar"));
                 toolbox.set_open(false);
                 ui.global::<Downloads>().set_active_count(0);
                 set_toolbox(&ui);

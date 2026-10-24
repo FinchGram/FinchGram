@@ -9,19 +9,21 @@
 // draw it (ui/<theme>/toolbox.slint), src/toolbox.rs fills and acts.
 import { Downloads } from "downloads.slint";
 import { Accounts, AccountRow } from "telegram.slint";
+import { AiAccess } from "ai-access.slint";
 import { Look } from "look.slint";
 
 // A tool of the toolbox.
 export struct ToolRow {
     id: string,             // "downloads", "live", "jellyfin", "emby", "hiding", "scheduled", "ai-access"
-    category: string,       // "transfers", "media", "messages", "connections"
+    category: string,       // "transfers", "media", "messages", "ai"
     name: string,
     line: string,           // what it is, in a few words
     icon: string,           // its Phosphor icon
     sigil: string,          // Terminal's mark for it: ↓, ◉, …
     key: string,            // its shortcut, "⌥⌘L", or ""
-    pinned: bool,
-    grey: bool,             // still to come: faded, and its switch does nothing
+    pinned: bool,           // stands on the bar (the bar's section pins)
+    grey: bool,             // still to come: faded, and nothing opens
+    switchable: bool,       // can be off: a switch of its own on the card (AI access)
     family: bool,           // the protocols are listed under it (downloads)
     slot: int,              // its place among the section's tools that are not families: the grid
 }
@@ -38,11 +40,12 @@ export struct ProtocolRow {
 
 // A category, with the tools shown of it.
 export struct ToolSection {
-    id: string,             // "accounts", "transfers", "media", "messages", "connections"
+    id: string,             // "accounts", "transfers", "media", "messages", "ai", "bar"
     label: string,
-    letter: string,         // Broadsheet's A … E
+    letter: string,         // Broadsheet's A … F
     icon: string,
     accounts: bool,         // the accounts section: Toolbox.accounts in place of tools
+    pins: bool,             // the bar's section: every tool that can stand on it, a switch each
     tools: [ToolRow],
     families: int,          // how many of its tools are families, drawn full width first
     others: int,            // the rest, in the grid
@@ -79,8 +82,13 @@ export global Toolbox {
     callback toggle();
     callback close();
     callback show(string);                         // opens at a category ("all" for every one)
-    callback pin(string, bool);                    // a tool, and whether it is pinned now
+    callback pin(string, bool);                    // a tool, and whether it stands on the bar now
+    callback enable(string, bool);                 // a tool with a switch of its own: on, or off
     callback open-tool(string);                    // a tool opens (and the toolbox shuts)
+    // Whether a tool with a switch is on: AI access answers assistants.
+    public pure function is-on(id: string) -> bool {
+        return id == "ai-access" ? AiAccess.on : true;
+    }
     callback choose(string);                       // the column: a category
     callback search(string);                       // the box
     callback open-first();                         // ⏎ in the box: the first tool found opens
@@ -95,7 +103,11 @@ export global ToolboxWords {
     public pure function transfers() -> string { return @tr("Transfers"); }
     public pure function media() -> string { return @tr("Media"); }
     public pure function messages() -> string { return @tr("Messages"); }
-    public pure function connections() -> string { return @tr("Connections"); }
+    public pure function ai() -> string { return "AI"; }
+    // The bar's section, named after the theme's bar.
+    public pure function bar() -> string { return Look.terminal ? @tr("Status bar") : Look.broadsheet ? @tr("Rail") : @tr("Activity bar"); }
+    public pure function bar-name() -> string { return Look.terminal ? status-bar() : Look.broadsheet ? rail() : activity-bar(); }
+    public pure function pin-here() -> string { return @tr("Switch a tool on here to show it on the {}.", bar-name()); }
     // The tools.
     public pure function downloads() -> string { return @tr("Downloads"); }
     public pure function downloads-line() -> string { return @tr("Pick files from your own servers and download them"); }

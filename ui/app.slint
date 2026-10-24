@@ -22,7 +22,7 @@ import { TerminalWindow } from "terminal/terminal.slint";
 import { SettingsPage } from "pages/settings.slint";
 import { MediaViewer } from "viewer.slint";
 import { ProfilePage } from "pages/profile.slint";
-import { AllowDialog } from "pages/ai-access.slint";
+import { AllowDialog, AiAccessPage } from "pages/ai-access.slint";
 import { DownloadsPage } from "pages/downloads.slint";
 
 // Re-exported so Rust can reach them through slint::include_modules!().
@@ -189,6 +189,7 @@ export component MainWindow inherits Window {
     if AppState.page == Page.settings: SettingsPage { }
     if root.ready && AppState.page == Page.profile: ProfilePage { }
     if AppState.page == Page.downloads: DownloadsPage { }
+    if root.ready && AppState.page == Page.ai-access: AiAccessPage { }
     // The media viewer, over everything while it is open: a chat's media, or a downloaded file.
     if ((root.ready && AppState.page == Page.chats) || AppState.page == Page.downloads) && Viewer.open: MediaViewer { }
     // An AI assistant's app is connecting for the first time: the question, over whatever is open.

@@ -1,8 +1,10 @@
 //! The toolbox (the design's seventh round, "百宝箱"): everything beyond the chats in one place,
 //! slid out from the logo in Workbench and Broadsheet, the pane's place under /tools in Terminal.
-//! Its categories list every tool with a switch that pins it to the bar: the activity bar, the
-//! rail and Terminal's status bar show only the pinned tools, one list for the three themes
-//! (`[toolbox] pinned` in settings.toml; downloads by default). Downloads is a family: the
+//! Its categories list every tool; a tool that can be off (AI access) has its switch on its
+//! card, the same one its page has. Pinning is the bar's own section, the last category: a
+//! switch a tool, and the activity bar, the rail and Terminal's status bar show only the pinned
+//! tools, one list for the three themes (`[toolbox] pinned` in settings.toml; nothing by default:
+//! the user pins what they want, the maintainer's word of 2026-10-24). Downloads is a family: the
 //! protocols a server can speak are listed under it; a protocol is a server's property, chosen
 //! when a server is added (src/downloads/), never a tool of its own. The tools the design draws
 //! but FinchGram does not have yet (live streams, Jellyfin, keyword hiding, scheduled messages)
@@ -16,7 +18,7 @@ use std::rc::Rc;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 
 use crate::settings::Settings;
-use crate::{AccountRow, Accounts, AppState, Downloads, MainWindow, NavRow, Page, ProtocolRow, SettingsSection, ToolRow, ToolSection, Toolbox, ToolboxWords};
+use crate::{AccountRow, Accounts, AiAccess, AppState, Downloads, MainWindow, NavRow, Page, ProtocolRow, ToolRow, ToolSection, Toolbox, ToolboxWords};
 
 /// A tool: its id, its category, its Phosphor icon, Terminal's mark, its shortcut, whether
 /// FinchGram has it, and whether it is a family (the protocols are listed under it).
@@ -27,27 +29,31 @@ struct Tool {
     sigil: &'static str,
     key: &'static str,
     built: bool,
+    /// Can be off: a switch of its own on the card.
+    switchable: bool,
     family: bool,
 }
 
 /// The tools, in the toolbox's order.
 const TOOLS: [Tool; 7] = [
-    Tool { id: "downloads", category: "transfers", icon: "download-simple", sigil: "↓", key: "⌥⌘L", built: true, family: true },
-    Tool { id: "live", category: "media", icon: "broadcast", sigil: "◉", key: "", built: false, family: false },
-    Tool { id: "jellyfin", category: "media", icon: "film-reel", sigil: "▷", key: "", built: false, family: false },
-    Tool { id: "emby", category: "media", icon: "television", sigil: "■", key: "", built: false, family: false },
-    Tool { id: "hiding", category: "messages", icon: "funnel-simple", sigil: "⊘", key: "", built: false, family: false },
-    Tool { id: "scheduled", category: "messages", icon: "clock", sigil: "○", key: "", built: false, family: false },
-    Tool { id: "ai-access", category: "connections", icon: "plugs-connected", sigil: "◆", key: "", built: true, family: false },
+    Tool { id: "downloads", category: "transfers", icon: "download-simple", sigil: "↓", key: "⌥⌘L", built: true, switchable: false, family: true },
+    Tool { id: "live", category: "media", icon: "broadcast", sigil: "◉", key: "", built: false, switchable: false, family: false },
+    Tool { id: "jellyfin", category: "media", icon: "film-reel", sigil: "▷", key: "", built: false, switchable: false, family: false },
+    Tool { id: "emby", category: "media", icon: "television", sigil: "■", key: "", built: false, switchable: false, family: false },
+    Tool { id: "hiding", category: "messages", icon: "funnel-simple", sigil: "⊘", key: "", built: false, switchable: false, family: false },
+    Tool { id: "scheduled", category: "messages", icon: "clock", sigil: "○", key: "", built: false, switchable: false, family: false },
+    Tool { id: "ai-access", category: "ai", icon: "plugs-connected", sigil: "◆", key: "", built: true, switchable: true, family: false },
 ];
 
-/// The categories, in the column's order: id, icon, Broadsheet's letter.
-const CATEGORIES: [(&str, &str, &str); 5] = [
+/// The categories, in the column's order: id, icon, Broadsheet's letter. The last is the bar's
+/// section, where tools are pinned.
+const CATEGORIES: [(&str, &str, &str); 6] = [
     ("accounts", "users-three", "A"),
     ("transfers", "arrows-down-up", "B"),
     ("media", "film-strip", "C"),
     ("messages", "chat-text", "D"),
-    ("connections", "plugs-connected", "E"),
+    ("ai", "sparkle", "E"),
+    ("bar", "push-pin", "F"),
 ];
 
 /// The protocols of the downloads family: id, name, default port, whether FinchGram speaks it
@@ -121,6 +127,16 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         }
         refresh();
     });
+    toolbox.on_enable({
+        let ui = ui.as_weak();
+        move |id, on| {
+            if let Some(ui) = ui.upgrade()
+                && id.as_str() == "ai-access"
+            {
+                ui.global::<AiAccess>().invoke_set_on(on);
+            }
+        }
+    });
     toolbox.on_open_tool({
         let ui = ui.as_weak();
         move |id| {
@@ -167,7 +183,8 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     });
 }
 
-/// The UI language changed: the words with it.
+/// The UI language or the theme changed: the words with it (the bar's section is named after
+/// the theme's bar).
 pub fn language_changed() {
     refresh();
 }
@@ -202,10 +219,7 @@ fn open_tool(ui: &MainWindow, id: &str) {
     let app = ui.global::<AppState>();
     match id {
         "downloads" => app.set_page(Page::Downloads),
-        "ai-access" => {
-            app.set_settings_section(SettingsSection::Ai);
-            app.set_page(Page::Settings);
-        }
+        "ai-access" => app.set_page(Page::AiAccess),
         _ => {}
     }
 }
@@ -244,11 +258,12 @@ fn label_of(words: &ToolboxWords, category: &str) -> SharedString {
         "transfers" => words.invoke_transfers(),
         "media" => words.invoke_media(),
         "messages" => words.invoke_messages(),
-        _ => words.invoke_connections(),
+        "ai" => words.invoke_ai(),
+        _ => words.invoke_bar(),
     }
 }
 
-fn refresh() {
+pub fn refresh() {
     let state = VIEW.with(|view| {
         view.borrow().as_ref().map(|view| (view.ui.clone(), view.settings.borrow().toolbox.pinned.clone(), view.category.clone(), view.query.clone()))
     });
@@ -292,6 +307,7 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
                 key: tool.key.into(),
                 pinned: tool.built && pinned.iter().any(|id| id == tool.id),
                 grey: !tool.built,
+                switchable: tool.switchable,
                 family: tool.family,
                 slot: 0,
             };
@@ -318,7 +334,23 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
             let shown = if searching { found > 0 } else { shown_by_choice && signed_in > 0 };
             nav.push(NavRow { id: id.into(), label: label.clone(), letter: letter.into(), icon: icon.into(), count: if searching { found } else { signed_in }, accounts: true });
             if shown {
-                sections.push(ToolSection { id: id.into(), label, letter: letter.into(), icon: icon.into(), accounts: true, tools: ModelRc::default(), families: 0, others: 0 });
+                sections.push(ToolSection { id: id.into(), label, letter: letter.into(), icon: icon.into(), accounts: true, pins: false, tools: ModelRc::default(), families: 0, others: 0 });
+            }
+            continue;
+        }
+        if id == "bar" {
+            // Every tool that can stand on the bar, with whether it does; searching finds them by name.
+            let its: Vec<ToolRow> = tools.iter().filter(|(tool, hit)| !tool.grey && (!searching || *hit)).map(|(tool, _)| tool.clone()).collect();
+            let on_the_bar = tools.iter().filter(|(tool, _)| tool.pinned).count() as i32;
+            let found = its.len() as i32;
+            if searching {
+                hits += found;
+            }
+            let shown = if searching { found > 0 } else { shown_by_choice };
+            nav.push(NavRow { id: id.into(), label: label.clone(), letter: letter.into(), icon: icon.into(), count: if searching { found } else { on_the_bar }, accounts: false });
+            if shown {
+                let others = its.len() as i32;
+                sections.push(ToolSection { id: id.into(), label, letter: letter.into(), icon: icon.into(), accounts: false, pins: true, tools: ModelRc::new(VecModel::from(its)), families: 0, others });
             }
             continue;
         }
@@ -344,7 +376,7 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
             if first.is_none() {
                 first = its.iter().find(|tool| !tool.grey).map(|tool| tool.id.to_string());
             }
-            sections.push(ToolSection { id: id.into(), label, letter: letter.into(), icon: icon.into(), accounts: false, tools: ModelRc::new(VecModel::from(its)), families, others });
+            sections.push(ToolSection { id: id.into(), label, letter: letter.into(), icon: icon.into(), accounts: false, pins: false, tools: ModelRc::new(VecModel::from(its)), families, others });
         }
     }
     let everything = if searching { hits } else { tools.len() as i32 + i32::from(signed_in > 0) };

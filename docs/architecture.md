@@ -320,15 +320,20 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     at the top filters by name (⏎ opens the first tool found), the categories stand at the left
     (All, then accounts, transfers, media, messages, connections; in toolbox.rs a category is a row
     of one table and a tool a row of another), the sections at the right: the accounts as tiles
-    (⌘1–⌘0; adding one), then every tool of each category with a line about it, what goes on, and
-    a switch that pins it to the bar: the activity bar, the rail and Terminal's status bar show
-    only the pinned tools, in the toolbox's order, one list for the three themes in
-    `[toolbox] pinned` of settings.toml, downloads by default; a name opens the tool and shuts the
-    toolbox, a switch only pins; the files on their way show as a number on the pinned button.
+    (⌘1–⌘0; adding one), then every tool of each category with a line about it and what goes
+    on: a card opens the tool and shuts the toolbox, and a tool that can be off (AI access) has
+    its switch on the card, the same one its page has. Pinning is a section of its own, the bar's
+    (Activity bar, Rail or Status bar, the last category): a switch a tool, and the activity bar,
+    the rail and Terminal's status bar show only the pinned tools, in the toolbox's order, one
+    list for the three themes in `[toolbox] pinned` of settings.toml, nothing by default (the
+    maintainer's word of 2026-10-24: the user pins what they want); the files on their way show
+    as a number on a pinned Downloads button.
     Downloads is a family: the protocols a server can speak are listed under it (WebDAV, FTP,
     FTPS and SFTP, each with its default port and how many servers speak it); a protocol is a
     server's property, chosen when a server is added (docs/downloads.md), never a tool of its own.
-    AI access (Settings → AI access) is a tool too, under connections. The tools the design draws
+    AI access is a tool too, under AI, and its page is the toolbox's (ui/pages/ai-access.slint,
+    AiAccessPage: the switch, the chats, the apps, the log), no longer a section of Settings, which
+    keeps FinchGram's own preferences (the maintainer's word of 2026-10-24). The tools the design draws
     but FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled messages) are
     listed faded and cannot be pinned; so is Emby, which the maintainer added beside Jellyfin on
     2026-10-24, beyond the design's round (a media server page is still to be designed). At the foot: the settings, the AI settings (faded) and the
@@ -386,7 +391,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   Protocol. The app listens on a Unix socket in its own folder; `finchgram mcp` (the same
   executable) is the stdio bridge an assistant's app runs. `protocol.rs` is JSON-RPC and MCP's
   methods, `tools.rs` the tools as the assistant sees them, and `src/telegram/tools.rs` what each
-  does with the store and TDLib, on the UI thread, within what Settings → AI access allows (off by
+  does with the store and TDLib, on the UI thread, within what AI access (the toolbox's page) allows (off by
   default). `access.rs` is that page and the dialog that asks the user to allow an app the first
   time it connects (ui/ai-access.slint, ui/pages/ai-access.slint, in every theme): the switch,
   which chats, what an assistant may write, the apps allowed or turned away, the log. Reading
