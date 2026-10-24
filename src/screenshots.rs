@@ -592,7 +592,7 @@ fn fill_chats(ui: &MainWindow) {
     account.set_phone("+86 138 0013 2046".into());
     account.set_id("6130081346".into());
     account.set_bio("Design, and a little code. Shanghai.".into());
-    // Three accounts signed in: the account menu, the drawers and Broadsheet's rail show them.
+    // Three accounts signed in: the account menu, the toolbox and Broadsheet's rail show them.
     let rows = vec![
         AccountRow {
             slot: 1,
@@ -695,28 +695,9 @@ fn fill_chats(ui: &MainWindow) {
     conversation.set_tabs(model(vec![tab(&keyboards), tab(&news), tab(&alex)]));
 }
 
-/// The toolbox as src/drawer.rs fills it: downloads and the screenshot pinned, the rest to come.
+/// The toolbox as src/toolbox.rs fills it: downloads pinned, every category shown.
 fn set_toolbox(ui: &MainWindow) {
-    let tool = |id: &str, name: &str, line: &str, icon: &str, sigil: &str, pinned: bool| ToolRow {
-        id: id.into(),
-        name: name.into(),
-        line: line.into(),
-        icon: icon.into(),
-        sigil: sigil.into(),
-        pinned,
-        grey: !pinned,
-    };
-    let tools = vec![
-        tool("downloads", "Downloads", "Files from your WebDAV servers", "download-simple", "↓", true),
-        tool("live", "Live", "Watch live streams", "broadcast", "▶", false),
-        tool("jellyfin", "Jellyfin", "Your own media server", "television", "■", false),
-        tool("hiding", "Keyword hiding", "Hide messages by keyword, on this Mac only", "eye-slash", "⊘", false),
-        tool("scheduled", "Scheduled messages", "Messages set to go out later", "clock", "○", false),
-    ];
-    let drawer = ui.global::<Drawer>();
-    drawer.set_pinned(model(tools.iter().filter(|tool| tool.pinned).cloned().collect()));
-    drawer.set_tools(model(tools));
-    drawer.set_downloads_pinned(true);
+    crate::toolbox::show_for_pictures(ui, &["downloads"], "all", "");
 }
 
 fn info_row(id: &str, kind: InfoRowKind, icon: &str, label: &str, key: &str) -> InfoRow {
@@ -1855,7 +1836,7 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
 /// and a queue with a file on its way, one waiting, one stopped and one done.
 fn fill_downloads(ui: &MainWindow) {
     let downloads = ui.global::<Downloads>();
-    let server = |name: &str, host: &str, status: ServerStatus| ServerRow { name: name.into(), host: host.into(), status };
+    let server = |name: &str, host: &str, status: ServerStatus| ServerRow { name: name.into(), host: host.into(), protocol: "WebDAV".into(), status };
     let entry = |name: &str, folder: bool, icon: &str, date: &str, size: &str, selected: bool| FolderEntry {
         name: name.into(),
         folder,
@@ -1969,16 +1950,27 @@ fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name
     downloads.set_form_open(true);
     downloads.set_form_editing(false);
     downloads.set_form_name(SharedString::new());
+    downloads.set_form_protocol("webdav".into());
     downloads.set_form_address(SharedString::new());
+    downloads.set_form_port(SharedString::new());
     downloads.set_form_username(SharedString::new());
     downloads.set_form_password(SharedString::new());
     save(window, &name("downloads-add"));
     // The same with an http address: the note, in red, that the password travels in the clear.
     downloads.set_form_address("http://192.168.1.10:5005/".into());
     save(window, &name("downloads-add-http"));
+    // A seedbox over SFTP (the seventh round): the protocol chips, the port, the way to sign in;
+    // this version says it cannot connect.
+    downloads.set_form_protocol("sftp".into());
+    downloads.set_form_name("Seedbox (SFTP)".into());
+    downloads.set_form_address("sb-ams.example.net".into());
+    downloads.set_form_username("zhouye".into());
+    save(window, &name("downloads-add-sftp"));
+    downloads.set_form_protocol("webdav".into());
     downloads.set_form_editing(true);
     downloads.set_form_name("Home NAS".into());
-    downloads.set_form_address("https://nas.home:5006/dav".into());
+    downloads.set_form_address("https://nas.home/dav".into());
+    downloads.set_form_port("5006".into());
     downloads.set_form_username("yumin".into());
     downloads.set_form_password("correct horse".into());
     downloads.set_test_state(TestState::Ok);
@@ -2087,22 +2079,25 @@ fn screenshots() {
                 info.set_open(false);
                 info.set_cursor(SharedString::new());
             }
-            // The drawer from the logo (the sixth round): the accounts, the toolbox with its pin
-            // switches, the foot; Terminal's pane under /tools.
+            // The toolbox from the logo (the seventh round), with two downloads on their way:
+            // every category; the transfers alone, with the protocols under Downloads; a search
+            // that finds a tool still to come; the accounts (Terminal's /accounts).
             {
-                let drawer = ui.global::<Drawer>();
-                drawer.set_accounts_shown(false);
-                drawer.set_open(true);
-                save(&window, &name("drawer"));
-                drawer.set_open(false);
-                // Terminal's pane under /accounts: the accounts, the one in front marked.
-                if theme == Theme::Terminal {
-                    drawer.set_accounts_shown(true);
-                    drawer.set_open(true);
-                    save(&window, &name("accounts"));
-                    drawer.set_open(false);
-                    drawer.set_accounts_shown(false);
-                }
+                let toolbox = ui.global::<Toolbox>();
+                fill_downloads(&ui);
+                ui.global::<Downloads>().set_active_count(2);
+                set_toolbox(&ui);
+                toolbox.set_open(true);
+                save(&window, &name("toolbox"));
+                crate::toolbox::show_for_pictures(&ui, &["downloads"], "transfers", "");
+                save(&window, &name("toolbox-transfers"));
+                crate::toolbox::show_for_pictures(&ui, &["downloads"], "all", "live");
+                save(&window, &name("toolbox-search"));
+                crate::toolbox::show_for_pictures(&ui, &["downloads"], "accounts", "");
+                save(&window, &name("toolbox-accounts"));
+                toolbox.set_open(false);
+                ui.global::<Downloads>().set_active_count(0);
+                set_toolbox(&ui);
             }
             // A right click on the first chat of the list: its menu.
             let (x, y) = match theme {

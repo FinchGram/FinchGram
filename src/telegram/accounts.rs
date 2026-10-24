@@ -1,4 +1,4 @@
-//! The accounts side by side (the Accounts global): the rows the account menu, the drawer and
+//! The accounts side by side (the Accounts global): the rows the account menu, the toolbox and
 //! Broadsheet's rail show, one per account in the order of their slots, with the account's colour
 //! and key (its place: ⌘1 … ⌘0), its unread messages and whether it is the one in front; and what
 //! the rows ask for: switching, adding an account. mod.rs keeps the accounts themselves.
@@ -108,6 +108,7 @@ pub fn refresh() {
     let others: Vec<AccountRow> = rows.iter().filter(|row| !row.current).cloned().collect();
     accounts.set_others(ModelRc::new(VecModel::from(others)));
     accounts.set_rows(ModelRc::new(VecModel::from(rows)));
+    crate::toolbox::accounts_changed();
     // A row's photo that was not here yet is fetched, as the account's own store asks for it.
     for slot in super::account_facts().into_iter().map(|facts| facts.slot) {
         super::in_context(slot, store::fetch_wanted_photos);

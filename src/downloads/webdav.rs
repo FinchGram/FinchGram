@@ -94,6 +94,44 @@ impl Server {
         ["http://", "https://"].iter().any(|scheme| lower.starts_with(scheme) && lower.len() > scheme.len())
     }
 
+    /// The port written in an address, "5006" out of "https://nas.home:5006/dav"; "" when the
+    /// address leaves it to the scheme.
+    pub fn port(url: &str) -> String {
+        let (_, port) = Self::split_authority(url);
+        port.to_string()
+    }
+
+    /// The address with this port in place of whatever it had: "https://nas.home:5006/dav" out of
+    /// "https://nas.home/dav" and "5006". An empty port leaves the address as it is.
+    pub fn with_port(url: &str, port: &str) -> String {
+        let url = url.trim();
+        if port.is_empty() {
+            return url.to_string();
+        }
+        let Some(scheme_end) = url.find("://") else { return url.to_string() };
+        let authority_start = scheme_end + 3;
+        let rest = &url[authority_start..];
+        let authority_end = rest.find(['/', '?', '#']).unwrap_or(rest.len());
+        let (host, _) = Self::split_authority(url);
+        format!("{}{}:{}{}", &url[..authority_start], host, port, &rest[authority_end..])
+    }
+
+    /// The authority of an address as host (with any user before it) and port.
+    fn split_authority(url: &str) -> (&str, &str) {
+        let url = url.trim();
+        let rest = url.split("://").nth(1).unwrap_or(url);
+        let authority = rest.split(['/', '?', '#']).next().unwrap_or("");
+        // An IPv6 address in brackets: the port is after the closing bracket.
+        let colon = match authority.rfind(']') {
+            Some(end) => authority[end..].find(':').map(|at| end + at),
+            None => authority.rfind(':'),
+        };
+        match colon {
+            Some(at) if authority[at + 1..].chars().all(|c| c.is_ascii_digit()) && !authority[at + 1..].is_empty() => (&authority[..at], &authority[at + 1..]),
+            _ => (authority, ""),
+        }
+    }
+
     /// The host of an address, for the page: "nas.home" out of "https://nas.home:5006/dav".
     pub fn host(url: &str) -> String {
         let rest = url.trim().split("://").nth(1).unwrap_or(url.trim());
@@ -317,6 +355,19 @@ pub fn parse_listing(xml: &str, folder_path: &str) -> Result<Vec<Entry>, Error> 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_port_of_an_address_in_and_out() {
+        assert_eq!(Server::port("https://nas.home:5006/dav"), "5006");
+        assert_eq!(Server::port("https://nas.home/dav"), "");
+        assert_eq!(Server::port("http://[fe80::1]:8080/dav/"), "8080");
+        assert_eq!(Server::port("http://[fe80::1]/dav/"), "");
+        assert_eq!(Server::with_port("https://nas.home/dav", "5006"), "https://nas.home:5006/dav");
+        assert_eq!(Server::with_port("https://nas.home:5005/dav?x=1", "5006"), "https://nas.home:5006/dav?x=1");
+        assert_eq!(Server::with_port("http://[fe80::1]:8080/dav/", "9090"), "http://[fe80::1]:9090/dav/");
+        assert_eq!(Server::with_port("https://nas.home/dav", ""), "https://nas.home/dav");
+        assert_eq!(Server::with_port("https://me@nas.home", "81"), "https://me@nas.home:81");
+    }
 
     #[test]
     fn host_of_an_address() {

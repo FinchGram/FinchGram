@@ -18,15 +18,21 @@ a sync client: the user picks what comes.
 
 ## The page
 
-View → Downloads (⌥⌘L), the download icon above the gear in Workbench's activity bar and
-Broadsheet's rail (with a dot while a file is on its way), and "[↓ 2]" in Terminal's foot, the
-number being the files on their way. The page needs no Telegram account: it opens before logging in.
+View → Downloads (⌥⌘L); the toolbox's Downloads (⌘J, docs/architecture.md), pinned to Workbench's
+activity bar and Broadsheet's rail by default, the button carrying the number of files on their
+way; and "[↓ 2 downloading]" in Terminal's status bar. The page needs no Telegram account: it opens
+before logging in.
 
 Three columns:
 
-- **WebDAV servers**, on the left: each with its name, its host and its status, checked when the
-  page opens: Connected, Password rejected, Not reachable. A right click gives Edit, Remove and Copy
-  address. Add server is the last row.
+- **Servers**, on the left: each with its name, a badge with the protocol it speaks (WebDAV, the
+  only one this version speaks), its host and its status, checked when the page opens: Connected,
+  Password rejected, Not reachable. A right click gives Edit, Remove and Copy address. Add server
+  is the last row. Its form asks for the protocol first (WebDAV; FTP, FTPS and SFTP are drawn
+  faded: the form can be filled in under them, and says it cannot be saved), then the name, the
+  address with the port beside it (the protocol's default stands in the empty field: 80 or 443
+  for WebDAV, 21, 990, 22; a port typed goes into the address), the account, and for SFTP how to
+  sign in, with a password, the key waiting for another version.
 - **The folder**, in the middle: where we are as a path, "Home NAS /Movies/2026", each folder of it
   a step back, then the folder's name, a box
   that filters the listing by name, a refresh button, and the "Downloads" button that shows or hides

@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-23 13:20+0000\n"
+"POT-Creation-Date: 2026-10-24 02:02+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -27,46 +27,50 @@ msgstr "チャット内を検索"
 msgid "Chat Info"
 msgstr "チャット情報"
 
-#: ui/app.slint:90 ui/pages/settings.slint:406
+#: ui/app.slint:89 ui/toolbox.slint:90
+msgid "Toolbox"
+msgstr "ツールボックス"
+
+#: ui/app.slint:100 ui/pages/settings.slint:406
 msgid "Workbench"
 msgstr "ワークベンチ"
 
-#: ui/app.slint:98 ui/pages/settings.slint:414
+#: ui/app.slint:108 ui/pages/settings.slint:414
 msgid "Terminal"
 msgstr "ターミナル"
 
-#: ui/app.slint:106 ui/pages/settings.slint:422
+#: ui/app.slint:116 ui/pages/settings.slint:422
 msgid "Broadsheet"
 msgstr "ブロードシート"
 
 #. The tools.
-#: ui/app.slint:115 ui/drawer.slint:56 ui/pages/downloads.slint:402
-#: ui/pages/downloads.slint:1439
+#: ui/app.slint:125 ui/pages/downloads.slint:502 ui/pages/downloads.slint:865
+#: ui/toolbox.slint:99
 msgid "Downloads"
 msgstr "ダウンロード"
 
-#: ui/app.slint:123
+#: ui/app.slint:133
 msgid "Settings…"
 msgstr "設定…"
 
-#: ui/app.slint:133
+#: ui/app.slint:143
 msgctxt "menu"
 msgid "Account"
 msgstr "アカウント"
 
-#: ui/app.slint:146
+#: ui/app.slint:156
 msgid "Add Account…"
 msgstr "アカウントを追加…"
 
-#: ui/app.slint:156
+#: ui/app.slint:166
 msgid "Help"
 msgstr "ヘルプ"
 
-#: ui/app.slint:159
+#: ui/app.slint:169
 msgid "Update to {}…"
 msgstr "{} にアップデート…"
 
-#: ui/app.slint:160
+#: ui/app.slint:170
 msgid "Check for Updates…"
 msgstr "アップデートを確認…"
 
@@ -97,21 +101,21 @@ msgid "Add a comment (optional)"
 msgstr "コメントを入力（任意）"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
-#: ui/broadsheet/broadsheet.slint:2584 ui/chat.slint:360 ui/compose.slint:244
-#: ui/pages/downloads.slint:1390 ui/pages/profile.slint:174
+#: ui/broadsheet/broadsheet.slint:2592 ui/chat.slint:360 ui/compose.slint:244
+#: ui/pages/downloads.slint:1582 ui/pages/profile.slint:174
 #: ui/terminal/actions.slint:386 ui/terminal/actions.slint:643
 #: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
 msgstr "キャンセル"
 
-#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2575
+#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2583
 #: ui/chat.slint:279 ui/chat.slint:820 ui/chat.slint:902
-#: ui/terminal/terminal.slint:1732 ui/workbench/conversation.slint:1630
+#: ui/terminal/terminal.slint:1731 ui/workbench/conversation.slint:1630
 msgid "Report"
 msgstr "報告"
 
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2566
-#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1724
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2574
+#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1723
 #: ui/workbench/conversation.slint:1618
 msgid "Delete"
 msgstr "削除"
@@ -124,78 +128,79 @@ msgstr "ライト"
 msgid "Dark"
 msgstr "ダーク"
 
-#: ui/broadsheet/broadsheet.slint:169 ui/drawer.slint:37
-#: ui/workbench/workbench.slint:204
+#: ui/broadsheet/broadsheet.slint:169 ui/pages/profile.slint:72
+#: ui/workbench/workbench.slint:224
 msgid "Accounts"
 msgstr "アカウント"
 
-#: ui/broadsheet/broadsheet.slint:319 ui/pages/downloads.slint:792
+#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:892
 #: ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "チャット"
 
-#: ui/broadsheet/broadsheet.slint:327 ui/broadsheet/broadsheet.slint:1044
+#: ui/broadsheet/broadsheet.slint:335 ui/broadsheet/broadsheet.slint:1052
 #: ui/workbench/sidebar.slint:553
 msgid "Channels"
 msgstr "チャンネル"
 
-#: ui/broadsheet/broadsheet.slint:335 ui/broadsheet/broadsheet.slint:1045
+#: ui/broadsheet/broadsheet.slint:343 ui/broadsheet/broadsheet.slint:1053
 msgid "Bots"
 msgstr "ボット"
 
-#: ui/broadsheet/broadsheet.slint:452 ui/terminal/terminal.slint:310
+#: ui/broadsheet/broadsheet.slint:460 ui/terminal/terminal.slint:309
+#: ui/toolbox.slint:92
 msgid "All"
 msgstr "すべて"
 
-#: ui/broadsheet/broadsheet.slint:501 ui/pages/ai-access.slint:102
+#: ui/broadsheet/broadsheet.slint:509 ui/pages/ai-access.slint:102
 #: ui/telegram.slint:909 ui/workbench/sidebar.slint:548
 msgid "All chats"
 msgstr "すべてのチャット"
 
-#: ui/broadsheet/broadsheet.slint:524
+#: ui/broadsheet/broadsheet.slint:532
 msgid "More"
 msgstr "その他"
 
-#: ui/broadsheet/broadsheet.slint:625 ui/terminal/terminal.slint:433
+#: ui/broadsheet/broadsheet.slint:633 ui/terminal/terminal.slint:432
 msgid "Mark all as read"
 msgstr "すべて既読にする"
 
-#: ui/broadsheet/broadsheet.slint:642 ui/terminal/terminal.slint:453
+#: ui/broadsheet/broadsheet.slint:650 ui/terminal/terminal.slint:452
 msgid "Sort by"
 msgstr "並び順"
 
-#: ui/broadsheet/broadsheet.slint:650 ui/terminal/terminal.slint:459
+#: ui/broadsheet/broadsheet.slint:658 ui/terminal/terminal.slint:458
 msgid "Latest message"
 msgstr "最新のメッセージ"
 
-#: ui/broadsheet/broadsheet.slint:659 ui/chat-manage.slint:233
-#: ui/pages/downloads.slint:1259 ui/workbench/sidebar.slint:868
+#: ui/broadsheet/broadsheet.slint:667 ui/chat-manage.slint:233
+#: ui/pages/downloads.slint:1402 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "名前"
 
-#: ui/broadsheet/broadsheet.slint:668 ui/terminal/terminal.slint:475
+#: ui/broadsheet/broadsheet.slint:676 ui/terminal/terminal.slint:474
 msgid "Unread"
 msgstr "未読"
 
-#: ui/broadsheet/broadsheet.slint:903 ui/format.slint:163
+#: ui/broadsheet/broadsheet.slint:911 ui/format.slint:163
 #: ui/workbench/sidebar.slint:369
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
 msgstr[0] "{n}人の登録者"
 
-#: ui/broadsheet/broadsheet.slint:1132
+#: ui/broadsheet/broadsheet.slint:1140
 msgid "Telegram bots"
 msgstr "Telegram のボット"
 
-#: ui/broadsheet/broadsheet.slint:1199 ui/terminal/terminal.slint:681
+#: ui/broadsheet/broadsheet.slint:1207 ui/terminal/terminal.slint:680
 msgid "No chats yet"
 msgstr "チャットはまだありません"
 
-#: ui/broadsheet/broadsheet.slint:1199 ui/terminal/terminal.slint:681
+#: ui/broadsheet/broadsheet.slint:1207 ui/terminal/terminal.slint:680
 msgid "No chats in this folder"
 msgstr "このフォルダにチャットはありません"
 
-#: ui/broadsheet/broadsheet.slint:1205 ui/workbench/sidebar.slint:592
+#: ui/broadsheet/broadsheet.slint:1213 ui/workbench/sidebar.slint:592
 msgid ""
 "Search for a username or phone number, or open an invite link someone sent "
 "you, to start chatting."
@@ -203,58 +208,58 @@ msgstr ""
 "ユーザー名や電話番号で検索するか、誰かから送られた招待リンクを開くと、チャッ"
 "トを始められます。"
 
-#: ui/broadsheet/broadsheet.slint:1206
+#: ui/broadsheet/broadsheet.slint:1214
 msgid "Chats you add to this folder in Telegram show up here."
 msgstr "Telegram でこのフォルダに追加したチャットがここに表示されます。"
 
-#: ui/broadsheet/broadsheet.slint:1245 ui/terminal/terminal.slint:716
+#: ui/broadsheet/broadsheet.slint:1253 ui/terminal/terminal.slint:715
 msgid "Official bots"
 msgstr "公式ボット"
 
-#: ui/broadsheet/broadsheet.slint:1259 ui/terminal/terminal.slint:728
+#: ui/broadsheet/broadsheet.slint:1267 ui/terminal/terminal.slint:727
 msgid "Other bots"
 msgstr "その他のボット"
 
-#: ui/broadsheet/broadsheet.slint:1271 ui/workbench/sidebar.slint:661
+#: ui/broadsheet/broadsheet.slint:1279 ui/workbench/sidebar.slint:661
 msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr ""
 "チェックマークの付いたボットは Telegram 公式のものです。それ以外のボットは、"
 "送信した内容を読むことができます。"
 
-#: ui/broadsheet/broadsheet.slint:1316 ui/broadsheet/broadsheet.slint:3303
-#: ui/terminal/terminal.slint:818 ui/workbench/conversation.slint:276
+#: ui/broadsheet/broadsheet.slint:1324 ui/broadsheet/broadsheet.slint:3311
+#: ui/terminal/terminal.slint:817 ui/workbench/conversation.slint:276
 #: ui/workbench/conversation.slint:2316
 msgid "Unmute"
 msgstr "ミュート解除"
 
-#: ui/broadsheet/broadsheet.slint:1316 ui/broadsheet/broadsheet.slint:3303
-#: ui/terminal/terminal.slint:818 ui/workbench/conversation.slint:276
+#: ui/broadsheet/broadsheet.slint:1324 ui/broadsheet/broadsheet.slint:3311
+#: ui/terminal/terminal.slint:817 ui/workbench/conversation.slint:276
 #: ui/workbench/conversation.slint:2316
 msgid "Mute"
 msgstr "ミュート"
 
-#: ui/broadsheet/broadsheet.slint:1324 ui/broadsheet/broadsheet.slint:3372
-#: ui/terminal/terminal.slint:1553 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1332 ui/broadsheet/broadsheet.slint:3380
+#: ui/terminal/terminal.slint:1552 ui/workbench/sidebar.slint:717
 msgid "Unpin"
 msgstr "ピン留めを解除"
 
-#: ui/broadsheet/broadsheet.slint:1324 ui/broadsheet/broadsheet.slint:3372
-#: ui/terminal/terminal.slint:1553 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1332 ui/broadsheet/broadsheet.slint:3380
+#: ui/terminal/terminal.slint:1552 ui/workbench/sidebar.slint:717
 msgid "Pin"
 msgstr "ピン留め"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/chat-info.slint:86
+#: ui/broadsheet/broadsheet.slint:1341 ui/chat-info.slint:86
 #: ui/workbench/sidebar.slint:726
 msgid "Add to folder"
 msgstr "フォルダに追加"
 
-#: ui/broadsheet/broadsheet.slint:1340 ui/broadsheet/broadsheet.slint:3380
-#: ui/terminal/terminal.slint:1561 ui/workbench/sidebar.slint:733
+#: ui/broadsheet/broadsheet.slint:1348 ui/broadsheet/broadsheet.slint:3388
+#: ui/terminal/terminal.slint:1560 ui/workbench/sidebar.slint:733
 msgid "Copy ID"
 msgstr "IDをコピー"
 
-#: ui/broadsheet/broadsheet.slint:1388 ui/chat-manage.slint:228
+#: ui/broadsheet/broadsheet.slint:1396 ui/chat-manage.slint:228
 #: ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637
 #: ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849
 #: ui/pages/login.slint:909 ui/pages/settings.slint:1467
@@ -262,58 +267,58 @@ msgstr "IDをコピー"
 msgid "Back"
 msgstr "戻る"
 
-#: ui/broadsheet/broadsheet.slint:1466 ui/workbench/conversation.slint:657
+#: ui/broadsheet/broadsheet.slint:1474 ui/workbench/conversation.slint:657
 msgid "Instant View"
 msgstr "Instant View"
 
-#: ui/broadsheet/broadsheet.slint:1498 ui/terminal/terminal.slint:935
+#: ui/broadsheet/broadsheet.slint:1506 ui/terminal/terminal.slint:934
 msgid "Forwarded from {0}"
 msgstr "転送元：{0}"
 
-#: ui/broadsheet/broadsheet.slint:1858 ui/broadsheet/broadsheet.slint:2084
+#: ui/broadsheet/broadsheet.slint:1866 ui/broadsheet/broadsheet.slint:2092
 #: ui/workbench/conversation.slint:1072
 msgid "edited"
 msgstr "編集済み"
 
-#: ui/broadsheet/broadsheet.slint:2153
+#: ui/broadsheet/broadsheet.slint:2161
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr "スポンサー · Telegram による掲載 · Premium ユーザーは非表示にできます"
 
-#: ui/broadsheet/broadsheet.slint:2219 ui/format.slint:262
+#: ui/broadsheet/broadsheet.slint:2227 ui/format.slint:262
 #: ui/workbench/conversation.slint:1219
 msgid "You"
 msgstr "自分"
 
-#: ui/broadsheet/broadsheet.slint:2330 ui/terminal/terminal.slint:1888
+#: ui/broadsheet/broadsheet.slint:2338 ui/terminal/terminal.slint:1881
 msgid "Hide sender's name"
 msgstr "送信者名を非表示"
 
-#: ui/broadsheet/broadsheet.slint:2542 ui/terminal/terminal.slint:1747
+#: ui/broadsheet/broadsheet.slint:2550 ui/terminal/terminal.slint:1746
 msgid "Shift-click to select a range"
 msgstr "Shift を押しながらクリックで範囲を選択"
 
-#: ui/broadsheet/broadsheet.slint:2550 ui/chat.slint:819
+#: ui/broadsheet/broadsheet.slint:2558 ui/chat.slint:819
 #: ui/workbench/conversation.slint:1596
 msgid "Forward"
 msgstr "転送"
 
-#: ui/broadsheet/broadsheet.slint:2835 ui/terminal/terminal.slint:2264
+#: ui/broadsheet/broadsheet.slint:2843 ui/terminal/terminal.slint:2257
 msgid "Choose a chat on the left"
 msgstr "左のリストからチャットを選択してください"
 
-#: ui/broadsheet/broadsheet.slint:2860 ui/terminal/terminal.slint:1476
+#: ui/broadsheet/broadsheet.slint:2868 ui/terminal/terminal.slint:1475
 msgid "typing…"
 msgstr "入力中…"
 
-#: ui/broadsheet/broadsheet.slint:2969 ui/terminal/terminal.slint:1614
+#: ui/broadsheet/broadsheet.slint:2977 ui/terminal/terminal.slint:1613
 msgid "{0} is typing…"
 msgstr "{0} が入力中…"
 
-#: ui/broadsheet/broadsheet.slint:3040
+#: ui/broadsheet/broadsheet.slint:3048
 msgid "Sending as {0}"
 msgstr "{0} として送信"
 
-#: ui/broadsheet/broadsheet.slint:3065
+#: ui/broadsheet/broadsheet.slint:3073
 msgid "Write a message…"
 msgstr "メッセージを入力…"
 
@@ -350,7 +355,8 @@ msgctxt "the chat's facts"
 msgid "Info"
 msgstr "情報"
 
-#: ui/chat-info.slint:77 ui/drawer.slint:44 ui/pages/settings.slint:101
+#. The foot.
+#: ui/chat-info.slint:77 ui/pages/settings.slint:101 ui/toolbox.slint:130
 msgid "Settings"
 msgstr "設定"
 
@@ -483,7 +489,7 @@ msgstr "チャットを削除"
 msgid "Clear history"
 msgstr "履歴を消去"
 
-#: ui/chat-info.slint:111 ui/drawer.slint:49
+#: ui/chat-info.slint:111
 msgid "Not available in this version"
 msgstr "このバージョンでは未対応"
 
@@ -517,7 +523,7 @@ msgstr "管理者の権限"
 msgid "Change photo"
 msgstr "写真を変更"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1370
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1562
 #: ui/pages/settings.slint:1278
 msgid "Save"
 msgstr "保存"
@@ -755,7 +761,7 @@ msgstr "連絡先を検索"
 msgid "No contacts to add"
 msgstr "追加できる連絡先がありません"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1370
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1562
 msgid "Add"
 msgstr "追加"
 
@@ -784,7 +790,7 @@ msgid "Remove {0} from the channel?"
 msgstr "{0} をチャンネルから削除しますか？"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:346 ui/pages/ai-access.slint:458
-#: ui/pages/downloads.slint:1401
+#: ui/pages/downloads.slint:1593
 msgid "Remove"
 msgstr "取り除く"
 
@@ -1166,8 +1172,8 @@ msgstr "このチャットとメッセージがリストから削除されます
 msgid "Also delete for {0}"
 msgstr "{0} のチャットからも削除"
 
-#: ui/chat.slint:303 ui/pages/downloads.slint:1076
-#: ui/pages/downloads.slint:1652
+#: ui/chat.slint:303 ui/pages/downloads.slint:1176
+#: ui/pages/downloads.slint:1844
 msgid "Open"
 msgstr "開く"
 
@@ -1389,11 +1395,11 @@ msgstr "アップロードをキャンセル"
 msgid "Not sent"
 msgstr "未送信"
 
-#: ui/chat.slint:386 ui/pages/downloads.slint:651 ui/pages/downloads.slint:1677
+#: ui/chat.slint:386 ui/pages/downloads.slint:751 ui/pages/downloads.slint:1869
 msgid "Retry"
 msgstr "再試行"
 
-#: ui/chat.slint:388 ui/pages/downloads.slint:1082
+#: ui/chat.slint:388 ui/pages/downloads.slint:1182
 msgid "Download"
 msgstr "ダウンロード"
 
@@ -1401,7 +1407,7 @@ msgstr "ダウンロード"
 msgid "Cancel download"
 msgstr "ダウンロードをキャンセル"
 
-#: ui/chat.slint:390 ui/pages/downloads.slint:642
+#: ui/chat.slint:390 ui/pages/downloads.slint:742
 msgid "Show in Finder"
 msgstr "Finder に表示"
 
@@ -1410,7 +1416,7 @@ msgstr "Finder に表示"
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
-#: ui/chat.slint:692 ui/terminal/terminal.slint:1000
+#: ui/chat.slint:692 ui/terminal/terminal.slint:999
 msgid "Tap to view"
 msgstr "クリックして表示"
 
@@ -1418,7 +1424,7 @@ msgstr "クリックして表示"
 msgid "Reply"
 msgstr "返信"
 
-#: ui/chat.slint:812 ui/pages/downloads.slint:1603
+#: ui/chat.slint:812 ui/pages/downloads.slint:1795
 msgid "Edit"
 msgstr "編集"
 
@@ -1603,7 +1609,7 @@ msgstr "グローバル検索"
 msgid "Found by phone number"
 msgstr "電話番号による検索"
 
-#: ui/compose.slint:136
+#: ui/compose.slint:136 ui/toolbox.slint:96
 msgid "Messages"
 msgstr "メッセージ"
 
@@ -1939,104 +1945,6 @@ msgstr ""
 #: ui/compose.slint:294
 msgid "This number is not on Telegram yet."
 msgstr "この番号はまだ Telegram に登録されていません。"
-
-#: ui/drawer.slint:38
-msgid "Toolbox"
-msgstr "ツールボックス"
-
-#: ui/drawer.slint:39
-msgid "Pin to the bar"
-msgstr "バーにピン留め"
-
-#: ui/drawer.slint:40
-msgid "{n} pinned"
-msgid_plural "{n} pinned"
-msgstr[0] "ピン留め {n}"
-
-#: ui/drawer.slint:41 ui/pages/profile.slint:119
-msgid "Add account"
-msgstr "アカウントを追加"
-
-#: ui/drawer.slint:42
-msgid "Current account"
-msgstr "現在のアカウント"
-
-#: ui/drawer.slint:43
-msgctxt "the account in front"
-msgid "Current"
-msgstr "現在"
-
-#: ui/drawer.slint:45
-msgid "AI settings"
-msgstr "AI 設定"
-
-#: ui/drawer.slint:46
-msgid "My profile"
-msgstr "マイプロフィール"
-
-#: ui/drawer.slint:47
-msgctxt "Broadsheet's drawer"
-msgid "Section index"
-msgstr "紙面目次"
-
-#: ui/drawer.slint:48
-msgid "Esc closes"
-msgstr "Esc で閉じる"
-
-#: ui/drawer.slint:50
-msgctxt "ten accounts are signed in, no more can be added"
-msgid "Ten at most"
-msgstr "最大 10 件"
-
-#. Terminal's pane.
-#: ui/drawer.slint:52
-msgid "[x] = pinned to the bottom bar · click a name to open"
-msgstr "[x] = 下部バーにピン留め · 名前をクリックで開く"
-
-#: ui/drawer.slint:53
-msgid "Bottom bar"
-msgstr "下部バー"
-
-#: ui/drawer.slint:54
-msgid "click a row to switch · ⌃1–⌃0"
-msgstr "行をクリックで切替 · ⌃1–⌃0"
-
-#: ui/drawer.slint:57
-msgid "Files from your WebDAV servers"
-msgstr "WebDAV サーバーのファイル"
-
-#: ui/drawer.slint:58
-msgid "{n} on its way"
-msgid_plural "{n} on their way"
-msgstr[0] "{n} 件ダウンロード中"
-
-#: ui/drawer.slint:59
-msgid "Live"
-msgstr "ライブ"
-
-#: ui/drawer.slint:60
-msgid "Watch live streams"
-msgstr "ライブ配信を見る"
-
-#: ui/drawer.slint:62
-msgid "Your own media server"
-msgstr "自分のメディアサーバー"
-
-#: ui/drawer.slint:63
-msgid "Keyword hiding"
-msgstr "キーワード非表示"
-
-#: ui/drawer.slint:64
-msgid "Hide messages by keyword, on this Mac only"
-msgstr "キーワードでメッセージを隠す（この Mac だけ）"
-
-#: ui/drawer.slint:65
-msgid "Scheduled messages"
-msgstr "予約メッセージ"
-
-#: ui/drawer.slint:66
-msgid "Messages set to go out later"
-msgstr "あとで送るよう予約したメッセージ"
 
 #: ui/extras.slint:15
 msgid ""
@@ -3063,47 +2971,79 @@ msgstr "サーバーに名前を付けてください。"
 msgid "The address needs to start with http:// or https://."
 msgstr "アドレスは http:// または https:// で始まる必要があります。"
 
-#: ui/pages/downloads.slint:300 ui/pages/downloads.slint:1184
+#: ui/pages/downloads.slint:77
+msgid "The port needs to be a number from 1 to 65535."
+msgstr "ポートは 1 から 65535 までの数字にしてください。"
+
+#: ui/pages/downloads.slint:106
+msgid "Host name or IP. A folder may follow after a /."
+msgstr "ホスト名または IP。/ の後にフォルダーを続けられます。"
+
+#: ui/pages/downloads.slint:107
+msgid "Host name or IP. Implicit TLS on the default port."
+msgstr "ホスト名または IP。既定のポートで暗黙の TLS。"
+
+#: ui/pages/downloads.slint:108
+msgid "Host name or IP of the SSH server."
+msgstr "SSH サーバーのホスト名または IP。"
+
+#: ui/pages/downloads.slint:109
+msgid "http:// or https://. A folder may be part of the address."
+msgstr ""
+"http:// または https:// で始めます。アドレスにフォルダを含めることもできま"
+"す。"
+
+#: ui/pages/downloads.slint:113
+msgid "Default port {}."
+msgstr "既定のポートは {} です。"
+
+#
+#: ui/pages/downloads.slint:117
+msgid "This version can’t connect to {} servers yet."
+msgstr "このバージョンはまだ {} サーバーに接続できません。"
+
+#: ui/pages/downloads.slint:400 ui/pages/downloads.slint:1284
 msgid "Add server"
 msgstr "サーバーを追加"
 
-#: ui/pages/downloads.slint:342
+#: ui/pages/downloads.slint:442
 msgid "Filter this folder"
 msgstr "このフォルダ内を絞り込む"
 
-#: ui/pages/downloads.slint:804
-msgid "WebDAV servers"
-msgstr "WebDAV サーバー"
+#: ui/pages/downloads.slint:904
+msgid "Servers"
+msgstr "サーバー"
 
-#: ui/pages/downloads.slint:1010
+#: ui/pages/downloads.slint:1110
 msgid "Modified"
 msgstr "変更日"
 
-#: ui/pages/downloads.slint:1015
+#: ui/pages/downloads.slint:1115
 msgid "Size"
 msgstr "サイズ"
 
-#: ui/pages/downloads.slint:1039
+#: ui/pages/downloads.slint:1139
 msgid "Nothing in this folder matches “{0}”"
 msgstr "このフォルダには「{0}」に一致するものがありません"
 
-#: ui/pages/downloads.slint:1061
+#: ui/pages/downloads.slint:1161
 msgid "{0} selected · {1}"
 msgstr "{0}件を選択中 · {1}"
 
-#: ui/pages/downloads.slint:1069
+#: ui/pages/downloads.slint:1169
 msgid "Clear"
 msgstr "選択解除"
 
-#: ui/pages/downloads.slint:1118
+#: ui/pages/downloads.slint:1218
 msgid "This folder is empty"
 msgstr "このフォルダは空です"
 
-#: ui/pages/downloads.slint:1167
-msgid "No WebDAV servers yet"
-msgstr "WebDAV サーバーはまだありません"
+#
+#: ui/pages/downloads.slint:1267
+msgid "No servers yet"
+msgstr "サーバーはまだありません"
 
-#: ui/pages/downloads.slint:1170
+#: ui/pages/downloads.slint:1270
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -3113,7 +3053,7 @@ msgstr ""
 "いるフォルダの WebDAV アドレスを追加してください。追加すると、ここで中身を閲"
 "覧して必要なファイルを選べます。"
 
-#: ui/pages/downloads.slint:1176
+#: ui/pages/downloads.slint:1276
 msgid ""
 "Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
 "reads: nothing is uploaded, synced, renamed or deleted on the server."
@@ -3122,37 +3062,55 @@ msgstr ""
 "す。FinchGram は読み取るだけです：サーバー上でアップロード、同期、名前の変"
 "更、削除は一切行いません。"
 
-#: ui/pages/downloads.slint:1249
+#: ui/pages/downloads.slint:1349
 msgid "Edit server"
 msgstr "サーバーを編集"
 
-#: ui/pages/downloads.slint:1249
-msgid "Add WebDAV server"
-msgstr "WebDAV サーバーを追加"
-
-#: ui/pages/downloads.slint:1252
+#
+#: ui/pages/downloads.slint:1352
 msgid ""
-"The address of the WebDAV server, and the account it gave you. The password "
-"is kept in FinchGram's encrypted database on this Mac."
+"The address of the server, and the account it gave you. The password is kept "
+"in FinchGram's encrypted database on this Mac."
 msgstr ""
-"WebDAV サーバーのアドレスと、サーバーから与えられたアカウント。パスワードはこ"
-"の Mac 上の FinchGram の暗号化データベースに保存されます。"
+"サーバーのアドレスと、サーバーから受け取ったアカウント。パスワードはこの Mac "
+"上の FinchGram の暗号化データベースに保存されます。"
 
-#: ui/pages/downloads.slint:1267
+#: ui/pages/downloads.slint:1363
+msgid "Protocol"
+msgstr "プロトコル"
+
+#: ui/pages/downloads.slint:1394
+msgid "You can fill the form in; it can’t be saved."
+msgstr "フォームは入力できますが、保存はできません。"
+
+#: ui/pages/downloads.slint:1417
 msgid "Address"
 msgstr "アドレス"
 
-#: ui/pages/downloads.slint:1269
-msgid "http:// or https://. A folder may be part of the address."
-msgstr ""
-"http:// または https:// で始めます。アドレスにフォルダを含めることもできま"
-"す。"
+#: ui/pages/downloads.slint:1426
+msgid "Port"
+msgstr "ポート"
 
-#: ui/pages/downloads.slint:1283 ui/pages/login.slint:553
+#
+#: ui/pages/downloads.slint:1452
+msgid "Sign in with"
+msgstr "ログイン方法"
+
+#: ui/pages/downloads.slint:1460 ui/pages/downloads.slint:1475
+#: ui/pages/settings.slint:1236
 msgid "Password"
 msgstr "パスワード"
 
-#: ui/pages/downloads.slint:1305
+#: ui/pages/downloads.slint:1464
+msgid "Key"
+msgstr "鍵"
+
+#
+#: ui/pages/downloads.slint:1469
+msgid "Key sign-in isn’t in this version."
+msgstr "鍵でのログインはこのバージョンでは未対応です。"
+
+#: ui/pages/downloads.slint:1497
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
@@ -3160,47 +3118,47 @@ msgstr ""
 "http ではパスワードもファイルも平文で流れます。このサーバーは信頼できるネット"
 "ワークでだけ使ってください。"
 
-#: ui/pages/downloads.slint:1341
+#: ui/pages/downloads.slint:1533
 msgid "Testing…"
 msgstr "テスト中…"
 
-#: ui/pages/downloads.slint:1380
+#: ui/pages/downloads.slint:1572
 msgid "Test connection"
 msgstr "接続をテスト"
 
-#: ui/pages/downloads.slint:1445
+#: ui/pages/downloads.slint:1637
 msgid "{0} active"
 msgstr "{0}件がダウンロード中"
 
-#: ui/pages/downloads.slint:1458
+#: ui/pages/downloads.slint:1650
 msgid "Clear finished"
 msgstr "完了済みを消去"
 
-#: ui/pages/downloads.slint:1481
+#: ui/pages/downloads.slint:1673
 msgid "Hide"
 msgstr "隠す"
 
-#: ui/pages/downloads.slint:1549
+#: ui/pages/downloads.slint:1741
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "1ファイルあたり {0} 接続 · ダウンロード先：{1}"
 
-#: ui/pages/downloads.slint:1555
+#: ui/pages/downloads.slint:1747
 msgid "Change"
 msgstr "変更"
 
-#: ui/pages/downloads.slint:1620
+#: ui/pages/downloads.slint:1812
 msgid "Copy address"
 msgstr "アドレスをコピー"
 
-#: ui/pages/downloads.slint:1636
+#: ui/pages/downloads.slint:1828
 msgid "Download folder"
 msgstr "フォルダをダウンロード"
 
-#: ui/pages/downloads.slint:1660
+#: ui/pages/downloads.slint:1852
 msgid "Copy link"
 msgstr "リンクをコピー"
 
-#: ui/pages/downloads.slint:1695
+#: ui/pages/downloads.slint:1887
 msgid "Remove from list"
 msgstr "リストから取り除く"
 
@@ -3547,6 +3505,11 @@ msgstr ""
 msgid "Current"
 msgstr "使用中"
 
+#. The accounts.
+#: ui/pages/profile.slint:119 ui/toolbox.slint:126
+msgid "Add account"
+msgstr "アカウントを追加"
+
 #: ui/pages/profile.slint:128 ui/pages/profile.slint:192
 msgid "Log out"
 msgstr "ログアウト"
@@ -3600,6 +3563,7 @@ msgid "Privacy & security"
 msgstr "プライバシーとセキュリティ"
 
 #: ui/pages/settings.slint:129 ui/pages/settings.slint:1568
+#: ui/toolbox.slint:109
 msgid "AI access"
 msgstr "AI アクセス"
 
@@ -4041,87 +4005,249 @@ msgctxt "list separator"
 msgid ", "
 msgstr "、"
 
-#: ui/terminal/drawer.slint:175 ui/terminal/terminal.slint:2195
-msgctxt "terminal"
-msgid "cmd"
-msgstr "コマンド"
-
-#: ui/terminal/terminal.slint:152
+#: ui/terminal/terminal.slint:151
 msgid "light"
 msgstr "ライト"
 
-#: ui/terminal/terminal.slint:152
+#: ui/terminal/terminal.slint:151
 msgid "dark"
 msgstr "ダーク"
 
-#: ui/terminal/terminal.slint:347
+#: ui/terminal/terminal.slint:346
 msgid "more"
 msgstr "その他"
 
-#: ui/terminal/terminal.slint:592
+#: ui/terminal/terminal.slint:591
 msgctxt "terminal"
 msgid "new"
 msgstr "新規"
 
-#: ui/terminal/terminal.slint:982 ui/terminal/terminal.slint:987
+#: ui/terminal/terminal.slint:981 ui/terminal/terminal.slint:986
 msgid "(edited)"
 msgstr "（編集済み）"
 
-#: ui/terminal/terminal.slint:1265
+#: ui/terminal/terminal.slint:1264
 msgid "sponsored"
 msgstr "スポンサー"
 
-#: ui/terminal/terminal.slint:1318 ui/terminal/terminal.slint:1483
+#: ui/terminal/terminal.slint:1317 ui/terminal/terminal.slint:1482
 msgid "search"
 msgstr "検索"
 
-#: ui/terminal/terminal.slint:1496
+#: ui/terminal/terminal.slint:1495
 msgid "chat info"
 msgstr "チャット情報"
 
-#: ui/terminal/terminal.slint:1779
+#: ui/terminal/terminal.slint:1778
 msgid "Mute or unmute this chat"
 msgstr "このチャットをミュート/ミュート解除"
 
-#: ui/terminal/terminal.slint:1780
+#: ui/terminal/terminal.slint:1779
 msgid "Pin or unpin this chat"
 msgstr "このチャットをピン留め/ピン留め解除"
 
-#: ui/terminal/terminal.slint:1781
+#: ui/terminal/terminal.slint:1780
 msgid "Mark every chat in this folder as read"
 msgstr "このフォルダのチャットをすべて既読にする"
 
-#: ui/terminal/terminal.slint:1782
+#: ui/terminal/terminal.slint:1781
 msgid "Copy this chat's ID"
 msgstr "このチャットのIDをコピー"
 
-#: ui/terminal/terminal.slint:1783
+#: ui/terminal/terminal.slint:1782
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "チャット、連絡先、@ユーザー名、メッセージを検索"
 
-#: ui/terminal/terminal.slint:1934
+#: ui/terminal/terminal.slint:1927
 msgid "unmute"
 msgstr "ミュート解除"
 
-#: ui/terminal/terminal.slint:1934
+#: ui/terminal/terminal.slint:1927
 msgid "mute"
 msgstr "ミュート"
 
-#: ui/terminal/terminal.slint:2039
+#: ui/terminal/terminal.slint:2032
 msgid "Write a message, or / for commands"
 msgstr "メッセージを入力、または / でコマンド"
 
-#: ui/terminal/terminal.slint:2070
+#: ui/terminal/terminal.slint:2063
 msgid "save"
 msgstr "保存"
 
-#: ui/terminal/terminal.slint:2070
+#: ui/terminal/terminal.slint:2063
 msgid "send"
 msgstr "送信"
 
-#: ui/terminal/terminal.slint:2170
+#: ui/terminal/terminal.slint:2163
 msgid "connected"
 msgstr "接続済み"
+
+#: ui/terminal/terminal.slint:2188
+msgctxt "terminal"
+msgid "cmd"
+msgstr "コマンド"
+
+#
+#: ui/toolbox.slint:91
+msgid "Search the toolbox"
+msgstr "ツールボックスを検索"
+
+#: ui/toolbox.slint:94
+msgid "Transfers"
+msgstr "転送"
+
+#: ui/toolbox.slint:95
+msgid "Media"
+msgstr "メディア"
+
+#
+#: ui/toolbox.slint:97
+msgid "Connections"
+msgstr "接続"
+
+#: ui/toolbox.slint:100
+msgid "Pick files from your own servers and download them"
+msgstr "自分のサーバーからファイルを選んでダウンロード"
+
+#
+#: ui/toolbox.slint:101
+msgid "Live streams"
+msgstr "ライブ配信"
+
+#
+#: ui/toolbox.slint:102
+msgid "Live streams going on in your groups and channels"
+msgstr "グループやチャンネルで配信中のライブ"
+
+#: ui/toolbox.slint:104
+msgid "Your own media library, played in the built-in player"
+msgstr "自分のライブラリを内蔵プレーヤーで"
+
+#: ui/toolbox.slint:105
+msgid "Keyword hiding"
+msgstr "キーワード非表示"
+
+#
+#: ui/toolbox.slint:106
+msgid "Tuck away messages by keyword; unhide any time"
+msgstr "キーワードでメッセージをしまう・いつでも戻せる"
+
+#: ui/toolbox.slint:107
+msgid "Scheduled messages"
+msgstr "予約メッセージ"
+
+#: ui/toolbox.slint:108
+msgid "Sent by the server on time, even with your computer off"
+msgstr "パソコンが切れていてもサーバーが時間どおりに送信"
+
+#: ui/toolbox.slint:110
+msgid "Let other apps read the chats you allow, through FinchGram"
+msgstr "許可したチャットを FinchGram 経由で他のアプリが読む"
+
+#. The protocols under Downloads.
+#: ui/toolbox.slint:112
+msgid "Protocol · chosen when you add a server"
+msgstr "プロトコル · サーバー追加時に選択"
+
+#: ui/toolbox.slint:113
+msgid "Common on NAS boxes, cloud drives and seedboxes"
+msgstr "NAS・クラウド・シードボックスで一般的"
+
+#: ui/toolbox.slint:114
+msgid "The old one, unencrypted"
+msgstr "昔からの方式、暗号化なし"
+
+#: ui/toolbox.slint:115
+msgid "FTP with TLS encryption"
+msgstr "TLS で暗号化した FTP"
+
+#: ui/toolbox.slint:116
+msgid ""
+"Over SSH; on seedboxes it usually doesn’t count against your traffic quota"
+msgstr "SSH 経由。シードボックスでは通常、転送量に数えられない"
+
+#
+#. What goes on.
+#: ui/toolbox.slint:118
+msgid "{n} downloading"
+msgid_plural "{n} downloading"
+msgstr[0] "{n} 件ダウンロード中"
+
+#
+#
+#: ui/toolbox.slint:119
+msgid "{n} server"
+msgid_plural "{n} servers"
+msgstr[0] "サーバー {n} 台"
+
+#
+#: ui/toolbox.slint:120
+msgid "Not in this version"
+msgstr "このバージョンでは未対応"
+
+#
+#: ui/toolbox.slint:121
+msgid "Pinned to the {}"
+msgstr "{}に固定済み"
+
+#: ui/toolbox.slint:122
+msgid "activity bar"
+msgstr "アクティビティバー"
+
+#: ui/toolbox.slint:123
+msgid "rail"
+msgstr "サイドバー"
+
+#
+#: ui/toolbox.slint:124
+msgid "status bar"
+msgstr "下部バー"
+
+#
+#: ui/toolbox.slint:127
+msgid "Limit reached"
+msgstr "上限に達しました"
+
+#: ui/toolbox.slint:128
+msgctxt "the account in front"
+msgid "Current"
+msgstr "現在"
+
+#: ui/toolbox.slint:131
+msgid "AI settings"
+msgstr "AI 設定"
+
+#: ui/toolbox.slint:132
+msgid "My profile"
+msgstr "マイプロフィール"
+
+#
+#: ui/toolbox.slint:133
+msgid "{} to open · Esc to close"
+msgstr "{} で開く · Esc で閉じる"
+
+#
+#. The search.
+#: ui/toolbox.slint:135
+msgid "Nothing called “{}”"
+msgstr "「{}」を含む項目はありません"
+
+#
+#
+#: ui/toolbox.slint:136
+msgid "{n} item"
+msgid_plural "{n} items"
+msgstr[0] "{n} 件"
+
+#
+#. Terminal.
+#: ui/toolbox.slint:138
+msgid "[x] pins to the status bar · click a name to open"
+msgstr "[x] で下部バーに固定 · 名前をクリックで開く"
+
+#: ui/toolbox.slint:139
+msgid "/tools <category> jumps there · type it again to close"
+msgstr "/tools <分類> でジャンプ · もう一度入力で閉じる"
 
 #: ui/viewer.slint:17
 msgctxt "zoom"
@@ -4217,6 +4343,6 @@ msgstr "このアカウントにはチャンネルがありません。"
 msgid "Channels open in reading mode: long posts, set for reading."
 msgstr "チャンネルはリーダーモードで開きます。長い投稿を読むための表示です。"
 
-#: ui/workbench/workbench.slint:353
+#: ui/workbench/workbench.slint:373
 msgid "Manage accounts"
 msgstr "アカウントを管理"

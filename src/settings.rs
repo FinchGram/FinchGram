@@ -52,7 +52,7 @@ pub struct Settings {
     /// The downloads page (src/downloads/, docs/downloads.md): where files go, how many connections
     /// a file comes over, whether the queue column shows.
     pub downloads: Downloads,
-    /// The drawer's toolbox (src/drawer.rs): which tools are pinned to the activity bar, in the
+    /// The toolbox (src/toolbox.rs): which tools are pinned to the activity bar, in the
     /// toolbox's order; one list for the three themes.
     pub toolbox: Toolbox,
 }

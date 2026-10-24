@@ -2,8 +2,8 @@
 // account and a search box, an activity bar, the side bar with the chat tree, the chats as tabs,
 // and a status bar.
 import { AppState, Page, Connection } from "../state.slint";
-import { Drawer, DrawerWords } from "../drawer.slint";
-import { WorkbenchDrawer } from "drawer.slint";
+import { Toolbox, ToolboxWords } from "../toolbox.slint";
+import { WorkbenchToolbox } from "toolbox.slint";
 import { Downloads } from "../downloads.slint";
 import { ChatInfo } from "../chat-info.slint";
 import { Chats, Conversation, Account, Accounts } from "../telegram.slint";
@@ -149,6 +149,7 @@ component ActivityButton inherits Rectangle {
     in property <bool> active;
     in property <bool> enabled: true;
     in property <bool> dot;
+    in property <int> count;        // a number at the corner, for downloads on their way
     callback activated();
     width: 40px;
     height: 40px;
@@ -160,6 +161,25 @@ component ActivityButton inherits Rectangle {
         name: root.icon;
         size: 21px;
         color: root.active ? P.accent : P.faint;
+    }
+
+    if root.count > 0: Rectangle {
+        x: parent.width - self.width - 2px;
+        y: 3px;
+        width: max(15px, count-label.preferred-width + 8px);
+        height: 15px;
+        border-radius: 8px;
+        background: P.accent;
+        border-width: 2px;
+        border-color: P.chrome;
+        count-label := Text {
+            text: root.count > 99 ? "99+" : "" + root.count;
+            color: P.on-accent;
+            font-size: 10px;
+            font-weight: 600;
+            horizontal-alignment: center;
+            vertical-alignment: center;
+        }
     }
 
     if root.dot: Rectangle {
@@ -317,7 +337,7 @@ component AccountMenu inherits Rectangle {
                     vertical-alignment: center;
                 }
                 if Accounts.full: Text {
-                    text: DrawerWords.full();
+                    text: ToolboxWords.limit-reached();
                     color: P.faint;
                     font-size: 11px;
                     vertical-alignment: center;
@@ -384,7 +404,7 @@ component ActivityBar inherits Rectangle {
         spacing: 6px;
         alignment: start;
 
-        // The logo opens the drawer (drawer.slint): ringed while it is open, with a dot while an
+        // The logo opens the toolbox (toolbox.slint): ringed while it is open, with a dot while an
         // unpinned tool has something going on.
         HorizontalLayout {
             alignment: center;
@@ -399,13 +419,13 @@ component ActivityBar inherits Rectangle {
                     height: 36px;
                     border-radius: 10px;
                     border-width: 2px;
-                    border-color: Drawer.open ? P.accent : transparent;
+                    border-color: Toolbox.open ? P.accent : transparent;
                 }
                 Logo {
                     size: 32px;
                     radius: 8px;
                 }
-                if Drawer.logo-dot: Rectangle {
+                if Toolbox.logo-dot: Rectangle {
                     x: parent.width - 6px;
                     y: -3px;
                     width: 9px;
@@ -418,7 +438,7 @@ component ActivityBar inherits Rectangle {
                 TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
-                        Drawer.toggle();
+                        Toolbox.toggle();
                     }
                 }
             }
@@ -429,7 +449,7 @@ component ActivityBar inherits Rectangle {
                 icon: "chats";
                 active: root.view == WorkbenchView.chats;
                 activated => {
-                    Drawer.close();
+                    Toolbox.close();
                     root.view = WorkbenchView.chats;
                 }
             }
@@ -441,7 +461,7 @@ component ActivityBar inherits Rectangle {
                 active: root.view == WorkbenchView.channels;
                 dot: root.view != WorkbenchView.channels && Chats.unread-channels > 0;
                 activated => {
-                    Drawer.close();
+                    Toolbox.close();
                     root.view = WorkbenchView.channels;
                 }
             }
@@ -452,7 +472,7 @@ component ActivityBar inherits Rectangle {
                 icon: "robot";
                 active: root.view == WorkbenchView.bots;
                 activated => {
-                    Drawer.close();
+                    Toolbox.close();
                     root.view = WorkbenchView.bots;
                 }
             }
@@ -463,15 +483,15 @@ component ActivityBar inherits Rectangle {
         padding-bottom: 10px;
         spacing: 6px;
         alignment: end;
-        // The tools pinned in the drawer's toolbox (drawer.slint), in its order; downloads carry a
-        // dot while some are on their way.
-        for tool in Drawer.pinned: HorizontalLayout {
+        // The tools pinned in the toolbox (toolbox.slint), in its order; downloads carry the number
+        // on their way.
+        for tool in Toolbox.pinned: HorizontalLayout {
             alignment: center;
             ActivityButton {
                 icon: tool.icon;
-                dot: tool.id == "downloads" && Downloads.active-count > 0;
+                count: tool.id == "downloads" ? Downloads.active-count : 0;
                 activated => {
-                    Drawer.open-tool(tool.id);
+                    Toolbox.open-tool(tool.id);
                 }
             }
         }
@@ -493,7 +513,7 @@ component ActivityBar inherits Rectangle {
                 TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
-                        Drawer.close();
+                        Toolbox.close();
                         menu.show();
                     }
                 }
@@ -606,8 +626,8 @@ export component WorkbenchWindow inherits Rectangle {
         StatusBar { }
     }
 
-    // The drawer, over the sidebar and the messages, under the title bar and above the status bar.
-    WorkbenchDrawer {
+    // The toolbox, over the sidebar and the messages, under the title bar and above the status bar.
+    WorkbenchToolbox {
         x: 52px;
         y: 40px;
         width: root.width - 52px;

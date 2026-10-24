@@ -71,10 +71,83 @@ export global DownloadWords {
         return @tr("Reached: {0} folders and {1} files at the root. No ranges, so each file comes over one connection.", Downloads.test-folders, Downloads.test-files);
     }
 
-    public pure function form-error(error: FormError) -> string {
+    public pure function form-error(error: FormError, protocol: string) -> string {
         if error == FormError.name { return @tr("Give the server a name."); }
         if error == FormError.address { return @tr("The address needs to start with http:// or https://."); }
+        if error == FormError.port { return @tr("The port needs to be a number from 1 to 65535."); }
+        if error == FormError.protocol { return cannot-connect(protocol); }
         return "";
+    }
+
+    // The protocols a server can speak (the seventh round): their names, their default ports, the
+    // address field's words for each. Only WebDAV works in this version.
+    public pure function protocol-name(id: string) -> string {
+        if id == "ftp" { return "FTP"; }
+        if id == "ftps" { return "FTPS"; }
+        if id == "sftp" { return "SFTP"; }
+        return "WebDAV";
+    }
+
+    public pure function protocol-port(id: string, address: string) -> string {
+        if id == "ftp" { return "21"; }
+        if id == "ftps" { return "990"; }
+        if id == "sftp" { return "22"; }
+        return address.to-lowercase().starts-with("http://") ? "80" : "443";
+    }
+
+    public pure function address-placeholder(id: string) -> string {
+        if id == "ftp" { return "ftp.example.net"; }
+        if id == "ftps" { return "ftps.example.net"; }
+        if id == "sftp" { return "sb-ams.example.net"; }
+        return "https://nas.home:5006/";
+    }
+
+    public pure function address-hint(id: string, address: string) -> string {
+        if id == "ftp" { return @tr("Host name or IP. A folder may follow after a /.") + " " + default-port(id, address); }
+        if id == "ftps" { return @tr("Host name or IP. Implicit TLS on the default port.") + " " + default-port(id, address); }
+        if id == "sftp" { return @tr("Host name or IP of the SSH server.") + " " + default-port(id, address); }
+        return @tr("http:// or https://. A folder may be part of the address.") + " " + default-port(id, address);
+    }
+
+    public pure function default-port(id: string, address: string) -> string {
+        return @tr("Default port {}.", protocol-port(id, address));
+    }
+
+    public pure function cannot-connect(protocol: string) -> string {
+        return @tr("This version can’t connect to {} servers yet.", protocol);
+    }
+}
+
+// A choice among a few, as a chip: a protocol, a way to sign in. One FinchGram does not have yet
+// is faded, and can still be looked at.
+component Chip inherits Rectangle {
+    in property <string> label;
+    in property <bool> on;
+    in property <bool> grey;
+    callback clicked();
+    height: 32px;
+    width: text.preferred-width + 24px;
+    border-radius: Look.button-radius;
+    background: on ? Look.sel : transparent;
+    border-width: on ? 0px : 1px;
+    border-color: Look.line-strong;
+    opacity: grey && !on ? 0.42 : 1;
+
+    text := Text {
+        width: parent.width;
+        height: parent.height;
+        text: Look.terminal ? "[" + root.label + "]" : root.label;
+        color: root.on && !Look.broadsheet ? Look.accent-ink : Look.text;
+        font-size: 14px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
     }
 }
 
@@ -239,12 +312,39 @@ component ServerItem inherits Rectangle {
             horizontal-stretch: 1;
             spacing: 2px;
             alignment: start;
-            Text {
-                text: root.server.name;
-                color: root.ink;
-                font-size: 14px;
-                font-weight: root.active ? 600 : 400;
-                overflow: elide;
+            HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+                Text {
+                    text: root.server.name;
+                    color: root.ink;
+                    font-size: 14px;
+                    font-weight: root.active ? 600 : 400;
+                    overflow: elide;
+                }
+                // What it speaks, as a small badge.
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        height: 16px;
+                        width: badge.preferred-width + 10px;
+                        border-radius: Look.button-radius;
+                        border-width: 1px;
+                        border-color: Look.line-strong;
+                        badge := Text {
+                            width: parent.width;
+                            height: parent.height;
+                            text: root.server.protocol;
+                            color: Look.muted;
+                            font-family: Look.mono;
+                            font-size: 10px;
+                            font-weight: 500;
+                            letter-spacing: 0.3px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
             }
             HorizontalLayout {
                 spacing: 5px;
@@ -801,7 +901,7 @@ export component DownloadsPage inherits Rectangle {
                         padding-left: 12px;
                         padding-bottom: 12px;
                         Heading {
-                            label: @tr("WebDAV servers");
+                            label: @tr("Servers");
                             size: Look.nav-heading-size;
                         }
                     }
@@ -1164,7 +1264,7 @@ export component DownloadsPage inherits Rectangle {
                         spacing: 18px;
                         alignment: start;
                         Heading {
-                            label: @tr("No WebDAV servers yet");
+                            label: @tr("No servers yet");
                         }
                         Paragraph {
                             text: @tr("Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a folder you share with vget serve. Then browse it here and pick the files you want.");
@@ -1246,13 +1346,56 @@ export component DownloadsPage inherits Rectangle {
                         VerticalLayout {
                             spacing: 6px;
                             Heading {
-                                label: Downloads.form-editing ? @tr("Edit server") : @tr("Add WebDAV server");
+                                label: Downloads.form-editing ? @tr("Edit server") : @tr("Add server");
                             }
                             Paragraph {
-                                text: @tr("The address of the WebDAV server, and the account it gave you. The password is kept in FinchGram's encrypted database on this Mac.");
+                                text: @tr("The address of the server, and the account it gave you. The password is kept in FinchGram's encrypted database on this Mac.");
                                 color: Look.muted;
                                 font-size: 15px;
                                 line-height-factor: Look.leading(1.55);
+                            }
+                        }
+                        // The protocol: WebDAV, or one this version does not speak yet, faded; the
+                        // form can be filled in under it, not saved.
+                        VerticalLayout {
+                            spacing: 6px;
+                            Text {
+                                text: @tr("Protocol");
+                                color: Look.muted;
+                                font-size: 13px;
+                            }
+                            HorizontalLayout {
+                                spacing: 6px;
+                                alignment: start;
+                                for id in ["webdav", "ftp", "ftps", "sftp"]: Chip {
+                                    label: DownloadWords.protocol-name(id);
+                                    on: Downloads.form-protocol == id;
+                                    grey: id != "webdav";
+                                    clicked => {
+                                        Downloads.form-protocol = id;
+                                        Downloads.form-error = FormError.none;
+                                        Downloads.test-state = TestState.none;
+                                    }
+                                }
+                            }
+                            if Downloads.form-protocol != "webdav": HorizontalLayout {
+                                spacing: 6px;
+                                alignment: start;
+                                VerticalLayout {
+                                    alignment: start;
+                                    padding-top: 1px;
+                                    Icon {
+                                        name: "info";
+                                        size: 14px;
+                                        color: Look.faint;
+                                    }
+                                }
+                                Paragraph {
+                                    text: DownloadWords.cannot-connect(DownloadWords.protocol-name(Downloads.form-protocol)) + " " + @tr("You can fill the form in; it can’t be saved.");
+                                    color: Look.faint;
+                                    font-size: 12px;
+                                    line-height-factor: Look.leading(1.45);
+                                }
                             }
                         }
                         FormField {
@@ -1263,13 +1406,36 @@ export component DownloadsPage inherits Rectangle {
                                 Downloads.submit-form();
                             }
                         }
-                        FormField {
-                            label: @tr("Address");
-                            placeholder: "https://nas.home:5006/";
-                            hint: @tr("http:// or https://. A folder may be part of the address.");
-                            text <=> Downloads.form-address;
-                            accepted => {
-                                Downloads.submit-form();
+                        // The address, and the port beside it: the protocol's default unless the
+                        // user gives one.
+                        VerticalLayout {
+                            spacing: 6px;
+                            HorizontalLayout {
+                                spacing: 10px;
+                                FormField {
+                                    horizontal-stretch: 1;
+                                    label: @tr("Address");
+                                    placeholder: DownloadWords.address-placeholder(Downloads.form-protocol);
+                                    text <=> Downloads.form-address;
+                                    accepted => {
+                                        Downloads.submit-form();
+                                    }
+                                }
+                                FormField {
+                                    width: 112px;
+                                    label: @tr("Port");
+                                    placeholder: DownloadWords.protocol-port(Downloads.form-protocol, Downloads.form-address);
+                                    input-type: InputType.number;
+                                    text <=> Downloads.form-port;
+                                    accepted => {
+                                        Downloads.submit-form();
+                                    }
+                                }
+                            }
+                            Paragraph {
+                                text: DownloadWords.address-hint(Downloads.form-protocol, Downloads.form-address);
+                                color: Look.faint;
+                                font-size: 12px;
                             }
                         }
                         FormField {
@@ -1277,6 +1443,32 @@ export component DownloadsPage inherits Rectangle {
                             text <=> Downloads.form-username;
                             accepted => {
                                 Downloads.submit-form();
+                            }
+                        }
+                        // SFTP signs in with a password or a key; the key waits for another version.
+                        if Downloads.form-protocol == "sftp": VerticalLayout {
+                            spacing: 6px;
+                            Text {
+                                text: @tr("Sign in with");
+                                color: Look.muted;
+                                font-size: 13px;
+                            }
+                            HorizontalLayout {
+                                spacing: 6px;
+                                alignment: start;
+                                Chip {
+                                    label: @tr("Password");
+                                    on: true;
+                                }
+                                Chip {
+                                    label: @tr("Key");
+                                    grey: true;
+                                }
+                            }
+                            Paragraph {
+                                text: @tr("Key sign-in isn’t in this version.");
+                                color: Look.faint;
+                                font-size: 12px;
                             }
                         }
                         FormField {
@@ -1321,7 +1513,7 @@ export component DownloadsPage inherits Rectangle {
                                 }
                             }
                             Paragraph {
-                                text: DownloadWords.form-error(Downloads.form-error);
+                                text: DownloadWords.form-error(Downloads.form-error, DownloadWords.protocol-name(Downloads.form-protocol));
                                 color: Look.danger;
                                 font-size: 14px;
                                 line-height-factor: Look.leading(1.5);

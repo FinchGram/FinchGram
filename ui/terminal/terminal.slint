@@ -3,8 +3,8 @@
 // bookmark; a pin before a pinned one); the chat reads as a log; one command line writes messages
 // and runs commands ("/mute", "/pin", …).
 import { ListView } from "std-widgets.slint";
-import { Drawer, DrawerWords } from "../drawer.slint";
-import { ToolsPane } from "drawer.slint";
+import { Toolbox, ToolboxWords } from "../toolbox.slint";
+import { TerminalToolbox } from "toolbox.slint";
 import { InfoPanel } from "chat-info.slint";
 import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
@@ -108,8 +108,8 @@ component TitleBar inherits Rectangle {
         padding-right: 14px;
         spacing: 8px;
         WindowButtonsSpace { }
-        // The mark opens the tools pane (/tools), with a dot while an unpinned tool has
-        // something going on.
+        // The mark opens the toolbox (/tools), with a dot while an unpinned tool has something
+        // going on.
         VerticalLayout {
             alignment: center;
             Rectangle {
@@ -120,7 +120,7 @@ component TitleBar inherits Rectangle {
                     height: 14px;
                     color: P.accent;
                 }
-                if Drawer.logo-dot: Rectangle {
+                if Toolbox.logo-dot: Rectangle {
                     x: parent.width - 4px;
                     y: -3px;
                     width: 7px;
@@ -131,8 +131,7 @@ component TitleBar inherits Rectangle {
                 TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
-                        Drawer.accounts-shown = false;
-                        Drawer.toggle();
+                        Toolbox.toggle();
                     }
                 }
             }
@@ -756,7 +755,7 @@ component Side inherits Rectangle {
                     overflow: elide;
                 }
                 // The profile, where the other themes have it: the icon in brackets. (The settings
-                // are in the drawer, /settings and the menu bar: the maintainer took the gear off
+                // are in the toolbox, /settings and the menu bar: the maintainer took the gear off
                 // the bars on 2026-10-23.)
                 IconAction {
                     icon: "user";
@@ -1785,10 +1784,11 @@ component CommandLine inherits Rectangle {
         { command: "/channel", description: ComposeWords.new-channel() },
         { command: "/dm", description: ComposeWords.new-chat() },
         { command: "/contact", description: ComposeWords.add-contact() },
-        { command: "/tools", description: DrawerWords.toolbox() },
-        { command: "/accounts", description: DrawerWords.accounts() },
-        { command: "/settings", description: DrawerWords.settings() },
-        { command: "/me", description: DrawerWords.profile() },
+        { command: "/tools", description: ToolboxWords.title() },
+        { command: "/accounts", description: ToolboxWords.accounts() },
+        { command: "/settings", description: ToolboxWords.settings() },
+        { command: "/ai", description: ToolboxWords.ai-settings() + " · " + ToolboxWords.not-yet() },
+        { command: "/me", description: ToolboxWords.profile() },
     ];
     property <string> typed: input.text;
 
@@ -1823,20 +1823,13 @@ component CommandLine inherits Rectangle {
         } else if line.starts-with("/contact") {
             NewChat.start(NewDialog.contact);
         } else if line.starts-with("/tools") {
-            // The pane at the right (drawer.slint); the same command again closes it.
-            if Drawer.open && !Drawer.accounts-shown {
-                Drawer.close();
-            } else {
-                Drawer.accounts-shown = false;
-                Drawer.open = true;
-            }
+            // The toolbox in the pane's place (toolbox.slint): "/tools 传输" at a category; the
+            // same command again closes it. Words that name no category leave it as it is.
+            Toolbox.command(line);
         } else if line.starts-with("/accounts") {
-            if Drawer.open && Drawer.accounts-shown {
-                Drawer.close();
-            } else {
-                Drawer.accounts-shown = true;
-                Drawer.open = true;
-            }
+            Toolbox.command("accounts");
+        } else if line.starts-with("/ai") {
+            // The AI settings are not in this version: the list of commands says so.
         } else if line.starts-with("/settings") {
             AppState.page = Page.settings;
         } else if line.starts-with("/me") {
@@ -2171,20 +2164,20 @@ component StatusBar inherits Rectangle {
             color: P.on-accent;
             font-size: 12px;
         }
-        // The tools pinned in the toolbox (drawer.slint): their mark and name, and how many
+        // The tools pinned in the toolbox (toolbox.slint): their mark and name, or how many
         // downloads are on their way.
-        for tool in Drawer.pinned: Rectangle {
+        for tool in Toolbox.pinned: Rectangle {
             width: pinned-label.preferred-width;
             pinned-label := T {
                 x: 0;
-                text: "[" + tool.sigil + " " + tool.name + (tool.id == "downloads" && Downloads.active-count > 0 ? " " + Downloads.active-count : "") + "]";
+                text: "[" + tool.sigil + " " + (tool.id == "downloads" && Downloads.active-count > 0 ? ToolboxWords.downloading(Downloads.active-count) : tool.name) + "]";
                 color: P.on-accent;
                 font-size: 12px;
             }
             TouchArea {
                 mouse-cursor: pointer;
                 clicked => {
-                    Drawer.open-tool(tool.id);
+                    Toolbox.open-tool(tool.id);
                 }
             }
         }
@@ -2251,24 +2244,23 @@ export component TerminalWindow inherits Rectangle {
             vertical-stretch: 1;
             Side {
                 view <=> root.view;
-                room: root.width - 388px - (Conversation.chat-id != "" && ChatInfo.open ? 320px : 0px) - (Drawer.open ? 320px : 0px);
+                room: root.width - 388px - (Conversation.chat-id != "" && ChatInfo.open ? 320px : 0px);
             }
             VerticalLayout {
                 horizontal-stretch: 1;
-                if Conversation.chat-id != "": Pane {
+                // The pane, or the toolbox in its place under /tools (toolbox.slint).
+                Rectangle {
                     vertical-stretch: 1;
-                }
-                if Conversation.chat-id == "": Rectangle {
-                    vertical-stretch: 1;
-                    T {
-                        text: "-- " + @tr("Choose a chat on the left") + " --";
-                        color: P.faint;
+                    if Conversation.chat-id != "": Pane { }
+                    if Conversation.chat-id == "": Rectangle {
+                        T {
+                            text: "-- " + @tr("Choose a chat on the left") + " --";
+                            color: P.faint;
+                        }
                     }
+                    if Toolbox.open: TerminalToolbox { }
                 }
                 line := CommandLine { }
-            }
-            if Drawer.open: ToolsPane {
-                width: 320px;
             }
         }
         StatusBar {
@@ -2276,12 +2268,7 @@ export component TerminalWindow inherits Rectangle {
                 line.focus-line();
             }
             accounts => {
-                if Drawer.open && Drawer.accounts-shown {
-                    Drawer.close();
-                } else {
-                    Drawer.accounts-shown = true;
-                    Drawer.open = true;
-                }
+                Toolbox.command("accounts");
             }
         }
     }

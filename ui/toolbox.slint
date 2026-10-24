@@ -1,0 +1,140 @@
+// The toolbox (the design's seventh round, "百宝箱 · 抽屉第二版"): everything beyond the chats in
+// one place. A wide panel slid out from the activity bar's logo in Workbench and the rail's in
+// Broadsheet; the pane's place under /tools in Terminal. The search box at the top, the categories
+// at the left, the sections at the right: the accounts, then the tools of each category, each
+// with a switch that pins it to the bar (the bars show only what the user pinned, one list for
+// the three themes, settings.toml), and the settings and the profile at the foot. Downloads is a
+// family: the protocols a server can speak are listed under it; a protocol is a server's
+// property, never a tool of its own. What is drawn here is the state and the words; the themes
+// draw it (ui/<theme>/toolbox.slint), src/toolbox.rs fills and acts.
+import { Downloads } from "downloads.slint";
+import { Accounts, AccountRow } from "telegram.slint";
+import { Look } from "look.slint";
+
+// A tool of the toolbox.
+export struct ToolRow {
+    id: string,             // "downloads", "live", "jellyfin", "hiding", "scheduled", "ai-access"
+    category: string,       // "transfers", "media", "messages", "connections"
+    name: string,
+    line: string,           // what it is, in a few words
+    icon: string,           // its Phosphor icon
+    sigil: string,          // Terminal's mark for it: ↓, ◉, …
+    key: string,            // its shortcut, "⌥⌘L", or ""
+    pinned: bool,
+    grey: bool,             // still to come: faded, and its switch does nothing
+    family: bool,           // the protocols are listed under it (downloads)
+    slot: int,              // its place among the section's tools that are not families: the grid
+}
+
+// A protocol of the downloads family, listed under Downloads.
+export struct ProtocolRow {
+    id: string,             // "webdav", "ftp", "ftps", "sftp"
+    name: string,           // "WebDAV"
+    port: string,           // "80 / 443"
+    line: string,
+    grey: bool,             // FinchGram does not speak it yet
+}
+
+// A category, with the tools shown of it.
+export struct ToolSection {
+    id: string,             // "accounts", "transfers", "media", "messages", "connections"
+    label: string,
+    letter: string,         // Broadsheet's A … E
+    icon: string,
+    accounts: bool,         // the accounts section: Toolbox.accounts in place of tools
+    tools: [ToolRow],
+    families: int,          // how many of its tools are families, drawn full width first
+    others: int,            // the rest, in the grid
+}
+
+// A row of the column at the left: All, then the categories.
+export struct NavRow {
+    id: string,             // "all", or a category
+    label: string,
+    letter: string,
+    icon: string,
+    count: int,             // its tools, or its hits while searching; the accounts: how many
+    accounts: bool,
+}
+
+export global Toolbox {
+    in-out property <bool> open;
+    in-out property <string> category: "all";      // the column's choice
+    in-out property <string> query;                // the search box
+    in-out property <[NavRow]> nav;
+    in-out property <[ToolSection]> sections;      // the category chosen, or every one with a hit
+    in-out property <[ToolRow]> pinned;            // those pinned, in the toolbox's order: the bars
+    in-out property <[ProtocolRow]> protocols;     // under Downloads
+    in-out property <[AccountRow]> accounts;       // every account, or those the search lets through
+    in-out property <bool> downloads-pinned;
+    in-out property <int> hits;                    // while searching: the tools and accounts found
+    in-out property <int> opened;                  // counts the openings: the search box takes the keyboard
+    out property <bool> searching: query != "";
+    out property <bool> no-hits: searching && sections.length == 0;
+    // An unpinned tool has something going on (downloads on their way), or another account has
+    // unread messages (not in Broadsheet, whose rail shows them): a dot on the logo. A pinned
+    // tool's dot sits on its own icon.
+    out property <bool> logo-dot: (!downloads-pinned && Downloads.active-count > 0) || (!Look.broadsheet && Accounts.others-unread > 0);
+    callback toggle();
+    callback close();
+    callback show(string);                         // opens at a category ("all" for every one)
+    callback pin(string, bool);                    // a tool, and whether it is pinned now
+    callback open-tool(string);                    // a tool opens (and the toolbox shuts)
+    callback choose(string);                       // the column: a category
+    callback search(string);                       // the box
+    callback open-first();                         // ⏎ in the box: the first tool found opens
+    callback command(string) -> bool;              // Terminal's "/tools [category]"; false for a category it does not know
+}
+
+export global ToolboxWords {
+    public pure function title() -> string { return @tr("Toolbox"); }
+    public pure function search() -> string { return @tr("Search the toolbox"); }
+    public pure function all() -> string { return @tr("All"); }
+    public pure function accounts() -> string { return @tr("Accounts"); }
+    public pure function transfers() -> string { return @tr("Transfers"); }
+    public pure function media() -> string { return @tr("Media"); }
+    public pure function messages() -> string { return @tr("Messages"); }
+    public pure function connections() -> string { return @tr("Connections"); }
+    // The tools.
+    public pure function downloads() -> string { return @tr("Downloads"); }
+    public pure function downloads-line() -> string { return @tr("Pick files from your own servers and download them"); }
+    public pure function live() -> string { return @tr("Live streams"); }
+    public pure function live-line() -> string { return @tr("Live streams going on in your groups and channels"); }
+    public pure function jellyfin() -> string { return "Jellyfin"; }
+    public pure function jellyfin-line() -> string { return @tr("Your own media library, played in the built-in player"); }
+    public pure function hiding() -> string { return @tr("Keyword hiding"); }
+    public pure function hiding-line() -> string { return @tr("Tuck away messages by keyword; unhide any time"); }
+    public pure function scheduled() -> string { return @tr("Scheduled messages"); }
+    public pure function scheduled-line() -> string { return @tr("Sent by the server on time, even with your computer off"); }
+    public pure function ai-access() -> string { return @tr("AI access"); }
+    public pure function ai-access-line() -> string { return @tr("Let other apps read the chats you allow, through FinchGram"); }
+    // The protocols under Downloads.
+    public pure function protocols() -> string { return @tr("Protocol · chosen when you add a server"); }
+    public pure function webdav-line() -> string { return @tr("Common on NAS boxes, cloud drives and seedboxes"); }
+    public pure function ftp-line() -> string { return @tr("The old one, unencrypted"); }
+    public pure function ftps-line() -> string { return @tr("FTP with TLS encryption"); }
+    public pure function sftp-line() -> string { return @tr("Over SSH; on seedboxes it usually doesn’t count against your traffic quota"); }
+    // What goes on.
+    public pure function downloading(n: int) -> string { return @tr("{n} downloading" | "{n} downloading" % n); }
+    public pure function servers(n: int) -> string { return @tr("{n} server" | "{n} servers" % n); }
+    public pure function not-yet() -> string { return @tr("Not in this version"); }
+    public pure function pinned-to(bar: string) -> string { return @tr("Pinned to the {}", bar); }
+    public pure function activity-bar() -> string { return @tr("activity bar"); }
+    public pure function rail() -> string { return @tr("rail"); }
+    public pure function status-bar() -> string { return @tr("status bar"); }
+    // The accounts.
+    public pure function add-account() -> string { return @tr("Add account"); }
+    public pure function limit-reached() -> string { return @tr("Limit reached"); }
+    public pure function current() -> string { return @tr("the account in front" => "Current"); }
+    // The foot.
+    public pure function settings() -> string { return @tr("Settings"); }
+    public pure function ai-settings() -> string { return @tr("AI settings"); }
+    public pure function profile() -> string { return @tr("My profile"); }
+    public pure function hint(key: string) -> string { return @tr("{} to open · Esc to close", key); }
+    // The search.
+    public pure function nothing(q: string) -> string { return @tr("Nothing called “{}”", q); }
+    public pure function hits(n: int) -> string { return @tr("{n} item" | "{n} items" % n); }
+    // Terminal.
+    public pure function pin-legend() -> string { return @tr("[x] pins to the status bar · click a name to open"); }
+    public pure function command-hint() -> string { return @tr("/tools <category> jumps there · type it again to close"); }
+}

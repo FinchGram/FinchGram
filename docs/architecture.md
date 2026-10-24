@@ -145,7 +145,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   pages' words), `chat_info.rs` (the chat's info panel, below), `manage.rs` (managing a group or
   channel, below), `account.rs` and
   `password.rs` (two-step verification) do what the pages ask for; `accounts.rs` lists the
-  accounts signed in for the account menu, the drawer and Broadsheet's rail and switches between
+  accounts signed in for the account menu, the toolbox and Broadsheet's rail and switches between
   them (Several accounts, below); `files.rs` downloads files,
   `avatars.rs` fetches the photos of chats and people for the rows that show them (a letter square
   until then, or for good when there is no photo), `viewer.rs` fills the media viewer and keeps its volume (the
@@ -310,24 +310,32 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     back; writing saves after a pause too. updateChatDraftMessage brings what was written on
     another device. The chat list shows a draft in place of the last message, after the word
     "Draft" (Terminal's list: "✎").
-  - The drawer (`src/drawer.rs`, ui/drawer.slint, ui/<theme>/drawer.slint; the design's sixth
-    round): everything beyond the chats in one place. Workbench slides it out from the activity
-    bar's logo over the sidebar, 280px under a scrim; Broadsheet from the rail's logo as a
-    newspaper's section index, 320px; Terminal has no drawer but a pane at the right under /tools
-    and /accounts (the title's brackets switch, the same command again or Esc closes). Three
-    parts: the accounts (the one in front; adding another waits for several accounts), the
-    toolbox (every tool with a line about it and a switch that pins it to the bar: the activity
-    bar, the rail and Terminal's bottom bar show only the pinned tools, in the toolbox's order,
-    one list for the three themes in `[toolbox] pinned` of settings.toml, downloads by default;
-    a name opens the tool and shuts the drawer, a switch only pins), and the settings, the AI
-    settings (still to come) and the profile at the foot. The tools the design draws but
-    FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled messages) are
-    listed faded and cannot be pinned; the greyed filters and scheduled views left the bars for
-    the toolbox. Two of the maintainer's decisions of 2026-10-23 depart from the design: the
-    screenshot is not in the toolbox (its scissors stay under the composer, with their shortcut),
-    and the gear left the bars (the settings are in the drawer, the menu bar and ⌘,). The logo
-    carries a dot while an unpinned tool has something going on (downloads on their way); a
-    pinned tool's dot sits on its own icon.
+  - The toolbox (`src/toolbox.rs`, ui/toolbox.slint, ui/<theme>/toolbox.slint; the design's
+    seventh round, "百宝箱"): everything beyond the chats in one place. Workbench slides it out
+    from the activity bar's logo over the list and the messages, a panel 780px wide under a scrim;
+    Broadsheet from the rail's logo, 820px, set like a newspaper's index; Terminal has no drawer
+    but puts the list in the pane's place under /tools (the command line and the status bar stay;
+    "/tools 传输" or "/tools transfers" jumps to a category, the same command again or Esc closes,
+    /accounts is the accounts category). ⌘J opens it in every theme (View → Toolbox). A search box
+    at the top filters by name (⏎ opens the first tool found), the categories stand at the left
+    (All, then accounts, transfers, media, messages, connections; in toolbox.rs a category is a row
+    of one table and a tool a row of another), the sections at the right: the accounts as tiles
+    (⌘1–⌘0; adding one), then every tool of each category with a line about it, what goes on, and
+    a switch that pins it to the bar: the activity bar, the rail and Terminal's status bar show
+    only the pinned tools, in the toolbox's order, one list for the three themes in
+    `[toolbox] pinned` of settings.toml, downloads by default; a name opens the tool and shuts the
+    toolbox, a switch only pins; the files on their way show as a number on the pinned button.
+    Downloads is a family: the protocols a server can speak are listed under it (WebDAV, which
+    this version speaks; FTP, FTPS and SFTP, faded), each with its default port; a protocol is a
+    server's property, chosen when a server is added (docs/downloads.md), never a tool of its own.
+    AI access (Settings → AI access) is a tool too, under connections. The tools the design draws
+    but FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled messages) are
+    listed faded and cannot be pinned. At the foot: the settings, the AI settings (faded) and the
+    profile. Two of the maintainer's decisions of 2026-10-23 stand: the screenshot is not in the
+    toolbox (its scissors stay under the composer, with their shortcut), and the gear stays off
+    the bars (the settings are in the toolbox, the menu bar and ⌘,). The logo carries a dot while
+    an unpinned tool has something going on (downloads on their way) or another account has unread
+    messages (not in Broadsheet, whose rail shows them); a pinned tool's dot sits on its own icon.
   - The chat's info panel (`chat_info.rs`, the design's chat-info round): ⌘I, the header's sidebar
     icon (Terminal's "[chat info]") opens it beside the messages, squeezing them (the list yields
     down to 220px first), in every theme, and it stays open across chats and restarts
@@ -438,7 +446,7 @@ their chats, tabs and drafts for when they come back.
   are given to the pages and everything is built again. What is per account beyond the store
   (which chat lists are loaded, the contacts, the downloads waited for, the unread count, where
   the login is) is keyed by the slot, or kept with the account in `mod.rs`.
-- **Switching.** A click on an account in the account menu, the drawer or Broadsheet's rail;
+- **Switching.** A click on an account in the account menu, the toolbox or Broadsheet's rail;
   ⌘1 … ⌘0 (the Account menu; in Terminal ⌃1 … ⌃0 too, as its pane says); or a click on another
   account's notification. The account leaving keeps the composer's words with its chat
   (`drafts.rs`), closes its menus, dialogs and the viewer, and goes offline; the one arriving

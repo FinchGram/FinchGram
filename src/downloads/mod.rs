@@ -61,7 +61,7 @@ impl Server {
     }
 
     fn row(&self) -> ServerRow {
-        ServerRow { name: self.name.clone().into(), host: webdav::Server::host(&self.url).into(), status: self.status }
+        ServerRow { name: self.name.clone().into(), host: webdav::Server::host(&self.url).into(), protocol: "WebDAV".into(), status: self.status }
     }
 }
 
@@ -1208,7 +1208,9 @@ fn add_server() {
     with_downloads(|downloads| {
         downloads.set_form_editing(false);
         downloads.set_form_name(SharedString::new());
+        downloads.set_form_protocol("webdav".into());
         downloads.set_form_address(SharedString::new());
+        downloads.set_form_port(SharedString::new());
         downloads.set_form_username(SharedString::new());
         downloads.set_form_password(SharedString::new());
         downloads.set_form_error(FormError::None);
@@ -1224,15 +1226,20 @@ fn edit_server(index: i32) {
         let client = server.client();
         state.editing = Some(index);
         state.current = Some(index);
-        Some((server.name.clone(), format!("{}/", server.url), server.username.clone(), client.password))
+        // The port written in the address goes to its own field.
+        let port = webdav::Server::port(&server.url);
+        let address = if port.is_empty() { server.url.clone() } else { server.url.replacen(&format!(":{port}"), "", 1) };
+        Some((server.name.clone(), format!("{address}/"), port, server.username.clone(), client.password))
     })
     .flatten();
-    let Some((name, address, username, password)) = fields else { return };
+    let Some((name, address, port, username, password)) = fields else { return };
     with_downloads(|downloads| {
         downloads.set_current(index as i32);
         downloads.set_form_editing(true);
         downloads.set_form_name(name.into());
+        downloads.set_form_protocol("webdav".into());
         downloads.set_form_address(address.into());
+        downloads.set_form_port(port.into());
         downloads.set_form_username(username.into());
         downloads.set_form_password(password.into());
         downloads.set_form_error(FormError::None);
@@ -1242,23 +1249,54 @@ fn edit_server(index: i32) {
 }
 
 /// The form's fields, as typed.
-fn form_fields() -> Option<(String, String, String, String)> {
+struct Form {
+    name: String,
+    /// "webdav", "ftp", "ftps", "sftp": the chip chosen.
+    protocol: String,
+    address: String,
+    /// "" for the protocol's default.
+    port: String,
+    username: String,
+    password: String,
+}
+
+fn form_fields() -> Option<Form> {
     let ui = STATE.with(|state| state.borrow().as_ref().and_then(|state| state.ui.upgrade()))?;
     let downloads = ui.global::<Downloads>();
-    Some((
-        downloads.get_form_name().trim().to_string(),
-        downloads.get_form_address().trim().to_string(),
-        downloads.get_form_username().trim().to_string(),
-        downloads.get_form_password().to_string(),
-    ))
+    Some(Form {
+        name: downloads.get_form_name().trim().to_string(),
+        protocol: downloads.get_form_protocol().to_string(),
+        address: downloads.get_form_address().trim().to_string(),
+        port: downloads.get_form_port().trim().to_string(),
+        username: downloads.get_form_username().trim().to_string(),
+        password: downloads.get_form_password().to_string(),
+    })
+}
+
+/// The address the form names, with its port in it, or what is wrong: a protocol this version
+/// does not speak (only WebDAV), an address that is not http(s), a port that is not one.
+fn form_address(form: &Form) -> Result<String, FormError> {
+    if form.protocol != "webdav" {
+        return Err(FormError::Protocol);
+    }
+    if !webdav::Server::is_address(&form.address) {
+        return Err(FormError::Address);
+    }
+    if !form.port.is_empty() && !matches!(form.port.parse::<u32>(), Ok(1..=65535)) {
+        return Err(FormError::Port);
+    }
+    Ok(webdav::Server::normalized_url(&webdav::Server::with_port(&form.address, &form.port)))
 }
 
 fn test_connection() {
-    let Some((_, address, username, password)) = form_fields() else { return };
-    if !webdav::Server::is_address(&address) {
-        with_downloads(|downloads| downloads.set_form_error(FormError::Address));
-        return;
-    }
+    let Some(form) = form_fields() else { return };
+    let url = match form_address(&form) {
+        Ok(url) => url,
+        Err(error) => {
+            with_downloads(|downloads| downloads.set_form_error(error));
+            return;
+        }
+    };
     let request = with_state(|state| {
         state.test_request += 1;
         state.test_request
@@ -1268,7 +1306,7 @@ fn test_connection() {
         downloads.set_form_error(FormError::None);
         downloads.set_test_state(TestState::Testing);
     });
-    send(Task::Test { request, server: webdav::Server { url: webdav::Server::normalized_url(&address), username, password } });
+    send(Task::Test { request, server: webdav::Server { url, username: form.username, password: form.password } });
 }
 
 fn tested(request: u64, result: Result<TestResult, webdav::Error>) {
@@ -1276,7 +1314,7 @@ fn tested(request: u64, result: Result<TestResult, webdav::Error>) {
     if request != current {
         return;
     }
-    let host = form_fields().map(|(_, address, _, _)| webdav::Server::host(&address)).unwrap_or_default();
+    let host = form_fields().map(|form| webdav::Server::host(&form.address)).unwrap_or_default();
     with_downloads(|downloads| match result {
         Ok(found) => {
             downloads.set_test_folders(found.folders);
@@ -1297,16 +1335,19 @@ fn tested(request: u64, result: Result<TestResult, webdav::Error>) {
 /// Add, or Save: the server goes into the settings, its password into the Keychain, and it is
 /// looked at.
 fn submit_form() {
-    let Some((name, address, username, password)) = form_fields() else { return };
-    if name.is_empty() {
+    let Some(form) = form_fields() else { return };
+    if form.name.is_empty() {
         with_downloads(|downloads| downloads.set_form_error(FormError::Name));
         return;
     }
-    if !webdav::Server::is_address(&address) {
-        with_downloads(|downloads| downloads.set_form_error(FormError::Address));
-        return;
-    }
-    let url = webdav::Server::normalized_url(&address);
+    let url = match form_address(&form) {
+        Ok(url) => url,
+        Err(error) => {
+            with_downloads(|downloads| downloads.set_form_error(error));
+            return;
+        }
+    };
+    let Form { name, username, password, .. } = form;
     let index = with_state(|state| {
         let index = match state.editing.filter(|index| *index < state.servers.len()) {
             Some(index) => {

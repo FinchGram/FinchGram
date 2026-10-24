@@ -14,7 +14,7 @@ import { BotWords } from "chat.slint";
 import { ExtraWords } from "extras.slint";
 import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "chat-info.slint";
 import { ChatManage, ManageWords, ManageLook, ManagePage, UsernameCheck, ManageToggle, ManageChip, ManagePerson, ManageLink, ManageChoice } from "chat-manage.slint";
-import { Drawer, DrawerWords, ToolRow } from "drawer.slint";
+import { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow } from "toolbox.slint";
 import { LoginPage } from "pages/login.slint";
 import { WorkbenchWindow } from "workbench/workbench.slint";
 import { BroadsheetWindow } from "broadsheet/broadsheet.slint";
@@ -38,7 +38,7 @@ export { Search, NewChat, NewDialog, LinkCheck, FoundKind, FoundRow, FoundSectio
 export { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError }
 export { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember }
 export { ChatManage, ManageWords, ManageLook, ManagePage, UsernameCheck, ManageToggle, ManageChip, ManagePerson, ManageLink, ManageChoice }
-export { Drawer, DrawerWords, ToolRow }
+export { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";
@@ -83,6 +83,16 @@ export component MainWindow inherits Window {
                     AppState.show-window();
                     AppState.page = Page.chats;
                     ChatInfo.toggle();
+                }
+            }
+            MenuItem {
+                title: @tr("Toolbox");
+                shortcut: @keys(Control + J);
+                enabled: root.ready;
+                activated => {
+                    AppState.show-window();
+                    AppState.page = Page.chats;
+                    Toolbox.toggle();
                 }
             }
             MenuSeparator { }

@@ -1,0 +1,760 @@
+// The toolbox, Broadsheet (the design's seventh round, 7a): a panel 820px wide slid out from the
+// rail's logo over the list, under a scrim, set like a newspaper's index: the title over a thick
+// and a thin rule, the categories as lettered sections, the tools two to a row with hairlines
+// between them and no cards, the protocols under Downloads, the foot. The state and the words
+// are in ui/toolbox.slint; src/toolbox.rs fills and acts.
+import { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow } from "../toolbox.slint";
+import { AppState, Page } from "../state.slint";
+import { Accounts, AccountRow } from "../telegram.slint";
+import { AccountColors, Look } from "../look.slint";
+import { Downloads } from "../downloads.slint";
+import { Icon, Avatar } from "../widgets.slint";
+import { BroadsheetPalette as P } from "palette.slint";
+
+component DuoIcon inherits Icon {
+    duotone: true;
+}
+
+// The grids are laid out by hand (Slint has no auto-fill grid): the tools two to a row, 60px
+// each, a family 188px with its protocols; an account's tile at least 180px wide, 40px high.
+global Grid {
+    out property <length> gap: 28px;
+    out property <length> card: 60px;
+    out property <length> family: 188px;
+    out property <length> tile-min: 180px;
+    out property <length> tile-gap: 6px;
+    out property <length> tile: 40px;
+}
+
+component Letter inherits Text {
+    width: 14px;
+    color: P.accent-ink;
+    font-size: 13px;
+    font-weight: 600;
+    vertical-alignment: center;
+}
+
+// A row of the column at the left: All, or a category, with its letter and how many tools it has
+// (hits while searching; the accounts: how many of ten).
+component NavLine inherits Rectangle {
+    in property <NavRow> nav;
+    property <bool> on: (Toolbox.searching ? "all" : Toolbox.category) == nav.id;
+    height: 30px;
+    border-radius: 2px;
+    background: on ? P.tint : touch.has-hover ? P.surface : transparent;
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 8px;
+        Letter {
+            text: root.nav.letter;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.nav.label;
+            color: root.on ? P.tint-ink : P.text;
+            font-size: 14px;
+            font-weight: root.on ? 600 : 400;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        Text {
+            text: root.nav.accounts && !Toolbox.searching ? root.nav.count + "/10" : "" + root.nav.count;
+            color: P.faint;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Toolbox.choose(root.nav.id);
+        }
+    }
+}
+
+// An account's tile: its picture, name and number, its unread messages, its key. The one in
+// front is tinted; a click brings another to the front.
+component AccountTile inherits Rectangle {
+    in property <AccountRow> account;
+    height: Grid.tile;
+    border-radius: 2px;
+    background: account.current ? P.tint : touch.has-hover ? P.hover : transparent;
+
+    if !root.account.current: Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: P.line;
+        opacity: 0.5;
+    }
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            Avatar {
+                size: 22px;
+                radius: 2px;
+                fill: AccountColors.accent(root.account.index, P.dark);
+                ink: #ffffff;
+                initial: root.account.initial;
+                picture: root.account.picture;
+                has-picture: root.account.has-picture;
+                font-size: 11px;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            Text {
+                text: root.account.name;
+                color: root.account.current ? P.tint-ink : P.text;
+                font-size: 14px;
+                font-weight: root.account.current ? 600 : 400;
+                overflow: elide;
+            }
+            Text {
+                text: root.account.sub;
+                color: P.faint;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        if root.account.unread > 0 && !root.account.current: Text {
+            text: root.account.unread > 99 ? "99+" : "" + root.account.unread;
+            color: P.accent2-ink;
+            font-size: 12px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+        Text {
+            text: AccountColors.key(root.account.index);
+            color: P.faint;
+            font-family: P.mono;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            if !root.account.current {
+                Toolbox.close();
+                Accounts.switch(root.account.slot);
+            }
+        }
+    }
+}
+
+// The tile after the accounts: adding one; greyed with ten.
+component AddTile inherits Rectangle {
+    height: Grid.tile;
+    border-radius: 2px;
+    border-width: 1px;
+    border-color: P.line;
+    background: touch.has-hover && !Accounts.full ? P.hover : transparent;
+    opacity: Accounts.full ? 0.42 : 1;
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            DuoIcon {
+                name: "plus";
+                size: 14px;
+                color: Accounts.full ? P.faint : P.accent-ink;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: ToolboxWords.add-account();
+            color: Accounts.full ? P.faint : P.accent-ink;
+            font-size: 14px;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        if Accounts.full: Text {
+            text: ToolboxWords.limit-reached();
+            color: P.faint;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: Accounts.full ? MouseCursor.default : MouseCursor.pointer;
+        clicked => {
+            if !Accounts.full {
+                Toolbox.close();
+                Accounts.add();
+            }
+        }
+    }
+}
+
+// The accounts as tiles, as many to a row as fit, the add tile last.
+component AccountGrid inherits Rectangle {
+    property <int> columns: max(1, Math.floor((self.width + Grid.tile-gap) / (Grid.tile-min + Grid.tile-gap)));
+    property <length> tile-width: (self.width - (columns - 1) * Grid.tile-gap) / columns;
+    property <int> count: Toolbox.accounts.length + 1;
+    height: Math.ceil(count * 1.0 / columns) * (Grid.tile + Grid.tile-gap) - Grid.tile-gap;
+
+    for row[i] in Toolbox.accounts: AccountTile {
+        account: row;
+        x: Math.mod(i, root.columns) * (root.tile-width + Grid.tile-gap);
+        y: Math.floor(i * 1.0 / root.columns) * (Grid.tile + Grid.tile-gap);
+        width: root.tile-width;
+    }
+    AddTile {
+        x: Math.mod(root.count - 1, root.columns) * (root.tile-width + Grid.tile-gap);
+        y: Math.floor((root.count - 1) * 1.0 / root.columns) * (Grid.tile + Grid.tile-gap);
+        width: root.tile-width;
+    }
+}
+
+// A protocol under Downloads: its name, its default port, a line about it, and how many servers
+// speak it, or that this version does not.
+component ProtocolLine inherits Rectangle {
+    in property <ProtocolRow> protocol;
+    height: 24px;
+    border-radius: 2px;
+    background: touch.has-hover && !protocol.grey ? P.surface : transparent;
+    opacity: protocol.grey ? 0.42 : 1;
+
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 6px;
+        spacing: 10px;
+        Text {
+            width: 58px;
+            text: root.protocol.name;
+            color: P.text;
+            font-family: P.mono;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+        Text {
+            width: 64px;
+            text: root.protocol.port;
+            color: P.faint;
+            font-family: P.mono;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.protocol.line;
+            color: P.muted;
+            font-size: 13px;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        Text {
+            text: root.protocol.grey ? ToolboxWords.not-yet() : ToolboxWords.servers(Downloads.servers.length);
+            color: P.faint;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        enabled: !root.protocol.grey;
+        mouse-cursor: pointer;
+        clicked => {
+            Toolbox.open-tool("downloads");
+        }
+    }
+}
+
+// A tool: its duotone icon (the accent while pinned), its name with what goes on, a line about
+// it, and the square switch that pins it to the rail, over a hairline. The row opens it; a family
+// lists its protocols underneath.
+component ToolCard inherits Rectangle {
+    in property <ToolRow> tool;
+    property <bool> live: !tool.grey;
+    property <bool> active: tool.id == "downloads" && Downloads.active-count > 0;
+
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: P.line;
+        opacity: 0.5;
+    }
+    touch := TouchArea {
+        enabled: root.live;
+        mouse-cursor: pointer;
+        clicked => {
+            Toolbox.open-tool(root.tool.id);
+        }
+    }
+    VerticalLayout {
+        padding-top: 9px;
+        padding-bottom: 9px;
+        spacing: 8px;
+        alignment: start;
+        Rectangle {
+            height: 40px;
+            opacity: root.live ? 1 : 0.42;
+            HorizontalLayout {
+                spacing: 10px;
+                VerticalLayout {
+                    alignment: center;
+                    DuoIcon {
+                        name: root.tool.icon;
+                        size: 24px;
+                        color: root.tool.pinned ? P.accent : P.faint;
+                    }
+                }
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    alignment: center;
+                    spacing: 1px;
+                    HorizontalLayout {
+                        spacing: 8px;
+                        Text {
+                            text: root.tool.name;
+                            color: touch.has-hover && root.live ? P.accent-ink : P.text;
+                            font-size: 15px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                        if root.active: Text {
+                            text: "● " + ToolboxWords.downloading(Downloads.active-count);
+                            color: P.accent2-ink;
+                            font-size: 12px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            horizontal-stretch: 1;
+                            text: root.tool.grey ? ToolboxWords.not-yet() : root.tool.pinned ? ToolboxWords.pinned-to(ToolboxWords.rail()) : "";
+                            color: P.faint;
+                            font-size: 12px;
+                            vertical-alignment: center;
+                            overflow: elide;
+                        }
+                    }
+                    Text {
+                        text: root.tool.line;
+                        color: P.muted;
+                        font-size: 13px;
+                        overflow: elide;
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 34px;
+                        height: 20px;
+                        border-radius: 2px;
+                        background: root.tool.pinned ? P.accent : P.off;
+                        animate background { duration: 200ms; }
+                        Rectangle {
+                            x: root.tool.pinned ? 17px : 3px;
+                            y: 3px;
+                            width: 14px;
+                            height: 14px;
+                            border-radius: 1px;
+                            background: #ffffff;
+                            animate x { duration: 200ms; }
+                        }
+                        TouchArea {
+                            enabled: root.live;
+                            mouse-cursor: pointer;
+                            clicked => {
+                                Toolbox.pin(root.tool.id, !root.tool.pinned);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // The protocols, under a family.
+        if root.tool.family: HorizontalLayout {
+            padding-left: 34px;
+            Rectangle {
+                width: 1px;
+                background: P.line;
+            }
+            VerticalLayout {
+                horizontal-stretch: 1;
+                padding-left: 10px;
+                spacing: 1px;
+                alignment: start;
+                Text {
+                    text: ToolboxWords.protocols();
+                    color: P.faint;
+                    font-size: 12px;
+                }
+                Rectangle { height: 2px; }
+                for protocol in Toolbox.protocols: ProtocolLine {
+                    protocol: protocol;
+                }
+            }
+        }
+    }
+}
+
+// A section's tools: a family full width first, then the rest two to a row.
+component ToolGrid inherits Rectangle {
+    in property <ToolSection> section;
+    property <int> columns: 2;
+    property <length> card-width: (self.width - (columns - 1) * Grid.gap) / columns;
+    property <length> top: section.families * Grid.family;
+    height: top + (section.others > 0 ? Math.ceil(section.others * 1.0 / columns) * Grid.card : 0px);
+
+    for tool in section.tools: Rectangle {
+        x: tool.family ? 0px : Math.mod(tool.slot, root.columns) * (root.card-width + Grid.gap);
+        y: tool.family ? 0px : root.top + Math.floor(tool.slot * 1.0 / root.columns) * Grid.card;
+        width: tool.family ? root.width : root.card-width;
+        height: tool.family ? Grid.family : Grid.card;
+        ToolCard {
+            tool: tool;
+        }
+    }
+}
+
+// A link at the foot: the settings, the AI settings (still to come), the profile.
+component FootLink inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <bool> enabled: true;
+    callback activated();
+    width: content.preferred-width;
+    height: 28px;
+
+    content := HorizontalLayout {
+        spacing: 6px;
+        VerticalLayout {
+            alignment: center;
+            DuoIcon {
+                name: root.icon;
+                size: 16px;
+                color: P.muted;
+                opacity: root.enabled ? 1 : 0.42;
+            }
+        }
+        Text {
+            text: root.label;
+            color: touch.has-hover && root.enabled ? P.accent-ink : P.text;
+            font-size: 14px;
+            font-weight: 600;
+            vertical-alignment: center;
+            opacity: root.enabled ? 1 : 0.42;
+        }
+        if !root.enabled: Text {
+            text: ToolboxWords.not-yet();
+            color: P.faint;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+export component BroadsheetToolbox inherits Rectangle {
+    property <bool> open: Toolbox.open;
+    // Drawn while open and while it slides shut.
+    visible: Toolbox.open || slide.x > -slide.width;
+    changed open => {
+        if self.open {
+            search-box.focus();
+        }
+    }
+
+    // The scrim over the rest: a click on it shuts the toolbox.
+    Rectangle {
+        background: P.dark ? #00000073 : #201e1d2e;
+        opacity: Toolbox.open ? 1 : 0;
+        animate opacity { duration: 200ms; }
+        TouchArea {
+            clicked => {
+                Toolbox.close();
+            }
+        }
+    }
+
+    slide := Rectangle {
+        x: Toolbox.open ? 0px : -self.width;
+        y: 0;
+        width: min(820px, parent.width);
+        height: parent.height;
+        background: P.panel;
+        drop-shadow-blur: 30px;
+        drop-shadow-offset-x: 10px;
+        drop-shadow-color: P.shadow;
+        animate x { duration: 240ms; easing: cubic-bezier(0.2, 0.8, 0.2, 1); }
+
+        // Clicks on the panel stay on it; Esc shuts it.
+        TouchArea { }
+        keys := FocusScope {
+            key-pressed(event) => {
+                if event.text == Key.Escape {
+                    Toolbox.close();
+                    return accept;
+                }
+                return reject;
+            }
+
+            VerticalLayout {
+                // The head: the title, the search box, esc; the thick and the thin rule under them.
+                HorizontalLayout {
+                    padding-left: 22px;
+                    padding-right: 22px;
+                    padding-top: 16px;
+                    padding-bottom: 8px;
+                    spacing: 16px;
+                    Text {
+                        text: ToolboxWords.title();
+                        color: P.text;
+                        font-size: 30px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        max-width: 460px;
+                        height: 34px;
+                        border-radius: 4px;
+                        background: P.surface;
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            spacing: 8px;
+                            VerticalLayout {
+                                alignment: center;
+                                DuoIcon {
+                                    name: "magnifying-glass";
+                                    size: 16px;
+                                    color: P.faint;
+                                }
+                            }
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                if Toolbox.query == "": Text {
+                                    width: parent.width;
+                                    height: parent.height;
+                                    text: ToolboxWords.search();
+                                    color: P.faint;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                    overflow: elide;
+                                }
+                                search-box := TextInput {
+                                    width: parent.width;
+                                    height: parent.height;
+                                    text <=> Toolbox.query;
+                                    single-line: true;
+                                    color: P.text;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                    selection-background-color: P.input-sel;
+                                    selection-foreground-color: P.text;
+                                    text-cursor-width: Look.cursor-width;
+                                    edited => {
+                                        Toolbox.search(self.text);
+                                    }
+                                    accepted => {
+                                        Toolbox.open-first();
+                                    }
+                                }
+                            }
+                            if Toolbox.searching: Text {
+                                text: ToolboxWords.hits(Toolbox.hits);
+                                color: P.faint;
+                                font-size: 12px;
+                                vertical-alignment: center;
+                            }
+                            if Toolbox.searching: Text {
+                                text: "×";
+                                color: P.muted;
+                                font-size: 16px;
+                                vertical-alignment: center;
+                                TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => {
+                                        Toolbox.search("");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: esc.preferred-width + 12px;
+                            height: esc.preferred-height + 2px;
+                            border-radius: 2px;
+                            border-width: 1px;
+                            border-color: P.faint;
+                            esc := Text {
+                                text: "esc";
+                                color: P.faint;
+                                font-family: P.mono;
+                                font-size: 11px;
+                                vertical-alignment: center;
+                            }
+                            TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    Toolbox.close();
+                                }
+                            }
+                        }
+                    }
+                }
+                VerticalLayout {
+                    padding-left: 22px;
+                    padding-right: 22px;
+                    spacing: 2px;
+                    Rectangle {
+                        height: 3px;
+                        background: P.text;
+                    }
+                    Rectangle {
+                        height: 1px;
+                        background: P.text;
+                    }
+                }
+                HorizontalLayout {
+                    vertical-stretch: 1;
+                    // The column: All, then the lettered categories.
+                    Rectangle {
+                        width: 188px;
+                        Rectangle {
+                            x: parent.width - 1px;
+                            width: 1px;
+                            background: P.line;
+                        }
+                        VerticalLayout {
+                            padding-left: 14px;
+                            padding-right: 14px;
+                            padding-top: 14px;
+                            padding-bottom: 14px;
+                            spacing: 2px;
+                            alignment: start;
+                            for nav in Toolbox.nav: NavLine {
+                                nav: nav;
+                            }
+                        }
+                    }
+                    // The sections.
+                    Flickable {
+                        horizontal-stretch: 1;
+                        content-height: body.preferred-height;
+                        body := VerticalLayout {
+                            width: parent.width;
+                            alignment: start;
+                            padding-left: 22px;
+                            padding-right: 22px;
+                            padding-top: 10px;
+                            padding-bottom: 18px;
+                            spacing: 22px;
+                            for section in Toolbox.sections: VerticalLayout {
+                                spacing: 8px;
+                                Rectangle {
+                                    height: head.preferred-height;
+                                    Rectangle {
+                                        y: parent.height - 1px;
+                                        height: 1px;
+                                        background: P.line;
+                                    }
+                                    head := HorizontalLayout {
+                                        padding-bottom: 5px;
+                                        spacing: 10px;
+                                        Letter {
+                                            text: section.letter;
+                                        }
+                                        Text {
+                                            text: section.label;
+                                            color: P.text;
+                                            font-size: 17px;
+                                            font-weight: 600;
+                                            vertical-alignment: center;
+                                        }
+                                        Rectangle { horizontal-stretch: 1; }
+                                        if section.accounts: Text {
+                                            text: "⌘1–⌘0";
+                                            color: P.faint;
+                                            font-family: P.mono;
+                                            font-size: 12px;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                }
+                                if section.accounts: AccountGrid { }
+                                if !section.accounts: ToolGrid {
+                                    section: section;
+                                }
+                            }
+                            if Toolbox.no-hits: VerticalLayout {
+                                padding-top: 28px;
+                                padding-bottom: 28px;
+                                Text {
+                                    text: ToolboxWords.nothing(Toolbox.query);
+                                    color: P.faint;
+                                    font-size: 14px;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+                // The foot: the settings, the AI settings (still to come), the profile; the keys.
+                Rectangle {
+                    height: foot.preferred-height;
+                    Rectangle {
+                        y: 0;
+                        height: 1px;
+                        background: P.line;
+                    }
+                    foot := HorizontalLayout {
+                        padding-left: 22px;
+                        padding-right: 22px;
+                        padding-top: 10px;
+                        padding-bottom: 14px;
+                        spacing: 18px;
+                        FootLink {
+                            icon: "gear-six";
+                            label: ToolboxWords.settings();
+                            activated => {
+                                Toolbox.close();
+                                AppState.page = Page.settings;
+                            }
+                        }
+                        FootLink {
+                            icon: "sparkle";
+                            label: ToolboxWords.ai-settings();
+                            enabled: false;
+                        }
+                        FootLink {
+                            icon: "user-circle";
+                            label: ToolboxWords.profile();
+                            activated => {
+                                Toolbox.close();
+                                AppState.page = Page.profile;
+                            }
+                        }
+                        Rectangle { horizontal-stretch: 1; }
+                        Text {
+                            text: ToolboxWords.hint("⌘J");
+                            color: P.faint;
+                            font-size: 12px;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

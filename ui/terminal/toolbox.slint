@@ -1,0 +1,541 @@
+// The toolbox, Terminal (the design's seventh round, 7b): no drawer, but /tools puts a list in
+// the pane's place, the command line and the status bar staying: the categories at the left
+// (▸ marks the one shown), a row a tool at the right ([x] pins, the mark, the name, a line about
+// it, what goes on), the protocols as a tree under Downloads, the accounts as rows, the foot's
+// commands. "/tools 传输" jumps to a category, the same command again or Esc closes. The pinned
+// tools sit in the status bar before [⌘K cmd]. The state and the words are in ui/toolbox.slint;
+// src/toolbox.rs fills and acts.
+import { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow } from "../toolbox.slint";
+import { AppState, Page } from "../state.slint";
+import { Accounts, AccountRow } from "../telegram.slint";
+import { AccountColors, Look } from "../look.slint";
+import { Downloads } from "../downloads.slint";
+import { TerminalPalette as P } from "palette.slint";
+
+component T inherits Text {
+    font-family: P.font;
+    font-size: 13px;
+    color: P.text;
+    vertical-alignment: center;
+}
+
+// A row of the column at the left: All, or a category, ▸ before the one shown, how many tools it
+// has after it (hits while searching; the accounts: how many of ten).
+component NavLine inherits Rectangle {
+    in property <NavRow> nav;
+    property <bool> on: (Toolbox.searching ? "all" : Toolbox.category) == nav.id;
+    height: 24px;
+    border-radius: 2px;
+    background: on || touch.has-hover ? P.sel : transparent;
+
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 6px;
+        spacing: 8px;
+        T {
+            width: 10px;
+            text: root.on ? "▸" : "";
+            color: P.accent;
+        }
+        T {
+            horizontal-stretch: 1;
+            text: root.nav.label;
+            color: root.on ? P.accent : P.text;
+            font-weight: root.on ? 600 : 400;
+            overflow: elide;
+        }
+        T {
+            text: root.nav.accounts && !Toolbox.searching ? root.nav.count + "/10" : "" + root.nav.count;
+            color: P.faint;
+            font-size: 12px;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Toolbox.choose(root.nav.id);
+        }
+    }
+}
+
+// An account, a row: ▸ before the one in front, its colour, its name, its unread messages or
+// "Current", its key. A click brings one to the front.
+component AccountLine inherits Rectangle {
+    in property <AccountRow> account;
+    height: 26px;
+    border-radius: 2px;
+    background: account.current ? P.sel : touch.has-hover ? P.sel.transparentize(0.5) : transparent;
+
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 6px;
+        spacing: 8px;
+        T {
+            width: 10px;
+            text: root.account.current ? "▸" : "";
+            color: P.accent;
+        }
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 8px;
+                height: 8px;
+                border-radius: 2px;
+                background: AccountColors.accent(root.account.index, P.dark);
+            }
+        }
+        T {
+            horizontal-stretch: 1;
+            text: root.account.name;
+            color: root.account.current ? P.accent : P.text;
+            font-weight: root.account.current ? 600 : 400;
+            overflow: elide;
+        }
+        T {
+            text: root.account.current ? ToolboxWords.current() : root.account.unread > 0 ? "" + root.account.unread : "";
+            color: root.account.current ? P.accent : P.accent2;
+        }
+        T {
+            width: 28px;
+            text: "⌃" + (root.account.index == 9 ? 0 : root.account.index + 1);
+            color: P.faint;
+            font-size: 11px;
+            horizontal-alignment: right;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            if !root.account.current {
+                Toolbox.close();
+                Accounts.switch(root.account.slot);
+            }
+        }
+    }
+}
+
+// A protocol under Downloads, a branch of the tree: its name, its default port, a line about
+// it, and how many servers speak it, or that this version does not.
+component ProtocolLine inherits Rectangle {
+    in property <ProtocolRow> protocol;
+    in property <bool> last;
+    height: 24px;
+    border-radius: 2px;
+    background: touch.has-hover && !protocol.grey ? P.sel : transparent;
+    opacity: protocol.grey ? 0.42 : 1;
+
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 6px;
+        spacing: 10px;
+        T {
+            width: 24px;
+            text: root.last ? "└─" : "├─";
+            color: P.faint;
+        }
+        T {
+            width: 56px;
+            text: root.protocol.name;
+            font-weight: 600;
+        }
+        T {
+            width: 64px;
+            text: root.protocol.port;
+            color: P.faint;
+        }
+        T {
+            horizontal-stretch: 1;
+            text: root.protocol.line;
+            color: P.muted;
+            overflow: elide;
+        }
+        T {
+            text: root.protocol.grey ? ToolboxWords.not-yet() : ToolboxWords.servers(Downloads.servers.length);
+            color: P.faint;
+        }
+    }
+    touch := TouchArea {
+        enabled: !root.protocol.grey;
+        mouse-cursor: pointer;
+        clicked => {
+            Toolbox.open-tool("downloads");
+        }
+    }
+}
+
+// A tool, a row: [x] pins it (the box alone), its mark, its name (which opens it), a line about
+// it, and what goes on, after a star.
+component ToolLine inherits Rectangle {
+    in property <ToolRow> tool;
+    property <bool> live: !tool.grey;
+    property <bool> active: tool.id == "downloads" && Downloads.active-count > 0;
+    height: 26px;
+    border-radius: 2px;
+    background: open-touch.has-hover && live ? P.sel : transparent;
+
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 6px;
+        spacing: 8px;
+        T {
+            width: 24px;
+            text: root.tool.grey ? "[-]" : root.tool.pinned ? "[x]" : "[ ]";
+            color: root.tool.pinned ? P.accent : P.faint;
+            TouchArea {
+                enabled: root.live;
+                mouse-cursor: pointer;
+                clicked => {
+                    Toolbox.pin(root.tool.id, !root.tool.pinned);
+                }
+            }
+        }
+        T {
+            width: 16px;
+            text: root.tool.sigil;
+            color: P.faint;
+            opacity: root.live ? 1 : 0.42;
+        }
+        T {
+            text: root.tool.name;
+            color: open-touch.has-hover && root.live ? P.accent : P.text;
+            font-weight: 600;
+            opacity: root.live ? 1 : 0.42;
+            open-touch := TouchArea {
+                enabled: root.live;
+                mouse-cursor: pointer;
+                clicked => {
+                    Toolbox.open-tool(root.tool.id);
+                }
+            }
+        }
+        T {
+            horizontal-stretch: 1;
+            text: root.tool.line;
+            color: P.muted;
+            opacity: root.live ? 1 : 0.42;
+            overflow: elide;
+        }
+        if root.active: T {
+            text: "* " + ToolboxWords.downloading(Downloads.active-count);
+            color: P.accent2;
+        }
+        if root.tool.grey: T {
+            text: ToolboxWords.not-yet();
+            color: P.faint;
+            opacity: 0.42;
+        }
+    }
+}
+
+// A command at the foot: /settings, /ai (still to come), /me.
+component FootCommand inherits Rectangle {
+    in property <string> command;
+    in property <string> label;
+    in property <bool> enabled: true;
+    callback activated();
+    width: content.preferred-width;
+    height: 24px;
+
+    content := HorizontalLayout {
+        spacing: 6px;
+        T {
+            text: "[" + root.command + " " + root.label + "]";
+            color: touch.has-hover && root.enabled ? P.accent : P.text;
+            opacity: root.enabled ? 1 : 0.42;
+        }
+        if !root.enabled: T {
+            text: ToolboxWords.not-yet();
+            color: P.faint;
+            font-size: 12px;
+        }
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.activated();
+        }
+    }
+}
+
+export component TerminalToolbox inherits Rectangle {
+    background: P.bg;
+    property <bool> open: Toolbox.open;
+    changed open => {
+        if self.open {
+            search-box.focus();
+        }
+    }
+
+    // The category shown, by name, for the title.
+    pure function category-label(id: string) -> string {
+        if id == "accounts" { return ToolboxWords.accounts(); }
+        if id == "transfers" { return ToolboxWords.transfers(); }
+        if id == "media" { return ToolboxWords.media(); }
+        if id == "messages" { return ToolboxWords.messages(); }
+        if id == "connections" { return ToolboxWords.connections(); }
+        return "";
+    }
+
+    keys := FocusScope {
+        init => {
+            search-box.focus();
+        }
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                Toolbox.close();
+                return accept;
+            }
+            return reject;
+        }
+
+        VerticalLayout {
+            // The head: the command as typed, the search box, [esc].
+            Rectangle {
+                height: 34px;
+                background: P.pane-head;
+                HorizontalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    spacing: 12px;
+                    T {
+                        text: "» /tools" + (Toolbox.category != "all" && !Toolbox.searching ? " " + root.category-label(Toolbox.category) : "")
+                            + (Toolbox.searching ? " \"" + Toolbox.query + "\"" : "");
+                        color: P.accent;
+                        font-weight: 600;
+                    }
+                    Rectangle {
+                        horizontal-stretch: 1;
+                        max-width: 460px;
+                        height: 26px;
+                        Rectangle {
+                            y: parent.height - 1px;
+                            height: 1px;
+                            background: P.line;
+                        }
+                        HorizontalLayout {
+                            spacing: 8px;
+                            T {
+                                text: "❯";
+                                color: P.accent;
+                            }
+                            Rectangle {
+                                horizontal-stretch: 1;
+                                if Toolbox.query == "": T {
+                                    width: parent.width;
+                                    height: parent.height;
+                                    text: ToolboxWords.search();
+                                    color: P.faint;
+                                    overflow: elide;
+                                }
+                                search-box := TextInput {
+                                    width: parent.width;
+                                    height: parent.height;
+                                    text <=> Toolbox.query;
+                                    single-line: true;
+                                    color: P.text;
+                                    font-family: P.font;
+                                    font-size: 13px;
+                                    vertical-alignment: center;
+                                    selection-background-color: Look.input-sel;
+                                    selection-foreground-color: P.text;
+                                    text-cursor-width: Look.cursor-width;
+                                    edited => {
+                                        Toolbox.search(self.text);
+                                    }
+                                    accepted => {
+                                        Toolbox.open-first();
+                                    }
+                                }
+                            }
+                            if Toolbox.searching: T {
+                                text: ToolboxWords.hits(Toolbox.hits);
+                                color: P.faint;
+                                font-size: 12px;
+                            }
+                            if Toolbox.searching: T {
+                                text: "[×]";
+                                color: clear.has-hover ? P.accent : P.muted;
+                                clear := TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => {
+                                        Toolbox.search("");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    T {
+                        text: "[esc]";
+                        color: close.has-hover ? P.accent : P.faint;
+                        close := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                Toolbox.close();
+                            }
+                        }
+                    }
+                }
+            }
+            HorizontalLayout {
+                vertical-stretch: 1;
+                // The column: All, then the categories.
+                Rectangle {
+                    width: 176px;
+                    Rectangle {
+                        x: parent.width - 1px;
+                        width: 1px;
+                        background: P.line;
+                    }
+                    VerticalLayout {
+                        padding-left: 16px;
+                        padding-right: 9px;
+                        padding-top: 10px;
+                        padding-bottom: 10px;
+                        spacing: 2px;
+                        alignment: start;
+                        for nav in Toolbox.nav: NavLine {
+                            nav: nav;
+                        }
+                    }
+                }
+                // The sections.
+                Flickable {
+                    horizontal-stretch: 1;
+                    content-height: body.preferred-height;
+                    body := VerticalLayout {
+                        width: parent.width;
+                        alignment: start;
+                        padding-left: 16px;
+                        padding-right: 16px;
+                        padding-top: 10px;
+                        padding-bottom: 14px;
+                        spacing: 12px;
+                        T {
+                            text: ToolboxWords.pin-legend();
+                            color: P.faint;
+                            overflow: elide;
+                        }
+                        for section in Toolbox.sections: VerticalLayout {
+                            spacing: 4px;
+                            HorizontalLayout {
+                                spacing: 10px;
+                                T {
+                                    text: "── " + section.label + " ──";
+                                    color: P.faint;
+                                }
+                                Rectangle { horizontal-stretch: 1; }
+                                if section.accounts: T {
+                                    text: "⌃1–⌃0";
+                                    color: P.faint;
+                                    font-size: 12px;
+                                }
+                            }
+                            if section.accounts: VerticalLayout {
+                                for row in Toolbox.accounts: AccountLine {
+                                    account: row;
+                                }
+                                // Adding one; greyed with ten.
+                                Rectangle {
+                                    height: 24px;
+                                    opacity: Accounts.full ? 0.42 : 1;
+                                    HorizontalLayout {
+                                        padding-left: 6px;
+                                        spacing: 8px;
+                                        alignment: start;
+                                        T {
+                                            text: "[+ " + ToolboxWords.add-account() + "]";
+                                            color: Accounts.full ? P.faint : P.accent;
+                                        }
+                                        if Accounts.full: T {
+                                            text: ToolboxWords.limit-reached();
+                                            color: P.faint;
+                                        }
+                                    }
+                                    TouchArea {
+                                        mouse-cursor: Accounts.full ? MouseCursor.default : MouseCursor.pointer;
+                                        clicked => {
+                                            if !Accounts.full {
+                                                Toolbox.close();
+                                                Accounts.add();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            if !section.accounts: VerticalLayout {
+                                for tool in section.tools: VerticalLayout {
+                                    ToolLine {
+                                        tool: tool;
+                                    }
+                                    // The protocols, a tree under a family.
+                                    if tool.family: VerticalLayout {
+                                        padding-left: 48px;
+                                        T {
+                                            height: 22px;
+                                            text: ToolboxWords.protocols();
+                                            color: P.faint;
+                                        }
+                                        for protocol[i] in Toolbox.protocols: ProtocolLine {
+                                            protocol: protocol;
+                                            last: i == Toolbox.protocols.length - 1;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if Toolbox.no-hits: T {
+                            height: 40px;
+                            text: ToolboxWords.nothing(Toolbox.query);
+                            color: P.faint;
+                            horizontal-alignment: center;
+                        }
+                    }
+                }
+            }
+            // The foot: /settings, /ai (still to come), /me; the command's ways.
+            Rectangle {
+                height: 34px;
+                Rectangle {
+                    y: 0;
+                    height: 1px;
+                    background: P.line;
+                }
+                HorizontalLayout {
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    spacing: 16px;
+                    FootCommand {
+                        command: "/settings";
+                        label: ToolboxWords.settings();
+                        activated => {
+                            Toolbox.close();
+                            AppState.page = Page.settings;
+                        }
+                    }
+                    FootCommand {
+                        command: "/ai";
+                        label: ToolboxWords.ai-settings();
+                        enabled: false;
+                    }
+                    FootCommand {
+                        command: "/me";
+                        label: ToolboxWords.profile();
+                        activated => {
+                            Toolbox.close();
+                            AppState.page = Page.profile;
+                        }
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    T {
+                        text: ToolboxWords.command-hint();
+                        color: P.faint;
+                        font-size: 12px;
+                        overflow: elide;
+                    }
+                }
+            }
+        }
+    }
+}

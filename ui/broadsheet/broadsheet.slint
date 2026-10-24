@@ -1,8 +1,8 @@
 // Broadsheet (the design's "1a 报纸"): a newspaper's calm. A rail with the accounts, the chat list
 // with its folders as tabs, and the conversation in bubbles. The accent is the account's colour.
 import { ListView } from "std-widgets.slint";
-import { Drawer } from "../drawer.slint";
-import { BroadsheetDrawer } from "drawer.slint";
+import { Toolbox } from "../toolbox.slint";
+import { BroadsheetToolbox } from "toolbox.slint";
 import { InfoPanel } from "chat-info.slint";
 import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
@@ -127,7 +127,7 @@ component Rail inherits Rectangle {
         padding-bottom: 14px;
         spacing: 14px;
         alignment: start;
-        // The logo opens the drawer (drawer.slint): ringed while it is open, with a dot while an
+        // The logo opens the toolbox (toolbox.slint): ringed while it is open, with a dot while an
         // unpinned tool has something going on.
         HorizontalLayout {
             alignment: center;
@@ -141,13 +141,13 @@ component Rail inherits Rectangle {
                     height: 44px;
                     border-radius: 12px;
                     border-width: 2px;
-                    border-color: Drawer.open ? P.accent : transparent;
+                    border-color: Toolbox.open ? P.accent : transparent;
                 }
                 Logo {
                     size: 40px;
                     radius: 10px;
                 }
-                if Drawer.logo-dot: Rectangle {
+                if Toolbox.logo-dot: Rectangle {
                     x: parent.width - 7px;
                     y: -3px;
                     width: 10px;
@@ -160,7 +160,7 @@ component Rail inherits Rectangle {
                 TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
-                        Drawer.toggle();
+                        Toolbox.toggle();
                     }
                 }
             }
@@ -239,9 +239,9 @@ component Rail inherits Rectangle {
         padding-bottom: 16px;
         spacing: 16px;
         alignment: end;
-        // The tools pinned in the drawer's toolbox (drawer.slint), in its order; downloads carry a
-        // dot while some are on their way.
-        for tool in Drawer.pinned: HorizontalLayout {
+        // The tools pinned in the toolbox (toolbox.slint), in its order; downloads carry the number
+        // on their way, squared as the newspaper's badges are.
+        for tool in Toolbox.pinned: HorizontalLayout {
             alignment: center;
             Rectangle {
                 width: 22px;
@@ -252,17 +252,25 @@ component Rail inherits Rectangle {
                     color: P.muted;
                 }
                 if tool.id == "downloads" && Downloads.active-count > 0: Rectangle {
-                    x: parent.width / 2 + 6px;
-                    y: -2px;
-                    width: 7px;
-                    height: 7px;
-                    border-radius: 3.5px;
+                    x: parent.width / 2 + 5px;
+                    y: -6px;
+                    width: max(15px, count-label.preferred-width + 8px);
+                    height: 15px;
+                    border-radius: 2px;
                     background: P.accent;
+                    count-label := Text {
+                        text: Downloads.active-count > 99 ? "99+" : "" + Downloads.active-count;
+                        color: P.on-accent;
+                        font-size: 10px;
+                        font-weight: 600;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
                 }
                 TouchArea {
                     mouse-cursor: pointer;
                     clicked => {
-                        Drawer.open-tool(tool.id);
+                        Toolbox.open-tool(tool.id);
                     }
                 }
             }
@@ -3407,8 +3415,8 @@ export component BroadsheetWindow inherits Rectangle {
         }
     }
 
-    // The drawer, from the rail's right over the list, under the title bar.
-    BroadsheetDrawer {
+    // The toolbox, from the rail's right over the list, under the title bar.
+    BroadsheetToolbox {
         x: 80px;
         y: 40px;
         width: root.width - 80px;

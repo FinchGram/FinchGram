@@ -9,6 +9,7 @@ export enum ServerStatus { unknown, checking, connected, password-rejected, not-
 export struct ServerRow {
     name: string,
     host: string,           // "nas.home", out of the address
+    protocol: string,       // what it speaks: "WebDAV" (the only one this version does)
     status: ServerStatus,
 }
 
@@ -49,8 +50,9 @@ export struct TransferRow {
 // The form's "Test connection".
 export enum TestState { none, testing, ok, failed }
 
-// What is wrong with the form when Add or Save is pressed.
-export enum FormError { none, name, address }
+// What is wrong with the form when Add, Save or Test connection is pressed: no name, an address
+// that is not one, a port that is not one, or a protocol this version does not speak.
+export enum FormError { none, name, address, port, protocol }
 
 export global Downloads {
     in-out property <[ServerRow]> servers;
@@ -79,7 +81,9 @@ export global Downloads {
     in-out property <bool> form-open;
     in-out property <bool> form-editing;            // Save and Remove instead of Add
     in-out property <string> form-name;
+    in-out property <string> form-protocol: "webdav";    // "webdav", "ftp", "ftps", "sftp": the chip chosen
     in-out property <string> form-address;
+    in-out property <string> form-port;             // as typed; "" for the protocol's default port
     in-out property <string> form-username;
     in-out property <string> form-password;
     in-out property <FormError> form-error;
