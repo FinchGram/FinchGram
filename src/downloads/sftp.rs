@@ -9,7 +9,9 @@
 //! trusted reaches them all. A file comes in 8 MB chunks over several sessions at once, each its own SSH connection, the
 //! `.part` and `.part.json` of the WebDAV engine marking what is done, so a stopped file goes on
 //! where it was. Paths are relative to the folder the account lands in: "host/films" lists
-//! "films" there. FinchGram only reads: opendir, stat and read, nothing else.
+//! "films" there. opendir, stat and read read; remove, rmdir, rename, mkdir and write change,
+//! and only on a server the user allows changes on (the design's ninth round). A folder is
+//! deleted by walking it: SFTP has no deep delete.
 
 use std::os::unix::fs::FileExt as _;
 use std::path::{Path, PathBuf};
@@ -21,7 +23,7 @@ use russh::client::{self, AuthResult};
 use russh::keys::PublicKeyOrCertificate;
 use russh_sftp::client::SftpSession;
 use russh_sftp::protocol::StatusCode;
-use tokio::io::{AsyncReadExt as _, AsyncSeekExt as _};
+use tokio::io::{AsyncReadExt as _, AsyncSeekExt as _, AsyncWriteExt as _};
 
 use super::http::Http;
 use super::remote::{Entry, Error};
@@ -33,6 +35,10 @@ const READ_PATIENCE: u64 = 60;
 /// A chunk of a file, as the WebDAV engine cuts it; a piece of a chunk asked for at once.
 const CHUNK: u64 = 8 * 1024 * 1024;
 const PIECE: usize = 256 * 1024;
+/// A folder deleted is walked first: at most this many folders, this deep (as a folder
+/// download, src/downloads/mod.rs).
+const MOST_DELETED_FOLDERS: usize = 100_000;
+const DEEPEST_DELETE: usize = 64;
 
 /// The key the server is held to, in OpenSSH's one-line form: the one the user trusted, or none
 /// until they have. One slot per server (host and port), shared by every `Server` made for it
@@ -178,6 +184,93 @@ impl Server {
         })
     }
 
+    /// The file, or the folder with everything in it, gone: remove, or the folder walked and
+    /// emptied from the bottom up, then rmdir.
+    pub fn delete(&self, http: &Http, path: &[String], name: &str, is_dir: bool) -> Result<(), Error> {
+        let remote = self.remote_path(path, Some(name));
+        http.block_on(async {
+            let session = self.session().await?;
+            let outcome = if is_dir { remove_tree(&session.sftp, &remote).await } else { session.sftp.remove_file(remote).await.map_err(sftp_error) };
+            session.close().await;
+            outcome
+        })
+    }
+
+    /// `name` in `from` moved to `to` as `new_name`: rename. What `replace` names at the
+    /// destination (a file, `Some(false)`, or a folder, `Some(true)`) goes first; with `None`
+    /// the server does as it does with a taken name, which OpenSSH refuses.
+    pub fn move_to(&self, http: &Http, from: &[String], name: &str, to: &[String], new_name: &str, replace: Option<bool>) -> Result<(), Error> {
+        let source = self.remote_path(from, Some(name));
+        let destination = self.remote_path(to, Some(new_name));
+        http.block_on(async {
+            let session = self.session().await?;
+            let cleared = match replace {
+                Some(true) => remove_tree(&session.sftp, &destination).await,
+                Some(false) => session.sftp.remove_file(destination.clone()).await.map_err(sftp_error),
+                None => Ok(()),
+            };
+            let outcome = match cleared {
+                Ok(()) => session.sftp.rename(source, destination).await.map_err(sftp_error),
+                Err(err) => Err(err),
+            };
+            session.close().await;
+            outcome
+        })
+    }
+
+    /// A new folder `name` in `path`: mkdir.
+    pub fn make_folder(&self, http: &Http, path: &[String], name: &str) -> Result<(), Error> {
+        let remote = self.remote_path(path, Some(name));
+        http.block_on(async {
+            let session = self.session().await?;
+            let outcome = session.sftp.create_dir(remote).await.map_err(sftp_error);
+            session.close().await;
+            outcome
+        })
+    }
+
+    /// The file at `local`, `size` bytes, written into `path` as `name` over one session, from
+    /// its first byte; the bytes sent go to `progress` as they go.
+    #[allow(clippy::too_many_arguments)]
+    pub fn upload(&self, http: &Http, local: &Path, size: u64, path: &[String], name: &str, cancel: &AtomicBool, progress: &(dyn Fn(u64) + Sync)) -> Result<(), transfer::Error> {
+        use std::io::Read as _;
+        let mut file = std::fs::File::open(local).map_err(|err| transfer::Error::Disk(err.to_string()))?;
+        let remote = self.remote_path(path, Some(name));
+        http.block_on(async {
+            let session = self.session().await.map_err(super::remote::transfer_error)?;
+            let mut out = session.sftp.create(remote).await.map_err(|err| super::remote::transfer_error(sftp_error(err)))?;
+            let mut buffer = vec![0u8; PIECE];
+            let mut sent: u64 = 0;
+            let mut reported = Instant::now();
+            let outcome: Result<(), transfer::Error> = async {
+                while sent < size {
+                    if cancel.load(Ordering::Relaxed) {
+                        return Err(transfer::Error::Cancelled);
+                    }
+                    let want = (size - sent).min(PIECE as u64) as usize;
+                    let read = match file.read(&mut buffer[..want]) {
+                        Ok(0) => return Err(transfer::Error::Disk(format!("the file ended {} bytes early", size - sent))),
+                        Ok(read) => read,
+                        Err(err) => return Err(transfer::Error::Disk(err.to_string())),
+                    };
+                    out.write_all(&buffer[..read]).await.map_err(|err| transfer::Error::Connection(err.to_string()))?;
+                    sent += read as u64;
+                    if reported.elapsed() >= Duration::from_millis(50) {
+                        progress(sent);
+                        reported = Instant::now();
+                    }
+                }
+                out.close().await.map_err(|err| transfer::Error::Connection(err.to_string()))?;
+                Ok(())
+            }
+            .await;
+            session.close().await;
+            outcome?;
+            progress(sent);
+            Ok(())
+        })
+    }
+
     /// The file into `dest`, under the download folder `root`, in chunks over up to
     /// `streams.count` sessions at once, going on from the chunks a `.part` has.
     #[allow(clippy::too_many_arguments)]
@@ -299,6 +392,45 @@ fn chunk_length(index: usize, total: u64) -> u64 {
     total.saturating_sub(index as u64 * CHUNK).min(CHUNK)
 }
 
+/// The folder at `root` and everything in it gone: its folders found first, each listed once,
+/// their files removed as they are met, then the folders removed from the deepest up. A name
+/// that is not a name (webdav::is_plain_name) stops it: the server does not get to say what
+/// else goes.
+async fn remove_tree(sftp: &SftpSession, root: &str) -> Result<(), Error> {
+    let mut folders: Vec<(String, usize)> = vec![(root.to_string(), 0)];
+    let mut index = 0;
+    while index < folders.len() {
+        let (folder, depth) = folders[index].clone();
+        index += 1;
+        let listed = sftp.read_dir(folder.clone()).await.map_err(sftp_error)?;
+        for entry in listed {
+            let name = entry.file_name();
+            if name == "." || name == ".." {
+                continue;
+            }
+            if !super::webdav::is_plain_name(&name) {
+                return Err(Error::Unreadable(format!("the server named an entry in a way that is not a name: {name:?}")));
+            }
+            let child = format!("{folder}/{name}");
+            if entry.file_type().is_dir() {
+                if depth + 1 > DEEPEST_DELETE {
+                    return Err(Error::Unreadable(format!("the folder's folders go more than {DEEPEST_DELETE} deep")));
+                }
+                if folders.len() >= MOST_DELETED_FOLDERS {
+                    return Err(Error::Unreadable(format!("the folder holds more than {MOST_DELETED_FOLDERS} folders")));
+                }
+                folders.push((child, depth + 1));
+            } else {
+                sftp.remove_file(child).await.map_err(sftp_error)?;
+            }
+        }
+    }
+    for (folder, _) in folders.iter().rev() {
+        sftp.remove_dir(folder.clone()).await.map_err(sftp_error)?;
+    }
+    Ok(())
+}
+
 /// A connection with its SFTP subsystem.
 struct Session {
     handle: client::Handle<Handler>,
@@ -360,12 +492,14 @@ fn ssh_error(error: russh::Error) -> Error {
     }
 }
 
-/// What an SFTP failure means.
+/// What an SFTP failure means. A refusal other than the account's or a missing file comes with
+/// the server's words ("Failure": OpenSSH's for a folder not empty, or a name taken).
 fn sftp_error(error: russh_sftp::client::error::Error) -> Error {
     match error {
         russh_sftp::client::error::Error::Status(status) => match status.status_code {
             StatusCode::NoSuchFile => Error::Missing,
             StatusCode::PermissionDenied => Error::Forbidden,
+            StatusCode::Failure => Error::Refused(if status.error_message.is_empty() { "Failure".to_string() } else { status.error_message }),
             _ => Error::Unreadable(format!("{}: {}", status.status_code, status.error_message)),
         },
         russh_sftp::client::error::Error::Timeout => Error::Unreachable("the server did not answer in time".into()),

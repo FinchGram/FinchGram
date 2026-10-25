@@ -264,10 +264,11 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   决定（默认关）。`access.rs` 就是那个页面和应用第一次连接时请用户允许的对话框（ui/ai-access.slint、
   ui/pages/ai-access.slint，三个主题都有）：开关、哪些聊天、助手能写什么、允许或拒绝过的应用、记录。读取不标已读；
   秘密聊天、自毁媒体和限制保存的聊天的媒体永远不交出去。
-- 下载页面（`src/downloads/`，[downloads.zh-Hans.md](downloads.zh-Hans.md)）：WebDAV 客户端，对着 NAS、seedbox、
-  PikPak、Alist/OpenList 或 `vget serve` 共享的文件夹，只读。`webdav.rs` 列目录（PROPFIND），`transfer.rs` 把一个文件
+- 下载页面（`src/downloads/`，[downloads.zh-Hans.md](downloads.zh-Hans.md)）：WebDAV、FTP、FTPS 或 SFTP 客户端，对着
+  NAS、seedbox、PikPak、Alist/OpenList 或 `vget serve` 共享的文件夹，默认只读，用户为某台服务器允许改动（表单里的开关）后
+  也能在那台上删除、移动、重命名、上传。`webdav.rs` 列目录（PROPFIND），`transfer.rs` 把一个文件
   切成 8 MB 的块、最多 12 条连接并发取进 `.part` 文件，停了接着来，照 vget 的做法；`mod.rs` 是 UI 线程上的页面状态、
-  一个负责列目录的“servers”线程，以及每个在下的文件一个线程，同时两个。密码进 macOS 钥匙串，服务器和下载目录进
+  一个负责列目录的“servers”线程、每个在传的文件一个线程（同时两个），以及每批改动一个“changes”线程。密码进 macOS 钥匙串，服务器和下载目录进
   settings.toml；下好的照片或视频在媒体查看器里打开（`viewer.rs` 的 `view_file`）。这个页面不需要账号。
 - `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）。
 - `src/platform/`：平台层。目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接、剪贴板（文字和图片）；以及 macOS 上
@@ -323,7 +324,7 @@ FinchGram 自己要留的、既不是偏好设置也不是 Telegram 的东西，
 的程序，每行带一个用同一把密钥算出的标签：不是 FinchGram 写的行、或事后被改过的行，都不算数；SSH 服务器的密钥、以及
 settings.toml 里的 AI 访问设置（`settings::Mcp::seal`，启动时由 src/mcp/access.rs 核对）同样带标签。TDLib 的
 数据库从 0.4.18 起也有一把自己的密钥，同样存法（account 是“tdlib”）。规矩：偏好设置进 settings.toml，它要小、要能手改；
-记录进数据库；Telegram 自己的状态归 TDLib。现在数据库里放的是下载页的服务器和它们的密码（docs/downloads.zh-Hans.md）、
+记录进数据库；Telegram 自己的状态归 TDLib。现在数据库里放的是下载页的服务器、它们的密码和用户是否允许改动每一台（docs/downloads.zh-Hans.md）、
 AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md），以及你信任过的 SSH 服务器密钥和信任的日期
 （docs/downloads.zh-Hans.md）；以后的东西（重启后还在的下载队列、
 日志、每个聊天的设置）建的时候再加表。

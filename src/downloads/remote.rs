@@ -1,10 +1,13 @@
 //! What the servers of the downloads page have in common, whatever they speak: a protocol with
 //! its default port, an address as the user types it, a listing's entries, the ways a server can
 //! refuse, and `Remote`, one of the three clients (webdav.rs, ftp.rs, sftp.rs) behind one face
-//! for the page (mod.rs): list a folder, check a server, say where a file is, fetch it.
+//! for the page (mod.rs): list a folder, check a server, say where a file is, fetch it; and, where
+//! the user allows changes on the server (the design's ninth round), delete, move, rename, make
+//! a folder and upload.
 
 use std::fmt;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
 use super::http::{Failure, Http};
@@ -52,6 +55,18 @@ impl Protocol {
 
 }
 
+/// Whether a server allows changes, as far as it said (the design's ninth round): WebDAV's
+/// OPTIONS answer names the methods the server allows, and one without DELETE, MOVE, PUT or MKCOL
+/// is a server that only reads (PikPak with its read-only switch on); FTP and SFTP say nothing,
+/// and a change is tried to find out.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Changes {
+    #[default]
+    Unknown,
+    Allowed,
+    ReadOnly,
+}
+
 /// A folder's entry, whatever listed it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entry {
@@ -85,6 +100,9 @@ pub enum Error {
     /// An SSH server not trusted yet showed its key: the user is asked before the password goes
     /// out. The key it showed.
     KeyUnknown(String),
+    /// The server would not make a change, in its own words: an FTP reply ("550 Delete operation
+    /// failed."), an SFTP failure's message, a WebDAV Multi-Status.
+    Refused(String),
 }
 
 impl fmt::Display for Error {
@@ -98,8 +116,61 @@ impl fmt::Display for Error {
             Error::Missing => write!(f, "the server has no such file or folder"),
             Error::KeyChanged(_) => write!(f, "the server's key is not the one it showed before"),
             Error::KeyUnknown(_) => write!(f, "the server's key is not trusted yet"),
+            Error::Refused(words) => write!(f, "the server refused: {words}"),
         }
     }
+}
+
+impl Error {
+    /// Whether the server itself said no: the page words such a failure as a refusal, "The server
+    /// refused to delete … (403 Forbidden)", and anything else as what went wrong.
+    pub fn is_refusal(&self) -> bool {
+        matches!(self, Error::Unauthorized | Error::Forbidden | Error::Status(_) | Error::Missing | Error::Refused(_))
+    }
+
+    /// The refusal in a few words, within the page's parentheses: the HTTP status with its
+    /// reason, SSH's "Permission denied", an FTP reply as the server gave it.
+    pub fn refusal(&self, protocol: Protocol) -> String {
+        let (sftp, ftp) = (protocol == Protocol::Sftp, matches!(protocol, Protocol::Ftp | Protocol::Ftps));
+        match self {
+            Error::Forbidden if sftp => "Permission denied".into(),
+            Error::Forbidden if ftp => "550 Permission denied".into(),
+            Error::Forbidden => "403 Forbidden".into(),
+            Error::Unauthorized if sftp => "the password was refused".into(),
+            Error::Unauthorized if ftp => "530 Not logged in".into(),
+            Error::Unauthorized => "401 Unauthorized".into(),
+            Error::Missing if sftp => "No such file".into(),
+            Error::Missing if ftp => "550 No such file".into(),
+            Error::Missing => "404 Not Found".into(),
+            Error::Status(code) => http_status(*code),
+            Error::Refused(words) => words.clone(),
+            other => other.to_string(),
+        }
+    }
+}
+
+/// An HTTP status with its reason, "423 Locked", for the ones a WebDAV server answers a change
+/// with; "HTTP 599" for the rest.
+pub fn http_status(code: u16) -> String {
+    let reason = match code {
+        400 => "Bad Request",
+        401 => "Unauthorized",
+        403 => "Forbidden",
+        404 => "Not Found",
+        405 => "Method Not Allowed",
+        409 => "Conflict",
+        412 => "Precondition Failed",
+        413 => "Content Too Large",
+        415 => "Unsupported Media Type",
+        423 => "Locked",
+        500 => "Internal Server Error",
+        501 => "Not Implemented",
+        502 => "Bad Gateway",
+        503 => "Service Unavailable",
+        507 => "Insufficient Storage",
+        _ => return format!("HTTP {code}"),
+    };
+    format!("{code} {reason}")
 }
 
 impl From<Failure> for Error {
@@ -169,6 +240,15 @@ pub enum Remote {
 }
 
 impl Remote {
+    pub fn protocol(&self) -> Protocol {
+        match self {
+            Remote::WebDav(_) => Protocol::Webdav,
+            Remote::Ftp(server) if server.tls => Protocol::Ftps,
+            Remote::Ftp(_) => Protocol::Ftp,
+            Remote::Sftp(_) => Protocol::Sftp,
+        }
+    }
+
     /// The folder's entries. Blocks: call it on a worker thread.
     pub fn list(&self, http: &Http, path: &[String]) -> Result<Vec<Entry>, Error> {
         match self {
@@ -281,6 +361,61 @@ impl Remote {
         crate::platform::mark_downloaded(&target, Some(&log::shown(&self.file_link(path, name))));
         Ok(target)
     }
+
+    /// Whether the server allows changes, as far as it says (`Changes`). Blocks.
+    pub fn changes(&self, http: &Http) -> Changes {
+        match self {
+            Remote::WebDav(server) => server.changes(http),
+            Remote::Ftp(_) | Remote::Sftp(_) => Changes::Unknown,
+        }
+    }
+
+    /// The file, or the folder with everything in it, gone from the server. Blocks.
+    pub fn delete(&self, http: &Http, path: &[String], name: &str, is_dir: bool) -> Result<(), Error> {
+        match self {
+            Remote::WebDav(server) => server.delete(http, path, name, is_dir),
+            Remote::Ftp(server) => server.delete(path, name, is_dir),
+            Remote::Sftp(server) => server.delete(http, path, name, is_dir),
+        }
+    }
+
+    /// `name` in the folder `from` moved to the folder `to` as `new_name` (the same folder and
+    /// another name: a rename), on the same server. `replace` says what stands at the
+    /// destination already and is to go: a file (`Some(false)`), a folder (`Some(true)`); with
+    /// `None` the server is told not to overwrite anything. Blocks.
+    #[allow(clippy::too_many_arguments)]
+    pub fn move_to(&self, http: &Http, from: &[String], name: &str, is_dir: bool, to: &[String], new_name: &str, replace: Option<bool>) -> Result<(), Error> {
+        match self {
+            Remote::WebDav(server) => server.move_to(http, from, name, is_dir, to, new_name, replace.is_some()),
+            Remote::Ftp(server) => server.move_to(from, name, to, new_name, replace),
+            Remote::Sftp(server) => server.move_to(http, from, name, to, new_name, replace),
+        }
+    }
+
+    /// A new folder `name` in the folder `path`. Blocks.
+    pub fn make_folder(&self, http: &Http, path: &[String], name: &str) -> Result<(), Error> {
+        match self {
+            Remote::WebDav(server) => server.make_folder(http, path, name),
+            Remote::Ftp(server) => server.make_folder(path, name),
+            Remote::Sftp(server) => server.make_folder(http, path, name),
+        }
+    }
+
+    /// The file at `local`, `size` bytes, into the folder `path` as `name`, over one stream from
+    /// its first byte (no upload goes on where it stopped: a retry starts over), reporting the
+    /// bytes sent to `progress` as it goes. What is there under that name is replaced. Blocks:
+    /// call it on a thread of the file's own.
+    #[allow(clippy::too_many_arguments)]
+    pub fn upload(&self, http: &Http, local: &Path, size: u64, path: &[String], name: &str, cancel: &Arc<AtomicBool>, progress: &(dyn Fn(u64) + Sync)) -> Result<(), transfer::Error> {
+        let started = std::time::Instant::now();
+        match self {
+            Remote::WebDav(server) => server.upload(http, local, size, path, name, cancel, progress),
+            Remote::Ftp(server) => server.upload(local, size, path, name, cancel, progress),
+            Remote::Sftp(server) => server.upload(http, local, size, path, name, cancel, progress),
+        }?;
+        log::line(format!("uploaded {}: {:.1} MB in {:.1} s", log::shown(&self.file_link(path, name)), size as f64 / (1024.0 * 1024.0), started.elapsed().as_secs_f64()));
+        Ok(())
+    }
 }
 
 /// A server's refusal, as the transfer engine words it.
@@ -294,7 +429,26 @@ pub fn transfer_error(error: Error) -> transfer::Error {
         Error::Missing => transfer::Error::Missing,
         Error::KeyChanged(shown) => transfer::Error::KeyChanged(shown),
         Error::KeyUnknown(shown) => transfer::Error::KeyUnknown(shown),
+        Error::Refused(words) => transfer::Error::Refused(words),
     }
+}
+
+/// A transfer's failure as the servers word theirs: for an upload's row, which says what the
+/// server refused in the server's words (`Error::refusal`). None for what is not the server's
+/// doing: the user stopped it, or the disk.
+pub fn remote_error(error: &transfer::Error) -> Option<Error> {
+    Some(match error {
+        transfer::Error::Unauthorized => Error::Unauthorized,
+        transfer::Error::Forbidden => Error::Forbidden,
+        transfer::Error::Status(code) => Error::Status(*code),
+        transfer::Error::Missing => Error::Missing,
+        transfer::Error::Refused(words) => Error::Refused(words.clone()),
+        transfer::Error::Connection(why) => Error::Unreachable(why.clone()),
+        transfer::Error::Protocol(why) => Error::Unreadable(why.clone()),
+        transfer::Error::KeyChanged(shown) => Error::KeyChanged(shown.clone()),
+        transfer::Error::KeyUnknown(shown) => Error::KeyUnknown(shown.clone()),
+        transfer::Error::Cancelled | transfer::Error::Disk(_) => return None,
+    })
 }
 
 #[cfg(test)]
@@ -318,6 +472,20 @@ mod tests {
         assert!(!is_host_address("sftp://"));
         assert!(!is_host_address("a host"));
         assert!(!is_host_address("host/../etc"));
+    }
+
+    #[test]
+    fn a_refusal_is_worded_as_the_server_would() {
+        assert_eq!(Error::Forbidden.refusal(Protocol::Webdav), "403 Forbidden");
+        assert_eq!(Error::Forbidden.refusal(Protocol::Sftp), "Permission denied");
+        assert_eq!(Error::Forbidden.refusal(Protocol::Ftps), "550 Permission denied");
+        assert_eq!(Error::Status(423).refusal(Protocol::Webdav), "423 Locked");
+        assert_eq!(Error::Status(599).refusal(Protocol::Webdav), "HTTP 599");
+        assert_eq!(Error::Refused("550 Delete operation failed.".into()).refusal(Protocol::Ftp), "550 Delete operation failed.");
+        assert_eq!(Error::Missing.refusal(Protocol::Webdav), "404 Not Found");
+        assert!(Error::Status(507).is_refusal());
+        assert!(!Error::Unreachable("x".into()).is_refusal());
+        assert!(Error::Unreachable("no route".into()).refusal(Protocol::Webdav).contains("no route"));
     }
 
     #[test]

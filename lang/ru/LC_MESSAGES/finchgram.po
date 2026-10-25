@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-24 14:21+0000\n"
+"POT-Creation-Date: 2026-10-25 03:52+0000\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -45,8 +45,7 @@ msgid "Broadsheet"
 msgstr "Газета"
 
 #. The tools.
-#: ui/app.slint:125 ui/pages/downloads.slint:506 ui/pages/downloads.slint:1157
-#: ui/toolbox.slint:113
+#: ui/app.slint:125 ui/pages/downloads.slint:2013 ui/toolbox.slint:113
 msgid "Downloads"
 msgstr "Загрузки"
 
@@ -103,10 +102,10 @@ msgstr "Добавьте комментарий (необязательно)"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/broadsheet.slint:2592 ui/chat.slint:360 ui/compose.slint:244
-#: ui/pages/downloads.slint:1096 ui/pages/downloads.slint:2258
-#: ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
-#: ui/terminal/terminal.slint:1742 ui/workbench/actions.slint:548
-#: ui/workbench/conversation.slint:1655
+#: ui/pages/downloads.slint:1393 ui/pages/downloads.slint:1903
+#: ui/pages/downloads.slint:3370 ui/pages/settings.slint:1209
+#: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1742
+#: ui/workbench/actions.slint:548 ui/workbench/conversation.slint:1655
 msgid "Cancel"
 msgstr "Отменить"
 
@@ -117,8 +116,8 @@ msgid "Report"
 msgstr "Пожаловаться"
 
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2574
-#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1727
-#: ui/workbench/conversation.slint:1618
+#: ui/chat.slint:387 ui/chat.slint:821 ui/pages/downloads.slint:2375
+#: ui/terminal/terminal.slint:1727 ui/workbench/conversation.slint:1618
 msgid "Delete"
 msgstr "Удалить"
 
@@ -135,7 +134,7 @@ msgstr "Тёмная"
 msgid "Accounts"
 msgstr "Аккаунты"
 
-#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:1184
+#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:2040
 #: ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "Чаты"
@@ -176,7 +175,7 @@ msgid "Latest message"
 msgstr "Последнее сообщение"
 
 #: ui/broadsheet/broadsheet.slint:667 ui/chat-manage.slint:233
-#: ui/pages/downloads.slint:1709 ui/workbench/sidebar.slint:868
+#: ui/pages/downloads.slint:2630 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "Название"
 
@@ -529,7 +528,7 @@ msgstr "Права администратора"
 msgid "Change photo"
 msgstr "Изменить фото"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1960
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2953
 #: ui/pages/settings.slint:1269
 msgid "Save"
 msgstr "Сохранить"
@@ -635,7 +634,7 @@ msgid "Primary invite link"
 msgstr "Основная ссылка-приглашение"
 
 #: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:900
+#: ui/pages/downloads.slint:1197
 msgid "Copy"
 msgstr "Копировать"
 
@@ -773,7 +772,7 @@ msgstr "Поиск по контактам"
 msgid "No contacts to add"
 msgstr "Нет контактов для добавления"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1960
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2953
 msgid "Add"
 msgstr "Добавить"
 
@@ -802,7 +801,7 @@ msgid "Remove {0} from the channel?"
 msgstr "Удалить {0} из канала?"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:346 ui/pages/ai-access.slint:461
-#: ui/pages/downloads.slint:1991
+#: ui/pages/downloads.slint:2984
 msgid "Remove"
 msgstr "Убрать"
 
@@ -1183,8 +1182,8 @@ msgstr "Чат и его сообщения исчезнут из вашего �
 msgid "Also delete for {0}"
 msgstr "Также удалить для {0}"
 
-#: ui/chat.slint:303 ui/pages/downloads.slint:1468
-#: ui/pages/downloads.slint:2242
+#: ui/chat.slint:303 ui/pages/downloads.slint:2389
+#: ui/pages/downloads.slint:3294
 msgid "Open"
 msgstr "Открыть"
 
@@ -1414,11 +1413,12 @@ msgstr "Отменить отправку"
 msgid "Not sent"
 msgstr "Не отправлено"
 
-#: ui/chat.slint:386 ui/pages/downloads.slint:761 ui/pages/downloads.slint:2267
+#: ui/chat.slint:386 ui/pages/downloads.slint:1051
+#: ui/pages/downloads.slint:3379
 msgid "Retry"
 msgstr "Повторить"
 
-#: ui/chat.slint:388 ui/pages/downloads.slint:1474
+#: ui/chat.slint:388 ui/pages/downloads.slint:2395
 msgid "Download"
 msgstr "Скачать"
 
@@ -1426,12 +1426,12 @@ msgstr "Скачать"
 msgid "Cancel download"
 msgstr "Отменить скачивание"
 
-#: ui/chat.slint:390 ui/pages/downloads.slint:752
+#: ui/chat.slint:390 ui/pages/downloads.slint:1032
 msgid "Show in Finder"
 msgstr "Показать в Finder"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:392 ui/pages/downloads.slint:58
+#: ui/chat.slint:392 ui/pages/downloads.slint:60
 msgid "{0} of {1}"
 msgstr "{0} из {1}"
 
@@ -1443,7 +1443,7 @@ msgstr "Нажмите, чтобы посмотреть"
 msgid "Reply"
 msgstr "Ответить"
 
-#: ui/chat.slint:812 ui/pages/downloads.slint:2193
+#: ui/chat.slint:812 ui/pages/downloads.slint:3236
 msgid "Edit"
 msgstr "Изменить"
 
@@ -1807,7 +1807,7 @@ msgstr "Человек должен быть зарегистрирован в T
 msgid "Next"
 msgstr "Далее"
 
-#: ui/compose.slint:225
+#: ui/compose.slint:225 ui/pages/downloads.slint:1962
 msgid "Skip"
 msgstr "Пропустить"
 
@@ -1914,7 +1914,7 @@ msgstr "Не более 32 символов"
 msgid "Cannot end with an underscore"
 msgstr "Не может заканчиваться подчёркиванием"
 
-#: ui/compose.slint:271 ui/pages/downloads.slint:17
+#: ui/compose.slint:271 ui/pages/downloads.slint:18
 msgid "Checking…"
 msgstr "Проверка…"
 
@@ -1950,7 +1950,7 @@ msgid "It can be revoked and made anew in the channel's settings."
 msgstr "Её можно отозвать и создать заново в настройках канала."
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:900
+#: ui/pages/downloads.slint:1197
 msgid "Copied"
 msgstr "Скопировано"
 
@@ -2483,7 +2483,7 @@ msgstr "Подключение…"
 msgid "Updating…"
 msgstr "Обновление…"
 
-#: ui/format.slint:185 ui/pages/ai-access.slint:82 ui/pages/downloads.slint:16
+#: ui/format.slint:185 ui/pages/ai-access.slint:82 ui/pages/downloads.slint:17
 msgid "Connected"
 msgstr "Подключено"
 
@@ -2917,137 +2917,247 @@ msgstr ""
 "может читать ваши чаты и действовать в них через FinchGram от имени вашего "
 "аккаунта. Сам FinchGram не обращается к ИИ и ничего для него не хранит."
 
-#: ui/pages/downloads.slint:18
+#: ui/pages/downloads.slint:19
 msgid "Password rejected"
 msgstr "Пароль отклонён"
 
-#: ui/pages/downloads.slint:19
+#: ui/pages/downloads.slint:20
 msgid "Not reachable"
 msgstr "Недоступен"
 
-#: ui/pages/downloads.slint:20
+#: ui/pages/downloads.slint:21
 msgid "Key not checked"
 msgstr "Ключ не проверен"
 
-#: ui/pages/downloads.slint:21
+#: ui/pages/downloads.slint:22
 msgid "Key changed"
 msgstr "Ключ изменился"
 
-#: ui/pages/downloads.slint:27
+#: ui/pages/downloads.slint:28
 msgid "The server refused the password (401)"
 msgstr "Сервер отклонил пароль (401)"
 
-#: ui/pages/downloads.slint:28
+#: ui/pages/downloads.slint:29
 msgid "The server refused access (403)"
 msgstr "Сервер отказал в доступе (403)"
 
-#: ui/pages/downloads.slint:29
+#: ui/pages/downloads.slint:30
 msgid "Cannot reach {0}"
 msgstr "Не удаётся связаться с {0}"
 
-#: ui/pages/downloads.slint:30
+#: ui/pages/downloads.slint:31
 msgid "The server answered HTTP {0}"
 msgstr "Сервер ответил кодом HTTP {0}"
 
-#: ui/pages/downloads.slint:31
+#: ui/pages/downloads.slint:32
 msgid "The server did not answer with a WebDAV listing"
 msgstr "Сервер не вернул список файлов WebDAV"
 
-#: ui/pages/downloads.slint:32
+#: ui/pages/downloads.slint:33
 msgid "The connection was lost"
 msgstr "Соединение потеряно"
 
-#: ui/pages/downloads.slint:33
+#: ui/pages/downloads.slint:34
 msgid "The file could not be written"
 msgstr "Не удалось записать файл"
 
-#: ui/pages/downloads.slint:34
+#: ui/pages/downloads.slint:35
 msgid "The server has no such file or folder"
 msgstr "На сервере нет такого файла или папки"
 
-#: ui/pages/downloads.slint:35
+#: ui/pages/downloads.slint:36
 msgid ""
 "Not connected: you didn’t trust the server’s key. Your password wasn’t sent."
 msgstr "Нет подключения: вы не доверились ключу сервера. Пароль не отправлен."
 
-#: ui/pages/downloads.slint:36 ui/pages/downloads.slint:1568
+#: ui/pages/downloads.slint:37 ui/pages/downloads.slint:2489
 msgid "Not connected. This server’s key has changed."
 msgstr "Нет подключения. Ключ этого сервера изменился."
 
-#: ui/pages/downloads.slint:42
+#: ui/pages/downloads.slint:43
 msgid "the server refused the password (401)"
 msgstr "сервер отклонил пароль (401)"
 
-#: ui/pages/downloads.slint:43
+#: ui/pages/downloads.slint:44
 msgid "the server refused access (403)"
 msgstr "сервер отказал в доступе (403)"
 
-#: ui/pages/downloads.slint:44
+#: ui/pages/downloads.slint:45
 msgid "the server answered HTTP {0}"
 msgstr "сервер ответил кодом HTTP {0}"
 
-#: ui/pages/downloads.slint:45
+#: ui/pages/downloads.slint:46
 msgid "the server did not answer with the file"
 msgstr "сервер не вернул файл"
 
-#: ui/pages/downloads.slint:46
+#: ui/pages/downloads.slint:47
 msgid "the file could not be written"
 msgstr "не удалось записать файл"
 
 #
-#: ui/pages/downloads.slint:47
+#: ui/pages/downloads.slint:48
 msgid "the server has no such file"
 msgstr "на сервере нет такого файла"
 
-#: ui/pages/downloads.slint:48
+#: ui/pages/downloads.slint:49
 msgid "the server’s key changed"
 msgstr "ключ сервера изменился"
 
-#: ui/pages/downloads.slint:49
+#: ui/pages/downloads.slint:50
 msgid "the server closed the connection"
 msgstr "сервер закрыл соединение"
 
-#: ui/pages/downloads.slint:53
+#: ui/pages/downloads.slint:55
 msgid "Waiting · {0}"
 msgstr "Ожидание · {0}"
 
-#: ui/pages/downloads.slint:54
+#: ui/pages/downloads.slint:56
 msgid "Done · {0}"
 msgstr "Готово · {0}"
 
-#: ui/pages/downloads.slint:55
+#: ui/pages/downloads.slint:57
 msgid "Paused until you check the server’s key. {0} of {1} kept."
 msgstr "Пауза, пока вы не проверите ключ сервера. Сохранено {0} из {1}."
 
-#: ui/pages/downloads.slint:56
+#: ui/pages/downloads.slint:58
 msgid "Stopped: {0}. {1} of {2} kept."
 msgstr "Остановлено: {0}. Сохранено {1} из {2}."
 
-#: ui/pages/downloads.slint:57
+#: ui/pages/downloads.slint:59
 msgid "Server busy (HTTP {0}), trying again…"
 msgstr "Сервер занят (HTTP {0}), повтор…"
 
-#: ui/pages/downloads.slint:59
+#: ui/pages/downloads.slint:61
 msgid "{0} of {1} · {2} · {3}"
 msgstr "{0} из {1} · {2} · {3}"
 
-#: ui/pages/downloads.slint:63
+#: ui/pages/downloads.slint:65
 msgid "estimating…"
 msgstr "оценка времени…"
 
-#: ui/pages/downloads.slint:64
+#: ui/pages/downloads.slint:66
 msgid "{0} s left"
 msgstr "осталось {0} с"
 
-#: ui/pages/downloads.slint:65
+#: ui/pages/downloads.slint:67
 msgid "{0} min left"
 msgstr "осталось {0} мин"
 
+#: ui/pages/downloads.slint:73
+msgid "Waiting · to {0} · {1}"
+msgstr "Ожидание · в {0} · {1}"
+
 #: ui/pages/downloads.slint:74
+msgid "Uploaded to {0} · {1}"
+msgstr "Загружено в {0} · {1}"
+
+#: ui/pages/downloads.slint:75
+msgid "The server refused the upload ({0})."
+msgstr "Сервер отказал в загрузке ({0})."
+
+#: ui/pages/downloads.slint:76
+msgid "Stopped: {0}. Retry starts over."
+msgstr "Остановлено: {0}. Повтор начнётся с начала."
+
+#: ui/pages/downloads.slint:77
+msgid "To {0} · {1} of {2}"
+msgstr "В {0} · {1} из {2}"
+
+#: ui/pages/downloads.slint:78
+msgid "To {0} · {1} of {2} · {3} · {4}"
+msgstr "В {0} · {1} из {2} · {3} · {4}"
+
+#: ui/pages/downloads.slint:88
+msgid "delete {0} items"
+msgstr "удалить {0} объектов"
+
+#: ui/pages/downloads.slint:89
+msgid "delete “{0}”"
+msgstr "удалить «{0}»"
+
+#
+#
+#: ui/pages/downloads.slint:90
+msgid "move {0} items"
+msgstr "переместить {0} объектов"
+
+#: ui/pages/downloads.slint:91
+msgid "move “{0}”"
+msgstr "переместить «{0}»"
+
+#: ui/pages/downloads.slint:92
+msgid "rename “{0}”"
+msgstr "переименовать «{0}»"
+
+#: ui/pages/downloads.slint:93
+msgid "create the folder “{0}”"
+msgstr "создать папку «{0}»"
+
+#: ui/pages/downloads.slint:99
+msgid "The server refused to {0} ({1})."
+msgstr "Сервер отказался {0} ({1})."
+
+#: ui/pages/downloads.slint:101
+msgid "Couldn’t {0}: {1}"
+msgstr "Не удалось {0}: {1}"
+
+#: ui/pages/downloads.slint:106
+msgid "Deleted {0} items"
+msgstr "Удалено {0} объектов"
+
+#: ui/pages/downloads.slint:107
+msgid "Deleted “{0}”"
+msgstr "«{0}» удалён"
+
+#: ui/pages/downloads.slint:108
+msgid "Moved {0} items to {1}"
+msgstr "Перемещено {0} объектов в {1}"
+
+#: ui/pages/downloads.slint:109
+msgid "Moved “{0}” to {1}"
+msgstr "«{0}» перемещён в {1}"
+
+#: ui/pages/downloads.slint:110
+msgid "Nothing was moved"
+msgstr "Ничего не перемещено"
+
+#: ui/pages/downloads.slint:116
+msgid "Changes: allowed by the server."
+msgstr "Изменения: сервер разрешает."
+
+#: ui/pages/downloads.slint:117
+msgid "Changes: the server only allows reading."
+msgstr "Изменения: сервер разрешает только чтение."
+
+#: ui/pages/downloads.slint:118
+msgid "Changes: the server didn’t say. You’ll know when you try."
+msgstr "Изменения: сервер не сказал. Узнаете, когда попробуете."
+
+#: ui/pages/downloads.slint:123
+msgid "There’s already “{0}” here."
+msgstr "Здесь уже есть «{0}»."
+
+#: ui/pages/downloads.slint:124
+msgid "Names can’t contain “/”."
+msgstr "В имени не может быть «/»."
+
+#: ui/pages/downloads.slint:131
+msgid "Folder"
+msgstr "Папка"
+
+#: ui/pages/downloads.slint:132
+msgid "Empty folder"
+msgstr "Пустая папка"
+
+#: ui/pages/downloads.slint:133
+msgid "Folder · {0} items inside"
+msgstr "Папка · {0} объектов внутри"
+
+#: ui/pages/downloads.slint:142
 msgid "Reached: {0} folders and {1} files at the root."
 msgstr "Подключено. В корне папок: {0}, файлов: {1}."
 
-#: ui/pages/downloads.slint:77
+#: ui/pages/downloads.slint:145
 msgid ""
 "Reached: {0} folders and {1} files at the root. Ranges supported, so "
 "downloads can use several connections."
@@ -3055,7 +3165,7 @@ msgstr ""
 "Подключено. В корне папок: {0}, файлов: {1}. Запросы Range поддерживаются: "
 "файлы можно скачивать по нескольким соединениям сразу."
 
-#: ui/pages/downloads.slint:79
+#: ui/pages/downloads.slint:147
 msgid ""
 "Reached: {0} folders and {1} files at the root. No ranges, so each file "
 "comes over one connection."
@@ -3063,163 +3173,320 @@ msgstr ""
 "Подключено. В корне папок: {0}, файлов: {1}. Запросы Range не "
 "поддерживаются: каждый файл скачивается по одному соединению."
 
-#: ui/pages/downloads.slint:83
+#: ui/pages/downloads.slint:151
 msgid "Give the server a name."
 msgstr "Укажите название сервера."
 
-#: ui/pages/downloads.slint:84
+#: ui/pages/downloads.slint:152
 msgid "The address needs to start with http:// or https://."
 msgstr "Адрес должен начинаться с http:// или https://."
 
 #
-#: ui/pages/downloads.slint:85
+#: ui/pages/downloads.slint:153
 msgid "Give the server's host name or IP."
 msgstr "Укажите имя хоста или IP сервера."
 
-#: ui/pages/downloads.slint:86
+#: ui/pages/downloads.slint:154
 msgid "The port needs to be a number from 1 to 65535."
 msgstr "Порт должен быть числом от 1 до 65535."
 
-#: ui/pages/downloads.slint:114
+#: ui/pages/downloads.slint:182
 msgid "Host name or IP. A folder may follow after a /."
 msgstr "Имя хоста или IP. После / может идти папка."
 
-#: ui/pages/downloads.slint:115
+#: ui/pages/downloads.slint:183
 msgid "Host name or IP. Implicit TLS on the default port."
 msgstr "Имя хоста или IP. Неявный TLS на порту по умолчанию."
 
-#: ui/pages/downloads.slint:116
+#: ui/pages/downloads.slint:184
 msgid "Host name or IP of the SSH server."
 msgstr "Имя хоста или IP сервера SSH."
 
-#: ui/pages/downloads.slint:117
+#: ui/pages/downloads.slint:185
 msgid "http:// or https://. A folder may be part of the address."
 msgstr "http:// или https://. Адрес может включать папку."
 
-#: ui/pages/downloads.slint:121
+#: ui/pages/downloads.slint:189
 msgid "Default port {}."
 msgstr "Порт по умолчанию: {}."
 
-#: ui/pages/downloads.slint:404 ui/pages/downloads.slint:1612
+#: ui/pages/downloads.slint:472 ui/pages/downloads.slint:2533
 msgid "Add server"
 msgstr "Добавить сервер"
 
-#: ui/pages/downloads.slint:446
+#: ui/pages/downloads.slint:514
 msgid "Filter this folder"
 msgstr "Искать в этой папке"
 
-#: ui/pages/downloads.slint:770 ui/pages/downloads.slint:1578
+#: ui/pages/downloads.slint:574 ui/pages/downloads.slint:3030
+msgid "Transfers"
+msgstr "Передача"
+
+#: ui/pages/downloads.slint:659
+msgid "Upload"
+msgstr "Загрузить"
+
+#: ui/pages/downloads.slint:750
+msgid "Drop to upload to {0}"
+msgstr "Отпустите, чтобы загрузить в {0}"
+
+#: ui/pages/downloads.slint:750
+msgid "The server doesn’t allow changes"
+msgstr "Сервер не разрешает изменения"
+
+#
+#: ui/pages/downloads.slint:757
+msgid "{0} only allows reading."
+msgstr "{0} разрешает только чтение."
+
+#: ui/pages/downloads.slint:1042
+msgid "Show"
+msgstr "Показать"
+
+#: ui/pages/downloads.slint:1060 ui/pages/downloads.slint:2499
 msgid "Check key"
 msgstr "Проверить ключ"
 
-#: ui/pages/downloads.slint:1007
+#: ui/pages/downloads.slint:1304
 msgid "This server’s key has changed"
 msgstr "Ключ этого сервера изменился"
 
-#: ui/pages/downloads.slint:1007
+#: ui/pages/downloads.slint:1304
 msgid "Trust this server’s key?"
 msgstr "Доверять ключу этого сервера?"
 
-#: ui/pages/downloads.slint:1015
+#: ui/pages/downloads.slint:1312
 msgid ""
 "It isn’t the server you connected to before, or someone is between you and "
 "it."
-msgstr "Это не тот сервер, к которому вы подключались раньше, или между вами кто-то есть."
+msgstr ""
+"Это не тот сервер, к которому вы подключались раньше, или между вами кто-то "
+"есть."
 
-#: ui/pages/downloads.slint:1016
+#: ui/pages/downloads.slint:1313
 msgid ""
 "This is the first time you connect to this server. Compare the fingerprint "
 "with the one its owner gave you. If you can’t, don’t continue."
-msgstr "Вы подключаетесь к этому серверу впервые. Сравните отпечаток с тем, что дал вам его владелец. Если не можете — не продолжайте."
+msgstr ""
+"Вы подключаетесь к этому серверу впервые. Сравните отпечаток с тем, что дал "
+"вам его владелец. Если не можете — не продолжайте."
 
-#: ui/pages/downloads.slint:1026
+#: ui/pages/downloads.slint:1323
 msgid "Server"
 msgstr "Сервер"
 
-#: ui/pages/downloads.slint:1051
+#: ui/pages/downloads.slint:1348
 msgid "Trusted earlier · {0}"
 msgstr "Доверенный ранее · {0}"
 
-#: ui/pages/downloads.slint:1052
+#: ui/pages/downloads.slint:1349
 msgid "Trusted since {0} · {1}"
 msgstr "Доверенный с {0} · {1}"
 
-#: ui/pages/downloads.slint:1057
+#: ui/pages/downloads.slint:1354
 msgid "Shown now · {0}"
 msgstr "Показан сейчас · {0}"
 
-#: ui/pages/downloads.slint:1057
+#: ui/pages/downloads.slint:1354
 msgid "{0} key · SHA256 fingerprint"
 msgstr "Ключ {0} · отпечаток SHA256"
 
-#: ui/pages/downloads.slint:1075
+#: ui/pages/downloads.slint:1372
 msgid ""
 "Nothing has been sent. If the owner says the key changed, check the new "
 "fingerprint with them first."
-msgstr "Ничего не отправлено. Если владелец говорит, что ключ сменился, сначала сверьте с ним новый отпечаток."
+msgstr ""
+"Ничего не отправлено. Если владелец говорит, что ключ сменился, сначала "
+"сверьте с ним новый отпечаток."
 
-#: ui/pages/downloads.slint:1076
+#: ui/pages/downloads.slint:1373
 msgid "Your password isn’t sent until you trust the key."
 msgstr "Пароль не отправляется, пока вы не доверитесь ключу."
 
-#: ui/pages/downloads.slint:1087
+#: ui/pages/downloads.slint:1384
 msgid "esc  don’t connect"
 msgstr "esc  не подключаться"
 
-#: ui/pages/downloads.slint:1087
+#: ui/pages/downloads.slint:1384 ui/pages/downloads.slint:1593
 msgid "esc  cancel"
 msgstr "esc  отмена"
 
-#: ui/pages/downloads.slint:1102
+#: ui/pages/downloads.slint:1399
 msgid "Trust new key"
 msgstr "Доверять новому ключу"
 
-#: ui/pages/downloads.slint:1109
+#: ui/pages/downloads.slint:1406
 msgid "Don’t connect"
 msgstr "Не подключаться"
 
-#: ui/pages/downloads.slint:1109
+#: ui/pages/downloads.slint:1406
 msgid "Trust and continue"
 msgstr "Доверять и продолжить"
 
-#: ui/pages/downloads.slint:1196
+#: ui/pages/downloads.slint:1549
+msgid "Already there"
+msgstr "Уже там"
+
+#: ui/pages/downloads.slint:1561
+msgid "and {0} more"
+msgstr "и ещё {0}"
+
+#: ui/pages/downloads.slint:1630
+msgid "Can’t move a folder into itself"
+msgstr "Папку нельзя переместить в неё же"
+
+#: ui/pages/downloads.slint:1630
+msgid "Current folder"
+msgstr "Текущая папка"
+
+#: ui/pages/downloads.slint:1660
+msgid "Delete “{0}”?"
+msgstr "Удалить «{0}»?"
+
+#: ui/pages/downloads.slint:1660
+msgid "Delete {0} items?"
+msgstr "Удалить {0} объектов?"
+
+#: ui/pages/downloads.slint:1661
+msgid "Deleted on {0} itself. There’s no trash, and it can’t be undone."
+msgstr "Удаляется прямо на {0}. Корзины нет, и отменить нельзя."
+
+#: ui/pages/downloads.slint:1671
+msgid "Folders are deleted with everything in them."
+msgstr "Папки удаляются вместе со всем содержимым."
+
+#: ui/pages/downloads.slint:1687
+msgid "Delete {0} items"
+msgstr "Удалить {0} объектов"
+
+#: ui/pages/downloads.slint:1702
+msgid "Move “{0}” to…"
+msgstr "Переместить «{0}» в…"
+
+#: ui/pages/downloads.slint:1702 ui/pages/downloads.slint:3331
+msgid "Move {0} items to…"
+msgstr "Переместить {0} объектов в…"
+
+#: ui/pages/downloads.slint:1703
+msgid "Within {0} only."
+msgstr "Только внутри {0}."
+
+#: ui/pages/downloads.slint:1793
+msgid "Folder name"
+msgstr "Имя папки"
+
+#: ui/pages/downloads.slint:1847
+msgid "No folders here"
+msgstr "Здесь нет папок"
+
+#: ui/pages/downloads.slint:1856
+msgid "Move to: {0}"
+msgstr "Переместить в: {0}"
+
+#: ui/pages/downloads.slint:1856
+msgid "Already in this folder."
+msgstr "Уже в этой папке."
+
+#: ui/pages/downloads.slint:1887
+msgid "New folder"
+msgstr "Новая папка"
+
+#: ui/pages/downloads.slint:1909
+msgid "Move here"
+msgstr "Переместить сюда"
+
+#: ui/pages/downloads.slint:1928
+msgid "“{0}” is already in {1}"
+msgstr "«{0}» уже есть в {1}"
+
+#: ui/pages/downloads.slint:1928
+msgid "{0} items are already in {1}"
+msgstr "{0} объектов уже есть в {1}"
+
+#: ui/pages/downloads.slint:1929
+msgid "Choose before uploading."
+msgstr "Выберите перед загрузкой."
+
+#: ui/pages/downloads.slint:1929
+msgid "Choose before moving."
+msgstr "Выберите перед перемещением."
+
+#: ui/pages/downloads.slint:1930
+msgid "The other one uploads as usual."
+msgstr "Другой загружается как обычно."
+
+#: ui/pages/downloads.slint:1930
+msgid "The other one moves as usual."
+msgstr "Другой перемещается как обычно."
+
+#: ui/pages/downloads.slint:1931
+msgid "The other {0} upload as usual."
+msgstr "Остальные {0} загружаются как обычно."
+
+#: ui/pages/downloads.slint:1931
+msgid "The other {0} move as usual."
+msgstr "Остальные {0} перемещаются как обычно."
+
+#: ui/pages/downloads.slint:1945
+msgid ""
+"Keep both adds “(2)” to the name. Replace deletes the one that’s there; it "
+"can’t be undone."
+msgstr "«Оставить оба» добавит к имени «(2)». «Заменить» удалит тот, что там; отменить нельзя."
+
+#: ui/pages/downloads.slint:1945
+msgid "Folders aren’t merged."
+msgstr "Папки не объединяются."
+
+#: ui/pages/downloads.slint:1955
+msgid "Replace"
+msgstr "Заменить"
+
+#: ui/pages/downloads.slint:1968
+msgid "Keep both"
+msgstr "Оставить оба"
+
+#: ui/pages/downloads.slint:2052
 msgid "Servers"
 msgstr "Серверы"
 
-#: ui/pages/downloads.slint:1402
+#: ui/pages/downloads.slint:2307
 msgid "Modified"
 msgstr "Изменено"
 
-#: ui/pages/downloads.slint:1407
+#: ui/pages/downloads.slint:2312
 msgid "Size"
 msgstr "Размер"
 
-#: ui/pages/downloads.slint:1431
+#: ui/pages/downloads.slint:2337
 msgid "Nothing in this folder matches “{0}”"
 msgstr "В этой папке ничего не найдено по запросу «{0}»"
 
-#: ui/pages/downloads.slint:1453
+#: ui/pages/downloads.slint:2359
 msgid "{0} selected · {1}"
 msgstr "Выбрано: {0} · {1}"
 
-#: ui/pages/downloads.slint:1461
+#: ui/pages/downloads.slint:2368
+msgid "Move…"
+msgstr "Переместить…"
+
+#: ui/pages/downloads.slint:2382
 msgid "Clear"
 msgstr "Сбросить"
 
-#: ui/pages/downloads.slint:1510
+#: ui/pages/downloads.slint:2431
 msgid "This folder is empty"
 msgstr "Эта папка пуста"
 
-#: ui/pages/downloads.slint:1568
+#: ui/pages/downloads.slint:2489
 msgid "Not connected yet. Check this server’s key first."
 msgstr "Ещё не подключено. Сначала проверьте ключ этого сервера."
 
 #
-#: ui/pages/downloads.slint:1595
+#: ui/pages/downloads.slint:2516
 msgid "No servers yet"
 msgstr "Серверов пока нет"
 
-#: ui/pages/downloads.slint:1598
+#: ui/pages/downloads.slint:2519
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -3229,22 +3496,19 @@ msgstr ""
 "папки, которую вы раздаёте через vget serve. Затем просматривайте содержимое "
 "здесь и выбирайте нужные файлы."
 
-#: ui/pages/downloads.slint:1604
+#: ui/pages/downloads.slint:2525
 msgid ""
-"Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
-"reads: nothing is uploaded, synced, renamed or deleted on the server."
-msgstr ""
-"К облачным дискам без WebDAV можно подключиться через OpenList. FinchGram "
-"только читает: ничего не загружает на сервер, не синхронизирует, не "
-"переименовывает и не удаляет."
+"Cloud drives without WebDAV can be reached through OpenList. FinchGram "
+"changes nothing on a server unless you allow it for that server."
+msgstr "Облака без WebDAV доступны через OpenList. FinchGram ничего не меняет на сервере, пока вы не разрешите это для него."
 
-#: ui/pages/downloads.slint:1677
+#: ui/pages/downloads.slint:2598
 msgid "Edit server"
 msgstr "Изменить сервер"
 
 #
 #
-#: ui/pages/downloads.slint:1680
+#: ui/pages/downloads.slint:2601
 msgid ""
 "The address of the server, and the account it gave you. The password is kept "
 "sealed in FinchGram's database on this Mac."
@@ -3252,59 +3516,73 @@ msgstr ""
 "Адрес сервера и учётная запись, которую он вам выдал. Пароль хранится "
 "запечатанным в базе данных FinchGram на этом Mac."
 
-#: ui/pages/downloads.slint:1690
+#: ui/pages/downloads.slint:2611
 msgid "Protocol"
 msgstr "Протокол"
 
-#: ui/pages/downloads.slint:1724
+#: ui/pages/downloads.slint:2645
 msgid "Address"
 msgstr "Адрес"
 
-#: ui/pages/downloads.slint:1733
+#: ui/pages/downloads.slint:2654
 msgid "Port"
 msgstr "Порт"
 
-#: ui/pages/downloads.slint:1753
+#: ui/pages/downloads.slint:2674
 msgid "Server key"
 msgstr "Ключ сервера"
 
-#: ui/pages/downloads.slint:1789
+#: ui/pages/downloads.slint:2710
 msgid "First seen {0}"
 msgstr "Впервые встречен {0}"
 
-#: ui/pages/downloads.slint:1797
+#: ui/pages/downloads.slint:2718
 msgid "Forget this key"
 msgstr "Забыть этот ключ"
 
-#: ui/pages/downloads.slint:1829
+#: ui/pages/downloads.slint:2750
 msgid "Forgotten. You’ll check it again on the next connection."
 msgstr "Забыт. При следующем подключении вы проверите его снова."
 
-#: ui/pages/downloads.slint:1829
+#: ui/pages/downloads.slint:2750
 msgid "Not seen yet. You’ll check it the first time you connect."
 msgstr "Ещё не встречался. Вы проверите его при первом подключении."
 
 #
-#: ui/pages/downloads.slint:1848
+#: ui/pages/downloads.slint:2769
 msgid "Sign in with"
 msgstr "Вход по"
 
-#: ui/pages/downloads.slint:1856 ui/pages/downloads.slint:1871
+#: ui/pages/downloads.slint:2777 ui/pages/downloads.slint:2792
 #: ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "Пароль"
 
-#: ui/pages/downloads.slint:1860
+#: ui/pages/downloads.slint:2781
 msgid "Key"
 msgstr "ключу"
 
 #
-#: ui/pages/downloads.slint:1865
+#: ui/pages/downloads.slint:2786
 msgid "Key sign-in isn’t in this version."
 msgstr "Вход по ключу в этой версии недоступен."
 
+#: ui/pages/downloads.slint:2825
+msgid "Allow changes to files on this server"
+msgstr "Разрешить изменять файлы на этом сервере"
+
+#: ui/pages/downloads.slint:2831
+msgid ""
+"Delete, move, rename and upload on the server. Deleted files can’t be "
+"recovered."
+msgstr "Удалять, перемещать, переименовывать и загружать на сервер. Удалённые файлы не восстановить."
+
+#: ui/pages/downloads.slint:2837
+msgid "This server said it only allows reading."
+msgstr "Этот сервер сообщил, что разрешает только чтение."
+
 #
-#: ui/pages/downloads.slint:1894
+#: ui/pages/downloads.slint:2874
 msgid ""
 "Over FTP the password and the files travel in the clear: use this server "
 "only on a network you trust, or FTPS."
@@ -3312,7 +3590,7 @@ msgstr ""
 "По FTP пароль и файлы идут открытым текстом: используйте этот сервер только "
 "в сети, которой доверяете, или FTPS."
 
-#: ui/pages/downloads.slint:1895
+#: ui/pages/downloads.slint:2875
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
@@ -3320,47 +3598,75 @@ msgstr ""
 "По http пароль и файлы передаются открытым текстом: используйте этот сервер "
 "только в сети, которой доверяете."
 
-#: ui/pages/downloads.slint:1931
+#: ui/pages/downloads.slint:2911
 msgid "Testing…"
 msgstr "Проверка…"
 
-#: ui/pages/downloads.slint:1970
+#: ui/pages/downloads.slint:2963
 msgid "Test connection"
 msgstr "Проверить подключение"
 
-#: ui/pages/downloads.slint:2035
+#: ui/pages/downloads.slint:3037
+msgid "{0} down · {1} up"
+msgstr "{0} вниз · {1} вверх"
+
+#: ui/pages/downloads.slint:3038
 msgid "{0} active"
 msgstr "Активных: {0}"
 
-#: ui/pages/downloads.slint:2048
+#: ui/pages/downloads.slint:3051
 msgid "Clear finished"
 msgstr "Убрать завершённые"
 
-#: ui/pages/downloads.slint:2071
+#: ui/pages/downloads.slint:3074
 msgid "Hide"
 msgstr "Скрыть"
 
-#: ui/pages/downloads.slint:2139
+#: ui/pages/downloads.slint:3142
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "Соединений на файл: {0} · Загрузки сохраняются в {1}"
 
-#: ui/pages/downloads.slint:2145
+#: ui/pages/downloads.slint:3148
 msgid "Change"
 msgstr "Изменить"
 
-#: ui/pages/downloads.slint:2210
+#: ui/pages/downloads.slint:3253
 msgid "Copy address"
 msgstr "Скопировать адрес"
 
-#: ui/pages/downloads.slint:2226
+#: ui/pages/downloads.slint:3262
+msgid "Download {0} items"
+msgstr "Скачать {0} объектов"
+
+#: ui/pages/downloads.slint:3278
 msgid "Download folder"
 msgstr "Скачать папку"
 
-#: ui/pages/downloads.slint:2250
+#: ui/pages/downloads.slint:3302
 msgid "Copy link"
 msgstr "Скопировать ссылку"
 
-#: ui/pages/downloads.slint:2285
+#: ui/pages/downloads.slint:3322
+msgid "Rename"
+msgstr "Переименовать"
+
+#: ui/pages/downloads.slint:3331
+msgid "Move to…"
+msgstr "Переместить в…"
+
+#: ui/pages/downloads.slint:3344
+msgid "Delete {0} items…"
+msgstr "Удалить {0} объектов…"
+
+#: ui/pages/downloads.slint:3344
+msgid "Delete…"
+msgstr "Удалить…"
+
+#: ui/pages/downloads.slint:3362
+msgid "The server doesn’t allow changes."
+msgstr "Сервер не разрешает изменения."
+
+#: ui/pages/downloads.slint:3397
 msgid "Remove from list"
 msgstr "Убрать из списка"
 
@@ -4281,10 +4587,6 @@ msgstr "команды"
 #: ui/toolbox.slint:101
 msgid "Search the toolbox"
 msgstr "Поиск по инструментам"
-
-#: ui/toolbox.slint:104
-msgid "Transfers"
-msgstr "Передача"
 
 #: ui/toolbox.slint:105
 msgid "Media"

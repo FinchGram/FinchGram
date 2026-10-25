@@ -2,8 +2,9 @@
 //! SQLite tool opens, since the user's data is the user's (the maintainer's word, 2026-10-24).
 //! It holds what FinchGram keeps that is neither a preference (settings.toml is for those, and
 //! only those) nor Telegram's (that is TDLib's database): the servers of the downloads page with
-//! their passwords, the programs the user has allowed or turned away at AI access, and the keys
-//! of the SSH servers the user trusted, with when. Only the password column is sealed
+//! their passwords and whether the user allows changes on each, the programs the user has allowed
+//! or turned away at AI access, and the keys of the SSH servers the user trusted, with when. Only
+//! the password column is sealed
 //! (AES-256-GCM, `cipher` below) under
 //! a random key made the first time and kept in the Keychain under FinchGram's name
 //! (platform::KEYCHAIN_SERVICE, the account "database"), where only this app reads it; every
@@ -47,7 +48,9 @@ const KEY_ACCOUNT: &str = "database";
 ///    that 0.6.2 or before took on its own, without asking).
 /// 3 (after 0.6.3): `ssh_hosts.seal`, the row's tag, the rows of before dropped (every SFTP
 ///    server shows its key once more).
-pub const LAYOUT: i32 = 3;
+/// 4 (after 0.6.3): `servers.allow_changes`, whether the user lets FinchGram delete, move, rename
+///    and upload on the server (the design's ninth round); off for every server of before.
+pub const LAYOUT: i32 = 4;
 
 /// The tables of layout 1, as 0.6.0 made them.
 const TABLES_OF_LAYOUT_1: &str = "CREATE TABLE IF NOT EXISTS servers (
@@ -97,6 +100,9 @@ pub struct ServerRecord {
     pub username: String,
     /// In the clear here; sealed in the file.
     pub password: String,
+    /// The user lets FinchGram change files on the server: delete, move, rename, upload
+    /// (docs/downloads.md). Off unless they turned it on in the server's form.
+    pub allow_changes: bool,
 }
 
 impl ServerRecord {
@@ -290,6 +296,11 @@ fn upgrade(connection: &Connection, from: i32, key: &[u8; 32]) -> Result<(), Str
                         .execute_batch("ALTER TABLE ssh_hosts ADD COLUMN seal TEXT NOT NULL DEFAULT ''; DELETE FROM ssh_hosts;")
                         .map_err(|err| err.to_string())
                 }
+                4 => {
+                    // Whether the user lets FinchGram change files on the server: off for every
+                    // server of before, until they turn it on in the form.
+                    connection.execute_batch("ALTER TABLE servers ADD COLUMN allow_changes INTEGER NOT NULL DEFAULT 0;").map_err(|err| err.to_string())
+                }
                 _ => Err(format!("no step to layout {to}")),
             }
         };
@@ -475,7 +486,7 @@ pub fn save_servers(servers: &[ServerRecord]) -> Result<(), String> {
 }
 
 fn read_servers(connection: &Connection, key: &[u8; 32]) -> rusqlite::Result<Vec<ServerRecord>> {
-    let mut statement = connection.prepare("SELECT name, protocol, address, port, username, password FROM servers ORDER BY position, id")?;
+    let mut statement = connection.prepare("SELECT name, protocol, address, port, username, password, allow_changes FROM servers ORDER BY position, id")?;
     let rows = statement.query_map([], |row| {
         let mut server = ServerRecord {
             name: row.get(0)?,
@@ -484,6 +495,7 @@ fn read_servers(connection: &Connection, key: &[u8; 32]) -> rusqlite::Result<Vec
             port: u16::try_from(row.get::<_, i64>(3)?).unwrap_or(0),
             username: row.get(4)?,
             password: row.get(5)?,
+            allow_changes: row.get::<_, i64>(6)? != 0,
         };
         server.password = cipher::open(key, &server.binding(), &server.password).unwrap_or_else(|err| {
             eprintln!("database: the password of {} cannot be opened: {err}", server.address);
@@ -500,8 +512,8 @@ fn write_servers(connection: &Connection, servers: &[ServerRecord]) -> rusqlite:
     let written: rusqlite::Result<()> = servers.iter().enumerate().try_for_each(|(position, server)| {
         connection
             .execute(
-                "INSERT INTO servers (position, name, protocol, address, port, username, password) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                params![position as i64, server.name, server.protocol, server.address, i64::from(server.port), server.username, server.password],
+                "INSERT INTO servers (position, name, protocol, address, port, username, password, allow_changes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+                params![position as i64, server.name, server.protocol, server.address, i64::from(server.port), server.username, server.password, i64::from(server.allow_changes)],
             )
             .map(|_| ())
     });
@@ -678,7 +690,7 @@ mod tests {
     }
 
     fn a_server(name: &str, password: &str) -> ServerRecord {
-        ServerRecord { name: name.into(), protocol: "webdav".into(), address: "https://nas.home/dav".into(), port: 5006, username: "me".into(), password: password.into() }
+        ServerRecord { name: name.into(), protocol: "webdav".into(), address: "https://nas.home/dav".into(), port: 5006, username: "me".into(), password: password.into(), allow_changes: false }
     }
 
     fn sealed_copies(servers: &[ServerRecord], key: &[u8; 32]) -> Vec<ServerRecord> {
@@ -725,7 +737,7 @@ mod tests {
     fn servers_are_kept_in_order_with_their_passwords_sealed() {
         let (path, backup) = scratch("servers");
         let key = a_key(2);
-        let servers = vec![a_server("Home NAS", "secret"), ServerRecord { protocol: "sftp".into(), address: "sb-ams.example.net".into(), port: 0, ..a_server("Seedbox", "") }];
+        let servers = vec![a_server("Home NAS", "secret"), ServerRecord { protocol: "sftp".into(), address: "sb-ams.example.net".into(), port: 0, allow_changes: true, ..a_server("Seedbox", "") }];
         {
             let connection = open_at(&path, &key, &backup).expect("a new database");
             write_servers(&connection, &sealed_copies(&servers, &key)).expect("write");
@@ -839,9 +851,10 @@ mod tests {
         layout_one(&path, &key);
         let connection = open_at(&path, &key, &backup).expect("brought up");
         assert_eq!(connection.query_row("PRAGMA user_version", [], |row| row.get::<_, i32>(0)).expect("version"), LAYOUT);
-        // The password is sealed to its server now, and opens.
+        // The password is sealed to its server now, and opens; changes on the server stay off
+        // until the user allows them.
         let servers = read_servers(&connection, &key).expect("read");
-        assert_eq!((servers[0].name.as_str(), servers[0].password.as_str()), ("Home NAS", "secret"));
+        assert_eq!((servers[0].name.as_str(), servers[0].password.as_str(), servers[0].allow_changes), ("Home NAS", "secret", false));
         let stored: String = connection.query_row("SELECT password FROM servers", [], |row| row.get(0)).expect("the column");
         assert!(stored.starts_with("v2:"), "{stored}");
         // The programs of before are not carried over: nothing vouches for their rows.

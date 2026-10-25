@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-24 14:21+0000\n"
+"POT-Creation-Date: 2026-10-25 03:52+0000\n"
 "Language: zh_Hant\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -44,8 +44,7 @@ msgid "Broadsheet"
 msgstr "報紙"
 
 #. The tools.
-#: ui/app.slint:125 ui/pages/downloads.slint:506 ui/pages/downloads.slint:1157
-#: ui/toolbox.slint:113
+#: ui/app.slint:125 ui/pages/downloads.slint:2013 ui/toolbox.slint:113
 msgid "Downloads"
 msgstr "下載"
 
@@ -102,10 +101,10 @@ msgstr "補充說明（選填）"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/broadsheet.slint:2592 ui/chat.slint:360 ui/compose.slint:244
-#: ui/pages/downloads.slint:1096 ui/pages/downloads.slint:2258
-#: ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
-#: ui/terminal/terminal.slint:1742 ui/workbench/actions.slint:548
-#: ui/workbench/conversation.slint:1655
+#: ui/pages/downloads.slint:1393 ui/pages/downloads.slint:1903
+#: ui/pages/downloads.slint:3370 ui/pages/settings.slint:1209
+#: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1742
+#: ui/workbench/actions.slint:548 ui/workbench/conversation.slint:1655
 msgid "Cancel"
 msgstr "取消"
 
@@ -116,8 +115,8 @@ msgid "Report"
 msgstr "檢舉"
 
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2574
-#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1727
-#: ui/workbench/conversation.slint:1618
+#: ui/chat.slint:387 ui/chat.slint:821 ui/pages/downloads.slint:2375
+#: ui/terminal/terminal.slint:1727 ui/workbench/conversation.slint:1618
 msgid "Delete"
 msgstr "刪除"
 
@@ -134,7 +133,7 @@ msgstr "深色"
 msgid "Accounts"
 msgstr "帳號"
 
-#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:1184
+#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:2040
 #: ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "聊天"
@@ -175,7 +174,7 @@ msgid "Latest message"
 msgstr "最新訊息"
 
 #: ui/broadsheet/broadsheet.slint:667 ui/chat-manage.slint:233
-#: ui/pages/downloads.slint:1709 ui/workbench/sidebar.slint:868
+#: ui/pages/downloads.slint:2630 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "名稱"
 
@@ -520,7 +519,7 @@ msgstr "管理員權限"
 msgid "Change photo"
 msgstr "更換大頭貼"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1960
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2953
 #: ui/pages/settings.slint:1269
 msgid "Save"
 msgstr "儲存"
@@ -626,7 +625,7 @@ msgid "Primary invite link"
 msgstr "主要邀請連結"
 
 #: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:900
+#: ui/pages/downloads.slint:1197
 msgid "Copy"
 msgstr "複製"
 
@@ -755,7 +754,7 @@ msgstr "搜尋聯絡人"
 msgid "No contacts to add"
 msgstr "沒有可以新增的聯絡人"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1960
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2953
 msgid "Add"
 msgstr "新增"
 
@@ -784,7 +783,7 @@ msgid "Remove {0} from the channel?"
 msgstr "把 {0} 移出頻道？"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:346 ui/pages/ai-access.slint:461
-#: ui/pages/downloads.slint:1991
+#: ui/pages/downloads.slint:2984
 msgid "Remove"
 msgstr "移除"
 
@@ -1151,8 +1150,8 @@ msgstr "這個聊天和它的訊息會從你的列表裡移除。"
 msgid "Also delete for {0}"
 msgstr "同時為 {0} 刪除"
 
-#: ui/chat.slint:303 ui/pages/downloads.slint:1468
-#: ui/pages/downloads.slint:2242
+#: ui/chat.slint:303 ui/pages/downloads.slint:2389
+#: ui/pages/downloads.slint:3294
 msgid "Open"
 msgstr "打開"
 
@@ -1373,11 +1372,12 @@ msgstr "取消上傳"
 msgid "Not sent"
 msgstr "未傳送"
 
-#: ui/chat.slint:386 ui/pages/downloads.slint:761 ui/pages/downloads.slint:2267
+#: ui/chat.slint:386 ui/pages/downloads.slint:1051
+#: ui/pages/downloads.slint:3379
 msgid "Retry"
 msgstr "重試"
 
-#: ui/chat.slint:388 ui/pages/downloads.slint:1474
+#: ui/chat.slint:388 ui/pages/downloads.slint:2395
 msgid "Download"
 msgstr "下載"
 
@@ -1385,12 +1385,12 @@ msgstr "下載"
 msgid "Cancel download"
 msgstr "取消下載"
 
-#: ui/chat.slint:390 ui/pages/downloads.slint:752
+#: ui/chat.slint:390 ui/pages/downloads.slint:1032
 msgid "Show in Finder"
 msgstr "在 Finder 中顯示"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:392 ui/pages/downloads.slint:58
+#: ui/chat.slint:392 ui/pages/downloads.slint:60
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
@@ -1402,7 +1402,7 @@ msgstr "點一下查看"
 msgid "Reply"
 msgstr "回覆"
 
-#: ui/chat.slint:812 ui/pages/downloads.slint:2193
+#: ui/chat.slint:812 ui/pages/downloads.slint:3236
 msgid "Edit"
 msgstr "編輯"
 
@@ -1747,7 +1747,7 @@ msgstr "對方必須已有 Telegram 帳號"
 msgid "Next"
 msgstr "下一步"
 
-#: ui/compose.slint:225
+#: ui/compose.slint:225 ui/pages/downloads.slint:1962
 msgid "Skip"
 msgstr "略過"
 
@@ -1852,7 +1852,7 @@ msgstr "最多 32 個字元"
 msgid "Cannot end with an underscore"
 msgstr "不能以底線結尾"
 
-#: ui/compose.slint:271 ui/pages/downloads.slint:17
+#: ui/compose.slint:271 ui/pages/downloads.slint:18
 msgid "Checking…"
 msgstr "正在檢查…"
 
@@ -1886,7 +1886,7 @@ msgid "It can be revoked and made anew in the channel's settings."
 msgstr "可以在頻道設定裡撤銷並重新產生。"
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:900
+#: ui/pages/downloads.slint:1197
 msgid "Copied"
 msgstr "已複製"
 
@@ -2394,7 +2394,7 @@ msgstr "正在連線…"
 msgid "Updating…"
 msgstr "正在更新…"
 
-#: ui/format.slint:185 ui/pages/ai-access.slint:82 ui/pages/downloads.slint:16
+#: ui/format.slint:185 ui/pages/ai-access.slint:82 ui/pages/downloads.slint:17
 msgid "Connected"
 msgstr "已連線"
 
@@ -2817,137 +2817,247 @@ msgstr ""
 "FinchGram、以你的帳號讀取聊天並代你操作。FinchGram 本身不呼叫任何 AI，也不為 "
 "AI 儲存任何內容。"
 
-#: ui/pages/downloads.slint:18
+#: ui/pages/downloads.slint:19
 msgid "Password rejected"
 msgstr "密碼遭拒"
 
-#: ui/pages/downloads.slint:19
+#: ui/pages/downloads.slint:20
 msgid "Not reachable"
 msgstr "無法連線"
 
-#: ui/pages/downloads.slint:20
+#: ui/pages/downloads.slint:21
 msgid "Key not checked"
 msgstr "金鑰未確認"
 
-#: ui/pages/downloads.slint:21
+#: ui/pages/downloads.slint:22
 msgid "Key changed"
 msgstr "金鑰變了"
 
-#: ui/pages/downloads.slint:27
+#: ui/pages/downloads.slint:28
 msgid "The server refused the password (401)"
 msgstr "伺服器拒絕了密碼（401）"
 
-#: ui/pages/downloads.slint:28
+#: ui/pages/downloads.slint:29
 msgid "The server refused access (403)"
 msgstr "伺服器拒絕存取（403）"
 
-#: ui/pages/downloads.slint:29
+#: ui/pages/downloads.slint:30
 msgid "Cannot reach {0}"
 msgstr "無法連線到 {0}"
 
-#: ui/pages/downloads.slint:30
+#: ui/pages/downloads.slint:31
 msgid "The server answered HTTP {0}"
 msgstr "伺服器回應了 HTTP {0}"
 
-#: ui/pages/downloads.slint:31
+#: ui/pages/downloads.slint:32
 msgid "The server did not answer with a WebDAV listing"
 msgstr "伺服器回應的不是 WebDAV 目錄列表"
 
-#: ui/pages/downloads.slint:32
+#: ui/pages/downloads.slint:33
 msgid "The connection was lost"
 msgstr "連線已中斷"
 
-#: ui/pages/downloads.slint:33
+#: ui/pages/downloads.slint:34
 msgid "The file could not be written"
 msgstr "無法寫入檔案"
 
-#: ui/pages/downloads.slint:34
+#: ui/pages/downloads.slint:35
 msgid "The server has no such file or folder"
 msgstr "伺服器上沒有這個檔案或資料夾"
 
-#: ui/pages/downloads.slint:35
+#: ui/pages/downloads.slint:36
 msgid ""
 "Not connected: you didn’t trust the server’s key. Your password wasn’t sent."
 msgstr "未連線：你沒有信任伺服器的金鑰。密碼沒有送出。"
 
-#: ui/pages/downloads.slint:36 ui/pages/downloads.slint:1568
+#: ui/pages/downloads.slint:37 ui/pages/downloads.slint:2489
 msgid "Not connected. This server’s key has changed."
 msgstr "未連線。這台伺服器的金鑰變了。"
 
-#: ui/pages/downloads.slint:42
+#: ui/pages/downloads.slint:43
 msgid "the server refused the password (401)"
 msgstr "伺服器拒絕了密碼（401）"
 
-#: ui/pages/downloads.slint:43
+#: ui/pages/downloads.slint:44
 msgid "the server refused access (403)"
 msgstr "伺服器拒絕存取（403）"
 
-#: ui/pages/downloads.slint:44
+#: ui/pages/downloads.slint:45
 msgid "the server answered HTTP {0}"
 msgstr "伺服器回應了 HTTP {0}"
 
-#: ui/pages/downloads.slint:45
+#: ui/pages/downloads.slint:46
 msgid "the server did not answer with the file"
 msgstr "伺服器回應的不是檔案"
 
-#: ui/pages/downloads.slint:46
+#: ui/pages/downloads.slint:47
 msgid "the file could not be written"
 msgstr "無法寫入檔案"
 
 #
-#: ui/pages/downloads.slint:47
+#: ui/pages/downloads.slint:48
 msgid "the server has no such file"
 msgstr "伺服器上沒有這個檔案"
 
-#: ui/pages/downloads.slint:48
+#: ui/pages/downloads.slint:49
 msgid "the server’s key changed"
 msgstr "伺服器的金鑰變了"
 
-#: ui/pages/downloads.slint:49
+#: ui/pages/downloads.slint:50
 msgid "the server closed the connection"
 msgstr "伺服器中斷了連線"
 
-#: ui/pages/downloads.slint:53
+#: ui/pages/downloads.slint:55
 msgid "Waiting · {0}"
 msgstr "等待中 · {0}"
 
-#: ui/pages/downloads.slint:54
+#: ui/pages/downloads.slint:56
 msgid "Done · {0}"
 msgstr "已完成 · {0}"
 
-#: ui/pages/downloads.slint:55
+#: ui/pages/downloads.slint:57
 msgid "Paused until you check the server’s key. {0} of {1} kept."
 msgstr "已暫停：等你核對伺服器金鑰。已下載 {0}，共 {1}。"
 
-#: ui/pages/downloads.slint:56
+#: ui/pages/downloads.slint:58
 msgid "Stopped: {0}. {1} of {2} kept."
 msgstr "已停止：{0}。已保留 {1} / {2}。"
 
-#: ui/pages/downloads.slint:57
+#: ui/pages/downloads.slint:59
 msgid "Server busy (HTTP {0}), trying again…"
 msgstr "伺服器忙碌（HTTP {0}），重試中…"
 
-#: ui/pages/downloads.slint:59
+#: ui/pages/downloads.slint:61
 msgid "{0} of {1} · {2} · {3}"
 msgstr "{0} / {1} · {2} · {3}"
 
-#: ui/pages/downloads.slint:63
+#: ui/pages/downloads.slint:65
 msgid "estimating…"
 msgstr "正在估算…"
 
-#: ui/pages/downloads.slint:64
+#: ui/pages/downloads.slint:66
 msgid "{0} s left"
 msgstr "剩餘 {0} 秒"
 
-#: ui/pages/downloads.slint:65
+#: ui/pages/downloads.slint:67
 msgid "{0} min left"
 msgstr "剩餘 {0} 分鐘"
 
+#: ui/pages/downloads.slint:73
+msgid "Waiting · to {0} · {1}"
+msgstr "等待中 · 傳到 {0} · {1}"
+
 #: ui/pages/downloads.slint:74
+msgid "Uploaded to {0} · {1}"
+msgstr "已上傳到 {0} · {1}"
+
+#: ui/pages/downloads.slint:75
+msgid "The server refused the upload ({0})."
+msgstr "伺服器拒絕上傳（{0}）。"
+
+#: ui/pages/downloads.slint:76
+msgid "Stopped: {0}. Retry starts over."
+msgstr "已停：{0}。重試會從頭傳。"
+
+#: ui/pages/downloads.slint:77
+msgid "To {0} · {1} of {2}"
+msgstr "傳到 {0} · {1} / {2}"
+
+#: ui/pages/downloads.slint:78
+msgid "To {0} · {1} of {2} · {3} · {4}"
+msgstr "傳到 {0} · {1} / {2} · {3} · {4}"
+
+#: ui/pages/downloads.slint:88
+msgid "delete {0} items"
+msgstr "刪除 {0} 項"
+
+#: ui/pages/downloads.slint:89
+msgid "delete “{0}”"
+msgstr "刪除「{0}」"
+
+#
+#
+#: ui/pages/downloads.slint:90
+msgid "move {0} items"
+msgstr "移動 {0} 項"
+
+#: ui/pages/downloads.slint:91
+msgid "move “{0}”"
+msgstr "移動「{0}」"
+
+#: ui/pages/downloads.slint:92
+msgid "rename “{0}”"
+msgstr "重新命名「{0}」"
+
+#: ui/pages/downloads.slint:93
+msgid "create the folder “{0}”"
+msgstr "新增資料夾「{0}」"
+
+#: ui/pages/downloads.slint:99
+msgid "The server refused to {0} ({1})."
+msgstr "伺服器拒絕{0}（{1}）。"
+
+#: ui/pages/downloads.slint:101
+msgid "Couldn’t {0}: {1}"
+msgstr "無法{0}：{1}"
+
+#: ui/pages/downloads.slint:106
+msgid "Deleted {0} items"
+msgstr "已刪除 {0} 項"
+
+#: ui/pages/downloads.slint:107
+msgid "Deleted “{0}”"
+msgstr "已刪除「{0}」"
+
+#: ui/pages/downloads.slint:108
+msgid "Moved {0} items to {1}"
+msgstr "已把 {0} 項移到「{1}」"
+
+#: ui/pages/downloads.slint:109
+msgid "Moved “{0}” to {1}"
+msgstr "已把「{0}」移到「{1}」"
+
+#: ui/pages/downloads.slint:110
+msgid "Nothing was moved"
+msgstr "什麼都沒移動"
+
+#: ui/pages/downloads.slint:116
+msgid "Changes: allowed by the server."
+msgstr "變更：伺服器允許。"
+
+#: ui/pages/downloads.slint:117
+msgid "Changes: the server only allows reading."
+msgstr "變更：伺服器只允許讀取。"
+
+#: ui/pages/downloads.slint:118
+msgid "Changes: the server didn’t say. You’ll know when you try."
+msgstr "變更：伺服器沒說，試了才知道。"
+
+#: ui/pages/downloads.slint:123
+msgid "There’s already “{0}” here."
+msgstr "這裡已經有「{0}」。"
+
+#: ui/pages/downloads.slint:124
+msgid "Names can’t contain “/”."
+msgstr "名字裡不能有「/」。"
+
+#: ui/pages/downloads.slint:131
+msgid "Folder"
+msgstr "資料夾"
+
+#: ui/pages/downloads.slint:132
+msgid "Empty folder"
+msgstr "空資料夾"
+
+#: ui/pages/downloads.slint:133
+msgid "Folder · {0} items inside"
+msgstr "資料夾 · 裡面 {0} 項"
+
+#: ui/pages/downloads.slint:142
 msgid "Reached: {0} folders and {1} files at the root."
 msgstr "連線成功：根目錄有 {0} 個資料夾和 {1} 個檔案。"
 
-#: ui/pages/downloads.slint:77
+#: ui/pages/downloads.slint:145
 msgid ""
 "Reached: {0} folders and {1} files at the root. Ranges supported, so "
 "downloads can use several connections."
@@ -2955,7 +3065,7 @@ msgstr ""
 "連線成功：根目錄有 {0} 個資料夾和 {1} 個檔案。支援範圍請求，下載可以同時使用"
 "多條連線。"
 
-#: ui/pages/downloads.slint:79
+#: ui/pages/downloads.slint:147
 msgid ""
 "Reached: {0} folders and {1} files at the root. No ranges, so each file "
 "comes over one connection."
@@ -2963,163 +3073,315 @@ msgstr ""
 "連線成功：根目錄有 {0} 個資料夾和 {1} 個檔案。不支援範圍請求，每個檔案只能用"
 "一條連線下載。"
 
-#: ui/pages/downloads.slint:83
+#: ui/pages/downloads.slint:151
 msgid "Give the server a name."
 msgstr "請為伺服器取個名稱。"
 
-#: ui/pages/downloads.slint:84
+#: ui/pages/downloads.slint:152
 msgid "The address needs to start with http:// or https://."
 msgstr "位址必須以 http:// 或 https:// 開頭。"
 
 #
-#: ui/pages/downloads.slint:85
+#: ui/pages/downloads.slint:153
 msgid "Give the server's host name or IP."
 msgstr "填上伺服器的主機名稱或 IP。"
 
-#: ui/pages/downloads.slint:86
+#: ui/pages/downloads.slint:154
 msgid "The port needs to be a number from 1 to 65535."
 msgstr "連接埠得是 1 到 65535 之間的數字。"
 
-#: ui/pages/downloads.slint:114
+#: ui/pages/downloads.slint:182
 msgid "Host name or IP. A folder may follow after a /."
 msgstr "主機名稱或 IP。後面可以用 / 接一個資料夾。"
 
-#: ui/pages/downloads.slint:115
+#: ui/pages/downloads.slint:183
 msgid "Host name or IP. Implicit TLS on the default port."
 msgstr "主機名稱或 IP。預設連接埠上用隱式 TLS。"
 
-#: ui/pages/downloads.slint:116
+#: ui/pages/downloads.slint:184
 msgid "Host name or IP of the SSH server."
 msgstr "SSH 伺服器的主機名稱或 IP。"
 
-#: ui/pages/downloads.slint:117
+#: ui/pages/downloads.slint:185
 msgid "http:// or https://. A folder may be part of the address."
 msgstr "以 http:// 或 https:// 開頭，位址裡可以包含資料夾。"
 
-#: ui/pages/downloads.slint:121
+#: ui/pages/downloads.slint:189
 msgid "Default port {}."
 msgstr "預設連接埠 {}。"
 
-#: ui/pages/downloads.slint:404 ui/pages/downloads.slint:1612
+#: ui/pages/downloads.slint:472 ui/pages/downloads.slint:2533
 msgid "Add server"
 msgstr "新增伺服器"
 
-#: ui/pages/downloads.slint:446
+#: ui/pages/downloads.slint:514
 msgid "Filter this folder"
 msgstr "篩選這個資料夾"
 
-#: ui/pages/downloads.slint:770 ui/pages/downloads.slint:1578
+#: ui/pages/downloads.slint:574 ui/pages/downloads.slint:3030
+msgid "Transfers"
+msgstr "傳輸"
+
+#: ui/pages/downloads.slint:659
+msgid "Upload"
+msgstr "上傳"
+
+#: ui/pages/downloads.slint:750
+msgid "Drop to upload to {0}"
+msgstr "放開就上傳到「{0}」"
+
+#: ui/pages/downloads.slint:750
+msgid "The server doesn’t allow changes"
+msgstr "伺服器不允許變更"
+
+#
+#: ui/pages/downloads.slint:757
+msgid "{0} only allows reading."
+msgstr "{0} 只允許讀取。"
+
+#: ui/pages/downloads.slint:1042
+msgid "Show"
+msgstr "顯示"
+
+#: ui/pages/downloads.slint:1060 ui/pages/downloads.slint:2499
 msgid "Check key"
 msgstr "核對金鑰"
 
-#: ui/pages/downloads.slint:1007
+#: ui/pages/downloads.slint:1304
 msgid "This server’s key has changed"
 msgstr "這台伺服器的金鑰變了"
 
-#: ui/pages/downloads.slint:1007
+#: ui/pages/downloads.slint:1304
 msgid "Trust this server’s key?"
 msgstr "信任這台伺服器的金鑰嗎？"
 
-#: ui/pages/downloads.slint:1015
+#: ui/pages/downloads.slint:1312
 msgid ""
 "It isn’t the server you connected to before, or someone is between you and "
 "it."
 msgstr "不是同一台伺服器，或者你和它之間有人。"
 
-#: ui/pages/downloads.slint:1016
+#: ui/pages/downloads.slint:1313
 msgid ""
 "This is the first time you connect to this server. Compare the fingerprint "
 "with the one its owner gave you. If you can’t, don’t continue."
-msgstr "這是第一次連線到這台伺服器。請和伺服器方給你的指紋核對；核對不了就別繼續。"
+msgstr ""
+"這是第一次連線到這台伺服器。請和伺服器方給你的指紋核對；核對不了就別繼續。"
 
-#: ui/pages/downloads.slint:1026
+#: ui/pages/downloads.slint:1323
 msgid "Server"
 msgstr "伺服器"
 
-#: ui/pages/downloads.slint:1051
+#: ui/pages/downloads.slint:1348
 msgid "Trusted earlier · {0}"
 msgstr "先前信任的 · {0}"
 
-#: ui/pages/downloads.slint:1052
+#: ui/pages/downloads.slint:1349
 msgid "Trusted since {0} · {1}"
 msgstr "{0} 起信任 · {1}"
 
-#: ui/pages/downloads.slint:1057
+#: ui/pages/downloads.slint:1354
 msgid "Shown now · {0}"
 msgstr "現在給出的 · {0}"
 
-#: ui/pages/downloads.slint:1057
+#: ui/pages/downloads.slint:1354
 msgid "{0} key · SHA256 fingerprint"
 msgstr "{0} 金鑰 · SHA256 指紋"
 
-#: ui/pages/downloads.slint:1075
+#: ui/pages/downloads.slint:1372
 msgid ""
 "Nothing has been sent. If the owner says the key changed, check the new "
 "fingerprint with them first."
 msgstr "什麼都沒送出。如果伺服器方說換過金鑰，先和他們核對新指紋。"
 
-#: ui/pages/downloads.slint:1076
+#: ui/pages/downloads.slint:1373
 msgid "Your password isn’t sent until you trust the key."
 msgstr "你確認之前，密碼不會送出。"
 
-#: ui/pages/downloads.slint:1087
+#: ui/pages/downloads.slint:1384
 msgid "esc  don’t connect"
 msgstr "esc  不連線"
 
-#: ui/pages/downloads.slint:1087
+#: ui/pages/downloads.slint:1384 ui/pages/downloads.slint:1593
 msgid "esc  cancel"
 msgstr "esc  取消"
 
-#: ui/pages/downloads.slint:1102
+#: ui/pages/downloads.slint:1399
 msgid "Trust new key"
 msgstr "信任新金鑰"
 
-#: ui/pages/downloads.slint:1109
+#: ui/pages/downloads.slint:1406
 msgid "Don’t connect"
 msgstr "不連線"
 
-#: ui/pages/downloads.slint:1109
+#: ui/pages/downloads.slint:1406
 msgid "Trust and continue"
 msgstr "信任並繼續"
 
-#: ui/pages/downloads.slint:1196
+#: ui/pages/downloads.slint:1549
+msgid "Already there"
+msgstr "已經在那裡"
+
+#: ui/pages/downloads.slint:1561
+msgid "and {0} more"
+msgstr "還有 {0} 項"
+
+#: ui/pages/downloads.slint:1630
+msgid "Can’t move a folder into itself"
+msgstr "不能移進它自己"
+
+#: ui/pages/downloads.slint:1630
+msgid "Current folder"
+msgstr "目前所在"
+
+#: ui/pages/downloads.slint:1660
+msgid "Delete “{0}”?"
+msgstr "刪除「{0}」？"
+
+#: ui/pages/downloads.slint:1660
+msgid "Delete {0} items?"
+msgstr "刪除 {0} 項？"
+
+#: ui/pages/downloads.slint:1661
+msgid "Deleted on {0} itself. There’s no trash, and it can’t be undone."
+msgstr "在 {0} 上直接刪除。沒有垃圾桶，刪了不能復原。"
+
+#: ui/pages/downloads.slint:1671
+msgid "Folders are deleted with everything in them."
+msgstr "資料夾會連同裡面的東西一起刪除。"
+
+#: ui/pages/downloads.slint:1687
+msgid "Delete {0} items"
+msgstr "刪除 {0} 項"
+
+#: ui/pages/downloads.slint:1702
+msgid "Move “{0}” to…"
+msgstr "把「{0}」移動到…"
+
+#: ui/pages/downloads.slint:1702 ui/pages/downloads.slint:3331
+msgid "Move {0} items to…"
+msgstr "把 {0} 項移動到…"
+
+#: ui/pages/downloads.slint:1703
+msgid "Within {0} only."
+msgstr "只能在 {0} 裡面移動。"
+
+#: ui/pages/downloads.slint:1793
+msgid "Folder name"
+msgstr "資料夾名稱"
+
+#: ui/pages/downloads.slint:1847
+msgid "No folders here"
+msgstr "這裡沒有資料夾"
+
+#: ui/pages/downloads.slint:1856
+msgid "Move to: {0}"
+msgstr "移到：{0}"
+
+#: ui/pages/downloads.slint:1856
+msgid "Already in this folder."
+msgstr "已經在這個資料夾裡了。"
+
+#: ui/pages/downloads.slint:1887
+msgid "New folder"
+msgstr "新增資料夾"
+
+#: ui/pages/downloads.slint:1909
+msgid "Move here"
+msgstr "移到這裡"
+
+#: ui/pages/downloads.slint:1928
+msgid "“{0}” is already in {1}"
+msgstr "「{1}」裡已經有「{0}」"
+
+#: ui/pages/downloads.slint:1928
+msgid "{0} items are already in {1}"
+msgstr "「{1}」裡已經有 {0} 個同名項"
+
+#: ui/pages/downloads.slint:1929
+msgid "Choose before uploading."
+msgstr "上傳前先選一個。"
+
+#: ui/pages/downloads.slint:1929
+msgid "Choose before moving."
+msgstr "移動前先選一個。"
+
+#: ui/pages/downloads.slint:1930
+msgid "The other one uploads as usual."
+msgstr "另一項照常上傳。"
+
+#: ui/pages/downloads.slint:1930
+msgid "The other one moves as usual."
+msgstr "另一項照常移動。"
+
+#: ui/pages/downloads.slint:1931
+msgid "The other {0} upload as usual."
+msgstr "其餘 {0} 項照常上傳。"
+
+#: ui/pages/downloads.slint:1931
+msgid "The other {0} move as usual."
+msgstr "其餘 {0} 項照常移動。"
+
+#: ui/pages/downloads.slint:1945
+msgid ""
+"Keep both adds “(2)” to the name. Replace deletes the one that’s there; it "
+"can’t be undone."
+msgstr "「都保留」會在新名字後加「(2)」。「取代」會刪掉原來那個，不能復原。"
+
+#: ui/pages/downloads.slint:1945
+msgid "Folders aren’t merged."
+msgstr "資料夾不會合併。"
+
+#: ui/pages/downloads.slint:1955
+msgid "Replace"
+msgstr "取代"
+
+#: ui/pages/downloads.slint:1968
+msgid "Keep both"
+msgstr "都保留"
+
+#: ui/pages/downloads.slint:2052
 msgid "Servers"
 msgstr "伺服器"
 
-#: ui/pages/downloads.slint:1402
+#: ui/pages/downloads.slint:2307
 msgid "Modified"
 msgstr "修改日期"
 
-#: ui/pages/downloads.slint:1407
+#: ui/pages/downloads.slint:2312
 msgid "Size"
 msgstr "大小"
 
-#: ui/pages/downloads.slint:1431
+#: ui/pages/downloads.slint:2337
 msgid "Nothing in this folder matches “{0}”"
 msgstr "這個資料夾裡沒有符合「{0}」的項目"
 
-#: ui/pages/downloads.slint:1453
+#: ui/pages/downloads.slint:2359
 msgid "{0} selected · {1}"
 msgstr "已選取 {0} 個項目 · {1}"
 
-#: ui/pages/downloads.slint:1461
+#: ui/pages/downloads.slint:2368
+msgid "Move…"
+msgstr "移動…"
+
+#: ui/pages/downloads.slint:2382
 msgid "Clear"
 msgstr "清除"
 
-#: ui/pages/downloads.slint:1510
+#: ui/pages/downloads.slint:2431
 msgid "This folder is empty"
 msgstr "這個資料夾是空的"
 
-#: ui/pages/downloads.slint:1568
+#: ui/pages/downloads.slint:2489
 msgid "Not connected yet. Check this server’s key first."
 msgstr "還沒連線。先核對這台伺服器的金鑰。"
 
 #
-#: ui/pages/downloads.slint:1595
+#: ui/pages/downloads.slint:2516
 msgid "No servers yet"
 msgstr "還沒有伺服器"
 
-#: ui/pages/downloads.slint:1598
+#: ui/pages/downloads.slint:2519
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -3128,21 +3390,19 @@ msgstr ""
 "加入 NAS、seedbox、PikPak、Alist / OpenList 的 WebDAV 位址，或是你用 vget "
 "serve 分享的資料夾，然後就能在這裡瀏覽，挑選想要的檔案。"
 
-#: ui/pages/downloads.slint:1604
+#: ui/pages/downloads.slint:2525
 msgid ""
-"Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
-"reads: nothing is uploaded, synced, renamed or deleted on the server."
-msgstr ""
-"沒有 WebDAV 的雲端硬碟可以透過 OpenList 連線。FinchGram 只會讀取：不上傳、不"
-"同步，也不會重新命名或刪除伺服器上的任何檔案。"
+"Cloud drives without WebDAV can be reached through OpenList. FinchGram "
+"changes nothing on a server unless you allow it for that server."
+msgstr "沒有 WebDAV 的網盤可以透過 OpenList 接入。除非你為某台伺服器允許，FinchGram 不會變更伺服器上的任何東西。"
 
-#: ui/pages/downloads.slint:1677
+#: ui/pages/downloads.slint:2598
 msgid "Edit server"
 msgstr "編輯伺服器"
 
 #
 #
-#: ui/pages/downloads.slint:1680
+#: ui/pages/downloads.slint:2601
 msgid ""
 "The address of the server, and the account it gave you. The password is kept "
 "sealed in FinchGram's database on this Mac."
@@ -3150,59 +3410,73 @@ msgstr ""
 "伺服器的位址，以及它給你的帳號。密碼封起來存在這台 Mac 上 FinchGram 的資料庫"
 "裡。"
 
-#: ui/pages/downloads.slint:1690
+#: ui/pages/downloads.slint:2611
 msgid "Protocol"
 msgstr "協定"
 
-#: ui/pages/downloads.slint:1724
+#: ui/pages/downloads.slint:2645
 msgid "Address"
 msgstr "位址"
 
-#: ui/pages/downloads.slint:1733
+#: ui/pages/downloads.slint:2654
 msgid "Port"
 msgstr "連接埠"
 
-#: ui/pages/downloads.slint:1753
+#: ui/pages/downloads.slint:2674
 msgid "Server key"
 msgstr "伺服器金鑰"
 
-#: ui/pages/downloads.slint:1789
+#: ui/pages/downloads.slint:2710
 msgid "First seen {0}"
 msgstr "第一次見到 {0}"
 
-#: ui/pages/downloads.slint:1797
+#: ui/pages/downloads.slint:2718
 msgid "Forget this key"
 msgstr "忘掉這把金鑰"
 
-#: ui/pages/downloads.slint:1829
+#: ui/pages/downloads.slint:2750
 msgid "Forgotten. You’ll check it again on the next connection."
 msgstr "已忘掉。下次連線時會重新請你核對。"
 
-#: ui/pages/downloads.slint:1829
+#: ui/pages/downloads.slint:2750
 msgid "Not seen yet. You’ll check it the first time you connect."
 msgstr "還沒見過。第一次連線時會請你核對。"
 
 #
-#: ui/pages/downloads.slint:1848
+#: ui/pages/downloads.slint:2769
 msgid "Sign in with"
 msgstr "登入方式"
 
-#: ui/pages/downloads.slint:1856 ui/pages/downloads.slint:1871
+#: ui/pages/downloads.slint:2777 ui/pages/downloads.slint:2792
 #: ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "密碼"
 
-#: ui/pages/downloads.slint:1860
+#: ui/pages/downloads.slint:2781
 msgid "Key"
 msgstr "金鑰"
 
 #
-#: ui/pages/downloads.slint:1865
+#: ui/pages/downloads.slint:2786
 msgid "Key sign-in isn’t in this version."
 msgstr "金鑰登入此版本暫不支援。"
 
+#: ui/pages/downloads.slint:2825
+msgid "Allow changes to files on this server"
+msgstr "允許變更這台伺服器上的檔案"
+
+#: ui/pages/downloads.slint:2831
+msgid ""
+"Delete, move, rename and upload on the server. Deleted files can’t be "
+"recovered."
+msgstr "在伺服器上刪除、移動、重新命名、上傳。刪掉的檔案找不回來。"
+
+#: ui/pages/downloads.slint:2837
+msgid "This server said it only allows reading."
+msgstr "這台伺服器說它只允許讀取。"
+
 #
-#: ui/pages/downloads.slint:1894
+#: ui/pages/downloads.slint:2874
 msgid ""
 "Over FTP the password and the files travel in the clear: use this server "
 "only on a network you trust, or FTPS."
@@ -3210,53 +3484,81 @@ msgstr ""
 "走 FTP 時密碼和檔案都是明文傳輸：這個伺服器只在你信任的網路裡用，或者改用 "
 "FTPS。"
 
-#: ui/pages/downloads.slint:1895
+#: ui/pages/downloads.slint:2875
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
 msgstr "走 http 時密碼和檔案都是明文傳輸：這個伺服器只在你信任的網路裡用。"
 
-#: ui/pages/downloads.slint:1931
+#: ui/pages/downloads.slint:2911
 msgid "Testing…"
 msgstr "正在測試…"
 
-#: ui/pages/downloads.slint:1970
+#: ui/pages/downloads.slint:2963
 msgid "Test connection"
 msgstr "測試連線"
 
-#: ui/pages/downloads.slint:2035
+#: ui/pages/downloads.slint:3037
+msgid "{0} down · {1} up"
+msgstr "下 {0} · 上 {1}"
+
+#: ui/pages/downloads.slint:3038
 msgid "{0} active"
 msgstr "{0} 個進行中"
 
-#: ui/pages/downloads.slint:2048
+#: ui/pages/downloads.slint:3051
 msgid "Clear finished"
 msgstr "清除已完成"
 
-#: ui/pages/downloads.slint:2071
+#: ui/pages/downloads.slint:3074
 msgid "Hide"
 msgstr "隱藏"
 
-#: ui/pages/downloads.slint:2139
+#: ui/pages/downloads.slint:3142
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "每個檔案 {0} 條連線 · 下載到 {1}"
 
-#: ui/pages/downloads.slint:2145
+#: ui/pages/downloads.slint:3148
 msgid "Change"
 msgstr "變更"
 
-#: ui/pages/downloads.slint:2210
+#: ui/pages/downloads.slint:3253
 msgid "Copy address"
 msgstr "複製位址"
 
-#: ui/pages/downloads.slint:2226
+#: ui/pages/downloads.slint:3262
+msgid "Download {0} items"
+msgstr "下載 {0} 項"
+
+#: ui/pages/downloads.slint:3278
 msgid "Download folder"
 msgstr "下載整個資料夾"
 
-#: ui/pages/downloads.slint:2250
+#: ui/pages/downloads.slint:3302
 msgid "Copy link"
 msgstr "複製連結"
 
-#: ui/pages/downloads.slint:2285
+#: ui/pages/downloads.slint:3322
+msgid "Rename"
+msgstr "重新命名"
+
+#: ui/pages/downloads.slint:3331
+msgid "Move to…"
+msgstr "移動到…"
+
+#: ui/pages/downloads.slint:3344
+msgid "Delete {0} items…"
+msgstr "刪除 {0} 項…"
+
+#: ui/pages/downloads.slint:3344
+msgid "Delete…"
+msgstr "刪除…"
+
+#: ui/pages/downloads.slint:3362
+msgid "The server doesn’t allow changes."
+msgstr "伺服器不允許變更。"
+
+#: ui/pages/downloads.slint:3397
 msgid "Remove from list"
 msgstr "從列表中移除"
 
@@ -4153,10 +4455,6 @@ msgstr "指令"
 #: ui/toolbox.slint:101
 msgid "Search the toolbox"
 msgstr "搜尋百寶箱"
-
-#: ui/toolbox.slint:104
-msgid "Transfers"
-msgstr "傳輸"
 
 #: ui/toolbox.slint:105
 msgid "Media"

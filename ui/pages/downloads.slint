@@ -1,11 +1,12 @@
-// Downloads, from the design's third round of the shared pages ("FinchGram Desktop 下载"): the
-// WebDAV servers on the left, the folder being looked at in the middle, the queue of downloads
-// on the right, which hides. One page for the three themes, in Look's colours and shapes; Rust
-// fills the Downloads global (src/downloads/).
+// Downloads, from the design's third round of the shared pages ("FinchGram Desktop 下载"), the
+// protocols of the seventh, the SSH keys of the eighth and the changes of the ninth: the servers
+// on the left, the folder being looked at in the middle, the queue of transfers on the right,
+// which hides. One page for the three themes, in Look's colours and shapes; Rust fills the
+// Downloads global (src/downloads/).
 import { AppState, Page } from "../state.slint";
-import { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError } from "../downloads.slint";
+import { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError, ChangesSaid, RenameError, DialogItem, MoveFolder } from "../downloads.slint";
 import { Look } from "../look.slint";
-import { Icon, Spinner, Field, PrimaryButton, Heading, Paragraph, Link, Logo } from "../widgets.slint";
+import { Icon, Spinner, Field, PrimaryButton, Heading, Paragraph, Link, Logo, Switch } from "../widgets.slint";
 import { PageFrame } from "frame.slint";
 import { SmallButton } from "rows.slint";
 import { KeyScope } from "../chat.slint";
@@ -50,6 +51,7 @@ export global DownloadWords {
     }
 
     public pure function transfer(row: TransferRow) -> string {
+        if row.upload { return upload(row); }
         if row.state == TransferState.waiting { return @tr("Waiting · {0}", row.total); }
         if row.state == TransferState.done { return @tr("Done · {0}", row.total); }
         if row.state == TransferState.stopped && row.problem == Problem.key-unchecked { return @tr("Paused until you check the server’s key. {0} of {1} kept.", row.done, row.total); }
@@ -63,6 +65,73 @@ export global DownloadWords {
         if seconds < 0 { return @tr("estimating…"); }
         if seconds < 60 { return @tr("{0} s left", seconds); }
         return @tr("{0} min left", minutes);
+    }
+
+    // An upload's row (the ninth round): where it goes and how far it is; refused in the server's
+    // own words; stopped otherwise, and a retry starts over, since no upload goes on where it was.
+    public pure function upload(row: TransferRow) -> string {
+        if row.state == TransferState.waiting { return @tr("Waiting · to {0} · {1}", row.dest, row.total); }
+        if row.state == TransferState.done { return @tr("Uploaded to {0} · {1}", row.dest, row.total); }
+        if row.state == TransferState.stopped && refused(row.problem) { return @tr("The server refused the upload ({0}).", row.detail); }
+        if row.state == TransferState.stopped { return @tr("Stopped: {0}. Retry starts over.", reason(row.problem, row.detail)); }
+        if row.speed == "" { return @tr("To {0} · {1} of {2}", row.dest, row.done, row.total); }
+        return @tr("To {0} · {1} of {2} · {3} · {4}", row.dest, row.done, row.total, row.speed, left(row.seconds-left, row.minutes-left));
+    }
+
+    // Whether the server itself said no (else it could not be reached, or the like).
+    public pure function refused(problem: Problem) -> bool {
+        return problem == Problem.forbidden || problem == Problem.http || problem == Problem.missing || problem == Problem.password;
+    }
+
+    // What a change was about, within "The server refused to …".
+    public pure function change-what(op: string, name: string, count: int) -> string {
+        if op == "delete" && count > 1 { return @tr("delete {0} items", count); }
+        if op == "delete" { return @tr("delete “{0}”", name); }
+        if op == "move" && count > 1 { return @tr("move {0} items", count); }
+        if op == "move" { return @tr("move “{0}”", name); }
+        if op == "rename" { return @tr("rename “{0}”", name); }
+        return @tr("create the folder “{0}”", name);
+    }
+
+    // A change the server did not make: its refusal in its own words, or what went wrong.
+    public pure function change-failed() -> string {
+        if Downloads.change-refused {
+            return @tr("The server refused to {0} ({1}).", change-what(Downloads.change-failed, Downloads.change-name, Downloads.change-count), Downloads.change-detail);
+        }
+        return @tr("Couldn’t {0}: {1}", change-what(Downloads.change-failed, Downloads.change-name, Downloads.change-count), problem(Downloads.change-problem, Downloads.change-detail));
+    }
+
+    // What was just done, at the foot of the page for a moment.
+    public pure function toast() -> string {
+        if Downloads.toast == "deleted" && Downloads.toast-count > 1 { return @tr("Deleted {0} items", Downloads.toast-count); }
+        if Downloads.toast == "deleted" { return @tr("Deleted “{0}”", Downloads.toast-name); }
+        if Downloads.toast == "moved" && Downloads.toast-count > 1 { return @tr("Moved {0} items to {1}", Downloads.toast-count, Downloads.toast-dest); }
+        if Downloads.toast == "moved" { return @tr("Moved “{0}” to {1}", Downloads.toast-name, Downloads.toast-dest); }
+        if Downloads.toast == "nothing-moved" { return @tr("Nothing was moved"); }
+        if Downloads.toast == "read-only" { return @tr("The server doesn’t allow changes."); }
+        return "";
+    }
+
+    // What Test connection learnt about changes.
+    public pure function changes-said(said: ChangesSaid) -> string {
+        if said == ChangesSaid.allowed { return @tr("Changes: allowed by the server."); }
+        if said == ChangesSaid.read-only { return @tr("Changes: the server only allows reading."); }
+        return @tr("Changes: the server didn’t say. You’ll know when you try.");
+    }
+
+    // What is wrong with a name typed for an entry or a new folder.
+    public pure function name-error(error: RenameError, name: string) -> string {
+        if error == RenameError.taken { return @tr("There’s already “{0}” here.", name); }
+        if error == RenameError.slash { return @tr("Names can’t contain “/”."); }
+        return "";
+    }
+
+    // Beside an item of the Delete dialog: a file's size, or what a folder holds.
+    public pure function item-meta(item: DialogItem) -> string {
+        if item.icon != "folder" { return item.size; }
+        if item.count < 0 { return @tr("Folder"); }
+        if item.count == 0 { return @tr("Empty folder"); }
+        return @tr("Folder · {0} items inside", item.count);
     }
 
     // What Test connection found.
@@ -470,7 +539,7 @@ component FilterBox inherits Rectangle {
     }
 }
 
-// The button that shows or hides the queue: "Downloads", with how many are on their way.
+// The button that shows or hides the queue: "Transfers", with how many are on their way.
 component QueueButton inherits Rectangle {
     property <bool> shown: Downloads.queue-open && Downloads.queue.length > 0;
     property <bool> usable: Downloads.queue.length > 0;
@@ -497,13 +566,13 @@ component QueueButton inherits Rectangle {
         VerticalLayout {
             alignment: center;
             Icon {
-                name: "download-simple";
+                name: "arrows-down-up";
                 size: 17px;
                 color: root.ink;
             }
         }
         Text {
-            text: @tr("Downloads");
+            text: @tr("Transfers");
             color: root.ink;
             font-size: 14px;
             font-weight: 600;
@@ -556,6 +625,144 @@ component QueueButton inherits Rectangle {
     }
 }
 
+// The toolbar's Upload (the ninth round), beside Transfers while the server takes changes;
+// greyed when the server said it only reads. Terminal keeps the icon between its brackets.
+component UploadButton inherits Rectangle {
+    property <bool> usable: !Downloads.server-read-only;
+    height: 32px;
+    width: content.preferred-width;
+    border-radius: Look.button-radius;
+    background: touch.has-hover && usable ? Look.sel : Look.bg;
+    border-width: 1px;
+    border-color: Look.line-strong;
+    opacity: usable ? 1 : 0.42;
+
+    content := HorizontalLayout {
+        padding-left: 10px;
+        padding-right: Look.terminal ? 10px : 12px;
+        spacing: 7px;
+        if Look.terminal: Text {
+            text: "[";
+            color: Look.text;
+            font-family: Look.mono;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "upload-simple";
+                size: 17px;
+                color: Look.text;
+            }
+        }
+        if !Look.terminal: Text {
+            text: @tr("Upload");
+            color: Look.text;
+            font-size: 14px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+        if Look.terminal: Text {
+            text: "]";
+            color: Look.text;
+            font-family: Look.mono;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.usable;
+        mouse-cursor: pointer;
+        clicked => {
+            Downloads.upload();
+        }
+    }
+}
+
+// Move… and Delete at the foot of the listing, beside Clear and Download: an icon and a word,
+// greyed when the server said it only reads.
+component FootAction inherits Rectangle {
+    in property <string> icon;
+    in property <string> text;
+    in property <color> ink: Look.text;
+    callback clicked();
+    property <bool> usable: !Downloads.server-read-only;
+    height: 32px;
+    width: content.preferred-width;
+    border-radius: Look.button-radius;
+    background: touch.has-hover && usable ? Look.bg : transparent;
+    opacity: usable ? 1 : 0.42;
+
+    content := HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 6px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 16px;
+                color: root.ink;
+            }
+        }
+        Text {
+            text: root.text;
+            color: root.ink;
+            font-size: 14px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+
+    touch := TouchArea {
+        enabled: root.usable;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// The drop box over the folder while files are dragged over the window and the server takes
+// changes: where they will go; or that the server said it only reads. (The design's border is
+// dashed; Slint draws a solid one.)
+component DropBox inherits Rectangle {
+    property <bool> allowed: !Downloads.server-read-only;
+    border-radius: Look.radius;
+    border-width: 2px;
+    border-color: allowed ? Look.accent : Look.line-strong;
+    background: allowed ? Look.soft : Look.side;
+
+    VerticalLayout {
+        alignment: center;
+        spacing: 8px;
+        padding: 24px;
+        HorizontalLayout {
+            alignment: center;
+            Icon {
+                name: root.allowed ? "upload-simple" : "prohibit";
+                size: 34px;
+                color: root.allowed ? Look.accent : Look.line-strong;
+            }
+        }
+        Paragraph {
+            text: root.allowed ? @tr("Drop to upload to {0}", Downloads.title) : @tr("The server doesn’t allow changes");
+            color: root.allowed ? Look.soft-ink : Look.text;
+            font-size: 17px;
+            font-weight: 600;
+            horizontal-alignment: center;
+        }
+        Paragraph {
+            text: root.allowed ? Downloads.path-label : @tr("{0} only allows reading.", Downloads.crumbs[0]);
+            color: root.allowed ? Look.soft-ink : Look.muted;
+            font-size: 13px;
+            horizontal-alignment: center;
+        }
+    }
+}
+
 // The heading of a column of the listing: "NAME", "name".
 component ColumnLabel inherits Text {
     in property <string> label;
@@ -567,10 +774,11 @@ component ColumnLabel inherits Text {
     vertical-alignment: center;
 }
 
-// A folder or a file of the listing.
+// A folder or a file of the listing; its name becomes a field while it is renamed in place.
 component EntryRow inherits Rectangle {
     in property <FolderEntry> entry;
     callback menu(length, length);
+    property <bool> renaming: Downloads.renaming != "" && Downloads.renaming == entry.name;
     height: content.preferred-height;
     background: entry.selected || touch.has-hover ? Look.sel : transparent;
 
@@ -600,8 +808,8 @@ component EntryRow inherits Rectangle {
     content := HorizontalLayout {
         padding-left: 16px;
         padding-right: 16px;
-        padding-top: 11px;
-        padding-bottom: 11px;
+        padding-top: root.renaming ? 6px : 11px;
+        padding-bottom: root.renaming ? 6px : 11px;
         spacing: 12px;
         VerticalLayout {
             alignment: center;
@@ -629,7 +837,7 @@ component EntryRow inherits Rectangle {
                 color: Look.accent;
             }
         }
-        Text {
+        if !root.renaming: Text {
             horizontal-stretch: 1;
             text: root.entry.name;
             color: Look.text;
@@ -637,6 +845,50 @@ component EntryRow inherits Rectangle {
             font-weight: root.entry.folder ? 500 : 400;
             vertical-alignment: center;
             overflow: elide;
+        }
+        // The name typed in place (the ninth round): all of it but the extension chosen first,
+        // ⏎ keeps it, Esc lets it go; a name taken here, or with a "/", is said under it.
+        if root.renaming: VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 3px;
+            alignment: center;
+            FocusScope {
+                height: 30px;
+                key-pressed(event) => {
+                    if event.text == Key.Escape {
+                        Downloads.cancel-rename();
+                        return accept;
+                    }
+                    return reject;
+                }
+                Field {
+                    width: parent.width;
+                    height: 30px;
+                    text <=> Downloads.rename-text;
+                    font-size: 14px;
+                    padding-x: 8px;
+                    border-radius: Look.button-radius;
+                    fill: Look.bg;
+                    ring: Look.accent;
+                    ring-width: 1.5px;
+                    error: Downloads.rename-error != RenameError.none;
+                    init => {
+                        self.focus-text();
+                        self.select-range(0, Downloads.rename-stem);
+                    }
+                    accepted => {
+                        Downloads.commit-rename(false);
+                    }
+                    edited => {
+                        Downloads.rename-error = RenameError.none;
+                    }
+                }
+            }
+            if Downloads.rename-error != RenameError.none: Text {
+                text: DownloadWords.name-error(Downloads.rename-error, Downloads.rename-text);
+                color: Look.danger;
+                font-size: 12px;
+            }
         }
         Text {
             width: 96px;
@@ -657,13 +909,16 @@ component EntryRow inherits Rectangle {
     }
 }
 
-// A download in the queue: on its way, waiting, done or stopped.
+// A transfer in the queue, down or up: on its way, waiting, done or stopped.
 component TransferItem inherits Rectangle {
     in property <TransferRow> item;
     callback menu(length, length);
     property <bool> live: item.state == TransferState.active || item.state == TransferState.waiting;
     // Paused for the server's key to be checked (the eighth round): Check key instead of Retry.
     property <bool> key-stopped: item.state == TransferState.stopped && (item.problem == Problem.key-unchecked || item.problem == Problem.key-changed);
+    // Downloads in the accent, uploads in their own colour (the ninth round), the arrow on the
+    // icon saying which way.
+    property <color> way: item.upload ? Look.up : Look.accent;
     height: content.preferred-height;
     border-radius: Look.radius;
     background: touch.has-hover ? Look.sel : transparent;
@@ -685,10 +940,36 @@ component TransferItem inherits Rectangle {
         VerticalLayout {
             alignment: start;
             padding-top: 1px;
-            Icon {
-                name: root.item.icon;
-                size: 20px;
-                color: Look.accent;
+            Rectangle {
+                width: 20px;
+                height: 22px;
+                Icon {
+                    x: 0;
+                    y: 0;
+                    name: root.item.icon;
+                    size: 20px;
+                    color: root.way;
+                }
+                Rectangle {
+                    x: parent.width - 8px;
+                    y: parent.height - 13px;
+                    width: 14px;
+                    height: 14px;
+                    border-radius: 7px;
+                    background: root.way;
+                    border-width: 2px;
+                    border-color: Look.side;
+                    Text {
+                        width: parent.width;
+                        height: parent.height;
+                        text: root.item.upload ? "↑" : "↓";
+                        color: Look.bg;
+                        font-size: 9px;
+                        font-weight: 700;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                }
             }
         }
         VerticalLayout {
@@ -711,7 +992,7 @@ component TransferItem inherits Rectangle {
                     width: parent.width * root.item.fraction;
                     height: parent.height;
                     border-radius: 2px;
-                    background: Look.accent;
+                    background: root.way;
                 }
             }
             Paragraph {
@@ -746,12 +1027,22 @@ component TransferItem inherits Rectangle {
                 }
             }
         }
-        if root.item.state == TransferState.done: VerticalLayout {
+        if root.item.state == TransferState.done && !root.item.upload: VerticalLayout {
             alignment: start;
             TinyButton {
                 text: @tr("Show in Finder");
                 clicked => {
                     Downloads.show-in-finder(root.item.id);
+                }
+            }
+        }
+        // An upload that is done: Show goes to its folder on the server, the file chosen.
+        if root.item.state == TransferState.done && root.item.upload: VerticalLayout {
+            alignment: start;
+            TinyButton {
+                text: @tr("Show");
+                clicked => {
+                    Downloads.show-upload(root.item.id);
                 }
             }
         }
@@ -849,28 +1140,35 @@ component FormField {
     }
 }
 
-// The answers of the key dialog: the safe one is filled; Trust new key, the unsafe one when the
-// key changed, is an outline in the danger colour.
+// The answers of the dialogs: the safe one is filled; an unsafe one (Trust new key, Replace) is
+// an outline in the danger colour; Delete, which the dialog is for, is filled in it. One that
+// cannot be taken now (Move here, in the folder the items are in) is faded.
 component AnswerButton inherits Rectangle {
     in property <string> text;
     in property <bool> primary;
     in property <bool> danger;
+    in property <bool> danger-filled;
+    in property <bool> enabled: true;
     callback clicked();
     height: 38px;
     width: label.preferred-width + 36px;
     border-radius: Look.button-radius;
-    background: primary ? (touch.has-hover ? Look.accent.mix(Look.text, 0.88) : Look.accent) : touch.has-hover ? Look.sel : danger ? transparent : Look.field;
-    border-width: primary ? 0px : 1px;
+    background: danger-filled ? (touch.has-hover ? Look.danger.mix(Look.text, 0.88) : Look.danger)
+        : primary ? (touch.has-hover ? Look.accent.mix(Look.text, 0.88) : Look.accent)
+        : touch.has-hover ? Look.sel : danger ? transparent : Look.field;
+    border-width: primary || danger-filled ? 0px : 1px;
     border-color: danger ? Look.danger : Look.line-strong;
+    opacity: enabled ? 1 : 0.45;
 
     label := Text {
         text: root.text;
-        color: root.primary ? Look.on-accent : root.danger ? Look.danger : Look.text;
+        color: root.primary ? Look.on-accent : root.danger-filled ? Look.bg : root.danger ? Look.danger : Look.text;
         font-size: 15px;
         font-weight: 600;
     }
 
     touch := TouchArea {
+        enabled: root.enabled;
         mouse-cursor: pointer;
         clicked => {
             root.clicked();
@@ -1122,12 +1420,570 @@ component KeyDialog inherits Rectangle {
     }
 }
 
+// A dialog over the page for a change on the server (the ninth round), built as the key dialog
+// is: an icon in a square, the question and a line under it, then what each dialog puts in the
+// middle and its answers. The page behind is dimmed and keeps its clicks; Esc is the caller's.
+component WriteDialog inherits Rectangle {
+    in property <length> box-width: 460px;
+    in property <string> icon;
+    in property <bool> danger;              // the icon outlined in the danger colour: Delete
+    in property <string> title;
+    in property <string> description;
+    callback enter();
+    callback escape();
+    background: #00000059;
+
+    TouchArea { }
+
+    KeyScope {
+        enter => {
+            root.enter();
+        }
+        escape => {
+            root.escape();
+        }
+    }
+
+    box := Rectangle {
+        x: (parent.width - self.width) / 2;
+        y: (parent.height - self.height) / 2;
+        width: min(root.box-width, parent.width - 48px);
+        height: body.preferred-height;
+        border-radius: Look.dialog-radius;
+        background: Look.bg;
+        border-width: 1px;
+        border-color: Look.line-strong;
+        drop-shadow-blur: 80px;
+        drop-shadow-offset-y: 30px;
+        drop-shadow-color: #00000057;
+
+        TouchArea { }
+
+        body := VerticalLayout {
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-top: 24px;
+            padding-bottom: 20px;
+            spacing: 16px;
+            HorizontalLayout {
+                spacing: 14px;
+                VerticalLayout {
+                    alignment: start;
+                    Rectangle {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: Look.radius;
+                        background: root.danger ? transparent : Look.soft;
+                        border-width: root.danger ? 1.5px : 0px;
+                        border-color: Look.danger;
+                        Icon {
+                            name: root.icon;
+                            size: 20px;
+                            color: root.danger ? Look.danger : Look.soft-ink;
+                        }
+                    }
+                }
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 5px;
+                    padding-top: 1px;
+                    alignment: start;
+                    Paragraph {
+                        text: Look.heading-prefix + root.title;
+                        color: Look.text;
+                        font-size: 18px;
+                        font-weight: 600;
+                        letter-spacing: Look.heading-tracking * 18px;
+                        line-height-factor: Look.leading(1.35);
+                    }
+                    Paragraph {
+                        text: root.description;
+                        color: Look.muted;
+                        font-size: 14px;
+                        line-height-factor: Look.leading(1.5);
+                    }
+                }
+            }
+            @children
+        }
+    }
+}
+
+// The items a dialog is about, four at most, with a word beside each: a file's size or what a
+// folder holds, or "Already there" in the Same-name dialog.
+component ItemList inherits Rectangle {
+    in property <[DialogItem]> items;
+    in property <int> more;                 // beyond the four shown
+    in property <bool> there;               // the Same-name dialog
+    height: rows.preferred-height;
+    border-radius: Look.radius;
+    background: Look.side;
+    border-width: Look.field-border;
+    border-color: Look.line;
+
+    rows := VerticalLayout {
+        padding-top: 4px;
+        padding-bottom: 4px;
+        for item in root.items: HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 7px;
+            padding-bottom: 7px;
+            spacing: 10px;
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: item.icon;
+                    size: 18px;
+                    color: Look.muted;
+                }
+            }
+            Text {
+                horizontal-stretch: 1;
+                text: item.name;
+                color: Look.text;
+                font-size: 14px;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            Text {
+                text: root.there ? @tr("Already there") : DownloadWords.item-meta(item);
+                color: Look.faint;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+        }
+        if root.more > 0: HorizontalLayout {
+            padding-left: 40px;
+            padding-right: 12px;
+            padding-top: 3px;
+            padding-bottom: 6px;
+            Text {
+                text: @tr("and {0} more", root.more);
+                color: Look.faint;
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+// A line of small print in a dialog, with an icon before it.
+component NoteLine inherits HorizontalLayout {
+    in property <string> icon: "info";
+    in property <string> text;
+    spacing: 8px;
+    VerticalLayout {
+        alignment: start;
+        padding-top: 1px;
+        Icon {
+            name: root.icon;
+            size: 15px;
+            color: Look.muted;
+        }
+    }
+    Paragraph {
+        text: root.text;
+        color: Look.muted;
+        font-size: 13px;
+        line-height-factor: Look.leading(1.5);
+    }
+}
+
+// Terminal says what Esc does under a dialog's middle, as its other dialogs do.
+component EscapeHint inherits Text {
+    in property <string> hint: @tr("esc  cancel");
+    text: hint;
+    color: Look.faint;
+    font-family: Look.mono;
+    font-size: 12px;
+}
+
+// A folder of the Move dialog's list: into it on a click; the folder the items are in is marked,
+// and a folder that is moving (or under one) cannot take them.
+component MoveRow inherits Rectangle {
+    in property <MoveFolder> folder;
+    height: 32px;
+    border-radius: Look.button-radius;
+    background: touch.has-hover && !folder.forbidden ? Look.sel : transparent;
+    opacity: folder.forbidden ? 0.42 : 1;
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "folder";
+                size: 18px;
+                color: Look.accent;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.folder.name;
+            color: Look.text;
+            font-size: 14px;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        Text {
+            text: root.folder.forbidden ? @tr("Can’t move a folder into itself") : root.folder.current ? @tr("Current folder") : "";
+            color: Look.faint;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "caret-right";
+                size: 13px;
+                color: Look.faint;
+                duotone: false;
+            }
+        }
+    }
+
+    touch := TouchArea {
+        enabled: !root.folder.forbidden;
+        mouse-cursor: pointer;
+        clicked => {
+            Downloads.move-open-folder(root.folder.name);
+        }
+    }
+}
+
+// Delete: what goes, with a word that there is no trash. ⏎ does nothing here, deleting takes a
+// click; Esc cancels.
+component DeleteDialog inherits WriteDialog {
+    icon: "trash";
+    danger: true;
+    title: Downloads.delete-count == 1 ? @tr("Delete “{0}”?", Downloads.delete-items[0].name) : @tr("Delete {0} items?", Downloads.delete-count);
+    description: @tr("Deleted on {0} itself. There’s no trash, and it can’t be undone.", Downloads.crumbs[0]);
+    escape => {
+        Downloads.close-dialog();
+    }
+
+    ItemList {
+        items: Downloads.delete-items;
+        more: Downloads.delete-count - 4;
+    }
+    if Downloads.delete-folders: NoteLine {
+        text: @tr("Folders are deleted with everything in them.");
+    }
+    VerticalLayout {
+        spacing: 8px;
+        padding-top: 2px;
+        if Look.terminal: EscapeHint { }
+        HorizontalLayout {
+            alignment: end;
+            spacing: 10px;
+            AnswerButton {
+                text: @tr("Cancel");
+                clicked => {
+                    Downloads.close-dialog();
+                }
+            }
+            AnswerButton {
+                text: Downloads.delete-count == 1 ? @tr("Delete") : @tr("Delete {0} items", Downloads.delete-count);
+                danger-filled: true;
+                clicked => {
+                    Downloads.confirm-delete();
+                }
+            }
+        }
+    }
+}
+
+// Move to…: the server's folders, walked from the one above the items', with the way there as
+// crumbs, New folder, and Move here (⏎) once another folder is shown.
+component MoveDialog inherits WriteDialog {
+    box-width: 540px;
+    icon: "arrow-bend-up-right";
+    title: Downloads.move-count == 1 ? @tr("Move “{0}” to…", Downloads.move-name) : @tr("Move {0} items to…", Downloads.move-count);
+    description: @tr("Within {0} only.", Downloads.crumbs[0]);
+    escape => {
+        Downloads.close-dialog();
+    }
+    enter => {
+        if Downloads.move-here-allowed && !Downloads.move-creating {
+            Downloads.move-here();
+        }
+    }
+
+    VerticalLayout {
+        spacing: 8px;
+        HorizontalLayout {
+            spacing: 6px;
+            alignment: start;
+            for crumb[index] in Downloads.move-crumbs: HorizontalLayout {
+                spacing: 6px;
+                if index > 0: Text {
+                    text: "›";
+                    color: Look.faint;
+                    font-size: 14px;
+                    vertical-alignment: center;
+                }
+                Rectangle {
+                    width: min(crumb-label.preferred-width, 160px);
+                    crumb-label := Text {
+                        width: parent.width;
+                        height: parent.height;
+                        text: crumb;
+                        color: crumb-touch.has-hover ? Look.accent-ink : Look.text;
+                        font-size: 14px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                        overflow: elide;
+                    }
+                    crumb-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Downloads.move-go-to(index);
+                        }
+                    }
+                }
+            }
+        }
+        Rectangle {
+            height: 220px;
+            border-radius: Look.radius;
+            background: Look.field;
+            border-width: 1px;
+            border-color: Look.line-strong;
+            clip: true;
+            Flickable {
+                width: parent.width;
+                height: parent.height;
+                mouse-drag-pan-enabled: false;
+                content-height: max(self.height, list.preferred-height);
+                list := VerticalLayout {
+                    width: parent.width;
+                    padding: 4px;
+                    alignment: start;
+                    if Downloads.move-creating: VerticalLayout {
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        padding-top: 4px;
+                        padding-bottom: 4px;
+                        spacing: 3px;
+                        HorizontalLayout {
+                            spacing: 10px;
+                            VerticalLayout {
+                                alignment: center;
+                                Icon {
+                                    name: "folder-plus";
+                                    size: 18px;
+                                    color: Look.accent;
+                                }
+                            }
+                            FocusScope {
+                                horizontal-stretch: 1;
+                                height: 30px;
+                                key-pressed(event) => {
+                                    if event.text == Key.Escape {
+                                        Downloads.cancel-new-folder();
+                                        return accept;
+                                    }
+                                    return reject;
+                                }
+                                Field {
+                                    width: parent.width;
+                                    height: 30px;
+                                    text <=> Downloads.move-new-name;
+                                    placeholder: @tr("Folder name");
+                                    font-size: 14px;
+                                    padding-x: 8px;
+                                    border-radius: Look.button-radius;
+                                    fill: Look.bg;
+                                    ring: Look.accent;
+                                    ring-width: 1.5px;
+                                    error: Downloads.move-new-error != RenameError.none;
+                                    init => {
+                                        self.focus-text();
+                                    }
+                                    accepted => {
+                                        Downloads.commit-new-folder();
+                                    }
+                                    edited => {
+                                        Downloads.move-new-error = RenameError.none;
+                                    }
+                                }
+                            }
+                        }
+                        if Downloads.move-new-error != RenameError.none: HorizontalLayout {
+                            padding-left: 28px;
+                            Text {
+                                text: DownloadWords.name-error(Downloads.move-new-error, Downloads.move-new-name);
+                                color: Look.danger;
+                                font-size: 12px;
+                            }
+                        }
+                    }
+                    for folder in Downloads.move-folders: MoveRow {
+                        folder: folder;
+                    }
+                    if Downloads.move-loading: HorizontalLayout {
+                        alignment: center;
+                        padding: 14px;
+                        Spinner {
+                            size: 20px;
+                            color: Look.muted;
+                        }
+                    }
+                    if !Downloads.move-loading && Downloads.move-problem != Problem.none: HorizontalLayout {
+                        padding: 10px;
+                        Paragraph {
+                            text: DownloadWords.problem(Downloads.move-problem, Downloads.move-problem-detail);
+                            color: Look.danger;
+                            font-size: 13px;
+                        }
+                    }
+                    if !Downloads.move-loading && Downloads.move-problem == Problem.none && Downloads.move-folders.length == 0 && !Downloads.move-creating: HorizontalLayout {
+                        padding-left: 10px;
+                        padding-right: 10px;
+                        padding-top: 14px;
+                        padding-bottom: 14px;
+                        Text {
+                            text: @tr("No folders here");
+                            color: Look.faint;
+                            font-size: 13px;
+                        }
+                    }
+                }
+            }
+        }
+        Paragraph {
+            text: Downloads.move-here-allowed ? @tr("Move to: {0}", Downloads.move-path-label) : @tr("Already in this folder.");
+            color: Downloads.move-here-allowed ? Look.muted : Look.faint;
+            font-size: 13px;
+        }
+    }
+    VerticalLayout {
+        spacing: 8px;
+        padding-top: 2px;
+        if Look.terminal: EscapeHint { }
+        HorizontalLayout {
+            spacing: 10px;
+            Rectangle {
+                height: 38px;
+                width: new-folder.preferred-width;
+                border-radius: Look.button-radius;
+                background: new-folder-touch.has-hover ? Look.sel : transparent;
+                border-width: 1px;
+                border-color: Look.line-strong;
+                new-folder := HorizontalLayout {
+                    padding-left: 14px;
+                    padding-right: 14px;
+                    spacing: 6px;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "folder-plus";
+                            size: 16px;
+                            color: Look.text;
+                        }
+                    }
+                    Text {
+                        text: @tr("New folder");
+                        color: Look.text;
+                        font-size: 14px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                }
+                new-folder-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Downloads.move-new-folder();
+                    }
+                }
+            }
+            Rectangle { horizontal-stretch: 1; }
+            AnswerButton {
+                text: @tr("Cancel");
+                clicked => {
+                    Downloads.close-dialog();
+                }
+            }
+            AnswerButton {
+                text: @tr("Move here") + Look.enter-hint;
+                primary: true;
+                enabled: Downloads.move-here-allowed;
+                clicked => {
+                    Downloads.move-here();
+                }
+            }
+        }
+    }
+}
+
+// The same name at the destination, of a move or of an upload: Replace what is there (an outline
+// in red: it deletes), Skip it, or Keep both (⏎), the new one as "name (2).ext". Esc cancels the
+// whole move or upload.
+component ConflictDialog inherits WriteDialog {
+    box-width: 500px;
+    icon: "copy";
+    property <bool> up: Downloads.conflict-upload;
+    property <int> rest: Downloads.conflict-rest;
+    title: Downloads.conflict-count == 1 ? @tr("“{0}” is already in {1}", Downloads.conflict-items[0].name, Downloads.conflict-dest) : @tr("{0} items are already in {1}", Downloads.conflict-count, Downloads.conflict-dest);
+    description: rest == 0 ? (up ? @tr("Choose before uploading.") : @tr("Choose before moving."))
+        : rest == 1 ? (up ? @tr("The other one uploads as usual.") : @tr("The other one moves as usual."))
+        : (up ? @tr("The other {0} upload as usual.", rest) : @tr("The other {0} move as usual.", rest));
+    escape => {
+        Downloads.close-dialog();
+    }
+    enter => {
+        Downloads.resolve-conflict("keep");
+    }
+
+    if Downloads.conflict-count > 1: ItemList {
+        items: Downloads.conflict-items;
+        more: Downloads.conflict-count - 4;
+        there: true;
+    }
+    NoteLine {
+        text: @tr("Keep both adds “(2)” to the name. Replace deletes the one that’s there; it can’t be undone.") + (Downloads.conflict-folders ? " " + @tr("Folders aren’t merged.") : "");
+    }
+    VerticalLayout {
+        spacing: 8px;
+        padding-top: 2px;
+        if Look.terminal: EscapeHint { }
+        HorizontalLayout {
+            alignment: end;
+            spacing: 10px;
+            AnswerButton {
+                text: @tr("Replace");
+                danger: true;
+                clicked => {
+                    Downloads.resolve-conflict("replace");
+                }
+            }
+            AnswerButton {
+                text: @tr("Skip");
+                clicked => {
+                    Downloads.resolve-conflict("skip");
+                }
+            }
+            AnswerButton {
+                text: @tr("Keep both") + Look.enter-hint;
+                primary: true;
+                clicked => {
+                    Downloads.resolve-conflict("keep");
+                }
+            }
+        }
+    }
+}
+
 export component DownloadsPage inherits Rectangle {
     // The context menu: what it is for, and where.
     property <int> menu-kind;           // 0 none, 1 a server, 2 an entry of the listing, 3 a download
     property <int> menu-index;          // the server
     property <string> menu-name;        // the entry
     property <bool> menu-folder;
+    property <bool> menu-selected;      // the entry is among the chosen files: the menu acts on them all
+    property <bool> menu-multi: menu-kind == 2 && menu-selected && Downloads.selected-count > 1;
     property <int> menu-id;             // the download
     property <TransferState> menu-state;
     property <length> menu-x;
@@ -1143,10 +1999,11 @@ export component DownloadsPage inherits Rectangle {
         Downloads.opened();
     }
 
-    function show-menu(kind: int, x: length, y: length) {
+    // The menu at x, y, kept within the page: `rows` of 34px each, with the padding.
+    function show-menu(kind: int, x: length, y: length, rows: int) {
         root.menu-kind = kind;
         root.menu-x = max(0px, min(x - root.absolute-position.x, root.width - 216px));
-        root.menu-y = max(0px, min(y - root.absolute-position.y, root.height - 160px));
+        root.menu-y = max(0px, min(y - root.absolute-position.y, root.height - (rows * 34px + 20px)));
     }
 
     function close-menu() {
@@ -1203,7 +2060,7 @@ export component DownloadsPage inherits Rectangle {
                         active: Downloads.form-open ? Downloads.form-editing && Downloads.current == index : Downloads.current == index;
                         menu(x, y) => {
                             root.menu-index = index;
-                            root.show-menu(1, x, y);
+                            root.show-menu(1, x, y, 3);
                         }
                     }
                     Rectangle { height: 4px; }
@@ -1218,9 +2075,14 @@ export component DownloadsPage inherits Rectangle {
             }
         }
 
-        // The folder being looked at: its listing, or what stands in for it.
-        Flickable {
+        // The folder being looked at: its listing, or what stands in for it; the drop box over it
+        // while files are dragged in.
+        Rectangle {
             horizontal-stretch: 1;
+
+            Flickable {
+            width: parent.width;
+            height: parent.height;
             mouse-drag-pan-enabled: false;
             content-height: max(self.height, middle.preferred-height);
 
@@ -1353,9 +2215,53 @@ export component DownloadsPage inherits Rectangle {
                                 }
                             }
                         }
+                        if Downloads.can-write: VerticalLayout {
+                            alignment: center;
+                            UploadButton { }
+                        }
                         VerticalLayout {
                             alignment: center;
                             QueueButton { }
+                        }
+                    }
+                }
+
+                // A change the server did not make (the ninth round), until dismissed.
+                if root.has-head && Downloads.change-failed != "": HorizontalLayout {
+                    spacing: 8px;
+                    VerticalLayout {
+                        alignment: start;
+                        padding-top: 1px;
+                        Icon {
+                            name: "warning-circle";
+                            size: 17px;
+                            color: Look.danger;
+                        }
+                    }
+                    Paragraph {
+                        horizontal-stretch: 1;
+                        text: DownloadWords.change-failed();
+                        color: Look.danger;
+                        font-size: 14px;
+                        line-height-factor: Look.leading(1.5);
+                    }
+                    VerticalLayout {
+                        alignment: start;
+                        Rectangle {
+                            width: 20px;
+                            height: 20px;
+                            Icon {
+                                name: "x";
+                                size: 15px;
+                                color: dismiss.has-hover ? Look.text : Look.muted;
+                                duotone: false;
+                            }
+                            dismiss := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    Downloads.dismiss-change-failed();
+                                }
+                            }
                         }
                     }
                 }
@@ -1413,7 +2319,8 @@ export component DownloadsPage inherits Rectangle {
                             menu(x, y) => {
                                 root.menu-name = entry.name;
                                 root.menu-folder = entry.folder;
-                                root.show-menu(2, x, y);
+                                root.menu-selected = entry.selected;
+                                root.show-menu(2, x, y, Downloads.can-write ? 8 : 3);
                             }
                         }
                         if Downloads.entries.length == 0: Rectangle {
@@ -1456,6 +2363,21 @@ export component DownloadsPage inherits Rectangle {
                                     font-weight: 500;
                                     vertical-alignment: center;
                                     overflow: elide;
+                                }
+                                if Downloads.can-write: FootAction {
+                                    icon: "arrow-bend-up-right";
+                                    text: @tr("Move…");
+                                    clicked => {
+                                        Downloads.move-selected();
+                                    }
+                                }
+                                if Downloads.can-write: FootAction {
+                                    icon: "trash";
+                                    text: @tr("Delete");
+                                    ink: Look.danger;
+                                    clicked => {
+                                        Downloads.delete-selected();
+                                    }
                                 }
                                 SmallButton {
                                     text: @tr("Clear");
@@ -1601,7 +2523,7 @@ export component DownloadsPage inherits Rectangle {
                             line-height-factor: Look.leading(1.6);
                         }
                         Paragraph {
-                            text: @tr("Cloud drives without WebDAV can be reached through OpenList. FinchGram only reads: nothing is uploaded, synced, renamed or deleted on the server.");
+                            text: @tr("Cloud drives without WebDAV can be reached through OpenList. FinchGram changes nothing on a server unless you allow it for that server.");
                             color: Look.muted;
                             font-size: 15px;
                             line-height-factor: Look.leading(1.6);
@@ -1875,6 +2797,65 @@ export component DownloadsPage inherits Rectangle {
                                 Downloads.submit-form();
                             }
                         }
+                        // Changes on this server (the ninth round): off until the user turns it on;
+                        // a server that said it only reads is noted under the words.
+                        Rectangle {
+                            height: allow.preferred-height;
+                            border-radius: Look.radius;
+                            background: Look.side;
+                            border-width: Look.field-border;
+                            border-color: Look.line;
+                            TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    Downloads.form-allow-changes = !Downloads.form-allow-changes;
+                                    Downloads.test-state = TestState.none;
+                                }
+                            }
+                            allow := HorizontalLayout {
+                                padding-left: 14px;
+                                padding-right: 14px;
+                                padding-top: 12px;
+                                padding-bottom: 12px;
+                                spacing: 14px;
+                                VerticalLayout {
+                                    horizontal-stretch: 1;
+                                    spacing: 2px;
+                                    alignment: start;
+                                    Text {
+                                        text: @tr("Allow changes to files on this server");
+                                        color: Look.text;
+                                        font-size: 14px;
+                                        font-weight: 600;
+                                    }
+                                    Paragraph {
+                                        text: @tr("Delete, move, rename and upload on the server. Deleted files can’t be recovered.");
+                                        color: Look.muted;
+                                        font-size: 12px;
+                                        line-height-factor: Look.leading(1.45);
+                                    }
+                                    if Downloads.form-read-only: Paragraph {
+                                        text: @tr("This server said it only allows reading.");
+                                        color: Look.faint;
+                                        font-size: 12px;
+                                        line-height-factor: Look.leading(1.45);
+                                    }
+                                }
+                                VerticalLayout {
+                                    alignment: center;
+                                    Switch {
+                                        on: Downloads.form-allow-changes;
+                                        track-width: 34px;
+                                        track-height: 20px;
+                                        knob-size: 14px;
+                                        toggled => {
+                                            Downloads.form-allow-changes = !Downloads.form-allow-changes;
+                                            Downloads.test-state = TestState.none;
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         // Basic authentication over http, and plain FTP, send the password in the clear
                         // (docs/downloads.md): allowed, for a NAS at home, and said in red.
                         if (Downloads.form-protocol == "webdav" && Downloads.form-address.to-lowercase().starts-with("http://")) || Downloads.form-protocol == "ftp": HorizontalLayout {
@@ -1934,23 +2915,36 @@ export component DownloadsPage inherits Rectangle {
                                 vertical-alignment: center;
                             }
                         }
-                        if Downloads.test-state == TestState.ok || Downloads.test-state == TestState.failed: HorizontalLayout {
-                            spacing: 8px;
-                            alignment: start;
-                            VerticalLayout {
+                        if Downloads.test-state == TestState.ok || Downloads.test-state == TestState.failed: VerticalLayout {
+                            spacing: 6px;
+                            HorizontalLayout {
+                                spacing: 8px;
                                 alignment: start;
-                                padding-top: 1px;
-                                Icon {
-                                    name: Downloads.test-state == TestState.ok ? "check-circle" : "warning-circle";
-                                    size: 17px;
+                                VerticalLayout {
+                                    alignment: start;
+                                    padding-top: 1px;
+                                    Icon {
+                                        name: Downloads.test-state == TestState.ok ? "check-circle" : "warning-circle";
+                                        size: 17px;
+                                        color: Downloads.test-state == TestState.ok ? Look.ok : Look.danger;
+                                    }
+                                }
+                                Paragraph {
+                                    text: DownloadWords.test-result();
                                     color: Downloads.test-state == TestState.ok ? Look.ok : Look.danger;
+                                    font-size: 14px;
+                                    line-height-factor: Look.leading(1.5);
                                 }
                             }
-                            Paragraph {
-                                text: DownloadWords.test-result();
-                                color: Downloads.test-state == TestState.ok ? Look.ok : Look.danger;
-                                font-size: 14px;
-                                line-height-factor: Look.leading(1.5);
+                            // What the server says about changes, under a test that reached it.
+                            if Downloads.test-state == TestState.ok: HorizontalLayout {
+                                padding-left: 25px;
+                                Paragraph {
+                                    text: DownloadWords.changes-said(Downloads.test-changes);
+                                    color: Look.muted;
+                                    font-size: 13px;
+                                    line-height-factor: Look.leading(1.5);
+                                }
                             }
                         }
                         HorizontalLayout {
@@ -2001,6 +2995,14 @@ export component DownloadsPage inherits Rectangle {
                     }
                 }
             }
+            }
+
+            if Downloads.dropping: DropBox {
+                x: 12px;
+                y: 12px;
+                width: parent.width - 24px;
+                height: parent.height - 24px;
+            }
         }
 
         // The queue, when it is not empty and not hidden.
@@ -2026,13 +3028,15 @@ export component DownloadsPage inherits Rectangle {
                         spacing: 3px;
                         alignment: start;
                         Heading {
-                            label: @tr("Downloads");
+                            label: @tr("Transfers");
                             size: Look.nav-heading-size;
                             wrap: no-wrap;
                             overflow: elide;
                         }
                         if Downloads.active-count > 0: Text {
-                            text: @tr("{0} active", Downloads.active-count);
+                            text: Downloads.active-uploads > 0 && Downloads.active-count > Downloads.active-uploads
+                                ? @tr("{0} down · {1} up", Downloads.active-count - Downloads.active-uploads, Downloads.active-uploads)
+                                : @tr("{0} active", Downloads.active-count);
                             color: Look.muted;
                             font-size: 13px;
                         }
@@ -2116,7 +3120,7 @@ export component DownloadsPage inherits Rectangle {
                             menu(x, y) => {
                                 root.menu-id = row.id;
                                 root.menu-state = row.state;
-                                root.show-menu(3, x, y);
+                                root.show-menu(3, x, y, 4);
                             }
                         }
                     }
@@ -2152,6 +3156,46 @@ export component DownloadsPage inherits Rectangle {
                     }
                 }
             }
+        }
+    }
+
+    // A name being typed in place: a click anywhere else keeps it (a bad name is let go), and so
+    // does a scroll, as the design has it.
+    if Downloads.renaming != "": TouchArea {
+        clicked => {
+            Downloads.commit-rename(true);
+        }
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down {
+                Downloads.commit-rename(true);
+            }
+        }
+        scroll-event(event) => {
+            Downloads.commit-rename(true);
+            return accept;
+        }
+    }
+
+    // What was just done, at the foot for a moment.
+    if Downloads.toast != "": Rectangle {
+        x: (parent.width - self.width) / 2;
+        y: parent.height - self.height - 24px;
+        width: min(520px, toast-text.preferred-width + 32px);
+        height: toast-text.preferred-height + 20px;
+        border-radius: Look.radius;
+        background: Look.text;
+        drop-shadow-blur: 30px;
+        drop-shadow-offset-y: 10px;
+        drop-shadow-color: #00000040;
+        toast-text := Text {
+            x: 16px;
+            width: parent.width - 32px;
+            height: parent.height;
+            text: DownloadWords.toast();
+            color: Look.bg;
+            font-size: 14px;
+            vertical-alignment: center;
+            overflow: elide;
         }
     }
 
@@ -2213,7 +3257,16 @@ export component DownloadsPage inherits Rectangle {
                         root.close-menu();
                     }
                 }
-                if root.menu-kind == 2 && root.menu-folder: MenuEntry {
+                // A right click on one of several chosen files acts on them all.
+                if root.menu-multi: MenuEntry {
+                    icon: "download-simple";
+                    label: @tr("Download {0} items", Downloads.selected-count);
+                    chosen => {
+                        Downloads.download-selected();
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 2 && !root.menu-multi && root.menu-folder: MenuEntry {
                     icon: "folder-open";
                     label: @tr("Open");
                     chosen => {
@@ -2221,7 +3274,7 @@ export component DownloadsPage inherits Rectangle {
                         root.close-menu();
                     }
                 }
-                if root.menu-kind == 2 && root.menu-folder: MenuEntry {
+                if root.menu-kind == 2 && !root.menu-multi && root.menu-folder: MenuEntry {
                     icon: "download-simple";
                     label: @tr("Download folder");
                     chosen => {
@@ -2229,7 +3282,7 @@ export component DownloadsPage inherits Rectangle {
                         root.close-menu();
                     }
                 }
-                if root.menu-kind == 2 && !root.menu-folder: MenuEntry {
+                if root.menu-kind == 2 && !root.menu-multi && !root.menu-folder: MenuEntry {
                     icon: "download-simple";
                     label: @tr("Download");
                     chosen => {
@@ -2237,7 +3290,7 @@ export component DownloadsPage inherits Rectangle {
                         root.close-menu();
                     }
                 }
-                if root.menu-kind == 2 && !root.menu-folder: MenuEntry {
+                if root.menu-kind == 2 && !root.menu-multi && !root.menu-folder: MenuEntry {
                     icon: "arrow-square-out";
                     label: @tr("Open");
                     chosen => {
@@ -2245,12 +3298,72 @@ export component DownloadsPage inherits Rectangle {
                         root.close-menu();
                     }
                 }
-                if root.menu-kind == 2: MenuEntry {
+                if root.menu-kind == 2 && !root.menu-multi: MenuEntry {
                     icon: "link";
                     label: @tr("Copy link");
                     chosen => {
                         Downloads.copy-link(root.menu-name);
                         root.close-menu();
+                    }
+                }
+                // Changes on the server (the ninth round), where the user allows them; greyed, with
+                // a word, when the server said it only reads.
+                if root.menu-kind == 2 && Downloads.can-write: Rectangle {
+                    height: 11px;
+                    Rectangle {
+                        x: 6px;
+                        y: 5px;
+                        width: parent.width - 12px;
+                        height: 1px;
+                        background: Look.line-strong;
+                    }
+                }
+                if root.menu-kind == 2 && Downloads.can-write: MenuEntry {
+                    icon: "pencil-simple";
+                    label: @tr("Rename");
+                    enabled: !Downloads.server-read-only && !root.menu-multi;
+                    chosen => {
+                        Downloads.rename-entry(root.menu-name);
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 2 && Downloads.can-write: MenuEntry {
+                    icon: "arrow-bend-up-right";
+                    label: root.menu-multi ? @tr("Move {0} items to…", Downloads.selected-count) : @tr("Move to…");
+                    enabled: !Downloads.server-read-only;
+                    chosen => {
+                        if root.menu-multi {
+                            Downloads.move-selected();
+                        } else {
+                            Downloads.move-entry(root.menu-name);
+                        }
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 2 && Downloads.can-write: MenuEntry {
+                    icon: "trash";
+                    label: root.menu-multi ? @tr("Delete {0} items…", Downloads.selected-count) : @tr("Delete…");
+                    danger: true;
+                    enabled: !Downloads.server-read-only;
+                    chosen => {
+                        if root.menu-multi {
+                            Downloads.delete-selected();
+                        } else {
+                            Downloads.delete-entry(root.menu-name);
+                        }
+                        root.close-menu();
+                    }
+                }
+                if root.menu-kind == 2 && Downloads.can-write && Downloads.server-read-only: HorizontalLayout {
+                    padding-left: 10px;
+                    padding-right: 10px;
+                    padding-top: 6px;
+                    padding-bottom: 4px;
+                    Paragraph {
+                        text: @tr("The server doesn’t allow changes.");
+                        color: Look.muted;
+                        font-size: 12px;
+                        line-height-factor: Look.leading(1.45);
                     }
                 }
                 if root.menu-kind == 3: MenuEntry {
@@ -2295,4 +3408,8 @@ export component DownloadsPage inherits Rectangle {
 
     // The question about an SFTP server's key, over the page.
     if Downloads.key-ask-open: KeyDialog { }
+    // The changes' dialogs (the ninth round).
+    if Downloads.delete-open: DeleteDialog { }
+    if Downloads.move-open: MoveDialog { }
+    if Downloads.conflict-open: ConflictDialog { }
 }

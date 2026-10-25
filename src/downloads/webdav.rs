@@ -1,18 +1,25 @@
-//! The WebDAV client (RFC 4918), read-only: what a folder holds (PROPFIND, depth 1), whether a
-//! server answers at all (depth 0), and the address of a file for the transfer engine
-//! (transfer.rs). Basic authentication over whatever the address says, http or https; the
-//! password comes from the Keychain (src/platform/). Nothing is ever written to the server.
+//! The WebDAV client (RFC 4918): what a folder holds (PROPFIND, depth 1), whether a server
+//! answers at all (depth 0), the address of a file for the transfer engine (transfer.rs), and,
+//! where the user allows changes on the server (the design's ninth round), DELETE, MOVE, MKCOL
+//! and PUT, with OPTIONS to learn whether the server allows them at all. Basic authentication
+//! over whatever the address says, http or https; the password comes from the app's database
+//! (src/database.rs). Nothing is written to a server unless the user turned that on for it.
 
-use std::time::Duration;
+use std::path::Path;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::time::{Duration, Instant};
 
 use base64::Engine;
 use bytes::Bytes;
 use http_body_util::{BodyExt, Full};
 use hyper::body::Incoming;
 use hyper::Method;
-use hyper::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use hyper::header::{ACCEPT, ALLOW, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE};
 
-use super::http::Http;
+use super::http::{Http, Upload};
+use super::remote::Changes;
+use super::transfer;
 
 /// A server as the page knows it: its address without a trailing slash, and the account.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -30,6 +37,12 @@ const LARGEST_LISTING: usize = 32 * 1024 * 1024;
 /// answers 207 and then never finishes would otherwise hold the listing thread for good.
 const LISTING_IDLE: Duration = Duration::from_secs(30);
 const LISTING_PATIENCE: Duration = Duration::from_secs(10 * 60);
+/// An upload: how long the server may take none of the file, and how long its answer may take
+/// once the whole file has gone (a server that puts the file somewhere else first).
+const UPLOAD_STALL: Duration = Duration::from_secs(60);
+const UPLOAD_ANSWER: Duration = Duration::from_secs(5 * 60);
+/// The methods a server that allows changes names in its OPTIONS answer.
+const CHANGING_METHODS: [&str; 4] = ["DELETE", "MOVE", "PUT", "MKCOL"];
 
 /// What a listing asks for: whether an entry is a folder, its size, when it changed, its name.
 const PROPFIND_BODY: &str = r#"<?xml version="1.0" encoding="utf-8"?>
@@ -153,6 +166,148 @@ impl Server {
     /// Whether the server answers at the root: nothing is read but the fact.
     pub fn check(&self, http: &Http) -> Result<(), Error> {
         http.block_on(self.propfind(http, &self.folder_url(&[]), "0")).map(|_| ())
+    }
+
+    /// Whether the server allows changes, as its OPTIONS answer at the root says: the Allow
+    /// header names the methods, and one without DELETE, MOVE, PUT or MKCOL is a server that only
+    /// reads. No Allow header, or no answer, says nothing: a change is tried to find out.
+    pub fn changes(&self, http: &Http) -> Changes {
+        http.block_on(async {
+            let mut request = http.request(Method::OPTIONS, &self.folder_url(&[]));
+            if let Some(authorization) = self.authorization() {
+                request = request.header(AUTHORIZATION, authorization);
+            }
+            let Ok(request) = request.body(Full::default()) else { return Changes::Unknown };
+            let Ok(response) = http.send(request).await else { return Changes::Unknown };
+            if !response.status().is_success() {
+                return Changes::Unknown;
+            }
+            let allowed: Vec<String> = response
+                .headers()
+                .get_all(ALLOW)
+                .iter()
+                .filter_map(|value| value.to_str().ok())
+                .flat_map(|value| value.split(','))
+                .map(|method| method.trim().to_ascii_uppercase())
+                .filter(|method| !method.is_empty())
+                .collect();
+            let changes = if allowed.is_empty() {
+                Changes::Unknown
+            } else if CHANGING_METHODS.iter().any(|method| allowed.iter().any(|allowed| allowed == method)) {
+                Changes::Allowed
+            } else {
+                Changes::ReadOnly
+            };
+            super::log::line(format!("{} allows: {} ({changes:?})", super::log::shown(&self.url), if allowed.is_empty() { "(no Allow header)".to_string() } else { allowed.join(", ") }));
+            changes
+        })
+    }
+
+    /// The file, or the folder with everything in it (a DELETE on a collection is deep), gone.
+    pub fn delete(&self, http: &Http, path: &[String], name: &str, is_dir: bool) -> Result<(), Error> {
+        let url = self.entry_url(path, name, is_dir);
+        http.block_on(self.change(http, Method::DELETE, &url, &[]))
+    }
+
+    /// `name` in `from` moved to `to` as `new_name`: a MOVE with the destination's address,
+    /// overwriting what is there only when `replace` says so.
+    #[allow(clippy::too_many_arguments)]
+    pub fn move_to(&self, http: &Http, from: &[String], name: &str, is_dir: bool, to: &[String], new_name: &str, replace: bool) -> Result<(), Error> {
+        let source = self.entry_url(from, name, is_dir);
+        let destination = self.entry_url(to, new_name, is_dir);
+        http.block_on(self.change(http, Method::from_bytes(b"MOVE").expect("a method"), &source, &[("Destination", destination.as_str()), ("Overwrite", if replace { "T" } else { "F" })]))
+    }
+
+    /// A new folder `name` in `path`: MKCOL.
+    pub fn make_folder(&self, http: &Http, path: &[String], name: &str) -> Result<(), Error> {
+        let mut folder = path.to_vec();
+        folder.push(name.to_string());
+        let url = self.folder_url(&folder);
+        http.block_on(self.change(http, Method::from_bytes(b"MKCOL").expect("a method"), &url, &[]))
+    }
+
+    /// The file at `local`, `size` bytes, PUT into `path` as `name`, the body read as it goes
+    /// (http::Upload). The bytes handed to the connection go to `progress`; the request is given
+    /// up when the server takes none for UPLOAD_STALL, or answers nothing for UPLOAD_ANSWER once
+    /// the file has gone, or the user stops it.
+    #[allow(clippy::too_many_arguments)]
+    pub fn upload(&self, http: &Http, local: &Path, size: u64, path: &[String], name: &str, cancel: &Arc<AtomicBool>, progress: &(dyn Fn(u64) + Sync)) -> Result<(), transfer::Error> {
+        let url = self.file_url(path, name);
+        let mut request = http.request(Method::PUT, &url).header(CONTENT_TYPE, "application/octet-stream").header(CONTENT_LENGTH, size);
+        if let Some(authorization) = self.authorization() {
+            request = request.header(AUTHORIZATION, authorization);
+        }
+        let (parts, ()) = request.body(()).map_err(|err| transfer::Error::Protocol(format!("bad address: {err}")))?.into_parts();
+        let upload = Upload { path: local.to_path_buf(), size, cancel: cancel.clone(), sent: Arc::new(AtomicU64::new(0)) };
+        http.block_on(async {
+            let sending = http.send_file(parts, &upload);
+            tokio::pin!(sending);
+            let mut ticker = tokio::time::interval(Duration::from_millis(100));
+            let (mut last_sent, mut moved_at) = (0u64, Instant::now());
+            loop {
+                tokio::select! {
+                    outcome = &mut sending => {
+                        let response = outcome?;
+                        return match response.status().as_u16() {
+                            200 | 201 | 204 => Ok(()),
+                            401 => Err(transfer::Error::Unauthorized),
+                            403 => Err(transfer::Error::Forbidden),
+                            404 => Err(transfer::Error::Missing),
+                            code => Err(transfer::Error::Status(code)),
+                        };
+                    }
+                    _ = ticker.tick() => {
+                        if cancel.load(Ordering::Relaxed) {
+                            return Err(transfer::Error::Cancelled);
+                        }
+                        let sent = upload.sent.load(Ordering::Relaxed);
+                        if sent != last_sent {
+                            last_sent = sent;
+                            moved_at = Instant::now();
+                            progress(sent);
+                        } else if moved_at.elapsed() > if sent >= size { UPLOAD_ANSWER } else { UPLOAD_STALL } {
+                            return Err(transfer::Error::Connection(if sent >= size { "the server did not answer after the file".to_string() } else { "the server stopped taking the file".to_string() }));
+                        }
+                    }
+                }
+            }
+        })
+    }
+
+    /// The address of an entry: a folder's, with its trailing slash, or a file's.
+    fn entry_url(&self, path: &[String], name: &str, is_dir: bool) -> String {
+        if is_dir {
+            let mut folder = path.to_vec();
+            folder.push(name.to_string());
+            self.folder_url(&folder)
+        } else {
+            self.file_url(path, name)
+        }
+    }
+
+    /// A change asked of the server with `method` at `url`, the answer's status read as the
+    /// server's yes or no: 2xx is done (a 207 Multi-Status, part of a deep DELETE or MOVE not
+    /// done, is a refusal), 401 and 403 the account, 404 nothing there, anything else as it is.
+    async fn change(&self, http: &Http, method: Method, url: &str, headers: &[(&str, &str)]) -> Result<(), Error> {
+        let mut request = http.request(method.clone(), url);
+        for (name, value) in headers {
+            request = request.header(*name, *value);
+        }
+        if let Some(authorization) = self.authorization() {
+            request = request.header(AUTHORIZATION, authorization);
+        }
+        let request = request.body(Full::default()).map_err(|err| Error::Unreadable(err.to_string()))?;
+        let response = http.send(request).await?;
+        let code = response.status().as_u16();
+        super::log::line(format!("{method} {}: {code}", super::log::shown(url)));
+        match code {
+            207 => Err(Error::Refused("207 Multi-Status: part of it was not done".into())),
+            200..=299 => Ok(()),
+            401 => Err(Error::Unauthorized),
+            403 => Err(Error::Forbidden),
+            404 => Err(Error::Missing),
+            code => Err(Error::Status(code)),
+        }
     }
 
     async fn propfind(&self, http: &Http, url: &str, depth: &str) -> Result<String, Error> {

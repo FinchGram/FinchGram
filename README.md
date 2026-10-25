@@ -126,8 +126,9 @@ NAS, a seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav`, or a f
 browse its folders, tick files or take a whole folder, and they arrive in ~/Documents/FinchGram/webdav:
 each file in 8 MB chunks over up to twelve connections, going on from where it stopped after a
 Retry, as the maintainer's command-line tool vget does. The queue on the right shows the speed and
-what is left; Open fetches a photo or video and shows it in the viewer. FinchGram only reads from
-the server, and the password goes sealed into FinchGram's database, never into a plain file.
+what is left; Open fetches a photo or video and shows it in the viewer. FinchGram changes nothing
+on a server unless you allow it for that server (then it can delete, move, rename and upload
+there), and the password goes sealed into FinchGram's database, never into a plain file.
 [docs/downloads.md](docs/downloads.md) has the details and what is not there yet (a self-signed
 certificate is refused: use http on the LAN, or a real certificate).
 

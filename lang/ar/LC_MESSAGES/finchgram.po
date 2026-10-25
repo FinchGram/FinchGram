@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-24 14:21+0000\n"
+"POT-Creation-Date: 2026-10-25 03:52+0000\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -45,8 +45,7 @@ msgid "Broadsheet"
 msgstr "الصحيفة"
 
 #. The tools.
-#: ui/app.slint:125 ui/pages/downloads.slint:506 ui/pages/downloads.slint:1157
-#: ui/toolbox.slint:113
+#: ui/app.slint:125 ui/pages/downloads.slint:2013 ui/toolbox.slint:113
 msgid "Downloads"
 msgstr "التنزيلات"
 
@@ -103,10 +102,10 @@ msgstr "أضف تعليقًا (اختياري)"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/broadsheet.slint:2592 ui/chat.slint:360 ui/compose.slint:244
-#: ui/pages/downloads.slint:1096 ui/pages/downloads.slint:2258
-#: ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
-#: ui/terminal/terminal.slint:1742 ui/workbench/actions.slint:548
-#: ui/workbench/conversation.slint:1655
+#: ui/pages/downloads.slint:1393 ui/pages/downloads.slint:1903
+#: ui/pages/downloads.slint:3370 ui/pages/settings.slint:1209
+#: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1742
+#: ui/workbench/actions.slint:548 ui/workbench/conversation.slint:1655
 msgid "Cancel"
 msgstr "إلغاء"
 
@@ -117,8 +116,8 @@ msgid "Report"
 msgstr "إبلاغ"
 
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2574
-#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1727
-#: ui/workbench/conversation.slint:1618
+#: ui/chat.slint:387 ui/chat.slint:821 ui/pages/downloads.slint:2375
+#: ui/terminal/terminal.slint:1727 ui/workbench/conversation.slint:1618
 msgid "Delete"
 msgstr "حذف"
 
@@ -135,7 +134,7 @@ msgstr "داكن"
 msgid "Accounts"
 msgstr "الحسابات"
 
-#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:1184
+#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:2040
 #: ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "الدردشات"
@@ -176,7 +175,7 @@ msgid "Latest message"
 msgstr "أحدث رسالة"
 
 #: ui/broadsheet/broadsheet.slint:667 ui/chat-manage.slint:233
-#: ui/pages/downloads.slint:1709 ui/workbench/sidebar.slint:868
+#: ui/pages/downloads.slint:2630 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "الاسم"
 
@@ -535,7 +534,7 @@ msgstr "صلاحيات المشرف"
 msgid "Change photo"
 msgstr "تغيير الصورة"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1960
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2953
 #: ui/pages/settings.slint:1269
 msgid "Save"
 msgstr "حفظ"
@@ -641,7 +640,7 @@ msgid "Primary invite link"
 msgstr "رابط الدعوة الرئيسي"
 
 #: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:900
+#: ui/pages/downloads.slint:1197
 msgid "Copy"
 msgstr "نسخ"
 
@@ -790,7 +789,7 @@ msgstr "ابحث في جهات الاتصال"
 msgid "No contacts to add"
 msgstr "لا توجد جهات اتصال لإضافتها"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1960
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2953
 msgid "Add"
 msgstr "إضافة"
 
@@ -819,7 +818,7 @@ msgid "Remove {0} from the channel?"
 msgstr "إزالة {0} من القناة؟"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:346 ui/pages/ai-access.slint:461
-#: ui/pages/downloads.slint:1991
+#: ui/pages/downloads.slint:2984
 msgid "Remove"
 msgstr "إزالة"
 
@@ -1202,8 +1201,8 @@ msgstr "ستختفي الدردشة ورسائلها من قائمتك."
 msgid "Also delete for {0}"
 msgstr "الحذف لدى {0} أيضًا"
 
-#: ui/chat.slint:303 ui/pages/downloads.slint:1468
-#: ui/pages/downloads.slint:2242
+#: ui/chat.slint:303 ui/pages/downloads.slint:2389
+#: ui/pages/downloads.slint:3294
 msgid "Open"
 msgstr "فتح"
 
@@ -1444,11 +1443,12 @@ msgstr "إلغاء الرفع"
 msgid "Not sent"
 msgstr "لم يتم الإرسال"
 
-#: ui/chat.slint:386 ui/pages/downloads.slint:761 ui/pages/downloads.slint:2267
+#: ui/chat.slint:386 ui/pages/downloads.slint:1051
+#: ui/pages/downloads.slint:3379
 msgid "Retry"
 msgstr "إعادة المحاولة"
 
-#: ui/chat.slint:388 ui/pages/downloads.slint:1474
+#: ui/chat.slint:388 ui/pages/downloads.slint:2395
 msgid "Download"
 msgstr "تنزيل"
 
@@ -1456,12 +1456,12 @@ msgstr "تنزيل"
 msgid "Cancel download"
 msgstr "إلغاء التنزيل"
 
-#: ui/chat.slint:390 ui/pages/downloads.slint:752
+#: ui/chat.slint:390 ui/pages/downloads.slint:1032
 msgid "Show in Finder"
 msgstr "إظهار في Finder"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:392 ui/pages/downloads.slint:58
+#: ui/chat.slint:392 ui/pages/downloads.slint:60
 msgid "{0} of {1}"
 msgstr "{0} من {1}"
 
@@ -1473,7 +1473,7 @@ msgstr "انقر للعرض"
 msgid "Reply"
 msgstr "رد"
 
-#: ui/chat.slint:812 ui/pages/downloads.slint:2193
+#: ui/chat.slint:812 ui/pages/downloads.slint:3236
 msgid "Edit"
 msgstr "تعديل"
 
@@ -1841,7 +1841,7 @@ msgstr "يجب أن يكون لديه حساب على Telegram"
 msgid "Next"
 msgstr "التالي"
 
-#: ui/compose.slint:225
+#: ui/compose.slint:225 ui/pages/downloads.slint:1962
 msgid "Skip"
 msgstr "تخطي"
 
@@ -1951,7 +1951,7 @@ msgstr "32 حرفًا على الأكثر"
 msgid "Cannot end with an underscore"
 msgstr "لا يمكن أن ينتهي بشرطة سفلية"
 
-#: ui/compose.slint:271 ui/pages/downloads.slint:17
+#: ui/compose.slint:271 ui/pages/downloads.slint:18
 msgid "Checking…"
 msgstr "جارٍ التحقق…"
 
@@ -1985,7 +1985,7 @@ msgid "It can be revoked and made anew in the channel's settings."
 msgstr "يمكن إبطاله وإنشاء رابط جديد من إعدادات القناة."
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:900
+#: ui/pages/downloads.slint:1197
 msgid "Copied"
 msgstr "تم النسخ"
 
@@ -2532,7 +2532,7 @@ msgstr "جارٍ الاتصال…"
 msgid "Updating…"
 msgstr "جارٍ التحديث…"
 
-#: ui/format.slint:185 ui/pages/ai-access.slint:82 ui/pages/downloads.slint:16
+#: ui/format.slint:185 ui/pages/ai-access.slint:82 ui/pages/downloads.slint:17
 msgid "Connected"
 msgstr "متصل"
 
@@ -2964,137 +2964,247 @@ msgstr ""
 "قراءة دردشاتك والتصرف فيها عبر FinchGram بحسابك. لا يستدعي FinchGram نفسه أي "
 "ذكاء اصطناعي ولا يحتفظ بشيء من أجله."
 
-#: ui/pages/downloads.slint:18
+#: ui/pages/downloads.slint:19
 msgid "Password rejected"
 msgstr "كلمة السر مرفوضة"
 
-#: ui/pages/downloads.slint:19
+#: ui/pages/downloads.slint:20
 msgid "Not reachable"
 msgstr "لا يمكن الوصول إليه"
 
-#: ui/pages/downloads.slint:20
+#: ui/pages/downloads.slint:21
 msgid "Key not checked"
 msgstr "المفتاح غير مُتحقَّق منه"
 
-#: ui/pages/downloads.slint:21
+#: ui/pages/downloads.slint:22
 msgid "Key changed"
 msgstr "تغيّر المفتاح"
 
-#: ui/pages/downloads.slint:27
+#: ui/pages/downloads.slint:28
 msgid "The server refused the password (401)"
 msgstr "رفض الخادم كلمة السر (401)"
 
-#: ui/pages/downloads.slint:28
+#: ui/pages/downloads.slint:29
 msgid "The server refused access (403)"
 msgstr "رفض الخادم الوصول (403)"
 
-#: ui/pages/downloads.slint:29
+#: ui/pages/downloads.slint:30
 msgid "Cannot reach {0}"
 msgstr "تعذر الوصول إلى {0}"
 
-#: ui/pages/downloads.slint:30
+#: ui/pages/downloads.slint:31
 msgid "The server answered HTTP {0}"
 msgstr "ردّ الخادم بـ HTTP {0}"
 
-#: ui/pages/downloads.slint:31
+#: ui/pages/downloads.slint:32
 msgid "The server did not answer with a WebDAV listing"
 msgstr "لم يردّ الخادم بقائمة WebDAV"
 
-#: ui/pages/downloads.slint:32
+#: ui/pages/downloads.slint:33
 msgid "The connection was lost"
 msgstr "انقطع الاتصال"
 
-#: ui/pages/downloads.slint:33
+#: ui/pages/downloads.slint:34
 msgid "The file could not be written"
 msgstr "تعذر كتابة الملف"
 
-#: ui/pages/downloads.slint:34
+#: ui/pages/downloads.slint:35
 msgid "The server has no such file or folder"
 msgstr "لا يوجد هذا الملف أو المجلد على الخادم"
 
-#: ui/pages/downloads.slint:35
+#: ui/pages/downloads.slint:36
 msgid ""
 "Not connected: you didn’t trust the server’s key. Your password wasn’t sent."
 msgstr "لم يتم الاتصال: لم تثق بمفتاح الخادم. لم تُرسَل كلمة مرورك."
 
-#: ui/pages/downloads.slint:36 ui/pages/downloads.slint:1568
+#: ui/pages/downloads.slint:37 ui/pages/downloads.slint:2489
 msgid "Not connected. This server’s key has changed."
 msgstr "لم يتم الاتصال. تغيّر مفتاح هذا الخادم."
 
-#: ui/pages/downloads.slint:42
+#: ui/pages/downloads.slint:43
 msgid "the server refused the password (401)"
 msgstr "رفض الخادم كلمة السر (401)"
 
-#: ui/pages/downloads.slint:43
+#: ui/pages/downloads.slint:44
 msgid "the server refused access (403)"
 msgstr "رفض الخادم الوصول (403)"
 
-#: ui/pages/downloads.slint:44
+#: ui/pages/downloads.slint:45
 msgid "the server answered HTTP {0}"
 msgstr "ردّ الخادم بـ HTTP {0}"
 
-#: ui/pages/downloads.slint:45
+#: ui/pages/downloads.slint:46
 msgid "the server did not answer with the file"
 msgstr "لم يردّ الخادم بالملف"
 
-#: ui/pages/downloads.slint:46
+#: ui/pages/downloads.slint:47
 msgid "the file could not be written"
 msgstr "تعذر كتابة الملف"
 
 #
-#: ui/pages/downloads.slint:47
+#: ui/pages/downloads.slint:48
 msgid "the server has no such file"
 msgstr "لا يوجد هذا الملف على الخادم"
 
-#: ui/pages/downloads.slint:48
+#: ui/pages/downloads.slint:49
 msgid "the server’s key changed"
 msgstr "تغيّر مفتاح الخادم"
 
-#: ui/pages/downloads.slint:49
+#: ui/pages/downloads.slint:50
 msgid "the server closed the connection"
 msgstr "أغلق الخادم الاتصال"
 
-#: ui/pages/downloads.slint:53
+#: ui/pages/downloads.slint:55
 msgid "Waiting · {0}"
 msgstr "في الانتظار · {0}"
 
-#: ui/pages/downloads.slint:54
+#: ui/pages/downloads.slint:56
 msgid "Done · {0}"
 msgstr "اكتمل · {0}"
 
-#: ui/pages/downloads.slint:55
+#: ui/pages/downloads.slint:57
 msgid "Paused until you check the server’s key. {0} of {1} kept."
 msgstr "متوقف مؤقتًا حتى تتحقق من مفتاح الخادم. محفوظ {0} من {1}."
 
-#: ui/pages/downloads.slint:56
+#: ui/pages/downloads.slint:58
 msgid "Stopped: {0}. {1} of {2} kept."
 msgstr "توقّف: {0}. تم الاحتفاظ بـ {1} من {2}."
 
-#: ui/pages/downloads.slint:57
+#: ui/pages/downloads.slint:59
 msgid "Server busy (HTTP {0}), trying again…"
 msgstr "الخادم مشغول (HTTP {0})، تجري إعادة المحاولة…"
 
-#: ui/pages/downloads.slint:59
+#: ui/pages/downloads.slint:61
 msgid "{0} of {1} · {2} · {3}"
 msgstr "{0} من {1} · {2} · {3}"
 
-#: ui/pages/downloads.slint:63
+#: ui/pages/downloads.slint:65
 msgid "estimating…"
 msgstr "جارٍ التقدير…"
 
-#: ui/pages/downloads.slint:64
+#: ui/pages/downloads.slint:66
 msgid "{0} s left"
 msgstr "{0} ث متبقية"
 
-#: ui/pages/downloads.slint:65
+#: ui/pages/downloads.slint:67
 msgid "{0} min left"
 msgstr "{0} د متبقية"
 
+#: ui/pages/downloads.slint:73
+msgid "Waiting · to {0} · {1}"
+msgstr "في الانتظار · إلى {0} · {1}"
+
 #: ui/pages/downloads.slint:74
+msgid "Uploaded to {0} · {1}"
+msgstr "رُفع إلى {0} · {1}"
+
+#: ui/pages/downloads.slint:75
+msgid "The server refused the upload ({0})."
+msgstr "رفض الخادم الرفع ({0})."
+
+#: ui/pages/downloads.slint:76
+msgid "Stopped: {0}. Retry starts over."
+msgstr "توقّف: {0}. إعادة المحاولة تبدأ من جديد."
+
+#: ui/pages/downloads.slint:77
+msgid "To {0} · {1} of {2}"
+msgstr "إلى {0} · {1} من {2}"
+
+#: ui/pages/downloads.slint:78
+msgid "To {0} · {1} of {2} · {3} · {4}"
+msgstr "إلى {0} · {1} من {2} · {3} · {4}"
+
+#: ui/pages/downloads.slint:88
+msgid "delete {0} items"
+msgstr "حذف {0} عناصر"
+
+#: ui/pages/downloads.slint:89
+msgid "delete “{0}”"
+msgstr "حذف ”{0}“"
+
+#
+#
+#: ui/pages/downloads.slint:90
+msgid "move {0} items"
+msgstr "نقل {0} عناصر"
+
+#: ui/pages/downloads.slint:91
+msgid "move “{0}”"
+msgstr "نقل ”{0}“"
+
+#: ui/pages/downloads.slint:92
+msgid "rename “{0}”"
+msgstr "إعادة تسمية ”{0}“"
+
+#: ui/pages/downloads.slint:93
+msgid "create the folder “{0}”"
+msgstr "إنشاء المجلد ”{0}“"
+
+#: ui/pages/downloads.slint:99
+msgid "The server refused to {0} ({1})."
+msgstr "رفض الخادم {0} ({1})."
+
+#: ui/pages/downloads.slint:101
+msgid "Couldn’t {0}: {1}"
+msgstr "تعذّر {0}: {1}"
+
+#: ui/pages/downloads.slint:106
+msgid "Deleted {0} items"
+msgstr "حُذفت {0} عناصر"
+
+#: ui/pages/downloads.slint:107
+msgid "Deleted “{0}”"
+msgstr "حُذف ”{0}“"
+
+#: ui/pages/downloads.slint:108
+msgid "Moved {0} items to {1}"
+msgstr "نُقلت {0} عناصر إلى {1}"
+
+#: ui/pages/downloads.slint:109
+msgid "Moved “{0}” to {1}"
+msgstr "نُقل ”{0}“ إلى {1}"
+
+#: ui/pages/downloads.slint:110
+msgid "Nothing was moved"
+msgstr "لم يُنقل شيء"
+
+#: ui/pages/downloads.slint:116
+msgid "Changes: allowed by the server."
+msgstr "التغييرات: يسمح بها الخادم."
+
+#: ui/pages/downloads.slint:117
+msgid "Changes: the server only allows reading."
+msgstr "التغييرات: الخادم يسمح بالقراءة فقط."
+
+#: ui/pages/downloads.slint:118
+msgid "Changes: the server didn’t say. You’ll know when you try."
+msgstr "التغييرات: لم يقل الخادم شيئًا. ستعرف عند المحاولة."
+
+#: ui/pages/downloads.slint:123
+msgid "There’s already “{0}” here."
+msgstr "يوجد ”{0}“ هنا بالفعل."
+
+#: ui/pages/downloads.slint:124
+msgid "Names can’t contain “/”."
+msgstr "لا يمكن أن يحتوي الاسم على ”/“."
+
+#: ui/pages/downloads.slint:131
+msgid "Folder"
+msgstr "مجلد"
+
+#: ui/pages/downloads.slint:132
+msgid "Empty folder"
+msgstr "مجلد فارغ"
+
+#: ui/pages/downloads.slint:133
+msgid "Folder · {0} items inside"
+msgstr "مجلد · بداخله {0} عناصر"
+
+#: ui/pages/downloads.slint:142
 msgid "Reached: {0} folders and {1} files at the root."
 msgstr "تم الوصول إلى الخادم: {0} من المجلدات و{1} من الملفات في الجذر."
 
-#: ui/pages/downloads.slint:77
+#: ui/pages/downloads.slint:145
 msgid ""
 "Reached: {0} folders and {1} files at the root. Ranges supported, so "
 "downloads can use several connections."
@@ -3102,7 +3212,7 @@ msgstr ""
 "تم الوصول إلى الخادم: {0} من المجلدات و{1} من الملفات في الجذر. يدعم الخادم "
 "طلبات النطاق، لذا يمكن للتنزيلات استخدام عدة اتصالات."
 
-#: ui/pages/downloads.slint:79
+#: ui/pages/downloads.slint:147
 msgid ""
 "Reached: {0} folders and {1} files at the root. No ranges, so each file "
 "comes over one connection."
@@ -3110,163 +3220,318 @@ msgstr ""
 "تم الوصول إلى الخادم: {0} من المجلدات و{1} من الملفات في الجذر. لا يدعم "
 "الخادم طلبات النطاق، لذا يأتي كل ملف عبر اتصال واحد."
 
-#: ui/pages/downloads.slint:83
+#: ui/pages/downloads.slint:151
 msgid "Give the server a name."
 msgstr "أدخل اسمًا للخادم."
 
-#: ui/pages/downloads.slint:84
+#: ui/pages/downloads.slint:152
 msgid "The address needs to start with http:// or https://."
 msgstr "يجب أن يبدأ العنوان بـ http:// أو https://."
 
 #
-#: ui/pages/downloads.slint:85
+#: ui/pages/downloads.slint:153
 msgid "Give the server's host name or IP."
 msgstr "أدخل اسم المضيف أو IP للخادم."
 
-#: ui/pages/downloads.slint:86
+#: ui/pages/downloads.slint:154
 msgid "The port needs to be a number from 1 to 65535."
 msgstr "يجب أن يكون المنفذ رقمًا بين 1 و65535."
 
-#: ui/pages/downloads.slint:114
+#: ui/pages/downloads.slint:182
 msgid "Host name or IP. A folder may follow after a /."
 msgstr "اسم المضيف أو IP. يمكن أن يتبعه مجلد بعد /."
 
-#: ui/pages/downloads.slint:115
+#: ui/pages/downloads.slint:183
 msgid "Host name or IP. Implicit TLS on the default port."
 msgstr "اسم المضيف أو IP. TLS ضمني على المنفذ الافتراضي."
 
-#: ui/pages/downloads.slint:116
+#: ui/pages/downloads.slint:184
 msgid "Host name or IP of the SSH server."
 msgstr "اسم المضيف أو IP لخادم SSH."
 
-#: ui/pages/downloads.slint:117
+#: ui/pages/downloads.slint:185
 msgid "http:// or https://. A folder may be part of the address."
 msgstr "يبدأ بـ http:// أو https://. يمكن أن يتضمن العنوان مجلدًا."
 
-#: ui/pages/downloads.slint:121
+#: ui/pages/downloads.slint:189
 msgid "Default port {}."
 msgstr "المنفذ الافتراضي {}."
 
-#: ui/pages/downloads.slint:404 ui/pages/downloads.slint:1612
+#: ui/pages/downloads.slint:472 ui/pages/downloads.slint:2533
 msgid "Add server"
 msgstr "إضافة خادم"
 
-#: ui/pages/downloads.slint:446
+#: ui/pages/downloads.slint:514
 msgid "Filter this folder"
 msgstr "تصفية هذا المجلد"
 
-#: ui/pages/downloads.slint:770 ui/pages/downloads.slint:1578
+#: ui/pages/downloads.slint:574 ui/pages/downloads.slint:3030
+msgid "Transfers"
+msgstr "النقل"
+
+#: ui/pages/downloads.slint:659
+msgid "Upload"
+msgstr "رفع"
+
+#: ui/pages/downloads.slint:750
+msgid "Drop to upload to {0}"
+msgstr "أفلت للرفع إلى {0}"
+
+#: ui/pages/downloads.slint:750
+msgid "The server doesn’t allow changes"
+msgstr "الخادم لا يسمح بالتغييرات"
+
+#
+#: ui/pages/downloads.slint:757
+msgid "{0} only allows reading."
+msgstr "{0} يسمح بالقراءة فقط."
+
+#: ui/pages/downloads.slint:1042
+msgid "Show"
+msgstr "إظهار"
+
+#: ui/pages/downloads.slint:1060 ui/pages/downloads.slint:2499
 msgid "Check key"
 msgstr "التحقق من المفتاح"
 
-#: ui/pages/downloads.slint:1007
+#: ui/pages/downloads.slint:1304
 msgid "This server’s key has changed"
 msgstr "تغيّر مفتاح هذا الخادم"
 
-#: ui/pages/downloads.slint:1007
+#: ui/pages/downloads.slint:1304
 msgid "Trust this server’s key?"
 msgstr "هل تثق بمفتاح هذا الخادم؟"
 
-#: ui/pages/downloads.slint:1015
+#: ui/pages/downloads.slint:1312
 msgid ""
 "It isn’t the server you connected to before, or someone is between you and "
 "it."
 msgstr "ليس الخادم الذي اتصلت به من قبل، أو أن أحدًا بينك وبينه."
 
-#: ui/pages/downloads.slint:1016
+#: ui/pages/downloads.slint:1313
 msgid ""
 "This is the first time you connect to this server. Compare the fingerprint "
 "with the one its owner gave you. If you can’t, don’t continue."
-msgstr "هذه أول مرة تتصل فيها بهذا الخادم. قارن البصمة بتلك التي أعطاك إياها مالكه. إن لم تستطع، فلا تتابع."
+msgstr ""
+"هذه أول مرة تتصل فيها بهذا الخادم. قارن البصمة بتلك التي أعطاك إياها مالكه. "
+"إن لم تستطع، فلا تتابع."
 
-#: ui/pages/downloads.slint:1026
+#: ui/pages/downloads.slint:1323
 msgid "Server"
 msgstr "الخادم"
 
-#: ui/pages/downloads.slint:1051
+#: ui/pages/downloads.slint:1348
 msgid "Trusted earlier · {0}"
 msgstr "موثوق منذ وقت سابق · {0}"
 
-#: ui/pages/downloads.slint:1052
+#: ui/pages/downloads.slint:1349
 msgid "Trusted since {0} · {1}"
 msgstr "موثوق منذ {0} · {1}"
 
-#: ui/pages/downloads.slint:1057
+#: ui/pages/downloads.slint:1354
 msgid "Shown now · {0}"
 msgstr "المعروض الآن · {0}"
 
-#: ui/pages/downloads.slint:1057
+#: ui/pages/downloads.slint:1354
 msgid "{0} key · SHA256 fingerprint"
 msgstr "مفتاح {0} · بصمة SHA256"
 
-#: ui/pages/downloads.slint:1075
+#: ui/pages/downloads.slint:1372
 msgid ""
 "Nothing has been sent. If the owner says the key changed, check the new "
 "fingerprint with them first."
-msgstr "لم يُرسَل شيء. إذا قال المالك إن المفتاح تغيّر، فتحقق معه من البصمة الجديدة أولًا."
+msgstr ""
+"لم يُرسَل شيء. إذا قال المالك إن المفتاح تغيّر، فتحقق معه من البصمة الجديدة "
+"أولًا."
 
-#: ui/pages/downloads.slint:1076
+#: ui/pages/downloads.slint:1373
 msgid "Your password isn’t sent until you trust the key."
 msgstr "لن تُرسَل كلمة مرورك حتى تثق بالمفتاح."
 
-#: ui/pages/downloads.slint:1087
+#: ui/pages/downloads.slint:1384
 msgid "esc  don’t connect"
 msgstr "esc  عدم الاتصال"
 
-#: ui/pages/downloads.slint:1087
+#: ui/pages/downloads.slint:1384 ui/pages/downloads.slint:1593
 msgid "esc  cancel"
 msgstr "esc  إلغاء"
 
-#: ui/pages/downloads.slint:1102
+#: ui/pages/downloads.slint:1399
 msgid "Trust new key"
 msgstr "الوثوق بالمفتاح الجديد"
 
-#: ui/pages/downloads.slint:1109
+#: ui/pages/downloads.slint:1406
 msgid "Don’t connect"
 msgstr "عدم الاتصال"
 
-#: ui/pages/downloads.slint:1109
+#: ui/pages/downloads.slint:1406
 msgid "Trust and continue"
 msgstr "الوثوق والمتابعة"
 
-#: ui/pages/downloads.slint:1196
+#: ui/pages/downloads.slint:1549
+msgid "Already there"
+msgstr "موجود هناك بالفعل"
+
+#: ui/pages/downloads.slint:1561
+msgid "and {0} more"
+msgstr "و{0} أخرى"
+
+#: ui/pages/downloads.slint:1630
+msgid "Can’t move a folder into itself"
+msgstr "لا يمكن نقل مجلد إلى داخل نفسه"
+
+#: ui/pages/downloads.slint:1630
+msgid "Current folder"
+msgstr "المجلد الحالي"
+
+#: ui/pages/downloads.slint:1660
+msgid "Delete “{0}”?"
+msgstr "حذف ”{0}“؟"
+
+#: ui/pages/downloads.slint:1660
+msgid "Delete {0} items?"
+msgstr "حذف {0} عناصر؟"
+
+#: ui/pages/downloads.slint:1661
+msgid "Deleted on {0} itself. There’s no trash, and it can’t be undone."
+msgstr "يُحذف على {0} مباشرة. لا توجد سلة مهملات، ولا يمكن التراجع."
+
+#: ui/pages/downloads.slint:1671
+msgid "Folders are deleted with everything in them."
+msgstr "تُحذف المجلدات بكل ما فيها."
+
+#: ui/pages/downloads.slint:1687
+msgid "Delete {0} items"
+msgstr "حذف {0} عناصر"
+
+#: ui/pages/downloads.slint:1702
+msgid "Move “{0}” to…"
+msgstr "نقل ”{0}“ إلى…"
+
+#: ui/pages/downloads.slint:1702 ui/pages/downloads.slint:3331
+msgid "Move {0} items to…"
+msgstr "نقل {0} عناصر إلى…"
+
+#: ui/pages/downloads.slint:1703
+msgid "Within {0} only."
+msgstr "ضمن {0} فقط."
+
+#: ui/pages/downloads.slint:1793
+msgid "Folder name"
+msgstr "اسم المجلد"
+
+#: ui/pages/downloads.slint:1847
+msgid "No folders here"
+msgstr "لا مجلدات هنا"
+
+#: ui/pages/downloads.slint:1856
+msgid "Move to: {0}"
+msgstr "النقل إلى: {0}"
+
+#: ui/pages/downloads.slint:1856
+msgid "Already in this folder."
+msgstr "موجود في هذا المجلد بالفعل."
+
+#: ui/pages/downloads.slint:1887
+msgid "New folder"
+msgstr "مجلد جديد"
+
+#: ui/pages/downloads.slint:1909
+msgid "Move here"
+msgstr "النقل إلى هنا"
+
+#: ui/pages/downloads.slint:1928
+msgid "“{0}” is already in {1}"
+msgstr "”{0}“ موجود بالفعل في {1}"
+
+#: ui/pages/downloads.slint:1928
+msgid "{0} items are already in {1}"
+msgstr "{0} عناصر موجودة بالفعل في {1}"
+
+#: ui/pages/downloads.slint:1929
+msgid "Choose before uploading."
+msgstr "اختر قبل الرفع."
+
+#: ui/pages/downloads.slint:1929
+msgid "Choose before moving."
+msgstr "اختر قبل النقل."
+
+#: ui/pages/downloads.slint:1930
+msgid "The other one uploads as usual."
+msgstr "الآخر يُرفع كالمعتاد."
+
+#: ui/pages/downloads.slint:1930
+msgid "The other one moves as usual."
+msgstr "الآخر يُنقل كالمعتاد."
+
+#: ui/pages/downloads.slint:1931
+msgid "The other {0} upload as usual."
+msgstr "الـ{0} الأخرى تُرفع كالمعتاد."
+
+#: ui/pages/downloads.slint:1931
+msgid "The other {0} move as usual."
+msgstr "الـ{0} الأخرى تُنقل كالمعتاد."
+
+#: ui/pages/downloads.slint:1945
+msgid ""
+"Keep both adds “(2)” to the name. Replace deletes the one that’s there; it "
+"can’t be undone."
+msgstr "«الاحتفاظ بكليهما» يضيف ”(2)“ إلى الاسم. «الاستبدال» يحذف الموجود هناك، ولا يمكن التراجع."
+
+#: ui/pages/downloads.slint:1945
+msgid "Folders aren’t merged."
+msgstr "لا تُدمج المجلدات."
+
+#: ui/pages/downloads.slint:1955
+msgid "Replace"
+msgstr "استبدال"
+
+#: ui/pages/downloads.slint:1968
+msgid "Keep both"
+msgstr "الاحتفاظ بكليهما"
+
+#: ui/pages/downloads.slint:2052
 msgid "Servers"
 msgstr "الخوادم"
 
-#: ui/pages/downloads.slint:1402
+#: ui/pages/downloads.slint:2307
 msgid "Modified"
 msgstr "تاريخ التعديل"
 
-#: ui/pages/downloads.slint:1407
+#: ui/pages/downloads.slint:2312
 msgid "Size"
 msgstr "الحجم"
 
-#: ui/pages/downloads.slint:1431
+#: ui/pages/downloads.slint:2337
 msgid "Nothing in this folder matches “{0}”"
 msgstr "لا يوجد في هذا المجلد ما يطابق «{0}»"
 
-#: ui/pages/downloads.slint:1453
+#: ui/pages/downloads.slint:2359
 msgid "{0} selected · {1}"
 msgstr "تم تحديد {0} · {1}"
 
-#: ui/pages/downloads.slint:1461
+#: ui/pages/downloads.slint:2368
+msgid "Move…"
+msgstr "نقل…"
+
+#: ui/pages/downloads.slint:2382
 msgid "Clear"
 msgstr "مسح"
 
-#: ui/pages/downloads.slint:1510
+#: ui/pages/downloads.slint:2431
 msgid "This folder is empty"
 msgstr "هذا المجلد فارغ"
 
-#: ui/pages/downloads.slint:1568
+#: ui/pages/downloads.slint:2489
 msgid "Not connected yet. Check this server’s key first."
 msgstr "لم يتم الاتصال بعد. تحقق من مفتاح هذا الخادم أولًا."
 
 #
-#: ui/pages/downloads.slint:1595
+#: ui/pages/downloads.slint:2516
 msgid "No servers yet"
 msgstr "لا توجد خوادم بعد"
 
-#: ui/pages/downloads.slint:1598
+#: ui/pages/downloads.slint:2519
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -3275,22 +3540,19 @@ msgstr ""
 "أضف عنوان WebDAV لجهاز NAS أو seedbox أو PikPak أو Alist / OpenList، أو "
 "لمجلد تشاركه عبر vget serve. ثم تصفّحه هنا واختر الملفات التي تريدها."
 
-#: ui/pages/downloads.slint:1604
+#: ui/pages/downloads.slint:2525
 msgid ""
-"Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
-"reads: nothing is uploaded, synced, renamed or deleted on the server."
-msgstr ""
-"يمكن الوصول إلى الأقراص السحابية التي لا تدعم WebDAV عبر OpenList. لا يقوم "
-"FinchGram إلا بالقراءة: لا يُرفع شيء ولا يُزامَن ولا يُعاد تسميته ولا يُحذف على "
-"الخادم."
+"Cloud drives without WebDAV can be reached through OpenList. FinchGram "
+"changes nothing on a server unless you allow it for that server."
+msgstr "يمكن الوصول إلى خدمات التخزين بدون WebDAV عبر OpenList. لا يغيّر FinchGram شيئًا على خادم ما لم تسمح بذلك لذلك الخادم."
 
-#: ui/pages/downloads.slint:1677
+#: ui/pages/downloads.slint:2598
 msgid "Edit server"
 msgstr "تعديل الخادم"
 
 #
 #
-#: ui/pages/downloads.slint:1680
+#: ui/pages/downloads.slint:2601
 msgid ""
 "The address of the server, and the account it gave you. The password is kept "
 "sealed in FinchGram's database on this Mac."
@@ -3298,59 +3560,73 @@ msgstr ""
 "عنوان الخادم والحساب الذي أعطاك إياه. تُحفظ كلمة المرور مختومة في قاعدة "
 "بيانات FinchGram على هذا Mac."
 
-#: ui/pages/downloads.slint:1690
+#: ui/pages/downloads.slint:2611
 msgid "Protocol"
 msgstr "البروتوكول"
 
-#: ui/pages/downloads.slint:1724
+#: ui/pages/downloads.slint:2645
 msgid "Address"
 msgstr "العنوان"
 
-#: ui/pages/downloads.slint:1733
+#: ui/pages/downloads.slint:2654
 msgid "Port"
 msgstr "المنفذ"
 
-#: ui/pages/downloads.slint:1753
+#: ui/pages/downloads.slint:2674
 msgid "Server key"
 msgstr "مفتاح الخادم"
 
-#: ui/pages/downloads.slint:1789
+#: ui/pages/downloads.slint:2710
 msgid "First seen {0}"
 msgstr "شوهد لأول مرة {0}"
 
-#: ui/pages/downloads.slint:1797
+#: ui/pages/downloads.slint:2718
 msgid "Forget this key"
 msgstr "نسيان هذا المفتاح"
 
-#: ui/pages/downloads.slint:1829
+#: ui/pages/downloads.slint:2750
 msgid "Forgotten. You’ll check it again on the next connection."
 msgstr "نُسي. ستتحقق منه مجددًا عند الاتصال التالي."
 
-#: ui/pages/downloads.slint:1829
+#: ui/pages/downloads.slint:2750
 msgid "Not seen yet. You’ll check it the first time you connect."
 msgstr "لم يُرَ بعد. ستتحقق منه عند أول اتصال."
 
 #
-#: ui/pages/downloads.slint:1848
+#: ui/pages/downloads.slint:2769
 msgid "Sign in with"
 msgstr "تسجيل الدخول بـ"
 
-#: ui/pages/downloads.slint:1856 ui/pages/downloads.slint:1871
+#: ui/pages/downloads.slint:2777 ui/pages/downloads.slint:2792
 #: ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "كلمة السر"
 
-#: ui/pages/downloads.slint:1860
+#: ui/pages/downloads.slint:2781
 msgid "Key"
 msgstr "المفتاح"
 
 #
-#: ui/pages/downloads.slint:1865
+#: ui/pages/downloads.slint:2786
 msgid "Key sign-in isn’t in this version."
 msgstr "تسجيل الدخول بالمفتاح غير متاح في هذا الإصدار."
 
+#: ui/pages/downloads.slint:2825
+msgid "Allow changes to files on this server"
+msgstr "السماح بتغيير الملفات على هذا الخادم"
+
+#: ui/pages/downloads.slint:2831
+msgid ""
+"Delete, move, rename and upload on the server. Deleted files can’t be "
+"recovered."
+msgstr "الحذف والنقل وإعادة التسمية والرفع على الخادم. لا يمكن استرداد الملفات المحذوفة."
+
+#: ui/pages/downloads.slint:2837
+msgid "This server said it only allows reading."
+msgstr "قال هذا الخادم إنه يسمح بالقراءة فقط."
+
 #
-#: ui/pages/downloads.slint:1894
+#: ui/pages/downloads.slint:2874
 msgid ""
 "Over FTP the password and the files travel in the clear: use this server "
 "only on a network you trust, or FTPS."
@@ -3358,7 +3634,7 @@ msgstr ""
 "عبر FTP تنتقل كلمة المرور والملفات مكشوفة: استخدم هذا الخادم فقط على شبكة "
 "تثق بها، أو استخدم FTPS."
 
-#: ui/pages/downloads.slint:1895
+#: ui/pages/downloads.slint:2875
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
@@ -3366,47 +3642,75 @@ msgstr ""
 "عبر http تُنقل كلمة المرور والملفات دون تشفير: لا تستخدم هذا الخادم إلا في "
 "شبكة تثق بها."
 
-#: ui/pages/downloads.slint:1931
+#: ui/pages/downloads.slint:2911
 msgid "Testing…"
 msgstr "جارٍ الاختبار…"
 
-#: ui/pages/downloads.slint:1970
+#: ui/pages/downloads.slint:2963
 msgid "Test connection"
 msgstr "اختبار الاتصال"
 
-#: ui/pages/downloads.slint:2035
+#: ui/pages/downloads.slint:3037
+msgid "{0} down · {1} up"
+msgstr "{0} تنزيل · {1} رفع"
+
+#: ui/pages/downloads.slint:3038
 msgid "{0} active"
 msgstr "{0} قيد التنزيل"
 
-#: ui/pages/downloads.slint:2048
+#: ui/pages/downloads.slint:3051
 msgid "Clear finished"
 msgstr "إزالة المكتملة"
 
-#: ui/pages/downloads.slint:2071
+#: ui/pages/downloads.slint:3074
 msgid "Hide"
 msgstr "إخفاء"
 
-#: ui/pages/downloads.slint:2139
+#: ui/pages/downloads.slint:3142
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "{0} من الاتصالات لكل ملف · تُحفظ التنزيلات في {1}"
 
-#: ui/pages/downloads.slint:2145
+#: ui/pages/downloads.slint:3148
 msgid "Change"
 msgstr "تغيير"
 
-#: ui/pages/downloads.slint:2210
+#: ui/pages/downloads.slint:3253
 msgid "Copy address"
 msgstr "نسخ العنوان"
 
-#: ui/pages/downloads.slint:2226
+#: ui/pages/downloads.slint:3262
+msgid "Download {0} items"
+msgstr "تنزيل {0} عناصر"
+
+#: ui/pages/downloads.slint:3278
 msgid "Download folder"
 msgstr "تنزيل المجلد"
 
-#: ui/pages/downloads.slint:2250
+#: ui/pages/downloads.slint:3302
 msgid "Copy link"
 msgstr "نسخ الرابط"
 
-#: ui/pages/downloads.slint:2285
+#: ui/pages/downloads.slint:3322
+msgid "Rename"
+msgstr "إعادة التسمية"
+
+#: ui/pages/downloads.slint:3331
+msgid "Move to…"
+msgstr "نقل إلى…"
+
+#: ui/pages/downloads.slint:3344
+msgid "Delete {0} items…"
+msgstr "حذف {0} عناصر…"
+
+#: ui/pages/downloads.slint:3344
+msgid "Delete…"
+msgstr "حذف…"
+
+#: ui/pages/downloads.slint:3362
+msgid "The server doesn’t allow changes."
+msgstr "الخادم لا يسمح بالتغييرات."
+
+#: ui/pages/downloads.slint:3397
 msgid "Remove from list"
 msgstr "إزالة من القائمة"
 
@@ -4304,10 +4608,6 @@ msgstr "أوامر"
 #: ui/toolbox.slint:101
 msgid "Search the toolbox"
 msgstr "ابحث في صندوق الأدوات"
-
-#: ui/toolbox.slint:104
-msgid "Transfers"
-msgstr "النقل"
 
 #: ui/toolbox.slint:105
 msgid "Media"

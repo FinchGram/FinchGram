@@ -399,11 +399,14 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   which chats, what an assistant may write, the apps allowed or turned away, the log. Reading
   marks nothing as read; secret chats, self-destructing media and the media of chats that
   restrict saving are never handed out.
-- The Downloads page (`src/downloads/`, [downloads.md](downloads.md)): a WebDAV client for a NAS,
-  a seedbox, PikPak, Alist/OpenList or a folder shared with `vget serve`, read-only. `webdav.rs`
+- The Downloads page (`src/downloads/`, [downloads.md](downloads.md)): a WebDAV, FTP, FTPS or SFTP
+  client for a NAS, a seedbox, PikPak, Alist/OpenList or a folder shared with `vget serve`, reading
+  only until the user allows changes on a server (its form's switch), then deleting, moving,
+  renaming and uploading there too. `webdav.rs`
   lists folders (PROPFIND), `transfer.rs` fetches a file in chunks of 8 MB over up to 12 connections
   into a `.part` file, going on from where it stopped, as vget does; `mod.rs` is the page's state on
-  the UI thread, a "servers" thread for listings and one thread per file on its way, two at a time.
+  the UI thread, a "servers" thread for listings, one thread per file on its way, two at a time, and
+  a "changes" thread per batch of changes.
   The servers with their passwords go into the app's database (below), the folder into settings.toml; a downloaded
   photo or video opens in the media viewer (`viewer.rs`, `view_file`). The page needs no account.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
@@ -486,7 +489,8 @@ keys, and the AI access settings in settings.toml (`settings::Mcp::seal`, checke
 src/mcp/access.rs). TDLib's database has a key of its own kept the same way (the account
 "tdlib"), since 0.4.18. The rule: preferences go into settings.toml, which stays small and
 readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
-database holds the servers of the downloads page with their passwords (docs/downloads.md), the
+database holds the servers of the downloads page with their passwords and whether the user
+allows changes on each (docs/downloads.md), the
 programs allowed or turned away at AI access (docs/mcp.md) and the keys of the SSH servers the
 user trusted, with the day (docs/downloads.md);
 what comes after (a download queue that outlives a restart, logs, per-chat settings) gets a table

@@ -188,6 +188,11 @@ export component Field inherits Rectangle {
         input.select-all();
     }
 
+    // The text between two byte offsets selected: a file's name without its extension.
+    public function select-range(start: int, end: int) {
+        input.set-selection-offsets(start, end);
+    }
+
     Text {
         x: root.padding-x;
         width: parent.width - 2 * root.padding-x;

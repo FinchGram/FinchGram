@@ -128,7 +128,7 @@ compartilhada com o `vget serve`), navegue pelas pastas dele, marque arquivos ou
 inteira, e eles chegam em ~/Documents/FinchGram/webdav: cada arquivo em pedaços de 8 MB por até doze
 conexões, continuando de onde parou depois de um Tentar novamente, como faz o vget, a ferramenta de
 linha de comando do mantenedor. A fila à direita mostra a velocidade e o que falta; Abrir busca uma
-foto ou um vídeo e o mostra no visualizador. O FinchGram só lê do servidor, e a senha vai selada para o banco de
+foto ou um vídeo e o mostra no visualizador. O FinchGram não altera nada em um servidor a menos que você permita para aquele servidor (então ele pode apagar, mover, renomear e enviar lá), e a senha vai selada para o banco de
 dados do FinchGram, nunca para um arquivo em texto claro. [docs/downloads.md](../docs/downloads.md) tem os detalhes e
 o que ainda falta (um certificado autoassinado é recusado: use http na rede local, ou um
 certificado de verdade).

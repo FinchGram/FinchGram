@@ -11,12 +11,16 @@
 //! kilobytes per second across the Pacific. They are set the way Go's transport sets them.
 
 use std::future::Future;
-use std::sync::OnceLock;
+use std::path::PathBuf;
+use std::pin::Pin;
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, OnceLock};
+use std::task::{Context, Poll};
 use std::time::Duration;
 
 use bytes::Bytes;
 use http_body_util::Full;
-use hyper::body::Incoming;
+use hyper::body::{Body, Frame, Incoming, SizeHint};
 use hyper::header::{AUTHORIZATION, LOCATION, USER_AGENT};
 use hyper::{Method, Request, Response, StatusCode, Uri};
 use hyper_rustls::HttpsConnector;
@@ -38,12 +42,119 @@ const CONNECTION_WINDOW: u32 = 32 << 20;
 /// The largest HTTP/2 frame we accept: fewer frames per chunk.
 const FRAME_SIZE: u32 = 1 << 20;
 const MOST_REDIRECTS: usize = 10;
+/// A piece of a file read and sent at a time (an upload), and how many may wait for the wire.
+const UPLOAD_PIECE: usize = 256 * 1024;
+const UPLOAD_PIECES_AHEAD: usize = 8;
 
-/// The client, cheap to clone: the connection pool and the runtime's handle.
+/// The client, cheap to clone: the connection pool and the runtime's handle. Uploads have a
+/// pool of their own, since their requests carry a body read from a file as it goes
+/// (`FileBody`) where every other request carries nothing, or a few bytes.
 #[derive(Clone)]
 pub struct Http {
     client: Client<HttpsConnector<HttpConnector>, Full<Bytes>>,
+    uploads: Client<HttpsConnector<HttpConnector>, FileBody>,
     handle: Handle,
+}
+
+/// What an upload sends (the design's ninth round): the file at `path`, `size` bytes of it, read
+/// as the request goes out. `sent` counts the bytes handed to the connection so far, for the
+/// page; `cancel` stops the reading.
+pub struct Upload {
+    pub path: PathBuf,
+    pub size: u64,
+    pub cancel: Arc<AtomicBool>,
+    pub sent: Arc<AtomicU64>,
+}
+
+impl Upload {
+    /// The body of one request: a thread reads the file piece by piece as the connection takes
+    /// them. The size is known from the start, so the request says Content-Length and never
+    /// chunks: a server that refuses chunked uploads (nginx's dav module answers 411) takes it.
+    fn body(&self) -> FileBody {
+        let (pieces, taken) = tokio::sync::mpsc::channel(UPLOAD_PIECES_AHEAD);
+        self.sent.store(0, Ordering::Relaxed);
+        if self.size > 0 {
+            let (path, size, cancel) = (self.path.clone(), self.size, self.cancel.clone());
+            let reading = std::thread::Builder::new().name("upload".into()).spawn(move || {
+                use std::io::Read as _;
+                let mut file = match std::fs::File::open(&path) {
+                    Ok(file) => file,
+                    Err(err) => {
+                        let _ = pieces.blocking_send(Err(err));
+                        return;
+                    }
+                };
+                let mut left = size;
+                let mut buffer = vec![0u8; UPLOAD_PIECE];
+                while left > 0 {
+                    if cancel.load(Ordering::Relaxed) {
+                        let _ = pieces.blocking_send(Err(std::io::Error::new(std::io::ErrorKind::Interrupted, "cancelled")));
+                        return;
+                    }
+                    let want = left.min(UPLOAD_PIECE as u64) as usize;
+                    let read = match file.read(&mut buffer[..want]) {
+                        // The file is shorter than it was when the upload was queued.
+                        Ok(0) => Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, format!("the file ended {left} bytes early"))),
+                        Ok(read) => Ok(read),
+                        Err(err) => Err(err),
+                    };
+                    let piece = match read {
+                        Ok(read) => Bytes::copy_from_slice(&buffer[..read]),
+                        Err(err) => {
+                            let _ = pieces.blocking_send(Err(err));
+                            return;
+                        }
+                    };
+                    left -= piece.len() as u64;
+                    // The request was dropped: nobody takes the pieces any more.
+                    if pieces.blocking_send(Ok(piece)).is_err() {
+                        return;
+                    }
+                }
+            });
+            if let Err(err) = reading {
+                eprintln!("downloads: cannot start a thread to read the file: {err}");
+            }
+        }
+        FileBody { pieces: taken, left: self.size, sent: self.sent.clone() }
+    }
+}
+
+/// A request's body read from a file as the connection takes it (`Upload::body`).
+pub struct FileBody {
+    pieces: tokio::sync::mpsc::Receiver<Result<Bytes, std::io::Error>>,
+    left: u64,
+    sent: Arc<AtomicU64>,
+}
+
+impl Body for FileBody {
+    type Data = Bytes;
+    type Error = std::io::Error;
+
+    fn poll_frame(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Result<Frame<Bytes>, std::io::Error>>> {
+        let body = self.get_mut();
+        if body.left == 0 {
+            return Poll::Ready(None);
+        }
+        match body.pieces.poll_recv(cx) {
+            Poll::Pending => Poll::Pending,
+            Poll::Ready(None) => Poll::Ready(Some(Err(std::io::Error::new(std::io::ErrorKind::UnexpectedEof, "the file's reader stopped")))),
+            Poll::Ready(Some(Err(err))) => Poll::Ready(Some(Err(err))),
+            Poll::Ready(Some(Ok(piece))) => {
+                body.left = body.left.saturating_sub(piece.len() as u64);
+                body.sent.fetch_add(piece.len() as u64, Ordering::Relaxed);
+                Poll::Ready(Some(Ok(Frame::data(piece))))
+            }
+        }
+    }
+
+    fn is_end_stream(&self) -> bool {
+        self.left == 0
+    }
+
+    fn size_hint(&self) -> SizeHint {
+        SizeHint::with_exact(self.left)
+    }
 }
 
 /// Why a request got no answer at all. What an answer says is for the caller.
@@ -98,11 +209,13 @@ impl Http {
     /// knowledge), which the tests' own server does.
     pub(crate) fn build(h2_only: bool) -> Http {
         let handle = runtime().handle().clone();
-        let mut http = HttpConnector::new();
-        http.enforce_http(false);
-        http.set_connect_timeout(Some(CONNECT_TIMEOUT));
-        http.set_nodelay(true);
-        let https = hyper_rustls::HttpsConnectorBuilder::new().with_platform_verifier().https_or_http().enable_http1().enable_http2().wrap_connector(http);
+        let https = || {
+            let mut http = HttpConnector::new();
+            http.enforce_http(false);
+            http.set_connect_timeout(Some(CONNECT_TIMEOUT));
+            http.set_nodelay(true);
+            hyper_rustls::HttpsConnectorBuilder::new().with_platform_verifier().https_or_http().enable_http1().enable_http2().wrap_connector(http)
+        };
         let mut builder = Client::builder(TokioExecutor::new());
         builder
             // hyper needs to be told what a timer is, or its keep-alives and idle timeouts panic.
@@ -118,7 +231,7 @@ impl Http {
         if h2_only {
             builder.http2_only(true);
         }
-        Http { client: builder.build(https), handle }
+        Http { client: builder.build(https()), uploads: builder.build(https()), handle }
     }
 
     /// The runtime's handle, for a task of the caller's own.
@@ -173,6 +286,41 @@ impl Http {
             }
             if response.status() == StatusCode::SEE_OTHER && parts.method != Method::GET {
                 parts.method = Method::GET;
+            }
+            parts.uri = target;
+        }
+    }
+
+    /// Send the request `parts` with `upload` as its body (a PUT), and wait for the answer's
+    /// headers, which come once the whole file has gone: no timeout here, the caller watches the
+    /// bytes move (webdav.rs). A redirect that keeps the method (301, 302, 307, 308) is followed
+    /// with the file read again from its first byte, under `send`'s rules for the credentials
+    /// and for https; a 303 is the answer.
+    pub async fn send_file(&self, mut parts: hyper::http::request::Parts, upload: &Upload) -> Result<Response<Incoming>, Failure> {
+        let mut hops = 0;
+        loop {
+            let attempt = Request::from_parts(parts.clone(), upload.body());
+            let response = self.uploads.request(attempt).await.map_err(|err| Failure::Connection(describe(&err)))?;
+            if !response.status().is_redirection() || response.status() == StatusCode::SEE_OTHER {
+                return Ok(response);
+            }
+            let Some(location) = response.headers().get(LOCATION).and_then(|value| value.to_str().ok()) else {
+                return Ok(response);
+            };
+            hops += 1;
+            if hops > MOST_REDIRECTS {
+                return Err(Failure::Redirect("the server redirected too many times".into()));
+            }
+            let target = resolve(&parts.uri, location)?;
+            super::log::line(format!("{} {} redirects the upload to {}://{}/…", parts.uri.host().unwrap_or_default(), response.status().as_u16(), target.scheme_str().unwrap_or_default(), target.host().unwrap_or_default()));
+            if downgrades(&parts.uri, &target) {
+                return Err(Failure::Redirect(format!(
+                    "the server redirected from https to {}, which would send the file in the clear",
+                    target.scheme_str().unwrap_or("an address without a scheme")
+                )));
+            }
+            if !same_origin(&parts.uri, &target) {
+                parts.headers.remove(AUTHORIZATION);
             }
             parts.uri = target;
         }

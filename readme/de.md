@@ -135,7 +135,7 @@ ganzen Ordner, und sie landen in ~/Documents/FinchGram/webdav: jede Datei in St�
 zwölf Verbindungen, und nach „Erneut versuchen“ geht es dort weiter, wo es stehen geblieben ist,
 wie bei vget, dem Kommandozeilenwerkzeug des Maintainers. Die Warteschlange rechts zeigt die
 Geschwindigkeit und was noch aussteht; „Öffnen“ holt ein Foto oder Video und zeigt es im Betrachter.
-FinchGram liest nur vom Server, und das Passwort kommt versiegelt in die Datenbank von FinchGram, nie in eine Klartextdatei.
+FinchGram ändert nichts auf einem Server, solange du es für diesen Server nicht erlaubst (dann kann es dort löschen, verschieben, umbenennen und hochladen), und das Passwort kommt versiegelt in die Datenbank von FinchGram, nie in eine Klartextdatei.
 [docs/downloads.md](../docs/downloads.md) hat die Einzelheiten und was noch fehlt (ein
 selbstsigniertes Zertifikat wird abgelehnt: im LAN http nehmen, oder ein echtes Zertifikat).
 

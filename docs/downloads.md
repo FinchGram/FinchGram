@@ -3,7 +3,8 @@
 [中文](downloads.zh-Hans.md)
 
 Status: built on 2026-10-16 from the design's round for it ("FinchGram Desktop 下载"), in every
-theme; released in v0.4.0.
+theme; released in v0.4.0. FTP, FTPS and SFTP since 0.6.0; the SSH key dialog (the eighth round)
+in 0.6.3; changes on the server (the ninth round, below) built on 2026-10-24, after 0.6.3.
 
 ## What it is
 
@@ -13,8 +14,10 @@ webdav`, or a folder shared with `vget serve`. The user adds a server, browses i
 they arrive in the downloads folder over several connections at once, the way the maintainer's
 command-line tool vget fetches them. Photos and videos open in the media viewer when they arrive.
 
-FinchGram only reads. Nothing is uploaded, synced, renamed or deleted on the server, and it is not
-a sync client: the user picks what comes.
+FinchGram changes nothing on a server unless the user allows it for that server (the switch in
+the server's form, off for every server until they turn it on). Then it can delete, move, rename
+and upload there, each on the user's own click, with a dialog before anything is deleted
+(Changes on the server, below). It is not a sync client: the user picks what comes, and what goes.
 
 ## The page
 
@@ -34,19 +37,28 @@ Three columns:
   account, and for SFTP how to sign in, with a password, the key waiting for another version.
 - **The folder**, in the middle: where we are as a path, "Home NAS /Movies/2026", each folder of it
   a step back, then the folder's name, a box
-  that filters the listing by name, a refresh button, and the "Downloads" button that shows or hides
-  the queue, with the number of files on their way. The listing is a table: a checkbox for each
+  that filters the listing by name, a refresh button, Upload where the server takes changes, and the
+  "Transfers" button that shows or hides the queue, with the number of files on their way. The
+  listing is a table: a checkbox for each
   file, an icon by kind, the name, when it was modified, its size; folders first, then names in the
   order of the UI language. A folder opens on a click. Chosen files are counted at the foot with
-  their size: Clear, Download, and Open when the one chosen file is a photo or video. A right click
-  on a file gives Download, Open and Copy link; on a folder, Open, Download folder and Copy link.
-- **Downloads**, on the right, 380 px: the queue. Each file has its name, a progress bar, "4.1 GB
-  of 10.8 GB · 24.3 MB/s · 5 min left", and an X that stops it. A stopped file says why and how
-  much is kept, with Retry; a finished one has Show in Finder. A right click gives Cancel, Retry,
+  their size: Clear, Download, and Open when the one chosen file is a photo or video; Move… and
+  Delete where the server takes changes. A right click
+  on a file gives Download, Open and Copy link; on a folder, Open, Download folder and Copy link; on
+  one of several chosen files, Download N items; and, where the server takes changes, Rename, Move
+  to… and Delete… under a line.
+- **Transfers**, on the right, 380 px: the queue, downloads and uploads together, each with an
+  arrow on its icon saying which way (uploads in a colour of their own: teal, green, amber by
+  theme). Each file has its name, a progress bar, "4.1 GB
+  of 10.8 GB · 24.3 MB/s · 5 min left" (an upload: "To 2024 · 980 MB of 2.8 GB · …"), and an X that
+  stops it. A stopped file says why and how
+  much is kept, with Retry; a finished download has Show in Finder, a finished upload Show, which
+  goes to its folder on the server with the file chosen. A right click gives Cancel, Retry,
   Show in Finder and Remove from list; once a file is done, Clear finished stands at the head beside
-  Hide and takes every finished file off the list at once. The foot says how many connections a file gets and where
+  Hide and takes every finished file off the list at once. Under the heading, "2 active", or "1 down
+  · 1 up" when both kinds are on their way. The foot says how many connections a file gets and where
   downloads go, with Change, which opens the folder chooser. Hide folds the column; the choice is
-  remembered, and the column comes out by itself when a download starts. With nothing in the queue
+  remembered, and the column comes out by itself when a transfer starts. With nothing in the queue
   the column is not there at all.
 
 Open fetches the photo or video and then shows it in the media viewer, the same one as for
@@ -57,6 +69,70 @@ downloads folder, six at a time (a server that takes half a second per request w
 make a folder of small files crawl), the files sharing the transfer's streams, first requests
 included, so that a folder never has more requests out than one file would; a file already there
 with the same size is skipped.
+
+## Changes on the server
+
+The design's ninth round ("写操作 · 删除 移动 重命名 上传", 2026-10-24). Everything in it hangs on
+one switch in the server's form, "Allow changes to files on this server", below the password: off
+for every server, including the ones added before this round, until the user turns it on (the
+`allow_changes` column of the `servers` table, layout 4). With it off, the page is the read-only
+client it was: no Upload, no Move…, no Delete, no write items in the menu. With it on, on a server
+that is reached:
+
+- **Rename**, in the menu of one entry (greyed when several are chosen): the row becomes a field
+  with the name, all of it but the extension selected. ⏎ keeps it, Esc lets it go, a click
+  anywhere else keeps it too (a bad name is let go then). A name taken in the folder, or with a "/"
+  in it, is said in red under the field and not sent.
+- **Move to…**, in the menu or at the foot: a dialog over the page with the server's folders only,
+  opened at the folder above the one looked at, each folder a step in with a click, the way there
+  as crumbs, "Current folder" beside the one the items are in, a folder that is itself moving (or
+  under one) greyed with "Can't move a folder into itself". New folder types a name at the top of
+  the list and makes it on the server (⏎), then goes into it. Move here (⏎) is faded in the folder
+  the items are in; it moves within the one server only.
+- **Delete…**, in the menu or at the foot, in red: a dialog first, naming the first four items with
+  their sizes (a folder with what it holds, counted by listing it, "Folder · 12 items inside"), "and
+  N more", the word that there is no trash on the server, and that folders go with everything in
+  them. The Delete button is filled red; ⏎ does nothing here, deleting takes a click; Esc cancels.
+  Done, a toast at the foot says "Deleted 3 items".
+- **Upload**, in the toolbar (the open panel, several files at once) or by dropping files from the
+  Finder on the window while this page is in front: a dashed box over the folder says "Drop to
+  upload to 2024" with the way there, or, on a server that said it only reads, "The server doesn't
+  allow changes". Each file joins the queue as an upload into the folder looked at, over one
+  stream, from its first byte: no upload goes on where it stopped, "Stopped: … Retry starts over".
+  A folder dropped is left where it is (files only, this version). A finished upload lists the
+  folder again when it is the one looked at.
+- **The same name at the destination**, of a move or an upload, asks before anything moves: "“x” is
+  already in 2024" (or "3 items are already in 2024", the first four listed), "The other 2 move as
+  usual", and three answers: Replace (an outline in red: it deletes what is there; folders are
+  not merged), Skip, and Keep both (⏎), which adds "(2)" to the new one's name, "(3)" when that is
+  taken too. Esc cancels the whole move or upload.
+- **What the server would not do** is said under the folder's title, in red with an X to dismiss
+  it: "The server refused to delete “x” (403 Forbidden)", in the server's own words (an FTP reply
+  such as "550 Delete operation failed.", SFTP's "Permission denied"); a change that failed for
+  another reason, "Couldn't delete “x”: Cannot reach nas.home". An upload the server refused says so
+  in its row, in red, with Retry. A batch (several files deleted or moved) stops at the first
+  refusal, and the folder is listed again, so what was done shows.
+- **A server that only reads.** A WebDAV server is asked, with OPTIONS, which methods it allows:
+  one whose Allow header names none of DELETE, MOVE, PUT and MKCOL said it only reads (PikPak with
+  its read-only switch on), and the page greys the write items, with "The server doesn't allow
+  changes." under them, Upload with them, and the drop box says so; the form notes "This server said
+  it only allows reading." under the switch. A server that allows them, or says nothing (no Allow
+  header, FTP and SFTP always), is tried, and refuses or not. Test connection adds a line under its
+  result: "Changes: allowed by the server." / "the server only allows reading." / "the server didn't
+  say. You'll know when you try."
+
+On the wire: WebDAV's DELETE (deep on a collection), MOVE with a Destination on the same server
+and `Overwrite: F` unless Replace was chosen, MKCOL, and PUT with the file streamed as the body and
+its Content-Length from the start (a server that refuses chunked uploads, nginx's dav module with
+its 411, takes it); a redirect that keeps the method is followed with the file read again, under
+the client's rules for the credentials and for https. FTP: DELE, RMD, RNFR and RNTO, MKD, STOR;
+SFTP: remove, rmdir, rename, mkdir, and a file created and written. Neither FTP nor SFTP deletes a
+folder in one go, so a folder is walked first, each folder listed once (at most 100,000 of them, 64
+deep, as a folder download), its files deleted as they are met, the folders removed from the
+deepest up; a name in a listing that is not a name stops it. Every change runs on a thread of its
+own ("changes"), one batch at a time, apart from the "servers" thread that lists; an upload is a
+transfer like a download, two at a time with them. Nothing is written to a server from anywhere
+but a click on this page.
 
 ## How a file comes
 
@@ -200,8 +276,9 @@ Copy link gives `sftp://me@host:2222/films/film.mkv` or `ftps://…` for those s
   each server's files go into a folder named after it under there), `connections` and
   `queue_shown`. That is all of it: the file is for preferences.
 - The servers, with their passwords, are in the app's database, `finchgram.db` next to it: a
-  plain SQLite file any tool opens, the `servers` table with the protocol, the address, the port
-  and the account of each; only the password column is sealed (AES-256-GCM) under a random key
+  plain SQLite file any tool opens, the `servers` table with the protocol, the address, the port,
+  the account of each and whether the user allows changes on it (`allow_changes`, layout 4, 0 for
+  every server of before); only the password column is sealed (AES-256-GCM) under a random key
   kept in the macOS Keychain under "FinchGram" (the account "database"), in the login keychain
   only, where only this app reads it (docs/architecture.md, The app's database), and sealed to its
   server: the protocol, the address, the port and the account are the seal's additional data, so
@@ -232,12 +309,16 @@ Copy link gives `sftp://me@host:2222/films/film.mkv` or `ftps://…` for those s
 - Basic authentication only: no Digest, no tokens, no proxy settings.
 - A file is fetched whole before it opens; nothing streams.
 - No sorting of the table beyond folders first and names in order, no sizes of folders.
+- An upload starts over after a stop (no resume), goes to the folder looked at only, and takes
+  files, not folders; nothing is copied between servers; a folder is not merged into one of the same
+  name (Replace puts the new one in its place).
 
 ## How it is built
 
 - `src/downloads/mod.rs`: the page's state on the UI thread, one worker thread ("servers") for
-  listings, checks and the form's test, and one thread per file on its way, with the engine's own
-  chunk workers inside it. Answers come back through `slint::invoke_from_event_loop`; there is no
+  listings, checks, the form's test and the Move dialog's folders, one thread per file on its way
+  (down or up), with the engine's own chunk workers inside it, and one thread per batch of changes
+  ("changes"). Answers come back through `slint::invoke_from_event_loop`; there is no
   async runtime, as everywhere in the app.
 - `src/platform/`: the folder chooser (NSOpenPanel) and the Keychain (objc2-security).
 - `ui/downloads.slint` (the global the page and Rust share), `ui/pages/downloads.slint` (the page,
@@ -245,4 +326,5 @@ Copy link gives `sftp://me@host:2222/films/film.mkv` or `ftps://…` for those s
   `src/telegram/viewer.rs` (`view_file`: a downloaded photo or video in the viewer).
 - `cargo test downloads`: the listing parser, the addresses, and the engine against a file server
   on the loopback: chunks over several connections, going on from an earlier try, one stream without
-  ranges, a failed chunk tried again, a refused password, a cancel.
+  ranges, a failed chunk tried again, a refused password, a cancel; the names of the ninth round
+  ("name (2).ext", a folder that cannot move into itself, a refusal's words).

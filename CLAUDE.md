@@ -45,9 +45,12 @@ things fit together.
   as macOS validates it (Team ID and signing identifier, the same through updates and for every
   copy), or by its path when it has no signature from a team.
 - The Downloads page (`src/downloads/`, docs/downloads.md, the design's "FinchGram Desktop 下载"
-  round, built in every theme) is a read-only client over WebDAV, FTP, FTPS or SFTP (the last
-  three since 0.6.0) whose WebDAV engine follows the maintainer's vget: 8 MB chunks over up to 12
-  connections, `.part` + `.part.json` for going on after a stop.
+  round, built in every theme) is a client over WebDAV, FTP, FTPS or SFTP (the last three since
+  0.6.0) whose WebDAV engine follows the maintainer's vget: 8 MB chunks over up to 12
+  connections, `.part` + `.part.json` for going on after a stop. It changes nothing on a server
+  unless the user turns on "Allow changes" in that server's form (the design's ninth round,
+  2026-10-24: delete, move, rename, upload, each on a click, a dialog before a delete; `allow_changes`
+  in the database, off for every server until then).
   The servers with their passwords live in the app's database (`src/database.rs`), never in
   settings.toml, at the maintainer's word of 2026-10-20; since 0.6.0 the file is plain SQLite and
   only the password column is sealed, with the key the Keychain holds.

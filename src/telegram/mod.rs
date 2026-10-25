@@ -246,7 +246,12 @@ pub fn start(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
                 | WindowEvent::MouseInput { .. }
                 | WindowEvent::MouseWheel { .. }
                 | WindowEvent::CursorMoved { .. } => online::input(),
-                // Files dragged from the Finder (docs/drag-and-drop.md): one event per file.
+                // Files dragged from the Finder (docs/drag-and-drop.md): one event per file, to
+                // the chat in front, or to the Downloads page when that is what is in front (an
+                // upload, where the server allows changes).
+                WindowEvent::HoveredFile(path) if downloads_in_front() => crate::downloads::hovering(path.clone()),
+                WindowEvent::HoveredFileCancelled if downloads_in_front() => crate::downloads::hover_ended(),
+                WindowEvent::DroppedFile(path) if downloads_in_front() => crate::downloads::dropped(path.clone()),
                 WindowEvent::HoveredFile(path) => attachments::hovering(path.clone()),
                 WindowEvent::HoveredFileCancelled => attachments::hover_ended(),
                 WindowEvent::DroppedFile(path) => attachments::dropped(path.clone()),
@@ -1076,6 +1081,11 @@ fn window_is_in_front() -> bool {
 /// The window, when it still exists.
 fn window() -> Option<MainWindow> {
     WINDOW.with(|window| window.borrow().as_ref().and_then(slint::Weak::upgrade))
+}
+
+/// Whether the Downloads page is the one shown: files dropped on the window go to it then.
+fn downloads_in_front() -> bool {
+    window().is_some_and(|ui| ui.global::<AppState>().get_page() == Page::Downloads)
 }
 
 /// Reach the window, when it still exists.

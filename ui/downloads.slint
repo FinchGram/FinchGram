@@ -1,7 +1,8 @@
-// Downloads (the design's third round of the shared pages, "FinchGram Desktop 下载"): the WebDAV
-// servers, the folder being looked at, and the queue of files on their way. Rust fills this global
-// (src/downloads/) and does what its callbacks ask; the page (pages/downloads.slint) shows it in
-// every theme. FinchGram only reads from a server: nothing is uploaded, synced, renamed or deleted.
+// Downloads (the design's third round of the shared pages, "FinchGram Desktop 下载"): the
+// servers, the folder being looked at, and the queue of files on their way, up or down. Rust fills
+// this global (src/downloads/) and does what its callbacks ask; the page (pages/downloads.slint)
+// shows it in every theme. FinchGram changes nothing on a server unless the user allows it for
+// that server (the ninth round): then it can delete, move, rename and upload there.
 
 // Whether a server answers: asked when the page opens, and whenever the server is looked at. An
 // SFTP server's key not trusted yet, or not the trusted one, is a state of its own (the eighth
@@ -38,6 +39,8 @@ export struct TransferRow {
     id: int,
     name: string,
     icon: string,           // as FolderEntry.icon; "folder" for a whole folder
+    upload: bool,           // going up to the server (the ninth round), not coming down
+    dest: string,           // an upload's folder on the server: its name, or the server's at the root
     state: TransferState,
     fraction: float,        // 0 … 1, how far it is
     done: string,           // "4.1 GB" so far
@@ -57,10 +60,35 @@ export enum TestState { none, testing, ok, failed }
 // address that is not one, no host for the others, a port that is not one.
 export enum FormError { none, name, address, host, port }
 
+// Whether a server said it allows changes (the ninth round): WebDAV's OPTIONS answer names the
+// methods; FTP and SFTP say nothing, and a change is tried to find out.
+export enum ChangesSaid { unknown, allowed, read-only }
+
+// What is wrong with a new name, typed in place or for a new folder: taken here, or with a "/".
+export enum RenameError { none, taken, slash }
+
+// An item of the Delete and the Same-name dialogs: its name, its icon, a file's size, and for a
+// folder what it holds (-1 while that is counted); the page words "Folder · 12 items inside",
+// "Empty folder" and "Already there".
+export struct DialogItem {
+    name: string,
+    icon: string,
+    size: string,
+    count: int,
+}
+
+// A folder of the Move dialog's list.
+export struct MoveFolder {
+    name: string,
+    current: bool,          // the folder the items are in now
+    forbidden: bool,        // one of the folders being moved, or under it: a folder cannot move into itself
+}
+
 export global Downloads {
     in-out property <[ServerRow]> servers;
     in-out property <int> current: -1;              // the server looked at; -1 for none
     in-out property <[string]> crumbs;              // the server's name, then the path's folders: "Home NAS /Movies/2026"
+    in-out property <string> path-label;            // the same in one line, "Home NAS › Movies › 2026": the drop box
     in-out property <string> title;                 // the folder looked at: its name, or the server's at the root
     in-out property <FolderState> folder-state: FolderState.loading;
     in-out property <Problem> problem;              // when folder-state is error
@@ -76,6 +104,7 @@ export global Downloads {
     in-out property <bool> some-selected;           // some of them are
     in-out property <[TransferRow]> queue;          // active, then waiting, stopped, done
     in-out property <int> active-count;
+    in-out property <int> active-uploads;           // of them, going up: the head says "{d} down · {u} up"
     in-out property <int> done-count;               // finished: "Clear finished" shows while there are any
     in-out property <bool> queue-open: true;        // the user's choice (settings.toml); the column shows when the queue is not empty
     in-out property <string> folder-label;          // "~/Documents/FinchGram/webdav"
@@ -98,6 +127,9 @@ export global Downloads {
     in-out property <bool> test-probed;             // there was a file to ask that of
     in-out property <Problem> test-problem;
     in-out property <string> test-detail;
+    in-out property <bool> form-allow-changes;      // the switch: delete, move, rename and upload on this server
+    in-out property <bool> form-read-only;          // the server said it only allows reading (its row under the switch)
+    in-out property <ChangesSaid> test-changes;     // what Test connection learnt about changes
     // An SFTP server's key, in the form: the one trusted, or that none is yet.
     in-out property <bool> form-key-known;
     in-out property <string> form-key-type;         // "ED25519"
@@ -117,6 +149,54 @@ export global Downloads {
     in-out property <string> key-ask-old-fingerprint;
     in-out property <string> key-ask-old-since;     // "Oct 3, 2026"; "" when the day is not known
     in-out property <string> key-copied;            // "new" or "old" for a moment after Copy; "" otherwise
+
+    // Changes on the server (the ninth round), where the user allows them for this server.
+    in-out property <bool> can-write;               // the server's switch is on and it is reached: the write items show
+    in-out property <bool> server-read-only;        // and the server said it only reads: they are greyed, Upload too
+    in-out property <string> renaming;              // the entry being renamed in place, by name; "" for none
+    in-out property <string> rename-text;           // the new name as typed
+    in-out property <int> rename-stem;              // bytes of the name before its extension: what is selected first
+    in-out property <RenameError> rename-error;
+    in-out property <bool> dropping;                // files dragged over the window: the drop box over the folder
+    // A word at the foot of the page for a moment: what was just done.
+    in-out property <string> toast;                 // "deleted", "moved", "nothing-moved", "read-only"; "" for none
+    in-out property <string> toast-name;            // the one item's name
+    in-out property <int> toast-count;
+    in-out property <string> toast-dest;            // the folder moved to
+    // A change the server did not make, under the folder's title until dismissed.
+    in-out property <string> change-failed;         // "delete", "move", "rename", "mkdir"; "" for none
+    in-out property <string> change-name;           // the item it was about
+    in-out property <int> change-count;             // the items it was about, when several
+    in-out property <bool> change-refused;          // the server said no (else it could not be reached, or the like)
+    in-out property <Problem> change-problem;
+    in-out property <string> change-detail;         // the refusal in the server's words: "403 Forbidden", "Permission denied"
+    // The Delete dialog.
+    in-out property <bool> delete-open;
+    in-out property <[DialogItem]> delete-items;    // the first four
+    in-out property <int> delete-count;
+    in-out property <bool> delete-folders;          // a folder is among them: everything in it goes too
+    // The Move dialog: the folder shown in it, with the way there, its folders, and the way out.
+    in-out property <bool> move-open;
+    in-out property <int> move-count;
+    in-out property <string> move-name;             // the one item's name
+    in-out property <[string]> move-crumbs;         // the server's name, then the folders down to the one shown
+    in-out property <string> move-path-label;       // the same in one line: "Move to: Home NAS › Media"
+    in-out property <[MoveFolder]> move-folders;
+    in-out property <bool> move-loading;
+    in-out property <Problem> move-problem;         // the folder could not be listed
+    in-out property <string> move-problem-detail;
+    in-out property <bool> move-here-allowed;       // the folder shown is not the one the items are in
+    in-out property <bool> move-creating;           // New folder was pressed: its name is typed at the top of the list
+    in-out property <string> move-new-name;
+    in-out property <RenameError> move-new-error;
+    // The Same-name dialog: items already at the destination, of a move or of an upload.
+    in-out property <bool> conflict-open;
+    in-out property <bool> conflict-upload;         // an upload; else a move
+    in-out property <string> conflict-dest;         // the destination folder's name
+    in-out property <[DialogItem]> conflict-items;  // the first four; the one item's name when there is one
+    in-out property <int> conflict-count;
+    in-out property <int> conflict-rest;            // the other items, which go as usual
+    in-out property <bool> conflict-folders;        // a folder is among them: folders are not merged
 
     callback opened();                              // the page is shown
     callback select-server(int);
@@ -154,4 +234,24 @@ export global Downloads {
     callback trust-key();                           // the dialog: the key shown is the server's from now
     callback refuse-key();                          // the dialog: nothing is sent
     callback copy-fingerprint(string);              // the dialog: "new" or "old"
+    // Changes on the server (the ninth round).
+    callback upload();                              // the toolbar's Upload: the file chooser, into the folder looked at
+    callback rename-entry(string);                  // the menu's Rename: the row becomes a field, rename-text its name
+    callback commit-rename(bool);                   // ⏎, or (true) a click elsewhere, which lets a bad name go
+    callback cancel-rename();                       // Esc
+    callback delete-entry(string);                  // the menu's Delete…: the dialog, for the one entry
+    callback delete-selected();                     // the menu's or the foot's Delete: the chosen files
+    callback confirm-delete();                      // the dialog's Delete
+    callback move-entry(string);                    // the menu's Move to…: the dialog
+    callback move-selected();
+    callback move-go-to(int);                       // a crumb of the dialog: 0 is the server's root
+    callback move-open-folder(string);              // a folder of the dialog's list
+    callback move-new-folder();                     // New folder: the name is typed into move-new-name
+    callback commit-new-folder();                   // ⏎ in that field
+    callback cancel-new-folder();                   // Esc in it
+    callback move-here();
+    callback resolve-conflict(string);              // the Same-name dialog: "replace", "skip" or "keep"
+    callback close-dialog();                        // Cancel, or Esc, on the Delete, Move and Same-name dialogs
+    callback dismiss-change-failed();
+    callback show-upload(int);                      // a finished upload's Show: the folder it went to, the file chosen
 }

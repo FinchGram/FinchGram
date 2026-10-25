@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-24 14:21+0000\n"
+"POT-Creation-Date: 2026-10-25 03:52+0000\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -44,8 +44,7 @@ msgid "Broadsheet"
 msgstr "ブロードシート"
 
 #. The tools.
-#: ui/app.slint:125 ui/pages/downloads.slint:506 ui/pages/downloads.slint:1157
-#: ui/toolbox.slint:113
+#: ui/app.slint:125 ui/pages/downloads.slint:2013 ui/toolbox.slint:113
 msgid "Downloads"
 msgstr "ダウンロード"
 
@@ -102,10 +101,10 @@ msgstr "コメントを入力（任意）"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/broadsheet.slint:2592 ui/chat.slint:360 ui/compose.slint:244
-#: ui/pages/downloads.slint:1096 ui/pages/downloads.slint:2258
-#: ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
-#: ui/terminal/terminal.slint:1742 ui/workbench/actions.slint:548
-#: ui/workbench/conversation.slint:1655
+#: ui/pages/downloads.slint:1393 ui/pages/downloads.slint:1903
+#: ui/pages/downloads.slint:3370 ui/pages/settings.slint:1209
+#: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1742
+#: ui/workbench/actions.slint:548 ui/workbench/conversation.slint:1655
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -116,8 +115,8 @@ msgid "Report"
 msgstr "報告"
 
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2574
-#: ui/chat.slint:387 ui/chat.slint:821 ui/terminal/terminal.slint:1727
-#: ui/workbench/conversation.slint:1618
+#: ui/chat.slint:387 ui/chat.slint:821 ui/pages/downloads.slint:2375
+#: ui/terminal/terminal.slint:1727 ui/workbench/conversation.slint:1618
 msgid "Delete"
 msgstr "削除"
 
@@ -134,7 +133,7 @@ msgstr "ダーク"
 msgid "Accounts"
 msgstr "アカウント"
 
-#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:1184
+#: ui/broadsheet/broadsheet.slint:327 ui/pages/downloads.slint:2040
 #: ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "チャット"
@@ -175,7 +174,7 @@ msgid "Latest message"
 msgstr "最新のメッセージ"
 
 #: ui/broadsheet/broadsheet.slint:667 ui/chat-manage.slint:233
-#: ui/pages/downloads.slint:1709 ui/workbench/sidebar.slint:868
+#: ui/pages/downloads.slint:2630 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "名前"
 
@@ -524,7 +523,7 @@ msgstr "管理者の権限"
 msgid "Change photo"
 msgstr "写真を変更"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:1960
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2953
 #: ui/pages/settings.slint:1269
 msgid "Save"
 msgstr "保存"
@@ -632,7 +631,7 @@ msgid "Primary invite link"
 msgstr "メインの招待リンク"
 
 #: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:900
+#: ui/pages/downloads.slint:1197
 msgid "Copy"
 msgstr "コピー"
 
@@ -762,7 +761,7 @@ msgstr "連絡先を検索"
 msgid "No contacts to add"
 msgstr "追加できる連絡先がありません"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:1960
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2953
 msgid "Add"
 msgstr "追加"
 
@@ -791,7 +790,7 @@ msgid "Remove {0} from the channel?"
 msgstr "{0} をチャンネルから削除しますか？"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:346 ui/pages/ai-access.slint:461
-#: ui/pages/downloads.slint:1991
+#: ui/pages/downloads.slint:2984
 msgid "Remove"
 msgstr "取り除く"
 
@@ -1173,8 +1172,8 @@ msgstr "このチャットとメッセージがリストから削除されます
 msgid "Also delete for {0}"
 msgstr "{0} のチャットからも削除"
 
-#: ui/chat.slint:303 ui/pages/downloads.slint:1468
-#: ui/pages/downloads.slint:2242
+#: ui/chat.slint:303 ui/pages/downloads.slint:2389
+#: ui/pages/downloads.slint:3294
 msgid "Open"
 msgstr "開く"
 
@@ -1396,11 +1395,12 @@ msgstr "アップロードをキャンセル"
 msgid "Not sent"
 msgstr "未送信"
 
-#: ui/chat.slint:386 ui/pages/downloads.slint:761 ui/pages/downloads.slint:2267
+#: ui/chat.slint:386 ui/pages/downloads.slint:1051
+#: ui/pages/downloads.slint:3379
 msgid "Retry"
 msgstr "再試行"
 
-#: ui/chat.slint:388 ui/pages/downloads.slint:1474
+#: ui/chat.slint:388 ui/pages/downloads.slint:2395
 msgid "Download"
 msgstr "ダウンロード"
 
@@ -1408,12 +1408,12 @@ msgstr "ダウンロード"
 msgid "Cancel download"
 msgstr "ダウンロードをキャンセル"
 
-#: ui/chat.slint:390 ui/pages/downloads.slint:752
+#: ui/chat.slint:390 ui/pages/downloads.slint:1032
 msgid "Show in Finder"
 msgstr "Finder に表示"
 
 #. "0.4 MB of 1.2 MB"
-#: ui/chat.slint:392 ui/pages/downloads.slint:58
+#: ui/chat.slint:392 ui/pages/downloads.slint:60
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
@@ -1425,7 +1425,7 @@ msgstr "クリックして表示"
 msgid "Reply"
 msgstr "返信"
 
-#: ui/chat.slint:812 ui/pages/downloads.slint:2193
+#: ui/chat.slint:812 ui/pages/downloads.slint:3236
 msgid "Edit"
 msgstr "編集"
 
@@ -1777,7 +1777,7 @@ msgstr "相手が Telegram を使っている必要があります"
 msgid "Next"
 msgstr "次へ"
 
-#: ui/compose.slint:225
+#: ui/compose.slint:225 ui/pages/downloads.slint:1962
 msgid "Skip"
 msgstr "スキップ"
 
@@ -1882,7 +1882,7 @@ msgstr "32 文字以内にしてください"
 msgid "Cannot end with an underscore"
 msgstr "末尾にアンダースコアは使えません"
 
-#: ui/compose.slint:271 ui/pages/downloads.slint:17
+#: ui/compose.slint:271 ui/pages/downloads.slint:18
 msgid "Checking…"
 msgstr "確認中…"
 
@@ -1917,7 +1917,7 @@ msgid "It can be revoked and made anew in the channel's settings."
 msgstr "チャンネルの設定で無効にして作り直せます。"
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:900
+#: ui/pages/downloads.slint:1197
 msgid "Copied"
 msgstr "コピーしました"
 
@@ -2434,7 +2434,7 @@ msgstr "接続中…"
 msgid "Updating…"
 msgstr "更新中…"
 
-#: ui/format.slint:185 ui/pages/ai-access.slint:82 ui/pages/downloads.slint:16
+#: ui/format.slint:185 ui/pages/ai-access.slint:82 ui/pages/downloads.slint:17
 msgid "Connected"
 msgstr "接続済み"
 
@@ -2868,137 +2868,249 @@ msgstr ""
 "FinchGram を通じてあなたのアカウントでチャットを読み、操作できます。"
 "FinchGram 自体は AI を呼び出さず、AI のために何も保存しません。"
 
-#: ui/pages/downloads.slint:18
+#: ui/pages/downloads.slint:19
 msgid "Password rejected"
 msgstr "パスワードが拒否されました"
 
-#: ui/pages/downloads.slint:19
+#: ui/pages/downloads.slint:20
 msgid "Not reachable"
 msgstr "接続できません"
 
-#: ui/pages/downloads.slint:20
+#: ui/pages/downloads.slint:21
 msgid "Key not checked"
 msgstr "鍵は未確認"
 
-#: ui/pages/downloads.slint:21
+#: ui/pages/downloads.slint:22
 msgid "Key changed"
 msgstr "鍵が変わった"
 
-#: ui/pages/downloads.slint:27
+#: ui/pages/downloads.slint:28
 msgid "The server refused the password (401)"
 msgstr "サーバーがパスワードを拒否しました（401）"
 
-#: ui/pages/downloads.slint:28
+#: ui/pages/downloads.slint:29
 msgid "The server refused access (403)"
 msgstr "サーバーがアクセスを拒否しました（403）"
 
-#: ui/pages/downloads.slint:29
+#: ui/pages/downloads.slint:30
 msgid "Cannot reach {0}"
 msgstr "{0} に接続できません"
 
-#: ui/pages/downloads.slint:30
+#: ui/pages/downloads.slint:31
 msgid "The server answered HTTP {0}"
 msgstr "サーバーが HTTP {0} を返しました"
 
-#: ui/pages/downloads.slint:31
+#: ui/pages/downloads.slint:32
 msgid "The server did not answer with a WebDAV listing"
 msgstr "サーバーから WebDAV の一覧が返されませんでした"
 
-#: ui/pages/downloads.slint:32
+#: ui/pages/downloads.slint:33
 msgid "The connection was lost"
 msgstr "接続が切断されました"
 
-#: ui/pages/downloads.slint:33
+#: ui/pages/downloads.slint:34
 msgid "The file could not be written"
 msgstr "ファイルを書き込めませんでした"
 
-#: ui/pages/downloads.slint:34
+#: ui/pages/downloads.slint:35
 msgid "The server has no such file or folder"
 msgstr "サーバーにそのファイルやフォルダーはありません"
 
-#: ui/pages/downloads.slint:35
+#: ui/pages/downloads.slint:36
 msgid ""
 "Not connected: you didn’t trust the server’s key. Your password wasn’t sent."
-msgstr "接続していません：サーバーの鍵を信頼しなかったため、パスワードは送信されていません。"
+msgstr ""
+"接続していません：サーバーの鍵を信頼しなかったため、パスワードは送信されてい"
+"ません。"
 
-#: ui/pages/downloads.slint:36 ui/pages/downloads.slint:1568
+#: ui/pages/downloads.slint:37 ui/pages/downloads.slint:2489
 msgid "Not connected. This server’s key has changed."
 msgstr "接続していません。このサーバーの鍵が変わりました。"
 
-#: ui/pages/downloads.slint:42
+#: ui/pages/downloads.slint:43
 msgid "the server refused the password (401)"
 msgstr "サーバーがパスワードを拒否しました（401）"
 
-#: ui/pages/downloads.slint:43
+#: ui/pages/downloads.slint:44
 msgid "the server refused access (403)"
 msgstr "サーバーがアクセスを拒否しました（403）"
 
-#: ui/pages/downloads.slint:44
+#: ui/pages/downloads.slint:45
 msgid "the server answered HTTP {0}"
 msgstr "サーバーが HTTP {0} を返しました"
 
-#: ui/pages/downloads.slint:45
+#: ui/pages/downloads.slint:46
 msgid "the server did not answer with the file"
 msgstr "サーバーからファイルが返されませんでした"
 
-#: ui/pages/downloads.slint:46
+#: ui/pages/downloads.slint:47
 msgid "the file could not be written"
 msgstr "ファイルを書き込めませんでした"
 
 #
-#: ui/pages/downloads.slint:47
+#: ui/pages/downloads.slint:48
 msgid "the server has no such file"
 msgstr "サーバーにそのファイルはありません"
 
-#: ui/pages/downloads.slint:48
+#: ui/pages/downloads.slint:49
 msgid "the server’s key changed"
 msgstr "サーバーの鍵が変わった"
 
-#: ui/pages/downloads.slint:49
+#: ui/pages/downloads.slint:50
 msgid "the server closed the connection"
 msgstr "サーバーが接続を切断しました"
 
-#: ui/pages/downloads.slint:53
+#: ui/pages/downloads.slint:55
 msgid "Waiting · {0}"
 msgstr "待機中 · {0}"
 
-#: ui/pages/downloads.slint:54
+#: ui/pages/downloads.slint:56
 msgid "Done · {0}"
 msgstr "完了 · {0}"
 
-#: ui/pages/downloads.slint:55
+#: ui/pages/downloads.slint:57
 msgid "Paused until you check the server’s key. {0} of {1} kept."
 msgstr "サーバーの鍵を確認するまで一時停止。{1} 中 {0} を保持。"
 
-#: ui/pages/downloads.slint:56
+#: ui/pages/downloads.slint:58
 msgid "Stopped: {0}. {1} of {2} kept."
 msgstr "停止：{0}。{2} のうち {1} を保持しています。"
 
-#: ui/pages/downloads.slint:57
+#: ui/pages/downloads.slint:59
 msgid "Server busy (HTTP {0}), trying again…"
 msgstr "サーバーが混み合っています（HTTP {0}）、再試行中…"
 
-#: ui/pages/downloads.slint:59
+#: ui/pages/downloads.slint:61
 msgid "{0} of {1} · {2} · {3}"
 msgstr "{0} / {1} · {2} · {3}"
 
-#: ui/pages/downloads.slint:63
+#: ui/pages/downloads.slint:65
 msgid "estimating…"
 msgstr "計算中…"
 
-#: ui/pages/downloads.slint:64
+#: ui/pages/downloads.slint:66
 msgid "{0} s left"
 msgstr "残り{0}秒"
 
-#: ui/pages/downloads.slint:65
+#: ui/pages/downloads.slint:67
 msgid "{0} min left"
 msgstr "残り{0}分"
 
+#: ui/pages/downloads.slint:73
+msgid "Waiting · to {0} · {1}"
+msgstr "待機中 · {0} へ · {1}"
+
 #: ui/pages/downloads.slint:74
+msgid "Uploaded to {0} · {1}"
+msgstr "{0} にアップロード済み · {1}"
+
+#: ui/pages/downloads.slint:75
+msgid "The server refused the upload ({0})."
+msgstr "サーバーがアップロードを拒否しました（{0}）。"
+
+#: ui/pages/downloads.slint:76
+msgid "Stopped: {0}. Retry starts over."
+msgstr "停止：{0}。再試行は最初からになります。"
+
+#: ui/pages/downloads.slint:77
+msgid "To {0} · {1} of {2}"
+msgstr "{0} へ · {2} 中 {1}"
+
+#: ui/pages/downloads.slint:78
+msgid "To {0} · {1} of {2} · {3} · {4}"
+msgstr "{0} へ · {2} 中 {1} · {3} · {4}"
+
+#: ui/pages/downloads.slint:88
+msgid "delete {0} items"
+msgstr "{0} 項目の削除"
+
+#: ui/pages/downloads.slint:89
+msgid "delete “{0}”"
+msgstr "「{0}」の削除"
+
+#
+#
+#: ui/pages/downloads.slint:90
+msgid "move {0} items"
+msgstr "{0} 項目の移動"
+
+#: ui/pages/downloads.slint:91
+msgid "move “{0}”"
+msgstr "「{0}」の移動"
+
+#: ui/pages/downloads.slint:92
+msgid "rename “{0}”"
+msgstr "「{0}」の名前変更"
+
+#: ui/pages/downloads.slint:93
+msgid "create the folder “{0}”"
+msgstr "フォルダ「{0}」の作成"
+
+#: ui/pages/downloads.slint:99
+msgid "The server refused to {0} ({1})."
+msgstr "サーバーが{0}を拒否しました（{1}）。"
+
+#: ui/pages/downloads.slint:101
+msgid "Couldn’t {0}: {1}"
+msgstr "{0}できませんでした：{1}"
+
+#: ui/pages/downloads.slint:106
+msgid "Deleted {0} items"
+msgstr "{0} 項目を削除しました"
+
+#: ui/pages/downloads.slint:107
+msgid "Deleted “{0}”"
+msgstr "「{0}」を削除しました"
+
+#: ui/pages/downloads.slint:108
+msgid "Moved {0} items to {1}"
+msgstr "{0} 項目を {1} に移動しました"
+
+#: ui/pages/downloads.slint:109
+msgid "Moved “{0}” to {1}"
+msgstr "「{0}」を {1} に移動しました"
+
+#: ui/pages/downloads.slint:110
+msgid "Nothing was moved"
+msgstr "何も移動されませんでした"
+
+#: ui/pages/downloads.slint:116
+msgid "Changes: allowed by the server."
+msgstr "変更：サーバーは許可しています。"
+
+#: ui/pages/downloads.slint:117
+msgid "Changes: the server only allows reading."
+msgstr "変更：サーバーは読み取りしか許可していません。"
+
+#: ui/pages/downloads.slint:118
+msgid "Changes: the server didn’t say. You’ll know when you try."
+msgstr "変更：サーバーは何も言っていません。試せば分かります。"
+
+#: ui/pages/downloads.slint:123
+msgid "There’s already “{0}” here."
+msgstr "ここには既に「{0}」があります。"
+
+#: ui/pages/downloads.slint:124
+msgid "Names can’t contain “/”."
+msgstr "名前に「/」は使えません。"
+
+#: ui/pages/downloads.slint:131
+msgid "Folder"
+msgstr "フォルダ"
+
+#: ui/pages/downloads.slint:132
+msgid "Empty folder"
+msgstr "空のフォルダ"
+
+#: ui/pages/downloads.slint:133
+msgid "Folder · {0} items inside"
+msgstr "フォルダ · 中に {0} 項目"
+
+#: ui/pages/downloads.slint:142
 msgid "Reached: {0} folders and {1} files at the root."
 msgstr "接続できました。ルートにフォルダが {0} 個、ファイルが {1} 個あります。"
 
-#: ui/pages/downloads.slint:77
+#: ui/pages/downloads.slint:145
 msgid ""
 "Reached: {0} folders and {1} files at the root. Ranges supported, so "
 "downloads can use several connections."
@@ -3006,7 +3118,7 @@ msgstr ""
 "接続できました。ルートにフォルダが {0} 個、ファイルが {1} 個あります。Range "
 "リクエストに対応しているため、ダウンロードには複数の接続を使えます。"
 
-#: ui/pages/downloads.slint:79
+#: ui/pages/downloads.slint:147
 msgid ""
 "Reached: {0} folders and {1} files at the root. No ranges, so each file "
 "comes over one connection."
@@ -3014,165 +3126,320 @@ msgstr ""
 "接続できました。ルートにフォルダが {0} 個、ファイルが {1} 個あります。Range "
 "リクエストに対応していないため、各ファイルは1つの接続で転送されます。"
 
-#: ui/pages/downloads.slint:83
+#: ui/pages/downloads.slint:151
 msgid "Give the server a name."
 msgstr "サーバーに名前を付けてください。"
 
-#: ui/pages/downloads.slint:84
+#: ui/pages/downloads.slint:152
 msgid "The address needs to start with http:// or https://."
 msgstr "アドレスは http:// または https:// で始まる必要があります。"
 
 #
-#: ui/pages/downloads.slint:85
+#: ui/pages/downloads.slint:153
 msgid "Give the server's host name or IP."
 msgstr "サーバーのホスト名または IP を入力してください。"
 
-#: ui/pages/downloads.slint:86
+#: ui/pages/downloads.slint:154
 msgid "The port needs to be a number from 1 to 65535."
 msgstr "ポートは 1 から 65535 までの数字にしてください。"
 
-#: ui/pages/downloads.slint:114
+#: ui/pages/downloads.slint:182
 msgid "Host name or IP. A folder may follow after a /."
 msgstr "ホスト名または IP。/ の後にフォルダーを続けられます。"
 
-#: ui/pages/downloads.slint:115
+#: ui/pages/downloads.slint:183
 msgid "Host name or IP. Implicit TLS on the default port."
 msgstr "ホスト名または IP。既定のポートで暗黙の TLS。"
 
-#: ui/pages/downloads.slint:116
+#: ui/pages/downloads.slint:184
 msgid "Host name or IP of the SSH server."
 msgstr "SSH サーバーのホスト名または IP。"
 
-#: ui/pages/downloads.slint:117
+#: ui/pages/downloads.slint:185
 msgid "http:// or https://. A folder may be part of the address."
 msgstr ""
 "http:// または https:// で始めます。アドレスにフォルダを含めることもできま"
 "す。"
 
-#: ui/pages/downloads.slint:121
+#: ui/pages/downloads.slint:189
 msgid "Default port {}."
 msgstr "既定のポートは {} です。"
 
-#: ui/pages/downloads.slint:404 ui/pages/downloads.slint:1612
+#: ui/pages/downloads.slint:472 ui/pages/downloads.slint:2533
 msgid "Add server"
 msgstr "サーバーを追加"
 
-#: ui/pages/downloads.slint:446
+#: ui/pages/downloads.slint:514
 msgid "Filter this folder"
 msgstr "このフォルダ内を絞り込む"
 
-#: ui/pages/downloads.slint:770 ui/pages/downloads.slint:1578
+#: ui/pages/downloads.slint:574 ui/pages/downloads.slint:3030
+msgid "Transfers"
+msgstr "転送"
+
+#: ui/pages/downloads.slint:659
+msgid "Upload"
+msgstr "アップロード"
+
+#: ui/pages/downloads.slint:750
+msgid "Drop to upload to {0}"
+msgstr "離すと {0} にアップロードします"
+
+#: ui/pages/downloads.slint:750
+msgid "The server doesn’t allow changes"
+msgstr "サーバーは変更を許可していません"
+
+#
+#: ui/pages/downloads.slint:757
+msgid "{0} only allows reading."
+msgstr "{0} は読み取りしか許可していません。"
+
+#: ui/pages/downloads.slint:1042
+msgid "Show"
+msgstr "表示"
+
+#: ui/pages/downloads.slint:1060 ui/pages/downloads.slint:2499
 msgid "Check key"
 msgstr "鍵を確認"
 
-#: ui/pages/downloads.slint:1007
+#: ui/pages/downloads.slint:1304
 msgid "This server’s key has changed"
 msgstr "このサーバーの鍵が変わりました"
 
-#: ui/pages/downloads.slint:1007
+#: ui/pages/downloads.slint:1304
 msgid "Trust this server’s key?"
 msgstr "このサーバーの鍵を信頼しますか？"
 
-#: ui/pages/downloads.slint:1015
+#: ui/pages/downloads.slint:1312
 msgid ""
 "It isn’t the server you connected to before, or someone is between you and "
 "it."
 msgstr "以前接続したサーバーではないか、あなたとサーバーの間に誰かがいます。"
 
-#: ui/pages/downloads.slint:1016
+#: ui/pages/downloads.slint:1313
 msgid ""
 "This is the first time you connect to this server. Compare the fingerprint "
 "with the one its owner gave you. If you can’t, don’t continue."
-msgstr "このサーバーへの接続は初めてです。管理者から受け取ったフィンガープリントと照合してください。照合できなければ続けないでください。"
+msgstr ""
+"このサーバーへの接続は初めてです。管理者から受け取ったフィンガープリントと照"
+"合してください。照合できなければ続けないでください。"
 
-#: ui/pages/downloads.slint:1026
+#: ui/pages/downloads.slint:1323
 msgid "Server"
 msgstr "サーバー"
 
-#: ui/pages/downloads.slint:1051
+#: ui/pages/downloads.slint:1348
 msgid "Trusted earlier · {0}"
 msgstr "以前から信頼 · {0}"
 
-#: ui/pages/downloads.slint:1052
+#: ui/pages/downloads.slint:1349
 msgid "Trusted since {0} · {1}"
 msgstr "{0} から信頼 · {1}"
 
-#: ui/pages/downloads.slint:1057
+#: ui/pages/downloads.slint:1354
 msgid "Shown now · {0}"
 msgstr "今回提示 · {0}"
 
-#: ui/pages/downloads.slint:1057
+#: ui/pages/downloads.slint:1354
 msgid "{0} key · SHA256 fingerprint"
 msgstr "{0} 鍵 · SHA256 フィンガープリント"
 
-#: ui/pages/downloads.slint:1075
+#: ui/pages/downloads.slint:1372
 msgid ""
 "Nothing has been sent. If the owner says the key changed, check the new "
 "fingerprint with them first."
-msgstr "何も送信されていません。管理者が鍵を変えたと言うなら、まず新しいフィンガープリントを照合してください。"
+msgstr ""
+"何も送信されていません。管理者が鍵を変えたと言うなら、まず新しいフィンガープ"
+"リントを照合してください。"
 
-#: ui/pages/downloads.slint:1076
+#: ui/pages/downloads.slint:1373
 msgid "Your password isn’t sent until you trust the key."
 msgstr "鍵を信頼するまでパスワードは送信されません。"
 
-#: ui/pages/downloads.slint:1087
+#: ui/pages/downloads.slint:1384
 msgid "esc  don’t connect"
 msgstr "esc  接続しない"
 
-#: ui/pages/downloads.slint:1087
+#: ui/pages/downloads.slint:1384 ui/pages/downloads.slint:1593
 msgid "esc  cancel"
 msgstr "esc  キャンセル"
 
-#: ui/pages/downloads.slint:1102
+#: ui/pages/downloads.slint:1399
 msgid "Trust new key"
 msgstr "新しい鍵を信頼"
 
-#: ui/pages/downloads.slint:1109
+#: ui/pages/downloads.slint:1406
 msgid "Don’t connect"
 msgstr "接続しない"
 
-#: ui/pages/downloads.slint:1109
+#: ui/pages/downloads.slint:1406
 msgid "Trust and continue"
 msgstr "信頼して続ける"
 
-#: ui/pages/downloads.slint:1196
+#: ui/pages/downloads.slint:1549
+msgid "Already there"
+msgstr "既にあります"
+
+#: ui/pages/downloads.slint:1561
+msgid "and {0} more"
+msgstr "他 {0} 項目"
+
+#: ui/pages/downloads.slint:1630
+msgid "Can’t move a folder into itself"
+msgstr "フォルダを自分自身の中には移動できません"
+
+#: ui/pages/downloads.slint:1630
+msgid "Current folder"
+msgstr "現在のフォルダ"
+
+#: ui/pages/downloads.slint:1660
+msgid "Delete “{0}”?"
+msgstr "「{0}」を削除しますか？"
+
+#: ui/pages/downloads.slint:1660
+msgid "Delete {0} items?"
+msgstr "{0} 項目を削除しますか？"
+
+#: ui/pages/downloads.slint:1661
+msgid "Deleted on {0} itself. There’s no trash, and it can’t be undone."
+msgstr "{0} 上で直接削除されます。ゴミ箱はなく、取り消せません。"
+
+#: ui/pages/downloads.slint:1671
+msgid "Folders are deleted with everything in them."
+msgstr "フォルダは中身ごと削除されます。"
+
+#: ui/pages/downloads.slint:1687
+msgid "Delete {0} items"
+msgstr "{0} 項目を削除"
+
+#: ui/pages/downloads.slint:1702
+msgid "Move “{0}” to…"
+msgstr "「{0}」を移動…"
+
+#: ui/pages/downloads.slint:1702 ui/pages/downloads.slint:3331
+msgid "Move {0} items to…"
+msgstr "{0} 項目を移動…"
+
+#: ui/pages/downloads.slint:1703
+msgid "Within {0} only."
+msgstr "{0} の中だけで移動できます。"
+
+#: ui/pages/downloads.slint:1793
+msgid "Folder name"
+msgstr "フォルダ名"
+
+#: ui/pages/downloads.slint:1847
+msgid "No folders here"
+msgstr "ここにフォルダはありません"
+
+#: ui/pages/downloads.slint:1856
+msgid "Move to: {0}"
+msgstr "移動先：{0}"
+
+#: ui/pages/downloads.slint:1856
+msgid "Already in this folder."
+msgstr "既にこのフォルダにあります。"
+
+#: ui/pages/downloads.slint:1887
+msgid "New folder"
+msgstr "新規フォルダ"
+
+#: ui/pages/downloads.slint:1909
+msgid "Move here"
+msgstr "ここに移動"
+
+#: ui/pages/downloads.slint:1928
+msgid "“{0}” is already in {1}"
+msgstr "「{0}」は既に {1} にあります"
+
+#: ui/pages/downloads.slint:1928
+msgid "{0} items are already in {1}"
+msgstr "{0} 項目は既に {1} にあります"
+
+#: ui/pages/downloads.slint:1929
+msgid "Choose before uploading."
+msgstr "アップロードする前に選んでください。"
+
+#: ui/pages/downloads.slint:1929
+msgid "Choose before moving."
+msgstr "移動する前に選んでください。"
+
+#: ui/pages/downloads.slint:1930
+msgid "The other one uploads as usual."
+msgstr "もう一つは通常どおりアップロードされます。"
+
+#: ui/pages/downloads.slint:1930
+msgid "The other one moves as usual."
+msgstr "もう一つは通常どおり移動されます。"
+
+#: ui/pages/downloads.slint:1931
+msgid "The other {0} upload as usual."
+msgstr "残りの {0} 項目は通常どおりアップロードされます。"
+
+#: ui/pages/downloads.slint:1931
+msgid "The other {0} move as usual."
+msgstr "残りの {0} 項目は通常どおり移動されます。"
+
+#: ui/pages/downloads.slint:1945
+msgid ""
+"Keep both adds “(2)” to the name. Replace deletes the one that’s there; it "
+"can’t be undone."
+msgstr "「両方残す」は名前に「(2)」を付けます。「置き換える」は元のものを削除し、取り消せません。"
+
+#: ui/pages/downloads.slint:1945
+msgid "Folders aren’t merged."
+msgstr "フォルダは結合されません。"
+
+#: ui/pages/downloads.slint:1955
+msgid "Replace"
+msgstr "置き換える"
+
+#: ui/pages/downloads.slint:1968
+msgid "Keep both"
+msgstr "両方残す"
+
+#: ui/pages/downloads.slint:2052
 msgid "Servers"
 msgstr "サーバー"
 
-#: ui/pages/downloads.slint:1402
+#: ui/pages/downloads.slint:2307
 msgid "Modified"
 msgstr "変更日"
 
-#: ui/pages/downloads.slint:1407
+#: ui/pages/downloads.slint:2312
 msgid "Size"
 msgstr "サイズ"
 
-#: ui/pages/downloads.slint:1431
+#: ui/pages/downloads.slint:2337
 msgid "Nothing in this folder matches “{0}”"
 msgstr "このフォルダには「{0}」に一致するものがありません"
 
-#: ui/pages/downloads.slint:1453
+#: ui/pages/downloads.slint:2359
 msgid "{0} selected · {1}"
 msgstr "{0}件を選択中 · {1}"
 
-#: ui/pages/downloads.slint:1461
+#: ui/pages/downloads.slint:2368
+msgid "Move…"
+msgstr "移動…"
+
+#: ui/pages/downloads.slint:2382
 msgid "Clear"
 msgstr "選択解除"
 
-#: ui/pages/downloads.slint:1510
+#: ui/pages/downloads.slint:2431
 msgid "This folder is empty"
 msgstr "このフォルダは空です"
 
-#: ui/pages/downloads.slint:1568
+#: ui/pages/downloads.slint:2489
 msgid "Not connected yet. Check this server’s key first."
 msgstr "まだ接続していません。先にこのサーバーの鍵を確認してください。"
 
 #
-#: ui/pages/downloads.slint:1595
+#: ui/pages/downloads.slint:2516
 msgid "No servers yet"
 msgstr "サーバーはまだありません"
 
-#: ui/pages/downloads.slint:1598
+#: ui/pages/downloads.slint:2519
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -3182,22 +3449,19 @@ msgstr ""
 "いるフォルダの WebDAV アドレスを追加してください。追加すると、ここで中身を閲"
 "覧して必要なファイルを選べます。"
 
-#: ui/pages/downloads.slint:1604
+#: ui/pages/downloads.slint:2525
 msgid ""
-"Cloud drives without WebDAV can be reached through OpenList. FinchGram only "
-"reads: nothing is uploaded, synced, renamed or deleted on the server."
-msgstr ""
-"WebDAV に対応していないクラウドドライブには OpenList を通じてアクセスできま"
-"す。FinchGram は読み取るだけです：サーバー上でアップロード、同期、名前の変"
-"更、削除は一切行いません。"
+"Cloud drives without WebDAV can be reached through OpenList. FinchGram "
+"changes nothing on a server unless you allow it for that server."
+msgstr "WebDAV のないクラウドには OpenList を通じて届きます。FinchGram は、そのサーバーに対して許可しない限り、サーバー上の何も変更しません。"
 
-#: ui/pages/downloads.slint:1677
+#: ui/pages/downloads.slint:2598
 msgid "Edit server"
 msgstr "サーバーを編集"
 
 #
 #
-#: ui/pages/downloads.slint:1680
+#: ui/pages/downloads.slint:2601
 msgid ""
 "The address of the server, and the account it gave you. The password is kept "
 "sealed in FinchGram's database on this Mac."
@@ -3205,59 +3469,73 @@ msgstr ""
 "サーバーのアドレスと、サーバーから受け取ったアカウント。パスワードは封印し"
 "て、この Mac 上の FinchGram のデータベースに保存されます。"
 
-#: ui/pages/downloads.slint:1690
+#: ui/pages/downloads.slint:2611
 msgid "Protocol"
 msgstr "プロトコル"
 
-#: ui/pages/downloads.slint:1724
+#: ui/pages/downloads.slint:2645
 msgid "Address"
 msgstr "アドレス"
 
-#: ui/pages/downloads.slint:1733
+#: ui/pages/downloads.slint:2654
 msgid "Port"
 msgstr "ポート"
 
-#: ui/pages/downloads.slint:1753
+#: ui/pages/downloads.slint:2674
 msgid "Server key"
 msgstr "サーバーの鍵"
 
-#: ui/pages/downloads.slint:1789
+#: ui/pages/downloads.slint:2710
 msgid "First seen {0}"
 msgstr "初回確認 {0}"
 
-#: ui/pages/downloads.slint:1797
+#: ui/pages/downloads.slint:2718
 msgid "Forget this key"
 msgstr "この鍵を忘れる"
 
-#: ui/pages/downloads.slint:1829
+#: ui/pages/downloads.slint:2750
 msgid "Forgotten. You’ll check it again on the next connection."
 msgstr "忘れました。次の接続時に再度確認します。"
 
-#: ui/pages/downloads.slint:1829
+#: ui/pages/downloads.slint:2750
 msgid "Not seen yet. You’ll check it the first time you connect."
 msgstr "まだ見ていません。最初の接続時に確認します。"
 
 #
-#: ui/pages/downloads.slint:1848
+#: ui/pages/downloads.slint:2769
 msgid "Sign in with"
 msgstr "ログイン方法"
 
-#: ui/pages/downloads.slint:1856 ui/pages/downloads.slint:1871
+#: ui/pages/downloads.slint:2777 ui/pages/downloads.slint:2792
 #: ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "パスワード"
 
-#: ui/pages/downloads.slint:1860
+#: ui/pages/downloads.slint:2781
 msgid "Key"
 msgstr "鍵"
 
 #
-#: ui/pages/downloads.slint:1865
+#: ui/pages/downloads.slint:2786
 msgid "Key sign-in isn’t in this version."
 msgstr "鍵でのログインはこのバージョンでは未対応です。"
 
+#: ui/pages/downloads.slint:2825
+msgid "Allow changes to files on this server"
+msgstr "このサーバー上のファイルの変更を許可"
+
+#: ui/pages/downloads.slint:2831
+msgid ""
+"Delete, move, rename and upload on the server. Deleted files can’t be "
+"recovered."
+msgstr "サーバー上で削除・移動・名前の変更・アップロードを行います。削除したファイルは元に戻せません。"
+
+#: ui/pages/downloads.slint:2837
+msgid "This server said it only allows reading."
+msgstr "このサーバーは読み取りしか許可していないと言っています。"
+
 #
-#: ui/pages/downloads.slint:1894
+#: ui/pages/downloads.slint:2874
 msgid ""
 "Over FTP the password and the files travel in the clear: use this server "
 "only on a network you trust, or FTPS."
@@ -3265,7 +3543,7 @@ msgstr ""
 "FTP ではパスワードもファイルも平文で流れます：このサーバーは信頼できるネット"
 "ワークでだけ使うか、FTPS にしてください。"
 
-#: ui/pages/downloads.slint:1895
+#: ui/pages/downloads.slint:2875
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
@@ -3273,47 +3551,75 @@ msgstr ""
 "http ではパスワードもファイルも平文で流れます。このサーバーは信頼できるネット"
 "ワークでだけ使ってください。"
 
-#: ui/pages/downloads.slint:1931
+#: ui/pages/downloads.slint:2911
 msgid "Testing…"
 msgstr "テスト中…"
 
-#: ui/pages/downloads.slint:1970
+#: ui/pages/downloads.slint:2963
 msgid "Test connection"
 msgstr "接続をテスト"
 
-#: ui/pages/downloads.slint:2035
+#: ui/pages/downloads.slint:3037
+msgid "{0} down · {1} up"
+msgstr "下り {0} · 上り {1}"
+
+#: ui/pages/downloads.slint:3038
 msgid "{0} active"
 msgstr "{0}件がダウンロード中"
 
-#: ui/pages/downloads.slint:2048
+#: ui/pages/downloads.slint:3051
 msgid "Clear finished"
 msgstr "完了済みを消去"
 
-#: ui/pages/downloads.slint:2071
+#: ui/pages/downloads.slint:3074
 msgid "Hide"
 msgstr "隠す"
 
-#: ui/pages/downloads.slint:2139
+#: ui/pages/downloads.slint:3142
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "1ファイルあたり {0} 接続 · ダウンロード先：{1}"
 
-#: ui/pages/downloads.slint:2145
+#: ui/pages/downloads.slint:3148
 msgid "Change"
 msgstr "変更"
 
-#: ui/pages/downloads.slint:2210
+#: ui/pages/downloads.slint:3253
 msgid "Copy address"
 msgstr "アドレスをコピー"
 
-#: ui/pages/downloads.slint:2226
+#: ui/pages/downloads.slint:3262
+msgid "Download {0} items"
+msgstr "{0} 項目をダウンロード"
+
+#: ui/pages/downloads.slint:3278
 msgid "Download folder"
 msgstr "フォルダをダウンロード"
 
-#: ui/pages/downloads.slint:2250
+#: ui/pages/downloads.slint:3302
 msgid "Copy link"
 msgstr "リンクをコピー"
 
-#: ui/pages/downloads.slint:2285
+#: ui/pages/downloads.slint:3322
+msgid "Rename"
+msgstr "名前を変更"
+
+#: ui/pages/downloads.slint:3331
+msgid "Move to…"
+msgstr "移動先…"
+
+#: ui/pages/downloads.slint:3344
+msgid "Delete {0} items…"
+msgstr "{0} 項目を削除…"
+
+#: ui/pages/downloads.slint:3344
+msgid "Delete…"
+msgstr "削除…"
+
+#: ui/pages/downloads.slint:3362
+msgid "The server doesn’t allow changes."
+msgstr "サーバーは変更を許可していません。"
+
+#: ui/pages/downloads.slint:3397
 msgid "Remove from list"
 msgstr "リストから取り除く"
 
@@ -4231,10 +4537,6 @@ msgstr "コマンド"
 #: ui/toolbox.slint:101
 msgid "Search the toolbox"
 msgstr "ツールボックスを検索"
-
-#: ui/toolbox.slint:104
-msgid "Transfers"
-msgstr "転送"
 
 #: ui/toolbox.slint:105
 msgid "Media"

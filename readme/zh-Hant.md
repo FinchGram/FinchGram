@@ -93,8 +93,8 @@ FinchGram 是一個 MCP 伺服器：你 Mac 上的 AI 助理應用程式（Claud
 檢視 → 下載，或者點齒輪上方的下載圖示。加一個伺服器，WebDAV、FTP、FTPS 或 SFTP（NAS、seedbox、PikPak、Alist/OpenList、Nextcloud、
 `rclone serve webdav`，或者用 `vget serve` 分享的資料夾），瀏覽它的資料夾，勾選檔案或整個資料夾一起拿，檔案就會到
 ~/Documents/FinchGram/webdav 裡：每個檔案切成 8 MB 的區塊、最多同時走十二條連線，按「重試」後從停下的地方接著下，和維護者的
-命令列工具 vget 一個做法。右邊的佇列顯示速度和還剩多少；「打開」會把照片或影片取回來，在檢視器裡顯示。FinchGram 只從
-伺服器讀取，密碼封起來存進 FinchGram 的資料庫，永遠不以明文寫進檔案。細節和還沒做的部分見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
+命令列工具 vget 一個做法。右邊的佇列顯示速度和還剩多少；「打開」會把照片或影片取回來，在檢視器裡顯示。除非你為某台伺服器允許，FinchGram 不會變更
+伺服器上的任何東西（允許後可以在那台上刪除、移動、重新命名、上傳）；密碼封起來存進 FinchGram 的資料庫，永遠不以明文寫進檔案。細節和還沒做的部分見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
 （自簽憑證會被拒絕：區域網路裡用 http，或者用正式的憑證）。
 
 ## 怎麼做的

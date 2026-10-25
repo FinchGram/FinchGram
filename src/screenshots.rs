@@ -1866,6 +1866,8 @@ fn fill_downloads(ui: &MainWindow) {
         problem,
         detail: SharedString::new(),
         waiting: 0,
+        upload: false,
+        dest: SharedString::new(),
     };
     downloads.set_servers(model(vec![
         server("Home NAS", "nas.home", "WebDAV", ServerStatus::Connected),
@@ -1874,6 +1876,7 @@ fn fill_downloads(ui: &MainWindow) {
     ]));
     downloads.set_current(0);
     downloads.set_crumbs(model(vec!["Home NAS".into(), "Movies".into(), "2026".into()]));
+    downloads.set_path_label("Home NAS › Movies › 2026".into());
     downloads.set_title("2026".into());
     downloads.set_folder_state(FolderState::Listed);
     downloads.set_problem(Problem::None);
@@ -1901,6 +1904,7 @@ fn fill_downloads(ui: &MainWindow) {
         transfer(4, "notes.pdf", "file-pdf", TransferState::Done, 1.0, "1.1 MB", "1.1 MB", "", -1, Problem::None),
     ]));
     downloads.set_active_count(1);
+    downloads.set_active_uploads(0);
     downloads.set_done_count(1);
     downloads.set_queue_open(true);
     downloads.set_folder_label("~/Documents/FinchGram/webdav".into());
@@ -2016,6 +2020,8 @@ fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name
         problem,
         detail: SharedString::new(),
         waiting: 0,
+        upload: false,
+        dest: SharedString::new(),
     };
     let seedbox = |status: ServerStatus| {
         model(vec![
@@ -2093,10 +2099,152 @@ fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name
     downloads.set_queue(model(Vec::new()));
     downloads.set_active_count(0);
     save(window, &name("downloads-none"));
+    downloads_changes(ui, window, theme, name);
     // Back to the page as it was, but with nothing on its way: the chat windows' pictures that
     // follow show the download icon without its dot.
     fill_downloads(ui);
     downloads.set_active_count(0);
+}
+
+/// The ninth round: changes on a server the user allows them on. The menu with Rename, Move to…
+/// and Delete…, the three dialogs, a name typed in place, files dragged in with uploads in the
+/// queue, what the server refused, a server that only reads, and the form's switch.
+fn downloads_changes(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: &dyn Fn(&str) -> String) {
+    let downloads = ui.global::<Downloads>();
+    let item = |name: &str, icon: &str, size: &str, count: i32| DialogItem { name: name.into(), icon: icon.into(), size: size.into(), count };
+    let folder = |name: &str, current: bool, forbidden: bool| MoveFolder { name: name.into(), current, forbidden };
+    #[allow(clippy::too_many_arguments)]
+    let transfer = |id: i32, name: &str, upload: bool, state: TransferState, fraction: f32, done: &str, total: &str, speed: &str, seconds: i32, problem: Problem, detail: &str| TransferRow {
+        id,
+        name: name.into(),
+        icon: if name.ends_with(".zip") { "file-zip".into() } else { "film-strip".into() },
+        state,
+        fraction,
+        done: done.into(),
+        total: total.into(),
+        speed: speed.into(),
+        seconds_left: seconds,
+        minutes_left: if seconds < 0 { -1 } else { (seconds + 59) / 60 },
+        problem,
+        detail: detail.into(),
+        waiting: 0,
+        upload,
+        dest: if upload { "2026".into() } else { SharedString::new() },
+    };
+    fill_downloads(ui);
+    downloads.set_can_write(true);
+    downloads.set_server_read_only(false);
+    // The menu on Dune, with the write items under the others.
+    let (x, y) = match theme {
+        Theme::Workbench => (520.0, 309.0),
+        Theme::Broadsheet => (520.0, 334.0),
+        Theme::Terminal => (520.0, 305.0),
+    };
+    right_click(window, x, y);
+    save(window, &name("downloads-write-menu"));
+    escape(window);
+    // Delete: two files and a folder, the folder with what it holds.
+    downloads.set_delete_items(model(vec![item("Dune Part Three (2026).mkv", "film-strip", "4.4 GB", -1), item("poster.jpg", "file-image", "2.4 MB", -1), item("Shorts", "folder", "", 12)]));
+    downloads.set_delete_count(3);
+    downloads.set_delete_folders(true);
+    downloads.set_delete_open(true);
+    save(window, &name("downloads-write-delete"));
+    downloads.set_delete_open(false);
+    // Move to…: the folders of Movies, the one the files are in marked.
+    downloads.set_move_count(2);
+    downloads.set_move_name(SharedString::new());
+    downloads.set_move_crumbs(model(vec!["Home NAS".into(), "Movies".into()]));
+    downloads.set_move_path_label("Home NAS › Movies".into());
+    downloads.set_move_folders(model(vec![folder("2024", false, false), folder("2025", false, false), folder("2026", true, false), folder("Documentaries", false, false)]));
+    downloads.set_move_loading(false);
+    downloads.set_move_problem(Problem::None);
+    downloads.set_move_here_allowed(true);
+    downloads.set_move_creating(false);
+    downloads.set_move_open(true);
+    save(window, &name("downloads-write-move"));
+    downloads.set_move_open(false);
+    // The same name at the destination: one of the two files is there already.
+    downloads.set_conflict_upload(false);
+    downloads.set_conflict_dest("2024".into());
+    downloads.set_conflict_items(model(vec![item("poster.jpg", "file-image", "", -1)]));
+    downloads.set_conflict_count(1);
+    downloads.set_conflict_rest(1);
+    downloads.set_conflict_folders(false);
+    downloads.set_conflict_open(true);
+    save(window, &name("downloads-write-conflict"));
+    downloads.set_conflict_open(false);
+    // A name typed in place: Dune's row is a field; then a name that is taken.
+    downloads.set_rename_text("Dune Part Three (2026) HDR.mkv".into());
+    downloads.set_rename_stem("Dune Part Three (2026) HDR".len() as i32);
+    downloads.set_rename_error(RenameError::None);
+    downloads.set_renaming("Dune Part Three (2026).mkv".into());
+    save(window, &name("downloads-write-rename"));
+    downloads.set_rename_text("poster.jpg".into());
+    downloads.set_rename_error(RenameError::Taken);
+    save(window, &name("downloads-write-rename-taken"));
+    downloads.set_renaming(SharedString::new());
+    // Files dragged in: the drop box over the folder, uploads in the queue beside the downloads.
+    downloads.set_queue(model(vec![
+        transfer(1, "Dune Part Three (2026).mkv", false, TransferState::Active, 0.38, "4.1 GB", "10.8 GB", "24.3 MB/s", 275, Problem::None, ""),
+        transfer(7, "Shogun S01E01 1080p.mkv", true, TransferState::Active, 0.34, "980 MB", "2.8 GB", "11.0 MB/s", 170, Problem::None, ""),
+        transfer(8, "Shogun S01E02 1080p.mkv", true, TransferState::Waiting, 0.0, "", "2.6 GB", "", -1, Problem::None, ""),
+        transfer(3, "soundtrack.zip", false, TransferState::Stopped, 0.25, "12 MB", "48 MB", "", -1, Problem::Connection, ""),
+        transfer(9, "Shogun – Trailer.mp4", true, TransferState::Done, 1.0, "212 MB", "212 MB", "", -1, Problem::None, ""),
+    ]));
+    downloads.set_active_count(2);
+    downloads.set_active_uploads(1);
+    downloads.set_dropping(true);
+    save(window, &name("downloads-write-upload"));
+    downloads.set_dropping(false);
+    // What the server would not do: the line under the folder's title, and an upload it refused.
+    downloads.set_change_failed("delete".into());
+    downloads.set_change_name("Dune Part Three (2026).mkv".into());
+    downloads.set_change_count(1);
+    downloads.set_change_refused(true);
+    downloads.set_change_problem(Problem::Forbidden);
+    downloads.set_change_detail("403 Forbidden".into());
+    downloads.set_queue(model(vec![
+        transfer(1, "Dune Part Three (2026).mkv", false, TransferState::Active, 0.38, "4.1 GB", "10.8 GB", "24.3 MB/s", 275, Problem::None, ""),
+        transfer(10, "Shogun S01E03 1080p.mkv", true, TransferState::Stopped, 0.0, "0 B", "2.7 GB", "", -1, Problem::Forbidden, "403 Forbidden"),
+        transfer(9, "Shogun – Trailer.mp4", true, TransferState::Done, 1.0, "212 MB", "212 MB", "", -1, Problem::None, ""),
+    ]));
+    downloads.set_active_count(1);
+    downloads.set_active_uploads(0);
+    save(window, &name("downloads-write-refused"));
+    downloads.set_change_failed(SharedString::new());
+    // A server that said it only reads: the items greyed, with a word.
+    downloads.set_server_read_only(true);
+    right_click(window, x, y);
+    save(window, &name("downloads-write-read-only"));
+    escape(window);
+    downloads.set_server_read_only(false);
+    downloads.set_can_write(false);
+    // The form: the switch on, and what the test learnt about changes.
+    downloads.set_form_open(true);
+    downloads.set_form_editing(true);
+    downloads.set_form_name("Home NAS".into());
+    downloads.set_form_protocol("webdav".into());
+    downloads.set_form_address("https://nas.home/dav".into());
+    downloads.set_form_port("5006".into());
+    downloads.set_form_username("yumin".into());
+    downloads.set_form_password("correct horse".into());
+    downloads.set_form_allow_changes(true);
+    downloads.set_form_read_only(false);
+    downloads.set_test_state(TestState::Ok);
+    downloads.set_test_folders(12);
+    downloads.set_test_files(3);
+    downloads.set_test_ranges(true);
+    downloads.set_test_probed(true);
+    downloads.set_test_changes(ChangesSaid::Allowed);
+    save(window, &name("downloads-write-form"));
+    downloads.set_form_read_only(true);
+    downloads.set_test_changes(ChangesSaid::ReadOnly);
+    save(window, &name("downloads-write-form-read-only"));
+    downloads.set_form_open(false);
+    downloads.set_form_allow_changes(false);
+    downloads.set_form_read_only(false);
+    downloads.set_test_state(TestState::None);
+    downloads.set_test_changes(ChangesSaid::Unknown);
 }
 
 #[test]

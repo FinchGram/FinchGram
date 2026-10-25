@@ -37,6 +37,8 @@ export global Look {
     // gives a pale selection and a solid accent cursor; a pale colour of its own hid the cursor.
     out property <color> input-sel: accent.with-alpha(0.2);
     out property <color> ok: pick(#127a72, #6fd0c4, #1a8a5a, #5fcf95, #1d7a45, #7ed69b);
+    // An upload in the transfers queue (the downloads page's ninth round): teal, green, amber.
+    out property <color> up: pick(#127a72, #6fd0c4, #1a8a5a, #5fcf95, #8f5b00, #e3b45b);
 
     // Type. Letters the font lacks (Chinese) come from Noto Sans SC (src/fonts.rs).
     out property <string> font: terminal ? "JetBrains Mono" : broadsheet ? "Source Sans 3" : "IBM Plex Sans";

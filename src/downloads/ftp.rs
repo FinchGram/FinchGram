@@ -5,8 +5,9 @@
 //! one stream (FTP gives a start, never an end: no ranges), REST going on from where a `.part`
 //! stopped, when the `.part.json` beside it says the `.part` is this file's, in this version (the
 //! WebDAV engine's state file, with no chunks in it). Paths are relative to the folder the
-//! account lands in: "host/films" lists "films" there. FinchGram only reads: RETR and LIST,
-//! nothing else.
+//! account lands in: "host/films" lists "films" there. RETR and LIST (MLSD) read; DELE, RMD,
+//! RNFR/RNTO, MKD and STOR change, and only on a server the user allows changes on (the design's
+//! ninth round). A folder is deleted by walking it: FTP has no deep delete.
 
 use std::io::{BufRead as _, Read, Seek as _, Write as _};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs as _};
@@ -35,6 +36,10 @@ const PIECE: usize = 256 * 1024;
 const LARGEST_LISTING: usize = 32 * 1024 * 1024;
 const LONGEST_LINE: usize = 64 * 1024;
 const MOST_ENTRIES: usize = 200_000;
+/// A folder deleted is walked first: at most this many folders, this deep (as a folder
+/// download, src/downloads/mod.rs).
+const MOST_DELETED_FOLDERS: usize = 100_000;
+const DEEPEST_DELETE: usize = 64;
 
 #[derive(Debug, Clone)]
 pub struct Server {
@@ -118,22 +123,84 @@ impl Server {
     pub fn list(&self, path: &[String]) -> Result<Vec<Entry>, Error> {
         let mut stream = self.connect()?;
         let folder = self.remote_path(path, None);
-        let where_ = if folder.is_empty() { None } else { Some(folder.as_str()) };
-        let entries: Vec<Entry> = match listing(&mut stream, "MLSD", where_) {
-            Ok(lines) => lines.iter().filter_map(|line| ListParser::parse_mlsd(line).ok()).map(entry_of).collect(),
-            // A listing beyond the bounds is not asked for again another way.
-            Err(Listing::Bounds(why)) => return Err(Error::Unreadable(why)),
-            // A server without MLSD says so: LIST, then.
-            Err(Listing::Ftp(_)) => {
-                let lines = listing(&mut stream, "LIST", where_).map_err(|failure| match failure {
-                    Listing::Ftp(err) => ftp_error(err),
-                    Listing::Bounds(why) => Error::Unreadable(why),
-                })?;
-                lines.iter().filter_map(|line| ListParser::parse_posix(line).or_else(|_| ListParser::parse_dos(line)).ok()).map(entry_of).collect()
-            }
-        };
+        let entries = entries(&mut stream, &folder);
         let _ = stream.quit();
-        Ok(entries.into_iter().filter(|entry| entry.name != "." && entry.name != "..").collect())
+        entries
+    }
+
+    /// The file, or the folder with everything in it, gone: DELE, or the folder walked and
+    /// emptied from the bottom up, then RMD.
+    pub fn delete(&self, path: &[String], name: &str, is_dir: bool) -> Result<(), Error> {
+        let mut stream = self.connect()?;
+        let remote = self.remote_path(path, Some(name));
+        let outcome = if is_dir { remove_tree(&mut stream, &remote) } else { stream.rm(&remote).map_err(change_error) };
+        let _ = stream.quit();
+        outcome
+    }
+
+    /// `name` in `from` moved to `to` as `new_name`: RNFR and RNTO. What `replace` names at the
+    /// destination (a file, `Some(false)`, or a folder, `Some(true)`) goes first; with `None`
+    /// the server does as it does with a taken name, which most refuse.
+    pub fn move_to(&self, from: &[String], name: &str, to: &[String], new_name: &str, replace: Option<bool>) -> Result<(), Error> {
+        let mut stream = self.connect()?;
+        let source = self.remote_path(from, Some(name));
+        let destination = self.remote_path(to, Some(new_name));
+        let outcome = match replace {
+            Some(true) => remove_tree(&mut stream, &destination),
+            Some(false) => stream.rm(&destination).map_err(change_error),
+            None => Ok(()),
+        }
+        .and_then(|()| stream.rename(&source, &destination).map_err(change_error));
+        let _ = stream.quit();
+        outcome
+    }
+
+    /// A new folder `name` in `path`: MKD.
+    pub fn make_folder(&self, path: &[String], name: &str) -> Result<(), Error> {
+        let mut stream = self.connect()?;
+        let outcome = stream.mkdir(self.remote_path(path, Some(name))).map_err(change_error);
+        let _ = stream.quit();
+        outcome
+    }
+
+    /// The file at `local`, `size` bytes, STORed into `path` as `name` over one stream, from its
+    /// first byte; the bytes sent go to `progress` as they go.
+    pub fn upload(&self, local: &Path, size: u64, path: &[String], name: &str, cancel: &AtomicBool, progress: &(dyn Fn(u64) + Sync)) -> Result<(), transfer::Error> {
+        let mut file = std::fs::File::open(local).map_err(|err| transfer::Error::Disk(err.to_string()))?;
+        let mut stream = self.connect().map_err(super::remote::transfer_error)?;
+        let remote = self.remote_path(path, Some(name));
+        let mut out = stream.put_with_stream(&remote).map_err(|err| super::remote::transfer_error(change_error(err)))?;
+        let mut buffer = vec![0u8; PIECE];
+        let mut sent: u64 = 0;
+        let mut reported = Instant::now();
+        while sent < size {
+            if cancel.load(Ordering::Relaxed) {
+                let _ = stream.abort(out);
+                return Err(transfer::Error::Cancelled);
+            }
+            let want = (size - sent).min(PIECE as u64) as usize;
+            let read = match file.read(&mut buffer[..want]) {
+                Ok(0) => {
+                    let _ = stream.abort(out);
+                    return Err(transfer::Error::Disk(format!("the file ended {} bytes early", size - sent)));
+                }
+                Ok(read) => read,
+                Err(err) => {
+                    let _ = stream.abort(out);
+                    return Err(transfer::Error::Disk(err.to_string()));
+                }
+            };
+            out.write_all(&buffer[..read]).map_err(|err| transfer::Error::Connection(format!("the connection was lost: {err}")))?;
+            sent += read as u64;
+            if reported.elapsed() >= Duration::from_millis(50) {
+                progress(sent);
+                reported = Instant::now();
+            }
+        }
+        out.finish().map_err(|err| super::remote::transfer_error(change_error(err)))?;
+        let _ = stream.quit();
+        progress(sent);
+        Ok(())
     }
 
     /// Whether the server answers at all with this account.
@@ -253,6 +320,60 @@ fn with_deadline<T: Send + 'static>(patience: Duration, work: impl FnOnce() -> T
     receiver.recv_timeout(patience).map_err(|_| Error::Unreachable("the server did not answer in time".into()))
 }
 
+/// The entries of `folder` ("" for the one the account lands in) over `stream`: MLSD where the
+/// server has it, LIST parsed otherwise; "." and ".." left out.
+fn entries(stream: &mut RustlsFtpStream, folder: &str) -> Result<Vec<Entry>, Error> {
+    let where_ = if folder.is_empty() { None } else { Some(folder) };
+    let entries: Vec<Entry> = match listing(stream, "MLSD", where_) {
+        Ok(lines) => lines.iter().filter_map(|line| ListParser::parse_mlsd(line).ok()).map(entry_of).collect(),
+        // A listing beyond the bounds is not asked for again another way.
+        Err(Listing::Bounds(why)) => return Err(Error::Unreadable(why)),
+        // A server without MLSD says so: LIST, then.
+        Err(Listing::Ftp(_)) => {
+            let lines = listing(stream, "LIST", where_).map_err(|failure| match failure {
+                Listing::Ftp(err) => ftp_error(err),
+                Listing::Bounds(why) => Error::Unreadable(why),
+            })?;
+            lines.iter().filter_map(|line| ListParser::parse_posix(line).or_else(|_| ListParser::parse_dos(line)).ok()).map(entry_of).collect()
+        }
+    };
+    Ok(entries.into_iter().filter(|entry| entry.name != "." && entry.name != "..").collect())
+}
+
+/// The folder at `root` and everything in it gone: its folders found first, each listed once,
+/// their files deleted as they are met, then the folders removed from the deepest up. A name
+/// that is not a name (webdav::is_plain_name) stops it: the server does not get to say what
+/// else goes.
+fn remove_tree(stream: &mut RustlsFtpStream, root: &str) -> Result<(), Error> {
+    let mut folders: Vec<(String, usize)> = vec![(root.to_string(), 0)];
+    let mut index = 0;
+    while index < folders.len() {
+        let (folder, depth) = folders[index].clone();
+        index += 1;
+        for entry in entries(stream, &folder)? {
+            if !super::webdav::is_plain_name(&entry.name) {
+                return Err(Error::Unreadable(format!("the server named an entry in a way that is not a name: {:?}", entry.name)));
+            }
+            let child = format!("{folder}/{}", entry.name);
+            if entry.is_dir {
+                if depth + 1 > DEEPEST_DELETE {
+                    return Err(Error::Unreadable(format!("the folder's folders go more than {DEEPEST_DELETE} deep")));
+                }
+                if folders.len() >= MOST_DELETED_FOLDERS {
+                    return Err(Error::Unreadable(format!("the folder holds more than {MOST_DELETED_FOLDERS} folders")));
+                }
+                folders.push((child, depth + 1));
+            } else {
+                stream.rm(&child).map_err(change_error)?;
+            }
+        }
+    }
+    for (folder, _) in folders.iter().rev() {
+        stream.rmdir(folder).map_err(change_error)?;
+    }
+    Ok(())
+}
+
 /// Why a listing did not come: the server's refusal, or the listing beyond the bounds.
 enum Listing {
     Ftp(FtpError),
@@ -324,6 +445,23 @@ fn tls() -> RustlsConnector {
 fn entry_of(file: suppaftp::list::File) -> Entry {
     let modified = file.modified().duration_since(std::time::UNIX_EPOCH).ok().map(|since| since.as_secs() as i64);
     Entry { name: file.name().to_string(), is_dir: file.is_directory(), size: if file.is_directory() { 0 } else { file.size() as u64 }, modified }
+}
+
+/// What an FTP refusal of a change means: the server's own words for a 4xx or 5xx reply
+/// ("550 Delete operation failed."), which say more than the code alone; the account's and the
+/// connection's failures as for a read.
+fn change_error(error: FtpError) -> Error {
+    match error {
+        FtpError::UnexpectedResponse(response)
+            if !matches!(response.status, Status::NotLoggedIn | Status::NeedPassword | Status::InvalidCredentials | Status::LoginNeedAccount | Status::NotAvailable | Status::HostUnavailable)
+                && (400..600).contains(&response.status.code()) =>
+        {
+            let words = String::from_utf8_lossy(&response.body).trim().to_string();
+            let code = response.status.code();
+            Error::Refused(if words.starts_with(&code.to_string()) { words } else { format!("{code} {words}") })
+        }
+        other => ftp_error(other),
+    }
 }
 
 /// What an FTP refusal means.

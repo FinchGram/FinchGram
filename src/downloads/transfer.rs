@@ -211,12 +211,15 @@ pub enum Error {
     KeyChanged(String),
     /// An SSH server not trusted yet showed its key (sftp.rs): the user is asked first. The key.
     KeyUnknown(String),
+    /// The server would not take an upload, in its own words (remote::Error::Refused).
+    Refused(String),
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Error::Cancelled => write!(f, "cancelled"),
+            Error::Refused(words) => write!(f, "the server refused: {words}"),
             Error::Unauthorized => write!(f, "the server refused the password (401)"),
             Error::Forbidden => write!(f, "the server refused access (403)"),
             Error::Status(code) => write!(f, "the server answered HTTP {code}"),

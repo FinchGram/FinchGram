@@ -48,6 +48,10 @@ for sending attachments wants a drop zone over the chat.
 - Files arrive as paths, so what is dropped is sent as a file chosen in the open panel is
   (`inputFileLocal`).
 - The drop goes to the open chat, wherever over the window it was.
+- Since the downloads page's ninth round (2026-10-24), the same hook sends the files to that page
+  instead while it is the one in front: an upload into the folder looked at, where the server
+  allows changes ([downloads.md](downloads.md), Changes on the server). The page cannot know where
+  over the window the drop was either, so one box covers the folder.
 
 ## Not checked
 

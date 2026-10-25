@@ -1,15 +1,18 @@
-//! Downloads (the design's third round of the shared pages, "FinchGram Desktop 下载", and the
-//! protocols of the seventh): servers over WebDAV, FTP, FTPS or SFTP, their folders, and files
-//! fetched over several connections at once (docs/downloads.md). `remote.rs` puts one face on
-//! the three clients (`webdav.rs` with `transfer.rs`, `ftp.rs`, `sftp.rs`); this module keeps the
-//! page's state on the UI thread and fills the Downloads global (ui/downloads.slint), which the
-//! page (ui/pages/downloads.slint) shows in every theme.
+//! Downloads (the design's third round of the shared pages, "FinchGram Desktop 下载", the
+//! protocols of the seventh, the changes of the ninth): servers over WebDAV, FTP, FTPS or SFTP,
+//! their folders, and files fetched over several connections at once (docs/downloads.md); on a
+//! server the user allows changes on, files deleted, moved, renamed and uploaded too. `remote.rs`
+//! puts one face on the three clients (`webdav.rs` with `transfer.rs`, `ftp.rs`, `sftp.rs`);
+//! this module keeps the page's state on the UI thread and fills the Downloads global
+//! (ui/downloads.slint), which the page (ui/pages/downloads.slint) shows in every theme.
 //!
 //! Threads (docs/architecture.md): one worker lists folders, checks servers and tests the form's
 //! server, one request at a time in the order asked, and answers through the event loop; a
-//! listing that is not the current one any more is dropped when it comes back. Each download runs
-//! on a thread of its own, two at a time, and reports its progress the same way. The servers,
-//! with their passwords, are the app's database's (src/database.rs).
+//! listing that is not the current one any more is dropped when it comes back. Each transfer
+//! runs on a thread of its own, two at a time, and reports its progress the same way; a batch of
+//! changes (a delete, a move, a rename, a new folder) on a thread of its own as well. The
+//! servers, with their passwords and whether changes are allowed on each, are the app's
+//! database's (src/database.rs).
 
 pub mod ftp;
 pub mod http;
@@ -31,10 +34,10 @@ use std::time::{Duration, Instant};
 use chrono::{Datelike, Local, TimeZone};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
 
-use remote::{Protocol, Remote};
+use remote::{Changes, Protocol, Remote};
 
 use crate::settings::Settings;
-use crate::{AppState, Downloads, FolderEntry, FolderState, FormError, MainWindow, Problem, ServerRow, ServerStatus, TestState, TransferRow, TransferState, database, platform, telegram};
+use crate::{AppState, ChangesSaid, DialogItem, Downloads, FolderEntry, FolderState, FormError, MainWindow, MoveFolder, Problem, RenameError, ServerRow, ServerStatus, TestState, TransferRow, TransferState, database, platform, telegram};
 
 /// How many files are fetched at the same time; the rest wait.
 const MOST_ACTIVE: usize = 2;
@@ -42,6 +45,11 @@ const MOST_ACTIVE: usize = 2;
 const SPEED_WINDOW: Duration = Duration::from_secs(10);
 /// "Copied" stays on the key dialog's link this long.
 const COPIED_FOR: Duration = Duration::from_millis(1600);
+/// A toast ("Deleted 3 items") stays this long.
+const TOAST_FOR: Duration = Duration::from_millis(3200);
+/// The Delete dialog counts what a folder holds by listing it, this many folders deep at most;
+/// a larger tree shows the count so far.
+const MOST_COUNTED_FOLDERS: usize = 200;
 
 /// A server as the page keeps it.
 #[derive(Clone)]
@@ -57,6 +65,11 @@ struct Server {
     /// "" for a server that asks for none.
     password: String,
     status: ServerStatus,
+    /// The user lets FinchGram change files on the server (the ninth round): the form's switch.
+    allow_changes: bool,
+    /// What the server said about changes (remote::Changes), once asked.
+    changes: Changes,
+    changes_asked: bool,
 }
 
 impl Server {
@@ -69,6 +82,9 @@ impl Server {
             username: record.username,
             password: record.password,
             status: ServerStatus::Unknown,
+            allow_changes: record.allow_changes,
+            changes: Changes::Unknown,
+            changes_asked: false,
         }
     }
 
@@ -81,6 +97,7 @@ impl Server {
             port: self.port,
             username: self.username.clone(),
             password: self.password.clone(),
+            allow_changes: self.allow_changes,
         }
     }
 
@@ -132,7 +149,7 @@ enum Folder {
     KeyWait { changed: bool },
 }
 
-/// What a download fetches.
+/// What a transfer moves.
 #[derive(Clone)]
 enum Kind {
     /// The file `name` in the folder `path` of the server, into `dest`, under the download folder
@@ -140,32 +157,43 @@ enum Kind {
     File { remote: Remote, path: Vec<String>, name: String, root: PathBuf, dest: PathBuf },
     /// A whole folder, file by file, into `dest`, under the download folder `root`.
     Folder { remote: Remote, path: Vec<String>, root: PathBuf, dest: PathBuf },
+    /// The file at `local` on this Mac, `size` bytes, up into the folder `path` of the server as
+    /// `name` (the ninth round); `dest` is the folder's name as the row says it.
+    Upload { remote: Remote, path: Vec<String>, name: String, local: PathBuf, size: u64, dest: String },
 }
 
 impl Kind {
-    /// Where the download goes: the file, or the folder.
+    /// What a transfer holds on this Mac while it runs: a download's file or folder, an upload's
+    /// source. Two transfers on one path never run at once (start_next).
     fn dest(&self) -> &Path {
         match self {
             Kind::File { dest, .. } | Kind::Folder { dest, .. } => dest,
+            Kind::Upload { local, .. } => local,
         }
     }
 
-    /// The download folder as it was when the download was queued; `dest` is under it, and the
-    /// engines write nothing outside it (transfer::Folder).
-    fn root(&self) -> &Path {
+    /// A download's partial files, to remove when it is given up on: where they are, under the
+    /// download folder as it was when the download was queued (`dest` is under it, and the
+    /// engines write nothing outside it, transfer::Folder). An upload leaves nothing.
+    fn partials(&self) -> Option<(&Path, &Path)> {
         match self {
-            Kind::File { root, .. } | Kind::Folder { root, .. } => root,
+            Kind::File { root, dest, .. } | Kind::Folder { root, dest, .. } => Some((root, dest)),
+            Kind::Upload { .. } => None,
         }
     }
 
     fn remote(&self) -> &Remote {
         match self {
-            Kind::File { remote, .. } | Kind::Folder { remote, .. } => remote,
+            Kind::File { remote, .. } | Kind::Folder { remote, .. } | Kind::Upload { remote, .. } => remote,
         }
+    }
+
+    fn is_upload(&self) -> bool {
+        matches!(self, Kind::Upload { .. })
     }
 }
 
-/// A download in the queue.
+/// A transfer in the queue: a download, or an upload.
 struct Transfer {
     id: i32,
     name: String,
@@ -212,6 +240,11 @@ impl Transfer {
             id: self.id,
             name: self.name.clone().into(),
             icon: self.icon.into(),
+            upload: self.kind.is_upload(),
+            dest: match &self.kind {
+                Kind::Upload { dest, .. } => dest.clone().into(),
+                _ => SharedString::new(),
+            },
             state: self.state,
             fraction: if self.total > 0 { (self.done as f64 / self.total as f64).clamp(0.0, 1.0) as f32 } else { 0.0 },
             done: size_text(self.done).into(),
@@ -238,17 +271,23 @@ impl Transfer {
 
 /// What the worker thread does, one at a time.
 enum Task {
-    List { request: u64, remote: Remote, path: Vec<String> },
+    /// The folder's listing; with `ask_changes`, what the server says about changes as well, once.
+    List { request: u64, remote: Remote, path: Vec<String>, ask_changes: bool },
     Check { index: usize, remote: Remote },
     Test { request: u64, remote: Remote },
+    /// A folder's listing for the Move dialog.
+    Browse { request: u64, remote: Remote, path: Vec<String> },
+    /// How many entries a folder holds, all the way down, for the Delete dialog's `slot`.
+    Count { request: u64, remote: Remote, path: Vec<String>, slot: usize },
 }
 
-/// What Test connection found: folders and files at the root, and whether the server does ranges
-/// (asked of the first file, when there is one).
+/// What Test connection found: folders and files at the root, whether the server does ranges
+/// (asked of the first file, when there is one), and what it says about changes.
 struct TestResult {
     folders: i32,
     files: i32,
     ranges: Option<bool>,
+    changes: Changes,
 }
 
 struct State {
@@ -278,6 +317,27 @@ struct State {
     key_question: Option<KeyQuestion>,
     /// Takes "Copied" off the dialog's link again.
     copied: slint::Timer,
+    /// The listing asked for last is to replace the entries without a spinner first (after a
+    /// change on the server).
+    list_quietly: bool,
+    /// The entry being renamed in place (the ninth round), by name.
+    renaming: Option<String>,
+    /// The Delete dialog, while it is open.
+    deleting: Option<Deleting>,
+    /// The Move dialog, while it is open.
+    moving: Option<Moving>,
+    browse_request: u64,
+    /// The Same-name dialog, while it is open: what waits on the answer.
+    conflict: Option<Conflict>,
+    /// Files dragged over the window, for the drop box, and those dropped, taken together once
+    /// they have all come.
+    hovering: Vec<PathBuf>,
+    dropped: Vec<PathBuf>,
+    flush_asked: bool,
+    /// Takes the toast off again.
+    toast: slint::Timer,
+    /// A finished upload's Show: the file to choose once its folder is listed.
+    reveal: Option<String>,
 }
 
 thread_local! {
@@ -306,6 +366,17 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
             activity: None,
             key_question: None,
             copied: slint::Timer::default(),
+            list_quietly: false,
+            renaming: None,
+            deleting: None,
+            moving: None,
+            browse_request: 0,
+            conflict: None,
+            hovering: Vec::new(),
+            dropped: Vec::new(),
+            flush_asked: false,
+            toast: slint::Timer::default(),
+            reveal: None,
         })
     });
     let downloads = ui.global::<Downloads>();
@@ -352,6 +423,25 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     downloads.on_refuse_key(refuse_key);
     downloads.on_copy_fingerprint(|which| copy_fingerprint(&which));
     downloads.on_forget_key(forget_key);
+    downloads.on_upload(upload);
+    downloads.on_rename_entry(|name| rename_entry(&name));
+    downloads.on_commit_rename(commit_rename);
+    downloads.on_cancel_rename(cancel_rename);
+    downloads.on_delete_entry(|name| delete_entry(&name));
+    downloads.on_delete_selected(delete_selected);
+    downloads.on_confirm_delete(confirm_delete);
+    downloads.on_move_entry(|name| move_entry(&name));
+    downloads.on_move_selected(move_selected);
+    downloads.on_move_go_to(move_go_to);
+    downloads.on_move_open_folder(|name| move_open_folder(&name));
+    downloads.on_move_new_folder(move_new_folder);
+    downloads.on_commit_new_folder(commit_new_folder);
+    downloads.on_cancel_new_folder(cancel_new_folder);
+    downloads.on_move_here(move_here);
+    downloads.on_resolve_conflict(|answer| resolve_conflict(&answer));
+    downloads.on_close_dialog(close_dialog);
+    downloads.on_dismiss_change_failed(dismiss_change_failed);
+    downloads.on_show_upload(show_upload);
 }
 
 // ---- reaching the state and the page ----------------------------------------------------------
@@ -386,17 +476,27 @@ fn start_worker() -> Sender<Task> {
         let http = http::client();
         for task in tasks {
             match task {
-                Task::List { request, remote, path } => {
+                Task::List { request, remote, path, ask_changes } => {
                     let result = remote.list(http, &path);
-                    let _ = slint::invoke_from_event_loop(move || listed(request, result));
+                    let changes = (ask_changes && result.is_ok()).then(|| remote.changes(http));
+                    let _ = slint::invoke_from_event_loop(move || listed(request, result, changes));
                 }
                 Task::Check { index, remote } => {
                     let result = remote.check(http);
-                    let _ = slint::invoke_from_event_loop(move || checked(index, result));
+                    let changes = result.is_ok().then(|| remote.changes(http));
+                    let _ = slint::invoke_from_event_loop(move || checked(index, result, changes));
                 }
                 Task::Test { request, remote } => {
                     let result = test(http, &remote);
                     let _ = slint::invoke_from_event_loop(move || tested(request, result));
+                }
+                Task::Browse { request, remote, path } => {
+                    let result = remote.list(http, &path);
+                    let _ = slint::invoke_from_event_loop(move || browsed(request, result));
+                }
+                Task::Count { request, remote, path, slot } => {
+                    let count = count_entries(http, &remote, &path);
+                    let _ = slint::invoke_from_event_loop(move || counted(request, slot, count));
                 }
             }
         }
@@ -413,7 +513,30 @@ fn test(http: &http::Http, remote: &Remote) -> Result<TestResult, remote::Error>
     let folders = entries.iter().filter(|entry| entry.is_dir).count() as i32;
     let files = entries.len() as i32 - folders;
     let ranges = entries.iter().find(|entry| !entry.is_dir && entry.size > 0).and_then(|file| remote.ranges(http, &file.name));
-    Ok(TestResult { folders, files, ranges })
+    Ok(TestResult { folders, files, ranges, changes: remote.changes(http) })
+}
+
+/// How many entries the folder holds, all the way down, for the Delete dialog: each folder
+/// listed once, MOST_COUNTED_FOLDERS of them at most (a larger tree gives the count so far).
+fn count_entries(http: &http::Http, remote: &Remote, path: &[String]) -> u64 {
+    let mut pending: VecDeque<Vec<String>> = VecDeque::from([path.to_vec()]);
+    let (mut count, mut listed) = (0u64, 0usize);
+    while let Some(folder) = pending.pop_front() {
+        if listed >= MOST_COUNTED_FOLDERS {
+            break;
+        }
+        listed += 1;
+        let Ok(entries) = remote.list(http, &folder) else { break };
+        for entry in entries {
+            count += 1;
+            if entry.is_dir && webdav::is_plain_name(&entry.name) {
+                let mut within = folder.clone();
+                within.push(entry.name);
+                pending.push_back(within);
+            }
+        }
+    }
+    count
 }
 
 // ---- the servers ------------------------------------------------------------------------------
@@ -474,15 +597,20 @@ fn select_server(index: i32) {
     list();
 }
 
-fn checked(index: usize, result: Result<(), remote::Error>) {
+fn checked(index: usize, result: Result<(), remote::Error>, changes: Option<Changes>) {
     with_state(|state| {
-        if let Some(server) = state.servers.get_mut(index)
-            && server.status == ServerStatus::Checking
-        {
-            server.status = status_of(&result.err());
+        if let Some(server) = state.servers.get_mut(index) {
+            if server.status == ServerStatus::Checking {
+                server.status = status_of(&result.err());
+            }
+            if let Some(changes) = changes {
+                server.changes = changes;
+                server.changes_asked = true;
+            }
         }
     });
     show_servers();
+    show_write_state();
 }
 
 /// What a server's answer says about it: nothing bad, the password, or no connection.
@@ -518,8 +646,14 @@ fn copy_address(index: i32) {
 
 // ---- the folder -------------------------------------------------------------------------------
 
-/// Ask the worker for the folder looked at.
+/// Ask the worker for the folder looked at: the spinner first, then its entries.
 fn list() {
+    list_with(false);
+}
+
+/// The same; `quietly` keeps the entries shown until the new ones come (after a change on the
+/// server, so the listing does not blink).
+fn list_with(quietly: bool) {
     let task = with_state(|state| {
         let index = state.current?;
         let server = state.servers.get_mut(index)?;
@@ -527,10 +661,16 @@ fn list() {
             server.status = ServerStatus::Checking;
         }
         state.request += 1;
-        state.folder = Folder::Loading;
-        Some(Task::List { request: state.request, remote: server.remote(), path: state.path.clone() })
+        state.list_quietly = quietly && matches!(state.folder, Folder::Listed);
+        if !state.list_quietly {
+            state.folder = Folder::Loading;
+        }
+        state.renaming = None;
+        let ask_changes = !server.changes_asked;
+        Some(Task::List { request: state.request, remote: server.remote(), path: state.path.clone(), ask_changes })
     })
     .flatten();
+    with_downloads(|downloads| downloads.set_renaming(SharedString::new()));
     let Some(task) = task else {
         show_folder();
         return;
@@ -540,7 +680,7 @@ fn list() {
     show_folder();
 }
 
-fn listed(request: u64, result: Result<Vec<remote::Entry>, remote::Error>) {
+fn listed(request: u64, result: Result<Vec<remote::Entry>, remote::Error>, changes: Option<Changes>) {
     let language = STATE
         .with(|state| state.borrow().as_ref().and_then(|state| state.ui.upgrade()))
         .map(|ui| ui.global::<AppState>().get_language().to_string())
@@ -553,16 +693,33 @@ fn listed(request: u64, result: Result<Vec<remote::Entry>, remote::Error>) {
         let status = status_of(&result.as_ref().err().cloned());
         if let Some(server) = state.current.and_then(|index| state.servers.get_mut(index)) {
             server.status = status;
+            if let Some(changes) = changes {
+                server.changes = changes;
+                server.changes_asked = true;
+            }
         }
         match result {
             Ok(mut entries) => {
                 entries.sort_by(|a, b| b.is_dir.cmp(&a.is_dir).then_with(|| order.compare(&a.name, &b.name)));
+                // What was chosen and is gone is not chosen any more; a finished upload's Show
+                // chooses its file.
+                state.selected.retain(|name| entries.iter().any(|entry| !entry.is_dir && entry.name == *name));
+                if let Some(reveal) = state.reveal.take()
+                    && entries.iter().any(|entry| !entry.is_dir && entry.name == reveal)
+                {
+                    state.selected.clear();
+                    state.selected.insert(reveal);
+                }
+                if state.renaming.as_ref().is_some_and(|name| !entries.iter().any(|entry| entry.name == *name)) {
+                    state.renaming = None;
+                }
                 state.entries = entries;
                 state.folder = Folder::Listed;
                 None
             }
             Err(err) => {
                 state.entries.clear();
+                state.renaming = None;
                 let server = state.current.and_then(|index| state.servers.get(index));
                 // The server's key is to be checked: the folder waits, and the user is asked.
                 if let Some((changed, shown)) = key_problem(&err) {
@@ -576,6 +733,10 @@ fn listed(request: u64, result: Result<Vec<remote::Entry>, remote::Error>) {
         }
     })
     .flatten();
+    let renaming = with_state(|state| state.renaming.clone()).flatten();
+    if renaming.is_none() {
+        with_downloads(|downloads| downloads.set_renaming(SharedString::new()));
+    }
     show_servers();
     show_folder();
     if let Some((host, port, name, shown)) = question {
@@ -594,6 +755,7 @@ fn problem_of(error: &remote::Error, host: &str) -> (Problem, String) {
         remote::Error::Missing => (Problem::Missing, String::new()),
         remote::Error::KeyChanged(_) => (Problem::KeyChanged, String::new()),
         remote::Error::KeyUnknown(_) => (Problem::KeyUnchecked, String::new()),
+        remote::Error::Refused(words) => (Problem::Http, words.clone()),
     }
 }
 
@@ -664,6 +826,7 @@ fn show_folder() {
     });
     let Some(shown) = shown else { return };
     with_downloads(|downloads| {
+        downloads.set_path_label(shown.crumbs.iter().map(SharedString::as_str).collect::<Vec<_>>().join(" › ").into());
         downloads.set_crumbs(ModelRc::new(VecModel::from(shown.crumbs)));
         downloads.set_title(shown.title.into());
         downloads.set_folder_state(shown.state);
@@ -678,6 +841,7 @@ fn show_folder() {
         downloads.set_all_selected(shown.all_selected);
         downloads.set_some_selected(shown.some_selected);
     });
+    show_write_state();
 }
 
 fn open_folder(name: &str) {
@@ -958,6 +1122,9 @@ fn run(id: i32, kind: Kind, cancel: Arc<AtomicBool>, connections: usize) {
         let result = match kind {
             Kind::File { remote, path, name, root, dest } => remote.download(http, &path, &name, &root, &dest, &streams, &cancel, &progress),
             Kind::Folder { remote, path, root, dest } => download_tree(http, &remote, &path, &root, &dest, &streams, &cancel, &progress),
+            Kind::Upload { remote, path, name, local, size, .. } => remote
+                .upload(http, &local, size, &path, &name, &cancel, &|sent| progress(transfer::Progress { done: sent, total: size, protocol: transfer::Protocol::Unknown, waiting: 0 }))
+                .map(|()| local),
         };
         let _ = slint::invoke_from_event_loop(move || finished(id, result));
     });
@@ -1154,19 +1321,25 @@ fn progressed(id: i32, progress: transfer::Progress) {
 }
 
 fn finished(id: i32, result: Result<PathBuf, transfer::Error>) {
-    let (open, key_stop) = with_state(|state| {
+    let (open, key_stop, uploaded) = with_state(|state| {
         let transfer = state.queue.iter_mut().find(|transfer| transfer.id == id && transfer.state == TransferState::Active)?;
+        // An upload that is done, or stopped, changes what its folder shows: it is listed again
+        // when it is the one looked at.
+        let uploaded = match &transfer.kind {
+            Kind::Upload { remote, path, .. } if !matches!(result, Err(transfer::Error::Cancelled)) => Some((remote.clone(), path.clone())),
+            _ => None,
+        };
         match result {
             Ok(path) => {
                 transfer.state = TransferState::Done;
                 transfer.done = transfer.total;
                 transfer.result = Some(path.clone());
-                Some((transfer.open_when_done.then_some((path, transfer.icon)), None))
+                Some((transfer.open_when_done.then_some((path, transfer.icon)), None, uploaded))
             }
-            Err(transfer::Error::Cancelled) => Some((None, None)),
+            Err(transfer::Error::Cancelled) => Some((None, None, None)),
             Err(err) => {
                 transfer.state = TransferState::Stopped;
-                let (problem, detail) = match &err {
+                let (problem, mut detail) = match &err {
                     transfer::Error::Unauthorized => (Problem::Password, String::new()),
                     transfer::Error::Forbidden => (Problem::Forbidden, String::new()),
                     transfer::Error::Status(code) => (Problem::Http, code.to_string()),
@@ -1176,8 +1349,15 @@ fn finished(id: i32, result: Result<PathBuf, transfer::Error>) {
                     transfer::Error::Missing => (Problem::Missing, String::new()),
                     transfer::Error::KeyChanged(_) => (Problem::KeyChanged, String::new()),
                     transfer::Error::KeyUnknown(_) => (Problem::KeyUnchecked, String::new()),
+                    transfer::Error::Refused(words) => (Problem::Http, words.clone()),
                     transfer::Error::Cancelled => (Problem::None, String::new()),
                 };
+                // An upload's row says what the server refused in the server's words.
+                if transfer.kind.is_upload()
+                    && let Some(refusal) = remote::remote_error(&err).filter(remote::Error::is_refusal)
+                {
+                    detail = refusal.refusal(transfer.kind.remote().protocol());
+                }
                 eprintln!("downloads: {} stopped: {err}", transfer.name);
                 transfer.problem = problem;
                 transfer.detail = detail;
@@ -1189,12 +1369,17 @@ fn finished(id: i32, result: Result<PathBuf, transfer::Error>) {
                     _ => None,
                 };
                 let key_stop = transfer.key_shown.as_ref().and_then(|_| transfer.kind.remote().ssh_host().map(|(host, port)| (host.to_string(), port, problem == Problem::KeyChanged)));
-                Some((None, key_stop))
+                Some((None, key_stop, uploaded))
             }
         }
     })
     .flatten()
-    .unwrap_or((None, None));
+    .unwrap_or((None, None, None));
+    if let Some((remote, path)) = uploaded
+        && looking_at(&remote, &path)
+    {
+        list_with(true);
+    }
     if let Some((host, port, changed)) = key_stop {
         with_state(|state| {
             for index in servers_at(state, &host, port) {
@@ -1233,15 +1418,17 @@ fn show_queue() {
     })
     .unwrap_or_default();
     let active = active_count();
+    let uploads = with_state(|state| state.queue.iter().filter(|transfer| transfer.state == TransferState::Active && transfer.kind.is_upload()).count() as i32).unwrap_or(0);
     with_downloads(|downloads| {
         downloads.set_queue(ModelRc::new(VecModel::from(rows)));
         downloads.set_active_count(active);
+        downloads.set_active_uploads(uploads);
         downloads.set_done_count(done);
     });
     // Busy while a file is on its way: a window in the background is no reason to slow down.
     with_state(|state| {
         if active > 0 && state.activity.is_none() {
-            state.activity = Some(platform::begin_activity("Downloading files"));
+            state.activity = Some(platform::begin_activity("Transferring files"));
         } else if active == 0 {
             state.activity = None;
         }
@@ -1266,9 +1453,11 @@ fn retry(id: i32) {
             transfer.problem = Problem::None;
             transfer.detail.clear();
             transfer.key_shown = None;
-            if let Kind::File { remote, path, name, dest, .. } = &transfer.kind {
-                transfer.done = remote.kept(dest, path, name);
-            }
+            // A download goes on from what is kept; an upload starts over.
+            transfer.done = match &transfer.kind {
+                Kind::File { remote, path, name, dest, .. } => remote.kept(dest, path, name),
+                _ => 0,
+            };
         }
     });
     start_next();
@@ -1287,9 +1476,11 @@ fn show_in_finder(id: i32) {
 fn remove_transfer(id: i32) {
     let partial = with_state(|state| {
         let transfer = state.queue.iter().find(|transfer| transfer.id == id && !transfer.live())?;
-        Some((transfer.state == TransferState::Stopped).then(|| (transfer.kind.root().to_path_buf(), transfer.kind.dest().to_path_buf())))
+        if transfer.state != TransferState::Stopped {
+            return None;
+        }
+        transfer.kind.partials().map(|(root, dest)| (root.to_path_buf(), dest.to_path_buf()))
     })
-    .flatten()
     .flatten();
     if let Some((root, dest)) = partial {
         transfer::remove_partials(&root, &dest);
@@ -1345,6 +1536,9 @@ fn add_server() {
         downloads.set_form_password(SharedString::new());
         downloads.set_form_error(FormError::None);
         downloads.set_test_state(TestState::None);
+        downloads.set_test_changes(ChangesSaid::Unknown);
+        downloads.set_form_allow_changes(false);
+        downloads.set_form_read_only(false);
         downloads.set_form_key_forgotten(false);
         downloads.set_form_open(true);
     });
@@ -1376,6 +1570,9 @@ fn edit_server(index: i32) {
         downloads.set_form_password(server.password.clone().into());
         downloads.set_form_error(FormError::None);
         downloads.set_test_state(TestState::None);
+        downloads.set_test_changes(ChangesSaid::Unknown);
+        downloads.set_form_allow_changes(server.allow_changes);
+        downloads.set_form_read_only(server.changes == Changes::ReadOnly);
         downloads.set_form_key_forgotten(false);
         downloads.set_form_open(true);
     });
@@ -1392,6 +1589,8 @@ struct Form {
     port: String,
     username: String,
     password: String,
+    /// The switch: changes on the server allowed.
+    allow_changes: bool,
 }
 
 fn form_fields() -> Option<Form> {
@@ -1404,6 +1603,7 @@ fn form_fields() -> Option<Form> {
         port: downloads.get_form_port().trim().to_string(),
         username: downloads.get_form_username().trim().to_string(),
         password: downloads.get_form_password().to_string(),
+        allow_changes: downloads.get_form_allow_changes(),
     })
 }
 
@@ -1445,7 +1645,18 @@ fn form_address(form: &Form) -> Result<(Protocol, String, u16), FormError> {
 /// The form as a server, checked, for a test or for keeping.
 fn form_server(form: Form) -> Result<Server, FormError> {
     let (protocol, address, port) = form_address(&form)?;
-    Ok(Server { name: form.name, protocol, address, port, username: form.username, password: form.password, status: ServerStatus::Unknown })
+    Ok(Server {
+        name: form.name,
+        protocol,
+        address,
+        port,
+        username: form.username,
+        password: form.password,
+        status: ServerStatus::Unknown,
+        allow_changes: form.allow_changes,
+        changes: Changes::Unknown,
+        changes_asked: false,
+    })
 }
 
 fn test_connection() {
@@ -1495,6 +1706,12 @@ fn tested(request: u64, result: Result<TestResult, remote::Error>) {
             downloads.set_test_files(found.files);
             downloads.set_test_probed(found.ranges.is_some());
             downloads.set_test_ranges(found.ranges.unwrap_or(false));
+            downloads.set_test_changes(match found.changes {
+                Changes::Unknown => ChangesSaid::Unknown,
+                Changes::Allowed => ChangesSaid::Allowed,
+                Changes::ReadOnly => ChangesSaid::ReadOnly,
+            });
+            downloads.set_form_read_only(found.changes == Changes::ReadOnly);
             downloads.set_test_state(TestState::Ok);
         }
         Err(err) => {
@@ -1524,7 +1741,11 @@ fn submit_form() {
     let index = with_state(|state| {
         let index = match state.editing.filter(|index| *index < state.servers.len()) {
             Some(index) => {
-                state.servers[index] = server;
+                // What the server said about changes holds while it is the same server.
+                let before = &state.servers[index];
+                let same = before.protocol == server.protocol && before.address == server.address && before.port == server.port;
+                let (changes, changes_asked) = if same { (before.changes, before.changes_asked) } else { (Changes::Unknown, false) };
+                state.servers[index] = Server { changes, changes_asked, ..server };
                 index
             }
             None => {
@@ -1842,6 +2063,972 @@ fn show_form_key() {
     });
 }
 
+// ---- changes on the server --------------------------------------------------------------------
+// The design's ninth round ("写操作"): where the user allows changes on a server (its form's
+// switch, in the database), the folder's menu and foot offer Rename, Move to… and Delete…, the
+// toolbar Upload, and files dropped on the window go up into the folder looked at. Deleting asks
+// first; moving opens a dialog over the server's folders; a name taken at the destination asks
+// Replace, Skip or Keep both. Every change goes to the server on a thread of its own, one batch
+// at a time, and the folder is listed again when it is done; what the server would not do is
+// said under the folder's title. A server that said it only reads (remote::Changes) has the
+// items greyed and is not asked.
+
+/// What a batch of changes does.
+enum Change {
+    /// The entries, from the folder `path`.
+    Delete { path: Vec<String>, entries: Vec<remote::Entry> },
+    /// The entries from `from` into `to`, each under its new name, replacing what stands there
+    /// when told to.
+    Move { from: Vec<String>, to: Vec<String>, items: Vec<Moved> },
+    /// The entry in `path`, under another name.
+    Rename { path: Vec<String>, entry: remote::Entry, new_name: String },
+    /// A new folder in `path`.
+    MakeFolder { path: Vec<String>, name: String },
+}
+
+/// One entry of a move: under what name it arrives, and what it replaces there (a file, `Some(false)`;
+/// a folder, `Some(true)`), if anything.
+struct Moved {
+    entry: remote::Entry,
+    new_name: String,
+    replace: Option<bool>,
+}
+
+impl Change {
+    /// The change's name for the page: "delete", "move", "rename", "mkdir".
+    fn op(&self) -> &'static str {
+        match self {
+            Change::Delete { .. } => "delete",
+            Change::Move { .. } => "move",
+            Change::Rename { .. } => "rename",
+            Change::MakeFolder { .. } => "mkdir",
+        }
+    }
+
+    fn count(&self) -> usize {
+        match self {
+            Change::Delete { entries, .. } => entries.len(),
+            Change::Move { items, .. } => items.len(),
+            Change::Rename { .. } | Change::MakeFolder { .. } => 1,
+        }
+    }
+
+    /// The name the page says the change was about: the one entry's, or the first's.
+    fn first_name(&self) -> String {
+        match self {
+            Change::Delete { entries, .. } => entries.first().map(|entry| entry.name.clone()).unwrap_or_default(),
+            Change::Move { items, .. } => items.first().map(|item| item.entry.name.clone()).unwrap_or_default(),
+            Change::Rename { entry, .. } => entry.name.clone(),
+            Change::MakeFolder { name, .. } => name.clone(),
+        }
+    }
+
+    /// The folders whose listing the change alters.
+    fn touched(&self) -> Vec<&[String]> {
+        match self {
+            Change::Delete { path, .. } | Change::Rename { path, .. } | Change::MakeFolder { path, .. } => vec![path.as_slice()],
+            Change::Move { from, to, .. } => vec![from.as_slice(), to.as_slice()],
+        }
+    }
+}
+
+/// The Delete dialog: what goes, from where, and what each folder among them holds (counted on
+/// the worker; none until it is).
+struct Deleting {
+    path: Vec<String>,
+    entries: Vec<remote::Entry>,
+    counts: Vec<Option<u64>>,
+    request: u64,
+}
+
+/// The Move dialog: what moves, from where, and the folder shown in it, with its listing once
+/// that came.
+struct Moving {
+    entries: Vec<remote::Entry>,
+    from: Vec<String>,
+    at: Vec<String>,
+    listed: Option<Result<Vec<remote::Entry>, remote::Error>>,
+    request: u64,
+}
+
+impl Moving {
+    /// Whether the folder `name` of the one shown is one of the folders moving, or under one: a
+    /// folder cannot move into itself.
+    fn forbidden(&self, name: &str) -> bool {
+        let mut full = self.at.clone();
+        full.push(name.to_string());
+        self.entries.iter().filter(|entry| entry.is_dir).any(|entry| {
+            let mut moving = self.from.clone();
+            moving.push(entry.name.clone());
+            full.starts_with(&moving)
+        })
+    }
+}
+
+/// A file of this Mac to upload: where it is, what it is called, how large it is.
+#[derive(Clone)]
+struct LocalFile {
+    path: PathBuf,
+    name: String,
+    size: u64,
+}
+
+/// The Same-name dialog: what waits on its answer, and which names are taken at the destination.
+enum Conflict {
+    Move { entries: Vec<remote::Entry>, from: Vec<String>, to: Vec<String>, target: Vec<remote::Entry>, clashes: Vec<String> },
+    Upload { files: Vec<LocalFile>, clashes: Vec<String> },
+}
+
+/// The server looked at, when the user allows changes on it and it is reached with its folder
+/// listed: what the write items need.
+fn writable(state: &State) -> Option<&Server> {
+    let server = state.servers.get(state.current?)?;
+    (server.allow_changes && server.status == ServerStatus::Connected && matches!(state.folder, Folder::Listed)).then_some(server)
+}
+
+/// The page's write state: whether the items show, whether they are greyed (the server said it
+/// only reads), and the drop box while files are dragged over the window.
+fn show_write_state() {
+    let (can_write, read_only, dropping) = with_state(|state| {
+        let server = writable(state);
+        let allowed = state.current.and_then(|index| state.servers.get(index)).is_some_and(|server| server.allow_changes && server.status == ServerStatus::Connected && !matches!(state.folder, Folder::KeyWait { .. }));
+        (server.is_some(), server.is_some_and(|server| server.changes == Changes::ReadOnly), allowed && !state.hovering.is_empty())
+    })
+    .unwrap_or((false, false, false));
+    with_downloads(|downloads| {
+        downloads.set_can_write(can_write);
+        downloads.set_server_read_only(read_only);
+        downloads.set_dropping(dropping);
+    });
+}
+
+/// Whether the folder `path` of the server `remote` is the one looked at.
+fn looking_at(remote: &Remote, path: &[String]) -> bool {
+    with_state(|state| state.current.and_then(|index| state.servers.get(index)).is_some_and(|server| server.remote().same_as(remote)) && state.path == path).unwrap_or(false)
+}
+
+/// The server's name, for the page's words about a change: the one at `remote`.
+fn server_name_of(state: &State, remote: &Remote) -> String {
+    state.servers.iter().find(|server| server.remote().same_as(remote)).map(|server| server.name.clone()).unwrap_or_default()
+}
+
+/// A folder as the page names it: the folder's own name, or the server's at the root.
+fn dest_label(state: &State, remote: &Remote, path: &[String]) -> String {
+    path.last().cloned().unwrap_or_else(|| server_name_of(state, remote))
+}
+
+/// `change` on the server, on a thread of its own, one entry after another; the outcome comes
+/// back through the event loop with how many were done, or what the server would not do.
+fn perform(remote: Remote, change: Change) {
+    let started = std::thread::Builder::new().name("changes".into()).spawn(move || {
+        let http = http::client();
+        let outcome: Result<usize, (String, remote::Error)> = match &change {
+            Change::Delete { path, entries } => entries.iter().try_fold(0, |done, entry| remote.delete(http, path, &entry.name, entry.is_dir).map(|()| done + 1).map_err(|err| (entry.name.clone(), err))),
+            Change::Move { from, to, items } => items.iter().try_fold(0, |done, item| {
+                remote.move_to(http, from, &item.entry.name, item.entry.is_dir, to, &item.new_name, item.replace).map(|()| done + 1).map_err(|err| (item.entry.name.clone(), err))
+            }),
+            Change::Rename { path, entry, new_name } => remote.move_to(http, path, &entry.name, entry.is_dir, path, new_name, None).map(|()| 1).map_err(|err| (entry.name.clone(), err)),
+            Change::MakeFolder { path, name } => remote.make_folder(http, path, name).map(|()| 1).map_err(|err| (name.clone(), err)),
+        };
+        if let Err((name, err)) = &outcome {
+            log::line(format!("{} {name:?} failed: {err}", change.op()));
+        }
+        let _ = slint::invoke_from_event_loop(move || changed(remote, change, outcome));
+    });
+    if let Err(err) = started {
+        eprintln!("downloads: cannot start the changes' thread: {err}");
+    }
+}
+
+/// A batch of changes came back: the toast, the folder listed again, or what went wrong.
+fn changed(remote: Remote, change: Change, outcome: Result<usize, (String, remote::Error)>) {
+    let looking = change.touched().iter().any(|path| looking_at(&remote, path));
+    match outcome {
+        Ok(done) => match &change {
+            Change::Delete { .. } => toast("deleted", &change.first_name(), done, ""),
+            Change::Move { to, .. } => {
+                let dest = with_state(|state| dest_label(state, &remote, to)).unwrap_or_default();
+                if done == 0 {
+                    toast("nothing-moved", "", 0, "");
+                } else {
+                    toast("moved", &change.first_name(), done, &dest);
+                }
+            }
+            Change::Rename { entry, new_name, .. } => {
+                with_state(|state| {
+                    if state.selected.remove(&entry.name) {
+                        state.selected.insert(new_name.clone());
+                    }
+                });
+            }
+            Change::MakeFolder { path, name } => made_folder(&remote, path, name),
+        },
+        Err((name, err)) => show_change_failed(&change, &name, &err, remote.protocol()),
+    }
+    if looking {
+        list_with(true);
+    }
+}
+
+/// What the server would not do, under the folder's title until dismissed.
+fn show_change_failed(change: &Change, name: &str, error: &remote::Error, protocol: Protocol) {
+    let (problem, detail) = problem_of(error, "");
+    with_downloads(|downloads| {
+        downloads.set_change_failed(change.op().into());
+        downloads.set_change_name(name.into());
+        downloads.set_change_count(change.count() as i32);
+        downloads.set_change_refused(error.is_refusal());
+        downloads.set_change_problem(problem);
+        downloads.set_change_detail(if error.is_refusal() { error.refusal(protocol).into() } else { detail.into() });
+    });
+}
+
+fn dismiss_change_failed() {
+    with_downloads(|downloads| downloads.set_change_failed(SharedString::new()));
+}
+
+/// A word at the foot of the page for a moment: "Deleted 3 items", "Moved “x” to 2024".
+fn toast(kind: &str, name: &str, count: usize, dest: &str) {
+    with_downloads(|downloads| {
+        downloads.set_toast_name(name.into());
+        downloads.set_toast_count(count as i32);
+        downloads.set_toast_dest(dest.into());
+        downloads.set_toast(kind.into());
+    });
+    with_state(|state| {
+        state.toast.start(slint::TimerMode::SingleShot, TOAST_FOR, || with_downloads(|downloads| downloads.set_toast(SharedString::new())));
+    });
+}
+
+/// "name (2).ext", "name (3).ext" … when `taken` says the name is: a folder's name is whole, a
+/// file's keeps its extension.
+fn free_name(taken: impl Fn(&str) -> bool, name: &str, is_dir: bool) -> String {
+    if !taken(name) {
+        return name.to_string();
+    }
+    let (stem, extension) = match name.rfind('.') {
+        Some(dot) if !is_dir && dot > 0 => (&name[..dot], &name[dot..]),
+        _ => (name, ""),
+    };
+    (2..)
+        .map(|n| format!("{stem} ({n}){extension}"))
+        .find(|candidate| !taken(candidate))
+        .unwrap_or_else(|| name.to_string())
+}
+
+/// How much of a name is chosen when it is renamed: all of it but a file's extension, in bytes.
+fn stem_length(name: &str, is_dir: bool) -> usize {
+    match name.rfind('.') {
+        Some(dot) if !is_dir && dot > 0 => dot,
+        _ => name.len(),
+    }
+}
+
+// -- renaming in place --
+
+/// The menu's Rename: the entry's row becomes a field with its name, the name but the extension
+/// chosen.
+fn rename_entry(name: &str) {
+    let entry = with_state(|state| {
+        let server = writable(state)?;
+        if server.changes == Changes::ReadOnly {
+            return None;
+        }
+        let entry = state.entries.iter().find(|entry| entry.name == name)?.clone();
+        state.renaming = Some(entry.name.clone());
+        Some(entry)
+    })
+    .flatten();
+    let Some(entry) = entry else { return };
+    with_downloads(|downloads| {
+        downloads.set_rename_text(entry.name.clone().into());
+        downloads.set_rename_stem(stem_length(&entry.name, entry.is_dir) as i32);
+        downloads.set_rename_error(RenameError::None);
+        downloads.set_renaming(entry.name.into());
+    });
+}
+
+/// ⏎ in the field, or (`from_click`) a click elsewhere: the new name goes to the server when it
+/// is a name and not taken; the same name, or none, is nothing to do. A bad name stays in the
+/// field with a word on it after ⏎, and is let go after a click.
+fn commit_rename(from_click: bool) {
+    let Some(ui) = STATE.with(|state| state.borrow().as_ref().and_then(|state| state.ui.upgrade())) else { return };
+    let new_name = ui.global::<Downloads>().get_rename_text().trim().to_string();
+    let outcome = with_state(|state| {
+        let old = state.renaming.clone()?;
+        let entry = state.entries.iter().find(|entry| entry.name == old)?.clone();
+        if new_name.is_empty() || new_name == old {
+            state.renaming = None;
+            return None;
+        }
+        let error = if !webdav::is_plain_name(&new_name) {
+            Some(RenameError::Slash)
+        } else if state.entries.iter().any(|entry| entry.name == new_name) {
+            Some(RenameError::Taken)
+        } else {
+            None
+        };
+        if let Some(error) = error {
+            if from_click {
+                state.renaming = None;
+                return None;
+            }
+            return Some(Err(error));
+        }
+        state.renaming = None;
+        let remote = writable(state)?.remote();
+        Some(Ok((remote, Change::Rename { path: state.path.clone(), entry, new_name: new_name.clone() })))
+    })
+    .flatten();
+    match outcome {
+        Some(Err(error)) => with_downloads(|downloads| downloads.set_rename_error(error)),
+        Some(Ok((remote, change))) => {
+            with_downloads(|downloads| downloads.set_renaming(SharedString::new()));
+            perform(remote, change);
+        }
+        None => with_downloads(|downloads| downloads.set_renaming(SharedString::new())),
+    }
+}
+
+fn cancel_rename() {
+    with_state(|state| state.renaming = None);
+    with_downloads(|downloads| downloads.set_renaming(SharedString::new()));
+}
+
+// -- deleting --
+
+/// The menu's Delete… on one entry: the dialog.
+fn delete_entry(name: &str) {
+    let entry = with_state(|state| state.entries.iter().find(|entry| entry.name == name).cloned()).flatten();
+    if let Some(entry) = entry {
+        open_delete(vec![entry]);
+    }
+}
+
+/// The foot's Delete, or the menu's on the chosen files: the dialog.
+fn delete_selected() {
+    let entries: Vec<remote::Entry> = with_state(|state| state.entries.iter().filter(|entry| !entry.is_dir && state.selected.contains(&entry.name)).cloned().collect()).unwrap_or_default();
+    if !entries.is_empty() {
+        open_delete(entries);
+    }
+}
+
+/// The Delete dialog for `entries`: the first four listed with their sizes; a folder's count
+/// comes from the worker, which lists it.
+fn open_delete(entries: Vec<remote::Entry>) {
+    let counts = with_state(|state| {
+        let server = writable(state)?;
+        if server.changes == Changes::ReadOnly {
+            return None;
+        }
+        let remote = server.remote();
+        state.browse_request += 1;
+        let request = state.browse_request;
+        let mut tasks = Vec::new();
+        for (slot, entry) in entries.iter().enumerate().take(4) {
+            if entry.is_dir {
+                let mut path = state.path.clone();
+                path.push(entry.name.clone());
+                tasks.push(Task::Count { request, remote: remote.clone(), path, slot });
+            }
+        }
+        state.deleting = Some(Deleting { path: state.path.clone(), counts: vec![None; entries.len()], entries, request });
+        Some(tasks)
+    })
+    .flatten();
+    let Some(tasks) = counts else { return };
+    for task in tasks {
+        send(task);
+    }
+    show_delete();
+}
+
+fn counted(request: u64, slot: usize, count: u64) {
+    let shown = with_state(|state| {
+        let deleting = state.deleting.as_mut().filter(|deleting| deleting.request == request)?;
+        *deleting.counts.get_mut(slot)? = Some(count);
+        Some(())
+    })
+    .flatten();
+    if shown.is_some() {
+        show_delete();
+    }
+}
+
+fn show_delete() {
+    let shown = with_state(|state| {
+        let deleting = state.deleting.as_ref()?;
+        let items: Vec<DialogItem> = deleting
+            .entries
+            .iter()
+            .zip(&deleting.counts)
+            .take(4)
+            .map(|(entry, count)| DialogItem {
+                name: entry.name.clone().into(),
+                icon: (if entry.is_dir { "folder" } else { icon_for(&entry.name) }).into(),
+                size: (if entry.is_dir { String::new() } else { size_text(entry.size) }).into(),
+                count: count.map_or(-1, |count| count.min(i32::MAX as u64) as i32),
+            })
+            .collect();
+        Some((items, deleting.entries.len() as i32, deleting.entries.iter().any(|entry| entry.is_dir)))
+    })
+    .flatten();
+    let Some((items, count, folders)) = shown else { return };
+    with_downloads(|downloads| {
+        downloads.set_delete_items(ModelRc::new(VecModel::from(items)));
+        downloads.set_delete_count(count);
+        downloads.set_delete_folders(folders);
+        downloads.set_delete_open(true);
+    });
+}
+
+/// The dialog's Delete: the entries go.
+fn confirm_delete() {
+    let change = with_state(|state| {
+        let deleting = state.deleting.take()?;
+        let remote = writable(state)?.remote();
+        Some((remote, Change::Delete { path: deleting.path, entries: deleting.entries }))
+    })
+    .flatten();
+    close_dialog();
+    if let Some((remote, change)) = change {
+        perform(remote, change);
+    }
+}
+
+// -- moving --
+
+/// The menu's Move to… on one entry: the dialog.
+fn move_entry(name: &str) {
+    let entry = with_state(|state| state.entries.iter().find(|entry| entry.name == name).cloned()).flatten();
+    if let Some(entry) = entry {
+        open_move(vec![entry]);
+    }
+}
+
+/// The foot's Move…, or the menu's on the chosen files: the dialog.
+fn move_selected() {
+    let entries: Vec<remote::Entry> = with_state(|state| state.entries.iter().filter(|entry| !entry.is_dir && state.selected.contains(&entry.name)).cloned().collect()).unwrap_or_default();
+    if !entries.is_empty() {
+        open_move(entries);
+    }
+}
+
+/// The Move dialog for `entries`, opened at the folder above the one looked at.
+fn open_move(entries: Vec<remote::Entry>) {
+    let opened = with_state(|state| {
+        let server = writable(state)?;
+        if server.changes == Changes::ReadOnly {
+            return None;
+        }
+        let from = state.path.clone();
+        let at = from[..from.len().saturating_sub(1)].to_vec();
+        state.moving = Some(Moving { entries, from, at, listed: None, request: 0 });
+        Some(())
+    })
+    .flatten();
+    if opened.is_none() {
+        return;
+    }
+    with_downloads(|downloads| {
+        downloads.set_move_creating(false);
+        downloads.set_move_new_name(SharedString::new());
+        downloads.set_move_new_error(RenameError::None);
+        downloads.set_move_open(true);
+    });
+    browse();
+}
+
+/// The folder the Move dialog shows, asked of the worker.
+fn browse() {
+    let task = with_state(|state| {
+        state.browse_request += 1;
+        let request = state.browse_request;
+        let remote = state.servers.get(state.current?)?.remote();
+        let moving = state.moving.as_mut()?;
+        moving.request = request;
+        moving.listed = None;
+        Some(Task::Browse { request, remote, path: moving.at.clone() })
+    })
+    .flatten();
+    if let Some(task) = task {
+        send(task);
+    }
+    show_move();
+}
+
+fn browsed(request: u64, result: Result<Vec<remote::Entry>, remote::Error>) {
+    let language = STATE
+        .with(|state| state.borrow().as_ref().and_then(|state| state.ui.upgrade()))
+        .map(|ui| ui.global::<AppState>().get_language().to_string())
+        .unwrap_or_else(|| "en".to_string());
+    let order = platform::NameOrder::new(&language);
+    let shown = with_state(|state| {
+        let moving = state.moving.as_mut().filter(|moving| moving.request == request)?;
+        moving.listed = Some(result.map(|mut entries| {
+            entries.sort_by(|a, b| b.is_dir.cmp(&a.is_dir).then_with(|| order.compare(&a.name, &b.name)));
+            entries
+        }));
+        Some(())
+    })
+    .flatten();
+    if shown.is_some() {
+        show_move();
+    }
+}
+
+fn show_move() {
+    let shown = with_state(|state| {
+        let moving = state.moving.as_ref()?;
+        let server_name = state.current.and_then(|index| state.servers.get(index)).map(|server| server.name.clone()).unwrap_or_default();
+        let mut crumbs = vec![SharedString::from(server_name.as_str())];
+        crumbs.extend(moving.at.iter().map(|folder| SharedString::from(folder.as_str())));
+        let folders: Vec<MoveFolder> = match &moving.listed {
+            Some(Ok(entries)) => entries
+                .iter()
+                .filter(|entry| entry.is_dir)
+                .map(|entry| {
+                    let mut full = moving.at.clone();
+                    full.push(entry.name.clone());
+                    MoveFolder { name: entry.name.clone().into(), current: full == moving.from, forbidden: moving.forbidden(&entry.name) }
+                })
+                .collect(),
+            _ => Vec::new(),
+        };
+        let (problem, detail) = match &moving.listed {
+            Some(Err(err)) => problem_of(err, &state.current.and_then(|index| state.servers.get(index)).map(Server::host).unwrap_or_default()),
+            _ => (Problem::None, String::new()),
+        };
+        let one = if moving.entries.len() == 1 { moving.entries[0].name.clone() } else { String::new() };
+        Some((crumbs, folders, moving.listed.is_none(), problem, detail, moving.at != moving.from, moving.entries.len() as i32, one))
+    })
+    .flatten();
+    let Some((crumbs, folders, loading, problem, detail, allowed, count, name)) = shown else { return };
+    with_downloads(|downloads| {
+        downloads.set_move_path_label(crumbs.iter().map(SharedString::as_str).collect::<Vec<_>>().join(" › ").into());
+        downloads.set_move_crumbs(ModelRc::new(VecModel::from(crumbs)));
+        downloads.set_move_folders(ModelRc::new(VecModel::from(folders)));
+        downloads.set_move_loading(loading);
+        downloads.set_move_problem(problem);
+        downloads.set_move_problem_detail(detail.into());
+        downloads.set_move_here_allowed(allowed);
+        downloads.set_move_count(count);
+        downloads.set_move_name(name.into());
+    });
+}
+
+/// A crumb of the dialog: 0 is the server's root.
+fn move_go_to(index: i32) {
+    let Ok(index) = usize::try_from(index) else { return };
+    let changed = with_state(|state| {
+        let moving = state.moving.as_mut()?;
+        moving.at.truncate(index);
+        Some(())
+    })
+    .flatten();
+    if changed.is_some() {
+        with_downloads(|downloads| downloads.set_move_creating(false));
+        browse();
+    }
+}
+
+/// A folder of the dialog's list: into it, unless it is one of the folders moving.
+fn move_open_folder(name: &str) {
+    let changed = with_state(|state| {
+        let moving = state.moving.as_mut()?;
+        if moving.forbidden(name) || !matches!(&moving.listed, Some(Ok(entries)) if entries.iter().any(|entry| entry.is_dir && entry.name == name)) {
+            return None;
+        }
+        moving.at.push(name.to_string());
+        Some(())
+    })
+    .flatten();
+    if changed.is_some() {
+        with_downloads(|downloads| downloads.set_move_creating(false));
+        browse();
+    }
+}
+
+/// New folder: its name is typed at the top of the list.
+fn move_new_folder() {
+    with_downloads(|downloads| {
+        downloads.set_move_new_name(SharedString::new());
+        downloads.set_move_new_error(RenameError::None);
+        downloads.set_move_creating(true);
+    });
+}
+
+/// ⏎ in that field: the folder is made on the server, and the dialog goes into it once it is.
+fn commit_new_folder() {
+    let Some(ui) = STATE.with(|state| state.borrow().as_ref().and_then(|state| state.ui.upgrade())) else { return };
+    let name = ui.global::<Downloads>().get_move_new_name().trim().to_string();
+    if name.is_empty() {
+        cancel_new_folder();
+        return;
+    }
+    let outcome = with_state(|state| {
+        let moving = state.moving.as_ref()?;
+        if !webdav::is_plain_name(&name) {
+            return Some(Err(RenameError::Slash));
+        }
+        if matches!(&moving.listed, Some(Ok(entries)) if entries.iter().any(|entry| entry.name == name)) {
+            return Some(Err(RenameError::Taken));
+        }
+        let remote = writable(state)?.remote();
+        Some(Ok((remote, Change::MakeFolder { path: moving.at.clone(), name: name.clone() })))
+    })
+    .flatten();
+    match outcome {
+        Some(Err(error)) => with_downloads(|downloads| downloads.set_move_new_error(error)),
+        Some(Ok((remote, change))) => {
+            with_downloads(|downloads| {
+                downloads.set_move_creating(false);
+                downloads.set_move_loading(true);
+            });
+            perform(remote, change);
+        }
+        None => cancel_new_folder(),
+    }
+}
+
+fn cancel_new_folder() {
+    with_downloads(|downloads| {
+        downloads.set_move_creating(false);
+        downloads.set_move_new_error(RenameError::None);
+    });
+}
+
+/// The folder asked for in the Move dialog was made: the dialog goes into it.
+fn made_folder(remote: &Remote, path: &[String], name: &str) {
+    let into = with_state(|state| {
+        let same = state.current.and_then(|index| state.servers.get(index)).is_some_and(|server| server.remote().same_as(remote));
+        let moving = state.moving.as_mut()?;
+        if !same || moving.at != path {
+            return None;
+        }
+        moving.at.push(name.to_string());
+        Some(())
+    })
+    .flatten();
+    if into.is_some() {
+        browse();
+    }
+}
+
+/// Move here: the entries into the folder shown; a name taken there asks first.
+fn move_here() {
+    let next = with_state(|state| {
+        let remote = writable(state)?.remote();
+        let moving = state.moving.as_ref()?;
+        if moving.at == moving.from || !matches!(&moving.listed, Some(Ok(_))) {
+            return None;
+        }
+        let moving = state.moving.take()?;
+        let Some(Ok(target)) = moving.listed else { return None };
+        let clashes: Vec<String> = moving.entries.iter().filter(|entry| target.iter().any(|there| there.name == entry.name)).map(|entry| entry.name.clone()).collect();
+        if clashes.is_empty() {
+            let items = moving.entries.into_iter().map(|entry| Moved { new_name: entry.name.clone(), entry, replace: None }).collect();
+            return Some(Ok((remote, Change::Move { from: moving.from, to: moving.at, items })));
+        }
+        state.conflict = Some(Conflict::Move { entries: moving.entries, from: moving.from, to: moving.at, target, clashes });
+        Some(Err(()))
+    })
+    .flatten();
+    match next {
+        Some(Ok((remote, change))) => {
+            close_dialog();
+            perform(remote, change);
+        }
+        Some(Err(())) => {
+            with_downloads(|downloads| downloads.set_move_open(false));
+            show_conflict();
+        }
+        None => {}
+    }
+}
+
+// -- the same name at the destination --
+
+fn show_conflict() {
+    let shown = with_state(|state| {
+        let remote = state.servers.get(state.current?)?.remote();
+        let conflict = state.conflict.as_ref()?;
+        let (upload, dest, items, total, folders) = match conflict {
+            Conflict::Move { entries, to, target, clashes, .. } => {
+                let items: Vec<DialogItem> = clashes
+                    .iter()
+                    .take(4)
+                    .map(|name| {
+                        let is_dir = target.iter().any(|there| there.name == *name && there.is_dir);
+                        DialogItem { name: name.clone().into(), icon: (if is_dir { "folder" } else { icon_for(name) }).into(), size: SharedString::new(), count: -1 }
+                    })
+                    .collect();
+                let folders = clashes.iter().any(|name| target.iter().any(|there| there.name == *name && there.is_dir));
+                (false, dest_label(state, &remote, to), items, entries.len(), folders)
+            }
+            Conflict::Upload { files, clashes } => {
+                let items: Vec<DialogItem> = clashes
+                    .iter()
+                    .take(4)
+                    .map(|name| {
+                        let is_dir = state.entries.iter().any(|there| there.name == *name && there.is_dir);
+                        DialogItem { name: name.clone().into(), icon: (if is_dir { "folder" } else { icon_for(name) }).into(), size: SharedString::new(), count: -1 }
+                    })
+                    .collect();
+                let folders = clashes.iter().any(|name| state.entries.iter().any(|there| there.name == *name && there.is_dir));
+                (true, dest_label(state, &remote, &state.path), items, files.len(), folders)
+            }
+        };
+        let clashes = match conflict {
+            Conflict::Move { clashes, .. } | Conflict::Upload { clashes, .. } => clashes.len(),
+        };
+        Some((upload, dest, items, clashes as i32, (total - clashes) as i32, folders))
+    })
+    .flatten();
+    let Some((upload, dest, items, count, rest, folders)) = shown else { return };
+    with_downloads(|downloads| {
+        downloads.set_conflict_upload(upload);
+        downloads.set_conflict_dest(dest.into());
+        downloads.set_conflict_items(ModelRc::new(VecModel::from(items)));
+        downloads.set_conflict_count(count);
+        downloads.set_conflict_rest(rest);
+        downloads.set_conflict_folders(folders);
+        downloads.set_conflict_open(true);
+    });
+}
+
+/// The dialog's answer: "replace" what is there, "skip" what clashes, or "keep" both, the new
+/// one as "name (2).ext".
+fn resolve_conflict(answer: &str) {
+    let next = with_state(|state| {
+        let conflict = state.conflict.take()?;
+        let remote = writable(state)?.remote();
+        match conflict {
+            Conflict::Move { entries, from, to, target, clashes } => {
+                let mut taken: Vec<String> = target.iter().map(|entry| entry.name.clone()).collect();
+                let mut items = Vec::new();
+                for entry in entries {
+                    let clashing = clashes.contains(&entry.name);
+                    let item = match (clashing, answer) {
+                        (false, _) => Moved { new_name: entry.name.clone(), entry, replace: None },
+                        (true, "replace") => {
+                            let replace = Some(target.iter().any(|there| there.name == entry.name && there.is_dir));
+                            Moved { new_name: entry.name.clone(), entry, replace }
+                        }
+                        (true, "keep") => {
+                            let new_name = free_name(|candidate| taken.iter().any(|name| name == candidate), &entry.name, entry.is_dir);
+                            Moved { new_name, entry, replace: None }
+                        }
+                        (true, _) => continue,
+                    };
+                    taken.push(item.new_name.clone());
+                    items.push(item);
+                }
+                Some(Ok((remote, Change::Move { from, to, items })))
+            }
+            Conflict::Upload { files, clashes } => {
+                let mut taken: Vec<String> = state.entries.iter().map(|entry| entry.name.clone()).collect();
+                let mut kept = Vec::new();
+                for mut file in files {
+                    let clashing = clashes.contains(&file.name);
+                    match (clashing, answer) {
+                        (false, _) | (true, "replace") => {}
+                        (true, "keep") => file.name = free_name(|candidate| taken.iter().any(|name| name == candidate), &file.name, false),
+                        (true, _) => continue,
+                    }
+                    taken.push(file.name.clone());
+                    kept.push(file);
+                }
+                Some(Err(kept))
+            }
+        }
+    })
+    .flatten();
+    close_dialog();
+    match next {
+        Some(Ok((remote, change))) => {
+            if change.count() == 0 {
+                toast("nothing-moved", "", 0, "");
+            } else {
+                perform(remote, change);
+            }
+        }
+        Some(Err(files)) => enqueue_uploads(files),
+        None => {}
+    }
+}
+
+/// Cancel, or Esc, on the Delete, Move and Same-name dialogs: nothing happens.
+fn close_dialog() {
+    with_state(|state| {
+        state.deleting = None;
+        state.moving = None;
+        state.conflict = None;
+    });
+    with_downloads(|downloads| {
+        downloads.set_delete_open(false);
+        downloads.set_move_open(false);
+        downloads.set_conflict_open(false);
+        downloads.set_move_creating(false);
+    });
+}
+
+// -- uploading --
+
+/// The toolbar's Upload: the file chooser, then the files into the folder looked at. On a server
+/// that said it only reads, the button is greyed, and a word says why.
+fn upload() {
+    match with_state(|state| writable(state).map(|server| server.changes != Changes::ReadOnly)).flatten() {
+        Some(true) => platform::choose_files(false, upload_files),
+        Some(false) => toast("read-only", "", 0, ""),
+        None => {}
+    }
+}
+
+/// A file dragged over the window (winit's HoveredFile, one per file) while this page is in
+/// front: the drop box, where the server takes changes.
+pub fn hovering(path: PathBuf) {
+    with_state(|state| state.hovering.push(path));
+    show_write_state();
+}
+
+/// The drag left the window without dropping.
+pub fn hover_ended() {
+    with_state(|state| state.hovering.clear());
+    show_write_state();
+}
+
+/// A file dropped on the window (winit's DroppedFile, one per file): taken with the others of
+/// the same drop once they have all come.
+pub fn dropped(path: PathBuf) {
+    let first = with_state(|state| {
+        state.dropped.push(path);
+        !std::mem::replace(&mut state.flush_asked, true)
+    })
+    .unwrap_or(false);
+    if first {
+        slint::Timer::single_shot(Duration::ZERO, flush_dropped);
+    }
+}
+
+fn flush_dropped() {
+    let paths = with_state(|state| {
+        state.flush_asked = false;
+        state.hovering.clear();
+        std::mem::take(&mut state.dropped)
+    })
+    .unwrap_or_default();
+    show_write_state();
+    if paths.is_empty() {
+        return;
+    }
+    match with_state(|state| writable(state).map(|server| server.changes != Changes::ReadOnly)).flatten() {
+        Some(true) => upload_files(paths),
+        Some(false) => toast("read-only", "", 0, ""),
+        None => {}
+    }
+}
+
+/// Files of this Mac into the folder looked at: the regular files among them (a folder dropped is
+/// left where it is, docs/downloads.md), each under its own name; a name taken in the folder asks
+/// first.
+fn upload_files(paths: Vec<PathBuf>) {
+    let files: Vec<LocalFile> = paths
+        .into_iter()
+        .filter_map(|path| {
+            let meta = std::fs::metadata(&path).ok()?;
+            let name = path.file_name()?.to_string_lossy().into_owned();
+            if !meta.is_file() || !webdav::is_plain_name(&name) {
+                log::line(format!("not uploaded, not a file: {}", path.display()));
+                return None;
+            }
+            Some(LocalFile { path, name, size: meta.len() })
+        })
+        .collect();
+    if files.is_empty() {
+        return;
+    }
+    let clashes = with_state(|state| {
+        writable(state).filter(|server| server.changes != Changes::ReadOnly)?;
+        Some(files.iter().filter(|file| state.entries.iter().any(|entry| entry.name == file.name)).map(|file| file.name.clone()).collect::<Vec<_>>())
+    })
+    .flatten();
+    let Some(clashes) = clashes else { return };
+    if clashes.is_empty() {
+        enqueue_uploads(files);
+        return;
+    }
+    with_state(|state| state.conflict = Some(Conflict::Upload { files, clashes }));
+    show_conflict();
+}
+
+/// The files into the queue, up to the folder looked at.
+fn enqueue_uploads(files: Vec<LocalFile>) {
+    let added = with_state(|state| {
+        let server = writable(state)?;
+        let remote = server.remote();
+        let dest = dest_label(state, &remote, &state.path);
+        let mut added = false;
+        for file in files {
+            // One at a time per name and folder.
+            if state.queue.iter().any(|transfer| transfer.live() && matches!(&transfer.kind, Kind::Upload { remote: theirs, path, name, .. } if theirs.same_as(&remote) && *path == state.path && *name == file.name)) {
+                continue;
+            }
+            let id = state.next_id;
+            state.next_id += 1;
+            state.queue.push(Transfer {
+                id,
+                name: file.name.clone(),
+                icon: icon_for(&file.name),
+                kind: Kind::Upload { remote: remote.clone(), path: state.path.clone(), name: file.name, local: file.path, size: file.size, dest: dest.clone() },
+                state: TransferState::Waiting,
+                done: 0,
+                total: file.size,
+                samples: VecDeque::new(),
+                waiting: 0,
+                problem: Problem::None,
+                detail: String::new(),
+                cancel: Arc::new(AtomicBool::new(false)),
+                result: None,
+                open_when_done: false,
+                key_shown: None,
+            });
+            added = true;
+        }
+        Some(added)
+    })
+    .flatten();
+    if added == Some(true) {
+        queued();
+    }
+}
+
+/// A finished upload's Show: the folder it went to, with the file chosen.
+fn show_upload(id: i32) {
+    let target = with_state(|state| {
+        let transfer = state.queue.iter().find(|transfer| transfer.id == id && transfer.state == TransferState::Done)?;
+        let Kind::Upload { remote, path, name, .. } = &transfer.kind else { return None };
+        let index = state.servers.iter().position(|server| server.remote().same_as(remote))?;
+        state.current = Some(index);
+        state.path = path.clone();
+        state.selected.clear();
+        state.filter.clear();
+        state.editing = None;
+        state.reveal = Some(name.clone());
+        Some(())
+    })
+    .flatten();
+    if target.is_none() {
+        return;
+    }
+    with_downloads(|downloads| {
+        downloads.set_form_open(false);
+        downloads.set_filter(SharedString::new());
+    });
+    show_servers();
+    list();
+}
+
 // ---- words and pictures -----------------------------------------------------------------------
 
 /// The icon for a file, by its extension, as the design has them.
@@ -1899,6 +3086,38 @@ fn full_date_text(unix: i64) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_taken_name_gets_a_number_before_its_extension() {
+        let taken = |names: &[&str]| {
+            let names: Vec<String> = names.iter().map(|name| name.to_string()).collect();
+            move |candidate: &str| names.iter().any(|name| name == candidate)
+        };
+        assert_eq!(free_name(taken(&[]), "Dune.mkv", false), "Dune.mkv");
+        assert_eq!(free_name(taken(&["Dune.mkv"]), "Dune.mkv", false), "Dune (2).mkv");
+        assert_eq!(free_name(taken(&["Dune.mkv", "Dune (2).mkv"]), "Dune.mkv", false), "Dune (3).mkv");
+        assert_eq!(free_name(taken(&["Extras"]), "Extras", true), "Extras (2)");
+        assert_eq!(free_name(taken(&["v2.0"]), "v2.0", true), "v2.0 (2)");
+        assert_eq!(free_name(taken(&[".hidden"]), ".hidden", false), ".hidden (2)");
+        assert_eq!(free_name(taken(&["README"]), "README", false), "README (2)");
+        assert_eq!(stem_length("Dune Part Two (2024) 2160p.mkv", false), "Dune Part Two (2024) 2160p".len());
+        assert_eq!(stem_length("Extras", true), "Extras".len());
+        assert_eq!(stem_length("v2.0", true), "v2.0".len());
+        assert_eq!(stem_length(".hidden", false), ".hidden".len());
+    }
+
+    #[test]
+    fn a_folder_cannot_move_into_itself() {
+        let entry = |name: &str, is_dir: bool| remote::Entry { name: name.into(), is_dir, size: 0, modified: None };
+        let path = |parts: &[&str]| parts.iter().map(|part| part.to_string()).collect::<Vec<_>>();
+        let moving = Moving { entries: vec![entry("Extras", true), entry("film.mkv", false)], from: path(&["Media", "2024"]), at: path(&["Media", "2024"]), listed: None, request: 0 };
+        assert!(moving.forbidden("Extras"));
+        assert!(!moving.forbidden("Subtitles"));
+        let deeper = Moving { at: path(&["Media", "2024", "Extras"]), ..moving };
+        assert!(deeper.forbidden("Behind the scenes"));
+        let elsewhere = Moving { at: path(&["Media"]), ..deeper };
+        assert!(!elsewhere.forbidden("Extras"));
+    }
 
     #[test]
     fn a_file_of_a_tree_goes_under_the_folder_and_nowhere_else() {
