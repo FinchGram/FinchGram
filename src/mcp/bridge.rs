@@ -59,16 +59,17 @@ pub fn run() -> i32 {
     0
 }
 
-/// FinchGram's socket, starting FinchGram when nothing listens.
+/// FinchGram's socket, starting FinchGram when nothing listens. Whatever listens has to be
+/// FinchGram itself (`verified`).
 fn connect(path: &Path) -> Result<UnixStream, String> {
     if let Ok(stream) = UnixStream::connect(path) {
-        return Ok(stream);
+        return verified(stream);
     }
     start_app()?;
     let until = Instant::now() + START_TIMEOUT;
     loop {
         match UnixStream::connect(path) {
-            Ok(stream) => return Ok(stream),
+            Ok(stream) => return verified(stream),
             Err(_) if Instant::now() < until => thread::sleep(RETRY),
             Err(err) => {
                 return Err(format!(
@@ -79,6 +80,14 @@ fn connect(path: &Path) -> Result<UnixStream, String> {
             }
         }
     }
+}
+
+/// The connection, once the process at its other end is FinchGram (peer::verify_server): another
+/// program of the user's that took the socket's place would see what the assistant asks for, and
+/// answer it. Nothing has been sent when it is not.
+fn verified(stream: UnixStream) -> Result<UnixStream, String> {
+    super::peer::verify_server(&stream).map_err(|why| format!("{why}: nothing was sent to it"))?;
+    Ok(stream)
 }
 
 /// Start FinchGram: the app this program is part of, in the background; or, in development, the

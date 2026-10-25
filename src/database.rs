@@ -13,7 +13,10 @@
 //! not open there: a program that can write the file could otherwise point a server at itself and
 //! have the app send it the password. The rows of the programs allowed carry a tag under the same
 //! key (`seal`), so that a row written by anything but FinchGram, or changed since, is not
-//! believed: the user is asked about the program as if it were new.
+//! believed: the user is asked about the program as if it were new. The SSH servers' keys carry
+//! a tag the same way, over the host, the port, the key and the day, so that a key swapped in
+//! the file is a key not trusted. The AI access settings in settings.toml carry one too
+//! (`settings::Mcp::seal`, checked by src/mcp/access.rs), under the key drawn here (`tag`).
 //!
 //! The layout is numbered: SQLite's `PRAGMA user_version` holds LAYOUT, counted up with every
 //! change to a table, each change with its step in `upgrade`. A file from an older FinchGram is
@@ -42,7 +45,9 @@ const KEY_ACCOUNT: &str = "database";
 ///    sealed again that way; `mcp_apps.seal`, the row's tag, the rows of before dropped (every
 ///    program asks again, once); `ssh_hosts.first_seen`, when the user trusted the key (0 for one
 ///    that 0.6.2 or before took on its own, without asking).
-pub const LAYOUT: i32 = 2;
+/// 3 (after 0.6.3): `ssh_hosts.seal`, the row's tag, the rows of before dropped (every SFTP
+///    server shows its key once more).
+pub const LAYOUT: i32 = 3;
 
 /// The tables of layout 1, as 0.6.0 made them.
 const TABLES_OF_LAYOUT_1: &str = "CREATE TABLE IF NOT EXISTS servers (
@@ -144,6 +149,23 @@ pub fn open() -> Result<(), String> {
     DATABASE.with(|slot| *slot.borrow_mut() = Some(connection));
     KEY.with(|slot| *slot.borrow_mut() = Some(key));
     Ok(())
+}
+
+/// Whether the database is open, its key at hand.
+pub fn is_open() -> bool {
+    KEY.with(|slot| slot.borrow().is_some())
+}
+
+/// The tag of `text` under the key only this app has (`cipher::tag`), for what is kept outside
+/// the database and checked by it: the AI access settings. None while the database is not open.
+pub fn tag(text: &str) -> Option<String> {
+    sealing_key().map(|key| cipher::tag(&key, text))
+}
+
+/// Whether `tag` is the tag of `text` under the key only this app has. False while the database
+/// is not open.
+pub fn tag_matches(text: &str, tag: &str) -> bool {
+    sealing_key().is_some_and(|key| cipher::tag_matches(&key, text, tag))
 }
 
 /// Where the database is: next to settings.toml (src/settings.rs).
@@ -260,6 +282,14 @@ fn upgrade(connection: &Connection, from: i32, key: &[u8; 32]) -> Result<(), Str
                         .map_err(|err| err.to_string())?;
                     reseal_servers(connection, key)
                 }
+                3 => {
+                    // The SSH servers' keys get their tag; the rows of before, open to anything
+                    // that could write the file, are not carried over: each server shows its key
+                    // once more, and the user looks at it.
+                    connection
+                        .execute_batch("ALTER TABLE ssh_hosts ADD COLUMN seal TEXT NOT NULL DEFAULT ''; DELETE FROM ssh_hosts;")
+                        .map_err(|err| err.to_string())
+                }
                 _ => Err(format!("no step to layout {to}")),
             }
         };
@@ -292,6 +322,7 @@ fn reseal_servers(connection: &Connection, key: &[u8; 32]) -> Result<(), String>
     }
     Ok(())
 }
+
 
 fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
     let mut name = path.as_os_str().to_os_string();
@@ -495,9 +526,11 @@ pub struct SshHost {
     pub first_seen: i64,
 }
 
-/// The key the SSH server at `host`:`port` is trusted by; none for a server not trusted yet.
+/// The key the SSH server at `host`:`port` is trusted by; none for a server not trusted yet, or
+/// whose row is not FinchGram's as it wrote it (a key swapped in the file is a key not trusted).
 pub fn ssh_host(host: &str, port: u16) -> Option<SshHost> {
-    with(|connection| read_ssh_host(connection, host, port)).unwrap_or_else(|err| {
+    let sealing = sealing_key()?;
+    with(|connection| read_ssh_host(connection, &sealing, host, port)).unwrap_or_else(|err| {
         eprintln!("database: cannot read a server's key: {err}");
         None
     })
@@ -506,7 +539,8 @@ pub fn ssh_host(host: &str, port: u16) -> Option<SshHost> {
 /// Trust `key` as the server's, from now, in place of what was kept before; the date stays when
 /// the key is the one kept already.
 pub fn trust_ssh_host(host: &str, port: u16, key: &str) -> Result<(), String> {
-    with(|connection| write_ssh_host(connection, host, port, key, chrono::Local::now().timestamp()))
+    let sealing = sealing_key().ok_or("the database is not open")?;
+    with(|connection| write_ssh_host(connection, &sealing, host, port, key, chrono::Local::now().timestamp()))
 }
 
 /// The server's key forgotten: the next connection asks the user about the key it shows.
@@ -514,22 +548,35 @@ pub fn forget_ssh_host(host: &str, port: u16) -> Result<(), String> {
     with(|connection| delete_ssh_host(connection, host, port))
 }
 
-fn read_ssh_host(connection: &Connection, host: &str, port: u16) -> rusqlite::Result<Option<SshHost>> {
-    connection
-        .query_row("SELECT key, first_seen FROM ssh_hosts WHERE host = ?1 AND port = ?2", params![host, i64::from(port)], |row| {
-            Ok(SshHost { key: row.get(0)?, first_seen: row.get(1)? })
-        })
-        .optional()
+/// What a server's row is tagged over: the server, its key, and the day.
+fn ssh_text(host: &str, port: u16, key: &str, first_seen: i64) -> String {
+    format!("ssh_host\0{host}\0{port}\0{key}\0{first_seen}")
 }
 
-fn write_ssh_host(connection: &Connection, host: &str, port: u16, key: &str, now: i64) -> rusqlite::Result<()> {
+fn read_ssh_host(connection: &Connection, sealing: &[u8; 32], host: &str, port: u16) -> rusqlite::Result<Option<SshHost>> {
+    let row: Option<(String, i64, String)> = connection
+        .query_row("SELECT key, first_seen, seal FROM ssh_hosts WHERE host = ?1 AND port = ?2", params![host, i64::from(port)], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)))
+        .optional()?;
+    Ok(row.and_then(|(key, first_seen, seal)| {
+        if cipher::tag_matches(sealing, &ssh_text(host, port, &key, first_seen), &seal) {
+            return Some(SshHost { key, first_seen });
+        }
+        eprintln!("database: the key kept for {host}:{port} was not written by FinchGram, or was changed since: not trusted");
+        None
+    }))
+}
+
+fn write_ssh_host(connection: &Connection, sealing: &[u8; 32], host: &str, port: u16, key: &str, now: i64) -> rusqlite::Result<()> {
+    let first_seen = match read_ssh_host(connection, sealing, host, port)? {
+        Some(known) if known.key == key => known.first_seen,
+        _ => now,
+    };
+    let seal = cipher::tag(sealing, &ssh_text(host, port, key, first_seen));
     connection
         .execute(
-            "INSERT INTO ssh_hosts (host, port, key, first_seen) VALUES (?1, ?2, ?3, ?4)
-             ON CONFLICT(host, port) DO UPDATE SET
-                 first_seen = CASE WHEN ssh_hosts.key = excluded.key THEN ssh_hosts.first_seen ELSE excluded.first_seen END,
-                 key = excluded.key",
-            params![host, i64::from(port), key, now],
+            "INSERT INTO ssh_hosts (host, port, key, first_seen, seal) VALUES (?1, ?2, ?3, ?4, ?5)
+             ON CONFLICT(host, port) DO UPDATE SET key = excluded.key, first_seen = excluded.first_seen, seal = excluded.seal",
+            params![host, i64::from(port), key, first_seen, seal],
         )
         .map(|_| ())
 }
@@ -800,8 +847,10 @@ mod tests {
         // The programs of before are not carried over: nothing vouches for their rows.
         assert_eq!(read_mcp_apps(&connection, &key).expect("read"), vec![]);
         assert_eq!(connection.query_row("SELECT count(*) FROM mcp_apps", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
-        // A server's key taken on by 0.6.2 stays trusted, with no day to it.
-        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), Some(SshHost { key: "ssh-ed25519 AAAA1".into(), first_seen: 0 }));
+        // A server's key taken on by 0.6.2, without the user's look at it, is not carried over:
+        // the server shows its key once more.
+        assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 22).expect("read"), None);
+        assert_eq!(connection.query_row("SELECT count(*) FROM ssh_hosts", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
         // The file as it was is in the backup folder, the password sealed as before.
         let copies: Vec<PathBuf> = std::fs::read_dir(&backup).expect("the backup folder").flatten().map(|entry| entry.path()).collect();
         assert_eq!(copies.len(), 1);
@@ -902,23 +951,32 @@ mod tests {
     #[test]
     fn ssh_servers_keys_are_kept_by_host_and_port_with_the_day_they_were_trusted() {
         let (path, backup) = scratch("ssh");
-        let connection = open_at(&path, &a_key(10), &backup).expect("a new database");
+        let key = a_key(10);
+        let connection = open_at(&path, &key, &backup).expect("a new database");
         let host = |key: &str, first_seen: i64| Some(SshHost { key: key.into(), first_seen });
-        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), None);
-        write_ssh_host(&connection, "sb-ams.example.net", 22, "ssh-ed25519 AAAA1", 1_000).expect("trusted");
-        write_ssh_host(&connection, "sb-ams.example.net", 2222, "ssh-ed25519 AAAA2", 2_000).expect("trusted");
-        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), host("ssh-ed25519 AAAA1", 1_000));
-        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 2222).expect("read"), host("ssh-ed25519 AAAA2", 2_000));
+        assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 22).expect("read"), None);
+        write_ssh_host(&connection, &key, "sb-ams.example.net", 22, "ssh-ed25519 AAAA1", 1_000).expect("trusted");
+        write_ssh_host(&connection, &key, "sb-ams.example.net", 2222, "ssh-ed25519 AAAA2", 2_000).expect("trusted");
+        assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 22).expect("read"), host("ssh-ed25519 AAAA1", 1_000));
+        assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 2222).expect("read"), host("ssh-ed25519 AAAA2", 2_000));
         // Trusted again, the same key: the day stays. Another key: the day is this one.
-        write_ssh_host(&connection, "sb-ams.example.net", 22, "ssh-ed25519 AAAA1", 3_000).expect("trusted again");
-        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), host("ssh-ed25519 AAAA1", 1_000));
-        write_ssh_host(&connection, "sb-ams.example.net", 22, "ssh-ed25519 BBBB", 4_000).expect("a new key");
-        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), host("ssh-ed25519 BBBB", 4_000));
+        write_ssh_host(&connection, &key, "sb-ams.example.net", 22, "ssh-ed25519 AAAA1", 3_000).expect("trusted again");
+        assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 22).expect("read"), host("ssh-ed25519 AAAA1", 1_000));
+        write_ssh_host(&connection, &key, "sb-ams.example.net", 22, "ssh-ed25519 BBBB", 4_000).expect("a new key");
+        assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 22).expect("read"), host("ssh-ed25519 BBBB", 4_000));
+        // A key swapped in the file by hand, or the day moved, is not FinchGram's: not trusted,
+        // so the server shows its key again; and another key does not open the row either.
+        connection.execute("UPDATE ssh_hosts SET key = 'ssh-ed25519 EVIL' WHERE port = 22", []).expect("swapped");
+        assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 22).expect("read"), None);
+        connection.execute("UPDATE ssh_hosts SET first_seen = 1 WHERE port = 2222", []).expect("moved");
+        assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 2222).expect("read"), None);
+        write_ssh_host(&connection, &key, "sb-ams.example.net", 2222, "ssh-ed25519 AAAA2", 5_000).expect("trusted again");
+        assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 2222).expect("read"), host("ssh-ed25519 AAAA2", 5_000));
+        assert_eq!(read_ssh_host(&connection, &a_key(11), "sb-ams.example.net", 2222).expect("read"), None);
         // Forgotten: nothing is known, and forgetting twice is nothing.
-        delete_ssh_host(&connection, "sb-ams.example.net", 22).expect("forgotten");
-        delete_ssh_host(&connection, "sb-ams.example.net", 22).expect("forgotten again");
-        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 22).expect("read"), None);
-        assert_eq!(read_ssh_host(&connection, "sb-ams.example.net", 2222).expect("read"), host("ssh-ed25519 AAAA2", 2_000));
+        delete_ssh_host(&connection, "sb-ams.example.net", 2222).expect("forgotten");
+        delete_ssh_host(&connection, "sb-ams.example.net", 2222).expect("forgotten again");
+        assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 2222).expect("read"), None);
         drop(connection);
         let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
     }

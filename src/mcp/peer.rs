@@ -137,6 +137,25 @@ pub fn host_of(stream: &UnixStream) -> Host {
     Host { pid, path, signature, started: system::started_at(pid).unwrap_or(0) }
 }
 
+/// Whether the process at the other end of `stream` is this very program: for the bridge
+/// (`finchgram mcp`), which connects to FinchGram's socket, so that another program of the user's
+/// that took the socket's place cannot stand in for FinchGram (it would see what the assistant
+/// asks for, and answer it). Told the way the server tells apps apart: the same signature from a
+/// team (the release); without one (development), the same executable.
+pub fn verify_server(stream: &UnixStream) -> Result<(), String> {
+    let pid = system::peer_pid(stream).ok_or("the system would not say which process listens at FinchGram's socket")?;
+    let theirs = system::path_of(pid).map(|path| path.canonicalize().unwrap_or(path));
+    let where_ = theirs.as_ref().map_or_else(|| format!("pid {pid}"), |path| path.display().to_string());
+    match (system::signature_of(std::process::id() as i32), system::signature_of(pid)) {
+        (Some(mine), Some(its)) if mine == its => Ok(()),
+        (Some(_), _) => Err(format!("the process listening at FinchGram's socket is not FinchGram ({where_})")),
+        (None, _) => {
+            let mine = std::env::current_exe().ok().and_then(|exe| exe.canonicalize().ok());
+            if mine.is_some() && mine == theirs { Ok(()) } else { Err(format!("the process listening at FinchGram's socket is not this FinchGram ({where_})")) }
+        }
+    }
+}
+
 /// The app bundle a program is in, when it is in one: "/Applications/Claude.app" for
 /// "/Applications/Claude.app/Contents/MacOS/Claude".
 pub fn bundle_of(path: &Path) -> Option<PathBuf> {
@@ -411,6 +430,8 @@ mod tests {
         assert!(system::started_at(me).is_some_and(|started| started > 1_600_000_000));
         let (ours, theirs) = UnixStream::pair().expect("a pair");
         assert_eq!(system::peer_pid(&ours), Some(me));
+        // The other end is this program: what the bridge requires of FinchGram's socket.
+        assert_eq!(verify_server(&ours), Ok(()));
         drop(theirs);
     }
 

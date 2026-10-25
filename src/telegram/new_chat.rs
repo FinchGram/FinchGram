@@ -62,6 +62,14 @@ struct State {
 thread_local! {
     static STATE: RefCell<State> = RefCell::new(State::default());
     static LINK_TIMER: slint::Timer = slint::Timer::default();
+    /// Counted up each time a dialog opens, so that what comes back for an earlier one (a group
+    /// made, a photo loaded) is not taken for this one's.
+    static OPENINGS: std::cell::Cell<u64> = const { std::cell::Cell::new(0) };
+}
+
+/// Which opening of the dialog this is.
+fn opening() -> u64 {
+    OPENINGS.with(std::cell::Cell::get)
 }
 
 pub fn connect(ui: &MainWindow) {
@@ -99,6 +107,7 @@ fn with_dialog(change: impl FnOnce(&NewChat)) {
 /// Open a dialog afresh. `phone`: a number the search did not find, for the Add contact dialog.
 fn start(dialog: NewDialog, phone: &str) {
     LINK_TIMER.with(|timer| timer.stop());
+    OPENINGS.with(|openings| openings.set(openings.get() + 1));
     STATE.with(|state| *state.borrow_mut() = State { dialog: Some(dialog), step: 1, ..State::default() });
     let blank = store::with(|store| store.blank_image()).unwrap_or_default();
     with_dialog(|new_chat| {
@@ -290,12 +299,14 @@ fn toggle(user_id: i64) {
 /// The system's open panel: a picture for the group or channel, shown in the dialog and set once
 /// the chat exists.
 fn choose_photo() {
-    crate::platform::choose_files(true, |paths| {
+    let chosen_for = opening();
+    crate::platform::choose_files(true, move |paths| {
         let Some(path) = paths.into_iter().next() else { return };
         let shown = path.clone();
         crate::images::load(path, move |picture| {
             let Some(picture) = picture else { return };
-            if STATE.with(|state| state.borrow().dialog.is_none()) {
+            // The dialog it was chosen for, still: not another opened since.
+            if STATE.with(|state| state.borrow().dialog.is_none()) || opening() != chosen_for {
                 return;
             }
             STATE.with(|state| state.borrow_mut().photo = Some(shown));
@@ -448,12 +459,16 @@ fn create_group() {
         return;
     }
     let picked = STATE.with(|state| state.borrow().picked.clone());
+    // The photo as chosen now, for this group: Telegram may answer after the dialog was closed and
+    // opened again for another group, with another photo chosen.
+    let photo = STATE.with(|state| state.borrow().photo.clone());
+    let made_for = opening();
     let most = store::with(|store| store.basic_group_size_max).unwrap_or(200) as usize;
     set_busy(true);
     if !picked.is_empty() && picked.len() < most {
         let request = json!({ "@type": "createNewBasicGroupChat", "user_ids": picked, "title": title, "message_auto_delete_time": 0 });
-        send(request, |answer| match answer.map(serde_json::from_value::<CreatedBasicGroupChat>) {
-            Ok(Ok(created)) => made(created.chat_id),
+        send(request, move |answer| match answer.map(serde_json::from_value::<CreatedBasicGroupChat>) {
+            Ok(Ok(created)) => made(created.chat_id, photo, made_for),
             Ok(Err(err)) => set_error(format!("cannot read the group made: {err}")),
             Err(err) => {
                 failed("make a group", &err);
@@ -468,11 +483,11 @@ fn create_group() {
     send(request, move |answer| match answer {
         Ok(chat) => match chat["id"].as_i64() {
             Some(chat_id) => add_members(chat_id, picked, SUPERGROUP_BATCH, move |err| match err {
-                None => made(chat_id),
+                None => made(chat_id, photo, made_for),
                 Some(err) => {
                     if failed("add the members", &err) {
                         // The group exists without them: it opens all the same, the words said.
-                        slint::Timer::single_shot(Duration::from_millis(1500), move || finish_with(chat_id));
+                        slint::Timer::single_shot(Duration::from_millis(1500), move || finish_for(made_for, chat_id));
                     }
                 }
             }),
@@ -499,13 +514,22 @@ fn add_members(chat_id: i64, users: Vec<i64>, batch: usize, then: impl FnOnce(Op
     });
 }
 
-/// The group is made: its photo goes up, and it opens.
-fn made(chat_id: i64) {
-    let photo = STATE.with(|state| state.borrow_mut().photo.take());
+/// The group is made: the photo chosen for it goes up, and it opens.
+fn made(chat_id: i64, photo: Option<PathBuf>, made_for: u64) {
     if let Some(photo) = photo {
         set_photo(chat_id, photo);
     }
-    finish_with(chat_id);
+    finish_for(made_for, chat_id);
+}
+
+/// The chat made by the dialog's opening `made_for` opens; that opening's dialog closes with it,
+/// a later one is left as it is.
+fn finish_for(made_for: u64, chat_id: i64) {
+    if opening() == made_for {
+        finish_with(chat_id);
+    } else {
+        conversation::open(chat_id);
+    }
 }
 
 /// Close the dialog and open the chat made.
@@ -525,28 +549,31 @@ fn create_channel() {
         return;
     }
     let about = field(|new_chat| new_chat.get_about(), ABOUT_LENGTH);
+    // The photo as chosen now, for this channel (as for a group, `create_group`).
+    let photo = STATE.with(|state| state.borrow().photo.clone());
+    let made_for = opening();
     set_busy(true);
     let request = json!({
         "@type": "createNewSupergroupChat", "title": title, "is_forum": false, "is_channel": true,
         "description": about, "location": null, "message_auto_delete_time": 0, "for_import": false,
     });
-    send(request, |answer| match answer {
+    send(request, move |answer| match answer {
         Ok(chat) => {
             let chat_id = chat["id"].as_i64();
             let supergroup_id = chat["type"]["supergroup_id"].as_i64();
             let (Some(chat_id), Some(supergroup_id)) = (chat_id, supergroup_id) else {
                 return set_error("cannot read the channel made");
             };
-            if STATE.with(|state| state.borrow().dialog) != Some(NewDialog::Channel) {
-                // Closed meanwhile: the channel exists all the same.
+            if let Some(photo) = photo {
+                set_photo(chat_id, photo);
+            }
+            if opening() != made_for || STATE.with(|state| state.borrow().dialog) != Some(NewDialog::Channel) {
+                // Closed meanwhile, or opened again for something else: the channel exists all
+                // the same.
                 conversation::open(chat_id);
                 return;
             }
             STATE.with(|state| state.borrow_mut().channel = Some((chat_id, supergroup_id)));
-            let photo = STATE.with(|state| state.borrow_mut().photo.take());
-            if let Some(photo) = photo {
-                set_photo(chat_id, photo);
-            }
             go_to(2, false);
             load_invite_link(chat_id, supergroup_id);
         }

@@ -20,6 +20,8 @@ const INVALID_PARAMS: i64 = -32602;
 const SERVER_OFF: i64 = -32000;
 /// The user has not allowed the program (FinchGram's own code too).
 const NOT_ALLOWED: i64 = -32001;
+/// A request before `initialize` (FinchGram's own code too).
+const NOT_INITIALIZED: i64 = -32002;
 
 /// Said to a client while the server is off in Settings.
 pub const OFF: &str = "FinchGram's MCP server is turned off. Turn it on in FinchGram's Settings → AI access (Let AI assistants \
@@ -128,6 +130,11 @@ impl<'a> Session<'a> {
     }
 
     fn request(&mut self, method: &str, params: &Value) -> Result<Value, (i64, String)> {
+        // Before `initialize` there is nothing but initialize and ping: a program that has not
+        // been let in gets no list of the tools and no call.
+        if !self.ready && !matches!(method, "initialize" | "ping") {
+            return Err((NOT_INITIALIZED, "Not initialized: call initialize first".to_string()));
+        }
         match method {
             "initialize" => self.initialize(params),
             "ping" => Ok(json!({})),
@@ -312,6 +319,22 @@ mod tests {
     }
 
     #[test]
+    fn nothing_but_initialize_and_ping_is_answered_before_initialize() {
+        let backend = Fake::on();
+        let mut session = Session::new(&backend);
+        let listed = answer(session.handle(r#"{"jsonrpc":"2.0","id":5,"method":"tools/list"}"#));
+        assert_eq!(listed["error"]["code"], NOT_INITIALIZED);
+        let called = answer(session.handle(r#"{"jsonrpc":"2.0","id":6,"method":"tools/call","params":{"name":"get_me","arguments":{}}}"#));
+        assert_eq!(called["error"]["code"], NOT_INITIALIZED);
+        assert!(backend.calls.borrow().is_empty());
+        let pinged = answer(session.handle(r#"{"jsonrpc":"2.0","id":7,"method":"ping"}"#));
+        assert!(pinged["result"].is_object());
+        initialize(&mut session, "2025-06-18");
+        let listed = answer(session.handle(r#"{"jsonrpc":"2.0","id":8,"method":"tools/list"}"#));
+        assert!(listed["result"]["tools"].as_array().is_some_and(|tools| !tools.is_empty()));
+    }
+
+    #[test]
     fn initialize_echoes_a_known_version_and_offers_the_newest_otherwise() {
         let backend = Fake::on();
         let mut session = Session::new(&backend);
@@ -335,10 +358,11 @@ mod tests {
             assert_eq!(result["error"]["code"], NOT_ALLOWED);
             let said = result["error"]["message"].as_str().expect("why");
             assert!(said.contains(if admission == Admission::Denied { "has not allowed" } else { "not answered" }), "{said}");
+            // Not let in: not initialized, so its calls get nowhere.
             let result = answer(session.handle(
                 &json!({ "jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": { "name": "get_me", "arguments": {} } }).to_string(),
             ));
-            assert_eq!(result["result"]["isError"], true);
+            assert_eq!(result["error"]["code"], NOT_INITIALIZED);
             assert!(backend.calls.borrow().is_empty());
             assert!(backend.log.borrow().iter().any(|entry| entry.contains("turned away")));
         }
@@ -352,8 +376,7 @@ mod tests {
         assert_eq!(result["error"]["code"], SERVER_OFF);
         assert_eq!(result["error"]["message"], OFF);
         let result = answer(session.handle(r#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"get_me"}}"#));
-        assert_eq!(result["result"]["isError"], true);
-        assert_eq!(result["result"]["content"][0]["text"], OFF);
+        assert_eq!(result["error"]["code"], NOT_INITIALIZED);
         assert!(backend.calls.borrow().is_empty());
     }
 
@@ -374,6 +397,7 @@ mod tests {
         let mut session = Session::new(&backend);
         let result = answer(session.handle(r#"{"jsonrpc":"2.0","id":"a","method":"ping"}"#));
         assert_eq!((result["id"].as_str(), result["result"].as_object().map(|o| o.len())), (Some("a"), Some(0)));
+        initialize(&mut session, "2025-06-18");
         let result = answer(session.handle(r#"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#));
         let tools = result["result"]["tools"].as_array().expect("tools");
         assert_eq!(tools.len(), 12);
@@ -391,6 +415,7 @@ mod tests {
     fn a_tool_call_reaches_the_backend_and_its_outcome_the_client() {
         let backend = Fake::on();
         let mut session = Session::new(&backend);
+        initialize(&mut session, "2025-06-18");
         let result = answer(session.handle(
             r#"{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"get_messages","arguments":{"chat_id":"42","limit":5}}}"#,
         ));
@@ -405,6 +430,7 @@ mod tests {
     fn bad_lines_and_bad_calls_are_protocol_errors() {
         let backend = Fake::on();
         let mut session = Session::new(&backend);
+        initialize(&mut session, "2025-06-18");
         let result = answer(session.handle("{not json"));
         assert_eq!((result["error"]["code"].as_i64(), result["id"].is_null()), (Some(PARSE_ERROR), true));
         let result = answer(session.handle("[1, 2]"));
@@ -437,6 +463,7 @@ mod tests {
             fn log(&self, _: &str) {}
         }
         let mut session = Session::new(&Failing);
+        initialize(&mut session, "2025-06-18");
         let result = answer(session.handle(r#"{"jsonrpc":"2.0","id":8,"method":"tools/call","params":{"name":"get_chat","arguments":{"chat_id":1}}}"#));
         assert!(result.get("error").is_none());
         assert_eq!(result["result"]["isError"], true);

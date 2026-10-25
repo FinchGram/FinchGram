@@ -127,9 +127,14 @@ credentials from the environment". FinchGram's answer has three layers:
 1. **The socket is the user's.** FinchGram listens on a Unix socket in its own folder
    (`~/Library/Application Support/FinchGram/mcp.sock`, mode 0600; when that path is too long for
    a socket, `finchgram-mcp.sock` in the user's temporary folder): only processes of the same
-   user can open it. No port is opened. At most 32 connections are open at once, and one that
-   has not said `initialize` within two minutes is closed; after that it may stay quiet as long as
-   it likes, as an assistant's app does.
+   user can open it. No port is opened. At most 32 connections are open at once, and at most 8
+   of them waiting for `initialize`; one that has not initialized within two minutes is closed,
+   whatever else it says, and so is one that does not read an answer within thirty seconds; before
+   `initialize` nothing but initialize and ping is answered. After it a connection may stay quiet
+   as long as it likes, as an assistant's app does. The bridge, for its part, takes no one for
+   FinchGram: before it passes a line on, it asks the system which process listens at the socket
+   and holds it to its own code signature (in development, to its own executable), so that another
+   program of the user's that took the socket's place is told so and sent nothing.
 2. **The system says who connected, and the user says whether it may.** For each connection
    FinchGram asks the kernel for the peer process (`LOCAL_PEERPID`) and libproc for its program;
    when that is FinchGram's own bridge, or a shell that started it, it looks at the parent until
@@ -164,7 +169,11 @@ credentials from the environment". FinchGram's answer has three layers:
    file handed over), and before what was read is handed over: the messages of a chat the user
    took out of the choice while Telegram answered are not handed over, and what was gathered from
    several chats is held to the choice as it is then. A change takes effect on calls already
-   waiting on Telegram.
+   waiting on Telegram. The settings are kept in settings.toml with a tag under the key only this
+   app has (`seal`; docs/architecture.md, The app's database): a file changed by anything but
+   FinchGram, say an allowed program widening its own reach, is not believed, and at the next
+   start the settings go back to their defaults, the server off. The AI access page is where they
+   are set, not the file.
 
 The assistant needs no Telegram credentials: it works through the session FinchGram is signed in
 with, and FinchGram's api_id is nowhere in this.

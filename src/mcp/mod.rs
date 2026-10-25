@@ -25,7 +25,7 @@ use std::path::PathBuf;
 use std::rc::Rc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Mutex, mpsc};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use slint::ComponentHandle;
 
@@ -51,13 +51,22 @@ const LINE_LIMIT: u64 = 1024 * 1024;
 /// How many connections may be open at once: an assistant's app holds one or two, and each costs
 /// a thread; many more is a program misbehaving, and the rest are turned away at the door.
 const MOST_CONNECTIONS: usize = 32;
-/// A connection that has not said `initialize` within this long is closed: a program that
-/// connects and says nothing would otherwise hold its thread for good. Once initialized it may be
-/// quiet as long as it likes: an assistant's app keeps its connection open for hours.
+/// A connection that has not said `initialize` within this long is closed, whether it says
+/// nothing or anything else: a program that connects and never initializes would otherwise hold
+/// its thread for good. Once initialized it may be quiet as long as it likes: an assistant's app
+/// keeps its connection open for hours.
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(120);
+/// How many connections may wait for `initialize` at once (one asks the user, the others wait
+/// their turn at the dialog): more than this is a program opening connections and not using them,
+/// and would hold every one of MOST_CONNECTIONS.
+const MOST_PENDING: usize = 8;
+/// An answer the client does not read within this long ends the connection: a program that
+/// asks and never reads would otherwise hold its thread on the write for good.
+const WRITE_TIMEOUT: Duration = Duration::from_secs(30);
 
-/// How many connections are open now.
+/// How many connections are open now, and how many of them have not initialized yet.
 static CONNECTIONS: AtomicUsize = AtomicUsize::new(0);
+static PENDING: AtomicUsize = AtomicUsize::new(0);
 
 /// One connection's place among `MOST_CONNECTIONS`, given back when dropped.
 struct Counted;
@@ -76,6 +85,27 @@ impl Counted {
 impl Drop for Counted {
     fn drop(&mut self) {
         CONNECTIONS.fetch_sub(1, Ordering::Relaxed);
+    }
+}
+
+/// One connection's place among the MOST_PENDING that have not initialized, given back when it
+/// has, or when it ends.
+struct Pending;
+
+impl Pending {
+    fn take() -> Option<Pending> {
+        let before = PENDING.fetch_add(1, Ordering::Relaxed);
+        if before >= MOST_PENDING {
+            PENDING.fetch_sub(1, Ordering::Relaxed);
+            return None;
+        }
+        Some(Pending)
+    }
+}
+
+impl Drop for Pending {
+    fn drop(&mut self) {
+        PENDING.fetch_sub(1, Ordering::Relaxed);
     }
 }
 
@@ -122,10 +152,14 @@ pub fn start(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
                         log(&format!("a connection turned away: {MOST_CONNECTIONS} are open already"));
                         continue;
                     };
+                    let Some(pending) = Pending::take() else {
+                        log(&format!("a connection turned away: {MOST_PENDING} are waiting to initialize already"));
+                        continue;
+                    };
                     let ui = ui.clone();
                     let session = std::thread::Builder::new().name("mcp-session".into()).spawn(move || {
                         let _counted = counted;
-                        serve(stream, ui);
+                        serve(stream, ui, pending);
                     });
                     if let Err(err) = session {
                         eprintln!("mcp: cannot start a thread for a connection: {err}");
@@ -186,10 +220,15 @@ fn log_path() -> Option<PathBuf> {
 }
 
 /// One connection, on its own thread: lines in, answers out, until the other end closes.
-fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>) {
+/// `pending` is its place among the connections waiting for `initialize`, given back once it has.
+fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>, pending: Pending) {
     let host = peer::host_of(&stream);
     let backend = UiBackend { ui, host, live: Cell::new(false) };
     backend.log("connected");
+    // A client that asks and never reads does not hold the thread on the write.
+    if let Err(err) = stream.set_write_timeout(Some(WRITE_TIMEOUT)) {
+        backend.log(&format!("cannot set a write timeout: {err}"));
+    }
     let reading = match stream.try_clone() {
         Ok(reading) => reading,
         Err(err) => {
@@ -204,7 +243,13 @@ fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>) {
     let mut timed = reading.set_read_timeout(Some(HANDSHAKE_TIMEOUT)).is_ok();
     let mut reader = BufReader::new(reading);
     let mut line = Vec::new();
+    let started = Instant::now();
+    let mut pending = Some(pending);
     loop {
+        if !session.ready() && started.elapsed() > HANDSHAKE_TIMEOUT {
+            backend.log("did not initialize within two minutes: the connection is closed");
+            break;
+        }
         line.clear();
         // A line's worth and one byte more: a line still going at the limit ends the connection.
         match reader.by_ref().take(LINE_LIMIT + 1).read_until(b'\n', &mut line) {
@@ -225,10 +270,14 @@ fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>) {
         {
             break;
         }
-        if timed && session.ready() {
-            timed = reader.get_ref().set_read_timeout(None).is_err();
+        if session.ready() {
+            pending = None;
+            if timed {
+                timed = reader.get_ref().set_read_timeout(None).is_err();
+            }
         }
     }
+    drop(pending);
     backend.log("disconnected");
     if backend.live.get() {
         let host = backend.host.clone();

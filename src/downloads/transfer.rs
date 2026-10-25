@@ -64,8 +64,9 @@ const BUSY_PATIENCE: Duration = Duration::from_secs(5 * 60);
 /// Room a volume must keep beyond a file: for the system, and for the files of a folder arriving
 /// beside it. A file that cannot fit is refused before it fills the disk, not at its end.
 const SPACE_MARGIN: u64 = 256 * 1024 * 1024;
-/// A file of unknown size is checked against the room left this often, by bytes written.
-const SPACE_CHECK_EVERY: u64 = 256 * 1024 * 1024;
+/// A file of unknown size is checked against the room left this often, by bytes written (the
+/// FTP engine checks every file this way, ftp.rs).
+pub(crate) const SPACE_CHECK_EVERY: u64 = 256 * 1024 * 1024;
 
 /// What the download folder is walked with (`Folder`): open(2)'s flags, and the calls that take
 /// a folder's descriptor and a name, by the system.

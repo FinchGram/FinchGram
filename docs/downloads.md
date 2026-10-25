@@ -154,15 +154,21 @@ puts one face on the three clients, and the page and the queue do not care which
 - **FTP and FTPS** (`ftp.rs`, over suppaftp, blocking): the address is a host and, after a /, a
   folder under the one the account lands in ("sb.example.net/films"); the port is 21, or 990 for
   FTPS, unless given. FTPS is TLS from the first byte on 990 and AUTH TLS on any other port,
-  trusting what the Mac trusts, as the HTTP client does. A listing is MLSD where the server has
+  trusting what the Mac trusts, as the HTTP client does. The connection, the welcome and the login
+  each wait twenty seconds at most, a read after that a minute, so that a server that takes the
+  connection and says nothing does not hold the servers' thread; a data connection goes to the
+  address the control connection reached, whatever address PASV names, so that a server cannot
+  send the client to another machine, or to the Mac itself. A listing is MLSD where the server has
   it, LIST parsed otherwise; a listing is read as it comes and held to 32 MB, 64 KB a line and
   200,000 entries, so that a server that never ends its listing is cut off, not kept in memory. A
   file comes over one stream, since FTP gives a start but never an end: no chunks, no several
   connections; a stopped file goes on from the end of its `.part` with REST, when the `.part.json`
   beside it says the `.part` is this file's, at this address and in this version (its size and
   its MDTM time); a `.part` of another file of the same name, of this file changed on the server,
-  or with no `.part.json` to say whose it is, starts afresh. Plain FTP sends the password in the
-  clear, and the form says so in red.
+  or with no `.part.json` to say whose it is, starts afresh. A server that sends more than the
+  size it gave is stopped at that size, and the room on the disk is asked about every 256 MB as
+  the bytes come, as the WebDAV engine asks. Plain FTP sends the password in the clear, and the
+  form says so in red.
 - **SFTP** (`sftp.rs`, over russh and russh-sftp: SSH in Rust, on the downloads' tokio runtime):
   the address is a host and a folder as for FTP, the port 22 unless given; the account signs in
   with its password (a key waits for another version). The server's key is shown to the user
@@ -205,8 +211,9 @@ Copy link gives `sftp://me@host:2222/films/film.mkv` or `ftps://…` for those s
   layout after). Keychain items
   belong to the app's signing identity, and releases are signed with North Brookville LLC's Apple
   Developer ID (docs/conventions.md), which macOS trusts across updates. The SSH servers' keys the
-  user trusted are in the `ssh_hosts` table, in the clear, with the day each was trusted (0 for a
-  key 0.6.2 or before took on its own). On the wire a WebDAV password is Basic authentication:
+  user trusted are in the `ssh_hosts` table, in the clear, with the day each was trusted and a tag
+  under the Keychain's key over the host, the port, the key and the day, so that a key swapped in
+  the file is a key not trusted: the server shows its key again. On the wire a WebDAV password is Basic authentication:
   base64, so plain over http on the LAN, and encrypted only by TLS over https; plain FTP sends it
   in the clear too, FTPS and SFTP never do.
   Versions 0.4.11 to 0.4.13 gave the item an access list open to any application as a way around

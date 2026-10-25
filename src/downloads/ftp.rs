@@ -9,7 +9,7 @@
 //! nothing else.
 
 use std::io::{BufRead as _, Read, Seek as _, Write as _};
-use std::net::ToSocketAddrs as _;
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs as _};
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -78,21 +78,39 @@ impl Server {
         format!("{scheme}://{account}{}{port}/{remote}{tail}", self.host)
     }
 
-    /// Connected, logged in, in binary: ready for a listing or a file.
+    /// Connected, logged in, in binary: ready for a listing or a file. The connection, the
+    /// welcome and the login each wait CONNECT_PATIENCE at most, a read after that READ_PATIENCE:
+    /// a server that takes the connection and says nothing does not hold the servers' thread
+    /// (src/downloads/mod.rs). A data connection goes to the address the control connection
+    /// reached, whatever address PASV names: a server cannot send the client to another machine,
+    /// or to the Mac itself.
     fn connect(&self) -> Result<RustlsFtpStream, Error> {
-        let address = (self.host.as_str(), self.port());
-        let mut stream = if self.tls && self.port() == 990 {
-            RustlsFtpStream::connect_secure_implicit(address, tls(), &self.host).map_err(ftp_error)?
+        let socket = (self.host.as_str(), self.port())
+            .to_socket_addrs()
+            .map_err(|err| Error::Unreachable(err.to_string()))?
+            .next()
+            .ok_or_else(|| Error::Unreachable(format!("{} is not known", self.host)))?;
+        let stream = if self.tls && self.port() == 990 {
+            // suppaftp's implicit TLS connects on its own, and waits for the welcome with no
+            // timeout: it is given one here, on a thread of its own, which is left to end on its
+            // own when the server keeps it waiting.
+            let host = self.host.clone();
+            with_deadline(CONNECT_PATIENCE + CONNECT_PATIENCE, move || RustlsFtpStream::connect_secure_implicit(socket, tls(), &host))?.map_err(ftp_error)?
         } else {
-            let socket = address.to_socket_addrs().map_err(|err| Error::Unreachable(err.to_string()))?.next().ok_or_else(|| Error::Unreachable(format!("{} is not known", self.host)))?;
-            let plain = RustlsFtpStream::connect_timeout(socket, CONNECT_PATIENCE).map_err(ftp_error)?;
+            let tcp = TcpStream::connect_timeout(&socket, CONNECT_PATIENCE).map_err(|err| Error::Unreachable(err.to_string()))?;
+            let _ = tcp.set_read_timeout(Some(CONNECT_PATIENCE));
+            let _ = tcp.set_write_timeout(Some(CONNECT_PATIENCE));
+            let plain = RustlsFtpStream::connect_with_stream(tcp).map_err(ftp_error)?;
             if self.tls { plain.into_secure(tls(), &self.host).map_err(ftp_error)? } else { plain }
         };
-        let _ = stream.get_ref().set_read_timeout(Some(READ_PATIENCE));
+        let peer = socket.ip();
+        let mut stream = stream.passive_stream_builder(move |named| data_connection(SocketAddr::new(peer, named.port())));
+        let _ = stream.get_ref().set_read_timeout(Some(CONNECT_PATIENCE));
         stream.set_mode(Mode::Passive);
         let (user, password) = if self.username.is_empty() { ("anonymous", "finchgram@") } else { (self.username.as_str(), self.password.as_str()) };
         stream.login(user, password).map_err(ftp_error)?;
         stream.transfer_type(FileType::Binary).map_err(ftp_error)?;
+        let _ = stream.get_ref().set_read_timeout(Some(READ_PATIENCE));
         Ok(stream)
     }
 
@@ -151,9 +169,10 @@ impl Server {
             done = 0;
         }
         transfer::write_sequential(root, &state_path, &link, &modified, total);
-        if let Some(total) = total {
-            transfer::check_space(dest, total.saturating_sub(done))?;
-        }
+        // The room on the disk: for what is left of the file when the server said its size, and,
+        // size or no size, asked about again as the bytes come (below), since a server may send
+        // more than it said, or without end.
+        transfer::check_space(dest, total.map_or(0, |total| total.saturating_sub(done)))?;
         file.seek(std::io::SeekFrom::End(0)).map_err(|err| transfer::Error::Disk(err.to_string()))?;
         let report = |done: u64| progress(transfer::Progress { done, total: total.unwrap_or(0), protocol: transfer::Protocol::Unknown, waiting: 0 });
         report(done);
@@ -166,6 +185,7 @@ impl Server {
             let _ = body.get_ref().get_ref().set_read_timeout(Some(READ_PATIENCE));
             let mut buffer = vec![0u8; PIECE];
             let mut reported = Instant::now();
+            let mut checked = done;
             loop {
                 if cancel.load(Ordering::Relaxed) {
                     drop(body);
@@ -176,8 +196,18 @@ impl Server {
                     Ok(read) => read,
                     Err(err) => return Err(transfer::Error::Connection(format!("the connection was lost: {err}"))),
                 };
+                // A server that sends more than the size it gave is not followed past it.
+                if let Some(total) = total
+                    && done + read as u64 > total
+                {
+                    return Err(transfer::Error::Protocol(format!("the server sent more than the {total} bytes it said the file has")));
+                }
                 file.write_all(&buffer[..read]).map_err(|err| transfer::Error::Disk(err.to_string()))?;
                 done += read as u64;
+                if done - checked >= transfer::SPACE_CHECK_EVERY {
+                    transfer::check_space(dest, 0)?;
+                    checked = done;
+                }
                 if reported.elapsed() >= Duration::from_millis(50) {
                     report(done);
                     reported = Instant::now();
@@ -198,6 +228,29 @@ impl Server {
         log::line(format!("done {}: {:.1} MB in {:.1} s", log::shown(&link), done as f64 / (1024.0 * 1024.0), started.elapsed().as_secs_f64()));
         Ok(target)
     }
+}
+
+/// A data connection, to `target`: the control connection's peer at the port PASV named, with
+/// the same patience as the control connection.
+fn data_connection(target: SocketAddr) -> Result<TcpStream, FtpError> {
+    let data = TcpStream::connect_timeout(&target, CONNECT_PATIENCE).map_err(FtpError::ConnectionError)?;
+    let _ = data.set_read_timeout(Some(READ_PATIENCE));
+    let _ = data.set_write_timeout(Some(READ_PATIENCE));
+    Ok(data)
+}
+
+/// `work` on a thread of its own, and its outcome within `patience`; past that the server is
+/// unreachable, and the thread is left to end on its own (its socket does, once the system or the
+/// server gives it up).
+fn with_deadline<T: Send + 'static>(patience: Duration, work: impl FnOnce() -> T + Send + 'static) -> Result<T, Error> {
+    let (sender, receiver) = std::sync::mpsc::channel();
+    std::thread::Builder::new()
+        .name("ftps-connect".into())
+        .spawn(move || {
+            let _ = sender.send(work());
+        })
+        .map_err(|err| Error::Unreachable(format!("cannot start a thread to connect: {err}")))?;
+    receiver.recv_timeout(patience).map_err(|_| Error::Unreachable("the server did not answer in time".into()))
 }
 
 /// Why a listing did not come: the server's refusal, or the listing beyond the bounds.

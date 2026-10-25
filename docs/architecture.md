@@ -481,7 +481,9 @@ under a random key made the first time and kept in the Keychain under "FinchGram
 address, port and account are the seal's additional data, so that the sealed text does not open in
 a row naming another server); the app shows a password in the server's form, so the user can read
 it there. The rows of the programs allowed at AI access carry a tag under the same key, so that a
-row written by anything but FinchGram, or changed since, is not believed. TDLib's database has a key of its own kept the same way (the account
+row written by anything but FinchGram, or changed since, is not believed; so do the SSH servers'
+keys, and the AI access settings in settings.toml (`settings::Mcp::seal`, checked at the start by
+src/mcp/access.rs). TDLib's database has a key of its own kept the same way (the account
 "tdlib"), since 0.4.18. The rule: preferences go into settings.toml, which stays small and
 readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
 database holds the servers of the downloads page with their passwords (docs/downloads.md), the
@@ -500,7 +502,9 @@ FinchGram still opens a newer file. The file of 0.5.9 and before is not read: it
 that backup folder and a new file made, at the maintainer's word (the app had six stars that day).
 Layout 2 (after 0.6.2) sealed the passwords to their servers, gave the programs' rows their tag
 (the rows of before were dropped, since nothing vouched for them, so every program asked again
-once) and the SSH servers' keys the day they were trusted.
+once) and the SSH servers' keys the day they were trusted. Layout 3 (after 0.6.3) gave the SSH
+servers' keys a tag of their own; the rows of before were dropped, so every SFTP server shows its
+key once more.
 Settings keys are never renamed without a serde alias, and the Keychain items keep their names.
 
 ## Platforms

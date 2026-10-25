@@ -18,7 +18,7 @@ use super::peer::Host;
 use super::protocol::Admission;
 use super::tools::{Activity, ActivityKind};
 use crate::database::{self, McpApp};
-use crate::settings::{McpScope, McpSending, Settings};
+use crate::settings::{Mcp, McpScope, McpSending, Settings};
 use crate::telegram::tools::{chosen_chats, moment, picker_chats};
 use crate::{AiAccess, AiActivity, AiActivityKind, AiApp, AiChat, AiScope, AiWriting, MainWindow};
 
@@ -56,8 +56,13 @@ struct State {
     copied: slint::Timer,
 }
 
+/// The Keychain account that says the AI access settings have been tagged once: until it is
+/// there (the first start with this code), the file has no tag, and is taken as it is.
+const POLICY_TAGGED: &str = "mcp-policy";
+
 /// Show the settings on the page and take its changes. Call once, on the UI thread.
 pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
+    verify_policy(&settings);
     STATE.with(|slot| {
         *slot.borrow_mut() = Some(State {
             ui: ui.as_weak(),
@@ -170,6 +175,45 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     ai.on_copy(|which| copy(&which));
     ai.on_show_log(show_log);
     ai.on_answer(answer);
+}
+
+/// The AI access settings as settings.toml has them, held to their tag (`Mcp::seal`, under the
+/// key only this app has): a file changed by anything but FinchGram, say a program allowed for
+/// some chats and drafts widening its own reach, is not believed, and the settings go back to
+/// their defaults (the server off; the user sets them again on the page). The first start with
+/// this code, before the Keychain says the settings were tagged once, takes the file as it is
+/// and tags it. While the database is not open there is no key to check with, and nothing can be
+/// allowed anyway.
+fn verify_policy(settings: &Rc<RefCell<Settings>>) {
+    if !database::is_open() {
+        return;
+    }
+    match crate::platform::keychain_read(crate::platform::KEYCHAIN_SERVICE, POLICY_TAGGED) {
+        Ok(Some(_)) => {}
+        Ok(None) => {
+            settings.borrow().save();
+            if let Err(err) = crate::platform::keychain_store(crate::platform::KEYCHAIN_SERVICE, POLICY_TAGGED, "1") {
+                eprintln!("mcp: cannot note in the Keychain that the AI access settings are tagged: {err}");
+            }
+            return;
+        }
+        Err(err) => {
+            eprintln!("mcp: cannot ask the Keychain whether the AI access settings are tagged: {err}");
+            return;
+        }
+    }
+    let (text, seal) = {
+        let settings = settings.borrow();
+        (settings.mcp.sealed_text(), settings.mcp.seal.clone())
+    };
+    // Settings never touched (nothing on, no tag) are nothing to doubt.
+    if database::tag_matches(&text, &seal) || (seal.is_empty() && text == Mcp::default().sealed_text()) {
+        return;
+    }
+    eprintln!("mcp: the AI access settings in settings.toml were not written by FinchGram, or were changed since: back to the defaults");
+    super::log("the AI access settings in settings.toml were not FinchGram's as it wrote them: back to the defaults, the server off");
+    settings.borrow_mut().mcp = Mcp::default();
+    settings.borrow().save();
 }
 
 // ---- the server's questions ----------------------------------------------------------------------

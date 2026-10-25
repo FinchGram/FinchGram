@@ -137,15 +137,40 @@ pub struct Mcp {
     /// another account logs in they go, so that every program asks again (`bind_to_account`). 0
     /// until an account has logged in since the setting exists.
     pub account: i64,
+    /// The tag of these settings under the key only this app has (`database::tag`), written with
+    /// them (`Settings::save`) and checked at the start (src/mcp/access.rs): a file changed by
+    /// anything but FinchGram, a program allowed for some chats widening its own reach, is not
+    /// believed, and these settings go back to their defaults. Not for editing by hand: the AI
+    /// access page is.
+    pub seal: String,
 }
 
 impl Default for Mcp {
     fn default() -> Self {
-        Mcp { enabled: false, scope: McpScope::All, chats: Vec::new(), sending: McpSending::On, account: 0 }
+        Mcp { enabled: false, scope: McpScope::All, chats: Vec::new(), sending: McpSending::On, account: 0, seal: String::new() }
     }
 }
 
 impl Mcp {
+    /// What the tag is over: everything an assistant's reach is decided by, and the account it
+    /// is for.
+    pub fn sealed_text(&self) -> String {
+        let mut chats = self.chats.clone();
+        chats.sort_unstable();
+        chats.dedup();
+        let chats: Vec<String> = chats.iter().map(i64::to_string).collect();
+        let scope = match self.scope {
+            McpScope::All => "all",
+            McpScope::Chosen => "chosen",
+        };
+        let sending = match self.sending {
+            McpSending::On => "on",
+            McpSending::Drafts => "drafts",
+            McpSending::Off => "off",
+        };
+        format!("mcp_policy\0{}\0{scope}\0{}\0{sending}\0{}", u8::from(self.enabled), chats.join(","), self.account)
+    }
+
     /// These settings are the account's with `id` from now on. The chats chosen were for the
     /// account that was logged in then: when this is another one, they go, and true says so (the
     /// caller drops the programs allowed, the database's, too), so that the chats are chosen
@@ -368,7 +393,12 @@ impl Settings {
         if let Some(dir) = path.parent() {
             let _ = fs::create_dir_all(dir);
         }
-        let text = match toml::to_string_pretty(self) {
+        // The AI access settings go with their tag (src/mcp/access.rs checks it at the start).
+        // Before the database is open (the language is saved earlier at the start), the tag
+        // there already stays.
+        let mut written = self.clone();
+        written.mcp.seal = crate::database::tag(&self.mcp.sealed_text()).unwrap_or_else(|| self.mcp.seal.clone());
+        let text = match toml::to_string_pretty(&written) {
             Ok(text) => text,
             Err(err) => {
                 eprintln!("settings: cannot serialize settings: {err}");
@@ -448,7 +478,7 @@ mod tests {
         assert_eq!(read.mcp, Mcp::default());
         assert!(!read.mcp.enabled && read.mcp.allows(42) && read.mcp.sending == McpSending::On);
         let settings = Settings {
-            mcp: Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![-1001, 42], sending: McpSending::Drafts, account: 1001 },
+            mcp: Mcp { enabled: true, scope: McpScope::Chosen, chats: vec![-1001, 42], sending: McpSending::Drafts, account: 1001, seal: String::new() },
             ..Settings::default()
         };
         let text = toml::to_string_pretty(&settings).expect("TOML");
