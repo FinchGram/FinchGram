@@ -37,7 +37,7 @@ use sha2::{Digest, Sha256};
 pub const RELEASES_REPO: &str = "FinchGram/FinchGram";
 const SUMS_ASSET: &str = "SHA256SUMS";
 const SIGNATURE_ASSET: &str = "SHA256SUMS.sig";
-/// Public keys allowed to sign releases; see src/bin/finchgram-release-sign.rs.
+/// Public keys allowed to sign releases; see crates/finchgram-release-sign/src/main.rs.
 const SIGNING_PUBLIC_KEYS: &str = include_str!("../release-signing.pub");
 
 /// The .app asset of a version. The name is derived from the version, never taken from the
@@ -309,7 +309,7 @@ fn fetch_bytes(url: &str) -> Result<Vec<u8>, String> {
 }
 
 /// The keys listed in release-signing.pub: one hex key per line, `#` comments and blanks
-/// ignored. (Kept identical to the copy in src/bin/finchgram-release-sign.rs.)
+/// ignored. (Kept identical to the copy in crates/finchgram-release-sign/src/main.rs.)
 fn public_keys(text: &str) -> Vec<&str> {
     text.lines()
         .map(str::trim)
@@ -318,7 +318,7 @@ fn public_keys(text: &str) -> Vec<&str> {
 }
 
 /// `signature_hex` must be an Ed25519 signature of `message` by one of `keys_hex`.
-/// (Kept identical to the copy in src/bin/finchgram-release-sign.rs.)
+/// (Kept identical to the copy in crates/finchgram-release-sign/src/main.rs.)
 fn verify_signature(message: &[u8], signature_hex: &str, keys_hex: &[&str]) -> Result<(), String> {
     let bytes = hex::decode(signature_hex.trim()).map_err(|err| format!("{SIGNATURE_ASSET} is not hex: {err}"))?;
     let signature = Signature::from_slice(&bytes)

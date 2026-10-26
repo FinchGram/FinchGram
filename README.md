@@ -207,10 +207,12 @@ settings in `~/Library/Application Support/FinchGram/settings.toml`.
 .github/workflows/
   mpv.yml                # builds libmpv on a clean runner; publishes mpv-* tags as releases
   check.yml              # clippy and the tests on every push to main
-  release.yml            # builds and publishes the app for the Release v* commits
+  release.yml            # for the Release v* commits: compiles the app on Blacksmith, signs and publishes it on GitHub
   tdlib.yml              # builds finchgram-tdlib on a clean runner; publishes tdlib-* tags as releases
 Cargo.toml
 build.rs                 # compiles ui/app.slint, bundles lang/, copies vendor/tdlib/bin/ next to the executable
+crates/
+  finchgram-release-sign/ # the Ed25519 signing tool behind releases, a package of its own
 docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   the pictures the READMEs show, from the picture test (scripts/readme-pictures.sh)
 lang/                    # translations: lang/<code>/LC_MESSAGES/finchgram.po, compiled into the binary
@@ -223,6 +225,7 @@ scripts/
   fetch-tdlib.sh         # the pinned finchgram-tdlib release into vendor/tdlib/bin/
   readme-pictures.sh     # copies the READMEs' pictures from target/screenshots/ into docs/screenshots/
   release.sh             # starts a release: version, tag, push; GitHub Actions does the rest
+  sign.sh                # signs the app: ad hoc, or with the Developer ID in the release workflow
 src/
   main.rs                # the window, the settings, the language and theme, updates; starts Telegram
   fonts.rs               # the UI fonts, compiled into the executable
@@ -258,7 +261,6 @@ src/
   settings.rs            # the user's preferences (settings.toml)
   i18n.rs                # UI language: saved choice, else the system's, else English
   screenshots.rs         # every page drawn to a PNG (cargo test screenshots -- --ignored)
-  bin/                   # finchgram-release-sign.rs, the Ed25519 signing tool behind releases
 ui/
   app.slint              # the main window: the menus, and which page shows
   state.slint            # the app's state, shared by Rust and the pages

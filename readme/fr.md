@@ -229,10 +229,12 @@ La base de données de TDLib et les fichiers téléchargés se trouvent dans
 .github/workflows/
   mpv.yml                # compile libmpv sur une machine propre ; publie les tags mpv-* comme releases
   check.yml              # clippy et les tests à chaque push sur main
-  release.yml            # compile et publie l'application pour les commits Release v*
+  release.yml            # pour les commits Release v* : compile l'application sur Blacksmith, la signe et la publie sur GitHub
   tdlib.yml              # compile finchgram-tdlib sur une machine propre ; publie les tags tdlib-* comme releases
 Cargo.toml
 build.rs                 # compile ui/app.slint, intègre lang/, copie vendor/tdlib/bin/ à côté de l'exécutable
+crates/
+  finchgram-release-sign/ # l'outil de signature Ed25519 des releases, un paquet à part
 docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   les images que montrent les README, issues du test de captures (scripts/readme-pictures.sh)
 lang/                    # traductions : lang/<code>/LC_MESSAGES/finchgram.po, compilées dans le binaire
@@ -245,6 +247,7 @@ scripts/
   fetch-tdlib.sh         # la release figée de finchgram-tdlib dans vendor/tdlib/bin/
   readme-pictures.sh     # copie les images des README de target/screenshots/ vers docs/screenshots/
   release.sh             # lance une release : version, tag, push ; GitHub Actions fait le reste
+  sign.sh                # signe l'application : ad hoc, ou avec le Developer ID dans le workflow de release
 src/
   main.rs                # la fenêtre, les réglages, la langue et le thème, les mises à jour ; démarre Telegram
   fonts.rs               # les polices de l'interface, compilées dans l'exécutable
@@ -280,7 +283,6 @@ src/
   settings.rs            # les préférences de l'utilisateur (settings.toml)
   i18n.rs                # langue de l'interface : le choix enregistré, sinon celle du système, sinon l'anglais
   screenshots.rs         # chaque page dessinée en PNG (cargo test screenshots -- --ignored)
-  bin/                   # finchgram-release-sign.rs, l'outil de signature Ed25519 des releases
 ui/
   app.slint              # la fenêtre principale : les menus, et quelle page s'affiche
   state.slint            # l'état de l'application, partagé par Rust et les pages

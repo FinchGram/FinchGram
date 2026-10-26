@@ -19,12 +19,15 @@ concurrency:
 
 jobs:
   macos-arm64:
+    # GitHub's own runner, free for a public repository: nobody waits on a check, so it stays off
+    # the paid Blacksmith runner that compiles releases (release.yml).
     runs-on: macos-latest # Apple silicon
-    # A cold run (no cache yet, or the lock file changed) takes about 35 minutes on the 3-core
-    # runner: the whole dependency tree twice, once for clippy's check and once for the tests'
-    # build. A warm one takes under ten. The cache is only saved by a run that finishes, so the
-    # limit leaves a cold run room.
-    timeout-minutes: 60
+    # A cold run (no cache yet, or the lock file changed) compiles the whole dependency tree twice,
+    # once for clippy's check and once for the tests' build: about 35 minutes on the 3-core runner,
+    # and more than 60 on a slow day (2026-10-26: clippy 36, the tests cut off at the hour). A warm
+    # one takes under ten. The cache is only saved by a run that finishes, so the limit leaves a
+    # cold run room.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -46,8 +49,9 @@ jobs:
         run: scripts/fetch-fonts.sh
 
       # Without an api_id (option_env!) the app compiles and says so at run time; the checks need none.
+      # --workspace: the app and the release signing tool (crates/finchgram-release-sign/).
       - name: Clippy
-        run: cargo clippy --all-targets
+        run: cargo clippy --workspace --all-targets
 
       - name: Tests
-        run: cargo test
+        run: cargo test --workspace

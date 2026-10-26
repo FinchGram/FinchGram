@@ -1670,6 +1670,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "finchgram-release-sign"
+version = "0.1.0"
+dependencies = [
+ "ed25519-dalek",
+ "hex",
+]
+
+[[package]]
 name = "find-msvc-tools"
 version = "0.1.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"

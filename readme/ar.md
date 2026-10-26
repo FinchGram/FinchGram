@@ -162,10 +162,12 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 .github/workflows/
   mpv.yml                # يبني libmpv على جهاز نظيف؛ وينشر وسوم mpv-* كإصدارات
   check.yml              # clippy والاختبارات مع كل push إلى main
-  release.yml            # يبني التطبيق وينشره لإيداعات Release v*
+  release.yml            # لإيداعات Release v*: يصرّف التطبيق على Blacksmith، ثم يوقّعه وينشره على GitHub
   tdlib.yml              # يبني finchgram-tdlib على جهاز نظيف؛ وينشر وسوم tdlib-* كإصدارات
 Cargo.toml
 build.rs                 # يصرّف ui/app.slint، ويضمّن lang/، وينسخ vendor/tdlib/bin/ بجوار الملف التنفيذي
+crates/
+  finchgram-release-sign/ # أداة التوقيع Ed25519 للإصدارات، في حزمة مستقلة
 docs/                    # architecture.md و conventions.md و downloads.md و drag-and-drop.md و media-files.md و skia.md (+ zh-Hans)
   screenshots/           #   الصور التي تعرضها ملفات README، من اختبار اللقطات (scripts/readme-pictures.sh)
 lang/                    # الترجمات: lang/<الرمز>/LC_MESSAGES/finchgram.po، مُضمَّنة في الملف الثنائي
@@ -178,6 +180,7 @@ scripts/
   fetch-tdlib.sh         # إصدار finchgram-tdlib المثبّت إلى vendor/tdlib/bin/
   readme-pictures.sh     # ينسخ صور ملفات README من target/screenshots/ إلى docs/screenshots/
   release.sh             # يبدأ إصدارًا: رقم الإصدار، والوسم، والدفع؛ ويتولى GitHub Actions الباقي
+  sign.sh                # يوقّع التطبيق: توقيعًا مؤقتًا، أو بـ Developer ID في مسار الإصدار
 src/
   main.rs                # النافذة، والإعدادات، واللغة والسمة، والتحديثات؛ يشغّل Telegram
   fonts.rs               # خطوط الواجهة، مُضمَّنة في الملف التنفيذي
@@ -213,7 +216,6 @@ src/
   settings.rs            # تفضيلات المستخدم (settings.toml)
   i18n.rs                # لغة الواجهة: الاختيار المحفوظ، وإلا لغة النظام، وإلا الإنجليزية
   screenshots.rs         # كل صفحة مرسومة في ملف PNG (cargo test screenshots -- --ignored)
-  bin/                   # finchgram-release-sign.rs، أداة التوقيع Ed25519 للإصدارات
 ui/
   app.slint              # النافذة الرئيسية: القوائم، وأي صفحة تظهر
   state.slint            # حالة التطبيق، يتشاركها Rust والصفحات

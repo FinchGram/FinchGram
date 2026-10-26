@@ -214,10 +214,12 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 .github/workflows/
   mpv.yml                # собирает libmpv на чистой машине; публикует теги mpv-* как релизы
   check.yml              # clippy и тесты при каждом push в main
-  release.yml            # собирает и публикует приложение для коммитов Release v*
+  release.yml            # для коммитов Release v*: компилирует приложение на Blacksmith, подписывает и публикует его на GitHub
   tdlib.yml              # собирает finchgram-tdlib на чистой машине; публикует теги tdlib-* как релизы
 Cargo.toml
 build.rs                 # компилирует ui/app.slint, встраивает lang/, копирует vendor/tdlib/bin/ рядом с исполняемым файлом
+crates/
+  finchgram-release-sign/ # инструмент подписи Ed25519 для релизов, отдельный пакет
 docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   картинки, которые показывают README, из теста снимков (scripts/readme-pictures.sh)
 lang/                    # переводы: lang/<код>/LC_MESSAGES/finchgram.po, вкомпилированы в бинарный файл
@@ -230,6 +232,7 @@ scripts/
   fetch-tdlib.sh         # зафиксированный релиз finchgram-tdlib в vendor/tdlib/bin/
   readme-pictures.sh     # копирует картинки README из target/screenshots/ в docs/screenshots/
   release.sh             # запускает релиз: версия, тег, push; остальное делает GitHub Actions
+  sign.sh                # подписывает приложение: ad hoc или, в процессе релиза, с Developer ID
 src/
   main.rs                # окно, настройки, язык и тема, обновления; запускает Telegram
   fonts.rs               # шрифты интерфейса, скомпилированные в исполняемый файл
@@ -265,7 +268,6 @@ src/
   settings.rs            # настройки пользователя (settings.toml)
   i18n.rs                # язык интерфейса: сохранённый выбор, иначе системный, иначе английский
   screenshots.rs         # каждая страница в PNG (cargo test screenshots -- --ignored)
-  bin/                   # finchgram-release-sign.rs, инструмент подписи Ed25519 для релизов
 ui/
   app.slint              # главное окно: меню и то, какая страница показана
   state.slint            # состояние приложения, общее для Rust и страниц

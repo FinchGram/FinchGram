@@ -153,10 +153,12 @@ TDLib 的資料庫和下載的檔案在 `~/Library/Application Support/FinchGram
 .github/workflows/
   mpv.yml                # 在乾淨的機器上建置 libmpv；mpv-* tag 發佈為 release
   check.yml              # 每次 push 到 main 跑 clippy 和測試
-  release.yml            # Release v* 提交時建置並發佈 app
+  release.yml            # Release v* 提交時：在 Blacksmith 上編譯 app，在 GitHub 上簽名並發佈
   tdlib.yml              # 在乾淨的機器上建置 finchgram-tdlib；tdlib-* tag 發佈為 release
 Cargo.toml
 build.rs                 # 編譯 ui/app.slint，打包 lang/，把 vendor/tdlib/bin/ 複製到執行檔旁邊
+crates/
+  finchgram-release-sign/ # release 背後的 Ed25519 簽名工具，獨立一個套件
 docs/                    # architecture.md、conventions.md、downloads.md、drag-and-drop.md、media-files.md、skia.md（以及簡體中文版）
   screenshots/           #   README 裡的圖，來自截圖測試（scripts/readme-pictures.sh）
 lang/                    # 翻譯：lang/<代碼>/LC_MESSAGES/finchgram.po，編譯進二進位檔
@@ -169,6 +171,7 @@ scripts/
   fetch-tdlib.sh         # 把鎖定的 finchgram-tdlib release 下載到 vendor/tdlib/bin/
   readme-pictures.sh     # 把 README 用的圖從 target/screenshots/ 複製到 docs/screenshots/
   release.sh             # 發起一次 release：改版本、打 tag、push，其餘交給 GitHub Actions
+  sign.sh                # 為 app 簽名：預設臨時簽名，release 流程裡用 Developer ID
 src/
   main.rs                # 視窗、設定、語言和主題、更新；啟動 Telegram
   fonts.rs               # 介面字型，編譯進執行檔
@@ -204,7 +207,6 @@ src/
   settings.rs            # 使用者偏好（settings.toml）
   i18n.rs                # 介面語言：已儲存的選擇，否則跟隨系統，否則英文
   screenshots.rs         # 把每個頁面畫成 PNG（cargo test screenshots -- --ignored）
-  bin/                   # finchgram-release-sign.rs，release 背後的 Ed25519 簽名工具
 ui/
   app.slint              # 主視窗：選單，以及顯示哪個頁面
   state.slint            # app 的狀態，Rust 和頁面共用

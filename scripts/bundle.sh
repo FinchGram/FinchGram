@@ -7,11 +7,10 @@
 # only for trying the packaged app, never for a release. Without FINCHGRAM_API_ID and
 # FINCHGRAM_API_HASH in the environment the app has no Telegram API credentials (docs/conventions.md).
 #
-# Signing is ad hoc by default (a bundle for this machine only). The release workflow signs with
-# the project's own certificate, the same for every release, so that macOS keeps what the user
-# allowed the app across updates (docs/conventions.md, Release first):
-#   SIGN_IDENTITY=FinchGram scripts/bundle.sh
-# A Developer ID gets the hardened runtime and a timestamp too, for notarization:
+# Signing (scripts/sign.sh, run at the end) is ad hoc by default: a bundle for this machine only.
+# The release workflow bundles ad hoc on a Blacksmith runner, then signs the bundle again with the
+# Developer ID on GitHub's own runner (.github/workflows/release.yml). To sign here with a
+# certificate of your own:
 #   SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" scripts/bundle.sh
 set -euo pipefail
 
@@ -21,7 +20,6 @@ BIN="finchgram"
 BUNDLE_ID="com.finchgram.FinchGram"
 VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/Cargo.toml" | head -1)"
 MIN_MACOS="12.0" # keep in sync with MACOS_MIN in vendor/tdlib/build.sh
-SIGN_IDENTITY="${SIGN_IDENTITY:--}"
 
 TDLIB="$ROOT/vendor/tdlib/bin"
 MPV="$ROOT/vendor/mpv/bin"
@@ -99,24 +97,13 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key><string>$MIN_MACOS</string>
     <key>LSApplicationCategoryType</key><string>public.app-category.social-networking</string>
     <key>NSHighResolutionCapable</key><true/>
-    <key>NSMicrophoneUsageDescription</key><string>FinchGram uses the microphone for voice messages, and for voice input when you use it: then what it hears goes to OpenAI under your own key, to become text.</string>
+    <key>NSMicrophoneUsageDescription</key><string>FinchGram uses the microphone for voice messages, and for voice input when you use it: then what it hears goes to the speech service you chose, under your own key, to become text.</string>
 </dict>
 </plist>
 PLIST
 
-# Sign the helper and the library first, then the app with its entitlements (the microphone, for
-# voice input: scripts/FinchGram.entitlements). Hardened runtime + timestamp only for a Developer
-# ID: they are for notarization.
-SIGN_OPTS=()
-case "$SIGN_IDENTITY" in
-  "Developer ID Application:"*) SIGN_OPTS=(--options runtime --timestamp) ;;
-esac
-codesign --force --sign "$SIGN_IDENTITY" "${SIGN_OPTS[@]+"${SIGN_OPTS[@]}"}" "$MACOS/finchgram-tdlib"
-codesign --force --sign "$SIGN_IDENTITY" "${SIGN_OPTS[@]+"${SIGN_OPTS[@]}"}" "$FRAMEWORKS/libmpv.2.dylib"
-codesign --force --sign "$SIGN_IDENTITY" "${SIGN_OPTS[@]+"${SIGN_OPTS[@]}"}" --entitlements "$ROOT/scripts/FinchGram.entitlements" "$APP"
-codesign --verify --deep --strict "$APP"
-codesign -d --entitlements - "$APP" 2>/dev/null | grep -q "com.apple.security.device.audio-input" || { echo "the app was signed without the microphone's entitlement" >&2; exit 1; }
+# Signed by scripts/sign.sh: ad hoc, or with SIGN_IDENTITY from the environment.
+"$ROOT/scripts/sign.sh" "$APP"
 
 echo
 echo "built: $APP ($(du -sh "$APP" | cut -f1))"
-echo "signed with $SIGN_IDENTITY; designated requirement: $(codesign -d -r- "$APP" 2>/dev/null | sed -n 's/^designated => //p')"

@@ -1,16 +1,26 @@
 name: release
 
 # A "Release v<version>" commit pushed to main (made by scripts/release.sh, with its v<version>
-# tag) builds the app on a clean Apple-silicon runner, keeps the result as an artifact for a week,
+# tag) builds the app on clean Apple-silicon runners, keeps the result as an artifact for a week,
 # and publishes it as a release of this repository, from which installed copies of the app update
 # themselves (src/update.rs). Other pushes only run check.yml (clippy and the tests): since
-# 2026-10-23, at the maintainer's word, no app is built for them. The job runs on the push to main
-# rather than on the tag so that its Rust build cache is saved on the default branch, the only
-# place GitHub shares caches from: the next release starts warm. Nothing is ever built on a
-# developer machine.
+# 2026-10-23, at the maintainer's word, no app is built for them. The run starts on the push to
+# main rather than on the tag so that its Rust build cache is saved on the default branch, the only
+# place caches are shared from: the next release starts warm. Nothing is ever built on a developer
+# machine.
+#
+# Two jobs since 2026-10-26, the maintainer's choice. Compiling, nearly all of a release (53 to 94
+# minutes on GitHub's free 3-core runner in October 2026), runs on a Blacksmith runner: an Apple M4
+# with 6 cores, paid by the minute, with 150 free minutes a month. Signing, notarizing and
+# publishing run on GitHub's own runner, so that the three keys (the Developer ID certificate,
+# Apple's notary key, the update signing key) never reach a machine outside GitHub. The build job
+# gets only the Telegram api_id and api_hash, which are in the app anyway. The Blacksmith app is
+# installed on the FinchGram organization; rulesets let only the maintainer write branches and tags,
+# so no other actor can put a workflow of its own where these secrets are (docs/conventions.md,
+# Release first).
 #
 # Every Action is pinned to a commit (its full SHA, the version beside it), never to a tag or a
-# branch, which can be moved: this job builds, signs and publishes what users install, and what runs
+# branch, which can be moved: these jobs build, sign and publish what users install, and what runs
 # here must be what was reviewed (docs/conventions.md, Release first). To update one, change the SHA.
 on:
   push:
@@ -19,7 +29,7 @@ on:
 
 concurrency:
   # Release builds run one after the other and are never cancelled. The runs of other pushes
-  # (whose job is skipped below) get a group of their own: GitHub keeps only one pending run per
+  # (whose jobs are skipped below) get a group of their own: GitHub keeps only one pending run per
   # group, and one of them queued behind a release could otherwise push a pending release out.
   group: ${{ startsWith(github.event.head_commit.message, 'Release v') && 'release' || format('push-{0}', github.run_id) }}
   cancel-in-progress: false
@@ -28,16 +38,22 @@ env:
   APP_NAME: FinchGram
 
 jobs:
-  macos-arm64:
+  # Compiles and bundles the app, signed ad hoc, and hands it to the publish job as an artifact.
+  build:
     # Only the release commits, and a run started by hand.
     if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Release v')
-    runs-on: macos-latest # Apple silicon
+    runs-on: blacksmith-6vcpu-macos-latest # Apple M4, 6 cores, 24 GB
     permissions:
-      contents: write # gh release create needs it; the default token is read-only
-    # The release build took 17 to 88 minutes on the 3-core runner in October 2026 (88 for v0.7.0,
-    # whose new dependencies missed the cache); the limit leaves room for a slow one, and for the
-    # notarization wait after it.
-    timeout-minutes: 180
+      contents: read
+    # Every minute here is paid for: a warm build should take well under half an hour, a cold one
+    # (no cache yet, or new dependencies) under an hour.
+    timeout-minutes: 75
+    outputs:
+      tag: ${{ steps.meta.outputs.tag }}
+      version: ${{ steps.meta.outputs.version }}
+      zip: ${{ steps.meta.outputs.zip }}
+      symbols: ${{ steps.meta.outputs.symbols }}
+      unsigned: ${{ steps.unsigned.outputs.artifact-id }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -71,6 +87,83 @@ jobs:
 
       - name: The UI fonts, pinned, from google/fonts
         run: scripts/fetch-fonts.sh
+
+      # FinchGram's own api_id and api_hash from my.telegram.org, compiled into the app. They exist
+      # only as secrets of this repository (docs/conventions.md, Telegram API credentials).
+      - name: Build and bundle
+        env:
+          FINCHGRAM_API_ID: ${{ secrets.FINCHGRAM_API_ID }}
+          FINCHGRAM_API_HASH: ${{ secrets.FINCHGRAM_API_HASH }}
+        run: |
+          if [ -z "$FINCHGRAM_API_ID" ] || [ -z "$FINCHGRAM_API_HASH" ]; then
+            echo "::error::secrets FINCHGRAM_API_ID and FINCHGRAM_API_HASH are missing (docs/conventions.md)"
+            exit 1
+          fi
+          scripts/bundle.sh # signed ad hoc: the publish job signs it with the Developer ID
+
+      # The symbols too: cargo packed the names and line tables of this very binary into
+      # finchgram.dSYM next to it (Cargo.toml, [profile.release]), which is what reads a crash report
+      # of this release (docs/crash-reports.md). The app stays stripped.
+      - name: Symbols
+        run: |
+          [ -d target/release/finchgram.dSYM ] || { echo "::error::target/release/finchgram.dSYM is missing: did the build pack the symbols (Cargo.toml, split-debuginfo)?"; exit 1; }
+          # cargo's finchgram.dSYM is a link to deps/finchgram-<hash>.dSYM, the DWARF file inside
+          # named the same; the release gets a plain copy with the file named finchgram.
+          rm -rf dist/finchgram.dSYM
+          ditto "target/release/$(readlink target/release/finchgram.dSYM || echo finchgram.dSYM)" dist/finchgram.dSYM
+          DWARF="$(ls dist/finchgram.dSYM/Contents/Resources/DWARF/)"
+          [ "$(echo "$DWARF" | wc -l)" -eq 1 ] || { echo "::error::finchgram.dSYM holds more than one file: $DWARF"; exit 1; }
+          mv "dist/finchgram.dSYM/Contents/Resources/DWARF/$DWARF" dist/finchgram.dSYM/Contents/Resources/DWARF/finchgram
+
+      # tar keeps the bundle as it is (its links and modes), which an artifact's own zip would not;
+      # COPYFILE_DISABLE keeps macOS's ._ files out of it.
+      - name: Pack
+        run: COPYFILE_DISABLE=1 tar -czf dist/unsigned.tar.gz -C dist "$APP_NAME.app" finchgram.dSYM
+
+      # Artifacts count against the organization's 0.5 GB of Actions storage, measured by the hour
+      # (2026-10-26: a week of release copies, 4.2 GB, used 90% of a month's): this one lives only
+      # until the publish job is done with it.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        id: unsigned
+        with:
+          name: unsigned
+          path: dist/unsigned.tar.gz
+          if-no-files-found: error
+          compression-level: 0 # gzipped already
+          retention-days: 1
+
+  # Signs the app with the Developer ID, has Apple notarize it, signs the update and publishes it.
+  publish:
+    needs: build
+    runs-on: macos-latest # GitHub's own, Apple silicon
+    permissions:
+      contents: write # gh release create needs it; the default token is read-only
+      actions: write # to delete the build job's artifact once done
+    # Signing takes a minute; the rest is Apple's notarization, which may take up to 45 (below).
+    timeout-minutes: 75
+    env:
+      TAG: ${{ needs.build.outputs.tag }}
+      VERSION: ${{ needs.build.outputs.version }}
+      ZIP: ${{ needs.build.outputs.zip }}
+      SYMBOLS: ${{ needs.build.outputs.symbols }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: unsigned
+          path: dist
+
+      - name: Unpack
+        run: |
+          tar -xzf dist/unsigned.tar.gz -C dist
+          rm dist/unsigned.tar.gz
+          ls -la dist
+
+      # For the update signing tool alone (crates/finchgram-release-sign/), a minute to build.
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master, 2026-10-16
+        with:
+          toolchain: stable
 
       # The app is signed with North Brookville LLC's Developer ID Application certificate, the
       # same for every release: macOS ties what the user allowed the app (Screen Recording, for the
@@ -114,19 +207,11 @@ jobs:
           echo "identity=$IDENTITY" >> "$GITHUB_OUTPUT"
           echo "signing as $IDENTITY"
 
-      # FinchGram's own api_id and api_hash from my.telegram.org, compiled into the app. They exist
-      # only as secrets of this repository (docs/conventions.md, Telegram API credentials).
-      - name: Build and bundle
+      - name: Sign the app
         env:
-          FINCHGRAM_API_ID: ${{ secrets.FINCHGRAM_API_ID }}
-          FINCHGRAM_API_HASH: ${{ secrets.FINCHGRAM_API_HASH }}
           SIGN_IDENTITY: ${{ steps.identity.outputs.identity }}
         run: |
-          if [ -z "$FINCHGRAM_API_ID" ] || [ -z "$FINCHGRAM_API_HASH" ]; then
-            echo "::error::secrets FINCHGRAM_API_ID and FINCHGRAM_API_HASH are missing (docs/conventions.md)"
-            exit 1
-          fi
-          scripts/bundle.sh
+          scripts/sign.sh "dist/$APP_NAME.app"
           # Signed with the certificate, the app's designated requirement names it, not this build.
           if [ "$SIGN_IDENTITY" != "-" ] && codesign -d -r- "dist/$APP_NAME.app" 2>&1 | grep -q cdhash; then
             echo "::error::the app is signed per build (cdhash), not with the certificate"
@@ -175,23 +260,10 @@ jobs:
           spctl -a -vv -t exec "dist/$APP_NAME.app" 2>&1 | tee "$RUNNER_TEMP/spctl.txt"
           grep -q "source=Notarized Developer ID" "$RUNNER_TEMP/spctl.txt"
 
-      # The symbols too: cargo packed the names and line tables of this very binary into
-      # finchgram.dSYM next to it (Cargo.toml, [profile.release]), which is what reads a crash report
-      # of this release (docs/crash-reports.md). The app stays stripped.
+      # The app and its symbols (prepared by the build job), each zipped, and their SHA-256.
       - name: Archive
-        env:
-          ZIP: ${{ steps.meta.outputs.zip }}
-          SYMBOLS: ${{ steps.meta.outputs.symbols }}
         run: |
           ditto -c -k --keepParent "dist/$APP_NAME.app" "dist/$ZIP"
-          [ -d target/release/finchgram.dSYM ] || { echo "::error::target/release/finchgram.dSYM is missing: did the build pack the symbols (Cargo.toml, split-debuginfo)?"; exit 1; }
-          # cargo's finchgram.dSYM is a link to deps/finchgram-<hash>.dSYM, the DWARF file inside
-          # named the same; the release gets a plain copy with the file named finchgram.
-          rm -rf dist/finchgram.dSYM
-          ditto "target/release/$(readlink target/release/finchgram.dSYM || echo finchgram.dSYM)" dist/finchgram.dSYM
-          DWARF="$(ls dist/finchgram.dSYM/Contents/Resources/DWARF/)"
-          [ "$(echo "$DWARF" | wc -l)" -eq 1 ] || { echo "::error::finchgram.dSYM holds more than one file: $DWARF"; exit 1; }
-          mv "dist/finchgram.dSYM/Contents/Resources/DWARF/$DWARF" dist/finchgram.dSYM/Contents/Resources/DWARF/finchgram
           APP_UUID="$(dwarfdump --uuid "dist/$APP_NAME.app/Contents/MacOS/finchgram" | awk '{print $2}')"
           SYMBOLS_UUID="$(dwarfdump --uuid dist/finchgram.dSYM/Contents/Resources/DWARF/finchgram | awk '{print $2}')"
           [ -n "$APP_UUID" ] && [ "$APP_UUID" = "$SYMBOLS_UUID" ] || { echo "::error::finchgram.dSYM ($SYMBOLS_UUID) is not the symbols of the binary in the app ($APP_UUID)"; exit 1; }
@@ -199,8 +271,8 @@ jobs:
           (cd dist && shasum -a 256 "$ZIP" "$SYMBOLS" > SHA256SUMS)
 
       # Ed25519 signature of SHA256SUMS; the app only installs releases it can verify with the
-      # public key in release-signing.pub (src/bin/finchgram-release-sign.rs).
-      - name: Sign
+      # public key in release-signing.pub (crates/finchgram-release-sign/src/main.rs).
+      - name: Sign the update
         env:
           RELEASE_SIGNING_KEY: ${{ secrets.RELEASE_SIGNING_KEY }}
         run: |
@@ -208,32 +280,31 @@ jobs:
             echo "::error::secret RELEASE_SIGNING_KEY is missing (docs/conventions.md, Release first)"
             exit 1
           fi
-          cargo run --release --quiet --bin finchgram-release-sign -- sign dist/SHA256SUMS
-          cargo run --release --quiet --bin finchgram-release-sign -- verify dist/SHA256SUMS release-signing.pub
+          cargo run --locked --quiet -p finchgram-release-sign -- sign dist/SHA256SUMS
+          cargo run --locked --quiet -p finchgram-release-sign -- verify dist/SHA256SUMS release-signing.pub
           ls -la dist
 
+      # A run started by hand publishes nothing: its files are kept as an artifact, for three days.
+      # A release's are on its release page, so no copy of them is kept here.
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: needs.build.outputs.tag == ''
         with:
-          name: finchgram-${{ steps.meta.outputs.version }}-macos-arm64
+          name: finchgram-${{ needs.build.outputs.version }}-macos-arm64
           path: |
             dist/*.zip
             dist/SHA256SUMS
             dist/SHA256SUMS.sig
-          retention-days: 7
+          retention-days: 3
 
       # ---- the rest only for a tagged commit ------------------------------------------------
 
       - name: Release notes
-        if: steps.meta.outputs.tag != ''
-        env:
-          TAG: ${{ steps.meta.outputs.tag }}
-          VERSION: ${{ steps.meta.outputs.version }}
-          ZIP: ${{ steps.meta.outputs.zip }}
-          SYMBOLS: ${{ steps.meta.outputs.symbols }}
+        if: needs.build.outputs.tag != ''
         run: |
           # The tag message holds the notes (scripts/release.sh), in English. The app shows only
           # what comes before the first "---" line (src/update.rs); the footer below is for the
           # release page.
+          git fetch --force --tags --quiet origin
           git tag -l --format='%(contents)' "$TAG" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}' > notes.md
           [ -s notes.md ] || echo "$APP_NAME $VERSION." > notes.md
           cat >> notes.md <<NOTES
@@ -246,13 +317,9 @@ jobs:
       # --latest: installed copies look for the latest release (src/update.rs); tdlib-* releases
       # are published with --latest=false and never take its place.
       - name: Publish
-        if: steps.meta.outputs.tag != ''
+        if: needs.build.outputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ steps.meta.outputs.tag }}
-          VERSION: ${{ steps.meta.outputs.version }}
-          ZIP: ${{ steps.meta.outputs.zip }}
-          SYMBOLS: ${{ steps.meta.outputs.symbols }}
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             echo "::error::release $TAG already exists"
@@ -261,3 +328,11 @@ jobs:
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --latest --title "$APP_NAME $VERSION" \
             --notes-file notes.md "dist/$ZIP" "dist/$SYMBOLS" dist/SHA256SUMS dist/SHA256SUMS.sig
           echo "released **$TAG**: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG" >> "$GITHUB_STEP_SUMMARY"
+
+      # The build job's bundle is no longer needed once all went well (Actions storage, above).
+      - name: Delete the build's artifact
+        if: success() && needs.build.outputs.unsigned != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT: ${{ needs.build.outputs.unsigned }}
+        run: gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$ARTIFACT"

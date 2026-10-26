@@ -213,10 +213,12 @@ O banco de dados do TDLib e os arquivos baixados ficam em
 .github/workflows/
   mpv.yml                # compila a libmpv numa máquina limpa; publica as tags mpv-* como releases
   check.yml              # clippy e os testes a cada push na main
-  release.yml            # compila e publica o app para os commits Release v*
+  release.yml            # para os commits Release v*: compila o app na Blacksmith, assina e publica no GitHub
   tdlib.yml              # compila o finchgram-tdlib numa máquina limpa; publica as tags tdlib-* como releases
 Cargo.toml
 build.rs                 # compila ui/app.slint, empacota lang/, copia vendor/tdlib/bin/ para junto do executável
+crates/
+  finchgram-release-sign/ # a ferramenta de assinatura Ed25519 das releases, um pacote à parte
 docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   as imagens que os READMEs mostram, do teste de capturas (scripts/readme-pictures.sh)
 lang/                    # traduções: lang/<código>/LC_MESSAGES/finchgram.po, compiladas no binário
@@ -229,6 +231,7 @@ scripts/
   fetch-tdlib.sh         # a release fixada do finchgram-tdlib em vendor/tdlib/bin/
   readme-pictures.sh     # copia as imagens dos READMEs de target/screenshots/ para docs/screenshots/
   release.sh             # inicia uma release: versão, tag, push; o GitHub Actions faz o resto
+  sign.sh                # assina o app: ad hoc, ou com o Developer ID no fluxo de release
 src/
   main.rs                # a janela, as configurações, o idioma e o tema, as atualizações; inicia o Telegram
   fonts.rs               # as fontes da interface, compiladas dentro do executável
@@ -264,7 +267,6 @@ src/
   settings.rs            # as preferências do usuário (settings.toml)
   i18n.rs                # idioma da interface: o escolhido; senão, o do sistema; senão, inglês
   screenshots.rs         # cada página desenhada num PNG (cargo test screenshots -- --ignored)
-  bin/                   # finchgram-release-sign.rs, a ferramenta de assinatura Ed25519 das releases
 ui/
   app.slint              # a janela principal: os menus e qual página aparece
   state.slint            # o estado do app, compartilhado pelo Rust e pelas páginas

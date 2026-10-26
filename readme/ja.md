@@ -171,10 +171,12 @@ TDLib のデータベースとダウンロードしたファイルは `~/Library
 .github/workflows/
   mpv.yml                # クリーンなマシンで libmpv をビルドし、mpv-* タグをリリースとして公開
   check.yml              # main への push ごとに clippy とテストを実行
-  release.yml            # Release v* コミットでアプリをビルドして公開
+  release.yml            # Release v* コミットで、アプリを Blacksmith でコンパイルし、GitHub で署名して公開
   tdlib.yml              # クリーンなマシンで finchgram-tdlib をビルドし、tdlib-* タグをリリースとして公開
 Cargo.toml
 build.rs                 # ui/app.slint をコンパイルし、lang/ を同梱し、vendor/tdlib/bin/ を実行ファイルの隣にコピー
+crates/
+  finchgram-release-sign/ # リリースを支える Ed25519 署名ツール（独立したパッケージ）
 docs/                    # architecture.md、conventions.md、downloads.md、drag-and-drop.md、media-files.md、skia.md（+ zh-Hans）
   screenshots/           #   README に載せる画像。スクリーンショットテストから（scripts/readme-pictures.sh）
 lang/                    # 翻訳：lang/<コード>/LC_MESSAGES/finchgram.po、バイナリに組み込まれる
@@ -187,6 +189,7 @@ scripts/
   fetch-tdlib.sh         # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ へ
   readme-pictures.sh     # README の画像を target/screenshots/ から docs/screenshots/ にコピー
   release.sh             # リリースを開始：バージョン、タグ、push。残りは GitHub Actions が行う
+  sign.sh                # アプリに署名：通常はアドホック、リリースのワークフローでは Developer ID
 src/
   main.rs                # ウィンドウ、設定、言語とテーマ、アップデート。Telegram を起動
   fonts.rs               # UI フォント。実行ファイルに組み込まれる
@@ -222,7 +225,6 @@ src/
   settings.rs            # ユーザーの設定（settings.toml）
   i18n.rs                # UI の言語：保存された選択、なければシステムの言語、それもなければ英語
   screenshots.rs         # すべてのページを PNG に描画（cargo test screenshots -- --ignored）
-  bin/                   # finchgram-release-sign.rs、リリースを支える Ed25519 署名ツール
 ui/
   app.slint              # メインウィンドウ：メニューと、どのページを表示するか
   state.slint            # アプリの状態。Rust とページで共有

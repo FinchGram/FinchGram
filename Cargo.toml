@@ -7,7 +7,12 @@ description = "FinchGram — an open-source Telegram desktop client with superpo
 license = "GPL-3.0-only"
 repository = "https://github.com/FinchGram/FinchGram"
 publish = false
-default-run = "finchgram"         # src/bin/ has the release signing tool too
+
+# The release signing tool is a package of its own (crates/finchgram-release-sign/), so that the
+# release workflow's signing job builds it alone (.github/workflows/release.yml). Plain cargo
+# commands at the top still mean the app; `--workspace` takes the tool in too.
+[workspace]
+members = ["crates/finchgram-release-sign"]
 
 [dependencies]
 # ~1.18: minor upgrades are deliberate. The unstable-* features (the transparent title bar, the

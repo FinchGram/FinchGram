@@ -1,5 +1,7 @@
 //! Release signing tool: the Ed25519 key pair behind FinchGram's updates.
 //!
+//! A package of its own, apart from the app's: the release workflow's signing job builds it alone.
+//!
 //! The public half is built into the app (`release-signing.pub`, read by src/update.rs); the
 //! private half exists only as the `RELEASE_SIGNING_KEY` secret of the GitHub Actions workflow,
 //! with a backup in the release manager's macOS keychain. CI signs `SHA256SUMS` of every release

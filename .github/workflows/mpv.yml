@@ -36,6 +36,9 @@ jobs:
         with:
           name: libmpv-macos-arm64
           path: vendor/mpv/dist
+          # The release below holds the same files; artifacts count against the organization's
+          # 0.5 GB of Actions storage (release.yml), so this copy goes after three days.
+          retention-days: 3
 
       # --latest=false: this repository's "Latest release" is always the newest app (v*), which
       # installed copies of FinchGram look for to update themselves.

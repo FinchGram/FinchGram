@@ -88,18 +88,34 @@ As in Coova Studio.
   can happen many times a day.
 - Every release goes through `scripts/release.sh`; nothing is published by hand. The version in
   `Cargo.toml`, the git tag `v<version>` and the GitHub release are one and the same thing.
-- Releases are built by GitHub Actions (`.github/workflows/release.yml`) from the tagged commit on a
-  clean runner, never on a developer's machine, with the pinned finchgram-tdlib fetched by the same
+- Releases are built by GitHub Actions (`.github/workflows/release.yml`) from the tagged commit on
+  clean runners, never on a developer's machine, with the pinned finchgram-tdlib fetched by the same
   script everyone uses. The workflow runs `scripts/bundle.sh`, which is also how to try the
   packaged app locally; a local bundle is never released. Every Action the workflows use (checkout,
-  the Rust toolchain, the caches, the artifact upload) is pinned to a commit by its full SHA, the
-  version beside it, never to a tag or branch that can be moved: what runs on the runner that signs
+  the Rust toolchain, the caches, the artifacts) is pinned to a commit by its full SHA, the version
+  beside it, never to a tag or branch that can be moved: what runs on the runner that signs
   releases is what was reviewed. To update one, change the SHA.
+- Two jobs since 2026-10-26, the maintainer's choice. The build job compiles and bundles on a
+  Blacksmith runner (an Apple M4 with 6 cores, paid by the minute, 150 free minutes a month; the
+  Blacksmith app is installed on the FinchGram organization), with only the Telegram api_id and
+  api_hash, which are in the app anyway. The publish job, on GitHub's own runner, signs the bundle
+  with the Developer ID (`scripts/sign.sh`), has Apple notarize it, signs `SHA256SUMS` and
+  publishes: the three keys never reach a machine outside GitHub. Rulesets let only the
+  maintainer (the repository's admins) create, update or delete branches and tags, so that no
+  other actor, the Blacksmith app included (it may write to the repository, for its own pull
+  requests), can put a workflow of its own where the keys are. `check.yml` stays on GitHub's free
+  runner: nobody waits on a check.
+- Artifacts count against the organization's Actions storage, 0.5 GB a month on GitHub's Free plan,
+  measured by the hour (on 2026-10-26 a week of release copies, 4.2 GB, had used 90% of a month's):
+  a release keeps no artifact (its files are on its release page), the bundle the build job hands
+  to the publish job is deleted once published, and a run started by hand keeps its files three
+  days.
 - Every release is signed: CI signs `SHA256SUMS` with an Ed25519 key that only CI has (the
   `RELEASE_SIGNING_KEY` secret, backed up in the release manager's keychain as "FinchGram release
   signing key"), and the app installs no update it cannot verify with the public keys compiled
-  into it (`release-signing.pub`). `src/bin/finchgram-release-sign.rs` makes the key pair
-  (`keygen`) and is what CI signs and verifies with. To rotate the key: add the new public key as a
+  into it (`release-signing.pub`). `crates/finchgram-release-sign/` makes the key pair
+  (`keygen`) and is what CI signs and verifies with; it is a package of its own so that the
+  publish job builds it in a minute, without the app's dependencies. To rotate the key: add the new public key as a
   second line of `release-signing.pub`, ship a version, switch the secret, then remove the old line.
 - The installed app updates itself (`src/update.rs`): once a day at a random moment
   (`check_for_updates` in settings.toml turns it off) and from Help → Check for Updates…. It

@@ -1,0 +1,16 @@
+[package]
+name = "finchgram-release-sign"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.92"
+description = "The Ed25519 signing tool behind FinchGram's releases"
+license = "GPL-3.0-only"
+repository = "https://github.com/FinchGram/FinchGram"
+publish = false
+
+# A package of its own, apart from the app's, so that the release workflow's signing job, on
+# GitHub's own runner, compiles these two crates in a minute rather than the app's whole
+# dependency tree (.github/workflows/release.yml).
+[dependencies]
+ed25519-dalek = "3"
+hex = "0.4"

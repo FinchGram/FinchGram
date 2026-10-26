@@ -165,10 +165,12 @@ TDLib의 데이터베이스와 내려받은 파일은 `~/Library/Application Sup
 .github/workflows/
   mpv.yml                # 깨끗한 머신에서 libmpv를 빌드하고, mpv-* 태그를 릴리스로 공개
   check.yml              # main에 push할 때마다 clippy와 테스트 실행
-  release.yml            # Release v* 커밋에서 앱을 빌드해 릴리스로 공개
+  release.yml            # Release v* 커밋에서 앱을 Blacksmith에서 컴파일하고, GitHub에서 서명해 릴리스로 공개
   tdlib.yml              # 깨끗한 머신에서 finchgram-tdlib을 빌드하고, tdlib-* 태그를 릴리스로 공개
 Cargo.toml
 build.rs                 # ui/app.slint를 컴파일하고, lang/을 포함하며, vendor/tdlib/bin/을 실행 파일 옆에 복사
+crates/
+  finchgram-release-sign/ # 릴리스에 쓰는 Ed25519 서명 도구, 별도 패키지
 docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   README에 싣는 그림, 스크린샷 테스트에서 (scripts/readme-pictures.sh)
 lang/                    # 번역: lang/<코드>/LC_MESSAGES/finchgram.po, 바이너리에 포함됨
@@ -181,6 +183,7 @@ scripts/
   fetch-tdlib.sh         # 고정된 finchgram-tdlib 릴리스를 vendor/tdlib/bin/으로
   readme-pictures.sh     # README의 그림을 target/screenshots/에서 docs/screenshots/로 복사
   release.sh             # 릴리스 시작: 버전, 태그, push; 나머지는 GitHub Actions가 처리
+  sign.sh                # 앱에 서명: 기본은 애드혹, 릴리스 워크플로에서는 Developer ID
 src/
   main.rs                # 창, 설정, 언어와 테마, 업데이트. Telegram을 시작
   fonts.rs               # UI 글꼴. 실행 파일에 포함됨
@@ -216,7 +219,6 @@ src/
   settings.rs            # 사용자 설정(settings.toml)
   i18n.rs                # UI 언어: 저장된 선택, 없으면 시스템 언어, 그것도 없으면 영어
   screenshots.rs         # 모든 페이지를 PNG로 그림(cargo test screenshots -- --ignored)
-  bin/                   # finchgram-release-sign.rs, 릴리스에 쓰는 Ed25519 서명 도구
 ui/
   app.slint              # 메인 창: 메뉴와, 어떤 페이지를 보여 줄지
   state.slint            # 앱의 상태. Rust와 페이지가 함께 씀

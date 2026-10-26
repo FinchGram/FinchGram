@@ -116,8 +116,15 @@ things fit together.
 - Releases are only ever built by GitHub Actions, and the maintainer tests the installed release, not
   a local build. So FinchGram's own api_id lives only in the repository's Actions secrets
   (`FINCHGRAM_API_ID`, `FINCHGRAM_API_HASH`); never store it on the machine or in a file.
+- The release workflow has two jobs since 2026-10-26 (the maintainer's choice, docs/conventions.md):
+  compiling on a Blacksmith runner (M4, paid by the minute, 150 free minutes a month), then signing,
+  notarizing and publishing on GitHub's own runner, so that the Developer ID, the notary key and
+  the update signing key never leave GitHub; rulesets let only the maintainer write branches and
+  tags. Checks stay on GitHub's free runner. Artifacts count against the organization's 0.5 GB of
+  Actions storage a month, measured by the hour: keep none that a release page already holds.
 - Build and check: `scripts/fetch-tdlib.sh`, `scripts/fetch-mpv.sh` and `scripts/fetch-fonts.sh` once, then `cargo build`,
-  `cargo test`, `cargo clippy --all-targets` (keep it free of warnings). After changing the UI, run
+  `cargo test --workspace`, `cargo clippy --workspace --all-targets` (keep it free of warnings;
+  `--workspace` takes in the release signing tool, `crates/finchgram-release-sign/`). After changing the UI, run
   `cargo test screenshots -- --ignored` and look at `target/screenshots/`: every page in every theme,
   light and dark, drawn with made-up data (there is no api_id here to log in with).
 - `FINCHGRAM_TEST_DC=1` uses Telegram's test servers.

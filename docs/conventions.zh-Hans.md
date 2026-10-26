@@ -73,12 +73,21 @@ libmpv 跟 finchgram-tdlib 一样照这个做：`vendor/mpv/build.sh` 按锁定�
 - release 由 GitHub Actions（`.github/workflows/release.yml`）在干净的机器上从打了 tag 的 commit 构建，
   永远不在开发者的机器上构建，用的是所有人都在用的同一个脚本拿到的锁定版 finchgram-tdlib。流程里跑的是
   `scripts/bundle.sh`，本地想试试打包后的 app 也用它；本地打出来的包永远不发布。流程用到的每个 Action（checkout、
-  Rust 工具链、缓存、上传产物）都按完整的 commit SHA 锁定，旁边注明版本，不用可以被挪动的 tag 或分支：在给 release
+  Rust 工具链、缓存、产物）都按完整的 commit SHA 锁定，旁边注明版本，不用可以被挪动的 tag 或分支：在给 release
   签名的机器上跑的，必须是审过的那份代码。要升级就改 SHA。
+- 从 2026-10-26 起分两个 job，维护者定的。构建 job 在 Blacksmith 的机器上编译、打包（Apple M4，6 核，按分钟
+  计费，每月 150 分钟免费；Blacksmith 的 app 装在 FinchGram 组织上），只拿到 Telegram 的 api_id 和 api_hash，
+  这两个本来就在 app 里。发布 job 在 GitHub 自己的机器上用 Developer ID 给包签名（`scripts/sign.sh`）、送苹果
+  公证、给 `SHA256SUMS` 签名并发布：三把密钥从不离开 GitHub 的机器。规则集（ruleset）只允许维护者（仓库管理员）
+  创建、更新、删除分支和 tag，这样别的任何参与方，包括 Blacksmith 的 app（它有往仓库写的权限，给它自己开 PR 用），
+  都没法把自己的 workflow 放到密钥所在的地方。`check.yml` 留在 GitHub 的免费机器上：检查没人在等。
+- 产物（artifact）算在组织的 Actions 存储里，GitHub 免费版每月 0.5 GB，按小时累计（2026-10-26 一周的 release
+  副本有 4.2 GB，用掉了一个月的 90%）：release 不留产物（文件都在 release 页面上），构建 job 交给发布 job 的包
+  发布后就删，手动启动的运行留三天。
 - 每个 release 都签名：CI 用只有 CI 才有的 Ed25519 私钥（`RELEASE_SIGNING_KEY` secret，另在发布负责人的
   钥匙串里以 "FinchGram release signing key" 备份一份）给 `SHA256SUMS` 签名，app 用编译进去的公钥
-  （`release-signing.pub`）验证，验证不过的更新一律不装。密钥对由 `src/bin/finchgram-release-sign.rs`
-  生成（`keygen`），CI 签名和验证用的也是它。换密钥：把新公钥加到 `release-signing.pub` 第二行，发一个版本，
+  （`release-signing.pub`）验证，验证不过的更新一律不装。密钥对由 `crates/finchgram-release-sign/`
+  生成（`keygen`），CI 签名和验证用的也是它；它单独一个包，发布 job 一分钟就能编好，不用编 app 的依赖。换密钥：把新公钥加到 `release-signing.pub` 第二行，发一个版本，
   换掉 secret，再删掉旧的那行。
 - 装好的 app 自己更新（`src/update.rs`）：每天在随机时刻检查一次（settings.toml 里的 `check_for_updates`
   可以关掉），也可以从 帮助 → 检查更新… 手动检查。先验证签名，再用签过名的清单校验 zip 的 SHA-256；
