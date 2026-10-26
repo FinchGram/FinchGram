@@ -160,7 +160,7 @@ component TreeLine inherits Rectangle {
     property <bool> open: !item.header && item.chat.id == Conversation.chat-id;
     property <bool> unread: item.chat.unread > 0 || item.chat.mention || item.chat.marked;
     height: item.header ? 34px : 55px;
-    background: open ? P.sel : touch.has-hover && !item.header ? P.chrome.transparentize(0.4) : transparent;
+    background: open ? P.sel : touch.has-hover && !item.header ? P.hover : transparent;
 
     if root.item.header: HorizontalLayout {
         padding-left: 14px;
@@ -308,7 +308,7 @@ component ChannelLine inherits Rectangle {
     callback menu(length, length);          // a right click, where it is in the window
     property <bool> open: chat.id == Conversation.chat-id;
     height: lines.preferred-height;
-    background: open ? P.sel : touch.has-hover ? P.chrome.transparentize(0.4) : transparent;
+    background: open ? P.sel : touch.has-hover ? P.hover : transparent;
 
     lines := VerticalLayout {
         padding-left: 14px;
@@ -393,7 +393,7 @@ component BotLine inherits Rectangle {
     callback menu(length, length);          // a right click, where it is in the window
     property <bool> open: chat.id == Conversation.chat-id;
     height: 38px;
-    background: open ? P.sel : touch.has-hover ? P.sel.transparentize(0.3) : transparent;
+    background: open ? P.sel : touch.has-hover ? P.hover : transparent;
 
     HorizontalLayout {
         padding-left: 26px;

@@ -6,16 +6,19 @@ Status: step 1, the user's own OpenAI key, built on 2026-10-25 at the maintainer
 ("咱们做一下这个语音输入吧，就是语音输入，转文字，类似微信那样"); steps 2 to 5 are not built. Voice
 input was decided on 2026-10-21 as the first of the AI features. There was no design round: the
 microphone is the one the design already drew in every composer, the strip above the composer is
-drawn the way each theme draws its strip for replying, and the settings are rows of the settings
-page; a round in Claude Design can take their place. The trigger is the sparkle the design draws,
+drawn the way each theme draws its strip for replying, and the settings are a panel of the toolbox
+drawn with the settings page's rows; a round in Claude Design can take their place. Since
+2026-10-26 voice input is a tool of the toolbox, at the maintainer's word ("这也是一个tool，而且不是
+telegram官方原生的feature"): off until the user turns it on there. The trigger is the sparkle the design draws,
 in the accent and without a title, in Workbench's tool row; the composer's microphone is voice
 messages', as every round of the design has it (the round "秘密聊天与通话"). The first section says what step 1 is as
 built; the rest of the page is the plan of 2026-10-21, with the facts it rests on.
 
 ## Step 1 as built (2026-10-25)
 
-- **Using it.** In a chat, the sparkle in the composer (Workbench and Broadsheet: next to the
-  microphone; Terminal: type `/voice`, and again to finish). A click starts and a second click
+- **Using it.** Once it is on (Toolbox → AI → Voice input), in a chat, the sparkle in the composer
+  (Workbench and Broadsheet: next to the microphone; Terminal: type `/voice`, and again to
+  finish). A click starts and a second click
   finishes; held while speaking (longer than 0.6 s), letting go finishes. While the user speaks, a strip above the
   composer shows bars for the microphone's loudness, the time, and the words as they come (the
   newest two lines; in Terminal one line). ⏎ or Done finishes too; Esc or × drops the words. Then
@@ -24,16 +27,21 @@ built; the rest of the page is the plan of 2026-10-21, with the facts it rests o
   after them, for the user to send. A dictation finishes by itself after five minutes, so that a
   microphone left open does not go on costing the user.
 - **When it cannot.** The strip says why, with a button where something can be put right: no key
-  (Open Settings), the microphone not allowed (Open System Settings), OpenAI refusing the key (401)
-  or the credit or the pace (429), the network, OpenAI's own message, nothing heard. The first time,
+  (Add key, which opens the panel), the microphone not allowed (Open System Settings), OpenAI
+  refusing the key (401: Change key) or the credit or the pace (429), the network, OpenAI's own message, nothing heard. The first time,
   macOS asks whether FinchGram may use the microphone.
-- **Settings → General → Voice input.** The OpenAI API key: pasted and saved, it is checked with
+- **Toolbox → AI → Voice input.** The AI category's second card, after AI access, opens the panel
+  (`ui/pages/voice-input.slint`), with "‹ AI" back to the cards. First the switch, off by default:
+  on, the sparkle is in every chat's composer; off, it is not there, nothing goes to OpenAI, and
+  Terminal's `/voice` opens the panel. A settings file of 0.7.0, which had no switch, has voice
+  input on when a key was kept (`enabled` is decided at the start and written with the next save).
+  Below the switch, while it is on: the OpenAI API key: pasted and saved, it is checked with
   OpenAI (the list of models), then shown by its last four characters, with Remove. It lives in
   the app's database, table `credentials` (layout 5), sealed to its name as the servers' passwords
   are sealed to their servers. The languages the user speaks: the UI's eleven as chips, by OpenAI's
   codes (`en`, `zh-cn`, `zh-tw`, `ja`, `ko`, `fr`, `de`, `es`, `pt`, `ru`, `ar`); with none chosen,
   the default, the model finds the language. Tidy the words: on by default. settings.toml has
-  `[voice_input]` with `languages`, `tidy`, and the two models, `model = "gpt-live-transcribe"` and
+  `[voice_input]` with `enabled`, `languages`, `tidy`, and the two models, `model = "gpt-live-transcribe"` and
   `tidy_model = "gpt-5-nano"`, which only the file has, so that a change of OpenAI's names needs no
   release.
 - **The session.** `wss://api.openai.com/v1/realtime?intent=transcription`, the key as a bearer
@@ -56,10 +64,11 @@ built; the rest of the page is the plan of 2026-10-21, with the facts it rests o
 - **The code.** `src/speech/mod.rs` (the state on the UI thread: idle, listening, finishing,
   tidying, failed with a reason; the settings), `src/speech/openai.rs` (the session, the tidying,
   the key's check), `src/speech/audio.rs`; `ui/voice.slint` (the globals, the bars, the words'
-  tail), each theme's composer, `ui/pages/settings.slint`; the screenshot scenes `voice-*` and
-  `settings-voice*`.
-- **Different from the plan.** Built without the design round. The settings are a section of their
-  own in General, not rows of Input. The words show in the strip while the user speaks and go into
+  tail), each theme's composer, `ui/pages/voice-input.slint` (the panel) in each theme's toolbox
+  (`src/toolbox.rs`); the screenshot scenes `voice-*` (the strip, and the panel: `voice-input`,
+  `voice-input-off`, `voice-input-malformed`, `voice-input-key`) and `toolbox-ai`.
+- **Different from the plan.** Built without the design round. The settings are a panel of the
+  toolbox (a section of their own in General until 2026-10-26), not rows of Input. The words show in the strip while the user speaks and go into
   the composer once, tidied, at the end (the plan left this to the design). They go at the end of
   what the composer holds, not at the cursor (Slint does not say where its cursor is). No keywords
   yet. Broadsheet has the sparkle too, which its round does not draw; voice input and a voice
@@ -139,8 +148,8 @@ The user pastes an OpenAI API key; FinchGram pays nothing, ships no key and runs
   tokens) costs well under a hundredth of a cent per message; the request says `store: false`.
   A switch turns tidying off. Whether the raw words show while speaking and the tidied text replaces
   them on release, or the tidied text alone appears, is the design round's.
-- Settings → General → Voice input (built as a section of its own): the key, the languages, the
-  tidying switch. The key is a credential and lives in the app's database, sealed as the servers'
+- The settings (built as a section of General, a panel of the toolbox since 2026-10-26): the key,
+  the languages, the tidying switch. The key is a credential and lives in the app's database, sealed as the servers'
   passwords are, never in settings.toml ([architecture.md](architecture.md), The app's database).
 - What it costs the user: $1.02 an hour of speech plus tidying; a typical month of chat dictation,
   one to three hours, is $1 to $3; ten hours is $10. OpenAI's audio prices have fallen every year so far.

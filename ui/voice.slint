@@ -1,7 +1,7 @@
-// Voice: voice input (docs/voice-input.md), the sparkle in the composer with a strip above it
-// while the user speaks and Settings → General → Voice input (src/speech/), which has no design
-// round yet: the strip follows each theme's strip for replying, the settings the page's own rows;
-// and voice messages (src/telegram/voice.rs), from the design's fifth round ("秘密聊天与通话", B1
+// Voice: voice input (docs/voice-input.md, src/speech/), a tool of the toolbox's AI category: the
+// sparkle in the composer while it is on, with a strip above it while the user speaks, and its
+// panel in the toolbox (ui/pages/voice-input.slint). It has no design round yet: the strip follows
+// each theme's strip for replying, the panel the settings' own rows; and voice messages (src/telegram/voice.rs), from the design's fifth round ("秘密聊天与通话", B1
 // the bubble, B2 the recording, B3 the microphone not allowed). Rust fills these globals; the
 // shared parts take each theme's colours, and Terminal writes its own; the words are here, once
 // for the three themes.
@@ -56,9 +56,12 @@ export global Voice {
     callback release();
     callback stop();                            // ⏎ or Done: the words go into the composer
     callback cancel();                          // Esc or ×: the words are dropped
-    callback act();                             // the problem's button: the settings, or the system's
+    callback act();                             // the problem's button: the toolbox's panel, or the system's
 
-    // Settings → General → Voice input.
+    // The toolbox's switch ([voice_input] enabled): on, the sparkle shows in the composer.
+    in-out property <bool> on;
+    callback set-on(bool);
+    // The toolbox's Voice input panel.
     in-out property <bool> has-key;
     in-out property <string> key-hint;          // "sk-…4f2a"
     in-out property <KeyCheck> key-check;
@@ -680,10 +683,10 @@ export global VoiceWords {
     public pure function cancel() -> string { return @tr("Cancel"); }
     // Why it stopped.
     public pure function problem() -> string {
-        if Voice.problem == VoiceProblem.no-key { return @tr("Voice input needs your own OpenAI API key: add it in Settings → General."); }
+        if Voice.problem == VoiceProblem.no-key { return @tr("Voice input needs your own OpenAI API key."); }
         if Voice.problem == VoiceProblem.microphone-denied { return @tr("FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."); }
         if Voice.problem == VoiceProblem.no-microphone { return @tr("No microphone could be opened: {0}", Voice.detail); }
-        if Voice.problem == VoiceProblem.refused-key { return @tr("OpenAI refused the key. Check it in Settings → General."); }
+        if Voice.problem == VoiceProblem.refused-key { return @tr("OpenAI refused the key."); }
         if Voice.problem == VoiceProblem.quota { return @tr("OpenAI says the key is out of credit or used too fast: {0}", Voice.detail); }
         if Voice.problem == VoiceProblem.network { return @tr("Could not reach OpenAI: {0}", Voice.detail); }
         if Voice.problem == VoiceProblem.nothing-heard { return @tr("Nothing was heard. Is the right microphone chosen in System Settings → Sound?"); }
@@ -691,12 +694,15 @@ export global VoiceWords {
     }
     // The problem's button; "" for none.
     public pure function action() -> string {
-        if Voice.problem == VoiceProblem.no-key || Voice.problem == VoiceProblem.refused-key { return @tr("Open Settings"); }
+        if Voice.problem == VoiceProblem.no-key { return @tr("Add key"); }
+        if Voice.problem == VoiceProblem.refused-key { return @tr("Change key"); }
         if Voice.problem == VoiceProblem.microphone-denied { return @tr("Open System Settings"); }
         return "";
     }
 
-    // Settings → General → Voice input.
+    // The toolbox's Voice input panel.
+    public pure function switch-title() -> string { return @tr("Use voice input"); }
+    public pure function switch-note() -> string { return @tr("Puts the sparkle in every chat's composer; when off, nothing goes to OpenAI"); }
     public pure function key() -> string { return @tr("OpenAI API key"); }
     public pure function key-note() -> string { return @tr("Your own key: OpenAI bills it for what is transcribed. It is kept sealed in FinchGram's database on this Mac."); }
     public pure function key-placeholder() -> string { return "sk-…"; }

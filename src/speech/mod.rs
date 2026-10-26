@@ -6,11 +6,15 @@
 //! microphone to OpenAI and nowhere else, and FinchGram keeps no recording. (The microphone in the
 //! composer is voice messages', src/telegram/voice.rs.)
 //!
+//! Voice input is a tool of the toolbox's AI category (src/toolbox.rs, ui/pages/voice-input.slint),
+//! off until the user turns it on there: off, the sparkle is not in the composer, and Terminal's
+//! /voice, or the button of a stop for want of a key, opens its panel, where the key goes.
+//!
 //! One dictation at a time, its state here on the UI thread. The microphone's samples come from
 //! one of the system's threads (src/platform/microphone.rs); the session with OpenAI runs on a
 //! thread of its own ("voice", `openai::dictate`), which reports back through the event loop. The
-//! key is the database's (`database::credential`), never in settings.toml; the languages and the
-//! tidying are settings (`[voice_input]`).
+//! key is the database's (`database::credential`), never in settings.toml; the switch, the
+//! languages and the tidying are settings (`[voice_input]`).
 
 mod audio;
 mod openai;
@@ -26,7 +30,7 @@ use slint::{ComponentHandle, ModelRc, VecModel};
 
 use crate::platform::{self, MicrophoneAccess};
 use crate::settings::Settings;
-use crate::{AppState, Conversation, KeyCheck, MainWindow, Page, Recorder, SettingsSection, Voice, VoiceLanguage, VoiceLanguageRow, VoiceProblem, VoiceState};
+use crate::{Conversation, KeyCheck, MainWindow, Recorder, Toolbox, Voice, VoiceLanguage, VoiceLanguageRow, VoiceProblem, VoiceState};
 use openai::{FailureKind, Input, KeyAnswer, Options, Report};
 
 /// The database's name for the user's OpenAI key.
@@ -89,6 +93,10 @@ struct Dictation {
 pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     let voice = ui.global::<Voice>();
     voice.set_tidy(settings.borrow().voice_input.tidy);
+    // A settings file from before the switch (0.7.0) has none: voice input is on there when a key
+    // was kept. The choice is written with the next save of the settings.
+    let on = *settings.borrow_mut().voice_input.enabled.get_or_insert_with(|| crate::database::credential(KEY).is_some());
+    voice.set_on(on);
     APP.with(|app| *app.borrow_mut() = Some(App { ui: ui.as_weak(), settings }));
     show_key(ui);
     show_languages(ui);
@@ -97,6 +105,7 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     voice.on_stop(finish);
     voice.on_cancel(cancel);
     voice.on_act(act);
+    voice.on_set_on(set_on);
     voice.on_save_key(|text| save_key(&text));
     voice.on_remove_key(remove_key);
     voice.on_open_key_page(|| platform::open_link(KEY_PAGE));
@@ -126,11 +135,20 @@ fn state() -> VoiceState {
 // ---- a dictation -------------------------------------------------------------------------------
 
 /// The sparkle pressed: a dictation starts, or the one listening finishes (a second click). Not
-/// while a voice message records: the microphone is its.
+/// while a voice message records: the microphone is its. Off (Terminal's /voice: the sparkle is
+/// not there), its panel in the toolbox comes instead, where it is turned on.
 fn press() {
-    let mut recording = false;
-    with_ui(|ui| recording = ui.global::<Recorder>().get_busy());
+    let (mut recording, mut on) = (false, false);
+    with_ui(|ui| {
+        recording = ui.global::<Recorder>().get_busy();
+        on = ui.global::<Voice>().get_on();
+    });
     if recording {
+        return;
+    }
+    if !on {
+        PRESSED.set(None);
+        with_ui(open_panel);
         return;
     }
     match state() {
@@ -297,11 +315,7 @@ fn act() {
     with_ui(|ui| problem = ui.global::<Voice>().get_problem());
     cancel();
     match problem {
-        VoiceProblem::NoKey | VoiceProblem::RefusedKey => with_ui(|ui| {
-            let app = ui.global::<AppState>();
-            app.set_settings_section(SettingsSection::General);
-            app.set_page(Page::Settings);
-        }),
+        VoiceProblem::NoKey | VoiceProblem::RefusedKey => with_ui(open_panel),
         VoiceProblem::MicrophoneDenied => platform::open_microphone_settings(),
         _ => {}
     }
@@ -406,7 +420,25 @@ fn opens(character: char) -> bool {
     matches!(character, '(' | '[' | '{' | '«' | '“' | '‘' | '¿' | '¡')
 }
 
-// ---- Settings → General → Voice input ----------------------------------------------------------
+// ---- the toolbox's Voice input panel -----------------------------------------------------------
+
+/// The toolbox, open at voice input's panel.
+fn open_panel(ui: &MainWindow) {
+    ui.global::<Toolbox>().invoke_open_tool("voice-input".into());
+}
+
+/// The panel's switch, or its card's: on, the sparkle shows in the composer; off, it goes, and a
+/// dictation going on is dropped.
+fn set_on(on: bool) {
+    with_settings(|settings| {
+        settings.voice_input.enabled = Some(on);
+        settings.save();
+    });
+    with_ui(|ui| ui.global::<Voice>().set_on(on));
+    if !on && state() != VoiceState::Idle {
+        cancel();
+    }
+}
 
 fn show_key(ui: &MainWindow) {
     let key = crate::database::credential(KEY);

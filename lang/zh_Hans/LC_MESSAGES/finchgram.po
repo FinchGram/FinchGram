@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-25 23:51+0000\n"
+"POT-Creation-Date: 2026-10-26 05:02+0000\n"
 "Language: zh_Hans\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -27,24 +27,24 @@ msgstr "在聊天中搜索"
 msgid "Chat Info"
 msgstr "聊天资料"
 
-#: ui/app.slint:91 ui/toolbox.slint:100
+#: ui/app.slint:91 ui/toolbox.slint:106
 msgid "Toolbox"
 msgstr "百宝箱"
 
-#: ui/app.slint:102 ui/pages/settings.slint:398
+#: ui/app.slint:102 ui/pages/settings.slint:397
 msgid "Workbench"
 msgstr "工作台"
 
-#: ui/app.slint:110 ui/pages/settings.slint:406
+#: ui/app.slint:110 ui/pages/settings.slint:405
 msgid "Terminal"
 msgstr "终端"
 
-#: ui/app.slint:118 ui/pages/settings.slint:414
+#: ui/app.slint:118 ui/pages/settings.slint:413
 msgid "Broadsheet"
 msgstr "报纸"
 
 #. The tools.
-#: ui/app.slint:127 ui/pages/downloads.slint:1981 ui/toolbox.slint:113
+#: ui/app.slint:127 ui/pages/downloads.slint:1981 ui/toolbox.slint:119
 msgid "Downloads"
 msgstr "下载"
 
@@ -102,7 +102,7 @@ msgstr "补充说明（可选）"
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/broadsheet.slint:2813 ui/chat.slint:386 ui/compose.slint:244
 #: ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871
-#: ui/pages/downloads.slint:3338 ui/pages/settings.slint:1398
+#: ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209
 #: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1847
 #: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
@@ -120,11 +120,11 @@ msgstr "举报"
 msgid "Delete"
 msgstr "删除"
 
-#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:437
+#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:436
 msgid "Light"
 msgstr "浅色"
 
-#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:445
+#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:444
 msgid "Dark"
 msgstr "深色"
 
@@ -148,7 +148,7 @@ msgid "Bots"
 msgstr "机器人"
 
 #: ui/broadsheet/broadsheet.slint:461 ui/terminal/terminal.slint:332
-#: ui/toolbox.slint:102
+#: ui/toolbox.slint:108
 msgid "All"
 msgstr "全部"
 
@@ -223,24 +223,24 @@ msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr "带认证标记的是 Telegram 官方机器人。其他机器人能看到你发给它的消息。"
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3721
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3722
 #: ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
-#: ui/workbench/conversation.slint:2762
+#: ui/workbench/conversation.slint:2763
 msgid "Unmute"
 msgstr "取消静音"
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3721
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3722
 #: ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
-#: ui/workbench/conversation.slint:2762
+#: ui/workbench/conversation.slint:2763
 msgid "Mute"
 msgstr "静音"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3790
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3791
 #: ui/terminal/terminal.slint:1661 ui/workbench/sidebar.slint:717
 msgid "Unpin"
 msgstr "取消置顶"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3790
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3791
 #: ui/terminal/terminal.slint:1661 ui/workbench/sidebar.slint:717
 msgid "Pin"
 msgstr "置顶"
@@ -250,7 +250,7 @@ msgstr "置顶"
 msgid "Add to folder"
 msgstr "加入文件夹"
 
-#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3798
+#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3799
 #: ui/terminal/terminal.slint:1669 ui/workbench/sidebar.slint:733
 msgid "Copy ID"
 msgstr "复制 ID"
@@ -258,7 +258,7 @@ msgstr "复制 ID"
 #: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228
 #: ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637
 #: ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849
-#: ui/pages/login.slint:909 ui/pages/settings.slint:1647
+#: ui/pages/login.slint:909 ui/pages/settings.slint:1458
 #: ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:783
 msgid "Back"
 msgstr "返回"
@@ -285,7 +285,7 @@ msgstr "赞助消息 · Telegram 官方投放 · Premium 用户可关闭"
 msgid "You"
 msgstr "你"
 
-#: ui/broadsheet/broadsheet.slint:2377 ui/terminal/terminal.slint:2075
+#: ui/broadsheet/broadsheet.slint:2377 ui/terminal/terminal.slint:2076
 msgid "Hide sender's name"
 msgstr "隐藏发送者"
 
@@ -298,7 +298,7 @@ msgstr "Shift + 点击：选中一段"
 msgid "Forward"
 msgstr "转发"
 
-#: ui/broadsheet/broadsheet.slint:3064 ui/terminal/terminal.slint:2605
+#: ui/broadsheet/broadsheet.slint:3064 ui/terminal/terminal.slint:2606
 msgid "Choose a chat on the left"
 msgstr "在左侧选择一个聊天"
 
@@ -352,7 +352,7 @@ msgid "Info"
 msgstr "资料"
 
 #. The foot.
-#: ui/chat-info.slint:77 ui/pages/settings.slint:99 ui/toolbox.slint:146
+#: ui/chat-info.slint:77 ui/pages/settings.slint:98 ui/toolbox.slint:154
 msgid "Settings"
 msgstr "设置"
 
@@ -410,8 +410,8 @@ msgstr "没有未读消息"
 msgid "Auto-delete messages"
 msgstr "自动删除消息"
 
-#: ui/chat-info.slint:92 ui/chat.slint:381 ui/pages/settings.slint:947
-#: ui/pages/settings.slint:969
+#: ui/chat-info.slint:92 ui/chat.slint:381 ui/pages/settings.slint:758
+#: ui/pages/settings.slint:780
 msgid "Off"
 msgstr "关"
 
@@ -520,7 +520,7 @@ msgid "Change photo"
 msgstr "更换头像"
 
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
-#: ui/pages/settings.slint:1458 ui/voice.slint:703
+#: ui/pages/settings.slint:1269 ui/voice.slint:709
 msgid "Save"
 msgstr "保存"
 
@@ -783,7 +783,7 @@ msgid "Remove {0} from the channel?"
 msgstr "把 {0} 移出频道？"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
-#: ui/pages/downloads.slint:2952 ui/voice.slint:704
+#: ui/pages/downloads.slint:2952 ui/voice.slint:710
 msgid "Remove"
 msgstr "移除"
 
@@ -1187,11 +1187,11 @@ msgstr "文件"
 msgid "Poll"
 msgstr "投票"
 
-#: ui/chat.slint:343 ui/voice.slint:656
+#: ui/chat.slint:343 ui/voice.slint:659
 msgid "Not available yet"
 msgstr "暂不可用"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:662
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:665
 msgid "Not allowed in this group"
 msgstr "本群不允许"
 
@@ -1216,7 +1216,7 @@ msgstr ""
 "截图需要在“系统设置 › 隐私与安全性”里允许屏幕录制。如果列表里已经有 "
 "FinchGram，把它关掉再打开一次。"
 
-#: ui/chat.slint:351 ui/voice.slint:661 ui/voice.slint:695
+#: ui/chat.slint:351 ui/voice.slint:664 ui/voice.slint:699
 msgid "Open System Settings"
 msgstr "打开系统设置"
 
@@ -1308,7 +1308,7 @@ msgstr "看一次"
 msgid "Hide with spoiler"
 msgstr "剧透遮罩"
 
-#: ui/chat.slint:387 ui/voice.slint:652
+#: ui/chat.slint:387 ui/voice.slint:655
 msgid "Send"
 msgstr "发送"
 
@@ -1586,7 +1586,7 @@ msgstr "全局搜索"
 msgid "Found by phone number"
 msgstr "按手机号找到"
 
-#: ui/compose.slint:136 ui/toolbox.slint:106
+#: ui/compose.slint:136 ui/toolbox.slint:112
 msgid "Messages"
 msgstr "消息"
 
@@ -1744,7 +1744,7 @@ msgstr "对方需要已注册 Telegram"
 
 #: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406
 #: ui/pages/login.slint:621 ui/pages/login.slint:842
-#: ui/pages/settings.slint:1567
+#: ui/pages/settings.slint:1378
 msgid "Next"
 msgstr "下一步"
 
@@ -1757,7 +1757,7 @@ msgid "Invite {n} person"
 msgid_plural "Invite {n} people"
 msgstr[0] "邀请 {n} 人"
 
-#: ui/compose.slint:229 ui/voice.slint:679
+#: ui/compose.slint:229 ui/voice.slint:682
 msgid "Done"
 msgstr "完成"
 
@@ -2803,11 +2803,11 @@ msgstr "到 AI 访问里改"
 msgid "Don't Allow"
 msgstr "不允许"
 
-#: ui/pages/ai-access.slint:882 ui/pages/ai-access.slint:889
+#: ui/pages/ai-access.slint:890 ui/pages/ai-access.slint:897
 msgid "AI access"
 msgstr "AI 访问"
 
-#: ui/pages/ai-access.slint:892
+#: ui/pages/ai-access.slint:900
 msgid ""
 "An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
 "chats and act in them through FinchGram, with your account. FinchGram itself "
@@ -3447,7 +3447,7 @@ msgid "Sign in with"
 msgstr "登录方式"
 
 #: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760
-#: ui/pages/settings.slint:1416
+#: ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "密码"
 
@@ -3625,11 +3625,11 @@ msgstr "多账号与文件夹"
 msgid "Keep work and life apart"
 msgstr "工作与生活分开放"
 
-#: ui/pages/login.slint:163 ui/pages/settings.slint:1113
+#: ui/pages/login.slint:163 ui/pages/settings.slint:924
 msgid "Fully open source — read the code"
 msgstr "完全开源，代码公开可查"
 
-#: ui/pages/login.slint:183 ui/pages/settings.slint:1142
+#: ui/pages/login.slint:183 ui/pages/settings.slint:953
 msgid ""
 "FinchGram is an unofficial client built on the Telegram API. It is not made "
 "by Telegram."
@@ -3700,7 +3700,7 @@ msgstr "已重新发送，请查看 Telegram"
 msgid "Didn't get it? Resend"
 msgstr "没收到？重新发送"
 
-#: ui/pages/login.slint:545 ui/pages/settings.slint:1215
+#: ui/pages/login.slint:545 ui/pages/settings.slint:1026
 msgid "Two-step verification"
 msgstr "两步验证"
 
@@ -3712,27 +3712,27 @@ msgstr "这个账号开启了两步验证，请输入你设置的密码。"
 msgid "Hint: {0}"
 msgstr "密码提示：{0}"
 
-#: ui/pages/login.slint:580 ui/pages/settings.slint:1442
+#: ui/pages/login.slint:580 ui/pages/settings.slint:1253
 msgid "Forgot password?"
 msgstr "忘记密码？"
 
-#: ui/pages/login.slint:601 ui/pages/settings.slint:1610
+#: ui/pages/login.slint:601 ui/pages/settings.slint:1421
 msgid "Recover via email"
 msgstr "通过邮箱找回密码"
 
-#: ui/pages/login.slint:602 ui/pages/settings.slint:1611
+#: ui/pages/login.slint:602 ui/pages/settings.slint:1422
 msgid "A recovery code was sent to {0}. Enter it to set a new password."
 msgstr "恢复码已发送至 {0}，验证后即可设置新密码。"
 
-#: ui/pages/login.slint:629 ui/pages/settings.slint:1639
+#: ui/pages/login.slint:629 ui/pages/settings.slint:1450
 msgid "Can't access this email?"
 msgstr "无法访问这个邮箱？"
 
-#: ui/pages/login.slint:651 ui/pages/settings.slint:1454
+#: ui/pages/login.slint:651 ui/pages/settings.slint:1265
 msgid "Set a new password"
 msgstr "设置新密码"
 
-#: ui/pages/login.slint:652 ui/pages/settings.slint:1455
+#: ui/pages/login.slint:652 ui/pages/settings.slint:1266
 msgid "You'll need this password when signing in on a new device."
 msgstr "以后在新设备上登录时，需要输入这个密码。"
 
@@ -3877,11 +3877,11 @@ msgstr "新密码"
 msgid "Re-enter new password"
 msgstr "再次输入新密码"
 
-#: ui/pages/password.slint:182 ui/pages/settings.slint:1481
+#: ui/pages/password.slint:182 ui/pages/settings.slint:1292
 msgid "Password hint (optional)"
 msgstr "密码提示（可选）"
 
-#: ui/pages/password.slint:192 ui/pages/settings.slint:1473
+#: ui/pages/password.slint:192 ui/pages/settings.slint:1284
 msgid ""
 "The hint is shown on the sign-in screen to anyone who knows your number. "
 "Don't write the password itself."
@@ -3892,7 +3892,7 @@ msgid "Current"
 msgstr "当前"
 
 #. The accounts.
-#: ui/pages/profile.slint:119 ui/toolbox.slint:142
+#: ui/pages/profile.slint:119 ui/toolbox.slint:150
 msgid "Add account"
 msgstr "添加账号"
 
@@ -3936,84 +3936,84 @@ msgstr "机器人和脚本用它来识别这个账号。"
 msgid "Profile"
 msgstr "个人资料"
 
-#: ui/pages/settings.slint:108 ui/pages/settings.slint:1745
+#: ui/pages/settings.slint:107 ui/pages/settings.slint:1556
 msgid "General"
 msgstr "通用"
 
-#: ui/pages/settings.slint:114 ui/pages/settings.slint:1746
+#: ui/pages/settings.slint:113 ui/pages/settings.slint:1557
 msgid "Notifications & sounds"
 msgstr "通知与声音"
 
-#: ui/pages/settings.slint:120 ui/pages/settings.slint:1736
+#: ui/pages/settings.slint:119 ui/pages/settings.slint:1547
 msgid "Privacy & security"
 msgstr "隐私与安全"
 
-#: ui/pages/settings.slint:132
+#: ui/pages/settings.slint:131
 msgid "Folders"
 msgstr "文件夹"
 
-#: ui/pages/settings.slint:137
+#: ui/pages/settings.slint:136
 msgid "Finch features"
 msgstr "Finch 功能"
 
-#: ui/pages/settings.slint:142 ui/pages/settings.slint:1749
+#: ui/pages/settings.slint:141 ui/pages/settings.slint:1560
 msgid "Appearance"
 msgstr "外观"
 
-#: ui/pages/settings.slint:148 ui/pages/settings.slint:1747
+#: ui/pages/settings.slint:147 ui/pages/settings.slint:1558
 msgid "Language"
 msgstr "语言"
 
-#: ui/pages/settings.slint:154
+#: ui/pages/settings.slint:153
 msgid "Data & storage"
 msgstr "数据与存储"
 
-#: ui/pages/settings.slint:159
+#: ui/pages/settings.slint:158
 msgid "Advanced"
 msgstr "高级"
 
-#: ui/pages/settings.slint:164 ui/pages/settings.slint:1749
+#: ui/pages/settings.slint:163 ui/pages/settings.slint:1560
 msgid "About"
 msgstr "关于"
 
-#: ui/pages/settings.slint:338
+#: ui/pages/settings.slint:337
 msgid "Version {0} available"
 msgstr "发现新版本 {0}"
 
-#: ui/pages/settings.slint:340
+#: ui/pages/settings.slint:339
 msgid "Downloading {0}% · {1} of {2}"
 msgstr "正在下载 {0}% · {1} / {2}"
 
-#: ui/pages/settings.slint:341
+#: ui/pages/settings.slint:340
 msgid "Installing…"
 msgstr "安装中…"
 
-#: ui/pages/settings.slint:342
+#: ui/pages/settings.slint:341
 msgid "You're up to date"
 msgstr "已是最新版本"
 
-#: ui/pages/settings.slint:343
+#: ui/pages/settings.slint:342
 msgid "The update failed"
 msgstr "更新失败"
 
-#: ui/pages/settings.slint:344 ui/pages/settings.slint:360
-#: ui/pages/settings.slint:1056
+#: ui/pages/settings.slint:343 ui/pages/settings.slint:359
+#: ui/pages/settings.slint:867
 msgid "Version {0}"
 msgstr "版本 {0}"
 
-#: ui/pages/settings.slint:368
+#: ui/pages/settings.slint:367
 msgid "Install and restart"
 msgstr "安装并重启"
 
-#: ui/pages/settings.slint:375
+#: ui/pages/settings.slint:374
 msgid "Check for updates"
 msgstr "检查更新"
 
-#: ui/pages/settings.slint:391
+#: ui/pages/settings.slint:390
 msgid "Theme"
 msgstr "主题"
 
-#: ui/pages/settings.slint:422
+#: ui/pages/settings.slint:421
 msgid ""
 "Workbench is an editor's layout, Broadsheet a newspaper's, Terminal a "
 "console's. The same chats and settings in all three."
@@ -4021,306 +4021,306 @@ msgstr ""
 "工作台像编辑器，报纸像一份报纸，终端像控制台。三套主题里的聊天和设置完全相"
 "同。"
 
-#: ui/pages/settings.slint:430
+#: ui/pages/settings.slint:429
 msgid "Light and dark"
 msgstr "浅色与深色"
 
-#: ui/pages/settings.slint:455
+#: ui/pages/settings.slint:454
 msgid "Match system appearance"
 msgstr "跟随系统明暗"
 
-#: ui/pages/settings.slint:486
+#: ui/pages/settings.slint:485
 msgid "Screenshot shortcut"
 msgstr "截图快捷键"
 
-#: ui/pages/settings.slint:503
+#: ui/pages/settings.slint:502
 msgid "Type a new shortcut…"
 msgstr "按下新的快捷键…"
 
-#: ui/pages/settings.slint:546
+#: ui/pages/settings.slint:545
 msgid "Reset"
 msgstr "重置"
 
-#: ui/pages/settings.slint:735
+#: ui/pages/settings.slint:574
 msgid "Startup & window"
 msgstr "启动与窗口"
 
-#: ui/pages/settings.slint:740
+#: ui/pages/settings.slint:579
 msgid "Launch at login"
 msgstr "开机时启动"
 
-#: ui/pages/settings.slint:750
+#: ui/pages/settings.slint:589
 msgid "Show in menu bar"
 msgstr "在菜单栏显示图标"
 
-#: ui/pages/settings.slint:760
+#: ui/pages/settings.slint:599
 msgid "When closing the window"
 msgstr "关闭窗口时"
 
-#: ui/pages/settings.slint:761
+#: ui/pages/settings.slint:600
 msgid "Quit"
 msgstr "退出程序"
 
-#: ui/pages/settings.slint:761
+#: ui/pages/settings.slint:600
 msgid "Minimize to tray"
 msgstr "最小化到托盘"
 
-#: ui/pages/settings.slint:773
+#: ui/pages/settings.slint:612
 msgid "Input"
 msgstr "输入"
 
-#: ui/pages/settings.slint:778
+#: ui/pages/settings.slint:617
 msgid "Send with Enter"
 msgstr "按 Enter 发送消息"
 
-#: ui/pages/settings.slint:787
+#: ui/pages/settings.slint:626
 msgid "Spell check"
 msgstr "拼写检查"
 
-#: ui/pages/settings.slint:793
+#: ui/pages/settings.slint:632
 msgid "Replace emoji automatically"
 msgstr "自动替换表情"
 
-#: ui/pages/settings.slint:829
+#: ui/pages/settings.slint:640
 msgid "Shortcuts"
 msgstr "快捷键"
 
-#: ui/pages/settings.slint:834
+#: ui/pages/settings.slint:645
 msgid "Keyboard shortcuts"
 msgstr "键盘快捷键"
 
-#: ui/pages/settings.slint:835
+#: ui/pages/settings.slint:646
 msgctxt "shortcuts"
 msgid "View"
 msgstr "查看"
 
-#: ui/pages/settings.slint:843
+#: ui/pages/settings.slint:654
 msgid "Screenshots"
 msgstr "截图"
 
-#: ui/pages/settings.slint:850
+#: ui/pages/settings.slint:661
 msgid "Hide the FinchGram window while taking a screenshot"
 msgstr "截图时隐藏 FinchGram 窗口"
 
-#: ui/pages/settings.slint:859
+#: ui/pages/settings.slint:670
 msgid "Also when FinchGram is in the background"
 msgstr "FinchGram 在后台时也可以用"
 
-#: ui/pages/settings.slint:878 ui/pages/settings.slint:883
+#: ui/pages/settings.slint:689 ui/pages/settings.slint:694
 msgid "Desktop notifications"
 msgstr "桌面通知"
 
-#: ui/pages/settings.slint:892
+#: ui/pages/settings.slint:703
 msgid "Message previews"
 msgstr "显示消息预览"
 
-#: ui/pages/settings.slint:902
+#: ui/pages/settings.slint:713
 msgid "Sounds"
 msgstr "提示音"
 
-#: ui/pages/settings.slint:912
+#: ui/pages/settings.slint:723
 msgid "Flash taskbar"
 msgstr "任务栏闪烁提醒"
 
-#: ui/pages/settings.slint:921
+#: ui/pages/settings.slint:732
 msgid "Count muted chats in badge"
 msgstr "未读数包含静音聊天"
 
-#: ui/pages/settings.slint:930
+#: ui/pages/settings.slint:741
 msgid "Notifications from other accounts"
 msgstr "其他账号的通知"
 
-#: ui/pages/settings.slint:931
+#: ui/pages/settings.slint:742
 msgid "When off, only the current account notifies you"
 msgstr "关闭后只有当前账号会弹通知"
 
-#: ui/pages/settings.slint:939
+#: ui/pages/settings.slint:750
 msgid "By chat type"
 msgstr "按聊天类型"
 
-#: ui/pages/settings.slint:946
+#: ui/pages/settings.slint:757
 msgid "Private chats"
 msgstr "私聊"
 
-#: ui/pages/settings.slint:947 ui/pages/settings.slint:958
-#: ui/pages/settings.slint:1216
+#: ui/pages/settings.slint:758 ui/pages/settings.slint:769
+#: ui/pages/settings.slint:1027
 msgid "On"
 msgstr "已开启"
 
-#: ui/pages/settings.slint:957
+#: ui/pages/settings.slint:768
 msgid "Groups"
 msgstr "群组"
 
-#: ui/pages/settings.slint:985
+#: ui/pages/settings.slint:796
 msgid "Changes the interface only — messages aren't translated"
 msgstr "只影响界面，不会翻译消息内容"
 
-#: ui/pages/settings.slint:1065
+#: ui/pages/settings.slint:876
 msgid "Updates"
 msgstr "更新"
 
-#: ui/pages/settings.slint:1072
+#: ui/pages/settings.slint:883
 msgid "Check for updates automatically"
 msgstr "自动检查更新"
 
-#: ui/pages/settings.slint:1080
+#: ui/pages/settings.slint:891
 msgid ""
 "Updates come from GitHub Releases and are signature-checked before install."
 msgstr "更新包从 GitHub Releases 下载，安装前校验签名。"
 
-#: ui/pages/settings.slint:1162
+#: ui/pages/settings.slint:973
 msgid "Who can see"
 msgstr "谁可以看到"
 
-#: ui/pages/settings.slint:1173
+#: ui/pages/settings.slint:984
 msgid "Last seen"
 msgstr "最后上线时间"
 
-#: ui/pages/settings.slint:1179
+#: ui/pages/settings.slint:990
 msgid "Profile photos"
 msgstr "头像"
 
-#: ui/pages/settings.slint:1185
+#: ui/pages/settings.slint:996
 msgid "Forwarded messages"
 msgstr "转发消息"
 
-#: ui/pages/settings.slint:1191
+#: ui/pages/settings.slint:1002
 msgid "Calls"
 msgstr "通话"
 
-#: ui/pages/settings.slint:1197
+#: ui/pages/settings.slint:1008
 msgid "Invites to groups"
 msgstr "邀请我进群"
 
-#: ui/pages/settings.slint:1202
+#: ui/pages/settings.slint:1013
 msgid "Stored on Telegram servers and synced across all your apps."
 msgstr "这些设置保存在 Telegram 服务器上，所有客户端同步。"
 
-#: ui/pages/settings.slint:1210
+#: ui/pages/settings.slint:1021
 msgid "Security"
 msgstr "安全"
 
-#: ui/pages/settings.slint:1228
+#: ui/pages/settings.slint:1039
 msgid "Local passcode"
 msgstr "本地密码锁"
 
-#: ui/pages/settings.slint:1234
+#: ui/pages/settings.slint:1045
 msgid "Active sessions"
 msgstr "活跃设备"
 
-#: ui/pages/settings.slint:1240
+#: ui/pages/settings.slint:1051
 msgid "Blocked users"
 msgstr "已屏蔽的用户"
 
-#: ui/pages/settings.slint:1246
+#: ui/pages/settings.slint:1057
 msgid "Delete my account"
 msgstr "账号自动注销"
 
-#: ui/pages/settings.slint:1279
+#: ui/pages/settings.slint:1090
 msgid "Two-step verification is on"
 msgstr "两步验证已开启"
 
-#: ui/pages/settings.slint:1279
+#: ui/pages/settings.slint:1090
 msgid "Two-step verification is off"
 msgstr "两步验证已关闭"
 
-#: ui/pages/settings.slint:1286
+#: ui/pages/settings.slint:1097
 msgid ""
 "When you sign in on a new device, you'll need this password in addition to "
 "the code."
 msgstr "在新设备上登录时，除了验证码，还需要输入这个密码。"
 
-#: ui/pages/settings.slint:1287
+#: ui/pages/settings.slint:1098
 msgid ""
 "Turn it on to require an extra password when signing in on a new device."
 msgstr "开启后，在新设备上登录需要额外输入密码。"
 
-#: ui/pages/settings.slint:1316
+#: ui/pages/settings.slint:1127
 msgid "Password will reset on {0}"
 msgstr "密码将于 {0} 重置"
 
-#: ui/pages/settings.slint:1322
+#: ui/pages/settings.slint:1133
 msgid "Come back then to set a new password. If this wasn't you, cancel now."
 msgstr "到时回到这里设置新密码。如果不是你本人操作，请立即取消。"
 
-#: ui/pages/settings.slint:1331
+#: ui/pages/settings.slint:1142
 msgid "Cancel reset"
 msgstr "取消重置"
 
-#: ui/pages/settings.slint:1343
+#: ui/pages/settings.slint:1154
 msgid "Change password"
 msgstr "修改密码"
 
-#: ui/pages/settings.slint:1351
+#: ui/pages/settings.slint:1162
 msgid "Password hint"
 msgstr "密码提示"
 
-#: ui/pages/settings.slint:1360
+#: ui/pages/settings.slint:1171
 msgid "Recovery email"
 msgstr "恢复邮箱"
 
-#: ui/pages/settings.slint:1369
+#: ui/pages/settings.slint:1180
 msgid "Turn off two-step verification"
 msgstr "关闭两步验证"
 
-#: ui/pages/settings.slint:1379 ui/pages/settings.slint:1454
+#: ui/pages/settings.slint:1190 ui/pages/settings.slint:1265
 msgid "Set password"
 msgstr "设置密码"
 
-#: ui/pages/settings.slint:1407
+#: ui/pages/settings.slint:1218
 msgid "Enter your current password"
 msgstr "输入当前密码"
 
-#: ui/pages/settings.slint:1408
+#: ui/pages/settings.slint:1219
 msgid "Confirm it's you before changing two-step verification settings."
 msgstr "修改两步验证设置前，需要先确认是你本人。"
 
-#: ui/pages/settings.slint:1472
+#: ui/pages/settings.slint:1283
 msgid "Change password hint"
 msgstr "修改密码提示"
 
-#: ui/pages/settings.slint:1509
+#: ui/pages/settings.slint:1320
 msgid "Change recovery email"
 msgstr "修改恢复邮箱"
 
-#: ui/pages/settings.slint:1510
+#: ui/pages/settings.slint:1321
 msgid ""
 "If you forget your password, a recovery code will be sent to this address."
 msgstr "忘记密码时，恢复码会发到这个邮箱。"
 
-#: ui/pages/settings.slint:1518
+#: ui/pages/settings.slint:1329
 msgid "Email address"
 msgstr "邮箱地址"
 
-#: ui/pages/settings.slint:1533
+#: ui/pages/settings.slint:1344
 msgid "Send code"
 msgstr "发送验证码"
 
-#: ui/pages/settings.slint:1546
+#: ui/pages/settings.slint:1357
 msgid "Enter the email code"
 msgstr "输入邮箱验证码"
 
-#: ui/pages/settings.slint:1547
+#: ui/pages/settings.slint:1358
 msgid "Code sent to {0}"
 msgstr "验证码已发送至 {0}"
 
-#: ui/pages/settings.slint:1588
+#: ui/pages/settings.slint:1399
 msgid "Turn off two-step verification?"
 msgstr "关闭两步验证？"
 
-#: ui/pages/settings.slint:1589
+#: ui/pages/settings.slint:1400
 msgid "Anyone who gets your sign-in code will be able to access your account."
 msgstr "关闭后，只要拿到发给你的登录验证码，别人就能登录你的账号。"
 
-#: ui/pages/settings.slint:1596
+#: ui/pages/settings.slint:1407
 msgid "Turn off"
 msgstr "关闭"
 
-#: ui/pages/settings.slint:1659
+#: ui/pages/settings.slint:1470
 msgid "Request password reset"
 msgstr "申请重置密码"
 
-#: ui/pages/settings.slint:1660
+#: ui/pages/settings.slint:1471
 msgid ""
 "If you can't get the recovery email, you can request a reset. To protect "
 "your account it takes 7 days, and you can cancel any time before then."
@@ -4328,19 +4328,19 @@ msgstr ""
 "如果收不到恢复邮件，可以申请重置密码。为防止他人盗用，需要等待 7 天，期间可以"
 "随时取消。"
 
-#: ui/pages/settings.slint:1667
+#: ui/pages/settings.slint:1478
 msgid "Request reset"
 msgstr "申请重置"
 
-#: ui/pages/settings.slint:1763
+#: ui/pages/settings.slint:1574
 msgid "Password updated"
 msgstr "密码已更新"
 
-#: ui/pages/settings.slint:1764
+#: ui/pages/settings.slint:1575
 msgid "Password hint updated"
 msgstr "密码提示已更新"
 
-#: ui/pages/settings.slint:1764
+#: ui/pages/settings.slint:1575
 msgid "Recovery email updated"
 msgstr "恢复邮箱已更新"
 
@@ -4420,208 +4420,208 @@ msgstr "复制当前聊天的 ID"
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "搜索聊天、联系人、@用户名和消息"
 
-#: ui/terminal/terminal.slint:2226
+#: ui/terminal/terminal.slint:2227
 msgid "unmute"
 msgstr "取消静音"
 
-#: ui/terminal/terminal.slint:2226
+#: ui/terminal/terminal.slint:2227
 msgid "mute"
 msgstr "静音"
 
-#: ui/terminal/terminal.slint:2325
+#: ui/terminal/terminal.slint:2326
 msgid "Write a message, or / for commands"
 msgstr "输入消息，或 / 调出命令"
 
-#: ui/terminal/terminal.slint:2441
+#: ui/terminal/terminal.slint:2442
 msgid "save"
 msgstr "保存"
 
-#: ui/terminal/terminal.slint:2384 ui/terminal/terminal.slint:2441
+#: ui/terminal/terminal.slint:2385 ui/terminal/terminal.slint:2442
 msgid "send"
 msgstr "发送"
 
-#: ui/terminal/terminal.slint:2540
+#: ui/terminal/terminal.slint:2541
 msgid "connected"
 msgstr "已连接"
 
-#: ui/terminal/terminal.slint:2565
+#: ui/terminal/terminal.slint:2566
 msgctxt "terminal"
 msgid "cmd"
 msgstr "命令"
 
 #
-#: ui/toolbox.slint:101
+#: ui/toolbox.slint:107
 msgid "Search the toolbox"
 msgstr "搜索百宝箱"
 
-#: ui/toolbox.slint:105
+#: ui/toolbox.slint:111
 msgid "Media"
 msgstr "媒体"
 
 #
 #
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:115
 msgid "Status bar"
 msgstr "底栏"
 
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:115
 msgid "Rail"
 msgstr "窄栏"
 
 #
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:115
 msgid "Activity bar"
 msgstr "活动栏"
 
-#: ui/toolbox.slint:111
+#: ui/toolbox.slint:117
 msgid "Switch a tool on here to show it on the {}."
 msgstr "在这里打开开关，工具就出现在{}上。"
 
-#: ui/toolbox.slint:114
+#: ui/toolbox.slint:120
 msgid "Pick files from your own servers and download them"
 msgstr "从你自己的服务器挑文件下载"
 
 #
-#: ui/toolbox.slint:115
+#: ui/toolbox.slint:121
 msgid "Live streams"
 msgstr "直播"
 
 #
-#: ui/toolbox.slint:116
+#: ui/toolbox.slint:122
 msgid "Live streams going on in your groups and channels"
 msgstr "正在进行的群组、频道直播"
 
-#: ui/toolbox.slint:118
+#: ui/toolbox.slint:124
 msgid "Your own media library, played in the built-in player"
 msgstr "自建片库，用内置播放器看"
 
 #
-#: ui/toolbox.slint:120
+#: ui/toolbox.slint:126
 msgid "Your own media library on Emby, played in the built-in player"
 msgstr "Emby 自建片库，用内置播放器看"
 
-#: ui/toolbox.slint:121
+#: ui/toolbox.slint:127
 msgid "Keyword hiding"
 msgstr "关键词隐藏"
 
 #
-#: ui/toolbox.slint:122
+#: ui/toolbox.slint:128
 msgid "Tuck away messages by keyword; unhide any time"
 msgstr "按关键词收起消息，随时移出"
 
-#: ui/toolbox.slint:123
+#: ui/toolbox.slint:129
 msgid "Scheduled messages"
 msgstr "定时消息"
 
-#: ui/toolbox.slint:124
+#: ui/toolbox.slint:130
 msgid "Sent by the server on time, even with your computer off"
 msgstr "到点由服务器发出，关机也发"
 
-#: ui/toolbox.slint:126
+#: ui/toolbox.slint:132
 msgid "Let other apps read the chats you allow, through FinchGram"
 msgstr "让别的应用经 FinchGram 读你允许的聊天"
 
 #. The protocols under Downloads.
-#: ui/toolbox.slint:128
+#: ui/toolbox.slint:136
 msgid "Protocol · chosen when you add a server"
 msgstr "协议 · 在添加服务器时选"
 
-#: ui/toolbox.slint:129
+#: ui/toolbox.slint:137
 msgid "Common on NAS boxes, cloud drives and seedboxes"
 msgstr "NAS、网盘、做种机都常见"
 
-#: ui/toolbox.slint:130
+#: ui/toolbox.slint:138
 msgid "The old one, unencrypted"
 msgstr "老协议，不加密"
 
-#: ui/toolbox.slint:131
+#: ui/toolbox.slint:139
 msgid "FTP with TLS encryption"
 msgstr "FTP 加上 TLS 加密"
 
-#: ui/toolbox.slint:132
+#: ui/toolbox.slint:140
 msgid ""
 "Over SSH; on seedboxes it usually doesn’t count against your traffic quota"
 msgstr "走 SSH；做种机用它下载通常不扣流量额度"
 
 #
 #. What goes on.
-#: ui/toolbox.slint:134
+#: ui/toolbox.slint:142
 msgid "{n} downloading"
 msgid_plural "{n} downloading"
 msgstr[0] "{n} 个在下"
 
 #
 #
-#: ui/toolbox.slint:135
+#: ui/toolbox.slint:143
 msgid "{n} server"
 msgid_plural "{n} servers"
 msgstr[0] "{n} 台服务器"
 
 #
-#: ui/toolbox.slint:136
+#: ui/toolbox.slint:144
 msgid "Not in this version"
 msgstr "此版本暂不支持"
 
 #
-#: ui/toolbox.slint:137
+#: ui/toolbox.slint:145
 msgid "Pinned to the {}"
 msgstr "已钉到{}"
 
-#: ui/toolbox.slint:138
+#: ui/toolbox.slint:146
 msgid "activity bar"
 msgstr "活动栏"
 
-#: ui/toolbox.slint:139
+#: ui/toolbox.slint:147
 msgid "rail"
 msgstr "窄栏"
 
 #
-#: ui/toolbox.slint:140
+#: ui/toolbox.slint:148
 msgid "status bar"
 msgstr "底栏"
 
 #
-#: ui/toolbox.slint:143
+#: ui/toolbox.slint:151
 msgid "Limit reached"
 msgstr "已达上限"
 
-#: ui/toolbox.slint:144
+#: ui/toolbox.slint:152
 msgctxt "the account in front"
 msgid "Current"
 msgstr "当前"
 
-#: ui/toolbox.slint:147
+#: ui/toolbox.slint:155
 msgid "My profile"
 msgstr "我的资料"
 
 #
-#: ui/toolbox.slint:148
+#: ui/toolbox.slint:156
 msgid "{} to open · Esc to close"
 msgstr "{} 打开 · Esc 关闭"
 
 #
 #. The search.
-#: ui/toolbox.slint:150
+#: ui/toolbox.slint:158
 msgid "Nothing called “{}”"
 msgstr "没有名字里带「{}」的条目"
 
 #
 #
-#: ui/toolbox.slint:151
+#: ui/toolbox.slint:159
 msgid "{n} item"
 msgid_plural "{n} items"
 msgstr[0] "{n} 项"
 
 #
 #. Terminal.
-#: ui/toolbox.slint:153
+#: ui/toolbox.slint:161
 msgid "[x] pins to the status bar · click a name to open"
 msgstr "[x] 钉到底栏 · 点名字打开"
 
-#: ui/toolbox.slint:154
+#: ui/toolbox.slint:162
 msgid "/tools <category> jumps there · type it again to close"
 msgstr "/tools 分类 跳过去 · 再输一次关闭"
 
@@ -4663,172 +4663,184 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ 切换 · ↑/↓ 音量 · space 播放 · esc 关闭"
 
-#: ui/voice.slint:643
+#: ui/toolbox.slint:133 ui/voice.slint:646
 msgid "Voice input"
 msgstr "语音输入"
 
+#: ui/toolbox.slint:134
+msgid "Speak, and the words go into the composer, through your own OpenAI key"
+msgstr "说话，文字就进到输入框里；用的是你自己的 OpenAI 密钥"
+
 #. The sparkle's tip.
-#: ui/voice.slint:645
+#: ui/voice.slint:648
 msgid "Finish voice input"
 msgstr "结束语音输入"
 
 #. The sparkle's tip.
-#: ui/voice.slint:645
+#: ui/voice.slint:648
 msgid "Voice input: click, or hold while you speak"
 msgstr "语音输入：点一下，或者按住说话"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:648
+#: ui/voice.slint:651
 msgid "Record voice message"
 msgstr "录制语音消息"
 
-#: ui/voice.slint:649
+#: ui/voice.slint:652
 msgid "Release to send · Drag left to cancel"
 msgstr "松开发送 · 向左拖动取消"
 
-#: ui/voice.slint:650
+#: ui/voice.slint:653
 msgid "Release to cancel"
 msgstr "松开取消"
 
-#: ui/voice.slint:651
+#: ui/voice.slint:654
 msgid "Hold to record. Release to send."
 msgstr "按住录音，松开发送。"
 
-#: ui/voice.slint:653
+#: ui/voice.slint:656
 msgid "Stop"
 msgstr "停止"
 
-#: ui/voice.slint:655
+#: ui/voice.slint:658
 msgid "Transcribe"
 msgstr "转文字"
 
-#: ui/voice.slint:657
+#: ui/voice.slint:660
 msgid "Couldn't download"
 msgstr "下载失败"
 
-#: ui/voice.slint:659
+#: ui/voice.slint:662
 msgid "Loading…"
 msgstr "加载中…"
 
-#: ui/voice.slint:660
+#: ui/voice.slint:663
 msgid "Microphone access is off."
 msgstr "麦克风权限已关闭。"
 
-#: ui/voice.slint:670
+#: ui/voice.slint:673
 msgid "Connecting to OpenAI…"
 msgstr "正在连接 OpenAI…"
 
-#: ui/voice.slint:670
+#: ui/voice.slint:673
 msgid "Listening · {0}"
 msgstr "正在听 · {0}"
 
-#: ui/voice.slint:672
+#: ui/voice.slint:675
 msgid "Finishing…"
 msgstr "正在收尾…"
 
-#: ui/voice.slint:673
+#: ui/voice.slint:676
 msgid "Tidying the words…"
 msgstr "正在整理文字…"
 
-#: ui/voice.slint:674
+#: ui/voice.slint:677
 msgid "Voice input stopped"
 msgstr "语音输入已停止"
 
 #. In the words' place before any came.
-#: ui/voice.slint:677
+#: ui/voice.slint:680
 msgid "Speak now"
 msgstr "请说话"
 
-#: ui/voice.slint:678
+#: ui/voice.slint:681
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ 完成 · Esc 取消"
 
-#: ui/voice.slint:683
-msgid "Voice input needs your own OpenAI API key: add it in Settings → General."
-msgstr "语音输入需要你自己的 OpenAI API 密钥：在“设置 › 通用”里添加。"
+#: ui/voice.slint:686
+msgid "Voice input needs your own OpenAI API key."
+msgstr "语音输入需要你自己的 OpenAI API 密钥。"
 
-#: ui/voice.slint:684
+#: ui/voice.slint:687
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram 不能使用麦克风。请在“系统设置 › 隐私与安全性 › 麦克风”里允许。"
 
-#: ui/voice.slint:685
+#: ui/voice.slint:688
 msgid "No microphone could be opened: {0}"
 msgstr "无法打开麦克风：{0}"
 
-#: ui/voice.slint:686
-msgid "OpenAI refused the key. Check it in Settings → General."
-msgstr "OpenAI 拒绝了这个密钥。请在“设置 › 通用”里检查。"
-
-#: ui/voice.slint:687
+#: ui/voice.slint:690
 msgid "OpenAI says the key is out of credit or used too fast: {0}"
 msgstr "OpenAI 说这个密钥没有余额了，或者用得太频繁：{0}"
 
-#: ui/voice.slint:688
+#: ui/voice.slint:691
 msgid "Could not reach OpenAI: {0}"
 msgstr "无法连接 OpenAI：{0}"
 
-#: ui/voice.slint:689
+#: ui/voice.slint:692
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "什么也没听到。“系统设置 › 声音”里选的麦克风对吗？"
 
-#: ui/voice.slint:690
+#: ui/voice.slint:693
 msgid "OpenAI said: {0}"
 msgstr "OpenAI 说：{0}"
 
-#: ui/voice.slint:694
-msgid "Open Settings"
-msgstr "打开设置"
+#: ui/voice.slint:697
+msgid "Add key"
+msgstr "添加密钥"
 
-#. Settings → General → Voice input.
-#: ui/voice.slint:700
+#: ui/voice.slint:698
+msgid "Change key"
+msgstr "更换密钥"
+
+#. The toolbox's Voice input panel.
+#: ui/voice.slint:704
+msgid "Use voice input"
+msgstr "使用语音输入"
+
+#: ui/voice.slint:705
+msgid "Puts the sparkle in every chat's composer; when off, nothing goes to OpenAI"
+msgstr "在每个聊天的输入框里放上 ✦；关闭时，什么都不会发给 OpenAI"
+
+#: ui/voice.slint:706
 msgid "OpenAI API key"
 msgstr "OpenAI API 密钥"
 
-#: ui/voice.slint:701
+#: ui/voice.slint:707
 msgid "Your own key: OpenAI bills it for what is transcribed. It is kept sealed in FinchGram's database on this Mac."
 msgstr "你自己的密钥：转写的费用由 OpenAI 记在它上面。密钥封起来存在这台 Mac 上 FinchGram 的数据库里。"
 
-#: ui/voice.slint:705
+#: ui/voice.slint:711
 msgid "Get a key at platform.openai.com"
 msgstr "在 platform.openai.com 获取密钥"
 
-#: ui/voice.slint:707
+#: ui/voice.slint:713
 msgid "That is not an OpenAI key: they start with sk-."
 msgstr "这不是 OpenAI 的密钥：它们都以 sk- 开头。"
 
-#: ui/voice.slint:708
+#: ui/voice.slint:714
 msgid "Checking the key with OpenAI…"
 msgstr "正在向 OpenAI 检查密钥…"
 
-#: ui/voice.slint:709
+#: ui/voice.slint:715
 msgid "OpenAI accepts the key."
 msgstr "OpenAI 接受这个密钥。"
 
-#: ui/voice.slint:710
+#: ui/voice.slint:689 ui/voice.slint:716
 msgid "OpenAI refused the key."
 msgstr "OpenAI 拒绝了这个密钥。"
 
-#: ui/voice.slint:711
+#: ui/voice.slint:717
 msgid "Could not check the key: {0}"
 msgstr "无法检查密钥：{0}"
 
-#: ui/voice.slint:720
+#: ui/voice.slint:726
 msgid "Languages you speak"
 msgstr "你说的语言"
 
-#: ui/voice.slint:721
+#: ui/voice.slint:727
 msgid "Hints for OpenAI. With none chosen, it finds the language as you speak; sentences that mix languages work either way."
 msgstr "给 OpenAI 的提示。一个都不选，它会边听边判断语言；几种语言混着说，怎样都行。"
 
-#: ui/voice.slint:722
+#: ui/voice.slint:728
 msgid "Tidy the words"
 msgstr "整理文字"
 
-#: ui/voice.slint:723
+#: ui/voice.slint:729
 msgid "A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."
 msgstr "一个小模型去掉“嗯”“呃”这类口头禅和重复的词，并加上标点；它从不翻译。"
 
-#: ui/voice.slint:725
+#: ui/voice.slint:731
 msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to OpenAI under your key and nothing else does; OpenAI charges about $1 for an hour of speech. FinchGram keeps no recording."
 msgstr "在聊天的输入框里按一下 ✦（终端主题里输入 /voice），然后说话；再按一下，或者按 ⏎，文字就进到输入框里，由你来发送。你的声音以你的密钥发给 OpenAI，别的什么都不发；OpenAI 每小时语音大约收 1 美元。FinchGram 不保留任何录音。"
 
@@ -4860,23 +4872,23 @@ msgstr "官方赞助消息 · FinchGram 照常显示，不做屏蔽"
 msgid "Send to {0}"
 msgstr "发送到 {0}"
 
-#: ui/workbench/conversation.slint:2710
+#: ui/workbench/conversation.slint:2711
 msgid "Esc to cancel"
 msgstr "Esc 取消"
 
-#: ui/workbench/conversation.slint:2720
+#: ui/workbench/conversation.slint:2721
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ 保存 · ⇧⏎ 换行"
 
-#: ui/workbench/conversation.slint:2720
+#: ui/workbench/conversation.slint:2721
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ 保存 · ⏎ 换行"
 
-#: ui/workbench/conversation.slint:2721
+#: ui/workbench/conversation.slint:2722
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ 发送 · ⇧⏎ 换行"
 
-#: ui/workbench/conversation.slint:2721
+#: ui/workbench/conversation.slint:2722
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ 发送 · ⏎ 换行"
 

@@ -1996,7 +1996,8 @@ component CommandLine inherits Rectangle {
         } else if line.starts-with("/file") {
             Attachments.choose(AttachKind.file);
         } else if line.starts-with("/voice") {
-            // Voice input: once starts, again finishes (src/speech/).
+            // Voice input: once starts, again finishes; while it is off, its panel in the toolbox
+            // comes, where it is turned on (src/speech/).
             Voice.press();
             Voice.release();
         } else if line.starts-with("/mute") {

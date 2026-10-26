@@ -65,8 +65,9 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
   antes de enviar.
 - **Ditado por voz.** Clique em ✦ na caixa de texto e fale: o texto aparece enquanto você
   fala e vai para a caixa, sem os éé e hum, para você enviar. Usa a sua própria chave da OpenAI
-  (cerca de US$ 1 por hora de fala), definida em Configurações → Geral, em qualquer idioma da
-  interface e em frases que os misturam. Veja [docs/voice-input.md](../docs/voice-input.md).
+  (cerca de US$ 1 por hora de fala): Ferramentas → Ditado por voz, desligado até você ligar, e a
+  chave vai ali; em qualquer idioma da interface e em frases que os misturam. Veja
+  [docs/voice-input.md](../docs/voice-input.md).
 - **Assistentes de IA.** Claude Desktop, Claude Code e outros apps que falam o Model Context
   Protocol podem ler suas conversas e agir nelas pelo FinchGram, quando você permite: Ferramentas → Acesso de IA, desligado até você ligar, com as conversas que escolher e se um assistente pode
   enviar ou não, e uma pergunta na primeira vez que um app se conecta. Veja

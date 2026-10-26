@@ -73,8 +73,9 @@ un client non officiel, qui n'est pas fait par Telegram.
   annuler ou vers le haut pour le verrouiller, puis arrêtez-le pour l'écouter avant de l'envoyer.
 - **Saisie vocale.** Appuyez sur ✦ dans la zone de saisie et parlez : le texte s'affiche pendant
   que vous parlez et arrive dans la zone, sans les euh ni les hum, prêt à être envoyé par vous. Elle
-  passe par votre propre clé OpenAI (environ 1 $ par heure de parole), à indiquer dans Réglages →
-  Général, dans toutes les langues de l'interface et dans les phrases qui les mêlent. Voir
+  passe par votre propre clé OpenAI (environ 1 $ par heure de parole) : Boîte à outils → Saisie
+  vocale, désactivée tant que vous ne l'activez pas, et c'est là qu'on indique la clé ; dans toutes
+  les langues de l'interface et dans les phrases qui les mêlent. Voir
   [docs/voice-input.md](../docs/voice-input.md).
 - **Assistants IA.** Claude Desktop, Claude Code et les autres apps qui parlent le Model Context
   Protocol peuvent lire vos discussions et y agir via FinchGram, une fois que vous les y autorisez :

@@ -44,7 +44,7 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
 - **設定。** 開機時啟動、按 Enter 傳送、截圖快捷鍵、通知的聲音和預覽、兩步驟驗證、介面語言，還有更新：app 從
   GitHub Releases 自動更新，驗證不過的一律不裝。
 - **語音訊息。** 在聊天裡直接播放，帶波形、時長和 1×、1.5×、2× 倍速；聽過對方看得到，和 Telegram 官方應用程式一樣。按住麥克風錄音：放開傳送，向左拖取消，向上拖鎖定，鎖定後可以停下來先試聽再傳。
-- **語音輸入。** 在輸入框裡按一下 ✦ 然後說話：字隨著你說出現，去掉「嗯」「呃」之後進到輸入框裡，由你來傳送。用的是你自己的 OpenAI 金鑰（每小時語音約 1 美元），在設定 → 一般裡填寫；介面的每種語言都行，幾種語言混著說也行。見 [docs/voice-input.zh-Hans.md](../docs/voice-input.zh-Hans.md)。
+- **語音輸入。** 在輸入框裡按一下 ✦ 然後說話：字隨著你說出現，去掉「嗯」「呃」之後進到輸入框裡，由你來傳送。用的是你自己的 OpenAI 金鑰（每小時語音約 1 美元）：百寶箱 → 語音輸入，預設關著，打開後在那裡填寫金鑰；介面的每種語言都行，幾種語言混著說也行。見 [docs/voice-input.zh-Hans.md](../docs/voice-input.zh-Hans.md)。
 - **AI 助理。** Claude Desktop、Claude Code 以及其他會說 Model Context Protocol 的應用程式，可以在你允許後透過 FinchGram 讀你的聊天並代你操作：百寶箱 → AI 存取，預設關著，由你選哪些聊天、助理能不能傳訊息，應用程式第一次連線時會先問你。見 [docs/mcp.md](../docs/mcp.md)。
 - **語言。** 介面和這份 README 都有十一種語言。
 

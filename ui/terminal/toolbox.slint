@@ -11,6 +11,7 @@ import { Accounts, AccountRow } from "../telegram.slint";
 import { AccountColors, Look } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { AiPanel } from "../pages/ai-access.slint";
+import { VoicePanel } from "../pages/voice-input.slint";
 import { TerminalPalette as P } from "palette.slint";
 
 component T inherits Text {
@@ -451,8 +452,9 @@ export component TerminalToolbox inherits Rectangle {
                         padding-top: 10px;
                         padding-bottom: 14px;
                         spacing: 12px;
-                        // AI in the column, or the AI access card: the configuration itself, in the sections' place.
-                        if Toolbox.category == "ai" && !Toolbox.searching: AiPanel { }
+                        // A tool's own panel (the AI access card, the voice input card), in the sections' place.
+                        if Toolbox.panel == "ai-access" && !Toolbox.searching: AiPanel { }
+                        if Toolbox.panel == "voice-input" && !Toolbox.searching: VoicePanel { }
                         for section in Toolbox.sections: VerticalLayout {
                             spacing: 4px;
                             HorizontalLayout {

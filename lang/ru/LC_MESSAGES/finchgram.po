@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-25 23:51+0000\n"
+"POT-Creation-Date: 2026-10-26 05:02+0000\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -28,24 +28,24 @@ msgstr "Поиск в чате"
 msgid "Chat Info"
 msgstr "Информация о чате"
 
-#: ui/app.slint:91 ui/toolbox.slint:100
+#: ui/app.slint:91 ui/toolbox.slint:106
 msgid "Toolbox"
 msgstr "Инструменты"
 
-#: ui/app.slint:102 ui/pages/settings.slint:398
+#: ui/app.slint:102 ui/pages/settings.slint:397
 msgid "Workbench"
 msgstr "Верстак"
 
-#: ui/app.slint:110 ui/pages/settings.slint:406
+#: ui/app.slint:110 ui/pages/settings.slint:405
 msgid "Terminal"
 msgstr "Терминал"
 
-#: ui/app.slint:118 ui/pages/settings.slint:414
+#: ui/app.slint:118 ui/pages/settings.slint:413
 msgid "Broadsheet"
 msgstr "Газета"
 
 #. The tools.
-#: ui/app.slint:127 ui/pages/downloads.slint:1981 ui/toolbox.slint:113
+#: ui/app.slint:127 ui/pages/downloads.slint:1981 ui/toolbox.slint:119
 msgid "Downloads"
 msgstr "Загрузки"
 
@@ -103,7 +103,7 @@ msgstr "Добавьте комментарий (необязательно)"
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/broadsheet.slint:2813 ui/chat.slint:386 ui/compose.slint:244
 #: ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871
-#: ui/pages/downloads.slint:3338 ui/pages/settings.slint:1398
+#: ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209
 #: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1847
 #: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
@@ -121,11 +121,11 @@ msgstr "Пожаловаться"
 msgid "Delete"
 msgstr "Удалить"
 
-#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:437
+#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:436
 msgid "Light"
 msgstr "Светлая"
 
-#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:445
+#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:444
 msgid "Dark"
 msgstr "Тёмная"
 
@@ -149,7 +149,7 @@ msgid "Bots"
 msgstr "Боты"
 
 #: ui/broadsheet/broadsheet.slint:461 ui/terminal/terminal.slint:332
-#: ui/toolbox.slint:102
+#: ui/toolbox.slint:108
 msgid "All"
 msgstr "Все"
 
@@ -230,24 +230,24 @@ msgstr ""
 "Боты с галочкой принадлежат Telegram. Остальные боты видят всё, что вы им "
 "отправляете."
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3721
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3722
 #: ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
-#: ui/workbench/conversation.slint:2762
+#: ui/workbench/conversation.slint:2763
 msgid "Unmute"
 msgstr "Включить уведомления"
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3721
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3722
 #: ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
-#: ui/workbench/conversation.slint:2762
+#: ui/workbench/conversation.slint:2763
 msgid "Mute"
 msgstr "Выключить уведомления"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3790
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3791
 #: ui/terminal/terminal.slint:1661 ui/workbench/sidebar.slint:717
 msgid "Unpin"
 msgstr "Открепить"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3790
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3791
 #: ui/terminal/terminal.slint:1661 ui/workbench/sidebar.slint:717
 msgid "Pin"
 msgstr "Закрепить"
@@ -257,7 +257,7 @@ msgstr "Закрепить"
 msgid "Add to folder"
 msgstr "Добавить в папку"
 
-#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3798
+#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3799
 #: ui/terminal/terminal.slint:1669 ui/workbench/sidebar.slint:733
 msgid "Copy ID"
 msgstr "Копировать ID"
@@ -265,7 +265,7 @@ msgstr "Копировать ID"
 #: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228
 #: ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637
 #: ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849
-#: ui/pages/login.slint:909 ui/pages/settings.slint:1647
+#: ui/pages/login.slint:909 ui/pages/settings.slint:1458
 #: ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:783
 msgid "Back"
 msgstr "Назад"
@@ -292,7 +292,7 @@ msgstr "Реклама · размещена Telegram · пользовател�
 msgid "You"
 msgstr "Вы"
 
-#: ui/broadsheet/broadsheet.slint:2377 ui/terminal/terminal.slint:2075
+#: ui/broadsheet/broadsheet.slint:2377 ui/terminal/terminal.slint:2076
 msgid "Hide sender's name"
 msgstr "Скрыть имя отправителя"
 
@@ -305,7 +305,7 @@ msgstr "Щёлкните с Shift, чтобы выделить диапазон"
 msgid "Forward"
 msgstr "Переслать"
 
-#: ui/broadsheet/broadsheet.slint:3064 ui/terminal/terminal.slint:2605
+#: ui/broadsheet/broadsheet.slint:3064 ui/terminal/terminal.slint:2606
 msgid "Choose a chat on the left"
 msgstr "Выберите чат слева"
 
@@ -359,7 +359,7 @@ msgid "Info"
 msgstr "Информация"
 
 #. The foot.
-#: ui/chat-info.slint:77 ui/pages/settings.slint:99 ui/toolbox.slint:146
+#: ui/chat-info.slint:77 ui/pages/settings.slint:98 ui/toolbox.slint:154
 msgid "Settings"
 msgstr "Настройки"
 
@@ -419,8 +419,8 @@ msgstr "Нет непрочитанных"
 msgid "Auto-delete messages"
 msgstr "Автоудаление сообщений"
 
-#: ui/chat-info.slint:92 ui/chat.slint:381 ui/pages/settings.slint:947
-#: ui/pages/settings.slint:969
+#: ui/chat-info.slint:92 ui/chat.slint:381 ui/pages/settings.slint:758
+#: ui/pages/settings.slint:780
 msgid "Off"
 msgstr "Выкл."
 
@@ -529,7 +529,7 @@ msgid "Change photo"
 msgstr "Изменить фото"
 
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
-#: ui/pages/settings.slint:1458 ui/voice.slint:703
+#: ui/pages/settings.slint:1269 ui/voice.slint:709
 msgid "Save"
 msgstr "Сохранить"
 
@@ -801,7 +801,7 @@ msgid "Remove {0} from the channel?"
 msgstr "Удалить {0} из канала?"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
-#: ui/pages/downloads.slint:2952 ui/voice.slint:704
+#: ui/pages/downloads.slint:2952 ui/voice.slint:710
 msgid "Remove"
 msgstr "Убрать"
 
@@ -1219,11 +1219,11 @@ msgstr "Файл"
 msgid "Poll"
 msgstr "Опрос"
 
-#: ui/chat.slint:343 ui/voice.slint:656
+#: ui/chat.slint:343 ui/voice.slint:659
 msgid "Not available yet"
 msgstr "Пока недоступно"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:662
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:665
 msgid "Not allowed in this group"
 msgstr "Запрещено в этой группе"
 
@@ -1249,7 +1249,7 @@ msgstr ""
 "«Конфиденциальность и безопасность». Если FinchGram уже есть в списке, "
 "выключите и снова включите его."
 
-#: ui/chat.slint:351 ui/voice.slint:661 ui/voice.slint:695
+#: ui/chat.slint:351 ui/voice.slint:664 ui/voice.slint:699
 msgid "Open System Settings"
 msgstr "Открыть Системные настройки"
 
@@ -1349,7 +1349,7 @@ msgstr "Один просмотр"
 msgid "Hide with spoiler"
 msgstr "Скрыть спойлером"
 
-#: ui/chat.slint:387 ui/voice.slint:652
+#: ui/chat.slint:387 ui/voice.slint:655
 msgid "Send"
 msgstr "Отправить"
 
@@ -1634,7 +1634,7 @@ msgstr "Глобальный поиск"
 msgid "Found by phone number"
 msgstr "Найдено по номеру телефона"
 
-#: ui/compose.slint:136 ui/toolbox.slint:106
+#: ui/compose.slint:136 ui/toolbox.slint:112
 msgid "Messages"
 msgstr "Сообщения"
 
@@ -1803,7 +1803,7 @@ msgstr "Человек должен быть зарегистрирован в T
 
 #: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406
 #: ui/pages/login.slint:621 ui/pages/login.slint:842
-#: ui/pages/settings.slint:1567
+#: ui/pages/settings.slint:1378
 msgid "Next"
 msgstr "Далее"
 
@@ -1818,7 +1818,7 @@ msgstr[0] "Пригласить {n} человека"
 msgstr[1] "Пригласить {n} человек"
 msgstr[2] "Пригласить {n} человек"
 
-#: ui/compose.slint:229 ui/voice.slint:679
+#: ui/compose.slint:229 ui/voice.slint:682
 msgid "Done"
 msgstr "Готово"
 
@@ -2903,11 +2903,11 @@ msgstr "Изменить в «Доступе для ИИ»"
 msgid "Don't Allow"
 msgstr "Не разрешать"
 
-#: ui/pages/ai-access.slint:882 ui/pages/ai-access.slint:889
+#: ui/pages/ai-access.slint:890 ui/pages/ai-access.slint:897
 msgid "AI access"
 msgstr "Доступ для ИИ"
 
-#: ui/pages/ai-access.slint:892
+#: ui/pages/ai-access.slint:900
 msgid ""
 "An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
 "chats and act in them through FinchGram, with your account. FinchGram itself "
@@ -3554,7 +3554,7 @@ msgid "Sign in with"
 msgstr "Вход по"
 
 #: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760
-#: ui/pages/settings.slint:1416
+#: ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "Пароль"
 
@@ -3736,11 +3736,11 @@ msgstr "Несколько аккаунтов и папки"
 msgid "Keep work and life apart"
 msgstr "Работа отдельно, личное отдельно"
 
-#: ui/pages/login.slint:163 ui/pages/settings.slint:1113
+#: ui/pages/login.slint:163 ui/pages/settings.slint:924
 msgid "Fully open source — read the code"
 msgstr "Полностью открытый исходный код — его можно прочитать"
 
-#: ui/pages/login.slint:183 ui/pages/settings.slint:1142
+#: ui/pages/login.slint:183 ui/pages/settings.slint:953
 msgid ""
 "FinchGram is an unofficial client built on the Telegram API. It is not made "
 "by Telegram."
@@ -3814,7 +3814,7 @@ msgstr "Отправлен снова — проверьте Telegram"
 msgid "Didn't get it? Resend"
 msgstr "Не пришёл? Отправить снова"
 
-#: ui/pages/login.slint:545 ui/pages/settings.slint:1215
+#: ui/pages/login.slint:545 ui/pages/settings.slint:1026
 msgid "Two-step verification"
 msgstr "Двухэтапная аутентификация"
 
@@ -3826,28 +3826,28 @@ msgstr "В этом аккаунте включена двухэтапная а�
 msgid "Hint: {0}"
 msgstr "Подсказка: {0}"
 
-#: ui/pages/login.slint:580 ui/pages/settings.slint:1442
+#: ui/pages/login.slint:580 ui/pages/settings.slint:1253
 msgid "Forgot password?"
 msgstr "Забыли пароль?"
 
-#: ui/pages/login.slint:601 ui/pages/settings.slint:1610
+#: ui/pages/login.slint:601 ui/pages/settings.slint:1421
 msgid "Recover via email"
 msgstr "Восстановление по электронной почте"
 
-#: ui/pages/login.slint:602 ui/pages/settings.slint:1611
+#: ui/pages/login.slint:602 ui/pages/settings.slint:1422
 msgid "A recovery code was sent to {0}. Enter it to set a new password."
 msgstr ""
 "Код восстановления отправлен на {0}. Введите его, чтобы задать новый пароль."
 
-#: ui/pages/login.slint:629 ui/pages/settings.slint:1639
+#: ui/pages/login.slint:629 ui/pages/settings.slint:1450
 msgid "Can't access this email?"
 msgstr "Нет доступа к этой почте?"
 
-#: ui/pages/login.slint:651 ui/pages/settings.slint:1454
+#: ui/pages/login.slint:651 ui/pages/settings.slint:1265
 msgid "Set a new password"
 msgstr "Задайте новый пароль"
 
-#: ui/pages/login.slint:652 ui/pages/settings.slint:1455
+#: ui/pages/login.slint:652 ui/pages/settings.slint:1266
 msgid "You'll need this password when signing in on a new device."
 msgstr "Этот пароль понадобится при входе с нового устройства."
 
@@ -3999,11 +3999,11 @@ msgstr "Новый пароль"
 msgid "Re-enter new password"
 msgstr "Повторите новый пароль"
 
-#: ui/pages/password.slint:182 ui/pages/settings.slint:1481
+#: ui/pages/password.slint:182 ui/pages/settings.slint:1292
 msgid "Password hint (optional)"
 msgstr "Подсказка к паролю (необязательно)"
 
-#: ui/pages/password.slint:192 ui/pages/settings.slint:1473
+#: ui/pages/password.slint:192 ui/pages/settings.slint:1284
 msgid ""
 "The hint is shown on the sign-in screen to anyone who knows your number. "
 "Don't write the password itself."
@@ -4016,7 +4016,7 @@ msgid "Current"
 msgstr "Текущий"
 
 #. The accounts.
-#: ui/pages/profile.slint:119 ui/toolbox.slint:142
+#: ui/pages/profile.slint:119 ui/toolbox.slint:150
 msgid "Add account"
 msgstr "Добавить аккаунт"
 
@@ -4060,84 +4060,84 @@ msgstr "По нему боты и скрипты узнают этот акка�
 msgid "Profile"
 msgstr "Профиль"
 
-#: ui/pages/settings.slint:108 ui/pages/settings.slint:1745
+#: ui/pages/settings.slint:107 ui/pages/settings.slint:1556
 msgid "General"
 msgstr "Основные"
 
-#: ui/pages/settings.slint:114 ui/pages/settings.slint:1746
+#: ui/pages/settings.slint:113 ui/pages/settings.slint:1557
 msgid "Notifications & sounds"
 msgstr "Уведомления и звуки"
 
-#: ui/pages/settings.slint:120 ui/pages/settings.slint:1736
+#: ui/pages/settings.slint:119 ui/pages/settings.slint:1547
 msgid "Privacy & security"
 msgstr "Конфиденциальность и безопасность"
 
-#: ui/pages/settings.slint:132
+#: ui/pages/settings.slint:131
 msgid "Folders"
 msgstr "Папки"
 
-#: ui/pages/settings.slint:137
+#: ui/pages/settings.slint:136
 msgid "Finch features"
 msgstr "Функции Finch"
 
-#: ui/pages/settings.slint:142 ui/pages/settings.slint:1749
+#: ui/pages/settings.slint:141 ui/pages/settings.slint:1560
 msgid "Appearance"
 msgstr "Оформление"
 
-#: ui/pages/settings.slint:148 ui/pages/settings.slint:1747
+#: ui/pages/settings.slint:147 ui/pages/settings.slint:1558
 msgid "Language"
 msgstr "Язык"
 
-#: ui/pages/settings.slint:154
+#: ui/pages/settings.slint:153
 msgid "Data & storage"
 msgstr "Данные и память"
 
-#: ui/pages/settings.slint:159
+#: ui/pages/settings.slint:158
 msgid "Advanced"
 msgstr "Дополнительно"
 
-#: ui/pages/settings.slint:164 ui/pages/settings.slint:1749
+#: ui/pages/settings.slint:163 ui/pages/settings.slint:1560
 msgid "About"
 msgstr "О программе"
 
-#: ui/pages/settings.slint:338
+#: ui/pages/settings.slint:337
 msgid "Version {0} available"
 msgstr "Доступна версия {0}"
 
-#: ui/pages/settings.slint:340
+#: ui/pages/settings.slint:339
 msgid "Downloading {0}% · {1} of {2}"
 msgstr "Загрузка {0}% · {1} из {2}"
 
-#: ui/pages/settings.slint:341
+#: ui/pages/settings.slint:340
 msgid "Installing…"
 msgstr "Установка…"
 
-#: ui/pages/settings.slint:342
+#: ui/pages/settings.slint:341
 msgid "You're up to date"
 msgstr "У вас последняя версия"
 
-#: ui/pages/settings.slint:343
+#: ui/pages/settings.slint:342
 msgid "The update failed"
 msgstr "Не удалось обновить"
 
-#: ui/pages/settings.slint:344 ui/pages/settings.slint:360
-#: ui/pages/settings.slint:1056
+#: ui/pages/settings.slint:343 ui/pages/settings.slint:359
+#: ui/pages/settings.slint:867
 msgid "Version {0}"
 msgstr "Версия {0}"
 
-#: ui/pages/settings.slint:368
+#: ui/pages/settings.slint:367
 msgid "Install and restart"
 msgstr "Установить и перезапустить"
 
-#: ui/pages/settings.slint:375
+#: ui/pages/settings.slint:374
 msgid "Check for updates"
 msgstr "Проверить обновления"
 
-#: ui/pages/settings.slint:391
+#: ui/pages/settings.slint:390
 msgid "Theme"
 msgstr "Тема"
 
-#: ui/pages/settings.slint:422
+#: ui/pages/settings.slint:421
 msgid ""
 "Workbench is an editor's layout, Broadsheet a newspaper's, Terminal a "
 "console's. The same chats and settings in all three."
@@ -4145,316 +4145,316 @@ msgstr ""
 "Верстак устроен как редактор, Газета — как газетная полоса, Терминал — как "
 "консоль. Чаты и настройки во всех трёх одни и те же."
 
-#: ui/pages/settings.slint:430
+#: ui/pages/settings.slint:429
 msgid "Light and dark"
 msgstr "Светлая и тёмная"
 
-#: ui/pages/settings.slint:455
+#: ui/pages/settings.slint:454
 msgid "Match system appearance"
 msgstr "Как в системе"
 
-#: ui/pages/settings.slint:486
+#: ui/pages/settings.slint:485
 msgid "Screenshot shortcut"
 msgstr "Сочетание клавиш для снимка экрана"
 
-#: ui/pages/settings.slint:503
+#: ui/pages/settings.slint:502
 msgid "Type a new shortcut…"
 msgstr "Нажмите новое сочетание клавиш…"
 
-#: ui/pages/settings.slint:546
+#: ui/pages/settings.slint:545
 msgid "Reset"
 msgstr "Сбросить"
 
-#: ui/pages/settings.slint:735
+#: ui/pages/settings.slint:574
 msgid "Startup & window"
 msgstr "Запуск и окно"
 
-#: ui/pages/settings.slint:740
+#: ui/pages/settings.slint:579
 msgid "Launch at login"
 msgstr "Открывать при входе в систему"
 
-#: ui/pages/settings.slint:750
+#: ui/pages/settings.slint:589
 msgid "Show in menu bar"
 msgstr "Показывать в строке меню"
 
-#: ui/pages/settings.slint:760
+#: ui/pages/settings.slint:599
 msgid "When closing the window"
 msgstr "При закрытии окна"
 
-#: ui/pages/settings.slint:761
+#: ui/pages/settings.slint:600
 msgid "Quit"
 msgstr "Завершить"
 
-#: ui/pages/settings.slint:761
+#: ui/pages/settings.slint:600
 msgid "Minimize to tray"
 msgstr "Свернуть в трей"
 
-#: ui/pages/settings.slint:773
+#: ui/pages/settings.slint:612
 msgid "Input"
 msgstr "Ввод"
 
-#: ui/pages/settings.slint:778
+#: ui/pages/settings.slint:617
 msgid "Send with Enter"
 msgstr "Отправлять по Enter"
 
-#: ui/pages/settings.slint:787
+#: ui/pages/settings.slint:626
 msgid "Spell check"
 msgstr "Проверка правописания"
 
-#: ui/pages/settings.slint:793
+#: ui/pages/settings.slint:632
 msgid "Replace emoji automatically"
 msgstr "Автоматически заменять эмодзи"
 
-#: ui/pages/settings.slint:829
+#: ui/pages/settings.slint:640
 msgid "Shortcuts"
 msgstr "Сочетания клавиш"
 
-#: ui/pages/settings.slint:834
+#: ui/pages/settings.slint:645
 msgid "Keyboard shortcuts"
 msgstr "Сочетания клавиш"
 
-#: ui/pages/settings.slint:835
+#: ui/pages/settings.slint:646
 msgctxt "shortcuts"
 msgid "View"
 msgstr "Показать"
 
-#: ui/pages/settings.slint:843
+#: ui/pages/settings.slint:654
 msgid "Screenshots"
 msgstr "Снимки экрана"
 
-#: ui/pages/settings.slint:850
+#: ui/pages/settings.slint:661
 msgid "Hide the FinchGram window while taking a screenshot"
 msgstr "Скрывать окно FinchGram при создании снимка экрана"
 
-#: ui/pages/settings.slint:859
+#: ui/pages/settings.slint:670
 msgid "Also when FinchGram is in the background"
 msgstr "Даже когда FinchGram в фоне"
 
-#: ui/pages/settings.slint:878 ui/pages/settings.slint:883
+#: ui/pages/settings.slint:689 ui/pages/settings.slint:694
 msgid "Desktop notifications"
 msgstr "Уведомления на рабочем столе"
 
-#: ui/pages/settings.slint:892
+#: ui/pages/settings.slint:703
 msgid "Message previews"
 msgstr "Показывать текст сообщений"
 
-#: ui/pages/settings.slint:902
+#: ui/pages/settings.slint:713
 msgid "Sounds"
 msgstr "Звуки"
 
-#: ui/pages/settings.slint:912
+#: ui/pages/settings.slint:723
 msgid "Flash taskbar"
 msgstr "Подпрыгивание значка в Dock"
 
-#: ui/pages/settings.slint:921
+#: ui/pages/settings.slint:732
 msgid "Count muted chats in badge"
 msgstr "Учитывать чаты без уведомлений в счётчике"
 
-#: ui/pages/settings.slint:930
+#: ui/pages/settings.slint:741
 msgid "Notifications from other accounts"
 msgstr "Уведомления от других аккаунтов"
 
-#: ui/pages/settings.slint:931
+#: ui/pages/settings.slint:742
 msgid "When off, only the current account notifies you"
 msgstr "Если выключено, уведомления приходят только от текущего аккаунта"
 
-#: ui/pages/settings.slint:939
+#: ui/pages/settings.slint:750
 msgid "By chat type"
 msgstr "По типу чата"
 
-#: ui/pages/settings.slint:946
+#: ui/pages/settings.slint:757
 msgid "Private chats"
 msgstr "Личные чаты"
 
-#: ui/pages/settings.slint:947 ui/pages/settings.slint:958
-#: ui/pages/settings.slint:1216
+#: ui/pages/settings.slint:758 ui/pages/settings.slint:769
+#: ui/pages/settings.slint:1027
 msgid "On"
 msgstr "Вкл."
 
-#: ui/pages/settings.slint:957
+#: ui/pages/settings.slint:768
 msgid "Groups"
 msgstr "Группы"
 
-#: ui/pages/settings.slint:985
+#: ui/pages/settings.slint:796
 msgid "Changes the interface only — messages aren't translated"
 msgstr "Меняет только интерфейс — сообщения не переводятся"
 
-#: ui/pages/settings.slint:1065
+#: ui/pages/settings.slint:876
 msgid "Updates"
 msgstr "Обновления"
 
-#: ui/pages/settings.slint:1072
+#: ui/pages/settings.slint:883
 msgid "Check for updates automatically"
 msgstr "Проверять обновления автоматически"
 
-#: ui/pages/settings.slint:1080
+#: ui/pages/settings.slint:891
 msgid ""
 "Updates come from GitHub Releases and are signature-checked before install."
 msgstr ""
 "Обновления приходят из GitHub Releases, и перед установкой проверяется их "
 "подпись."
 
-#: ui/pages/settings.slint:1162
+#: ui/pages/settings.slint:973
 msgid "Who can see"
 msgstr "Кто может видеть"
 
-#: ui/pages/settings.slint:1173
+#: ui/pages/settings.slint:984
 msgid "Last seen"
 msgstr "Время захода"
 
-#: ui/pages/settings.slint:1179
+#: ui/pages/settings.slint:990
 msgid "Profile photos"
 msgstr "Фото профиля"
 
-#: ui/pages/settings.slint:1185
+#: ui/pages/settings.slint:996
 msgid "Forwarded messages"
 msgstr "Пересланные сообщения"
 
-#: ui/pages/settings.slint:1191
+#: ui/pages/settings.slint:1002
 msgid "Calls"
 msgstr "Звонки"
 
-#: ui/pages/settings.slint:1197
+#: ui/pages/settings.slint:1008
 msgid "Invites to groups"
 msgstr "Приглашения в группы"
 
-#: ui/pages/settings.slint:1202
+#: ui/pages/settings.slint:1013
 msgid "Stored on Telegram servers and synced across all your apps."
 msgstr ""
 "Хранятся на серверах Telegram и синхронизируются между всеми вашими "
 "приложениями."
 
-#: ui/pages/settings.slint:1210
+#: ui/pages/settings.slint:1021
 msgid "Security"
 msgstr "Безопасность"
 
-#: ui/pages/settings.slint:1228
+#: ui/pages/settings.slint:1039
 msgid "Local passcode"
 msgstr "Код-пароль"
 
-#: ui/pages/settings.slint:1234
+#: ui/pages/settings.slint:1045
 msgid "Active sessions"
 msgstr "Активные сеансы"
 
-#: ui/pages/settings.slint:1240
+#: ui/pages/settings.slint:1051
 msgid "Blocked users"
 msgstr "Заблокированные пользователи"
 
-#: ui/pages/settings.slint:1246
+#: ui/pages/settings.slint:1057
 msgid "Delete my account"
 msgstr "Удалить мой аккаунт"
 
-#: ui/pages/settings.slint:1279
+#: ui/pages/settings.slint:1090
 msgid "Two-step verification is on"
 msgstr "Двухэтапная аутентификация включена"
 
-#: ui/pages/settings.slint:1279
+#: ui/pages/settings.slint:1090
 msgid "Two-step verification is off"
 msgstr "Двухэтапная аутентификация выключена"
 
-#: ui/pages/settings.slint:1286
+#: ui/pages/settings.slint:1097
 msgid ""
 "When you sign in on a new device, you'll need this password in addition to "
 "the code."
 msgstr "При входе с нового устройства помимо кода понадобится этот пароль."
 
-#: ui/pages/settings.slint:1287
+#: ui/pages/settings.slint:1098
 msgid ""
 "Turn it on to require an extra password when signing in on a new device."
 msgstr ""
 "Включите, чтобы при входе с нового устройства требовался дополнительный "
 "пароль."
 
-#: ui/pages/settings.slint:1316
+#: ui/pages/settings.slint:1127
 msgid "Password will reset on {0}"
 msgstr "Пароль будет сброшен {0}"
 
-#: ui/pages/settings.slint:1322
+#: ui/pages/settings.slint:1133
 msgid "Come back then to set a new password. If this wasn't you, cancel now."
 msgstr ""
 "Вернитесь в это время, чтобы задать новый пароль. Если это были не вы, "
 "отмените сейчас."
 
-#: ui/pages/settings.slint:1331
+#: ui/pages/settings.slint:1142
 msgid "Cancel reset"
 msgstr "Отменить сброс"
 
-#: ui/pages/settings.slint:1343
+#: ui/pages/settings.slint:1154
 msgid "Change password"
 msgstr "Изменить пароль"
 
-#: ui/pages/settings.slint:1351
+#: ui/pages/settings.slint:1162
 msgid "Password hint"
 msgstr "Подсказка к паролю"
 
-#: ui/pages/settings.slint:1360
+#: ui/pages/settings.slint:1171
 msgid "Recovery email"
 msgstr "Почта для восстановления"
 
-#: ui/pages/settings.slint:1369
+#: ui/pages/settings.slint:1180
 msgid "Turn off two-step verification"
 msgstr "Выключить двухэтапную аутентификацию"
 
-#: ui/pages/settings.slint:1379 ui/pages/settings.slint:1454
+#: ui/pages/settings.slint:1190 ui/pages/settings.slint:1265
 msgid "Set password"
 msgstr "Задать пароль"
 
-#: ui/pages/settings.slint:1407
+#: ui/pages/settings.slint:1218
 msgid "Enter your current password"
 msgstr "Введите текущий пароль"
 
-#: ui/pages/settings.slint:1408
+#: ui/pages/settings.slint:1219
 msgid "Confirm it's you before changing two-step verification settings."
 msgstr ""
 "Подтвердите, что это вы, прежде чем менять настройки двухэтапной "
 "аутентификации."
 
-#: ui/pages/settings.slint:1472
+#: ui/pages/settings.slint:1283
 msgid "Change password hint"
 msgstr "Изменить подсказку к паролю"
 
-#: ui/pages/settings.slint:1509
+#: ui/pages/settings.slint:1320
 msgid "Change recovery email"
 msgstr "Изменить почту для восстановления"
 
-#: ui/pages/settings.slint:1510
+#: ui/pages/settings.slint:1321
 msgid ""
 "If you forget your password, a recovery code will be sent to this address."
 msgstr "Если вы забудете пароль, код восстановления придёт на этот адрес."
 
-#: ui/pages/settings.slint:1518
+#: ui/pages/settings.slint:1329
 msgid "Email address"
 msgstr "Адрес электронной почты"
 
-#: ui/pages/settings.slint:1533
+#: ui/pages/settings.slint:1344
 msgid "Send code"
 msgstr "Отправить код"
 
-#: ui/pages/settings.slint:1546
+#: ui/pages/settings.slint:1357
 msgid "Enter the email code"
 msgstr "Введите код из письма"
 
-#: ui/pages/settings.slint:1547
+#: ui/pages/settings.slint:1358
 msgid "Code sent to {0}"
 msgstr "Код отправлен на {0}"
 
-#: ui/pages/settings.slint:1588
+#: ui/pages/settings.slint:1399
 msgid "Turn off two-step verification?"
 msgstr "Выключить двухэтапную аутентификацию?"
 
-#: ui/pages/settings.slint:1589
+#: ui/pages/settings.slint:1400
 msgid "Anyone who gets your sign-in code will be able to access your account."
 msgstr "Любой, кто получит ваш код для входа, сможет войти в ваш аккаунт."
 
-#: ui/pages/settings.slint:1596
+#: ui/pages/settings.slint:1407
 msgid "Turn off"
 msgstr "Выключить"
 
-#: ui/pages/settings.slint:1659
+#: ui/pages/settings.slint:1470
 msgid "Request password reset"
 msgstr "Запросить сброс пароля"
 
-#: ui/pages/settings.slint:1660
+#: ui/pages/settings.slint:1471
 msgid ""
 "If you can't get the recovery email, you can request a reset. To protect "
 "your account it takes 7 days, and you can cancel any time before then."
@@ -4462,19 +4462,19 @@ msgstr ""
 "Если письмо для восстановления недоступно, можно запросить сброс. Для защиты "
 "аккаунта это займёт 7 дней, и до этого момента запрос можно отменить."
 
-#: ui/pages/settings.slint:1667
+#: ui/pages/settings.slint:1478
 msgid "Request reset"
 msgstr "Запросить сброс"
 
-#: ui/pages/settings.slint:1763
+#: ui/pages/settings.slint:1574
 msgid "Password updated"
 msgstr "Пароль обновлён"
 
-#: ui/pages/settings.slint:1764
+#: ui/pages/settings.slint:1575
 msgid "Password hint updated"
 msgstr "Подсказка к паролю обновлена"
 
-#: ui/pages/settings.slint:1764
+#: ui/pages/settings.slint:1575
 msgid "Recovery email updated"
 msgstr "Почта для восстановления обновлена"
 
@@ -4554,135 +4554,135 @@ msgstr "Копировать ID этого чата"
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "Поиск по чатам, контактам, @username и сообщениям"
 
-#: ui/terminal/terminal.slint:2226
+#: ui/terminal/terminal.slint:2227
 msgid "unmute"
 msgstr "включить уведомления"
 
-#: ui/terminal/terminal.slint:2226
+#: ui/terminal/terminal.slint:2227
 msgid "mute"
 msgstr "выключить уведомления"
 
-#: ui/terminal/terminal.slint:2325
+#: ui/terminal/terminal.slint:2326
 msgid "Write a message, or / for commands"
 msgstr "Напишите сообщение или / для команд"
 
-#: ui/terminal/terminal.slint:2441
+#: ui/terminal/terminal.slint:2442
 msgid "save"
 msgstr "сохранить"
 
-#: ui/terminal/terminal.slint:2384 ui/terminal/terminal.slint:2441
+#: ui/terminal/terminal.slint:2385 ui/terminal/terminal.slint:2442
 msgid "send"
 msgstr "отправить"
 
-#: ui/terminal/terminal.slint:2540
+#: ui/terminal/terminal.slint:2541
 msgid "connected"
 msgstr "подключено"
 
-#: ui/terminal/terminal.slint:2565
+#: ui/terminal/terminal.slint:2566
 msgctxt "terminal"
 msgid "cmd"
 msgstr "команды"
 
 #
-#: ui/toolbox.slint:101
+#: ui/toolbox.slint:107
 msgid "Search the toolbox"
 msgstr "Поиск по инструментам"
 
-#: ui/toolbox.slint:105
+#: ui/toolbox.slint:111
 msgid "Media"
 msgstr "Медиа"
 
 #
 #
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:115
 msgid "Status bar"
 msgstr "Нижняя панель"
 
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:115
 msgid "Rail"
 msgstr "Боковая панель"
 
 #
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:115
 msgid "Activity bar"
 msgstr "Панель действий"
 
-#: ui/toolbox.slint:111
+#: ui/toolbox.slint:117
 msgid "Switch a tool on here to show it on the {}."
 msgstr "Включите здесь инструмент, чтобы он появился на {}."
 
-#: ui/toolbox.slint:114
+#: ui/toolbox.slint:120
 msgid "Pick files from your own servers and download them"
 msgstr "Выбирайте файлы на своих серверах и скачивайте"
 
 #
-#: ui/toolbox.slint:115
+#: ui/toolbox.slint:121
 msgid "Live streams"
 msgstr "Трансляции"
 
 #
-#: ui/toolbox.slint:116
+#: ui/toolbox.slint:122
 msgid "Live streams going on in your groups and channels"
 msgstr "Идущие трансляции в ваших группах и каналах"
 
-#: ui/toolbox.slint:118
+#: ui/toolbox.slint:124
 msgid "Your own media library, played in the built-in player"
 msgstr "Своя медиатека во встроенном плеере"
 
 #
-#: ui/toolbox.slint:120
+#: ui/toolbox.slint:126
 msgid "Your own media library on Emby, played in the built-in player"
 msgstr "Своя медиатека на Emby во встроенном плеере"
 
-#: ui/toolbox.slint:121
+#: ui/toolbox.slint:127
 msgid "Keyword hiding"
 msgstr "Скрытие по словам"
 
 #
-#: ui/toolbox.slint:122
+#: ui/toolbox.slint:128
 msgid "Tuck away messages by keyword; unhide any time"
 msgstr "Сворачивает сообщения по словам; можно вернуть"
 
-#: ui/toolbox.slint:123
+#: ui/toolbox.slint:129
 msgid "Scheduled messages"
 msgstr "Отложенные сообщения"
 
-#: ui/toolbox.slint:124
+#: ui/toolbox.slint:130
 msgid "Sent by the server on time, even with your computer off"
 msgstr "Сервер отправит вовремя, даже если компьютер выключен"
 
-#: ui/toolbox.slint:126
+#: ui/toolbox.slint:132
 msgid "Let other apps read the chats you allow, through FinchGram"
 msgstr "Другие приложения читают разрешённые вами чаты через FinchGram"
 
 #. The protocols under Downloads.
-#: ui/toolbox.slint:128
+#: ui/toolbox.slint:136
 msgid "Protocol · chosen when you add a server"
 msgstr "Протокол · выбирается при добавлении сервера"
 
-#: ui/toolbox.slint:129
+#: ui/toolbox.slint:137
 msgid "Common on NAS boxes, cloud drives and seedboxes"
 msgstr "Обычен для NAS, облаков и сидбоксов"
 
-#: ui/toolbox.slint:130
+#: ui/toolbox.slint:138
 msgid "The old one, unencrypted"
 msgstr "Старый, без шифрования"
 
-#: ui/toolbox.slint:131
+#: ui/toolbox.slint:139
 msgid "FTP with TLS encryption"
 msgstr "FTP с шифрованием TLS"
 
-#: ui/toolbox.slint:132
+#: ui/toolbox.slint:140
 msgid ""
 "Over SSH; on seedboxes it usually doesn’t count against your traffic quota"
 msgstr "Через SSH; на сидбоксах обычно не расходует квоту трафика"
 
 #
 #. What goes on.
-#: ui/toolbox.slint:134
+#: ui/toolbox.slint:142
 msgid "{n} downloading"
 msgid_plural "{n} downloading"
 msgstr[0] "загружается: {n}"
@@ -4691,7 +4691,7 @@ msgstr[2] "загружается: {n}"
 
 #
 #
-#: ui/toolbox.slint:135
+#: ui/toolbox.slint:143
 msgid "{n} server"
 msgid_plural "{n} servers"
 msgstr[0] "серверов: {n}"
@@ -4699,56 +4699,56 @@ msgstr[1] "серверов: {n}"
 msgstr[2] "серверов: {n}"
 
 #
-#: ui/toolbox.slint:136
+#: ui/toolbox.slint:144
 msgid "Not in this version"
 msgstr "Нет в этой версии"
 
 #
-#: ui/toolbox.slint:137
+#: ui/toolbox.slint:145
 msgid "Pinned to the {}"
 msgstr "Закреплено на {}"
 
-#: ui/toolbox.slint:138
+#: ui/toolbox.slint:146
 msgid "activity bar"
 msgstr "панели действий"
 
-#: ui/toolbox.slint:139
+#: ui/toolbox.slint:147
 msgid "rail"
 msgstr "боковой панели"
 
 #
-#: ui/toolbox.slint:140
+#: ui/toolbox.slint:148
 msgid "status bar"
 msgstr "нижней панели"
 
 #
-#: ui/toolbox.slint:143
+#: ui/toolbox.slint:151
 msgid "Limit reached"
 msgstr "Достигнут предел"
 
-#: ui/toolbox.slint:144
+#: ui/toolbox.slint:152
 msgctxt "the account in front"
 msgid "Current"
 msgstr "Текущий"
 
-#: ui/toolbox.slint:147
+#: ui/toolbox.slint:155
 msgid "My profile"
 msgstr "Мой профиль"
 
 #
-#: ui/toolbox.slint:148
+#: ui/toolbox.slint:156
 msgid "{} to open · Esc to close"
 msgstr "{} — открыть · Esc — закрыть"
 
 #
 #. The search.
-#: ui/toolbox.slint:150
+#: ui/toolbox.slint:158
 msgid "Nothing called “{}”"
 msgstr "Ничего с названием «{}»"
 
 #
 #
-#: ui/toolbox.slint:151
+#: ui/toolbox.slint:159
 msgid "{n} item"
 msgid_plural "{n} items"
 msgstr[0] "элементов: {n}"
@@ -4757,11 +4757,11 @@ msgstr[2] "элементов: {n}"
 
 #
 #. Terminal.
-#: ui/toolbox.slint:153
+#: ui/toolbox.slint:161
 msgid "[x] pins to the status bar · click a name to open"
 msgstr "[x] закрепляет на нижней панели · нажмите на название, чтобы открыть"
 
-#: ui/toolbox.slint:154
+#: ui/toolbox.slint:162
 msgid "/tools <category> jumps there · type it again to close"
 msgstr "/tools <раздел> — перейти · ещё раз — закрыть"
 
@@ -4803,172 +4803,184 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ листать · ↑/↓ громкость · пробел воспроизвести · esc закрыть"
 
-#: ui/voice.slint:643
+#: ui/toolbox.slint:133 ui/voice.slint:646
 msgid "Voice input"
 msgstr "Голосовой ввод"
 
+#: ui/toolbox.slint:134
+msgid "Speak, and the words go into the composer, through your own OpenAI key"
+msgstr "Говорите, и текст появляется в поле ввода; работает с вашим собственным ключом OpenAI"
+
 #. The sparkle's tip.
-#: ui/voice.slint:645
+#: ui/voice.slint:648
 msgid "Finish voice input"
 msgstr "Закончить голосовой ввод"
 
 #. The sparkle's tip.
-#: ui/voice.slint:645
+#: ui/voice.slint:648
 msgid "Voice input: click, or hold while you speak"
 msgstr "Голосовой ввод: щёлкните или удерживайте, пока говорите"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:648
+#: ui/voice.slint:651
 msgid "Record voice message"
 msgstr "Записать голосовое сообщение"
 
-#: ui/voice.slint:649
+#: ui/voice.slint:652
 msgid "Release to send · Drag left to cancel"
 msgstr "Отпустите, чтобы отправить · Потяните влево, чтобы отменить"
 
-#: ui/voice.slint:650
+#: ui/voice.slint:653
 msgid "Release to cancel"
 msgstr "Отпустите, чтобы отменить"
 
-#: ui/voice.slint:651
+#: ui/voice.slint:654
 msgid "Hold to record. Release to send."
 msgstr "Удерживайте, чтобы записать. Отпустите, чтобы отправить."
 
-#: ui/voice.slint:653
+#: ui/voice.slint:656
 msgid "Stop"
 msgstr "Остановить"
 
-#: ui/voice.slint:655
+#: ui/voice.slint:658
 msgid "Transcribe"
 msgstr "Расшифровать"
 
-#: ui/voice.slint:657
+#: ui/voice.slint:660
 msgid "Couldn't download"
 msgstr "Не удалось загрузить"
 
-#: ui/voice.slint:659
+#: ui/voice.slint:662
 msgid "Loading…"
 msgstr "Загрузка…"
 
-#: ui/voice.slint:660
+#: ui/voice.slint:663
 msgid "Microphone access is off."
 msgstr "Доступ к микрофону выключен."
 
-#: ui/voice.slint:670
+#: ui/voice.slint:673
 msgid "Connecting to OpenAI…"
 msgstr "Подключение к OpenAI…"
 
-#: ui/voice.slint:670
+#: ui/voice.slint:673
 msgid "Listening · {0}"
 msgstr "Слушаю · {0}"
 
-#: ui/voice.slint:672
+#: ui/voice.slint:675
 msgid "Finishing…"
 msgstr "Завершение…"
 
-#: ui/voice.slint:673
+#: ui/voice.slint:676
 msgid "Tidying the words…"
 msgstr "Привожу текст в порядок…"
 
-#: ui/voice.slint:674
+#: ui/voice.slint:677
 msgid "Voice input stopped"
 msgstr "Голосовой ввод остановлен"
 
 #. In the words' place before any came.
-#: ui/voice.slint:677
+#: ui/voice.slint:680
 msgid "Speak now"
 msgstr "Говорите"
 
-#: ui/voice.slint:678
+#: ui/voice.slint:681
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ готово · Esc отмена"
 
-#: ui/voice.slint:683
-msgid "Voice input needs your own OpenAI API key: add it in Settings → General."
-msgstr "Для голосового ввода нужен ваш собственный ключ API OpenAI: добавьте его в Настройках → «Основные»."
+#: ui/voice.slint:686
+msgid "Voice input needs your own OpenAI API key."
+msgstr "Для голосового ввода нужен ваш собственный ключ API OpenAI."
 
-#: ui/voice.slint:684
+#: ui/voice.slint:687
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram не может пользоваться микрофоном. Разрешите это в Системных настройках → «Конфиденциальность и безопасность» → «Микрофон»."
 
-#: ui/voice.slint:685
+#: ui/voice.slint:688
 msgid "No microphone could be opened: {0}"
 msgstr "Не удалось открыть микрофон: {0}"
 
-#: ui/voice.slint:686
-msgid "OpenAI refused the key. Check it in Settings → General."
-msgstr "OpenAI отклонил ключ. Проверьте его в Настройках → «Основные»."
-
-#: ui/voice.slint:687
+#: ui/voice.slint:690
 msgid "OpenAI says the key is out of credit or used too fast: {0}"
 msgstr "По словам OpenAI, на ключе нет средств или он используется слишком часто: {0}"
 
-#: ui/voice.slint:688
+#: ui/voice.slint:691
 msgid "Could not reach OpenAI: {0}"
 msgstr "Не удалось связаться с OpenAI: {0}"
 
-#: ui/voice.slint:689
+#: ui/voice.slint:692
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "Ничего не слышно. Выбран ли нужный микрофон в Системных настройках → «Звук»?"
 
-#: ui/voice.slint:690
+#: ui/voice.slint:693
 msgid "OpenAI said: {0}"
 msgstr "Ответ OpenAI: {0}"
 
-#: ui/voice.slint:694
-msgid "Open Settings"
-msgstr "Открыть настройки"
+#: ui/voice.slint:697
+msgid "Add key"
+msgstr "Добавить ключ"
 
-#. Settings → General → Voice input.
-#: ui/voice.slint:700
+#: ui/voice.slint:698
+msgid "Change key"
+msgstr "Сменить ключ"
+
+#. The toolbox's Voice input panel.
+#: ui/voice.slint:704
+msgid "Use voice input"
+msgstr "Использовать голосовой ввод"
+
+#: ui/voice.slint:705
+msgid "Puts the sparkle in every chat's composer; when off, nothing goes to OpenAI"
+msgstr "Добавляет ✦ в поле ввода каждого чата; когда выключено, в OpenAI ничего не уходит"
+
+#: ui/voice.slint:706
 msgid "OpenAI API key"
 msgstr "Ключ API OpenAI"
 
-#: ui/voice.slint:701
+#: ui/voice.slint:707
 msgid "Your own key: OpenAI bills it for what is transcribed. It is kept sealed in FinchGram's database on this Mac."
 msgstr "Ваш собственный ключ: OpenAI списывает с него плату за распознанное. Он хранится запечатанным в базе данных FinchGram на этом Mac."
 
-#: ui/voice.slint:705
+#: ui/voice.slint:711
 msgid "Get a key at platform.openai.com"
 msgstr "Получить ключ на platform.openai.com"
 
-#: ui/voice.slint:707
+#: ui/voice.slint:713
 msgid "That is not an OpenAI key: they start with sk-."
 msgstr "Это не ключ OpenAI: они начинаются с sk-."
 
-#: ui/voice.slint:708
+#: ui/voice.slint:714
 msgid "Checking the key with OpenAI…"
 msgstr "Проверка ключа в OpenAI…"
 
-#: ui/voice.slint:709
+#: ui/voice.slint:715
 msgid "OpenAI accepts the key."
 msgstr "OpenAI принимает ключ."
 
-#: ui/voice.slint:710
+#: ui/voice.slint:689 ui/voice.slint:716
 msgid "OpenAI refused the key."
 msgstr "OpenAI отклонил ключ."
 
-#: ui/voice.slint:711
+#: ui/voice.slint:717
 msgid "Could not check the key: {0}"
 msgstr "Не удалось проверить ключ: {0}"
 
-#: ui/voice.slint:720
+#: ui/voice.slint:726
 msgid "Languages you speak"
 msgstr "Языки, на которых вы говорите"
 
-#: ui/voice.slint:721
+#: ui/voice.slint:727
 msgid "Hints for OpenAI. With none chosen, it finds the language as you speak; sentences that mix languages work either way."
 msgstr "Подсказки для OpenAI. Если ничего не выбрано, язык определяется по ходу речи; фразы, где языки смешаны, работают в любом случае."
 
-#: ui/voice.slint:722
+#: ui/voice.slint:728
 msgid "Tidy the words"
 msgstr "Приводить текст в порядок"
 
-#: ui/voice.slint:723
+#: ui/voice.slint:729
 msgid "A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."
 msgstr "Небольшая модель убирает «э-э», «м-м» и повторы слов и расставляет знаки препинания; она ничего не переводит."
 
-#: ui/voice.slint:725
+#: ui/voice.slint:731
 msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to OpenAI under your key and nothing else does; OpenAI charges about $1 for an hour of speech. FinchGram keeps no recording."
 msgstr "Нажмите ✦ в поле ввода чата или введите /voice в Терминале и говорите; нажмите ещё раз или ⏎, и текст окажется в поле, а отправите его вы. Голос уходит в OpenAI под вашим ключом, и больше ничего никуда не уходит; OpenAI берёт около 1 $ за час речи. FinchGram не хранит записей."
 
@@ -5000,23 +5012,23 @@ msgstr "Рекламное сообщение Telegram · FinchGram показы
 msgid "Send to {0}"
 msgstr "Кому: {0}"
 
-#: ui/workbench/conversation.slint:2710
+#: ui/workbench/conversation.slint:2711
 msgid "Esc to cancel"
 msgstr "Esc — отмена"
 
-#: ui/workbench/conversation.slint:2720
+#: ui/workbench/conversation.slint:2721
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ сохранить · ⇧⏎ новая строка"
 
-#: ui/workbench/conversation.slint:2720
+#: ui/workbench/conversation.slint:2721
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ сохранить · ⏎ новая строка"
 
-#: ui/workbench/conversation.slint:2721
+#: ui/workbench/conversation.slint:2722
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ отправить · ⇧⏎ новая строка"
 
-#: ui/workbench/conversation.slint:2721
+#: ui/workbench/conversation.slint:2722
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ отправить · ⏎ новая строка"
 

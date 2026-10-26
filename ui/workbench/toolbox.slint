@@ -9,6 +9,7 @@ import { Accounts, AccountRow } from "../telegram.slint";
 import { AccountColors, Look } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { AiPanel } from "../pages/ai-access.slint";
+import { VoicePanel } from "../pages/voice-input.slint";
 import { Icon, Avatar } from "../widgets.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 
@@ -767,8 +768,9 @@ export component WorkbenchToolbox inherits Rectangle {
                             padding-top: 14px;
                             padding-bottom: 18px;
                             spacing: 20px;
-                            // AI in the column, or the AI access card: the configuration itself, in the sections' place.
-                            if Toolbox.category == "ai" && !Toolbox.searching: AiPanel { }
+                            // A tool's own panel (the AI access card, the voice input card), in the sections' place.
+                            if Toolbox.panel == "ai-access" && !Toolbox.searching: AiPanel { }
+                            if Toolbox.panel == "voice-input" && !Toolbox.searching: VoicePanel { }
                             for section in Toolbox.sections: VerticalLayout {
                                 spacing: 8px;
                                 HorizontalLayout {

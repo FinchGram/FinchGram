@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: finchgram\n"
-"POT-Creation-Date: 2026-10-25 23:51+0000\n"
+"POT-Creation-Date: 2026-10-26 05:02+0000\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -27,24 +27,24 @@ msgstr "채팅에서 검색"
 msgid "Chat Info"
 msgstr "채팅 정보"
 
-#: ui/app.slint:91 ui/toolbox.slint:100
+#: ui/app.slint:91 ui/toolbox.slint:106
 msgid "Toolbox"
 msgstr "도구 상자"
 
-#: ui/app.slint:102 ui/pages/settings.slint:398
+#: ui/app.slint:102 ui/pages/settings.slint:397
 msgid "Workbench"
 msgstr "워크벤치"
 
-#: ui/app.slint:110 ui/pages/settings.slint:406
+#: ui/app.slint:110 ui/pages/settings.slint:405
 msgid "Terminal"
 msgstr "터미널"
 
-#: ui/app.slint:118 ui/pages/settings.slint:414
+#: ui/app.slint:118 ui/pages/settings.slint:413
 msgid "Broadsheet"
 msgstr "브로드시트"
 
 #. The tools.
-#: ui/app.slint:127 ui/pages/downloads.slint:1981 ui/toolbox.slint:113
+#: ui/app.slint:127 ui/pages/downloads.slint:1981 ui/toolbox.slint:119
 msgid "Downloads"
 msgstr "다운로드"
 
@@ -102,7 +102,7 @@ msgstr "설명 추가 (선택 사항)"
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/broadsheet.slint:2813 ui/chat.slint:386 ui/compose.slint:244
 #: ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871
-#: ui/pages/downloads.slint:3338 ui/pages/settings.slint:1398
+#: ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209
 #: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1847
 #: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
@@ -120,11 +120,11 @@ msgstr "신고"
 msgid "Delete"
 msgstr "삭제"
 
-#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:437
+#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:436
 msgid "Light"
 msgstr "라이트"
 
-#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:445
+#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:444
 msgid "Dark"
 msgstr "다크"
 
@@ -148,7 +148,7 @@ msgid "Bots"
 msgstr "봇"
 
 #: ui/broadsheet/broadsheet.slint:461 ui/terminal/terminal.slint:332
-#: ui/toolbox.slint:102
+#: ui/toolbox.slint:108
 msgid "All"
 msgstr "전체"
 
@@ -227,24 +227,24 @@ msgstr ""
 "체크 표시가 있는 봇은 Telegram 공식 봇입니다. 다른 봇은 내가 보낸 내용을 볼 "
 "수 있습니다."
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3721
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3722
 #: ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
-#: ui/workbench/conversation.slint:2762
+#: ui/workbench/conversation.slint:2763
 msgid "Unmute"
 msgstr "음소거 해제"
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3721
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3722
 #: ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
-#: ui/workbench/conversation.slint:2762
+#: ui/workbench/conversation.slint:2763
 msgid "Mute"
 msgstr "음소거"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3790
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3791
 #: ui/terminal/terminal.slint:1661 ui/workbench/sidebar.slint:717
 msgid "Unpin"
 msgstr "고정 해제"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3790
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3791
 #: ui/terminal/terminal.slint:1661 ui/workbench/sidebar.slint:717
 msgid "Pin"
 msgstr "고정"
@@ -254,7 +254,7 @@ msgstr "고정"
 msgid "Add to folder"
 msgstr "폴더에 추가"
 
-#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3798
+#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3799
 #: ui/terminal/terminal.slint:1669 ui/workbench/sidebar.slint:733
 msgid "Copy ID"
 msgstr "ID 복사"
@@ -262,7 +262,7 @@ msgstr "ID 복사"
 #: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228
 #: ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637
 #: ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849
-#: ui/pages/login.slint:909 ui/pages/settings.slint:1647
+#: ui/pages/login.slint:909 ui/pages/settings.slint:1458
 #: ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:783
 msgid "Back"
 msgstr "뒤로"
@@ -289,7 +289,7 @@ msgstr "스폰서 메시지 · Telegram 게재 · Premium 사용자는 끌 수 �
 msgid "You"
 msgstr "나"
 
-#: ui/broadsheet/broadsheet.slint:2377 ui/terminal/terminal.slint:2075
+#: ui/broadsheet/broadsheet.slint:2377 ui/terminal/terminal.slint:2076
 msgid "Hide sender's name"
 msgstr "보낸 사람 이름 숨기기"
 
@@ -302,7 +302,7 @@ msgstr "Shift-클릭으로 범위 선택"
 msgid "Forward"
 msgstr "전달"
 
-#: ui/broadsheet/broadsheet.slint:3064 ui/terminal/terminal.slint:2605
+#: ui/broadsheet/broadsheet.slint:3064 ui/terminal/terminal.slint:2606
 msgid "Choose a chat on the left"
 msgstr "왼쪽에서 채팅을 선택하세요"
 
@@ -356,7 +356,7 @@ msgid "Info"
 msgstr "정보"
 
 #. The foot.
-#: ui/chat-info.slint:77 ui/pages/settings.slint:99 ui/toolbox.slint:146
+#: ui/chat-info.slint:77 ui/pages/settings.slint:98 ui/toolbox.slint:154
 msgid "Settings"
 msgstr "설정"
 
@@ -414,8 +414,8 @@ msgstr "읽지 않은 메시지 없음"
 msgid "Auto-delete messages"
 msgstr "메시지 자동 삭제"
 
-#: ui/chat-info.slint:92 ui/chat.slint:381 ui/pages/settings.slint:947
-#: ui/pages/settings.slint:969
+#: ui/chat-info.slint:92 ui/chat.slint:381 ui/pages/settings.slint:758
+#: ui/pages/settings.slint:780
 msgid "Off"
 msgstr "끔"
 
@@ -524,7 +524,7 @@ msgid "Change photo"
 msgstr "사진 변경"
 
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
-#: ui/pages/settings.slint:1458 ui/voice.slint:703
+#: ui/pages/settings.slint:1269 ui/voice.slint:709
 msgid "Save"
 msgstr "저장"
 
@@ -788,7 +788,7 @@ msgid "Remove {0} from the channel?"
 msgstr "{0}님을 채널에서 제거하시겠습니까?"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
-#: ui/pages/downloads.slint:2952 ui/voice.slint:704
+#: ui/pages/downloads.slint:2952 ui/voice.slint:710
 msgid "Remove"
 msgstr "제거"
 
@@ -1198,11 +1198,11 @@ msgstr "파일"
 msgid "Poll"
 msgstr "투표"
 
-#: ui/chat.slint:343 ui/voice.slint:656
+#: ui/chat.slint:343 ui/voice.slint:659
 msgid "Not available yet"
 msgstr "아직 사용할 수 없음"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:662
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:665
 msgid "Not allowed in this group"
 msgstr "이 그룹에서는 허용되지 않음"
 
@@ -1227,7 +1227,7 @@ msgstr ""
 "스크린샷을 찍으려면 시스템 설정 → 개인정보 보호 및 보안에서 화면 기록을 허용"
 "해야 합니다. FinchGram이 이미 목록에 있다면 껐다가 다시 켜세요."
 
-#: ui/chat.slint:351 ui/voice.slint:661 ui/voice.slint:695
+#: ui/chat.slint:351 ui/voice.slint:664 ui/voice.slint:699
 msgid "Open System Settings"
 msgstr "시스템 설정 열기"
 
@@ -1319,7 +1319,7 @@ msgstr "한 번 보기"
 msgid "Hide with spoiler"
 msgstr "스포일러로 가리기"
 
-#: ui/chat.slint:387 ui/voice.slint:652
+#: ui/chat.slint:387 ui/voice.slint:655
 msgid "Send"
 msgstr "보내기"
 
@@ -1599,7 +1599,7 @@ msgstr "전체 검색"
 msgid "Found by phone number"
 msgstr "전화번호로 찾음"
 
-#: ui/compose.slint:136 ui/toolbox.slint:106
+#: ui/compose.slint:136 ui/toolbox.slint:112
 msgid "Messages"
 msgstr "메시지"
 
@@ -1761,7 +1761,7 @@ msgstr "상대방이 Telegram에 가입되어 있어야 합니다"
 
 #: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406
 #: ui/pages/login.slint:621 ui/pages/login.slint:842
-#: ui/pages/settings.slint:1567
+#: ui/pages/settings.slint:1378
 msgid "Next"
 msgstr "다음"
 
@@ -1774,7 +1774,7 @@ msgid "Invite {n} person"
 msgid_plural "Invite {n} people"
 msgstr[0] "{n}명 초대"
 
-#: ui/compose.slint:229 ui/voice.slint:679
+#: ui/compose.slint:229 ui/voice.slint:682
 msgid "Done"
 msgstr "완료"
 
@@ -2836,11 +2836,11 @@ msgstr "AI 접근에서 변경"
 msgid "Don't Allow"
 msgstr "허용 안 함"
 
-#: ui/pages/ai-access.slint:882 ui/pages/ai-access.slint:889
+#: ui/pages/ai-access.slint:890 ui/pages/ai-access.slint:897
 msgid "AI access"
 msgstr "AI 접근"
 
-#: ui/pages/ai-access.slint:892
+#: ui/pages/ai-access.slint:900
 msgid ""
 "An AI assistant's app (Claude Desktop, Claude Code, Cursor…) can read your "
 "chats and act in them through FinchGram, with your account. FinchGram itself "
@@ -3484,7 +3484,7 @@ msgid "Sign in with"
 msgstr "로그인 방식"
 
 #: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760
-#: ui/pages/settings.slint:1416
+#: ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "암호"
 
@@ -3664,11 +3664,11 @@ msgstr "다중 계정 및 폴더"
 msgid "Keep work and life apart"
 msgstr "일과 생활을 분리하세요"
 
-#: ui/pages/login.slint:163 ui/pages/settings.slint:1113
+#: ui/pages/login.slint:163 ui/pages/settings.slint:924
 msgid "Fully open source — read the code"
 msgstr "완전한 오픈 소스 — 코드를 직접 확인하세요"
 
-#: ui/pages/login.slint:183 ui/pages/settings.slint:1142
+#: ui/pages/login.slint:183 ui/pages/settings.slint:953
 msgid ""
 "FinchGram is an unofficial client built on the Telegram API. It is not made "
 "by Telegram."
@@ -3740,7 +3740,7 @@ msgstr "다시 보냈습니다 — Telegram을 확인하세요"
 msgid "Didn't get it? Resend"
 msgstr "받지 못하셨습니까? 다시 보내기"
 
-#: ui/pages/login.slint:545 ui/pages/settings.slint:1215
+#: ui/pages/login.slint:545 ui/pages/settings.slint:1026
 msgid "Two-step verification"
 msgstr "2단계 인증"
 
@@ -3752,27 +3752,27 @@ msgstr "이 계정은 2단계 인증이 켜져 있습니다. 암호를 입력하
 msgid "Hint: {0}"
 msgstr "힌트: {0}"
 
-#: ui/pages/login.slint:580 ui/pages/settings.slint:1442
+#: ui/pages/login.slint:580 ui/pages/settings.slint:1253
 msgid "Forgot password?"
 msgstr "암호를 잊으셨습니까?"
 
-#: ui/pages/login.slint:601 ui/pages/settings.slint:1610
+#: ui/pages/login.slint:601 ui/pages/settings.slint:1421
 msgid "Recover via email"
 msgstr "이메일로 복구"
 
-#: ui/pages/login.slint:602 ui/pages/settings.slint:1611
+#: ui/pages/login.slint:602 ui/pages/settings.slint:1422
 msgid "A recovery code was sent to {0}. Enter it to set a new password."
 msgstr "{0}에 복구 코드를 보냈습니다. 코드를 입력하여 새 암호를 설정하세요."
 
-#: ui/pages/login.slint:629 ui/pages/settings.slint:1639
+#: ui/pages/login.slint:629 ui/pages/settings.slint:1450
 msgid "Can't access this email?"
 msgstr "이 이메일에 접근할 수 없습니까?"
 
-#: ui/pages/login.slint:651 ui/pages/settings.slint:1454
+#: ui/pages/login.slint:651 ui/pages/settings.slint:1265
 msgid "Set a new password"
 msgstr "새 암호 설정"
 
-#: ui/pages/login.slint:652 ui/pages/settings.slint:1455
+#: ui/pages/login.slint:652 ui/pages/settings.slint:1266
 msgid "You'll need this password when signing in on a new device."
 msgstr "새 기기에서 로그인할 때 이 암호가 필요합니다."
 
@@ -3921,11 +3921,11 @@ msgstr "새 암호"
 msgid "Re-enter new password"
 msgstr "새 암호 재입력"
 
-#: ui/pages/password.slint:182 ui/pages/settings.slint:1481
+#: ui/pages/password.slint:182 ui/pages/settings.slint:1292
 msgid "Password hint (optional)"
 msgstr "암호 힌트 (선택 사항)"
 
-#: ui/pages/password.slint:192 ui/pages/settings.slint:1473
+#: ui/pages/password.slint:192 ui/pages/settings.slint:1284
 msgid ""
 "The hint is shown on the sign-in screen to anyone who knows your number. "
 "Don't write the password itself."
@@ -3938,7 +3938,7 @@ msgid "Current"
 msgstr "현재"
 
 #. The accounts.
-#: ui/pages/profile.slint:119 ui/toolbox.slint:142
+#: ui/pages/profile.slint:119 ui/toolbox.slint:150
 msgid "Add account"
 msgstr "계정 추가"
 
@@ -3982,84 +3982,84 @@ msgstr "봇과 스크립트는 이 번호로 이 계정을 식별합니다."
 msgid "Profile"
 msgstr "프로필"
 
-#: ui/pages/settings.slint:108 ui/pages/settings.slint:1745
+#: ui/pages/settings.slint:107 ui/pages/settings.slint:1556
 msgid "General"
 msgstr "일반"
 
-#: ui/pages/settings.slint:114 ui/pages/settings.slint:1746
+#: ui/pages/settings.slint:113 ui/pages/settings.slint:1557
 msgid "Notifications & sounds"
 msgstr "알림 및 소리"
 
-#: ui/pages/settings.slint:120 ui/pages/settings.slint:1736
+#: ui/pages/settings.slint:119 ui/pages/settings.slint:1547
 msgid "Privacy & security"
 msgstr "개인정보 보호 및 보안"
 
-#: ui/pages/settings.slint:132
+#: ui/pages/settings.slint:131
 msgid "Folders"
 msgstr "폴더"
 
-#: ui/pages/settings.slint:137
+#: ui/pages/settings.slint:136
 msgid "Finch features"
 msgstr "Finch 기능"
 
-#: ui/pages/settings.slint:142 ui/pages/settings.slint:1749
+#: ui/pages/settings.slint:141 ui/pages/settings.slint:1560
 msgid "Appearance"
 msgstr "화면 모드"
 
-#: ui/pages/settings.slint:148 ui/pages/settings.slint:1747
+#: ui/pages/settings.slint:147 ui/pages/settings.slint:1558
 msgid "Language"
 msgstr "언어"
 
-#: ui/pages/settings.slint:154
+#: ui/pages/settings.slint:153
 msgid "Data & storage"
 msgstr "데이터 및 저장 공간"
 
-#: ui/pages/settings.slint:159
+#: ui/pages/settings.slint:158
 msgid "Advanced"
 msgstr "고급"
 
-#: ui/pages/settings.slint:164 ui/pages/settings.slint:1749
+#: ui/pages/settings.slint:163 ui/pages/settings.slint:1560
 msgid "About"
 msgstr "정보"
 
-#: ui/pages/settings.slint:338
+#: ui/pages/settings.slint:337
 msgid "Version {0} available"
 msgstr "{0} 버전 사용 가능"
 
-#: ui/pages/settings.slint:340
+#: ui/pages/settings.slint:339
 msgid "Downloading {0}% · {1} of {2}"
 msgstr "다운로드 중 {0}% · {2} 중 {1}"
 
-#: ui/pages/settings.slint:341
+#: ui/pages/settings.slint:340
 msgid "Installing…"
 msgstr "설치 중…"
 
-#: ui/pages/settings.slint:342
+#: ui/pages/settings.slint:341
 msgid "You're up to date"
 msgstr "최신 버전입니다"
 
-#: ui/pages/settings.slint:343
+#: ui/pages/settings.slint:342
 msgid "The update failed"
 msgstr "업데이트에 실패했습니다"
 
-#: ui/pages/settings.slint:344 ui/pages/settings.slint:360
-#: ui/pages/settings.slint:1056
+#: ui/pages/settings.slint:343 ui/pages/settings.slint:359
+#: ui/pages/settings.slint:867
 msgid "Version {0}"
 msgstr "버전 {0}"
 
-#: ui/pages/settings.slint:368
+#: ui/pages/settings.slint:367
 msgid "Install and restart"
 msgstr "설치하고 다시 실행"
 
-#: ui/pages/settings.slint:375
+#: ui/pages/settings.slint:374
 msgid "Check for updates"
 msgstr "업데이트 확인"
 
-#: ui/pages/settings.slint:391
+#: ui/pages/settings.slint:390
 msgid "Theme"
 msgstr "테마"
 
-#: ui/pages/settings.slint:422
+#: ui/pages/settings.slint:421
 msgid ""
 "Workbench is an editor's layout, Broadsheet a newspaper's, Terminal a "
 "console's. The same chats and settings in all three."
@@ -4067,308 +4067,308 @@ msgstr ""
 "워크벤치는 편집기, 브로드시트는 신문, 터미널은 콘솔의 레이아웃입니다. 세 가"
 "지 모두 같은 채팅과 설정을 사용합니다."
 
-#: ui/pages/settings.slint:430
+#: ui/pages/settings.slint:429
 msgid "Light and dark"
 msgstr "라이트 및 다크"
 
-#: ui/pages/settings.slint:455
+#: ui/pages/settings.slint:454
 msgid "Match system appearance"
 msgstr "시스템 화면 모드에 맞춤"
 
-#: ui/pages/settings.slint:486
+#: ui/pages/settings.slint:485
 msgid "Screenshot shortcut"
 msgstr "스크린샷 단축키"
 
-#: ui/pages/settings.slint:503
+#: ui/pages/settings.slint:502
 msgid "Type a new shortcut…"
 msgstr "새 단축키를 누르세요…"
 
-#: ui/pages/settings.slint:546
+#: ui/pages/settings.slint:545
 msgid "Reset"
 msgstr "재설정"
 
-#: ui/pages/settings.slint:735
+#: ui/pages/settings.slint:574
 msgid "Startup & window"
 msgstr "시작 및 윈도우"
 
-#: ui/pages/settings.slint:740
+#: ui/pages/settings.slint:579
 msgid "Launch at login"
 msgstr "로그인 시 실행"
 
-#: ui/pages/settings.slint:750
+#: ui/pages/settings.slint:589
 msgid "Show in menu bar"
 msgstr "메뉴 막대에 표시"
 
-#: ui/pages/settings.slint:760
+#: ui/pages/settings.slint:599
 msgid "When closing the window"
 msgstr "윈도우를 닫을 때"
 
-#: ui/pages/settings.slint:761
+#: ui/pages/settings.slint:600
 msgid "Quit"
 msgstr "종료"
 
-#: ui/pages/settings.slint:761
+#: ui/pages/settings.slint:600
 msgid "Minimize to tray"
 msgstr "트레이로 최소화"
 
-#: ui/pages/settings.slint:773
+#: ui/pages/settings.slint:612
 msgid "Input"
 msgstr "입력"
 
-#: ui/pages/settings.slint:778
+#: ui/pages/settings.slint:617
 msgid "Send with Enter"
 msgstr "Enter 키로 보내기"
 
-#: ui/pages/settings.slint:787
+#: ui/pages/settings.slint:626
 msgid "Spell check"
 msgstr "맞춤법 검사"
 
-#: ui/pages/settings.slint:793
+#: ui/pages/settings.slint:632
 msgid "Replace emoji automatically"
 msgstr "이모티콘 자동 대치"
 
-#: ui/pages/settings.slint:829
+#: ui/pages/settings.slint:640
 msgid "Shortcuts"
 msgstr "단축키"
 
-#: ui/pages/settings.slint:834
+#: ui/pages/settings.slint:645
 msgid "Keyboard shortcuts"
 msgstr "키보드 단축키"
 
-#: ui/pages/settings.slint:835
+#: ui/pages/settings.slint:646
 msgctxt "shortcuts"
 msgid "View"
 msgstr "보기"
 
-#: ui/pages/settings.slint:843
+#: ui/pages/settings.slint:654
 msgid "Screenshots"
 msgstr "스크린샷"
 
-#: ui/pages/settings.slint:850
+#: ui/pages/settings.slint:661
 msgid "Hide the FinchGram window while taking a screenshot"
 msgstr "스크린샷을 찍는 동안 FinchGram 윈도우 가리기"
 
-#: ui/pages/settings.slint:859
+#: ui/pages/settings.slint:670
 msgid "Also when FinchGram is in the background"
 msgstr "FinchGram이 백그라운드에 있을 때도"
 
-#: ui/pages/settings.slint:878 ui/pages/settings.slint:883
+#: ui/pages/settings.slint:689 ui/pages/settings.slint:694
 msgid "Desktop notifications"
 msgstr "데스크탑 알림"
 
-#: ui/pages/settings.slint:892
+#: ui/pages/settings.slint:703
 msgid "Message previews"
 msgstr "메시지 미리보기"
 
-#: ui/pages/settings.slint:902
+#: ui/pages/settings.slint:713
 msgid "Sounds"
 msgstr "소리"
 
-#: ui/pages/settings.slint:912
+#: ui/pages/settings.slint:723
 msgid "Flash taskbar"
 msgstr "작업 표시줄 깜박임"
 
-#: ui/pages/settings.slint:921
+#: ui/pages/settings.slint:732
 msgid "Count muted chats in badge"
 msgstr "배지에 음소거된 채팅 포함"
 
-#: ui/pages/settings.slint:930
+#: ui/pages/settings.slint:741
 msgid "Notifications from other accounts"
 msgstr "다른 계정의 알림"
 
-#: ui/pages/settings.slint:931
+#: ui/pages/settings.slint:742
 msgid "When off, only the current account notifies you"
 msgstr "끄면 현재 계정의 알림만 받습니다"
 
-#: ui/pages/settings.slint:939
+#: ui/pages/settings.slint:750
 msgid "By chat type"
 msgstr "채팅 유형별"
 
-#: ui/pages/settings.slint:946
+#: ui/pages/settings.slint:757
 msgid "Private chats"
 msgstr "개인 채팅"
 
-#: ui/pages/settings.slint:947 ui/pages/settings.slint:958
-#: ui/pages/settings.slint:1216
+#: ui/pages/settings.slint:758 ui/pages/settings.slint:769
+#: ui/pages/settings.slint:1027
 msgid "On"
 msgstr "켬"
 
-#: ui/pages/settings.slint:957
+#: ui/pages/settings.slint:768
 msgid "Groups"
 msgstr "그룹"
 
-#: ui/pages/settings.slint:985
+#: ui/pages/settings.slint:796
 msgid "Changes the interface only — messages aren't translated"
 msgstr "인터페이스에만 적용되며 메시지는 번역되지 않습니다"
 
-#: ui/pages/settings.slint:1065
+#: ui/pages/settings.slint:876
 msgid "Updates"
 msgstr "업데이트"
 
-#: ui/pages/settings.slint:1072
+#: ui/pages/settings.slint:883
 msgid "Check for updates automatically"
 msgstr "자동으로 업데이트 확인"
 
-#: ui/pages/settings.slint:1080
+#: ui/pages/settings.slint:891
 msgid ""
 "Updates come from GitHub Releases and are signature-checked before install."
 msgstr "업데이트는 GitHub Releases에서 받으며 설치 전에 서명을 검증합니다."
 
-#: ui/pages/settings.slint:1162
+#: ui/pages/settings.slint:973
 msgid "Who can see"
 msgstr "공개 범위"
 
-#: ui/pages/settings.slint:1173
+#: ui/pages/settings.slint:984
 msgid "Last seen"
 msgstr "마지막 접속"
 
-#: ui/pages/settings.slint:1179
+#: ui/pages/settings.slint:990
 msgid "Profile photos"
 msgstr "프로필 사진"
 
-#: ui/pages/settings.slint:1185
+#: ui/pages/settings.slint:996
 msgid "Forwarded messages"
 msgstr "전달된 메시지"
 
-#: ui/pages/settings.slint:1191
+#: ui/pages/settings.slint:1002
 msgid "Calls"
 msgstr "통화"
 
-#: ui/pages/settings.slint:1197
+#: ui/pages/settings.slint:1008
 msgid "Invites to groups"
 msgstr "그룹 초대"
 
-#: ui/pages/settings.slint:1202
+#: ui/pages/settings.slint:1013
 msgid "Stored on Telegram servers and synced across all your apps."
 msgstr "Telegram 서버에 저장되어 모든 앱에서 동기화됩니다."
 
-#: ui/pages/settings.slint:1210
+#: ui/pages/settings.slint:1021
 msgid "Security"
 msgstr "보안"
 
-#: ui/pages/settings.slint:1228
+#: ui/pages/settings.slint:1039
 msgid "Local passcode"
 msgstr "로컬 잠금 암호"
 
-#: ui/pages/settings.slint:1234
+#: ui/pages/settings.slint:1045
 msgid "Active sessions"
 msgstr "활성 세션"
 
-#: ui/pages/settings.slint:1240
+#: ui/pages/settings.slint:1051
 msgid "Blocked users"
 msgstr "차단된 사용자"
 
-#: ui/pages/settings.slint:1246
+#: ui/pages/settings.slint:1057
 msgid "Delete my account"
 msgstr "내 계정 삭제"
 
-#: ui/pages/settings.slint:1279
+#: ui/pages/settings.slint:1090
 msgid "Two-step verification is on"
 msgstr "2단계 인증 켜짐"
 
-#: ui/pages/settings.slint:1279
+#: ui/pages/settings.slint:1090
 msgid "Two-step verification is off"
 msgstr "2단계 인증 꺼짐"
 
-#: ui/pages/settings.slint:1286
+#: ui/pages/settings.slint:1097
 msgid ""
 "When you sign in on a new device, you'll need this password in addition to "
 "the code."
 msgstr "새 기기에서 로그인할 때 코드와 함께 이 암호가 필요합니다."
 
-#: ui/pages/settings.slint:1287
+#: ui/pages/settings.slint:1098
 msgid ""
 "Turn it on to require an extra password when signing in on a new device."
 msgstr "켜면 새 기기에서 로그인할 때 추가 암호를 요구합니다."
 
-#: ui/pages/settings.slint:1316
+#: ui/pages/settings.slint:1127
 msgid "Password will reset on {0}"
 msgstr "{0}에 암호가 재설정됩니다"
 
-#: ui/pages/settings.slint:1322
+#: ui/pages/settings.slint:1133
 msgid "Come back then to set a new password. If this wasn't you, cancel now."
 msgstr ""
 "그때 돌아와서 새 암호를 설정하세요. 본인이 요청한 것이 아니라면 지금 취소하세"
 "요."
 
-#: ui/pages/settings.slint:1331
+#: ui/pages/settings.slint:1142
 msgid "Cancel reset"
 msgstr "재설정 취소"
 
-#: ui/pages/settings.slint:1343
+#: ui/pages/settings.slint:1154
 msgid "Change password"
 msgstr "암호 변경"
 
-#: ui/pages/settings.slint:1351
+#: ui/pages/settings.slint:1162
 msgid "Password hint"
 msgstr "암호 힌트"
 
-#: ui/pages/settings.slint:1360
+#: ui/pages/settings.slint:1171
 msgid "Recovery email"
 msgstr "복구 이메일"
 
-#: ui/pages/settings.slint:1369
+#: ui/pages/settings.slint:1180
 msgid "Turn off two-step verification"
 msgstr "2단계 인증 끄기"
 
-#: ui/pages/settings.slint:1379 ui/pages/settings.slint:1454
+#: ui/pages/settings.slint:1190 ui/pages/settings.slint:1265
 msgid "Set password"
 msgstr "암호 설정"
 
-#: ui/pages/settings.slint:1407
+#: ui/pages/settings.slint:1218
 msgid "Enter your current password"
 msgstr "현재 암호 입력"
 
-#: ui/pages/settings.slint:1408
+#: ui/pages/settings.slint:1219
 msgid "Confirm it's you before changing two-step verification settings."
 msgstr "2단계 인증 설정을 변경하기 전에 본인 확인이 필요합니다."
 
-#: ui/pages/settings.slint:1472
+#: ui/pages/settings.slint:1283
 msgid "Change password hint"
 msgstr "암호 힌트 변경"
 
-#: ui/pages/settings.slint:1509
+#: ui/pages/settings.slint:1320
 msgid "Change recovery email"
 msgstr "복구 이메일 변경"
 
-#: ui/pages/settings.slint:1510
+#: ui/pages/settings.slint:1321
 msgid ""
 "If you forget your password, a recovery code will be sent to this address."
 msgstr "암호를 잊은 경우 이 주소로 복구 코드가 전송됩니다."
 
-#: ui/pages/settings.slint:1518
+#: ui/pages/settings.slint:1329
 msgid "Email address"
 msgstr "이메일 주소"
 
-#: ui/pages/settings.slint:1533
+#: ui/pages/settings.slint:1344
 msgid "Send code"
 msgstr "코드 보내기"
 
-#: ui/pages/settings.slint:1546
+#: ui/pages/settings.slint:1357
 msgid "Enter the email code"
 msgstr "이메일 코드 입력"
 
-#: ui/pages/settings.slint:1547
+#: ui/pages/settings.slint:1358
 msgid "Code sent to {0}"
 msgstr "{0}에 코드를 보냈습니다"
 
-#: ui/pages/settings.slint:1588
+#: ui/pages/settings.slint:1399
 msgid "Turn off two-step verification?"
 msgstr "2단계 인증을 끄시겠습니까?"
 
-#: ui/pages/settings.slint:1589
+#: ui/pages/settings.slint:1400
 msgid "Anyone who gets your sign-in code will be able to access your account."
 msgstr "로그인 코드를 얻은 사람은 누구나 내 계정에 접근할 수 있게 됩니다."
 
-#: ui/pages/settings.slint:1596
+#: ui/pages/settings.slint:1407
 msgid "Turn off"
 msgstr "끄기"
 
-#: ui/pages/settings.slint:1659
+#: ui/pages/settings.slint:1470
 msgid "Request password reset"
 msgstr "암호 재설정 요청"
 
-#: ui/pages/settings.slint:1660
+#: ui/pages/settings.slint:1471
 msgid ""
 "If you can't get the recovery email, you can request a reset. To protect "
 "your account it takes 7 days, and you can cancel any time before then."
@@ -4376,19 +4376,19 @@ msgstr ""
 "복구 이메일을 받을 수 없다면 재설정을 요청할 수 있습니다. 계정 보호를 위해 7"
 "일이 걸리며, 그전에는 언제든지 취소할 수 있습니다."
 
-#: ui/pages/settings.slint:1667
+#: ui/pages/settings.slint:1478
 msgid "Request reset"
 msgstr "재설정 요청"
 
-#: ui/pages/settings.slint:1763
+#: ui/pages/settings.slint:1574
 msgid "Password updated"
 msgstr "암호가 업데이트되었습니다"
 
-#: ui/pages/settings.slint:1764
+#: ui/pages/settings.slint:1575
 msgid "Password hint updated"
 msgstr "암호 힌트가 업데이트되었습니다"
 
-#: ui/pages/settings.slint:1764
+#: ui/pages/settings.slint:1575
 msgid "Recovery email updated"
 msgstr "복구 이메일이 업데이트되었습니다"
 
@@ -4468,208 +4468,208 @@ msgstr "이 채팅의 ID 복사"
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "채팅, 연락처, @사용자 이름, 메시지 검색"
 
-#: ui/terminal/terminal.slint:2226
+#: ui/terminal/terminal.slint:2227
 msgid "unmute"
 msgstr "음소거 해제"
 
-#: ui/terminal/terminal.slint:2226
+#: ui/terminal/terminal.slint:2227
 msgid "mute"
 msgstr "음소거"
 
-#: ui/terminal/terminal.slint:2325
+#: ui/terminal/terminal.slint:2326
 msgid "Write a message, or / for commands"
 msgstr "메시지를 입력하거나 /로 명령을 사용하세요"
 
-#: ui/terminal/terminal.slint:2441
+#: ui/terminal/terminal.slint:2442
 msgid "save"
 msgstr "저장"
 
-#: ui/terminal/terminal.slint:2384 ui/terminal/terminal.slint:2441
+#: ui/terminal/terminal.slint:2385 ui/terminal/terminal.slint:2442
 msgid "send"
 msgstr "보내기"
 
-#: ui/terminal/terminal.slint:2540
+#: ui/terminal/terminal.slint:2541
 msgid "connected"
 msgstr "연결됨"
 
-#: ui/terminal/terminal.slint:2565
+#: ui/terminal/terminal.slint:2566
 msgctxt "terminal"
 msgid "cmd"
 msgstr "명령"
 
 #
-#: ui/toolbox.slint:101
+#: ui/toolbox.slint:107
 msgid "Search the toolbox"
 msgstr "도구함 검색"
 
-#: ui/toolbox.slint:105
+#: ui/toolbox.slint:111
 msgid "Media"
 msgstr "미디어"
 
 #
 #
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:115
 msgid "Status bar"
 msgstr "하단 표시줄"
 
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:115
 msgid "Rail"
 msgstr "사이드 레일"
 
 #
 #. The bar's section, named after the theme's bar.
-#: ui/toolbox.slint:109
+#: ui/toolbox.slint:115
 msgid "Activity bar"
 msgstr "활동 표시줄"
 
-#: ui/toolbox.slint:111
+#: ui/toolbox.slint:117
 msgid "Switch a tool on here to show it on the {}."
 msgstr "여기서 켠 도구가 {}에 표시됩니다."
 
-#: ui/toolbox.slint:114
+#: ui/toolbox.slint:120
 msgid "Pick files from your own servers and download them"
 msgstr "내 서버에서 파일을 골라 내려받기"
 
 #
-#: ui/toolbox.slint:115
+#: ui/toolbox.slint:121
 msgid "Live streams"
 msgstr "라이브 방송"
 
 #
-#: ui/toolbox.slint:116
+#: ui/toolbox.slint:122
 msgid "Live streams going on in your groups and channels"
 msgstr "그룹과 채널에서 진행 중인 라이브"
 
-#: ui/toolbox.slint:118
+#: ui/toolbox.slint:124
 msgid "Your own media library, played in the built-in player"
 msgstr "내 미디어 라이브러리를 내장 플레이어로"
 
 #
-#: ui/toolbox.slint:120
+#: ui/toolbox.slint:126
 msgid "Your own media library on Emby, played in the built-in player"
 msgstr "Emby의 내 미디어 라이브러리를 내장 플레이어로"
 
-#: ui/toolbox.slint:121
+#: ui/toolbox.slint:127
 msgid "Keyword hiding"
 msgstr "키워드 숨기기"
 
 #
-#: ui/toolbox.slint:122
+#: ui/toolbox.slint:128
 msgid "Tuck away messages by keyword; unhide any time"
 msgstr "키워드로 메시지를 접고 언제든 되돌리기"
 
-#: ui/toolbox.slint:123
+#: ui/toolbox.slint:129
 msgid "Scheduled messages"
 msgstr "예약 메시지"
 
-#: ui/toolbox.slint:124
+#: ui/toolbox.slint:130
 msgid "Sent by the server on time, even with your computer off"
 msgstr "컴퓨터가 꺼져 있어도 서버가 제시간에 보냄"
 
-#: ui/toolbox.slint:126
+#: ui/toolbox.slint:132
 msgid "Let other apps read the chats you allow, through FinchGram"
 msgstr "허용한 채팅을 다른 앱이 FinchGram으로 읽기"
 
 #. The protocols under Downloads.
-#: ui/toolbox.slint:128
+#: ui/toolbox.slint:136
 msgid "Protocol · chosen when you add a server"
 msgstr "프로토콜 · 서버를 추가할 때 선택"
 
-#: ui/toolbox.slint:129
+#: ui/toolbox.slint:137
 msgid "Common on NAS boxes, cloud drives and seedboxes"
 msgstr "NAS, 클라우드, 시드박스에서 흔함"
 
-#: ui/toolbox.slint:130
+#: ui/toolbox.slint:138
 msgid "The old one, unencrypted"
 msgstr "오래된 방식, 암호화 없음"
 
-#: ui/toolbox.slint:131
+#: ui/toolbox.slint:139
 msgid "FTP with TLS encryption"
 msgstr "TLS 암호화를 더한 FTP"
 
-#: ui/toolbox.slint:132
+#: ui/toolbox.slint:140
 msgid ""
 "Over SSH; on seedboxes it usually doesn’t count against your traffic quota"
 msgstr "SSH 사용. 시드박스에서는 보통 트래픽 한도에서 차감되지 않음"
 
 #
 #. What goes on.
-#: ui/toolbox.slint:134
+#: ui/toolbox.slint:142
 msgid "{n} downloading"
 msgid_plural "{n} downloading"
 msgstr[0] "{n}개 받는 중"
 
 #
 #
-#: ui/toolbox.slint:135
+#: ui/toolbox.slint:143
 msgid "{n} server"
 msgid_plural "{n} servers"
 msgstr[0] "서버 {n}대"
 
 #
-#: ui/toolbox.slint:136
+#: ui/toolbox.slint:144
 msgid "Not in this version"
 msgstr "이 버전에서는 지원 안 함"
 
 #
-#: ui/toolbox.slint:137
+#: ui/toolbox.slint:145
 msgid "Pinned to the {}"
 msgstr "{}에 고정됨"
 
-#: ui/toolbox.slint:138
+#: ui/toolbox.slint:146
 msgid "activity bar"
 msgstr "활동 표시줄"
 
-#: ui/toolbox.slint:139
+#: ui/toolbox.slint:147
 msgid "rail"
 msgstr "사이드 레일"
 
 #
-#: ui/toolbox.slint:140
+#: ui/toolbox.slint:148
 msgid "status bar"
 msgstr "하단 표시줄"
 
 #
-#: ui/toolbox.slint:143
+#: ui/toolbox.slint:151
 msgid "Limit reached"
 msgstr "한도 도달"
 
-#: ui/toolbox.slint:144
+#: ui/toolbox.slint:152
 msgctxt "the account in front"
 msgid "Current"
 msgstr "현재"
 
-#: ui/toolbox.slint:147
+#: ui/toolbox.slint:155
 msgid "My profile"
 msgstr "내 프로필"
 
 #
-#: ui/toolbox.slint:148
+#: ui/toolbox.slint:156
 msgid "{} to open · Esc to close"
 msgstr "{} 열기 · Esc 닫기"
 
 #
 #. The search.
-#: ui/toolbox.slint:150
+#: ui/toolbox.slint:158
 msgid "Nothing called “{}”"
 msgstr "‘{}’ 항목이 없습니다"
 
 #
 #
-#: ui/toolbox.slint:151
+#: ui/toolbox.slint:159
 msgid "{n} item"
 msgid_plural "{n} items"
 msgstr[0] "{n}개"
 
 #
 #. Terminal.
-#: ui/toolbox.slint:153
+#: ui/toolbox.slint:161
 msgid "[x] pins to the status bar · click a name to open"
 msgstr "[x] 하단 표시줄에 고정 · 이름을 눌러 열기"
 
-#: ui/toolbox.slint:154
+#: ui/toolbox.slint:162
 msgid "/tools <category> jumps there · type it again to close"
 msgstr "/tools <분류>로 이동 · 다시 입력하면 닫힘"
 
@@ -4711,172 +4711,184 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ 전환 · ↑/↓ 음량 · space 재생 · esc 닫기"
 
-#: ui/voice.slint:643
+#: ui/toolbox.slint:133 ui/voice.slint:646
 msgid "Voice input"
 msgstr "음성 입력"
 
+#: ui/toolbox.slint:134
+msgid "Speak, and the words go into the composer, through your own OpenAI key"
+msgstr "말하면 입력창에 글자가 들어갑니다. 본인의 OpenAI 키로 동작합니다"
+
 #. The sparkle's tip.
-#: ui/voice.slint:645
+#: ui/voice.slint:648
 msgid "Finish voice input"
 msgstr "음성 입력 끝내기"
 
 #. The sparkle's tip.
-#: ui/voice.slint:645
+#: ui/voice.slint:648
 msgid "Voice input: click, or hold while you speak"
 msgstr "음성 입력: 클릭하거나, 누른 채로 말하세요"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:648
+#: ui/voice.slint:651
 msgid "Record voice message"
 msgstr "음성 메시지 녹음"
 
-#: ui/voice.slint:649
+#: ui/voice.slint:652
 msgid "Release to send · Drag left to cancel"
 msgstr "놓으면 전송 · 왼쪽으로 끌면 취소"
 
-#: ui/voice.slint:650
+#: ui/voice.slint:653
 msgid "Release to cancel"
 msgstr "놓으면 취소"
 
-#: ui/voice.slint:651
+#: ui/voice.slint:654
 msgid "Hold to record. Release to send."
 msgstr "누른 채 녹음하고, 놓으면 전송합니다."
 
-#: ui/voice.slint:653
+#: ui/voice.slint:656
 msgid "Stop"
 msgstr "정지"
 
-#: ui/voice.slint:655
+#: ui/voice.slint:658
 msgid "Transcribe"
 msgstr "받아쓰기"
 
-#: ui/voice.slint:657
+#: ui/voice.slint:660
 msgid "Couldn't download"
 msgstr "다운로드하지 못했습니다"
 
-#: ui/voice.slint:659
+#: ui/voice.slint:662
 msgid "Loading…"
 msgstr "불러오는 중…"
 
-#: ui/voice.slint:660
+#: ui/voice.slint:663
 msgid "Microphone access is off."
 msgstr "마이크 접근이 꺼져 있습니다."
 
-#: ui/voice.slint:670
+#: ui/voice.slint:673
 msgid "Connecting to OpenAI…"
 msgstr "OpenAI에 연결하는 중…"
 
-#: ui/voice.slint:670
+#: ui/voice.slint:673
 msgid "Listening · {0}"
 msgstr "듣는 중 · {0}"
 
-#: ui/voice.slint:672
+#: ui/voice.slint:675
 msgid "Finishing…"
 msgstr "마무리하는 중…"
 
-#: ui/voice.slint:673
+#: ui/voice.slint:676
 msgid "Tidying the words…"
 msgstr "문장을 다듬는 중…"
 
-#: ui/voice.slint:674
+#: ui/voice.slint:677
 msgid "Voice input stopped"
 msgstr "음성 입력이 멈췄습니다"
 
 #. In the words' place before any came.
-#: ui/voice.slint:677
+#: ui/voice.slint:680
 msgid "Speak now"
 msgstr "말씀하세요"
 
-#: ui/voice.slint:678
+#: ui/voice.slint:681
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ 완료 · Esc 취소"
 
-#: ui/voice.slint:683
-msgid "Voice input needs your own OpenAI API key: add it in Settings → General."
-msgstr "음성 입력에는 본인의 OpenAI API 키가 필요합니다. 설정 → 일반에서 추가하세요."
+#: ui/voice.slint:686
+msgid "Voice input needs your own OpenAI API key."
+msgstr "음성 입력에는 본인의 OpenAI API 키가 필요합니다."
 
-#: ui/voice.slint:684
+#: ui/voice.slint:687
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram이 마이크를 사용할 수 없습니다. 시스템 설정 → 개인정보 보호 및 보안 → 마이크에서 허용하세요."
 
-#: ui/voice.slint:685
+#: ui/voice.slint:688
 msgid "No microphone could be opened: {0}"
 msgstr "마이크를 열 수 없습니다: {0}"
 
-#: ui/voice.slint:686
-msgid "OpenAI refused the key. Check it in Settings → General."
-msgstr "OpenAI가 키를 거부했습니다. 설정 → 일반에서 확인하세요."
-
-#: ui/voice.slint:687
+#: ui/voice.slint:690
 msgid "OpenAI says the key is out of credit or used too fast: {0}"
 msgstr "OpenAI에 따르면 이 키의 크레딧이 떨어졌거나 너무 빠르게 사용되고 있습니다: {0}"
 
-#: ui/voice.slint:688
+#: ui/voice.slint:691
 msgid "Could not reach OpenAI: {0}"
 msgstr "OpenAI에 연결할 수 없습니다: {0}"
 
-#: ui/voice.slint:689
+#: ui/voice.slint:692
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "아무것도 들리지 않았습니다. 시스템 설정 → 사운드에서 올바른 마이크가 선택되어 있나요?"
 
-#: ui/voice.slint:690
+#: ui/voice.slint:693
 msgid "OpenAI said: {0}"
 msgstr "OpenAI의 응답: {0}"
 
-#: ui/voice.slint:694
-msgid "Open Settings"
-msgstr "설정 열기"
+#: ui/voice.slint:697
+msgid "Add key"
+msgstr "키 추가"
 
-#. Settings → General → Voice input.
-#: ui/voice.slint:700
+#: ui/voice.slint:698
+msgid "Change key"
+msgstr "키 변경"
+
+#. The toolbox's Voice input panel.
+#: ui/voice.slint:704
+msgid "Use voice input"
+msgstr "음성 입력 사용"
+
+#: ui/voice.slint:705
+msgid "Puts the sparkle in every chat's composer; when off, nothing goes to OpenAI"
+msgstr "모든 채팅의 입력창에 ✦를 표시합니다. 끄면 OpenAI로 아무것도 보내지 않습니다"
+
+#: ui/voice.slint:706
 msgid "OpenAI API key"
 msgstr "OpenAI API 키"
 
-#: ui/voice.slint:701
+#: ui/voice.slint:707
 msgid "Your own key: OpenAI bills it for what is transcribed. It is kept sealed in FinchGram's database on this Mac."
 msgstr "본인의 키입니다. 받아쓴 만큼 OpenAI가 이 키에 요금을 청구합니다. 키는 봉인된 채 이 Mac의 FinchGram 데이터베이스에 보관됩니다."
 
-#: ui/voice.slint:705
+#: ui/voice.slint:711
 msgid "Get a key at platform.openai.com"
 msgstr "platform.openai.com에서 키 받기"
 
-#: ui/voice.slint:707
+#: ui/voice.slint:713
 msgid "That is not an OpenAI key: they start with sk-."
 msgstr "OpenAI 키가 아닙니다. OpenAI 키는 sk-로 시작합니다."
 
-#: ui/voice.slint:708
+#: ui/voice.slint:714
 msgid "Checking the key with OpenAI…"
 msgstr "OpenAI에 키를 확인하는 중…"
 
-#: ui/voice.slint:709
+#: ui/voice.slint:715
 msgid "OpenAI accepts the key."
 msgstr "OpenAI가 이 키를 받아들입니다."
 
-#: ui/voice.slint:710
+#: ui/voice.slint:689 ui/voice.slint:716
 msgid "OpenAI refused the key."
 msgstr "OpenAI가 키를 거부했습니다."
 
-#: ui/voice.slint:711
+#: ui/voice.slint:717
 msgid "Could not check the key: {0}"
 msgstr "키를 확인할 수 없습니다: {0}"
 
-#: ui/voice.slint:720
+#: ui/voice.slint:726
 msgid "Languages you speak"
 msgstr "말하는 언어"
 
-#: ui/voice.slint:721
+#: ui/voice.slint:727
 msgid "Hints for OpenAI. With none chosen, it finds the language as you speak; sentences that mix languages work either way."
 msgstr "OpenAI에 주는 힌트입니다. 아무것도 고르지 않으면 말하는 동안 언어를 알아냅니다. 여러 언어가 섞인 문장은 어느 쪽이든 괜찮습니다."
 
-#: ui/voice.slint:722
+#: ui/voice.slint:728
 msgid "Tidy the words"
 msgstr "문장 다듬기"
 
-#: ui/voice.slint:723
+#: ui/voice.slint:729
 msgid "A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."
 msgstr "작은 모델이 '음', '어' 같은 말과 반복된 단어를 빼고 문장 부호를 넣습니다. 번역은 하지 않습니다."
 
-#: ui/voice.slint:725
+#: ui/voice.slint:731
 msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to OpenAI under your key and nothing else does; OpenAI charges about $1 for an hour of speech. FinchGram keeps no recording."
 msgstr "채팅 입력창에서 ✦를 누르거나 터미널에서 /voice를 입력하고 말하세요. 다시 누르거나 ⏎를 누르면 말한 내용이 입력창에 들어가고, 보내는 것은 직접 합니다. 음성은 본인의 키로 OpenAI에 전송되며 그 밖에는 아무것도 전송되지 않습니다. 요금은 음성 1시간에 약 1달러입니다. FinchGram은 녹음을 남기지 않습니다."
 
@@ -4908,23 +4920,23 @@ msgstr "Telegram 스폰서 메시지 · FinchGram은 있는 그대로 표시합�
 msgid "Send to {0}"
 msgstr "{0}에게 보내기"
 
-#: ui/workbench/conversation.slint:2710
+#: ui/workbench/conversation.slint:2711
 msgid "Esc to cancel"
 msgstr "Esc 취소"
 
-#: ui/workbench/conversation.slint:2720
+#: ui/workbench/conversation.slint:2721
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ 저장 · ⇧⏎ 줄 바꿈"
 
-#: ui/workbench/conversation.slint:2720
+#: ui/workbench/conversation.slint:2721
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ 저장 · ⏎ 줄 바꿈"
 
-#: ui/workbench/conversation.slint:2721
+#: ui/workbench/conversation.slint:2722
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ 보내기 · ⇧⏎ 줄 바꿈"
 
-#: ui/workbench/conversation.slint:2721
+#: ui/workbench/conversation.slint:2722
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ 보내기 · ⏎ 줄 바꿈"
 

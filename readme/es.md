@@ -66,8 +66,9 @@ Es un cliente no oficial, no hecho por Telegram.
   bloquearlo, y detenlo para escucharlo antes de enviarlo.
 - **Dictado por voz.** Pulsa ✦ en el cuadro de escritura y habla: el texto aparece mientras
   hablas y queda en el cuadro, sin los eh ni los mm, para que lo envíes tú. Funciona con tu propia
-  clave de OpenAI (alrededor de 1 $ por hora de voz), puesta en Ajustes → General, en cualquiera de
-  los idiomas de la interfaz y en frases que los mezclan. Ver [docs/voice-input.md](../docs/voice-input.md).
+  clave de OpenAI (alrededor de 1 $ por hora de voz): Herramientas → Dictado por voz, desactivado
+  hasta que lo actives, y ahí va la clave; en cualquiera de los idiomas de la interfaz y en frases
+  que los mezclan. Ver [docs/voice-input.md](../docs/voice-input.md).
 - **Asistentes de IA.** Claude Desktop, Claude Code y otras apps que hablan el Model Context
   Protocol pueden leer tus chats y actuar en ellos a través de FinchGram, cuando tú lo permites:
   Herramientas → Acceso de IA, desactivado hasta que lo actives, con los chats que elijas y si un

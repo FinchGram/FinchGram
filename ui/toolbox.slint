@@ -6,16 +6,18 @@
 // the three themes, settings.toml), and the settings and the profile at the foot (the design's
 // "AI settings" button left on 2026-10-24, at the maintainer's word). Downloads is a
 // family: the protocols a server can speak are listed under it; a protocol is a server's
-// property, never a tool of its own. What is drawn here is the state and the words; the themes
+// property, never a tool of its own. The AI category's two tools, AI access and voice input,
+// are panels of the toolbox's own: a card opens its panel in the sections' place. What is drawn here is the state and the words; the themes
 // draw it (ui/<theme>/toolbox.slint), src/toolbox.rs fills and acts.
 import { Downloads } from "downloads.slint";
 import { Accounts, AccountRow } from "telegram.slint";
 import { AiAccess } from "ai-access.slint";
+import { Voice } from "voice.slint";
 import { Look } from "look.slint";
 
 // A tool of the toolbox.
 export struct ToolRow {
-    id: string,             // "downloads", "live", "jellyfin", "emby", "hiding", "scheduled", "ai-access"
+    id: string,             // "downloads", "live", "jellyfin", "emby", "hiding", "scheduled", "ai-access", "voice-input"
     category: string,       // "transfers", "media", "messages", "ai"
     name: string,
     line: string,           // what it is, in a few words
@@ -65,6 +67,9 @@ export struct NavRow {
 export global Toolbox {
     in-out property <bool> open;
     in-out property <string> category: "all";      // the column's choice
+    // A tool's own panel, in the sections' place while nothing is searched: "ai-access",
+    // "voice-input", or "" for the category's cards.
+    in-out property <string> panel;
     in-out property <string> query;                // the search box
     in-out property <[NavRow]> nav;
     in-out property <[ToolSection]> sections;      // the category chosen, or every one with a hit
@@ -85,10 +90,11 @@ export global Toolbox {
     callback show(string);                         // opens at a category ("all" for every one)
     callback pin(string, bool);                    // a tool, and whether it stands on the bar now
     callback enable(string, bool);                 // a tool with a switch of its own: on, or off
-    callback open-tool(string);                    // a tool opens (and the toolbox shuts)
-    // Whether a tool with a switch is on: AI access answers assistants.
+    callback open-tool(string);                    // a tool opens: its page (and the toolbox shuts), or its panel here
+    // Whether a tool with a switch is on: AI access answers assistants; voice input has its
+    // sparkle in the composer.
     public pure function is-on(id: string) -> bool {
-        return id == "ai-access" ? AiAccess.on : true;
+        return id == "ai-access" ? AiAccess.on : id == "voice-input" ? Voice.on : true;
     }
     callback choose(string);                       // the column: a category
     callback search(string);                       // the box
@@ -124,6 +130,8 @@ export global ToolboxWords {
     public pure function scheduled-line() -> string { return @tr("Sent by the server on time, even with your computer off"); }
     public pure function ai-access() -> string { return @tr("AI access"); }
     public pure function ai-access-line() -> string { return @tr("Let other apps read the chats you allow, through FinchGram"); }
+    public pure function voice-input() -> string { return @tr("Voice input"); }
+    public pure function voice-input-line() -> string { return @tr("Speak, and the words go into the composer, through your own OpenAI key"); }
     // The protocols under Downloads.
     public pure function protocols() -> string { return @tr("Protocol · chosen when you add a server"); }
     public pure function webdav-line() -> string { return @tr("Common on NAS boxes, cloud drives and seedboxes"); }

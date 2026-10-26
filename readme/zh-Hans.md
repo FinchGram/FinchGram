@@ -43,7 +43,7 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
 - **设置。** 开机启动、按 Enter 发送、截图快捷键、通知的声音和预览、两步验证、界面语言，还有更新：app 从
   GitHub Releases 自动更新，验证不过的一律不装。
 - **语音消息。** 在聊天里直接播放，带波形、时长和 1×、1.5×、2× 倍速；听过对方能看到，和 Telegram 官方应用一样。按住麦克风录音：松开发送，向左拖取消，向上拖锁定，锁定后可以停下来先试听再发。
-- **语音输入。** 在输入框里按一下 ✦ 然后说话：字随着你说出现，去掉“嗯”“呃”之后进到输入框里，由你来发送。用的是你自己的 OpenAI 密钥（每小时语音约 1 美元），在设置 → 通用里填；界面的每种语言都行，几种语言混着说也行。见 [docs/voice-input.zh-Hans.md](../docs/voice-input.zh-Hans.md)。
+- **语音输入。** 在输入框里按一下 ✦ 然后说话：字随着你说出现，去掉“嗯”“呃”之后进到输入框里，由你来发送。用的是你自己的 OpenAI 密钥（每小时语音约 1 美元）：百宝箱 → 语音输入，默认关着，打开后在那里填密钥；界面的每种语言都行，几种语言混着说也行。见 [docs/voice-input.zh-Hans.md](../docs/voice-input.zh-Hans.md)。
 - **AI 助手。** Claude Desktop、Claude Code 以及其他会说 Model Context Protocol 的应用，可以在你允许后通过 FinchGram 读你的聊天并代你操作：百宝箱 → AI 访问，默认关着，由你选哪些聊天、助手能不能发消息，应用第一次连接时会先问你。见 [docs/mcp.zh-Hans.md](../docs/mcp.zh-Hans.md)。
 - **语言。** 界面和这份 README 都有十一种语言。
 

@@ -1,0 +1,230 @@
+// Voice input's panel in the toolbox, the AI category's second tool (src/speech/,
+// docs/voice-input.md): the switch that puts the sparkle in the composer, then, while it is on,
+// what OpenAI needs: the user's own key, the languages they speak, and whether a small model tidies
+// the words. No design round draws it: it has the AI access panel's shape (ui/pages/ai-access.slint)
+// and the settings' own rows, in every theme.
+import { Look } from "../look.slint";
+import { Icon, Field, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
+import { Card, Separator, SwitchRow, SmallButton, Chip } from "rows.slint";
+import { Voice, VoiceWords } from "../voice.slint";
+import { Toolbox, ToolboxWords } from "../toolbox.slint";
+
+// Voice input's OpenAI key (src/speech/): a box to paste it into, or its last letters and Remove
+// once it is kept; under them, what OpenAI said of it.
+component VoiceKeyRow {
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 10px;
+        HorizontalLayout {
+            spacing: 14px;
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "key";
+                    size: 20px;
+                    color: Look.accent;
+                }
+            }
+            VerticalLayout {
+                horizontal-stretch: 1;
+                alignment: center;
+                spacing: 2px;
+                Text {
+                    text: VoiceWords.key();
+                    color: Look.text;
+                    font-size: 15px;
+                    font-weight: 500;
+                }
+                Paragraph {
+                    text: VoiceWords.key-note();
+                    color: Look.muted;
+                    font-size: 13px;
+                }
+            }
+            if Voice.has-key: VerticalLayout {
+                alignment: center;
+                Text {
+                    text: Voice.key-hint;
+                    color: Look.muted;
+                    font-family: Look.mono;
+                    font-size: 13px;
+                }
+            }
+            if Voice.has-key: VerticalLayout {
+                alignment: center;
+                SmallButton {
+                    text: Look.terminal ? "[" + VoiceWords.remove().to-lowercase() + "]" : VoiceWords.remove();
+                    quiet: Look.terminal;
+                    clicked => {
+                        Voice.remove-key();
+                    }
+                }
+            }
+        }
+        if !Voice.has-key: HorizontalLayout {
+            padding-left: 34px;
+            spacing: 8px;
+            key-field := Field {
+                horizontal-stretch: 1;
+                height: 36px;
+                // The page's colour: on the card's own (Broadsheet's cards and fields share one,
+                // with no ring) the box would not show.
+                fill: Look.bg;
+                font-size: 14px;
+                font-family: Look.mono;
+                input-type: InputType.password;
+                placeholder: VoiceWords.key-placeholder();
+                accepted(text) => {
+                    Voice.save-key(text);
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                SmallButton {
+                    text: Look.terminal ? "[" + VoiceWords.save().to-lowercase() + "]" : VoiceWords.save();
+                    primary: !Look.terminal;
+                    clicked => {
+                        Voice.save-key(key-field.text);
+                    }
+                }
+            }
+        }
+        if VoiceWords.key-check() != "": HorizontalLayout {
+            padding-left: 34px;
+            Paragraph {
+                text: VoiceWords.key-check();
+                color: VoiceWords.key-tone() == 2 ? Look.ok : VoiceWords.key-tone() == 1 ? Look.danger : Look.muted;
+                font-size: 13px;
+            }
+        }
+        if !Voice.has-key: HorizontalLayout {
+            padding-left: 34px;
+            Link {
+                text: VoiceWords.get-key();
+                trailing-icon: "arrow-square-out";
+                font-size: 13px;
+                clicked => {
+                    Voice.open-key-page();
+                }
+            }
+        }
+    }
+}
+
+// The languages the user speaks, as chips in the UI's order: hints for OpenAI.
+component VoiceLanguagesRow {
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 14px;
+        spacing: 10px;
+        HorizontalLayout {
+            spacing: 14px;
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "translate";
+                    size: 20px;
+                    color: Look.accent;
+                }
+            }
+            VerticalLayout {
+                horizontal-stretch: 1;
+                alignment: center;
+                spacing: 2px;
+                Text {
+                    text: VoiceWords.languages();
+                    color: Look.text;
+                    font-size: 15px;
+                    font-weight: 500;
+                }
+                Paragraph {
+                    text: VoiceWords.languages-note();
+                    color: Look.muted;
+                    font-size: 13px;
+                }
+            }
+        }
+        HorizontalLayout {
+            padding-left: 34px;
+            VerticalLayout {
+                spacing: 8px;
+                for row in Voice.language-rows: HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    for language in row.languages: Chip {
+                        label: language.name;
+                        on: language.on;
+                        clicked => {
+                            Voice.toggle-language(language.code);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component VoicePanel {
+    VerticalLayout {
+        max-width: 600px;
+        spacing: 26px;
+        alignment: start;
+        VerticalLayout {
+            spacing: 12px;
+            // Back to the AI category's cards.
+            Link {
+                text: ToolboxWords.ai();
+                icon: "caret-left";
+                clicked => {
+                    Toolbox.choose("ai");
+                }
+            }
+            Heading {
+                label: VoiceWords.voice-input();
+            }
+            Paragraph {
+                text: VoiceWords.about();
+                color: Look.muted;
+                font-size: 15px;
+                line-height-factor: Look.leading(1.6);
+            }
+        }
+        Card {
+            SwitchRow {
+                icon: "sparkle";
+                title: VoiceWords.switch-title();
+                description: VoiceWords.switch-note();
+                on: Voice.on;
+                toggled => {
+                    Voice.set-on(!Voice.on);
+                }
+            }
+        }
+        if Voice.on: VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: "OpenAI";
+            }
+            Card {
+                VoiceKeyRow { }
+                Separator { }
+                VoiceLanguagesRow { }
+                Separator { }
+                SwitchRow {
+                    icon: "broom";
+                    title: VoiceWords.tidy();
+                    description: VoiceWords.tidy-note();
+                    on: Voice.tidy;
+                    toggled => {
+                        Voice.set-tidy(!Voice.tidy);
+                    }
+                }
+            }
+        }
+    }
+}

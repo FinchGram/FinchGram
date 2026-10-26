@@ -67,8 +67,9 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   gestoppt lässt sie sich vor dem Senden anhören.
 - **Spracheingabe.** Drück ✦ im Eingabefeld und sprich: Der Text erscheint, während du
   sprichst, und landet ohne Äh und Ähm im Feld, damit du ihn abschickst. Sie läuft über deinen
-  eigenen OpenAI-Schlüssel (etwa 1 $ pro Stunde Sprache), einzutragen unter Einstellungen →
-  Allgemein, in jeder Sprache der Oberfläche und in Sätzen, die sie mischen. Siehe
+  eigenen OpenAI-Schlüssel (etwa 1 $ pro Stunde Sprache): Werkzeuge → Spracheingabe, aus, bis du
+  sie einschaltest, und dort trägst du den Schlüssel ein; in jeder Sprache der Oberfläche und in
+  Sätzen, die sie mischen. Siehe
   [docs/voice-input.md](../docs/voice-input.md).
 - **KI-Assistenten.** Claude Desktop, Claude Code und andere Apps, die das Model Context Protocol
   sprechen, können über FinchGram deine Chats lesen und darin handeln, sobald du es erlaubst:

@@ -11,7 +11,7 @@ import { AiAccess, AiScope, AiWriting, AiChat, AiApp, AiActivity, AiActivityKind
 import { Look } from "../look.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Logo, SectionLabel, Paragraph, Link, Heading } from "../widgets.slint";
-import { Toolbox } from "../toolbox.slint";
+import { Toolbox, ToolboxWords } from "../toolbox.slint";
 import { Card, Separator, SwitchRow, NavRow, SmallButton } from "rows.slint";
 
 // How chats, apps and what an assistant asked for are worded.
@@ -841,7 +841,7 @@ export component AllowDialog inherits Rectangle {
                     clicked => {
                         AiAccess.picking = false;
                         AppState.page = Page.chats;
-                        Toolbox.show("ai");
+                        Toolbox.open-tool("ai-access");
                     }
                 }
             }
@@ -878,6 +878,14 @@ export component AiPanel {
         alignment: start;
         VerticalLayout {
             spacing: 12px;
+            // Back to the AI category's cards, or, choosing chats, to the panel.
+            if !AiAccess.picking: Link {
+                text: ToolboxWords.ai();
+                icon: "caret-left";
+                clicked => {
+                    Toolbox.choose("ai");
+                }
+            }
             if AiAccess.picking: Link {
                 text: @tr("AI access");
                 icon: "caret-left";

@@ -3517,9 +3517,9 @@ component ConversationPane inherits Rectangle {
                         opacity: 0.4;
                     }
                 }
-                // The sparkle: voice input (src/speech/). A click starts and a second one
-                // finishes; held while speaking, letting go finishes.
-                if !Recorder.busy: VerticalLayout {
+                // The sparkle: voice input (src/speech/), while the toolbox has it on. A click
+                // starts and a second one finishes; held while speaking, letting go finishes.
+                if !Recorder.busy && Voice.on: VerticalLayout {
                     alignment: end;
                     padding-bottom: 2px;
                     sparkle := Rectangle {

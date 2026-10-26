@@ -33,6 +33,10 @@ export global WorkbenchPalette {
     out property <color> file-image: dark ? #78c89e : #29885e;
     out property <color> line: dark ? #2b2f35 : #e4e7eb;
     out property <color> sel: dark ? #252b45 : #e6eafb;
+    // A row of the chat list under the pointer: plainly darker than the side, short of a chosen
+    // row's sel. (The chrome grey at 60% it had was one or two shades from the side: too faint to
+    // see, the maintainer said on 2026-10-26.)
+    out property <color> hover: dark ? #262a30 : #eceef1;
     // The selected words in an input, and on macOS its cursor (Look.input-sel says why).
     out property <color> input-sel: accent.with-alpha(0.2);
     out property <color> tab: dark ? #1e2126 : #f3f4f6;

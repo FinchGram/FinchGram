@@ -2485,9 +2485,10 @@ component Pane {
                                 opacity: Recorder.busy ? 0 : 0.45;
                             }
                         }
-                        // The sparkle: voice input (src/speech/). A click starts and a second one
-                        // finishes; held while speaking, letting go finishes.
-                        VerticalLayout {
+                        // The sparkle: voice input (src/speech/), while the toolbox has it on. A
+                        // click starts and a second one finishes; held while speaking, letting go
+                        // finishes.
+                        if Voice.on: VerticalLayout {
                             alignment: center;
                             sparkle := Rectangle {
                                 property <bool> allowed: !Recorder.busy;

@@ -9,8 +9,7 @@ import { Fmt } from "../format.slint";
 import { Icon, Logo, Spinner, Field, PrimaryButton, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
 import { FormHeading, FormError, HintLine, EmailCodeField, LinkRow, NewPasswordForm } from "password.slint";
 import { PageFrame, SideColumn } from "frame.slint";
-import { Card, Separator, SwitchRow, NavRow, SmallButton, Chip } from "rows.slint";
-import { Voice, VoiceWords } from "../voice.slint";
+import { Card, Separator, SwitchRow, NavRow, SmallButton } from "rows.slint";
 
 component Category inherits Rectangle {
     in property <SettingsSection> section;
@@ -560,168 +559,8 @@ component ShortcutRow {
     }
 }
 
-// Voice input's OpenAI key (src/speech/): a box to paste it into, or its last letters and Remove
-// once it is kept; under them, what OpenAI said of it.
-component VoiceKeyRow {
-    VerticalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        padding-top: 12px;
-        padding-bottom: 12px;
-        spacing: 10px;
-        HorizontalLayout {
-            spacing: 14px;
-            VerticalLayout {
-                alignment: center;
-                Icon {
-                    name: "key";
-                    size: 20px;
-                    color: Look.accent;
-                }
-            }
-            VerticalLayout {
-                horizontal-stretch: 1;
-                alignment: center;
-                spacing: 2px;
-                Text {
-                    text: VoiceWords.key();
-                    color: Look.text;
-                    font-size: 15px;
-                    font-weight: 500;
-                }
-                Paragraph {
-                    text: VoiceWords.key-note();
-                    color: Look.muted;
-                    font-size: 13px;
-                }
-            }
-            if Voice.has-key: VerticalLayout {
-                alignment: center;
-                Text {
-                    text: Voice.key-hint;
-                    color: Look.muted;
-                    font-family: Look.mono;
-                    font-size: 13px;
-                }
-            }
-            if Voice.has-key: VerticalLayout {
-                alignment: center;
-                SmallButton {
-                    text: Look.terminal ? "[" + VoiceWords.remove().to-lowercase() + "]" : VoiceWords.remove();
-                    quiet: Look.terminal;
-                    clicked => {
-                        Voice.remove-key();
-                    }
-                }
-            }
-        }
-        if !Voice.has-key: HorizontalLayout {
-            padding-left: 34px;
-            spacing: 8px;
-            key-field := Field {
-                horizontal-stretch: 1;
-                height: 36px;
-                // The page's colour: on the card's own (Broadsheet's cards and fields share one,
-                // with no ring) the box would not show.
-                fill: Look.bg;
-                font-size: 14px;
-                font-family: Look.mono;
-                input-type: InputType.password;
-                placeholder: VoiceWords.key-placeholder();
-                accepted(text) => {
-                    Voice.save-key(text);
-                }
-            }
-            VerticalLayout {
-                alignment: center;
-                SmallButton {
-                    text: Look.terminal ? "[" + VoiceWords.save().to-lowercase() + "]" : VoiceWords.save();
-                    primary: !Look.terminal;
-                    clicked => {
-                        Voice.save-key(key-field.text);
-                    }
-                }
-            }
-        }
-        if VoiceWords.key-check() != "": HorizontalLayout {
-            padding-left: 34px;
-            Paragraph {
-                text: VoiceWords.key-check();
-                color: VoiceWords.key-tone() == 2 ? Look.ok : VoiceWords.key-tone() == 1 ? Look.danger : Look.muted;
-                font-size: 13px;
-            }
-        }
-        if !Voice.has-key: HorizontalLayout {
-            padding-left: 34px;
-            Link {
-                text: VoiceWords.get-key();
-                trailing-icon: "arrow-square-out";
-                font-size: 13px;
-                clicked => {
-                    Voice.open-key-page();
-                }
-            }
-        }
-    }
-}
-
-// The languages the user speaks, as chips in the UI's order: hints for OpenAI.
-component VoiceLanguagesRow {
-    VerticalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        padding-top: 12px;
-        padding-bottom: 14px;
-        spacing: 10px;
-        HorizontalLayout {
-            spacing: 14px;
-            VerticalLayout {
-                alignment: center;
-                Icon {
-                    name: "translate";
-                    size: 20px;
-                    color: Look.accent;
-                }
-            }
-            VerticalLayout {
-                horizontal-stretch: 1;
-                alignment: center;
-                spacing: 2px;
-                Text {
-                    text: VoiceWords.languages();
-                    color: Look.text;
-                    font-size: 15px;
-                    font-weight: 500;
-                }
-                Paragraph {
-                    text: VoiceWords.languages-note();
-                    color: Look.muted;
-                    font-size: 13px;
-                }
-            }
-        }
-        HorizontalLayout {
-            padding-left: 34px;
-            VerticalLayout {
-                spacing: 8px;
-                for row in Voice.language-rows: HorizontalLayout {
-                    alignment: start;
-                    spacing: 8px;
-                    for language in row.languages: Chip {
-                        label: language.name;
-                        on: language.on;
-                        clicked => {
-                            Voice.toggle-language(language.code);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// General, from the design: starting FinchGram and closing its window, typing, voice input,
-// shortcuts, and the screenshot tool.
+// General, from the design: starting FinchGram and closing its window, typing, shortcuts, and the
+// screenshot tool. (Voice input is a tool of the toolbox: ui/pages/voice-input.slint.)
 component GeneralSection {
     init => {
         AppState.check-launch-at-login();
@@ -793,34 +632,6 @@ component GeneralSection {
                     title: @tr("Replace emoji automatically");
                     enabled: false;
                 }
-            }
-        }
-        // Voice input (src/speech/, docs/voice-input.md): the user's own OpenAI key, the languages
-        // they speak, and whether a small model tidies the words.
-        VerticalLayout {
-            spacing: 8px;
-            SectionLabel {
-                label: VoiceWords.voice-input();
-            }
-            Card {
-                VoiceKeyRow { }
-                Separator { }
-                VoiceLanguagesRow { }
-                Separator { }
-                SwitchRow {
-                    icon: "sparkle";
-                    title: VoiceWords.tidy();
-                    description: VoiceWords.tidy-note();
-                    on: Voice.tidy;
-                    toggled => {
-                        Voice.set-tidy(!Voice.tidy);
-                    }
-                }
-            }
-            Paragraph {
-                text: VoiceWords.about();
-                color: Look.faint;
-                font-size: 13px;
             }
         }
         VerticalLayout {

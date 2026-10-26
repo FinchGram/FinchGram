@@ -55,9 +55,9 @@ pub struct Settings {
     /// The toolbox (src/toolbox.rs): which tools are pinned to the activity bar, in the
     /// toolbox's order; one list for the three themes.
     pub toolbox: Toolbox,
-    /// Settings → General → Voice input (src/speech/, docs/voice-input.md): the user speaks, and
-    /// the words go into the composer, through their own OpenAI key. The key itself is a
-    /// credential and lives in the database (database::credential), never here.
+    /// Voice input, a tool of the toolbox's AI category (src/speech/, docs/voice-input.md): the
+    /// user speaks, and the words go into the composer, through their own OpenAI key. The key
+    /// itself is a credential and lives in the database (database::credential), never here.
     pub voice_input: VoiceInput,
 }
 
@@ -67,6 +67,10 @@ pub struct Settings {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct VoiceInput {
+    /// The tool is on: the sparkle shows in the composer. Off until the user turns it on in the
+    /// toolbox. A file written before the switch existed (0.7.0) has none, and voice input is on
+    /// there when a key was kept (src/speech/ decides at the start).
+    pub enabled: Option<bool>,
     /// The languages the user speaks, as OpenAI's hints name them ("en", "zh-cn", "zh-tw", "ja"),
     /// in the order of the UI's language list; none lets the model find out by itself. Sentences
     /// that mix them are fine either way.
@@ -82,7 +86,7 @@ pub struct VoiceInput {
 
 impl Default for VoiceInput {
     fn default() -> Self {
-        VoiceInput { languages: Vec::new(), tidy: true, model: "gpt-live-transcribe".to_string(), tidy_model: "gpt-5-nano".to_string() }
+        VoiceInput { enabled: None, languages: Vec::new(), tidy: true, model: "gpt-live-transcribe".to_string(), tidy_model: "gpt-5-nano".to_string() }
     }
 }
 
@@ -551,8 +555,27 @@ mod tests {
         let read: Settings = toml::from_str(&text).expect("read back");
         assert_eq!(read.voice_input, settings.voice_input);
         // Names emptied by hand come back as the defaults.
-        let odd = VoiceInput { model: " ".into(), tidy_model: String::new(), languages: vec!["ja".into(), "".into(), "ja".into()], tidy: true }.sanitized();
+        let odd = VoiceInput { enabled: None, model: " ".into(), tidy_model: String::new(), languages: vec!["ja".into(), "".into(), "ja".into()], tidy: true }.sanitized();
         assert_eq!(odd, VoiceInput { languages: vec!["ja".into()], ..VoiceInput::default() });
+    }
+
+    #[test]
+    fn voice_inputs_switch_is_written_once_chosen_and_absent_in_an_older_file() {
+        // 0.7.0 wrote no switch: none is read, and the start decides by the key.
+        let read: Settings = toml::from_str("[voice_input]
+tidy = true
+").expect("read");
+        assert_eq!(read.voice_input.enabled, None);
+        let text = toml::to_string_pretty(&Settings::default()).expect("TOML");
+        let section: Vec<&str> = text.split("[voice_input]").nth(1).unwrap_or("").lines().take_while(|line| !line.starts_with('[')).collect();
+        assert!(!section.iter().any(|line| line.starts_with("enabled")), "{text}");
+        for on in [true, false] {
+            let settings = Settings { voice_input: VoiceInput { enabled: Some(on), ..VoiceInput::default() }, ..Settings::default() };
+            let text = toml::to_string_pretty(&settings).expect("TOML");
+            assert!(text.contains(&format!("[voice_input]\nenabled = {on}\n")), "{text}");
+            let read: Settings = toml::from_str(&text).expect("read back");
+            assert_eq!(read.voice_input.enabled, Some(on));
+        }
     }
 
     #[test]

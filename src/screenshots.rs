@@ -106,6 +106,11 @@ fn click_with(window: &MinimalSoftwareWindow, x: f32, y: f32, button: PointerEve
     window.dispatch_event(WindowEvent::PointerReleased { position, button });
 }
 
+/// The pointer resting at `x`, `y` in the picture, pressing nothing: what it hovers shows so.
+fn hover(window: &MinimalSoftwareWindow, x: f32, y: f32) {
+    window.dispatch_event(WindowEvent::PointerMoved { position: slint::LogicalPosition::new(x, y + MENU_BAR as f32) });
+}
+
 /// How far under a chat menu's top its third entry, Add to folder, is: the menu's padding and
 /// heading, then two entries and a half.
 fn add_to_folder(theme: Theme) -> f32 {
@@ -700,7 +705,7 @@ fn fill_chats(ui: &MainWindow) {
 
 /// The toolbox as src/toolbox.rs fills it: downloads pinned, every category shown.
 fn set_toolbox(ui: &MainWindow) {
-    crate::toolbox::show_for_pictures(ui, &["downloads"], "all", "");
+    crate::toolbox::show_for_pictures(ui, &["downloads"], "all", "", "");
 }
 
 fn info_row(id: &str, kind: InfoRowKind, icon: &str, label: &str, key: &str) -> InfoRow {
@@ -1715,6 +1720,7 @@ fn attachments(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, na
 /// stopped for want of a key, and one OpenAI refused.
 fn voice(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
     let voice = ui.global::<Voice>();
+    voice.set_on(true);
     voice.set_state(VoiceState::Listening);
     voice.set_connecting(true);
     voice.set_level(0.3);
@@ -1741,6 +1747,7 @@ fn voice(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) ->
     voice.set_detail(SharedString::new());
     voice.set_level(0.0);
     voice.set_seconds(0);
+    voice.set_on(false);
 }
 
 /// The design's fifth round, voice messages (src/telegram/voice.rs): Jie's not yet listened to,
@@ -1811,24 +1818,34 @@ fn voice_messages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn
 
 /// Settings → General → Voice input, scrolled to: no key yet, then a key kept that OpenAI takes,
 /// with two languages chosen and the words tidied.
-fn voice_settings(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+/// Voice input's panel in the toolbox, over the chats: off (the switch alone), on without a key,
+/// a key that is not one, and a key OpenAI took with two languages chosen.
+fn voice_panel(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
     let app = ui.global::<AppState>();
     let voice = ui.global::<Voice>();
-    app.set_settings_section(SettingsSection::General);
-    scroll(window, 800.0, 500.0, 360.0);
-    save(window, &name("settings-voice"));
+    let toolbox = ui.global::<Toolbox>();
+    let page = app.get_page();
+    app.set_page(Page::Chats);
+    crate::toolbox::show_for_pictures(ui, &["downloads"], "ai", "voice-input", "");
+    toolbox.set_open(true);
+    save(window, &name("voice-input-off"));
+    voice.set_on(true);
+    save(window, &name("voice-input"));
     voice.set_key_check(KeyCheck::Malformed);
-    save(window, &name("settings-voice-malformed"));
+    save(window, &name("voice-input-malformed"));
     voice.set_has_key(true);
     voice.set_key_hint("sk-…4f2a".into());
     voice.set_key_check(KeyCheck::Works);
     crate::speech::show_for_pictures(ui, &["zh-cn", "en"]);
-    save(window, &name("settings-voice-key"));
+    save(window, &name("voice-input-key"));
     voice.set_has_key(false);
     voice.set_key_hint(SharedString::new());
     voice.set_key_check(KeyCheck::None);
     crate::speech::show_for_pictures(ui, &[]);
-    scroll(window, 800.0, 500.0, -2000.0);
+    voice.set_on(false);
+    toolbox.set_open(false);
+    set_toolbox(ui);
+    app.set_page(page);
 }
 
 fn two_step(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
@@ -1889,7 +1906,7 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
     };
     // AI access is the toolbox's panel: the chats behind, the toolbox open at AI.
     app.set_page(Page::Chats);
-    crate::toolbox::show_for_pictures(ui, &["downloads"], "ai", "");
+    crate::toolbox::show_for_pictures(ui, &["downloads"], "ai", "ai-access", "");
     ui.global::<Toolbox>().set_open(true);
     ai.set_on(true);
     ai.set_scope(AiScope::Chosen);
@@ -2433,6 +2450,12 @@ fn screenshots() {
             set_toolbox(&ui);
             open_keyboards(&ui);
             save(&window, &name("chats"));
+            // The pointer resting on a chat of Workbench's list (Mom, under Personal): its hover.
+            if theme == Theme::Workbench {
+                hover(&window, 150.0, 307.0);
+                save(&window, &name("chats-hover"));
+                window.dispatch_event(WindowEvent::PointerExited);
+            }
             // Searching in the chat: the line under the header, at the third of 14 matches.
             {
                 let conversation = ui.global::<Conversation>();
@@ -2465,14 +2488,17 @@ fn screenshots() {
                 set_toolbox(&ui);
                 toolbox.set_open(true);
                 save(&window, &name("toolbox"));
-                crate::toolbox::show_for_pictures(&ui, &["downloads"], "transfers", "");
+                crate::toolbox::show_for_pictures(&ui, &["downloads"], "transfers", "", "");
                 save(&window, &name("toolbox-transfers"));
-                crate::toolbox::show_for_pictures(&ui, &["downloads"], "all", "live");
+                crate::toolbox::show_for_pictures(&ui, &["downloads"], "all", "", "live");
                 save(&window, &name("toolbox-search"));
-                crate::toolbox::show_for_pictures(&ui, &["downloads"], "accounts", "");
+                crate::toolbox::show_for_pictures(&ui, &["downloads"], "accounts", "", "");
                 save(&window, &name("toolbox-accounts"));
-                crate::toolbox::show_for_pictures(&ui, &["downloads"], "bar", "");
+                crate::toolbox::show_for_pictures(&ui, &["downloads"], "bar", "", "");
                 save(&window, &name("toolbox-bar"));
+                // AI: its two tools, AI access and voice input, as cards.
+                crate::toolbox::show_for_pictures(&ui, &["downloads"], "ai", "", "");
+                save(&window, &name("toolbox-ai"));
                 toolbox.set_open(false);
                 ui.global::<Downloads>().set_active_count(0);
                 set_toolbox(&ui);
@@ -2577,11 +2603,11 @@ fn screenshots() {
             app.set_update_total("63.8 MB".into());
             save(&window, &name("settings-about-downloading"));
             app.set_update_state(crate::UpdateState::Idle);
-            voice_settings(&ui, &window, &name);
+            voice_panel(&ui, &window, &name);
             // Settings → General → Screenshots: the shortcut's box taking new keys.
             app.set_settings_section(SettingsSection::General);
             ui.global::<Screenshot>().set_recording(true);
-            // The Screenshots section is the page's last, below Voice input: scrolled to.
+            // The Screenshots section is the page's last: scrolled to.
             scroll(&window, 800.0, 500.0, 2000.0);
             save(&window, &name("settings-screenshot-shortcut"));
             scroll(&window, 800.0, 500.0, -2000.0);
@@ -2632,7 +2658,7 @@ fn screenshots() {
     app.set_page(Page::Settings);
     app.set_settings_section(SettingsSection::General);
     save(&window, "zh-workbench-settings-general");
-    voice_settings(&ui, &window, &|page: &str| format!("zh-workbench-{page}"));
+    voice_panel(&ui, &window, &|page: &str| format!("zh-workbench-{page}"));
     app.set_settings_section(SettingsSection::Notifications);
     save(&window, "zh-workbench-settings-notifications");
     app.set_settings_section(SettingsSection::Appearance);
@@ -2664,7 +2690,7 @@ fn screenshots() {
         app.set_page(Page::Settings);
         app.set_settings_section(SettingsSection::General);
         save(&window, &format!("{code}-workbench-settings-general"));
-        voice_settings(&ui, &window, &|page: &str| format!("{code}-workbench-{page}"));
+        voice_panel(&ui, &window, &|page: &str| format!("{code}-workbench-{page}"));
         app.set_page(Page::Chats);
     }
     let _ = login.get_countries().row_count();

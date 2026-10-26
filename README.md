@@ -65,8 +65,9 @@ client, not made by Telegram.
   to send it, drag left to cancel, drag up to lock it, then stop it to listen before it goes.
 - **Voice input.** Press the sparkle in the composer and speak: the words show as you talk and
   go into the box, tidied of um and uh, for you to send. It runs on your own OpenAI key (about $1 an
-  hour of speech), set in Settings → General, in any of the interface's languages and in sentences
-  that mix them. See [docs/voice-input.md](docs/voice-input.md).
+  hour of speech): Toolbox → Voice input, off until you turn it on, where the key goes. It works in
+  any of the interface's languages and in sentences that mix them. See
+  [docs/voice-input.md](docs/voice-input.md).
 - **AI assistants.** Claude Desktop, Claude Code and other apps that speak the Model Context
   Protocol can read your chats and act in them through FinchGram, once you let them: Toolbox → AI access, off until you turn it on, with the chats you choose and whether an assistant may send, and
   a question the first time an app connects. See [docs/mcp.md](docs/mcp.md).

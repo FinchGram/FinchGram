@@ -64,8 +64,10 @@ things fit together.
   redirects every file request to a CDN that speaks HTTP/1.1 only; what its speed depends on is
   the number of streams and the tail, docs/downloads.md.)
 - Voice input (`src/speech/`, docs/voice-input.md, built 2026-10-25 at the maintainer's word,
-  "类似微信那样"): the composer's sparkle (Terminal: /voice; the microphone is voice messages'); the
-  words stream back from OpenAI's realtime transcription (`gpt-live-transcribe`) under the user's
+  "类似微信那样"): a tool of the toolbox's AI category since 2026-10-26 (not Telegram's, the
+  maintainer's word), off until the user turns it on in its panel there (ui/pages/voice-input.slint),
+  where its settings are; then the composer's sparkle (Terminal: /voice; the microphone is voice
+  messages'); the words stream back from OpenAI's realtime transcription (`gpt-live-transcribe`) under the user's
   own key, show in a strip above the composer, are tidied
   by a small model (`gpt-5-nano`, a switch) and go into the composer for the user to send. No model
   inside the app (the installer stays small); the key is a credential in the database

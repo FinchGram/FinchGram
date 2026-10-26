@@ -1,7 +1,7 @@
 //! The toolbox (the design's seventh round, "百宝箱"): everything beyond the chats in one place,
 //! slid out from the logo in Workbench and Broadsheet, the pane's place under /tools in Terminal.
-//! Its categories list every tool; a tool that can be off (AI access) has its switch on its
-//! card, the same one its page has. Pinning is the bar's own section, the last category: a
+//! Its categories list every tool; a tool that can be off (AI access, voice input) has its switch
+//! on its card, the same one its panel has. Pinning is the bar's own section, the last category: a
 //! switch a tool, and the activity bar, the rail and Terminal's status bar show only the pinned
 //! tools, one list for the three themes (`[toolbox] pinned` in settings.toml; nothing by default:
 //! the user pins what they want, the maintainer's word of 2026-10-24). Downloads is a family: the
@@ -9,9 +9,12 @@
 //! when a server is added (src/downloads/), never a tool of its own. The tools the design draws
 //! but FinchGram does not have yet (live streams, Jellyfin, keyword hiding, scheduled messages)
 //! are listed faded, and cannot be pinned; so is Emby, which the maintainer added beside
-//! Jellyfin on 2026-10-24, beyond the design's round. AI access is the toolbox's own panel: AI in
-//! the column, or its card, shows the configuration in the sections' place. The screenshot is not
-//! a tool of the toolbox: its scissors stay under the composer, at the maintainer's word (2026-10-23).
+//! Jellyfin on 2026-10-24, beyond the design's round. The AI category holds AI access and voice
+//! input (src/speech/, a tool since 2026-10-26 at the maintainer's word: not Telegram's, and off
+//! until the user turns it on), each a panel of the toolbox's own: its card, or its pinned button,
+//! shows the panel in the sections' place, with a link back to the category's cards. The
+//! screenshot is not a tool of the toolbox: its scissors stay under the composer, at the
+//! maintainer's word (2026-10-23).
 
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -19,7 +22,7 @@ use std::rc::Rc;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel, Weak};
 
 use crate::settings::Settings;
-use crate::{AccountRow, Accounts, AiAccess, AppState, Downloads, MainWindow, NavRow, Page, ProtocolRow, ToolRow, ToolSection, Toolbox, ToolboxWords};
+use crate::{AccountRow, Accounts, AiAccess, AppState, Downloads, MainWindow, NavRow, Page, ProtocolRow, ToolRow, ToolSection, Toolbox, ToolboxWords, Voice};
 
 /// A tool: its id, its category, its Phosphor icon, Terminal's mark, its shortcut, whether
 /// FinchGram has it, and whether it is a family (the protocols are listed under it).
@@ -36,7 +39,7 @@ struct Tool {
 }
 
 /// The tools, in the toolbox's order.
-const TOOLS: [Tool; 7] = [
+const TOOLS: [Tool; 8] = [
     Tool { id: "downloads", category: "transfers", icon: "download-simple", sigil: "↓", key: "⌥⌘L", built: true, switchable: false, family: true },
     Tool { id: "live", category: "media", icon: "broadcast", sigil: "◉", key: "", built: false, switchable: false, family: false },
     Tool { id: "jellyfin", category: "media", icon: "film-reel", sigil: "▷", key: "", built: false, switchable: false, family: false },
@@ -44,7 +47,11 @@ const TOOLS: [Tool; 7] = [
     Tool { id: "hiding", category: "messages", icon: "funnel-simple", sigil: "⊘", key: "", built: false, switchable: false, family: false },
     Tool { id: "scheduled", category: "messages", icon: "clock", sigil: "○", key: "", built: false, switchable: false, family: false },
     Tool { id: "ai-access", category: "ai", icon: "plugs-connected", sigil: "◆", key: "", built: true, switchable: true, family: false },
+    Tool { id: "voice-input", category: "ai", icon: "sparkle", sigil: "✦", key: "", built: true, switchable: true, family: false },
 ];
+
+/// The tools that are panels of the toolbox's own rather than pages.
+const PANELS: [&str; 2] = ["ai-access", "voice-input"];
 
 /// The categories, in the column's order: id, icon, Broadsheet's letter. The last is the bar's
 /// section, where tools are pinned.
@@ -66,11 +73,14 @@ const PROTOCOLS: [(&str, &str, &str, bool); 4] = [
     ("sftp", "SFTP", "22", true),
 ];
 
-/// What the toolbox shows: the category chosen in the column and the words in the search box.
+/// What the toolbox shows: the category chosen in the column, a tool's own panel, and the words
+/// in the search box.
 struct View {
     ui: Weak<MainWindow>,
     settings: Rc<RefCell<Settings>>,
     category: String,
+    /// A tool's panel in the sections' place (one of PANELS), or "" for the category's cards.
+    panel: String,
     query: String,
     /// The first tool shown that FinchGram has: ⏎ in the search box opens it.
     first: Option<String>,
@@ -82,7 +92,7 @@ thread_local! {
 
 pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     VIEW.with(|view| {
-        *view.borrow_mut() = Some(View { ui: ui.as_weak(), settings, category: "all".to_string(), query: String::new(), first: None });
+        *view.borrow_mut() = Some(View { ui: ui.as_weak(), settings, category: "all".to_string(), panel: String::new(), query: String::new(), first: None });
     });
     refresh();
     let toolbox = ui.global::<Toolbox>();
@@ -131,10 +141,11 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     toolbox.on_enable({
         let ui = ui.as_weak();
         move |id, on| {
-            if let Some(ui) = ui.upgrade()
-                && id.as_str() == "ai-access"
-            {
-                ui.global::<AiAccess>().invoke_set_on(on);
+            let Some(ui) = ui.upgrade() else { return };
+            match id.as_str() {
+                "ai-access" => ui.global::<AiAccess>().invoke_set_on(on),
+                "voice-input" => ui.global::<Voice>().invoke_set_on(on),
+                _ => {}
             }
         }
     });
@@ -172,7 +183,7 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
             let Some(ui) = ui.upgrade() else { return false };
             let Some(category) = category_named(&ui, &words) else { return false };
             let toolbox = ui.global::<Toolbox>();
-            let shown = VIEW.with(|view| view.borrow().as_ref().map(|view| view.category == category && view.query.is_empty()).unwrap_or(false));
+            let shown = VIEW.with(|view| view.borrow().as_ref().map(|view| view.category == category && view.panel.is_empty() && view.query.is_empty()).unwrap_or(false));
             if toolbox.get_open() && shown {
                 toolbox.set_open(false);
             } else {
@@ -201,11 +212,11 @@ pub fn servers_changed() {
 }
 
 /// The toolbox as the picture test draws it (src/screenshots.rs): these tools pinned, this
-/// category chosen, these words in the box.
+/// category chosen, this tool's panel ("" for none), these words in the box.
 #[cfg(test)]
-pub fn show_for_pictures(ui: &MainWindow, pinned: &[&str], category: &str, query: &str) {
+pub fn show_for_pictures(ui: &MainWindow, pinned: &[&str], category: &str, panel: &str, query: &str) {
     let pinned: Vec<String> = pinned.iter().map(|tool| tool.to_string()).collect();
-    fill(ui, &pinned, category, query);
+    fill(ui, &pinned, category, panel, query);
 }
 
 fn open(ui: &MainWindow) {
@@ -214,27 +225,33 @@ fn open(ui: &MainWindow) {
     toolbox.set_opened(toolbox.get_opened() + 1);
 }
 
-/// The tool's page comes and the toolbox shuts; AI access is the toolbox's own panel, so the
-/// toolbox opens at AI instead.
+/// The tool's page comes and the toolbox shuts; a tool that is a panel of the toolbox's own (AI
+/// access, voice input) has the toolbox open at its panel instead.
 fn open_tool(ui: &MainWindow, id: &str) {
-    match id {
-        "downloads" => {
-            ui.global::<Toolbox>().set_open(false);
-            ui.global::<AppState>().set_page(Page::Downloads);
-        }
-        "ai-access" => {
-            set_view("ai", "");
-            open(ui);
-        }
-        _ => {}
+    if id == "downloads" {
+        ui.global::<Toolbox>().set_open(false);
+        ui.global::<AppState>().set_page(Page::Downloads);
+        return;
     }
+    let Some(tool) = TOOLS.iter().find(|tool| tool.id == id && PANELS.contains(&tool.id)) else { return };
+    VIEW.with(|view| {
+        if let Some(view) = view.borrow_mut().as_mut() {
+            view.category = tool.category.to_string();
+            view.panel = tool.id.to_string();
+            view.query = String::new();
+        }
+    });
+    refresh();
+    open(ui);
 }
 
-/// The column's choice and the box's words, then everything drawn again.
+/// The column's choice and the box's words, with the category's cards (no panel), then
+/// everything drawn again.
 fn set_view(category: &str, query: &str) {
     VIEW.with(|view| {
         if let Some(view) = view.borrow_mut().as_mut() {
             view.category = category.to_string();
+            view.panel = String::new();
             view.query = query.to_string();
         }
     });
@@ -271,16 +288,18 @@ fn label_of(words: &ToolboxWords, category: &str) -> SharedString {
 
 pub fn refresh() {
     let state = VIEW.with(|view| {
-        view.borrow().as_ref().map(|view| (view.ui.clone(), view.settings.borrow().toolbox.pinned.clone(), view.category.clone(), view.query.clone()))
+        view.borrow()
+            .as_ref()
+            .map(|view| (view.ui.clone(), view.settings.borrow().toolbox.pinned.clone(), view.category.clone(), view.panel.clone(), view.query.clone()))
     });
-    let Some((ui, pinned, category, query)) = state else { return };
+    let Some((ui, pinned, category, panel, query)) = state else { return };
     let Some(ui) = ui.upgrade() else { return };
-    fill(&ui, &pinned, &category, &query);
+    fill(&ui, &pinned, &category, &panel, &query);
 }
 
-/// The column, the sections and the bars, from the tools, the accounts, the category chosen and
-/// the words in the box.
-fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
+/// The column, the sections and the bars, from the tools, the accounts, the category chosen, the
+/// panel shown and the words in the box.
+fn fill(ui: &MainWindow, pinned: &[String], category: &str, panel: &str, query: &str) {
     let words = ui.global::<ToolboxWords>();
     let needle = query.trim().to_lowercase();
     let searching = !needle.is_empty();
@@ -296,7 +315,8 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
                 "emby" => (words.invoke_emby(), words.invoke_emby_line()),
                 "hiding" => (words.invoke_hiding(), words.invoke_hiding_line()),
                 "scheduled" => (words.invoke_scheduled(), words.invoke_scheduled_line()),
-                _ => (words.invoke_ai_access(), words.invoke_ai_access_line()),
+                "ai-access" => (words.invoke_ai_access(), words.invoke_ai_access_line()),
+                _ => (words.invoke_voice_input(), words.invoke_voice_input_line()),
             };
             let mut texts: Vec<&str> = vec![&name, &line, tool.id];
             if tool.family {
@@ -385,8 +405,8 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
             sections.push(ToolSection { id: id.into(), label, letter: letter.into(), icon: icon.into(), accounts: false, pins: false, tools: ModelRc::new(VecModel::from(its)), families, others });
         }
     }
-    // AI in the column is the AI access panel itself (the themes draw it): no sections there.
-    if category == "ai" && !searching {
+    // A tool's panel is in the sections' place (the themes draw it), until something is searched.
+    if !panel.is_empty() && !searching {
         sections.clear();
     }
     let everything = if searching { hits } else { tools.len() as i32 + i32::from(signed_in > 0) };
@@ -415,6 +435,7 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, query: &str) {
     });
     let toolbox = ui.global::<Toolbox>();
     toolbox.set_category(category.into());
+    toolbox.set_panel(panel.into());
     toolbox.set_query(query.into());
     toolbox.set_hits(hits);
     toolbox.set_downloads_pinned(bar.iter().any(|tool| tool.id == "downloads"));

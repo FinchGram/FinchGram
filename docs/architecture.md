@@ -340,11 +340,11 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     "/tools 传输" or "/tools transfers" jumps to a category, the same command again or Esc closes,
     /accounts is the accounts category). ⌘J opens it in every theme (View → Toolbox). A search box
     at the top filters by name (⏎ opens the first tool found), the categories stand at the left
-    (All, then accounts, transfers, media, messages, connections; in toolbox.rs a category is a row
+    (All, then accounts, transfers, media, messages, AI; in toolbox.rs a category is a row
     of one table and a tool a row of another), the sections at the right: the accounts as tiles
     (⌘1–⌘0; adding one), then every tool of each category with a line about it and what goes
-    on: a card opens the tool and shuts the toolbox, and a tool that can be off (AI access) has
-    its switch on the card, the same one its page has. Pinning is a section of its own, the bar's
+    on: a card opens the tool and shuts the toolbox, and a tool that can be off (AI access, voice
+    input) has its switch on the card, the same one its panel has. Pinning is a section of its own, the bar's
     (Activity bar, Rail or Status bar, the last category): a switch a tool, and the activity bar,
     the rail and Terminal's status bar show only the pinned tools, in the toolbox's order, one
     list for the three themes in `[toolbox] pinned` of settings.toml, nothing by default (the
@@ -353,10 +353,13 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     Downloads is a family: the protocols a server can speak are listed under it (WebDAV, FTP,
     FTPS and SFTP, each with its default port and how many servers speak it); a protocol is a
     server's property, chosen when a server is added (docs/downloads.md), never a tool of its own.
-    AI access is a tool too, under AI, and its panel is the toolbox's: AI in the column, or the
-    card, shows the configuration itself in the sections' place (ui/pages/ai-access.slint's AiPanel:
-    the switch, the chats, the apps, the log), no longer a section of Settings, which keeps
-    FinchGram's own preferences (the maintainer's word of 2026-10-24). The tools the design draws
+    AI holds two tools, AI access and voice input, each a panel of the toolbox's own: its card, or
+    its button on the bar, shows the configuration itself in the sections' place, with "‹ AI" back
+    to the category's cards (ui/pages/ai-access.slint's AiPanel: the switch, the chats, the apps,
+    the log; ui/pages/voice-input.slint's VoicePanel: the switch, then the key, the languages and
+    the tidying). Neither is a section of Settings, which keeps FinchGram's own preferences (the
+    maintainer's word of 2026-10-24 for AI access, and of 2026-10-26 for voice input: not
+    Telegram's, so a tool). The tools the design draws
     but FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled messages) are
     listed faded and cannot be pinned; so is Emby, which the maintainer added beside Jellyfin on
     2026-10-24, beyond the design's round (a media server page is still to be designed). At the
@@ -431,15 +434,17 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   a "changes" thread per batch of changes.
   The servers with their passwords go into the app's database (below), the folder into settings.toml; a downloaded
   photo or video opens in the media viewer (`viewer.rs`, `view_file`). The page needs no account.
-- Voice input (`src/speech/`, [voice-input.md](voice-input.md)): the composer's sparkle (Terminal:
-  `/voice`).
+- Voice input (`src/speech/`, [voice-input.md](voice-input.md)): a tool of the toolbox's AI
+  category, off until the user turns it on; the composer's sparkle while it is on (Terminal:
+  `/voice`, which opens its panel while it is off).
   `mod.rs` is a dictation's state on the UI thread (idle, listening, finishing, tidying, or failed
   with a reason), the words of the strip above the composer, the words put into the composer at the
-  end, and Settings → General → Voice input; `openai.rs` is OpenAI's realtime transcription session
+  end, and the toolbox's Voice input panel; `openai.rs` is OpenAI's realtime transcription session
   over a WebSocket, the small model that tidies the words, and the check of a key; `audio.rs` turns
   the microphone's sound into 24 kHz 16-bit PCM. The microphone itself is the platform's
   (`src/platform/microphone.rs`, AVAudioEngine); the user's OpenAI key is a credential in the app's
-  database (below), the languages and the tidying are `[voice_input]` in settings.toml.
+  database (below), the switch, the languages and the tidying are `[voice_input]` in settings.toml
+  (a 0.7.0 file has no `enabled`: voice input is on there when a key was kept).
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player); voice
   messages through an mpv of their own with no video (`audio.rs`).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this

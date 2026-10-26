@@ -3,7 +3,7 @@
 [中文](mcp.zh-Hans.md)
 
 Status: built on 2026-10-12, the server first (v0.3.20) and then its page, AI access (a section of
-Settings until 2026-10-24, a panel inside the toolbox since: ⌘J → AI),
+Settings until 2026-10-24, a panel inside the toolbox since: ⌘J → AI → AI access),
 and the dialog that asks the user to allow an app the first time it connects, from the design's
 round for them ("AI 访问" in "FinchGram Desktop 页面"), in every theme.
 
@@ -27,7 +27,7 @@ reading that nobody can see, sending that the user controls.
 
 ## Connecting an assistant
 
-1. Toolbox → AI (⌘J): turn on "Let AI assistants connect". Choose which chats an assistant may
+1. Toolbox → AI → AI access (⌘J): turn on "Let AI assistants connect". Choose which chats an assistant may
    see (all but secret chats, or only chosen ones) and what it may write (messages, drafts only, or
    nothing).
 
