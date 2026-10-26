@@ -353,11 +353,13 @@ fn failure_of(error: &Value) -> Failure {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::speech::service::Speech;
+    use crate::speech::service::{Endpoint, Speech};
 
+    /// "openai-realtime" or "qwen-realtime", at the vendor's own address.
     fn options(format: &str, model: &str, language: &str) -> Options {
+        let connection = if format == "qwen-realtime" { "dashscope" } else { "openai" };
         Options {
-            speech: Speech::new(format, "", model).expect("the default address"),
+            speech: Speech::new(Endpoint::new(connection, "", "").expect("the default address"), false, model).expect("it hears"),
             speech_key: Some("sk-test".into()),
             language: language.into(),
             keywords: Vec::new(),

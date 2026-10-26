@@ -64,14 +64,15 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
   para enviar, arraste para a esquerda para cancelar ou para cima para travar, e pare para ouvir
   antes de enviar.
 - **Ditado por voz.** Clique em ✦ na caixa de texto e fale: o texto vai para a caixa, sem os éé e
-  hum, para você enviar. Você escolhe os serviços pelo formato da API deles, com as suas próprias
-  chaves e, se quiser, o seu próprio endereço (um intermediário ou um servidor da sua rede): a
-  transcrição em tempo real da OpenAI, Qwen e Doubao (os dois fortes em chinês) ou qualquer serviço
-  que fale a API de transcrição da OpenAI; o ajuste do texto, no formato da OpenAI, da Anthropic ou
-  do Gemini. Cada idioma principal tem a sua própria configuração, e as palavras de outros idiomas
-  misturadas ficam como você disse. Ferramentas → AI → Ditado por voz, desligado até você ligar.
-  “Transcrever” sob uma mensagem de voz usa a transcrição do próprio Telegram, ou o seu serviço se
-  você ligar isso. Veja [docs/voice-input.md](../docs/voice-input.md).
+  hum, para você enviar. Você adiciona os seus serviços como conexões, cada uma com um nome, o
+  formato da API, a sua própria chave e, se quiser, o seu próprio endereço (um intermediário ou um
+  servidor da sua rede), e escolhe uma para cada tarefa: para a voz, a transcrição em tempo real da
+  OpenAI, Qwen e Doubao (os dois fortes em chinês) ou qualquer serviço que fale a API de transcrição
+  da OpenAI; para o ajuste do texto, o formato da OpenAI, da Anthropic ou do Gemini. Cada idioma
+  principal escolhe as suas, e as palavras de outros idiomas misturadas ficam como você disse.
+  Ferramentas → AI → Ditado por voz, desligado até você ligar. “Transcrever” sob uma mensagem de voz
+  usa a transcrição do próprio Telegram, ou o seu serviço se você ligar isso. Veja
+  [docs/voice-input.md](../docs/voice-input.md).
 - **Assistentes de IA.** Claude Desktop, Claude Code e outros apps que falam o Model Context
   Protocol podem ler suas conversas e agir nelas pelo FinchGram, quando você permite: Ferramentas → Acesso de IA, desligado até você ligar, com as conversas que escolher e se um assistente pode
   enviar ou não, e uma pergunta na primeira vez que um app se conecta. Veja

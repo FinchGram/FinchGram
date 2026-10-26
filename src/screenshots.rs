@@ -196,8 +196,8 @@ fn fill(ui: &MainWindow) {
     password.set_recovery_email("z•••@gmail.com".into());
     password.set_reset_date(reset_date());
 
-    // Voice input's panel: one profile for any language through OpenAI, no key yet.
-    crate::speech::show_for_pictures(ui, &crate::settings::VoiceInput::default(), &[]);
+    // Voice input's panel: no connection yet, one profile for any language.
+    crate::speech::show_for_pictures(ui, &crate::settings::VoiceInput::default(), "", &[]);
 }
 
 /// When a reset asked for today can be completed, as in the design.
@@ -1749,6 +1749,8 @@ fn voice(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) ->
     voice.set_state(VoiceState::Failed);
     voice.set_problem(VoiceProblem::NoKey);
     save(window, &name("voice-no-key"));
+    voice.set_problem(VoiceProblem::NoService);
+    save(window, &name("voice-no-service"));
     voice.set_can_switch(false);
     voice.set_language_name(SharedString::new());
     voice.set_service("OpenAI".into());
@@ -1843,13 +1845,13 @@ fn voice_messages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn
     open_keyboards(ui);
 }
 
-/// Voice input's panel in the toolbox, over the chats: off (the switch alone); on, one profile for
-/// any language through OpenAI, without a key, with a key that is not one, with a key OpenAI took;
-/// Chinese added and in use, heard by Doubao with words to know and tidied by Claude with a key of
-/// its own, while another language is being added, then scrolled to its tidying and the voice
-/// messages' switch; an upload through a relay given over plain http.
+/// Voice input's panel in the toolbox, over the chats: off (the switch alone); on with no
+/// connection yet; a new connection open, its key not one; three connections (OpenAI, Doubao for
+/// Chinese, a relay of Claude's for tidying), Doubao open with its key taken, while another
+/// language is being added, then scrolled to Chinese's speech recognition and its tidying and the
+/// voice messages; English through OpenAI's upload, and a connection whose address is plain http.
 fn voice_panel(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
-    use crate::settings::{VoiceInput, VoiceProfile};
+    use crate::settings::{VoiceConnection, VoiceInput, VoiceProfile};
     let app = ui.global::<AppState>();
     let voice = ui.global::<Voice>();
     let toolbox = ui.global::<Toolbox>();
@@ -1857,53 +1859,65 @@ fn voice_panel(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&s
     app.set_page(Page::Chats);
     crate::toolbox::show_for_pictures(ui, &["downloads"], "ai", "voice-input", "");
     toolbox.set_open(true);
-    let check = |check: KeyCheck| {
-        let mut speech = voice.get_speech();
-        speech.check = check;
-        voice.set_speech(speech);
-    };
-    crate::speech::show_for_pictures(ui, &VoiceInput::default(), &[]);
+    crate::speech::show_for_pictures(ui, &VoiceInput::default(), "", &[]);
     save(window, &name("voice-input-off"));
     voice.set_on(true);
     save(window, &name("voice-input"));
-    check(KeyCheck::Malformed);
+    // A connection just added, OpenAI's by default, a key that is not one.
+    let mut fresh = VoiceInput::default();
+    fresh.connections.push(VoiceConnection { id: "1".into(), label: "OpenAI".into(), ..VoiceConnection::default() });
+    fresh.profiles[0].connection = "1".into();
+    fresh.profiles[0].tidy_connection = "1".into();
+    crate::speech::show_for_pictures(ui, &fresh, "1", &[]);
+    voice.set_connection_check(KeyCheck::Malformed);
     save(window, &name("voice-input-malformed"));
-    crate::speech::show_for_pictures(ui, &VoiceInput::default(), &[("voice_input.auto.speech", "sk-…4f2a")]);
-    check(KeyCheck::Works);
+    crate::speech::show_for_pictures(ui, &fresh, "1", &[("1", "sk-…4f2a")]);
+    voice.set_connection_check(KeyCheck::Works);
     save(window, &name("voice-input-key"));
-    // Chinese through Doubao, tidied by Claude.
-    let mut chinese = VoiceInput::default();
-    chinese.profiles.push(VoiceProfile {
+    // OpenAI for any language; Doubao hears Chinese, a relay of Claude's tidies it.
+    let mut three = VoiceInput {
+        connections: vec![
+            VoiceConnection { id: "1".into(), label: "OpenAI".into(), ..VoiceConnection::default() },
+            VoiceConnection { id: "2".into(), label: "豆包语音".into(), format: "doubao".into(), ..VoiceConnection::default() },
+            VoiceConnection { id: "3".into(), label: "Claude relay".into(), format: "anthropic".into(), url: "https://relay.example.com".into(), ..VoiceConnection::default() },
+            ],
+        ..VoiceInput::default()
+    };
+    three.profiles[0].connection = "1".into();
+    three.profiles[0].tidy_connection = "1".into();
+    three.profiles.push(VoiceProfile {
         language: "zh-cn".into(),
-        format: "doubao".into(),
+        connection: "2".into(),
         keywords: "陈思远, FinchGram, PikPak".into(),
-        tidy_format: "anthropic".into(),
-        tidy_same_key: false,
+        tidy_connection: "3".into(),
         ..VoiceProfile::default()
     });
-    chinese.language = "zh-cn".into();
-    chinese.transcribe_messages = true;
-    let keys = [("voice_input.auto.speech", "sk-…4f2a"), ("voice_input.zh-cn.speech", "6f1…9b2c"), ("voice_input.zh-cn.tidy", "sk-…7d1e")];
-    crate::speech::show_for_pictures(ui, &chinese, &keys);
-    check(KeyCheck::Works);
+    three.language = "zh-cn".into();
+    three.transcribe_messages = true;
+    let keys = [("1", "sk-…4f2a"), ("2", "6f1…9b2c"), ("3", "sk-…7d1e")];
+    crate::speech::show_for_pictures(ui, &three, "2", &keys);
+    voice.set_connection_check(KeyCheck::Works);
     voice.set_adding(true);
     save(window, &name("voice-input-doubao"));
     voice.set_adding(false);
-    scroll(window, 800.0, 400.0, 420.0);
+    crate::speech::show_for_pictures(ui, &three, "", &keys);
+    scroll(window, 800.0, 400.0, 520.0);
     save(window, &name("voice-input-doubao-speech"));
-    scroll(window, 800.0, 400.0, 700.0);
+    scroll(window, 800.0, 400.0, 600.0);
     save(window, &name("voice-input-doubao-tidy"));
     scroll(window, 800.0, 400.0, -1120.0);
-    // An upload through a relay, its address in plain http.
-    let mut relay = VoiceInput::default();
-    relay.profiles[0].format = "openai-transcriptions".into();
-    relay.profiles[0].url = "http://relay.example.com/v1".into();
-    relay.profiles[0].tidy_format = "gemini".into();
-    crate::speech::show_for_pictures(ui, &relay, &[("voice_input.auto.speech", "sk-…4f2a")]);
-    scroll(window, 800.0, 400.0, 300.0);
+    // English uploaded through OpenAI; a connection over plain http to the internet, open.
+    let mut english = three.clone();
+    english.connections.push(VoiceConnection { id: "4".into(), label: "My relay".into(), url: "http://relay.example.com/v1".into(), ..VoiceConnection::default() });
+    english.profiles[0] = VoiceProfile { language: "en".into(), connection: "1".into(), mode: "upload".into(), tidy_connection: "1".into(), ..VoiceProfile::default() };
+    english.language = "en".into();
+    crate::speech::show_for_pictures(ui, &english, "4", &keys);
+    voice.set_connection_check(KeyCheck::None);
     save(window, &name("voice-input-relay"));
-    scroll(window, 800.0, 400.0, -300.0);
-    crate::speech::show_for_pictures(ui, &VoiceInput::default(), &[]);
+    scroll(window, 800.0, 400.0, 900.0);
+    save(window, &name("voice-input-upload"));
+    scroll(window, 800.0, 400.0, -900.0);
+    crate::speech::show_for_pictures(ui, &VoiceInput::default(), "", &[]);
     voice.set_on(false);
     toolbox.set_open(false);
     set_toolbox(ui);

@@ -15,7 +15,7 @@ import { ExtraWords } from "extras.slint";
 import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "chat-info.slint";
 import { ChatManage, ManageWords, ManageLook, ManagePage, UsernameCheck, ManageToggle, ManageChip, ManagePerson, ManageLink, ManageChoice } from "chat-manage.slint";
 import { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow } from "toolbox.slint";
-import { Voice, VoiceWords, VoiceState, VoiceProblem, KeyCheck, VoiceLanguage, VoiceLanguageRow, VoiceService, Recorder, RecordStage } from "voice.slint";
+import { Voice, VoiceWords, VoiceState, VoiceProblem, KeyCheck, VoiceLanguage, VoiceLanguageRow, VoiceConnectionRow, VoiceChoice, VoiceChoiceRow, Recorder, RecordStage } from "voice.slint";
 import { LoginPage } from "pages/login.slint";
 import { WorkbenchWindow } from "workbench/workbench.slint";
 import { BroadsheetWindow } from "broadsheet/broadsheet.slint";
@@ -40,7 +40,7 @@ export { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, 
 export { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember }
 export { ChatManage, ManageWords, ManageLook, ManagePage, UsernameCheck, ManageToggle, ManageChip, ManagePerson, ManageLink, ManageChoice }
 export { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow }
-export { Voice, VoiceWords, VoiceState, VoiceProblem, KeyCheck, VoiceLanguage, VoiceLanguageRow, VoiceService, Recorder, RecordStage }
+export { Voice, VoiceWords, VoiceState, VoiceProblem, KeyCheck, VoiceLanguage, VoiceLanguageRow, VoiceConnectionRow, VoiceChoice, VoiceChoiceRow, Recorder, RecordStage }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";

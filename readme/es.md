@@ -65,14 +65,15 @@ Es un cliente no oficial, no hecho por Telegram.
   grabar uno: suéltalo para enviarlo, arrastra a la izquierda para cancelar o hacia arriba para
   bloquearlo, y detenlo para escucharlo antes de enviarlo.
 - **Dictado por voz.** Pulsa ✦ en el cuadro de escritura y habla: el texto queda en el cuadro, sin
-  los eh ni los mm, para que lo envíes tú. Eliges los servicios por el formato de su API, con tus
-  propias claves y, si quieres, tu propia dirección (un intermediario o un servidor de tu red): la
-  transcripción en tiempo real de OpenAI, Qwen y Doubao (los dos fuertes en chino) o cualquier
-  servicio que hable la API de transcripción de OpenAI; el pulido del texto, en el formato de OpenAI,
-  Anthropic o Gemini. Cada idioma principal tiene su propia configuración, y las palabras de otros
-  idiomas que se mezclan se quedan como las dices. Herramientas → AI → Dictado por voz, desactivado
-  hasta que lo actives. «Transcribir» bajo un mensaje de voz usa la transcripción de Telegram, o tu
-  propio servicio si lo activas. Ver [docs/voice-input.md](../docs/voice-input.md).
+  los eh ni los mm, para que lo envíes tú. Añades tus servicios como conexiones, cada una con un
+  nombre, el formato de su API, tu propia clave y, si quieres, tu propia dirección (un intermediario
+  o un servidor de tu red), y eliges una para cada tarea: para la voz, la transcripción en tiempo real
+  de OpenAI, Qwen y Doubao (los dos fuertes en chino) o cualquier servicio que hable la API de
+  transcripción de OpenAI; para el pulido del texto, el formato de OpenAI, Anthropic o Gemini. Cada
+  idioma principal elige las suyas, y las palabras de otros idiomas que se mezclan se quedan como las
+  dices. Herramientas → AI → Dictado por voz, desactivado hasta que lo actives. «Transcribir» bajo un
+  mensaje de voz usa la transcripción de Telegram, o tu propio servicio si lo activas. Ver
+  [docs/voice-input.md](../docs/voice-input.md).
 - **Asistentes de IA.** Claude Desktop, Claude Code y otras apps que hablan el Model Context
   Protocol pueden leer tus chats y actuar en ellos a través de FinchGram, cuando tú lo permites:
   Herramientas → Acceso de IA, desactivado hasta que lo actives, con los chats que elijas y si un

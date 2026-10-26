@@ -1,14 +1,14 @@
 // Voice input's panel in the toolbox, the AI category's second tool (src/speech/,
-// docs/voice-input.md): the switch that puts the sparkle in the composer, then, while it is on,
-// the main languages the user speaks, and for the one in use its two services: the speech
-// recognition and the text model that tidies the words, each named by its API's format, its
-// address (a vendor's, a relay's, a server of the user's own), its key and its model; last, voice
+// docs/voice-input.md): the switch that puts the sparkle in the composer, then, while it is on, the
+// connections the user added (each a name, an API format, an address and a key: a vendor's, a
+// relay's, a server of the user's own), the main languages the user speaks, and for the one in use
+// its abilities, each a connection and a model: the speech recognition and the tidying; last, voice
 // messages. No design round draws it: it has the AI access panel's shape (ui/pages/ai-access.slint)
 // and the settings' own rows, in every theme.
 import { Look } from "../look.slint";
 import { Icon, Field, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
 import { Card, Separator, SwitchRow, SmallButton, Chip } from "rows.slint";
-import { Voice, VoiceWords, VoiceService } from "../voice.slint";
+import { Voice, VoiceWords, VoiceChoiceRow } from "../voice.slint";
 import { Toolbox, ToolboxWords } from "../toolbox.slint";
 
 // A row's head: an icon, what it is, and a line under it.
@@ -121,62 +121,15 @@ component LanguagesRow {
     }
 }
 
-// A service's format: its chips in two lines, and what the chosen one is.
-component FormatRow {
-    in property <string> which;
-    in property <VoiceService> service;
-    in property <[string]> first;
-    in property <[string]> second;
-    VerticalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        padding-top: 12px;
-        padding-bottom: 14px;
-        spacing: 10px;
-        RowHead {
-            icon: "plugs-connected";
-            title: VoiceWords.api-format();
-            note: VoiceWords.format-note(root.service.format);
-        }
-        HorizontalLayout {
-            padding-left: 34px;
-            VerticalLayout {
-                spacing: 8px;
-                HorizontalLayout {
-                    alignment: start;
-                    spacing: 8px;
-                    for format in root.first: Chip {
-                        label: VoiceWords.format-name(format);
-                        on: root.service.format == format;
-                        clicked => {
-                            Voice.set-format(root.which, format);
-                        }
-                    }
-                }
-                if root.second.length > 0: HorizontalLayout {
-                    alignment: start;
-                    spacing: 8px;
-                    for format in root.second: Chip {
-                        label: VoiceWords.format-name(format);
-                        on: root.service.format == format;
-                        clicked => {
-                            Voice.set-format(root.which, format);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// An address or a model: a box that keeps what is typed (empty: the format's own, shown faint),
-// what is wrong with it, and a check of the service once the typing is done (⏎, or leaving it).
+// A box that keeps what is typed (empty: what is shown faint), what is wrong with it, and a
+// callback once the typing is done (⏎, or leaving it).
 component TextRow {
     in property <string> icon;
     in property <string> title;
     in property <string> note;
     in property <string> placeholder;
     in property <string> problem;
+    in property <string> font-family: Look.mono;
     in-out property <string> text;
     callback edited(string);
     callback done();
@@ -200,7 +153,7 @@ component TextRow {
                 // with no ring) the box would not show.
                 fill: Look.bg;
                 font-size: 14px;
-                font-family: Look.mono;
+                font-family: root.font-family;
                 placeholder: root.placeholder;
                 error: root.problem != "";
                 edited(text) => {
@@ -223,11 +176,78 @@ component TextRow {
     }
 }
 
-// A service's key: a box to paste it into, or its first and last letters and Remove once it is
-// kept; under them, what the last check said, and where the vendor's keys are made.
+// A connection in the list: its name, its format and host, its key's letters; a click opens it
+// for editing, or closes it.
+component ConnectionRow inherits Rectangle {
+    in property <string> label;
+    in property <string> format;
+    in property <string> host;
+    in property <bool> has-key;
+    in property <string> key-hint;
+    in property <bool> open;
+    callback clicked();
+    background: touch.has-hover ? Look.sel : transparent;
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "plugs-connected";
+                size: 20px;
+                color: Look.accent;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.label;
+                color: Look.text;
+                font-size: 15px;
+                font-weight: 500;
+                overflow: elide;
+            }
+            Text {
+                text: VoiceWords.format-name(root.format) + (root.host != "" ? " · " + root.host : "");
+                color: Look.muted;
+                font-size: 13px;
+                overflow: elide;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Text {
+                text: root.has-key ? root.key-hint : VoiceWords.no-key();
+                color: root.has-key ? Look.muted : Look.faint;
+                font-family: Look.mono;
+                font-size: 13px;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.open ? "caret-down" : "caret-right";
+                size: 14px;
+                color: Look.faint;
+            }
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// The open connection's key: a box to paste it into, or its letters and Remove once it is kept;
+// under them, what the last check said, and where the vendor's keys are made.
 component KeyRow {
-    in property <string> which;
-    in property <VoiceService> service;
     VerticalLayout {
         padding-left: 16px;
         padding-right: 16px;
@@ -242,27 +262,27 @@ component KeyRow {
                 title: VoiceWords.key();
                 note: VoiceWords.key-note();
             }
-            if root.service.has-key: VerticalLayout {
+            if Voice.connection-has-key: VerticalLayout {
                 alignment: center;
                 Text {
-                    text: root.service.key-hint;
+                    text: Voice.connection-key-hint;
                     color: Look.muted;
                     font-family: Look.mono;
                     font-size: 13px;
                 }
             }
-            if root.service.has-key: VerticalLayout {
+            if Voice.connection-has-key: VerticalLayout {
                 alignment: center;
                 SmallButton {
                     text: Look.terminal ? "[" + VoiceWords.remove().to-lowercase() + "]" : VoiceWords.remove();
                     quiet: Look.terminal;
                     clicked => {
-                        Voice.remove-key(root.which);
+                        Voice.remove-connection-key();
                     }
                 }
             }
         }
-        if !root.service.has-key: HorizontalLayout {
+        if !Voice.connection-has-key: HorizontalLayout {
             padding-left: 34px;
             spacing: 8px;
             key-field := Field {
@@ -274,7 +294,7 @@ component KeyRow {
                 input-type: InputType.password;
                 placeholder: VoiceWords.key-placeholder();
                 accepted(text) => {
-                    Voice.save-key(root.which, text);
+                    Voice.save-connection-key(text);
                 }
             }
             VerticalLayout {
@@ -283,23 +303,182 @@ component KeyRow {
                     text: Look.terminal ? "[" + VoiceWords.save().to-lowercase() + "]" : VoiceWords.save();
                     primary: !Look.terminal;
                     clicked => {
-                        Voice.save-key(root.which, key-field.text);
+                        Voice.save-connection-key(key-field.text);
                     }
                 }
             }
         }
-        if VoiceWords.check-text(root.service) != "": Note {
-            text: VoiceWords.check-text(root.service);
-            tone: VoiceWords.check-tone(root.service);
+        if VoiceWords.check-text() != "": Note {
+            text: VoiceWords.check-text();
+            tone: VoiceWords.check-tone();
         }
-        if !root.service.has-key && root.service.official: HorizontalLayout {
+        if !Voice.connection-has-key && Voice.connection-official: HorizontalLayout {
             padding-left: 34px;
             Link {
-                text: VoiceWords.get-key(root.service.shown);
+                text: VoiceWords.get-key(VoiceWords.vendor(Voice.connection-format));
                 trailing-icon: "arrow-square-out";
                 font-size: 13px;
                 clicked => {
-                    Voice.open-key-page(root.which);
+                    Voice.open-key-page();
+                }
+            }
+        }
+    }
+}
+
+// The open connection: its name, its format, its address, its key, and its removal.
+component ConnectionForm inherits Rectangle {
+    height: form.preferred-height;
+    background: Look.bg.transparentize(0.6);
+    form := VerticalLayout {
+        TextRow {
+            icon: "pencil-simple";
+            title: VoiceWords.name();
+            note: VoiceWords.name-note();
+            font-family: Look.font;
+            text <=> Voice.connection-label;
+            edited(text) => {
+                Voice.edit-connection-label(text);
+            }
+        }
+        Separator { }
+        VerticalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 12px;
+            padding-bottom: 14px;
+            spacing: 10px;
+            RowHead {
+                icon: "plugs";
+                title: VoiceWords.api-format();
+                note: VoiceWords.format-note(Voice.connection-format);
+            }
+            HorizontalLayout {
+                padding-left: 34px;
+                VerticalLayout {
+                    spacing: 8px;
+                    HorizontalLayout {
+                        alignment: start;
+                        spacing: 8px;
+                        for format in ["openai", "anthropic", "gemini"]: Chip {
+                            label: VoiceWords.format-name(format);
+                            on: Voice.connection-format == format;
+                            clicked => {
+                                Voice.set-connection-format(format);
+                            }
+                        }
+                    }
+                    HorizontalLayout {
+                        alignment: start;
+                        spacing: 8px;
+                        for format in ["dashscope", "doubao"]: Chip {
+                            label: VoiceWords.format-name(format);
+                            on: Voice.connection-format == format;
+                            clicked => {
+                                Voice.set-connection-format(format);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Separator { }
+        TextRow {
+            icon: "globe-simple";
+            title: VoiceWords.address();
+            note: VoiceWords.address-note();
+            placeholder: Voice.connection-url-placeholder;
+            problem: VoiceWords.address-problem(Voice.connection-url-problem);
+            text <=> Voice.connection-url;
+            edited(text) => {
+                Voice.edit-connection-url(text);
+            }
+            done => {
+                Voice.check-connection();
+            }
+        }
+        Separator { }
+        KeyRow { }
+        HorizontalLayout {
+            padding-left: 50px;
+            padding-bottom: 14px;
+            alignment: start;
+            Link {
+                text: VoiceWords.remove-connection();
+                icon: "trash";
+                font-size: 13px;
+                clicked => {
+                    Voice.remove-connection();
+                }
+            }
+        }
+    }
+}
+
+// The connection an ability takes: the ones that can do it as chips, in lines; or that none can.
+component ChoiceRow {
+    in property <string> which;
+    in property <[VoiceChoiceRow]> rows;
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 14px;
+        spacing: 10px;
+        RowHead {
+            icon: "plugs-connected";
+            title: VoiceWords.connection();
+            note: root.rows.length == 0 ? VoiceWords.none-can() : "";
+        }
+        if root.rows.length > 0: HorizontalLayout {
+            padding-left: 34px;
+            VerticalLayout {
+                spacing: 8px;
+                for row in root.rows: HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    for choice in row.choices: Chip {
+                        label: VoiceWords.choice-label(choice);
+                        on: choice.on;
+                        clicked => {
+                            Voice.choose(root.which, choice.id);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// How an OpenAI connection hears: as the user speaks, or the recording at the end.
+component ModeRow {
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 14px;
+        spacing: 10px;
+        RowHead {
+            icon: "microphone";
+            title: VoiceWords.mode();
+            note: VoiceWords.mode-note(Voice.speech-mode);
+        }
+        HorizontalLayout {
+            padding-left: 34px;
+            alignment: start;
+            spacing: 8px;
+            Chip {
+                label: VoiceWords.mode-realtime();
+                on: Voice.speech-mode != "upload";
+                clicked => {
+                    Voice.set-mode("realtime");
+                }
+            }
+            Chip {
+                label: VoiceWords.mode-upload();
+                on: Voice.speech-mode == "upload";
+                clicked => {
+                    Voice.set-mode("upload");
                 }
             }
         }
@@ -342,6 +521,69 @@ export component VoicePanel {
                 }
             }
         }
+        if Voice.on: VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: VoiceWords.connections();
+            }
+            Paragraph {
+                text: VoiceWords.connections-note();
+                color: Look.muted;
+                font-size: 13px;
+            }
+            Card {
+                for row[index] in Voice.connections: VerticalLayout {
+                    if index > 0: Separator { }
+                    ConnectionRow {
+                        label: row.label;
+                        format: row.format;
+                        host: row.host;
+                        has-key: row.has-key;
+                        key-hint: row.key-hint;
+                        open: Voice.open-connection == row.id;
+                        clicked => {
+                            Voice.toggle-connection(row.id);
+                        }
+                    }
+                    if Voice.open-connection == row.id: Separator { }
+                    if Voice.open-connection == row.id: ConnectionForm { }
+                }
+                if Voice.connections.length > 0: Separator { }
+                Rectangle {
+                    height: add-row.preferred-height;
+                    background: add-touch.has-hover ? Look.sel : transparent;
+                    add-row := HorizontalLayout {
+                        padding-left: 16px;
+                        padding-right: 16px;
+                        padding-top: 12px;
+                        padding-bottom: 12px;
+                        spacing: 14px;
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "plus";
+                                size: 20px;
+                                color: Look.accent;
+                            }
+                        }
+                        Text {
+                            horizontal-stretch: 1;
+                            text: VoiceWords.add-connection();
+                            color: Look.accent-ink;
+                            font-size: 15px;
+                            font-weight: 500;
+                            vertical-alignment: center;
+                        }
+                    }
+                    add-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Voice.add-connection();
+                        }
+                    }
+                }
+            }
+        }
         if Voice.on: Card {
             LanguagesRow { }
         }
@@ -351,52 +593,30 @@ export component VoicePanel {
                 label: VoiceWords.speech-section(VoiceWords.language-label(Voice.language-name));
             }
             Card {
-                FormatRow {
+                ChoiceRow {
                     which: "speech";
-                    service: Voice.speech;
-                    first: ["openai-realtime", "openai-transcriptions"];
-                    second: ["qwen-realtime", "doubao"];
+                    rows: Voice.speech-choices;
                 }
-                Separator { }
-                TextRow {
-                    icon: "globe-simple";
-                    title: VoiceWords.address();
-                    note: VoiceWords.address-note();
-                    placeholder: Voice.speech.url-placeholder;
-                    problem: VoiceWords.address-problem(Voice.speech.url-problem);
-                    text <=> Voice.speech-url;
-                    edited(text) => {
-                        Voice.edit-url("speech", text);
-                    }
-                    done => {
-                        Voice.check("speech");
-                    }
-                }
-                Separator { }
-                KeyRow {
-                    which: "speech";
-                    service: Voice.speech;
-                }
-                Separator { }
-                TextRow {
+                if Voice.speech-format == "openai": Separator { }
+                if Voice.speech-format == "openai": ModeRow { }
+                if Voice.speech-format != "": Separator { }
+                if Voice.speech-format != "": TextRow {
                     icon: "robot";
                     title: VoiceWords.model();
-                    note: VoiceWords.model-note(Voice.speech.format);
-                    placeholder: Voice.speech.model-placeholder;
+                    note: VoiceWords.model-note(Voice.speech-format);
+                    placeholder: Voice.speech-model-placeholder;
                     text <=> Voice.speech-model;
                     edited(text) => {
                         Voice.edit-model("speech", text);
                     }
-                    done => {
-                        Voice.check("speech");
-                    }
                 }
-                Separator { }
-                TextRow {
+                if Voice.speech-format != "": Separator { }
+                if Voice.speech-format != "": TextRow {
                     icon: "book-open";
                     title: VoiceWords.keywords();
                     note: VoiceWords.keywords-note();
                     placeholder: VoiceWords.keywords-placeholder();
+                    font-family: Look.font;
                     text <=> Voice.keywords;
                     edited(text) => {
                         Voice.edit-keywords(text);
@@ -420,61 +640,19 @@ export component VoicePanel {
                     }
                 }
                 if Voice.tidy: Separator { }
-                if Voice.tidy: FormatRow {
+                if Voice.tidy: ChoiceRow {
                     which: "tidy";
-                    service: Voice.tidying;
-                    first: ["openai", "anthropic", "gemini"];
-                    second: [];
+                    rows: Voice.tidy-choices;
                 }
-                if Voice.tidy: Separator { }
-                if Voice.tidy: TextRow {
-                    icon: "globe-simple";
-                    title: VoiceWords.address();
-                    note: VoiceWords.address-note();
-                    placeholder: Voice.tidying.url-placeholder;
-                    problem: VoiceWords.address-problem(Voice.tidying.url-problem);
-                    text <=> Voice.tidy-url;
-                    edited(text) => {
-                        Voice.edit-url("tidy", text);
-                    }
-                    done => {
-                        Voice.check("tidy");
-                    }
-                }
-                if Voice.tidy: Separator { }
-                if Voice.tidy: SwitchRow {
-                    icon: "link-simple";
-                    title: VoiceWords.same-key();
-                    description: VoiceWords.same-key-note();
-                    on: Voice.same-key;
-                    toggled => {
-                        Voice.set-same-key(!Voice.same-key);
-                    }
-                }
-                if Voice.tidy && Voice.same-key && VoiceWords.check-text(Voice.tidying) != "": VerticalLayout {
-                    padding-bottom: 12px;
-                    Note {
-                        text: VoiceWords.check-text(Voice.tidying);
-                        tone: VoiceWords.check-tone(Voice.tidying);
-                    }
-                }
-                if Voice.tidy && !Voice.same-key: Separator { }
-                if Voice.tidy && !Voice.same-key: KeyRow {
-                    which: "tidy";
-                    service: Voice.tidying;
-                }
-                if Voice.tidy: Separator { }
-                if Voice.tidy: TextRow {
+                if Voice.tidy && Voice.tidy-model-placeholder != "": Separator { }
+                if Voice.tidy && Voice.tidy-model-placeholder != "": TextRow {
                     icon: "robot";
                     title: VoiceWords.model();
-                    note: VoiceWords.model-note(Voice.tidying.format);
-                    placeholder: Voice.tidying.model-placeholder;
+                    note: VoiceWords.model-note("");
+                    placeholder: Voice.tidy-model-placeholder;
                     text <=> Voice.tidy-model;
                     edited(text) => {
                         Voice.edit-model("tidy", text);
-                    }
-                    done => {
-                        Voice.check("tidy");
                     }
                 }
             }
@@ -504,6 +682,22 @@ export component VoicePanel {
                     on: Voice.transcribe-messages;
                     toggled => {
                         Voice.set-transcribe-messages(!Voice.transcribe-messages);
+                    }
+                }
+                if Voice.transcribe-messages: Separator { }
+                if Voice.transcribe-messages: ChoiceRow {
+                    which: "messages";
+                    rows: Voice.message-choices;
+                }
+                if Voice.transcribe-messages && Voice.messages-model-placeholder != "": Separator { }
+                if Voice.transcribe-messages && Voice.messages-model-placeholder != "": TextRow {
+                    icon: "robot";
+                    title: VoiceWords.model();
+                    note: VoiceWords.model-note("");
+                    placeholder: Voice.messages-model-placeholder;
+                    text <=> Voice.messages-model;
+                    edited(text) => {
+                        Voice.edit-model("messages", text);
                     }
                 }
             }

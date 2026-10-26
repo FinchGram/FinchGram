@@ -33,19 +33,29 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   spaces), the cursor after them, for the user to send. A dictation finishes by itself after five
   minutes, so that a microphone left open does not go on costing the user.
 - **When it cannot.** The strip says why, naming the service, with a button where something can be
-  put right: no key (Add key, which opens the panel), an address FinchGram cannot use (Change
+  put right: no connection chosen for the main language's speech recognition (Set up, which opens
+  the panel), no key (Add key, the same), an address FinchGram cannot use (Change
   address), the microphone not allowed (Open System Settings), the service refusing the key (401 or
   403: Change key) or the credit or the pace (429), the network, the service's own message, nothing
   heard. The first time, macOS asks whether FinchGram may use the microphone.
+- **Connections, then abilities** (the maintainer's model of 2026-10-26: "可以让用户添加多个不同的url和
+  key组合，并且同时选一下格式，还要有一个label…然后，每个能力，选一个组合"). The user adds connections,
+  each a name of theirs, an API format, an address (empty: the vendor's own) and a key, and each
+  ability picks one connection and a model (empty: the format's own). A connection does everything
+  its format can: *OpenAI-compatible* hears (realtime, or an upload at the end) and tidies, so one
+  OpenAI key serves both; *Alibaba Cloud Model Studio* hears (Qwen-ASR) and tidies (Qwen, in its
+  OpenAI-compatible mode), one key for both; *Anthropic* and *Gemini* tidy; *Doubao speech* hears.
+  An ability lists only the connections that can do it. The connection list shows each one's name,
+  format, host and key; a click opens it to change its name, format, address and key, or to remove
+  it (the abilities that used it then have none).
 - **Main languages.** The user picks the language they mostly speak, or "any language"; words of
   other languages mixed in are kept as spoken (each format is told so in its own way, below), and the
-  main language fixes the script (简体 or 繁體). Each main language has a set of its own, a profile:
-  its speech service, its tidying, its keys. Adding a language copies the set in use, keys and all,
-  so that only what differs is changed (Chinese through Doubao, English through OpenAI, say).
-  Removing one removes its keys.
-- **Speech recognition, by its API's format.** Each with an address (empty: the vendor's own), an
-  API key, a model (empty: the format's own) and words to know (names and terms the user says often,
-  separated by commas), which each format takes as hints:
+  main language fixes the script (简体 or 繁體). Each main language has its abilities of its own: the
+  connection that hears it (and, for an OpenAI one, how: as the user speaks, or when they are done),
+  the words to know, the connection that tidies it. Adding a language starts with the abilities in
+  use (Chinese through Doubao, English through OpenAI, say: two connections, chosen per language).
+- **Speech recognition, by its connection's format.** With a model and words to know (names and
+  terms the user says often, separated by commas), which each format takes as hints:
   - *OpenAI Realtime* (`wss://…/realtime?intent=transcription`, 24 kHz): a `session.update` of type
     `transcription` with the model (`gpt-live-transcribe`), `delay: "xhigh"` (the most context: the
     live words show later and are right more often; a profile's `delay` in settings.toml takes
@@ -82,8 +92,7 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
     (`X-Api-Key`); the old console's App ID and Access Token go into the key's field as
     `appid:token`. The model is the resource billed (`X-Api-Resource-Id`, Seed-ASR 2.0 by the hour,
     `volc.seedasr.sauc.duration`, unless the user names another).
-- **Tidying, by its API's format.** A switch (on by default), then a format, an address, the key
-  (the speech recognition's, by a switch on by default, or one of its own) and a model:
+- **Tidying, by its connection's format.** A switch (on by default), then a connection and a model:
   *OpenAI's Chat Completions* (the format nearly every vendor, relay and local server speaks;
   `gpt-5-mini` by default, able enough to put a misheard word right; the `system` role every
   server takes; `store: false` and `reasoning_effort: "minimal"` only where they belong, OpenAI
@@ -101,13 +110,12 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   `wss://…/api-ws/v1/realtime?model=…`) is taken as its base. Plain http goes only to this Mac or the
   local network, where a server of one's own runs; a name and password in the address are refused;
   redirects are never followed, so that a key in a header does not go to another host.
-- **Keys.** Credentials in the app's database, table `credentials`, sealed to their names:
-  `voice_input.<language>.speech` and `voice_input.<language>.tidy` (no layout change); shown by their
-  first and last letters, with Remove. 0.7's one key (`openai_api_key`) becomes the first profile's
-  speech key at the start. A service is checked when its key is saved and when its format, address
-  or model is done being typed: the list of models for the HTTP formats, the WebSocket's handshake
-  for the realtime ones (whose servers may list none); the answer shows under it. A vendor's own
-  address wants a key; one of the user's own may not, and then none is sent.
+- **Keys.** One per connection, a credential in the app's database, table `credentials`, sealed to
+  its name, `voice_input.connection.<id>` (no layout change); shown by its first and last letters,
+  with Remove. A connection is checked when its key is saved, its format chosen or its address done
+  being typed: the list of models for the HTTP formats, the WebSocket's handshake for the realtime
+  ones (whose servers may list none); the answer shows under it. A vendor's own address wants a key;
+  one of the user's own may not, and then none is sent.
 - **The words right first (2026-10-26).** OpenAI's live model at `xhigh`; words to know for every
   format; Doubao's two passes; Qwen's context; the tidying that puts misheard words right with
   `gpt-5-mini`; and the microphone's sound resampled band-limited (`audio.rs`: a windowed sinc
@@ -120,7 +128,8 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   (`voiceNote.speech_recognition_result`, pending with the words so far, done, or failed); a second
   click hides the words, a third shows them again. When Telegram cannot and the user turned on
   "Transcribe voice messages with your own service" in the panel (off by default), the message goes
-  to the speech service of the main language in use: its file as it is to the upload format, or
+  to the connection chosen for voice messages (by default the main language in use's speech
+  recognition; an OpenAI connection chosen for them uploads): its file as it is to the upload format, or
   decoded by libmpv's PCM writer (`src/player/decode.rs`, faster than real time) to the service's
   rate for the realtime ones; no tidying. The words are kept in memory for the session, nowhere
   else. Otherwise the bubble says that Telegram wants Premium, and where the user's own service is.
@@ -129,19 +138,25 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   user's click, nothing stored, as the maintainer decided for the MCP server on 2026-10-12; built
   at the maintainer's word of 2026-10-26 ("语音信息转文字！可以一起做了"), and theirs to keep or remove.
 - **The settings file.** `[voice_input]` has `enabled`, `language` (the main language in use),
-  `transcribe_messages`, and a `[[voice_input.profiles]]` for each main language: `language`,
-  `format`, `url`, `model`, `keywords`, `tidy`, `tidy_format`, `tidy_url`, `tidy_model`,
-  `tidy_same_key`, and `delay` when set by hand. 0.7's `languages`, `tidy`, `model` and `tidy_model`
-  are read once and make the first profile: one language chosen is its main language, several or
-  none are any language; models that were 0.7's defaults become the formats' own.
-- **The code.** `src/speech/mod.rs` (the state on the UI thread, the panel, the profiles and keys),
+  `transcribe_messages`, `messages_connection` and `messages_model` (empty: the speech recognition's),
+  a `[[voice_input.connections]]` for each connection (`id`, `label`, `format`, `url`), and a
+  `[[voice_input.profiles]]` for each main language: `language`, `connection`, `mode` (`realtime` or
+  `upload`), `model`, `keywords`, `tidy`, `tidy_connection`, `tidy_model`, and `delay` when set by
+  hand. Older files migrate: 0.7.0's and 0.7.1's `languages`, `tidy`, `model` and `tidy_model` make
+  the first profile and an OpenAI connection (one language chosen is the main one, several or none
+  are any language; models that were 0.7's defaults become the formats' own); 0.7.2's per-language
+  formats, addresses and keys become connections, one for each address and key. Their keys move into
+  the connections at the next start (`key_from` points at the old credential until then, even across a
+  save), and connections that turn out to share a format, an address and a key become one.
+- **The code.** `src/speech/mod.rs` (the state on the UI thread, the panel, the connections, the
+  profiles and the keys),
   `dictation.rs` (a dictation from the first sound to the words), `service.rs` (formats, addresses,
   connections, checks), `realtime.rs` (OpenAI's and Qwen's sessions), `doubao.rs`, `upload.rs`,
   `tidy.rs`, `messages.rs` (voice messages), `audio.rs`; `src/player/decode.rs`;
   `src/telegram/voice.rs` (Transcribe); `ui/voice.slint`, each theme's composer and strip,
   `ui/pages/voice-input.slint` in each theme's toolbox; the screenshot scenes `voice-*`
-  (`voice-upload`, `voice-transcripts`, the panel's `voice-input-doubao`, `…-speech`, `…-tidy`,
-  `voice-input-relay` among them) and `toolbox-ai`.
+  (`voice-upload`, `voice-transcripts`, the panel's `voice-input-doubao` (a connection open), `…-speech`, `…-tidy`,
+  `voice-input-relay`, `voice-input-upload` among them) and `toolbox-ai`.
 - **Different from the plan.** Built without the design round. The settings are a panel of the
   toolbox, not rows of Input. The words show in the strip while the user speaks and go into the
   composer once, tidied, at the end. They go at the end of what the composer holds, not at the

@@ -173,6 +173,7 @@ fn looks_tidied(words: &str, tidied: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::speech::service::Endpoint;
 
     #[test]
     fn the_instructions_name_the_main_language_and_its_script() {
@@ -184,11 +185,11 @@ mod tests {
 
     #[test]
     fn chat_completions_ask_openai_itself_not_to_store_and_others_plainly() {
-        let official = Tidy::new("openai", "", "").expect("OpenAI");
+        let official = Tidy::new(Endpoint::new("openai", "", "").expect("an address"), "").expect("OpenAI");
         let request = openai_request(&official, "rules", "um hello");
         assert_eq!(request["messages"], json!([{ "role": "system", "content": "rules" }, { "role": "user", "content": "um hello" }]));
         assert_eq!((request["store"].as_bool(), request["reasoning_effort"].as_str()), (Some(false), Some("minimal")));
-        let deepseek = Tidy::new("openai", "https://api.deepseek.com/v1", "deepseek-chat").expect("DeepSeek");
+        let deepseek = Tidy::new(Endpoint::new("openai", "https://api.deepseek.com/v1", "DeepSeek").expect("an address"), "deepseek-chat").expect("DeepSeek");
         let request = openai_request(&deepseek, "rules", "um hello");
         assert!(request.get("store").is_none() && request.get("reasoning_effort").is_none());
         assert_eq!(openai_text(&json!({ "choices": [{ "message": { "content": "Hello." } }] })), Ok("Hello.".to_string()));

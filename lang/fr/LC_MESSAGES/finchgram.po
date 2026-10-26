@@ -198,7 +198,8 @@ msgstr "Dernier message"
 
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/workbench/sidebar.slint:868
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:837
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:837
 msgid "Name"
 msgstr "Nom"
 
@@ -575,7 +576,7 @@ msgstr "Changer la photo"
 
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:836
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:876
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -849,7 +850,7 @@ msgstr "Retirer {0} de la chaîne ?"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952
-#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:837
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:877
 msgid "Remove"
 msgstr "Retirer"
 
@@ -1272,11 +1273,11 @@ msgstr "Fichier"
 msgid "Poll"
 msgstr "Sondage"
 
-#: ui/chat.slint:343 ui/voice.slint:738
+#: ui/chat.slint:343 ui/voice.slint:769
 msgid "Not available yet"
 msgstr "Pas encore disponible"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:744
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:775
 msgid "Not allowed in this group"
 msgstr "Non autorisé dans ce groupe"
 
@@ -1302,7 +1303,7 @@ msgstr ""
 "Système → Confidentialité et sécurité. Si FinchGram figure déjà dans la "
 "liste, désactivez-le puis réactivez-le."
 
-#: ui/chat.slint:351 ui/voice.slint:743 ui/voice.slint:782
+#: ui/chat.slint:351 ui/voice.slint:774 ui/voice.slint:815
 msgid "Open System Settings"
 msgstr "Ouvrir les Réglages Système"
 
@@ -1398,7 +1399,7 @@ msgstr "Voir une fois"
 msgid "Hide with spoiler"
 msgstr "Masquer avec un spoiler"
 
-#: ui/chat.slint:387 ui/voice.slint:723
+#: ui/chat.slint:387 ui/voice.slint:754
 msgid "Send"
 msgstr "Envoyer"
 
@@ -1874,7 +1875,7 @@ msgid_plural "Invite {n} people"
 msgstr[0] "Inviter {n} personne"
 msgstr[1] "Inviter {n} personnes"
 
-#: ui/compose.slint:229 ui/voice.slint:763
+#: ui/compose.slint:229 ui/voice.slint:794
 msgid "Done"
 msgstr "Terminé"
 
@@ -3586,7 +3587,7 @@ msgstr ""
 msgid "Protocol"
 msgstr "Protocole"
 
-#: ui/pages/downloads.slint:2613 ui/voice.slint:818
+#: ui/pages/downloads.slint:2613 ui/voice.slint:865
 msgid "Address"
 msgstr "Adresse"
 
@@ -4881,7 +4882,7 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ parcourir · ↑/↓ volume · espace lecture · esc fermer"
 
-#: ui/toolbox.slint:133 ui/voice.slint:714
+#: ui/toolbox.slint:133 ui/voice.slint:745
 msgid "Voice input"
 msgstr "Saisie vocale"
 
@@ -4890,107 +4891,107 @@ msgid "Speak, and the words go into the composer, through your own OpenAI key"
 msgstr "Parlez, et le texte arrive dans la zone de saisie, avec votre propre clé OpenAI"
 
 #. The sparkle's tip.
-#: ui/voice.slint:716
+#: ui/voice.slint:747
 msgid "Finish voice input"
 msgstr "Terminer la saisie vocale"
 
 #. The sparkle's tip.
-#: ui/voice.slint:716
+#: ui/voice.slint:747
 msgid "Voice input: click, or hold while you speak"
 msgstr "Saisie vocale : cliquez, ou maintenez enfoncé pendant que vous parlez"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:719
+#: ui/voice.slint:750
 msgid "Record voice message"
 msgstr "Enregistrer un message vocal"
 
-#: ui/voice.slint:720
+#: ui/voice.slint:751
 msgid "Release to send · Drag left to cancel"
 msgstr "Relâchez pour envoyer · Glissez à gauche pour annuler"
 
-#: ui/voice.slint:721
+#: ui/voice.slint:752
 msgid "Release to cancel"
 msgstr "Relâchez pour annuler"
 
-#: ui/voice.slint:722
+#: ui/voice.slint:753
 msgid "Hold to record. Release to send."
 msgstr "Maintenez pour enregistrer. Relâchez pour envoyer."
 
-#: ui/voice.slint:724
+#: ui/voice.slint:755
 msgid "Stop"
 msgstr "Arrêter"
 
-#: ui/voice.slint:726
+#: ui/voice.slint:757
 msgid "Transcribe"
 msgstr "Transcrire"
 
-#: ui/voice.slint:739
+#: ui/voice.slint:770
 msgid "Couldn't download"
 msgstr "Échec du téléchargement"
 
-#: ui/voice.slint:741
+#: ui/voice.slint:772
 msgid "Loading…"
 msgstr "Chargement…"
 
-#: ui/voice.slint:742
+#: ui/voice.slint:773
 msgid "Microphone access is off."
 msgstr "L’accès au micro est désactivé."
 
-#: ui/voice.slint:752
+#: ui/voice.slint:783
 msgid "Listening · {0}"
 msgstr "Écoute · {0}"
 
-#: ui/voice.slint:754
+#: ui/voice.slint:785
 msgid "Finishing…"
 msgstr "Finalisation…"
 
-#: ui/voice.slint:755
+#: ui/voice.slint:786
 msgid "Tidying the words…"
 msgstr "Mise au propre du texte…"
 
-#: ui/voice.slint:756
+#: ui/voice.slint:787
 msgid "Voice input stopped"
 msgstr "Saisie vocale arrêtée"
 
 #. In the words' place before any came.
-#: ui/voice.slint:759
+#: ui/voice.slint:790
 msgid "Speak now"
 msgstr "Parlez maintenant"
 
-#: ui/voice.slint:762
+#: ui/voice.slint:793
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ terminer · Esc annuler"
 
-#: ui/voice.slint:768
+#: ui/voice.slint:800
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram n’a pas le droit d’utiliser le micro. Autorisez-le dans Réglages Système → Confidentialité et sécurité → Micro."
 
-#: ui/voice.slint:769
+#: ui/voice.slint:801
 msgid "No microphone could be opened: {0}"
 msgstr "Impossible d’ouvrir un micro : {0}"
 
-#: ui/voice.slint:774
+#: ui/voice.slint:806
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "Rien n’a été entendu. Le bon micro est-il choisi dans Réglages Système → Son ?"
 
-#: ui/voice.slint:779
+#: ui/voice.slint:812
 msgid "Add key"
 msgstr "Ajouter une clé"
 
-#: ui/voice.slint:780
+#: ui/voice.slint:813
 msgid "Change key"
 msgstr "Changer de clé"
 
 #. The toolbox's Voice input panel.
-#: ui/voice.slint:787
+#: ui/voice.slint:820
 msgid "Use voice input"
 msgstr "Utiliser la saisie vocale"
 
-#: ui/voice.slint:856
+#: ui/voice.slint:916
 msgid "Tidy the words"
 msgstr "Mettre le texte au propre"
 
-#: ui/voice.slint:857
+#: ui/voice.slint:917
 msgid "A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."
 msgstr "Un petit modèle retire les euh, les hum et les mots répétés, et met la ponctuation ; il ne traduit jamais."
 
@@ -5056,226 +5057,278 @@ msgstr ""
 msgid "Manage accounts"
 msgstr "Gérer les comptes"
 
-#: ui/voice.slint:727 ui/voice.slint:735
+#: ui/voice.slint:758 ui/voice.slint:766
 msgid "Transcribing…"
 msgstr "Transcription…"
 
-#: ui/voice.slint:731
+#: ui/voice.slint:762
 msgid "Telegram transcribes voice messages with Premium, or a few times a week without it. Your own speech service can do it too: Toolbox → AI → Voice input."
 msgstr "Telegram transcrit les messages vocaux avec Premium, sinon quelques fois par semaine. Votre propre service de reconnaissance vocale peut aussi le faire : Boîte à outils → AI → Saisie vocale."
 
-#: ui/voice.slint:733
+#: ui/voice.slint:764
 msgid "Too long for Telegram to transcribe."
 msgstr "Trop long pour que Telegram le transcrive."
 
-#: ui/voice.slint:734
+#: ui/voice.slint:765
 msgid "Could not transcribe it: {0}"
 msgstr "Impossible de le transcrire : {0}"
 
-#: ui/voice.slint:752
+#: ui/voice.slint:783
 msgid "Connecting to {0}…"
 msgstr "Connexion à {0}…"
 
-#: ui/voice.slint:759
+#: ui/voice.slint:790
 msgid "Speak now: the words come when you are done"
 msgstr "Parlez maintenant : le texte arrivera quand vous aurez fini"
 
-#: ui/voice.slint:761
+#: ui/voice.slint:792
 msgid "Any language"
 msgstr "Toutes langues"
 
-#: ui/voice.slint:767
+#: ui/voice.slint:799
 msgid "Voice input needs your API key for {0}."
 msgstr "La saisie vocale a besoin de votre clé d’API pour {0}."
 
-#: ui/voice.slint:770 ui/voice.slint:844
+#: ui/voice.slint:802 ui/voice.slint:886
 msgid "{0} refused the key."
 msgstr "{0} a refusé la clé."
 
-#: ui/voice.slint:771
+#: ui/voice.slint:803
 msgid "{0} says the key is out of credit or used too fast: {1}"
 msgstr "Selon {0}, la clé n’a plus de crédit ou est utilisée trop vite : {1}"
 
-#: ui/voice.slint:772
+#: ui/voice.slint:804
 msgid "Could not reach {0}: {1}"
 msgstr "Impossible de joindre {0} : {1}"
 
-#: ui/voice.slint:773
+#: ui/voice.slint:805
 msgid "The speech service's address in Voice input is not one FinchGram can use."
 msgstr "L’adresse du service de reconnaissance vocale dans Saisie vocale n’est pas utilisable par FinchGram."
 
-#: ui/voice.slint:775
+#: ui/voice.slint:807
 msgid "{0} said: {1}"
 msgstr "{0} a répondu : {1}"
 
-#: ui/voice.slint:781
+#: ui/voice.slint:814
 msgid "Change address"
 msgstr "Changer d’adresse"
 
-#: ui/voice.slint:788
+#: ui/voice.slint:821
 msgid "Puts the sparkle in every chat's composer; when off, nothing goes to any service"
 msgstr "Met ✦ dans la zone de saisie de chaque discussion ; désactivée, rien ne part vers aucun service"
 
-#: ui/voice.slint:789
+#: ui/voice.slint:822
 msgid "Main language"
 msgstr "Langue principale"
 
-#: ui/voice.slint:791
-msgid "The language you mostly speak; words of other languages mixed in are kept as you say them. Each main language has its own services and keys. While you speak, a click on the language in the strip takes the next one."
-msgstr "La langue que vous parlez le plus ; les mots d’autres langues que vous y mêlez sont gardés tels que vous les dites. Chaque langue principale a ses propres services et clés. Pendant que vous parlez, un clic sur la langue dans le bandeau passe à la suivante."
+#: ui/voice.slint:827
+msgid "Remove {0}"
+msgstr "Retirer « {0} »"
 
-#: ui/voice.slint:794
-msgid "Remove {0} and its keys"
-msgstr "Retirer « {0} » et ses clés"
-
-#: ui/voice.slint:795
+#: ui/voice.slint:828
 msgid "Speech recognition · {0}"
 msgstr "Reconnaissance vocale · {0}"
 
-#: ui/voice.slint:796
+#: ui/voice.slint:829
 msgid "Tidying · {0}"
 msgstr "Mise au propre · {0}"
 
-#: ui/voice.slint:797
+#: ui/voice.slint:830
 msgid "API format"
 msgstr "Format d’API"
 
-#: ui/voice.slint:801
-msgid "OpenAI-compatible upload"
-msgstr "Envoi compatible OpenAI"
-
-#: ui/voice.slint:802
-msgid "Qwen (Alibaba Cloud)"
-msgstr "Qwen (Alibaba Cloud)"
-
-#: ui/voice.slint:803
-msgid "Doubao (Volcengine)"
-msgstr "Doubao (Volcengine)"
-
-#: ui/voice.slint:810
-msgid "Words show as you speak. OpenAI, or a relay that passes its realtime API through."
-msgstr "Le texte s’affiche à mesure que vous parlez. OpenAI, ou un relais qui transmet son API temps réel."
-
-#: ui/voice.slint:811
-msgid "Words come when you are done. Most services and relays speak it: OpenAI, Groq, SiliconFlow, a Whisper server of your own."
-msgstr "Le texte arrive quand vous avez fini. La plupart des services et relais le prennent en charge : OpenAI, Groq, SiliconFlow, votre propre serveur Whisper."
-
-#: ui/voice.slint:812
-msgid "Words show as you speak. A key from Alibaba Cloud Model Studio; strong in Chinese and its dialects."
-msgstr "Le texte s’affiche à mesure que vous parlez. Une clé d’Alibaba Cloud Model Studio ; fort en chinois et dans ses dialectes."
-
-#: ui/voice.slint:813
-msgid "Doubao's Seed-ASR, strong in Chinese: words show as you speak Chinese or English. A key from Volcengine's speech console."
-msgstr "Seed-ASR de Doubao, fort en chinois : le texte s’affiche à mesure que vous parlez chinois ou anglais. Une clé de la console vocale de Volcengine."
-
-#: ui/voice.slint:814
-msgid "Claude's Messages API: Anthropic, and the relays and vendors that speak it."
-msgstr "Messages API de Claude : Anthropic, ainsi que les relais et fournisseurs qui la prennent en charge."
-
-#: ui/voice.slint:815
-msgid "Google's Gemini API."
-msgstr "L’API Gemini de Google."
-
-#: ui/voice.slint:816
-msgid "Chat Completions: OpenAI, and nearly everyone else: DeepSeek, Qwen, Kimi, OpenRouter, Ollama, relays."
-msgstr "Chat Completions : OpenAI, et presque tous les autres : DeepSeek, Qwen, Kimi, OpenRouter, Ollama, des relais."
-
-#: ui/voice.slint:819
+#: ui/voice.slint:866
 msgid "Empty for the vendor's own. For a relay or a server of your own, its base URL."
 msgstr "Vide pour celle du fournisseur. Pour un relais ou votre propre serveur, son URL de base."
 
-#: ui/voice.slint:821
+#: ui/voice.slint:868
 msgid "That is not an address: it starts with https://"
 msgstr "Ce n’est pas une adresse : elle commence par https://"
 
-#: ui/voice.slint:822
+#: ui/voice.slint:869
 msgid "Leave the name and password out of the address."
 msgstr "Ne mettez ni nom d’utilisateur ni mot de passe dans l’adresse."
 
-#: ui/voice.slint:823
+#: ui/voice.slint:870
 msgid "Plain http goes only to this Mac or the local network: use https."
 msgstr "Le http non chiffré ne va que vers ce Mac ou le réseau local : utilisez https."
 
-#: ui/voice.slint:826
+#: ui/voice.slint:909
 msgid "Model"
 msgstr "Modèle"
 
-#: ui/voice.slint:828
+#: ui/voice.slint:911
 msgid "For Doubao, the resource ID of what you bought."
 msgstr "Pour Doubao, l’ID de ressource de ce que vous avez acheté."
 
-#: ui/voice.slint:828
+#: ui/voice.slint:911
 msgid "Empty for the format's own."
 msgstr "Vide pour celui du format."
 
-#: ui/voice.slint:830
+#: ui/voice.slint:913
 msgid "Words to know"
 msgstr "Mots à reconnaître"
 
-#: ui/voice.slint:831
+#: ui/voice.slint:914
 msgid "Names and terms you often say, separated by commas: the service listens for them, so they come out right."
 msgstr "Noms et termes que vous dites souvent, séparés par des virgules : le service y prête attention, pour qu’ils soient bien transcrits."
 
-#: ui/voice.slint:832
+#: ui/voice.slint:915
 msgid "Names, products, terms"
 msgstr "Noms, produits, termes"
 
-#: ui/voice.slint:833
+#: ui/voice.slint:873
 msgid "API key"
 msgstr "Clé d’API"
 
-#: ui/voice.slint:834
+#: ui/voice.slint:874
 msgid "Your own key: the service bills it for what it does. It is kept sealed in FinchGram's database on this Mac."
 msgstr "Votre propre clé : le service la facture pour ce qu’il fait. Elle est conservée scellée dans la base de données de FinchGram sur ce Mac."
 
-#: ui/voice.slint:835
+#: ui/voice.slint:875
 msgid "Paste the key"
 msgstr "Coller la clé"
 
-#: ui/voice.slint:838
+#: ui/voice.slint:878
 msgid "Get a key from {0}"
 msgstr "Obtenir une clé chez {0}"
 
-#: ui/voice.slint:841
+#: ui/voice.slint:881
 msgid "That does not look like an API key."
 msgstr "Cela ne ressemble pas à une clé d’API."
 
-#: ui/voice.slint:842
+#: ui/voice.slint:882
 msgid "Checking with {0}…"
 msgstr "Vérification avec {0}…"
 
-#: ui/voice.slint:843
+#: ui/voice.slint:884
 msgid "{0} answers and takes the key."
 msgstr "{0} répond et accepte la clé."
 
-#: ui/voice.slint:843
+#: ui/voice.slint:884
 msgid "{0} answers."
 msgstr "{0} répond."
 
-#: ui/voice.slint:845
+#: ui/voice.slint:887
 msgid "Could not check: {0}"
 msgstr "Impossible de vérifier : {0}"
 
-#: ui/voice.slint:854
-msgid "Use the speech recognition's key"
-msgstr "Utiliser la clé de la reconnaissance vocale"
-
-#: ui/voice.slint:855
-msgid "One key for both, when they are the same vendor or relay."
-msgstr "Une seule clé pour les deux, quand c’est le même fournisseur ou relais."
-
-#: ui/voice.slint:858
+#: ui/voice.slint:918
 msgid "Voice messages"
 msgstr "Messages vocaux"
 
-#: ui/voice.slint:859
+#: ui/voice.slint:919
 msgid "Transcribe voice messages with your own service"
 msgstr "Transcrire les messages vocaux avec votre propre service"
 
-#: ui/voice.slint:861
+#: ui/voice.slint:921
 msgid "Transcribe under a voice message asks Telegram first, which needs Premium or one of its few free tries a week. When Telegram cannot, this sends the message to your speech service: someone else's voice, to a service of your choosing. Off unless you turn it on."
 msgstr "« Transcrire », sous un message vocal, demande d’abord à Telegram, ce qui nécessite Premium ou l’un de ses quelques essais gratuits par semaine. Quand Telegram ne peut pas, cette option envoie le message à votre service de reconnaissance vocale : la voix de quelqu’un d’autre, vers un service de votre choix. Désactivée tant que vous ne l’activez pas."
 
-#: ui/voice.slint:864
+#: ui/voice.slint:924
 msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the speech service you choose below, under your own key, and nothing else does. FinchGram keeps no recording."
 msgstr "Appuyez sur ✦ dans la zone de saisie d’une discussion, ou tapez /voice dans Terminal, et parlez ; appuyez de nouveau, ou sur ⏎, et le texte arrive dans la zone, prêt à être envoyé par vous. Votre voix part vers le service de reconnaissance vocale que vous choisissez ci-dessous, avec votre propre clé, et rien d’autre ne part. FinchGram ne garde aucun enregistrement."
+
+#: ui/voice.slint:798
+msgid "No speech recognition is set up yet: choose a connection for it in Voice input."
+msgstr "La reconnaissance vocale n’est pas encore configurée : choisissez-lui une connexion dans Saisie vocale."
+
+#: ui/voice.slint:811
+msgid "Set up"
+msgstr "Configurer"
+
+#: ui/voice.slint:824
+msgid "The language you mostly speak; words of other languages mixed in are kept as you say them. Each main language picks its own connections. While you speak, a click on the language in the strip takes the next one."
+msgstr "La langue que vous parlez le plus ; les mots d’autres langues que vous y mêlez sont gardés tels que vous les dites. Chaque langue principale choisit ses propres connexions. Pendant que vous parlez, un clic sur la langue dans le bandeau passe à la suivante."
+
+#: ui/voice.slint:832
+msgid "Connections"
+msgstr "Connexions"
+
+#: ui/voice.slint:834
+msgid "Your services, each a name, an API format, an address and a key. Each ability below takes one of them, and one connection can serve several."
+msgstr "Vos services, chacun avec un nom, un format d’API, une adresse et une clé. Chaque fonction ci-dessous en utilise un, et une même connexion peut servir à plusieurs."
+
+#: ui/voice.slint:836
+msgid "Add a connection"
+msgstr "Ajouter une connexion"
+
+#: ui/voice.slint:838
+msgid "What you call it, so that you know it when you choose."
+msgstr "Le nom que vous lui donnez, pour la reconnaître au moment de choisir."
+
+#: ui/voice.slint:839
+msgid "Remove this connection and its key"
+msgstr "Retirer cette connexion et sa clé"
+
+#: ui/voice.slint:840
+msgid "no key"
+msgstr "pas de clé"
+
+#: ui/voice.slint:845 ui/voice.slint:861
+msgid "Alibaba Cloud Model Studio"
+msgstr "Alibaba Cloud Model Studio"
+
+#: ui/voice.slint:846
+msgid "Doubao speech (Volcengine)"
+msgstr "Doubao vocal (Volcengine)"
+
+#: ui/voice.slint:847
+msgid "OpenAI-compatible"
+msgstr "Compatible OpenAI"
+
+#: ui/voice.slint:851
+msgid "Tidying: Claude's Messages API, Anthropic's and the relays' and vendors' that speak it."
+msgstr "Mise au propre : la Messages API de Claude, chez Anthropic et chez les relais et fournisseurs qui la prennent en charge."
+
+#: ui/voice.slint:852
+msgid "Tidying: Google's Gemini API."
+msgstr "Mise au propre : l’API Gemini de Google."
+
+#: ui/voice.slint:853
+msgid "Speech recognition (Qwen-ASR, strong in Chinese and its dialects) and tidying (Qwen), one key for both."
+msgstr "Reconnaissance vocale (Qwen-ASR, fort en chinois et dans ses dialectes) et mise au propre (Qwen), une seule clé pour les deux."
+
+#: ui/voice.slint:854
+msgid "Speech recognition: Doubao's Seed-ASR, strong in Chinese. A key from Volcengine's speech console."
+msgstr "Reconnaissance vocale : Seed-ASR de Doubao, fort en chinois. Une clé de la console vocale de Volcengine."
+
+#: ui/voice.slint:855
+msgid "Speech recognition and tidying: OpenAI, and nearly every other service that speaks its API: Groq, SiliconFlow, DeepSeek, Kimi, OpenRouter, Ollama, relays, a Whisper server of your own."
+msgstr "Reconnaissance vocale et mise au propre : OpenAI, et presque tous les autres services qui prennent en charge son API : Groq, SiliconFlow, DeepSeek, Kimi, OpenRouter, Ollama, des relais, votre propre serveur Whisper."
+
+#: ui/voice.slint:862
+msgid "Volcengine"
+msgstr "Volcengine"
+
+#: ui/voice.slint:897
+msgid "Connection"
+msgstr "Connexion"
+
+#: ui/voice.slint:898
+msgid "No connection can do this yet: add one above."
+msgstr "Aucune connexion ne peut encore le faire : ajoutez-en une ci-dessus."
+
+#: ui/voice.slint:899
+msgid "Same as speech recognition"
+msgstr "Comme la reconnaissance vocale"
+
+#: ui/voice.slint:901
+msgid "How it hears"
+msgstr "Mode d’écoute"
+
+#: ui/voice.slint:902
+msgid "As you speak"
+msgstr "À mesure que vous parlez"
+
+#: ui/voice.slint:903
+msgid "When you are done"
+msgstr "Quand vous avez fini"
+
+#: ui/voice.slint:906
+msgid "The recording goes up when you are done: what most relays and servers of your own take."
+msgstr "L’enregistrement est envoyé quand vous avez fini : c’est ce qu’acceptent la plupart des relais et de vos propres serveurs."
+
+#: ui/voice.slint:907
+msgid "Words show as you speak, through OpenAI's Realtime API."
+msgstr "Le texte s’affiche à mesure que vous parlez, via la Realtime API d’OpenAI."

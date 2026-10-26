@@ -438,9 +438,10 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 - Voice input (`src/speech/`, [voice-input.md](voice-input.md)): a tool of the toolbox's AI
   category, off until the user turns it on; the composer's sparkle while it is on (Terminal:
   `/voice`, which opens its panel while it is off).
-  The services go by their API's format, address and model, so that any vendor, relay or server of
-  the user's own that speaks one of the formats can be used, with a set (a profile) per main
-  language. `mod.rs` is a dictation's state on the UI thread (idle, listening, finishing, tidying,
+  The user adds connections (a name, an API format, an address, a key), any vendor, relay or
+  server of their own that speaks one of the formats, and each ability picks a connection and a
+  model: per main language (a profile) the speech recognition and the tidying, and the voice
+  messages' own. `mod.rs` is a dictation's state on the UI thread (idle, listening, finishing, tidying,
   or failed with a reason), the strip's words, the words put into the composer at the end, the
   profiles and their keys, and the toolbox's Voice input panel; `dictation.rs` is a dictation from
   the first sound to the words; `service.rs` the formats, the addresses and the connections;
@@ -541,8 +542,8 @@ database holds the servers of the downloads page with their passwords and whethe
 allows changes on each (docs/downloads.md), the
 programs allowed or turned away at AI access (docs/mcp.md), the keys of the SSH servers the
 user trusted, with the day (docs/downloads.md), and the app's own credentials that are no server's,
-each sealed to its name: voice input's keys, two for each main language
-(`voice_input.<language>.speech` and `….tidy`, docs/voice-input.md);
+each sealed to its name: voice input's keys, one for each connection
+(`voice_input.connection.<id>`, docs/voice-input.md);
 what comes after (a download queue that outlives a restart, logs, per-chat settings) gets a table
 when it is built.
 

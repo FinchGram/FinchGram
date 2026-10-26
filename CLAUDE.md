@@ -67,16 +67,18 @@ things fit together.
   "类似微信那样", opened to any vendor on 2026-10-26): a tool of the toolbox's AI category (not
   Telegram's, the maintainer's word), off until the user turns it on in its panel there
   (ui/pages/voice-input.slint), where its settings are; then the composer's sparkle (Terminal:
-  /voice; the microphone is voice messages'). The services go by their API's format, the user's own
-  address (a vendor's, a relay's, a server of their own) and keys, never fixed to one vendor ("应该
-  允许大家自己找vendor"), with a set per main language (`[[voice_input.profiles]]`; words of other
-  languages mixed in are kept as spoken): speech by OpenAI Realtime, an OpenAI-compatible upload,
-  Qwen (DashScope) or Doubao (Seed-ASR, its binary protocol); tidying by Chat Completions, Anthropic's
-  Messages or Gemini, with the speech recognition's key or one of its own. The words right come
+  /voice; the microphone is voice messages'). Never fixed to one vendor ("应该允许大家自己找vendor"):
+  the user adds connections, each a label, an API format (OpenAI-compatible, Anthropic, Gemini,
+  Alibaba Cloud Model Studio, Doubao speech), an address (a vendor's, a relay's, a server of their
+  own) and a key (`[[voice_input.connections]]`), and each ability picks a connection and a model
+  (the maintainer's model of 2026-10-26: "每个能力，选一个组合"): per main language
+  (`[[voice_input.profiles]]`; words of other languages mixed in are kept as spoken) the speech
+  recognition (OpenAI realtime or upload, Qwen, Doubao's binary protocol) and the tidying (Chat
+  Completions, Anthropic's Messages, Gemini), and the voice messages' own. The words right come
   first ("以语音转文字的准确度为第一", 2026-10-26): OpenAI's live model at `delay: xhigh`, words to know
   for every format, band-limited resampling, a tidying that puts misheard words right. No model
   inside the app (the installer stays small); the keys are credentials in the database
-  (`credentials`, `voice_input.<language>.speech`/`.tidy`), never in settings.toml; the sessions are
+  (`credentials`, `voice_input.connection.<id>`), never in settings.toml; the sessions are
   blocking (tungstenite WebSockets, ureq) on threads of their own, not async. Transcribe under a
   voice message (the design's B1) is Telegram's own transcription (recognizeSpeech) first; the
   user's own service only when they turn that on, off by default. Built without a design round,

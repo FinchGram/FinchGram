@@ -64,13 +64,14 @@ client, not made by Telegram.
   listening tells the sender, as in Telegram's own apps. Hold the microphone to record one: let go
   to send it, drag left to cancel, drag up to lock it, then stop it to listen before it goes.
 - **Voice input.** Press the sparkle in the composer and speak: the words go into the box, tidied
-  of um and uh, for you to send. You choose the services by their API's format, with your own keys
-  and, if you like, your own address (a relay, or a server on your network): OpenAI's realtime
-  transcription, Qwen and Doubao (both strong in Chinese), or any service that speaks OpenAI's
-  transcription API; the tidying in OpenAI's, Anthropic's or Gemini's format. Each main language has
-  its own set, and words of other languages mixed in are kept as you say them. Toolbox → AI → Voice
-  input, off until you turn it on. Transcribe under a voice message uses Telegram's own
-  transcription, or your own service if you turn that on. See [docs/voice-input.md](docs/voice-input.md).
+  of um and uh, for you to send. You add your services as connections, each a name, an API format,
+  your own key and, if you like, your own address (a relay, or a server on your network), and choose
+  one for each job: for the speech, OpenAI's realtime transcription, Qwen and Doubao (both strong in
+  Chinese), or any service that speaks OpenAI's transcription API; for the tidying, OpenAI's,
+  Anthropic's or Gemini's format. Each main language takes its own, and words of other languages
+  mixed in are kept as you say them. Toolbox → AI → Voice input, off until you turn it on.
+  Transcribe under a voice message uses Telegram's own transcription, or your own service if you
+  turn that on. See [docs/voice-input.md](docs/voice-input.md).
 - **AI assistants.** Claude Desktop, Claude Code and other apps that speak the Model Context
   Protocol can read your chats and act in them through FinchGram, once you let them: Toolbox → AI access, off until you turn it on, with the chats you choose and whether an assistant may send, and
   a question the first time an app connects. See [docs/mcp.md](docs/mcp.md).

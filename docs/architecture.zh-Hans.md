@@ -287,8 +287,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   一个负责列目录的“servers”线程、每个在传的文件一个线程（同时两个），以及每批改动一个“changes”线程。密码进 macOS 钥匙串，服务器和下载目录进
   settings.toml；下好的照片或视频在媒体查看器里打开（`viewer.rs` 的 `view_file`）。这个页面不需要账号。
 - 语音输入（`src/speech/`，[voice-input.zh-Hans.md](voice-input.zh-Hans.md)）：百宝箱“AI”一类里的一个工具，用户打开之前是关的；
-  打开时输入框里有 ✦（终端里是 `/voice`，关着的时候它打开语音输入的面板）。服务按 API 格式、地址和模型来定，任何支持
-  其中一种格式的厂商、中转站或用户自己的服务器都能用，每种主要语言一套（profile）。`mod.rs` 是 UI 线程上一次口述的状态
+  打开时输入框里有 ✦（终端里是 `/voice`，关着的时候它打开语音输入的面板）。用户添加连接（名字、API 格式、地址、密钥），
+  任何支持其中一种格式的厂商、中转站或用户自己的服务器都行；每项能力选一个连接和模型：每种主要语言（profile）的语音识别
+  和整理，以及语音消息自己的。`mod.rs` 是 UI 线程上一次口述的状态
   （空闲、在听、收尾、整理、或带原因的失败）、那一条里的文字、最后放进输入框的文字、各套设置和密钥，以及百宝箱里语音输入
   的面板；`dictation.rs` 是一次口述从第一个声音到出字；`service.rs` 是格式、地址和连接；`realtime.rs` 是 OpenAI 和千问的
   实时会话，`doubao.rs` 是豆包的二进制协议，`upload.rs` 是 OpenAI 的 `/audio/transcriptions`，`tidy.rs` 是三种格式的整理，
@@ -353,8 +354,8 @@ settings.toml 里的 AI 访问设置（`settings::Mcp::seal`，启动时由 src/
 数据库从 0.4.18 起也有一把自己的密钥，同样存法（account 是“tdlib”）。规矩：偏好设置进 settings.toml，它要小、要能手改；
 记录进数据库；Telegram 自己的状态归 TDLib。现在数据库里放的是下载页的服务器、它们的密码和用户是否允许改动每一台（docs/downloads.zh-Hans.md）、
 AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任过的 SSH 服务器密钥和信任的日期
-（docs/downloads.zh-Hans.md），以及 app 自己的、不属于哪台服务器的凭据，每个都封到自己的名字上：语音输入的密钥，每种主要语言两个
-（`voice_input.<语言>.speech` 和 `….tidy`，docs/voice-input.zh-Hans.md）；以后的东西（重启后还在的下载队列、
+（docs/downloads.zh-Hans.md），以及 app 自己的、不属于哪台服务器的凭据，每个都封到自己的名字上：语音输入的密钥，每个连接一个
+（`voice_input.connection.<id>`，docs/voice-input.zh-Hans.md）；以后的东西（重启后还在的下载队列、
 日志、每个聊天的设置）建的时候再加表。
 
 从 0.6.0 起表结构有编号：SQLite 自带的 `PRAGMA user_version` 存着 `LAYOUT`，每改一次表就加一，每一步在

@@ -6,25 +6,24 @@
 //! service and nowhere else, and FinchGram keeps no recording. (The microphone in the composer is
 //! voice messages', src/telegram/voice.rs.)
 //!
-//! The services are named by their API's format, address and model (service.rs), so that any
-//! vendor, relay or server of the user's own that speaks one of the formats can be used: OpenAI's
-//! realtime transcription (realtime.rs), OpenAI's upload of a recording (upload.rs), Alibaba Cloud's
-//! Qwen (realtime.rs), ByteDance's Doubao (doubao.rs); the tidying in Chat Completions, Anthropic's
-//! or Google's format (tidy.rs). Each main language the user speaks has a set of its own (a
-//! profile, settings.toml's `[[voice_input.profiles]]`): which one is used is the main language
-//! chosen in the panel, or in the strip while speaking. Words of other languages mixed in are kept
-//! as spoken.
+//! The user adds connections: a name of theirs, an API format, an address and a key, any vendor,
+//! relay or server of their own that speaks one of the formats (service.rs). Each ability picks a
+//! connection and a model: for each main language the user speaks (a profile), the speech
+//! recognition that hears it (OpenAI's realtime transcription or its upload, Alibaba Cloud's Qwen,
+//! ByteDance's Doubao: realtime.rs, upload.rs, doubao.rs) and the text model that tidies the words
+//! (Chat Completions, Anthropic's or Google's format: tidy.rs); and the one that transcribes voice
+//! messages (messages.rs). Which main language is used is chosen in the panel, or in the strip while
+//! speaking; words of other languages mixed in are kept as spoken.
 //!
 //! Voice input is a tool of the toolbox's AI category (src/toolbox.rs, ui/pages/voice-input.slint),
 //! off until the user turns it on there: off, the sparkle is not in the composer, and Terminal's
-//! /voice, or the button of a stop for want of a key, opens its panel, where the services and the
-//! keys are set.
+//! /voice, or the button of a stop for want of a key, opens its panel, where the connections and
+//! the abilities are set.
 //!
 //! One dictation at a time, its state here on the UI thread. The microphone's samples come from
 //! one of the system's threads (src/platform/microphone.rs); the session runs on a thread of its
 //! own ("voice", `dictation::dictate`), which reports back through the event loop. The keys are
-//! the database's (`database::credential`, `voice_input.<language>.speech` and `….tidy`), never in
-//! settings.toml.
+//! the database's (`database::credential`, `voice_input.connection.<id>`), never in settings.toml.
 
 mod audio;
 pub mod dictation;
@@ -44,16 +43,17 @@ use std::time::{Duration, Instant};
 
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
+use crate::database::{credential, remove_credential, save_credential};
 use crate::platform::{self, MicrophoneAccess};
-use crate::settings::{Settings, VoiceInput, VoiceProfile};
-use crate::{Conversation, KeyCheck, MainWindow, Recorder, Toolbox, Voice, VoiceLanguage, VoiceLanguageRow, VoiceProblem, VoiceService, VoiceState};
+use crate::settings::{Settings, VoiceConnection, VoiceInput, VoiceProfile};
+use crate::{Conversation, KeyCheck, MainWindow, Recorder, Toolbox, Voice, VoiceChoice, VoiceChoiceRow, VoiceConnectionRow, VoiceLanguage, VoiceLanguageRow, VoiceProblem, VoiceState};
 #[cfg(test)]
 pub use audio::wav;
 pub use audio::wav_samples;
 use dictation::{Input, Options, Report};
-use service::{AddressProblem, FailureKind, KeyAnswer, Speech, SpeechFormat, Tidy};
+use service::{AddressProblem, ConnectionFormat, Endpoint, FailureKind, KeyAnswer, Speech, SpeechFormat, Tidy};
 
-/// 0.7's one key, OpenAI's, from before the profiles: it becomes the first profile's speech key.
+/// 0.7.0's and 0.7.1's one key, OpenAI's.
 const OLD_KEY: &str = "openai_api_key";
 /// Held longer than this, the microphone finishes when let go; a shorter press is a click.
 const HOLD: Duration = Duration::from_millis(600);
@@ -85,22 +85,14 @@ pub fn is_language(code: &str) -> bool {
     LANGUAGES.iter().any(|(_, known)| *known == code)
 }
 
-/// Which of a profile's two services.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Which {
-    Speech,
-    Tidy,
+/// The database's name for a connection's key.
+fn key_name(id: &str) -> String {
+    format!("voice_input.connection.{id}")
 }
 
-impl Which {
-    fn of(name: &str) -> Which {
-        if name == "tidy" { Which::Tidy } else { Which::Speech }
-    }
-}
-
-/// The database's name for a profile's key.
-fn key_name(language: &str, which: Which) -> String {
-    format!("voice_input.{language}.{}", if which == Which::Tidy { "tidy" } else { "speech" })
+/// A connection's key; none for a connection that is not there, or has none.
+fn key_of(id: &str) -> Option<String> {
+    if id.is_empty() { None } else { credential(&key_name(id)) }
 }
 
 thread_local! {
@@ -111,8 +103,10 @@ thread_local! {
     static GENERATION: Cell<u64> = const { Cell::new(0) };
     /// When the microphone was pressed to start the dictation, while it is still held.
     static PRESSED: Cell<Option<Instant>> = const { Cell::new(None) };
-    /// Counted up with every check of a service, so that only the last one's answer shows.
+    /// Counted up with every check of a connection, so that only the last one's answer shows.
     static CHECKS: Cell<u64> = const { Cell::new(0) };
+    /// The connection open in the panel for editing, by id; "" for none.
+    static OPEN: RefCell<String> = const { RefCell::new(String::new()) };
 }
 
 struct App {
@@ -133,12 +127,14 @@ struct Dictation {
 }
 
 pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
-    // 0.7's OpenAI key goes to the profile its settings became (settings.rs).
-    let first = settings.borrow().voice_input.current().language.clone();
-    move_old_key(&first);
+    adopt_keys(&mut settings.borrow_mut());
     // A settings file from before the switch (0.7.0) has none: voice input is on there when a key
     // was kept. The choice is written with the next save of the settings.
-    let on = *settings.borrow_mut().voice_input.enabled.get_or_insert_with(|| crate::database::credential(&key_name(&first, Which::Speech)).is_some());
+    let on = {
+        let mut settings = settings.borrow_mut();
+        let has_key = settings.voice_input.connections.iter().any(|connection| key_of(&connection.id).is_some());
+        *settings.voice_input.enabled.get_or_insert(has_key)
+    };
     let voice = ui.global::<Voice>();
     voice.set_on(on);
     APP.with(|app| *app.borrow_mut() = Some(App { ui: ui.as_weak(), settings }));
@@ -155,31 +151,94 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     voice.on_cancel_adding(|| with_ui(|ui| ui.global::<Voice>().set_adding(false)));
     voice.on_add_language(|code| add_language(&code));
     voice.on_remove_language(remove_language);
-    voice.on_set_format(|which, name| set_format(Which::of(&which), &name));
-    voice.on_edit_url(|which, text| edit(Which::of(&which), Field::Url, &text));
-    voice.on_edit_model(|which, text| edit(Which::of(&which), Field::Model, &text));
-    voice.on_edit_keywords(|text| edit(Which::Speech, Field::Keywords, &text));
-    voice.on_check(|which| check(Which::of(&which)));
-    voice.on_save_key(|which, text| save_key(Which::of(&which), &text));
-    voice.on_remove_key(|which| remove_key(Which::of(&which)));
-    voice.on_open_key_page(|which| open_key_page(Which::of(&which)));
+    voice.on_add_connection(add_connection);
+    voice.on_toggle_connection(|id| toggle_connection(&id));
+    voice.on_edit_connection_label(|text| edit_connection(ConnectionField::Label, &text));
+    voice.on_edit_connection_url(|text| edit_connection(ConnectionField::Url, &text));
+    voice.on_set_connection_format(|name| set_connection_format(&name));
+    voice.on_check_connection(check_connection);
+    voice.on_save_connection_key(|text| save_key(&text));
+    voice.on_remove_connection_key(remove_key);
+    voice.on_remove_connection(remove_connection);
+    voice.on_open_key_page(open_key_page);
+    voice.on_choose(|which, id| choose(&which, &id));
+    voice.on_set_mode(|mode| set_mode(&mode));
+    voice.on_edit_model(|which, text| edit_model(&which, &text));
+    voice.on_edit_keywords(|text| edit_keywords(&text));
     voice.on_set_tidy(set_tidy);
-    voice.on_set_same_key(set_same_key);
     voice.on_set_transcribe_messages(set_transcribe_messages);
 }
 
-/// 0.7's key moved under the profile's name, once.
-fn move_old_key(language: &str) {
-    let Some(old) = crate::database::credential(OLD_KEY) else { return };
-    let name = key_name(language, Which::Speech);
-    if crate::database::credential(&name).is_none()
-        && let Err(err) = crate::database::save_credential(&name, &old)
-    {
-        eprintln!("voice input: cannot move the key of 0.7: {err}");
+/// 0.7's keys into the connections its settings became (settings.rs), and the connections that
+/// turn out to be the same (one format, one address, one key: a key copied to two languages in
+/// 0.7.2) made one. Once: a connection's `key_from` goes with its key.
+fn adopt_keys(settings: &mut Settings) {
+    let voice_input = &mut settings.voice_input;
+    if !voice_input.connections.iter().any(|connection| connection.key_from.is_some()) {
         return;
     }
-    if let Err(err) = crate::database::remove_credential(OLD_KEY) {
-        eprintln!("voice input: cannot remove the key of 0.7: {err}");
+    let mut adopted: Vec<String> = Vec::new();
+    for connection in &mut voice_input.connections {
+        let Some(from) = connection.key_from.take() else { continue };
+        // 0.7.2 moved 0.7.1's key under the first profile's name at its start, even when its
+        // settings were not written again: the key is under either name. 0.7.1's was OpenAI's.
+        let (key, source) = match credential(&from) {
+            Some(key) => (Some(key), from),
+            None if connection.format == "openai" => (credential(OLD_KEY), OLD_KEY.to_string()),
+            None => continue,
+        };
+        let Some(key) = key else { continue };
+        let name = key_name(&connection.id);
+        if credential(&name).is_none()
+            && let Err(err) = save_credential(&name, &key)
+        {
+            eprintln!("voice input: cannot move a key of 0.7: {err}");
+            connection.key_from = Some(source);
+            continue;
+        }
+        adopted.push(source);
+    }
+    // The same format, address and key twice: the first one stays, and takes the other's place.
+    // One whose key could not move yet is left as it is, for the next start.
+    let mut keys: Vec<Option<String>> = voice_input.connections.iter().map(|connection| key_of(&connection.id)).collect();
+    let mut index = 0;
+    while index < voice_input.connections.len() {
+        let twin = (0..index).find(|&earlier| {
+            let (a, b) = (&voice_input.connections[earlier], &voice_input.connections[index]);
+            a.format == b.format && a.url == b.url && keys[earlier] == keys[index] && a.key_from.is_none() && b.key_from.is_none()
+        });
+        match twin {
+            Some(earlier) => {
+                let (gone, kept) = (voice_input.connections[index].id.clone(), voice_input.connections[earlier].id.clone());
+                repoint(voice_input, &gone, &kept);
+                let _ = remove_credential(&key_name(&gone));
+                voice_input.connections.remove(index);
+                keys.remove(index);
+            }
+            None => index += 1,
+        }
+    }
+    // An old key goes once every connection that took it has its copy.
+    for source in adopted {
+        if !voice_input.connections.iter().any(|connection| connection.key_from.as_deref() == Some(source.as_str())) {
+            let _ = remove_credential(&source);
+        }
+    }
+    settings.save();
+}
+
+/// What used connection `gone` uses `kept` from now on ("" for none).
+fn repoint(voice_input: &mut VoiceInput, gone: &str, kept: &str) {
+    for profile in &mut voice_input.profiles {
+        if profile.connection == gone {
+            profile.connection = kept.to_string();
+        }
+        if profile.tidy_connection == gone {
+            profile.tidy_connection = kept.to_string();
+        }
+    }
+    if voice_input.messages_connection == gone {
+        voice_input.messages_connection = kept.to_string();
     }
 }
 
@@ -202,35 +261,35 @@ fn state() -> VoiceState {
     state
 }
 
-/// The profile in use now.
-fn current() -> Option<VoiceProfile> {
-    with_settings(|settings| settings.voice_input.current().clone())
+/// A connection as the services take it; none when it is not there, Err when its address is not one.
+fn endpoint_of(voice_input: &VoiceInput, id: &str) -> Option<Result<Endpoint, AddressProblem>> {
+    let connection = voice_input.connection(id)?;
+    Some(Endpoint::new(&connection.format, &connection.url, &connection.label))
 }
 
-/// A profile's key for one of its services (the speech service's for the tidying, when the two
-/// share it).
-fn key_of(profile: &VoiceProfile, which: Which) -> Option<String> {
-    let which = if which == Which::Tidy && profile.tidy_same_key { Which::Speech } else { which };
-    crate::database::credential(&key_name(&profile.language, which))
+/// The speech service of a profile: its connection, how, its model.
+fn speech_of(voice_input: &VoiceInput, profile: &VoiceProfile) -> Result<Speech, VoiceProblem> {
+    let endpoint = endpoint_of(voice_input, &profile.connection).ok_or(VoiceProblem::NoService)?.map_err(|_| VoiceProblem::BadAddress)?;
+    Speech::new(endpoint, profile.mode == "upload", &profile.model).ok_or(VoiceProblem::NoService)
 }
 
 /// A dictation's settings, from a profile: Err with the problem that stops it.
-fn options_of(profile: &VoiceProfile, recorded: bool) -> Result<Options, VoiceProblem> {
-    let speech = Speech::new(&profile.format, &profile.url, &profile.model).map_err(|_| VoiceProblem::BadAddress)?;
-    let speech_key = key_of(profile, Which::Speech);
+fn options_of(voice_input: &VoiceInput, profile: &VoiceProfile, recorded: bool) -> Result<Options, VoiceProblem> {
+    let speech = speech_of(voice_input, profile)?;
+    let speech_key = key_of(&profile.connection);
     // The vendor's own address wants a key; a server of the user's own may not.
     if speech_key.is_none() && speech.official() {
         return Err(VoiceProblem::NoKey);
     }
     let tidy = if profile.tidy && !recorded {
-        match Tidy::new(&profile.tidy_format, &profile.tidy_url, &profile.tidy_model) {
-            Ok(tidy) => {
-                let key = key_of(profile, Which::Tidy);
+        endpoint_of(voice_input, &profile.tidy_connection)
+            .and_then(Result::ok)
+            .and_then(|endpoint| Tidy::new(endpoint, &profile.tidy_model))
+            .and_then(|tidy| {
+                let key = key_of(&profile.tidy_connection);
                 // Without its key the words go in as heard; the panel says what is missing.
                 if key.is_none() && tidy.official() { None } else { Some((tidy, key)) }
-            }
-            Err(_) => None,
-        }
+            })
     } else {
         None
     };
@@ -245,10 +304,25 @@ fn options_of(profile: &VoiceProfile, recorded: bool) -> Result<Options, VoicePr
     })
 }
 
-/// The voice messages' own: the profile in use, its speech service only (src/speech/messages.rs).
+/// The voice messages' own (src/speech/messages.rs): the connection chosen for them, which takes
+/// an OpenAI connection's upload and finds the language itself; or, with none chosen, the speech
+/// recognition of the main language in use.
 pub fn message_options() -> Result<Options, VoiceProblem> {
-    let profile = current().ok_or(VoiceProblem::NoKey)?;
-    options_of(&profile, true)
+    with_settings(|settings| {
+        let voice_input = &settings.voice_input;
+        if voice_input.messages_connection.is_empty() {
+            return options_of(voice_input, voice_input.current(), true);
+        }
+        let own = VoiceProfile {
+            connection: voice_input.messages_connection.clone(),
+            mode: "upload".into(),
+            model: voice_input.messages_model.clone(),
+            tidy: false,
+            ..VoiceProfile::default()
+        };
+        options_of(voice_input, &own, true)
+    })
+    .unwrap_or(Err(VoiceProblem::NoService))
 }
 
 /// Whether the user lets their own service transcribe voice messages.
@@ -301,9 +375,8 @@ fn start() {
     let generation = GENERATION.get() + 1;
     GENERATION.set(generation);
     end_dictation();
-    let Some(profile) = current() else { return };
-    show_strip_service(&profile);
-    let options = match options_of(&profile, false) {
+    show_strip_service();
+    let options = match with_settings(|settings| options_of(&settings.voice_input, settings.voice_input.current(), false)).unwrap_or(Err(VoiceProblem::NoService)) {
         Ok(options) => options,
         Err(problem) => {
             fail(problem, "");
@@ -344,14 +417,19 @@ fn start() {
 
 /// The strip's words of the profile in use: who hears it, its language, whether words come
 /// while the user speaks.
-fn show_strip_service(profile: &VoiceProfile) {
-    let speech = Speech::new(&profile.format, &profile.url, &profile.model).ok();
-    let count = with_settings(|settings| settings.voice_input.profiles.len()).unwrap_or(1);
+fn show_strip_service() {
+    let found = with_settings(|settings| {
+        let voice_input = &settings.voice_input;
+        let profile = voice_input.current();
+        let speech = speech_of(voice_input, profile).ok();
+        (speech, profile.language.clone(), voice_input.profiles.len())
+    });
+    let Some((speech, language, count)) = found else { return };
     with_ui(|ui| {
         let voice = ui.global::<Voice>();
         voice.set_service(speech.as_ref().map(Speech::shown).unwrap_or_default().into());
-        voice.set_live(speech.as_ref().is_some_and(|speech| live(speech, &profile.language)));
-        voice.set_language_name(language_name(&profile.language).into());
+        voice.set_live(speech.as_ref().is_some_and(|speech| live(speech, &language)));
+        voice.set_language_name(language_name(&language).into());
         voice.set_can_switch(count > 1);
     });
 }
@@ -482,8 +560,8 @@ fn next_language() {
     if matches!(state(), VoiceState::Listening | VoiceState::Failed) {
         PRESSED.set(None);
         start();
-    } else if let Some(profile) = current() {
-        show_strip_service(&profile);
+    } else {
+        show_strip_service();
     }
 }
 
@@ -493,7 +571,7 @@ fn act() {
     with_ui(|ui| problem = ui.global::<Voice>().get_problem());
     cancel();
     match problem {
-        VoiceProblem::NoKey | VoiceProblem::RefusedKey | VoiceProblem::BadAddress => with_ui(open_panel),
+        VoiceProblem::NoKey | VoiceProblem::NoService | VoiceProblem::RefusedKey | VoiceProblem::BadAddress => with_ui(open_panel),
         VoiceProblem::MicrophoneDenied => platform::open_microphone_settings(),
         _ => {}
     }
@@ -620,25 +698,48 @@ fn set_on(on: bool) {
     }
 }
 
-/// What the panel shows of the settings, with the keys' last letters (the database's, or the
+/// The connection open for editing, as the panel shows it.
+struct OpenConnection {
+    label: String,
+    format: String,
+    url: String,
+    url_placeholder: String,
+    url_problem: i32,
+    has_key: bool,
+    key_hint: String,
+    official: bool,
+    shown: String,
+}
+
+/// What the panel shows of the settings, with the keys' letters (the database's, or the
 /// screenshots' own).
 struct PanelView {
     languages: Vec<VoiceLanguage>,
     addable: Vec<VoiceLanguage>,
-    speech: VoiceService,
-    speech_url: String,
+    language_name: String,
+    connections: Vec<VoiceConnectionRow>,
+    open: Option<OpenConnection>,
+    speech_choices: Vec<VoiceChoice>,
+    speech_format: String,
+    speech_mode: String,
     speech_model: String,
+    speech_model_placeholder: String,
     keywords: String,
     tidy: bool,
-    tidying: VoiceService,
-    tidy_url: String,
+    tidy_choices: Vec<VoiceChoice>,
     tidy_model: String,
-    same_key: bool,
-    language_name: String,
+    tidy_model_placeholder: String,
     transcribe_messages: bool,
+    message_choices: Vec<VoiceChoice>,
+    messages_model: String,
+    messages_model_placeholder: String,
 }
 
-fn panel_view(voice_input: &VoiceInput, key_hint: &dyn Fn(&str, Which) -> Option<String>) -> PanelView {
+fn format_of(voice_input: &VoiceInput, id: &str) -> Option<ConnectionFormat> {
+    voice_input.connection(id).map(|connection| ConnectionFormat::from_name(&connection.format))
+}
+
+fn panel_view(voice_input: &VoiceInput, open: &str, key_hint: &dyn Fn(&str) -> Option<String>) -> PanelView {
     let profile = voice_input.current();
     let chip = |code: &str, on: bool| VoiceLanguage { code: code.into(), name: language_name(code).into(), on };
     let languages = voice_input.profiles.iter().map(|other| chip(&other.language, other.language == profile.language)).collect();
@@ -647,93 +748,151 @@ fn panel_view(voice_input: &VoiceInput, key_hint: &dyn Fn(&str, Which) -> Option
         addable.push(chip("auto", false));
     }
     addable.extend(LANGUAGES.iter().filter(|(_, code)| !voice_input.profiles.iter().any(|other| other.language == *code)).map(|(_, code)| chip(code, false)));
-    let speech_format = SpeechFormat::from_name(&profile.format);
-    let speech = service_view(
-        speech_format.name(),
-        Speech::new(&profile.format, &profile.url, &profile.model).map(|speech| (speech.shown(), speech.official(), live(&speech, &profile.language))),
-        speech_format.default_url(),
-        speech_format.default_model(),
-        key_hint(&profile.language, Which::Speech),
-    );
-    let tidy_format = service::TidyFormat::from_name(&profile.tidy_format);
-    let tidying = service_view(
-        tidy_format.name(),
-        Tidy::new(&profile.tidy_format, &profile.tidy_url, &profile.tidy_model).map(|tidy| (tidy.shown(), tidy.official(), false)),
-        tidy_format.default_url(),
-        tidy_format.default_model(),
-        key_hint(&profile.language, if profile.tidy_same_key { Which::Speech } else { Which::Tidy }),
-    );
+    let connections = voice_input
+        .connections
+        .iter()
+        .map(|connection| {
+            let hint = key_hint(&connection.id);
+            VoiceConnectionRow {
+                id: connection.id.as_str().into(),
+                label: label_of(connection).into(),
+                format: connection.format.as_str().into(),
+                // An address that is no address shows as typed, for the user to know the row.
+                host: Endpoint::new(&connection.format, &connection.url, "").map(|endpoint| endpoint.address.shown()).unwrap_or_else(|_| connection.url.trim().to_string()).into(),
+                has_key: hint.is_some(),
+                key_hint: hint.unwrap_or_default().into(),
+            }
+        })
+        .collect();
+    let open = voice_input.connection(open).map(|connection| {
+        let format = ConnectionFormat::from_name(&connection.format);
+        let endpoint = Endpoint::new(&connection.format, &connection.url, &connection.label);
+        let hint = key_hint(&connection.id);
+        OpenConnection {
+            label: connection.label.clone(),
+            format: connection.format.clone(),
+            url: connection.url.clone(),
+            url_placeholder: format.default_url().into(),
+            url_problem: problem_number(endpoint.as_ref().err()),
+            has_key: hint.is_some(),
+            key_hint: hint.unwrap_or_default(),
+            official: endpoint.as_ref().is_ok_and(Endpoint::official),
+            shown: label_of(connection),
+        }
+    });
+    let choices = |chosen: &str, fits: fn(ConnectionFormat) -> bool| -> Vec<VoiceChoice> {
+        voice_input
+            .connections
+            .iter()
+            .filter(|connection| fits(ConnectionFormat::from_name(&connection.format)))
+            .map(|connection| VoiceChoice { id: connection.id.as_str().into(), label: label_of(connection).into(), on: connection.id == chosen })
+            .collect()
+    };
+    let speech_format = format_of(voice_input, &profile.connection);
+    let upload = profile.mode == "upload";
+    let tidy_format = format_of(voice_input, &profile.tidy_connection);
+    let messages_format = format_of(voice_input, &voice_input.messages_connection);
+    let mut message_choices = vec![VoiceChoice { id: SharedString::new(), label: SharedString::new(), on: voice_input.messages_connection.is_empty() }];
+    message_choices.extend(choices(&voice_input.messages_connection, ConnectionFormat::hears));
     PanelView {
         languages,
         addable,
-        speech,
-        speech_url: profile.url.clone(),
+        language_name: language_name(&profile.language),
+        connections,
+        open,
+        speech_choices: choices(&profile.connection, ConnectionFormat::hears),
+        speech_format: speech_format.map(ConnectionFormat::name).unwrap_or_default().into(),
+        speech_mode: profile.mode.clone(),
         speech_model: profile.model.clone(),
+        speech_model_placeholder: speech_format.map(|format| format.speech_model(upload)).unwrap_or_default().into(),
         keywords: profile.keywords.clone(),
         tidy: profile.tidy,
-        tidying,
-        tidy_url: profile.tidy_url.clone(),
+        tidy_choices: choices(&profile.tidy_connection, ConnectionFormat::writes),
         tidy_model: profile.tidy_model.clone(),
-        same_key: profile.tidy_same_key,
-        language_name: language_name(&profile.language),
+        tidy_model_placeholder: tidy_format.map(ConnectionFormat::text_model).unwrap_or_default().into(),
         transcribe_messages: voice_input.transcribe_messages,
+        message_choices,
+        messages_model: voice_input.messages_model.clone(),
+        messages_model_placeholder: messages_format.map(|format| format.speech_model(true)).unwrap_or_default().into(),
     }
 }
 
-fn service_view(format: &str, address: Result<(String, bool, bool), AddressProblem>, url: &str, model: &str, hint: Option<String>) -> VoiceService {
-    let (shown, official, live, problem) = match address {
-        Ok((shown, official, live)) => (shown, official, live, 0),
-        Err(AddressProblem::Malformed) => (String::new(), false, false, 1),
-        Err(AddressProblem::Credentials) => (String::new(), false, false, 2),
-        Err(AddressProblem::Unencrypted) => (String::new(), false, false, 3),
-    };
-    VoiceService {
-        format: format.into(),
-        url_placeholder: url.into(),
-        url_problem: problem,
-        model_placeholder: model.into(),
-        has_key: hint.is_some(),
-        key_hint: hint.unwrap_or_default().into(),
-        check: KeyCheck::None,
-        check_detail: SharedString::new(),
-        shown: shown.into(),
-        official,
-        live,
+/// A connection's name, its address's host when it has none.
+fn label_of(connection: &VoiceConnection) -> String {
+    if connection.label.trim().is_empty() { service::default_label(&connection.format, &connection.url) } else { connection.label.trim().to_string() }
+}
+
+/// What is wrong with an address, as the panel numbers it: 0 nothing; 1 not an address; 2 a name
+/// and password in it; 3 plain http to the internet.
+fn problem_number(problem: Option<&AddressProblem>) -> i32 {
+    match problem {
+        None => 0,
+        Some(AddressProblem::Malformed) => 1,
+        Some(AddressProblem::Credentials) => 2,
+        Some(AddressProblem::Unencrypted) => 3,
     }
 }
 
-/// The panel drawn again from the settings; the checks' answers stay unless the service changed.
+/// The panel drawn again from the settings.
 fn show_panel(ui: &MainWindow) {
-    let Some(view) = with_settings(|settings| panel_view(&settings.voice_input, &|language, which| crate::database::credential(&key_name(language, which)).as_deref().map(hint)))
-    else {
+    refresh(ui, true);
+}
+
+/// The panel drawn again; `typed`: the boxes the user types into too (not while they type in one).
+fn refresh(ui: &MainWindow, typed: bool) {
+    let open = OPEN.with(|open| open.borrow().clone());
+    let Some(view) = with_settings(|settings| panel_view(&settings.voice_input, &open, &|id| credential(&key_name(id)).as_deref().map(hint))) else {
         return;
     };
-    apply(ui, view);
+    apply(ui, view, typed);
 }
 
-fn apply(ui: &MainWindow, view: PanelView) {
+fn apply(ui: &MainWindow, view: PanelView, typed: bool) {
     let voice = ui.global::<Voice>();
-    let keep = |old: VoiceService, mut new: VoiceService| {
-        if old.format == new.format && old.shown == new.shown && old.has_key == new.has_key {
-            new.check = old.check;
-            new.check_detail = old.check_detail;
-        }
-        new
-    };
     voice.set_can_remove(view.languages.len() > 1);
     voice.set_language_rows(lines(view.languages));
     voice.set_addable_rows(lines(view.addable));
-    voice.set_speech(keep(voice.get_speech(), view.speech));
-    voice.set_tidying(keep(voice.get_tidying(), view.tidying));
-    voice.set_speech_url(view.speech_url.into());
-    voice.set_speech_model(view.speech_model.into());
-    voice.set_keywords(view.keywords.into());
-    voice.set_tidy_url(view.tidy_url.into());
-    voice.set_tidy_model(view.tidy_model.into());
-    voice.set_tidy(view.tidy);
-    voice.set_same_key(view.same_key);
     voice.set_language_name(view.language_name.into());
+    voice.set_connections(ModelRc::new(VecModel::from(view.connections)));
+    match view.open {
+        Some(open) => {
+            voice.set_open_connection(OPEN.with(|id| id.borrow().clone()).into());
+            if typed {
+                voice.set_connection_label(open.label.into());
+                voice.set_connection_url(open.url.into());
+            }
+            voice.set_connection_format(open.format.into());
+            voice.set_connection_url_placeholder(open.url_placeholder.into());
+            voice.set_connection_url_problem(open.url_problem);
+            voice.set_connection_has_key(open.has_key);
+            voice.set_connection_key_hint(open.key_hint.into());
+            voice.set_connection_official(open.official);
+            voice.set_connection_shown(open.shown.into());
+        }
+        None => voice.set_open_connection(SharedString::new()),
+    }
+    voice.set_speech_choices(choice_lines(view.speech_choices));
+    voice.set_speech_format(view.speech_format.into());
+    voice.set_speech_mode(view.speech_mode.into());
+    voice.set_speech_model_placeholder(view.speech_model_placeholder.into());
+    voice.set_tidy(view.tidy);
+    voice.set_tidy_choices(choice_lines(view.tidy_choices));
+    voice.set_tidy_model_placeholder(view.tidy_model_placeholder.into());
     voice.set_transcribe_messages(view.transcribe_messages);
+    voice.set_message_choices(choice_lines(view.message_choices));
+    voice.set_messages_model_placeholder(view.messages_model_placeholder.into());
+    if typed {
+        voice.set_speech_model(view.speech_model.into());
+        voice.set_keywords(view.keywords.into());
+        voice.set_tidy_model(view.tidy_model.into());
+        voice.set_messages_model(view.messages_model.into());
+    }
+}
+
+/// Connections to choose from, three in a line.
+fn choice_lines(choices: Vec<VoiceChoice>) -> ModelRc<VoiceChoiceRow> {
+    let lines: Vec<VoiceChoiceRow> = choices.chunks(3).map(|line| VoiceChoiceRow { choices: ModelRc::new(VecModel::from(line.to_vec())) }).collect();
+    ModelRc::new(VecModel::from(lines))
 }
 
 /// Chips in lines of PER_LINE.
@@ -742,26 +901,22 @@ fn lines(chips: Vec<VoiceLanguage>) -> ModelRc<VoiceLanguageRow> {
     ModelRc::new(VecModel::from(lines))
 }
 
-/// The panel for the screenshot test (src/screenshots.rs): `voice_input` as the settings, with
-/// keys whose last letters are `hints` (by the database's names).
+/// The panel for the screenshot test (src/screenshots.rs): `voice_input` as the settings, the
+/// connection `open` open, with keys whose letters are `hints` (by connection id).
 #[cfg(test)]
-pub fn show_for_pictures(ui: &MainWindow, voice_input: &VoiceInput, hints: &[(&str, &str)]) {
-    let view = panel_view(voice_input, &|language, which| hints.iter().find(|(name, _)| *name == key_name(language, which)).map(|(_, hint)| hint.to_string()));
-    apply(ui, view);
-    show_strip_for_pictures(ui, voice_input);
-}
-
-#[cfg(test)]
-fn show_strip_for_pictures(ui: &MainWindow, voice_input: &VoiceInput) {
+pub fn show_for_pictures(ui: &MainWindow, voice_input: &VoiceInput, open: &str, hints: &[(&str, &str)]) {
+    OPEN.with(|id| *id.borrow_mut() = open.to_string());
+    let view = panel_view(voice_input, open, &|id| hints.iter().find(|(known, _)| *known == id).map(|(_, hint)| hint.to_string()));
+    apply(ui, view, true);
     let profile = voice_input.current();
-    let speech = Speech::new(&profile.format, &profile.url, &profile.model).ok();
+    let speech = speech_of(voice_input, profile).ok();
     let voice = ui.global::<Voice>();
     voice.set_service(speech.as_ref().map(Speech::shown).unwrap_or_default().into());
     voice.set_live(speech.as_ref().is_some_and(|speech| live(speech, &profile.language)));
     voice.set_can_switch(voice_input.profiles.len() > 1);
 }
 
-/// A main language chosen in the panel: the one used from now on, and its settings shown.
+/// A main language chosen in the panel: the one used from now on, and its abilities shown.
 fn choose_language(code: &str) {
     with_settings(|settings| {
         if settings.voice_input.profiles.iter().any(|profile| profile.language == code) {
@@ -775,133 +930,172 @@ fn choose_language(code: &str) {
     });
 }
 
-/// A main language added: its set starts as a copy of the one in use, keys and all, and is the
-/// one used from now on.
+/// A main language added: its abilities start as the ones in use (the same connections), and it
+/// is the one used from now on.
 fn add_language(code: &str) {
     if code != "auto" && !is_language(code) {
         return;
     }
-    let copied = with_settings(|settings| {
+    with_settings(|settings| {
         let voice_input = &mut settings.voice_input;
         if voice_input.profiles.iter().any(|profile| profile.language == code) {
-            return None;
+            return;
         }
         let from = voice_input.current().clone();
-        voice_input.profiles.push(VoiceProfile { language: code.to_string(), ..from.clone() });
+        voice_input.profiles.push(VoiceProfile { language: code.to_string(), ..from });
         voice_input.language = code.to_string();
         settings.save();
-        Some(from.language)
-    })
-    .flatten();
-    if let Some(from) = copied {
-        for which in [Which::Speech, Which::Tidy] {
-            if let Some(key) = crate::database::credential(&key_name(&from, which))
-                && let Err(err) = crate::database::save_credential(&key_name(code, which), &key)
-            {
-                eprintln!("voice input: cannot copy a key: {err}");
-            }
-        }
-    }
+    });
     with_ui(|ui| {
         ui.global::<Voice>().set_adding(false);
         show_panel(ui);
     });
 }
 
-/// The main language in use removed, with its keys; the first one left is used.
+/// The main language in use removed; the first one left is used. The connections stay.
 fn remove_language() {
-    let removed = with_settings(|settings| {
+    with_settings(|settings| {
         let voice_input = &mut settings.voice_input;
         if voice_input.profiles.len() < 2 {
-            return None;
+            return;
         }
         let language = voice_input.language.clone();
         voice_input.profiles.retain(|profile| profile.language != language);
         voice_input.language = voice_input.profiles[0].language.clone();
         settings.save();
-        Some(language)
-    })
-    .flatten();
-    if let Some(language) = removed {
-        for which in [Which::Speech, Which::Tidy] {
-            let _ = crate::database::remove_credential(&key_name(&language, which));
-        }
-    }
-    with_ui(show_panel);
-}
-
-/// A service's format chosen: its own address and model come with it, unless the address is one
-/// the two formats share (a relay of OpenAI's speaks both of OpenAI's speech formats).
-fn set_format(which: Which, name: &str) {
-    with_settings(|settings| {
-        let profile = settings.voice_input.current_mut();
-        match which {
-            Which::Speech => {
-                if !service::SPEECH_FORMATS.contains(&name) || profile.format == name {
-                    return;
-                }
-                let shared = SpeechFormat::from_name(&profile.format).default_url() == SpeechFormat::from_name(name).default_url();
-                if !shared {
-                    profile.url.clear();
-                }
-                profile.format = name.to_string();
-                profile.model.clear();
-            }
-            Which::Tidy => {
-                if !service::TIDY_FORMATS.contains(&name) || profile.tidy_format == name {
-                    return;
-                }
-                profile.tidy_format = name.to_string();
-                profile.tidy_url.clear();
-                profile.tidy_model.clear();
-            }
-        }
-        settings.save();
     });
     with_ui(show_panel);
-    check(which);
 }
 
-enum Field {
+// ---- connections -------------------------------------------------------------------------------
+
+/// A new connection, OpenAI's by default, open for the user to name, point and key; the main
+/// language's abilities that have none take it.
+fn add_connection() {
+    let id = with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        let id = voice_input.next_connection_id();
+        voice_input.connections.push(VoiceConnection { id: id.clone(), label: service::default_label("openai", ""), ..VoiceConnection::default() });
+        let profile = voice_input.current_mut();
+        if profile.connection.is_empty() {
+            profile.connection = id.clone();
+        }
+        if profile.tidy_connection.is_empty() {
+            profile.tidy_connection = id.clone();
+        }
+        settings.save();
+        id
+    });
+    let Some(id) = id else { return };
+    OPEN.with(|open| *open.borrow_mut() = id);
+    with_ui(|ui| {
+        ui.global::<Voice>().set_connection_check(KeyCheck::None);
+        show_panel(ui);
+    });
+}
+
+/// A connection's row clicked: open for editing, or closed.
+fn toggle_connection(id: &str) {
+    OPEN.with(|open| {
+        let mut open = open.borrow_mut();
+        *open = if *open == id { String::new() } else { id.to_string() };
+    });
+    with_ui(|ui| {
+        ui.global::<Voice>().set_connection_check(KeyCheck::None);
+        show_panel(ui);
+    });
+}
+
+fn open_id() -> String {
+    OPEN.with(|open| open.borrow().clone())
+}
+
+enum ConnectionField {
+    Label,
     Url,
-    Model,
-    Keywords,
 }
 
-/// An address or a model typed: kept as it is typed, and the address's problem shown.
-fn edit(which: Which, field: Field, text: &str) {
+/// The open connection's name or address typed: kept as typed, and what is said of it shown.
+fn edit_connection(field: ConnectionField, text: &str) {
+    let id = open_id();
     with_settings(|settings| {
-        let profile = settings.voice_input.current_mut();
-        let slot = match (which, &field) {
-            (_, Field::Keywords) => &mut profile.keywords,
-            (Which::Speech, Field::Url) => &mut profile.url,
-            (Which::Speech, Field::Model) => &mut profile.model,
-            (Which::Tidy, Field::Url) => &mut profile.tidy_url,
-            (Which::Tidy, Field::Model) => &mut profile.tidy_model,
-        };
-        *slot = text.trim().to_string();
-        settings.save();
+        if let Some(connection) = settings.voice_input.connections.iter_mut().find(|connection| connection.id == id) {
+            match field {
+                ConnectionField::Label => connection.label = text.trim().to_string(),
+                ConnectionField::Url => connection.url = text.trim().to_string(),
+            }
+            settings.save();
+        }
     });
-    if matches!(field, Field::Keywords) {
+    with_ui(|ui| {
+        ui.global::<Voice>().set_connection_check(KeyCheck::None);
+        refresh(ui, false);
+    });
+}
+
+/// The open connection's format chosen: its name follows when it was the format's own, and the
+/// abilities it can no longer do are left without it.
+fn set_connection_format(name: &str) {
+    if !service::CONNECTION_FORMATS.contains(&name) {
         return;
     }
-    let Some(profile) = current() else { return };
-    let address = match which {
-        Which::Speech => Speech::new(&profile.format, &profile.url, &profile.model).map(|speech| (speech.shown(), speech.official(), live(&speech, &profile.language))),
-        Which::Tidy => Tidy::new(&profile.tidy_format, &profile.tidy_url, &profile.tidy_model).map(|tidy| (tidy.shown(), tidy.official(), false)),
-    };
-    // The typed text stays as it is; only what is said of it changes.
-    let fresh = service_view("", address, "", "", None);
-    with_ui(|ui| {
-        let voice = ui.global::<Voice>();
-        let mut shown = if which == Which::Speech { voice.get_speech() } else { voice.get_tidying() };
-        shown.url_problem = fresh.url_problem;
-        shown.shown = fresh.shown;
-        shown.official = fresh.official;
-        shown.live = fresh.live;
-        shown.check = KeyCheck::None;
-        if which == Which::Speech { voice.set_speech(shown) } else { voice.set_tidying(shown) }
-    });
+    let id = open_id();
+    let changed = with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        let connection = voice_input.connections.iter_mut().find(|connection| connection.id == id)?;
+        if connection.format == name {
+            return None;
+        }
+        if connection.label.is_empty() || connection.label == service::default_label(&connection.format, &connection.url) {
+            connection.label = service::default_label(name, &connection.url);
+        }
+        connection.format = name.to_string();
+        let format = ConnectionFormat::from_name(name);
+        for profile in &mut voice_input.profiles {
+            if profile.connection == id {
+                profile.model.clear();
+                if !format.hears() {
+                    profile.connection.clear();
+                }
+            }
+            if profile.tidy_connection == id {
+                profile.tidy_model.clear();
+                if !format.writes() {
+                    profile.tidy_connection.clear();
+                }
+            }
+        }
+        if voice_input.messages_connection == id {
+            voice_input.messages_model.clear();
+            if !format.hears() {
+                voice_input.messages_connection.clear();
+            }
+        }
+        settings.save();
+        Some(())
+    })
+    .flatten();
+    if changed.is_some() {
+        with_ui(|ui| {
+            // The name may follow the format, and models typed for the old one went: the boxes
+            // show what is kept now.
+            let kept = with_settings(|settings| {
+                let voice_input = &settings.voice_input;
+                let label = voice_input.connection(&id).map(|connection| connection.label.clone()).unwrap_or_default();
+                let profile = voice_input.current();
+                (label, profile.model.clone(), profile.tidy_model.clone(), voice_input.messages_model.clone())
+            });
+            refresh(ui, false);
+            if let Some((label, model, tidy_model, messages_model)) = kept {
+                let voice = ui.global::<Voice>();
+                voice.set_connection_label(label.into());
+                voice.set_speech_model(model.into());
+                voice.set_tidy_model(tidy_model.into());
+                voice.set_messages_model(messages_model.into());
+            }
+        });
+        check_connection();
+    }
 }
 
 /// The key as the panel shows it: its first letters and its last four.
@@ -920,96 +1114,175 @@ fn looks_like_a_key(key: &str) -> bool {
     key.len() >= 8 && key.chars().all(|character| character.is_ascii_graphic())
 }
 
-fn save_key(which: Which, text: &str) {
+fn save_key(text: &str) {
     let key = text.trim();
     CHECKS.set(CHECKS.get() + 1);
+    let id = open_id();
+    if id.is_empty() {
+        return;
+    }
     if !looks_like_a_key(key) {
-        set_check(which, KeyCheck::Malformed, "");
+        set_check(KeyCheck::Malformed, "");
         return;
     }
-    let Some(language) = current().map(|profile| profile.language) else { return };
-    if let Err(err) = crate::database::save_credential(&key_name(&language, which), key) {
-        set_check(which, KeyCheck::Failed, &err);
+    if let Err(err) = save_credential(&key_name(&id), key) {
+        set_check(KeyCheck::Failed, &err);
         return;
     }
-    with_ui(show_panel);
-    check(which);
-    // The tidying that takes this key is checked again too.
-    if which == Which::Speech && current().is_some_and(|profile| profile.tidy && profile.tidy_same_key) {
-        check(Which::Tidy);
-    }
+    with_ui(|ui| refresh(ui, false));
+    check_connection();
 }
 
-fn remove_key(which: Which) {
+fn remove_key() {
     CHECKS.set(CHECKS.get() + 1);
-    if let Some(language) = current().map(|profile| profile.language)
-        && let Err(err) = crate::database::remove_credential(&key_name(&language, which))
+    let id = open_id();
+    if !id.is_empty()
+        && let Err(err) = remove_credential(&key_name(&id))
     {
         eprintln!("voice input: cannot remove the key: {err}");
     }
     with_ui(|ui| {
-        show_panel(ui);
-        set_check_on(ui, which, KeyCheck::None, "");
+        refresh(ui, false);
+        ui.global::<Voice>().set_connection_check(KeyCheck::None);
     });
 }
 
-fn set_check(which: Which, check: KeyCheck, detail: &str) {
-    with_ui(|ui| set_check_on(ui, which, check, detail));
+/// The open connection removed, with its key; the abilities that used it have none.
+fn remove_connection() {
+    let id = open_id();
+    with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        voice_input.connections.retain(|connection| connection.id != id);
+        repoint(voice_input, &id, "");
+        settings.save();
+    });
+    let _ = remove_credential(&key_name(&id));
+    OPEN.with(|open| open.borrow_mut().clear());
+    with_ui(show_panel);
 }
 
-fn set_check_on(ui: &MainWindow, which: Which, check: KeyCheck, detail: &str) {
-    let voice = ui.global::<Voice>();
-    let mut shown = if which == Which::Speech { voice.get_speech() } else { voice.get_tidying() };
-    shown.check = check;
-    shown.check_detail = detail.into();
-    if which == Which::Speech { voice.set_speech(shown) } else { voice.set_tidying(shown) }
+fn set_check(check: KeyCheck, detail: &str) {
+    with_ui(|ui| {
+        let voice = ui.global::<Voice>();
+        voice.set_connection_check(check);
+        voice.set_connection_check_detail(detail.into());
+    });
 }
 
-/// The service asked, on a thread of its own, whether it answers at its address and takes the
-/// key; the answer shows under it. Nothing is asked of an address that is not one, nor of a
-/// vendor's own address without a key.
-fn check(which: Which) {
-    let Some(profile) = current() else { return };
-    let key = key_of(&profile, which);
-    let job: Box<dyn FnOnce() -> KeyAnswer + Send> = match which {
-        Which::Speech => match Speech::new(&profile.format, &profile.url, &profile.model) {
-            Ok(speech) if key.is_some() || !speech.official() => Box::new(move || service::check_speech(&speech, key.as_deref())),
-            _ => return set_check(which, KeyCheck::None, ""),
-        },
-        Which::Tidy => match Tidy::new(&profile.tidy_format, &profile.tidy_url, &profile.tidy_model) {
-            Ok(tidy) if profile.tidy && (key.is_some() || !tidy.official()) => Box::new(move || service::check_tidy(&tidy, key.as_deref())),
-            _ => return set_check(which, KeyCheck::None, ""),
-        },
+/// The open connection asked, on a thread of its own, whether it answers at its address and
+/// takes the key; the answer shows under it. Nothing is asked of an address that is not one, nor
+/// of a vendor's own address without a key.
+fn check_connection() {
+    let id = open_id();
+    let Some(Some(Ok(endpoint))) = with_settings(|settings| endpoint_of(&settings.voice_input, &id)) else {
+        return set_check(KeyCheck::None, "");
     };
+    let key = key_of(&id);
+    if key.is_none() && endpoint.official() {
+        return set_check(KeyCheck::None, "");
+    }
     let number = CHECKS.get() + 1;
     CHECKS.set(number);
-    set_check(which, KeyCheck::Checking, "");
+    set_check(KeyCheck::Checking, "");
     let spawned = std::thread::Builder::new().name("voice-check".into()).spawn(move || {
-        let answer = job();
+        let answer = service::check_connection(&endpoint, key.as_deref());
         let _ = slint::invoke_from_event_loop(move || {
             if number != CHECKS.get() {
                 return;
             }
             match answer {
-                KeyAnswer::Works => set_check(which, KeyCheck::Works, ""),
-                KeyAnswer::Refused => set_check(which, KeyCheck::Refused, ""),
-                KeyAnswer::Failed(err) => set_check(which, KeyCheck::Failed, &err),
+                KeyAnswer::Works => set_check(KeyCheck::Works, ""),
+                KeyAnswer::Refused => set_check(KeyCheck::Refused, ""),
+                KeyAnswer::Failed(err) => set_check(KeyCheck::Failed, &err),
             }
         });
     });
     if spawned.is_err() {
-        set_check(which, KeyCheck::None, "");
+        set_check(KeyCheck::None, "");
     }
 }
 
-/// The page of the vendor's keys, for the format chosen.
-fn open_key_page(which: Which) {
-    let Some(profile) = current() else { return };
-    let page = match which {
-        Which::Speech => SpeechFormat::from_name(&profile.format).key_page(),
-        Which::Tidy => service::TidyFormat::from_name(&profile.tidy_format).key_page(),
-    };
-    platform::open_link(page);
+/// The page of the open connection's vendor's keys.
+fn open_key_page() {
+    let id = open_id();
+    if let Some(Some(format)) = with_settings(|settings| format_of(&settings.voice_input, &id)) {
+        platform::open_link(format.key_page());
+    }
+}
+
+// ---- the abilities -----------------------------------------------------------------------------
+
+/// A connection chosen for an ability ("speech", "tidy", "messages"; "" for the messages' default):
+/// a model typed for another format goes.
+fn choose(which: &str, id: &str) {
+    with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        let format = format_of(voice_input, id);
+        match which {
+            "speech" => {
+                let before = format_of(voice_input, &voice_input.current().connection);
+                let profile = voice_input.current_mut();
+                profile.connection = id.to_string();
+                if before != format {
+                    profile.model.clear();
+                }
+            }
+            "tidy" => {
+                let before = format_of(voice_input, &voice_input.current().tidy_connection);
+                let profile = voice_input.current_mut();
+                profile.tidy_connection = id.to_string();
+                if before != format {
+                    profile.tidy_model.clear();
+                }
+            }
+            _ => {
+                if format_of(voice_input, &voice_input.messages_connection) != format {
+                    voice_input.messages_model.clear();
+                }
+                voice_input.messages_connection = id.to_string();
+            }
+        }
+        settings.save();
+    });
+    with_ui(show_panel);
+}
+
+/// How an OpenAI connection hears the main language: as it is spoken, or uploaded at the end; a
+/// model typed for the other way goes.
+fn set_mode(mode: &str) {
+    if mode != "realtime" && mode != "upload" {
+        return;
+    }
+    with_settings(|settings| {
+        let profile = settings.voice_input.current_mut();
+        if profile.mode != mode {
+            profile.mode = mode.to_string();
+            profile.model.clear();
+            settings.save();
+        }
+    });
+    with_ui(show_panel);
+}
+
+/// A model typed, kept as typed.
+fn edit_model(which: &str, text: &str) {
+    with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        let text = text.trim().to_string();
+        match which {
+            "speech" => voice_input.current_mut().model = text,
+            "tidy" => voice_input.current_mut().tidy_model = text,
+            _ => voice_input.messages_model = text,
+        }
+        settings.save();
+    });
+}
+
+fn edit_keywords(text: &str) {
+    with_settings(|settings| {
+        settings.voice_input.current_mut().keywords = text.trim().to_string();
+        settings.save();
+    });
 }
 
 fn set_tidy(on: bool) {
@@ -1018,18 +1291,6 @@ fn set_tidy(on: bool) {
         settings.save();
     });
     with_ui(show_panel);
-    if on {
-        check(Which::Tidy);
-    }
-}
-
-fn set_same_key(on: bool) {
-    with_settings(|settings| {
-        settings.voice_input.current_mut().tidy_same_key = on;
-        settings.save();
-    });
-    with_ui(show_panel);
-    check(Which::Tidy);
 }
 
 fn set_transcribe_messages(on: bool) {
@@ -1043,6 +1304,7 @@ fn set_transcribe_messages(on: bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::settings::VoiceConnection;
 
     #[test]
     fn words_join_as_their_script_is_written() {
@@ -1081,37 +1343,75 @@ mod tests {
             assert_eq!(*ui_code, language.code);
         }
         assert!(is_language("zh-tw") && !is_language("auto") && !is_language("zh_Hans"));
-        assert_eq!(key_name("zh-cn", Which::Tidy), "voice_input.zh-cn.tidy");
+        assert_eq!(key_name("3"), "voice_input.connection.3");
+    }
+
+    /// OpenAI (1) for any language, Doubao (2) and Anthropic (3) for Chinese, in use.
+    fn three_connections() -> VoiceInput {
+        let mut voice_input = VoiceInput {
+            connections: vec![
+                VoiceConnection { id: "1".into(), label: "OpenAI".into(), ..VoiceConnection::default() },
+                VoiceConnection { id: "2".into(), label: "豆包语音".into(), format: "doubao".into(), ..VoiceConnection::default() },
+                VoiceConnection { id: "3".into(), label: "Claude 中转".into(), format: "anthropic".into(), url: "https://relay.example.com".into(), ..VoiceConnection::default() },
+                    ],
+            ..VoiceInput::default()
+        };
+        voice_input.profiles[0].connection = "1".into();
+        voice_input.profiles[0].tidy_connection = "1".into();
+        voice_input.profiles.push(VoiceProfile { language: "zh-cn".into(), connection: "2".into(), tidy_connection: "3".into(), ..VoiceProfile::default() });
+        voice_input.language = "zh-cn".into();
+        voice_input
     }
 
     #[test]
-    fn the_panel_shows_the_profile_in_use_and_what_can_be_added() {
-        let mut voice_input = VoiceInput::default();
-        voice_input.profiles.push(VoiceProfile { language: "zh-cn".into(), format: "doubao".into(), tidy_same_key: false, ..VoiceProfile::default() });
-        voice_input.language = "zh-cn".into();
-        let view = panel_view(&voice_input, &|language, which| (language == "zh-cn" && which == Which::Speech).then(|| "6f1…9b2c".to_string()));
-        assert_eq!(view.languages.iter().map(|chip| (chip.code.to_string(), chip.on)).collect::<Vec<_>>(), vec![("auto".to_string(), false), ("zh-cn".to_string(), true)]);
-        assert_eq!(view.addable.len(), 10);
-        assert!(!view.addable.iter().any(|chip| chip.code == "auto" || chip.code == "zh-cn"));
-        assert_eq!((view.speech.format.as_str(), view.speech.shown.as_str(), view.speech.has_key), ("doubao", "Volcengine", true));
-        assert_eq!(view.speech.model_placeholder.as_str(), "volc.seedasr.sauc.duration");
-        assert!(view.speech.live);
-        // The tidying has a key of its own here, and none is kept.
-        assert!(!view.same_key && !view.tidying.has_key);
+    fn each_ability_offers_the_connections_that_can_do_it() {
+        let voice_input = three_connections();
+        let view = panel_view(&voice_input, "2", &|id| (id == "2").then(|| "6f1…9b2c".to_string()));
+        let ids = |choices: &[VoiceChoice]| choices.iter().map(|choice| (choice.id.to_string(), choice.on)).collect::<Vec<_>>();
+        // Speech: OpenAI and Doubao, not Anthropic; Doubao chosen.
+        assert_eq!(ids(&view.speech_choices), vec![("1".to_string(), false), ("2".to_string(), true)]);
+        // Tidying: OpenAI and Anthropic, not Doubao; Anthropic chosen.
+        assert_eq!(ids(&view.tidy_choices), vec![("1".to_string(), false), ("3".to_string(), true)]);
+        // Voice messages: the speech recognition's by default, then the ones that hear.
+        assert_eq!(ids(&view.message_choices), vec![(String::new(), true), ("1".to_string(), false), ("2".to_string(), false)]);
+        assert_eq!((view.speech_format.as_str(), view.speech_model_placeholder.as_str()), ("doubao", "volc.seedasr.sauc.duration"));
+        assert_eq!(view.tidy_model_placeholder.as_str(), "claude-haiku-5-5");
+        // The connections listed, the open one's fields.
+        assert_eq!(view.connections.iter().map(|row| (row.label.to_string(), row.host.to_string(), row.has_key)).collect::<Vec<_>>(), vec![
+            ("OpenAI".to_string(), "api.openai.com".to_string(), false),
+            ("豆包语音".to_string(), "openspeech.bytedance.com".to_string(), true),
+            ("Claude 中转".to_string(), "relay.example.com".to_string(), false),
+        ]);
+        let open = view.open.expect("the open one");
+        assert_eq!((open.format.as_str(), open.key_hint.as_str(), open.official, open.url_problem), ("doubao", "6f1…9b2c", true, 0));
         assert_eq!(view.language_name, "简体中文");
-        // An address that is not one says why.
-        voice_input.current_mut().url = "http://example.com".into();
-        let view = panel_view(&voice_input, &|_, _| None);
-        assert_eq!(view.speech.url_problem, 3);
+    }
+
+    #[test]
+    fn a_profile_hears_and_tidies_through_its_connections() {
+        let voice_input = three_connections();
+        let speech = speech_of(&voice_input, voice_input.current()).map_err(|_| "no speech").expect("Doubao");
+        assert_eq!((speech.format, speech.shown().as_str()), (SpeechFormat::Doubao, "豆包语音"));
+        // An OpenAI connection uploading.
+        let mut upload = voice_input.profiles[0].clone();
+        upload.mode = "upload".into();
+        assert_eq!(speech_of(&voice_input, &upload).map(|speech| speech.format).map_err(|_| "no speech"), Ok(SpeechFormat::OpenAiTranscriptions));
+        // None chosen, or one that cannot hear: no service.
+        let mut none = voice_input.profiles[0].clone();
+        none.connection.clear();
+        assert!(matches!(speech_of(&voice_input, &none), Err(VoiceProblem::NoService)));
+        none.connection = "3".into();
+        assert!(matches!(speech_of(&voice_input, &none), Err(VoiceProblem::NoService)));
     }
 
     #[test]
     fn words_show_while_speaking_except_for_uploads_and_doubaos_other_languages() {
-        let speech = |format: &str, model: &str| Speech::new(format, "", model).expect("the default address");
-        assert!(live(&speech("openai-realtime", ""), "auto"));
-        assert!(!live(&speech("openai-realtime", "gpt-transcribe"), "auto"));
-        assert!(!live(&speech("openai-transcriptions", ""), "zh-cn"));
-        assert!(live(&speech("qwen-realtime", ""), "ja"));
-        assert!(live(&speech("doubao", ""), "zh-tw") && !live(&speech("doubao", ""), "ja"));
+        let endpoint = |format: &str| Endpoint::new(format, "", "").expect("the default address");
+        let speech = |format: &str, upload: bool, model: &str| Speech::new(endpoint(format), upload, model).expect("it hears");
+        assert!(live(&speech("openai", false, ""), "auto"));
+        assert!(!live(&speech("openai", false, "gpt-transcribe"), "auto"));
+        assert!(!live(&speech("openai", true, ""), "zh-cn"));
+        assert!(live(&speech("dashscope", false, ""), "ja"));
+        assert!(live(&speech("doubao", false, ""), "zh-tw") && !live(&speech("doubao", false, ""), "ja"));
     }
 }

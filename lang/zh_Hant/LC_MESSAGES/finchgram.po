@@ -198,7 +198,8 @@ msgstr "最新訊息"
 
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/workbench/sidebar.slint:868
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:837
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:837
 msgid "Name"
 msgstr "名稱"
 
@@ -566,7 +567,7 @@ msgstr "更換大頭貼"
 
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:836
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:876
 msgid "Save"
 msgstr "儲存"
 
@@ -832,7 +833,7 @@ msgstr "把 {0} 移出頻道？"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952
-#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:837
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:877
 msgid "Remove"
 msgstr "移除"
 
@@ -1237,11 +1238,11 @@ msgstr "檔案"
 msgid "Poll"
 msgstr "投票"
 
-#: ui/chat.slint:343 ui/voice.slint:738
+#: ui/chat.slint:343 ui/voice.slint:769
 msgid "Not available yet"
 msgstr "尚未開放"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:744
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:775
 msgid "Not allowed in this group"
 msgstr "這個群組不允許"
 
@@ -1266,7 +1267,7 @@ msgstr ""
 "截圖需要在「系統設定 › 隱私權與安全性」裡允許螢幕錄製。如果列表裡已經有 "
 "FinchGram，把它關掉再打開一次。"
 
-#: ui/chat.slint:351 ui/voice.slint:743 ui/voice.slint:782
+#: ui/chat.slint:351 ui/voice.slint:774 ui/voice.slint:815
 msgid "Open System Settings"
 msgstr "打開系統設定"
 
@@ -1358,7 +1359,7 @@ msgstr "只看一次"
 msgid "Hide with spoiler"
 msgstr "劇透遮罩"
 
-#: ui/chat.slint:387 ui/voice.slint:723
+#: ui/chat.slint:387 ui/voice.slint:754
 msgid "Send"
 msgstr "傳送"
 
@@ -1810,7 +1811,7 @@ msgid "Invite {n} person"
 msgid_plural "Invite {n} people"
 msgstr[0] "邀請 {n} 人"
 
-#: ui/compose.slint:229 ui/voice.slint:763
+#: ui/compose.slint:229 ui/voice.slint:794
 msgid "Done"
 msgstr "完成"
 
@@ -3474,7 +3475,7 @@ msgstr ""
 msgid "Protocol"
 msgstr "協定"
 
-#: ui/pages/downloads.slint:2613 ui/voice.slint:818
+#: ui/pages/downloads.slint:2613 ui/voice.slint:865
 msgid "Address"
 msgstr "位址"
 
@@ -4729,7 +4730,7 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ 切換 · ↑/↓ 音量 · space 播放 · esc 關閉"
 
-#: ui/toolbox.slint:133 ui/voice.slint:714
+#: ui/toolbox.slint:133 ui/voice.slint:745
 msgid "Voice input"
 msgstr "語音輸入"
 
@@ -4738,107 +4739,107 @@ msgid "Speak, and the words go into the composer, through your own OpenAI key"
 msgstr "說話，文字就會進到輸入框裡；用的是你自己的 OpenAI 金鑰"
 
 #. The sparkle's tip.
-#: ui/voice.slint:716
+#: ui/voice.slint:747
 msgid "Finish voice input"
 msgstr "結束語音輸入"
 
 #. The sparkle's tip.
-#: ui/voice.slint:716
+#: ui/voice.slint:747
 msgid "Voice input: click, or hold while you speak"
 msgstr "語音輸入：點一下，或按住說話"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:719
+#: ui/voice.slint:750
 msgid "Record voice message"
 msgstr "錄製語音訊息"
 
-#: ui/voice.slint:720
+#: ui/voice.slint:751
 msgid "Release to send · Drag left to cancel"
 msgstr "放開傳送 · 向左拖曳取消"
 
-#: ui/voice.slint:721
+#: ui/voice.slint:752
 msgid "Release to cancel"
 msgstr "放開取消"
 
-#: ui/voice.slint:722
+#: ui/voice.slint:753
 msgid "Hold to record. Release to send."
 msgstr "按住錄音，放開傳送。"
 
-#: ui/voice.slint:724
+#: ui/voice.slint:755
 msgid "Stop"
 msgstr "停止"
 
-#: ui/voice.slint:726
+#: ui/voice.slint:757
 msgid "Transcribe"
 msgstr "轉文字"
 
-#: ui/voice.slint:739
+#: ui/voice.slint:770
 msgid "Couldn't download"
 msgstr "下載失敗"
 
-#: ui/voice.slint:741
+#: ui/voice.slint:772
 msgid "Loading…"
 msgstr "載入中…"
 
-#: ui/voice.slint:742
+#: ui/voice.slint:773
 msgid "Microphone access is off."
 msgstr "麥克風權限已關閉。"
 
-#: ui/voice.slint:752
+#: ui/voice.slint:783
 msgid "Listening · {0}"
 msgstr "正在聽 · {0}"
 
-#: ui/voice.slint:754
+#: ui/voice.slint:785
 msgid "Finishing…"
 msgstr "正在收尾…"
 
-#: ui/voice.slint:755
+#: ui/voice.slint:786
 msgid "Tidying the words…"
 msgstr "正在整理文字…"
 
-#: ui/voice.slint:756
+#: ui/voice.slint:787
 msgid "Voice input stopped"
 msgstr "語音輸入已停止"
 
 #. In the words' place before any came.
-#: ui/voice.slint:759
+#: ui/voice.slint:790
 msgid "Speak now"
 msgstr "請說話"
 
-#: ui/voice.slint:762
+#: ui/voice.slint:793
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ 完成 · Esc 取消"
 
-#: ui/voice.slint:768
+#: ui/voice.slint:800
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram 不能使用麥克風。請在「系統設定 › 隱私權與安全性 › 麥克風」裡允許。"
 
-#: ui/voice.slint:769
+#: ui/voice.slint:801
 msgid "No microphone could be opened: {0}"
 msgstr "無法開啟麥克風：{0}"
 
-#: ui/voice.slint:774
+#: ui/voice.slint:806
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "什麼也沒聽到。「系統設定 › 聲音」裡選的麥克風對嗎？"
 
-#: ui/voice.slint:779
+#: ui/voice.slint:812
 msgid "Add key"
 msgstr "加入金鑰"
 
-#: ui/voice.slint:780
+#: ui/voice.slint:813
 msgid "Change key"
 msgstr "更換金鑰"
 
 #. The toolbox's Voice input panel.
-#: ui/voice.slint:787
+#: ui/voice.slint:820
 msgid "Use voice input"
 msgstr "使用語音輸入"
 
-#: ui/voice.slint:856
+#: ui/voice.slint:916
 msgid "Tidy the words"
 msgstr "整理文字"
 
-#: ui/voice.slint:857
+#: ui/voice.slint:917
 msgid "A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."
 msgstr "一個小模型會去掉「嗯」「呃」這類贅詞和重複的字詞，並加上標點；它從不翻譯。"
 
@@ -4902,226 +4903,278 @@ msgstr "頻道以閱讀模式打開：長文排版，方便閱讀。"
 msgid "Manage accounts"
 msgstr "管理帳號"
 
-#: ui/voice.slint:727 ui/voice.slint:735
+#: ui/voice.slint:758 ui/voice.slint:766
 msgid "Transcribing…"
 msgstr "正在轉文字…"
 
-#: ui/voice.slint:731
+#: ui/voice.slint:762
 msgid "Telegram transcribes voice messages with Premium, or a few times a week without it. Your own speech service can do it too: Toolbox → AI → Voice input."
 msgstr "Telegram 的語音轉文字要 Premium，沒有 Premium 每週只能用幾次。你自己的語音辨識服務也能轉：百寶箱 → AI → 語音輸入。"
 
-#: ui/voice.slint:733
+#: ui/voice.slint:764
 msgid "Too long for Telegram to transcribe."
 msgstr "太長了，Telegram 轉不了。"
 
-#: ui/voice.slint:734
+#: ui/voice.slint:765
 msgid "Could not transcribe it: {0}"
 msgstr "沒能轉成文字：{0}"
 
-#: ui/voice.slint:752
+#: ui/voice.slint:783
 msgid "Connecting to {0}…"
 msgstr "正在連線 {0}…"
 
-#: ui/voice.slint:759
+#: ui/voice.slint:790
 msgid "Speak now: the words come when you are done"
 msgstr "請說話，說完後出字"
 
-#: ui/voice.slint:761
+#: ui/voice.slint:792
 msgid "Any language"
 msgstr "任何語言"
 
-#: ui/voice.slint:767
+#: ui/voice.slint:799
 msgid "Voice input needs your API key for {0}."
 msgstr "語音輸入需要你的 {0} API 金鑰。"
 
-#: ui/voice.slint:770 ui/voice.slint:844
+#: ui/voice.slint:802 ui/voice.slint:886
 msgid "{0} refused the key."
 msgstr "{0} 拒絕了這個金鑰。"
 
-#: ui/voice.slint:771
+#: ui/voice.slint:803
 msgid "{0} says the key is out of credit or used too fast: {1}"
 msgstr "{0} 說這個金鑰額度不足，或用得太快：{1}"
 
-#: ui/voice.slint:772
+#: ui/voice.slint:804
 msgid "Could not reach {0}: {1}"
 msgstr "無法連線 {0}：{1}"
 
-#: ui/voice.slint:773
+#: ui/voice.slint:805
 msgid "The speech service's address in Voice input is not one FinchGram can use."
 msgstr "語音輸入裡填的語音辨識位址，FinchGram 無法使用。"
 
-#: ui/voice.slint:775
+#: ui/voice.slint:807
 msgid "{0} said: {1}"
 msgstr "{0} 說：{1}"
 
-#: ui/voice.slint:781
+#: ui/voice.slint:814
 msgid "Change address"
 msgstr "更改位址"
 
-#: ui/voice.slint:788
+#: ui/voice.slint:821
 msgid "Puts the sparkle in every chat's composer; when off, nothing goes to any service"
 msgstr "在每個聊天的輸入框裡放上 ✦；關閉時，什麼都不會傳給任何服務"
 
-#: ui/voice.slint:789
+#: ui/voice.slint:822
 msgid "Main language"
 msgstr "主要語言"
 
-#: ui/voice.slint:791
-msgid "The language you mostly speak; words of other languages mixed in are kept as you say them. Each main language has its own services and keys. While you speak, a click on the language in the strip takes the next one."
-msgstr "你平時主要說的語言；夾在裡面的其他語言，照你說的原樣保留。每種主要語言有自己的一套服務和金鑰。說話時點一下語音列上的語言，就換到下一種。"
+#: ui/voice.slint:827
+msgid "Remove {0}"
+msgstr "移除「{0}」"
 
-#: ui/voice.slint:794
-msgid "Remove {0} and its keys"
-msgstr "移除「{0}」及其金鑰"
-
-#: ui/voice.slint:795
+#: ui/voice.slint:828
 msgid "Speech recognition · {0}"
 msgstr "語音辨識 · {0}"
 
-#: ui/voice.slint:796
+#: ui/voice.slint:829
 msgid "Tidying · {0}"
 msgstr "整理文字 · {0}"
 
-#: ui/voice.slint:797
+#: ui/voice.slint:830
 msgid "API format"
 msgstr "介面格式"
 
-#: ui/voice.slint:801
-msgid "OpenAI-compatible upload"
-msgstr "OpenAI 相容上傳"
-
-#: ui/voice.slint:802
-msgid "Qwen (Alibaba Cloud)"
-msgstr "通義千問（阿里雲）"
-
-#: ui/voice.slint:803
-msgid "Doubao (Volcengine)"
-msgstr "豆包（火山引擎）"
-
-#: ui/voice.slint:810
-msgid "Words show as you speak. OpenAI, or a relay that passes its realtime API through."
-msgstr "邊說邊出字。OpenAI 自己的，或轉發它即時介面的中轉站。"
-
-#: ui/voice.slint:811
-msgid "Words come when you are done. Most services and relays speak it: OpenAI, Groq, SiliconFlow, a Whisper server of your own."
-msgstr "說完後出字。大多數服務和中轉站都支援：OpenAI、Groq、SiliconFlow、你自己的 Whisper 伺服器。"
-
-#: ui/voice.slint:812
-msgid "Words show as you speak. A key from Alibaba Cloud Model Studio; strong in Chinese and its dialects."
-msgstr "邊說邊出字。金鑰在阿里雲 Model Studio（百煉）申請；中文和方言辨識很強。"
-
-#: ui/voice.slint:813
-msgid "Doubao's Seed-ASR, strong in Chinese: words show as you speak Chinese or English. A key from Volcengine's speech console."
-msgstr "豆包的 Seed-ASR，中文很強：說中文或英文時邊說邊出字。金鑰在火山引擎的豆包語音主控台申請。"
-
-#: ui/voice.slint:814
-msgid "Claude's Messages API: Anthropic, and the relays and vendors that speak it."
-msgstr "Claude 的 Messages API：Anthropic，以及支援這種格式的中轉站和廠商。"
-
-#: ui/voice.slint:815
-msgid "Google's Gemini API."
-msgstr "Google 的 Gemini API。"
-
-#: ui/voice.slint:816
-msgid "Chat Completions: OpenAI, and nearly everyone else: DeepSeek, Qwen, Kimi, OpenRouter, Ollama, relays."
-msgstr "Chat Completions：OpenAI，以及幾乎所有其他廠商：DeepSeek、通義千問、Kimi、OpenRouter、Ollama、各種中轉站。"
-
-#: ui/voice.slint:819
+#: ui/voice.slint:866
 msgid "Empty for the vendor's own. For a relay or a server of your own, its base URL."
 msgstr "留空就用廠商自己的。用中轉站或你自己的伺服器時，填它的 base URL。"
 
-#: ui/voice.slint:821
+#: ui/voice.slint:868
 msgid "That is not an address: it starts with https://"
 msgstr "這不是位址：位址以 https:// 開頭"
 
-#: ui/voice.slint:822
+#: ui/voice.slint:869
 msgid "Leave the name and password out of the address."
 msgstr "位址裡不要帶使用者名稱和密碼。"
 
-#: ui/voice.slint:823
+#: ui/voice.slint:870
 msgid "Plain http goes only to this Mac or the local network: use https."
 msgstr "明文 http 只能連本機或區域網路：請用 https。"
 
-#: ui/voice.slint:826
+#: ui/voice.slint:909
 msgid "Model"
 msgstr "模型"
 
-#: ui/voice.slint:828
+#: ui/voice.slint:911
 msgid "For Doubao, the resource ID of what you bought."
 msgstr "豆包這裡填你所購資源的 ID。"
 
-#: ui/voice.slint:828
+#: ui/voice.slint:911
 msgid "Empty for the format's own."
 msgstr "留空就用這種格式的預設模型。"
 
-#: ui/voice.slint:830
+#: ui/voice.slint:913
 msgid "Words to know"
 msgstr "熱詞"
 
-#: ui/voice.slint:831
+#: ui/voice.slint:914
 msgid "Names and terms you often say, separated by commas: the service listens for them, so they come out right."
 msgstr "你常說的人名和術語，用逗號隔開：辨識服務會特別留意它們，讓它們寫對。"
 
-#: ui/voice.slint:832
+#: ui/voice.slint:915
 msgid "Names, products, terms"
 msgstr "人名、產品名、術語"
 
-#: ui/voice.slint:833
+#: ui/voice.slint:873
 msgid "API key"
 msgstr "API 金鑰"
 
-#: ui/voice.slint:834
+#: ui/voice.slint:874
 msgid "Your own key: the service bills it for what it does. It is kept sealed in FinchGram's database on this Mac."
 msgstr "你自己的金鑰：服務的費用記在它上面。金鑰封起來存在這台 Mac 上 FinchGram 的資料庫裡。"
 
-#: ui/voice.slint:835
+#: ui/voice.slint:875
 msgid "Paste the key"
 msgstr "貼上金鑰"
 
-#: ui/voice.slint:838
+#: ui/voice.slint:878
 msgid "Get a key from {0}"
 msgstr "到 {0} 取得金鑰"
 
-#: ui/voice.slint:841
+#: ui/voice.slint:881
 msgid "That does not look like an API key."
 msgstr "這看起來不像 API 金鑰。"
 
-#: ui/voice.slint:842
+#: ui/voice.slint:882
 msgid "Checking with {0}…"
 msgstr "正在向 {0} 檢查…"
 
-#: ui/voice.slint:843
+#: ui/voice.slint:884
 msgid "{0} answers and takes the key."
 msgstr "{0} 有回應，金鑰可用。"
 
-#: ui/voice.slint:843
+#: ui/voice.slint:884
 msgid "{0} answers."
 msgstr "{0} 有回應。"
 
-#: ui/voice.slint:845
+#: ui/voice.slint:887
 msgid "Could not check: {0}"
 msgstr "無法檢查：{0}"
 
-#: ui/voice.slint:854
-msgid "Use the speech recognition's key"
-msgstr "使用和語音辨識相同的 API 金鑰"
-
-#: ui/voice.slint:855
-msgid "One key for both, when they are the same vendor or relay."
-msgstr "兩者是同一家廠商或同一個中轉站時，一個金鑰就夠了。"
-
-#: ui/voice.slint:858
+#: ui/voice.slint:918
 msgid "Voice messages"
 msgstr "語音訊息"
 
-#: ui/voice.slint:859
+#: ui/voice.slint:919
 msgid "Transcribe voice messages with your own service"
 msgstr "用你自己的服務把語音訊息轉文字"
 
-#: ui/voice.slint:861
+#: ui/voice.slint:921
 msgid "Transcribe under a voice message asks Telegram first, which needs Premium or one of its few free tries a week. When Telegram cannot, this sends the message to your speech service: someone else's voice, to a service of your choosing. Off unless you turn it on."
 msgstr "語音訊息下面的「轉文字」先請 Telegram 來轉，這需要 Premium，或每週僅有的幾次免費機會。Telegram 轉不了時，打開這個開關會把這則訊息傳給你的語音辨識服務：也就是把別人的聲音傳給你選的服務。預設關閉。"
 
-#: ui/voice.slint:864
+#: ui/voice.slint:924
 msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the speech service you choose below, under your own key, and nothing else does. FinchGram keeps no recording."
 msgstr "在聊天的輸入框裡按一下 ✦（終端機主題裡輸入 /voice），然後說話；再按一下，或按 ⏎，文字就會進到輸入框裡，由你來傳送。你的聲音以你自己的金鑰傳給你在下面選的語音辨識服務，其他什麼都不傳。FinchGram 不保留任何錄音。"
+
+#: ui/voice.slint:798
+msgid "No speech recognition is set up yet: choose a connection for it in Voice input."
+msgstr "還沒設定語音辨識：在語音輸入裡給它選一個連線。"
+
+#: ui/voice.slint:811
+msgid "Set up"
+msgstr "去設定"
+
+#: ui/voice.slint:824
+msgid "The language you mostly speak; words of other languages mixed in are kept as you say them. Each main language picks its own connections. While you speak, a click on the language in the strip takes the next one."
+msgstr "你平時主要說的語言；夾在裡面的其他語言，照你說的原樣保留。每種主要語言各選各的連線。說話時點一下語音列上的語言，就換到下一種。"
+
+#: ui/voice.slint:832
+msgid "Connections"
+msgstr "連線"
+
+#: ui/voice.slint:834
+msgid "Your services, each a name, an API format, an address and a key. Each ability below takes one of them, and one connection can serve several."
+msgstr "你的服務：每個都有名稱、API 格式、位址和金鑰。下面每項能力從中選一個用，一個連線可以同時給好幾項用。"
+
+#: ui/voice.slint:836
+msgid "Add a connection"
+msgstr "新增連線"
+
+#: ui/voice.slint:838
+msgid "What you call it, so that you know it when you choose."
+msgstr "你給它取的名稱，選的時候好認。"
+
+#: ui/voice.slint:839
+msgid "Remove this connection and its key"
+msgstr "移除這個連線及其金鑰"
+
+#: ui/voice.slint:840
+msgid "no key"
+msgstr "沒有金鑰"
+
+#: ui/voice.slint:845 ui/voice.slint:861
+msgid "Alibaba Cloud Model Studio"
+msgstr "阿里雲百煉"
+
+#: ui/voice.slint:846
+msgid "Doubao speech (Volcengine)"
+msgstr "豆包語音（火山引擎）"
+
+#: ui/voice.slint:847
+msgid "OpenAI-compatible"
+msgstr "OpenAI 相容"
+
+#: ui/voice.slint:851
+msgid "Tidying: Claude's Messages API, Anthropic's and the relays' and vendors' that speak it."
+msgstr "整理文字：Claude 的 Messages API，Anthropic 自己的，以及支援這種格式的中轉站和廠商的。"
+
+#: ui/voice.slint:852
+msgid "Tidying: Google's Gemini API."
+msgstr "整理文字：Google 的 Gemini API。"
+
+#: ui/voice.slint:853
+msgid "Speech recognition (Qwen-ASR, strong in Chinese and its dialects) and tidying (Qwen), one key for both."
+msgstr "語音辨識（Qwen-ASR，中文和方言很強）和整理文字（通義千問），一個金鑰兩樣都能用。"
+
+#: ui/voice.slint:854
+msgid "Speech recognition: Doubao's Seed-ASR, strong in Chinese. A key from Volcengine's speech console."
+msgstr "語音辨識：豆包的 Seed-ASR，中文很強。金鑰在火山引擎的豆包語音主控台申請。"
+
+#: ui/voice.slint:855
+msgid "Speech recognition and tidying: OpenAI, and nearly every other service that speaks its API: Groq, SiliconFlow, DeepSeek, Kimi, OpenRouter, Ollama, relays, a Whisper server of your own."
+msgstr "語音辨識和整理文字：OpenAI，以及幾乎所有支援它這種介面的服務：Groq、SiliconFlow、DeepSeek、Kimi、OpenRouter、Ollama、各種中轉站、你自己的 Whisper 伺服器。"
+
+#: ui/voice.slint:862
+msgid "Volcengine"
+msgstr "火山引擎"
+
+#: ui/voice.slint:897
+msgid "Connection"
+msgstr "連線"
+
+#: ui/voice.slint:898
+msgid "No connection can do this yet: add one above."
+msgstr "還沒有能做這件事的連線：先在上面新增一個。"
+
+#: ui/voice.slint:899
+msgid "Same as speech recognition"
+msgstr "和語音辨識相同"
+
+#: ui/voice.slint:901
+msgid "How it hears"
+msgstr "辨識方式"
+
+#: ui/voice.slint:902
+msgid "As you speak"
+msgstr "邊說邊出字"
+
+#: ui/voice.slint:903
+msgid "When you are done"
+msgstr "說完再出字"
+
+#: ui/voice.slint:906
+msgid "The recording goes up when you are done: what most relays and servers of your own take."
+msgstr "說完後把錄音傳上去：大多數中轉站和自架伺服器只支援這種。"
+
+#: ui/voice.slint:907
+msgid "Words show as you speak, through OpenAI's Realtime API."
+msgstr "說話時就出字，走 OpenAI 的 Realtime API。"

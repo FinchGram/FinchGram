@@ -16,10 +16,8 @@ use tungstenite::handshake::HandshakeError;
 use tungstenite::http::{HeaderName, HeaderValue, Uri};
 use tungstenite::{Message, WebSocket};
 
-/// The speech services' formats, as settings.toml names them.
-pub const SPEECH_FORMATS: [&str; 4] = ["openai-realtime", "openai-transcriptions", "qwen-realtime", "doubao"];
-/// The text models' formats, as settings.toml names them.
-pub const TIDY_FORMATS: [&str; 3] = ["openai", "anthropic", "gemini"];
+/// The connections' formats, as settings.toml names them.
+pub const CONNECTION_FORMATS: [&str; 5] = ["openai", "anthropic", "gemini", "dashscope", "doubao"];
 
 pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(15);
@@ -27,7 +25,121 @@ const WRITE_TIMEOUT: Duration = Duration::from_secs(15);
 /// How long a read waits for the service before a session's loop looks at the microphone again.
 pub const POLL: Duration = Duration::from_millis(20);
 
-/// How a speech service is spoken to.
+/// The format a connection's API speaks, and with it what the connection can do.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConnectionFormat {
+    /// OpenAI's, and every vendor's, relay's and server's that speaks it: speech (realtime, or an
+    /// upload at the end) and text.
+    OpenAi,
+    /// Anthropic's Messages: text.
+    Anthropic,
+    /// Google's Gemini: text.
+    Gemini,
+    /// Alibaba Cloud Model Studio (DashScope): speech (Qwen-ASR, realtime) and text (Qwen, in its
+    /// OpenAI-compatible mode), one key for both.
+    DashScope,
+    /// Volcengine's Doubao speech (Seed-ASR): speech.
+    Doubao,
+}
+
+impl ConnectionFormat {
+    pub fn from_name(name: &str) -> ConnectionFormat {
+        match name {
+            "anthropic" => ConnectionFormat::Anthropic,
+            "gemini" => ConnectionFormat::Gemini,
+            "dashscope" => ConnectionFormat::DashScope,
+            "doubao" => ConnectionFormat::Doubao,
+            _ => ConnectionFormat::OpenAi,
+        }
+    }
+
+    pub fn name(self) -> &'static str {
+        match self {
+            ConnectionFormat::OpenAi => "openai",
+            ConnectionFormat::Anthropic => "anthropic",
+            ConnectionFormat::Gemini => "gemini",
+            ConnectionFormat::DashScope => "dashscope",
+            ConnectionFormat::Doubao => "doubao",
+        }
+    }
+
+    /// The address when the user gives none: the vendor's own.
+    pub fn default_url(self) -> &'static str {
+        match self {
+            ConnectionFormat::OpenAi => "https://api.openai.com/v1",
+            ConnectionFormat::Anthropic => "https://api.anthropic.com",
+            ConnectionFormat::Gemini => "https://generativelanguage.googleapis.com",
+            ConnectionFormat::DashScope => "https://dashscope-intl.aliyuncs.com",
+            ConnectionFormat::Doubao => "https://openspeech.bytedance.com",
+        }
+    }
+
+    /// The vendor, as a new connection to its own address is named.
+    pub fn vendor(self) -> &'static str {
+        match self {
+            ConnectionFormat::OpenAi => "OpenAI",
+            ConnectionFormat::Anthropic => "Anthropic",
+            ConnectionFormat::Gemini => "Gemini",
+            ConnectionFormat::DashScope => "Alibaba Cloud",
+            ConnectionFormat::Doubao => "Doubao",
+        }
+    }
+
+    /// Where the vendor's keys are made.
+    pub fn key_page(self) -> &'static str {
+        match self {
+            ConnectionFormat::OpenAi => "https://platform.openai.com/api-keys",
+            ConnectionFormat::Anthropic => "https://platform.claude.com/settings/keys",
+            ConnectionFormat::Gemini => "https://aistudio.google.com/apikey",
+            ConnectionFormat::DashScope => "https://www.alibabacloud.com/help/en/model-studio/get-api-key",
+            ConnectionFormat::Doubao => "https://console.volcengine.com/speech/new/setting/apikeys",
+        }
+    }
+
+    /// It can hear: speech recognition.
+    pub fn hears(self) -> bool {
+        matches!(self, ConnectionFormat::OpenAi | ConnectionFormat::DashScope | ConnectionFormat::Doubao)
+    }
+
+    /// It can tidy: a text model.
+    pub fn writes(self) -> bool {
+        !matches!(self, ConnectionFormat::Doubao)
+    }
+
+    /// The speech model when the user names none: `upload` for OpenAI's upload.
+    pub fn speech_model(self, upload: bool) -> &'static str {
+        match self {
+            ConnectionFormat::OpenAi if upload => "gpt-transcribe",
+            ConnectionFormat::DashScope => "qwen3-asr-flash-realtime",
+            // Doubao's "model" is the resource it is billed under, Seed-ASR 2.0 by the hour.
+            ConnectionFormat::Doubao => "volc.seedasr.sauc.duration",
+            _ => "gpt-live-transcribe",
+        }
+    }
+
+    /// The text model when the user names none: a small, fast one of each, able enough to put a
+    /// misheard word right (the words right come first).
+    pub fn text_model(self) -> &'static str {
+        match self {
+            ConnectionFormat::Anthropic => "claude-haiku-5-5",
+            ConnectionFormat::Gemini => "gemini-3.5-flash-lite",
+            ConnectionFormat::DashScope => "qwen-flash",
+            _ => "gpt-5-mini",
+        }
+    }
+}
+
+/// A new connection's name: the vendor's for its own address, else the host.
+pub fn default_label(format: &str, url: &str) -> String {
+    let format = ConnectionFormat::from_name(format);
+    match Address::parse(url, format.default_url()) {
+        Ok(address) if url.trim().is_empty() || Address::parse("", format.default_url()).is_ok_and(|own| own.host == address.host) => format.vendor().to_string(),
+        Ok(address) => address.host,
+        Err(_) => format.vendor().to_string(),
+    }
+}
+
+/// How a speech service is spoken to: the protocol under a connection's format.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpeechFormat {
     /// OpenAI's realtime transcription over a WebSocket: words while the user speaks.
@@ -42,62 +154,6 @@ pub enum SpeechFormat {
 }
 
 impl SpeechFormat {
-    pub fn from_name(name: &str) -> SpeechFormat {
-        match name {
-            "openai-transcriptions" => SpeechFormat::OpenAiTranscriptions,
-            "qwen-realtime" => SpeechFormat::QwenRealtime,
-            "doubao" => SpeechFormat::Doubao,
-            _ => SpeechFormat::OpenAiRealtime,
-        }
-    }
-
-    pub fn name(self) -> &'static str {
-        match self {
-            SpeechFormat::OpenAiRealtime => "openai-realtime",
-            SpeechFormat::OpenAiTranscriptions => "openai-transcriptions",
-            SpeechFormat::QwenRealtime => "qwen-realtime",
-            SpeechFormat::Doubao => "doubao",
-        }
-    }
-
-    /// The address when the user gives none: the vendor's own.
-    pub fn default_url(self) -> &'static str {
-        match self {
-            SpeechFormat::OpenAiRealtime | SpeechFormat::OpenAiTranscriptions => "https://api.openai.com/v1",
-            SpeechFormat::QwenRealtime => "https://dashscope-intl.aliyuncs.com",
-            SpeechFormat::Doubao => "https://openspeech.bytedance.com",
-        }
-    }
-
-    /// The model when the user names none. Doubao's "model" is the resource it is billed under,
-    /// Seed-ASR 2.0 by the hour.
-    pub fn default_model(self) -> &'static str {
-        match self {
-            SpeechFormat::OpenAiRealtime => "gpt-live-transcribe",
-            SpeechFormat::OpenAiTranscriptions => "gpt-transcribe",
-            SpeechFormat::QwenRealtime => "qwen3-asr-flash-realtime",
-            SpeechFormat::Doubao => "volc.seedasr.sauc.duration",
-        }
-    }
-
-    /// Where the vendor's keys are made.
-    pub fn key_page(self) -> &'static str {
-        match self {
-            SpeechFormat::OpenAiRealtime | SpeechFormat::OpenAiTranscriptions => "https://platform.openai.com/api-keys",
-            SpeechFormat::QwenRealtime => "https://www.alibabacloud.com/help/en/model-studio/get-api-key",
-            SpeechFormat::Doubao => "https://console.volcengine.com/speech/new/setting/apikeys",
-        }
-    }
-
-    /// The vendor, for the user's eyes, when the address is its own.
-    fn vendor(self) -> &'static str {
-        match self {
-            SpeechFormat::OpenAiRealtime | SpeechFormat::OpenAiTranscriptions => "OpenAI",
-            SpeechFormat::QwenRealtime => "Alibaba Cloud",
-            SpeechFormat::Doubao => "Volcengine",
-        }
-    }
-
     /// The rate of the sound it takes.
     pub fn rate(self) -> u32 {
         match self {
@@ -107,67 +163,16 @@ impl SpeechFormat {
     }
 }
 
-/// How a text model is spoken to.
+/// How a text model is spoken to: the protocol under a connection's format.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TidyFormat {
-    /// Chat Completions: OpenAI's, and the one nearly every vendor, relay and local server speaks.
+    /// Chat Completions: OpenAI's, and the one nearly every vendor, relay and local server speaks
+    /// (Model Studio's OpenAI-compatible mode among them).
     OpenAi,
     /// Anthropic's Messages.
     Anthropic,
     /// Google's Gemini (generateContent).
     Gemini,
-}
-
-impl TidyFormat {
-    pub fn from_name(name: &str) -> TidyFormat {
-        match name {
-            "anthropic" => TidyFormat::Anthropic,
-            "gemini" => TidyFormat::Gemini,
-            _ => TidyFormat::OpenAi,
-        }
-    }
-
-    pub fn name(self) -> &'static str {
-        match self {
-            TidyFormat::OpenAi => "openai",
-            TidyFormat::Anthropic => "anthropic",
-            TidyFormat::Gemini => "gemini",
-        }
-    }
-
-    pub fn default_url(self) -> &'static str {
-        match self {
-            TidyFormat::OpenAi => "https://api.openai.com/v1",
-            TidyFormat::Anthropic => "https://api.anthropic.com",
-            TidyFormat::Gemini => "https://generativelanguage.googleapis.com",
-        }
-    }
-
-    /// A small, fast model of each, able enough to put a misheard word right: tidying is a short
-    /// job, and the words right come first.
-    pub fn default_model(self) -> &'static str {
-        match self {
-            TidyFormat::OpenAi => "gpt-5-mini",
-            TidyFormat::Anthropic => "claude-haiku-5-5",
-            TidyFormat::Gemini => "gemini-3.5-flash-lite",
-        }
-    }
-
-    pub fn key_page(self) -> &'static str {
-        match self {
-            TidyFormat::OpenAi => "https://platform.openai.com/api-keys",
-            TidyFormat::Anthropic => "https://platform.claude.com/settings/keys",
-            TidyFormat::Gemini => "https://aistudio.google.com/apikey",
-        }
-    }
-
-    fn vendor(self) -> &'static str {
-        match self {
-            TidyFormat::OpenAi => "OpenAI",
-            TidyFormat::Anthropic => "Anthropic",
-            TidyFormat::Gemini => "Google",
-        }
-    }
 }
 
 // ---- addresses ---------------------------------------------------------------------------------
@@ -273,114 +278,146 @@ fn local(host: &str) -> bool {
 
 /// What OpenAI's formats' addresses may end with when the user pasted an endpoint whole.
 const OPENAI_ENDINGS: [&str; 5] = ["/chat/completions", "/audio/transcriptions", "/realtime", "/models", "/responses"];
+/// What Model Studio's addresses may end with: its realtime path, its OpenAI-compatible mode, its
+/// own API.
+const DASHSCOPE_ENDINGS: [&str; 4] = ["/api-ws/v1/realtime", "/compatible-mode/v1/chat/completions", "/compatible-mode/v1", "/api/v1"];
 
-/// A speech service as a profile names it: format, address (the format's own when empty), model.
+/// A connection's own: its format, its address (the format's own when empty), its name.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Endpoint {
+    pub format: ConnectionFormat,
+    pub address: Address,
+    pub label: String,
+}
+
+impl Endpoint {
+    pub fn new(format: &str, url: &str, label: &str) -> Result<Endpoint, AddressProblem> {
+        let format = ConnectionFormat::from_name(format);
+        let address = Address::parse(url, format.default_url())?;
+        let label = if label.trim().is_empty() { default_label(format.name(), url) } else { label.trim().to_string() };
+        Ok(Endpoint { format, address, label })
+    }
+
+    /// Whether the address is the vendor's own: a key is needed then.
+    pub fn official(&self) -> bool {
+        Address::parse("", self.format.default_url()).is_ok_and(|own| own.host == self.address.host)
+    }
+}
+
+/// A speech service as a profile names it: a connection, how it hears, the model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Speech {
     pub format: SpeechFormat,
-    pub address: Address,
+    pub endpoint: Endpoint,
     pub model: String,
 }
 
 impl Speech {
-    pub fn new(format: &str, url: &str, model: &str) -> Result<Speech, AddressProblem> {
-        let format = SpeechFormat::from_name(format);
-        let address = Address::parse(url, format.default_url())?;
-        let model = if model.trim().is_empty() { format.default_model().to_string() } else { model.trim().to_string() };
-        Ok(Speech { format, address, model })
+    /// `upload` is for an OpenAI connection: the recording sent at the end. None when the
+    /// connection's format cannot hear.
+    pub fn new(endpoint: Endpoint, upload: bool, model: &str) -> Option<Speech> {
+        let format = match endpoint.format {
+            ConnectionFormat::OpenAi if upload => SpeechFormat::OpenAiTranscriptions,
+            ConnectionFormat::OpenAi => SpeechFormat::OpenAiRealtime,
+            ConnectionFormat::DashScope => SpeechFormat::QwenRealtime,
+            ConnectionFormat::Doubao => SpeechFormat::Doubao,
+            ConnectionFormat::Anthropic | ConnectionFormat::Gemini => return None,
+        };
+        let model = if model.trim().is_empty() { endpoint.format.speech_model(upload).to_string() } else { model.trim().to_string() };
+        Some(Speech { format, endpoint, model })
     }
 
-    /// Whether the address is the vendor's own (the default): the vendor's name then shows, and
-    /// a key is needed.
     pub fn official(&self) -> bool {
-        Address::parse("", self.format.default_url()).is_ok_and(|own| own.host == self.address.host)
+        self.endpoint.official()
     }
 
-    /// Who the user is told answered: the vendor, or the host of the address they gave.
+    /// Who the user is told answered: the connection's name.
     pub fn shown(&self) -> String {
-        if self.official() { self.format.vendor().to_string() } else { self.address.shown() }
+        self.endpoint.label.clone()
+    }
+
+    fn address(&self) -> &Address {
+        &self.endpoint.address
     }
 
     pub fn openai_realtime(&self) -> String {
-        self.address.websocket(&format!("{}/realtime", self.address.base(&OPENAI_ENDINGS)), "intent=transcription")
+        self.address().websocket(&format!("{}/realtime", self.address().base(&OPENAI_ENDINGS)), "intent=transcription")
     }
 
     pub fn openai_transcriptions(&self) -> String {
-        self.address.http(&format!("{}/audio/transcriptions", self.address.base(&OPENAI_ENDINGS)), "")
-    }
-
-    pub fn openai_models(&self) -> String {
-        self.address.http(&format!("{}/models", self.address.base(&OPENAI_ENDINGS)), "")
+        self.address().http(&format!("{}/audio/transcriptions", self.address().base(&OPENAI_ENDINGS)), "")
     }
 
     pub fn qwen_realtime(&self) -> String {
-        let base = self.address.base(&["/api-ws/v1/realtime", "/compatible-mode/v1", "/api/v1"]);
-        self.address.websocket(&format!("{base}/api-ws/v1/realtime"), &format!("model={}", query_value(&self.model)))
+        let base = self.address().base(&DASHSCOPE_ENDINGS);
+        self.address().websocket(&format!("{base}/api-ws/v1/realtime"), &format!("model={}", query_value(&self.model)))
     }
 
     /// Doubao's two ways: `two_pass` words while the user speaks, each sentence heard again for the
     /// final words (Chinese and English); else the sound in, the words at the end (the languages
     /// Doubao names one by one).
     pub fn doubao(&self, two_pass: bool) -> String {
-        let base = self.address.base(&["/api/v3/sauc/bigmodel_async", "/api/v3/sauc/bigmodel_nostream", "/api/v3/sauc/bigmodel"]);
+        let base = self.address().base(&["/api/v3/sauc/bigmodel_async", "/api/v3/sauc/bigmodel_nostream", "/api/v3/sauc/bigmodel"]);
         let endpoint = if two_pass { "bigmodel_async" } else { "bigmodel_nostream" };
-        self.address.websocket(&format!("{base}/api/v3/sauc/{endpoint}"), "")
+        self.address().websocket(&format!("{base}/api/v3/sauc/{endpoint}"), "")
     }
 }
 
-/// A text model as a profile names it.
+/// A text model as a profile names it: a connection and the model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tidy {
     pub format: TidyFormat,
-    pub address: Address,
+    pub endpoint: Endpoint,
     pub model: String,
 }
 
 impl Tidy {
-    pub fn new(format: &str, url: &str, model: &str) -> Result<Tidy, AddressProblem> {
-        let format = TidyFormat::from_name(format);
-        let address = Address::parse(url, format.default_url())?;
-        let model = if model.trim().is_empty() { format.default_model().to_string() } else { model.trim().to_string() };
-        Ok(Tidy { format, address, model })
+    /// None when the connection's format cannot write.
+    pub fn new(endpoint: Endpoint, model: &str) -> Option<Tidy> {
+        let format = match endpoint.format {
+            ConnectionFormat::OpenAi | ConnectionFormat::DashScope => TidyFormat::OpenAi,
+            ConnectionFormat::Anthropic => TidyFormat::Anthropic,
+            ConnectionFormat::Gemini => TidyFormat::Gemini,
+            ConnectionFormat::Doubao => return None,
+        };
+        let model = if model.trim().is_empty() { endpoint.format.text_model().to_string() } else { model.trim().to_string() };
+        Some(Tidy { format, endpoint, model })
     }
 
     pub fn official(&self) -> bool {
-        Address::parse("", self.format.default_url()).is_ok_and(|own| own.host == self.address.host)
+        self.endpoint.official()
     }
 
-    pub fn shown(&self) -> String {
-        if self.official() { self.format.vendor().to_string() } else { self.address.shown() }
+    fn address(&self) -> &Address {
+        &self.endpoint.address
     }
 
+    /// Chat Completions: at the base for OpenAI's format; in Model Studio's OpenAI-compatible mode
+    /// for its own.
     pub fn chat_completions(&self) -> String {
-        self.address.http(&format!("{}/chat/completions", self.address.base(&OPENAI_ENDINGS)), "")
-    }
-
-    pub fn openai_models(&self) -> String {
-        self.address.http(&format!("{}/models", self.address.base(&OPENAI_ENDINGS)), "")
+        if self.endpoint.format == ConnectionFormat::DashScope {
+            let base = self.address().base(&DASHSCOPE_ENDINGS);
+            return self.address().http(&format!("{base}/compatible-mode/v1/chat/completions"), "");
+        }
+        self.address().http(&format!("{}/chat/completions", self.address().base(&OPENAI_ENDINGS)), "")
     }
 
     /// Anthropic's base has no version in it (its SDKs add /v1): one pasted with it is taken too.
     pub fn anthropic(&self, endpoint: &str) -> String {
-        let base = self.address.base(&["/v1/messages", "/v1/models", "/messages", "/v1"]);
-        self.address.http(&format!("{base}/v1/{endpoint}"), "")
+        let base = self.address().base(&["/v1/messages", "/v1/models", "/messages", "/v1"]);
+        self.address().http(&format!("{base}/v1/{endpoint}"), "")
     }
 
     pub fn gemini_generate(&self) -> String {
-        let base = self.gemini_base();
-        self.address.http(&format!("{base}/v1beta/models/{}:generateContent", query_value(&self.model)), "")
+        let base = gemini_base(self.address());
+        self.address().http(&format!("{base}/v1beta/models/{}:generateContent", query_value(&self.model)), "")
     }
+}
 
-    pub fn gemini_models(&self) -> String {
-        self.address.http(&format!("{}/v1beta/models", self.gemini_base()), "")
-    }
-
-    fn gemini_base(&self) -> String {
-        let path = self.address.path.clone();
-        match path.find("/v1beta") {
-            Some(at) => path[..at].to_string(),
-            None => path.trim_end_matches('/').to_string(),
-        }
+fn gemini_base(address: &Address) -> String {
+    match address.path.find("/v1beta") {
+        Some(at) => address.path[..at].to_string(),
+        None => address.path.trim_end_matches('/').to_string(),
     }
 }
 
@@ -494,26 +531,28 @@ pub fn post(url: &str, headers: &[(&str, String)], content_type: &str, body: Vec
     Ok((status, body))
 }
 
-/// Whether the service takes the key (none for a server of one's own that asks for none): a
-/// request that costs nothing, the list of models, or the WebSocket's handshake for the realtime
-/// formats, whose servers may have no list.
-pub fn check_speech(speech: &Speech, key: Option<&str>) -> KeyAnswer {
-    match speech.format {
-        SpeechFormat::OpenAiTranscriptions => match get(&speech.openai_models(), &bearer(key), Duration::from_secs(20)) {
-            Ok((status, body)) => KeyAnswer::of_status(status, &body),
-            Err(err) => KeyAnswer::Failed(err),
-        },
-        SpeechFormat::OpenAiRealtime => handshake(&speech.openai_realtime(), &bearer(key)),
-        SpeechFormat::QwenRealtime => handshake(&speech.qwen_realtime(), &bearer(key)),
-        SpeechFormat::Doubao => handshake(&speech.doubao(true), &super::doubao::headers(key.unwrap_or(""), &speech.model)),
-    }
-}
-
-pub fn check_tidy(tidy: &Tidy, key: Option<&str>) -> KeyAnswer {
-    let answer = match tidy.format {
-        TidyFormat::OpenAi => get(&tidy.openai_models(), &bearer(key), Duration::from_secs(20)),
-        TidyFormat::Anthropic => get(&tidy.anthropic("models"), &super::tidy::anthropic_headers(key, tidy.official()), Duration::from_secs(20)),
-        TidyFormat::Gemini => get(&tidy.gemini_models(), &super::tidy::gemini_headers(key, tidy.official()), Duration::from_secs(20)),
+/// Whether a connection answers at its address and takes the key (none for a server of one's own
+/// that asks for none): a request that costs nothing, the list of models, or for the formats that
+/// speak only realtime, the WebSocket's handshake.
+pub fn check_connection(endpoint: &Endpoint, key: Option<&str>) -> KeyAnswer {
+    let address = &endpoint.address;
+    let answer = match endpoint.format {
+        ConnectionFormat::OpenAi => get(&address.http(&format!("{}/models", address.base(&OPENAI_ENDINGS)), ""), &bearer(key), Duration::from_secs(20)),
+        ConnectionFormat::Anthropic => {
+            let tidy = Tidy::new(endpoint.clone(), "").expect("Anthropic writes");
+            get(&tidy.anthropic("models"), &super::tidy::anthropic_headers(key, endpoint.official()), Duration::from_secs(20))
+        }
+        ConnectionFormat::Gemini => {
+            get(&address.http(&format!("{}/v1beta/models", gemini_base(address)), ""), &super::tidy::gemini_headers(key, endpoint.official()), Duration::from_secs(20))
+        }
+        ConnectionFormat::DashScope => {
+            let speech = Speech::new(endpoint.clone(), false, "").expect("Model Studio hears");
+            return handshake(&speech.qwen_realtime(), &bearer(key));
+        }
+        ConnectionFormat::Doubao => {
+            let speech = Speech::new(endpoint.clone(), false, "").expect("Doubao hears");
+            return handshake(&speech.doubao(true), &super::doubao::headers(key.unwrap_or(""), &speech.model));
+        }
     };
     match answer {
         Ok((status, body)) => KeyAnswer::of_status(status, &body),
@@ -677,67 +716,91 @@ pub fn random_id() -> String {
 mod tests {
     use super::*;
 
+    fn endpoint(format: &str, url: &str) -> Endpoint {
+        Endpoint::new(format, url, "").expect("an address")
+    }
+
     #[test]
     fn an_empty_address_is_the_formats_own_and_a_pasted_endpoint_is_taken_as_its_base() {
-        let speech = Speech::new("openai-realtime", "", "").expect("the default");
+        let speech = Speech::new(endpoint("openai", ""), false, "").expect("OpenAI hears");
+        assert_eq!(speech.format, SpeechFormat::OpenAiRealtime);
         assert_eq!(speech.openai_realtime(), "wss://api.openai.com/v1/realtime?intent=transcription");
         assert_eq!(speech.model, "gpt-live-transcribe");
         assert!(speech.official());
         assert_eq!(speech.shown(), "OpenAI");
-        let speech = Speech::new("openai-transcriptions", "https://api.groq.com/openai/v1/", "whisper-large-v3").expect("Groq");
+        // The same connection, uploading.
+        let speech = Speech::new(endpoint("openai", ""), true, "").expect("OpenAI hears");
+        assert_eq!((speech.format, speech.model.as_str()), (SpeechFormat::OpenAiTranscriptions, "gpt-transcribe"));
+        let speech = Speech::new(endpoint("openai", "https://api.groq.com/openai/v1/"), true, "whisper-large-v3").expect("hears");
         assert_eq!(speech.openai_transcriptions(), "https://api.groq.com/openai/v1/audio/transcriptions");
-        assert_eq!(speech.openai_models(), "https://api.groq.com/openai/v1/models");
         assert!(!speech.official());
         assert_eq!(speech.shown(), "api.groq.com");
         // An endpoint pasted whole.
-        let speech = Speech::new("openai-transcriptions", "https://api.siliconflow.cn/v1/audio/transcriptions", "FunAudioLLM/SenseVoiceSmall").expect("SiliconFlow");
+        let speech = Speech::new(endpoint("openai", "https://api.siliconflow.cn/v1/audio/transcriptions"), true, "FunAudioLLM/SenseVoiceSmall").expect("hears");
         assert_eq!(speech.openai_transcriptions(), "https://api.siliconflow.cn/v1/audio/transcriptions");
         // A relay's address, for the live model too.
-        let speech = Speech::new("openai-realtime", "https://relay.example.com/v1", "").expect("a relay");
+        let speech = Speech::new(endpoint("openai", "https://relay.example.com/v1"), false, "").expect("hears");
         assert_eq!(speech.openai_realtime(), "wss://relay.example.com/v1/realtime?intent=transcription");
         // A server on this Mac, plainly.
-        let speech = Speech::new("openai-transcriptions", "http://127.0.0.1:8000/v1", "Systran/faster-whisper-large-v3").expect("local");
+        let speech = Speech::new(endpoint("openai", "http://127.0.0.1:8000/v1"), true, "Systran/faster-whisper-large-v3").expect("hears");
         assert_eq!(speech.openai_transcriptions(), "http://127.0.0.1:8000/v1/audio/transcriptions");
-        assert_eq!(speech.shown(), "127.0.0.1:8000");
+        assert_eq!(speech.shown(), "127.0.0.1");
     }
 
     #[test]
     fn qwen_and_doubao_take_their_hosts_however_pasted() {
-        let speech = Speech::new("qwen-realtime", "", "").expect("the default");
+        let speech = Speech::new(endpoint("dashscope", ""), false, "").expect("Model Studio hears");
+        assert_eq!(speech.format, SpeechFormat::QwenRealtime);
         assert_eq!(speech.qwen_realtime(), "wss://dashscope-intl.aliyuncs.com/api-ws/v1/realtime?model=qwen3-asr-flash-realtime");
         assert_eq!(speech.shown(), "Alibaba Cloud");
-        let speech = Speech::new("qwen-realtime", "wss://ws-123.ap-southeast-1.maas.aliyuncs.com/api-ws/v1/realtime?model=x", "qwen3-asr-flash-realtime").expect("a workspace's");
+        let speech = Speech::new(endpoint("dashscope", "wss://ws-123.ap-southeast-1.maas.aliyuncs.com/api-ws/v1/realtime?model=x"), false, "qwen3-asr-flash-realtime").expect("hears");
         assert_eq!(speech.qwen_realtime(), "wss://ws-123.ap-southeast-1.maas.aliyuncs.com/api-ws/v1/realtime?model=qwen3-asr-flash-realtime");
-        let speech = Speech::new("qwen-realtime", "https://dashscope.aliyuncs.com/compatible-mode/v1", "").expect("Beijing's");
+        let speech = Speech::new(endpoint("dashscope", "https://dashscope.aliyuncs.com/compatible-mode/v1"), false, "").expect("hears");
         assert_eq!(speech.qwen_realtime(), "wss://dashscope.aliyuncs.com/api-ws/v1/realtime?model=qwen3-asr-flash-realtime");
-        let speech = Speech::new("doubao", "", "").expect("the default");
+        let speech = Speech::new(endpoint("doubao", ""), false, "").expect("Doubao hears");
         assert_eq!(speech.doubao(true), "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async");
         assert_eq!(speech.doubao(false), "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_nostream");
         assert_eq!(speech.model, "volc.seedasr.sauc.duration");
-        let speech = Speech::new("doubao", "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel", "volc.bigasr.sauc.duration").expect("pasted");
+        let speech = Speech::new(endpoint("doubao", "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel"), false, "volc.bigasr.sauc.duration").expect("hears");
         assert_eq!(speech.doubao(true), "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async");
         // A model's name goes into the address only as a name.
-        let speech = Speech::new("qwen-realtime", "", "qwen3&evil=1").expect("odd");
+        let speech = Speech::new(endpoint("dashscope", ""), false, "qwen3&evil=1").expect("hears");
         assert!(speech.qwen_realtime().ends_with("?model=qwen3evil1"));
     }
 
     #[test]
-    fn the_text_models_formats_build_their_endpoints() {
-        let tidy = Tidy::new("openai", "", "").expect("the default");
+    fn the_text_formats_build_their_endpoints_and_model_studio_tidies_in_its_compatible_mode() {
+        let tidy = Tidy::new(endpoint("openai", ""), "").expect("OpenAI writes");
         assert_eq!((tidy.chat_completions().as_str(), tidy.model.as_str()), ("https://api.openai.com/v1/chat/completions", "gpt-5-mini"));
-        let tidy = Tidy::new("openai", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1", "qwen-flash").expect("DashScope's");
+        let tidy = Tidy::new(endpoint("dashscope", ""), "").expect("Model Studio writes");
+        assert_eq!((tidy.format, tidy.model.as_str()), (TidyFormat::OpenAi, "qwen-flash"));
         assert_eq!(tidy.chat_completions(), "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions");
-        let tidy = Tidy::new("anthropic", "", "").expect("the default");
+        let tidy = Tidy::new(endpoint("dashscope", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"), "qwen-plus").expect("writes");
+        assert_eq!(tidy.chat_completions(), "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions");
+        let tidy = Tidy::new(endpoint("anthropic", ""), "").expect("Anthropic writes");
         assert_eq!((tidy.anthropic("messages").as_str(), tidy.model.as_str()), ("https://api.anthropic.com/v1/messages", "claude-haiku-5-5"));
-        assert_eq!(tidy.anthropic("models"), "https://api.anthropic.com/v1/models");
         // A relay's, given with the version, and a vendor's under a path.
-        assert_eq!(Tidy::new("anthropic", "https://relay.example.com/v1", "").expect("relay").anthropic("messages"), "https://relay.example.com/v1/messages");
-        assert_eq!(Tidy::new("anthropic", "https://api.deepseek.com/anthropic", "").expect("path").anthropic("messages"), "https://api.deepseek.com/anthropic/v1/messages");
-        let tidy = Tidy::new("gemini", "", "").expect("the default");
+        assert_eq!(Tidy::new(endpoint("anthropic", "https://relay.example.com/v1"), "").expect("writes").anthropic("messages"), "https://relay.example.com/v1/messages");
+        assert_eq!(Tidy::new(endpoint("anthropic", "https://api.deepseek.com/anthropic"), "").expect("writes").anthropic("messages"), "https://api.deepseek.com/anthropic/v1/messages");
+        let tidy = Tidy::new(endpoint("gemini", ""), "").expect("Gemini writes");
         assert_eq!(tidy.gemini_generate(), "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent");
-        let tidy = Tidy::new("gemini", "https://generativelanguage.googleapis.com/v1beta/", "gemini-3.8-flash").expect("pasted");
+        let tidy = Tidy::new(endpoint("gemini", "https://generativelanguage.googleapis.com/v1beta/"), "gemini-3.8-flash").expect("writes");
         assert_eq!(tidy.gemini_generate(), "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent");
-        assert_eq!(tidy.gemini_models(), "https://generativelanguage.googleapis.com/v1beta/models");
+        // What a format cannot do, it is not asked.
+        assert!(Tidy::new(endpoint("doubao", ""), "").is_none());
+        assert!(Speech::new(endpoint("anthropic", ""), false, "").is_none() && Speech::new(endpoint("gemini", ""), false, "").is_none());
+        assert!(ConnectionFormat::DashScope.hears() && ConnectionFormat::DashScope.writes());
+        assert!(ConnectionFormat::Doubao.hears() && !ConnectionFormat::Doubao.writes());
+        assert!(!ConnectionFormat::Anthropic.hears() && ConnectionFormat::Anthropic.writes());
+    }
+
+    #[test]
+    fn a_new_connection_is_named_for_its_vendor_or_its_host() {
+        assert_eq!(default_label("dashscope", ""), "Alibaba Cloud");
+        assert_eq!(default_label("openai", "https://api.openai.com/v1"), "OpenAI");
+        assert_eq!(default_label("openai", "https://relay.example.com/v1"), "relay.example.com");
+        assert_eq!(default_label("doubao", "not an address"), "Doubao");
+        assert_eq!(Endpoint::new("doubao", "", " 豆包语音 ").map(|endpoint| endpoint.label), Ok("豆包语音".to_string()));
     }
 
     #[test]

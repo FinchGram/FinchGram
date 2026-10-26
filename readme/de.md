@@ -66,14 +66,15 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   loslassen sendet, nach links ziehen bricht ab, nach oben ziehen sperrt die Aufnahme, und
   gestoppt lässt sie sich vor dem Senden anhören.
 - **Spracheingabe.** Drück ✦ im Eingabefeld und sprich: Der Text landet ohne Äh und Ähm im Feld,
-  damit du ihn abschickst. Die Dienste wählst du nach dem Format ihrer API, mit deinen eigenen
-  Schlüsseln und, wenn du willst, deiner eigenen Adresse (ein Relay oder ein Server in deinem Netz):
-  OpenAIs Echtzeit-Transkription, Qwen und Doubao (beide stark im Chinesischen) oder jeder Dienst,
-  der OpenAIs Transkriptions-API spricht; das Aufräumen im Format von OpenAI, Anthropic oder Gemini.
-  Jede Hauptsprache hat ihre eigenen Einstellungen, und eingestreute Wörter anderer Sprachen bleiben,
-  wie du sie sagst. Werkzeuge → AI → Spracheingabe, aus, bis du sie einschaltest. „Transkribieren“
-  unter einer Sprachnachricht nutzt Telegrams eigene Transkription, oder deinen eigenen Dienst, wenn
-  du das einschaltest. Siehe [docs/voice-input.md](../docs/voice-input.md).
+  damit du ihn abschickst. Deine Dienste legst du als Verbindungen an, jede mit einem Namen, dem
+  Format ihrer API, deinem eigenen Schlüssel und, wenn du willst, deiner eigenen Adresse (ein Relay
+  oder ein Server in deinem Netz), und wählst für jede Aufgabe eine: für die Sprache OpenAIs
+  Echtzeit-Transkription, Qwen und Doubao (beide stark im Chinesischen) oder jeden Dienst, der
+  OpenAIs Transkriptions-API spricht; für das Aufräumen das Format von OpenAI, Anthropic oder Gemini.
+  Jede Hauptsprache wählt ihre eigenen, und eingestreute Wörter anderer Sprachen bleiben, wie du sie
+  sagst. Werkzeuge → AI → Spracheingabe, aus, bis du sie einschaltest. „Transkribieren“ unter einer
+  Sprachnachricht nutzt Telegrams eigene Transkription, oder deinen eigenen Dienst, wenn du das
+  einschaltest. Siehe [docs/voice-input.md](../docs/voice-input.md).
 - **KI-Assistenten.** Claude Desktop, Claude Code und andere Apps, die das Model Context Protocol
   sprechen, können über FinchGram deine Chats lesen und darin handeln, sobald du es erlaubst:
   Werkzeuge → KI-Zugriff, aus, bis du es einschaltest, mit den Chats, die du wählst, und ob ein

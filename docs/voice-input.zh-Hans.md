@@ -20,14 +20,22 @@
   （最新的两行；终端里一行）；说完才出字的格式，那里会写明。按 ⏎ 或「完成」也结束；Esc 或 × 丢掉这些字。之后那一条先显示
   「正在收尾…」等最后的字，再显示「正在整理文字…」，然后文字接在输入框已有内容的后面（该有空格的文字之间加空格），光标停在
   它们后面，由用户发送。一次口述五分钟后自己结束，免得忘了关的麦克风一直花用户的钱。
-- **用不了的时候。** 那一条说明原因并点出是哪个服务，能补救的给一个按钮：没有密钥（添加密钥，打开那个面板）、地址
+- **用不了的时候。** 那一条说明原因并点出是哪个服务，能补救的给一个按钮：主要语言的语音识别还没选连接（去设置，打开那个面板）、
+  没有密钥（添加密钥，也是打开面板）、地址
   FinchGram 用不了（更改地址）、不许用麦克风（打开系统设置）、服务拒绝密钥（401 或 403：更换密钥）或余额、频率不够（429）、
   网络、服务自己的报错、什么也没听到。第一次用时 macOS 会问 FinchGram 能不能用麦克风。
+- **先有连接，再给每项能力选连接**（维护者 2026-10-26 定的模型：“可以让用户添加多个不同的url和key组合，并且同时选一下
+  格式，还要有一个label…然后，每个能力，选一个组合”）。用户添加连接，每个连接有自己起的名字、API 格式、地址（留空：厂商
+  自己的）和密钥；每项能力选一个连接和一个模型（留空：这种格式的默认）。一个连接能做它的格式能做的所有事：*OpenAI 兼容*
+  能识别（边说边出字，或说完上传）也能整理，一个 OpenAI 密钥两样都用；*阿里云百炼* 能识别（Qwen-ASR）也能整理（千问，
+  走它的 OpenAI 兼容模式），一个密钥两样都用；*Anthropic* 和 *Gemini* 只整理；*豆包语音* 只识别。每项能力只列出能做它的
+  连接。连接列表显示每个连接的名字、格式、主机和密钥；点一下展开，改名字、格式、地址和密钥，或者移除（用到它的能力就没有
+  连接了）。
 - **主要语言。** 用户选自己主要说的语言，或者「任意语言」；夹在里面的其他语言照说的原样保留（每种格式用各自的方式告诉服务，
-  见下），主要语言也定了文字是简体还是繁体。每种主要语言有自己的一套（profile）：语音识别服务、整理、密钥。添加一种语言时
-  复制正在用的那一套，连密钥一起，只改不一样的地方（比如中文走豆包、英文走 OpenAI）。移除一种语言就把它的密钥一起删掉。
-- **语音识别，按 API 格式。** 每种都有地址（留空：厂商自己的）、API 密钥、模型（留空：这种格式的默认）和热词（用户常说的
-  人名和术语，用逗号隔开），热词各格式按自己的方式当提示：
+  见下），主要语言也定了文字是简体还是繁体。每种主要语言有自己的能力设置：用哪个连接识别（OpenAI 的连接还要选怎么识别：
+  边说边出字，或说完再出字）、热词、用哪个连接整理。添加一种语言时从正在用的设置开始（比如中文走豆包、英文走 OpenAI：
+  两个连接，每种语言各选各的）。
+- **语音识别，按连接的格式。** 带模型和热词（用户常说的人名和术语，用逗号隔开），热词各格式按自己的方式当提示：
   - *OpenAI Realtime*（`wss://…/realtime?intent=transcription`，24 kHz）：`session.update`，类型 `transcription`，带模型
     （`gpt-live-transcribe`）、`delay: "xhigh"`（上下文最多：实时的字出得晚一些，但对得更多；settings.toml 里某个 profile
     的 `delay` 可以换成别的）、主要语言（2026 年的模型用 `languages: ["zh-cn"]`，老模型用 `language: "zh"`，绝不两个都发）、
@@ -51,8 +59,7 @@
     语言走 `bigmodel_nostream`，带它的语言代码（`ja-JP` 等），说完才出字。繁体由豆包自己转（`output_zh_variant: "tw"`）；
     热词放在 `corpus.context` 里。密钥是新版控制台的（`X-Api-Key`）；旧版控制台的 App ID 和 Access Token 以 `appid:token`
     的形式填进密钥框。模型就是计费的资源（`X-Api-Resource-Id`，默认是按小时计费的 Seed-ASR 2.0，`volc.seedasr.sauc.duration`）。
-- **整理文字，按 API 格式。** 一个开关（默认开），然后是格式、地址、密钥（用开关选语音识别的那个，默认开，或者单独一个）
-  和模型：*OpenAI 的 Chat Completions*（几乎所有厂商、中转站和本地服务器都支持的格式；默认 `gpt-5-mini`，够聪明，能改对听错的
+- **整理文字，按连接的格式。** 一个开关（默认开），然后是连接和模型：*OpenAI 的 Chat Completions*（几乎所有厂商、中转站和本地服务器都支持的格式；默认 `gpt-5-mini`，够聪明，能改对听错的
   字；用每个服务器都认的 `system` 角色；`store: false` 和 `reasoning_effort: "minimal"` 只发给该发的：OpenAI 自己和它的 GPT-5
   模型）、*Anthropic 的 Messages*（`claude-haiku-5-5`；`anthropic-version: 2023-06-01`，中转站和其他厂商的 Claude 格式接口都认；
   密钥放在 `x-api-key`，发往不是 Anthropic 的地址时也作 bearer token；支持的模型（Claude 4.6 及以后）带
@@ -63,11 +70,10 @@
 - **地址。** 留空就是厂商自己的；粘贴进来的完整接口（`…/v1/audio/transcriptions`、`wss://…/api-ws/v1/realtime?model=…`）
   会当作它的 base。明文 http 只能连本机或局域网（自建服务器在那里）；地址里带用户名和密码的不收；从不跟随重定向，免得请求头
   里的密钥被带到别的主机。
-- **密钥。** 存在 app 数据库的 `credentials` 表里，封到各自的名字上：`voice_input.<语言>.speech` 和
-  `voice_input.<语言>.tidy`（表结构不变）；显示开头和最后几个字符，旁边是「移除」。0.7 的那一个密钥（`openai_api_key`）启动时
-  变成第一套的语音识别密钥。密钥保存时、格式/地址/模型输完时都会检查一下服务：HTTP 格式读模型列表，实时格式做一次
-  WebSocket 握手（它们的服务器不一定有模型列表）；结果显示在下面。厂商自己的地址需要密钥；用户自己的服务器可以不要，那就
-  不发。
+- **密钥。** 每个连接一个，存在 app 数据库的 `credentials` 表里，封到它的名字上：`voice_input.connection.<id>`（表结构
+  不变）；显示开头和最后几个字符，旁边是「移除」。密钥保存时、选了格式时、地址输完时都会检查一下连接：HTTP 格式读模型
+  列表，实时格式做一次 WebSocket 握手（它们的服务器不一定有模型列表）；结果显示在下面。厂商自己的地址需要密钥；用户自己的
+  服务器可以不要，那就不发。
 - **准确度第一（2026-10-26）。** OpenAI 实时模型用 `xhigh`；每种格式都有热词；豆包二遍识别；千问的上下文；用 `gpt-5-mini`
   的整理改对听错的字；麦克风的声音做带限重采样（`audio.rs`：Blackman 窗下的加窗 sinc，16 个过零点，截止在较低采样率一半的
   92%）。原来的平均法会让 10 kHz 的嘶声以一半的响度折进 16 kHz 的频带，正好落在中文 s、sh、x、z、c、q 所在的地方（有个测试
@@ -75,21 +81,27 @@
 - **语音消息。** 语音消息下面的「转文字」（设计稿第五轮 B1，之前一直是灰的）：先用 Telegram 自己的转写（`recognizeSpeech`：
   Telegram Premium、没有 Premium 时每周几次、或为此助力过的群），字按 Telegram 给的进到消息里
   （`voiceNote.speech_recognition_result`：进行中带已有的字、完成、失败）；再点一下收起，再点又展开。Telegram 转不了，而用户
-  在面板里打开了「用你自己的服务把语音消息转文字」（默认关）时，消息交给当前主要语言的语音识别服务：上传格式直接传它的文件，
+  在面板里打开了「用你自己的服务把语音消息转文字」（默认关）时，消息交给为语音消息选的连接（默认和当前主要语言的语音识别
+  相同；单独选的 OpenAI 连接用上传）：上传格式直接传它的文件，
   实时格式先由 libmpv 的 PCM 输出（`src/player/decode.rs`，比实时快）解码成服务要的采样率；不整理。字只在这次运行的内存里，
   别处都不存。其余情况下，气泡里写明 Telegram 要 Premium，以及用户自己的服务在哪里。这等于把 Telegram 的内容（别人的声音）
   交给用户选的服务，碰到 API 条款第 1.5 条（见 [mcp.zh-Hans.md](mcp.zh-Hans.md)）：默认关、一次一条、由用户点击、什么都不存，
   和维护者 2026-10-12 为 MCP 服务器做的决定一样；按维护者 2026-10-26 的话做的（“语音信息转文字！可以一起做了”），留不留由
   维护者定。
-- **设置文件。** `[voice_input]` 里有 `enabled`、`language`（正在用的主要语言）、`transcribe_messages`，以及每种主要语言
-  一个 `[[voice_input.profiles]]`：`language`、`format`、`url`、`model`、`keywords`、`tidy`、`tidy_format`、`tidy_url`、
-  `tidy_model`、`tidy_same_key`，手动设过才有的 `delay`。0.7 的 `languages`、`tidy`、`model` 和 `tidy_model` 只读一次，变成
-  第一套：只选了一种语言的，那就是它的主要语言；选了几种或一种没选的，就是任意语言；等于 0.7 默认值的模型变成格式自己的默认。
-- **代码。** `src/speech/mod.rs`（UI 线程上的状态、面板、各套设置和密钥）、`dictation.rs`（一次口述从第一个声音到出字）、
+- **设置文件。** `[voice_input]` 里有 `enabled`、`language`（正在用的主要语言）、`transcribe_messages`、
+  `messages_connection` 和 `messages_model`（留空：和语音识别相同），每个连接一个 `[[voice_input.connections]]`（`id`、
+  `label`、`format`、`url`），每种主要语言一个 `[[voice_input.profiles]]`：`language`、`connection`、`mode`（`realtime` 或
+  `upload`）、`model`、`keywords`、`tidy`、`tidy_connection`、`tidy_model`，手动设过才有的 `delay`。旧文件会迁移：0.7.0 和
+  0.7.1 的 `languages`、`tidy`、`model`、`tidy_model` 变成第一套设置和一个 OpenAI 连接（只选了一种语言的，那就是它的主要语言；
+  选了几种或一种没选的，就是任意语言；等于 0.7 默认值的模型变成格式自己的默认）；0.7.2 每种语言的格式、地址和密钥变成连接，
+  每个地址加密钥一个。它们的密钥在下次启动时搬进连接（在那之前 `key_from` 指着旧凭据，保存设置也不丢），格式、地址和密钥都
+  一样的连接合成一个。
+- **代码。** `src/speech/mod.rs`（UI 线程上的状态、面板、连接、各语言的设置和密钥）、`dictation.rs`（一次口述从第一个声音到出字）、
   `service.rs`（格式、地址、连接、检查）、`realtime.rs`（OpenAI 和千问的会话）、`doubao.rs`、`upload.rs`、`tidy.rs`、
   `messages.rs`（语音消息）、`audio.rs`；`src/player/decode.rs`；`src/telegram/voice.rs`（转文字）；`ui/voice.slint`、各主题的
   输入框和那一条、各主题百宝箱里的 `ui/pages/voice-input.slint`；截图场景 `voice-*`（其中有 `voice-upload`、
-  `voice-transcripts`，面板的 `voice-input-doubao`、`…-speech`、`…-tidy`、`voice-input-relay`）和 `toolbox-ai`。
+  `voice-transcripts`，面板的 `voice-input-doubao`（展开了一个连接）、`…-speech`、`…-tidy`、`voice-input-relay`、
+  `voice-input-upload`）和 `toolbox-ai`。
 - **和计划不一样的地方。** 没出设计稿就做了。设置是百宝箱里的一个面板，不是「输入」里的几行。说话时字显示在那一条里，说完
   整理好才一次放进输入框。字接在输入框内容的末尾，不是光标处（Slint 不告诉我们光标在哪）。报纸主题也加了 ✦，它那一轮设计稿
   里没有；语音输入和录语音消息不会同时进行。第 5 步的路由就是用户手动选主要语言。
