@@ -264,13 +264,25 @@ export struct RoundNote {
 // A voice message (src/telegram/voice.rs): its length, its loudness as bars, whether it was
 // listened to. Which one plays, and how far, is Conversation's (voice-playing …), so that the row
 // stays the same while it plays.
+// Why a voice message has no words: Telegram wants Premium for them (or the week's tries are
+// used up), it is too long for Telegram, or the service failed (its words in the detail).
+export enum TranscriptProblem { none, premium, too-long, failed }
+
 export struct VoiceNote {
     shown: bool,
     duration: string,       // "0:14"
     bars: [float],          // its waveform, 0 … 1 a bar (the design's 28)
     blocks: string,         // the same as Terminal writes it, 20 block characters
     listened: bool,         // ours, or listened to; an incoming one not yet listened to has a dot
+    // Its words, once Transcribe was clicked (src/telegram/voice.rs): Telegram's own, or the
+    // user's own speech service's; on their way (the words so far), or why there are none.
+    transcript: string,
+    transcribing: bool,
+    transcript-problem: TranscriptProblem,
+    transcript-detail: string,
+    transcript-shown: bool, // asked for, and not hidden again
 }
+
 
 // A contact card in a message: who, their number, whether they are on Telegram.
 export struct ContactCard {
@@ -366,6 +378,7 @@ export global Conversation {
     in-out property <bool> voice-failed;             // its file could not be downloaded: Retry
     in-out property <string> voice-speed: "1×";      // 1×, 1.5×, 2×
     callback play-voice(string);                    // play it, or pause it, or go on; again after a failure
+    callback transcribe-voice(string);              // its words (Transcribe): asked for, hidden, shown again
     callback seek-voice(string, float);             // a click on its waveform: from there
     callback next-voice-speed();                    // 1× → 1.5× → 2× → 1×
     in-out property <bool> muted;

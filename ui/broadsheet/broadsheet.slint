@@ -1698,6 +1698,7 @@ component Bubble {
             // A voice message (the design's fifth round, B1; voice.slint).
             if root.message.voice.shown: VoiceNoteView {
                 message-id: root.message.id;
+                words-color: root.mine ? P.tint-ink : P.text;
                 note: root.message.voice;
                 accent: P.accent;
                 on-accent: P.on-accent;
@@ -2004,6 +2005,7 @@ component Post inherits Capped {
         alignment: start;
         VoiceNoteView {
             message-id: root.message.id;
+            words-color: P.text;
             note: root.message.voice;
             accent: P.accent;
             on-accent: P.on-accent;
@@ -2491,6 +2493,30 @@ component VoiceStrip inherits Rectangle {
                     name: "warning-circle";
                     size: 20px;
                     color: P.danger;
+                }
+            }
+        }
+        // The main language, when there are others: a click takes the next one.
+        if Voice.can-switch: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: language-words.preferred-width + 16px;
+                height: 24px;
+                border-radius: 2px;
+                background: language-touch.has-hover ? P.hover : transparent;
+                border-width: 1px;
+                border-color: P.accent;
+                language-words := Text {
+                    text: VoiceWords.language-label(Voice.language-name);
+                    color: P.accent-ink;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+                language-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Voice.next-language();
+                    }
                 }
             }
         }

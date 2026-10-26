@@ -7,6 +7,7 @@
 //! Everything runs on the UI thread; mpv's own threads only ask the event loop to look.
 
 pub mod audio;
+pub mod decode;
 mod mpv;
 pub mod probe;
 

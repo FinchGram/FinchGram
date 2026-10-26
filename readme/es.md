@@ -64,11 +64,15 @@ Es un cliente no oficial, no hecho por Telegram.
   escucharlos, el remitente lo ve, como en las apps de Telegram. Mantén pulsado el micrófono para
   grabar uno: suéltalo para enviarlo, arrastra a la izquierda para cancelar o hacia arriba para
   bloquearlo, y detenlo para escucharlo antes de enviarlo.
-- **Dictado por voz.** Pulsa ✦ en el cuadro de escritura y habla: el texto aparece mientras
-  hablas y queda en el cuadro, sin los eh ni los mm, para que lo envíes tú. Funciona con tu propia
-  clave de OpenAI (alrededor de 1 $ por hora de voz): Herramientas → Dictado por voz, desactivado
-  hasta que lo actives, y ahí va la clave; en cualquiera de los idiomas de la interfaz y en frases
-  que los mezclan. Ver [docs/voice-input.md](../docs/voice-input.md).
+- **Dictado por voz.** Pulsa ✦ en el cuadro de escritura y habla: el texto queda en el cuadro, sin
+  los eh ni los mm, para que lo envíes tú. Eliges los servicios por el formato de su API, con tus
+  propias claves y, si quieres, tu propia dirección (un intermediario o un servidor de tu red): la
+  transcripción en tiempo real de OpenAI, Qwen y Doubao (los dos fuertes en chino) o cualquier
+  servicio que hable la API de transcripción de OpenAI; el pulido del texto, en el formato de OpenAI,
+  Anthropic o Gemini. Cada idioma principal tiene su propia configuración, y las palabras de otros
+  idiomas que se mezclan se quedan como las dices. Herramientas → AI → Dictado por voz, desactivado
+  hasta que lo actives. «Transcribir» bajo un mensaje de voz usa la transcripción de Telegram, o tu
+  propio servicio si lo activas. Ver [docs/voice-input.md](../docs/voice-input.md).
 - **Asistentes de IA.** Claude Desktop, Claude Code y otras apps que hablan el Model Context
   Protocol pueden leer tus chats y actuar en ellos a través de FinchGram, cuando tú lo permites:
   Herramientas → Acceso de IA, desactivado hasta que lo actives, con los chats que elijas y si un
@@ -159,8 +163,9 @@ FinchGram hace lo que hacen las apps de Telegram y nada de lo que prohíben. Un 
 leído cuando lo ves, la otra parte te ve escribiendo y en línea como en cualquier app de Telegram,
 los mensajes patrocinados de los canales se muestran, los archivos que se autodestruyen se abren una
 vez y nada de Telegram va a ninguna IA, salvo que dejes entrar a un asistente (Herramientas → Acceso
-de IA). Nada sale de tu máquina salvo hacia Telegram, hacia GitHub para las actualizaciones y,
-mientras usas el dictado por voz, tu voz hacia OpenAI con tu propia clave.
+de IA) o actives la transcripción de mensajes de voz con tu propio servicio. Nada sale de tu máquina
+salvo hacia Telegram, hacia GitHub para las actualizaciones y, mientras usas el dictado por voz, tu
+voz hacia el servicio de reconocimiento que elegiste, con tu propia clave.
 
 ## Desarrollo
 

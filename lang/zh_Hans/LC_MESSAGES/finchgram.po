@@ -10,12 +10,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: ui/app.slint:58
+#: ui/pages/settings.slint:646
 msgid "View"
 msgstr "视图"
 
+#: ui/app.slint:60 ui/broadsheet/actions.slint:171
 #: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
-#: ui/terminal/actions.slint:166
+#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166
+#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166
 msgid "Search"
 msgstr "搜索"
 
@@ -74,86 +76,104 @@ msgid "Check for Updates…"
 msgstr "检查更新…"
 
 #: ui/broadsheet/actions.slint:134 ui/terminal/actions.slint:140
+#: ui/broadsheet/actions.slint:134 ui/terminal/actions.slint:140
 msgid "Choose recipient…"
 msgstr "转发到…"
 
-#: ui/broadsheet/actions.slint:227 ui/telegram.slint:932
-#: ui/workbench/actions.slint:229
+#: ui/broadsheet/actions.slint:227 ui/telegram.slint:945
+#: ui/broadsheet/actions.slint:227 ui/telegram.slint:945 ui/workbench/actions.slint:229
 msgid "Saved Messages"
 msgstr "收藏夹"
 
 #: ui/broadsheet/actions.slint:240 ui/compose.slint:129
-#: ui/workbench/actions.slint:242
+#: ui/broadsheet/actions.slint:240 ui/compose.slint:129 ui/workbench/actions.slint:242
 msgid "Recent"
 msgstr "最近聊天"
 
+#: ui/broadsheet/actions.slint:293 ui/terminal/actions.slint:254
 #: ui/broadsheet/actions.slint:293 ui/terminal/actions.slint:254
 msgid "No chats found"
 msgstr "没有找到聊天"
 
 #: ui/broadsheet/actions.slint:422 ui/terminal/actions.slint:358
+#: ui/broadsheet/actions.slint:422 ui/terminal/actions.slint:358
 msgid "Add a comment"
 msgstr "补充说明（必填）"
 
+#: ui/broadsheet/actions.slint:422 ui/terminal/actions.slint:358
 #: ui/broadsheet/actions.slint:422 ui/terminal/actions.slint:358
 msgid "Add a comment (optional)"
 msgstr "补充说明（可选）"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
-#: ui/broadsheet/broadsheet.slint:2813 ui/chat.slint:386 ui/compose.slint:244
-#: ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871
-#: ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209
-#: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1847
-#: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
 msgstr "取消"
 
-#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2804
-#: ui/chat.slint:305 ui/chat.slint:846 ui/chat.slint:928
-#: ui/terminal/terminal.slint:1840 ui/workbench/conversation.slint:1858
+#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2830
+#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2830 ui/chat.slint:305 ui/chat.slint:846 ui/chat.slint:928
+#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2830 ui/chat.slint:305 ui/chat.slint:846 ui/chat.slint:928 ui/terminal/terminal.slint:1847
+#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2830 ui/chat.slint:305 ui/chat.slint:846 ui/chat.slint:928 ui/terminal/terminal.slint:1847 ui/workbench/conversation.slint:1884
 msgid "Report"
 msgstr "举报"
 
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2795
-#: ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343
-#: ui/terminal/terminal.slint:1832 ui/workbench/actions.slint:554
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
 msgid "Delete"
 msgstr "删除"
 
+#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:436
 #: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:436
 msgid "Light"
 msgstr "浅色"
 
 #: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:444
+#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:444
 msgid "Dark"
 msgstr "深色"
 
 #: ui/broadsheet/broadsheet.slint:170 ui/pages/profile.slint:72
-#: ui/workbench/workbench.slint:224
+#: ui/broadsheet/broadsheet.slint:170 ui/pages/profile.slint:72 ui/workbench/workbench.slint:224
 msgid "Accounts"
 msgstr "账号"
 
 #: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2008
-#: ui/workbench/sidebar.slint:555
+#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2008 ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "聊天"
 
 #: ui/broadsheet/broadsheet.slint:336 ui/broadsheet/broadsheet.slint:1053
-#: ui/workbench/sidebar.slint:553
+#: ui/broadsheet/broadsheet.slint:336 ui/broadsheet/broadsheet.slint:1053 ui/workbench/sidebar.slint:553
 msgid "Channels"
 msgstr "频道"
 
+#: ui/broadsheet/broadsheet.slint:344 ui/broadsheet/broadsheet.slint:1054
 #: ui/broadsheet/broadsheet.slint:344 ui/broadsheet/broadsheet.slint:1054
 msgid "Bots"
 msgstr "机器人"
 
 #: ui/broadsheet/broadsheet.slint:461 ui/terminal/terminal.slint:332
-#: ui/toolbox.slint:108
+#: ui/broadsheet/broadsheet.slint:461 ui/terminal/terminal.slint:332 ui/toolbox.slint:108
 msgid "All"
 msgstr "全部"
 
 #: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105
-#: ui/telegram.slint:934 ui/workbench/sidebar.slint:548
+#: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105 ui/telegram.slint:947
+#: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105 ui/telegram.slint:947 ui/workbench/sidebar.slint:548
 msgid "All chats"
 msgstr "全部聊天"
 
@@ -162,28 +182,33 @@ msgid "More"
 msgstr "更多"
 
 #: ui/broadsheet/broadsheet.slint:634 ui/terminal/terminal.slint:455
+#: ui/broadsheet/broadsheet.slint:634 ui/terminal/terminal.slint:455
 msgid "Mark all as read"
 msgstr "全部标为已读"
 
+#: ui/broadsheet/broadsheet.slint:651 ui/terminal/terminal.slint:475
 #: ui/broadsheet/broadsheet.slint:651 ui/terminal/terminal.slint:475
 msgid "Sort by"
 msgstr "排序方式"
 
 #: ui/broadsheet/broadsheet.slint:659 ui/terminal/terminal.slint:481
+#: ui/broadsheet/broadsheet.slint:659 ui/terminal/terminal.slint:481
 msgid "Latest message"
 msgstr "最新消息"
 
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233
-#: ui/pages/downloads.slint:2598 ui/workbench/sidebar.slint:868
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "名称"
 
+#: ui/broadsheet/broadsheet.slint:677 ui/terminal/terminal.slint:497
 #: ui/broadsheet/broadsheet.slint:677 ui/terminal/terminal.slint:497
 msgid "Unread"
 msgstr "未读"
 
 #: ui/broadsheet/broadsheet.slint:912 ui/format.slint:163
-#: ui/workbench/sidebar.slint:369
+#: ui/broadsheet/broadsheet.slint:912 ui/format.slint:163 ui/workbench/sidebar.slint:369
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
 msgstr[0] "{n} 位订阅者"
@@ -192,6 +217,7 @@ msgstr[0] "{n} 位订阅者"
 msgid "Telegram bots"
 msgstr "Telegram 机器人"
 
+#: ui/broadsheet/broadsheet.slint:1208 ui/terminal/terminal.slint:703
 #: ui/broadsheet/broadsheet.slint:1208 ui/terminal/terminal.slint:703
 msgid "No chats yet"
 msgstr "还没有聊天"
@@ -211,9 +237,11 @@ msgid "Chats you add to this folder in Telegram show up here."
 msgstr "在 Telegram 的文件夹设置里添加聊天，会自动同步到这里。"
 
 #: ui/broadsheet/broadsheet.slint:1254 ui/terminal/terminal.slint:738
+#: ui/broadsheet/broadsheet.slint:1254 ui/terminal/terminal.slint:738
 msgid "Official bots"
 msgstr "官方机器人"
 
+#: ui/broadsheet/broadsheet.slint:1268 ui/terminal/terminal.slint:750
 #: ui/broadsheet/broadsheet.slint:1268 ui/terminal/terminal.slint:750
 msgid "Other bots"
 msgstr "其他机器人"
@@ -223,43 +251,53 @@ msgid ""
 "Bots with a check mark are Telegram's own. Other bots see what you send them."
 msgstr "带认证标记的是 Telegram 官方机器人。其他机器人能看到你发给它的消息。"
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3722
-#: ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
-#: ui/workbench/conversation.slint:2763
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277 ui/workbench/conversation.slint:2789
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277 ui/workbench/conversation.slint:2789
 msgid "Unmute"
 msgstr "取消静音"
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3722
-#: ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
-#: ui/workbench/conversation.slint:2763
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277 ui/workbench/conversation.slint:2789
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277 ui/workbench/conversation.slint:2789
 msgid "Mute"
 msgstr "静音"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3791
-#: ui/terminal/terminal.slint:1661 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817 ui/terminal/terminal.slint:1668
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817 ui/terminal/terminal.slint:1668 ui/workbench/sidebar.slint:717
 msgid "Unpin"
 msgstr "取消置顶"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3791
-#: ui/terminal/terminal.slint:1661 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817 ui/terminal/terminal.slint:1668
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817 ui/terminal/terminal.slint:1668 ui/workbench/sidebar.slint:717
 msgid "Pin"
 msgstr "置顶"
 
 #: ui/broadsheet/broadsheet.slint:1342 ui/chat-info.slint:86
-#: ui/workbench/sidebar.slint:726
+#: ui/broadsheet/broadsheet.slint:1342 ui/chat-info.slint:86 ui/workbench/sidebar.slint:726
 msgid "Add to folder"
 msgstr "加入文件夹"
 
-#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3799
-#: ui/terminal/terminal.slint:1669 ui/workbench/sidebar.slint:733
+#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3825
+#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3825 ui/terminal/terminal.slint:1676
+#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3825 ui/terminal/terminal.slint:1676 ui/workbench/sidebar.slint:733
 msgid "Copy ID"
 msgstr "复制 ID"
 
 #: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228
-#: ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637
-#: ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849
-#: ui/pages/login.slint:909 ui/pages/settings.slint:1458
-#: ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:783
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849 ui/pages/login.slint:909
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849 ui/pages/login.slint:909 ui/pages/settings.slint:1458
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849 ui/pages/login.slint:909 ui/pages/settings.slint:1458 ui/terminal/actions.slint:286
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849 ui/pages/login.slint:909 ui/pages/settings.slint:1458 ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:783
 msgid "Back"
 msgstr "返回"
 
@@ -268,53 +306,59 @@ msgid "Instant View"
 msgstr "Instant View"
 
 #: ui/broadsheet/broadsheet.slint:1507 ui/terminal/terminal.slint:1039
+#: ui/broadsheet/broadsheet.slint:1507 ui/terminal/terminal.slint:1039
 msgid "Forwarded from {0}"
 msgstr "转发自 {0}"
 
-#: ui/broadsheet/broadsheet.slint:1885 ui/broadsheet/broadsheet.slint:2131
-#: ui/workbench/conversation.slint:1114
+#: ui/broadsheet/broadsheet.slint:1886 ui/broadsheet/broadsheet.slint:2133
+#: ui/broadsheet/broadsheet.slint:1886 ui/broadsheet/broadsheet.slint:2133 ui/workbench/conversation.slint:1116
 msgid "edited"
 msgstr "已编辑"
 
-#: ui/broadsheet/broadsheet.slint:2200
+#: ui/broadsheet/broadsheet.slint:2202
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr "赞助消息 · Telegram 官方投放 · Premium 用户可关闭"
 
-#: ui/broadsheet/broadsheet.slint:2266 ui/format.slint:262
-#: ui/workbench/conversation.slint:1261
+#: ui/broadsheet/broadsheet.slint:2268 ui/format.slint:262
+#: ui/broadsheet/broadsheet.slint:2268 ui/format.slint:262 ui/workbench/conversation.slint:1263
 msgid "You"
 msgstr "你"
 
-#: ui/broadsheet/broadsheet.slint:2377 ui/terminal/terminal.slint:2076
+#: ui/broadsheet/broadsheet.slint:2379 ui/terminal/terminal.slint:2083
+#: ui/broadsheet/broadsheet.slint:2379 ui/terminal/terminal.slint:2083
 msgid "Hide sender's name"
 msgstr "隐藏发送者"
 
-#: ui/broadsheet/broadsheet.slint:2771 ui/terminal/terminal.slint:1855
+#: ui/broadsheet/broadsheet.slint:2797 ui/terminal/terminal.slint:1862
+#: ui/broadsheet/broadsheet.slint:2797 ui/terminal/terminal.slint:1862
 msgid "Shift-click to select a range"
 msgstr "Shift + 点击：选中一段"
 
-#: ui/broadsheet/broadsheet.slint:2779 ui/chat.slint:845
-#: ui/workbench/conversation.slint:1824
+#: ui/broadsheet/broadsheet.slint:2805 ui/chat.slint:845
+#: ui/broadsheet/broadsheet.slint:2805 ui/chat.slint:845 ui/workbench/conversation.slint:1850
 msgid "Forward"
 msgstr "转发"
 
-#: ui/broadsheet/broadsheet.slint:3064 ui/terminal/terminal.slint:2606
+#: ui/broadsheet/broadsheet.slint:3090 ui/terminal/terminal.slint:2621
+#: ui/broadsheet/broadsheet.slint:3090 ui/terminal/terminal.slint:2621
 msgid "Choose a chat on the left"
 msgstr "在左侧选择一个聊天"
 
-#: ui/broadsheet/broadsheet.slint:3089 ui/terminal/terminal.slint:1584
+#: ui/broadsheet/broadsheet.slint:3115 ui/terminal/terminal.slint:1591
+#: ui/broadsheet/broadsheet.slint:3115 ui/terminal/terminal.slint:1591
 msgid "typing…"
 msgstr "正在输入…"
 
-#: ui/broadsheet/broadsheet.slint:3198 ui/terminal/terminal.slint:1722
+#: ui/broadsheet/broadsheet.slint:3224 ui/terminal/terminal.slint:1729
+#: ui/broadsheet/broadsheet.slint:3224 ui/terminal/terminal.slint:1729
 msgid "{0} is typing…"
 msgstr "{0} 正在输入…"
 
-#: ui/broadsheet/broadsheet.slint:3269
+#: ui/broadsheet/broadsheet.slint:3295
 msgid "Sending as {0}"
 msgstr "以 {0} 发送"
 
-#: ui/broadsheet/broadsheet.slint:3308
+#: ui/broadsheet/broadsheet.slint:3334
 msgid "Write a message…"
 msgstr "写点什么…"
 
@@ -330,6 +374,7 @@ msgstr "通话"
 msgid "Mobile"
 msgstr "手机"
 
+#: ui/chat-info.slint:72 ui/chat-manage.slint:245
 #: ui/chat-info.slint:72 ui/chat-manage.slint:245 ui/pages/profile.slint:300
 msgid "Username"
 msgstr "用户名"
@@ -352,6 +397,7 @@ msgid "Info"
 msgstr "资料"
 
 #. The foot.
+#: ui/chat-info.slint:77 ui/pages/settings.slint:98
 #: ui/chat-info.slint:77 ui/pages/settings.slint:98 ui/toolbox.slint:154
 msgid "Settings"
 msgstr "设置"
@@ -410,8 +456,7 @@ msgstr "没有未读消息"
 msgid "Auto-delete messages"
 msgstr "自动删除消息"
 
-#: ui/chat-info.slint:92 ui/chat.slint:381 ui/pages/settings.slint:758
-#: ui/pages/settings.slint:780
+#: ui/chat-manage.slint:322 ui/extras.slint:69
 msgid "Off"
 msgstr "关"
 
@@ -520,7 +565,8 @@ msgid "Change photo"
 msgstr "更换头像"
 
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
-#: ui/pages/settings.slint:1269 ui/voice.slint:709
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:836
 msgid "Save"
 msgstr "保存"
 
@@ -528,7 +574,7 @@ msgstr "保存"
 msgid "Got it"
 msgstr "知道了"
 
-#: ui/chat-manage.slint:232
+#: ui/pages/downloads.slint:3116
 msgctxt "on the photo"
 msgid "Change"
 msgstr "更换"
@@ -625,7 +671,8 @@ msgid "Primary invite link"
 msgstr "主邀请链接"
 
 #: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:1165
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
 msgid "Copy"
 msgstr "复制"
 
@@ -704,7 +751,7 @@ msgstr "不限"
 msgid "Up to {0}"
 msgstr "上限 {0} 人"
 
-#: ui/chat-manage.slint:279
+#: ui/format.slint:236
 msgctxt "how many joined by the link"
 msgid "{0} joined"
 msgstr "已加入 {0}"
@@ -755,6 +802,7 @@ msgid "No contacts to add"
 msgstr "没有可以添加的联系人"
 
 #: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2921
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2921
 msgid "Add"
 msgstr "添加"
 
@@ -783,7 +831,8 @@ msgid "Remove {0} from the channel?"
 msgstr "把 {0} 移出频道？"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
-#: ui/pages/downloads.slint:2952 ui/voice.slint:710
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:837
 msgid "Remove"
 msgstr "移除"
 
@@ -829,6 +878,7 @@ msgstr "成员权限"
 msgid "{0} of {1} allowed · what members can do"
 msgstr "允许 {0} / {1} 项 · 普通成员能做什么"
 
+#: ui/chat-manage.slint:313 ui/pages/ai-access.slint:111
 #: ui/chat-manage.slint:313 ui/pages/ai-access.slint:111
 msgid "Send messages"
 msgstr "可以发消息"
@@ -1151,7 +1201,7 @@ msgid "Also delete for {0}"
 msgstr "同时为 {0} 删除"
 
 #: ui/chat.slint:329 ui/pages/downloads.slint:2357
-#: ui/pages/downloads.slint:3262
+#: ui/chat.slint:329 ui/pages/downloads.slint:2357 ui/pages/downloads.slint:3262
 msgid "Open"
 msgstr "打开"
 
@@ -1187,11 +1237,11 @@ msgstr "文件"
 msgid "Poll"
 msgstr "投票"
 
-#: ui/chat.slint:343 ui/voice.slint:659
+#: ui/chat.slint:343 ui/voice.slint:738
 msgid "Not available yet"
 msgstr "暂不可用"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:665
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:744
 msgid "Not allowed in this group"
 msgstr "本群不允许"
 
@@ -1216,7 +1266,7 @@ msgstr ""
 "截图需要在“系统设置 › 隐私与安全性”里允许屏幕录制。如果列表里已经有 "
 "FinchGram，把它关掉再打开一次。"
 
-#: ui/chat.slint:351 ui/voice.slint:664 ui/voice.slint:699
+#: ui/chat.slint:351 ui/voice.slint:743 ui/voice.slint:782
 msgid "Open System Settings"
 msgstr "打开系统设置"
 
@@ -1308,7 +1358,7 @@ msgstr "看一次"
 msgid "Hide with spoiler"
 msgstr "剧透遮罩"
 
-#: ui/chat.slint:387 ui/voice.slint:655
+#: ui/chat.slint:387 ui/voice.slint:723
 msgid "Send"
 msgstr "发送"
 
@@ -1373,10 +1423,12 @@ msgid "Not sent"
 msgstr "未发送"
 
 #: ui/chat.slint:412 ui/pages/downloads.slint:1019
-#: ui/pages/downloads.slint:3347
+#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3347
+#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3347
 msgid "Retry"
 msgstr "重试"
 
+#: ui/chat.slint:414 ui/pages/downloads.slint:2363
 #: ui/chat.slint:414 ui/pages/downloads.slint:2363
 msgid "Download"
 msgstr "下载"
@@ -1386,6 +1438,7 @@ msgid "Cancel download"
 msgstr "取消下载"
 
 #: ui/chat.slint:416 ui/pages/downloads.slint:1000
+#: ui/chat.slint:416 ui/pages/downloads.slint:1000
 msgid "Show in Finder"
 msgstr "在访达中显示"
 
@@ -1394,7 +1447,7 @@ msgstr "在访达中显示"
 msgid "{0} of {1}"
 msgstr "{0} / {1}"
 
-#: ui/chat.slint:718 ui/terminal/terminal.slint:1108
+#: ui/chat.slint:718 ui/terminal/terminal.slint:1115
 msgid "Tap to view"
 msgstr "点击查看"
 
@@ -1418,7 +1471,7 @@ msgstr "保存图片"
 msgid "Save Video"
 msgstr "保存视频"
 
-#: ui/chat.slint:843
+#: ui/chat.slint:853
 msgctxt "words of a photo or video"
 msgid "Copy Text"
 msgstr "拷贝文字"
@@ -1594,17 +1647,17 @@ msgstr "消息"
 msgid "Contact"
 msgstr "联系人"
 
-#: ui/compose.slint:145
+#: ui/pages/ai-access.slint:28
 msgctxt "kind of chat"
 msgid "Group"
 msgstr "群组"
 
-#: ui/compose.slint:146
+#: ui/pages/ai-access.slint:31
 msgctxt "kind of chat"
 msgid "Channel"
 msgstr "频道"
 
-#: ui/compose.slint:147
+#: ui/pages/ai-access.slint:34
 msgctxt "kind of chat"
 msgid "Bot"
 msgstr "机器人"
@@ -1743,8 +1796,9 @@ msgid "They need to be on Telegram"
 msgstr "对方需要已注册 Telegram"
 
 #: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406
-#: ui/pages/login.slint:621 ui/pages/login.slint:842
-#: ui/pages/settings.slint:1378
+#: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406 ui/pages/login.slint:621 ui/pages/login.slint:842
+#: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406 ui/pages/login.slint:621 ui/pages/login.slint:842 ui/pages/settings.slint:1378
+#: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406 ui/pages/login.slint:621 ui/pages/login.slint:842 ui/pages/settings.slint:1378
 msgid "Next"
 msgstr "下一步"
 
@@ -1757,7 +1811,7 @@ msgid "Invite {n} person"
 msgid_plural "Invite {n} people"
 msgstr[0] "邀请 {n} 人"
 
-#: ui/compose.slint:229 ui/voice.slint:682
+#: ui/compose.slint:229 ui/voice.slint:763
 msgid "Done"
 msgstr "完成"
 
@@ -1854,6 +1908,7 @@ msgid "Cannot end with an underscore"
 msgstr "不能以下划线结尾"
 
 #: ui/compose.slint:271 ui/pages/downloads.slint:18
+#: ui/compose.slint:271 ui/pages/downloads.slint:18
 msgid "Checking…"
 msgstr "正在检查…"
 
@@ -1887,7 +1942,8 @@ msgid "It can be revoked and made anew in the channel's settings."
 msgstr "可以在频道设置里撤销并重新生成。"
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:1165
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
 msgid "Copied"
 msgstr "已复制"
 
@@ -2031,6 +2087,7 @@ msgstr "没有匹配的聊天"
 msgid "Add a message (optional)"
 msgstr "附上一条消息（可选）"
 
+#: ui/extras.slint:47 ui/pages/ai-access.slint:472
 #: ui/extras.slint:47 ui/pages/ai-access.slint:472
 msgid "Choose chats"
 msgstr "选择聊天"
@@ -2221,7 +2278,7 @@ msgctxt "month"
 msgid "Apr"
 msgstr "4月"
 
-#: ui/format.slint:62
+#: ui/format.slint:77
 msgctxt "month"
 msgid "May"
 msgstr "5月"
@@ -2313,12 +2370,12 @@ msgstr "12月"
 msgid "Yesterday"
 msgstr "昨天"
 
-#: ui/format.slint:99
+#: ui/format.slint:117
 msgctxt "short date"
 msgid "{0} {1}"
 msgstr "{0}{1}日"
 
-#: ui/format.slint:101
+#: ui/format.slint:119 ui/format.slint:124
 msgctxt "short date with year"
 msgid "{0} {1}, {2}"
 msgstr "{2}年{0}{1}日"
@@ -2804,6 +2861,7 @@ msgid "Don't Allow"
 msgstr "不允许"
 
 #: ui/pages/ai-access.slint:890 ui/pages/ai-access.slint:897
+#: ui/pages/ai-access.slint:890 ui/pages/ai-access.slint:897
 msgid "AI access"
 msgstr "AI 访问"
 
@@ -3111,6 +3169,7 @@ msgid "Default port {}."
 msgstr "默认端口 {}。"
 
 #: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2501
+#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2501
 msgid "Add server"
 msgstr "添加服务器"
 
@@ -3118,6 +3177,7 @@ msgstr "添加服务器"
 msgid "Filter this folder"
 msgstr "筛选这个文件夹"
 
+#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2998
 #: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2998
 msgid "Transfers"
 msgstr "传输"
@@ -3413,7 +3473,7 @@ msgstr ""
 msgid "Protocol"
 msgstr "协议"
 
-#: ui/pages/downloads.slint:2613
+#: ui/pages/downloads.slint:2613 ui/voice.slint:818
 msgid "Address"
 msgstr "地址"
 
@@ -3447,7 +3507,7 @@ msgid "Sign in with"
 msgstr "登录方式"
 
 #: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760
-#: ui/pages/settings.slint:1227
+#: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760 ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "密码"
 
@@ -3609,7 +3669,7 @@ msgstr "自动翻译"
 msgid "Translate foreign-language messages into your UI language"
 msgstr "外语消息自动译为界面语言"
 
-#: ui/pages/login.slint:133 ui/workbench/conversation.slint:2163
+#: ui/pages/login.slint:133 ui/workbench/conversation.slint:2189
 msgid "Reading mode"
 msgstr "阅读模式"
 
@@ -3648,6 +3708,7 @@ msgstr "用手机号登录"
 msgid "We'll send a code to your Telegram app"
 msgstr "验证码将发送到你的 Telegram 应用"
 
+#: ui/pages/login.slint:385 ui/pages/profile.slint:354
 #: ui/pages/login.slint:385 ui/pages/profile.slint:354
 msgid "Phone number"
 msgstr "手机号"
@@ -3700,6 +3761,7 @@ msgstr "已重新发送，请查看 Telegram"
 msgid "Didn't get it? Resend"
 msgstr "没收到？重新发送"
 
+#: ui/pages/login.slint:545 ui/pages/settings.slint:1026
 #: ui/pages/login.slint:545 ui/pages/settings.slint:1026
 msgid "Two-step verification"
 msgstr "两步验证"
@@ -3887,11 +3949,12 @@ msgid ""
 "Don't write the password itself."
 msgstr "提示会显示在登录页，任何知道你手机号的人都能看到，不要直接写出密码。"
 
-#: ui/pages/profile.slint:110
+#: ui/toolbox.slint:152
 msgid "Current"
 msgstr "当前"
 
 #. The accounts.
+#: ui/pages/profile.slint:119 ui/toolbox.slint:150
 #: ui/pages/profile.slint:119 ui/toolbox.slint:150
 msgid "Add account"
 msgstr "添加账号"
@@ -3945,6 +4008,7 @@ msgid "Notifications & sounds"
 msgstr "通知与声音"
 
 #: ui/pages/settings.slint:119 ui/pages/settings.slint:1547
+#: ui/pages/settings.slint:119 ui/pages/settings.slint:1547
 msgid "Privacy & security"
 msgstr "隐私与安全"
 
@@ -3997,7 +4061,7 @@ msgid "The update failed"
 msgstr "更新失败"
 
 #: ui/pages/settings.slint:343 ui/pages/settings.slint:359
-#: ui/pages/settings.slint:867
+#: ui/pages/settings.slint:343 ui/pages/settings.slint:359 ui/pages/settings.slint:867
 msgid "Version {0}"
 msgstr "版本 {0}"
 
@@ -4143,7 +4207,7 @@ msgid "Private chats"
 msgstr "私聊"
 
 #: ui/pages/settings.slint:758 ui/pages/settings.slint:769
-#: ui/pages/settings.slint:1027
+#: ui/pages/settings.slint:758 ui/pages/settings.slint:769 ui/pages/settings.slint:1027
 msgid "On"
 msgstr "已开启"
 
@@ -4357,12 +4421,12 @@ msgstr "退出 FinchGram"
 msgid "New message"
 msgstr "新消息"
 
-#: ui/telegram.slint:933
+#: ui/telegram.slint:946
 msgid "Deleted Account"
 msgstr "已注销账号"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:936
+#: ui/telegram.slint:949
 msgctxt "list separator"
 msgid ", "
 msgstr "、"
@@ -4384,67 +4448,67 @@ msgctxt "terminal"
 msgid "new"
 msgstr "新建"
 
-#: ui/terminal/terminal.slint:1086 ui/terminal/terminal.slint:1095
+#: ui/terminal/terminal.slint:1086 ui/terminal/terminal.slint:1102
 msgid "(edited)"
 msgstr "（已编辑）"
 
-#: ui/terminal/terminal.slint:1373
+#: ui/terminal/terminal.slint:1380
 msgid "sponsored"
 msgstr "赞助"
 
-#: ui/terminal/terminal.slint:1426 ui/terminal/terminal.slint:1591
+#: ui/terminal/terminal.slint:1433 ui/terminal/terminal.slint:1598
 msgid "search"
 msgstr "搜索"
 
-#: ui/terminal/terminal.slint:1604
+#: ui/terminal/terminal.slint:1611
 msgid "chat info"
 msgstr "聊天资料"
 
-#: ui/terminal/terminal.slint:1971
+#: ui/terminal/terminal.slint:1978
 msgid "Mute or unmute this chat"
 msgstr "静音或取消静音当前聊天"
 
-#: ui/terminal/terminal.slint:1972
+#: ui/terminal/terminal.slint:1979
 msgid "Pin or unpin this chat"
 msgstr "置顶或取消置顶当前聊天"
 
-#: ui/terminal/terminal.slint:1973
+#: ui/terminal/terminal.slint:1980
 msgid "Mark every chat in this folder as read"
 msgstr "把这个文件夹里的聊天全部标为已读"
 
-#: ui/terminal/terminal.slint:1974
+#: ui/terminal/terminal.slint:1981
 msgid "Copy this chat's ID"
 msgstr "复制当前聊天的 ID"
 
-#: ui/terminal/terminal.slint:1975
+#: ui/terminal/terminal.slint:1982
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "搜索聊天、联系人、@用户名和消息"
 
-#: ui/terminal/terminal.slint:2227
+#: ui/terminal/terminal.slint:2242
 msgid "unmute"
 msgstr "取消静音"
 
-#: ui/terminal/terminal.slint:2227
+#: ui/terminal/terminal.slint:2242
 msgid "mute"
 msgstr "静音"
 
-#: ui/terminal/terminal.slint:2326
+#: ui/terminal/terminal.slint:2341
 msgid "Write a message, or / for commands"
 msgstr "输入消息，或 / 调出命令"
 
-#: ui/terminal/terminal.slint:2442
+#: ui/terminal/terminal.slint:2457
 msgid "save"
 msgstr "保存"
 
-#: ui/terminal/terminal.slint:2385 ui/terminal/terminal.slint:2442
+#: ui/terminal/terminal.slint:2400 ui/terminal/terminal.slint:2457
 msgid "send"
 msgstr "发送"
 
-#: ui/terminal/terminal.slint:2541
+#: ui/terminal/terminal.slint:2556
 msgid "connected"
 msgstr "已连接"
 
-#: ui/terminal/terminal.slint:2566
+#: ui/terminal/terminal.slint:2581
 msgctxt "terminal"
 msgid "cmd"
 msgstr "命令"
@@ -4663,7 +4727,7 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ 切换 · ↑/↓ 音量 · space 播放 · esc 关闭"
 
-#: ui/toolbox.slint:133 ui/voice.slint:646
+#: ui/toolbox.slint:133 ui/voice.slint:714
 msgid "Voice input"
 msgstr "语音输入"
 
@@ -4672,177 +4736,109 @@ msgid "Speak, and the words go into the composer, through your own OpenAI key"
 msgstr "说话，文字就进到输入框里；用的是你自己的 OpenAI 密钥"
 
 #. The sparkle's tip.
-#: ui/voice.slint:648
+#: ui/voice.slint:716
 msgid "Finish voice input"
 msgstr "结束语音输入"
 
 #. The sparkle's tip.
-#: ui/voice.slint:648
+#: ui/voice.slint:716
 msgid "Voice input: click, or hold while you speak"
 msgstr "语音输入：点一下，或者按住说话"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:651
+#: ui/voice.slint:719
 msgid "Record voice message"
 msgstr "录制语音消息"
 
-#: ui/voice.slint:652
+#: ui/voice.slint:720
 msgid "Release to send · Drag left to cancel"
 msgstr "松开发送 · 向左拖动取消"
 
-#: ui/voice.slint:653
+#: ui/voice.slint:721
 msgid "Release to cancel"
 msgstr "松开取消"
 
-#: ui/voice.slint:654
+#: ui/voice.slint:722
 msgid "Hold to record. Release to send."
 msgstr "按住录音，松开发送。"
 
-#: ui/voice.slint:656
+#: ui/voice.slint:724
 msgid "Stop"
 msgstr "停止"
 
-#: ui/voice.slint:658
+#: ui/voice.slint:726
 msgid "Transcribe"
 msgstr "转文字"
 
-#: ui/voice.slint:660
+#: ui/voice.slint:739
 msgid "Couldn't download"
 msgstr "下载失败"
 
-#: ui/voice.slint:662
+#: ui/voice.slint:741
 msgid "Loading…"
 msgstr "加载中…"
 
-#: ui/voice.slint:663
+#: ui/voice.slint:742
 msgid "Microphone access is off."
 msgstr "麦克风权限已关闭。"
 
-#: ui/voice.slint:673
-msgid "Connecting to OpenAI…"
-msgstr "正在连接 OpenAI…"
-
-#: ui/voice.slint:673
+#: ui/voice.slint:752
 msgid "Listening · {0}"
 msgstr "正在听 · {0}"
 
-#: ui/voice.slint:675
+#: ui/voice.slint:754
 msgid "Finishing…"
 msgstr "正在收尾…"
 
-#: ui/voice.slint:676
+#: ui/voice.slint:755
 msgid "Tidying the words…"
 msgstr "正在整理文字…"
 
-#: ui/voice.slint:677
+#: ui/voice.slint:756
 msgid "Voice input stopped"
 msgstr "语音输入已停止"
 
 #. In the words' place before any came.
-#: ui/voice.slint:680
+#: ui/voice.slint:759
 msgid "Speak now"
 msgstr "请说话"
 
-#: ui/voice.slint:681
+#: ui/voice.slint:762
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ 完成 · Esc 取消"
 
-#: ui/voice.slint:686
-msgid "Voice input needs your own OpenAI API key."
-msgstr "语音输入需要你自己的 OpenAI API 密钥。"
-
-#: ui/voice.slint:687
+#: ui/voice.slint:768
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram 不能使用麦克风。请在“系统设置 › 隐私与安全性 › 麦克风”里允许。"
 
-#: ui/voice.slint:688
+#: ui/voice.slint:769
 msgid "No microphone could be opened: {0}"
 msgstr "无法打开麦克风：{0}"
 
-#: ui/voice.slint:690
-msgid "OpenAI says the key is out of credit or used too fast: {0}"
-msgstr "OpenAI 说这个密钥没有余额了，或者用得太频繁：{0}"
-
-#: ui/voice.slint:691
-msgid "Could not reach OpenAI: {0}"
-msgstr "无法连接 OpenAI：{0}"
-
-#: ui/voice.slint:692
+#: ui/voice.slint:774
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "什么也没听到。“系统设置 › 声音”里选的麦克风对吗？"
 
-#: ui/voice.slint:693
-msgid "OpenAI said: {0}"
-msgstr "OpenAI 说：{0}"
-
-#: ui/voice.slint:697
+#: ui/voice.slint:779
 msgid "Add key"
 msgstr "添加密钥"
 
-#: ui/voice.slint:698
+#: ui/voice.slint:780
 msgid "Change key"
 msgstr "更换密钥"
 
 #. The toolbox's Voice input panel.
-#: ui/voice.slint:704
+#: ui/voice.slint:787
 msgid "Use voice input"
 msgstr "使用语音输入"
 
-#: ui/voice.slint:705
-msgid "Puts the sparkle in every chat's composer; when off, nothing goes to OpenAI"
-msgstr "在每个聊天的输入框里放上 ✦；关闭时，什么都不会发给 OpenAI"
-
-#: ui/voice.slint:706
-msgid "OpenAI API key"
-msgstr "OpenAI API 密钥"
-
-#: ui/voice.slint:707
-msgid "Your own key: OpenAI bills it for what is transcribed. It is kept sealed in FinchGram's database on this Mac."
-msgstr "你自己的密钥：转写的费用由 OpenAI 记在它上面。密钥封起来存在这台 Mac 上 FinchGram 的数据库里。"
-
-#: ui/voice.slint:711
-msgid "Get a key at platform.openai.com"
-msgstr "在 platform.openai.com 获取密钥"
-
-#: ui/voice.slint:713
-msgid "That is not an OpenAI key: they start with sk-."
-msgstr "这不是 OpenAI 的密钥：它们都以 sk- 开头。"
-
-#: ui/voice.slint:714
-msgid "Checking the key with OpenAI…"
-msgstr "正在向 OpenAI 检查密钥…"
-
-#: ui/voice.slint:715
-msgid "OpenAI accepts the key."
-msgstr "OpenAI 接受这个密钥。"
-
-#: ui/voice.slint:689 ui/voice.slint:716
-msgid "OpenAI refused the key."
-msgstr "OpenAI 拒绝了这个密钥。"
-
-#: ui/voice.slint:717
-msgid "Could not check the key: {0}"
-msgstr "无法检查密钥：{0}"
-
-#: ui/voice.slint:726
-msgid "Languages you speak"
-msgstr "你说的语言"
-
-#: ui/voice.slint:727
-msgid "Hints for OpenAI. With none chosen, it finds the language as you speak; sentences that mix languages work either way."
-msgstr "给 OpenAI 的提示。一个都不选，它会边听边判断语言；几种语言混着说，怎样都行。"
-
-#: ui/voice.slint:728
+#: ui/voice.slint:856
 msgid "Tidy the words"
 msgstr "整理文字"
 
-#: ui/voice.slint:729
+#: ui/voice.slint:857
 msgid "A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."
 msgstr "一个小模型去掉“嗯”“呃”这类口头禅和重复的词，并加上标点；它从不翻译。"
-
-#: ui/voice.slint:731
-msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to OpenAI under your key and nothing else does; OpenAI charges about $1 for an hour of speech. FinchGram keeps no recording."
-msgstr "在聊天的输入框里按一下 ✦（终端主题里输入 /voice），然后说话；再按一下，或者按 ⏎，文字就进到输入框里，由你来发送。你的声音以你的密钥发给 OpenAI，别的什么都不发；OpenAI 每小时语音大约收 1 美元。FinchGram 不保留任何录音。"
 
 #: ui/workbench/conversation.slint:309 ui/workbench/conversation.slint:374
 msgid "Close other tabs"
@@ -4856,39 +4852,39 @@ msgstr "关闭标签"
 msgid "Close all tabs"
 msgstr "关闭所有标签"
 
-#: ui/workbench/conversation.slint:1188
+#: ui/workbench/conversation.slint:1190
 msgid "Sponsored"
 msgstr "赞助消息"
 
-#: ui/workbench/conversation.slint:1195
+#: ui/workbench/conversation.slint:1197
 msgid "Premium users can turn these off"
 msgstr "Premium 用户可关闭"
 
-#: ui/workbench/conversation.slint:1235
+#: ui/workbench/conversation.slint:1237
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
 msgstr "官方赞助消息 · FinchGram 照常显示，不做屏蔽"
 
-#: ui/workbench/conversation.slint:2326
+#: ui/workbench/conversation.slint:2352
 msgid "Send to {0}"
 msgstr "发送到 {0}"
 
-#: ui/workbench/conversation.slint:2711
+#: ui/workbench/conversation.slint:2737
 msgid "Esc to cancel"
 msgstr "Esc 取消"
 
-#: ui/workbench/conversation.slint:2721
+#: ui/workbench/conversation.slint:2747
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ 保存 · ⇧⏎ 换行"
 
-#: ui/workbench/conversation.slint:2721
+#: ui/workbench/conversation.slint:2747
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ 保存 · ⏎ 换行"
 
-#: ui/workbench/conversation.slint:2722
+#: ui/workbench/conversation.slint:2748
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ 发送 · ⇧⏎ 换行"
 
-#: ui/workbench/conversation.slint:2722
+#: ui/workbench/conversation.slint:2748
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ 发送 · ⏎ 换行"
 
@@ -4903,3 +4899,227 @@ msgstr "频道默认以阅读模式打开：长文排版，方便阅读。"
 #: ui/workbench/workbench.slint:373
 msgid "Manage accounts"
 msgstr "管理账号"
+
+#: ui/voice.slint:727 ui/voice.slint:735
+msgid "Transcribing…"
+msgstr "正在转文字…"
+
+#: ui/voice.slint:731
+msgid "Telegram transcribes voice messages with Premium, or a few times a week without it. Your own speech service can do it too: Toolbox → AI → Voice input."
+msgstr "Telegram 的语音转文字要 Premium，没有 Premium 每周只能用几次。你自己的语音识别服务也能转：百宝箱 → AI → 语音输入。"
+
+#: ui/voice.slint:733
+msgid "Too long for Telegram to transcribe."
+msgstr "太长了，Telegram 转不了。"
+
+#: ui/voice.slint:734
+msgid "Could not transcribe it: {0}"
+msgstr "没能转成文字：{0}"
+
+#: ui/voice.slint:752
+msgid "Connecting to {0}…"
+msgstr "正在连接 {0}…"
+
+#: ui/voice.slint:759
+msgid "Speak now: the words come when you are done"
+msgstr "请说话，说完后出字"
+
+#: ui/voice.slint:761
+msgid "Any language"
+msgstr "任意语言"
+
+#: ui/voice.slint:767
+msgid "Voice input needs your API key for {0}."
+msgstr "语音输入需要你的 {0} API 密钥。"
+
+#: ui/voice.slint:770 ui/voice.slint:844
+msgid "{0} refused the key."
+msgstr "{0} 拒绝了这个密钥。"
+
+#: ui/voice.slint:771
+msgid "{0} says the key is out of credit or used too fast: {1}"
+msgstr "{0} 说这个密钥余额不足，或用得太快：{1}"
+
+#: ui/voice.slint:772
+msgid "Could not reach {0}: {1}"
+msgstr "无法连接 {0}：{1}"
+
+#: ui/voice.slint:773
+msgid "The speech service's address in Voice input is not one FinchGram can use."
+msgstr "语音输入里填的语音识别地址，FinchGram 用不了。"
+
+#: ui/voice.slint:775
+msgid "{0} said: {1}"
+msgstr "{0} 说：{1}"
+
+#: ui/voice.slint:781
+msgid "Change address"
+msgstr "更改地址"
+
+#: ui/voice.slint:788
+msgid "Puts the sparkle in every chat's composer; when off, nothing goes to any service"
+msgstr "在每个聊天的输入框里放上 ✦；关闭时，什么都不会发给任何服务"
+
+#: ui/voice.slint:789
+msgid "Main language"
+msgstr "主要语言"
+
+#: ui/voice.slint:791
+msgid "The language you mostly speak; words of other languages mixed in are kept as you say them. Each main language has its own services and keys. While you speak, a click on the language in the strip takes the next one."
+msgstr "你平时主要说的语言；夹在里面的其他语言，照你说的原样保留。每种主要语言有自己的一套服务和密钥。说话时点一下语音条上的语言，就换到下一种。"
+
+#: ui/voice.slint:794
+msgid "Remove {0} and its keys"
+msgstr "移除“{0}”及其密钥"
+
+#: ui/voice.slint:795
+msgid "Speech recognition · {0}"
+msgstr "语音识别 · {0}"
+
+#: ui/voice.slint:796
+msgid "Tidying · {0}"
+msgstr "整理文字 · {0}"
+
+#: ui/voice.slint:797
+msgid "API format"
+msgstr "接口格式"
+
+#: ui/voice.slint:801
+msgid "OpenAI-compatible upload"
+msgstr "OpenAI 兼容上传"
+
+#: ui/voice.slint:802
+msgid "Qwen (Alibaba Cloud)"
+msgstr "通义千问（阿里云）"
+
+#: ui/voice.slint:803
+msgid "Doubao (Volcengine)"
+msgstr "豆包（火山引擎）"
+
+#: ui/voice.slint:810
+msgid "Words show as you speak. OpenAI, or a relay that passes its realtime API through."
+msgstr "边说边出字。OpenAI 自己的，或转发它实时接口的中转站。"
+
+#: ui/voice.slint:811
+msgid "Words come when you are done. Most services and relays speak it: OpenAI, Groq, SiliconFlow, a Whisper server of your own."
+msgstr "说完后出字。大多数服务和中转站都支持：OpenAI、Groq、硅基流动、你自己的 Whisper 服务器。"
+
+#: ui/voice.slint:812
+msgid "Words show as you speak. A key from Alibaba Cloud Model Studio; strong in Chinese and its dialects."
+msgstr "边说边出字。密钥在阿里云百炼申请；中文和方言识别很强。"
+
+#: ui/voice.slint:813
+msgid "Doubao's Seed-ASR, strong in Chinese: words show as you speak Chinese or English. A key from Volcengine's speech console."
+msgstr "豆包的 Seed-ASR，中文很强：说中文或英文时边说边出字。密钥在火山引擎的豆包语音控制台申请。"
+
+#: ui/voice.slint:814
+msgid "Claude's Messages API: Anthropic, and the relays and vendors that speak it."
+msgstr "Claude 的 Messages API：Anthropic，以及支持这种格式的中转站和厂商。"
+
+#: ui/voice.slint:815
+msgid "Google's Gemini API."
+msgstr "Google 的 Gemini API。"
+
+#: ui/voice.slint:816
+msgid "Chat Completions: OpenAI, and nearly everyone else: DeepSeek, Qwen, Kimi, OpenRouter, Ollama, relays."
+msgstr "Chat Completions：OpenAI，以及几乎所有其他厂商：DeepSeek、通义千问、Kimi、OpenRouter、Ollama、各种中转站。"
+
+#: ui/voice.slint:819
+msgid "Empty for the vendor's own. For a relay or a server of your own, its base URL."
+msgstr "留空就用厂商自己的。用中转站或你自己的服务器时，填它的 base URL。"
+
+#: ui/voice.slint:821
+msgid "That is not an address: it starts with https://"
+msgstr "这不是地址：地址以 https:// 开头"
+
+#: ui/voice.slint:822
+msgid "Leave the name and password out of the address."
+msgstr "地址里不要带用户名和密码。"
+
+#: ui/voice.slint:823
+msgid "Plain http goes only to this Mac or the local network: use https."
+msgstr "明文 http 只能连本机或局域网：请用 https。"
+
+#: ui/voice.slint:826
+msgid "Model"
+msgstr "模型"
+
+#: ui/voice.slint:828
+msgid "For Doubao, the resource ID of what you bought."
+msgstr "豆包这里填你所购资源的 ID。"
+
+#: ui/voice.slint:828
+msgid "Empty for the format's own."
+msgstr "留空就用这种格式的默认模型。"
+
+#: ui/voice.slint:830
+msgid "Words to know"
+msgstr "热词"
+
+#: ui/voice.slint:831
+msgid "Names and terms you often say, separated by commas: the service listens for them, so they come out right."
+msgstr "你常说的人名和术语，用逗号隔开：识别服务会特别留意它们，让它们写对。"
+
+#: ui/voice.slint:832
+msgid "Names, products, terms"
+msgstr "人名、产品名、术语"
+
+#: ui/voice.slint:833
+msgid "API key"
+msgstr "API 密钥"
+
+#: ui/voice.slint:834
+msgid "Your own key: the service bills it for what it does. It is kept sealed in FinchGram's database on this Mac."
+msgstr "你自己的密钥：服务的费用记在它上面。密钥封起来存在这台 Mac 上 FinchGram 的数据库里。"
+
+#: ui/voice.slint:835
+msgid "Paste the key"
+msgstr "粘贴密钥"
+
+#: ui/voice.slint:838
+msgid "Get a key from {0}"
+msgstr "到 {0} 获取密钥"
+
+#: ui/voice.slint:841
+msgid "That does not look like an API key."
+msgstr "这看起来不像 API 密钥。"
+
+#: ui/voice.slint:842
+msgid "Checking with {0}…"
+msgstr "正在向 {0} 检查…"
+
+#: ui/voice.slint:843
+msgid "{0} answers and takes the key."
+msgstr "{0} 有响应，密钥可用。"
+
+#: ui/voice.slint:843
+msgid "{0} answers."
+msgstr "{0} 有响应。"
+
+#: ui/voice.slint:845
+msgid "Could not check: {0}"
+msgstr "无法检查：{0}"
+
+#: ui/voice.slint:854
+msgid "Use the speech recognition's key"
+msgstr "使用和语音识别相同的 API 密钥"
+
+#: ui/voice.slint:855
+msgid "One key for both, when they are the same vendor or relay."
+msgstr "两者是同一家厂商或同一个中转站时，一个密钥就够了。"
+
+#: ui/voice.slint:858
+msgid "Voice messages"
+msgstr "语音消息"
+
+#: ui/voice.slint:859
+msgid "Transcribe voice messages with your own service"
+msgstr "用你自己的服务把语音消息转文字"
+
+#: ui/voice.slint:861
+msgid "Transcribe under a voice message asks Telegram first, which needs Premium or one of its few free tries a week. When Telegram cannot, this sends the message to your speech service: someone else's voice, to a service of your choosing. Off unless you turn it on."
+msgstr "语音消息下面的“转文字”先请 Telegram 来转，这需要 Premium，或每周仅有的几次免费机会。Telegram 转不了时，打开这个开关会把这条消息发给你的语音识别服务：也就是把别人的声音发给你选的服务。默认关闭。"
+
+#: ui/voice.slint:864
+msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the speech service you choose below, under your own key, and nothing else does. FinchGram keeps no recording."
+msgstr "在聊天的输入框里按一下 ✦（终端主题里输入 /voice），然后说话；再按一下，或者按 ⏎，文字就进到输入框里，由你来发送。你的声音以你自己的密钥发给你在下面选的语音识别服务，别的什么都不发。FinchGram 不保留任何录音。"

@@ -61,9 +61,11 @@ pub struct Settings {
     pub voice_input: VoiceInput,
 }
 
-/// Voice input's own settings. The words go through OpenAI with the user's own key, the first of
-/// the five steps of docs/voice-input.md; the models are named here so that a change of OpenAI's
-/// names needs no release.
+/// Voice input's own settings (src/speech/, docs/voice-input.md): the switch, the main language
+/// spoken now, and for each main language the user set up, the services that hear it and tidy it,
+/// each named by its API's format, its address and its model, so that any vendor or relay that
+/// speaks one of the formats can be used. The keys are credentials and live in the database
+/// (`voice_input.<language>.speech` and `….tidy`), never here.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct VoiceInput {
@@ -71,37 +73,152 @@ pub struct VoiceInput {
     /// toolbox. A file written before the switch existed (0.7.0) has none, and voice input is on
     /// there when a key was kept (src/speech/ decides at the start).
     pub enabled: Option<bool>,
-    /// The languages the user speaks, as OpenAI's hints name them ("en", "zh-cn", "zh-tw", "ja"),
-    /// in the order of the UI's language list; none lets the model find out by itself. Sentences
-    /// that mix them are fine either way.
-    pub languages: Vec<String>,
-    /// After the transcript, a small text model takes out the filler words, the repeats and the
-    /// false starts and sets the punctuation; off, the words come as heard.
-    pub tidy: bool,
-    /// The speech model: one of OpenAI's realtime transcription models.
+    /// The main language dictated now, one of the profiles' ("auto", "en", "zh-cn", …).
+    pub language: String,
+    /// A voice message the user asks to transcribe goes to their own speech service when
+    /// Telegram's own transcription cannot be had: that hands Telegram's content to a service of
+    /// the user's choosing (docs/voice-input.md), so it is off until the user turns it on.
+    pub transcribe_messages: bool,
+    /// 0.7.0's and 0.7.1's settings, read once to make the first profile and never written again:
+    /// the languages spoken (hints), whether the words were tidied, and the two OpenAI models.
+    #[serde(skip_serializing)]
+    pub languages: Option<Vec<String>>,
+    #[serde(skip_serializing)]
+    pub tidy: Option<bool>,
+    #[serde(skip_serializing)]
+    pub model: Option<String>,
+    #[serde(skip_serializing)]
+    pub tidy_model: Option<String>,
+    /// One per main language the user set up, in the order they were added; never none once
+    /// read. Missing from a file it is none (not the default's one), which is how a file of 0.7.x
+    /// is known.
+    #[serde(default)]
+    pub profiles: Vec<VoiceProfile>,
+}
+
+/// How one main language is heard and tidied. An empty address or model is the format's own
+/// (src/speech/service.rs names them), so that a change of format brings its defaults.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct VoiceProfile {
+    /// "auto" (any language, found as the user speaks) or one of the UI's languages by the codes
+    /// speech services take ("en", "zh-cn", "zh-tw", "ja", …). Words of other languages mixed in
+    /// are kept as spoken, whichever it is.
+    pub language: String,
+    /// The speech service: its API's format ("openai-realtime", "openai-transcriptions",
+    /// "qwen-realtime", "doubao"), its address, its model.
+    pub format: String,
+    pub url: String,
     pub model: String,
-    /// The text model that tidies.
+    /// Names and terms the user says often, separated by commas or lines: each speech service
+    /// takes them as hints (OpenAI's keywords, Qwen's corpus, Doubao's hot words, an upload's
+    /// prompt), so that they are heard right.
+    pub keywords: String,
+    /// OpenAI's live model only: how long it waits to be sure of a word, "minimal" … "xhigh";
+    /// empty for FinchGram's own choice. Only in this file.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub delay: String,
+    /// After the transcript, a text model takes out the filler words, the repeats and the false
+    /// starts and sets the punctuation; off, the words come as heard.
+    pub tidy: bool,
+    /// The text model's API format ("openai", "anthropic", "gemini"), address and model.
+    pub tidy_format: String,
+    pub tidy_url: String,
     pub tidy_model: String,
+    /// The text model takes the speech service's key: one key for the two.
+    pub tidy_same_key: bool,
+}
+
+impl Default for VoiceProfile {
+    fn default() -> Self {
+        VoiceProfile {
+            language: "auto".into(),
+            format: "openai-realtime".into(),
+            url: String::new(),
+            model: String::new(),
+            keywords: String::new(),
+            delay: String::new(),
+            tidy: true,
+            tidy_format: "openai".into(),
+            tidy_url: String::new(),
+            tidy_model: String::new(),
+            tidy_same_key: true,
+        }
+    }
 }
 
 impl Default for VoiceInput {
     fn default() -> Self {
-        VoiceInput { enabled: None, languages: Vec::new(), tidy: true, model: "gpt-live-transcribe".to_string(), tidy_model: "gpt-5-nano".to_string() }
+        VoiceInput {
+            enabled: None,
+            language: "auto".into(),
+            transcribe_messages: false,
+            languages: None,
+            tidy: None,
+            model: None,
+            tidy_model: None,
+            profiles: vec![VoiceProfile::default()],
+        }
     }
 }
 
 impl VoiceInput {
-    /// A model name emptied by hand is the default again.
+    /// The profile used now: the current language's.
+    pub fn current(&self) -> &VoiceProfile {
+        self.profiles.iter().find(|profile| profile.language == self.language).or(self.profiles.first()).expect("a profile, kept by sanitized")
+    }
+
+    pub fn current_mut(&mut self) -> &mut VoiceProfile {
+        let index = self.profiles.iter().position(|profile| profile.language == self.language).unwrap_or(0);
+        &mut self.profiles[index]
+    }
+
+    /// A file of 0.7.x becomes the first profile; what makes no sense (edited by hand) is put
+    /// right: unknown languages and formats, a language twice, no profile at all.
     fn sanitized(mut self) -> VoiceInput {
-        let default = VoiceInput::default();
-        if self.model.trim().is_empty() {
-            self.model = default.model;
+        let legacy = (self.languages.take(), self.tidy.take(), self.model.take(), self.tidy_model.take());
+        if self.profiles.is_empty() && legacy != (None, None, None, None) {
+            let (languages, tidy, model, tidy_model) = legacy;
+            // One language chosen is the main one; several, or none, are any language.
+            let language = match languages.as_deref() {
+                Some([only]) => only.trim().to_string(),
+                _ => "auto".to_string(),
+            };
+            // The models of 0.7.x's defaults are the formats' own now.
+            let own = |name: Option<String>, default: &str| name.map(|name| name.trim().to_string()).filter(|name| !name.is_empty() && name != default).unwrap_or_default();
+            self.profiles.push(VoiceProfile {
+                language: language.clone(),
+                model: own(model, "gpt-live-transcribe"),
+                tidy: tidy.unwrap_or(true),
+                tidy_model: own(tidy_model, "gpt-5-nano"),
+                ..VoiceProfile::default()
+            });
+            self.language = language;
         }
-        if self.tidy_model.trim().is_empty() {
-            self.tidy_model = default.tidy_model;
+        let mut seen = Vec::new();
+        self.profiles.retain(|profile| {
+            let known = profile.language == "auto" || crate::speech::is_language(&profile.language);
+            let first = !seen.contains(&profile.language);
+            seen.push(profile.language.clone());
+            known && first
+        });
+        for profile in &mut self.profiles {
+            if !crate::speech::service::SPEECH_FORMATS.contains(&profile.format.as_str()) {
+                profile.format = VoiceProfile::default().format;
+            }
+            if !crate::speech::service::TIDY_FORMATS.contains(&profile.tidy_format.as_str()) {
+                profile.tidy_format = VoiceProfile::default().tidy_format;
+            }
+            for text in [&mut profile.url, &mut profile.model, &mut profile.keywords, &mut profile.delay, &mut profile.tidy_url, &mut profile.tidy_model] {
+                *text = text.trim().to_string();
+            }
         }
-        self.languages.retain(|code| !code.trim().is_empty());
-        self.languages.dedup();
+        if self.profiles.is_empty() {
+            self.profiles.push(VoiceProfile::default());
+        }
+        if !self.profiles.iter().any(|profile| profile.language == self.language) {
+            self.language = self.profiles[0].language.clone();
+        }
         self
     }
 }
@@ -544,19 +661,77 @@ mod tests {
     }
 
     #[test]
-    fn voice_input_tidies_by_default_and_keeps_its_models() {
+    fn voice_input_starts_with_one_profile_for_any_language_through_openai() {
         let read: Settings = toml::from_str("theme = \"terminal\"\n").expect("read");
         assert_eq!(read.voice_input, VoiceInput::default());
-        assert!(read.voice_input.tidy && read.voice_input.languages.is_empty());
-        assert_eq!((read.voice_input.model.as_str(), read.voice_input.tidy_model.as_str()), ("gpt-live-transcribe", "gpt-5-nano"));
-        let settings = Settings { voice_input: VoiceInput { languages: vec!["zh-cn".into(), "en".into()], tidy: false, ..VoiceInput::default() }, ..Settings::default() };
+        let profile = read.voice_input.current();
+        assert_eq!((profile.language.as_str(), profile.format.as_str(), profile.tidy_format.as_str()), ("auto", "openai-realtime", "openai"));
+        assert!(profile.tidy && profile.tidy_same_key && profile.url.is_empty() && profile.model.is_empty());
+        assert!(!read.voice_input.transcribe_messages);
+        // Two profiles, the second in use, written and read back.
+        let mut voice_input = VoiceInput::default();
+        voice_input.profiles.push(VoiceProfile {
+            language: "zh-cn".into(),
+            format: "doubao".into(),
+            tidy_format: "anthropic".into(),
+            tidy_same_key: false,
+            ..VoiceProfile::default()
+        });
+        voice_input.language = "zh-cn".into();
+        assert_eq!(voice_input.current().format, "doubao");
+        voice_input.current_mut().model = "volc.seedasr.sauc.concurrent".into();
+        let settings = Settings { voice_input, ..Settings::default() };
         let text = toml::to_string_pretty(&settings).expect("TOML");
-        assert!(text.contains("[voice_input]\nlanguages = [\n    \"zh-cn\",\n    \"en\",\n]\ntidy = false\nmodel = \"gpt-live-transcribe\"\n"), "{text}");
+        assert!(text.contains("[[voice_input.profiles]]\nlanguage = \"zh-cn\"\nformat = \"doubao\"\nurl = \"\"\nmodel = \"volc.seedasr.sauc.concurrent\"\nkeywords = \"\"\n"), "{text}");
+        // The live model's delay is written only when set by hand.
+        assert!(!text.contains("delay"), "{text}");
         let read: Settings = toml::from_str(&text).expect("read back");
         assert_eq!(read.voice_input, settings.voice_input);
-        // Names emptied by hand come back as the defaults.
-        let odd = VoiceInput { enabled: None, model: " ".into(), tidy_model: String::new(), languages: vec!["ja".into(), "".into(), "ja".into()], tidy: true }.sanitized();
-        assert_eq!(odd, VoiceInput { languages: vec!["ja".into()], ..VoiceInput::default() });
+        assert_eq!(read.voice_input.clone().sanitized(), settings.voice_input);
+    }
+
+    #[test]
+    fn a_voice_input_file_of_0_7_becomes_the_first_profile() {
+        // One language chosen is the main one; models other than 0.7's defaults are kept.
+        let read: Settings = toml::from_str(
+            "[voice_input]\nenabled = true\nlanguages = [\"zh-cn\"]\ntidy = false\nmodel = \"gpt-live-transcribe\"\ntidy_model = \"gpt-5-mini\"\n",
+        )
+        .expect("read");
+        let voice_input = read.voice_input.sanitized();
+        assert_eq!((voice_input.enabled, voice_input.language.as_str()), (Some(true), "zh-cn"));
+        assert_eq!(
+            voice_input.profiles,
+            vec![VoiceProfile { language: "zh-cn".into(), tidy: false, tidy_model: "gpt-5-mini".into(), ..VoiceProfile::default() }]
+        );
+        // Several languages, as 0.7 let the user choose them: any language, through OpenAI as before.
+        let read: Settings = toml::from_str(
+            "[voice_input]\nenabled = true\nlanguages = [\n    \"en\",\n    \"zh-cn\",\n    \"zh-tw\",\n]\ntidy = true\nmodel = \"gpt-live-transcribe\"\ntidy_model = \"gpt-5-nano\"\n",
+        )
+        .expect("read");
+        let voice_input = read.voice_input.sanitized();
+        assert_eq!(voice_input.language, "auto");
+        assert_eq!(voice_input.profiles, vec![VoiceProfile::default()]);
+        assert_eq!((voice_input.languages.clone(), voice_input.model.clone()), (None, None));
+        // Written again, none of 0.7's keys is left.
+        let text = toml::to_string_pretty(&Settings { voice_input, ..Settings::default() }).expect("TOML");
+        let section = text.split("[voice_input]").nth(1).unwrap_or("");
+        assert!(!section.contains("languages") && !section.contains("gpt-live-transcribe") && !section.contains("gpt-5-nano"), "{text}");
+    }
+
+    #[test]
+    fn voice_profiles_edited_by_hand_are_put_right() {
+        let read: Settings = toml::from_str(
+            "[voice_input]\nlanguage = \"xx\"\n\n[[voice_input.profiles]]\nlanguage = \"ja\"\nformat = \"whisper\"\ntidy_format = \"cohere\"\nurl = \" https://example.com/v1 \"\n\n[[voice_input.profiles]]\nlanguage = \"ja\"\nformat = \"doubao\"\n\n[[voice_input.profiles]]\nlanguage = \"klingon\"\n",
+        )
+        .expect("read");
+        let voice_input = read.voice_input.sanitized();
+        assert_eq!(voice_input.profiles.len(), 1);
+        let profile = &voice_input.profiles[0];
+        assert_eq!((profile.format.as_str(), profile.tidy_format.as_str(), profile.url.as_str()), ("openai-realtime", "openai", "https://example.com/v1"));
+        assert_eq!(voice_input.language, "ja");
+        // No profile at all is one for any language.
+        let read: Settings = toml::from_str("[voice_input]\nenabled = false\n").expect("read");
+        assert_eq!(read.voice_input.sanitized().profiles, vec![VoiceProfile::default()]);
     }
 
     #[test]

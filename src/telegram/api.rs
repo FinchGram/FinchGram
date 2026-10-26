@@ -1860,7 +1860,37 @@ pub struct VoiceNote {
     pub waveform: String,
     #[serde(default)]
     pub mime_type: String,
+    /// Telegram's transcription of it, once asked for (recognizeSpeech, src/telegram/voice.rs): on
+    /// its way, done, or failed; none until then.
+    #[serde(default)]
+    pub speech_recognition_result: Option<SpeechRecognitionResult>,
     pub voice: File,
+}
+
+/// Telegram's own transcription of a voice message: Premium's, or one of the few a week without
+/// it, or a group's boosted for it.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum SpeechRecognitionResult {
+    #[serde(rename = "speechRecognitionResultPending")]
+    Pending {
+        #[serde(default)]
+        partial_text: String,
+    },
+    #[serde(rename = "speechRecognitionResultText")]
+    Text { text: String },
+    #[serde(rename = "speechRecognitionResultError")]
+    Error { error: SpeechError },
+    #[serde(other)]
+    Other,
+}
+
+/// Why Telegram could not transcribe it ("MSG_VOICE_TOO_LONG", …).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct SpeechError {
+    pub code: i32,
+    #[serde(default)]
+    pub message: String,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]

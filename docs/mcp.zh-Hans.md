@@ -11,7 +11,8 @@ AI 助手的应用（Claude Desktop、Claude Code、Cursor，凡是会说 Model 
 FinchGram、用用户自己的账号，读用户的聊天并在其中行动。这是 FinchGram 做了、而 Telegram 官方应用没有的唯一一件事。
 FinchGram 自身不把 Telegram 的任何东西交给 AI，不为 AI 建索引，不为 AI 存任何东西：助手是用户自己的，它只能通过下面这些工具、在用户
 允许的范围内触及 Telegram。（语音输入，见 [voice-input.zh-Hans.md](voice-input.zh-Hans.md)，在用户口述时以用户自己的密钥把用户自己的声音发给
-OpenAI，不含 Telegram 的任何东西。）
+用户选的语音识别服务，不含 Telegram 的任何东西；唯一的例外是 Telegram 自己转不了时、用户要用那个服务转写的语音消息：
+用户打开之前是关的，一次一条、由用户点击，字哪里都不存。）
 
 维护者于 2026-10-12 做出这个决定时，知道 Telegram API 条款第 1.5 条禁止把平台数据用于"人工智能的开发、增强或
 部署"，也知道 Telegram《内容授权服务条款》里的例外：需要"明确、知情、肯定且持续的同意……严格限于特定内容和

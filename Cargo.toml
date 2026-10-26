@@ -52,10 +52,12 @@ russh-sftp = "3"
 suppaftp = { version = "12", default-features = false, features = ["rustls-ring", "deprecated"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 rustls-platform-verifier = "0.7"
-# Voice input (src/speech/, docs/voice-input.md): the words stream back from OpenAI's realtime
-# transcription over a WebSocket, tungstenite in its blocking form over a rustls stream of our own
+# Voice input (src/speech/, docs/voice-input.md): the realtime speech services' WebSockets
+# (OpenAI's, Qwen's, Doubao's), tungstenite in its blocking form over a rustls stream of our own
 # (the platform's trust store, as every other connection), one thread per dictation.
 tungstenite = { version = "0.30", default-features = false, features = ["handshake"] }
+# Doubao's answers (src/speech/doubao.rs) may come gzipped; flate2 is in the tree already (ureq, russh).
+flate2 = "1"
 
 [dev-dependencies]
 # The HTTP/2 server of the transfer engine's test (src/downloads/transfer.rs).

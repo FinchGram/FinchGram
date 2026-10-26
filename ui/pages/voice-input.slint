@@ -1,17 +1,233 @@
 // Voice input's panel in the toolbox, the AI category's second tool (src/speech/,
 // docs/voice-input.md): the switch that puts the sparkle in the composer, then, while it is on,
-// what OpenAI needs: the user's own key, the languages they speak, and whether a small model tidies
-// the words. No design round draws it: it has the AI access panel's shape (ui/pages/ai-access.slint)
+// the main languages the user speaks, and for the one in use its two services: the speech
+// recognition and the text model that tidies the words, each named by its API's format, its
+// address (a vendor's, a relay's, a server of the user's own), its key and its model; last, voice
+// messages. No design round draws it: it has the AI access panel's shape (ui/pages/ai-access.slint)
 // and the settings' own rows, in every theme.
 import { Look } from "../look.slint";
 import { Icon, Field, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
 import { Card, Separator, SwitchRow, SmallButton, Chip } from "rows.slint";
-import { Voice, VoiceWords } from "../voice.slint";
+import { Voice, VoiceWords, VoiceService } from "../voice.slint";
 import { Toolbox, ToolboxWords } from "../toolbox.slint";
 
-// Voice input's OpenAI key (src/speech/): a box to paste it into, or its last letters and Remove
-// once it is kept; under them, what OpenAI said of it.
-component VoiceKeyRow {
+// A row's head: an icon, what it is, and a line under it.
+component RowHead {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> note;
+    HorizontalLayout {
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 20px;
+                color: Look.accent;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.title;
+                color: Look.text;
+                font-size: 15px;
+                font-weight: 500;
+            }
+            if root.note != "": Paragraph {
+                text: root.note;
+                color: Look.muted;
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+// A line of words under a row, faint, a warning, or a good word.
+component Note {
+    in property <string> text;
+    in property <int> tone;             // 0 faint, 1 a warning, 2 a good word
+    HorizontalLayout {
+        padding-left: 34px;
+        Paragraph {
+            text: root.text;
+            color: root.tone == 2 ? Look.ok : root.tone == 1 ? Look.danger : Look.muted;
+            font-size: 13px;
+        }
+    }
+}
+
+// The main languages set up, as chips (the one in use on), and Add; while adding, the languages
+// that can be.
+component LanguagesRow {
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 14px;
+        spacing: 10px;
+        RowHead {
+            icon: "translate";
+            title: VoiceWords.main-language();
+            note: VoiceWords.main-language-note();
+        }
+        HorizontalLayout {
+            padding-left: 34px;
+            VerticalLayout {
+                spacing: 8px;
+                for row[index] in Voice.language-rows: HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    for language in row.languages: Chip {
+                        label: VoiceWords.language-label(language.name);
+                        on: language.on;
+                        clicked => {
+                            Voice.choose-language(language.code);
+                        }
+                    }
+                    // Add, after the last chip.
+                    if index == Voice.language-rows.length - 1: Chip {
+                        label: "+ " + VoiceWords.add-language();
+                        on: Voice.adding;
+                        clicked => {
+                            if Voice.adding {
+                                Voice.cancel-adding();
+                            } else {
+                                Voice.start-adding();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if Voice.adding: HorizontalLayout {
+            padding-left: 34px;
+            VerticalLayout {
+                spacing: 8px;
+                for row in Voice.addable-rows: HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    for language in row.languages: Chip {
+                        label: VoiceWords.language-label(language.name);
+                        clicked => {
+                            Voice.add-language(language.code);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// A service's format: its chips in two lines, and what the chosen one is.
+component FormatRow {
+    in property <string> which;
+    in property <VoiceService> service;
+    in property <[string]> first;
+    in property <[string]> second;
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 14px;
+        spacing: 10px;
+        RowHead {
+            icon: "plugs-connected";
+            title: VoiceWords.api-format();
+            note: VoiceWords.format-note(root.service.format);
+        }
+        HorizontalLayout {
+            padding-left: 34px;
+            VerticalLayout {
+                spacing: 8px;
+                HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    for format in root.first: Chip {
+                        label: VoiceWords.format-name(format);
+                        on: root.service.format == format;
+                        clicked => {
+                            Voice.set-format(root.which, format);
+                        }
+                    }
+                }
+                if root.second.length > 0: HorizontalLayout {
+                    alignment: start;
+                    spacing: 8px;
+                    for format in root.second: Chip {
+                        label: VoiceWords.format-name(format);
+                        on: root.service.format == format;
+                        clicked => {
+                            Voice.set-format(root.which, format);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// An address or a model: a box that keeps what is typed (empty: the format's own, shown faint),
+// what is wrong with it, and a check of the service once the typing is done (⏎, or leaving it).
+component TextRow {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> note;
+    in property <string> placeholder;
+    in property <string> problem;
+    in-out property <string> text;
+    callback edited(string);
+    callback done();
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 8px;
+        RowHead {
+            icon: root.icon;
+            title: root.title;
+            note: root.note;
+        }
+        HorizontalLayout {
+            padding-left: 34px;
+            Field {
+                height: 36px;
+                text <=> root.text;
+                // The page's colour: on the card's own (Broadsheet's cards and fields share one,
+                // with no ring) the box would not show.
+                fill: Look.bg;
+                font-size: 14px;
+                font-family: Look.mono;
+                placeholder: root.placeholder;
+                error: root.problem != "";
+                edited(text) => {
+                    root.edited(text);
+                }
+                accepted => {
+                    root.done();
+                }
+                changed has-focus => {
+                    if !self.has-focus {
+                        root.done();
+                    }
+                }
+            }
+        }
+        if root.problem != "": Note {
+            text: root.problem;
+            tone: 1;
+        }
+    }
+}
+
+// A service's key: a box to paste it into, or its first and last letters and Remove once it is
+// kept; under them, what the last check said, and where the vendor's keys are made.
+component KeyRow {
+    in property <string> which;
+    in property <VoiceService> service;
     VerticalLayout {
         padding-left: 16px;
         padding-right: 16px;
@@ -20,65 +236,45 @@ component VoiceKeyRow {
         spacing: 10px;
         HorizontalLayout {
             spacing: 14px;
-            VerticalLayout {
-                alignment: center;
-                Icon {
-                    name: "key";
-                    size: 20px;
-                    color: Look.accent;
-                }
-            }
-            VerticalLayout {
+            RowHead {
                 horizontal-stretch: 1;
-                alignment: center;
-                spacing: 2px;
-                Text {
-                    text: VoiceWords.key();
-                    color: Look.text;
-                    font-size: 15px;
-                    font-weight: 500;
-                }
-                Paragraph {
-                    text: VoiceWords.key-note();
-                    color: Look.muted;
-                    font-size: 13px;
-                }
+                icon: "key";
+                title: VoiceWords.key();
+                note: VoiceWords.key-note();
             }
-            if Voice.has-key: VerticalLayout {
+            if root.service.has-key: VerticalLayout {
                 alignment: center;
                 Text {
-                    text: Voice.key-hint;
+                    text: root.service.key-hint;
                     color: Look.muted;
                     font-family: Look.mono;
                     font-size: 13px;
                 }
             }
-            if Voice.has-key: VerticalLayout {
+            if root.service.has-key: VerticalLayout {
                 alignment: center;
                 SmallButton {
                     text: Look.terminal ? "[" + VoiceWords.remove().to-lowercase() + "]" : VoiceWords.remove();
                     quiet: Look.terminal;
                     clicked => {
-                        Voice.remove-key();
+                        Voice.remove-key(root.which);
                     }
                 }
             }
         }
-        if !Voice.has-key: HorizontalLayout {
+        if !root.service.has-key: HorizontalLayout {
             padding-left: 34px;
             spacing: 8px;
             key-field := Field {
                 horizontal-stretch: 1;
                 height: 36px;
-                // The page's colour: on the card's own (Broadsheet's cards and fields share one,
-                // with no ring) the box would not show.
                 fill: Look.bg;
                 font-size: 14px;
                 font-family: Look.mono;
                 input-type: InputType.password;
                 placeholder: VoiceWords.key-placeholder();
                 accepted(text) => {
-                    Voice.save-key(text);
+                    Voice.save-key(root.which, text);
                 }
             }
             VerticalLayout {
@@ -87,82 +283,23 @@ component VoiceKeyRow {
                     text: Look.terminal ? "[" + VoiceWords.save().to-lowercase() + "]" : VoiceWords.save();
                     primary: !Look.terminal;
                     clicked => {
-                        Voice.save-key(key-field.text);
+                        Voice.save-key(root.which, key-field.text);
                     }
                 }
             }
         }
-        if VoiceWords.key-check() != "": HorizontalLayout {
-            padding-left: 34px;
-            Paragraph {
-                text: VoiceWords.key-check();
-                color: VoiceWords.key-tone() == 2 ? Look.ok : VoiceWords.key-tone() == 1 ? Look.danger : Look.muted;
-                font-size: 13px;
-            }
+        if VoiceWords.check-text(root.service) != "": Note {
+            text: VoiceWords.check-text(root.service);
+            tone: VoiceWords.check-tone(root.service);
         }
-        if !Voice.has-key: HorizontalLayout {
+        if !root.service.has-key && root.service.official: HorizontalLayout {
             padding-left: 34px;
             Link {
-                text: VoiceWords.get-key();
+                text: VoiceWords.get-key(root.service.shown);
                 trailing-icon: "arrow-square-out";
                 font-size: 13px;
                 clicked => {
-                    Voice.open-key-page();
-                }
-            }
-        }
-    }
-}
-
-// The languages the user speaks, as chips in the UI's order: hints for OpenAI.
-component VoiceLanguagesRow {
-    VerticalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        padding-top: 12px;
-        padding-bottom: 14px;
-        spacing: 10px;
-        HorizontalLayout {
-            spacing: 14px;
-            VerticalLayout {
-                alignment: center;
-                Icon {
-                    name: "translate";
-                    size: 20px;
-                    color: Look.accent;
-                }
-            }
-            VerticalLayout {
-                horizontal-stretch: 1;
-                alignment: center;
-                spacing: 2px;
-                Text {
-                    text: VoiceWords.languages();
-                    color: Look.text;
-                    font-size: 15px;
-                    font-weight: 500;
-                }
-                Paragraph {
-                    text: VoiceWords.languages-note();
-                    color: Look.muted;
-                    font-size: 13px;
-                }
-            }
-        }
-        HorizontalLayout {
-            padding-left: 34px;
-            VerticalLayout {
-                spacing: 8px;
-                for row in Voice.language-rows: HorizontalLayout {
-                    alignment: start;
-                    spacing: 8px;
-                    for language in row.languages: Chip {
-                        label: language.name;
-                        on: language.on;
-                        clicked => {
-                            Voice.toggle-language(language.code);
-                        }
-                    }
+                    Voice.open-key-page(root.which);
                 }
             }
         }
@@ -205,16 +342,74 @@ export component VoicePanel {
                 }
             }
         }
+        if Voice.on: Card {
+            LanguagesRow { }
+        }
         if Voice.on: VerticalLayout {
             spacing: 8px;
             SectionLabel {
-                label: "OpenAI";
+                label: VoiceWords.speech-section(VoiceWords.language-label(Voice.language-name));
             }
             Card {
-                VoiceKeyRow { }
+                FormatRow {
+                    which: "speech";
+                    service: Voice.speech;
+                    first: ["openai-realtime", "openai-transcriptions"];
+                    second: ["qwen-realtime", "doubao"];
+                }
                 Separator { }
-                VoiceLanguagesRow { }
+                TextRow {
+                    icon: "globe-simple";
+                    title: VoiceWords.address();
+                    note: VoiceWords.address-note();
+                    placeholder: Voice.speech.url-placeholder;
+                    problem: VoiceWords.address-problem(Voice.speech.url-problem);
+                    text <=> Voice.speech-url;
+                    edited(text) => {
+                        Voice.edit-url("speech", text);
+                    }
+                    done => {
+                        Voice.check("speech");
+                    }
+                }
                 Separator { }
+                KeyRow {
+                    which: "speech";
+                    service: Voice.speech;
+                }
+                Separator { }
+                TextRow {
+                    icon: "robot";
+                    title: VoiceWords.model();
+                    note: VoiceWords.model-note(Voice.speech.format);
+                    placeholder: Voice.speech.model-placeholder;
+                    text <=> Voice.speech-model;
+                    edited(text) => {
+                        Voice.edit-model("speech", text);
+                    }
+                    done => {
+                        Voice.check("speech");
+                    }
+                }
+                Separator { }
+                TextRow {
+                    icon: "book-open";
+                    title: VoiceWords.keywords();
+                    note: VoiceWords.keywords-note();
+                    placeholder: VoiceWords.keywords-placeholder();
+                    text <=> Voice.keywords;
+                    edited(text) => {
+                        Voice.edit-keywords(text);
+                    }
+                }
+            }
+        }
+        if Voice.on: VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: VoiceWords.tidy-section(VoiceWords.language-label(Voice.language-name));
+            }
+            Card {
                 SwitchRow {
                     icon: "broom";
                     title: VoiceWords.tidy();
@@ -222,6 +417,93 @@ export component VoicePanel {
                     on: Voice.tidy;
                     toggled => {
                         Voice.set-tidy(!Voice.tidy);
+                    }
+                }
+                if Voice.tidy: Separator { }
+                if Voice.tidy: FormatRow {
+                    which: "tidy";
+                    service: Voice.tidying;
+                    first: ["openai", "anthropic", "gemini"];
+                    second: [];
+                }
+                if Voice.tidy: Separator { }
+                if Voice.tidy: TextRow {
+                    icon: "globe-simple";
+                    title: VoiceWords.address();
+                    note: VoiceWords.address-note();
+                    placeholder: Voice.tidying.url-placeholder;
+                    problem: VoiceWords.address-problem(Voice.tidying.url-problem);
+                    text <=> Voice.tidy-url;
+                    edited(text) => {
+                        Voice.edit-url("tidy", text);
+                    }
+                    done => {
+                        Voice.check("tidy");
+                    }
+                }
+                if Voice.tidy: Separator { }
+                if Voice.tidy: SwitchRow {
+                    icon: "link-simple";
+                    title: VoiceWords.same-key();
+                    description: VoiceWords.same-key-note();
+                    on: Voice.same-key;
+                    toggled => {
+                        Voice.set-same-key(!Voice.same-key);
+                    }
+                }
+                if Voice.tidy && Voice.same-key && VoiceWords.check-text(Voice.tidying) != "": VerticalLayout {
+                    padding-bottom: 12px;
+                    Note {
+                        text: VoiceWords.check-text(Voice.tidying);
+                        tone: VoiceWords.check-tone(Voice.tidying);
+                    }
+                }
+                if Voice.tidy && !Voice.same-key: Separator { }
+                if Voice.tidy && !Voice.same-key: KeyRow {
+                    which: "tidy";
+                    service: Voice.tidying;
+                }
+                if Voice.tidy: Separator { }
+                if Voice.tidy: TextRow {
+                    icon: "robot";
+                    title: VoiceWords.model();
+                    note: VoiceWords.model-note(Voice.tidying.format);
+                    placeholder: Voice.tidying.model-placeholder;
+                    text <=> Voice.tidy-model;
+                    edited(text) => {
+                        Voice.edit-model("tidy", text);
+                    }
+                    done => {
+                        Voice.check("tidy");
+                    }
+                }
+            }
+            if Voice.can-remove: HorizontalLayout {
+                alignment: start;
+                padding-top: 4px;
+                Link {
+                    text: VoiceWords.remove-language(VoiceWords.language-label(Voice.language-name));
+                    icon: "trash";
+                    font-size: 13px;
+                    clicked => {
+                        Voice.remove-language();
+                    }
+                }
+            }
+        }
+        if Voice.on: VerticalLayout {
+            spacing: 8px;
+            SectionLabel {
+                label: VoiceWords.messages-section();
+            }
+            Card {
+                SwitchRow {
+                    icon: "chat-circle-text";
+                    title: VoiceWords.transcribe-messages();
+                    description: VoiceWords.transcribe-messages-note();
+                    on: Voice.transcribe-messages;
+                    toggled => {
+                        Voice.set-transcribe-messages(!Voice.transcribe-messages);
                     }
                 }
             }

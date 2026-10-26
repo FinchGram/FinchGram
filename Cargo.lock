@@ -1630,6 +1630,7 @@ dependencies = [
  "chrono",
  "dirs",
  "ed25519-dalek",
+ "flate2",
  "glow",
  "hex",
  "http-body-util",

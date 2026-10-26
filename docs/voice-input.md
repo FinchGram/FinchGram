@@ -2,80 +2,157 @@
 
 [中文](voice-input.zh-Hans.md)
 
-Status: step 1, the user's own OpenAI key, built on 2026-10-25 at the maintainer's word
-("咱们做一下这个语音输入吧，就是语音输入，转文字，类似微信那样"); steps 2 to 5 are not built. Voice
-input was decided on 2026-10-21 as the first of the AI features. There was no design round: the
-microphone is the one the design already drew in every composer, the strip above the composer is
-drawn the way each theme draws its strip for replying, and the settings are a panel of the toolbox
-drawn with the settings page's rows; a round in Claude Design can take their place. Since
-2026-10-26 voice input is a tool of the toolbox, at the maintainer's word ("这也是一个tool，而且不是
-telegram官方原生的feature"): off until the user turns it on there. The trigger is the sparkle the design draws,
-in the accent and without a title, in Workbench's tool row; the composer's microphone is voice
-messages', as every round of the design has it (the round "秘密聊天与通话"). The first section says what step 1 is as
-built; the rest of the page is the plan of 2026-10-21, with the facts it rests on.
+Status: step 1, the user's own key, built on 2026-10-25 at the maintainer's word
+("咱们做一下这个语音输入吧，就是语音输入，转文字，类似微信那样") with OpenAI alone, and opened to any vendor on
+2026-10-26, at the maintainer's word that Chinese was far below WeChat's voice input and that the
+services should go by their API's format and the user's own address and keys ("应该允许大家自己找vendor，
+而不是固定成openai"), with a set of its own for each main language, and the words right first
+("以语音转文字的准确度为第一"). An address of the user's own also covers most of step 3 (a server on
+their Mac or network). Steps 2, 4 and 5 are not built. Voice input was decided on 2026-10-21 as the
+first of the AI features. There was no design round: the microphone is the one the design already
+drew in every composer, the strip above the composer is drawn the way each theme draws its strip
+for replying, and the settings are a panel of the toolbox drawn with the settings page's rows; a
+round in Claude Design can take their place. Since 2026-10-26 voice input is a tool of the toolbox,
+at the maintainer's word ("这也是一个tool，而且不是telegram官方原生的feature"): off until the user turns it on
+there. The trigger is the sparkle the design draws, in the accent and without a title, in
+Workbench's tool row; the composer's microphone is voice messages', as every round of the design has
+it (the round "秘密聊天与通话"). The first section says what is built; the rest of the page is the plan of
+2026-10-21, with the facts it rests on.
 
-## Step 1 as built (2026-10-25)
+## As built (2026-10-26)
 
 - **Using it.** Once it is on (Toolbox → AI → Voice input), in a chat, the sparkle in the composer
   (Workbench and Broadsheet: next to the microphone; Terminal: type `/voice`, and again to
-  finish). A click starts and a second click
-  finishes; held while speaking (longer than 0.6 s), letting go finishes. While the user speaks, a strip above the
-  composer shows bars for the microphone's loudness, the time, and the words as they come (the
-  newest two lines; in Terminal one line). ⏎ or Done finishes too; Esc or × drops the words. Then
-  the strip says "Finishing…" while the last words come and "Tidying the words…", and the words go
-  into the composer after what it holds (with a space where the script has spaces), the cursor
-  after them, for the user to send. A dictation finishes by itself after five minutes, so that a
-  microphone left open does not go on costing the user.
-- **When it cannot.** The strip says why, with a button where something can be put right: no key
-  (Add key, which opens the panel), the microphone not allowed (Open System Settings), OpenAI
-  refusing the key (401: Change key) or the credit or the pace (429), the network, OpenAI's own message, nothing heard. The first time,
-  macOS asks whether FinchGram may use the microphone.
-- **Toolbox → AI → Voice input.** The AI category's second card, after AI access, opens the panel
-  (`ui/pages/voice-input.slint`), with "‹ AI" back to the cards. First the switch, off by default:
-  on, the sparkle is in every chat's composer; off, it is not there, nothing goes to OpenAI, and
-  Terminal's `/voice` opens the panel. A settings file of 0.7.0, which had no switch, has voice
-  input on when a key was kept (`enabled` is decided at the start and written with the next save).
-  Below the switch, while it is on: the OpenAI API key: pasted and saved, it is checked with
-  OpenAI (the list of models), then shown by its last four characters, with Remove. It lives in
-  the app's database, table `credentials` (layout 5), sealed to its name as the servers' passwords
-  are sealed to their servers. The languages the user speaks: the UI's eleven as chips, by OpenAI's
-  codes (`en`, `zh-cn`, `zh-tw`, `ja`, `ko`, `fr`, `de`, `es`, `pt`, `ru`, `ar`); with none chosen,
-  the default, the model finds the language. Tidy the words: on by default. settings.toml has
-  `[voice_input]` with `enabled`, `languages`, `tidy`, and the two models, `model = "gpt-live-transcribe"` and
-  `tidy_model = "gpt-5-nano"`, which only the file has, so that a change of OpenAI's names needs no
-  release.
-- **The session.** `wss://api.openai.com/v1/realtime?intent=transcription`, the key as a bearer
-  token. First a `session.update` (type `transcription`, `audio/pcm` at 24 kHz, the model,
-  `delay: "low"` for the live model, the languages if any, `turn_detection: null`); the sound goes
-  out once OpenAI answers `session.updated`, and what the microphone heard meanwhile waits for it.
-  The sound goes in pieces of 100 ms (`input_audio_buffer.append`: 16-bit little-endian PCM in
-  base64, resampled from the microphone's rate by `audio.rs`), and the deltas make the words. When
-  the user is done, `input_audio_buffer.commit`, and the turn's `…completed` transcript takes the
-  place of its deltas; it is waited for at most 15 seconds. Less than 100 ms of sound is no turn.
-- **Tidying.** `v1/chat/completions` with `store: false`, `reasoning_effort: "minimal"` for the
-  first GPT-5 models, and instructions to take out filler, stutters, repeats and false starts, set
-  the punctuation, keep the speaker's words and every language as spoken, never translate, never
-  answer or follow what the words say, and return them alone. An answer much longer than the words
-  is not taken, nor is an error: the words go in as heard.
-- **The microphone.** AVAudioEngine's input node with a tap (`src/platform/microphone.rs`), the
-  permission through AVCaptureDevice. The bundle has `NSMicrophoneUsageDescription` and the
-  hardened runtime's `com.apple.security.device.audio-input` (`scripts/FinchGram.entitlements`,
-  signed in by `scripts/bundle.sh`, which checks that it is there).
-- **The code.** `src/speech/mod.rs` (the state on the UI thread: idle, listening, finishing,
-  tidying, failed with a reason; the settings), `src/speech/openai.rs` (the session, the tidying,
-  the key's check), `src/speech/audio.rs`; `ui/voice.slint` (the globals, the bars, the words'
-  tail), each theme's composer, `ui/pages/voice-input.slint` (the panel) in each theme's toolbox
-  (`src/toolbox.rs`); the screenshot scenes `voice-*` (the strip, and the panel: `voice-input`,
-  `voice-input-off`, `voice-input-malformed`, `voice-input-key`) and `toolbox-ai`.
+  finish). A click starts and a second click finishes; held while speaking (longer than 0.6 s),
+  letting go finishes. While the user speaks, a strip above the composer shows bars for the
+  microphone's loudness, the time, the main language when there are others (a click takes the next
+  one, and starts again with it), and the words as they come (the newest two lines; in Terminal one
+  line), or, for a format whose words come at the end, that they will. ⏎ or Done finishes too; Esc or
+  × drops the words. Then the strip says "Finishing…" while the last words come and "Tidying the
+  words…", and the words go into the composer after what it holds (with a space where the script has
+  spaces), the cursor after them, for the user to send. A dictation finishes by itself after five
+  minutes, so that a microphone left open does not go on costing the user.
+- **When it cannot.** The strip says why, naming the service, with a button where something can be
+  put right: no key (Add key, which opens the panel), an address FinchGram cannot use (Change
+  address), the microphone not allowed (Open System Settings), the service refusing the key (401 or
+  403: Change key) or the credit or the pace (429), the network, the service's own message, nothing
+  heard. The first time, macOS asks whether FinchGram may use the microphone.
+- **Main languages.** The user picks the language they mostly speak, or "any language"; words of
+  other languages mixed in are kept as spoken (each format is told so in its own way, below), and the
+  main language fixes the script (简体 or 繁體). Each main language has a set of its own, a profile:
+  its speech service, its tidying, its keys. Adding a language copies the set in use, keys and all,
+  so that only what differs is changed (Chinese through Doubao, English through OpenAI, say).
+  Removing one removes its keys.
+- **Speech recognition, by its API's format.** Each with an address (empty: the vendor's own), an
+  API key, a model (empty: the format's own) and words to know (names and terms the user says often,
+  separated by commas), which each format takes as hints:
+  - *OpenAI Realtime* (`wss://…/realtime?intent=transcription`, 24 kHz): a `session.update` of type
+    `transcription` with the model (`gpt-live-transcribe`), `delay: "xhigh"` (the most context: the
+    live words show later and are right more often; a profile's `delay` in settings.toml takes
+    another), the main language (`languages: ["zh-cn"]` for the models of 2026, `language: "zh"`
+    for the older ones, never both), a sentence of context (`prompt`: a chat message dictated,
+    mainly in that language, other languages mixed in to be written as spoken), the words to know
+    (`keywords`; in the context for the older models), and `turn_detection: null`. The sound goes in
+    pieces of 100 ms once OpenAI answers `session.updated`; the deltas make the live words; the user
+    done, `input_audio_buffer.commit`, and the turn's `…completed` transcript takes the place of its
+    deltas, waited for at most 15 seconds. Less than 100 ms of sound is no turn.
+  - *OpenAI-compatible upload* (`POST …/audio/transcriptions`, the format the most services, relays
+    and servers of one's own speak: OpenAI, Groq, SiliconFlow (whose SenseVoice is strong in
+    Chinese), Mistral, speaches, LocalAI, vLLM): the recording is kept while the user speaks and
+    goes up as one WAV file at 16 kHz once they are done, with the model (`gpt-transcribe`), the
+    language by ISO 639-1, and a prompt: for Chinese a line in the script wanted that leaves English
+    words as they are, and the words to know. No words while the user speaks.
+  - *Qwen (Alibaba Cloud)* (`wss://dashscope-intl.aliyuncs.com/api-ws/v1/realtime?model=qwen3-asr-flash-realtime`,
+    Model Studio's key as a bearer token; Beijing's host or a workspace's by the address): a
+    `session.update` with `input_audio_format: "pcm"`, `sample_rate: 16000`, the language
+    (`input_audio_transcription.language`), the words to know as context (`…corpus.text`), and the
+    server's own detection of where sentences end, 1200 ms of silence (in its manual mode Qwen hears
+    nothing until the commit, so no live words). Each sentence comes as text the server is sure of
+    and a draft (`…text`: `text` + `stash`), then whole (`…completed`); the user done,
+    `session.finish`, and `session.finished` ends it. Every client event carries an `event_id`.
+  - *Doubao (Volcengine)* (Seed-ASR, 豆包流式语音识别, its binary protocol over a WebSocket, document of
+    2026-08-06): a 4-byte header to every frame (version and size, message type and flags,
+    serialization and compression), big-endian sizes; the request in JSON, then the sound in pieces
+    of 200 ms, the last one flagged; each answer the whole text so far, the answer to the last
+    piece the final one. Chinese, English and any language go to `bigmodel_async` with
+    `enable_nonstream` (two passes: the live words, then each sentence heard again for the final
+    ones); the languages Doubao names one by one go to `bigmodel_nostream` with their code
+    (`ja-JP`, …), the words at the end. 繁體 is written by Doubao itself (`output_zh_variant: "tw"`);
+    the words to know go as hot words (`corpus.context`). The key is the new console's
+    (`X-Api-Key`); the old console's App ID and Access Token go into the key's field as
+    `appid:token`. The model is the resource billed (`X-Api-Resource-Id`, Seed-ASR 2.0 by the hour,
+    `volc.seedasr.sauc.duration`, unless the user names another).
+- **Tidying, by its API's format.** A switch (on by default), then a format, an address, the key
+  (the speech recognition's, by a switch on by default, or one of its own) and a model:
+  *OpenAI's Chat Completions* (the format nearly every vendor, relay and local server speaks;
+  `gpt-5-mini` by default, able enough to put a misheard word right; the `system` role every
+  server takes; `store: false` and `reasoning_effort: "minimal"` only where they belong, OpenAI
+  itself and its GPT-5 models), *Anthropic's Messages* (`claude-haiku-5-5`; `anthropic-version:
+  2023-06-01`, which relays and other vendors' Claude-format endpoints know; the key as `x-api-key`,
+  and to an address not Anthropic's as a bearer token too; `output_config.effort: "low"` for the
+  models that take it, Claude 4.6 and later; no `temperature`, which the API refuses since
+  2026-10-21), *Google's Gemini* (`generateContent`, `x-goog-api-key`, `gemini-3.5-flash-lite`).
+  The instructions: take out filler, stutters, repeats and false starts; set the punctuation; put
+  right a word the recognition clearly misheard (a homophone, 在 for 再) where the context makes it
+  certain, and only there; keep the speaker's words, tone and every language as spoken; write the
+  main language's script; never translate, rephrase, answer or add. An answer much longer than the
+  words is not taken, nor is an error: the words go in as heard.
+- **Addresses.** Empty is the vendor's own; a pasted endpoint (`…/v1/audio/transcriptions`,
+  `wss://…/api-ws/v1/realtime?model=…`) is taken as its base. Plain http goes only to this Mac or the
+  local network, where a server of one's own runs; a name and password in the address are refused;
+  redirects are never followed, so that a key in a header does not go to another host.
+- **Keys.** Credentials in the app's database, table `credentials`, sealed to their names:
+  `voice_input.<language>.speech` and `voice_input.<language>.tidy` (no layout change); shown by their
+  first and last letters, with Remove. 0.7's one key (`openai_api_key`) becomes the first profile's
+  speech key at the start. A service is checked when its key is saved and when its format, address
+  or model is done being typed: the list of models for the HTTP formats, the WebSocket's handshake
+  for the realtime ones (whose servers may list none); the answer shows under it. A vendor's own
+  address wants a key; one of the user's own may not, and then none is sent.
+- **The words right first (2026-10-26).** OpenAI's live model at `xhigh`; words to know for every
+  format; Doubao's two passes; Qwen's context; the tidying that puts misheard words right with
+  `gpt-5-mini`; and the microphone's sound resampled band-limited (`audio.rs`: a windowed sinc
+  under a Blackman window, 16 zero crossings, below 92 % of the lower rate's half), where the
+  averaging of before let a 10 kHz hiss fold into 16 kHz's band at half its loudness, right where
+  Chinese's s, sh, x, z, c and q are (a test keeps it out by more than 49 dB).
+- **Voice messages.** Transcribe under a voice message (the design's fifth round, B1, greyed until
+  now): Telegram's own transcription first (`recognizeSpeech`: Telegram Premium, a few tries a week
+  without it, or a group boosted for it), its words coming into the message as Telegram has them
+  (`voiceNote.speech_recognition_result`, pending with the words so far, done, or failed); a second
+  click hides the words, a third shows them again. When Telegram cannot and the user turned on
+  "Transcribe voice messages with your own service" in the panel (off by default), the message goes
+  to the speech service of the main language in use: its file as it is to the upload format, or
+  decoded by libmpv's PCM writer (`src/player/decode.rs`, faster than real time) to the service's
+  rate for the realtime ones; no tidying. The words are kept in memory for the session, nowhere
+  else. Otherwise the bubble says that Telegram wants Premium, and where the user's own service is.
+  This hands Telegram's content (someone else's voice) to a service of the user's choosing, which
+  touches clause 1.5 of the API terms (see [mcp.md](mcp.md)): off by default, one message at the
+  user's click, nothing stored, as the maintainer decided for the MCP server on 2026-10-12; built
+  at the maintainer's word of 2026-10-26 ("语音信息转文字！可以一起做了"), and theirs to keep or remove.
+- **The settings file.** `[voice_input]` has `enabled`, `language` (the main language in use),
+  `transcribe_messages`, and a `[[voice_input.profiles]]` for each main language: `language`,
+  `format`, `url`, `model`, `keywords`, `tidy`, `tidy_format`, `tidy_url`, `tidy_model`,
+  `tidy_same_key`, and `delay` when set by hand. 0.7's `languages`, `tidy`, `model` and `tidy_model`
+  are read once and make the first profile: one language chosen is its main language, several or
+  none are any language; models that were 0.7's defaults become the formats' own.
+- **The code.** `src/speech/mod.rs` (the state on the UI thread, the panel, the profiles and keys),
+  `dictation.rs` (a dictation from the first sound to the words), `service.rs` (formats, addresses,
+  connections, checks), `realtime.rs` (OpenAI's and Qwen's sessions), `doubao.rs`, `upload.rs`,
+  `tidy.rs`, `messages.rs` (voice messages), `audio.rs`; `src/player/decode.rs`;
+  `src/telegram/voice.rs` (Transcribe); `ui/voice.slint`, each theme's composer and strip,
+  `ui/pages/voice-input.slint` in each theme's toolbox; the screenshot scenes `voice-*`
+  (`voice-upload`, `voice-transcripts`, the panel's `voice-input-doubao`, `…-speech`, `…-tidy`,
+  `voice-input-relay` among them) and `toolbox-ai`.
 - **Different from the plan.** Built without the design round. The settings are a panel of the
-  toolbox (a section of their own in General until 2026-10-26), not rows of Input. The words show in the strip while the user speaks and go into
-  the composer once, tidied, at the end (the plan left this to the design). They go at the end of
-  what the composer holds, not at the cursor (Slint does not say where its cursor is). No keywords
-  yet. Broadsheet has the sparkle too, which its round does not draw; voice input and a voice
-  message never record at the same time.
-- **Not tried live.** The session follows OpenAI's documentation of October 2026, and its events are
-  tested in that shape; the machine it was built on has no OpenAI key. The first dictation with a
-  real key is the test.
+  toolbox, not rows of Input. The words show in the strip while the user speaks and go into the
+  composer once, tidied, at the end. They go at the end of what the composer holds, not at the
+  cursor (Slint does not say where its cursor is). Broadsheet has the sparkle too, which its round
+  does not draw; voice input and a voice message never record at the same time. The router of step
+  5 is the user's choice of main language, by hand.
+- **Tried live.** OpenAI's realtime session, by the maintainer on 0.7.0 and 0.7.1: English good,
+  Chinese far below WeChat's. Qwen, Doubao, the upload, Anthropic's and Gemini's tidying and the
+  voice messages' own-service path follow their documents of October 2026 and are tested in those
+  shapes; this machine has no key for them. The decoding of an Opus voice message is tested with a
+  real one.
 
 ## What it is
 
@@ -83,7 +160,8 @@ built; the rest of the page is the plan of 2026-10-21, with the facts it rests o
   the box; sending them is still the user's. It transcribes the user's own voice and nothing from
   Telegram, so clause 1.5 of Telegram's API terms (see [mcp.md](mcp.md)) is not touched.
   Transcribing voice messages the user received is a different thing: it is Telegram content, the
-  gray zone the research report of 2026-10-06 left to the maintainer, and it is not this page.
+  gray zone the research report of 2026-10-06 left to the maintainer. Telegram's own transcription
+  is used for it first; the user's own service only when they turn it on (above, Voice messages).
 - What the maintainer asked for: all 11 languages of the UI (English, Chinese in both scripts,
   Spanish, Portuguese, German, French, Russian, Japanese, Korean, Arabic), sentences that mix
   languages, and an installer that stays small (60-some MB today). Chinese accuracy alone was

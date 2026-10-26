@@ -196,8 +196,8 @@ fn fill(ui: &MainWindow) {
     password.set_recovery_email("z•••@gmail.com".into());
     password.set_reset_date(reset_date());
 
-    // Settings → General → Voice input: no key yet, no language chosen.
-    crate::speech::show_for_pictures(ui, &[]);
+    // Voice input's panel: one profile for any language through OpenAI, no key yet.
+    crate::speech::show_for_pictures(ui, &crate::settings::VoiceInput::default(), &[]);
 }
 
 /// When a reset asked for today can be completed, as in the design.
@@ -1715,12 +1715,14 @@ fn attachments(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, na
 
 /// Settings → Privacy & security, and two-step verification: on, with a reset on its way and a
 /// change just made; off; asking for the password; a new password.
-/// Voice input above the composer (src/speech/): listening, the words mixing two languages and
-/// longer than the strip, so that the newest show; the last words being tidied; a dictation that
-/// stopped for want of a key, and one OpenAI refused.
+/// Voice input above the composer (src/speech/): connecting to OpenAI; listening in Chinese with
+/// a second main language to switch to, the words mixing two languages and longer than the strip,
+/// so that the newest show; the last words being tidied; an upload's dictation, whose words come
+/// at the end; a dictation that stopped for want of Doubao's key, and one OpenAI refused.
 fn voice(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
     let voice = ui.global::<Voice>();
     voice.set_on(true);
+    voice.set_service("OpenAI".into());
     voice.set_state(VoiceState::Listening);
     voice.set_connecting(true);
     voice.set_level(0.3);
@@ -1728,6 +1730,8 @@ fn voice(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) ->
     voice.set_connecting(false);
     voice.set_level(0.7);
     voice.set_seconds(7);
+    voice.set_can_switch(true);
+    voice.set_language_name("简体中文".into());
     voice.set_words(
         "明天下午三点在 Blue Bottle 见，记得带上 the contract，还有上周说的那份报价单。And the pricing sheet we talked about last week, so that we can go through it together before the call."
             .into(),
@@ -1736,9 +1740,18 @@ fn voice(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) ->
     voice.set_state(VoiceState::Tidying);
     save(window, &name("voice-tidying"));
     voice.set_words(SharedString::new());
+    voice.set_state(VoiceState::Listening);
+    voice.set_live(false);
+    voice.set_service("api.groq.com".into());
+    save(window, &name("voice-upload"));
+    voice.set_live(true);
+    voice.set_service("Volcengine".into());
     voice.set_state(VoiceState::Failed);
     voice.set_problem(VoiceProblem::NoKey);
     save(window, &name("voice-no-key"));
+    voice.set_can_switch(false);
+    voice.set_language_name(SharedString::new());
+    voice.set_service("OpenAI".into());
     voice.set_problem(VoiceProblem::Quota);
     voice.set_detail("You exceeded your current quota, please check your plan and billing details.".into());
     save(window, &name("voice-quota"));
@@ -1761,8 +1774,13 @@ fn voice_messages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn
     let blocks: String = WAVE[..20].iter().map(|height| ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'][((height / 2.9) as usize).min(7)]).collect();
     let voice = |id: &str, sender: &str, time: &str, duration: &str, listened: bool| MessageRow {
         content: Content::VoiceNote,
-        voice: VoiceNote { shown: true, duration: duration.into(), bars: model(bars.clone()), blocks: blocks.as_str().into(), listened },
+        voice: VoiceNote { shown: true, duration: duration.into(), bars: model(bars.clone()), blocks: blocks.as_str().into(), listened, ..VoiceNote::default() },
         ..message(id, sender, time, "")
+    };
+    // Its words once Transcribe was clicked: Telegram's, on their way, or why there are none.
+    let words = |row: MessageRow, transcript: &str, transcribing: bool, problem: TranscriptProblem| MessageRow {
+        voice: VoiceNote { transcript: transcript.into(), transcribing, transcript_problem: problem, transcript_shown: true, ..row.voice.clone() },
+        ..row
     };
     open_keyboards(ui);
     let conversation = ui.global::<Conversation>();
@@ -1788,6 +1806,15 @@ fn voice_messages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn
     save(window, &name("voice-failed"));
     conversation.set_voice_failed(false);
     conversation.set_voice_playing(SharedString::new());
+    // Transcribed: Telegram's words, a transcription on its way, and one Telegram wants Premium for.
+    conversation.set_messages(model(vec![
+        day_row(Day::Today),
+        message("v0", "Jie", "14:02", "Listen to this one, the switches are loud"),
+        words(voice("v1", "Jie", "14:03", "0:12", true), "我刚收到新键盘，青轴的声音真的很响，你听听看。Typing on it feels great though.", false, TranscriptProblem::None),
+        words(voice("v2", "Zhou Ye", "14:05", "0:08", true), "Sounds like a typewriter, I", true, TranscriptProblem::None),
+        words(voice("v3", "Mika", "14:06", "0:12", true), "", false, TranscriptProblem::Premium),
+    ]));
+    save(window, &name("voice-transcripts"));
 
     // Recording, the live bars as the design draws them.
     let levels: Vec<f32> = (0..22).map(|index| (16.0 * ((index as f32 * 1.3 + 0.5).sin() * (index as f32 * 0.37).cos()).abs()).round() / 19.0).collect();
@@ -1816,11 +1843,13 @@ fn voice_messages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn
     open_keyboards(ui);
 }
 
-/// Settings → General → Voice input, scrolled to: no key yet, then a key kept that OpenAI takes,
-/// with two languages chosen and the words tidied.
-/// Voice input's panel in the toolbox, over the chats: off (the switch alone), on without a key,
-/// a key that is not one, and a key OpenAI took with two languages chosen.
+/// Voice input's panel in the toolbox, over the chats: off (the switch alone); on, one profile for
+/// any language through OpenAI, without a key, with a key that is not one, with a key OpenAI took;
+/// Chinese added and in use, heard by Doubao with words to know and tidied by Claude with a key of
+/// its own, while another language is being added, then scrolled to its tidying and the voice
+/// messages' switch; an upload through a relay given over plain http.
 fn voice_panel(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    use crate::settings::{VoiceInput, VoiceProfile};
     let app = ui.global::<AppState>();
     let voice = ui.global::<Voice>();
     let toolbox = ui.global::<Toolbox>();
@@ -1828,20 +1857,53 @@ fn voice_panel(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&s
     app.set_page(Page::Chats);
     crate::toolbox::show_for_pictures(ui, &["downloads"], "ai", "voice-input", "");
     toolbox.set_open(true);
+    let check = |check: KeyCheck| {
+        let mut speech = voice.get_speech();
+        speech.check = check;
+        voice.set_speech(speech);
+    };
+    crate::speech::show_for_pictures(ui, &VoiceInput::default(), &[]);
     save(window, &name("voice-input-off"));
     voice.set_on(true);
     save(window, &name("voice-input"));
-    voice.set_key_check(KeyCheck::Malformed);
+    check(KeyCheck::Malformed);
     save(window, &name("voice-input-malformed"));
-    voice.set_has_key(true);
-    voice.set_key_hint("sk-…4f2a".into());
-    voice.set_key_check(KeyCheck::Works);
-    crate::speech::show_for_pictures(ui, &["zh-cn", "en"]);
+    crate::speech::show_for_pictures(ui, &VoiceInput::default(), &[("voice_input.auto.speech", "sk-…4f2a")]);
+    check(KeyCheck::Works);
     save(window, &name("voice-input-key"));
-    voice.set_has_key(false);
-    voice.set_key_hint(SharedString::new());
-    voice.set_key_check(KeyCheck::None);
-    crate::speech::show_for_pictures(ui, &[]);
+    // Chinese through Doubao, tidied by Claude.
+    let mut chinese = VoiceInput::default();
+    chinese.profiles.push(VoiceProfile {
+        language: "zh-cn".into(),
+        format: "doubao".into(),
+        keywords: "陈思远, FinchGram, PikPak".into(),
+        tidy_format: "anthropic".into(),
+        tidy_same_key: false,
+        ..VoiceProfile::default()
+    });
+    chinese.language = "zh-cn".into();
+    chinese.transcribe_messages = true;
+    let keys = [("voice_input.auto.speech", "sk-…4f2a"), ("voice_input.zh-cn.speech", "6f1…9b2c"), ("voice_input.zh-cn.tidy", "sk-…7d1e")];
+    crate::speech::show_for_pictures(ui, &chinese, &keys);
+    check(KeyCheck::Works);
+    voice.set_adding(true);
+    save(window, &name("voice-input-doubao"));
+    voice.set_adding(false);
+    scroll(window, 800.0, 400.0, 420.0);
+    save(window, &name("voice-input-doubao-speech"));
+    scroll(window, 800.0, 400.0, 700.0);
+    save(window, &name("voice-input-doubao-tidy"));
+    scroll(window, 800.0, 400.0, -1120.0);
+    // An upload through a relay, its address in plain http.
+    let mut relay = VoiceInput::default();
+    relay.profiles[0].format = "openai-transcriptions".into();
+    relay.profiles[0].url = "http://relay.example.com/v1".into();
+    relay.profiles[0].tidy_format = "gemini".into();
+    crate::speech::show_for_pictures(ui, &relay, &[("voice_input.auto.speech", "sk-…4f2a")]);
+    scroll(window, 800.0, 400.0, 300.0);
+    save(window, &name("voice-input-relay"));
+    scroll(window, 800.0, 400.0, -300.0);
+    crate::speech::show_for_pictures(ui, &VoiceInput::default(), &[]);
     voice.set_on(false);
     toolbox.set_open(false);
     set_toolbox(ui);

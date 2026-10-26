@@ -105,10 +105,11 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
   on a channel. So does the question whether a program may connect: the thread waits while the
   dialog asks the user.
 - Voice input (`src/speech/`) has the microphone's tap, on one of the system's audio threads, which
-  only hands the samples on, and a "voice" thread per dictation: a blocking WebSocket to OpenAI
-  (tungstenite over rustls; a read waits at most 20 ms, and the sound goes out between reads), then
-  the request that tidies the words (ureq). It reports to the UI thread through the event loop;
-  nothing of it is async.
+  only hands the samples on, and a "voice" thread per dictation: a blocking WebSocket to the speech
+  service the user chose (tungstenite over rustls; a read waits at most 20 ms, and the sound goes out
+  between reads), or one upload at the end (ureq), then the request that tidies the words (ureq). A
+  voice message transcribed by the user's own service has a "voice-message" thread, which has libmpv
+  decode its file first. They report to the UI thread through the event loop; nothing of it is async.
 - A panic on the UI thread ends the app: Slint calls into the app through `extern "C"` functions,
   which no panic unwinds through, so Rust aborts there, and macOS's crash report shows abort() and
   nothing of the cause. The panic's message and place go into `panic.log` next to settings.toml
@@ -437,14 +438,20 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 - Voice input (`src/speech/`, [voice-input.md](voice-input.md)): a tool of the toolbox's AI
   category, off until the user turns it on; the composer's sparkle while it is on (Terminal:
   `/voice`, which opens its panel while it is off).
-  `mod.rs` is a dictation's state on the UI thread (idle, listening, finishing, tidying, or failed
-  with a reason), the words of the strip above the composer, the words put into the composer at the
-  end, and the toolbox's Voice input panel; `openai.rs` is OpenAI's realtime transcription session
-  over a WebSocket, the small model that tidies the words, and the check of a key; `audio.rs` turns
-  the microphone's sound into 24 kHz 16-bit PCM. The microphone itself is the platform's
-  (`src/platform/microphone.rs`, AVAudioEngine); the user's OpenAI key is a credential in the app's
-  database (below), the switch, the languages and the tidying are `[voice_input]` in settings.toml
-  (a 0.7.0 file has no `enabled`: voice input is on there when a key was kept).
+  The services go by their API's format, address and model, so that any vendor, relay or server of
+  the user's own that speaks one of the formats can be used, with a set (a profile) per main
+  language. `mod.rs` is a dictation's state on the UI thread (idle, listening, finishing, tidying,
+  or failed with a reason), the strip's words, the words put into the composer at the end, the
+  profiles and their keys, and the toolbox's Voice input panel; `dictation.rs` is a dictation from
+  the first sound to the words; `service.rs` the formats, the addresses and the connections;
+  `realtime.rs` OpenAI's and Qwen's realtime sessions, `doubao.rs` Doubao's binary protocol,
+  `upload.rs` OpenAI's `/audio/transcriptions`, `tidy.rs` the tidying in three formats,
+  `messages.rs` a voice message through the user's own service; `audio.rs` turns the microphone's
+  sound into 16-bit PCM at the service's rate, band-limited. The microphone itself is the
+  platform's (`src/platform/microphone.rs`, AVAudioEngine); the keys are credentials in the app's
+  database (below), the rest is `[voice_input]` in settings.toml (a file of 0.7 becomes the first
+  profile). Transcribe under a voice message is `src/telegram/voice.rs`: Telegram's own
+  transcription first, the user's own service when they allow it.
 - `src/player/`: video through libmpv, drawn into the window (the media viewer's player); voice
   messages through an mpv of their own with no video (`audio.rs`).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
@@ -534,7 +541,8 @@ database holds the servers of the downloads page with their passwords and whethe
 allows changes on each (docs/downloads.md), the
 programs allowed or turned away at AI access (docs/mcp.md), the keys of the SSH servers the
 user trusted, with the day (docs/downloads.md), and the app's own credentials that are no server's,
-each sealed to its name: the OpenAI key of voice input (docs/voice-input.md);
+each sealed to its name: voice input's keys, two for each main language
+(`voice_input.<language>.speech` and `….tidy`, docs/voice-input.md);
 what comes after (a download queue that outlives a restart, logs, per-chat settings) gets a table
 when it is built.
 
@@ -568,9 +576,9 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
 - **Plugins by other people.** They first need a trust model: who signs them, what the user
   approves, how they are sandboxed.
 - **Voice input beyond the user's own key.** The first of the five steps of
-  [voice-input.md](voice-input.md) is built (2026-10-25); the others are not: a plan sold by
-  FinchGram, servers the user runs, the operating systems' own recognizers, and a router between
-  them.
+  [voice-input.md](voice-input.md) is built (2026-10-25), open to any vendor and to servers the user
+  runs since 2026-10-26; the others are not: a plan sold by FinchGram, the operating systems' own
+  recognizers, and a router between them (today the user picks the main language).
 
 ## Open questions
 

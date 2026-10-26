@@ -5,7 +5,7 @@
 // the bubble, B2 the recording, B3 the microphone not allowed). Rust fills these globals; the
 // shared parts take each theme's colours, and Terminal writes its own; the words are here, once
 // for the three themes.
-import { Conversation, VoiceNote } from "telegram.slint";
+import { Conversation, VoiceNote, TranscriptProblem } from "telegram.slint";
 import { Icon, Spinner } from "widgets.slint";
 
 // Where a dictation is: the microphone is open and the words come as the user speaks (listening),
@@ -13,23 +13,44 @@ import { Icon, Spinner } from "widgets.slint";
 // (tidying), or it stopped, and why (failed). Idle: nothing shows but the microphone.
 export enum VoiceState { idle, listening, finishing, tidying, failed }
 
-// Why a dictation stopped, or could not start.
-export enum VoiceProblem { none, no-key, microphone-denied, no-microphone, refused-key, quota, network, openai, nothing-heard }
+// Why a dictation stopped, or could not start. bad-address: the service's address in the panel is
+// not one FinchGram can use; service: the service's own message.
+export enum VoiceProblem { none, no-key, microphone-denied, no-microphone, refused-key, quota, network, service, bad-address, nothing-heard }
 
-// What OpenAI said of the key last saved in the settings.
+// What a service said when last checked: its address and its key (malformed: the key typed is not
+// one).
 export enum KeyCheck { none, malformed, checking, works, refused, failed }
 
-// One of the languages the user can say they speak, by OpenAI's code ("zh-cn"), with its name in
-// itself.
+// A main language, by the code speech services take ("zh-cn", or "auto" for any), with its name
+// in itself ("" for any: the UI's words say it).
 export struct VoiceLanguage {
     code: string,
     name: string,
     on: bool,
 }
 
-// A line of them, as the settings lay them out.
+// A line of them, as the panel lays them out.
 export struct VoiceLanguageRow {
     languages: [VoiceLanguage],
+}
+
+// One of the main language's two services, the speech service or the text model, as the panel
+// shows it: its format ("openai-realtime", "doubao", "anthropic", …), what an empty address and
+// model mean, what is wrong with the address typed (0 nothing; 1 not an address; 2 a name and
+// password in it; 3 plain http to the internet), its key's last letters, the last check, who it
+// is (the vendor for its own address, else the host), and whether words show while speaking.
+export struct VoiceService {
+    format: string,
+    url-placeholder: string,
+    url-problem: int,
+    model-placeholder: string,
+    has-key: bool,
+    key-hint: string,
+    check: KeyCheck,
+    check-detail: string,
+    shown: string,
+    official: bool,
+    live: bool,
 }
 
 export global Voice {
@@ -58,21 +79,53 @@ export global Voice {
     callback cancel();                          // Esc or ×: the words are dropped
     callback act();                             // the problem's button: the toolbox's panel, or the system's
 
+    // The main language in use, for the strip: its name ("" for any), whether there are others to
+    // switch to (a click on it takes the next one), who hears it, and whether words show while
+    // the user speaks (not when the recording goes up at the end).
+    in-out property <string> language-name;
+    in-out property <bool> can-switch;
+    in-out property <string> service;
+    in-out property <bool> live: true;
+    callback next-language();
+
     // The toolbox's switch ([voice_input] enabled): on, the sparkle shows in the composer.
     in-out property <bool> on;
     callback set-on(bool);
-    // The toolbox's Voice input panel.
-    in-out property <bool> has-key;
-    in-out property <string> key-hint;          // "sk-…4f2a"
-    in-out property <KeyCheck> key-check;
-    in-out property <string> key-error;         // what went wrong checking or keeping it
+    // The toolbox's Voice input panel: the main languages set up (the one in use on), the ones
+    // that can be added (while adding), and the one in use's two services. The address and model
+    // typed are their own properties, so that typing is never interrupted.
     in-out property <[VoiceLanguageRow]> language-rows;
+    in-out property <[VoiceLanguageRow]> addable-rows;
+    in-out property <bool> adding;
+    in-out property <bool> can-remove;
+    in-out property <VoiceService> speech;
+    in-out property <string> speech-url;
+    in-out property <string> speech-model;
+    in-out property <string> keywords;          // the words to know, as typed
     in-out property <bool> tidy: true;
-    callback save-key(string);
-    callback remove-key();
-    callback open-key-page();                   // OpenAI's page of API keys, in the browser
-    callback toggle-language(string);
+    in-out property <VoiceService> tidying;
+    in-out property <string> tidy-url;
+    in-out property <string> tidy-model;
+    in-out property <bool> same-key: true;      // the text model takes the speech service's key
+    // Voice messages may go to the user's own speech service when Telegram's transcription cannot.
+    in-out property <bool> transcribe-messages;
+    callback choose-language(string);
+    callback start-adding();
+    callback cancel-adding();
+    callback add-language(string);
+    callback remove-language();
+    // Of one of the two services, named "speech" or "tidy".
+    callback set-format(string, string);
+    callback edit-url(string, string);
+    callback edit-model(string, string);
+    callback edit-keywords(string);
+    callback check(string);                     // the address or model typed is done: ask the service
+    callback save-key(string, string);
+    callback remove-key(string);
+    callback open-key-page(string);             // the vendor's page of API keys, in the browser
     callback set-tidy(bool);
+    callback set-same-key(bool);
+    callback set-transcribe-messages(bool);
 }
 
 // Where the recording of a voice message is (src/telegram/voice.rs), from the design's fifth
@@ -212,7 +265,7 @@ export component PauseSign {
 // A voice message in a chat (B1): the play button (a spinner while its file comes, Retry after it
 // could not), the waveform, which is also how far it has played and takes a click to go there,
 // its time ("0:04 / 0:12" while it plays), a dot until it is listened to, the speed while it
-// plays, and Transcribe, greyed: not in FinchGram.
+// plays, and Transcribe, whose words show under it (src/telegram/voice.rs).
 export component VoiceNoteView {
     in property <string> message-id;
     in property <VoiceNote> note;
@@ -229,6 +282,7 @@ export component VoiceNoteView {
     in property <string> font-family;
     in property <length> radius: 6px;
     in property <bool> duotone;
+    in property <color> words-color: root.meta;      // the transcript's words
     property <bool> current: Conversation.voice-playing == root.message-id;
     property <bool> failed: root.current && Conversation.voice-failed;
     property <bool> loading: root.current && Conversation.voice-loading;
@@ -237,6 +291,8 @@ export component VoiceNoteView {
     property <float> progress: root.current ? Conversation.voice-progress : 0;
     property <int> played-bars: Math.round(root.note.bars.length * root.progress);
 
+    VerticalLayout {
+    spacing: 6px;
     HorizontalLayout {
         spacing: 10px;
         alignment: start;
@@ -357,7 +413,7 @@ export component VoiceNoteView {
                 width: chip.preferred-width + 14px;
                 height: chip.preferred-height + 6px;
                 border-radius: root.radius;
-                background: root.side;
+                background: transcribe.has-hover ? root.side.darker(0.06) : root.side;
                 chip := HorizontalLayout {
                     spacing: 4px;
                     VerticalLayout {
@@ -365,23 +421,35 @@ export component VoiceNoteView {
                         Icon {
                             name: "text-aa";
                             size: 13px;
-                            color: root.faint;
+                            color: root.note.transcript-shown ? root.accent : root.muted;
                             duotone: root.duotone;
                         }
                     }
                     Text {
-                        text: transcribe.has-hover ? VoiceWords.transcribe() + " · " + VoiceWords.not-available() : VoiceWords.transcribe();
-                        color: root.faint;
+                        text: root.note.transcribing ? VoiceWords.transcribing() : VoiceWords.transcribe();
+                        color: root.note.transcript-shown ? root.accent : root.muted;
                         font-family: root.font-family;
                         font-size: 11px;
                         vertical-alignment: center;
                     }
                 }
                 transcribe := TouchArea {
-                    mouse-cursor: not-allowed;
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Conversation.transcribe-voice(root.message-id);
+                    }
                 }
             }
         }
+    }
+    // Its words, or why there are none.
+    if root.note.transcript-shown: Text {
+        text: VoiceWords.transcript(root.note);
+        color: root.note.transcript-problem != TranscriptProblem.none ? root.danger : root.note.transcribing ? root.muted : root.words-color;
+        font-family: root.font-family;
+        font-size: 13px;
+        wrap: word-wrap;
+    }
     }
 }
 
@@ -656,6 +724,17 @@ export global VoiceWords {
     public pure function stop() -> string { return @tr("Stop"); }
     public pure function delete() -> string { return @tr("Delete"); }
     public pure function transcribe() -> string { return @tr("Transcribe"); }
+    public pure function transcribing() -> string { return @tr("Transcribing…"); }
+    // A voice message's words as they show under it, or why there are none.
+    public pure function transcript(note: VoiceNote) -> string {
+        if note.transcript-problem == TranscriptProblem.premium {
+            return @tr("Telegram transcribes voice messages with Premium, or a few times a week without it. Your own speech service can do it too: Toolbox → AI → Voice input.");
+        }
+        if note.transcript-problem == TranscriptProblem.too-long { return @tr("Too long for Telegram to transcribe."); }
+        if note.transcript-problem == TranscriptProblem.failed { return @tr("Could not transcribe it: {0}", note.transcript-detail); }
+        if note.transcript == "" { return @tr("Transcribing…"); }
+        return note.transcribing ? note.transcript + " …" : note.transcript;
+    }
     public pure function not-available() -> string { return @tr("Not available yet"); }
     public pure function download-failed() -> string { return @tr("Couldn't download"); }
     public pure function retry() -> string { return @tr("Retry"); }
@@ -670,64 +749,118 @@ export global VoiceWords {
     // The strip's first line.
     public pure function title() -> string {
         if Voice.state == VoiceState.listening {
-            return Voice.connecting ? @tr("Connecting to OpenAI…") : @tr("Listening · {0}", time(Voice.seconds));
+            return Voice.connecting ? @tr("Connecting to {0}…", Voice.service) : @tr("Listening · {0}", time(Voice.seconds));
         }
         if Voice.state == VoiceState.finishing { return @tr("Finishing…"); }
         if Voice.state == VoiceState.tidying { return @tr("Tidying the words…"); }
         return @tr("Voice input stopped");
     }
-    // In the words' place before any came.
-    public pure function speak-now() -> string { return @tr("Speak now"); }
+    // In the words' place before any came; when the words come only at the end, it says so.
+    public pure function speak-now() -> string { return Voice.live ? @tr("Speak now") : @tr("Speak now: the words come when you are done"); }
+    // The main language in use, in the strip and the panel: its name, or "any language".
+    public pure function language-label(name: string) -> string { return name == "" ? @tr("Any language") : name; }
     public pure function keys() -> string { return @tr("⏎ done · Esc cancel"); }
     public pure function done() -> string { return @tr("Done"); }
     public pure function cancel() -> string { return @tr("Cancel"); }
     // Why it stopped.
     public pure function problem() -> string {
-        if Voice.problem == VoiceProblem.no-key { return @tr("Voice input needs your own OpenAI API key."); }
+        if Voice.problem == VoiceProblem.no-key { return @tr("Voice input needs your API key for {0}.", Voice.service); }
         if Voice.problem == VoiceProblem.microphone-denied { return @tr("FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."); }
         if Voice.problem == VoiceProblem.no-microphone { return @tr("No microphone could be opened: {0}", Voice.detail); }
-        if Voice.problem == VoiceProblem.refused-key { return @tr("OpenAI refused the key."); }
-        if Voice.problem == VoiceProblem.quota { return @tr("OpenAI says the key is out of credit or used too fast: {0}", Voice.detail); }
-        if Voice.problem == VoiceProblem.network { return @tr("Could not reach OpenAI: {0}", Voice.detail); }
+        if Voice.problem == VoiceProblem.refused-key { return @tr("{0} refused the key.", Voice.service); }
+        if Voice.problem == VoiceProblem.quota { return @tr("{0} says the key is out of credit or used too fast: {1}", Voice.service, Voice.detail); }
+        if Voice.problem == VoiceProblem.network { return @tr("Could not reach {0}: {1}", Voice.service, Voice.detail); }
+        if Voice.problem == VoiceProblem.bad-address { return @tr("The speech service's address in Voice input is not one FinchGram can use."); }
         if Voice.problem == VoiceProblem.nothing-heard { return @tr("Nothing was heard. Is the right microphone chosen in System Settings → Sound?"); }
-        return @tr("OpenAI said: {0}", Voice.detail);
+        return @tr("{0} said: {1}", Voice.service, Voice.detail);
     }
     // The problem's button; "" for none.
     public pure function action() -> string {
         if Voice.problem == VoiceProblem.no-key { return @tr("Add key"); }
         if Voice.problem == VoiceProblem.refused-key { return @tr("Change key"); }
+        if Voice.problem == VoiceProblem.bad-address { return @tr("Change address"); }
         if Voice.problem == VoiceProblem.microphone-denied { return @tr("Open System Settings"); }
         return "";
     }
 
     // The toolbox's Voice input panel.
     public pure function switch-title() -> string { return @tr("Use voice input"); }
-    public pure function switch-note() -> string { return @tr("Puts the sparkle in every chat's composer; when off, nothing goes to OpenAI"); }
-    public pure function key() -> string { return @tr("OpenAI API key"); }
-    public pure function key-note() -> string { return @tr("Your own key: OpenAI bills it for what is transcribed. It is kept sealed in FinchGram's database on this Mac."); }
-    public pure function key-placeholder() -> string { return "sk-…"; }
+    public pure function switch-note() -> string { return @tr("Puts the sparkle in every chat's composer; when off, nothing goes to any service"); }
+    public pure function main-language() -> string { return @tr("Main language"); }
+    public pure function main-language-note() -> string {
+        return @tr("The language you mostly speak; words of other languages mixed in are kept as you say them. Each main language has its own services and keys. While you speak, a click on the language in the strip takes the next one.");
+    }
+    public pure function add-language() -> string { return @tr("Add"); }
+    public pure function remove-language(name: string) -> string { return @tr("Remove {0} and its keys", name); }
+    public pure function speech-section(name: string) -> string { return @tr("Speech recognition · {0}", name); }
+    public pure function tidy-section(name: string) -> string { return @tr("Tidying · {0}", name); }
+    public pure function api-format() -> string { return @tr("API format"); }
+    // A format's name on its chip.
+    public pure function format-name(format: string) -> string {
+        if format == "openai-realtime" { return "OpenAI Realtime"; }
+        if format == "openai-transcriptions" { return @tr("OpenAI-compatible upload"); }
+        if format == "qwen-realtime" { return @tr("Qwen (Alibaba Cloud)"); }
+        if format == "doubao" { return @tr("Doubao (Volcengine)"); }
+        if format == "anthropic" { return "Anthropic"; }
+        if format == "gemini" { return "Gemini"; }
+        return "OpenAI";
+    }
+    // What a format is, under its chips.
+    public pure function format-note(format: string) -> string {
+        if format == "openai-realtime" { return @tr("Words show as you speak. OpenAI, or a relay that passes its realtime API through."); }
+        if format == "openai-transcriptions" { return @tr("Words come when you are done. Most services and relays speak it: OpenAI, Groq, SiliconFlow, a Whisper server of your own."); }
+        if format == "qwen-realtime" { return @tr("Words show as you speak. A key from Alibaba Cloud Model Studio; strong in Chinese and its dialects."); }
+        if format == "doubao" { return @tr("Doubao's Seed-ASR, strong in Chinese: words show as you speak Chinese or English. A key from Volcengine's speech console."); }
+        if format == "anthropic" { return @tr("Claude's Messages API: Anthropic, and the relays and vendors that speak it."); }
+        if format == "gemini" { return @tr("Google's Gemini API."); }
+        return @tr("Chat Completions: OpenAI, and nearly everyone else: DeepSeek, Qwen, Kimi, OpenRouter, Ollama, relays.");
+    }
+    public pure function address() -> string { return @tr("Address"); }
+    public pure function address-note() -> string { return @tr("Empty for the vendor's own. For a relay or a server of your own, its base URL."); }
+    public pure function address-problem(problem: int) -> string {
+        if problem == 1 { return @tr("That is not an address: it starts with https://"); }
+        if problem == 2 { return @tr("Leave the name and password out of the address."); }
+        if problem == 3 { return @tr("Plain http goes only to this Mac or the local network: use https."); }
+        return "";
+    }
+    public pure function model() -> string { return @tr("Model"); }
+    public pure function model-note(format: string) -> string {
+        return format == "doubao" ? @tr("For Doubao, the resource ID of what you bought.") : @tr("Empty for the format's own.");
+    }
+    public pure function keywords() -> string { return @tr("Words to know"); }
+    public pure function keywords-note() -> string { return @tr("Names and terms you often say, separated by commas: the service listens for them, so they come out right."); }
+    public pure function keywords-placeholder() -> string { return @tr("Names, products, terms"); }
+    public pure function key() -> string { return @tr("API key"); }
+    public pure function key-note() -> string { return @tr("Your own key: the service bills it for what it does. It is kept sealed in FinchGram's database on this Mac."); }
+    public pure function key-placeholder() -> string { return @tr("Paste the key"); }
     public pure function save() -> string { return @tr("Save"); }
     public pure function remove() -> string { return @tr("Remove"); }
-    public pure function get-key() -> string { return @tr("Get a key at platform.openai.com"); }
-    public pure function key-check() -> string {
-        if Voice.key-check == KeyCheck.malformed { return @tr("That is not an OpenAI key: they start with sk-."); }
-        if Voice.key-check == KeyCheck.checking { return @tr("Checking the key with OpenAI…"); }
-        if Voice.key-check == KeyCheck.works { return @tr("OpenAI accepts the key."); }
-        if Voice.key-check == KeyCheck.refused { return @tr("OpenAI refused the key."); }
-        if Voice.key-check == KeyCheck.failed { return @tr("Could not check the key: {0}", Voice.key-error); }
+    public pure function get-key(vendor: string) -> string { return @tr("Get a key from {0}", vendor); }
+    // What the last check of a service said.
+    public pure function check-text(service: VoiceService) -> string {
+        if service.check == KeyCheck.malformed { return @tr("That does not look like an API key."); }
+        if service.check == KeyCheck.checking { return @tr("Checking with {0}…", service.shown); }
+        if service.check == KeyCheck.works { return service.has-key ? @tr("{0} answers and takes the key.", service.shown) : @tr("{0} answers.", service.shown); }
+        if service.check == KeyCheck.refused { return @tr("{0} refused the key.", service.shown); }
+        if service.check == KeyCheck.failed { return @tr("Could not check: {0}", service.check-detail); }
         return "";
     }
     // Faint, a warning, or a good word: what the check deserves.
-    public pure function key-tone() -> int {
-        if Voice.key-check == KeyCheck.works { return 2; }
-        if Voice.key-check == KeyCheck.malformed || Voice.key-check == KeyCheck.refused || Voice.key-check == KeyCheck.failed { return 1; }
+    public pure function check-tone(service: VoiceService) -> int {
+        if service.check == KeyCheck.works { return 2; }
+        if service.check == KeyCheck.malformed || service.check == KeyCheck.refused || service.check == KeyCheck.failed { return 1; }
         return 0;
     }
-    public pure function languages() -> string { return @tr("Languages you speak"); }
-    public pure function languages-note() -> string { return @tr("Hints for OpenAI. With none chosen, it finds the language as you speak; sentences that mix languages work either way."); }
+    public pure function same-key() -> string { return @tr("Use the speech recognition's key"); }
+    public pure function same-key-note() -> string { return @tr("One key for both, when they are the same vendor or relay."); }
     public pure function tidy() -> string { return @tr("Tidy the words"); }
     public pure function tidy-note() -> string { return @tr("A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."); }
+    public pure function messages-section() -> string { return @tr("Voice messages"); }
+    public pure function transcribe-messages() -> string { return @tr("Transcribe voice messages with your own service"); }
+    public pure function transcribe-messages-note() -> string {
+        return @tr("Transcribe under a voice message asks Telegram first, which needs Premium or one of its few free tries a week. When Telegram cannot, this sends the message to your speech service: someone else's voice, to a service of your choosing. Off unless you turn it on.");
+    }
     public pure function about() -> string {
-        return @tr("Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to OpenAI under your key and nothing else does; OpenAI charges about $1 for an hour of speech. FinchGram keeps no recording.");
+        return @tr("Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the speech service you choose below, under your own key, and nothing else does. FinchGram keeps no recording.");
     }
 }

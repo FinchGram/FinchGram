@@ -28,7 +28,7 @@ use crate::platform::NameOrder;
 use crate::{
     Account, AppState, BotCommand, ButtonKind, ButtonRow, ChatButton, ChatKind, ChatOrder, ChatRow, Chats, ContactCard, Content,
     Conversation, FileCard, FileState, FileType, Folder, FolderChoice, LinkPreview, MainWindow, Media, MessageRow, Moment, NotificationScopes,
-    Reaction, ReplyQuote, RoundNote, RowKind, Status, Sticker, Tab, TopicRow, TreeRow, Viewer, ViewerItem, VoiceNote, Words,
+    Reaction, ReplyQuote, RoundNote, RowKind, Status, Sticker, Tab, TopicRow, TranscriptProblem, TreeRow, Viewer, ViewerItem, VoiceNote, Words,
 };
 
 /// Commands shown at most when "/" is typed.
@@ -272,6 +272,14 @@ pub struct Store {
     /// The round video message playing, and the one whose file is on its way (viewer.rs).
     pub round_playing: Option<i64>,
     pub round_loading: Option<i64>,
+    /// Voice messages' words by the user's own speech service (voice.rs, src/speech/messages.rs),
+    /// by chat and message: on their way, done, or why not. Kept for the session only, nowhere
+    /// else.
+    pub own_transcripts: HashMap<(i64, i64), OwnTranscript>,
+    /// Why Telegram's own transcription could not start, by chat and message.
+    pub transcript_refusals: HashMap<(i64, i64), Refusal>,
+    /// Voice messages whose words the user hid again, by chat and message.
+    pub transcripts_hidden: HashSet<(i64, i64)>,
     /// The reactions model of each row, by row id, with a hash of what it was built from.
     reaction_models: RefCell<HashMap<SharedString, (u64, ModelRc<Reaction>)>>,
     /// The topic rows as last set.
@@ -408,6 +416,9 @@ impl Store {
             added_contacts: HashSet::new(),
             round_playing: None,
             round_loading: None,
+            own_transcripts: HashMap::new(),
+            transcript_refusals: HashMap::new(),
+            transcripts_hidden: HashSet::new(),
             reaction_models: RefCell::new(HashMap::new()),
             topics_shown: RefCell::new(Vec::new()),
             dirty: Dirty::default(),
@@ -458,6 +469,9 @@ pub fn clear() {
         store.wanted_photos.borrow_mut().clear();
         store.media_models.borrow_mut().clear();
         store.voice_bars.borrow_mut().clear();
+        store.own_transcripts.clear();
+        store.transcript_refusals.clear();
+        store.transcripts_hidden.clear();
         store.rows.clear();
         store.selected.clear();
         store.replied.clear();
@@ -2219,9 +2233,31 @@ impl Store {
         }
     }
 
-    /// A voice message as the row shows it: its length, its bars, whether it was listened to.
+    /// A voice message as the row shows it: its length, its bars, whether it was listened to, and
+    /// its words once asked for: Telegram's own, or the user's own service's.
     fn voice_note(&self, message: &api::Message) -> VoiceNote {
         let M::VoiceNote { voice_note, is_listened, .. } = &message.content else { return VoiceNote::default() };
+        let key = (message.chat_id, message.id);
+        let (transcript, transcribing, problem, detail) = match (self.own_transcripts.get(&key), &voice_note.speech_recognition_result) {
+            (Some(OwnTranscript::Pending), _) => (String::new(), true, TranscriptProblem::None, String::new()),
+            (Some(OwnTranscript::Text(text)), _) => (text.clone(), false, TranscriptProblem::None, String::new()),
+            (Some(OwnTranscript::Failed(why)), _) => (String::new(), false, TranscriptProblem::Failed, why.clone()),
+            (None, Some(api::SpeechRecognitionResult::Pending { partial_text })) => (partial_text.clone(), true, TranscriptProblem::None, String::new()),
+            (None, Some(api::SpeechRecognitionResult::Text { text })) => (text.clone(), false, TranscriptProblem::None, String::new()),
+            (None, Some(api::SpeechRecognitionResult::Error { error })) => match Refusal::of(&error.message) {
+                Refusal::TooLong => (String::new(), false, TranscriptProblem::TooLong, String::new()),
+                Refusal::Premium => (String::new(), false, TranscriptProblem::Premium, String::new()),
+                Refusal::Other(why) => (String::new(), false, TranscriptProblem::Failed, why),
+            },
+            (None, _) => match self.transcript_refusals.get(&key) {
+                Some(Refusal::Premium) => (String::new(), false, TranscriptProblem::Premium, String::new()),
+                Some(Refusal::TooLong) => (String::new(), false, TranscriptProblem::TooLong, String::new()),
+                Some(Refusal::Other(why)) => (String::new(), false, TranscriptProblem::Failed, why.clone()),
+                None => (String::new(), false, TranscriptProblem::None, String::new()),
+            },
+        };
+        let asked = transcribing || !transcript.is_empty() || problem != TranscriptProblem::None;
+        let transcript_shown = asked && !self.transcripts_hidden.contains(&key);
         let mut cache = self.voice_bars.borrow_mut();
         // Kept small: each voice message adds one, and a chat's are few against this.
         if cache.len() > 2000 {
@@ -2234,7 +2270,18 @@ impl Store {
                 (ModelRc::new(VecModel::from(bars)), blocks.into())
             })
             .clone();
-        VoiceNote { shown: true, duration: duration_text(voice_note.duration).into(), bars, blocks, listened: *is_listened || message.is_outgoing }
+        VoiceNote {
+            shown: true,
+            duration: duration_text(voice_note.duration).into(),
+            bars,
+            blocks,
+            listened: *is_listened || message.is_outgoing,
+            transcript: transcript.into(),
+            transcribing,
+            transcript_problem: problem,
+            transcript_detail: detail.into(),
+            transcript_shown,
+        }
     }
 
     /// A contact card as the row shows it.
@@ -2851,6 +2898,38 @@ pub fn is_service(content: Content) -> bool {
 /// The first line of a message, for a list's preview.
 fn first_line(text: &str) -> &str {
     text.lines().find(|line| !line.trim().is_empty()).unwrap_or("").trim()
+}
+
+/// A voice message's words by the user's own speech service.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum OwnTranscript {
+    Pending,
+    Text(String),
+    /// Why not, in the service's words.
+    Failed(String),
+}
+
+/// Why Telegram did not transcribe a voice message.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Refusal {
+    /// Telegram Premium is needed (or the week's tries are used up).
+    Premium,
+    TooLong,
+    Other(String),
+}
+
+impl Refusal {
+    /// From TDLib's error message.
+    pub fn of(message: &str) -> Refusal {
+        let upper = message.to_ascii_uppercase();
+        if upper.contains("TOO_LONG") {
+            Refusal::TooLong
+        } else if upper.contains("PREMIUM") || upper.contains("TRIAL") || upper.contains("LIMIT") {
+            Refusal::Premium
+        } else {
+            Refusal::Other(message.to_string())
+        }
+    }
 }
 
 #[cfg(test)]

@@ -10,12 +10,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: ui/app.slint:58
+#: ui/pages/settings.slint:646
 msgid "View"
 msgstr "Présentation"
 
+#: ui/app.slint:60 ui/broadsheet/actions.slint:171
 #: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
-#: ui/terminal/actions.slint:166
+#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166
+#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166
 msgid "Search"
 msgstr "Rechercher"
 
@@ -74,86 +76,104 @@ msgid "Check for Updates…"
 msgstr "Rechercher des mises à jour…"
 
 #: ui/broadsheet/actions.slint:134 ui/terminal/actions.slint:140
+#: ui/broadsheet/actions.slint:134 ui/terminal/actions.slint:140
 msgid "Choose recipient…"
 msgstr "Choisir un destinataire…"
 
-#: ui/broadsheet/actions.slint:227 ui/telegram.slint:932
-#: ui/workbench/actions.slint:229
+#: ui/broadsheet/actions.slint:227 ui/telegram.slint:945
+#: ui/broadsheet/actions.slint:227 ui/telegram.slint:945 ui/workbench/actions.slint:229
 msgid "Saved Messages"
 msgstr "Messages enregistrés"
 
 #: ui/broadsheet/actions.slint:240 ui/compose.slint:129
-#: ui/workbench/actions.slint:242
+#: ui/broadsheet/actions.slint:240 ui/compose.slint:129 ui/workbench/actions.slint:242
 msgid "Recent"
 msgstr "Récents"
 
+#: ui/broadsheet/actions.slint:293 ui/terminal/actions.slint:254
 #: ui/broadsheet/actions.slint:293 ui/terminal/actions.slint:254
 msgid "No chats found"
 msgstr "Aucune discussion trouvée"
 
 #: ui/broadsheet/actions.slint:422 ui/terminal/actions.slint:358
+#: ui/broadsheet/actions.slint:422 ui/terminal/actions.slint:358
 msgid "Add a comment"
 msgstr "Ajouter un commentaire"
 
+#: ui/broadsheet/actions.slint:422 ui/terminal/actions.slint:358
 #: ui/broadsheet/actions.slint:422 ui/terminal/actions.slint:358
 msgid "Add a comment (optional)"
 msgstr "Ajouter un commentaire (facultatif)"
 
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
-#: ui/broadsheet/broadsheet.slint:2813 ui/chat.slint:386 ui/compose.slint:244
-#: ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871
-#: ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209
-#: ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1847
-#: ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
 msgstr "Annuler"
 
-#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2804
-#: ui/chat.slint:305 ui/chat.slint:846 ui/chat.slint:928
-#: ui/terminal/terminal.slint:1840 ui/workbench/conversation.slint:1858
+#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2830
+#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2830 ui/chat.slint:305 ui/chat.slint:846 ui/chat.slint:928
+#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2830 ui/chat.slint:305 ui/chat.slint:846 ui/chat.slint:928 ui/terminal/terminal.slint:1847
+#: ui/broadsheet/actions.slint:455 ui/broadsheet/broadsheet.slint:2830 ui/chat.slint:305 ui/chat.slint:846 ui/chat.slint:928 ui/terminal/terminal.slint:1847 ui/workbench/conversation.slint:1884
 msgid "Report"
 msgstr "Signaler"
 
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2795
-#: ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343
-#: ui/terminal/terminal.slint:1832 ui/workbench/actions.slint:554
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
 msgid "Delete"
 msgstr "Supprimer"
 
+#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:436
 #: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:436
 msgid "Light"
 msgstr "Clair"
 
 #: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:444
+#: ui/broadsheet/broadsheet.slint:105 ui/pages/settings.slint:444
 msgid "Dark"
 msgstr "Sombre"
 
 #: ui/broadsheet/broadsheet.slint:170 ui/pages/profile.slint:72
-#: ui/workbench/workbench.slint:224
+#: ui/broadsheet/broadsheet.slint:170 ui/pages/profile.slint:72 ui/workbench/workbench.slint:224
 msgid "Accounts"
 msgstr "Comptes"
 
 #: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2008
-#: ui/workbench/sidebar.slint:555
+#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2008 ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "Discussions"
 
 #: ui/broadsheet/broadsheet.slint:336 ui/broadsheet/broadsheet.slint:1053
-#: ui/workbench/sidebar.slint:553
+#: ui/broadsheet/broadsheet.slint:336 ui/broadsheet/broadsheet.slint:1053 ui/workbench/sidebar.slint:553
 msgid "Channels"
 msgstr "Canaux"
 
+#: ui/broadsheet/broadsheet.slint:344 ui/broadsheet/broadsheet.slint:1054
 #: ui/broadsheet/broadsheet.slint:344 ui/broadsheet/broadsheet.slint:1054
 msgid "Bots"
 msgstr "Bots"
 
 #: ui/broadsheet/broadsheet.slint:461 ui/terminal/terminal.slint:332
-#: ui/toolbox.slint:108
+#: ui/broadsheet/broadsheet.slint:461 ui/terminal/terminal.slint:332 ui/toolbox.slint:108
 msgid "All"
 msgstr "Toutes"
 
 #: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105
-#: ui/telegram.slint:934 ui/workbench/sidebar.slint:548
+#: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105 ui/telegram.slint:947
+#: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105 ui/telegram.slint:947 ui/workbench/sidebar.slint:548
 msgid "All chats"
 msgstr "Toutes les discussions"
 
@@ -162,28 +182,33 @@ msgid "More"
 msgstr "Plus"
 
 #: ui/broadsheet/broadsheet.slint:634 ui/terminal/terminal.slint:455
+#: ui/broadsheet/broadsheet.slint:634 ui/terminal/terminal.slint:455
 msgid "Mark all as read"
 msgstr "Tout marquer comme lu"
 
+#: ui/broadsheet/broadsheet.slint:651 ui/terminal/terminal.slint:475
 #: ui/broadsheet/broadsheet.slint:651 ui/terminal/terminal.slint:475
 msgid "Sort by"
 msgstr "Trier par"
 
 #: ui/broadsheet/broadsheet.slint:659 ui/terminal/terminal.slint:481
+#: ui/broadsheet/broadsheet.slint:659 ui/terminal/terminal.slint:481
 msgid "Latest message"
 msgstr "Dernier message"
 
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233
-#: ui/pages/downloads.slint:2598 ui/workbench/sidebar.slint:868
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/workbench/sidebar.slint:868
 msgid "Name"
 msgstr "Nom"
 
+#: ui/broadsheet/broadsheet.slint:677 ui/terminal/terminal.slint:497
 #: ui/broadsheet/broadsheet.slint:677 ui/terminal/terminal.slint:497
 msgid "Unread"
 msgstr "Non lus"
 
 #: ui/broadsheet/broadsheet.slint:912 ui/format.slint:163
-#: ui/workbench/sidebar.slint:369
+#: ui/broadsheet/broadsheet.slint:912 ui/format.slint:163 ui/workbench/sidebar.slint:369
 msgid "{n} subscriber"
 msgid_plural "{n} subscribers"
 msgstr[0] "{n} abonné"
@@ -193,6 +218,7 @@ msgstr[1] "{n} abonnés"
 msgid "Telegram bots"
 msgstr "Bots Telegram"
 
+#: ui/broadsheet/broadsheet.slint:1208 ui/terminal/terminal.slint:703
 #: ui/broadsheet/broadsheet.slint:1208 ui/terminal/terminal.slint:703
 msgid "No chats yet"
 msgstr "Aucune discussion pour l'instant"
@@ -215,9 +241,11 @@ msgstr ""
 "Les discussions que vous ajoutez à ce dossier dans Telegram apparaissent ici."
 
 #: ui/broadsheet/broadsheet.slint:1254 ui/terminal/terminal.slint:738
+#: ui/broadsheet/broadsheet.slint:1254 ui/terminal/terminal.slint:738
 msgid "Official bots"
 msgstr "Bots officiels"
 
+#: ui/broadsheet/broadsheet.slint:1268 ui/terminal/terminal.slint:750
 #: ui/broadsheet/broadsheet.slint:1268 ui/terminal/terminal.slint:750
 msgid "Other bots"
 msgstr "Autres bots"
@@ -229,43 +257,53 @@ msgstr ""
 "Les bots marqués d'une coche sont ceux de Telegram. Les autres bots voient "
 "ce que vous leur envoyez."
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3722
-#: ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
-#: ui/workbench/conversation.slint:2763
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277 ui/workbench/conversation.slint:2789
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277 ui/workbench/conversation.slint:2789
 msgid "Unmute"
 msgstr "Réactiver les notifications"
 
-#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3722
-#: ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
-#: ui/workbench/conversation.slint:2763
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277 ui/workbench/conversation.slint:2789
+#: ui/broadsheet/broadsheet.slint:1325 ui/broadsheet/broadsheet.slint:3748 ui/terminal/terminal.slint:840 ui/workbench/conversation.slint:277 ui/workbench/conversation.slint:2789
 msgid "Mute"
 msgstr "Mettre en sourdine"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3791
-#: ui/terminal/terminal.slint:1661 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817 ui/terminal/terminal.slint:1668
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817 ui/terminal/terminal.slint:1668 ui/workbench/sidebar.slint:717
 msgid "Unpin"
 msgstr "Désépingler"
 
-#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3791
-#: ui/terminal/terminal.slint:1661 ui/workbench/sidebar.slint:717
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817 ui/terminal/terminal.slint:1668
+#: ui/broadsheet/broadsheet.slint:1333 ui/broadsheet/broadsheet.slint:3817 ui/terminal/terminal.slint:1668 ui/workbench/sidebar.slint:717
 msgid "Pin"
 msgstr "Épingler"
 
 #: ui/broadsheet/broadsheet.slint:1342 ui/chat-info.slint:86
-#: ui/workbench/sidebar.slint:726
+#: ui/broadsheet/broadsheet.slint:1342 ui/chat-info.slint:86 ui/workbench/sidebar.slint:726
 msgid "Add to folder"
 msgstr "Ajouter à un dossier"
 
-#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3799
-#: ui/terminal/terminal.slint:1669 ui/workbench/sidebar.slint:733
+#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3825
+#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3825 ui/terminal/terminal.slint:1676
+#: ui/broadsheet/broadsheet.slint:1349 ui/broadsheet/broadsheet.slint:3825 ui/terminal/terminal.slint:1676 ui/workbench/sidebar.slint:733
 msgid "Copy ID"
 msgstr "Copier l'ID"
 
 #: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228
-#: ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637
-#: ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849
-#: ui/pages/login.slint:909 ui/pages/settings.slint:1458
-#: ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:783
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849 ui/pages/login.slint:909
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849 ui/pages/login.slint:909 ui/pages/settings.slint:1458
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849 ui/pages/login.slint:909 ui/pages/settings.slint:1458 ui/terminal/actions.slint:286
+#: ui/broadsheet/broadsheet.slint:1397 ui/chat-manage.slint:228 ui/pages/login.slint:423 ui/pages/login.slint:532 ui/pages/login.slint:637 ui/pages/login.slint:684 ui/pages/login.slint:808 ui/pages/login.slint:849 ui/pages/login.slint:909 ui/pages/settings.slint:1458 ui/terminal/actions.slint:286 ui/workbench/sidebar.slint:783
 msgid "Back"
 msgstr "Retour"
 
@@ -274,55 +312,61 @@ msgid "Instant View"
 msgstr "Instant View"
 
 #: ui/broadsheet/broadsheet.slint:1507 ui/terminal/terminal.slint:1039
+#: ui/broadsheet/broadsheet.slint:1507 ui/terminal/terminal.slint:1039
 msgid "Forwarded from {0}"
 msgstr "Transféré de {0}"
 
-#: ui/broadsheet/broadsheet.slint:1885 ui/broadsheet/broadsheet.slint:2131
-#: ui/workbench/conversation.slint:1114
+#: ui/broadsheet/broadsheet.slint:1886 ui/broadsheet/broadsheet.slint:2133
+#: ui/broadsheet/broadsheet.slint:1886 ui/broadsheet/broadsheet.slint:2133 ui/workbench/conversation.slint:1116
 msgid "edited"
 msgstr "modifié"
 
-#: ui/broadsheet/broadsheet.slint:2200
+#: ui/broadsheet/broadsheet.slint:2202
 msgid "Sponsored · placed by Telegram · Premium users can turn these off"
 msgstr ""
 "Sponsorisé · diffusé par Telegram · les utilisateurs Premium peuvent les "
 "désactiver"
 
-#: ui/broadsheet/broadsheet.slint:2266 ui/format.slint:262
-#: ui/workbench/conversation.slint:1261
+#: ui/broadsheet/broadsheet.slint:2268 ui/format.slint:262
+#: ui/broadsheet/broadsheet.slint:2268 ui/format.slint:262 ui/workbench/conversation.slint:1263
 msgid "You"
 msgstr "Vous"
 
-#: ui/broadsheet/broadsheet.slint:2377 ui/terminal/terminal.slint:2076
+#: ui/broadsheet/broadsheet.slint:2379 ui/terminal/terminal.slint:2083
+#: ui/broadsheet/broadsheet.slint:2379 ui/terminal/terminal.slint:2083
 msgid "Hide sender's name"
 msgstr "Masquer le nom de l'expéditeur"
 
-#: ui/broadsheet/broadsheet.slint:2771 ui/terminal/terminal.slint:1855
+#: ui/broadsheet/broadsheet.slint:2797 ui/terminal/terminal.slint:1862
+#: ui/broadsheet/broadsheet.slint:2797 ui/terminal/terminal.slint:1862
 msgid "Shift-click to select a range"
 msgstr "Maj + clic pour sélectionner une plage"
 
-#: ui/broadsheet/broadsheet.slint:2779 ui/chat.slint:845
-#: ui/workbench/conversation.slint:1824
+#: ui/broadsheet/broadsheet.slint:2805 ui/chat.slint:845
+#: ui/broadsheet/broadsheet.slint:2805 ui/chat.slint:845 ui/workbench/conversation.slint:1850
 msgid "Forward"
 msgstr "Transférer"
 
-#: ui/broadsheet/broadsheet.slint:3064 ui/terminal/terminal.slint:2606
+#: ui/broadsheet/broadsheet.slint:3090 ui/terminal/terminal.slint:2621
+#: ui/broadsheet/broadsheet.slint:3090 ui/terminal/terminal.slint:2621
 msgid "Choose a chat on the left"
 msgstr "Choisissez une discussion à gauche"
 
-#: ui/broadsheet/broadsheet.slint:3089 ui/terminal/terminal.slint:1584
+#: ui/broadsheet/broadsheet.slint:3115 ui/terminal/terminal.slint:1591
+#: ui/broadsheet/broadsheet.slint:3115 ui/terminal/terminal.slint:1591
 msgid "typing…"
 msgstr "écrit…"
 
-#: ui/broadsheet/broadsheet.slint:3198 ui/terminal/terminal.slint:1722
+#: ui/broadsheet/broadsheet.slint:3224 ui/terminal/terminal.slint:1729
+#: ui/broadsheet/broadsheet.slint:3224 ui/terminal/terminal.slint:1729
 msgid "{0} is typing…"
 msgstr "{0} écrit…"
 
-#: ui/broadsheet/broadsheet.slint:3269
+#: ui/broadsheet/broadsheet.slint:3295
 msgid "Sending as {0}"
 msgstr "Envoi en tant que {0}"
 
-#: ui/broadsheet/broadsheet.slint:3308
+#: ui/broadsheet/broadsheet.slint:3334
 msgid "Write a message…"
 msgstr "Écrire un message…"
 
@@ -338,6 +382,7 @@ msgstr "Appel"
 msgid "Mobile"
 msgstr "Mobile"
 
+#: ui/chat-info.slint:72 ui/chat-manage.slint:245
 #: ui/chat-info.slint:72 ui/chat-manage.slint:245 ui/pages/profile.slint:300
 msgid "Username"
 msgstr "Nom d'utilisateur"
@@ -360,6 +405,7 @@ msgid "Info"
 msgstr "Infos"
 
 #. The foot.
+#: ui/chat-info.slint:77 ui/pages/settings.slint:98
 #: ui/chat-info.slint:77 ui/pages/settings.slint:98 ui/toolbox.slint:154
 msgid "Settings"
 msgstr "Réglages"
@@ -419,8 +465,7 @@ msgstr "Aucun message non lu"
 msgid "Auto-delete messages"
 msgstr "Suppression automatique"
 
-#: ui/chat-info.slint:92 ui/chat.slint:381 ui/pages/settings.slint:758
-#: ui/pages/settings.slint:780
+#: ui/chat-manage.slint:322 ui/extras.slint:69
 msgid "Off"
 msgstr "Désactivé"
 
@@ -529,7 +574,8 @@ msgid "Change photo"
 msgstr "Changer la photo"
 
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
-#: ui/pages/settings.slint:1269 ui/voice.slint:709
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:836
 msgid "Save"
 msgstr "Enregistrer"
 
@@ -537,7 +583,7 @@ msgstr "Enregistrer"
 msgid "Got it"
 msgstr "Compris"
 
-#: ui/chat-manage.slint:232
+#: ui/pages/downloads.slint:3116
 msgctxt "on the photo"
 msgid "Change"
 msgstr "Changer"
@@ -636,7 +682,8 @@ msgid "Primary invite link"
 msgstr "Lien d'invitation principal"
 
 #: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:1165
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
 msgid "Copy"
 msgstr "Copier"
 
@@ -720,7 +767,7 @@ msgstr "Sans limite"
 msgid "Up to {0}"
 msgstr "Jusqu'à {0}"
 
-#: ui/chat-manage.slint:279
+#: ui/format.slint:236
 msgctxt "how many joined by the link"
 msgid "{0} joined"
 msgstr "rejoint par {0}"
@@ -772,6 +819,7 @@ msgid "No contacts to add"
 msgstr "Aucun contact à ajouter"
 
 #: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2921
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2921
 msgid "Add"
 msgstr "Ajouter"
 
@@ -800,7 +848,8 @@ msgid "Remove {0} from the channel?"
 msgstr "Retirer {0} de la chaîne ?"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
-#: ui/pages/downloads.slint:2952 ui/voice.slint:710
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:837
 msgid "Remove"
 msgstr "Retirer"
 
@@ -847,6 +896,7 @@ msgstr "Autorisations des membres"
 msgid "{0} of {1} allowed · what members can do"
 msgstr "{0} sur {1} autorisées · ce que les membres peuvent faire"
 
+#: ui/chat-manage.slint:313 ui/pages/ai-access.slint:111
 #: ui/chat-manage.slint:313 ui/pages/ai-access.slint:111
 msgid "Send messages"
 msgstr "Envoyer des messages"
@@ -1186,7 +1236,7 @@ msgid "Also delete for {0}"
 msgstr "Supprimer aussi pour {0}"
 
 #: ui/chat.slint:329 ui/pages/downloads.slint:2357
-#: ui/pages/downloads.slint:3262
+#: ui/chat.slint:329 ui/pages/downloads.slint:2357 ui/pages/downloads.slint:3262
 msgid "Open"
 msgstr "Ouvrir"
 
@@ -1222,11 +1272,11 @@ msgstr "Fichier"
 msgid "Poll"
 msgstr "Sondage"
 
-#: ui/chat.slint:343 ui/voice.slint:659
+#: ui/chat.slint:343 ui/voice.slint:738
 msgid "Not available yet"
 msgstr "Pas encore disponible"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:665
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:744
 msgid "Not allowed in this group"
 msgstr "Non autorisé dans ce groupe"
 
@@ -1252,7 +1302,7 @@ msgstr ""
 "Système → Confidentialité et sécurité. Si FinchGram figure déjà dans la "
 "liste, désactivez-le puis réactivez-le."
 
-#: ui/chat.slint:351 ui/voice.slint:664 ui/voice.slint:699
+#: ui/chat.slint:351 ui/voice.slint:743 ui/voice.slint:782
 msgid "Open System Settings"
 msgstr "Ouvrir les Réglages Système"
 
@@ -1348,7 +1398,7 @@ msgstr "Voir une fois"
 msgid "Hide with spoiler"
 msgstr "Masquer avec un spoiler"
 
-#: ui/chat.slint:387 ui/voice.slint:655
+#: ui/chat.slint:387 ui/voice.slint:723
 msgid "Send"
 msgstr "Envoyer"
 
@@ -1414,10 +1464,12 @@ msgid "Not sent"
 msgstr "Non envoyé"
 
 #: ui/chat.slint:412 ui/pages/downloads.slint:1019
-#: ui/pages/downloads.slint:3347
+#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3347
+#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3347
 msgid "Retry"
 msgstr "Réessayer"
 
+#: ui/chat.slint:414 ui/pages/downloads.slint:2363
 #: ui/chat.slint:414 ui/pages/downloads.slint:2363
 msgid "Download"
 msgstr "Télécharger"
@@ -1427,6 +1479,7 @@ msgid "Cancel download"
 msgstr "Annuler le téléchargement"
 
 #: ui/chat.slint:416 ui/pages/downloads.slint:1000
+#: ui/chat.slint:416 ui/pages/downloads.slint:1000
 msgid "Show in Finder"
 msgstr "Afficher dans le Finder"
 
@@ -1435,7 +1488,7 @@ msgstr "Afficher dans le Finder"
 msgid "{0} of {1}"
 msgstr "{0} sur {1}"
 
-#: ui/chat.slint:718 ui/terminal/terminal.slint:1108
+#: ui/chat.slint:718 ui/terminal/terminal.slint:1115
 msgid "Tap to view"
 msgstr "Cliquez pour voir"
 
@@ -1459,7 +1512,7 @@ msgstr "Enregistrer l'image"
 msgid "Save Video"
 msgstr "Enregistrer la vidéo"
 
-#: ui/chat.slint:843
+#: ui/chat.slint:853
 msgctxt "words of a photo or video"
 msgid "Copy Text"
 msgstr "Copier le texte"
@@ -1645,17 +1698,17 @@ msgstr "Messages"
 msgid "Contact"
 msgstr "Contact"
 
-#: ui/compose.slint:145
+#: ui/pages/ai-access.slint:28
 msgctxt "kind of chat"
 msgid "Group"
 msgstr "Groupe"
 
-#: ui/compose.slint:146
+#: ui/pages/ai-access.slint:31
 msgctxt "kind of chat"
 msgid "Channel"
 msgstr "Chaîne"
 
-#: ui/compose.slint:147
+#: ui/pages/ai-access.slint:34
 msgctxt "kind of chat"
 msgid "Bot"
 msgstr "Bot"
@@ -1805,8 +1858,9 @@ msgid "They need to be on Telegram"
 msgstr "La personne doit être sur Telegram"
 
 #: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406
-#: ui/pages/login.slint:621 ui/pages/login.slint:842
-#: ui/pages/settings.slint:1378
+#: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406 ui/pages/login.slint:621 ui/pages/login.slint:842
+#: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406 ui/pages/login.slint:621 ui/pages/login.slint:842 ui/pages/settings.slint:1378
+#: ui/compose.slint:225 ui/compose.slint:228 ui/pages/login.slint:406 ui/pages/login.slint:621 ui/pages/login.slint:842 ui/pages/settings.slint:1378
 msgid "Next"
 msgstr "Suivant"
 
@@ -1820,7 +1874,7 @@ msgid_plural "Invite {n} people"
 msgstr[0] "Inviter {n} personne"
 msgstr[1] "Inviter {n} personnes"
 
-#: ui/compose.slint:229 ui/voice.slint:682
+#: ui/compose.slint:229 ui/voice.slint:763
 msgid "Done"
 msgstr "Terminé"
 
@@ -1918,6 +1972,7 @@ msgid "Cannot end with an underscore"
 msgstr "Ne peut pas finir par un tiret bas"
 
 #: ui/compose.slint:271 ui/pages/downloads.slint:18
+#: ui/compose.slint:271 ui/pages/downloads.slint:18
 msgid "Checking…"
 msgstr "Vérification…"
 
@@ -1953,7 +2008,8 @@ msgid "It can be revoked and made anew in the channel's settings."
 msgstr "Il peut être révoqué et recréé dans les paramètres de la chaîne."
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:562
-#: ui/pages/downloads.slint:1165
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
 msgid "Copied"
 msgstr "Copié"
 
@@ -2110,6 +2166,7 @@ msgstr "Aucune discussion correspondante"
 msgid "Add a message (optional)"
 msgstr "Ajouter un message (facultatif)"
 
+#: ui/extras.slint:47 ui/pages/ai-access.slint:472
 #: ui/extras.slint:47 ui/pages/ai-access.slint:472
 msgid "Choose chats"
 msgstr "Choisir des discussions"
@@ -2307,7 +2364,7 @@ msgctxt "month"
 msgid "Apr"
 msgstr "avr."
 
-#: ui/format.slint:62
+#: ui/format.slint:77
 msgctxt "month"
 msgid "May"
 msgstr "mai"
@@ -2399,12 +2456,12 @@ msgstr "décembre"
 msgid "Yesterday"
 msgstr "Hier"
 
-#: ui/format.slint:99
+#: ui/format.slint:117
 msgctxt "short date"
 msgid "{0} {1}"
 msgstr "{1} {0}"
 
-#: ui/format.slint:101
+#: ui/format.slint:119 ui/format.slint:124
 msgctxt "short date with year"
 msgid "{0} {1}, {2}"
 msgstr "{1} {0} {2}"
@@ -2902,6 +2959,7 @@ msgid "Don't Allow"
 msgstr "Refuser"
 
 #: ui/pages/ai-access.slint:890 ui/pages/ai-access.slint:897
+#: ui/pages/ai-access.slint:890 ui/pages/ai-access.slint:897
 msgid "AI access"
 msgstr "Accès IA"
 
@@ -3214,6 +3272,7 @@ msgid "Default port {}."
 msgstr "Port par défaut : {}."
 
 #: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2501
+#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2501
 msgid "Add server"
 msgstr "Ajouter un serveur"
 
@@ -3221,6 +3280,7 @@ msgstr "Ajouter un serveur"
 msgid "Filter this folder"
 msgstr "Filtrer ce dossier"
 
+#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2998
 #: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2998
 msgid "Transfers"
 msgstr "Transferts"
@@ -3526,7 +3586,7 @@ msgstr ""
 msgid "Protocol"
 msgstr "Protocole"
 
-#: ui/pages/downloads.slint:2613
+#: ui/pages/downloads.slint:2613 ui/voice.slint:818
 msgid "Address"
 msgstr "Adresse"
 
@@ -3560,7 +3620,7 @@ msgid "Sign in with"
 msgstr "Se connecter avec"
 
 #: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760
-#: ui/pages/settings.slint:1227
+#: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760 ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "Mot de passe"
 
@@ -3728,7 +3788,7 @@ msgid "Translate foreign-language messages into your UI language"
 msgstr ""
 "Traduit les messages en langue étrangère dans la langue de votre interface"
 
-#: ui/pages/login.slint:133 ui/workbench/conversation.slint:2163
+#: ui/pages/login.slint:133 ui/workbench/conversation.slint:2189
 msgid "Reading mode"
 msgstr "Mode lecture"
 
@@ -3768,6 +3828,7 @@ msgstr "Connectez-vous avec votre téléphone"
 msgid "We'll send a code to your Telegram app"
 msgstr "Nous enverrons un code à votre app Telegram"
 
+#: ui/pages/login.slint:385 ui/pages/profile.slint:354
 #: ui/pages/login.slint:385 ui/pages/profile.slint:354
 msgid "Phone number"
 msgstr "Numéro de téléphone"
@@ -3822,6 +3883,7 @@ msgstr "Renvoyé — regardez dans Telegram"
 msgid "Didn't get it? Resend"
 msgstr "Rien reçu ? Renvoyer"
 
+#: ui/pages/login.slint:545 ui/pages/settings.slint:1026
 #: ui/pages/login.slint:545 ui/pages/settings.slint:1026
 msgid "Two-step verification"
 msgstr "Validation en deux étapes"
@@ -4022,11 +4084,12 @@ msgstr ""
 "L'indice s'affiche sur l'écran de connexion pour quiconque connaît votre "
 "numéro. N'y écrivez pas le mot de passe lui-même."
 
-#: ui/pages/profile.slint:110
+#: ui/toolbox.slint:152
 msgid "Current"
 msgstr "Actuel"
 
 #. The accounts.
+#: ui/pages/profile.slint:119 ui/toolbox.slint:150
 #: ui/pages/profile.slint:119 ui/toolbox.slint:150
 msgid "Add account"
 msgstr "Ajouter un compte"
@@ -4080,6 +4143,7 @@ msgid "Notifications & sounds"
 msgstr "Notifications et sons"
 
 #: ui/pages/settings.slint:119 ui/pages/settings.slint:1547
+#: ui/pages/settings.slint:119 ui/pages/settings.slint:1547
 msgid "Privacy & security"
 msgstr "Confidentialité et sécurité"
 
@@ -4132,7 +4196,7 @@ msgid "The update failed"
 msgstr "La mise à jour a échoué"
 
 #: ui/pages/settings.slint:343 ui/pages/settings.slint:359
-#: ui/pages/settings.slint:867
+#: ui/pages/settings.slint:343 ui/pages/settings.slint:359 ui/pages/settings.slint:867
 msgid "Version {0}"
 msgstr "Version {0}"
 
@@ -4279,7 +4343,7 @@ msgid "Private chats"
 msgstr "Discussions privées"
 
 #: ui/pages/settings.slint:758 ui/pages/settings.slint:769
-#: ui/pages/settings.slint:1027
+#: ui/pages/settings.slint:758 ui/pages/settings.slint:769 ui/pages/settings.slint:1027
 msgid "On"
 msgstr "Activé"
 
@@ -4508,12 +4572,12 @@ msgstr "Quitter FinchGram"
 msgid "New message"
 msgstr "Nouveau message"
 
-#: ui/telegram.slint:933
+#: ui/telegram.slint:946
 msgid "Deleted Account"
 msgstr "Compte supprimé"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:936
+#: ui/telegram.slint:949
 msgctxt "list separator"
 msgid ", "
 msgstr ", "
@@ -4535,67 +4599,67 @@ msgctxt "terminal"
 msgid "new"
 msgstr "nouveau"
 
-#: ui/terminal/terminal.slint:1086 ui/terminal/terminal.slint:1095
+#: ui/terminal/terminal.slint:1086 ui/terminal/terminal.slint:1102
 msgid "(edited)"
 msgstr "(modifié)"
 
-#: ui/terminal/terminal.slint:1373
+#: ui/terminal/terminal.slint:1380
 msgid "sponsored"
 msgstr "sponsorisé"
 
-#: ui/terminal/terminal.slint:1426 ui/terminal/terminal.slint:1591
+#: ui/terminal/terminal.slint:1433 ui/terminal/terminal.slint:1598
 msgid "search"
 msgstr "rechercher"
 
-#: ui/terminal/terminal.slint:1604
+#: ui/terminal/terminal.slint:1611
 msgid "chat info"
 msgstr "infos"
 
-#: ui/terminal/terminal.slint:1971
+#: ui/terminal/terminal.slint:1978
 msgid "Mute or unmute this chat"
 msgstr "Mettre en sourdine ou réactiver cette discussion"
 
-#: ui/terminal/terminal.slint:1972
+#: ui/terminal/terminal.slint:1979
 msgid "Pin or unpin this chat"
 msgstr "Épingler ou désépingler cette discussion"
 
-#: ui/terminal/terminal.slint:1973
+#: ui/terminal/terminal.slint:1980
 msgid "Mark every chat in this folder as read"
 msgstr "Marquer toutes les discussions de ce dossier comme lues"
 
-#: ui/terminal/terminal.slint:1974
+#: ui/terminal/terminal.slint:1981
 msgid "Copy this chat's ID"
 msgstr "Copier l'ID de cette discussion"
 
-#: ui/terminal/terminal.slint:1975
+#: ui/terminal/terminal.slint:1982
 msgid "Search chats, contacts, @usernames and messages"
 msgstr "Rechercher discussions, contacts, @noms d'utilisateur et messages"
 
-#: ui/terminal/terminal.slint:2227
+#: ui/terminal/terminal.slint:2242
 msgid "unmute"
 msgstr "réactiver les notifications"
 
-#: ui/terminal/terminal.slint:2227
+#: ui/terminal/terminal.slint:2242
 msgid "mute"
 msgstr "mettre en sourdine"
 
-#: ui/terminal/terminal.slint:2326
+#: ui/terminal/terminal.slint:2341
 msgid "Write a message, or / for commands"
 msgstr "Écrivez un message, ou / pour les commandes"
 
-#: ui/terminal/terminal.slint:2442
+#: ui/terminal/terminal.slint:2457
 msgid "save"
 msgstr "enregistrer"
 
-#: ui/terminal/terminal.slint:2385 ui/terminal/terminal.slint:2442
+#: ui/terminal/terminal.slint:2400 ui/terminal/terminal.slint:2457
 msgid "send"
 msgstr "envoyer"
 
-#: ui/terminal/terminal.slint:2541
+#: ui/terminal/terminal.slint:2556
 msgid "connected"
 msgstr "connecté"
 
-#: ui/terminal/terminal.slint:2566
+#: ui/terminal/terminal.slint:2581
 msgctxt "terminal"
 msgid "cmd"
 msgstr "cmd"
@@ -4817,7 +4881,7 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ parcourir · ↑/↓ volume · espace lecture · esc fermer"
 
-#: ui/toolbox.slint:133 ui/voice.slint:646
+#: ui/toolbox.slint:133 ui/voice.slint:714
 msgid "Voice input"
 msgstr "Saisie vocale"
 
@@ -4826,177 +4890,109 @@ msgid "Speak, and the words go into the composer, through your own OpenAI key"
 msgstr "Parlez, et le texte arrive dans la zone de saisie, avec votre propre clé OpenAI"
 
 #. The sparkle's tip.
-#: ui/voice.slint:648
+#: ui/voice.slint:716
 msgid "Finish voice input"
 msgstr "Terminer la saisie vocale"
 
 #. The sparkle's tip.
-#: ui/voice.slint:648
+#: ui/voice.slint:716
 msgid "Voice input: click, or hold while you speak"
 msgstr "Saisie vocale : cliquez, ou maintenez enfoncé pendant que vous parlez"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:651
+#: ui/voice.slint:719
 msgid "Record voice message"
 msgstr "Enregistrer un message vocal"
 
-#: ui/voice.slint:652
+#: ui/voice.slint:720
 msgid "Release to send · Drag left to cancel"
 msgstr "Relâchez pour envoyer · Glissez à gauche pour annuler"
 
-#: ui/voice.slint:653
+#: ui/voice.slint:721
 msgid "Release to cancel"
 msgstr "Relâchez pour annuler"
 
-#: ui/voice.slint:654
+#: ui/voice.slint:722
 msgid "Hold to record. Release to send."
 msgstr "Maintenez pour enregistrer. Relâchez pour envoyer."
 
-#: ui/voice.slint:656
+#: ui/voice.slint:724
 msgid "Stop"
 msgstr "Arrêter"
 
-#: ui/voice.slint:658
+#: ui/voice.slint:726
 msgid "Transcribe"
 msgstr "Transcrire"
 
-#: ui/voice.slint:660
+#: ui/voice.slint:739
 msgid "Couldn't download"
 msgstr "Échec du téléchargement"
 
-#: ui/voice.slint:662
+#: ui/voice.slint:741
 msgid "Loading…"
 msgstr "Chargement…"
 
-#: ui/voice.slint:663
+#: ui/voice.slint:742
 msgid "Microphone access is off."
 msgstr "L’accès au micro est désactivé."
 
-#: ui/voice.slint:673
-msgid "Connecting to OpenAI…"
-msgstr "Connexion à OpenAI…"
-
-#: ui/voice.slint:673
+#: ui/voice.slint:752
 msgid "Listening · {0}"
 msgstr "Écoute · {0}"
 
-#: ui/voice.slint:675
+#: ui/voice.slint:754
 msgid "Finishing…"
 msgstr "Finalisation…"
 
-#: ui/voice.slint:676
+#: ui/voice.slint:755
 msgid "Tidying the words…"
 msgstr "Mise au propre du texte…"
 
-#: ui/voice.slint:677
+#: ui/voice.slint:756
 msgid "Voice input stopped"
 msgstr "Saisie vocale arrêtée"
 
 #. In the words' place before any came.
-#: ui/voice.slint:680
+#: ui/voice.slint:759
 msgid "Speak now"
 msgstr "Parlez maintenant"
 
-#: ui/voice.slint:681
+#: ui/voice.slint:762
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ terminer · Esc annuler"
 
-#: ui/voice.slint:686
-msgid "Voice input needs your own OpenAI API key."
-msgstr "La saisie vocale a besoin de votre propre clé d’API OpenAI."
-
-#: ui/voice.slint:687
+#: ui/voice.slint:768
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram n’a pas le droit d’utiliser le micro. Autorisez-le dans Réglages Système → Confidentialité et sécurité → Micro."
 
-#: ui/voice.slint:688
+#: ui/voice.slint:769
 msgid "No microphone could be opened: {0}"
 msgstr "Impossible d’ouvrir un micro : {0}"
 
-#: ui/voice.slint:690
-msgid "OpenAI says the key is out of credit or used too fast: {0}"
-msgstr "Selon OpenAI, la clé n’a plus de crédit ou est utilisée trop vite : {0}"
-
-#: ui/voice.slint:691
-msgid "Could not reach OpenAI: {0}"
-msgstr "Impossible de joindre OpenAI : {0}"
-
-#: ui/voice.slint:692
+#: ui/voice.slint:774
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "Rien n’a été entendu. Le bon micro est-il choisi dans Réglages Système → Son ?"
 
-#: ui/voice.slint:693
-msgid "OpenAI said: {0}"
-msgstr "OpenAI a répondu : {0}"
-
-#: ui/voice.slint:697
+#: ui/voice.slint:779
 msgid "Add key"
 msgstr "Ajouter une clé"
 
-#: ui/voice.slint:698
+#: ui/voice.slint:780
 msgid "Change key"
 msgstr "Changer de clé"
 
 #. The toolbox's Voice input panel.
-#: ui/voice.slint:704
+#: ui/voice.slint:787
 msgid "Use voice input"
 msgstr "Utiliser la saisie vocale"
 
-#: ui/voice.slint:705
-msgid "Puts the sparkle in every chat's composer; when off, nothing goes to OpenAI"
-msgstr "Met ✦ dans la zone de saisie de chaque discussion ; désactivée, rien ne part vers OpenAI"
-
-#: ui/voice.slint:706
-msgid "OpenAI API key"
-msgstr "Clé d’API OpenAI"
-
-#: ui/voice.slint:707
-msgid "Your own key: OpenAI bills it for what is transcribed. It is kept sealed in FinchGram's database on this Mac."
-msgstr "Votre propre clé : OpenAI la facture pour ce qui est transcrit. Elle est conservée scellée dans la base de données de FinchGram sur ce Mac."
-
-#: ui/voice.slint:711
-msgid "Get a key at platform.openai.com"
-msgstr "Obtenir une clé sur platform.openai.com"
-
-#: ui/voice.slint:713
-msgid "That is not an OpenAI key: they start with sk-."
-msgstr "Ce n’est pas une clé OpenAI : elles commencent par sk-."
-
-#: ui/voice.slint:714
-msgid "Checking the key with OpenAI…"
-msgstr "Vérification de la clé auprès d’OpenAI…"
-
-#: ui/voice.slint:715
-msgid "OpenAI accepts the key."
-msgstr "OpenAI accepte la clé."
-
-#: ui/voice.slint:689 ui/voice.slint:716
-msgid "OpenAI refused the key."
-msgstr "OpenAI a refusé la clé."
-
-#: ui/voice.slint:717
-msgid "Could not check the key: {0}"
-msgstr "Impossible de vérifier la clé : {0}"
-
-#: ui/voice.slint:726
-msgid "Languages you speak"
-msgstr "Langues que vous parlez"
-
-#: ui/voice.slint:727
-msgid "Hints for OpenAI. With none chosen, it finds the language as you speak; sentences that mix languages work either way."
-msgstr "Des indications pour OpenAI. Sans aucune, il reconnaît la langue pendant que vous parlez ; les phrases qui mêlent les langues fonctionnent dans les deux cas."
-
-#: ui/voice.slint:728
+#: ui/voice.slint:856
 msgid "Tidy the words"
 msgstr "Mettre le texte au propre"
 
-#: ui/voice.slint:729
+#: ui/voice.slint:857
 msgid "A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."
 msgstr "Un petit modèle retire les euh, les hum et les mots répétés, et met la ponctuation ; il ne traduit jamais."
-
-#: ui/voice.slint:731
-msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to OpenAI under your key and nothing else does; OpenAI charges about $1 for an hour of speech. FinchGram keeps no recording."
-msgstr "Appuyez sur ✦ dans la zone de saisie d’une discussion, ou tapez /voice dans Terminal, et parlez ; appuyez de nouveau, ou sur ⏎, et le texte arrive dans la zone, prêt à être envoyé par vous. Votre voix part vers OpenAI avec votre clé, et rien d’autre ne part ; OpenAI facture environ 1 $ par heure de parole. FinchGram ne garde aucun enregistrement."
 
 #: ui/workbench/conversation.slint:309 ui/workbench/conversation.slint:374
 msgid "Close other tabs"
@@ -5010,39 +5006,39 @@ msgstr "Fermer l'onglet"
 msgid "Close all tabs"
 msgstr "Fermer tous les onglets"
 
-#: ui/workbench/conversation.slint:1188
+#: ui/workbench/conversation.slint:1190
 msgid "Sponsored"
 msgstr "Sponsorisé"
 
-#: ui/workbench/conversation.slint:1195
+#: ui/workbench/conversation.slint:1197
 msgid "Premium users can turn these off"
 msgstr "Les utilisateurs Premium peuvent les désactiver"
 
-#: ui/workbench/conversation.slint:1235
+#: ui/workbench/conversation.slint:1237
 msgid "Telegram's sponsored message · FinchGram shows it as it is"
 msgstr "Message sponsorisé par Telegram · FinchGram l'affiche tel quel"
 
-#: ui/workbench/conversation.slint:2326
+#: ui/workbench/conversation.slint:2352
 msgid "Send to {0}"
 msgstr "Envoyer à {0}"
 
-#: ui/workbench/conversation.slint:2711
+#: ui/workbench/conversation.slint:2737
 msgid "Esc to cancel"
 msgstr "Esc pour annuler"
 
-#: ui/workbench/conversation.slint:2721
+#: ui/workbench/conversation.slint:2747
 msgid "⏎ save · ⇧⏎ new line"
 msgstr "⏎ enregistrer · ⇧⏎ nouvelle ligne"
 
-#: ui/workbench/conversation.slint:2721
+#: ui/workbench/conversation.slint:2747
 msgid "⌘⏎ save · ⏎ new line"
 msgstr "⌘⏎ enregistrer · ⏎ nouvelle ligne"
 
-#: ui/workbench/conversation.slint:2722
+#: ui/workbench/conversation.slint:2748
 msgid "⏎ send · ⇧⏎ new line"
 msgstr "⏎ envoyer · ⇧⏎ nouvelle ligne"
 
-#: ui/workbench/conversation.slint:2722
+#: ui/workbench/conversation.slint:2748
 msgid "⌘⏎ send · ⏎ new line"
 msgstr "⌘⏎ envoyer · ⏎ nouvelle ligne"
 
@@ -5059,3 +5055,227 @@ msgstr ""
 #: ui/workbench/workbench.slint:373
 msgid "Manage accounts"
 msgstr "Gérer les comptes"
+
+#: ui/voice.slint:727 ui/voice.slint:735
+msgid "Transcribing…"
+msgstr "Transcription…"
+
+#: ui/voice.slint:731
+msgid "Telegram transcribes voice messages with Premium, or a few times a week without it. Your own speech service can do it too: Toolbox → AI → Voice input."
+msgstr "Telegram transcrit les messages vocaux avec Premium, sinon quelques fois par semaine. Votre propre service de reconnaissance vocale peut aussi le faire : Boîte à outils → AI → Saisie vocale."
+
+#: ui/voice.slint:733
+msgid "Too long for Telegram to transcribe."
+msgstr "Trop long pour que Telegram le transcrive."
+
+#: ui/voice.slint:734
+msgid "Could not transcribe it: {0}"
+msgstr "Impossible de le transcrire : {0}"
+
+#: ui/voice.slint:752
+msgid "Connecting to {0}…"
+msgstr "Connexion à {0}…"
+
+#: ui/voice.slint:759
+msgid "Speak now: the words come when you are done"
+msgstr "Parlez maintenant : le texte arrivera quand vous aurez fini"
+
+#: ui/voice.slint:761
+msgid "Any language"
+msgstr "Toutes langues"
+
+#: ui/voice.slint:767
+msgid "Voice input needs your API key for {0}."
+msgstr "La saisie vocale a besoin de votre clé d’API pour {0}."
+
+#: ui/voice.slint:770 ui/voice.slint:844
+msgid "{0} refused the key."
+msgstr "{0} a refusé la clé."
+
+#: ui/voice.slint:771
+msgid "{0} says the key is out of credit or used too fast: {1}"
+msgstr "Selon {0}, la clé n’a plus de crédit ou est utilisée trop vite : {1}"
+
+#: ui/voice.slint:772
+msgid "Could not reach {0}: {1}"
+msgstr "Impossible de joindre {0} : {1}"
+
+#: ui/voice.slint:773
+msgid "The speech service's address in Voice input is not one FinchGram can use."
+msgstr "L’adresse du service de reconnaissance vocale dans Saisie vocale n’est pas utilisable par FinchGram."
+
+#: ui/voice.slint:775
+msgid "{0} said: {1}"
+msgstr "{0} a répondu : {1}"
+
+#: ui/voice.slint:781
+msgid "Change address"
+msgstr "Changer d’adresse"
+
+#: ui/voice.slint:788
+msgid "Puts the sparkle in every chat's composer; when off, nothing goes to any service"
+msgstr "Met ✦ dans la zone de saisie de chaque discussion ; désactivée, rien ne part vers aucun service"
+
+#: ui/voice.slint:789
+msgid "Main language"
+msgstr "Langue principale"
+
+#: ui/voice.slint:791
+msgid "The language you mostly speak; words of other languages mixed in are kept as you say them. Each main language has its own services and keys. While you speak, a click on the language in the strip takes the next one."
+msgstr "La langue que vous parlez le plus ; les mots d’autres langues que vous y mêlez sont gardés tels que vous les dites. Chaque langue principale a ses propres services et clés. Pendant que vous parlez, un clic sur la langue dans le bandeau passe à la suivante."
+
+#: ui/voice.slint:794
+msgid "Remove {0} and its keys"
+msgstr "Retirer « {0} » et ses clés"
+
+#: ui/voice.slint:795
+msgid "Speech recognition · {0}"
+msgstr "Reconnaissance vocale · {0}"
+
+#: ui/voice.slint:796
+msgid "Tidying · {0}"
+msgstr "Mise au propre · {0}"
+
+#: ui/voice.slint:797
+msgid "API format"
+msgstr "Format d’API"
+
+#: ui/voice.slint:801
+msgid "OpenAI-compatible upload"
+msgstr "Envoi compatible OpenAI"
+
+#: ui/voice.slint:802
+msgid "Qwen (Alibaba Cloud)"
+msgstr "Qwen (Alibaba Cloud)"
+
+#: ui/voice.slint:803
+msgid "Doubao (Volcengine)"
+msgstr "Doubao (Volcengine)"
+
+#: ui/voice.slint:810
+msgid "Words show as you speak. OpenAI, or a relay that passes its realtime API through."
+msgstr "Le texte s’affiche à mesure que vous parlez. OpenAI, ou un relais qui transmet son API temps réel."
+
+#: ui/voice.slint:811
+msgid "Words come when you are done. Most services and relays speak it: OpenAI, Groq, SiliconFlow, a Whisper server of your own."
+msgstr "Le texte arrive quand vous avez fini. La plupart des services et relais le prennent en charge : OpenAI, Groq, SiliconFlow, votre propre serveur Whisper."
+
+#: ui/voice.slint:812
+msgid "Words show as you speak. A key from Alibaba Cloud Model Studio; strong in Chinese and its dialects."
+msgstr "Le texte s’affiche à mesure que vous parlez. Une clé d’Alibaba Cloud Model Studio ; fort en chinois et dans ses dialectes."
+
+#: ui/voice.slint:813
+msgid "Doubao's Seed-ASR, strong in Chinese: words show as you speak Chinese or English. A key from Volcengine's speech console."
+msgstr "Seed-ASR de Doubao, fort en chinois : le texte s’affiche à mesure que vous parlez chinois ou anglais. Une clé de la console vocale de Volcengine."
+
+#: ui/voice.slint:814
+msgid "Claude's Messages API: Anthropic, and the relays and vendors that speak it."
+msgstr "Messages API de Claude : Anthropic, ainsi que les relais et fournisseurs qui la prennent en charge."
+
+#: ui/voice.slint:815
+msgid "Google's Gemini API."
+msgstr "L’API Gemini de Google."
+
+#: ui/voice.slint:816
+msgid "Chat Completions: OpenAI, and nearly everyone else: DeepSeek, Qwen, Kimi, OpenRouter, Ollama, relays."
+msgstr "Chat Completions : OpenAI, et presque tous les autres : DeepSeek, Qwen, Kimi, OpenRouter, Ollama, des relais."
+
+#: ui/voice.slint:819
+msgid "Empty for the vendor's own. For a relay or a server of your own, its base URL."
+msgstr "Vide pour celle du fournisseur. Pour un relais ou votre propre serveur, son URL de base."
+
+#: ui/voice.slint:821
+msgid "That is not an address: it starts with https://"
+msgstr "Ce n’est pas une adresse : elle commence par https://"
+
+#: ui/voice.slint:822
+msgid "Leave the name and password out of the address."
+msgstr "Ne mettez ni nom d’utilisateur ni mot de passe dans l’adresse."
+
+#: ui/voice.slint:823
+msgid "Plain http goes only to this Mac or the local network: use https."
+msgstr "Le http non chiffré ne va que vers ce Mac ou le réseau local : utilisez https."
+
+#: ui/voice.slint:826
+msgid "Model"
+msgstr "Modèle"
+
+#: ui/voice.slint:828
+msgid "For Doubao, the resource ID of what you bought."
+msgstr "Pour Doubao, l’ID de ressource de ce que vous avez acheté."
+
+#: ui/voice.slint:828
+msgid "Empty for the format's own."
+msgstr "Vide pour celui du format."
+
+#: ui/voice.slint:830
+msgid "Words to know"
+msgstr "Mots à reconnaître"
+
+#: ui/voice.slint:831
+msgid "Names and terms you often say, separated by commas: the service listens for them, so they come out right."
+msgstr "Noms et termes que vous dites souvent, séparés par des virgules : le service y prête attention, pour qu’ils soient bien transcrits."
+
+#: ui/voice.slint:832
+msgid "Names, products, terms"
+msgstr "Noms, produits, termes"
+
+#: ui/voice.slint:833
+msgid "API key"
+msgstr "Clé d’API"
+
+#: ui/voice.slint:834
+msgid "Your own key: the service bills it for what it does. It is kept sealed in FinchGram's database on this Mac."
+msgstr "Votre propre clé : le service la facture pour ce qu’il fait. Elle est conservée scellée dans la base de données de FinchGram sur ce Mac."
+
+#: ui/voice.slint:835
+msgid "Paste the key"
+msgstr "Coller la clé"
+
+#: ui/voice.slint:838
+msgid "Get a key from {0}"
+msgstr "Obtenir une clé chez {0}"
+
+#: ui/voice.slint:841
+msgid "That does not look like an API key."
+msgstr "Cela ne ressemble pas à une clé d’API."
+
+#: ui/voice.slint:842
+msgid "Checking with {0}…"
+msgstr "Vérification avec {0}…"
+
+#: ui/voice.slint:843
+msgid "{0} answers and takes the key."
+msgstr "{0} répond et accepte la clé."
+
+#: ui/voice.slint:843
+msgid "{0} answers."
+msgstr "{0} répond."
+
+#: ui/voice.slint:845
+msgid "Could not check: {0}"
+msgstr "Impossible de vérifier : {0}"
+
+#: ui/voice.slint:854
+msgid "Use the speech recognition's key"
+msgstr "Utiliser la clé de la reconnaissance vocale"
+
+#: ui/voice.slint:855
+msgid "One key for both, when they are the same vendor or relay."
+msgstr "Une seule clé pour les deux, quand c’est le même fournisseur ou relais."
+
+#: ui/voice.slint:858
+msgid "Voice messages"
+msgstr "Messages vocaux"
+
+#: ui/voice.slint:859
+msgid "Transcribe voice messages with your own service"
+msgstr "Transcrire les messages vocaux avec votre propre service"
+
+#: ui/voice.slint:861
+msgid "Transcribe under a voice message asks Telegram first, which needs Premium or one of its few free tries a week. When Telegram cannot, this sends the message to your speech service: someone else's voice, to a service of your choosing. Off unless you turn it on."
+msgstr "« Transcrire », sous un message vocal, demande d’abord à Telegram, ce qui nécessite Premium ou l’un de ses quelques essais gratuits par semaine. Quand Telegram ne peut pas, cette option envoie le message à votre service de reconnaissance vocale : la voix de quelqu’un d’autre, vers un service de votre choix. Désactivée tant que vous ne l’activez pas."
+
+#: ui/voice.slint:864
+msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the speech service you choose below, under your own key, and nothing else does. FinchGram keeps no recording."
+msgstr "Appuyez sur ✦ dans la zone de saisie d’une discussion, ou tapez /voice dans Terminal, et parlez ; appuyez de nouveau, ou sur ⏎, et le texte arrive dans la zone, prêt à être envoyé par vous. Votre voix part vers le service de reconnaissance vocale que vous choisissez ci-dessous, avec votre propre clé, et rien d’autre ne part. FinchGram ne garde aucun enregistrement."

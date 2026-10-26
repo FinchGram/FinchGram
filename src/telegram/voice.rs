@@ -8,6 +8,13 @@
 //! it plays. It stops at its end (the design: no playing on into the next one), and when another
 //! chat comes to the front.
 //!
+//! Transcribe (B1) shows a voice message's words under it: Telegram's own transcription first
+//! (recognizeSpeech: Telegram Premium, a few tries a week without it, or a group boosted for it),
+//! its words coming into the message as Telegram has them; when Telegram cannot, the user's own
+//! speech service (src/speech/messages.rs), only if they allowed it in voice input's panel, since
+//! that hands the message to a service of their choosing. A second click hides the words, a third
+//! shows them again.
+//!
 //! A new one is recorded by the microphone into an M4A file (platform::VoiceRecorder: AAC, which
 //! TDLib takes as a voice message) in the caches folder, and sent as inputMessageVoiceNote with
 //! its length and its waveform; TDLib uploads it from there. The microphone is held while
@@ -23,9 +30,9 @@ use base64::Engine as _;
 use serde_json::json;
 use slint::{ComponentHandle, ModelRc, SharedString, Timer, TimerMode, VecModel};
 
-use super::api::MessageContent as M;
-use super::store::{self, duration_text};
-use super::{actions, conversation, files, send, with_ui};
+use super::api::{self, MessageContent as M, SpeechRecognitionResult};
+use super::store::{self, OwnTranscript, Refusal, duration_text};
+use super::{Error, actions, conversation, files, send, with_ui};
 use crate::platform::{self, MicrophoneAccess};
 use crate::player::audio::{self, Heard};
 use crate::{Conversation, MainWindow, RecordStage, Recorder, Voice};
@@ -108,6 +115,11 @@ pub fn connect(ui: &MainWindow) {
         }
     });
     conversation.on_next_voice_speed(next_speed);
+    conversation.on_transcribe_voice(|id| {
+        if let Ok(message_id) = id.parse() {
+            transcribe(message_id);
+        }
+    });
     audio::listen(heard);
     let recorder = ui.global::<Recorder>();
     recorder.on_press(press);
@@ -295,6 +307,142 @@ pub fn chat_changed() {
     if recording {
         delete_recording();
     }
+}
+
+// ---- words -------------------------------------------------------------------------------------
+
+/// Where a voice message's words are, as Transcribe finds them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Words {
+    /// Not asked for yet.
+    None,
+    /// On their way, or here: Telegram's or the user's own service's.
+    Shown,
+    /// Asked for, and hidden again.
+    Hidden,
+    /// Telegram could not (Premium, too long, …): its reason shows.
+    TelegramCannot,
+    /// The user's own service could not: its reason shows.
+    OwnFailed,
+}
+
+/// Transcribe, clicked.
+fn transcribe(message_id: i64) {
+    let found = store::with(|store| {
+        let chat_id = store.open?;
+        let message = store.histories.get(&chat_id)?.messages.get(&message_id)?;
+        let M::VoiceNote { voice_note, .. } = &message.content else { return None };
+        let key = (chat_id, message_id);
+        let words = if store.transcripts_hidden.contains(&key) {
+            Words::Hidden
+        } else {
+            match (store.own_transcripts.get(&key), &voice_note.speech_recognition_result) {
+                (Some(OwnTranscript::Failed(_)), _) => Words::OwnFailed,
+                (Some(_), _) => Words::Shown,
+                (None, Some(SpeechRecognitionResult::Pending { .. } | SpeechRecognitionResult::Text { .. })) => Words::Shown,
+                (None, Some(SpeechRecognitionResult::Error { .. })) => Words::TelegramCannot,
+                (None, _) if store.transcript_refusals.contains_key(&key) => Words::TelegramCannot,
+                (None, _) => Words::None,
+            }
+        };
+        Some((chat_id, voice_note.clone(), words))
+    })
+    .flatten();
+    let Some((chat_id, voice_note, words)) = found else { return };
+    let key = (chat_id, message_id);
+    match words {
+        Words::Hidden => change(|store| {
+            store.transcripts_hidden.remove(&key);
+        }),
+        Words::Shown => change(|store| {
+            store.transcripts_hidden.insert(key);
+        }),
+        // Telegram could not, or the user's service failed: the user's service (again), when it
+        // may; else the reason is hidden, and the next click asks Telegram again.
+        Words::TelegramCannot | Words::OwnFailed => {
+            if own_service_allowed() {
+                transcribe_with_own_service(chat_id, message_id, voice_note);
+            } else {
+                change(|store| {
+                    store.transcript_refusals.remove(&key);
+                    store.own_transcripts.remove(&key);
+                });
+            }
+        }
+        Words::None => {
+            let slot = super::context();
+            send(json!({ "@type": "recognizeSpeech", "chat_id": chat_id, "message_id": message_id }), move |answer| {
+                // Asked: the words come into the message (updateMessageContent).
+                let Err(err) = answer else { return };
+                let reason = match &err {
+                    Error::Telegram { message, .. } => message.clone(),
+                    Error::Stopped => err.to_string(),
+                };
+                super::in_context(slot, || {
+                    if own_service_allowed() {
+                        transcribe_with_own_service(chat_id, message_id, voice_note);
+                    } else {
+                        change(|store| {
+                            store.transcript_refusals.insert(key, Refusal::of(&reason));
+                        });
+                    }
+                });
+            });
+        }
+    }
+}
+
+/// Whether a voice message may go to the user's own speech service: they allowed it, and the
+/// service is set up (a key where one is needed).
+fn own_service_allowed() -> bool {
+    crate::speech::transcribes_messages() && crate::speech::message_options().is_ok()
+}
+
+/// The store changed for the open chat's rows, and the rows drawn again.
+fn change(work: impl FnOnce(&mut store::Store)) {
+    store::with(|store| {
+        work(store);
+        store.dirty.conversation = true;
+    });
+    store::refresh();
+}
+
+/// The voice message's file, then its words from the user's own service; the words, or why not,
+/// into the store for the session.
+fn transcribe_with_own_service(chat_id: i64, message_id: i64, voice_note: api::VoiceNote) {
+    let Ok(options) = crate::speech::message_options() else { return };
+    let key = (chat_id, message_id);
+    let slot = super::context();
+    change(|store| {
+        store.own_transcripts.insert(key, OwnTranscript::Pending);
+        store.transcript_refusals.remove(&key);
+        store.transcripts_hidden.remove(&key);
+    });
+    let finished = move |outcome: OwnTranscript| {
+        super::in_context(slot, || {
+            store::with(|store| {
+                store.own_transcripts.insert(key, outcome);
+                store.dirty.conversation |= store.open == Some(chat_id);
+            });
+            store::refresh();
+        });
+    };
+    let failed = finished;
+    let mime = voice_note.mime_type.clone();
+    files::download_or_fail(
+        &voice_note.voice,
+        PRIORITY,
+        move |path| {
+            crate::speech::messages::transcribe(options, PathBuf::from(path), mime, move |words| {
+                finished(match words {
+                    Ok(words) if !words.trim().is_empty() => OwnTranscript::Text(words.trim().to_string()),
+                    Ok(_) => OwnTranscript::Failed("nothing was heard".into()),
+                    Err(why) => OwnTranscript::Failed(why),
+                });
+            });
+        },
+        move || failed(OwnTranscript::Failed("the file could not be downloaded".into())),
+    );
 }
 
 // ---- recording ---------------------------------------------------------------------------------

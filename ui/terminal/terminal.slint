@@ -10,7 +10,7 @@ import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState, ChatOrder,
-    VoiceNote } from "../telegram.slint";
+    VoiceNote, TranscriptProblem } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords, SearchInput, SearchWords, ButtonGrid, BotWords } from "../chat.slint";
@@ -994,11 +994,11 @@ component VoiceLine inherits HorizontalLayout {
         text: VoiceWords.loading();
         color: P.faint;
     }
-    T {
-        text: "[" + (transcribe.has-hover ? VoiceWords.transcribe() + " · " + VoiceWords.not-available() : VoiceWords.transcribe()).to-lowercase() + "]";
-        color: P.faint;
-        transcribe := TouchArea {
-            mouse-cursor: not-allowed;
+    Action {
+        label: (root.note.transcribing ? VoiceWords.transcribing() : VoiceWords.transcribe()).to-lowercase();
+        color: root.note.transcript-shown ? P.accent : P.muted;
+        activated => {
+            Conversation.transcribe-voice(root.message-id);
         }
     }
 }
@@ -1089,6 +1089,13 @@ component LogLine {
             if root.message.voice.shown: VoiceLine {
                 message-id: root.message.id;
                 note: root.message.voice;
+            }
+            // Its words, under it, once asked for: "── the words", or why there are none.
+            if root.message.voice.shown && root.message.voice.transcript-shown: Paragraph {
+                text: "── " + VoiceWords.transcript(root.message.voice);
+                color: root.message.voice.transcript-problem != TranscriptProblem.none ? P.accent3 : root.message.voice.transcribing ? P.faint : P.muted;
+                font-family: P.font;
+                font-size: 13px;
             }
             if !root.message.rich && !root.message.round.shown && !root.message.contact.shown && (!root.has-media || root.message.text != "") && (!root.message.voice.shown || root.message.text != ""): Paragraph {
                 text: (root.has-media || root.message.voice.shown ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail))
@@ -2126,6 +2133,14 @@ component CommandLine inherits Rectangle {
         if Voice.state == VoiceState.finishing || Voice.state == VoiceState.tidying: T {
             text: "◌ " + VoiceWords.title().to-lowercase();
             color: P.muted;
+        }
+        // The main language, when there are others: a click takes the next one.
+        if Voice.can-switch: Action {
+            label: VoiceWords.language-label(Voice.language-name).to-lowercase();
+            color: P.accent2;
+            activated => {
+                Voice.next-language();
+            }
         }
         if Voice.state != VoiceState.failed: Rectangle {
             horizontal-stretch: 1;

@@ -84,8 +84,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   （`upgrade_in_event_loop`），store、TDLib 和页面都在那里，结果通过 channel 回来。一个程序能不能连也是这样问的：
   对话框问用户的时候，连接线程等着。
 - 语音输入（`src/speech/`）有麦克风的 tap，在系统的一个音频线程上跑，只把采样交出去；每次口述一个“voice”线程：到
-  OpenAI 的阻塞 WebSocket（rustls 上的 tungstenite；每次读最多等 20 毫秒，声音在两次读之间发出去），之后是整理文字的
-  请求（ureq）。它通过事件循环向 UI 线程汇报；都不是 async。
+  用户所选语音识别服务的阻塞 WebSocket（rustls 上的 tungstenite；每次读最多等 20 毫秒，声音在两次读之间发出去），或者
+  说完时上传一次（ureq），之后是整理文字的请求（ureq）。用用户自己的服务转写语音消息时有一个“voice-message”线程，
+  先让 libmpv 解码它的文件。它们通过事件循环向 UI 线程汇报；都不是 async。
 - UI 线程上的 panic 会结束整个 app：Slint 通过 `extern "C"` 函数调进 app 的代码，panic 不能穿过这样的函数，Rust 在那里
   直接 abort，macOS 的崩溃报告里只看得到 abort()，看不到原因。所以 panic 的内容和位置先写进 settings.toml 旁边的
   `panic.log`（`src/main.rs`）：从 Dock 启动的 app 没有终端可以打印。崩溃留下什么、报告怎么读，见
@@ -286,12 +287,15 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   一个负责列目录的“servers”线程、每个在传的文件一个线程（同时两个），以及每批改动一个“changes”线程。密码进 macOS 钥匙串，服务器和下载目录进
   settings.toml；下好的照片或视频在媒体查看器里打开（`viewer.rs` 的 `view_file`）。这个页面不需要账号。
 - 语音输入（`src/speech/`，[voice-input.zh-Hans.md](voice-input.zh-Hans.md)）：百宝箱“AI”一类里的一个工具，用户打开之前是关的；
-  打开时输入框里有 ✦（终端里是 `/voice`，关着的时候它打开语音输入的面板）。`mod.rs` 是 UI 线程上
-  一次口述的状态（空闲、在听、收尾、整理、或带原因的失败）、输入框上方那条里的文字、最后放进输入框的文字，以及
-  百宝箱里语音输入的面板；`openai.rs` 是 OpenAI 实时转写的会话（WebSocket）、整理文字的小模型，以及检查密钥；
-  `audio.rs` 把麦克风的声音转成 24 kHz 16 位 PCM。麦克风本身归平台层（`src/platform/microphone.rs`，AVAudioEngine）；
-  用户的 OpenAI 密钥是 app 数据库里的一条凭据（见下），开关、语言和整理开关是 settings.toml 里的 `[voice_input]`
-  （0.7.0 的文件里没有 `enabled`：存过密钥的，语音输入就是开的）。
+  打开时输入框里有 ✦（终端里是 `/voice`，关着的时候它打开语音输入的面板）。服务按 API 格式、地址和模型来定，任何支持
+  其中一种格式的厂商、中转站或用户自己的服务器都能用，每种主要语言一套（profile）。`mod.rs` 是 UI 线程上一次口述的状态
+  （空闲、在听、收尾、整理、或带原因的失败）、那一条里的文字、最后放进输入框的文字、各套设置和密钥，以及百宝箱里语音输入
+  的面板；`dictation.rs` 是一次口述从第一个声音到出字；`service.rs` 是格式、地址和连接；`realtime.rs` 是 OpenAI 和千问的
+  实时会话，`doubao.rs` 是豆包的二进制协议，`upload.rs` 是 OpenAI 的 `/audio/transcriptions`，`tidy.rs` 是三种格式的整理，
+  `messages.rs` 是用用户自己的服务转写语音消息；`audio.rs` 把麦克风的声音带限重采样成服务要的采样率的 16 位 PCM。
+  麦克风本身归平台层（`src/platform/microphone.rs`，AVAudioEngine）；密钥是 app 数据库里的凭据（见下），其余是
+  settings.toml 里的 `[voice_input]`（0.7 的文件变成第一套）。语音消息下面的“转文字”在 `src/telegram/voice.rs`：先用
+  Telegram 自己的转写，用户允许时才用用户自己的服务。
 - `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）；语音消息用另一个不出画面的 mpv 播放（`audio.rs`）。
 - `src/platform/`：平台层。目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接、剪贴板（文字和图片）；以及 macOS 上
   （设置 → 通用）关闭窗口后留在 Dock 里，即设计稿的“关闭窗口时：最小化到托盘”（点 Dock 图标重新打开窗口，退出时先让
@@ -349,8 +353,8 @@ settings.toml 里的 AI 访问设置（`settings::Mcp::seal`，启动时由 src/
 数据库从 0.4.18 起也有一把自己的密钥，同样存法（account 是“tdlib”）。规矩：偏好设置进 settings.toml，它要小、要能手改；
 记录进数据库；Telegram 自己的状态归 TDLib。现在数据库里放的是下载页的服务器、它们的密码和用户是否允许改动每一台（docs/downloads.zh-Hans.md）、
 AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任过的 SSH 服务器密钥和信任的日期
-（docs/downloads.zh-Hans.md），以及 app 自己的、不属于哪台服务器的凭据，每个都封到自己的名字上：语音输入的 OpenAI 密钥
-（docs/voice-input.zh-Hans.md）；以后的东西（重启后还在的下载队列、
+（docs/downloads.zh-Hans.md），以及 app 自己的、不属于哪台服务器的凭据，每个都封到自己的名字上：语音输入的密钥，每种主要语言两个
+（`voice_input.<语言>.speech` 和 `….tidy`，docs/voice-input.zh-Hans.md）；以后的东西（重启后还在的下载队列、
 日志、每个聊天的设置）建的时候再加表。
 
 从 0.6.0 起表结构有编号：SQLite 自带的 `PRAGMA user_version` 存着 `LAYOUT`，每改一次表就加一，每一步在
@@ -375,7 +379,8 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
 - **通话**。TDLib 只管信令；媒体部分（tgcalls）本身就是一个大项目。
 - **别人写的插件**。先得有信任模型：谁来签名、用户批准什么、怎么隔离。
 - **用户自己的密钥之外的语音输入**。[voice-input.zh-Hans.md](voice-input.zh-Hans.md) 的五步里第一步已经做了
-  （2026-10-25），其余的没有：FinchGram 卖的套餐、用户自己跑的服务、操作系统自带的识别，以及在它们之间选择的路由。
+  （2026-10-25），2026-10-26 起向所有厂商和用户自己跑的服务开放；其余的没有：FinchGram 卖的套餐、操作系统自带的识别，
+  以及在它们之间选择的路由（现在由用户自己选主要语言）。
 
 ## 还没定的事
 

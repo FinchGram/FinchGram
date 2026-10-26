@@ -1,23 +1,39 @@
 //! Voice input (docs/voice-input.md): the user presses the sparkle in the composer (in Terminal,
-//! types /voice) and speaks; the words come back from OpenAI's realtime transcription while they
-//! speak, under the user's own key, and show in the strip above the composer; when the user is done
-//! (the sparkle again, ⏎, or letting go of it after holding it), a small model tidies them and
-//! they go into the composer, for the user to send. Esc drops them. The sound goes from the
-//! microphone to OpenAI and nowhere else, and FinchGram keeps no recording. (The microphone in the
-//! composer is voice messages', src/telegram/voice.rs.)
+//! types /voice) and speaks; the words come back from the speech service the user chose, under
+//! their own key, and show in the strip above the composer; when the user is done (the sparkle
+//! again, ⏎, or letting go of it after holding it), a text model tidies them and they go into the
+//! composer, for the user to send. Esc drops them. The sound goes from the microphone to that
+//! service and nowhere else, and FinchGram keeps no recording. (The microphone in the composer is
+//! voice messages', src/telegram/voice.rs.)
+//!
+//! The services are named by their API's format, address and model (service.rs), so that any
+//! vendor, relay or server of the user's own that speaks one of the formats can be used: OpenAI's
+//! realtime transcription (realtime.rs), OpenAI's upload of a recording (upload.rs), Alibaba Cloud's
+//! Qwen (realtime.rs), ByteDance's Doubao (doubao.rs); the tidying in Chat Completions, Anthropic's
+//! or Google's format (tidy.rs). Each main language the user speaks has a set of its own (a
+//! profile, settings.toml's `[[voice_input.profiles]]`): which one is used is the main language
+//! chosen in the panel, or in the strip while speaking. Words of other languages mixed in are kept
+//! as spoken.
 //!
 //! Voice input is a tool of the toolbox's AI category (src/toolbox.rs, ui/pages/voice-input.slint),
 //! off until the user turns it on there: off, the sparkle is not in the composer, and Terminal's
-//! /voice, or the button of a stop for want of a key, opens its panel, where the key goes.
+//! /voice, or the button of a stop for want of a key, opens its panel, where the services and the
+//! keys are set.
 //!
 //! One dictation at a time, its state here on the UI thread. The microphone's samples come from
-//! one of the system's threads (src/platform/microphone.rs); the session with OpenAI runs on a
-//! thread of its own ("voice", `openai::dictate`), which reports back through the event loop. The
-//! key is the database's (`database::credential`), never in settings.toml; the switch, the
-//! languages and the tidying are settings (`[voice_input]`).
+//! one of the system's threads (src/platform/microphone.rs); the session runs on a thread of its
+//! own ("voice", `dictation::dictate`), which reports back through the event loop. The keys are
+//! the database's (`database::credential`, `voice_input.<language>.speech` and `….tidy`), never in
+//! settings.toml.
 
 mod audio;
-mod openai;
+pub mod dictation;
+mod doubao;
+pub mod messages;
+mod realtime;
+pub mod service;
+mod tidy;
+mod upload;
 
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -26,17 +42,19 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc::{self, Sender};
 use std::time::{Duration, Instant};
 
-use slint::{ComponentHandle, ModelRc, VecModel};
+use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
 use crate::platform::{self, MicrophoneAccess};
-use crate::settings::Settings;
-use crate::{Conversation, KeyCheck, MainWindow, Recorder, Toolbox, Voice, VoiceLanguage, VoiceLanguageRow, VoiceProblem, VoiceState};
-use openai::{FailureKind, Input, KeyAnswer, Options, Report};
+use crate::settings::{Settings, VoiceInput, VoiceProfile};
+use crate::{Conversation, KeyCheck, MainWindow, Recorder, Toolbox, Voice, VoiceLanguage, VoiceLanguageRow, VoiceProblem, VoiceService, VoiceState};
+#[cfg(test)]
+pub use audio::wav;
+pub use audio::wav_samples;
+use dictation::{Input, Options, Report};
+use service::{AddressProblem, FailureKind, KeyAnswer, Speech, SpeechFormat, Tidy};
 
-/// The database's name for the user's OpenAI key.
-const KEY: &str = "openai_api_key";
-/// Where the user gets one.
-const KEY_PAGE: &str = "https://platform.openai.com/api-keys";
+/// 0.7's one key, OpenAI's, from before the profiles: it becomes the first profile's speech key.
+const OLD_KEY: &str = "openai_api_key";
 /// Held longer than this, the microphone finishes when let go; a shorter press is a click.
 const HOLD: Duration = Duration::from_millis(600);
 /// The longest dictation: it finishes by itself then, so that a microphone left open does not go
@@ -44,7 +62,8 @@ const HOLD: Duration = Duration::from_millis(600);
 const LONGEST: Duration = Duration::from_secs(5 * 60);
 /// How often the bars and the clock are drawn again.
 const TICK: Duration = Duration::from_millis(50);
-/// The languages offered, in the order of the UI's language list: its code there, and OpenAI's.
+/// The languages offered as main languages, in the order of the UI's language list: its code
+/// there, and the one the speech services take.
 const LANGUAGES: [(&str, &str); 11] = [
     ("en", "en"),
     ("zh_Hans", "zh-cn"),
@@ -58,8 +77,31 @@ const LANGUAGES: [(&str, &str); 11] = [
     ("ru", "ru"),
     ("ar", "ar"),
 ];
-/// Languages per line of chips in the settings.
+/// Chips per line in the panel.
 const PER_LINE: usize = 4;
+
+/// Whether `code` is one of the main languages offered (settings.rs keeps only those).
+pub fn is_language(code: &str) -> bool {
+    LANGUAGES.iter().any(|(_, known)| *known == code)
+}
+
+/// Which of a profile's two services.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Which {
+    Speech,
+    Tidy,
+}
+
+impl Which {
+    fn of(name: &str) -> Which {
+        if name == "tidy" { Which::Tidy } else { Which::Speech }
+    }
+}
+
+/// The database's name for a profile's key.
+fn key_name(language: &str, which: Which) -> String {
+    format!("voice_input.{language}.{}", if which == Which::Tidy { "tidy" } else { "speech" })
+}
 
 thread_local! {
     static APP: RefCell<Option<App>> = const { RefCell::new(None) };
@@ -69,8 +111,8 @@ thread_local! {
     static GENERATION: Cell<u64> = const { Cell::new(0) };
     /// When the microphone was pressed to start the dictation, while it is still held.
     static PRESSED: Cell<Option<Instant>> = const { Cell::new(None) };
-    /// Counted up with every check of a key, so that only the last one's answer shows.
-    static KEY_CHECKS: Cell<u64> = const { Cell::new(0) };
+    /// Counted up with every check of a service, so that only the last one's answer shows.
+    static CHECKS: Cell<u64> = const { Cell::new(0) };
 }
 
 struct App {
@@ -91,26 +133,54 @@ struct Dictation {
 }
 
 pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
-    let voice = ui.global::<Voice>();
-    voice.set_tidy(settings.borrow().voice_input.tidy);
+    // 0.7's OpenAI key goes to the profile its settings became (settings.rs).
+    let first = settings.borrow().voice_input.current().language.clone();
+    move_old_key(&first);
     // A settings file from before the switch (0.7.0) has none: voice input is on there when a key
     // was kept. The choice is written with the next save of the settings.
-    let on = *settings.borrow_mut().voice_input.enabled.get_or_insert_with(|| crate::database::credential(KEY).is_some());
+    let on = *settings.borrow_mut().voice_input.enabled.get_or_insert_with(|| crate::database::credential(&key_name(&first, Which::Speech)).is_some());
+    let voice = ui.global::<Voice>();
     voice.set_on(on);
     APP.with(|app| *app.borrow_mut() = Some(App { ui: ui.as_weak(), settings }));
-    show_key(ui);
-    show_languages(ui);
+    show_panel(ui);
     voice.on_press(press);
     voice.on_release(release);
     voice.on_stop(finish);
     voice.on_cancel(cancel);
     voice.on_act(act);
+    voice.on_next_language(next_language);
     voice.on_set_on(set_on);
-    voice.on_save_key(|text| save_key(&text));
-    voice.on_remove_key(remove_key);
-    voice.on_open_key_page(|| platform::open_link(KEY_PAGE));
-    voice.on_toggle_language(|code| toggle_language(&code));
+    voice.on_choose_language(|code| choose_language(&code));
+    voice.on_start_adding(|| with_ui(|ui| ui.global::<Voice>().set_adding(true)));
+    voice.on_cancel_adding(|| with_ui(|ui| ui.global::<Voice>().set_adding(false)));
+    voice.on_add_language(|code| add_language(&code));
+    voice.on_remove_language(remove_language);
+    voice.on_set_format(|which, name| set_format(Which::of(&which), &name));
+    voice.on_edit_url(|which, text| edit(Which::of(&which), Field::Url, &text));
+    voice.on_edit_model(|which, text| edit(Which::of(&which), Field::Model, &text));
+    voice.on_edit_keywords(|text| edit(Which::Speech, Field::Keywords, &text));
+    voice.on_check(|which| check(Which::of(&which)));
+    voice.on_save_key(|which, text| save_key(Which::of(&which), &text));
+    voice.on_remove_key(|which| remove_key(Which::of(&which)));
+    voice.on_open_key_page(|which| open_key_page(Which::of(&which)));
     voice.on_set_tidy(set_tidy);
+    voice.on_set_same_key(set_same_key);
+    voice.on_set_transcribe_messages(set_transcribe_messages);
+}
+
+/// 0.7's key moved under the profile's name, once.
+fn move_old_key(language: &str) {
+    let Some(old) = crate::database::credential(OLD_KEY) else { return };
+    let name = key_name(language, Which::Speech);
+    if crate::database::credential(&name).is_none()
+        && let Err(err) = crate::database::save_credential(&name, &old)
+    {
+        eprintln!("voice input: cannot move the key of 0.7: {err}");
+        return;
+    }
+    if let Err(err) = crate::database::remove_credential(OLD_KEY) {
+        eprintln!("voice input: cannot remove the key of 0.7: {err}");
+    }
 }
 
 fn with_ui(work: impl FnOnce(&MainWindow)) {
@@ -130,6 +200,60 @@ fn state() -> VoiceState {
     let mut state = VoiceState::Idle;
     with_ui(|ui| state = ui.global::<Voice>().get_state());
     state
+}
+
+/// The profile in use now.
+fn current() -> Option<VoiceProfile> {
+    with_settings(|settings| settings.voice_input.current().clone())
+}
+
+/// A profile's key for one of its services (the speech service's for the tidying, when the two
+/// share it).
+fn key_of(profile: &VoiceProfile, which: Which) -> Option<String> {
+    let which = if which == Which::Tidy && profile.tidy_same_key { Which::Speech } else { which };
+    crate::database::credential(&key_name(&profile.language, which))
+}
+
+/// A dictation's settings, from a profile: Err with the problem that stops it.
+fn options_of(profile: &VoiceProfile, recorded: bool) -> Result<Options, VoiceProblem> {
+    let speech = Speech::new(&profile.format, &profile.url, &profile.model).map_err(|_| VoiceProblem::BadAddress)?;
+    let speech_key = key_of(profile, Which::Speech);
+    // The vendor's own address wants a key; a server of the user's own may not.
+    if speech_key.is_none() && speech.official() {
+        return Err(VoiceProblem::NoKey);
+    }
+    let tidy = if profile.tidy && !recorded {
+        match Tidy::new(&profile.tidy_format, &profile.tidy_url, &profile.tidy_model) {
+            Ok(tidy) => {
+                let key = key_of(profile, Which::Tidy);
+                // Without its key the words go in as heard; the panel says what is missing.
+                if key.is_none() && tidy.official() { None } else { Some((tidy, key)) }
+            }
+            Err(_) => None,
+        }
+    } else {
+        None
+    };
+    Ok(Options {
+        speech,
+        speech_key,
+        language: profile.language.clone(),
+        keywords: dictation::keywords(&profile.keywords),
+        delay: profile.delay.clone(),
+        tidy,
+        recorded,
+    })
+}
+
+/// The voice messages' own: the profile in use, its speech service only (src/speech/messages.rs).
+pub fn message_options() -> Result<Options, VoiceProblem> {
+    let profile = current().ok_or(VoiceProblem::NoKey)?;
+    options_of(&profile, true)
+}
+
+/// Whether the user lets their own service transcribe voice messages.
+pub fn transcribes_messages() -> bool {
+    with_settings(|settings| settings.voice_input.transcribe_messages).unwrap_or(false)
 }
 
 // ---- a dictation -------------------------------------------------------------------------------
@@ -177,9 +301,14 @@ fn start() {
     let generation = GENERATION.get() + 1;
     GENERATION.set(generation);
     end_dictation();
-    let Some(key) = crate::database::credential(KEY) else {
-        fail(VoiceProblem::NoKey, "");
-        return;
+    let Some(profile) = current() else { return };
+    show_strip_service(&profile);
+    let options = match options_of(&profile, false) {
+        Ok(options) => options,
+        Err(problem) => {
+            fail(problem, "");
+            return;
+        }
     };
     with_ui(|ui| {
         let voice = ui.global::<Voice>();
@@ -192,7 +321,7 @@ fn start() {
         voice.set_state(VoiceState::Listening);
     });
     match platform::microphone_access() {
-        MicrophoneAccess::Allowed => begin(generation, key),
+        MicrophoneAccess::Allowed => begin(generation, options),
         MicrophoneAccess::Denied => fail(VoiceProblem::MicrophoneDenied, ""),
         MicrophoneAccess::Undetermined => {
             // The system's question takes the press: what comes after it is a click.
@@ -203,7 +332,7 @@ fn start() {
                         return;
                     }
                     if allowed {
-                        begin(generation, key);
+                        begin(generation, options);
                     } else {
                         fail(VoiceProblem::MicrophoneDenied, "");
                     }
@@ -213,8 +342,41 @@ fn start() {
     }
 }
 
+/// The strip's words of the profile in use: who hears it, its language, whether words come
+/// while the user speaks.
+fn show_strip_service(profile: &VoiceProfile) {
+    let speech = Speech::new(&profile.format, &profile.url, &profile.model).ok();
+    let count = with_settings(|settings| settings.voice_input.profiles.len()).unwrap_or(1);
+    with_ui(|ui| {
+        let voice = ui.global::<Voice>();
+        voice.set_service(speech.as_ref().map(Speech::shown).unwrap_or_default().into());
+        voice.set_live(speech.as_ref().is_some_and(|speech| live(speech, &profile.language)));
+        voice.set_language_name(language_name(&profile.language).into());
+        voice.set_can_switch(count > 1);
+    });
+}
+
+/// Whether words show while the user speaks: not when the recording goes up at the end, nor with
+/// Doubao's languages other than Chinese and English.
+fn live(speech: &Speech, language: &str) -> bool {
+    match speech.format {
+        SpeechFormat::OpenAiTranscriptions => false,
+        SpeechFormat::Doubao => matches!(language, "auto" | "zh-cn" | "zh-tw" | "en"),
+        SpeechFormat::OpenAiRealtime => speech.model.starts_with("gpt-live") || speech.model.contains("realtime") || !speech.official(),
+        SpeechFormat::QwenRealtime => true,
+    }
+}
+
+/// A main language's name, in itself; "any language" in the UI's.
+fn language_name(code: &str) -> String {
+    match LANGUAGES.iter().find(|(_, known)| *known == code) {
+        Some((ui_code, _)) => crate::i18n::native_name(ui_code).to_string(),
+        None => String::new(),
+    }
+}
+
 /// The microphone on, and the session's thread started.
-fn begin(generation: u64, key: String) {
+fn begin(generation: u64, options: Options) {
     let (inputs, received) = mpsc::channel::<Input>();
     let level = Arc::new(AtomicU32::new(0));
     let microphone = {
@@ -232,23 +394,13 @@ fn begin(generation: u64, key: String) {
             return;
         }
     };
-    let options = with_settings(|settings| {
-        let voice_input = &settings.voice_input;
-        Options {
-            key,
-            model: voice_input.model.clone(),
-            languages: voice_input.languages.clone(),
-            tidy_model: voice_input.tidy.then(|| voice_input.tidy_model.clone()),
-        }
-    });
-    let Some(options) = options else { return };
     let spawned = std::thread::Builder::new().name("voice".into()).spawn(move || {
-        openai::dictate(&options, &received, &|report| {
+        dictation::dictate(&options, &received, &|report| {
             let _ = slint::invoke_from_event_loop(move || reported(generation, report));
         });
     });
     if let Err(err) = spawned {
-        fail(VoiceProblem::Openai, &err.to_string());
+        fail(VoiceProblem::Service, &err.to_string());
         return;
     }
     let ticks = slint::Timer::default();
@@ -309,13 +461,39 @@ fn cancel() {
     with_ui(reset);
 }
 
+/// The strip's language, clicked: the next main language, and a dictation that listens starts
+/// again with it (what was heard in the other language is dropped).
+fn next_language() {
+    let changed = with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        if voice_input.profiles.len() < 2 {
+            return false;
+        }
+        let index = voice_input.profiles.iter().position(|profile| profile.language == voice_input.language).unwrap_or(0);
+        voice_input.language = voice_input.profiles[(index + 1) % voice_input.profiles.len()].language.clone();
+        settings.save();
+        true
+    })
+    .unwrap_or(false);
+    if !changed {
+        return;
+    }
+    with_ui(show_panel);
+    if matches!(state(), VoiceState::Listening | VoiceState::Failed) {
+        PRESSED.set(None);
+        start();
+    } else if let Some(profile) = current() {
+        show_strip_service(&profile);
+    }
+}
+
 /// The problem's button: where it can be put right.
 fn act() {
     let mut problem = VoiceProblem::None;
     with_ui(|ui| problem = ui.global::<Voice>().get_problem());
     cancel();
     match problem {
-        VoiceProblem::NoKey | VoiceProblem::RefusedKey => with_ui(open_panel),
+        VoiceProblem::NoKey | VoiceProblem::RefusedKey | VoiceProblem::BadAddress => with_ui(open_panel),
         VoiceProblem::MicrophoneDenied => platform::open_microphone_settings(),
         _ => {}
     }
@@ -341,15 +519,17 @@ fn reported(generation: u64, report: Report) {
                 reset(ui);
             });
         }
-        Report::Failed(failure) => {
-            let problem = match failure.kind {
-                FailureKind::RefusedKey => VoiceProblem::RefusedKey,
-                FailureKind::Quota => VoiceProblem::Quota,
-                FailureKind::Network => VoiceProblem::Network,
-                FailureKind::OpenAi => VoiceProblem::Openai,
-            };
-            fail(problem, &failure.detail);
-        }
+        Report::Failed(failure) => fail(problem_of(failure.kind), &failure.detail),
+    }
+}
+
+/// What the user is told of a failure.
+pub fn problem_of(kind: FailureKind) -> VoiceProblem {
+    match kind {
+        FailureKind::RefusedKey => VoiceProblem::RefusedKey,
+        FailureKind::Quota => VoiceProblem::Quota,
+        FailureKind::Network => VoiceProblem::Network,
+        FailureKind::Service => VoiceProblem::Service,
     }
 }
 
@@ -440,130 +620,424 @@ fn set_on(on: bool) {
     }
 }
 
-fn show_key(ui: &MainWindow) {
-    let key = crate::database::credential(KEY);
+/// What the panel shows of the settings, with the keys' last letters (the database's, or the
+/// screenshots' own).
+struct PanelView {
+    languages: Vec<VoiceLanguage>,
+    addable: Vec<VoiceLanguage>,
+    speech: VoiceService,
+    speech_url: String,
+    speech_model: String,
+    keywords: String,
+    tidy: bool,
+    tidying: VoiceService,
+    tidy_url: String,
+    tidy_model: String,
+    same_key: bool,
+    language_name: String,
+    transcribe_messages: bool,
+}
+
+fn panel_view(voice_input: &VoiceInput, key_hint: &dyn Fn(&str, Which) -> Option<String>) -> PanelView {
+    let profile = voice_input.current();
+    let chip = |code: &str, on: bool| VoiceLanguage { code: code.into(), name: language_name(code).into(), on };
+    let languages = voice_input.profiles.iter().map(|other| chip(&other.language, other.language == profile.language)).collect();
+    let mut addable: Vec<VoiceLanguage> = Vec::new();
+    if !voice_input.profiles.iter().any(|other| other.language == "auto") {
+        addable.push(chip("auto", false));
+    }
+    addable.extend(LANGUAGES.iter().filter(|(_, code)| !voice_input.profiles.iter().any(|other| other.language == *code)).map(|(_, code)| chip(code, false)));
+    let speech_format = SpeechFormat::from_name(&profile.format);
+    let speech = service_view(
+        speech_format.name(),
+        Speech::new(&profile.format, &profile.url, &profile.model).map(|speech| (speech.shown(), speech.official(), live(&speech, &profile.language))),
+        speech_format.default_url(),
+        speech_format.default_model(),
+        key_hint(&profile.language, Which::Speech),
+    );
+    let tidy_format = service::TidyFormat::from_name(&profile.tidy_format);
+    let tidying = service_view(
+        tidy_format.name(),
+        Tidy::new(&profile.tidy_format, &profile.tidy_url, &profile.tidy_model).map(|tidy| (tidy.shown(), tidy.official(), false)),
+        tidy_format.default_url(),
+        tidy_format.default_model(),
+        key_hint(&profile.language, if profile.tidy_same_key { Which::Speech } else { Which::Tidy }),
+    );
+    PanelView {
+        languages,
+        addable,
+        speech,
+        speech_url: profile.url.clone(),
+        speech_model: profile.model.clone(),
+        keywords: profile.keywords.clone(),
+        tidy: profile.tidy,
+        tidying,
+        tidy_url: profile.tidy_url.clone(),
+        tidy_model: profile.tidy_model.clone(),
+        same_key: profile.tidy_same_key,
+        language_name: language_name(&profile.language),
+        transcribe_messages: voice_input.transcribe_messages,
+    }
+}
+
+fn service_view(format: &str, address: Result<(String, bool, bool), AddressProblem>, url: &str, model: &str, hint: Option<String>) -> VoiceService {
+    let (shown, official, live, problem) = match address {
+        Ok((shown, official, live)) => (shown, official, live, 0),
+        Err(AddressProblem::Malformed) => (String::new(), false, false, 1),
+        Err(AddressProblem::Credentials) => (String::new(), false, false, 2),
+        Err(AddressProblem::Unencrypted) => (String::new(), false, false, 3),
+    };
+    VoiceService {
+        format: format.into(),
+        url_placeholder: url.into(),
+        url_problem: problem,
+        model_placeholder: model.into(),
+        has_key: hint.is_some(),
+        key_hint: hint.unwrap_or_default().into(),
+        check: KeyCheck::None,
+        check_detail: SharedString::new(),
+        shown: shown.into(),
+        official,
+        live,
+    }
+}
+
+/// The panel drawn again from the settings; the checks' answers stay unless the service changed.
+fn show_panel(ui: &MainWindow) {
+    let Some(view) = with_settings(|settings| panel_view(&settings.voice_input, &|language, which| crate::database::credential(&key_name(language, which)).as_deref().map(hint)))
+    else {
+        return;
+    };
+    apply(ui, view);
+}
+
+fn apply(ui: &MainWindow, view: PanelView) {
     let voice = ui.global::<Voice>();
-    voice.set_has_key(key.is_some());
-    voice.set_key_hint(key.as_deref().map(hint).unwrap_or_default().into());
-}
-
-/// The key as the settings show it: its last four characters.
-fn hint(key: &str) -> String {
-    let tail: Vec<char> = key.chars().rev().take(4).collect();
-    format!("sk-…{}", tail.iter().rev().collect::<String>())
-}
-
-/// What could be an OpenAI key: they all start with sk-, and are long and of plain characters.
-fn looks_like_a_key(key: &str) -> bool {
-    key.starts_with("sk-") && key.len() >= 20 && key.chars().all(|character| character.is_ascii_graphic())
-}
-
-fn save_key(text: &str) {
-    let key = text.trim();
-    KEY_CHECKS.set(KEY_CHECKS.get() + 1);
-    if !looks_like_a_key(key) {
-        with_ui(|ui| ui.global::<Voice>().set_key_check(KeyCheck::Malformed));
-        return;
-    }
-    if let Err(err) = crate::database::save_credential(KEY, key) {
-        with_ui(|ui| {
-            let voice = ui.global::<Voice>();
-            voice.set_key_error(err.into());
-            voice.set_key_check(KeyCheck::Failed);
-        });
-        return;
-    }
-    with_ui(show_key);
-    check_key(key.to_string());
-}
-
-/// OpenAI asked whether it takes the key, on a thread of its own; the answer shows under it.
-fn check_key(key: String) {
-    let check = KEY_CHECKS.get();
-    with_ui(|ui| ui.global::<Voice>().set_key_check(KeyCheck::Checking));
-    let spawned = std::thread::Builder::new().name("voice-key".into()).spawn(move || {
-        let answer = openai::check_key(&key);
-        let _ = slint::invoke_from_event_loop(move || key_checked(check, answer));
-    });
-    if spawned.is_err() {
-        with_ui(|ui| ui.global::<Voice>().set_key_check(KeyCheck::None));
-    }
-}
-
-fn key_checked(check: u64, answer: KeyAnswer) {
-    if check != KEY_CHECKS.get() {
-        return;
-    }
-    with_ui(|ui| {
-        let voice = ui.global::<Voice>();
-        match answer {
-            KeyAnswer::Works => voice.set_key_check(KeyCheck::Works),
-            KeyAnswer::Refused => voice.set_key_check(KeyCheck::Refused),
-            KeyAnswer::Failed(err) => {
-                voice.set_key_error(err.into());
-                voice.set_key_check(KeyCheck::Failed);
-            }
+    let keep = |old: VoiceService, mut new: VoiceService| {
+        if old.format == new.format && old.shown == new.shown && old.has_key == new.has_key {
+            new.check = old.check;
+            new.check_detail = old.check_detail;
         }
-    });
+        new
+    };
+    voice.set_can_remove(view.languages.len() > 1);
+    voice.set_language_rows(lines(view.languages));
+    voice.set_addable_rows(lines(view.addable));
+    voice.set_speech(keep(voice.get_speech(), view.speech));
+    voice.set_tidying(keep(voice.get_tidying(), view.tidying));
+    voice.set_speech_url(view.speech_url.into());
+    voice.set_speech_model(view.speech_model.into());
+    voice.set_keywords(view.keywords.into());
+    voice.set_tidy_url(view.tidy_url.into());
+    voice.set_tidy_model(view.tidy_model.into());
+    voice.set_tidy(view.tidy);
+    voice.set_same_key(view.same_key);
+    voice.set_language_name(view.language_name.into());
+    voice.set_transcribe_messages(view.transcribe_messages);
 }
 
-fn remove_key() {
-    KEY_CHECKS.set(KEY_CHECKS.get() + 1);
-    if let Err(err) = crate::database::remove_credential(KEY) {
-        eprintln!("voice input: cannot remove the key: {err}");
-    }
-    with_ui(|ui| {
-        show_key(ui);
-        ui.global::<Voice>().set_key_check(KeyCheck::None);
-    });
-}
-
-fn show_languages(ui: &MainWindow) {
-    let chosen = with_settings(|settings| settings.voice_input.languages.clone()).unwrap_or_default();
-    ui.global::<Voice>().set_language_rows(language_lines(&chosen));
-}
-
-/// The languages as the settings' lines of chips, those in `chosen` on.
-fn language_lines(chosen: &[String]) -> ModelRc<VoiceLanguageRow> {
-    let languages: Vec<VoiceLanguage> = LANGUAGES
-        .iter()
-        .map(|(ui_code, code)| VoiceLanguage { code: (*code).into(), name: crate::i18n::native_name(ui_code).into(), on: chosen.iter().any(|chosen| chosen == code) })
-        .collect();
-    let lines: Vec<VoiceLanguageRow> = languages.chunks(PER_LINE).map(|line| VoiceLanguageRow { languages: ModelRc::new(VecModel::from(line.to_vec())) }).collect();
+/// Chips in lines of PER_LINE.
+fn lines(chips: Vec<VoiceLanguage>) -> ModelRc<VoiceLanguageRow> {
+    let lines: Vec<VoiceLanguageRow> = chips.chunks(PER_LINE).map(|line| VoiceLanguageRow { languages: ModelRc::new(VecModel::from(line.to_vec())) }).collect();
     ModelRc::new(VecModel::from(lines))
 }
 
-/// The settings' languages for the screenshot test (src/screenshots.rs), with `chosen` on.
+/// The panel for the screenshot test (src/screenshots.rs): `voice_input` as the settings, with
+/// keys whose last letters are `hints` (by the database's names).
 #[cfg(test)]
-pub fn show_for_pictures(ui: &MainWindow, chosen: &[&str]) {
-    let chosen: Vec<String> = chosen.iter().map(|code| code.to_string()).collect();
-    ui.global::<Voice>().set_language_rows(language_lines(&chosen));
+pub fn show_for_pictures(ui: &MainWindow, voice_input: &VoiceInput, hints: &[(&str, &str)]) {
+    let view = panel_view(voice_input, &|language, which| hints.iter().find(|(name, _)| *name == key_name(language, which)).map(|(_, hint)| hint.to_string()));
+    apply(ui, view);
+    show_strip_for_pictures(ui, voice_input);
 }
 
-fn toggle_language(code: &str) {
-    if !LANGUAGES.iter().any(|(_, known)| *known == code) {
+#[cfg(test)]
+fn show_strip_for_pictures(ui: &MainWindow, voice_input: &VoiceInput) {
+    let profile = voice_input.current();
+    let speech = Speech::new(&profile.format, &profile.url, &profile.model).ok();
+    let voice = ui.global::<Voice>();
+    voice.set_service(speech.as_ref().map(Speech::shown).unwrap_or_default().into());
+    voice.set_live(speech.as_ref().is_some_and(|speech| live(speech, &profile.language)));
+    voice.set_can_switch(voice_input.profiles.len() > 1);
+}
+
+/// A main language chosen in the panel: the one used from now on, and its settings shown.
+fn choose_language(code: &str) {
+    with_settings(|settings| {
+        if settings.voice_input.profiles.iter().any(|profile| profile.language == code) {
+            settings.voice_input.language = code.to_string();
+            settings.save();
+        }
+    });
+    with_ui(|ui| {
+        ui.global::<Voice>().set_adding(false);
+        show_panel(ui);
+    });
+}
+
+/// A main language added: its set starts as a copy of the one in use, keys and all, and is the
+/// one used from now on.
+fn add_language(code: &str) {
+    if code != "auto" && !is_language(code) {
         return;
     }
-    with_settings(|settings| {
-        let languages = &mut settings.voice_input.languages;
-        match languages.iter().position(|chosen| chosen == code) {
-            Some(index) => {
-                languages.remove(index);
-            }
-            None => languages.push(code.to_string()),
+    let copied = with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        if voice_input.profiles.iter().any(|profile| profile.language == code) {
+            return None;
         }
-        languages.sort_by_key(|chosen| LANGUAGES.iter().position(|(_, known)| known == chosen).unwrap_or(usize::MAX));
+        let from = voice_input.current().clone();
+        voice_input.profiles.push(VoiceProfile { language: code.to_string(), ..from.clone() });
+        voice_input.language = code.to_string();
+        settings.save();
+        Some(from.language)
+    })
+    .flatten();
+    if let Some(from) = copied {
+        for which in [Which::Speech, Which::Tidy] {
+            if let Some(key) = crate::database::credential(&key_name(&from, which))
+                && let Err(err) = crate::database::save_credential(&key_name(code, which), &key)
+            {
+                eprintln!("voice input: cannot copy a key: {err}");
+            }
+        }
+    }
+    with_ui(|ui| {
+        ui.global::<Voice>().set_adding(false);
+        show_panel(ui);
+    });
+}
+
+/// The main language in use removed, with its keys; the first one left is used.
+fn remove_language() {
+    let removed = with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        if voice_input.profiles.len() < 2 {
+            return None;
+        }
+        let language = voice_input.language.clone();
+        voice_input.profiles.retain(|profile| profile.language != language);
+        voice_input.language = voice_input.profiles[0].language.clone();
+        settings.save();
+        Some(language)
+    })
+    .flatten();
+    if let Some(language) = removed {
+        for which in [Which::Speech, Which::Tidy] {
+            let _ = crate::database::remove_credential(&key_name(&language, which));
+        }
+    }
+    with_ui(show_panel);
+}
+
+/// A service's format chosen: its own address and model come with it, unless the address is one
+/// the two formats share (a relay of OpenAI's speaks both of OpenAI's speech formats).
+fn set_format(which: Which, name: &str) {
+    with_settings(|settings| {
+        let profile = settings.voice_input.current_mut();
+        match which {
+            Which::Speech => {
+                if !service::SPEECH_FORMATS.contains(&name) || profile.format == name {
+                    return;
+                }
+                let shared = SpeechFormat::from_name(&profile.format).default_url() == SpeechFormat::from_name(name).default_url();
+                if !shared {
+                    profile.url.clear();
+                }
+                profile.format = name.to_string();
+                profile.model.clear();
+            }
+            Which::Tidy => {
+                if !service::TIDY_FORMATS.contains(&name) || profile.tidy_format == name {
+                    return;
+                }
+                profile.tidy_format = name.to_string();
+                profile.tidy_url.clear();
+                profile.tidy_model.clear();
+            }
+        }
         settings.save();
     });
-    with_ui(show_languages);
+    with_ui(show_panel);
+    check(which);
+}
+
+enum Field {
+    Url,
+    Model,
+    Keywords,
+}
+
+/// An address or a model typed: kept as it is typed, and the address's problem shown.
+fn edit(which: Which, field: Field, text: &str) {
+    with_settings(|settings| {
+        let profile = settings.voice_input.current_mut();
+        let slot = match (which, &field) {
+            (_, Field::Keywords) => &mut profile.keywords,
+            (Which::Speech, Field::Url) => &mut profile.url,
+            (Which::Speech, Field::Model) => &mut profile.model,
+            (Which::Tidy, Field::Url) => &mut profile.tidy_url,
+            (Which::Tidy, Field::Model) => &mut profile.tidy_model,
+        };
+        *slot = text.trim().to_string();
+        settings.save();
+    });
+    if matches!(field, Field::Keywords) {
+        return;
+    }
+    let Some(profile) = current() else { return };
+    let address = match which {
+        Which::Speech => Speech::new(&profile.format, &profile.url, &profile.model).map(|speech| (speech.shown(), speech.official(), live(&speech, &profile.language))),
+        Which::Tidy => Tidy::new(&profile.tidy_format, &profile.tidy_url, &profile.tidy_model).map(|tidy| (tidy.shown(), tidy.official(), false)),
+    };
+    // The typed text stays as it is; only what is said of it changes.
+    let fresh = service_view("", address, "", "", None);
+    with_ui(|ui| {
+        let voice = ui.global::<Voice>();
+        let mut shown = if which == Which::Speech { voice.get_speech() } else { voice.get_tidying() };
+        shown.url_problem = fresh.url_problem;
+        shown.shown = fresh.shown;
+        shown.official = fresh.official;
+        shown.live = fresh.live;
+        shown.check = KeyCheck::None;
+        if which == Which::Speech { voice.set_speech(shown) } else { voice.set_tidying(shown) }
+    });
+}
+
+/// The key as the panel shows it: its first letters and its last four.
+fn hint(key: &str) -> String {
+    let characters: Vec<char> = key.chars().collect();
+    if characters.len() <= 10 {
+        return format!("…{}", characters[characters.len().saturating_sub(2)..].iter().collect::<String>());
+    }
+    let head: String = characters[..3].iter().collect();
+    let tail: String = characters[characters.len() - 4..].iter().collect();
+    format!("{head}…{tail}")
+}
+
+/// What could be a key of any vendor's: plain characters, no spaces, not too short.
+fn looks_like_a_key(key: &str) -> bool {
+    key.len() >= 8 && key.chars().all(|character| character.is_ascii_graphic())
+}
+
+fn save_key(which: Which, text: &str) {
+    let key = text.trim();
+    CHECKS.set(CHECKS.get() + 1);
+    if !looks_like_a_key(key) {
+        set_check(which, KeyCheck::Malformed, "");
+        return;
+    }
+    let Some(language) = current().map(|profile| profile.language) else { return };
+    if let Err(err) = crate::database::save_credential(&key_name(&language, which), key) {
+        set_check(which, KeyCheck::Failed, &err);
+        return;
+    }
+    with_ui(show_panel);
+    check(which);
+    // The tidying that takes this key is checked again too.
+    if which == Which::Speech && current().is_some_and(|profile| profile.tidy && profile.tidy_same_key) {
+        check(Which::Tidy);
+    }
+}
+
+fn remove_key(which: Which) {
+    CHECKS.set(CHECKS.get() + 1);
+    if let Some(language) = current().map(|profile| profile.language)
+        && let Err(err) = crate::database::remove_credential(&key_name(&language, which))
+    {
+        eprintln!("voice input: cannot remove the key: {err}");
+    }
+    with_ui(|ui| {
+        show_panel(ui);
+        set_check_on(ui, which, KeyCheck::None, "");
+    });
+}
+
+fn set_check(which: Which, check: KeyCheck, detail: &str) {
+    with_ui(|ui| set_check_on(ui, which, check, detail));
+}
+
+fn set_check_on(ui: &MainWindow, which: Which, check: KeyCheck, detail: &str) {
+    let voice = ui.global::<Voice>();
+    let mut shown = if which == Which::Speech { voice.get_speech() } else { voice.get_tidying() };
+    shown.check = check;
+    shown.check_detail = detail.into();
+    if which == Which::Speech { voice.set_speech(shown) } else { voice.set_tidying(shown) }
+}
+
+/// The service asked, on a thread of its own, whether it answers at its address and takes the
+/// key; the answer shows under it. Nothing is asked of an address that is not one, nor of a
+/// vendor's own address without a key.
+fn check(which: Which) {
+    let Some(profile) = current() else { return };
+    let key = key_of(&profile, which);
+    let job: Box<dyn FnOnce() -> KeyAnswer + Send> = match which {
+        Which::Speech => match Speech::new(&profile.format, &profile.url, &profile.model) {
+            Ok(speech) if key.is_some() || !speech.official() => Box::new(move || service::check_speech(&speech, key.as_deref())),
+            _ => return set_check(which, KeyCheck::None, ""),
+        },
+        Which::Tidy => match Tidy::new(&profile.tidy_format, &profile.tidy_url, &profile.tidy_model) {
+            Ok(tidy) if profile.tidy && (key.is_some() || !tidy.official()) => Box::new(move || service::check_tidy(&tidy, key.as_deref())),
+            _ => return set_check(which, KeyCheck::None, ""),
+        },
+    };
+    let number = CHECKS.get() + 1;
+    CHECKS.set(number);
+    set_check(which, KeyCheck::Checking, "");
+    let spawned = std::thread::Builder::new().name("voice-check".into()).spawn(move || {
+        let answer = job();
+        let _ = slint::invoke_from_event_loop(move || {
+            if number != CHECKS.get() {
+                return;
+            }
+            match answer {
+                KeyAnswer::Works => set_check(which, KeyCheck::Works, ""),
+                KeyAnswer::Refused => set_check(which, KeyCheck::Refused, ""),
+                KeyAnswer::Failed(err) => set_check(which, KeyCheck::Failed, &err),
+            }
+        });
+    });
+    if spawned.is_err() {
+        set_check(which, KeyCheck::None, "");
+    }
+}
+
+/// The page of the vendor's keys, for the format chosen.
+fn open_key_page(which: Which) {
+    let Some(profile) = current() else { return };
+    let page = match which {
+        Which::Speech => SpeechFormat::from_name(&profile.format).key_page(),
+        Which::Tidy => service::TidyFormat::from_name(&profile.tidy_format).key_page(),
+    };
+    platform::open_link(page);
 }
 
 fn set_tidy(on: bool) {
     with_settings(|settings| {
-        settings.voice_input.tidy = on;
+        settings.voice_input.current_mut().tidy = on;
         settings.save();
     });
-    with_ui(|ui| ui.global::<Voice>().set_tidy(on));
+    with_ui(show_panel);
+    if on {
+        check(Which::Tidy);
+    }
+}
+
+fn set_same_key(on: bool) {
+    with_settings(|settings| {
+        settings.voice_input.current_mut().tidy_same_key = on;
+        settings.save();
+    });
+    with_ui(show_panel);
+    check(Which::Tidy);
+}
+
+fn set_transcribe_messages(on: bool) {
+    with_settings(|settings| {
+        settings.voice_input.transcribe_messages = on;
+        settings.save();
+    });
+    with_ui(|ui| ui.global::<Voice>().set_transcribe_messages(on));
 }
 
 #[cfg(test)]
@@ -588,20 +1062,56 @@ mod tests {
     }
 
     #[test]
-    fn a_key_shows_by_its_last_letters_and_only_openais_look_is_taken() {
+    fn a_key_shows_by_its_first_and_last_letters_and_any_vendors_look_is_taken() {
         assert_eq!(hint("sk-proj-abcdefghijklmnop4f2a"), "sk-…4f2a");
+        assert_eq!(hint("AIzaSyD-abcdefghij91c2"), "AIz…91c2");
+        assert_eq!(hint("short-key"), "…ey");
         assert!(looks_like_a_key("sk-proj-abcdefghijklmnopqrstuvwxyz0123456789"));
-        assert!(!looks_like_a_key("sk-short"));
-        assert!(!looks_like_a_key("pk-abcdefghijklmnopqrstuvwxyz"));
+        assert!(looks_like_a_key("gsk_abcdefghijklmnop"));
+        assert!(looks_like_a_key("123456789:access-token"));
+        assert!(!looks_like_a_key("short"));
         assert!(!looks_like_a_key("sk-abcdefghij klmnopqrstuvwxyz"));
         assert!(!looks_like_a_key("sk-abcdefghijklmnopqrstuvwxyz中"));
     }
 
     #[test]
-    fn the_languages_offered_are_the_uis_by_openais_codes() {
+    fn the_languages_offered_are_the_uis_by_the_services_codes() {
         assert_eq!(LANGUAGES.len(), crate::i18n::LANGUAGES.len());
         for ((ui_code, _), language) in LANGUAGES.iter().zip(crate::i18n::LANGUAGES) {
             assert_eq!(*ui_code, language.code);
         }
+        assert!(is_language("zh-tw") && !is_language("auto") && !is_language("zh_Hans"));
+        assert_eq!(key_name("zh-cn", Which::Tidy), "voice_input.zh-cn.tidy");
+    }
+
+    #[test]
+    fn the_panel_shows_the_profile_in_use_and_what_can_be_added() {
+        let mut voice_input = VoiceInput::default();
+        voice_input.profiles.push(VoiceProfile { language: "zh-cn".into(), format: "doubao".into(), tidy_same_key: false, ..VoiceProfile::default() });
+        voice_input.language = "zh-cn".into();
+        let view = panel_view(&voice_input, &|language, which| (language == "zh-cn" && which == Which::Speech).then(|| "6f1…9b2c".to_string()));
+        assert_eq!(view.languages.iter().map(|chip| (chip.code.to_string(), chip.on)).collect::<Vec<_>>(), vec![("auto".to_string(), false), ("zh-cn".to_string(), true)]);
+        assert_eq!(view.addable.len(), 10);
+        assert!(!view.addable.iter().any(|chip| chip.code == "auto" || chip.code == "zh-cn"));
+        assert_eq!((view.speech.format.as_str(), view.speech.shown.as_str(), view.speech.has_key), ("doubao", "Volcengine", true));
+        assert_eq!(view.speech.model_placeholder.as_str(), "volc.seedasr.sauc.duration");
+        assert!(view.speech.live);
+        // The tidying has a key of its own here, and none is kept.
+        assert!(!view.same_key && !view.tidying.has_key);
+        assert_eq!(view.language_name, "简体中文");
+        // An address that is not one says why.
+        voice_input.current_mut().url = "http://example.com".into();
+        let view = panel_view(&voice_input, &|_, _| None);
+        assert_eq!(view.speech.url_problem, 3);
+    }
+
+    #[test]
+    fn words_show_while_speaking_except_for_uploads_and_doubaos_other_languages() {
+        let speech = |format: &str, model: &str| Speech::new(format, "", model).expect("the default address");
+        assert!(live(&speech("openai-realtime", ""), "auto"));
+        assert!(!live(&speech("openai-realtime", "gpt-transcribe"), "auto"));
+        assert!(!live(&speech("openai-transcriptions", ""), "zh-cn"));
+        assert!(live(&speech("qwen-realtime", ""), "ja"));
+        assert!(live(&speech("doubao", ""), "zh-tw") && !live(&speech("doubao", ""), "ja"));
     }
 }

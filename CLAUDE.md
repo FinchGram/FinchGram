@@ -64,17 +64,24 @@ things fit together.
   redirects every file request to a CDN that speaks HTTP/1.1 only; what its speed depends on is
   the number of streams and the tail, docs/downloads.md.)
 - Voice input (`src/speech/`, docs/voice-input.md, built 2026-10-25 at the maintainer's word,
-  "类似微信那样"): a tool of the toolbox's AI category since 2026-10-26 (not Telegram's, the
-  maintainer's word), off until the user turns it on in its panel there (ui/pages/voice-input.slint),
-  where its settings are; then the composer's sparkle (Terminal: /voice; the microphone is voice
-  messages'); the words stream back from OpenAI's realtime transcription (`gpt-live-transcribe`) under the user's
-  own key, show in a strip above the composer, are tidied
-  by a small model (`gpt-5-nano`, a switch) and go into the composer for the user to send. No model
-  inside the app (the installer stays small); the key is a credential in the database
-  (`credentials`), never in settings.toml; the session is a blocking WebSocket (tungstenite) on a
-  thread of its own, not async. Built without a design round, drawn in each theme's own style;
-  the other four steps of docs/voice-input.md (a plan, a local server, the OS's recognizers, a
-  router) are not built.
+  "类似微信那样", opened to any vendor on 2026-10-26): a tool of the toolbox's AI category (not
+  Telegram's, the maintainer's word), off until the user turns it on in its panel there
+  (ui/pages/voice-input.slint), where its settings are; then the composer's sparkle (Terminal:
+  /voice; the microphone is voice messages'). The services go by their API's format, the user's own
+  address (a vendor's, a relay's, a server of their own) and keys, never fixed to one vendor ("应该
+  允许大家自己找vendor"), with a set per main language (`[[voice_input.profiles]]`; words of other
+  languages mixed in are kept as spoken): speech by OpenAI Realtime, an OpenAI-compatible upload,
+  Qwen (DashScope) or Doubao (Seed-ASR, its binary protocol); tidying by Chat Completions, Anthropic's
+  Messages or Gemini, with the speech recognition's key or one of its own. The words right come
+  first ("以语音转文字的准确度为第一", 2026-10-26): OpenAI's live model at `delay: xhigh`, words to know
+  for every format, band-limited resampling, a tidying that puts misheard words right. No model
+  inside the app (the installer stays small); the keys are credentials in the database
+  (`credentials`, `voice_input.<language>.speech`/`.tidy`), never in settings.toml; the sessions are
+  blocking (tungstenite WebSockets, ureq) on threads of their own, not async. Transcribe under a
+  voice message (the design's B1) is Telegram's own transcription (recognizeSpeech) first; the
+  user's own service only when they turn that on, off by default. Built without a design round,
+  drawn in each theme's own style; steps 2, 4 and 5 of docs/voice-input.md (a plan, the OS's
+  recognizers, a router) are not built.
 - Backward compatibility, since 2026-10-24 (the app is public): every change to the database's
   layout, to settings.toml's keys or to the Keychain items comes with its migration. The database
   carries `PRAGMA user_version` (LAYOUT in `src/database.rs`); an older file is first copied as it
@@ -120,6 +127,9 @@ things fit together.
   are shown. FinchGram trains nothing and hands nothing of Telegram to any AI on its own; what of
   Telegram reaches an AI is only what the user hands it through the MCP server (docs/mcp.md): off
   by default, within the chats the user chose, never indexed or stored for it, and reading that
-  marks nothing as read. The maintainer decided this on 2026-10-12 knowing the terms' clause 1.5.
-  Voice input sends the user's own voice to OpenAI, under the user's own key, while they dictate;
-  that is not Telegram's data.
+  marks nothing as read; and a voice message the user asks to transcribe with their own speech
+  service when Telegram's own transcription cannot: off by default, one message at their click, the
+  words stored nowhere. The maintainer decided this on 2026-10-12 knowing the terms' clause 1.5,
+  and built the second on 2026-10-26 ("语音信息转文字！可以一起做了"). Voice input sends the user's own
+  voice to the speech service they chose, under their own key, while they dictate; that is not
+  Telegram's data.
