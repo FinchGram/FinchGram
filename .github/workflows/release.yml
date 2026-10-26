@@ -34,9 +34,10 @@ jobs:
     runs-on: macos-latest # Apple silicon
     permissions:
       contents: write # gh release create needs it; the default token is read-only
-    # The release build takes about 56 minutes on the 3-core runner (v0.5.7: 58½ for the job);
-    # the limit leaves it room, and the notarization wait after it.
-    timeout-minutes: 120
+    # The release build took 17 to 88 minutes on the 3-core runner in October 2026 (88 for v0.7.0,
+    # whose new dependencies missed the cache); the limit leaves room for a slow one, and for the
+    # notarization wait after it.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -92,7 +93,10 @@ jobs:
           KEYCHAIN="$RUNNER_TEMP/finchgram.keychain-db"
           KEYCHAIN_PASSWORD="$(openssl rand -hex 16)"
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          # It locks itself only after six hours, longer than the job may run: when v0.7.0's first
+          # run compiled for 88 minutes, the keychain locked at the hour and codesign waited for its
+          # password until the job was cancelled.
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           echo "$CODESIGN_CERTIFICATE" | base64 --decode > "$RUNNER_TEMP/finchgram.p12"
           # The .p12 carries Apple's Developer ID G2 intermediate certificate too, so that the chain
