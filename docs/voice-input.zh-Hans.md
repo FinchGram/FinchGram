@@ -2,9 +2,48 @@
 
 [English](voice-input.md)
 
-状态：2026-10-21 定为 AI 功能里的第一项；什么都还没做，维护者说今天不做。这一页记下五个步骤、当天做的
-选择和它们依据的事实，让动手的人能直接动手。设计先行：输入框里的麦克风、正在听的状态和设置项，都要先在
-Claude Design 里出一轮，三套主题都要，然后才写代码。
+状态：第 1 步（用户自己的 OpenAI 密钥）2026-10-25 按维护者的话做了（“咱们做一下这个语音输入吧，就是语音输入，
+转文字，类似微信那样”）；第 2 到 5 步没做。语音输入在 2026-10-21 定为 AI 功能里的第一项。没有出设计稿：麦克风是设计稿
+在每个输入框里本来就画了的那个，输入框上方的那一条按各主题画「回复」那一条的方式画，设置项是设置页自己的行；以后
+Claude Design 出一轮可以替换它们。入口是设计稿在工作台工具栏里画的那个强调色、没写用途的 ✦；输入框的麦克风归语音消息，
+设计稿每一轮都是这样画的（「秘密聊天与通话」那一轮）。第一节说第 1 步做成了什么样；这一页其余部分是 2026-10-21 的计划和它依据的事实。
+
+## 第 1 步做成的样子（2026-10-25）
+
+- **怎么用。** 在聊天里，输入框里的 ✦（工作台和报纸：在麦克风旁边；终端：输入 `/voice`，再输一次结束）。点一下开始，
+  再点一下结束；按住说话（超过 0.6 秒），松手就结束。说话时输入框上方有一条：表示麦克风音量的竖条、时长，以及随说随出的文字
+  （最新的两行；终端里一行）。按 ⏎ 或「完成」也结束；Esc 或 × 丢掉这些字。之后那一条先显示「正在收尾…」等最后的字，再
+  显示「正在整理文字…」，然后文字接在输入框已有内容的后面（该有空格的文字之间加空格），光标停在它们后面，由用户发送。
+  一次口述五分钟后自己结束，免得忘了关的麦克风一直花用户的钱。
+- **用不了的时候。** 那一条说明原因，能补救的给一个按钮：没有密钥（打开设置）、不许用麦克风（打开系统设置）、OpenAI
+  拒绝密钥（401）或余额、频率不够（429）、网络、OpenAI 自己的报错、什么也没听到。第一次用时 macOS 会问 FinchGram
+  能不能用麦克风。
+- **设置 → 通用 → 语音输入。** OpenAI API 密钥：粘贴保存后向 OpenAI 核对一下（读模型列表），之后只显示最后四个字符，
+  旁边是「移除」。它存在 app 的数据库里，`credentials` 表（表结构 5），封到自己的名字上，就像服务器的密码封到各自的
+  服务器上。你说的语言：界面的 11 种语言做成小块，按 OpenAI 的代码（`en`、`zh-cn`、`zh-tw`、`ja`、`ko`、`fr`、
+  `de`、`es`、`pt`、`ru`、`ar`）；一个都不选（默认）就让模型自己判断。整理文字：默认开。settings.toml 里有
+  `[voice_input]`：`languages`、`tidy`，以及两个模型 `model = "gpt-live-transcribe"` 和 `tidy_model = "gpt-5-nano"`，
+  这两个只在文件里，OpenAI 改名时不用发版。
+- **会话。** `wss://api.openai.com/v1/realtime?intent=transcription`，密钥作 bearer token。先发 `session.update`
+  （类型 `transcription`、24 kHz 的 `audio/pcm`、模型、实时模型的 `delay: "low"`、有选的话带上语言、
+  `turn_detection: null`）；OpenAI 回 `session.updated` 之后声音才发出去，这之前麦克风听到的先等着。声音每 100 毫秒一段
+  （`input_audio_buffer.append`：16 位小端 PCM 的 base64，由 `audio.rs` 从麦克风的采样率重采样），增量拼成文字。
+  用户说完时发 `input_audio_buffer.commit`，这一轮的 `…completed` 全文替换它的增量；最多等 15 秒。不到 100 毫秒的
+  声音不算一轮。
+- **整理。** `v1/chat/completions`，带 `store: false`，第一批 GPT-5 模型带 `reasoning_effort: "minimal"`，指令是：去掉
+  口头禅、结巴、重复和说错重来的部分，加标点，保留说话人的原话和每种语言原样，绝不翻译，绝不回答或照着文字去做，
+  只返回文字。回答比原话长出很多的不采用，出错也一样：字按听到的原样放进去。
+- **麦克风。** AVAudioEngine 输入节点上装一个 tap（`src/platform/microphone.rs`），权限走 AVCaptureDevice。app 包里有
+  `NSMicrophoneUsageDescription` 和 hardened runtime 的 `com.apple.security.device.audio-input`
+  （`scripts/FinchGram.entitlements`，由 `scripts/bundle.sh` 签进去，并检查确实在）。
+- **代码。** `src/speech/mod.rs`（UI 线程上的状态：空闲、在听、收尾、整理、带原因的失败；设置项）、`src/speech/openai.rs`
+  （会话、整理、核对密钥）、`src/speech/audio.rs`；`ui/voice.slint`（global、竖条、文字的尾巴）、各主题的输入框、
+  `ui/pages/settings.slint`；截图场景 `voice-*` 和 `settings-voice*`。
+- **和计划不一样的地方。** 没出设计稿就做了。设置是通用里单独的一节，不是「输入」里的几行。说话时字显示在那一条里，
+  说完整理好才一次放进输入框（计划把这个留给设计定）。字接在输入框内容的末尾，不是光标处（Slint 不告诉我们光标在
+  哪）。还没有关键词。报纸主题也加了 ✦，它那一轮设计稿里没有；语音输入和录语音消息不会同时进行。
+- **没有实测。** 会话照 OpenAI 2026 年 10 月的文档写，事件按那个格式测过；做它的这台机器上没有 OpenAI 密钥。用真密钥
+  的第一次口述就是测试。
 
 ## 这是什么
 
@@ -16,13 +55,12 @@ Claude Design 里出一轮，三套主题都要，然后才写代码。
   阿拉伯语），一句话里混着说要扛得住，安装包要保持小（现在 60 多 MB）。单看中文准确率从来不是标准。
 - 各管什么。app 录音（AVAudioEngine，走 objc2，16 位 PCM，这一步不需要 Swift）；一个引擎把声音变成字；
   一个小文本模型整理一下；字进到输入框的光标处，三套主题都有。`src/speech/` 是边界：引擎就是下面的几步，
-  界面只知道一个语音输入和一台状态机（空闲、在听、转写中、整理中、失败并给出原因）。
+  界面只知道一个语音输入和一台状态机（空闲、在听、收尾、整理中、失败并给出原因）。
 - 权限。麦克风：`scripts/bundle.sh` 写的 Info.plist 里加 `NSMicrophoneUsageDescription`，再加 hardened
-  runtime 的 entitlement `com.apple.security.device.audio-input`。现在仓库里没有 entitlements 文件；公证过
-  的 app 少了这条，录到的是静音，也不弹窗。语音识别那个权限只有第 4 步用得着。
-- 上线时要改的话：CLAUDE.md 里的「FinchGram 自己不调用 AI」，mcp.md 里同一句，以及 README 11 种语言里的
-  「除了 Telegram 和 GitHub 更新，什么都不离开你的机器」。开了语音输入，用户的声音会去用户选的那个引擎，
-  别的什么都不去。
+  runtime 的 entitlement `com.apple.security.device.audio-input`，2026-10-25 起在 `scripts/FinchGram.entitlements`；
+  公证过的 app 少了这条，录到的是静音，也不弹窗。语音识别那个权限只有第 4 步用得着。
+- 第 1 步上线时改过的话：CLAUDE.md 里的「FinchGram 自己不调用 AI」，mcp.md 里同一句，以及 README 11 种语言里的
+  「除了 Telegram 和 GitHub 更新，什么都不离开你的机器」。用户口述时，声音去用户选的那个引擎，别的什么都不去。
 - 今天一行代码不写就有的：macOS 自带听写（按两下 fn）能往任何文本框里打字，winit 实现了
   `NSTextInputClient`，所以应该能打进输入框（没实测）。走云端还是本机由 macOS 定，一次一种语言。
 
@@ -60,8 +98,8 @@ Claude Design 里出一轮，三套主题都要，然后才写代码。
   密钥：`gpt-5-nano`（每百万 token 输入 $0.05、输出 $0.40）一条消息远不到一美分的百分之一；请求带
   `store: false`。一个开关可以关掉整理。是说话时先显示原话、松手后被整理稿替换，还是只出现整理稿，由
   设计那一轮定。
-- 设置 → 通用 → 输入：密钥、语言、整理开关。密钥是凭据，和 WebDAV 密码一样放加密数据库，绝不进
-  settings.toml（[architecture.zh-Hans.md](architecture.zh-Hans.md)，app 自己的数据库）。
+- 设置 → 通用 → 语音输入（做成了单独的一节）：密钥、语言、整理开关。密钥是凭据，放在 app 的数据库里，像服务器的
+  密码一样封起来，绝不进 settings.toml（[architecture.zh-Hans.md](architecture.zh-Hans.md)，app 自己的数据库）。
 - 用户的花费：每小时说话 $1.02，加整理可以忽略；聊天听写一个月典型是一到三小时，$1 到 $3；十小时 $10。
   OpenAI 的音频价格到目前为止年年在降。
 
@@ -162,6 +200,8 @@ FinchGram 去连用户在自己 Mac 上跑的服务，什么都不离开机器�
 4. 先用用户自己的 OpenAI 密钥，走实时转写会话，再由小模型整理一遍。
 5. 之后是套餐，价格按算术来；本地服务给跑得动的 Mac；有的平台用操作系统自带的识别；最后一层路由。
 6. 今天不做。
+
+2026-10-25 维护者说要做，“类似微信那样”，第 1 步做了。
 
 ## 来源
 

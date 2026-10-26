@@ -6,6 +6,7 @@ import {
 import { Fmt } from "format.slint";
 import { Icon, Spinner } from "widgets.slint";
 import { Look } from "look.slint";
+import { Voice, VoiceState } from "voice.slint";
 
 // The open chat's messages, scrolled. New messages are followed while the view is at the end;
 // messages loading above do not move what is being read (the distance from the end is kept); near
@@ -111,7 +112,9 @@ export global ChatIcons {
 // Where a message is written: Enter sends it, Shift+Enter starts a new line; while an input method
 // is still composing, Enter is the input method's. Grows with the text up to `tallest`. Esc closes
 // what is open over it (Actions.escape); ↑ in an empty box edits our last message. Each change the
-// user makes is reported (`edited`): the chat sees that we are typing.
+// user makes is reported (`edited`): the chat sees that we are typing. The chat's composer takes
+// voice input's words (`takes-dictation`, src/speech/): while the user speaks, Enter finishes and
+// Esc drops the words, and once the words are in, the cursor goes after them.
 export component MessageInput inherits Rectangle {
     in property <string> placeholder;
     in property <color> text-color;
@@ -131,6 +134,8 @@ export component MessageInput inherits Rectangle {
     in property <bool> enabled: true;
     // Sending with nothing written: forwarding sends the messages alone.
     in property <bool> allow-empty;
+    // The chat's composer, where voice input's words go (not a caption's box).
+    in property <bool> takes-dictation;
     in-out property <string> text <=> input.text;
     out property <bool> has-focus: input.has-focus;
     // The words to send; the box empties itself.
@@ -141,6 +146,15 @@ export component MessageInput inherits Rectangle {
 
     public function focus-text() {
         input.focus();
+    }
+
+    // Voice input's words went in at the end: the keyboard here, the cursor after them.
+    property <int> insertions: Voice.insertions;
+    changed insertions => {
+        if root.takes-dictation {
+            input.focus();
+            input.set-selection-offsets(2147483647, 2147483647);
+        }
     }
 
     public function send-now() {
@@ -195,6 +209,18 @@ export component MessageInput inherits Rectangle {
             // (Settings → General), ⌘Enter sends and Enter makes a new line. (Slint reports ⌘ as
             // control on macOS.)
             key-pressed(event) => {
+                // While the user speaks, Enter finishes: the words come into the box, not sent; and
+                // while the last words are on their way, it waits for them.
+                if root.takes-dictation && event.text == Key.Return && self.preedit-text == "" && Voice.busy {
+                    if Voice.state == VoiceState.listening {
+                        Voice.stop();
+                    }
+                    return accept;
+                }
+                if root.takes-dictation && event.text == Key.Escape && self.preedit-text == "" && Voice.shown {
+                    Voice.cancel();
+                    return accept;
+                }
                 if event.text == Key.Return && !event.modifiers.shift && !event.modifiers.alt && self.preedit-text == ""
                     && event.modifiers.control != AppState.send-with-enter
                 {

@@ -16,16 +16,33 @@ pub const ON_SCREEN: i32 = 16;
 pub const IN_LISTS: i32 = 8;
 
 type Ready = Box<dyn FnOnce(String)>;
+type Failed = Box<dyn FnOnce()>;
+
+/// What waits for a file: what to do with its path, and, for some, what to do when it cannot be
+/// had.
+struct Waiter {
+    ready: Ready,
+    failed: Option<Failed>,
+}
 
 thread_local! {
     /// By account and file id (TDLib's file ids are each account's own): what waits for the file.
-    static WAITING: RefCell<HashMap<(Slot, i32), Vec<Ready>>> = RefCell::new(HashMap::new());
+    static WAITING: RefCell<HashMap<(Slot, i32), Vec<Waiter>>> = RefCell::new(HashMap::new());
 }
 
 /// Call `ready` with the local path of `file`, downloading it first unless it is on disk already.
 pub fn download(file: &File, priority: i32, ready: impl FnOnce(String) + 'static) {
+    wait(file, priority, Waiter { ready: Box::new(ready), failed: None });
+}
+
+/// As `download`, and `failed` is called when TDLib cannot get the file.
+pub fn download_or_fail(file: &File, priority: i32, ready: impl FnOnce(String) + 'static, failed: impl FnOnce() + 'static) {
+    wait(file, priority, Waiter { ready: Box::new(ready), failed: Some(Box::new(failed)) });
+}
+
+fn wait(file: &File, priority: i32, waiter: Waiter) {
     if let Some(path) = completed(file) {
-        ready(path);
+        (waiter.ready)(path);
         return;
     }
     let slot = super::context();
@@ -33,7 +50,7 @@ pub fn download(file: &File, priority: i32, ready: impl FnOnce(String) + 'static
     let first = WAITING.with(|waiting| {
         let mut waiting = waiting.borrow_mut();
         let list = waiting.entry((slot, id)).or_default();
-        list.push(Box::new(ready));
+        list.push(waiter);
         list.len() == 1
     });
     if !first {
@@ -53,8 +70,8 @@ pub fn download(file: &File, priority: i32, ready: impl FnOnce(String) + 'static
 pub fn updated(file: &File) {
     let Some(path) = completed(file) else { return };
     let waiting = WAITING.with(|waiting| waiting.borrow_mut().remove(&(super::context(), file.id))).unwrap_or_default();
-    for ready in waiting {
-        ready(path.clone());
+    for waiter in waiting {
+        (waiter.ready)(path.clone());
     }
 }
 
@@ -72,8 +89,12 @@ pub(super) fn completed(file: &File) -> Option<String> {
     (file.local.is_downloading_completed && !file.local.path.is_empty() && std::path::Path::new(&file.local.path).exists()).then(|| file.local.path.clone())
 }
 
-/// What waited for the file waits no longer; asking again starts a new download.
+/// What waited for the file waits no longer, and is told so where it asked to be; asking again
+/// starts a new download.
 fn give_up(slot: Slot, id: i32, why: &str) {
     eprintln!("telegram: cannot download file {id}: {why}");
-    WAITING.with(|waiting| waiting.borrow_mut().remove(&(slot, id)));
+    let waiting = WAITING.with(|waiting| waiting.borrow_mut().remove(&(slot, id))).unwrap_or_default();
+    for failed in waiting.into_iter().filter_map(|waiter| waiter.failed) {
+        failed();
+    }
 }

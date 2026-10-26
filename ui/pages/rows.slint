@@ -168,3 +168,36 @@ export component SmallButton inherits Rectangle {
         }
     }
 }
+
+// A choice among a few, as a chip: a protocol, a way to sign in, a language. One FinchGram does
+// not have yet is faded, and can still be looked at.
+export component Chip inherits Rectangle {
+    in property <string> label;
+    in property <bool> on;
+    in property <bool> grey;
+    callback clicked();
+    height: 32px;
+    width: text.preferred-width + 24px;
+    border-radius: Look.button-radius;
+    background: on ? Look.sel : transparent;
+    border-width: on ? 0px : 1px;
+    border-color: Look.line-strong;
+    opacity: grey && !on ? 0.42 : 1;
+
+    text := Text {
+        width: parent.width;
+        height: parent.height;
+        text: Look.terminal ? "[" + root.label + "]" : root.label;
+        color: root.on && !Look.broadsheet ? Look.accent-ink : Look.text;
+        font-size: 14px;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}

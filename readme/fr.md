@@ -67,6 +67,15 @@ un client non officiel, qui n'est pas fait par Telegram.
 - **Réglages.** Ouvrir à la connexion, envoyer avec Entrée, le raccourci de capture, sons et aperçus
   des notifications, validation en deux étapes, langue de l'interface, et mises à jour : l'application
   se met à jour elle-même depuis GitHub Releases et n'installe rien qu'elle ne puisse vérifier.
+- **Messages vocaux.** Ils se lisent dans la discussion, avec leur forme d'onde, le temps et 1×,
+  1,5× ou 2× ; l'écoute se voit chez l'expéditeur, comme dans les applications de Telegram.
+  Maintenez le micro pour en enregistrer un : relâchez pour l'envoyer, glissez à gauche pour
+  annuler ou vers le haut pour le verrouiller, puis arrêtez-le pour l'écouter avant de l'envoyer.
+- **Saisie vocale.** Appuyez sur ✦ dans la zone de saisie et parlez : le texte s'affiche pendant
+  que vous parlez et arrive dans la zone, sans les euh ni les hum, prêt à être envoyé par vous. Elle
+  passe par votre propre clé OpenAI (environ 1 $ par heure de parole), à indiquer dans Réglages →
+  Général, dans toutes les langues de l'interface et dans les phrases qui les mêlent. Voir
+  [docs/voice-input.md](../docs/voice-input.md).
 - **Assistants IA.** Claude Desktop, Claude Code et les autres apps qui parlent le Model Context
   Protocol peuvent lire vos discussions et y agir via FinchGram, une fois que vous les y autorisez :
   Boîte à outils → Accès IA, désactivé tant que vous ne l'activez pas, avec les discussions que vous
@@ -74,8 +83,8 @@ un client non officiel, qui n'est pas fait par Telegram.
   Voir [docs/mcp.md](../docs/mcp.md).
 - **Langues.** L'interface et ce README en onze langues.
 
-Pas encore : discussions secrètes, messages vocaux et appels, sondages et messages
-programmés, filtres par mots-clés, Windows et Linux. Voir
+Pas encore : discussions secrètes et appels, sondages et messages programmés, filtres par
+mots-clés, Windows et Linux. Voir
 [ce qui vient ensuite](../docs/architecture.md#not-now).
 
 ## Téléchargement
@@ -162,8 +171,9 @@ FinchGram fait ce que font les applications de Telegram, et rien de ce qu'elles 
 message est marqué lu quand vous le voyez, l'autre côté vous voit écrire et en ligne comme dans
 toute application Telegram, les messages sponsorisés des chaînes sont affichés, les médias qui
 s'autodétruisent s'ouvrent une fois, et rien de Telegram ne va à une IA, sauf si vous laissez entrer
-un assistant (Boîte à outils → Accès IA). Rien ne quitte votre machine sauf vers Telegram, et vers GitHub
-pour les mises à jour.
+un assistant (Boîte à outils → Accès IA). Rien ne quitte votre machine sauf vers Telegram, vers GitHub
+pour les mises à jour et, pendant que vous utilisez la saisie vocale, votre voix vers OpenAI avec
+votre propre clé.
 
 ## Développement
 

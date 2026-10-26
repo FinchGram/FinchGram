@@ -261,6 +261,17 @@ export struct RoundNote {
     loading: bool,          // its file is on its way
 }
 
+// A voice message (src/telegram/voice.rs): its length, its loudness as bars, whether it was
+// listened to. Which one plays, and how far, is Conversation's (voice-playing …), so that the row
+// stays the same while it plays.
+export struct VoiceNote {
+    shown: bool,
+    duration: string,       // "0:14"
+    bars: [float],          // its waveform, 0 … 1 a bar (the design's 28)
+    blocks: string,         // the same as Terminal writes it, 20 block characters
+    listened: bool,         // ours, or listened to; an incoming one not yet listened to has a dot
+}
+
 // A contact card in a message: who, their number, whether they are on Telegram.
 export struct ContactCard {
     shown: bool,
@@ -302,6 +313,7 @@ export struct MessageRow {
     buttons: [ButtonRow],   // a bot's buttons under it, row by row
     reactions: [Reaction],  // the reactions to it, most given first
     round: RoundNote,       // a round video message
+    voice: VoiceNote,       // a voice message
     contact: ContactCard,   // a contact card
     can-share: bool,        // a channel's post: the share link under it (Share)
 }
@@ -343,6 +355,19 @@ export global Conversation {
     in-out property <bool> can-send-photos;
     in-out property <bool> can-send-videos;
     in-out property <bool> can-send-files;
+    in-out property <bool> can-send-voice;           // voice messages (the chat may forbid them)
+    // The voice message that plays, or whose file is on its way (src/telegram/voice.rs): its id,
+    // "" for none; how far it has played, 0 … 1, and as "0:05".
+    in-out property <string> voice-playing;
+    in-out property <bool> voice-loading;
+    in-out property <bool> voice-paused;
+    in-out property <float> voice-progress;
+    in-out property <string> voice-time;
+    in-out property <bool> voice-failed;             // its file could not be downloaded: Retry
+    in-out property <string> voice-speed: "1×";      // 1×, 1.5×, 2×
+    callback play-voice(string);                    // play it, or pause it, or go on; again after a failure
+    callback seek-voice(string, float);             // a click on its waveform: from there
+    callback next-voice-speed();                    // 1× → 1.5× → 2× → 1×
     in-out property <bool> muted;
     in-out property <bool> pinned;
     in-out property <[MessageRow]> messages;     // oldest first

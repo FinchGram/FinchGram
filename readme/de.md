@@ -61,6 +61,15 @@ ein inoffizieller Client, nicht von Telegram gemacht.
 - **Einstellungen.** Beim Anmelden starten, Senden mit Enter, das Bildschirmfoto-Kürzel, Töne und
   Vorschauen der Mitteilungen, zweistufige Bestätigung, die Sprache der Oberfläche und Updates: die App
   aktualisiert sich selbst aus GitHub Releases und installiert nichts, was sie nicht prüfen kann.
+- **Sprachnachrichten.** Abspielen im Chat, mit Wellenform, Zeit und 1×, 1,5× oder 2×; das
+  Anhören sieht der Absender, wie in Telegrams eigenen Apps. Zum Aufnehmen das Mikrofon halten:
+  loslassen sendet, nach links ziehen bricht ab, nach oben ziehen sperrt die Aufnahme, und
+  gestoppt lässt sie sich vor dem Senden anhören.
+- **Spracheingabe.** Drück ✦ im Eingabefeld und sprich: Der Text erscheint, während du
+  sprichst, und landet ohne Äh und Ähm im Feld, damit du ihn abschickst. Sie läuft über deinen
+  eigenen OpenAI-Schlüssel (etwa 1 $ pro Stunde Sprache), einzutragen unter Einstellungen →
+  Allgemein, in jeder Sprache der Oberfläche und in Sätzen, die sie mischen. Siehe
+  [docs/voice-input.md](../docs/voice-input.md).
 - **KI-Assistenten.** Claude Desktop, Claude Code und andere Apps, die das Model Context Protocol
   sprechen, können über FinchGram deine Chats lesen und darin handeln, sobald du es erlaubst:
   Werkzeuge → KI-Zugriff, aus, bis du es einschaltest, mit den Chats, die du wählst, und ob ein
@@ -68,8 +77,8 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   [docs/mcp.md](../docs/mcp.md).
 - **Sprachen.** Die Oberfläche und dieses README in elf Sprachen.
 
-Noch nicht da: geheime Chats, Sprachnachrichten und Anrufe, Umfragen und geplante
-Nachrichten, Schlüsselwortfilter, Windows und Linux. Siehe
+Noch nicht da: geheime Chats und Anrufe, Umfragen und geplante Nachrichten,
+Schlüsselwortfilter, Windows und Linux. Siehe
 [was als Nächstes kommt](../docs/architecture.md#not-now).
 
 ## Download
@@ -154,8 +163,9 @@ Builds in `vendor/` und die Releases. Siehe [docs/architecture.md](../docs/archi
 FinchGram tut, was Telegrams eigene Apps tun, und nichts, was sie verbieten. Eine Nachricht gilt als
 gelesen, wenn du sie siehst, die Gegenseite sieht dich tippen und online wie in jeder Telegram-App,
 gesponserte Nachrichten in Kanälen werden gezeigt, selbstzerstörende Medien öffnen sich einmal, und
-nichts von Telegram geht an irgendeine KI, außer du lässt einen Assistenten herein (Einstellungen →
-KI-Zugriff). Nichts verlässt deinen Rechner außer zu Telegram, und zu GitHub für Updates.
+nichts von Telegram geht an irgendeine KI, außer du lässt einen Assistenten herein (Werkzeuge →
+KI-Zugriff). Nichts verlässt deinen Rechner außer zu Telegram, zu GitHub für Updates und, während du
+die Spracheingabe benutzt, deine Stimme mit deinem eigenen Schlüssel zu OpenAI.
 
 ## Entwicklung
 

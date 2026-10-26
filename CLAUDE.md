@@ -32,9 +32,12 @@ things fit together.
   Appearance without a restart (docs/architecture.md). Every change to the pages goes into all three,
   Workbench first. What the design shows but FinchGram cannot do yet is greyed out; never invent
   pages or visual design beyond the design.
-- Video (and later voice messages) plays through mpv, as libmpv built from pinned sources in
+- Video and voice messages play through mpv, as libmpv built from pinned sources in
   `vendor/mpv/` the way finchgram-tdlib is (`mpv-*` releases, `scripts/fetch-mpv.sh`); the app links
   it and draws its frames with OpenGL (`src/player/`). Media follow the design's media-viewer.js.
+  Voice messages (`src/telegram/voice.rs`, the design's round "秘密聊天与通话", B1 and B2) play
+  through an mpv of their own with no video (`src/player/audio.rs`), and are recorded by holding
+  the composer's microphone, as AAC in M4A by AVAudioRecorder, which TDLib takes as voice notes.
 - The MCP server (`src/mcp/`, `src/telegram/tools.rs`, docs/mcp.md) is what sets FinchGram apart:
   AI assistants' apps work with the user's Telegram through the running app, over a Unix socket
   with `finchgram mcp` as the stdio bridge, inside the one TDLib session and without an async
@@ -60,6 +63,16 @@ things fit together.
   the "no async runtime" line was a simplification from the first day, not a need. (PikPak itself
   redirects every file request to a CDN that speaks HTTP/1.1 only; what its speed depends on is
   the number of streams and the tail, docs/downloads.md.)
+- Voice input (`src/speech/`, docs/voice-input.md, built 2026-10-25 at the maintainer's word,
+  "类似微信那样"): the composer's sparkle (Terminal: /voice; the microphone is voice messages'); the
+  words stream back from OpenAI's realtime transcription (`gpt-live-transcribe`) under the user's
+  own key, show in a strip above the composer, are tidied
+  by a small model (`gpt-5-nano`, a switch) and go into the composer for the user to send. No model
+  inside the app (the installer stays small); the key is a credential in the database
+  (`credentials`), never in settings.toml; the session is a blocking WebSocket (tungstenite) on a
+  thread of its own, not async. Built without a design round, drawn in each theme's own style;
+  the other four steps of docs/voice-input.md (a plan, a local server, the OS's recognizers, a
+  router) are not built.
 - Backward compatibility, since 2026-10-24 (the app is public): every change to the database's
   layout, to settings.toml's keys or to the Keychain items comes with its migration. The database
   carries `PRAGMA user_version` (LAYOUT in `src/database.rs`); an older file is first copied as it
@@ -102,7 +115,9 @@ things fit together.
 - Think of contributors: a fresh clone must build and run by following the README.
 - Telegram's API terms (core.telegram.org/api/terms) are part of the design: nothing that
   interferes with read receipts, typing or online status; official sponsored messages in channels
-  are shown. FinchGram itself calls no AI and trains nothing; what reaches an AI is only what the
-  user hands it through the MCP server (docs/mcp.md): off by default, within the chats the user
-  chose, never indexed or stored for it, and reading that marks nothing as read. The maintainer
-  decided this on 2026-10-12 knowing the terms' clause 1.5.
+  are shown. FinchGram trains nothing and hands nothing of Telegram to any AI on its own; what of
+  Telegram reaches an AI is only what the user hands it through the MCP server (docs/mcp.md): off
+  by default, within the chats the user chose, never indexed or stored for it, and reading that
+  marks nothing as read. The maintainer decided this on 2026-10-12 knowing the terms' clause 1.5.
+  Voice input sends the user's own voice to OpenAI, under the user's own key, while they dictate;
+  that is not Telegram's data.

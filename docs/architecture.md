@@ -104,6 +104,11 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
   (`upgrade_in_event_loop`), where the store, TDLib and the page are, and its outcome comes back
   on a channel. So does the question whether a program may connect: the thread waits while the
   dialog asks the user.
+- Voice input (`src/speech/`) has the microphone's tap, on one of the system's audio threads, which
+  only hands the samples on, and a "voice" thread per dictation: a blocking WebSocket to OpenAI
+  (tungstenite over rustls; a read waits at most 20 ms, and the sound goes out between reads), then
+  the request that tidies the words (ureq). It reports to the UI thread through the event loop;
+  nothing of it is async.
 - A panic on the UI thread ends the app: Slint calls into the app through `extern "C"` functions,
   which no panic unwinds through, so Rust aborts there, and macOS's crash report shows abort() and
   nothing of the cause. The panic's message and place go into `panic.log` next to settings.toml
@@ -293,8 +298,25 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     the length; a click plays it in place through the same player as the viewer (`viewer.rs`:
     the frame is Viewer.frame while Conversation.round-playing names the message), with the ring
     in the accent while it plays; TDLib is told it was watched (openMessageContent). Recording
-    voice or video messages is not in FinchGram: there is no capture and no Opus encoder yet, so
-    the composer's microphone button is greyed.
+    round video messages is not in FinchGram: there is no camera capture.
+  - Voice messages (messageVoiceNote; `voice.rs`, from the design's round "秘密聊天与通话", B1
+    and B2): the bubble has the play button, the waveform of 28 bars (TDLib's 5-bit waveform),
+    which is also how far it has played and takes a click to go there, the time, a dot until it
+    is listened to, the speed (1×, 1.5×, 2×) while it plays, and Transcribe, greyed; Terminal
+    writes it as one line of block characters. It plays through an mpv of its own with no video
+    (`src/player/audio.rs`), so that it and the media viewer never take each other's player;
+    which one plays and how far is Conversation's, not the rows', so that the rows stay as they
+    are while it plays; an incoming one tells TDLib it was listened to (openMessageContent) when
+    it plays, as Telegram's apps do, and its sender sees that (updateMessageContentOpened marks it
+    on every device). It stops at its end and when another chat comes to the front. A new one is
+    recorded by holding the composer's microphone: letting go sends it, dragged left it cancels,
+    dragged up it locks (then Delete, Stop and listen, Send); a click says to hold. The recording is
+    AVAudioRecorder's, AAC in an M4A file in the caches folder (TDLib takes M4A voice notes, "audio/
+    mp4"; no Opus encoder needed), sent as inputMessageVoiceNote with its length and its waveform
+    from the loudness measured while it recorded; recordings older than a day are deleted at the
+    start. The microphone not allowed shows the design's bar with the way to System Settings. Not
+    built from the round: its first-press card before the system's question, and the mini player
+    under the title bar for a voice message that plays out of sight.
   - Contact cards (messageContact; `contacts.rs`): who, their number, whether they are on
     Telegram; Message opens a chat with them (Invite, for someone not on Telegram, puts
     Telegram's invitation on the clipboard: a desktop sends no text messages), Add contact
@@ -409,7 +431,17 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   a "changes" thread per batch of changes.
   The servers with their passwords go into the app's database (below), the folder into settings.toml; a downloaded
   photo or video opens in the media viewer (`viewer.rs`, `view_file`). The page needs no account.
-- `src/player/`: video through libmpv, drawn into the window (the media viewer's player).
+- Voice input (`src/speech/`, [voice-input.md](voice-input.md)): the composer's sparkle (Terminal:
+  `/voice`).
+  `mod.rs` is a dictation's state on the UI thread (idle, listening, finishing, tidying, or failed
+  with a reason), the words of the strip above the composer, the words put into the composer at the
+  end, and Settings → General → Voice input; `openai.rs` is OpenAI's realtime transcription session
+  over a WebSocket, the small model that tidies the words, and the check of a key; `audio.rs` turns
+  the microphone's sound into 24 kHz 16-bit PCM. The microphone itself is the platform's
+  (`src/platform/microphone.rs`, AVAudioEngine); the user's OpenAI key is a credential in the app's
+  database (below), the languages and the tidying are `[voice_input]` in settings.toml.
+- `src/player/`: video through libmpv, drawn into the window (the media viewer's player); voice
+  messages through an mpv of their own with no video (`audio.rs`).
 - `src/platform/`: the platform layer. So far: what the account's list of sessions calls this
   device, the transparent title bar on macOS, opening links, the clipboard (words and pictures);
   and on macOS (Settings → General)
@@ -418,7 +450,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   in the menu bar, and launching at login (SMAppService, macOS 13 and later); notifications through
   the system's UserNotifications framework (only for the app as a bundle, so not from `cargo run`),
   the unread count on the Dock icon, and its bounce (Settings → Notifications & sounds); the folder
-  chooser for the Downloads page, and the Keychain, where the keys of the two databases are.
+  chooser for the Downloads page, the Keychain, where the keys of the two databases are, and the
+  microphone with the question whether FinchGram may use it: AVAudioEngine's tap for voice input,
+  AVAudioRecorder for voice messages (`microphone.rs`).
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
 - `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
 - `src/images.rs`: pictures (photos, video stills, the photos of chats and people, the tiny previews
@@ -430,7 +464,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 - `ui/`: `app.slint` (the window: its menus and which page shows), `state.slint` and
   `telegram.slint` and `downloads.slint` (the globals Rust and the pages share), `look.slint`, `format.slint` (dates,
   counts and kinds of message in the UI language), `widgets.slint` and `chat.slint` (shared parts),
-  `viewer.slint` (the media viewer, over the whole window), `pages/`, and the three themes' folders.
+  `viewer.slint` (the media viewer, over the whole window), `voice.slint` (voice input's state and
+  words), `pages/`, and the three themes' folders.
 
 ## Several accounts
 
@@ -478,7 +513,8 @@ their chats, tabs and drafts for when they come back.
 What FinchGram keeps that is neither a preference nor Telegram's goes into a database of its own:
 `finchgram.db` next to settings.toml (`src/database.rs`), a plain SQLite file that any SQLite tool
 opens, since the user's data is the user's (the maintainer's word of 2026-10-24; up to 0.5.9 the
-file was encrypted as a whole with SQLCipher). Only the password column is sealed, with AES-256-GCM
+file was encrypted as a whole with SQLCipher). Only the password column is sealed (and a
+credential's value, below), with AES-256-GCM
 under a random key made the first time and kept in the Keychain under "FinchGram" (the account
 "database"), where only this app reads it, and sealed to the server it is for (its protocol,
 address, port and account are the seal's additional data, so that the sealed text does not open in
@@ -491,8 +527,9 @@ src/mcp/access.rs). TDLib's database has a key of its own kept the same way (the
 readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
 database holds the servers of the downloads page with their passwords and whether the user
 allows changes on each (docs/downloads.md), the
-programs allowed or turned away at AI access (docs/mcp.md) and the keys of the SSH servers the
-user trusted, with the day (docs/downloads.md);
+programs allowed or turned away at AI access (docs/mcp.md), the keys of the SSH servers the
+user trusted, with the day (docs/downloads.md), and the app's own credentials that are no server's,
+each sealed to its name: the OpenAI key of voice input (docs/voice-input.md);
 what comes after (a download queue that outlives a restart, logs, per-chat settings) gets a table
 when it is built.
 
@@ -508,7 +545,8 @@ Layout 2 (after 0.6.2) sealed the passwords to their servers, gave the programs'
 (the rows of before were dropped, since nothing vouched for them, so every program asked again
 once) and the SSH servers' keys the day they were trusted. Layout 3 (after 0.6.3) gave the SSH
 servers' keys a tag of their own; the rows of before were dropped, so every SFTP server shows its
-key once more.
+key once more. Layout 4 gave the servers `allow_changes`, off for every server of before; layout 5
+added `credentials`, the app's own secrets by name (both after 0.6.3).
 Settings keys are never renamed without a serde alias, and the Keychain items keep their names.
 
 ## Platforms
@@ -524,10 +562,10 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
 - **Calls.** TDLib only does the signalling; the media part (tgcalls) is a large project of its own.
 - **Plugins by other people.** They first need a trust model: who signs them, what the user
   approves, how they are sandboxed.
-- **Voice input.** Dictation into the composer: the user's own OpenAI key first, later a plan,
-  servers the user runs, the operating systems' own recognizers and a router between them. The
-  five steps and the facts behind them are in [voice-input.md](voice-input.md). Decided on
-  2026-10-21; needs a design first.
+- **Voice input beyond the user's own key.** The first of the five steps of
+  [voice-input.md](voice-input.md) is built (2026-10-25); the others are not: a plan sold by
+  FinchGram, servers the user runs, the operating systems' own recognizers, and a router between
+  them.
 
 ## Open questions
 
@@ -537,7 +575,7 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
    the user can see the folder and clear it (what is cleared is fetched again when looked at); no
    size limit, by the maintainer's choice. What is fetched when, and what is to come (fetching
    ahead, playing while downloading), is in [media-files.md](media-files.md).
-3. **Media playback** (the media center): voice messages (Opus), video, GIFs and animated stickers
+3. **Media playback** (the media center): voice messages (any format mpv reads), video, GIFs and animated stickers
    (WebM, Lottie). Decided on 2026-09-30: mpv. It comes as libmpv, built from pinned sources by
    `vendor/mpv/build.sh` as finchgram-tdlib is: mpv with FFmpeg, libplacebo and libass (FreeType,
    FriBidi, HarfBuzz), all static in one library that depends only on macOS; the app links it and

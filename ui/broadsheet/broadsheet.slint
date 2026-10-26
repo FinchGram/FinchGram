@@ -12,7 +12,8 @@ import {
 import { Look, AccountColors } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { Fmt } from "../format.slint";
-import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover, Avatar } from "../widgets.slint";
+import { Icon, Logo, Paragraph, ListEdge, WindowButtonsSpace, WindowMover, Avatar, Spinner } from "../widgets.slint";
+import { Voice, VoiceState, VoiceWords, LevelBars, WordsTail, VoiceNoteView, RecordRow, LockTag, MicDeniedBar, Recorder, RecordStage, RecordDrag } from "../voice.slint";
 import {
     ChatScroll, MessageInput, Capped, MediaTiles, StickerPicture, RichText, MessageArea, ActionWords, KeyScope, AttachWords, FileCardView, ChatMenuWords,
     SearchInput, SearchWords, ButtonGrid, BotWords,
@@ -1694,9 +1695,27 @@ component Bubble {
                 default-font-size: 16px;
                 link-color: P.accent-ink;
             }
-            if !root.message.rich && !root.has-sticker && !root.message.round.shown && !root.message.contact.shown && (!root.has-media || root.message.text != ""): Paragraph {
-                text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
-                color: root.mine ? P.tint-ink : root.has-media || root.message.content == Content.text ? P.text : P.muted;
+            // A voice message (the design's fifth round, B1; voice.slint).
+            if root.message.voice.shown: VoiceNoteView {
+                message-id: root.message.id;
+                note: root.message.voice;
+                accent: P.accent;
+                on-accent: P.on-accent;
+                played: root.mine ? P.accent-ink : P.accent;
+                wave: P.track;
+                meta: root.mine ? P.accent-ink : P.muted;
+                side: P.hover;
+                muted: P.muted;
+                faint: P.faint;
+                danger: P.danger;
+                danger-soft: P.danger-soft;
+                font-family: P.font;
+                radius: 2px;
+                duotone: true;
+            }
+            if !root.message.rich && !root.has-sticker && !root.message.round.shown && !root.message.contact.shown && (!root.has-media || root.message.text != "") && (!root.message.voice.shown || root.message.text != ""): Paragraph {
+                text: root.has-media || root.message.voice.shown ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
+                color: root.mine ? P.tint-ink : root.has-media || root.message.voice.shown || root.message.content == Content.text ? P.text : P.muted;
                 font-size: 16px;
                 line-height-factor: P.leading(1.45);
             }
@@ -1981,8 +2000,28 @@ component Post inherits Capped {
         default-font-size: 16px;
         link-color: P.accent-ink;
     }
-    if !root.message.rich && !root.has-sticker && !root.message.round.shown && !root.message.contact.shown && (!root.has-media || root.message.text != ""): Paragraph {
-        text: root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
+    if root.message.voice.shown: HorizontalLayout {
+        alignment: start;
+        VoiceNoteView {
+            message-id: root.message.id;
+            note: root.message.voice;
+            accent: P.accent;
+            on-accent: P.on-accent;
+            played: P.accent;
+            wave: P.track;
+            meta: P.muted;
+            side: P.hover;
+            muted: P.muted;
+            faint: P.faint;
+            danger: P.danger;
+            danger-soft: P.danger-soft;
+            font-family: P.font;
+            radius: 2px;
+            duotone: true;
+        }
+    }
+    if !root.message.rich && !root.has-sticker && !root.message.round.shown && !root.message.contact.shown && (!root.has-media || root.message.text != "") && (!root.message.voice.shown || root.message.text != ""): Paragraph {
+        text: root.has-media || root.message.voice.shown ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail);
         color: P.text;
         font-size: 16px;
         line-height-factor: P.leading(1.6);
@@ -2363,6 +2402,188 @@ component ComposeStrip inherits Rectangle {
                     mouse-cursor: pointer;
                     clicked => {
                         Actions.cancel-bar();
+                    }
+                }
+            }
+        }
+    }
+}
+
+// A button of the recording in the composer (B2): Delete, Stop (a square).
+component RecordButton inherits Rectangle {
+    in property <string> icon;
+    in property <bool> stop;
+    in property <string> tip;
+    in property <color> ink;
+    callback clicked();
+    width: 36px;
+    height: 36px;
+    border-radius: 2px;
+    background: touch.has-hover ? P.hover : transparent;
+    if !root.stop: DuoIcon {
+        name: root.icon;
+        size: 22px;
+        color: root.ink;
+    }
+    if root.stop: Rectangle {
+        width: 13px;
+        height: 13px;
+        border-radius: 1px;
+        background: root.ink;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+    if touch.has-hover: Rectangle {
+        x: parent.width - self.width;
+        y: -self.height - 8px;
+        width: tip-text.preferred-width + 20px;
+        height: tip-text.preferred-height + 12px;
+        border-radius: 2px;
+        background: P.text;
+        drop-shadow-blur: 20px;
+        drop-shadow-offset-y: 6px;
+        drop-shadow-color: #00000033;
+        tip-text := Text {
+            text: root.tip;
+            color: P.bg;
+            font-size: 12px;
+        }
+    }
+}
+
+// Voice input above the composer, as the strip for replying is drawn (src/speech/): the bars and
+// the words while the user speaks, a spinner while the last words come and are tidied, the reason
+// when it stopped.
+component VoiceStrip inherits Rectangle {
+    height: strip.preferred-height;
+    border-radius: 4px;
+    background: P.panel;
+    border-width: 1px;
+    border-color: Voice.state == VoiceState.failed ? P.danger.transparentize(0.6) : #80787833;
+
+    strip := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 23px;
+                height: 20px;
+                if Voice.state == VoiceState.listening: LevelBars {
+                    level: Voice.connecting ? 0 : Voice.level;
+                    color: P.accent;
+                    bar: 3px;
+                    tallest: 18px;
+                    radius: 0px;
+                }
+                if Voice.state == VoiceState.finishing || Voice.state == VoiceState.tidying: Spinner {
+                    size: 18px;
+                    color: P.accent;
+                }
+                if Voice.state == VoiceState.failed: DuoIcon {
+                    name: "warning-circle";
+                    size: 20px;
+                    color: P.danger;
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 1px;
+            Text {
+                text: VoiceWords.title();
+                color: Voice.state == VoiceState.failed ? P.danger : P.accent-ink;
+                font-size: 14px;
+                font-weight: 600;
+                overflow: elide;
+            }
+            if Voice.state != VoiceState.failed: WordsTail {
+                text: Voice.words == "" ? VoiceWords.speak-now() : Voice.words;
+                ink: Voice.words == "" ? P.faint : P.text;
+                font-family: P.font;
+                font-size: 14px;
+            }
+            if Voice.state == VoiceState.failed: Text {
+                text: VoiceWords.problem();
+                color: P.muted;
+                font-size: 14px;
+                wrap: word-wrap;
+            }
+        }
+        if Voice.state == VoiceState.listening: VerticalLayout {
+            alignment: center;
+            Text {
+                text: VoiceWords.keys();
+                color: P.faint;
+                font-family: P.mono;
+                font-size: 12px;
+            }
+        }
+        if Voice.state == VoiceState.listening: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: done-words.preferred-width + 24px;
+                height: 30px;
+                border-radius: 2px;
+                background: done-touch.has-hover ? P.accent.darker(0.1) : P.accent;
+                done-words := Text {
+                    text: VoiceWords.done();
+                    color: P.on-accent;
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+                done-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Voice.stop();
+                    }
+                }
+            }
+        }
+        if Voice.state == VoiceState.failed && VoiceWords.action() != "": VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: act-words.preferred-width + 24px;
+                height: 30px;
+                border-radius: 2px;
+                background: act-touch.has-hover ? P.tint.darker(0.05) : P.tint;
+                act-words := Text {
+                    text: VoiceWords.action();
+                    color: P.tint-ink;
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+                act-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Voice.act();
+                    }
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 24px;
+                height: 24px;
+                Icon {
+                    name: "x";
+                    size: 16px;
+                    color: close-touch.has-hover ? P.text : P.faint;
+                    duotone: false;
+                }
+                close-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Voice.cancel();
                     }
                 }
             }
@@ -3058,6 +3279,19 @@ component ConversationPane inherits Rectangle {
                 }
             }
             if Actions.bar != ComposeBar.none: ComposeStrip { }
+            if Voice.shown: VoiceStrip { }
+            // The microphone is not allowed (the design's fifth round, B3).
+            if Recorder.denied: MicDeniedBar {
+                danger: P.danger;
+                danger-soft: P.danger-soft;
+                link: P.accent-ink;
+                text-color: P.text;
+                faint: P.faint;
+                font-family: P.font;
+                font-size: 13px;
+                radius: 2px;
+                duotone: true;
+            }
             HorizontalLayout {
                 spacing: 10px;
                 alignment: stretch;
@@ -3069,6 +3303,7 @@ component ConversationPane inherits Rectangle {
                     input := MessageInput {
                         text <=> Conversation.draft;
                         allow-empty: Actions.bar == ComposeBar.forward;
+                        takes-dictation: true;
                         placeholder: Conversation.slow-wait > 0 ? ExtraWords.slow-wait-placeholder(Conversation.slow-wait)
                             : Conversation.keyboard-placeholder != "" ? Conversation.keyboard-placeholder : @tr("Write a message…");
                         text-color: P.text;
@@ -3086,10 +3321,31 @@ component ConversationPane inherits Rectangle {
                             Conversation.edited(words);
                         }
                     }
+                    // While a voice message records, the recording in the words' place (B2).
+                    if Recorder.busy: Rectangle {
+                        border-radius: 4px;
+                        background: P.surface;
+                        clip: true;
+                        RecordRow {
+                            width: parent.width;
+                            height: parent.height;
+                            rec: P.rec;
+                            rec-soft: P.rec-soft;
+                            text-color: P.text;
+                            muted: P.muted;
+                            danger: P.danger;
+                            accent: P.accent;
+                            on-accent: P.on-accent;
+                            wave: P.track;
+                            font-family: P.font;
+                            font-size: 13px;
+                            padding-x: 14px;
+                        }
+                    }
                 }
                 // The paperclip: photos, videos and files (attachments.slint); scheduling is still
-                // to come.
-                VerticalLayout {
+                // to come. While a voice message records, the paperclip and the others step aside.
+                if !Recorder.busy: VerticalLayout {
                     alignment: end;
                     padding-bottom: 2px;
                     clip := Rectangle {
@@ -3136,7 +3392,7 @@ component ConversationPane inherits Rectangle {
                 }
                 // The scissors: a screenshot into the card (src/screenshot/), as its shortcut
                 // does; greyed where the chat takes no photos.
-                VerticalLayout {
+                if !Recorder.busy: VerticalLayout {
                     alignment: end;
                     padding-bottom: 2px;
                     scissors := Rectangle {
@@ -3193,7 +3449,7 @@ component ConversationPane inherits Rectangle {
                 }
                 // A bot's menu button (its web app, or its commands), and the fold for its
                 // keyboard (bots.rs).
-                if Conversation.menu-button != "": VerticalLayout {
+                if Conversation.menu-button != "" && !Recorder.busy: VerticalLayout {
                     alignment: end;
                     padding-bottom: 4px;
                     Rectangle {
@@ -3229,7 +3485,7 @@ component ConversationPane inherits Rectangle {
                         }
                     }
                 }
-                if Conversation.keyboard.length > 0: VerticalLayout {
+                if Conversation.keyboard.length > 0 && !Recorder.busy: VerticalLayout {
                     alignment: end;
                     padding-bottom: 2px;
                     Rectangle {
@@ -3250,15 +3506,166 @@ component ConversationPane inherits Rectangle {
                         }
                     }
                 }
-                // Scheduling and voice messages are still to come.
-                for name in ["clock", "microphone"]: VerticalLayout {
+                // Scheduling is still to come.
+                if !Recorder.busy: VerticalLayout {
                     alignment: end;
                     padding-bottom: 9px;
                     DuoIcon {
-                        name: name;
+                        name: "clock";
                         size: 22px;
                         color: P.muted;
                         opacity: 0.4;
+                    }
+                }
+                // The sparkle: voice input (src/speech/). A click starts and a second one
+                // finishes; held while speaking, letting go finishes.
+                if !Recorder.busy: VerticalLayout {
+                    alignment: end;
+                    padding-bottom: 2px;
+                    sparkle := Rectangle {
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 2px;
+                        background: Voice.busy ? P.tint : sparkle-touch.has-hover ? P.hover : transparent;
+                        DuoIcon {
+                            name: "sparkle";
+                            size: 22px;
+                            color: P.accent;
+                        }
+                        sparkle-touch := TouchArea {
+                            mouse-cursor: pointer;
+                            pointer-event(event) => {
+                                if event.button == PointerEventButton.left && event.kind == PointerEventKind.down {
+                                    Voice.press();
+                                }
+                                if event.button == PointerEventButton.left && event.kind == PointerEventKind.up {
+                                    Voice.release();
+                                }
+                            }
+                        }
+                        if sparkle-touch.has-hover && !sparkle-touch.pressed: Rectangle {
+                            x: parent.width - self.width;
+                            y: -self.height - 8px;
+                            width: sparkle-tip.preferred-width + 20px;
+                            height: sparkle-tip.preferred-height + 12px;
+                            border-radius: 2px;
+                            background: P.text;
+                            drop-shadow-blur: 20px;
+                            drop-shadow-offset-y: 6px;
+                            drop-shadow-color: #00000033;
+                            sparkle-tip := Text {
+                                text: VoiceWords.tip();
+                                color: P.bg;
+                                font-size: 12px;
+                            }
+                        }
+                    }
+                }
+                // Locked, or stopped to be listened to: Delete, and Stop while it records (B2);
+                // the send button sends it.
+                if Recorder.stage == RecordStage.locked || Recorder.stage == RecordStage.preview: VerticalLayout {
+                    alignment: end;
+                    padding-bottom: 2px;
+                    RecordButton {
+                        icon: "trash";
+                        tip: VoiceWords.delete();
+                        ink: P.danger;
+                        clicked => {
+                            Recorder.delete();
+                        }
+                    }
+                }
+                if Recorder.stage == RecordStage.locked: VerticalLayout {
+                    alignment: end;
+                    padding-bottom: 2px;
+                    RecordButton {
+                        stop: true;
+                        tip: VoiceWords.stop();
+                        ink: P.text;
+                        clicked => {
+                            Recorder.stop();
+                        }
+                    }
+                }
+                // The microphone: a voice message (the design's fifth round, B2). Held while
+                // speaking, letting go sends it; dragged left it cancels, dragged up it locks.
+                if Recorder.stage == RecordStage.idle || Recorder.stage == RecordStage.holding: VerticalLayout {
+                    alignment: end;
+                    padding-bottom: 2px;
+                    mic := Rectangle {
+                        property <bool> allowed: Conversation.can-send-voice && !Voice.busy;
+                        property <bool> holding: Recorder.stage == RecordStage.holding;
+                        width: 36px;
+                        height: 36px;
+                        border-radius: 2px;
+                        background: !mic.holding && mic-touch.has-hover && mic.allowed ? P.hover : transparent;
+                        if !mic.holding: DuoIcon {
+                            name: "microphone";
+                            size: 22px;
+                            color: mic-touch.has-hover && mic.allowed ? P.text : P.muted;
+                            opacity: mic.allowed ? 1 : 0.4;
+                        }
+                        if mic.holding: Rectangle {
+                            width: 56px;
+                            height: 56px;
+                            border-radius: 28px;
+                            background: P.tint;
+                            Rectangle {
+                                width: 44px;
+                                height: 44px;
+                                border-radius: 22px;
+                                background: P.accent;
+                                DuoIcon {
+                                    name: "microphone";
+                                    size: 22px;
+                                    color: P.on-accent;
+                                }
+                            }
+                        }
+                        if mic.holding: LockTag {
+                            x: (parent.width - self.width) / 2;
+                            y: (parent.height - 44px) / 2 - self.height - 6px;
+                            panel: P.panel;
+                            ring: P.line;
+                            ink: P.muted;
+                            duotone: true;
+                        }
+                        mic-touch := TouchArea {
+                            enabled: mic.allowed || mic.holding;
+                            mouse-cursor: mic.allowed ? pointer : not-allowed;
+                            pointer-event(event) => {
+                                if event.button == PointerEventButton.left && event.kind == PointerEventKind.down {
+                                    Recorder.press();
+                                }
+                                if event.button == PointerEventButton.left && event.kind == PointerEventKind.up {
+                                    Recorder.release();
+                                }
+                            }
+                            moved => {
+                                if mic.holding {
+                                    Recorder.cancelling = self.mouse-x - self.pressed-x < -RecordDrag.cancel;
+                                    if self.mouse-y - self.pressed-y < -RecordDrag.lock {
+                                        Recorder.lock();
+                                    }
+                                }
+                            }
+                        }
+                        if (mic-touch.has-hover && !mic-touch.pressed && !Recorder.busy) || Recorder.too-short: Rectangle {
+                            x: parent.width - self.width;
+                            y: -self.height - 8px;
+                            width: mic-tip.preferred-width + 20px;
+                            height: mic-tip.preferred-height + 12px;
+                            border-radius: 2px;
+                            background: P.text;
+                            drop-shadow-blur: 20px;
+                            drop-shadow-offset-y: 6px;
+                            drop-shadow-color: #00000033;
+                            mic-tip := Text {
+                                text: Recorder.too-short ? VoiceWords.hold-to-record() : mic.allowed ? VoiceWords.record() : VoiceWords.not-allowed();
+                                color: P.bg;
+                                font-size: 12px;
+                            }
+                        }
                     }
                 }
                 VerticalLayout {
@@ -3276,7 +3683,11 @@ component ConversationPane inherits Rectangle {
                         send := TouchArea {
                             mouse-cursor: pointer;
                             clicked => {
-                                input.send-now();
+                                if Recorder.stage == RecordStage.locked || Recorder.stage == RecordStage.preview {
+                                    Recorder.send();
+                                } else {
+                                    input.send-now();
+                                }
                             }
                         }
                     }

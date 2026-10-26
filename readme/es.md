@@ -60,6 +60,14 @@ Es un cliente no oficial, no hecho por Telegram.
 - **Ajustes.** Abrir al iniciar sesión, enviar con Intro, el atajo de captura, sonidos y vistas previas
   de las notificaciones, verificación en dos pasos, el idioma de la interfaz y las actualizaciones: la
   app se actualiza sola desde GitHub Releases y no instala nada que no pueda verificar.
+- **Mensajes de voz.** Se reproducen en el chat, con su onda, el tiempo y 1×, 1,5× o 2×; al
+  escucharlos, el remitente lo ve, como en las apps de Telegram. Mantén pulsado el micrófono para
+  grabar uno: suéltalo para enviarlo, arrastra a la izquierda para cancelar o hacia arriba para
+  bloquearlo, y detenlo para escucharlo antes de enviarlo.
+- **Dictado por voz.** Pulsa ✦ en el cuadro de escritura y habla: el texto aparece mientras
+  hablas y queda en el cuadro, sin los eh ni los mm, para que lo envíes tú. Funciona con tu propia
+  clave de OpenAI (alrededor de 1 $ por hora de voz), puesta en Ajustes → General, en cualquiera de
+  los idiomas de la interfaz y en frases que los mezclan. Ver [docs/voice-input.md](../docs/voice-input.md).
 - **Asistentes de IA.** Claude Desktop, Claude Code y otras apps que hablan el Model Context
   Protocol pueden leer tus chats y actuar en ellos a través de FinchGram, cuando tú lo permites:
   Herramientas → Acceso de IA, desactivado hasta que lo actives, con los chats que elijas y si un
@@ -67,8 +75,8 @@ Es un cliente no oficial, no hecho por Telegram.
   [docs/mcp.md](../docs/mcp.md).
 - **Idiomas.** La interfaz y este README en once idiomas.
 
-Todavía no: chats secretos, mensajes de voz y llamadas, encuestas y mensajes
-programados, filtros por palabras clave, Windows y Linux. Mira
+Todavía no: chats secretos y llamadas, encuestas y mensajes programados, filtros por
+palabras clave, Windows y Linux. Mira
 [qué viene después](../docs/architecture.md#not-now).
 
 ## Descarga
@@ -149,8 +157,9 @@ y [docs/conventions.md](../docs/conventions.md).
 FinchGram hace lo que hacen las apps de Telegram y nada de lo que prohíben. Un mensaje se marca como
 leído cuando lo ves, la otra parte te ve escribiendo y en línea como en cualquier app de Telegram,
 los mensajes patrocinados de los canales se muestran, los archivos que se autodestruyen se abren una
-vez y nada de Telegram va a ninguna IA, salvo que dejes entrar a un asistente (Ajustes → Acceso de
-IA). Nada sale de tu máquina salvo hacia Telegram, y hacia GitHub para las actualizaciones.
+vez y nada de Telegram va a ninguna IA, salvo que dejes entrar a un asistente (Herramientas → Acceso
+de IA). Nada sale de tu máquina salvo hacia Telegram, hacia GitHub para las actualizaciones y,
+mientras usas el dictado por voz, tu voz hacia OpenAI con tu propia clave.
 
 ## Desarrollo
 

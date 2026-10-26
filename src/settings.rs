@@ -55,6 +55,51 @@ pub struct Settings {
     /// The toolbox (src/toolbox.rs): which tools are pinned to the activity bar, in the
     /// toolbox's order; one list for the three themes.
     pub toolbox: Toolbox,
+    /// Settings → General → Voice input (src/speech/, docs/voice-input.md): the user speaks, and
+    /// the words go into the composer, through their own OpenAI key. The key itself is a
+    /// credential and lives in the database (database::credential), never here.
+    pub voice_input: VoiceInput,
+}
+
+/// Voice input's own settings. The words go through OpenAI with the user's own key, the first of
+/// the five steps of docs/voice-input.md; the models are named here so that a change of OpenAI's
+/// names needs no release.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct VoiceInput {
+    /// The languages the user speaks, as OpenAI's hints name them ("en", "zh-cn", "zh-tw", "ja"),
+    /// in the order of the UI's language list; none lets the model find out by itself. Sentences
+    /// that mix them are fine either way.
+    pub languages: Vec<String>,
+    /// After the transcript, a small text model takes out the filler words, the repeats and the
+    /// false starts and sets the punctuation; off, the words come as heard.
+    pub tidy: bool,
+    /// The speech model: one of OpenAI's realtime transcription models.
+    pub model: String,
+    /// The text model that tidies.
+    pub tidy_model: String,
+}
+
+impl Default for VoiceInput {
+    fn default() -> Self {
+        VoiceInput { languages: Vec::new(), tidy: true, model: "gpt-live-transcribe".to_string(), tidy_model: "gpt-5-nano".to_string() }
+    }
+}
+
+impl VoiceInput {
+    /// A model name emptied by hand is the default again.
+    fn sanitized(mut self) -> VoiceInput {
+        let default = VoiceInput::default();
+        if self.model.trim().is_empty() {
+            self.model = default.model;
+        }
+        if self.tidy_model.trim().is_empty() {
+            self.tidy_model = default.tidy_model;
+        }
+        self.languages.retain(|code| !code.trim().is_empty());
+        self.languages.dedup();
+        self
+    }
 }
 
 /// The toolbox's own setting: the tools pinned to the bar, by id ("downloads", …); nothing
@@ -355,6 +400,7 @@ impl Default for Settings {
             mcp: Mcp::default(),
             downloads: Downloads::default(),
             toolbox: Toolbox::default(),
+            voice_input: VoiceInput::default(),
         }
     }
 }
@@ -385,6 +431,7 @@ impl Settings {
             settings.downloads.connections = crate::downloads::transfer::DEFAULT_CONNECTIONS as u32;
         }
         settings.downloads.connections = settings.downloads.connections.clamp(1, crate::downloads::transfer::MOST_CONNECTIONS as u32);
+        settings.voice_input = settings.voice_input.clone().sanitized();
         settings
     }
 
@@ -490,6 +537,22 @@ mod tests {
         let read: Settings = toml::from_str("[mcp]\nenabled = true\n").expect("read");
         assert!(read.mcp.enabled && read.mcp.scope == McpScope::All && read.mcp.sending == McpSending::On);
         assert_eq!(read.mcp.account, 0);
+    }
+
+    #[test]
+    fn voice_input_tidies_by_default_and_keeps_its_models() {
+        let read: Settings = toml::from_str("theme = \"terminal\"\n").expect("read");
+        assert_eq!(read.voice_input, VoiceInput::default());
+        assert!(read.voice_input.tidy && read.voice_input.languages.is_empty());
+        assert_eq!((read.voice_input.model.as_str(), read.voice_input.tidy_model.as_str()), ("gpt-live-transcribe", "gpt-5-nano"));
+        let settings = Settings { voice_input: VoiceInput { languages: vec!["zh-cn".into(), "en".into()], tidy: false, ..VoiceInput::default() }, ..Settings::default() };
+        let text = toml::to_string_pretty(&settings).expect("TOML");
+        assert!(text.contains("[voice_input]\nlanguages = [\n    \"zh-cn\",\n    \"en\",\n]\ntidy = false\nmodel = \"gpt-live-transcribe\"\n"), "{text}");
+        let read: Settings = toml::from_str(&text).expect("read back");
+        assert_eq!(read.voice_input, settings.voice_input);
+        // Names emptied by hand come back as the defaults.
+        let odd = VoiceInput { model: " ".into(), tidy_model: String::new(), languages: vec!["ja".into(), "".into(), "ja".into()], tidy: true }.sanitized();
+        assert_eq!(odd, VoiceInput { languages: vec!["ja".into()], ..VoiceInput::default() });
     }
 
     #[test]

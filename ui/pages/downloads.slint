@@ -8,7 +8,7 @@ import { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, 
 import { Look } from "../look.slint";
 import { Icon, Spinner, Field, PrimaryButton, Heading, Paragraph, Link, Logo, Switch } from "../widgets.slint";
 import { PageFrame } from "frame.slint";
-import { SmallButton } from "rows.slint";
+import { SmallButton, Chip } from "rows.slint";
 import { KeyScope } from "../chat.slint";
 
 // How the page words a server's state, a problem and a download's progress.
@@ -188,39 +188,6 @@ export global DownloadWords {
 
     public pure function default-port(id: string, address: string) -> string {
         return @tr("Default port {}.", protocol-port(id, address));
-    }
-}
-
-// A choice among a few, as a chip: a protocol, a way to sign in. One FinchGram does not have yet
-// is faded, and can still be looked at.
-component Chip inherits Rectangle {
-    in property <string> label;
-    in property <bool> on;
-    in property <bool> grey;
-    callback clicked();
-    height: 32px;
-    width: text.preferred-width + 24px;
-    border-radius: Look.button-radius;
-    background: on ? Look.sel : transparent;
-    border-width: on ? 0px : 1px;
-    border-color: Look.line-strong;
-    opacity: grey && !on ? 0.42 : 1;
-
-    text := Text {
-        width: parent.width;
-        height: parent.height;
-        text: Look.terminal ? "[" + root.label + "]" : root.label;
-        color: root.on && !Look.broadsheet ? Look.accent-ink : Look.text;
-        font-size: 14px;
-        font-weight: 600;
-        horizontal-alignment: center;
-        vertical-alignment: center;
-    }
-    TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            root.clicked();
-        }
     }
 }
 

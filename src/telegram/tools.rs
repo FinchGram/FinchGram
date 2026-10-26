@@ -1225,7 +1225,9 @@ mod tests {
         assert_eq!(text_of(&text.content), Some("hi".to_string()));
         let dice = message(r#"{"@type":"messageDice","emoji":"🎲","value":3}"#);
         assert_eq!(text_of(&dice.content), Some("🎲".to_string()));
-        let voice = message(r#"{"@type":"messageVoiceNote","caption":{"@type":"formattedText","text":"","entities":[]},"is_listened":false}"#);
+        let voice = message(
+            r#"{"@type":"messageVoiceNote","voice_note":{"@type":"voiceNote","duration":3,"waveform":"","mime_type":"audio/ogg","voice":{"@type":"file","id":7,"size":4000,"expected_size":4000,"local":{"@type":"localFile","path":"","can_be_downloaded":true,"can_be_deleted":false,"is_downloading_active":false,"is_downloading_completed":false,"download_offset":0,"downloaded_prefix_size":0,"downloaded_size":0},"remote":{"@type":"remoteFile","id":"x","unique_id":"y","is_uploading_active":false,"is_uploading_completed":true,"uploaded_size":4000}}},"caption":{"@type":"formattedText","text":"","entities":[]},"is_listened":false}"#,
+        );
         assert_eq!(media_json(&voice.content).map(|media| media["kind"].to_string()), Some("\"voice_note\"".to_string()));
         assert!(media_file(&voice.content).is_none());
         let gone = message(r#"{"@type":"messageExpiredPhoto"}"#);

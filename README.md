@@ -60,13 +60,20 @@ client, not made by Telegram.
 - **Settings.** Launch at login, Send with Enter, the screenshot shortcut, notification sounds and
   previews, two-step verification, the interface language, and updates: the app updates itself from
   GitHub Releases and installs nothing it cannot verify.
+- **Voice messages.** Play them in the chat, with their waveform, the time and 1×, 1.5× or 2×;
+  listening tells the sender, as in Telegram's own apps. Hold the microphone to record one: let go
+  to send it, drag left to cancel, drag up to lock it, then stop it to listen before it goes.
+- **Voice input.** Press the sparkle in the composer and speak: the words show as you talk and
+  go into the box, tidied of um and uh, for you to send. It runs on your own OpenAI key (about $1 an
+  hour of speech), set in Settings → General, in any of the interface's languages and in sentences
+  that mix them. See [docs/voice-input.md](docs/voice-input.md).
 - **AI assistants.** Claude Desktop, Claude Code and other apps that speak the Model Context
   Protocol can read your chats and act in them through FinchGram, once you let them: Toolbox → AI access, off until you turn it on, with the chats you choose and whether an assistant may send, and
   a question the first time an app connects. See [docs/mcp.md](docs/mcp.md).
 - **Languages.** The interface and this README in eleven languages.
 
-Not there yet: secret chats, voice messages and calls, polls and scheduled
-messages, keyword filters, Windows and Linux. See [what comes next](docs/architecture.md#not-now).
+Not there yet: secret chats and calls, polls and scheduled messages, keyword
+filters, Windows and Linux. See [what comes next](docs/architecture.md#not-now).
 
 ## Download
 
@@ -148,7 +155,8 @@ FinchGram does what Telegram's own apps do, and nothing they forbid. A message i
 you see it, the other side sees you typing and online as in any Telegram app, sponsored messages in
 channels are shown, self-destructing media opens once, and nothing from Telegram goes to any AI
 unless you let an assistant in (Toolbox → AI access). Nothing leaves your machine except to
-Telegram, and to GitHub for updates.
+Telegram, to GitHub for updates, and, while you use voice input, your voice to OpenAI under your own
+key.
 
 ## Development
 

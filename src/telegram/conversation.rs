@@ -240,6 +240,7 @@ pub fn open(chat_id: i64) {
         actions::chat_changed(Some(chat_id));
         reactions::chat_changed();
         super::viewer::chat_changed();
+        super::voice::chat_changed();
         super::chat_info::chat_changed();
         if let Some(previous) = previous {
             send(json!({ "@type": "closeChat", "chat_id": previous }), |_| {});

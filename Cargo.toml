@@ -52,6 +52,10 @@ russh-sftp = "3"
 suppaftp = { version = "12", default-features = false, features = ["rustls-ring", "deprecated"] }
 rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
 rustls-platform-verifier = "0.7"
+# Voice input (src/speech/, docs/voice-input.md): the words stream back from OpenAI's realtime
+# transcription over a WebSocket, tungstenite in its blocking form over a rustls stream of our own
+# (the platform's trust store, as every other connection), one thread per dictation.
+tungstenite = { version = "0.30", default-features = false, features = ["handshake"] }
 
 [dev-dependencies]
 # The HTTP/2 server of the transfer engine's test (src/downloads/transfer.rs).
@@ -81,6 +85,14 @@ resvg = { version = "0.48", default-features = false, features = ["text"] }   # 
 # connecting to the MCP server (src/mcp/peer.rs); the same objc2 family.
 objc2-core-foundation = { version = "0.3", default-features = false, features = ["std", "CFBase", "CFData", "CFDictionary", "CFNumber", "CFString"] }
 objc2-security = { version = "0.3", default-features = false, features = ["std", "CSCommon", "SecBase", "SecCode", "SecItem", "SecRequirement"] }
+# The microphone (src/platform/microphone.rs): AVAudioEngine's input node with a tap on it for
+# voice input, AVAudioRecorder for voice messages (it writes AAC in an M4A file itself), and
+# AVFoundation's question whether FinchGram may listen; the same objc2 family.
+objc2-avf-audio = { version = "0.3", default-features = false, features = [
+    "std", "block2", "AVAudioBuffer", "AVAudioEngine", "AVAudioFormat", "AVAudioIONode", "AVAudioNode", "AVAudioRecorder", "AVAudioSettings",
+    "AVAudioTime", "AVAudioTypes",
+] }
+objc2-av-foundation = { version = "0.3", default-features = false, features = ["std", "block2", "AVCaptureDevice", "AVMediaFormat"] }
 
 [build-dependencies]
 slint-build = "~1.18"

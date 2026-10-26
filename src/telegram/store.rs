@@ -28,7 +28,7 @@ use crate::platform::NameOrder;
 use crate::{
     Account, AppState, BotCommand, ButtonKind, ButtonRow, ChatButton, ChatKind, ChatOrder, ChatRow, Chats, ContactCard, Content,
     Conversation, FileCard, FileState, FileType, Folder, FolderChoice, LinkPreview, MainWindow, Media, MessageRow, Moment, NotificationScopes,
-    Reaction, ReplyQuote, RoundNote, RowKind, Status, Sticker, Tab, TopicRow, TreeRow, Viewer, ViewerItem, Words,
+    Reaction, ReplyQuote, RoundNote, RowKind, Status, Sticker, Tab, TopicRow, TreeRow, Viewer, ViewerItem, VoiceNote, Words,
 };
 
 /// Commands shown at most when "/" is typed.
@@ -201,6 +201,10 @@ pub struct Store {
     /// The media list of each message row, by row id: the same model from one refresh to the next,
     /// so that a row changes only when its media do.
     media_models: RefCell<HashMap<SharedString, Rc<VecModel<Media>>>>,
+    /// The bars of each voice message's waveform, by the waveform: the same model from one
+    /// refresh to the next, so that a voice message's row stays the same (rows compare models by
+    /// what they are, not by what they hold).
+    voice_bars: RefCell<HashMap<String, (ModelRc<f32>, SharedString)>>,
     /// No picture: one empty image for every row without one. Slint's default image never equals
     /// another, not even itself, and a row that never compares equal is set again at each refresh,
     /// which lays the whole chat out again.
@@ -375,6 +379,7 @@ impl Store {
             transfers: HashMap::new(),
             row_files: RefCell::new(HashSet::new()),
             media_models: RefCell::new(HashMap::new()),
+            voice_bars: RefCell::new(HashMap::new()),
             blank: Image::from_rgba8(SharedPixelBuffer::new(1, 1)),
             rows: Vec::new(),
             selected: HashSet::new(),
@@ -452,6 +457,7 @@ pub fn clear() {
         store.avatars_asked.clear();
         store.wanted_photos.borrow_mut().clear();
         store.media_models.borrow_mut().clear();
+        store.voice_bars.borrow_mut().clear();
         store.rows.clear();
         store.selected.clear();
         store.replied.clear();
@@ -983,6 +989,17 @@ impl Store {
                     self.dirty.conversation |= self.open == Some(chat_id);
                 }
             }
+            // Listened to, or watched, here or on another of the account's devices.
+            Update::MessageContentOpened { chat_id, message_id } => {
+                if let Some(message) = self.histories.get_mut(&chat_id).and_then(|history| history.messages.get_mut(&message_id)) {
+                    match &mut message.content {
+                        M::VoiceNote { is_listened, .. } => *is_listened = true,
+                        M::VideoNote { is_viewed, .. } => *is_viewed = true,
+                        _ => {}
+                    }
+                    self.dirty.conversation |= self.open == Some(chat_id);
+                }
+            }
             Update::MessageEdited { chat_id, message_id, edit_date, reply_markup } => {
                 if let Some(message) = self.histories.get_mut(&chat_id).and_then(|history| history.messages.get_mut(&message_id)) {
                     message.edit_date = edit_date;
@@ -1174,8 +1191,9 @@ impl Store {
             photos: permissions.can_send_photos,
             videos: permissions.can_send_videos,
             documents: permissions.can_send_documents,
+            voice: permissions.can_send_voice_notes,
         };
-        let everything = SendRights { photos: true, videos: true, documents: true };
+        let everything = SendRights { photos: true, videos: true, documents: true, voice: true };
         let nothing = SendRights::default();
         if !self.can_write(chat) {
             return nothing;
@@ -1294,7 +1312,7 @@ impl Store {
                 (Content::Audio, caption.text.clone(), name)
             }
             M::Document { document, caption } => (Content::Document, caption.text.clone(), document.file_name.clone()),
-            M::VoiceNote { caption } => (Content::VoiceNote, caption.text.clone(), none()),
+            M::VoiceNote { caption, .. } => (Content::VoiceNote, caption.text.clone(), none()),
             M::VideoNote { .. } => (Content::VideoNote, none(), none()),
             M::ExpiredPhoto {} => (Content::ExpiredPhoto, none(), none()),
             M::ExpiredVideo {} => (Content::ExpiredVideo, none(), none()),
@@ -1564,6 +1582,7 @@ impl Store {
         conversation.set_can_send_photos(rights.photos);
         conversation.set_can_send_videos(rights.videos);
         conversation.set_can_send_files(rights.documents);
+        conversation.set_can_send_voice(rights.voice);
         conversation.set_muted(self.muted(chat));
         conversation.set_pinned(!pinned_in(chat).is_empty());
 
@@ -1788,6 +1807,7 @@ impl Store {
                 buttons: self.button_rows(message),
                 reactions: self.reaction_rows(message),
                 round: self.round_note(message),
+                voice: self.voice_note(message),
                 contact: self.contact_card(message),
                 can_share: channel && !service && !pending,
                 sticker,
@@ -2197,6 +2217,24 @@ impl Store {
             playing: self.round_playing == Some(message.id),
             loading: self.round_loading == Some(message.id),
         }
+    }
+
+    /// A voice message as the row shows it: its length, its bars, whether it was listened to.
+    fn voice_note(&self, message: &api::Message) -> VoiceNote {
+        let M::VoiceNote { voice_note, is_listened, .. } = &message.content else { return VoiceNote::default() };
+        let mut cache = self.voice_bars.borrow_mut();
+        // Kept small: each voice message adds one, and a chat's are few against this.
+        if cache.len() > 2000 {
+            cache.clear();
+        }
+        let (bars, blocks) = cache
+            .entry(voice_note.waveform.clone())
+            .or_insert_with(|| {
+                let (bars, blocks) = super::voice::bars_of(&voice_note.waveform);
+                (ModelRc::new(VecModel::from(bars)), blocks.into())
+            })
+            .clone();
+        VoiceNote { shown: true, duration: duration_text(voice_note.duration).into(), bars, blocks, listened: *is_listened || message.is_outgoing }
     }
 
     /// A contact card as the row shows it.
@@ -2624,7 +2662,7 @@ pub fn formatted(content: &M) -> Option<&api::FormattedText> {
         | M::Animation { caption, .. }
         | M::Audio { caption, .. }
         | M::Document { caption, .. }
-        | M::VoiceNote { caption } => Some(caption),
+        | M::VoiceNote { caption, .. } => Some(caption),
         _ => None,
     }
 }
@@ -2693,6 +2731,7 @@ pub struct SendRights {
     pub photos: bool,
     pub videos: bool,
     pub documents: bool,
+    pub voice: bool,
 }
 
 impl SendRights {
@@ -2701,7 +2740,12 @@ impl SendRights {
     }
 
     fn and(&self, other: &SendRights) -> SendRights {
-        SendRights { photos: self.photos && other.photos, videos: self.videos && other.videos, documents: self.documents && other.documents }
+        SendRights {
+            photos: self.photos && other.photos,
+            videos: self.videos && other.videos,
+            documents: self.documents && other.documents,
+            voice: self.voice && other.voice,
+        }
     }
 }
 

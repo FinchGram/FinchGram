@@ -4,7 +4,7 @@ import { Chats, Conversation, Account, Accounts, AccountRow, Login, LoginStep, C
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, LinkPreview, RowKind, Content, ChatKind, Status, Moment,
     Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice, NotificationScope,
     NotificationScopes, FileCard, FileState, FileType, Attachments, Attachment, AttachKind, AttachProblem, AttachHint, ChatConfirm,
-    ButtonKind, ChatButton, ButtonRow, BotCommand, Reaction, RoundNote, ContactCard, TopicRow, Share, ShareKind, ShareRow } from "telegram.slint";
+    ButtonKind, ChatButton, ButtonRow, BotCommand, Reaction, RoundNote, VoiceNote, ContactCard, TopicRow, Share, ShareKind, ShareRow } from "telegram.slint";
 import { AiAccess, AiScope, AiWriting, AiChat, AiApp, AiActivity, AiActivityKind } from "ai-access.slint";
 import { Search, NewChat, NewDialog, LinkCheck, FoundKind, FoundRow, FoundSection, ComposeWords } from "compose.slint";
 import { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError } from "downloads.slint";
@@ -15,6 +15,7 @@ import { ExtraWords } from "extras.slint";
 import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "chat-info.slint";
 import { ChatManage, ManageWords, ManageLook, ManagePage, UsernameCheck, ManageToggle, ManageChip, ManagePerson, ManageLink, ManageChoice } from "chat-manage.slint";
 import { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow } from "toolbox.slint";
+import { Voice, VoiceWords, VoiceState, VoiceProblem, KeyCheck, VoiceLanguage, VoiceLanguageRow, Recorder, RecordStage } from "voice.slint";
 import { LoginPage } from "pages/login.slint";
 import { WorkbenchWindow } from "workbench/workbench.slint";
 import { BroadsheetWindow } from "broadsheet/broadsheet.slint";
@@ -32,13 +33,14 @@ export { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme,
     PasswordChange, ChatRow, Folder, TreeRow, Tab, MessageRow, Media, Sticker, LinkPreview, RowKind, Content, ChatKind, Status, Moment,
     Day, Viewer, ViewerItem, Words, ReplyQuote, Actions, MessageAction, ComposeBar, ActionNotice, DeleteChoice, NotificationScope,
     NotificationScopes, FileCard, FileState, FileType, Attachments, Attachment, AttachKind, AttachProblem, AttachHint, ChatConfirm, Fmt,
-    ButtonKind, ChatButton, ButtonRow, BotCommand, Reaction, RoundNote, ContactCard, TopicRow, Share, ShareKind, ShareRow }
+    ButtonKind, ChatButton, ButtonRow, BotCommand, Reaction, RoundNote, VoiceNote, ContactCard, TopicRow, Share, ShareKind, ShareRow }
 export { AiAccess, AiScope, AiWriting, AiChat, AiApp, AiActivity, AiActivityKind }
 export { Search, NewChat, NewDialog, LinkCheck, FoundKind, FoundRow, FoundSection, ComposeWords, BotWords, ExtraWords }
 export { Downloads, ServerRow, ServerStatus, Problem, FolderState, FolderEntry, TransferRow, TransferState, TestState, FormError }
 export { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember }
 export { ChatManage, ManageWords, ManageLook, ManagePage, UsernameCheck, ManageToggle, ManageChip, ManagePerson, ManageLink, ManageChoice }
 export { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow }
+export { Voice, VoiceWords, VoiceState, VoiceProblem, KeyCheck, VoiceLanguage, VoiceLanguageRow, Recorder, RecordStage }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";

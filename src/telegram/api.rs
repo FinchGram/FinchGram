@@ -123,6 +123,9 @@ pub enum Update {
     MessageSendFailed { message: Box<Message>, old_message_id: i64 },
     #[serde(rename = "updateMessageContent")]
     MessageContent { chat_id: i64, message_id: i64, new_content: MessageContent },
+    /// The content was opened: a voice message listened to, a round video message watched.
+    #[serde(rename = "updateMessageContentOpened")]
+    MessageContentOpened { chat_id: i64, message_id: i64 },
     /// Edited: its new buttons come with it (none when they went).
     #[serde(rename = "updateMessageEdited")]
     MessageEdited {
@@ -1590,7 +1593,13 @@ pub enum MessageContent {
     #[serde(rename = "messageDocument")]
     Document { document: Document, caption: FormattedText },
     #[serde(rename = "messageVoiceNote")]
-    VoiceNote { caption: FormattedText },
+    VoiceNote {
+        voice_note: VoiceNote,
+        caption: FormattedText,
+        /// Listened to by the user (an incoming one shows a dot until then).
+        #[serde(default)]
+        is_listened: bool,
+    },
     #[serde(rename = "messageVideoNote")]
     VideoNote {
         video_note: VideoNote,
@@ -1837,6 +1846,21 @@ pub struct VideoNote {
     #[serde(default)]
     pub thumbnail: Option<Thumbnail>,
     pub video: File,
+}
+
+/// A voice message's sound (voiceNote): Opus in OGG from Telegram's own apps, MP3 or M4A from
+/// others, FinchGram's among them (src/telegram/voice.rs).
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct VoiceNote {
+    /// In seconds, as the sender says.
+    pub duration: i32,
+    /// Its loudness as values of 5 bits, packed, in base64 (TDLib's bytes); "" when the sender
+    /// gave none.
+    #[serde(default)]
+    pub waveform: String,
+    #[serde(default)]
+    pub mime_type: String,
+    pub voice: File,
 }
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]

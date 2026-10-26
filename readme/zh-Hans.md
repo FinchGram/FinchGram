@@ -42,10 +42,12 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
 - **三套主题。** 工作台、报纸和终端，各有浅色和深色，切换不用重启。
 - **设置。** 开机启动、按 Enter 发送、截图快捷键、通知的声音和预览、两步验证、界面语言，还有更新：app 从
   GitHub Releases 自动更新，验证不过的一律不装。
+- **语音消息。** 在聊天里直接播放，带波形、时长和 1×、1.5×、2× 倍速；听过对方能看到，和 Telegram 官方应用一样。按住麦克风录音：松开发送，向左拖取消，向上拖锁定，锁定后可以停下来先试听再发。
+- **语音输入。** 在输入框里按一下 ✦ 然后说话：字随着你说出现，去掉“嗯”“呃”之后进到输入框里，由你来发送。用的是你自己的 OpenAI 密钥（每小时语音约 1 美元），在设置 → 通用里填；界面的每种语言都行，几种语言混着说也行。见 [docs/voice-input.zh-Hans.md](../docs/voice-input.zh-Hans.md)。
 - **AI 助手。** Claude Desktop、Claude Code 以及其他会说 Model Context Protocol 的应用，可以在你允许后通过 FinchGram 读你的聊天并代你操作：百宝箱 → AI 访问，默认关着，由你选哪些聊天、助手能不能发消息，应用第一次连接时会先问你。见 [docs/mcp.zh-Hans.md](../docs/mcp.zh-Hans.md)。
 - **语言。** 界面和这份 README 都有十一种语言。
 
-还没有的：秘密聊天、语音消息和通话、投票和定时消息、关键词过滤、Windows 和 Linux。见
+还没有的：秘密聊天和通话、投票和定时消息、关键词过滤、Windows 和 Linux。见
 [接下来做什么](../docs/architecture.zh-Hans.md#现在不做)。
 
 ## 下载
@@ -108,7 +110,7 @@ app 是一个外壳。Telegram 本身交给 TDLib，它作为一个独立程序�
 
 FinchGram 只做 Telegram 官方应用做的事，不做它们禁止的事。消息在你看到时标为已读，对方像在任何 Telegram 应用里一样
 能看到你正在输入和在线，频道里的赞助消息照常显示，自毁媒体只能打开一次，来自 Telegram 的内容不会交给任何 AI，除非你在百宝箱 → AI 访问里放一个助手进来。
-除了 Telegram 和用来更新的 GitHub，什么都不会离开你的机器。
+除了 Telegram、用来更新的 GitHub，以及你用语音输入时以你自己的密钥发给 OpenAI 的声音，什么都不会离开你的机器。
 
 ## 开发
 

@@ -1,0 +1,727 @@
+// Voice: voice input (docs/voice-input.md), the sparkle in the composer with a strip above it
+// while the user speaks and Settings → General → Voice input (src/speech/), which has no design
+// round yet: the strip follows each theme's strip for replying, the settings the page's own rows;
+// and voice messages (src/telegram/voice.rs), from the design's fifth round ("秘密聊天与通话", B1
+// the bubble, B2 the recording, B3 the microphone not allowed). Rust fills these globals; the
+// shared parts take each theme's colours, and Terminal writes its own; the words are here, once
+// for the three themes.
+import { Conversation, VoiceNote } from "telegram.slint";
+import { Icon, Spinner } from "widgets.slint";
+
+// Where a dictation is: the microphone is open and the words come as the user speaks (listening),
+// the user is done and the last words are on their way (finishing), a small model tidies them
+// (tidying), or it stopped, and why (failed). Idle: nothing shows but the microphone.
+export enum VoiceState { idle, listening, finishing, tidying, failed }
+
+// Why a dictation stopped, or could not start.
+export enum VoiceProblem { none, no-key, microphone-denied, no-microphone, refused-key, quota, network, openai, nothing-heard }
+
+// What OpenAI said of the key last saved in the settings.
+export enum KeyCheck { none, malformed, checking, works, refused, failed }
+
+// One of the languages the user can say they speak, by OpenAI's code ("zh-cn"), with its name in
+// itself.
+export struct VoiceLanguage {
+    code: string,
+    name: string,
+    on: bool,
+}
+
+// A line of them, as the settings lay them out.
+export struct VoiceLanguageRow {
+    languages: [VoiceLanguage],
+}
+
+export global Voice {
+    in-out property <VoiceState> state;
+    // Until OpenAI has the session's settings: the microphone already listens, and what it hears
+    // goes out once the session is ready.
+    in-out property <bool> connecting;
+    // What was heard so far, as OpenAI has it; then the tidied words, for a moment.
+    in-out property <string> words;
+    // How loud the microphone is, 0 … 1, for the bars.
+    in-out property <float> level;
+    // How long the user has been speaking.
+    in-out property <int> seconds;
+    in-out property <VoiceProblem> problem;
+    in-out property <string> detail;            // the reason in the system's or OpenAI's words
+    // Counted up by Rust each time words went into the composer: the composer takes the keyboard,
+    // with the cursor after them.
+    in-out property <int> insertions;
+    out property <bool> busy: state == VoiceState.listening || state == VoiceState.finishing || state == VoiceState.tidying;
+    out property <bool> shown: state != VoiceState.idle;
+    // The microphone, pressed and let go: a click starts and a second click finishes; held while
+    // speaking, letting go finishes.
+    callback press();
+    callback release();
+    callback stop();                            // ⏎ or Done: the words go into the composer
+    callback cancel();                          // Esc or ×: the words are dropped
+    callback act();                             // the problem's button: the settings, or the system's
+
+    // Settings → General → Voice input.
+    in-out property <bool> has-key;
+    in-out property <string> key-hint;          // "sk-…4f2a"
+    in-out property <KeyCheck> key-check;
+    in-out property <string> key-error;         // what went wrong checking or keeping it
+    in-out property <[VoiceLanguageRow]> language-rows;
+    in-out property <bool> tidy: true;
+    callback save-key(string);
+    callback remove-key();
+    callback open-key-page();                   // OpenAI's page of API keys, in the browser
+    callback toggle-language(string);
+    callback set-tidy(bool);
+}
+
+// Where the recording of a voice message is (src/telegram/voice.rs), from the design's fifth
+// round (B2): the microphone held down (holding: letting go sends it, dragged left cancels it,
+// dragged up locks it), locked (recording on its own: Delete, Stop, Send), stopped and listened to
+// before it goes (preview: Delete, Send).
+export enum RecordStage { idle, holding, locked, preview }
+
+export global Recorder {
+    in-out property <RecordStage> stage;
+    in-out property <string> time;                // "0:07,4"
+    // The loudness of the last moments, newest last, 0 … 1 a bar: the strip's live bars.
+    in-out property <[float]> levels;
+    // Dragged left far enough, while held: letting go cancels it (the pages set it).
+    in-out property <bool> cancelling;
+    // Stopped: its own waveform, its length, and how far it plays when listened to.
+    in-out property <[float]> preview-bars;
+    in-out property <string> preview-time;        // "0:14"
+    in-out property <bool> preview-playing;
+    in-out property <float> preview-progress;
+    // The system does not let FinchGram use the microphone: the bar above the composer says so.
+    in-out property <bool> denied;
+    // A click, not held: the tip says to hold, for a moment.
+    in-out property <bool> too-short;
+    out property <bool> recording: stage == RecordStage.holding || stage == RecordStage.locked;
+    out property <bool> busy: stage != RecordStage.idle;
+    callback press();
+    callback release();
+    callback lock();
+    callback stop();
+    callback send();
+    callback delete();
+    callback play-preview();
+    callback open-microphone-settings();
+    callback dismiss-denied();
+}
+
+// How far the pointer must go, held on the microphone, to cancel (left) or to lock (up).
+export global RecordDrag {
+    out property <length> cancel: 80px;
+    out property <length> lock: 60px;
+}
+
+// How loud the microphone is: five bars, the middle one tallest.
+export component LevelBars {
+    in property <float> level;
+    in property <color> color;
+    in property <length> bar: 3px;
+    in property <length> gap: 2px;
+    in property <length> tallest: 16px;
+    in property <length> radius: 1.5px;
+    width: 5 * root.bar + 4 * root.gap;
+    height: root.tallest;
+
+    for weight[index] in [0.45, 0.75, 1.0, 0.75, 0.45]: Rectangle {
+        x: index * (root.bar + root.gap);
+        width: root.bar;
+        height: max(root.bar, root.tallest * min(1, 0.15 + root.level * weight));
+        y: (root.tallest - self.height) / 2;
+        border-radius: root.radius;
+        background: root.color;
+        animate height { duration: 90ms; }
+    }
+}
+
+// The newest words, in at most `lines` lines: the older ones go out at the top.
+export component WordsTail inherits Rectangle {
+    in property <string> text;
+    in property <color> ink;
+    in property <string> font-family;
+    in property <length> font-size: 13px;
+    in property <int> lines: 2;
+    clip: true;
+    height: min(words.preferred-height, probe.preferred-height * root.lines);
+
+    // One line's height, with the CJK fallback in it.
+    probe := Text {
+        visible: false;
+        text: "Xg中";
+        font-family: root.font-family;
+        font-size: root.font-size;
+    }
+    words := Text {
+        y: parent.height - self.height;
+        width: parent.width;
+        height: self.preferred-height;
+        text: root.text;
+        color: root.ink;
+        font-family: root.font-family;
+        font-size: root.font-size;
+        wrap: word-wrap;
+    }
+}
+
+// A solid triangle pointing right: play.
+export component PlaySign {
+    in property <color> color;
+    in property <length> size: 14px;
+    Path {
+        width: root.size;
+        height: root.size;
+        x: (parent.width - self.width) / 2 + root.size / 10;
+        y: (parent.height - self.height) / 2;
+        viewbox-width: 14;
+        viewbox-height: 14;
+        fill: root.color;
+        MoveTo { x: 2; y: 1; }
+        LineTo { x: 13; y: 7; }
+        LineTo { x: 2; y: 13; }
+        Close { }
+    }
+}
+
+// Two solid bars: pause.
+export component PauseSign {
+    in property <color> color;
+    in property <length> bar: 4px;
+    in property <length> tall: 13px;
+    Rectangle {
+        x: parent.width / 2 - root.bar - 2px;
+        y: (parent.height - root.tall) / 2;
+        width: root.bar;
+        height: root.tall;
+        border-radius: 1px;
+        background: root.color;
+    }
+    Rectangle {
+        x: parent.width / 2 + 2px;
+        y: (parent.height - root.tall) / 2;
+        width: root.bar;
+        height: root.tall;
+        border-radius: 1px;
+        background: root.color;
+    }
+}
+
+// A voice message in a chat (B1): the play button (a spinner while its file comes, Retry after it
+// could not), the waveform, which is also how far it has played and takes a click to go there,
+// its time ("0:04 / 0:12" while it plays), a dot until it is listened to, the speed while it
+// plays, and Transcribe, greyed: not in FinchGram.
+export component VoiceNoteView {
+    in property <string> message-id;
+    in property <VoiceNote> note;
+    in property <color> accent;
+    in property <color> on-accent;
+    in property <color> played;                 // the bars played (Broadsheet's own bubbles: its ink)
+    in property <color> wave;                   // the bars not yet played (the design's wave0)
+    in property <color> meta;                   // the time
+    in property <color> side;
+    in property <color> muted;
+    in property <color> faint;
+    in property <color> danger;
+    in property <color> danger-soft;
+    in property <string> font-family;
+    in property <length> radius: 6px;
+    in property <bool> duotone;
+    property <bool> current: Conversation.voice-playing == root.message-id;
+    property <bool> failed: root.current && Conversation.voice-failed;
+    property <bool> loading: root.current && Conversation.voice-loading;
+    property <bool> paused: root.current && Conversation.voice-paused;
+    property <bool> playing: root.current && !root.loading && !root.failed && !root.paused;
+    property <float> progress: root.current ? Conversation.voice-progress : 0;
+    property <int> played-bars: Math.round(root.note.bars.length * root.progress);
+
+    HorizontalLayout {
+        spacing: 10px;
+        alignment: start;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 38px;
+                height: 38px;
+                border-radius: 19px;
+                background: root.failed ? root.danger-soft : root.loading ? root.side : button.has-hover ? root.accent.darker(0.1) : root.accent;
+                if root.loading: Spinner {
+                    size: 17px;
+                    color: root.muted;
+                }
+                if root.failed: Icon {
+                    name: "arrow-clockwise";
+                    size: 17px;
+                    color: root.danger;
+                    duotone: false;
+                }
+                if root.playing: PauseSign {
+                    color: root.on-accent;
+                }
+                if !root.loading && !root.failed && !root.playing: PlaySign {
+                    color: root.on-accent;
+                    size: 15px;
+                }
+                button := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Conversation.play-voice(root.message-id);
+                    }
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            spacing: 4px;
+            Rectangle {
+                width: root.note.bars.length * 5px - 2px;
+                height: 22px;
+                for bar[index] in root.note.bars: Rectangle {
+                    x: index * 5px;
+                    width: 3px;
+                    height: max(3px, 21px * bar);
+                    y: (parent.height - self.height) / 2;
+                    border-radius: 1.5px;
+                    background: index < root.played-bars ? root.played : root.wave;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Conversation.seek-voice(root.message-id, self.mouse-x / self.width);
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 7px;
+                alignment: start;
+                Text {
+                    text: root.playing || root.paused ? Conversation.voice-time + " / " + root.note.duration : root.note.duration;
+                    color: root.meta;
+                    font-family: root.font-family;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                }
+                if !root.note.listened: VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 3px;
+                        background: root.accent;
+                    }
+                }
+                if root.playing: VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: speed.preferred-width + 10px;
+                        height: speed.preferred-height + 2px;
+                        border-radius: root.radius;
+                        border-width: 1px;
+                        border-color: root.meta;
+                        speed := Text {
+                            text: Conversation.voice-speed;
+                            color: root.meta;
+                            font-family: root.font-family;
+                            font-size: 11px;
+                            font-weight: 600;
+                        }
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                Conversation.next-voice-speed();
+                            }
+                        }
+                    }
+                }
+                if root.failed: Text {
+                    text: VoiceWords.download-failed() + " · " + VoiceWords.retry();
+                    color: root.danger;
+                    font-family: root.font-family;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                }
+                if root.loading: Text {
+                    text: VoiceWords.loading();
+                    color: root.meta;
+                    font-family: root.font-family;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: chip.preferred-width + 14px;
+                height: chip.preferred-height + 6px;
+                border-radius: root.radius;
+                background: root.side;
+                chip := HorizontalLayout {
+                    spacing: 4px;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "text-aa";
+                            size: 13px;
+                            color: root.faint;
+                            duotone: root.duotone;
+                        }
+                    }
+                    Text {
+                        text: transcribe.has-hover ? VoiceWords.transcribe() + " · " + VoiceWords.not-available() : VoiceWords.transcribe();
+                        color: root.faint;
+                        font-family: root.font-family;
+                        font-size: 11px;
+                        vertical-alignment: center;
+                    }
+                }
+                transcribe := TouchArea {
+                    mouse-cursor: not-allowed;
+                }
+            }
+        }
+    }
+}
+
+// The composer while a voice message records (B2): a red dot, the clock, the live bars and what
+// letting go does (dragged left: that it cancels, the row moving after the pointer); locked, the
+// same without the hint; stopped, its own play button, waveform and length. Esc deletes it, ⏎
+// sends it once it is no longer held.
+export component RecordRow inherits Rectangle {
+    in property <color> rec;
+    in property <color> rec-soft;
+    in property <color> text-color;
+    in property <color> muted;
+    in property <color> danger;
+    in property <color> accent;
+    in property <color> on-accent;
+    in property <color> wave;
+    in property <string> font-family;
+    in property <length> font-size: 12px;
+    in property <length> padding-x: 12px;
+
+    init => {
+        keys.focus();
+    }
+    keys := FocusScope {
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                Recorder.delete();
+                return accept;
+            }
+            if event.text == Key.Return && Recorder.stage != RecordStage.holding {
+                Recorder.send();
+                return accept;
+            }
+            return reject;
+        }
+    }
+    if Recorder.recording: HorizontalLayout {
+        x: Recorder.cancelling ? -28px : 0px;
+        width: root.width;
+        padding-left: root.padding-x;
+        padding-right: root.padding-x;
+        spacing: 10px;
+        animate x { duration: 120ms; }
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 17px;
+                height: 17px;
+                border-radius: 8.5px;
+                background: root.rec-soft;
+                Rectangle {
+                    width: 9px;
+                    height: 9px;
+                    border-radius: 4.5px;
+                    background: root.rec;
+                }
+            }
+        }
+        Text {
+            text: Recorder.time;
+            color: root.text-color;
+            font-family: root.font-family;
+            font-size: root.font-size;
+            vertical-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: Recorder.levels.length * 4px - 2px;
+                height: 22px;
+                for level[index] in Recorder.levels: Rectangle {
+                    x: index * 4px;
+                    width: 2px;
+                    height: 3px + 19px * level;
+                    y: (parent.height - self.height) / 2;
+                    border-radius: 1px;
+                    background: root.rec;
+                }
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: Recorder.cancelling ? "‹ " + VoiceWords.release-to-cancel() : Recorder.stage == RecordStage.locked ? "" : VoiceWords.release-to-send();
+            color: Recorder.cancelling ? root.danger : root.muted;
+            font-family: root.font-family;
+            font-size: root.font-size;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+    }
+    if Recorder.stage == RecordStage.preview: HorizontalLayout {
+        padding-left: root.padding-x;
+        padding-right: root.padding-x;
+        spacing: 10px;
+        alignment: start;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 28px;
+                height: 28px;
+                border-radius: 14px;
+                background: listen.has-hover ? root.accent.darker(0.1) : root.accent;
+                if Recorder.preview-playing: PauseSign {
+                    color: root.on-accent;
+                    bar: 3px;
+                    tall: 10px;
+                }
+                if !Recorder.preview-playing: PlaySign {
+                    color: root.on-accent;
+                    size: 11px;
+                }
+                listen := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Recorder.play-preview();
+                    }
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: Recorder.preview-bars.length * 4px - 2px;
+                height: 22px;
+                for bar[index] in Recorder.preview-bars: Rectangle {
+                    x: index * 4px;
+                    width: 2px;
+                    height: max(3px, 18px * bar);
+                    y: (parent.height - self.height) / 2;
+                    border-radius: 1px;
+                    background: index < Math.round(Recorder.preview-bars.length * Recorder.preview-progress) ? root.accent : root.wave;
+                }
+            }
+        }
+        Text {
+            text: Recorder.preview-time;
+            color: root.muted;
+            font-family: root.font-family;
+            font-size: root.font-size;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// Above the microphone while it is held (B2): drag up to lock.
+export component LockTag inherits Rectangle {
+    in property <color> panel;
+    in property <color> ring: transparent;
+    in property <color> ink;
+    in property <length> tag-radius: 17px;
+    in property <bool> duotone;
+    width: 34px;
+    height: column.preferred-height + 16px;
+    border-radius: root.tag-radius;
+    background: root.panel;
+    border-width: 1px;
+    border-color: root.ring;
+    drop-shadow-blur: 14px;
+    drop-shadow-offset-y: 4px;
+    drop-shadow-color: #00000033;
+    column := VerticalLayout {
+        alignment: center;
+        spacing: 4px;
+        HorizontalLayout {
+            alignment: center;
+            Icon {
+                name: "lock-simple";
+                size: 14px;
+                color: root.ink;
+                duotone: root.duotone;
+            }
+        }
+        HorizontalLayout {
+            alignment: center;
+            Icon {
+                name: "caret-up";
+                size: 12px;
+                color: root.ink;
+                duotone: false;
+            }
+        }
+    }
+}
+
+// The system does not let FinchGram use the microphone (B3): above the composer, with the way to
+// its settings.
+export component MicDeniedBar inherits Rectangle {
+    in property <color> danger;
+    in property <color> danger-soft;
+    in property <color> link;
+    in property <color> text-color;
+    in property <color> faint;
+    in property <string> font-family;
+    in property <length> font-size: 12px;
+    in property <length> radius: 6px;
+    in property <bool> duotone;
+    height: row.preferred-height;
+    border-radius: root.radius;
+    background: root.danger-soft;
+    row := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "microphone-slash";
+                size: 16px;
+                color: root.danger;
+                duotone: root.duotone;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: VoiceWords.microphone-off();
+            color: root.text-color;
+            font-family: root.font-family;
+            font-size: root.font-size;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        Text {
+            text: VoiceWords.open-system-settings();
+            color: root.link;
+            font-family: root.font-family;
+            font-size: root.font-size;
+            font-weight: 600;
+            vertical-alignment: center;
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Recorder.open-microphone-settings();
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 18px;
+                height: 18px;
+                Icon {
+                    name: "x";
+                    size: 14px;
+                    color: root.faint;
+                    duotone: false;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        Recorder.dismiss-denied();
+                    }
+                }
+            }
+        }
+    }
+}
+
+export global VoiceWords {
+    public pure function voice-input() -> string { return @tr("Voice input"); }
+    // The sparkle's tip.
+    public pure function tip() -> string { return Voice.busy ? @tr("Finish voice input") : @tr("Voice input: click, or hold while you speak"); }
+
+    // Voice messages (the design's fifth round, its words).
+    public pure function record() -> string { return @tr("Record voice message"); }
+    public pure function release-to-send() -> string { return @tr("Release to send · Drag left to cancel"); }
+    public pure function release-to-cancel() -> string { return @tr("Release to cancel"); }
+    public pure function hold-to-record() -> string { return @tr("Hold to record. Release to send."); }
+    public pure function send() -> string { return @tr("Send"); }
+    public pure function stop() -> string { return @tr("Stop"); }
+    public pure function delete() -> string { return @tr("Delete"); }
+    public pure function transcribe() -> string { return @tr("Transcribe"); }
+    public pure function not-available() -> string { return @tr("Not available yet"); }
+    public pure function download-failed() -> string { return @tr("Couldn't download"); }
+    public pure function retry() -> string { return @tr("Retry"); }
+    public pure function loading() -> string { return @tr("Loading…"); }
+    public pure function microphone-off() -> string { return @tr("Microphone access is off."); }
+    public pure function open-system-settings() -> string { return @tr("Open System Settings"); }
+    public pure function not-allowed() -> string { return @tr("Not allowed in this group"); }
+    // "0:07", "12:30".
+    public pure function time(seconds: int) -> string {
+        return Math.floor(seconds / 60) + ":" + (Math.mod(seconds, 60) < 10 ? "0" : "") + Math.mod(seconds, 60);
+    }
+    // The strip's first line.
+    public pure function title() -> string {
+        if Voice.state == VoiceState.listening {
+            return Voice.connecting ? @tr("Connecting to OpenAI…") : @tr("Listening · {0}", time(Voice.seconds));
+        }
+        if Voice.state == VoiceState.finishing { return @tr("Finishing…"); }
+        if Voice.state == VoiceState.tidying { return @tr("Tidying the words…"); }
+        return @tr("Voice input stopped");
+    }
+    // In the words' place before any came.
+    public pure function speak-now() -> string { return @tr("Speak now"); }
+    public pure function keys() -> string { return @tr("⏎ done · Esc cancel"); }
+    public pure function done() -> string { return @tr("Done"); }
+    public pure function cancel() -> string { return @tr("Cancel"); }
+    // Why it stopped.
+    public pure function problem() -> string {
+        if Voice.problem == VoiceProblem.no-key { return @tr("Voice input needs your own OpenAI API key: add it in Settings → General."); }
+        if Voice.problem == VoiceProblem.microphone-denied { return @tr("FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."); }
+        if Voice.problem == VoiceProblem.no-microphone { return @tr("No microphone could be opened: {0}", Voice.detail); }
+        if Voice.problem == VoiceProblem.refused-key { return @tr("OpenAI refused the key. Check it in Settings → General."); }
+        if Voice.problem == VoiceProblem.quota { return @tr("OpenAI says the key is out of credit or used too fast: {0}", Voice.detail); }
+        if Voice.problem == VoiceProblem.network { return @tr("Could not reach OpenAI: {0}", Voice.detail); }
+        if Voice.problem == VoiceProblem.nothing-heard { return @tr("Nothing was heard. Is the right microphone chosen in System Settings → Sound?"); }
+        return @tr("OpenAI said: {0}", Voice.detail);
+    }
+    // The problem's button; "" for none.
+    public pure function action() -> string {
+        if Voice.problem == VoiceProblem.no-key || Voice.problem == VoiceProblem.refused-key { return @tr("Open Settings"); }
+        if Voice.problem == VoiceProblem.microphone-denied { return @tr("Open System Settings"); }
+        return "";
+    }
+
+    // Settings → General → Voice input.
+    public pure function key() -> string { return @tr("OpenAI API key"); }
+    public pure function key-note() -> string { return @tr("Your own key: OpenAI bills it for what is transcribed. It is kept sealed in FinchGram's database on this Mac."); }
+    public pure function key-placeholder() -> string { return "sk-…"; }
+    public pure function save() -> string { return @tr("Save"); }
+    public pure function remove() -> string { return @tr("Remove"); }
+    public pure function get-key() -> string { return @tr("Get a key at platform.openai.com"); }
+    public pure function key-check() -> string {
+        if Voice.key-check == KeyCheck.malformed { return @tr("That is not an OpenAI key: they start with sk-."); }
+        if Voice.key-check == KeyCheck.checking { return @tr("Checking the key with OpenAI…"); }
+        if Voice.key-check == KeyCheck.works { return @tr("OpenAI accepts the key."); }
+        if Voice.key-check == KeyCheck.refused { return @tr("OpenAI refused the key."); }
+        if Voice.key-check == KeyCheck.failed { return @tr("Could not check the key: {0}", Voice.key-error); }
+        return "";
+    }
+    // Faint, a warning, or a good word: what the check deserves.
+    public pure function key-tone() -> int {
+        if Voice.key-check == KeyCheck.works { return 2; }
+        if Voice.key-check == KeyCheck.malformed || Voice.key-check == KeyCheck.refused || Voice.key-check == KeyCheck.failed { return 1; }
+        return 0;
+    }
+    public pure function languages() -> string { return @tr("Languages you speak"); }
+    public pure function languages-note() -> string { return @tr("Hints for OpenAI. With none chosen, it finds the language as you speak; sentences that mix languages work either way."); }
+    public pure function tidy() -> string { return @tr("Tidy the words"); }
+    public pure function tidy-note() -> string { return @tr("A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."); }
+    public pure function about() -> string {
+        return @tr("Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to OpenAI under your key and nothing else does; OpenAI charges about $1 for an hour of speech. FinchGram keeps no recording.");
+    }
+}

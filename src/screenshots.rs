@@ -190,6 +190,9 @@ fn fill(ui: &MainWindow) {
     password.set_has_recovery_email(true);
     password.set_recovery_email("z•••@gmail.com".into());
     password.set_reset_date(reset_date());
+
+    // Settings → General → Voice input: no key yet, no language chosen.
+    crate::speech::show_for_pictures(ui, &[]);
 }
 
 /// When a reset asked for today can be completed, as in the design.
@@ -795,6 +798,7 @@ fn open_keyboards(ui: &MainWindow) {
     conversation.set_can_send_photos(true);
     conversation.set_can_send_videos(true);
     conversation.set_can_send_files(true);
+    conversation.set_can_send_voice(true);
     conversation.set_messages(model(vec![
         day_row(Day::Today),
         // Formatting and a link.
@@ -1079,6 +1083,7 @@ fn bots(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> 
     conversation.set_can_send_photos(true);
     conversation.set_can_send_videos(true);
     conversation.set_can_send_files(true);
+    conversation.set_can_send_voice(true);
     conversation.set_messages(model(vec![
         day_row(Day::Today),
         message("1", "Zhou Ye", "09:40", "/start"),
@@ -1705,6 +1710,127 @@ fn attachments(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, na
 
 /// Settings → Privacy & security, and two-step verification: on, with a reset on its way and a
 /// change just made; off; asking for the password; a new password.
+/// Voice input above the composer (src/speech/): listening, the words mixing two languages and
+/// longer than the strip, so that the newest show; the last words being tidied; a dictation that
+/// stopped for want of a key, and one OpenAI refused.
+fn voice(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    let voice = ui.global::<Voice>();
+    voice.set_state(VoiceState::Listening);
+    voice.set_connecting(true);
+    voice.set_level(0.3);
+    save(window, &name("voice-connecting"));
+    voice.set_connecting(false);
+    voice.set_level(0.7);
+    voice.set_seconds(7);
+    voice.set_words(
+        "明天下午三点在 Blue Bottle 见，记得带上 the contract，还有上周说的那份报价单。And the pricing sheet we talked about last week, so that we can go through it together before the call."
+            .into(),
+    );
+    save(window, &name("voice-listening"));
+    voice.set_state(VoiceState::Tidying);
+    save(window, &name("voice-tidying"));
+    voice.set_words(SharedString::new());
+    voice.set_state(VoiceState::Failed);
+    voice.set_problem(VoiceProblem::NoKey);
+    save(window, &name("voice-no-key"));
+    voice.set_problem(VoiceProblem::Quota);
+    voice.set_detail("You exceeded your current quota, please check your plan and billing details.".into());
+    save(window, &name("voice-quota"));
+    voice.set_state(VoiceState::Idle);
+    voice.set_problem(VoiceProblem::None);
+    voice.set_detail(SharedString::new());
+    voice.set_level(0.0);
+    voice.set_seconds(0);
+}
+
+/// The design's fifth round, voice messages (src/telegram/voice.rs): Jie's not yet listened to,
+/// ours, Mika's playing at 1.5×; one whose file is on its way, one that could not be had; then
+/// the composer recording: held, dragged left to cancel, locked, stopped to be listened to, a
+/// click that did not hold, and the microphone not allowed.
+fn voice_messages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    // The design's waveform (WAVE, 0 … 22) and Terminal's twenty blocks of it.
+    const WAVE: [f32; 28] = [6., 10., 14., 9., 18., 22., 16., 12., 20., 22., 18., 10., 8., 14., 20., 16., 12., 22., 18., 9., 6., 12., 16., 20., 14., 10., 8., 12.];
+    let bars: Vec<f32> = WAVE.iter().map(|height| height / 22.0).collect();
+    let blocks: String = WAVE[..20].iter().map(|height| ['▁', '▂', '▃', '▄', '▅', '▆', '▇', '█'][((height / 2.9) as usize).min(7)]).collect();
+    let voice = |id: &str, sender: &str, time: &str, duration: &str, listened: bool| MessageRow {
+        content: Content::VoiceNote,
+        voice: VoiceNote { shown: true, duration: duration.into(), bars: model(bars.clone()), blocks: blocks.as_str().into(), listened },
+        ..message(id, sender, time, "")
+    };
+    open_keyboards(ui);
+    let conversation = ui.global::<Conversation>();
+    conversation.set_messages(model(vec![
+        day_row(Day::Today),
+        message("v0", "Jie", "14:02", "Listen to this one, the switches are loud"),
+        voice("v1", "Jie", "14:03", "0:12", false),
+        voice("v2", "Zhou Ye", "14:05", "0:08", true),
+        voice("v3", "Mika", "14:06", "0:12", true),
+    ]));
+    conversation.set_voice_playing("v3".into());
+    conversation.set_voice_progress(0.35);
+    conversation.set_voice_time("0:04".into());
+    conversation.set_voice_speed("1.5×".into());
+    save(window, &name("voice-messages"));
+    conversation.set_voice_speed("1×".into());
+    conversation.set_voice_playing("v1".into());
+    conversation.set_voice_progress(0.0);
+    conversation.set_voice_loading(true);
+    save(window, &name("voice-loading"));
+    conversation.set_voice_loading(false);
+    conversation.set_voice_failed(true);
+    save(window, &name("voice-failed"));
+    conversation.set_voice_failed(false);
+    conversation.set_voice_playing(SharedString::new());
+
+    // Recording, the live bars as the design draws them.
+    let levels: Vec<f32> = (0..22).map(|index| (16.0 * ((index as f32 * 1.3 + 0.5).sin() * (index as f32 * 0.37).cos()).abs()).round() / 19.0).collect();
+    let recorder = ui.global::<Recorder>();
+    recorder.set_levels(model(levels));
+    recorder.set_time("0:07,4".into());
+    recorder.set_stage(RecordStage::Holding);
+    save(window, &name("record-holding"));
+    recorder.set_cancelling(true);
+    save(window, &name("record-cancel"));
+    recorder.set_cancelling(false);
+    recorder.set_stage(RecordStage::Locked);
+    recorder.set_time("0:12,8".into());
+    save(window, &name("record-locked"));
+    recorder.set_preview_bars(model(WAVE.iter().map(|height| height * 0.85 / 18.0).collect()));
+    recorder.set_preview_time("0:14".into());
+    recorder.set_stage(RecordStage::Preview);
+    save(window, &name("record-preview"));
+    recorder.set_stage(RecordStage::Idle);
+    recorder.set_too_short(true);
+    save(window, &name("record-too-short"));
+    recorder.set_too_short(false);
+    recorder.set_denied(true);
+    save(window, &name("record-denied"));
+    recorder.set_denied(false);
+    open_keyboards(ui);
+}
+
+/// Settings → General → Voice input, scrolled to: no key yet, then a key kept that OpenAI takes,
+/// with two languages chosen and the words tidied.
+fn voice_settings(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    let app = ui.global::<AppState>();
+    let voice = ui.global::<Voice>();
+    app.set_settings_section(SettingsSection::General);
+    scroll(window, 800.0, 500.0, 360.0);
+    save(window, &name("settings-voice"));
+    voice.set_key_check(KeyCheck::Malformed);
+    save(window, &name("settings-voice-malformed"));
+    voice.set_has_key(true);
+    voice.set_key_hint("sk-…4f2a".into());
+    voice.set_key_check(KeyCheck::Works);
+    crate::speech::show_for_pictures(ui, &["zh-cn", "en"]);
+    save(window, &name("settings-voice-key"));
+    voice.set_has_key(false);
+    voice.set_key_hint(SharedString::new());
+    voice.set_key_check(KeyCheck::None);
+    crate::speech::show_for_pictures(ui, &[]);
+    scroll(window, 800.0, 500.0, -2000.0);
+}
+
 fn two_step(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
     let app = ui.global::<AppState>();
     let password = ui.global::<PasswordSettings>();
@@ -2351,6 +2477,8 @@ fn screenshots() {
                 ui.global::<Downloads>().set_active_count(0);
                 set_toolbox(&ui);
             }
+            voice(&ui, &window, &name);
+            voice_messages(&ui, &window, &name);
             // A right click on the first chat of the list: its menu.
             let (x, y) = match theme {
                 Theme::Workbench => (150.0, 166.0),
@@ -2449,10 +2577,14 @@ fn screenshots() {
             app.set_update_total("63.8 MB".into());
             save(&window, &name("settings-about-downloading"));
             app.set_update_state(crate::UpdateState::Idle);
+            voice_settings(&ui, &window, &name);
             // Settings → General → Screenshots: the shortcut's box taking new keys.
             app.set_settings_section(SettingsSection::General);
             ui.global::<Screenshot>().set_recording(true);
+            // The Screenshots section is the page's last, below Voice input: scrolled to.
+            scroll(&window, 800.0, 500.0, 2000.0);
             save(&window, &name("settings-screenshot-shortcut"));
+            scroll(&window, 800.0, 500.0, -2000.0);
             ui.global::<Screenshot>().set_recording(false);
             two_step(&ui, &window, &name);
             ai_access(&ui, &window, &name);
@@ -2484,6 +2616,8 @@ fn screenshots() {
         }
         message_actions(&ui, &window, &|page: &str| format!("zh-{theme_name}-{page}"));
         compose(&ui, &window, theme, &|page: &str| format!("zh-{theme_name}-{page}"));
+        voice(&ui, &window, &|page: &str| format!("zh-{theme_name}-{page}"));
+        voice_messages(&ui, &window, &|page: &str| format!("zh-{theme_name}-{page}"));
     }
     app.set_theme(Theme::Workbench);
     app.set_telegram_state(TelegramState::WaitPhoneNumber);
@@ -2498,6 +2632,7 @@ fn screenshots() {
     app.set_page(Page::Settings);
     app.set_settings_section(SettingsSection::General);
     save(&window, "zh-workbench-settings-general");
+    voice_settings(&ui, &window, &|page: &str| format!("zh-workbench-{page}"));
     app.set_settings_section(SettingsSection::Notifications);
     save(&window, "zh-workbench-settings-notifications");
     app.set_settings_section(SettingsSection::Appearance);
@@ -2525,9 +2660,11 @@ fn screenshots() {
         app.set_page(Page::Chats);
         open_keyboards(&ui);
         save(&window, &format!("{code}-workbench-chats"));
+        voice(&ui, &window, &|page: &str| format!("{code}-workbench-{page}"));
         app.set_page(Page::Settings);
         app.set_settings_section(SettingsSection::General);
         save(&window, &format!("{code}-workbench-settings-general"));
+        voice_settings(&ui, &window, &|page: &str| format!("{code}-workbench-{page}"));
         app.set_page(Page::Chats);
     }
     let _ = login.get_countries().row_count();

@@ -9,7 +9,8 @@ import { InfoPanel } from "chat-info.slint";
 import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
-    Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState, ChatOrder } from "../telegram.slint";
+    Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState, ChatOrder,
+    VoiceNote } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords, SearchInput, SearchWords, ButtonGrid, BotWords } from "../chat.slint";
@@ -18,6 +19,7 @@ import { Look } from "../look.slint";
 import { Downloads } from "../downloads.slint";
 import { TerminalPalette as P } from "palette.slint";
 import { Sign } from "signs.slint";
+import { Voice, VoiceState, VoiceWords, Recorder, RecordStage, RecordDrag } from "../voice.slint";
 import { TerminalActions } from "actions.slint";
 import { TerminalAttachments } from "attachments.slint";
 import { TerminalCompose } from "compose.slint";
@@ -55,7 +57,7 @@ component Action {
 
 // An icon in brackets that does something: the foot's profile and settings. (No bundled font has
 // a gear glyph, so the other themes' icons, between two bracket characters.) Disabled, it is a
-// mark only: a closed topic's lock, the microphone that is still to come.
+// mark only: a closed topic's lock.
 component IconAction {
     in property <string> icon;
     in property <color> color: P.muted;
@@ -88,6 +90,23 @@ component IconAction {
         clicked => {
             root.activated();
         }
+    }
+}
+
+// How loud the microphone is, as five block characters, the middle one tallest.
+global Bars {
+    public pure function block(value: float) -> string {
+        if value < 0.125 { return "▁"; }
+        if value < 0.25 { return "▂"; }
+        if value < 0.375 { return "▃"; }
+        if value < 0.5 { return "▄"; }
+        if value < 0.625 { return "▅"; }
+        if value < 0.75 { return "▆"; }
+        if value < 0.875 { return "▇"; }
+        return "█";
+    }
+    public pure function of(level: float) -> string {
+        return block(0.05 + level * 0.45) + block(0.05 + level * 0.75) + block(0.05 + level) + block(0.05 + level * 0.75) + block(0.05 + level * 0.45);
     }
 }
 
@@ -902,6 +921,88 @@ component Side inherits Rectangle {
 }
 
 // One line of the log: time, sender, words. While messages are being chosen, "[x]" in front.
+// A voice message as Terminal writes it (the design's fifth round, B1): "▶ ▃▄▅▄▇█▆▅▇█ 0:12 ●
+// [1.5×] [transcribe]", the blocks played in the accent; a click on the glyph plays or pauses, on
+// the blocks it goes there.
+component VoiceLine inherits HorizontalLayout {
+    in property <string> message-id;
+    in property <VoiceNote> note;
+    property <bool> current: Conversation.voice-playing == root.message-id;
+    property <bool> failed: root.current && Conversation.voice-failed;
+    property <bool> loading: root.current && Conversation.voice-loading;
+    property <bool> paused: root.current && Conversation.voice-paused;
+    property <bool> playing: root.current && !root.loading && !root.failed && !root.paused;
+    property <float> progress: root.current ? Conversation.voice-progress : 0;
+    spacing: 10px;
+    alignment: start;
+    Rectangle {
+        width: glyph.preferred-width;
+        glyph := T {
+            text: root.failed ? "↻" : root.loading ? "…" : root.playing ? "❚❚" : "▶";
+            color: root.failed ? P.danger : P.accent;
+        }
+        TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                Conversation.play-voice(root.message-id);
+            }
+        }
+    }
+    Rectangle {
+        width: blocks.preferred-width;
+        blocks := T {
+            text: root.note.blocks;
+            color: P.faint;
+        }
+        Rectangle {
+            x: 0;
+            width: blocks.preferred-width * Math.round(root.progress * 20) / 20;
+            clip: true;
+            T {
+                x: 0;
+                width: blocks.preferred-width;
+                text: root.note.blocks;
+                color: P.accent;
+            }
+        }
+        TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                Conversation.seek-voice(root.message-id, self.mouse-x / self.width);
+            }
+        }
+    }
+    T {
+        text: root.playing || root.paused ? Conversation.voice-time + " / " + root.note.duration : root.note.duration;
+    }
+    if !root.note.listened: T {
+        text: "●";
+        color: P.accent;
+    }
+    if root.playing: Action {
+        label: Conversation.voice-speed;
+        color: P.accent2;
+        activated => {
+            Conversation.next-voice-speed();
+        }
+    }
+    if root.failed: T {
+        text: VoiceWords.download-failed() + " [" + VoiceWords.retry().to-lowercase() + "]";
+        color: P.danger;
+    }
+    if root.loading: T {
+        text: VoiceWords.loading();
+        color: P.faint;
+    }
+    T {
+        text: "[" + (transcribe.has-hover ? VoiceWords.transcribe() + " · " + VoiceWords.not-available() : VoiceWords.transcribe()).to-lowercase() + "]";
+        color: P.faint;
+        transcribe := TouchArea {
+            mouse-cursor: not-allowed;
+        }
+    }
+}
+
 component LogLine {
     in property <MessageRow> message;
     property <bool> has-media: message.media.length > 0 || message.files.length > 0;
@@ -985,8 +1086,12 @@ component LogLine {
                 text: (root.message.edited ? @tr("(edited)") : "") + (root.message.sending ? " …" : "");
                 color: P.faint;
             }
-            if !root.message.rich && !root.message.round.shown && !root.message.contact.shown && (!root.has-media || root.message.text != ""): Paragraph {
-                text: (root.has-media ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail))
+            if root.message.voice.shown: VoiceLine {
+                message-id: root.message.id;
+                note: root.message.voice;
+            }
+            if !root.message.rich && !root.message.round.shown && !root.message.contact.shown && (!root.has-media || root.message.text != "") && (!root.message.voice.shown || root.message.text != ""): Paragraph {
+                text: (root.has-media || root.message.voice.shown ? root.message.text : Fmt.body(root.message.content, root.message.text, root.message.detail))
                     + (root.message.edited ? " " + @tr("(edited)") : "")
                     + (root.message.sending ? " …" : "");
                 color: root.has-media || root.message.content == Content.text ? P.text : P.muted;
@@ -1755,12 +1860,95 @@ component SelectionLine inherits Rectangle {
     }
 }
 
+// The command line while a voice message records (B2): "● 0:07,4 ▂▅▇▃▆▂▄▇▅▃ Release to send · Drag
+// left to cancel"; stopped, "▶ ▃▄▅▄▇█ 0:14". Esc deletes it, ⏎ sends it once it is not held.
+component RecordLine inherits Rectangle {
+    background: P.cmd;
+    init => {
+        keys.focus();
+    }
+    keys := FocusScope {
+        key-pressed(event) => {
+            if event.text == Key.Escape {
+                Recorder.delete();
+                return accept;
+            }
+            if event.text == Key.Return && Recorder.stage != RecordStage.holding {
+                Recorder.send();
+                return accept;
+            }
+            return reject;
+        }
+    }
+    if Recorder.recording: HorizontalLayout {
+        x: Recorder.cancelling ? -28px : 0px;
+        width: root.width;
+        spacing: 10px;
+        animate x { duration: 120ms; }
+        T {
+            text: "●";
+            color: P.rec;
+        }
+        T {
+            text: Recorder.time;
+        }
+        HorizontalLayout {
+            spacing: 0;
+            for level in Recorder.levels: T {
+                text: Bars.block(level);
+                color: P.rec;
+            }
+        }
+        T {
+            horizontal-stretch: 1;
+            text: Recorder.cancelling ? "‹ " + VoiceWords.release-to-cancel() : Recorder.stage == RecordStage.locked ? "" : VoiceWords.release-to-send();
+            color: Recorder.cancelling ? P.danger : P.muted;
+            horizontal-alignment: right;
+            overflow: elide;
+        }
+    }
+    if Recorder.stage == RecordStage.preview: HorizontalLayout {
+        spacing: 10px;
+        alignment: start;
+        Rectangle {
+            width: listen.preferred-width;
+            listen := T {
+                text: Recorder.preview-playing ? "❚❚" : "▶";
+                color: P.accent;
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    Recorder.play-preview();
+                }
+            }
+        }
+        HorizontalLayout {
+            spacing: 0;
+            for bar[index] in Recorder.preview-bars: T {
+                text: Bars.block(bar);
+                color: index < Math.round(Recorder.preview-bars.length * Recorder.preview-progress) ? P.accent : P.faint;
+            }
+        }
+        T {
+            text: Recorder.preview-time;
+            color: P.muted;
+        }
+    }
+}
+
 component CommandLine inherits Rectangle {
     // The strip above the prompt: replying, editing, forwarding (the design's 1b); under it, what
     // Telegram refused (Conversation.send-error), while there is something.
     property <bool> strip: Actions.bar != ComposeBar.none && !Actions.selecting && Conversation.chat-id != "";
     property <bool> refused: Conversation.send-error != "" && !Actions.selecting && Conversation.chat-id != "";
-    property <length> above: (root.strip ? 28px : 0px) + (root.refused ? 28px : 0px);
+    // Voice input (src/speech/), the line right above the prompt.
+    property <bool> voice: Voice.shown && !Actions.selecting && Conversation.chat-id != "";
+    // A voice message: the microphone not allowed (B3), or a click that did not hold (B2).
+    property <bool> denied: Recorder.denied && !Actions.selecting && Conversation.chat-id != "";
+    property <bool> hold-tip: Recorder.too-short && !Actions.selecting && Conversation.chat-id != "";
+    property <length> above: (root.strip ? 28px : 0px) + (root.refused ? 28px : 0px) + (root.voice ? 28px : 0px) + (root.denied ? 28px : 0px)
+        + (root.hold-tip ? 28px : 0px);
     height: P.foot-height + root.above;
     background: P.cmd;
     // A reply or an edit begins, a menu or dialog closed: the keyboard comes back here.
@@ -1779,6 +1967,7 @@ component CommandLine inherits Rectangle {
     property <[Command]> commands: [
         { command: "/photo", description: AttachWords.photo-or-video() },
         { command: "/file", description: AttachWords.file() },
+        { command: "/voice", description: VoiceWords.voice-input() },
         { command: "/mute", description: @tr("Mute or unmute this chat") },
         { command: "/pin", description: @tr("Pin or unpin this chat") },
         { command: "/readall", description: @tr("Mark every chat in this folder as read") },
@@ -1806,6 +1995,10 @@ component CommandLine inherits Rectangle {
             Attachments.choose(AttachKind.photo);
         } else if line.starts-with("/file") {
             Attachments.choose(AttachKind.file);
+        } else if line.starts-with("/voice") {
+            // Voice input: once starts, again finishes (src/speech/).
+            Voice.press();
+            Voice.release();
         } else if line.starts-with("/mute") {
             Conversation.toggle-mute();
         } else if line.starts-with("/pin") {
@@ -1913,6 +2106,111 @@ component CommandLine inherits Rectangle {
         }
     }
 
+    // "● 0:07 ▂▅▇▅▂ ── the words so far  [⏎ done] [esc]"; the newest words stay in sight.
+    if root.voice: HorizontalLayout {
+        y: (root.strip ? 28px : 0px) + (root.refused ? 28px : 0px);
+        height: 28px;
+        padding-top: 7px;
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 10px;
+        if Voice.state == VoiceState.listening: T {
+            text: Voice.connecting ? "◌ " + VoiceWords.title().to-lowercase() : "● " + VoiceWords.time(Voice.seconds);
+            color: P.accent3;
+        }
+        if Voice.state == VoiceState.listening && !Voice.connecting: T {
+            text: Bars.of(Voice.level);
+            color: P.accent;
+        }
+        if Voice.state == VoiceState.finishing || Voice.state == VoiceState.tidying: T {
+            text: "◌ " + VoiceWords.title().to-lowercase();
+            color: P.muted;
+        }
+        if Voice.state != VoiceState.failed: Rectangle {
+            horizontal-stretch: 1;
+            clip: true;
+            tail := T {
+                x: min(0px, parent.width - self.preferred-width);
+                y: 0;
+                width: self.preferred-width;
+                height: parent.height;
+                text: "── " + (Voice.words == "" ? VoiceWords.speak-now().to-lowercase() : Voice.words);
+                color: Voice.words == "" ? P.faint : P.text;
+            }
+        }
+        if Voice.state == VoiceState.failed: T {
+            horizontal-stretch: 1;
+            text: "✗ " + VoiceWords.problem();
+            color: P.accent3;
+            overflow: elide;
+        }
+        if Voice.state == VoiceState.listening: Action {
+            label: "⏎ " + VoiceWords.done().to-lowercase();
+            color: P.accent;
+            activated => {
+                Voice.stop();
+            }
+        }
+        if Voice.state == VoiceState.failed && VoiceWords.action() != "": Action {
+            label: VoiceWords.action().to-lowercase();
+            color: P.accent;
+            activated => {
+                Voice.act();
+            }
+        }
+        Action {
+            label: "esc";
+            color: P.faint;
+            activated => {
+                Voice.cancel();
+            }
+        }
+    }
+
+    // "[!] Microphone access is off. [open system settings] [x]"
+    if root.denied: HorizontalLayout {
+        y: (root.strip ? 28px : 0px) + (root.refused ? 28px : 0px) + (root.voice ? 28px : 0px);
+        height: 28px;
+        padding-top: 7px;
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 10px;
+        T {
+            text: "[!]";
+            color: P.danger;
+        }
+        T {
+            horizontal-stretch: 1;
+            text: VoiceWords.microphone-off();
+            overflow: elide;
+        }
+        Action {
+            label: VoiceWords.open-system-settings().to-lowercase();
+            color: P.accent;
+            activated => {
+                Recorder.open-microphone-settings();
+            }
+        }
+        Action {
+            label: "x";
+            color: P.faint;
+            activated => {
+                Recorder.dismiss-denied();
+            }
+        }
+    }
+    if root.hold-tip: HorizontalLayout {
+        y: (root.strip ? 28px : 0px) + (root.refused ? 28px : 0px) + (root.voice ? 28px : 0px) + (root.denied ? 28px : 0px);
+        height: 28px;
+        padding-top: 7px;
+        padding-left: 16px;
+        padding-right: 16px;
+        T {
+            text: VoiceWords.hold-to-record().to-lowercase();
+            color: P.muted;
+        }
+    }
+
     HorizontalLayout {
         y: root.above;
         height: P.foot-height;
@@ -1980,16 +2278,6 @@ component CommandLine inherits Rectangle {
                 }
             }
         }
-        // "[mic]": voice messages are still to come (docs/voice-input.md), so greyed.
-        if root.writable: VerticalLayout {
-            alignment: center;
-            IconAction {
-                icon: "microphone";
-                color: P.faint;
-                opacity: 0.4;
-                enabled: false;
-            }
-        }
         // A bot's menu button, and the fold for its keyboard (bots.rs).
         if root.writable && Conversation.menu-button != "": VerticalLayout {
             alignment: center;
@@ -2021,11 +2309,15 @@ component CommandLine inherits Rectangle {
         VerticalLayout {
             horizontal-stretch: Conversation.chat-id != "" && Conversation.topic-closed ? 0 : 1;
             alignment: center;
+            Rectangle {
+            height: input.height;
             input := MessageInput {
+                width: parent.width;
                 // Out of sight where there is nothing to write; its room keeps the line's shape.
                 visible: !root.read-only;
                 text <=> Conversation.draft;
                 allow-empty: Actions.bar == ComposeBar.forward;
+                takes-dictation: !root.read-only;
                 // Nothing goes while a group's topics are listed.
                 enabled: Conversation.chat-id != "" && !Actions.selecting && !root.read-only && !Conversation.showing-topics;
                 // Slow mode holding: how long still, in the placeholder (src/telegram/admin.rs).
@@ -2056,9 +2348,94 @@ component CommandLine inherits Rectangle {
                     }
                 }
             }
+            if Recorder.busy: RecordLine {
+                width: parent.width;
+                height: parent.height;
+            }
+            }
+        }
+        // Locked, or stopped to be listened to: "[del]", and "[■ stop]" while it records (B2).
+        if root.writable && (Recorder.stage == RecordStage.locked || Recorder.stage == RecordStage.preview): VerticalLayout {
+            alignment: center;
+            Action {
+                label: "del";
+                color: P.danger;
+                activated => {
+                    Recorder.delete();
+                }
+            }
+        }
+        if root.writable && Recorder.stage == RecordStage.locked: VerticalLayout {
+            alignment: center;
+            Action {
+                label: "■ stop";
+                color: P.text;
+                activated => {
+                    Recorder.stop();
+                }
+            }
+        }
+        // The main button (B2): "[hold: rec]" with nothing written, held to record a voice
+        // message ("● rec" while held; dragged left it cancels, up it locks); "⏎ send" to send the
+        // recording.
+        if root.writable && (Recorder.stage == RecordStage.locked || Recorder.stage == RecordStage.preview): VerticalLayout {
+            alignment: center;
+            Action {
+                label: "⏎ " + @tr("send");
+                color: P.accent;
+                activated => {
+                    Recorder.send();
+                }
+            }
+        }
+        if root.writable && Conversation.can-send-voice && !Voice.busy && root.typed == "" && Conversation.slow-wait == 0
+            && (Recorder.stage == RecordStage.idle || Recorder.stage == RecordStage.holding): VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: hold.preferred-width;
+                hold := T {
+                    text: Recorder.stage == RecordStage.holding ? "● rec" : "[hold: rec]";
+                    color: Recorder.stage == RecordStage.holding ? P.rec : hold-touch.has-hover ? P.text : P.muted;
+                }
+                hold-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    pointer-event(event) => {
+                        if event.button == PointerEventButton.left && event.kind == PointerEventKind.down {
+                            Recorder.press();
+                        }
+                        if event.button == PointerEventButton.left && event.kind == PointerEventKind.up {
+                            Recorder.release();
+                        }
+                    }
+                    moved => {
+                        if Recorder.stage == RecordStage.holding {
+                            Recorder.cancelling = self.mouse-x - self.pressed-x < -RecordDrag.cancel;
+                            if self.mouse-y - self.pressed-y < -RecordDrag.lock {
+                                Recorder.lock();
+                            }
+                        }
+                    }
+                }
+                // "[lock] ↑" above it while held.
+                if Recorder.stage == RecordStage.holding: Rectangle {
+                    x: parent.width - self.width;
+                    y: -self.height - 10px;
+                    width: lock.preferred-width + 16px;
+                    height: lock.preferred-height + 8px;
+                    border-radius: 3px;
+                    background: P.side;
+                    drop-shadow-blur: 14px;
+                    drop-shadow-offset-y: 4px;
+                    drop-shadow-color: P.shadow;
+                    lock := T {
+                        text: "[lock] ↑";
+                        color: P.muted;
+                    }
+                }
+            }
         }
         // Slow mode's wait, or its rule, in the hint's place.
-        if !root.read-only && !Conversation.showing-topics: T {
+        if !root.read-only && !Conversation.showing-topics && !Recorder.busy && (root.typed != "" || Conversation.slow-wait > 0 || !Conversation.can-send-voice || Voice.busy): T {
             text: Conversation.slow-wait > 0 ? ExtraWords.slow-wait-hint(Conversation.slow-wait)
                 : Conversation.slow-limited ? ExtraWords.slow-hint(Conversation.slow-mode)
                 : (AppState.send-with-enter ? "⏎ " : "⌘⏎ ") + (Actions.bar == ComposeBar.edit ? @tr("save") : @tr("send"));

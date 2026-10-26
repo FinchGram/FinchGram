@@ -83,6 +83,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - MCP 服务端（`src/mcp/`）有一个监听 socket 的线程，每个连接再各一个。连接线程读一行、答一行；工具的活交给 UI 线程
   （`upgrade_in_event_loop`），store、TDLib 和页面都在那里，结果通过 channel 回来。一个程序能不能连也是这样问的：
   对话框问用户的时候，连接线程等着。
+- 语音输入（`src/speech/`）有麦克风的 tap，在系统的一个音频线程上跑，只把采样交出去；每次口述一个“voice”线程：到
+  OpenAI 的阻塞 WebSocket（rustls 上的 tungstenite；每次读最多等 20 毫秒，声音在两次读之间发出去），之后是整理文字的
+  请求（ureq）。它通过事件循环向 UI 线程汇报；都不是 async。
 - UI 线程上的 panic 会结束整个 app：Slint 通过 `extern "C"` 函数调进 app 的代码，panic 不能穿过这样的函数，Rust 在那里
   直接 abort，macOS 的崩溃报告里只看得到 abort()，看不到原因。所以 panic 的内容和位置先写进 settings.toml 旁边的
   `panic.log`（`src/main.rs`）：从 Dock 启动的 app 没有终端可以打印。崩溃留下什么、报告怎么读，见
@@ -198,8 +201,18 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
     话题的图标是它自定义表情对应的 emoji，综合话题是「#」。
   - 圆形视频消息（messageVideoNote）：180 px 的圆，里面是静帧、播放按钮和时长；点击就地播放，用的是和查看器同一个
     播放器（`viewer.rs`：Conversation.round-playing 指着这条消息时画面是 Viewer.frame），播放时外圈是强调色；
-    会告诉 TDLib 看过了（openMessageContent）。录语音和录视频消息 FinchGram 还没有：没有采集，也没有 Opus 编码器，
-    所以输入框的麦克风按钮是灰的。
+    会告诉 TDLib 看过了（openMessageContent）。录圆形视频消息 FinchGram 还没有：没有摄像头采集。
+  - 语音消息（messageVoiceNote；`voice.rs`，来自设计稿「秘密聊天与通话」那一轮的 B1 和 B2）：气泡里有播放按钮、28 根柱子
+    的波形（TDLib 的 5 位波形），波形同时就是播放进度，点一下跳到那里；还有时长、没听过时的小圆点、播放时的倍速
+    （1×、1.5×、2×），以及灰掉的「转文字」；终端主题写成一行方块字符。它用一个单独的、不出画面的 mpv 播放
+    （`src/player/audio.rs`），所以和媒体查看器互不抢播放器；正在播哪条、播到哪，是 Conversation 的属性，不在每一行里，
+    这样播放时各行保持不变；别人发来的语音开始播放时会告诉 TDLib 听过了（openMessageContent），和 Telegram 官方应用
+    一样，发送者能看到（updateMessageContentOpened 在每台设备上把它标为已听）。播完就停，换到别的聊天也停。录新的：按住
+    输入框的麦克风说话，松开发送，向左拖取消，向上拖锁定（之后可以删除、停止并试听、发送）；只点一下会提示要按住。录音用
+    AVAudioRecorder，存成缓存目录里的 M4A（AAC）文件（TDLib 接受 M4A 的语音消息，"audio/mp4"，不需要 Opus 编码器），
+    以 inputMessageVoiceNote 发出，带上时长和录音时测到的响度做成的波形；超过一天的录音在启动时删掉。麦克风不被允许时，
+    显示设计稿里的那条提示和去系统设置的入口。这一轮里没做的：第一次按麦克风时、系统问之前的那张说明卡片，以及正在播放的
+    语音滚出视野时出现在标题栏下的迷你播放器。
   - 联系人名片（messageContact；`contacts.rs`）：谁、号码、是否注册了 Telegram；「发消息」打开和这个人的聊天
     （没注册的换成「邀请」，把 Telegram 的邀请语复制到剪贴板：桌面发不了短信），「添加联系人」（addContact，没注册的
     按号码 importContacts），「分享」（分享面板）。
@@ -270,12 +283,18 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   切成 8 MB 的块、最多 12 条连接并发取进 `.part` 文件，停了接着来，照 vget 的做法；`mod.rs` 是 UI 线程上的页面状态、
   一个负责列目录的“servers”线程、每个在传的文件一个线程（同时两个），以及每批改动一个“changes”线程。密码进 macOS 钥匙串，服务器和下载目录进
   settings.toml；下好的照片或视频在媒体查看器里打开（`viewer.rs` 的 `view_file`）。这个页面不需要账号。
-- `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）。
+- 语音输入（`src/speech/`，[voice-input.zh-Hans.md](voice-input.zh-Hans.md)）：输入框里的 ✦（终端里是 `/voice`）。`mod.rs` 是 UI 线程上
+  一次口述的状态（空闲、在听、收尾、整理、或带原因的失败）、输入框上方那条里的文字、最后放进输入框的文字，以及
+  设置 → 通用 → 语音输入；`openai.rs` 是 OpenAI 实时转写的会话（WebSocket）、整理文字的小模型，以及检查密钥；
+  `audio.rs` 把麦克风的声音转成 24 kHz 16 位 PCM。麦克风本身归平台层（`src/platform/microphone.rs`，AVAudioEngine）；
+  用户的 OpenAI 密钥是 app 数据库里的一条凭据（见下），语言和整理开关是 settings.toml 里的 `[voice_input]`。
+- `src/player/`：用 libmpv 播放视频，画进窗口（媒体查看器的播放器）；语音消息用另一个不出画面的 mpv 播放（`audio.rs`）。
 - `src/platform/`：平台层。目前有：账号的会话列表里怎么称呼这台设备、macOS 上的透明标题栏、打开链接、剪贴板（文字和图片）；以及 macOS 上
   （设置 → 通用）关闭窗口后留在 Dock 里，即设计稿的“关闭窗口时：最小化到托盘”（点 Dock 图标重新打开窗口，退出时先让
   TDLib 关好）、菜单栏图标、开机时启动（SMAppService，macOS 13 及以上）；通过系统的 UserNotifications 框架发通知
   （只有打包成 .app 才有，`cargo run` 时没有）、Dock 图标上的未读数，以及让 Dock 图标跳一下（设置 → 通知与声音）；
-  下载页面用的选目录面板和钥匙串（WebDAV 服务器的密码）。
+  下载页面用的选目录面板和钥匙串（WebDAV 服务器的密码），以及麦克风和能不能用它的那一问：语音输入用 AVAudioEngine
+  的 tap，语音消息用 AVAudioRecorder（`microphone.rs`）。
 - `src/update.rs`：自动更新（[conventions.md](conventions.zh-Hans.md) 第 3 节）。
 - `src/settings.rs`、`src/i18n.rs`、`src/fonts.rs`（界面字体，编译进可执行文件）。
 - `src/images.rs`：图片（照片、视频封面、聊天和联系人的头像、消息里自带的小预览图）在界面线程之外解码，并缓存最近的。
@@ -285,7 +304,7 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   （`cargo test --release refresh_timing -- --ignored --nocapture`）。
 - `ui/`：`app.slint`（窗口：菜单，以及显示哪个页面）、`state.slint`、`telegram.slint` 和 `downloads.slint`（Rust 和页面共用的 global）、
   `look.slint`、`format.slint`（按界面语言写出的日期、数量和消息类型）、`widgets.slint` 和 `chat.slint`（共用的部件）、
-  `viewer.slint`（覆盖整个窗口的媒体查看器）、`pages/`，以及三套主题各自的目录。
+  `viewer.slint`（覆盖整个窗口的媒体查看器）、`voice.slint`（语音输入的状态和文字）、`pages/`，以及三套主题各自的目录。
 
 ## 多账号
 
@@ -318,15 +337,16 @@ finchgram-tdlib，一直跑着，所以每个账号的消息都会到、都会�
 
 FinchGram 自己要留的、既不是偏好设置也不是 Telegram 的东西，进它自己的数据库：settings.toml 旁边的 `finchgram.db`
 （`src/database.rs`），一个普通的 SQLite 文件，任何 SQLite 工具都能打开，因为用户的数据是用户的（维护者 2026-10-24 的
-决定；0.5.9 及以前整库用 SQLCipher 加密）。只有密码那一列是封起来的：AES-256-GCM，密钥随机生成、第一次就存进钥匙串
+决定；0.5.9 及以前整库用 SQLCipher 加密）。只有密码那一列（以及凭据的值，见下）是封起来的：AES-256-GCM，密钥随机生成、第一次就存进钥匙串
 "FinchGram" 名下（account 是“database”），只有本应用能读；封的时候绑定它所属的服务器（协议、地址、端口和账号是封印的
 附加认证数据，密文挪到写着另一台服务器的行里打不开）；app 在服务器的表单里显示密码，用户要看在那儿看。AI 访问里允许过
 的程序，每行带一个用同一把密钥算出的标签：不是 FinchGram 写的行、或事后被改过的行，都不算数；SSH 服务器的密钥、以及
 settings.toml 里的 AI 访问设置（`settings::Mcp::seal`，启动时由 src/mcp/access.rs 核对）同样带标签。TDLib 的
 数据库从 0.4.18 起也有一把自己的密钥，同样存法（account 是“tdlib”）。规矩：偏好设置进 settings.toml，它要小、要能手改；
 记录进数据库；Telegram 自己的状态归 TDLib。现在数据库里放的是下载页的服务器、它们的密码和用户是否允许改动每一台（docs/downloads.zh-Hans.md）、
-AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md），以及你信任过的 SSH 服务器密钥和信任的日期
-（docs/downloads.zh-Hans.md）；以后的东西（重启后还在的下载队列、
+AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任过的 SSH 服务器密钥和信任的日期
+（docs/downloads.zh-Hans.md），以及 app 自己的、不属于哪台服务器的凭据，每个都封到自己的名字上：语音输入的 OpenAI 密钥
+（docs/voice-input.zh-Hans.md）；以后的东西（重启后还在的下载队列、
 日志、每个聊天的设置）建的时候再加表。
 
 从 0.6.0 起表结构有编号：SQLite 自带的 `PRAGMA user_version` 存着 `LAYOUT`，每改一次表就加一，每一步在
@@ -335,7 +355,8 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md），以及你�
 这样旧版本的 app 也能打开新文件。0.5.9 及以前的文件不读：搬进那个备份文件夹，另建新文件，这是维护者定的（那天 app
 有六颗星）。表结构 2（0.6.2 之后）把密码重新封到各自的服务器上、给程序的行加了标签（之前的行没有东西能担保，一律丢掉，
 每个程序再被问一次），并给 SSH 服务器的密钥记下信任的日期。表结构 3（0.6.3 之后）给 SSH 服务器的密钥也加了标签，之前的
-行丢掉，每台 SFTP 服务器再出示一次密钥。settings 的键名改动必须带 serde alias，钥匙串条目的名字永远不改。
+行丢掉，每台 SFTP 服务器再出示一次密钥。表结构 4 给服务器加了 `allow_changes`，之前的服务器一律关；表结构 5 加了
+`credentials`，按名字存 app 自己的秘密（两个都在 0.6.3 之后）。settings 的键名改动必须带 serde alias，钥匙串条目的名字永远不改。
 
 ## 平台
 
@@ -349,16 +370,15 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md），以及你�
 
 - **通话**。TDLib 只管信令；媒体部分（tgcalls）本身就是一个大项目。
 - **别人写的插件**。先得有信任模型：谁来签名、用户批准什么、怎么隔离。
-- **语音输入**。对着输入框说话：先用用户自己的 OpenAI 密钥，之后是套餐、用户自己跑的服务、操作系统自带的识别，
-  以及在它们之间选择的路由。五步和背后的事实见 [voice-input.zh-Hans.md](voice-input.zh-Hans.md)。2026-10-21
-  定的；需要先设计。
+- **用户自己的密钥之外的语音输入**。[voice-input.zh-Hans.md](voice-input.zh-Hans.md) 的五步里第一步已经做了
+  （2026-10-25），其余的没有：FinchGram 卖的套餐、用户自己跑的服务、操作系统自带的识别，以及在它们之间选择的路由。
 
 ## 还没定的事
 
 1. **数据库加密**：0.4.18 定了。TDLib 的数据库和 app 自己的数据库都用随机密钥加密，密钥放钥匙串（见上面
    “app 自己的数据库”）。
 2. **下载的文件放哪**：2026-10-20 定了：`~/Documents/FinchGram/media_cache`，用户看得见、可以自己清（清掉的看的时候会重新取）；不设大小上限，维护者的选择。什么时候取什么、还有什么要做（提前下载、边下边播），见 [media-files.zh-Hans.md](media-files.zh-Hans.md)。
-3. **媒体播放**（媒体中心）：语音消息（Opus）、视频、GIF 和动态贴纸（WebM、Lottie）。2026-09-30 定了：用 mpv。
+3. **媒体播放**（媒体中心）：语音消息（mpv 能读的格式都行）、视频、GIF 和动态贴纸（WebM、Lottie）。2026-09-30 定了：用 mpv。
    它以 libmpv 的形式出现，跟 finchgram-tdlib 一样由 `vendor/mpv/build.sh` 从锁定的源码构建：mpv 加上 FFmpeg、
    libplacebo 和 libass（FreeType、FriBidi、HarfBuzz），全部静态链接进一个只依赖 macOS 的库；app 链接它，
    并把它放在 app 包的 Frameworks 目录里。窗口每次渲染时，mpv 在 Slint 自己的 OpenGL 上下文里把当前帧画进我们的

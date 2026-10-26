@@ -99,20 +99,23 @@ cat > "$APP/Contents/Info.plist" <<PLIST
     <key>LSMinimumSystemVersion</key><string>$MIN_MACOS</string>
     <key>LSApplicationCategoryType</key><string>public.app-category.social-networking</string>
     <key>NSHighResolutionCapable</key><true/>
+    <key>NSMicrophoneUsageDescription</key><string>FinchGram uses the microphone for voice messages, and for voice input when you use it: then what it hears goes to OpenAI under your own key, to become text.</string>
 </dict>
 </plist>
 PLIST
 
-# Sign the helper and the library first, then the app. Hardened runtime + timestamp only for a
-# Developer ID: they are for notarization.
+# Sign the helper and the library first, then the app with its entitlements (the microphone, for
+# voice input: scripts/FinchGram.entitlements). Hardened runtime + timestamp only for a Developer
+# ID: they are for notarization.
 SIGN_OPTS=()
 case "$SIGN_IDENTITY" in
   "Developer ID Application:"*) SIGN_OPTS=(--options runtime --timestamp) ;;
 esac
 codesign --force --sign "$SIGN_IDENTITY" "${SIGN_OPTS[@]+"${SIGN_OPTS[@]}"}" "$MACOS/finchgram-tdlib"
 codesign --force --sign "$SIGN_IDENTITY" "${SIGN_OPTS[@]+"${SIGN_OPTS[@]}"}" "$FRAMEWORKS/libmpv.2.dylib"
-codesign --force --sign "$SIGN_IDENTITY" "${SIGN_OPTS[@]+"${SIGN_OPTS[@]}"}" "$APP"
+codesign --force --sign "$SIGN_IDENTITY" "${SIGN_OPTS[@]+"${SIGN_OPTS[@]}"}" --entitlements "$ROOT/scripts/FinchGram.entitlements" "$APP"
 codesign --verify --deep --strict "$APP"
+codesign -d --entitlements - "$APP" 2>/dev/null | grep -q "com.apple.security.device.audio-input" || { echo "the app was signed without the microphone's entitlement" >&2; exit 1; }
 
 echo
 echo "built: $APP ($(du -sh "$APP" | cut -f1))"

@@ -27,6 +27,7 @@ pub const MPV_EVENT_END_FILE: mpv_event_id = 7;
 pub const MPV_EVENT_FILE_LOADED: mpv_event_id = 8;
 pub const MPV_EVENT_PROPERTY_CHANGE: mpv_event_id = 22;
 
+pub const MPV_END_FILE_REASON_EOF: c_int = 0;
 pub const MPV_END_FILE_REASON_ERROR: c_int = 4;
 
 #[repr(C)]

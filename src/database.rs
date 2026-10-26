@@ -3,8 +3,9 @@
 //! It holds what FinchGram keeps that is neither a preference (settings.toml is for those, and
 //! only those) nor Telegram's (that is TDLib's database): the servers of the downloads page with
 //! their passwords and whether the user allows changes on each, the programs the user has allowed
-//! or turned away at AI access, and the keys of the SSH servers the user trusted, with when. Only
-//! the password column is sealed
+//! or turned away at AI access, the keys of the SSH servers the user trusted, with when, and the
+//! app's own credentials that are no server's (the OpenAI key of voice input). Only
+//! the password column (and a credential's value) is sealed
 //! (AES-256-GCM, `cipher` below) under
 //! a random key made the first time and kept in the Keychain under FinchGram's name
 //! (platform::KEYCHAIN_SERVICE, the account "database"), where only this app reads it; every
@@ -50,7 +51,9 @@ const KEY_ACCOUNT: &str = "database";
 ///    server shows its key once more).
 /// 4 (after 0.6.3): `servers.allow_changes`, whether the user lets FinchGram delete, move, rename
 ///    and upload on the server (the design's ninth round); off for every server of before.
-pub const LAYOUT: i32 = 4;
+/// 5 (after 0.6.3): `credentials`, the app's own secrets that are no server's, each value sealed
+///    to its name: the OpenAI key of voice input (src/speech/, docs/voice-input.md).
+pub const LAYOUT: i32 = 5;
 
 /// The tables of layout 1, as 0.6.0 made them.
 const TABLES_OF_LAYOUT_1: &str = "CREATE TABLE IF NOT EXISTS servers (
@@ -301,6 +304,12 @@ fn upgrade(connection: &Connection, from: i32, key: &[u8; 32]) -> Result<(), Str
                     // server of before, until they turn it on in the form.
                     connection.execute_batch("ALTER TABLE servers ADD COLUMN allow_changes INTEGER NOT NULL DEFAULT 0;").map_err(|err| err.to_string())
                 }
+                5 => {
+                    // The app's own credentials, by name, each value sealed to its name.
+                    connection
+                        .execute_batch("CREATE TABLE IF NOT EXISTS credentials (name TEXT PRIMARY KEY, value TEXT NOT NULL);")
+                        .map_err(|err| err.to_string())
+                }
                 _ => Err(format!("no step to layout {to}")),
             }
         };
@@ -524,6 +533,60 @@ fn write_servers(connection: &Connection, servers: &[ServerRecord]) -> rusqlite:
             Err(err)
         }
     }
+}
+
+// ---- the credentials ---------------------------------------------------------------------------
+
+/// A secret of the app's own that is no server's, by its name: the OpenAI key of voice input
+/// (src/speech/, "openai_api_key"). Sealed to its name, so that a sealed text copied into a row of
+/// another name does not open there. None when there is none, or it cannot be opened.
+pub fn credential(name: &str) -> Option<String> {
+    let key = sealing_key()?;
+    match with(|connection| read_credential(connection, &key, name)) {
+        Ok(secret) => secret,
+        Err(err) => {
+            eprintln!("database: cannot read the credential {name}: {err}");
+            None
+        }
+    }
+}
+
+/// Keep `secret` under `name`, in place of what was there; an empty secret removes the row.
+pub fn save_credential(name: &str, secret: &str) -> Result<(), String> {
+    if secret.is_empty() {
+        return remove_credential(name);
+    }
+    let key = sealing_key().ok_or("the database is not open")?;
+    let sealed = cipher::seal(&key, &credential_binding(name), secret)?;
+    with(|connection| write_credential(connection, name, &sealed))
+}
+
+pub fn remove_credential(name: &str) -> Result<(), String> {
+    with(|connection| connection.execute("DELETE FROM credentials WHERE name = ?1", params![name]).map(|_| ()))
+}
+
+/// What a credential's secret is sealed to: its name.
+fn credential_binding(name: &str) -> String {
+    format!("credential\0{name}")
+}
+
+fn read_credential(connection: &Connection, key: &[u8; 32], name: &str) -> rusqlite::Result<Option<String>> {
+    let sealed: Option<String> = connection.query_row("SELECT value FROM credentials WHERE name = ?1", params![name], |row| row.get(0)).optional()?;
+    Ok(sealed.and_then(|sealed| match cipher::open(key, &credential_binding(name), &sealed) {
+        Ok(secret) if !secret.is_empty() => Some(secret),
+        Ok(_) => None,
+        Err(err) => {
+            eprintln!("database: the credential {name} cannot be opened: {err}");
+            None
+        }
+    }))
+}
+
+/// `sealed` written as it is, under `name`.
+fn write_credential(connection: &Connection, name: &str, sealed: &str) -> rusqlite::Result<()> {
+    connection
+        .execute("INSERT INTO credentials (name, value) VALUES (?1, ?2) ON CONFLICT (name) DO UPDATE SET value = excluded.value", params![name, sealed])
+        .map(|_| ())
 }
 
 // ---- the SSH servers' keys ---------------------------------------------------------------------
@@ -864,6 +927,8 @@ mod tests {
         // the server shows its key once more.
         assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 22).expect("read"), None);
         assert_eq!(connection.query_row("SELECT count(*) FROM ssh_hosts", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
+        // The credentials of layout 5 have their table, with nothing in it yet.
+        assert_eq!(connection.query_row("SELECT count(*) FROM credentials", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
         // The file as it was is in the backup folder, the password sealed as before.
         let copies: Vec<PathBuf> = std::fs::read_dir(&backup).expect("the backup folder").flatten().map(|entry| entry.path()).collect();
         assert_eq!(copies.len(), 1);
@@ -990,6 +1055,33 @@ mod tests {
         delete_ssh_host(&connection, "sb-ams.example.net", 2222).expect("forgotten");
         delete_ssh_host(&connection, "sb-ams.example.net", 2222).expect("forgotten again");
         assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 2222).expect("read"), None);
+        drop(connection);
+        let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
+    }
+
+    #[test]
+    fn a_credential_is_kept_by_its_name_and_opens_there_alone() {
+        let (path, backup) = scratch("credentials");
+        let key = a_key(11);
+        let connection = open_at(&path, &key, &backup).expect("a new file");
+        assert_eq!(read_credential(&connection, &key, "openai_api_key").expect("read"), None);
+        let sealed = cipher::seal(&key, &credential_binding("openai_api_key"), "sk-live-1234").expect("sealed");
+        write_credential(&connection, "openai_api_key", &sealed).expect("written");
+        assert_eq!(read_credential(&connection, &key, "openai_api_key").expect("read"), Some("sk-live-1234".to_string()));
+        // Written again: the one row changes.
+        let again = cipher::seal(&key, &credential_binding("openai_api_key"), "sk-live-5678").expect("sealed");
+        write_credential(&connection, "openai_api_key", &again).expect("written");
+        assert_eq!(read_credential(&connection, &key, "openai_api_key").expect("read"), Some("sk-live-5678".to_string()));
+        assert_eq!(connection.query_row("SELECT count(*) FROM credentials", [], |row| row.get::<_, i64>(0)).expect("count"), 1);
+        // The sealed text copied under another name does not open there, and under another key
+        // not at all; the column holds no key in the clear.
+        write_credential(&connection, "other", &again).expect("written");
+        assert_eq!(read_credential(&connection, &key, "other").expect("read"), None);
+        assert_eq!(read_credential(&connection, &a_key(12), "openai_api_key").expect("read"), None);
+        let stored: String = connection.query_row("SELECT value FROM credentials WHERE name = 'openai_api_key'", [], |row| row.get(0)).expect("the column");
+        assert!(stored.starts_with("v2:") && !stored.contains("sk-live"), "{stored}");
+        connection.execute("DELETE FROM credentials WHERE name = ?1", params!["openai_api_key"]).expect("removed");
+        assert_eq!(read_credential(&connection, &key, "openai_api_key").expect("read"), None);
         drop(connection);
         let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
     }

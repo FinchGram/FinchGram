@@ -1,11 +1,12 @@
 //! Video through libmpv (vendor/mpv; docs/architecture.md, "Media playback"): the media viewer's
-//! player. mpv decodes, with VideoToolbox where it can, and each time the window renders it draws
+//! player. Voice messages play through an mpv of their own, with no video (`audio`). mpv decodes, with VideoToolbox where it can, and each time the window renders it draws
 //! the current frame into an OpenGL texture of ours, inside Slint's own context (FemtoVG); the
 //! viewer shows that texture as an image (Viewer.frame). What mpv reports goes to the Viewer
 //! global: the position, playing or not, the end.
 //!
 //! Everything runs on the UI thread; mpv's own threads only ask the event loop to look.
 
+pub mod audio;
 mod mpv;
 pub mod probe;
 

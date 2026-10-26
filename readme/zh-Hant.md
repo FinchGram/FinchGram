@@ -43,10 +43,12 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
 - **三套主題。** 工作台、報紙和終端，各有淺色和深色，切換不用重新啟動。
 - **設定。** 開機時啟動、按 Enter 傳送、截圖快捷鍵、通知的聲音和預覽、兩步驟驗證、介面語言，還有更新：app 從
   GitHub Releases 自動更新，驗證不過的一律不裝。
+- **語音訊息。** 在聊天裡直接播放，帶波形、時長和 1×、1.5×、2× 倍速；聽過對方看得到，和 Telegram 官方應用程式一樣。按住麥克風錄音：放開傳送，向左拖取消，向上拖鎖定，鎖定後可以停下來先試聽再傳。
+- **語音輸入。** 在輸入框裡按一下 ✦ 然後說話：字隨著你說出現，去掉「嗯」「呃」之後進到輸入框裡，由你來傳送。用的是你自己的 OpenAI 金鑰（每小時語音約 1 美元），在設定 → 一般裡填寫；介面的每種語言都行，幾種語言混著說也行。見 [docs/voice-input.zh-Hans.md](../docs/voice-input.zh-Hans.md)。
 - **AI 助理。** Claude Desktop、Claude Code 以及其他會說 Model Context Protocol 的應用程式，可以在你允許後透過 FinchGram 讀你的聊天並代你操作：百寶箱 → AI 存取，預設關著，由你選哪些聊天、助理能不能傳訊息，應用程式第一次連線時會先問你。見 [docs/mcp.md](../docs/mcp.md)。
 - **語言。** 介面和這份 README 都有十一種語言。
 
-還沒有的：秘密聊天、語音訊息和通話、投票和排程訊息、關鍵字過濾、Windows 和 Linux。見
+還沒有的：秘密聊天和通話、投票和排程訊息、關鍵字過濾、Windows 和 Linux。見
 [接下來做什麼](../docs/architecture.md#not-now)。
 
 ## 下載
@@ -109,7 +111,7 @@ app 是一個外殼。Telegram 本身交給 TDLib，它作為一個獨立程式�
 
 FinchGram 只做 Telegram 官方應用程式做的事，不做它們禁止的事。訊息在你看到時標為已讀，對方像在任何 Telegram 應用程式裡一樣
 能看到你正在輸入和在線上，頻道裡的贊助訊息照常顯示，自毀媒體只能打開一次，來自 Telegram 的內容不會交給任何 AI，除非你在百寶箱 → AI 存取裡放一個助理進來。
-除了 Telegram 和用來更新的 GitHub，什麼都不會離開你的機器。
+除了 Telegram、用來更新的 GitHub，以及你用語音輸入時以你自己的金鑰傳給 OpenAI 的聲音，什麼都不會離開你的機器。
 
 ## 開發
 

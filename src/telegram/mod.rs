@@ -62,6 +62,7 @@ pub mod tools;
 mod topics;
 mod attachments;
 mod viewer;
+mod voice;
 
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
@@ -229,6 +230,7 @@ pub fn start(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     manage::connect(ui);
     contacts::connect(ui);
     viewer::connect_round(ui);
+    voice::connect(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {
@@ -519,6 +521,7 @@ fn enter_front() {
     actions::chat_changed(open);
     reactions::chat_changed();
     viewer::chat_changed();
+    voice::chat_changed();
     chat_info::chat_changed();
     if let Some(open) = open {
         drafts::entering(open);

@@ -3,6 +3,8 @@
 
 #[cfg(target_os = "macos")]
 mod macos;
+#[cfg(target_os = "macos")]
+mod microphone;
 
 use slint::ComponentHandle;
 
@@ -185,6 +187,93 @@ pub fn request_screen_capture() {
 pub fn open_screen_capture_settings() {
     #[cfg(target_os = "macos")]
     macos::open_screen_capture_settings();
+}
+
+/// Whether FinchGram may listen to the microphone, for voice input (src/speech/).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MicrophoneAccess {
+    Allowed,
+    /// The user said no, or the Mac's settings let nobody ask.
+    Denied,
+    /// Nobody has asked yet: the system asks the user, once.
+    Undetermined,
+}
+
+pub fn microphone_access() -> MicrophoneAccess {
+    #[cfg(target_os = "macos")]
+    return microphone::access();
+    #[cfg(not(target_os = "macos"))]
+    MicrophoneAccess::Denied
+}
+
+/// Ask the system for leave to listen: macOS asks the user once. `answered` gets the answer, on a
+/// thread of the system's.
+pub fn ask_for_microphone(answered: impl FnOnce(bool) + Send + 'static) {
+    #[cfg(target_os = "macos")]
+    microphone::ask(answered);
+    #[cfg(not(target_os = "macos"))]
+    answered(false);
+}
+
+/// Open the system's settings where the microphone is allowed.
+pub fn open_microphone_settings() {
+    #[cfg(target_os = "macos")]
+    microphone::open_settings();
+}
+
+/// A voice message being recorded into an M4A file (src/telegram/voice.rs); dropped without
+/// `finish`, the recording stops and the file goes.
+pub struct VoiceRecorder {
+    #[cfg(target_os = "macos")]
+    inner: microphone::Recorder,
+}
+
+impl VoiceRecorder {
+    pub fn start(path: &std::path::Path) -> Result<VoiceRecorder, String> {
+        #[cfg(target_os = "macos")]
+        return microphone::Recorder::start(path).map(|inner| VoiceRecorder { inner });
+        #[cfg(not(target_os = "macos"))]
+        {
+            let _ = path;
+            Err("voice messages are not built for this system yet".into())
+        }
+    }
+
+    /// How loud the microphone is now, 0 … 1.
+    pub fn level(&self) -> f32 {
+        #[cfg(target_os = "macos")]
+        return self.inner.level();
+        #[cfg(not(target_os = "macos"))]
+        0.0
+    }
+
+    /// The recording stops and its file is complete; how long it is, in seconds.
+    pub fn finish(self) -> f64 {
+        #[cfg(target_os = "macos")]
+        return self.inner.finish();
+        #[cfg(not(target_os = "macos"))]
+        0.0
+    }
+}
+
+/// The microphone, listening for as long as this is kept (voice input, src/speech/).
+pub struct Microphone {
+    #[cfg(target_os = "macos")]
+    _inner: microphone::Microphone,
+}
+
+impl Microphone {
+    /// Listen to the default input: `deliver` gets the sound, one channel at the rate it is given
+    /// with, on a thread of the system's.
+    pub fn start(deliver: impl Fn(&[f32], f64) + Send + Sync + 'static) -> Result<Microphone, String> {
+        #[cfg(target_os = "macos")]
+        return microphone::Microphone::start(deliver).map(|inner| Microphone { _inner: inner });
+        #[cfg(not(target_os = "macos"))]
+        {
+            let _ = deliver;
+            Err("voice input is not built for this system yet".into())
+        }
+    }
 }
 
 /// Capture one display (counted from 1, as the system counts them) into a picture of `format`

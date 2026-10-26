@@ -11,9 +11,11 @@ round for them ("AI 访问" in "FinchGram Desktop 页面"), in every theme.
 
 An AI assistant's app (Claude Desktop, Claude Code, Cursor: anything that speaks the Model Context
 Protocol) reads the user's chats and acts in them through the running FinchGram, with the user's own
-account. It is the one thing FinchGram does that Telegram's own apps do not. FinchGram itself calls
-no AI, indexes nothing for one and stores nothing for one: the assistant is the user's, and it
-reaches Telegram only through the tools below, with what the user allows.
+account. It is the one thing FinchGram does that Telegram's own apps do not. FinchGram itself hands
+nothing of Telegram to any AI, indexes nothing for one and stores nothing for one: the assistant is
+the user's, and it reaches Telegram only through the tools below, with what the user allows. (Voice
+input, [voice-input.md](voice-input.md), sends the user's own voice to OpenAI under the user's own
+key while they dictate, and nothing of Telegram.)
 
 The maintainer decided this on 2026-10-12 knowing clause 1.5 of Telegram's API terms, which forbids
 using data from the platform in "the development, enhancement or deployment of artificial
