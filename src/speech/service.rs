@@ -1,9 +1,10 @@
-//! The services voice input talks to, named by their API's format (docs/voice-input.md): each
-//! format's own address, model and page for keys when the user names none; how an address the user
-//! typed or pasted becomes the endpoint; and the connections, HTTP through ureq and WebSockets
-//! through tungstenite over rustls with the platform's trust store, all blocking, on the threads
-//! src/speech/ starts. Any vendor, relay or server of the user's own that speaks one of the formats
-//! can be used: the address is theirs to give.
+//! The AI vendors voice input talks to, named by their API's format (docs/voice-input.md): each
+//! format's own address and page for keys; how an address the user typed or pasted becomes the
+//! endpoint; the models a vendor offers, as it lists them (the user chooses, FinchGram never does);
+//! and the connections, HTTP through ureq and WebSockets through tungstenite over rustls with the
+//! platform's trust store, all blocking, on the threads src/speech/ starts. Any vendor, relay or
+//! server of the user's own that speaks one of the formats can be used: the address is theirs to
+//! give.
 
 use std::io::{self, ErrorKind, Read, Write};
 use std::net::{IpAddr, TcpStream, ToSocketAddrs};
@@ -16,8 +17,13 @@ use tungstenite::handshake::HandshakeError;
 use tungstenite::http::{HeaderName, HeaderValue, Uri};
 use tungstenite::{Message, WebSocket};
 
-/// The connections' formats, as settings.toml names them.
+/// The vendors' formats, as settings.toml names them.
 pub const CONNECTION_FORMATS: [&str; 5] = ["openai", "anthropic", "gemini", "dashscope", "doubao"];
+
+/// Doubao's models are the resources Volcengine sells, which its API does not list: the four its
+/// documentation names (docs/6561/1354869: streaming recognition 1.0 and 2.0, billed by the hour or
+/// by concurrency).
+pub const DOUBAO_RESOURCES: [&str; 4] = ["volc.bigasr.sauc.concurrent", "volc.bigasr.sauc.duration", "volc.seedasr.sauc.concurrent", "volc.seedasr.sauc.duration"];
 
 pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(10);
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(15);
@@ -43,6 +49,11 @@ pub enum ConnectionFormat {
 }
 
 impl ConnectionFormat {
+    /// The format of that name; none for "" (not chosen yet) or a name FinchGram does not know.
+    pub fn known(name: &str) -> Option<ConnectionFormat> {
+        CONNECTION_FORMATS.contains(&name).then(|| ConnectionFormat::from_name(name))
+    }
+
     pub fn from_name(name: &str) -> ConnectionFormat {
         match name {
             "anthropic" => ConnectionFormat::Anthropic,
@@ -105,33 +116,21 @@ impl ConnectionFormat {
     pub fn writes(self) -> bool {
         !matches!(self, ConnectionFormat::Doubao)
     }
-
-    /// The speech model when the user names none: `upload` for OpenAI's upload.
-    pub fn speech_model(self, upload: bool) -> &'static str {
-        match self {
-            ConnectionFormat::OpenAi if upload => "gpt-transcribe",
-            ConnectionFormat::DashScope => "qwen3-asr-flash-realtime",
-            // Doubao's "model" is the resource it is billed under, Seed-ASR 2.0 by the hour.
-            ConnectionFormat::Doubao => "volc.seedasr.sauc.duration",
-            _ => "gpt-live-transcribe",
-        }
-    }
-
-    /// The text model when the user names none: a small, fast one of each, able enough to put a
-    /// misheard word right (the words right come first).
-    pub fn text_model(self) -> &'static str {
-        match self {
-            ConnectionFormat::Anthropic => "claude-haiku-5-5",
-            ConnectionFormat::Gemini => "gemini-3.5-flash-lite",
-            ConnectionFormat::DashScope => "qwen-flash",
-            _ => "gpt-5-mini",
-        }
-    }
 }
 
-/// A new connection's name: the vendor's for its own address, else the host.
+/// What a vendor is asked to do: hear (speech recognition) or write (a text model, for tidying).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum Ability {
+    Hear,
+    Write,
+}
+
+/// A vendor's name when the user gives none: the vendor's own for its own address, else the host;
+/// with no format chosen, the host of the address typed, if any.
 pub fn default_label(format: &str, url: &str) -> String {
-    let format = ConnectionFormat::from_name(format);
+    let Some(format) = ConnectionFormat::known(format) else {
+        return if url.trim().is_empty() { String::new() } else { Address::parse(url, "").map(|address| address.host).unwrap_or_default() };
+    };
     match Address::parse(url, format.default_url()) {
         Ok(address) if url.trim().is_empty() || Address::parse("", format.default_url()).is_ok_and(|own| own.host == address.host) => format.vendor().to_string(),
         Ok(address) => address.host,
@@ -304,7 +303,7 @@ impl Endpoint {
     }
 }
 
-/// A speech service as a profile names it: a connection, how it hears, the model.
+/// A speech service as voice input or voice messages name it: a vendor, how it hears, the model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Speech {
     pub format: SpeechFormat,
@@ -313,8 +312,8 @@ pub struct Speech {
 }
 
 impl Speech {
-    /// `upload` is for an OpenAI connection: the recording sent at the end. None when the
-    /// connection's format cannot hear.
+    /// `upload` is for an OpenAI-compatible vendor: the recording sent at the end. None when the
+    /// vendor's format cannot hear, or no model is chosen.
     pub fn new(endpoint: Endpoint, upload: bool, model: &str) -> Option<Speech> {
         let format = match endpoint.format {
             ConnectionFormat::OpenAi if upload => SpeechFormat::OpenAiTranscriptions,
@@ -323,8 +322,11 @@ impl Speech {
             ConnectionFormat::Doubao => SpeechFormat::Doubao,
             ConnectionFormat::Anthropic | ConnectionFormat::Gemini => return None,
         };
-        let model = if model.trim().is_empty() { endpoint.format.speech_model(upload).to_string() } else { model.trim().to_string() };
-        Some(Speech { format, endpoint, model })
+        let model = model.trim();
+        if model.is_empty() {
+            return None;
+        }
+        Some(Speech { format, endpoint, model: model.to_string() })
     }
 
     pub fn official(&self) -> bool {
@@ -363,7 +365,7 @@ impl Speech {
     }
 }
 
-/// A text model as a profile names it: a connection and the model.
+/// A text model as tidying names it: a vendor and the model.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tidy {
     pub format: TidyFormat,
@@ -372,7 +374,7 @@ pub struct Tidy {
 }
 
 impl Tidy {
-    /// None when the connection's format cannot write.
+    /// None when the vendor's format cannot write, or no model is chosen.
     pub fn new(endpoint: Endpoint, model: &str) -> Option<Tidy> {
         let format = match endpoint.format {
             ConnectionFormat::OpenAi | ConnectionFormat::DashScope => TidyFormat::OpenAi,
@@ -380,8 +382,11 @@ impl Tidy {
             ConnectionFormat::Gemini => TidyFormat::Gemini,
             ConnectionFormat::Doubao => return None,
         };
-        let model = if model.trim().is_empty() { endpoint.format.text_model().to_string() } else { model.trim().to_string() };
-        Some(Tidy { format, endpoint, model })
+        let model = model.trim();
+        if model.is_empty() {
+            return None;
+        }
+        Some(Tidy { format, endpoint, model: model.to_string() })
     }
 
     pub fn official(&self) -> bool {
@@ -402,16 +407,20 @@ impl Tidy {
         self.address().http(&format!("{}/chat/completions", self.address().base(&OPENAI_ENDINGS)), "")
     }
 
-    /// Anthropic's base has no version in it (its SDKs add /v1): one pasted with it is taken too.
     pub fn anthropic(&self, endpoint: &str) -> String {
-        let base = self.address().base(&["/v1/messages", "/v1/models", "/messages", "/v1"]);
-        self.address().http(&format!("{base}/v1/{endpoint}"), "")
+        anthropic_url(self.address(), endpoint)
     }
 
     pub fn gemini_generate(&self) -> String {
         let base = gemini_base(self.address());
         self.address().http(&format!("{base}/v1beta/models/{}:generateContent", query_value(&self.model)), "")
     }
+}
+
+/// Anthropic's base has no version in it (its SDKs add /v1): one pasted with it is taken too.
+fn anthropic_url(address: &Address, endpoint: &str) -> String {
+    let base = address.base(&["/v1/messages", "/v1/models", "/messages", "/v1"]);
+    address.http(&format!("{base}/v1/{endpoint}"), "")
 }
 
 fn gemini_base(address: &Address) -> String {
@@ -531,33 +540,132 @@ pub fn post(url: &str, headers: &[(&str, String)], content_type: &str, body: Vec
     Ok((status, body))
 }
 
-/// Whether a connection answers at its address and takes the key (none for a server of one's own
-/// that asks for none): a request that costs nothing, the list of models, or for the formats that
-/// speak only realtime, the WebSocket's handshake.
+/// Whether a vendor answers at its address and takes the key (none for a server of one's own that
+/// asks for none): a request that costs nothing, its list of models; for Doubao, whose API lists
+/// none, the WebSocket's handshake under each of its resources, any of which the user may have
+/// bought.
 pub fn check_connection(endpoint: &Endpoint, key: Option<&str>) -> KeyAnswer {
     let address = &endpoint.address;
     let answer = match endpoint.format {
-        ConnectionFormat::OpenAi => get(&address.http(&format!("{}/models", address.base(&OPENAI_ENDINGS)), ""), &bearer(key), Duration::from_secs(20)),
-        ConnectionFormat::Anthropic => {
-            let tidy = Tidy::new(endpoint.clone(), "").expect("Anthropic writes");
-            get(&tidy.anthropic("models"), &super::tidy::anthropic_headers(key, endpoint.official()), Duration::from_secs(20))
-        }
+        ConnectionFormat::OpenAi => get(&address.http(&format!("{}/models", address.base(&OPENAI_ENDINGS)), ""), &bearer(key), LIST_TIMEOUT),
+        ConnectionFormat::Anthropic => get(&anthropic_url(address, "models"), &super::tidy::anthropic_headers(key, endpoint.official()), LIST_TIMEOUT),
         ConnectionFormat::Gemini => {
-            get(&address.http(&format!("{}/v1beta/models", gemini_base(address)), ""), &super::tidy::gemini_headers(key, endpoint.official()), Duration::from_secs(20))
+            get(&address.http(&format!("{}/v1beta/models", gemini_base(address)), ""), &super::tidy::gemini_headers(key, endpoint.official()), LIST_TIMEOUT)
         }
-        ConnectionFormat::DashScope => {
-            let speech = Speech::new(endpoint.clone(), false, "").expect("Model Studio hears");
-            return handshake(&speech.qwen_realtime(), &bearer(key));
-        }
+        ConnectionFormat::DashScope => get(&dashscope_models(address, "TG", 1, 1), &bearer(key), LIST_TIMEOUT),
         ConnectionFormat::Doubao => {
-            let speech = Speech::new(endpoint.clone(), false, "").expect("Doubao hears");
-            return handshake(&speech.doubao(true), &super::doubao::headers(key.unwrap_or(""), &speech.model));
+            let mut answer = KeyAnswer::Refused;
+            for resource in DOUBAO_RESOURCES {
+                let Some(speech) = Speech::new(endpoint.clone(), false, resource) else { continue };
+                match handshake(&speech.doubao(true), &super::doubao::headers(key.unwrap_or(""), resource)) {
+                    KeyAnswer::Works => return KeyAnswer::Works,
+                    KeyAnswer::Refused => {}
+                    failed => answer = failed,
+                }
+            }
+            return answer;
         }
     };
     match answer {
         Ok((status, body)) => KeyAnswer::of_status(status, &body),
         Err(err) => KeyAnswer::Failed(err),
     }
+}
+
+/// How long a vendor may take to list its models.
+const LIST_TIMEOUT: Duration = Duration::from_secs(20);
+/// How many pages of a vendor's list are read at most.
+const LIST_PAGES: u32 = 20;
+
+/// Why a vendor's models could not be listed.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ListProblem {
+    /// The vendor refused the key (401, 403).
+    Refused,
+    /// The vendor's own message, or the network's.
+    Failed(String),
+}
+
+/// The models `endpoint`'s vendor offers for `ability`, as its own API lists them, sorted: all of
+/// them, but those the vendor itself marks as for something else (Model Studio's capabilities,
+/// Gemini's generation methods). Doubao's are its documented resources.
+pub fn list_models(endpoint: &Endpoint, key: Option<&str>, ability: Ability) -> Result<Vec<String>, ListProblem> {
+    let address = &endpoint.address;
+    let mut models: Vec<String> = match endpoint.format {
+        ConnectionFormat::Doubao => DOUBAO_RESOURCES.iter().map(|resource| resource.to_string()).collect(),
+        ConnectionFormat::OpenAi => {
+            let answer = fetch(&address.http(&format!("{}/models", address.base(&OPENAI_ENDINGS)), ""), &bearer(key))?;
+            names(&answer["data"], "id")
+        }
+        ConnectionFormat::Anthropic => {
+            let answer = fetch(&format!("{}?limit=1000", anthropic_url(address, "models")), &super::tidy::anthropic_headers(key, endpoint.official()))?;
+            names(&answer["data"], "id")
+        }
+        ConnectionFormat::Gemini => {
+            let headers = super::tidy::gemini_headers(key, endpoint.official());
+            let mut models = Vec::new();
+            let mut token = String::new();
+            for _ in 0..LIST_PAGES {
+                let query = if token.is_empty() { "pageSize=1000".to_string() } else { format!("pageSize=1000&pageToken={}", query_value(&token)) };
+                let answer = fetch(&address.http(&format!("{}/v1beta/models", gemini_base(address)), &query), &headers)?;
+                for model in answer["models"].as_array().into_iter().flatten() {
+                    let generates = model["supportedGenerationMethods"].as_array().is_some_and(|methods| methods.iter().any(|method| method == "generateContent"));
+                    if let Some(name) = model["name"].as_str().filter(|_| generates) {
+                        models.push(name.trim_start_matches("models/").to_string());
+                    }
+                }
+                token = answer["nextPageToken"].as_str().unwrap_or("").to_string();
+                if token.is_empty() {
+                    break;
+                }
+            }
+            models
+        }
+        ConnectionFormat::DashScope => {
+            // Model Studio's catalog, by its own capability: realtime recognition for hearing,
+            // text generation for writing.
+            let capability = match ability {
+                Ability::Hear => "Realtime-ASR",
+                Ability::Write => "TG",
+            };
+            let mut models = Vec::new();
+            for page in 1..=LIST_PAGES {
+                let answer = fetch(&dashscope_models(address, capability, page, 100), &bearer(key))?;
+                let listed = names(&answer["output"]["models"], "model");
+                let total = answer["output"]["total"].as_u64().unwrap_or(0) as usize;
+                let empty = listed.is_empty();
+                models.extend(listed);
+                if empty || models.len() >= total {
+                    break;
+                }
+            }
+            models
+        }
+    };
+    models.sort();
+    models.dedup();
+    Ok(models)
+}
+
+/// A page of Model Studio's catalog of models with `capability`.
+fn dashscope_models(address: &Address, capability: &str, page: u32, size: u32) -> String {
+    let base = address.base(&DASHSCOPE_ENDINGS);
+    address.http(&format!("{base}/api/v1/models"), &format!("capabilities={capability}&page_no={page}&page_size={size}"))
+}
+
+/// A GET whose answer is JSON: the answer, or why not.
+fn fetch(url: &str, headers: &[(&str, String)]) -> Result<serde_json::Value, ListProblem> {
+    let (status, body) = get(url, headers, LIST_TIMEOUT).map_err(ListProblem::Failed)?;
+    match status {
+        200..=299 => serde_json::from_str(&body).map_err(|err| ListProblem::Failed(err.to_string())),
+        401 | 403 => Err(ListProblem::Refused),
+        _ => Err(ListProblem::Failed(error_message(&body).unwrap_or_else(|| format!("HTTP {status}")))),
+    }
+}
+
+/// The `field` of each item of a JSON array, where it is a string.
+fn names(items: &serde_json::Value, field: &str) -> Vec<String> {
+    items.as_array().into_iter().flatten().filter_map(|item| item[field].as_str()).map(str::to_string).filter(|name| !name.trim().is_empty()).collect()
 }
 
 /// `Authorization: Bearer key`, or nothing without a key.
@@ -722,15 +830,16 @@ mod tests {
 
     #[test]
     fn an_empty_address_is_the_formats_own_and_a_pasted_endpoint_is_taken_as_its_base() {
-        let speech = Speech::new(endpoint("openai", ""), false, "").expect("OpenAI hears");
+        let speech = Speech::new(endpoint("openai", ""), false, " gpt-live-transcribe ").expect("OpenAI hears");
         assert_eq!(speech.format, SpeechFormat::OpenAiRealtime);
         assert_eq!(speech.openai_realtime(), "wss://api.openai.com/v1/realtime?intent=transcription");
         assert_eq!(speech.model, "gpt-live-transcribe");
         assert!(speech.official());
         assert_eq!(speech.shown(), "OpenAI");
-        // The same connection, uploading.
-        let speech = Speech::new(endpoint("openai", ""), true, "").expect("OpenAI hears");
+        // The same vendor, uploading; no model chosen is no speech recognition.
+        let speech = Speech::new(endpoint("openai", ""), true, "gpt-transcribe").expect("OpenAI hears");
         assert_eq!((speech.format, speech.model.as_str()), (SpeechFormat::OpenAiTranscriptions, "gpt-transcribe"));
+        assert!(Speech::new(endpoint("openai", ""), true, " ").is_none());
         let speech = Speech::new(endpoint("openai", "https://api.groq.com/openai/v1/"), true, "whisper-large-v3").expect("hears");
         assert_eq!(speech.openai_transcriptions(), "https://api.groq.com/openai/v1/audio/transcriptions");
         assert!(!speech.official());
@@ -739,7 +848,7 @@ mod tests {
         let speech = Speech::new(endpoint("openai", "https://api.siliconflow.cn/v1/audio/transcriptions"), true, "FunAudioLLM/SenseVoiceSmall").expect("hears");
         assert_eq!(speech.openai_transcriptions(), "https://api.siliconflow.cn/v1/audio/transcriptions");
         // A relay's address, for the live model too.
-        let speech = Speech::new(endpoint("openai", "https://relay.example.com/v1"), false, "").expect("hears");
+        let speech = Speech::new(endpoint("openai", "https://relay.example.com/v1"), false, "gpt-live-transcribe").expect("hears");
         assert_eq!(speech.openai_realtime(), "wss://relay.example.com/v1/realtime?intent=transcription");
         // A server on this Mac, plainly.
         let speech = Speech::new(endpoint("openai", "http://127.0.0.1:8000/v1"), true, "Systran/faster-whisper-large-v3").expect("hears");
@@ -749,18 +858,17 @@ mod tests {
 
     #[test]
     fn qwen_and_doubao_take_their_hosts_however_pasted() {
-        let speech = Speech::new(endpoint("dashscope", ""), false, "").expect("Model Studio hears");
+        let speech = Speech::new(endpoint("dashscope", ""), false, "qwen3-asr-flash-realtime").expect("Model Studio hears");
         assert_eq!(speech.format, SpeechFormat::QwenRealtime);
         assert_eq!(speech.qwen_realtime(), "wss://dashscope-intl.aliyuncs.com/api-ws/v1/realtime?model=qwen3-asr-flash-realtime");
         assert_eq!(speech.shown(), "Alibaba Cloud");
         let speech = Speech::new(endpoint("dashscope", "wss://ws-123.ap-southeast-1.maas.aliyuncs.com/api-ws/v1/realtime?model=x"), false, "qwen3-asr-flash-realtime").expect("hears");
         assert_eq!(speech.qwen_realtime(), "wss://ws-123.ap-southeast-1.maas.aliyuncs.com/api-ws/v1/realtime?model=qwen3-asr-flash-realtime");
-        let speech = Speech::new(endpoint("dashscope", "https://dashscope.aliyuncs.com/compatible-mode/v1"), false, "").expect("hears");
+        let speech = Speech::new(endpoint("dashscope", "https://dashscope.aliyuncs.com/compatible-mode/v1"), false, "qwen3-asr-flash-realtime").expect("hears");
         assert_eq!(speech.qwen_realtime(), "wss://dashscope.aliyuncs.com/api-ws/v1/realtime?model=qwen3-asr-flash-realtime");
-        let speech = Speech::new(endpoint("doubao", ""), false, "").expect("Doubao hears");
+        let speech = Speech::new(endpoint("doubao", ""), false, "volc.seedasr.sauc.duration").expect("Doubao hears");
         assert_eq!(speech.doubao(true), "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async");
         assert_eq!(speech.doubao(false), "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_nostream");
-        assert_eq!(speech.model, "volc.seedasr.sauc.duration");
         let speech = Speech::new(endpoint("doubao", "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel"), false, "volc.bigasr.sauc.duration").expect("hears");
         assert_eq!(speech.doubao(true), "wss://openspeech.bytedance.com/api/v3/sauc/bigmodel_async");
         // A model's name goes into the address only as a name.
@@ -770,37 +878,57 @@ mod tests {
 
     #[test]
     fn the_text_formats_build_their_endpoints_and_model_studio_tidies_in_its_compatible_mode() {
-        let tidy = Tidy::new(endpoint("openai", ""), "").expect("OpenAI writes");
+        let tidy = Tidy::new(endpoint("openai", ""), "gpt-5-mini").expect("OpenAI writes");
         assert_eq!((tidy.chat_completions().as_str(), tidy.model.as_str()), ("https://api.openai.com/v1/chat/completions", "gpt-5-mini"));
-        let tidy = Tidy::new(endpoint("dashscope", ""), "").expect("Model Studio writes");
+        assert!(Tidy::new(endpoint("openai", ""), "").is_none());
+        let tidy = Tidy::new(endpoint("dashscope", ""), "qwen-flash").expect("Model Studio writes");
         assert_eq!((tidy.format, tidy.model.as_str()), (TidyFormat::OpenAi, "qwen-flash"));
         assert_eq!(tidy.chat_completions(), "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions");
         let tidy = Tidy::new(endpoint("dashscope", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"), "qwen-plus").expect("writes");
         assert_eq!(tidy.chat_completions(), "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions");
-        let tidy = Tidy::new(endpoint("anthropic", ""), "").expect("Anthropic writes");
-        assert_eq!((tidy.anthropic("messages").as_str(), tidy.model.as_str()), ("https://api.anthropic.com/v1/messages", "claude-haiku-5-5"));
+        let tidy = Tidy::new(endpoint("anthropic", ""), "claude-haiku-5-5").expect("Anthropic writes");
+        assert_eq!(tidy.anthropic("messages"), "https://api.anthropic.com/v1/messages");
         // A relay's, given with the version, and a vendor's under a path.
-        assert_eq!(Tidy::new(endpoint("anthropic", "https://relay.example.com/v1"), "").expect("writes").anthropic("messages"), "https://relay.example.com/v1/messages");
-        assert_eq!(Tidy::new(endpoint("anthropic", "https://api.deepseek.com/anthropic"), "").expect("writes").anthropic("messages"), "https://api.deepseek.com/anthropic/v1/messages");
-        let tidy = Tidy::new(endpoint("gemini", ""), "").expect("Gemini writes");
+        assert_eq!(Tidy::new(endpoint("anthropic", "https://relay.example.com/v1"), "m").expect("writes").anthropic("messages"), "https://relay.example.com/v1/messages");
+        assert_eq!(Tidy::new(endpoint("anthropic", "https://api.deepseek.com/anthropic"), "m").expect("writes").anthropic("messages"), "https://api.deepseek.com/anthropic/v1/messages");
+        let tidy = Tidy::new(endpoint("gemini", ""), "gemini-3.5-flash-lite").expect("Gemini writes");
         assert_eq!(tidy.gemini_generate(), "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent");
         let tidy = Tidy::new(endpoint("gemini", "https://generativelanguage.googleapis.com/v1beta/"), "gemini-3.8-flash").expect("writes");
         assert_eq!(tidy.gemini_generate(), "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent");
         // What a format cannot do, it is not asked.
-        assert!(Tidy::new(endpoint("doubao", ""), "").is_none());
-        assert!(Speech::new(endpoint("anthropic", ""), false, "").is_none() && Speech::new(endpoint("gemini", ""), false, "").is_none());
+        assert!(Tidy::new(endpoint("doubao", ""), "m").is_none());
+        assert!(Speech::new(endpoint("anthropic", ""), false, "m").is_none() && Speech::new(endpoint("gemini", ""), false, "m").is_none());
         assert!(ConnectionFormat::DashScope.hears() && ConnectionFormat::DashScope.writes());
         assert!(ConnectionFormat::Doubao.hears() && !ConnectionFormat::Doubao.writes());
         assert!(!ConnectionFormat::Anthropic.hears() && ConnectionFormat::Anthropic.writes());
     }
 
     #[test]
-    fn a_new_connection_is_named_for_its_vendor_or_its_host() {
+    fn a_vendor_unnamed_is_named_for_itself_or_its_host_and_a_format_is_known_or_none() {
         assert_eq!(default_label("dashscope", ""), "Alibaba Cloud");
         assert_eq!(default_label("openai", "https://api.openai.com/v1"), "OpenAI");
         assert_eq!(default_label("openai", "https://relay.example.com/v1"), "relay.example.com");
         assert_eq!(default_label("doubao", "not an address"), "Doubao");
+        // No format chosen yet: the host typed, or nothing.
+        assert_eq!(default_label("", ""), "");
+        assert_eq!(default_label("", "https://relay.example.com/v1"), "relay.example.com");
         assert_eq!(Endpoint::new("doubao", "", " 豆包语音 ").map(|endpoint| endpoint.label), Ok("豆包语音".to_string()));
+        assert_eq!(ConnectionFormat::known("gemini"), Some(ConnectionFormat::Gemini));
+        assert_eq!((ConnectionFormat::known(""), ConnectionFormat::known("whisper")), (None, None));
+    }
+
+    #[test]
+    fn model_lists_are_read_as_each_vendor_gives_them() {
+        let openai = serde_json::json!({ "object": "list", "data": [{ "id": "gpt-transcribe" }, { "id": "" }, { "id": "whisper-1" }] });
+        assert_eq!(names(&openai["data"], "id"), vec!["gpt-transcribe", "whisper-1"]);
+        let dashscope = serde_json::json!({ "output": { "total": 1, "models": [{ "model": "qwen3-asr-flash-realtime", "name": "Qwen3-ASR-Flash-Realtime" }] } });
+        assert_eq!(names(&dashscope["output"]["models"], "model"), vec!["qwen3-asr-flash-realtime"]);
+        assert!(names(&serde_json::json!({}), "id").is_empty());
+        let address = Address::parse("", ConnectionFormat::DashScope.default_url()).expect("Model Studio's own");
+        assert_eq!(dashscope_models(&address, "Realtime-ASR", 2, 100), "https://dashscope-intl.aliyuncs.com/api/v1/models?capabilities=Realtime-ASR&page_no=2&page_size=100");
+        // Doubao's list is its resources, with no request.
+        let doubao = Endpoint::new("doubao", "", "").expect("Doubao's own");
+        assert_eq!(list_models(&doubao, None, Ability::Hear), Ok(DOUBAO_RESOURCES.iter().map(|resource| resource.to_string()).collect::<Vec<_>>()));
     }
 
     #[test]

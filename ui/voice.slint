@@ -13,10 +13,10 @@ import { Icon, Spinner } from "widgets.slint";
 // (tidying), or it stopped, and why (failed). Idle: nothing shows but the microphone.
 export enum VoiceState { idle, listening, finishing, tidying, failed }
 
-// Why a dictation stopped, or could not start. no-service: no connection chosen for the main
-// language's speech recognition; bad-address: its address is not one FinchGram can use; service:
-// the service's own message.
-export enum VoiceProblem { none, no-service, no-key, microphone-denied, no-microphone, refused-key, quota, network, service, bad-address, nothing-heard }
+// Why a dictation stopped, or could not start. no-service: no AI vendor chosen for voice input;
+// no-mode: none chosen for how an OpenAI-compatible vendor hears; no-model: no model chosen;
+// bad-address: the vendor's address is not one FinchGram can use; service: the vendor's own message.
+export enum VoiceProblem { none, no-service, no-mode, no-model, no-key, microphone-denied, no-microphone, refused-key, quota, network, service, bad-address, nothing-heard }
 
 // What a service said when last checked: its address and its key (malformed: the key typed is not
 // one).
@@ -35,10 +35,10 @@ export struct VoiceLanguageRow {
     languages: [VoiceLanguage],
 }
 
-// A connection the user added, as the panel lists it: its id, its name, its format ("openai",
-// "anthropic", "gemini", "dashscope", "doubao"), its address's host ("" when the address is not
-// one), and its key's letters.
-export struct VoiceConnectionRow {
+// An AI vendor the user added, as the panel lists it: its id, its name ("" when it has none yet),
+// its format ("openai", "anthropic", "gemini", "dashscope", "doubao"; "" until chosen), its
+// address's host (or the address as typed when it is not one), and its key's letters.
+export struct VoiceVendorRow {
     id: string,
     label: string,
     format: string,
@@ -47,18 +47,15 @@ export struct VoiceConnectionRow {
     key-hint: string,
 }
 
-// A connection an ability may take, by its id ("" for the voice messages' default, the speech
-// recognition's), its name, chosen or not.
-export struct VoiceChoice {
+// One item of a dropdown: an AI vendor (its id, its name) or a model (its name, twice).
+export struct VoiceItem {
     id: string,
     label: string,
-    on: bool,
 }
 
-// A line of them, as the panel lays them out.
-export struct VoiceChoiceRow {
-    choices: [VoiceChoice],
-}
+// A feature's models, as its AI vendor lists them: none asked for (no vendor chosen, or its
+// address being typed), asked for, listed, listed but none, or why not.
+export enum ModelsState { none, loading, listed, empty, need-key, refused, failed }
 
 export global Voice {
     in-out property <VoiceState> state;
@@ -109,51 +106,66 @@ export global Voice {
     callback cancel-adding();
     callback add-language(string);
     callback remove-language();
-    // The connections, and the one open for editing (by id, "" for none) with its fields: what is
+    // The AI vendors, and the one open for editing (by id, "" for none) with its fields: what is
     // typed into its boxes are their own properties, so that typing is never interrupted.
-    in-out property <[VoiceConnectionRow]> connections;
-    in-out property <string> open-connection;
-    in-out property <string> connection-label;
-    in-out property <string> connection-url;
-    in-out property <string> connection-format;
-    in-out property <string> connection-url-placeholder;
-    in-out property <int> connection-url-problem;       // 0 none, 1 not an address, 2 a name and password, 3 plain http
-    in-out property <bool> connection-has-key;
-    in-out property <string> connection-key-hint;
-    in-out property <bool> connection-official;         // the vendor's own address: the link to its keys shows
-    in-out property <string> connection-shown;          // its name, for what the check says
-    in-out property <KeyCheck> connection-check;
-    in-out property <string> connection-check-detail;
-    callback add-connection();
-    callback toggle-connection(string);
-    callback edit-connection-label(string);
-    callback edit-connection-url(string);
-    callback set-connection-format(string);
-    callback check-connection();                        // the address typed is done: ask the service
-    callback save-connection-key(string);
-    callback remove-connection-key();
-    callback remove-connection();
+    in-out property <[VoiceVendorRow]> vendors;
+    in-out property <string> open-vendor;
+    in-out property <string> vendor-label;
+    in-out property <string> vendor-url;
+    in-out property <string> vendor-format;
+    in-out property <string> vendor-url-placeholder;
+    in-out property <int> vendor-url-problem;           // 0 none, 1 not an address, 2 a name and password, 3 plain http
+    in-out property <bool> vendor-has-key;
+    in-out property <string> vendor-key-hint;
+    in-out property <bool> vendor-official;             // the vendor's own address: the link to its keys shows
+    in-out property <string> vendor-shown;              // its name, for what the check says
+    in-out property <KeyCheck> vendor-check;
+    in-out property <string> vendor-check-detail;
+    callback add-vendor();
+    callback toggle-vendor(string);
+    callback edit-vendor-label(string);
+    callback edit-vendor-url(string);
+    callback set-vendor-format(string);
+    callback check-vendor();                            // the address typed is done: ask the vendor
+    callback save-vendor-key(string);
+    callback remove-vendor-key();
+    callback remove-vendor();
     callback open-key-page();                           // the vendor's page of API keys, in the browser
-    // The main language in use's abilities, each a connection and a model: the speech recognition
-    // (an OpenAI connection's way, "realtime" or "upload"; the words to know), the tidying, and
-    // the voice messages' own.
-    in-out property <[VoiceChoiceRow]> speech-choices;
-    in-out property <string> speech-format;             // the chosen connection's format, "" for none
-    in-out property <string> speech-mode;
-    in-out property <string> speech-model;
-    in-out property <string> speech-model-placeholder;
+    // The three AI features, each with its AI vendor and its model, chosen from lists; nothing is
+    // chosen until the user chooses: voice input ("speech"; how an OpenAI-compatible vendor hears,
+    // "realtime" or "upload"; the words to know), tidying ("tidy"), voice messages ("messages").
+    // A feature's vendors are the ones that can do it; its models are its vendor's, as listed,
+    // narrowed by what is typed in the list's search.
+    in-out property <[VoiceItem]> speech-vendors;
+    in-out property <string> speech-vendor;             // the chosen vendor's id, "" for none
+    in-out property <string> speech-vendor-label;
+    in-out property <string> speech-format;             // the chosen vendor's format, "" for none
+    in-out property <string> speech-mode;               // "" for none chosen
+    in-out property <[VoiceItem]> speech-models;
+    in-out property <string> speech-model;              // "" for none chosen
+    in-out property <ModelsState> speech-models-state;
+    in-out property <string> speech-models-detail;
     in-out property <string> keywords;                  // the words to know, as typed
-    in-out property <bool> tidy: true;
-    in-out property <[VoiceChoiceRow]> tidy-choices;
+    in-out property <bool> tidy;
+    in-out property <[VoiceItem]> tidy-vendors;
+    in-out property <string> tidy-vendor;
+    in-out property <string> tidy-vendor-label;
+    in-out property <[VoiceItem]> tidy-models;
     in-out property <string> tidy-model;
-    in-out property <string> tidy-model-placeholder;
+    in-out property <ModelsState> tidy-models-state;
+    in-out property <string> tidy-models-detail;
     in-out property <bool> transcribe-messages;
-    in-out property <[VoiceChoiceRow]> message-choices;
+    in-out property <[VoiceItem]> messages-vendors;
+    in-out property <string> messages-vendor;
+    in-out property <string> messages-vendor-label;
+    in-out property <[VoiceItem]> messages-models;
     in-out property <string> messages-model;
-    in-out property <string> messages-model-placeholder;
-    callback choose(string, string);                    // an ability ("speech", "tidy", "messages") and a connection
+    in-out property <ModelsState> messages-models-state;
+    in-out property <string> messages-models-detail;
+    callback choose-vendor(string, string);             // a feature, a vendor's id
+    callback choose-model(string, string);              // a feature, a model
+    callback search-models(string, string);             // a feature, what is typed in its list's search
     callback set-mode(string);
-    callback edit-model(string, string);
     callback edit-keywords(string);
     callback set-tidy(bool);
     callback set-transcribe-messages(bool);
@@ -759,7 +771,10 @@ export global VoiceWords {
     // A voice message's words as they show under it, or why there are none.
     public pure function transcript(note: VoiceNote) -> string {
         if note.transcript-problem == TranscriptProblem.premium {
-            return @tr("Telegram transcribes voice messages with Premium, or a few times a week without it. Your own speech service can do it too: Toolbox → AI → Voice input.");
+            return @tr("Telegram transcribes voice messages with Premium, or a few times a week without it. Your own AI vendor can do it too: Toolbox → AI → Voice input.");
+        }
+        if note.transcript-problem == TranscriptProblem.not-set-up {
+            return @tr("Voice messages have no AI vendor or model yet: choose them in Toolbox → AI → Voice input.");
         }
         if note.transcript-problem == TranscriptProblem.too-long { return @tr("Too long for Telegram to transcribe."); }
         if note.transcript-problem == TranscriptProblem.failed { return @tr("Could not transcribe it: {0}", note.transcript-detail); }
@@ -795,20 +810,22 @@ export global VoiceWords {
     public pure function cancel() -> string { return @tr("Cancel"); }
     // Why it stopped.
     public pure function problem() -> string {
-        if Voice.problem == VoiceProblem.no-service { return @tr("No speech recognition is set up yet: choose a connection for it in Voice input."); }
+        if Voice.problem == VoiceProblem.no-service { return @tr("Voice input has no AI vendor yet: choose one in Voice input."); }
+        if Voice.problem == VoiceProblem.no-mode { return @tr("Voice input does not know yet how to hear: choose it in Voice input."); }
+        if Voice.problem == VoiceProblem.no-model { return @tr("Voice input has no model yet: choose one in Voice input."); }
         if Voice.problem == VoiceProblem.no-key { return @tr("Voice input needs your API key for {0}.", Voice.service); }
         if Voice.problem == VoiceProblem.microphone-denied { return @tr("FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."); }
         if Voice.problem == VoiceProblem.no-microphone { return @tr("No microphone could be opened: {0}", Voice.detail); }
         if Voice.problem == VoiceProblem.refused-key { return @tr("{0} refused the key.", Voice.service); }
         if Voice.problem == VoiceProblem.quota { return @tr("{0} says the key is out of credit or used too fast: {1}", Voice.service, Voice.detail); }
         if Voice.problem == VoiceProblem.network { return @tr("Could not reach {0}: {1}", Voice.service, Voice.detail); }
-        if Voice.problem == VoiceProblem.bad-address { return @tr("The speech service's address in Voice input is not one FinchGram can use."); }
+        if Voice.problem == VoiceProblem.bad-address { return @tr("The AI vendor's address in Voice input is not one FinchGram can use."); }
         if Voice.problem == VoiceProblem.nothing-heard { return @tr("Nothing was heard. Is the right microphone chosen in System Settings → Sound?"); }
         return @tr("{0} said: {1}", Voice.service, Voice.detail);
     }
     // The problem's button; "" for none.
     public pure function action() -> string {
-        if Voice.problem == VoiceProblem.no-service { return @tr("Set up"); }
+        if Voice.problem == VoiceProblem.no-service || Voice.problem == VoiceProblem.no-mode || Voice.problem == VoiceProblem.no-model { return @tr("Set up"); }
         if Voice.problem == VoiceProblem.no-key { return @tr("Add key"); }
         if Voice.problem == VoiceProblem.refused-key { return @tr("Change key"); }
         if Voice.problem == VoiceProblem.bad-address { return @tr("Change address"); }
@@ -817,27 +834,22 @@ export global VoiceWords {
     }
 
     // The toolbox's Voice input panel.
-    public pure function switch-title() -> string { return @tr("Use voice input"); }
-    public pure function switch-note() -> string { return @tr("Puts the sparkle in every chat's composer; when off, nothing goes to any service"); }
-    public pure function main-language() -> string { return @tr("Main language"); }
-    public pure function main-language-note() -> string {
-        return @tr("The language you mostly speak; words of other languages mixed in are kept as you say them. Each main language picks its own connections. While you speak, a click on the language in the strip takes the next one.");
+    public pure function about() -> string {
+        return @tr("Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the AI vendor you choose below, under your own key, and nothing else does. FinchGram keeps no recording.");
     }
-    public pure function add-language() -> string { return @tr("Add"); }
-    public pure function remove-language(name: string) -> string { return @tr("Remove {0}", name); }
-    public pure function speech-section(name: string) -> string { return @tr("Speech recognition · {0}", name); }
-    public pure function tidy-section(name: string) -> string { return @tr("Tidying · {0}", name); }
-    public pure function api-format() -> string { return @tr("API format"); }
-    // The connections.
-    public pure function connections() -> string { return @tr("Connections"); }
-    public pure function connections-note() -> string {
-        return @tr("Your services, each a name, an API format, an address and a key. Each ability below takes one of them, and one connection can serve several.");
+    // The AI vendors.
+    public pure function vendors() -> string { return @tr("AI vendors"); }
+    public pure function vendors-note() -> string {
+        return @tr("Your AI vendors, each a name, an API format, an address and a key. Each feature below chooses one of them, and one AI vendor can serve several.");
     }
-    public pure function add-connection() -> string { return @tr("Add a connection"); }
+    public pure function add-vendor() -> string { return @tr("Add an AI vendor"); }
+    public pure function new-vendor() -> string { return @tr("New AI vendor"); }
+    public pure function remove-vendor() -> string { return @tr("Remove this AI vendor and its key"); }
+    public pure function no-format() -> string { return @tr("No API format chosen yet"); }
     public pure function name() -> string { return @tr("Name"); }
     public pure function name-note() -> string { return @tr("What you call it, so that you know it when you choose."); }
-    public pure function remove-connection() -> string { return @tr("Remove this connection and its key"); }
     public pure function no-key() -> string { return @tr("no key"); }
+    public pure function api-format() -> string { return @tr("API format"); }
     // A format's name on its chip and in the list.
     public pure function format-name(format: string) -> string {
         if format == "anthropic" { return "Anthropic"; }
@@ -848,6 +860,7 @@ export global VoiceWords {
     }
     // What a format can do, under its chips.
     public pure function format-note(format: string) -> string {
+        if format == "" { return @tr("The API your AI vendor speaks: choose one."); }
         if format == "anthropic" { return @tr("Tidying: Claude's Messages API, Anthropic's and the relays' and vendors' that speak it."); }
         if format == "gemini" { return @tr("Tidying: Google's Gemini API."); }
         if format == "dashscope" { return @tr("Speech recognition (Qwen-ASR, strong in Chinese and its dialects) and tidying (Qwen), one key for both."); }
@@ -876,51 +889,71 @@ export global VoiceWords {
     public pure function save() -> string { return @tr("Save"); }
     public pure function remove() -> string { return @tr("Remove"); }
     public pure function get-key(vendor: string) -> string { return @tr("Get a key from {0}", vendor); }
-    // What the last check of the open connection said.
+    // What the last check of the open vendor said.
     public pure function check-text() -> string {
-        if Voice.connection-check == KeyCheck.malformed { return @tr("That does not look like an API key."); }
-        if Voice.connection-check == KeyCheck.checking { return @tr("Checking with {0}…", Voice.connection-shown); }
-        if Voice.connection-check == KeyCheck.works {
-            return Voice.connection-has-key ? @tr("{0} answers and takes the key.", Voice.connection-shown) : @tr("{0} answers.", Voice.connection-shown);
+        if Voice.vendor-check == KeyCheck.malformed { return @tr("That does not look like an API key."); }
+        if Voice.vendor-check == KeyCheck.checking { return @tr("Checking with {0}…", Voice.vendor-shown); }
+        if Voice.vendor-check == KeyCheck.works {
+            return Voice.vendor-has-key ? @tr("{0} answers and takes the key.", Voice.vendor-shown) : @tr("{0} answers.", Voice.vendor-shown);
         }
-        if Voice.connection-check == KeyCheck.refused { return @tr("{0} refused the key.", Voice.connection-shown); }
-        if Voice.connection-check == KeyCheck.failed { return @tr("Could not check: {0}", Voice.connection-check-detail); }
+        if Voice.vendor-check == KeyCheck.refused { return @tr("{0} refused the key.", Voice.vendor-shown); }
+        if Voice.vendor-check == KeyCheck.failed { return @tr("Could not check: {0}", Voice.vendor-check-detail); }
         return "";
     }
     // Faint, a warning, or a good word: what the check deserves.
     public pure function check-tone() -> int {
-        if Voice.connection-check == KeyCheck.works { return 2; }
-        if Voice.connection-check == KeyCheck.malformed || Voice.connection-check == KeyCheck.refused || Voice.connection-check == KeyCheck.failed { return 1; }
+        if Voice.vendor-check == KeyCheck.works { return 2; }
+        if Voice.vendor-check == KeyCheck.malformed || Voice.vendor-check == KeyCheck.refused || Voice.vendor-check == KeyCheck.failed { return 1; }
         return 0;
     }
-    // The abilities.
-    public pure function connection() -> string { return @tr("Connection"); }
-    public pure function none-can() -> string { return @tr("No connection can do this yet: add one above."); }
-    public pure function same-as-speech() -> string { return @tr("Same as speech recognition"); }
-    public pure function choice-label(choice: VoiceChoice) -> string { return choice.id == "" ? same-as-speech() : choice.label; }
+    // The features.
+    public pure function switch-title() -> string { return @tr("Use voice input"); }
+    public pure function switch-note() -> string { return @tr("Puts the sparkle in every chat's composer; when off, nothing goes to any service"); }
+    public pure function main-language() -> string { return @tr("Main language"); }
+    public pure function main-language-note() -> string {
+        return @tr("The language you mostly speak, which tells the AI vendor what it hears; words of other languages mixed in are kept as you say them. While you speak, a click on the language in the strip takes the next one.");
+    }
+    public pure function add-language() -> string { return @tr("Add"); }
+    public pure function remove-language(name: string) -> string { return @tr("Remove {0}", name); }
+    public pure function ai-vendor() -> string { return @tr("AI vendor"); }
+    public pure function choose-vendor() -> string { return @tr("Choose an AI vendor"); }
+    public pure function none-can() -> string { return @tr("No AI vendor can do this yet: add one above."); }
     public pure function mode() -> string { return @tr("How it hears"); }
     public pure function mode-realtime() -> string { return @tr("As you speak"); }
     public pure function mode-upload() -> string { return @tr("When you are done"); }
     public pure function mode-note(mode: string) -> string {
-        return mode == "upload"
-            ? @tr("The recording goes up when you are done: what most relays and servers of your own take.")
-            : @tr("Words show as you speak, through OpenAI's Realtime API.");
+        if mode == "upload" { return @tr("The recording goes up when you are done: what most relays and servers of your own take."); }
+        if mode == "realtime" { return @tr("Words show as you speak, through OpenAI's Realtime API."); }
+        return @tr("Words as you speak, through OpenAI's Realtime API; or the recording when you are done, which most relays and servers of your own take.");
     }
     public pure function model() -> string { return @tr("Model"); }
+    public pure function choose-model() -> string { return @tr("Choose a model"); }
     public pure function model-note(format: string) -> string {
-        return format == "doubao" ? @tr("For Doubao, the resource ID of what you bought.") : @tr("Empty for the format's own.");
+        return format == "doubao" ? @tr("Volcengine's resources, as its documentation names them: choose the one you bought.") : "";
+    }
+    public pure function search() -> string { return @tr("Search"); }
+    public pure function nothing-matches() -> string { return @tr("Nothing matches."); }
+    // Under a feature's models: what its AI vendor said of them.
+    public pure function models-note(state: ModelsState, vendor: string, detail: string) -> string {
+        if state == ModelsState.loading { return @tr("Asking {0} for its models…", vendor); }
+        if state == ModelsState.need-key { return @tr("Add the key of {0} above to see its models.", vendor); }
+        if state == ModelsState.refused { return @tr("{0} refused the key.", vendor); }
+        if state == ModelsState.failed { return @tr("Could not list the models of {0}: {1}", vendor, detail); }
+        if state == ModelsState.empty { return @tr("{0} lists no models for this.", vendor); }
+        return "";
+    }
+    public pure function models-tone(state: ModelsState) -> int {
+        return state == ModelsState.refused || state == ModelsState.failed ? 1 : 0;
     }
     public pure function keywords() -> string { return @tr("Words to know"); }
     public pure function keywords-note() -> string { return @tr("Names and terms you often say, separated by commas: the service listens for them, so they come out right."); }
     public pure function keywords-placeholder() -> string { return @tr("Names, products, terms"); }
+    public pure function tidy-section() -> string { return @tr("Tidying"); }
     public pure function tidy() -> string { return @tr("Tidy the words"); }
-    public pure function tidy-note() -> string { return @tr("A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."); }
+    public pure function tidy-note() -> string { return @tr("A model of your choice takes um, uh and repeated words out of what voice input heard, and sets the punctuation; it never translates."); }
     public pure function messages-section() -> string { return @tr("Voice messages"); }
-    public pure function transcribe-messages() -> string { return @tr("Transcribe voice messages with your own service"); }
+    public pure function transcribe-messages() -> string { return @tr("Transcribe voice messages with your AI vendor"); }
     public pure function transcribe-messages-note() -> string {
-        return @tr("Transcribe under a voice message asks Telegram first, which needs Premium or one of its few free tries a week. When Telegram cannot, this sends the message to your speech service: someone else's voice, to a service of your choosing. Off unless you turn it on.");
-    }
-    public pure function about() -> string {
-        return @tr("Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the speech service you choose below, under your own key, and nothing else does. FinchGram keeps no recording.");
+        return @tr("Transcribe under a voice message then sends it to the AI vendor chosen here instead of Telegram: someone else's voice, to a service of your choosing. The words are kept nowhere. Off unless you turn it on.");
     }
 }

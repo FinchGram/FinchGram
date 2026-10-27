@@ -2242,6 +2242,7 @@ impl Store {
             (Some(OwnTranscript::Pending), _) => (String::new(), true, TranscriptProblem::None, String::new()),
             (Some(OwnTranscript::Text(text)), _) => (text.clone(), false, TranscriptProblem::None, String::new()),
             (Some(OwnTranscript::Failed(why)), _) => (String::new(), false, TranscriptProblem::Failed, why.clone()),
+            (Some(OwnTranscript::NotSetUp), _) => (String::new(), false, TranscriptProblem::NotSetUp, String::new()),
             (None, Some(api::SpeechRecognitionResult::Pending { partial_text })) => (partial_text.clone(), true, TranscriptProblem::None, String::new()),
             (None, Some(api::SpeechRecognitionResult::Text { text })) => (text.clone(), false, TranscriptProblem::None, String::new()),
             (None, Some(api::SpeechRecognitionResult::Error { error })) => match Refusal::of(&error.message) {
@@ -2907,6 +2908,9 @@ pub enum OwnTranscript {
     Text(String),
     /// Why not, in the service's words.
     Failed(String),
+    /// Transcribing is the user's vendor's, but no vendor or model is chosen (or a vendor's own
+    /// address has no key).
+    NotSetUp,
 }
 
 /// Why Telegram did not transcribe a voice message.

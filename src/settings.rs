@@ -55,64 +55,83 @@ pub struct Settings {
     /// The toolbox (src/toolbox.rs): which tools are pinned to the activity bar, in the
     /// toolbox's order; one list for the three themes.
     pub toolbox: Toolbox,
-    /// Voice input, a tool of the toolbox's AI category (src/speech/, docs/voice-input.md): the
-    /// user speaks, and the words go into the composer, through their own OpenAI key. The key
-    /// itself is a credential and lives in the database (database::credential), never here.
+    /// Voice input, a tool of the toolbox's AI category (src/speech/, docs/voice-input.md): the AI
+    /// vendors the user added, and the three AI features that use them (voice input, tidying its
+    /// words, transcribing voice messages). The vendors' keys are credentials in the database
+    /// (database::credential), never here.
     pub voice_input: VoiceInput,
 }
 
-/// Voice input's own settings (src/speech/, docs/voice-input.md): the switch; the connections the
-/// user added, each a name, an API format and an address (its key is the database's); the main
-/// language spoken now, and for each main language which connection hears it and which tidies the
-/// words, with which model; and which connection transcribes voice messages. Any vendor, relay or
-/// server of the user's own that speaks one of the formats can be a connection. The keys are
-/// credentials in the database (`voice_input.connection.<id>`), never here.
+/// Voice input's own settings (src/speech/, docs/voice-input.md): the AI vendors the user added,
+/// each a name, an API format and an address (its key is the database's); then three AI features,
+/// each with its own switch, its AI vendor and its model, chosen by the user and by nobody else:
+/// nothing is chosen until they choose (the maintainer's word of 2026-10-26). Voice input also has
+/// the main languages, which only tell its vendor what is spoken, how an OpenAI-compatible vendor
+/// hears, and the words to know. The keys are credentials in the database
+/// (`voice_input.connection.<id>`, named when the vendors were called connections), never here.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct VoiceInput {
-    /// The tool is on: the sparkle shows in the composer. Off until the user turns it on in the
-    /// toolbox. A file written before the switch existed (0.7.0) has none, and voice input is on
-    /// there when a key was kept (src/speech/ decides at the start).
+    /// Voice input itself, the tool's switch: on, the sparkle shows in the composer. Off until the
+    /// user turns it on. A file written before the switch existed (0.7.0) has none, and voice input
+    /// is on there when a key was kept (src/speech/ decides at the start).
     pub enabled: Option<bool>,
-    /// The main language dictated now, one of the profiles' ("auto", "en", "zh-cn", …).
+    /// The main language dictated now, one of `main_languages`.
     pub language: String,
-    /// A voice message the user asks to transcribe goes to their own speech service when
-    /// Telegram's own transcription cannot be had: that hands Telegram's content to a service of
-    /// the user's choosing (docs/voice-input.md), so it is off until the user turns it on.
+    /// The main languages the user speaks, in the order they were added: "auto" (any language) or
+    /// one of the UI's languages by the codes speech services take ("en", "zh-cn", "zh-tw", "ja",
+    /// …). They only tell the vendor what is spoken; words of other languages mixed in are kept as
+    /// spoken. While the user speaks, a click in the strip takes the next one.
+    pub main_languages: Vec<String>,
+    /// The AI vendors, in the order they were added (0.7.3's connections).
+    #[serde(alias = "connections")]
+    pub vendors: Vec<AiVendor>,
+    /// Voice input's AI vendor, by id ("" for none chosen), and its model ("" for none).
+    pub vendor: String,
+    /// How an OpenAI-compatible vendor hears: "realtime" (words as the user speaks) or "upload" (the
+    /// recording sent at the end, which most relays and servers of one's own take); "" for none
+    /// chosen.
+    pub mode: String,
+    pub model: String,
+    /// Names and terms the user says often, separated by commas or lines: each speech service takes
+    /// them as hints (OpenAI's keywords, Qwen's corpus, Doubao's hot words, an upload's prompt), so
+    /// that they are heard right.
+    pub keywords: String,
+    /// OpenAI's live model only: how long it waits to be sure of a word, "minimal" … "xhigh"; empty
+    /// for FinchGram's own choice. Only in this file.
+    #[serde(skip_serializing_if = "String::is_empty")]
+    pub delay: String,
+    /// Tidying, the second feature: a text model takes the filler words, the repeats and the false
+    /// starts out of what voice input heard, and sets the punctuation. Its switch, AI vendor and
+    /// model.
+    pub tidy: bool,
+    pub tidy_vendor: String,
+    pub tidy_model: String,
+    /// Transcribing voice messages, the third feature: Transcribe under a voice message sends it to
+    /// this AI vendor instead of Telegram. That hands Telegram's content, someone's voice, to a
+    /// service of the user's choosing (docs/voice-input.md), so it is off until the user turns it on.
     pub transcribe_messages: bool,
-    /// The connection that transcribes voice messages, by id, and its model; empty for the main
-    /// language in use's speech recognition.
-    pub messages_connection: String,
+    #[serde(alias = "messages_connection")]
+    pub messages_vendor: String,
     pub messages_model: String,
-    /// 0.7.0's and 0.7.1's settings, read once to make the first profile and never written again:
-    /// the languages spoken (hints), whether the words were tidied, and the two OpenAI models.
+    /// 0.7.0's and 0.7.1's languages, which only they wrote, and always: read once, never written
+    /// again. Their `tidy`, `model` and `tidy_model` were voice input's own, as these are now.
     #[serde(skip_serializing)]
     pub languages: Option<Vec<String>>,
+    /// 0.7.2's and 0.7.3's settings of each main language: read once, never written again.
     #[serde(skip_serializing)]
-    pub tidy: Option<bool>,
-    #[serde(skip_serializing)]
-    pub model: Option<String>,
-    #[serde(skip_serializing)]
-    pub tidy_model: Option<String>,
-    /// The connections, in the order they were added.
-    #[serde(default)]
-    pub connections: Vec<VoiceConnection>,
-    /// One per main language the user set up, in the order they were added; never none once
-    /// read. Missing from a file it is none (not the default's one), which is how a file of 0.7.0
-    /// or 0.7.1 is known.
-    #[serde(default)]
     pub profiles: Vec<VoiceProfile>,
 }
 
-/// A service the user added: a name of theirs, the format its API speaks ("openai" for OpenAI's
+/// An AI vendor the user added: a name of theirs, the format its API speaks ("openai" for OpenAI's
 /// and every service that speaks it, "anthropic", "gemini", "dashscope" for Alibaba Cloud Model
-/// Studio, "doubao" for Volcengine's Doubao speech), and its address (empty: the format's own,
-/// src/speech/service.rs). One connection serves every ability its format has: an OpenAI one hears
-/// and tidies alike.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// Studio, "doubao" for Volcengine's Doubao speech; "" until the user chooses one), and its address
+/// (empty: the format's own, src/speech/service.rs). A vendor serves every feature its format can
+/// do: an OpenAI-compatible one hears and writes alike.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
-pub struct VoiceConnection {
-    /// Its id: the profiles name it by this, and its key is `voice_input.connection.<id>`.
+pub struct AiVendor {
+    /// Its id: the features name it by this, and its key is `voice_input.connection.<id>`.
     pub id: String,
     pub label: String,
     pub format: String,
@@ -123,55 +142,29 @@ pub struct VoiceConnection {
     pub key_from: Option<String>,
 }
 
-impl Default for VoiceConnection {
-    fn default() -> Self {
-        VoiceConnection { id: String::new(), label: String::new(), format: "openai".into(), url: String::new(), key_from: None }
-    }
-}
-
-/// How one main language is heard and tidied: which connection, how, with which model (empty: the
-/// format's own).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+/// 0.7.2's and 0.7.3's settings of one main language (read once, never written): the connection
+/// that heard it and the one that tidied it, with their models (empty: what the format used);
+/// 0.7.2 named the services' formats, addresses and keys instead of connections.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(default)]
 pub struct VoiceProfile {
-    /// "auto" (any language, found as the user speaks) or one of the UI's languages by the codes
-    /// speech services take ("en", "zh-cn", "zh-tw", "ja", …). Words of other languages mixed in
-    /// are kept as spoken, whichever it is.
     pub language: String,
-    /// The connection that hears it, by id ("" for none yet).
     pub connection: String,
-    /// How an OpenAI connection hears it: "realtime" (words as the user speaks) or "upload" (the
-    /// recording sent at the end, which most relays and servers of one's own take).
     pub mode: String,
     pub model: String,
-    /// Names and terms the user says often, separated by commas or lines: each speech service
-    /// takes them as hints (OpenAI's keywords, Qwen's corpus, Doubao's hot words, an upload's
-    /// prompt), so that they are heard right.
     pub keywords: String,
-    /// OpenAI's live model only: how long it waits to be sure of a word, "minimal" … "xhigh";
-    /// empty for FinchGram's own choice. Only in this file.
-    #[serde(skip_serializing_if = "String::is_empty")]
     pub delay: String,
-    /// After the transcript, a text model takes out the filler words, the repeats and the false
-    /// starts and sets the punctuation; off, the words come as heard.
     pub tidy: bool,
-    /// The connection that tidies, by id, and its model.
     pub tidy_connection: String,
     pub tidy_model: String,
-    /// 0.7.2's: the two services' formats and addresses, and whether the tidying took the speech
-    /// service's key; read once to make the connections, never written again.
-    #[serde(skip_serializing)]
     pub format: Option<String>,
-    #[serde(skip_serializing)]
     pub url: Option<String>,
-    #[serde(skip_serializing)]
     pub tidy_format: Option<String>,
-    #[serde(skip_serializing)]
     pub tidy_url: Option<String>,
-    #[serde(skip_serializing)]
     pub tidy_same_key: Option<bool>,
 }
 
+/// What 0.7.2 and 0.7.3 took for a field their files lack.
 impl Default for VoiceProfile {
     fn default() -> Self {
         VoiceProfile {
@@ -198,51 +191,70 @@ impl Default for VoiceInput {
         VoiceInput {
             enabled: None,
             language: "auto".into(),
+            main_languages: vec!["auto".into()],
+            vendors: Vec::new(),
+            vendor: String::new(),
+            mode: String::new(),
+            model: String::new(),
+            keywords: String::new(),
+            delay: String::new(),
+            tidy: false,
+            tidy_vendor: String::new(),
+            tidy_model: String::new(),
             transcribe_messages: false,
-            messages_connection: String::new(),
+            messages_vendor: String::new(),
             messages_model: String::new(),
             languages: None,
-            tidy: None,
-            model: None,
-            tidy_model: None,
-            connections: Vec::new(),
-            profiles: vec![VoiceProfile::default()],
+            profiles: Vec::new(),
         }
     }
 }
 
+/// The speech model 0.7.3 used when the user had named none (the format's own then): a file of
+/// before keeps hearing with it, now named, since nothing is chosen for the user any more.
+fn former_speech_model(format: &str, mode: &str) -> &'static str {
+    match (format, mode) {
+        ("openai", "upload") => "gpt-transcribe",
+        ("dashscope", _) => "qwen3-asr-flash-realtime",
+        ("doubao", _) => "volc.seedasr.sauc.duration",
+        _ => "gpt-live-transcribe",
+    }
+}
+
+/// The text model 0.7.3 used when the user had named none, likewise.
+fn former_text_model(format: &str) -> &'static str {
+    match format {
+        "anthropic" => "claude-haiku-5-5",
+        "gemini" => "gemini-3.5-flash-lite",
+        "dashscope" => "qwen-flash",
+        _ => "gpt-5-mini",
+    }
+}
+
 impl VoiceInput {
-    /// The profile used now: the current language's.
-    pub fn current(&self) -> &VoiceProfile {
-        self.profiles.iter().find(|profile| profile.language == self.language).or(self.profiles.first()).expect("a profile, kept by sanitized")
-    }
-
-    pub fn current_mut(&mut self) -> &mut VoiceProfile {
-        let index = self.profiles.iter().position(|profile| profile.language == self.language).unwrap_or(0);
-        &mut self.profiles[index]
-    }
-
-    pub fn connection(&self, id: &str) -> Option<&VoiceConnection> {
+    /// The vendor of id `id`; none for "" or one that is not there.
+    pub fn find_vendor(&self, id: &str) -> Option<&AiVendor> {
         if id.is_empty() {
             return None;
         }
-        self.connections.iter().find(|connection| connection.id == id)
+        self.vendors.iter().find(|vendor| vendor.id == id)
     }
 
-    /// An id no connection has.
-    pub fn next_connection_id(&self) -> String {
-        let highest = self.connections.iter().filter_map(|connection| connection.id.parse::<u32>().ok()).max().unwrap_or(0);
+    /// An id no vendor has.
+    pub fn next_vendor_id(&self) -> String {
+        let highest = self.vendors.iter().filter_map(|vendor| vendor.id.parse::<u32>().ok()).max().unwrap_or(0);
         (highest + 1).to_string()
     }
 
-    /// The connection of `format` at `url` whose key comes from `key_from`, made when there is none.
-    fn connection_for(&mut self, format: &str, url: &str, key_from: &str) -> String {
-        let found = self.connections.iter().find(|connection| connection.format == format && connection.url == url && connection.key_from.as_deref() == Some(key_from));
+    /// The vendor of `format` at `url` whose key comes from `key_from`, made when there is none
+    /// (0.7.2's files).
+    fn vendor_for(&mut self, format: &str, url: &str, key_from: &str) -> String {
+        let found = self.vendors.iter().find(|vendor| vendor.format == format && vendor.url == url && vendor.key_from.as_deref() == Some(key_from));
         if let Some(found) = found {
             return found.id.clone();
         }
-        let id = self.next_connection_id();
-        self.connections.push(VoiceConnection {
+        let id = self.next_vendor_id();
+        self.vendors.push(AiVendor {
             id: id.clone(),
             label: crate::speech::service::default_label(format, url),
             format: format.to_string(),
@@ -252,41 +264,47 @@ impl VoiceInput {
         id
     }
 
-    /// Files of 0.7.x become connections and profiles; what makes no sense (edited by hand) is put
-    /// right: unknown languages and formats, a language twice, a connection that is not there, no
-    /// profile at all.
-    fn sanitized(mut self) -> VoiceInput {
-        // 0.7.0 and 0.7.1: one OpenAI key for everything, its settings at the top.
-        let legacy = (self.languages.take(), self.tidy.take(), self.model.take(), self.tidy_model.take());
-        if self.profiles.is_empty() && legacy != (None, None, None, None) {
-            let (languages, tidy, model, tidy_model) = legacy;
-            // One language chosen is the main one; several, or none, are any language.
-            let language = match languages.as_deref() {
-                Some([only]) => only.trim().to_string(),
-                _ => "auto".to_string(),
-            };
-            // The models of 0.7's defaults are the formats' own.
-            let own = |name: Option<String>, default: &str| name.map(|name| name.trim().to_string()).filter(|name| !name.is_empty() && name != default).unwrap_or_default();
-            self.profiles.push(VoiceProfile {
-                language: language.clone(),
-                model: own(model, "gpt-live-transcribe"),
-                tidy: tidy.unwrap_or(true),
-                tidy_model: own(tidy_model, "gpt-5-nano"),
-                format: Some("openai-realtime".into()),
-                url: Some(String::new()),
-                tidy_format: Some("openai".into()),
-                tidy_url: Some(String::new()),
-                tidy_same_key: Some(true),
-                ..VoiceProfile::default()
-            });
-            self.language = language;
+    /// The format of the vendor of id `id`, "" for none.
+    fn format_of(&self, id: &str) -> String {
+        self.find_vendor(id).map(|vendor| vendor.format.clone()).unwrap_or_default()
+    }
+
+    /// 0.7.0's and 0.7.1's file: one OpenAI key for everything, voice input's own settings at the top.
+    fn adopt_0_7_1(&mut self, languages: Vec<String>) {
+        // One language chosen is the main one; several, or none, are any language.
+        let language = match languages.as_slice() {
+            [only] => only.trim().to_string(),
+            _ => "auto".to_string(),
+        };
+        // 0.7.2 moved the key under the main language's name, even where it wrote no settings.
+        self.vendors = vec![AiVendor {
+            id: "1".into(),
+            label: "OpenAI".into(),
+            format: "openai".into(),
+            url: String::new(),
+            key_from: Some(format!("voice_input.{language}.speech")),
+        }];
+        self.vendor = "1".into();
+        self.mode = "realtime".into();
+        if self.model.trim().is_empty() {
+            self.model = former_speech_model("openai", "realtime").into();
         }
-        // 0.7.2: each profile named its services' formats, addresses and keys; they become
-        // connections, one for each address and key (the start merges those whose keys turn out
-        // the same).
-        for index in 0..self.profiles.len() {
-            let profile = self.profiles[index].clone();
-            let Some(format) = profile.format.clone() else { continue };
+        self.tidy_vendor = "1".into();
+        // 0.7.1's own tidying model became the format's, gpt-5-mini, in 0.7.2.
+        if self.tidy_model.trim().is_empty() || self.tidy_model.trim() == "gpt-5-nano" {
+            self.tidy_model = former_text_model("openai").into();
+        }
+        self.main_languages = vec![language.clone()];
+        self.language = language;
+    }
+
+    /// 0.7.2's and 0.7.3's files: a set of choices for each main language. 0.7.2's formats,
+    /// addresses and keys become vendors, one for each address and key (the start merges those whose
+    /// keys turn out the same); then the features take the choices of the main language in use,
+    /// with the models it used named, and the words to know of every language.
+    fn adopt_profiles(&mut self, mut profiles: Vec<VoiceProfile>) {
+        for profile in &mut profiles {
+            let Some(format) = profile.format.take() else { continue };
             let language = profile.language.clone();
             let speech_key = format!("voice_input.{language}.speech");
             let (family, mode) = match format.as_str() {
@@ -295,70 +313,117 @@ impl VoiceInput {
                 "doubao" => ("doubao", "realtime"),
                 _ => ("openai", "realtime"),
             };
-            let speech = self.connection_for(family, profile.url.as_deref().unwrap_or("").trim(), &speech_key);
-            let tidy_family = match profile.tidy_format.as_deref() {
+            profile.connection = self.vendor_for(family, profile.url.take().unwrap_or_default().trim(), &speech_key);
+            profile.mode = mode.to_string();
+            let tidy_family = match profile.tidy_format.take().as_deref() {
                 Some("anthropic") => "anthropic",
                 Some("gemini") => "gemini",
                 _ => "openai",
             };
-            let tidy_key = if profile.tidy_same_key.unwrap_or(true) { speech_key.clone() } else { format!("voice_input.{language}.tidy") };
-            let tidy = self.connection_for(tidy_family, profile.tidy_url.as_deref().unwrap_or("").trim(), &tidy_key);
-            let profile = &mut self.profiles[index];
-            profile.connection = speech;
-            profile.mode = mode.to_string();
-            profile.tidy_connection = tidy;
-            profile.format = None;
-            profile.url = None;
-            profile.tidy_format = None;
-            profile.tidy_url = None;
-            profile.tidy_same_key = None;
+            let tidy_key = if profile.tidy_same_key.take().unwrap_or(true) { speech_key } else { format!("voice_input.{language}.tidy") };
+            profile.tidy_connection = self.vendor_for(tidy_family, profile.tidy_url.take().unwrap_or_default().trim(), &tidy_key);
         }
-        // The connections: known formats, ids of their own.
+        let Some(current) = profiles.iter().find(|profile| profile.language == self.language).or(profiles.first()).cloned() else { return };
+        self.main_languages = profiles.iter().map(|profile| profile.language.clone()).collect();
+        self.language = current.language.clone();
+        self.vendor = current.connection.clone();
+        let format = self.format_of(&self.vendor);
+        self.mode = if format == "openai" { current.mode.clone() } else { String::new() };
+        self.model = match current.model.trim() {
+            _ if self.vendor.is_empty() => String::new(),
+            "" => former_speech_model(&format, &current.mode).into(),
+            model => model.to_string(),
+        };
+        let mut words: Vec<String> = Vec::new();
+        for profile in std::iter::once(&current).chain(profiles.iter()) {
+            for word in crate::speech::dictation::keywords(&profile.keywords) {
+                if !words.contains(&word) {
+                    words.push(word);
+                }
+            }
+        }
+        self.keywords = words.join(", ");
+        self.delay = current.delay.clone();
+        self.tidy_vendor = current.tidy_connection.clone();
+        self.tidy = current.tidy && !self.tidy_vendor.is_empty();
+        self.tidy_model = match current.tidy_model.trim() {
+            _ if self.tidy_vendor.is_empty() => String::new(),
+            "" => former_text_model(&self.format_of(&self.tidy_vendor)).into(),
+            model => model.to_string(),
+        };
+        // 0.7.3 sent a voice message, when Telegram could not, to its own connection when one was
+        // chosen, else to the main language in use's speech recognition: now always to its own
+        // vendor, which uploads the file when it is OpenAI-compatible.
+        if self.messages_vendor.is_empty() && self.transcribe_messages && !self.vendor.is_empty() {
+            self.messages_vendor = self.vendor.clone();
+            self.messages_model = if format == "openai" && self.mode != "upload" { former_speech_model("openai", "upload").into() } else { self.model.clone() };
+        } else if !self.messages_vendor.is_empty() && self.messages_model.trim().is_empty() {
+            self.messages_model = former_speech_model(&self.format_of(&self.messages_vendor), "upload").into();
+        }
+    }
+
+    /// Older files become vendors and features; what makes no sense (edited by hand) is put right:
+    /// unknown formats and languages, ids twice, a feature's vendor that is not there or cannot do
+    /// it, a way of hearing that is none.
+    fn sanitized(mut self) -> VoiceInput {
+        let profiles = std::mem::take(&mut self.profiles);
+        let languages = self.languages.take();
+        if !profiles.is_empty() {
+            self.adopt_profiles(profiles);
+        } else if let Some(languages) = languages
+            && self.vendors.is_empty()
+        {
+            self.adopt_0_7_1(languages);
+        }
+        // The vendors: known formats ("" until chosen), ids of their own.
         let mut ids: Vec<String> = Vec::new();
-        for index in 0..self.connections.len() {
-            let connection = &mut self.connections[index];
-            if !crate::speech::service::CONNECTION_FORMATS.contains(&connection.format.as_str()) {
-                connection.format = "openai".into();
+        for (index, vendor) in self.vendors.iter_mut().enumerate() {
+            if !vendor.format.is_empty() && !crate::speech::service::CONNECTION_FORMATS.contains(&vendor.format.as_str()) {
+                vendor.format.clear();
             }
-            connection.label = connection.label.trim().to_string();
-            connection.url = connection.url.trim().to_string();
-            if connection.id.trim().is_empty() || ids.contains(&connection.id) {
+            vendor.label = vendor.label.trim().to_string();
+            vendor.url = vendor.url.trim().to_string();
+            if vendor.id.trim().is_empty() || ids.contains(&vendor.id) {
                 let highest = ids.iter().filter_map(|id| id.parse::<u32>().ok()).max().unwrap_or(0).max(index as u32);
-                connection.id = (highest + 1).to_string();
+                vendor.id = (highest + 1).to_string();
             }
-            ids.push(connection.id.clone());
+            ids.push(vendor.id.clone());
         }
-        let known = |id: &str| ids.iter().any(|known| known == id);
-        let mut seen = Vec::new();
-        self.profiles.retain(|profile| {
-            let language_known = profile.language == "auto" || crate::speech::is_language(&profile.language);
-            let first = !seen.contains(&profile.language);
-            seen.push(profile.language.clone());
-            language_known && first
-        });
-        for profile in &mut self.profiles {
-            if !known(&profile.connection) {
-                profile.connection.clear();
+        // Each feature's vendor is one that is there and can do it; its model goes with it.
+        use crate::speech::service::ConnectionFormat;
+        let can = |voice_input: &VoiceInput, id: &str, ability: fn(ConnectionFormat) -> bool| ConnectionFormat::known(&voice_input.format_of(id)).is_some_and(ability);
+        if !can(&self, &self.vendor, ConnectionFormat::hears) {
+            self.vendor.clear();
+        }
+        if !can(&self, &self.tidy_vendor, ConnectionFormat::writes) {
+            self.tidy_vendor.clear();
+        }
+        if !can(&self, &self.messages_vendor, ConnectionFormat::hears) {
+            self.messages_vendor.clear();
+        }
+        if self.format_of(&self.vendor) != "openai" || !matches!(self.mode.as_str(), "realtime" | "upload") {
+            self.mode.clear();
+        }
+        for (vendor, model) in [(&self.vendor, &mut self.model), (&self.tidy_vendor, &mut self.tidy_model), (&self.messages_vendor, &mut self.messages_model)] {
+            *model = if vendor.is_empty() { String::new() } else { model.trim().to_string() };
+        }
+        self.keywords = self.keywords.trim().to_string();
+        self.delay = self.delay.trim().to_string();
+        // The main languages: known ones, each once; any language when none is left.
+        let mut seen: Vec<String> = Vec::new();
+        for language in std::mem::take(&mut self.main_languages) {
+            let language = language.trim().to_string();
+            if (language == "auto" || crate::speech::is_language(&language)) && !seen.contains(&language) {
+                seen.push(language);
             }
-            if !known(&profile.tidy_connection) {
-                profile.tidy_connection.clear();
-            }
-            if profile.mode != "upload" {
-                profile.mode = "realtime".into();
-            }
-            for text in [&mut profile.model, &mut profile.keywords, &mut profile.delay, &mut profile.tidy_model] {
-                *text = text.trim().to_string();
-            }
         }
-        if !known(&self.messages_connection) {
-            self.messages_connection.clear();
+        if seen.is_empty() {
+            seen.push("auto".into());
         }
-        if self.profiles.is_empty() {
-            self.profiles.push(VoiceProfile::default());
+        if !seen.contains(&self.language) {
+            self.language = seen[0].clone();
         }
-        if !self.profiles.iter().any(|profile| profile.language == self.language) {
-            self.language = self.profiles[0].language.clone();
-        }
+        self.main_languages = seen;
         self
     }
 }
@@ -801,87 +866,101 @@ mod tests {
     }
 
     #[test]
-    fn voice_input_starts_with_no_connection_and_one_profile_for_any_language() {
+    fn voice_input_starts_with_nothing_chosen_and_reads_back_what_the_user_chose() {
         let read: Settings = toml::from_str("theme = \"terminal\"\n").expect("read");
-        assert_eq!(read.voice_input, VoiceInput::default());
-        assert!(read.voice_input.connections.is_empty());
-        let profile = read.voice_input.current();
-        assert_eq!((profile.language.as_str(), profile.connection.as_str(), profile.mode.as_str()), ("auto", "", "realtime"));
-        assert!(profile.tidy && profile.tidy_connection.is_empty());
-        assert!(!read.voice_input.transcribe_messages);
-        // Two connections, Chinese heard by the second and tidied by the first, written and read back.
-        let mut voice_input = VoiceInput::default();
-        voice_input.connections.push(VoiceConnection { id: "1".into(), label: "OpenAI".into(), ..VoiceConnection::default() });
-        voice_input.connections.push(VoiceConnection { id: "2".into(), label: "豆包语音".into(), format: "doubao".into(), ..VoiceConnection::default() });
-        assert_eq!(voice_input.next_connection_id(), "3");
-        voice_input.profiles.push(VoiceProfile {
+        let voice_input = read.voice_input.sanitized();
+        assert_eq!(voice_input, VoiceInput::default());
+        assert!(voice_input.vendors.is_empty() && voice_input.vendor.is_empty() && voice_input.model.is_empty() && voice_input.mode.is_empty());
+        assert!(!voice_input.tidy && voice_input.tidy_vendor.is_empty() && voice_input.tidy_model.is_empty());
+        assert!(!voice_input.transcribe_messages && voice_input.messages_vendor.is_empty());
+        assert_eq!((voice_input.language.as_str(), voice_input.main_languages.clone()), ("auto", vec!["auto".to_string()]));
+        // A new vendor has no format until the user chooses one.
+        assert_eq!(AiVendor::default().format, "");
+        // Two vendors: Doubao hears Chinese, the OpenAI-compatible one tidies and transcribes.
+        let voice_input = VoiceInput {
+            main_languages: vec!["zh-cn".into(), "en".into()],
             language: "zh-cn".into(),
-            connection: "2".into(),
+            vendors: vec![
+                AiVendor { id: "1".into(), label: "OpenAI".into(), format: "openai".into(), ..AiVendor::default() },
+                AiVendor { id: "2".into(), label: "豆包语音".into(), format: "doubao".into(), ..AiVendor::default() },
+            ],
+            vendor: "2".into(),
+            model: "volc.seedasr.sauc.duration".into(),
             keywords: "陈思远, FinchGram".into(),
-            tidy_connection: "1".into(),
-            ..VoiceProfile::default()
-        });
-        voice_input.language = "zh-cn".into();
-        assert_eq!(voice_input.connection(&voice_input.current().connection).map(|connection| connection.format.as_str()), Some("doubao"));
+            tidy: true,
+            tidy_vendor: "1".into(),
+            tidy_model: "gpt-5-mini".into(),
+            transcribe_messages: true,
+            messages_vendor: "1".into(),
+            messages_model: "gpt-transcribe".into(),
+            ..VoiceInput::default()
+        };
+        assert_eq!(voice_input.next_vendor_id(), "3");
+        assert_eq!(voice_input.find_vendor("2").map(|vendor| vendor.format.as_str()), Some("doubao"));
         let settings = Settings { voice_input, ..Settings::default() };
         let text = toml::to_string_pretty(&settings).expect("TOML");
-        assert!(text.contains("[[voice_input.connections]]\nid = \"2\"\nlabel = \"豆包语音\"\nformat = \"doubao\"\nurl = \"\"\n"), "{text}");
-        assert!(text.contains("[[voice_input.profiles]]\nlanguage = \"zh-cn\"\nconnection = \"2\"\nmode = \"realtime\"\n"), "{text}");
-        // Nothing of 0.7's shapes, and the live model's delay only when set by hand.
-        assert!(!text.contains("key_from") && !text.contains("tidy_same_key") && !text.contains("delay"), "{text}");
+        assert!(text.contains("vendor = \"2\"\nmode = \"\"\nmodel = \"volc.seedasr.sauc.duration\"\n"), "{text}");
+        assert!(text.contains("[[voice_input.vendors]]\nid = \"2\"\nlabel = \"豆包语音\"\nformat = \"doubao\"\nurl = \"\"\n"), "{text}");
+        // Nothing of the older shapes, and the live model's delay only when set by hand.
+        let section = text.split("[voice_input]").nth(1).unwrap_or("");
+        for old in ["connections", "profiles", "\nlanguages =", "key_from", "delay", "messages_connection"] {
+            assert!(!section.contains(old), "{old} in {text}");
+        }
         let read: Settings = toml::from_str(&text).expect("read back");
         assert_eq!(read.voice_input, settings.voice_input);
         assert_eq!(read.voice_input.clone().sanitized(), settings.voice_input);
     }
 
     #[test]
-    fn a_voice_input_file_of_0_7_1_becomes_an_openai_connection_and_the_first_profile() {
-        // One language chosen is the main one; models other than 0.7's defaults are kept.
+    fn a_voice_input_file_of_0_7_1_becomes_an_openai_vendor_for_voice_input_and_tidying() {
+        // One language chosen is the main one; the models are kept, named.
         let read: Settings = toml::from_str(
             "[voice_input]\nenabled = true\nlanguages = [\"zh-cn\"]\ntidy = false\nmodel = \"gpt-live-transcribe\"\ntidy_model = \"gpt-5-mini\"\n",
         )
         .expect("read");
         let voice_input = read.voice_input.sanitized();
         assert_eq!((voice_input.enabled, voice_input.language.as_str()), (Some(true), "zh-cn"));
+        assert_eq!(voice_input.main_languages, vec!["zh-cn".to_string()]);
         assert_eq!(
-            voice_input.connections,
-            vec![VoiceConnection { id: "1".into(), label: "OpenAI".into(), key_from: Some("voice_input.zh-cn.speech".into()), ..VoiceConnection::default() }]
+            voice_input.vendors,
+            vec![AiVendor { id: "1".into(), label: "OpenAI".into(), format: "openai".into(), key_from: Some("voice_input.zh-cn.speech".into()), ..AiVendor::default() }]
         );
-        let profile = voice_input.current();
-        assert_eq!((profile.connection.as_str(), profile.tidy_connection.as_str(), profile.mode.as_str()), ("1", "1", "realtime"));
-        assert_eq!((profile.tidy, profile.model.as_str(), profile.tidy_model.as_str()), (false, "", "gpt-5-mini"));
-        // Several languages, as 0.7 let the user choose them: any language.
+        assert_eq!((voice_input.vendor.as_str(), voice_input.mode.as_str(), voice_input.model.as_str()), ("1", "realtime", "gpt-live-transcribe"));
+        assert_eq!((voice_input.tidy, voice_input.tidy_vendor.as_str(), voice_input.tidy_model.as_str()), (false, "1", "gpt-5-mini"));
+        assert!(!voice_input.transcribe_messages && voice_input.messages_vendor.is_empty());
+        // Several languages, as 0.7 let the user choose them: any language; 0.7's own tidying model
+        // is the one 0.7.2 took in its place.
         let read: Settings = toml::from_str(
             "[voice_input]\nlanguages = [\n    \"en\",\n    \"zh-cn\",\n    \"zh-tw\",\n]\ntidy = true\nmodel = \"gpt-live-transcribe\"\ntidy_model = \"gpt-5-nano\"\n",
         )
         .expect("read");
         let voice_input = read.voice_input.sanitized();
-        assert_eq!(voice_input.language, "auto");
-        assert_eq!(voice_input.connections[0].key_from.as_deref(), Some("voice_input.auto.speech"));
-        // Written again, none of 0.7's keys is left, but the key's way to its connection is.
+        assert_eq!((voice_input.language.as_str(), voice_input.tidy, voice_input.tidy_model.as_str()), ("auto", true, "gpt-5-mini"));
+        assert_eq!(voice_input.vendors[0].key_from.as_deref(), Some("voice_input.auto.speech"));
+        // Written again, none of 0.7's keys is left, but the key's way to its vendor is.
         let text = toml::to_string_pretty(&Settings { voice_input, ..Settings::default() }).expect("TOML");
         let section = text.split("[voice_input]").nth(1).unwrap_or("");
-        assert!(!section.contains("languages") && !section.contains("gpt-live-transcribe") && !section.contains("gpt-5-nano"), "{text}");
+        assert!(!section.contains("\nlanguages =") && !section.contains("gpt-5-nano"), "{text}");
         assert!(section.contains("key_from = \"voice_input.auto.speech\""), "{text}");
     }
 
     #[test]
-    fn a_voice_input_file_of_0_7_2_becomes_connections_one_for_each_address_and_key() {
+    fn a_voice_input_file_of_0_7_2_becomes_vendors_and_the_main_languages_choices() {
         let read: Settings = toml::from_str(
             "[voice_input]\nenabled = true\nlanguage = \"zh-cn\"\ntranscribe_messages = true\n\n\
-             [[voice_input.profiles]]\nlanguage = \"auto\"\nformat = \"openai-realtime\"\nurl = \"\"\nmodel = \"\"\nkeywords = \"\"\ntidy = true\ntidy_format = \"openai\"\ntidy_url = \"\"\ntidy_model = \"\"\ntidy_same_key = true\n\n\
+             [[voice_input.profiles]]\nlanguage = \"auto\"\nformat = \"openai-realtime\"\nurl = \"\"\nmodel = \"\"\nkeywords = \"Blue Bottle\"\ntidy = true\ntidy_format = \"openai\"\ntidy_url = \"\"\ntidy_model = \"\"\ntidy_same_key = true\n\n\
              [[voice_input.profiles]]\nlanguage = \"zh-cn\"\nformat = \"doubao\"\nurl = \"\"\nmodel = \"volc.seedasr.sauc.concurrent\"\nkeywords = \"陈思远\"\ntidy = true\ntidy_format = \"anthropic\"\ntidy_url = \"https://relay.example.com\"\ntidy_model = \"\"\ntidy_same_key = false\n\n\
              [[voice_input.profiles]]\nlanguage = \"en\"\nformat = \"openai-transcriptions\"\nurl = \"https://api.groq.com/openai/v1\"\nmodel = \"whisper-large-v3\"\nkeywords = \"\"\ntidy = false\ntidy_format = \"openai\"\ntidy_url = \"\"\ntidy_model = \"\"\ntidy_same_key = true\n",
         )
         .expect("read");
         let voice_input = read.voice_input.sanitized();
-        let connections: Vec<(&str, &str, &str, &str, &str)> = voice_input
-            .connections
+        let vendors: Vec<(&str, &str, &str, &str, &str)> = voice_input
+            .vendors
             .iter()
-            .map(|connection| (connection.id.as_str(), connection.label.as_str(), connection.format.as_str(), connection.url.as_str(), connection.key_from.as_deref().unwrap_or("")))
+            .map(|vendor| (vendor.id.as_str(), vendor.label.as_str(), vendor.format.as_str(), vendor.url.as_str(), vendor.key_from.as_deref().unwrap_or("")))
             .collect();
         assert_eq!(
-            connections,
+            vendors,
             vec![
                 ("1", "OpenAI", "openai", "", "voice_input.auto.speech"),
                 ("2", "Doubao", "doubao", "", "voice_input.zh-cn.speech"),
@@ -890,37 +969,52 @@ mod tests {
                 ("5", "OpenAI", "openai", "", "voice_input.en.speech"),
             ]
         );
-        let profile = |language: &str| voice_input.profiles.iter().find(|profile| profile.language == language).expect("the profile").clone();
-        assert_eq!((profile("auto").connection.as_str(), profile("auto").tidy_connection.as_str()), ("1", "1"));
-        let chinese = profile("zh-cn");
-        assert_eq!((chinese.connection.as_str(), chinese.tidy_connection.as_str(), chinese.model.as_str(), chinese.keywords.as_str()), ("2", "3", "volc.seedasr.sauc.concurrent", "陈思远"));
-        let english = profile("en");
-        assert_eq!((english.connection.as_str(), english.mode.as_str(), english.tidy), ("4", "upload", false));
-        assert!(voice_input.transcribe_messages && voice_input.profiles.iter().all(|profile| profile.format.is_none() && profile.tidy_same_key.is_none()));
+        // The main language in use's choices, its models named; every language's words to know.
+        assert_eq!(voice_input.main_languages, vec!["auto".to_string(), "zh-cn".into(), "en".into()]);
+        assert_eq!((voice_input.vendor.as_str(), voice_input.mode.as_str(), voice_input.model.as_str()), ("2", "", "volc.seedasr.sauc.concurrent"));
+        assert_eq!(voice_input.keywords, "陈思远, Blue Bottle");
+        assert_eq!((voice_input.tidy, voice_input.tidy_vendor.as_str(), voice_input.tidy_model.as_str()), (true, "3", "claude-haiku-5-5"));
+        // Voice messages went to the speech recognition in use: its vendor now, chosen.
+        assert_eq!((voice_input.messages_vendor.as_str(), voice_input.messages_model.as_str()), ("2", "volc.seedasr.sauc.concurrent"));
+        assert!(voice_input.profiles.is_empty());
+    }
+
+    #[test]
+    fn a_voice_input_file_of_0_7_3_keeps_its_vendors_and_the_main_languages_choices() {
+        let read: Settings = toml::from_str(
+            "[voice_input]\nenabled = true\nlanguage = \"en\"\ntranscribe_messages = false\nmessages_connection = \"\"\nmessages_model = \"\"\n\n\
+             [[voice_input.connections]]\nid = \"1\"\nlabel = \"OpenAI\"\nformat = \"openai\"\nurl = \"\"\n\n\
+             [[voice_input.connections]]\nid = \"2\"\nlabel = \"豆包语音\"\nformat = \"doubao\"\nurl = \"\"\n\n\
+             [[voice_input.profiles]]\nlanguage = \"zh-cn\"\nconnection = \"2\"\nmode = \"realtime\"\nmodel = \"\"\nkeywords = \"\"\ntidy = true\ntidy_connection = \"1\"\ntidy_model = \"\"\n\n\
+             [[voice_input.profiles]]\nlanguage = \"en\"\nconnection = \"1\"\nmode = \"upload\"\nmodel = \"\"\nkeywords = \"FinchGram\"\ntidy = true\ntidy_connection = \"\"\ntidy_model = \"\"\n",
+        )
+        .expect("read");
+        let voice_input = read.voice_input.sanitized();
+        assert_eq!(voice_input.vendors.iter().map(|vendor| vendor.label.as_str()).collect::<Vec<_>>(), vec!["OpenAI", "豆包语音"]);
+        assert_eq!((voice_input.language.as_str(), voice_input.main_languages.clone()), ("en", vec!["zh-cn".to_string(), "en".into()]));
+        assert_eq!((voice_input.vendor.as_str(), voice_input.mode.as_str(), voice_input.model.as_str()), ("1", "upload", "gpt-transcribe"));
+        // Tidying was on with no connection chosen: off, nothing chosen.
+        assert_eq!((voice_input.tidy, voice_input.tidy_vendor.as_str(), voice_input.tidy_model.as_str()), (false, "", ""));
+        assert!(!voice_input.transcribe_messages && voice_input.messages_vendor.is_empty() && voice_input.messages_model.is_empty());
     }
 
     #[test]
     fn voice_settings_edited_by_hand_are_put_right() {
         let read: Settings = toml::from_str(
-            "[voice_input]\nlanguage = \"xx\"\nmessages_connection = \"9\"\n\n\
-             [[voice_input.connections]]\nid = \"1\"\nlabel = \" Mine \"\nformat = \"whisper\"\nurl = \" https://example.com/v1 \"\n\n\
-             [[voice_input.connections]]\nid = \"1\"\nlabel = \"Twin\"\nformat = \"gemini\"\n\n\
-             [[voice_input.profiles]]\nlanguage = \"ja\"\nconnection = \"7\"\nmode = \"sideways\"\ntidy_connection = \"2\"\n\n\
-             [[voice_input.profiles]]\nlanguage = \"ja\"\n\n\
-             [[voice_input.profiles]]\nlanguage = \"klingon\"\n",
+            "[voice_input]\nlanguage = \"xx\"\nmain_languages = [\"ja\", \"ja\", \"klingon\"]\nvendor = \"2\"\nmode = \"sideways\"\nmodel = \" gemini-x \"\ntidy = true\ntidy_vendor = \"7\"\ntidy_model = \"m\"\nmessages_vendor = \"1\"\nmessages_model = \"whisper-1\"\n\n\
+             [[voice_input.vendors]]\nid = \"1\"\nlabel = \" Mine \"\nformat = \"whisper\"\nurl = \" https://example.com/v1 \"\n\n\
+             [[voice_input.vendors]]\nid = \"1\"\nlabel = \"Twin\"\nformat = \"gemini\"\n",
         )
         .expect("read");
         let voice_input = read.voice_input.sanitized();
-        let first = &voice_input.connections[0];
-        assert_eq!((first.id.as_str(), first.label.as_str(), first.format.as_str(), first.url.as_str()), ("1", "Mine", "openai", "https://example.com/v1"));
-        assert_eq!(voice_input.connections[1].id, "2");
-        assert_eq!(voice_input.profiles.len(), 1);
-        let profile = &voice_input.profiles[0];
-        assert_eq!((profile.connection.as_str(), profile.mode.as_str(), profile.tidy_connection.as_str()), ("", "realtime", "2"));
-        assert_eq!((voice_input.language.as_str(), voice_input.messages_connection.as_str()), ("ja", ""));
-        // No profile at all is one for any language.
-        let read: Settings = toml::from_str("[voice_input]\nenabled = false\n").expect("read");
-        assert_eq!(read.voice_input.sanitized().profiles, vec![VoiceProfile::default()]);
+        let first = &voice_input.vendors[0];
+        assert_eq!((first.id.as_str(), first.label.as_str(), first.format.as_str(), first.url.as_str()), ("1", "Mine", "", "https://example.com/v1"));
+        assert_eq!(voice_input.vendors[1].id, "2");
+        // Gemini cannot hear, vendor 7 is not there, vendor 1 has no format: nothing chosen.
+        assert_eq!((voice_input.vendor.as_str(), voice_input.mode.as_str(), voice_input.model.as_str()), ("", "", ""));
+        assert_eq!((voice_input.tidy, voice_input.tidy_vendor.as_str(), voice_input.tidy_model.as_str()), (true, "", ""));
+        assert_eq!((voice_input.messages_vendor.as_str(), voice_input.messages_model.as_str()), ("", ""));
+        assert_eq!((voice_input.language.as_str(), voice_input.main_languages.clone()), ("ja", vec!["ja".to_string()]));
     }
 
     #[test]

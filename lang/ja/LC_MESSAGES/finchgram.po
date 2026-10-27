@@ -16,8 +16,8 @@ msgstr "表示"
 
 #: ui/app.slint:60 ui/broadsheet/actions.slint:171
 #: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166
+#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:934
+#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:934
 msgid "Search"
 msgstr "検索"
 
@@ -80,8 +80,8 @@ msgstr "アップデートを確認…"
 msgid "Choose recipient…"
 msgstr "転送先を選択…"
 
-#: ui/broadsheet/actions.slint:227 ui/telegram.slint:945
-#: ui/broadsheet/actions.slint:227 ui/telegram.slint:945 ui/workbench/actions.slint:229
+#: ui/broadsheet/actions.slint:227 ui/telegram.slint:946
+#: ui/broadsheet/actions.slint:227 ui/telegram.slint:946 ui/workbench/actions.slint:229
 msgid "Saved Messages"
 msgstr "保存済みメッセージ"
 
@@ -172,8 +172,8 @@ msgid "All"
 msgstr "すべて"
 
 #: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105
-#: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105 ui/telegram.slint:947
-#: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105 ui/telegram.slint:947 ui/workbench/sidebar.slint:548
+#: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105 ui/telegram.slint:948
+#: ui/broadsheet/broadsheet.slint:510 ui/pages/ai-access.slint:105 ui/telegram.slint:948 ui/workbench/sidebar.slint:548
 msgid "All chats"
 msgstr "すべてのチャット"
 
@@ -198,8 +198,8 @@ msgstr "最新のメッセージ"
 
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:837
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:837
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:849
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:849
 msgid "Name"
 msgstr "名前"
 
@@ -571,7 +571,7 @@ msgstr "写真を変更"
 
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:876
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:889
 msgid "Save"
 msgstr "保存"
 
@@ -840,7 +840,7 @@ msgstr "{0} をチャンネルから削除しますか？"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952
-#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:877
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:890
 msgid "Remove"
 msgstr "取り除く"
 
@@ -1260,11 +1260,11 @@ msgstr "ファイル"
 msgid "Poll"
 msgstr "投票"
 
-#: ui/chat.slint:343 ui/voice.slint:769
+#: ui/chat.slint:343 ui/voice.slint:784
 msgid "Not available yet"
 msgstr "まだ利用できません"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:775
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:790
 msgid "Not allowed in this group"
 msgstr "このグループでは許可されていません"
 
@@ -1290,7 +1290,7 @@ msgstr ""
 "を許可する必要があります。FinchGram がすでにリストにある場合は、いったんオフ"
 "にしてからもう一度オンにしてください。"
 
-#: ui/chat.slint:351 ui/voice.slint:774 ui/voice.slint:815
+#: ui/chat.slint:351 ui/voice.slint:789 ui/voice.slint:832
 msgid "Open System Settings"
 msgstr "システム設定を開く"
 
@@ -1382,7 +1382,7 @@ msgstr "1回だけ表示"
 msgid "Hide with spoiler"
 msgstr "ネタバレで隠す"
 
-#: ui/chat.slint:387 ui/voice.slint:754
+#: ui/chat.slint:387 ui/voice.slint:766
 msgid "Send"
 msgstr "送信"
 
@@ -1841,7 +1841,7 @@ msgid "Invite {n} person"
 msgid_plural "Invite {n} people"
 msgstr[0] "{n} 人を招待"
 
-#: ui/compose.slint:229 ui/voice.slint:794
+#: ui/compose.slint:229 ui/voice.slint:809
 msgid "Done"
 msgstr "完了"
 
@@ -3534,7 +3534,7 @@ msgstr ""
 msgid "Protocol"
 msgstr "プロトコル"
 
-#: ui/pages/downloads.slint:2613 ui/voice.slint:865
+#: ui/pages/downloads.slint:2613 ui/voice.slint:878
 msgid "Address"
 msgstr "アドレス"
 
@@ -4506,12 +4506,12 @@ msgstr "FinchGram を終了"
 msgid "New message"
 msgstr "新着メッセージ"
 
-#: ui/telegram.slint:946
+#: ui/telegram.slint:947
 msgid "Deleted Account"
 msgstr "削除されたアカウント"
 
 #. Between names in a list: "Jie, Mika".
-#: ui/telegram.slint:949
+#: ui/telegram.slint:950
 msgctxt "list separator"
 msgid ", "
 msgstr "、"
@@ -4812,118 +4812,114 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ 切り替え · ↑/↓ 音量 · space 再生 · esc 閉じる"
 
-#: ui/toolbox.slint:133 ui/voice.slint:745
+#: ui/toolbox.slint:133 ui/voice.slint:757
 msgid "Voice input"
 msgstr "音声入力"
 
 #: ui/toolbox.slint:134
-msgid "Speak, and the words go into the composer, through your own OpenAI key"
-msgstr "話すと、言葉が入力欄に入ります。自分の OpenAI キーを使います"
+msgid "Speak, and the words go into the composer, through the AI vendor you choose"
+msgstr "話すと、言葉が入力欄に入ります。選んだ AI プロバイダーを使います"
 
 #. The sparkle's tip.
-#: ui/voice.slint:747
+#: ui/voice.slint:759
 msgid "Finish voice input"
 msgstr "音声入力を終える"
 
 #. The sparkle's tip.
-#: ui/voice.slint:747
+#: ui/voice.slint:759
 msgid "Voice input: click, or hold while you speak"
 msgstr "音声入力：クリックするか、押したまま話します"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:750
+#: ui/voice.slint:762
 msgid "Record voice message"
 msgstr "ボイスメッセージを録音"
 
-#: ui/voice.slint:751
+#: ui/voice.slint:763
 msgid "Release to send · Drag left to cancel"
 msgstr "離して送信 · 左にドラッグでキャンセル"
 
-#: ui/voice.slint:752
+#: ui/voice.slint:764
 msgid "Release to cancel"
 msgstr "離してキャンセル"
 
-#: ui/voice.slint:753
+#: ui/voice.slint:765
 msgid "Hold to record. Release to send."
 msgstr "押したまま録音、離して送信。"
 
-#: ui/voice.slint:755
+#: ui/voice.slint:767
 msgid "Stop"
 msgstr "停止"
 
-#: ui/voice.slint:757
+#: ui/voice.slint:769
 msgid "Transcribe"
 msgstr "文字起こし"
 
-#: ui/voice.slint:770
+#: ui/voice.slint:785
 msgid "Couldn't download"
 msgstr "ダウンロードできませんでした"
 
-#: ui/voice.slint:772
+#: ui/voice.slint:787
 msgid "Loading…"
 msgstr "読み込み中…"
 
-#: ui/voice.slint:773
+#: ui/voice.slint:788
 msgid "Microphone access is off."
 msgstr "マイクへのアクセスがオフです。"
 
-#: ui/voice.slint:783
+#: ui/voice.slint:798
 msgid "Listening · {0}"
 msgstr "聞き取り中 · {0}"
 
-#: ui/voice.slint:785
+#: ui/voice.slint:800
 msgid "Finishing…"
 msgstr "仕上げ中…"
 
-#: ui/voice.slint:786
+#: ui/voice.slint:801
 msgid "Tidying the words…"
 msgstr "言葉を整えています…"
 
-#: ui/voice.slint:787
+#: ui/voice.slint:802
 msgid "Voice input stopped"
 msgstr "音声入力が止まりました"
 
 #. In the words' place before any came.
-#: ui/voice.slint:790
+#: ui/voice.slint:805
 msgid "Speak now"
 msgstr "話してください"
 
-#: ui/voice.slint:793
+#: ui/voice.slint:808
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ 完了 · Esc キャンセル"
 
-#: ui/voice.slint:800
+#: ui/voice.slint:817
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram はマイクを使えません。「システム設定 → プライバシーとセキュリティ → マイク」で許可してください。"
 
-#: ui/voice.slint:801
+#: ui/voice.slint:818
 msgid "No microphone could be opened: {0}"
 msgstr "マイクを開けませんでした：{0}"
 
-#: ui/voice.slint:806
+#: ui/voice.slint:823
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "何も聞こえませんでした。「システム設定 → サウンド」で正しいマイクが選ばれていますか？"
 
-#: ui/voice.slint:812
+#: ui/voice.slint:829
 msgid "Add key"
 msgstr "キーを追加"
 
-#: ui/voice.slint:813
+#: ui/voice.slint:830
 msgid "Change key"
 msgstr "キーを変更"
 
 #. The toolbox's Voice input panel.
-#: ui/voice.slint:820
+#: ui/voice.slint:910
 msgid "Use voice input"
 msgstr "音声入力を使う"
 
-#: ui/voice.slint:916
+#: ui/voice.slint:952
 msgid "Tidy the words"
 msgstr "言葉を整える"
-
-#: ui/voice.slint:917
-msgid "A small model takes out um, uh and repeated words, and sets the punctuation; it never translates."
-msgstr "小さなモデルが「えー」「あの」や繰り返しを取り除き、句読点を付けます。翻訳はしません。"
 
 #: ui/workbench/conversation.slint:309 ui/workbench/conversation.slint:374
 msgid "Close other tabs"
@@ -4985,278 +4981,326 @@ msgstr "チャンネルはリーダーモードで開きます。長い投稿を
 msgid "Manage accounts"
 msgstr "アカウントを管理"
 
-#: ui/voice.slint:758 ui/voice.slint:766
+#: ui/voice.slint:770 ui/voice.slint:781
 msgid "Transcribing…"
 msgstr "文字起こし中…"
 
-#: ui/voice.slint:762
-msgid "Telegram transcribes voice messages with Premium, or a few times a week without it. Your own speech service can do it too: Toolbox → AI → Voice input."
-msgstr "Telegram はボイスメッセージを Premium で文字起こしします。Premium なしでも週に数回はできます。「ツールボックス → AI → 音声入力」で設定すれば、自分の音声認識サービスでも文字起こしできます。"
-
-#: ui/voice.slint:764
+#: ui/voice.slint:779
 msgid "Too long for Telegram to transcribe."
 msgstr "長すぎて、Telegram では文字起こしできません。"
 
-#: ui/voice.slint:765
+#: ui/voice.slint:780
 msgid "Could not transcribe it: {0}"
 msgstr "文字起こしできませんでした：{0}"
 
-#: ui/voice.slint:783
+#: ui/voice.slint:798
 msgid "Connecting to {0}…"
 msgstr "{0} に接続中…"
 
-#: ui/voice.slint:790
+#: ui/voice.slint:805
 msgid "Speak now: the words come when you are done"
 msgstr "話してください：言葉は話し終えてから表示されます"
 
-#: ui/voice.slint:792
+#: ui/voice.slint:807
 msgid "Any language"
 msgstr "すべての言語"
 
-#: ui/voice.slint:799
+#: ui/voice.slint:816
 msgid "Voice input needs your API key for {0}."
 msgstr "音声入力には {0} の API キーが必要です。"
 
-#: ui/voice.slint:802 ui/voice.slint:886
+#: ui/voice.slint:819 ui/voice.slint:899 ui/voice.slint:940
 msgid "{0} refused the key."
 msgstr "{0} がキーを拒否しました。"
 
-#: ui/voice.slint:803
+#: ui/voice.slint:820
 msgid "{0} says the key is out of credit or used too fast: {1}"
 msgstr "{0} によると、このキーはクレジットが尽きたか、使い方が速すぎます：{1}"
 
-#: ui/voice.slint:804
+#: ui/voice.slint:821
 msgid "Could not reach {0}: {1}"
 msgstr "{0} に接続できませんでした：{1}"
 
-#: ui/voice.slint:805
-msgid "The speech service's address in Voice input is not one FinchGram can use."
-msgstr "音声入力に設定された音声認識サービスのアドレスは、FinchGram では使えません。"
-
-#: ui/voice.slint:807
+#: ui/voice.slint:824
 msgid "{0} said: {1}"
 msgstr "{0} の応答：{1}"
 
-#: ui/voice.slint:814
+#: ui/voice.slint:831
 msgid "Change address"
 msgstr "アドレスを変更"
 
-#: ui/voice.slint:821
+#: ui/voice.slint:911
 msgid "Puts the sparkle in every chat's composer; when off, nothing goes to any service"
 msgstr "すべてのチャットの入力欄に ✦ を表示します。オフのときは、どのサービスにも何も送りません"
 
-#: ui/voice.slint:822
+#: ui/voice.slint:912
 msgid "Main language"
 msgstr "主な言語"
 
-#: ui/voice.slint:827
+#: ui/voice.slint:917
 msgid "Remove {0}"
 msgstr "「{0}」を取り除く"
 
-#: ui/voice.slint:828
-msgid "Speech recognition · {0}"
-msgstr "音声認識 · {0}"
-
-#: ui/voice.slint:829
-msgid "Tidying · {0}"
-msgstr "言葉を整える · {0}"
-
-#: ui/voice.slint:830
+#: ui/voice.slint:852
 msgid "API format"
 msgstr "API 形式"
 
-#: ui/voice.slint:866
+#: ui/voice.slint:879
 msgid "Empty for the vendor's own. For a relay or a server of your own, its base URL."
 msgstr "空欄なら提供元のアドレスを使います。中継サービスや自分のサーバーなら、そのベース URL を入力します。"
 
-#: ui/voice.slint:868
+#: ui/voice.slint:881
 msgid "That is not an address: it starts with https://"
 msgstr "アドレスではありません。アドレスは https:// で始まります。"
 
-#: ui/voice.slint:869
+#: ui/voice.slint:882
 msgid "Leave the name and password out of the address."
 msgstr "アドレスにユーザー名とパスワードを含めないでください。"
 
-#: ui/voice.slint:870
+#: ui/voice.slint:883
 msgid "Plain http goes only to this Mac or the local network: use https."
 msgstr "暗号化なしの http は、この Mac かローカルネットワークにしか使えません。https を使ってください。"
 
-#: ui/voice.slint:909
+#: ui/voice.slint:929
 msgid "Model"
 msgstr "モデル"
 
-#: ui/voice.slint:911
-msgid "For Doubao, the resource ID of what you bought."
-msgstr "Doubao では、購入したサービスのリソース ID を入力します。"
-
-#: ui/voice.slint:911
-msgid "Empty for the format's own."
-msgstr "空欄なら、その形式の標準モデルを使います。"
-
-#: ui/voice.slint:913
+#: ui/voice.slint:948
 msgid "Words to know"
 msgstr "単語登録"
 
-#: ui/voice.slint:914
+#: ui/voice.slint:949
 msgid "Names and terms you often say, separated by commas: the service listens for them, so they come out right."
 msgstr "よく口にする名前や用語を、カンマで区切って入力します。サービスがこれらを意識して聞き取るので、正しく書き起こされます。"
 
-#: ui/voice.slint:915
+#: ui/voice.slint:950
 msgid "Names, products, terms"
 msgstr "名前、製品名、用語"
 
-#: ui/voice.slint:873
+#: ui/voice.slint:886
 msgid "API key"
 msgstr "API キー"
 
-#: ui/voice.slint:874
+#: ui/voice.slint:887
 msgid "Your own key: the service bills it for what it does. It is kept sealed in FinchGram's database on this Mac."
 msgstr "自分のキーです。使った分の料金を、サービスがこのキーに請求します。キーは封印して、この Mac 上の FinchGram のデータベースに保存されます。"
 
-#: ui/voice.slint:875
+#: ui/voice.slint:888
 msgid "Paste the key"
 msgstr "キーを貼り付け"
 
-#: ui/voice.slint:878
+#: ui/voice.slint:891
 msgid "Get a key from {0}"
 msgstr "{0} でキーを取得"
 
-#: ui/voice.slint:881
+#: ui/voice.slint:894
 msgid "That does not look like an API key."
 msgstr "API キーではないようです。"
 
-#: ui/voice.slint:882
+#: ui/voice.slint:895
 msgid "Checking with {0}…"
 msgstr "{0} で確認中…"
 
-#: ui/voice.slint:884
+#: ui/voice.slint:897
 msgid "{0} answers and takes the key."
 msgstr "{0} が応答し、キーを受け付けました。"
 
-#: ui/voice.slint:884
+#: ui/voice.slint:897
 msgid "{0} answers."
 msgstr "{0} が応答しました。"
 
-#: ui/voice.slint:887
+#: ui/voice.slint:900
 msgid "Could not check: {0}"
 msgstr "確認できませんでした：{0}"
 
-#: ui/voice.slint:918
+#: ui/voice.slint:954
 msgid "Voice messages"
 msgstr "ボイスメッセージ"
 
-#: ui/voice.slint:919
-msgid "Transcribe voice messages with your own service"
-msgstr "自分のサービスでボイスメッセージを文字起こしする"
-
-#: ui/voice.slint:921
-msgid "Transcribe under a voice message asks Telegram first, which needs Premium or one of its few free tries a week. When Telegram cannot, this sends the message to your speech service: someone else's voice, to a service of your choosing. Off unless you turn it on."
-msgstr "ボイスメッセージの下の「文字起こし」は、まず Telegram に頼みます。これには Premium か、週に数回の無料枠が必要です。Telegram でできないときは、メッセージを自分の音声認識サービスに送ります。他人の声を、自分で選んだサービスに送ることになります。自分でオンにしない限りオフです。"
-
-#: ui/voice.slint:924
-msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the speech service you choose below, under your own key, and nothing else does. FinchGram keeps no recording."
-msgstr "チャットの入力欄で ✦ を押すか、ターミナルで /voice と入力して話し、もう一度押すか ⏎ を押すと、言葉が入力欄に入り、あなたが送信します。声は自分のキーで、下で選んだ音声認識サービスに送られ、それ以外は何も送られません。FinchGram は録音を残しません。"
-
-#: ui/voice.slint:798
-msgid "No speech recognition is set up yet: choose a connection for it in Voice input."
-msgstr "音声認識がまだ設定されていません。「音声入力」で音声認識の接続先を選んでください。"
-
-#: ui/voice.slint:811
+#: ui/voice.slint:828
 msgid "Set up"
 msgstr "設定する"
 
-#: ui/voice.slint:824
-msgid "The language you mostly speak; words of other languages mixed in are kept as you say them. Each main language picks its own connections. While you speak, a click on the language in the strip takes the next one."
-msgstr "主に話す言語です。ほかの言語の言葉が混ざっても、話したとおりに残ります。主な言語ごとに、使う接続先を選びます。話している間にバーの言語をクリックすると、次の言語に切り替わります。"
-
-#: ui/voice.slint:832
-msgid "Connections"
-msgstr "接続先"
-
-#: ui/voice.slint:834
-msgid "Your services, each a name, an API format, an address and a key. Each ability below takes one of them, and one connection can serve several."
-msgstr "自分のサービスです。それぞれ名前、API 形式、アドレス、キーを持ちます。下の各機能はこのうち 1 つを使い、1 つの接続先を複数の機能で使えます。"
-
-#: ui/voice.slint:836
-msgid "Add a connection"
-msgstr "接続先を追加"
-
-#: ui/voice.slint:838
+#: ui/voice.slint:850
 msgid "What you call it, so that you know it when you choose."
 msgstr "選ぶときに見分けられるよう、自分で付ける名前です。"
 
-#: ui/voice.slint:839
-msgid "Remove this connection and its key"
-msgstr "この接続先とそのキーを取り除く"
-
-#: ui/voice.slint:840
+#: ui/voice.slint:851
 msgid "no key"
 msgstr "キーなし"
 
-#: ui/voice.slint:845 ui/voice.slint:861
+#: ui/voice.slint:857 ui/voice.slint:874
 msgid "Alibaba Cloud Model Studio"
 msgstr "Alibaba Cloud Model Studio"
 
-#: ui/voice.slint:846
+#: ui/voice.slint:858
 msgid "Doubao speech (Volcengine)"
 msgstr "Doubao 音声（Volcengine）"
 
-#: ui/voice.slint:847
+#: ui/voice.slint:859
 msgid "OpenAI-compatible"
 msgstr "OpenAI 互換"
 
-#: ui/voice.slint:851
+#: ui/voice.slint:864
 msgid "Tidying: Claude's Messages API, Anthropic's and the relays' and vendors' that speak it."
 msgstr "「言葉を整える」：Claude の Messages API。Anthropic と、これに対応する中継サービスや提供元で使えます。"
 
-#: ui/voice.slint:852
+#: ui/voice.slint:865
 msgid "Tidying: Google's Gemini API."
 msgstr "「言葉を整える」：Google の Gemini API。"
 
-#: ui/voice.slint:853
+#: ui/voice.slint:866
 msgid "Speech recognition (Qwen-ASR, strong in Chinese and its dialects) and tidying (Qwen), one key for both."
 msgstr "音声認識（Qwen-ASR、中国語とその方言に強い）と「言葉を整える」（Qwen）。1 つのキーで両方に使えます。"
 
-#: ui/voice.slint:854
+#: ui/voice.slint:867
 msgid "Speech recognition: Doubao's Seed-ASR, strong in Chinese. A key from Volcengine's speech console."
 msgstr "音声認識：Doubao の Seed-ASR で、中国語に強いです。キーは Volcengine の音声コンソールで取得します。"
 
-#: ui/voice.slint:855
+#: ui/voice.slint:868
 msgid "Speech recognition and tidying: OpenAI, and nearly every other service that speaks its API: Groq, SiliconFlow, DeepSeek, Kimi, OpenRouter, Ollama, relays, a Whisper server of your own."
 msgstr "音声認識と「言葉を整える」：OpenAI をはじめ、その API に対応するほぼすべてのサービスで使えます。Groq、SiliconFlow、DeepSeek、Kimi、OpenRouter、Ollama、中継サービス、自分の Whisper サーバーなど。"
 
-#: ui/voice.slint:862
+#: ui/voice.slint:875
 msgid "Volcengine"
 msgstr "Volcengine"
 
-#: ui/voice.slint:897
-msgid "Connection"
-msgstr "接続先"
-
-#: ui/voice.slint:898
-msgid "No connection can do this yet: add one above."
-msgstr "これに使える接続先はまだありません。上で追加してください。"
-
-#: ui/voice.slint:899
-msgid "Same as speech recognition"
-msgstr "音声認識と同じ"
-
-#: ui/voice.slint:901
+#: ui/voice.slint:921
 msgid "How it hears"
 msgstr "聞き取り方"
 
-#: ui/voice.slint:902
+#: ui/voice.slint:922
 msgid "As you speak"
 msgstr "話しながら"
 
-#: ui/voice.slint:903
+#: ui/voice.slint:923
 msgid "When you are done"
 msgstr "話し終えてから"
 
-#: ui/voice.slint:906
+#: ui/voice.slint:925
 msgid "The recording goes up when you are done: what most relays and servers of your own take."
 msgstr "録音は話し終えてからアップロードされます。ほとんどの中継サービスや自分のサーバーが対応している方式です。"
 
-#: ui/voice.slint:907
+#: ui/voice.slint:926
 msgid "Words show as you speak, through OpenAI's Realtime API."
 msgstr "話しながら言葉が表示されます。OpenAI の Realtime API を使います。"
+
+#: ui/voice.slint:774
+msgid "Telegram transcribes voice messages with Premium, or a few times a week without it. Your own AI vendor can do it too: Toolbox → AI → Voice input."
+msgstr "Telegram はボイスメッセージを Premium で文字起こしします。Premium なしでも週に数回はできます。「ツールボックス → AI → 音声入力」で設定すれば、自分の AI プロバイダーでも文字起こしできます。"
+
+#: ui/voice.slint:777
+msgid "Voice messages have no AI vendor or model yet: choose them in Toolbox → AI → Voice input."
+msgstr "ボイスメッセージ用の AI プロバイダーかモデルがまだ選ばれていません。「ツールボックス → AI → 音声入力」で選んでください。"
+
+#: ui/voice.slint:813
+msgid "Voice input has no AI vendor yet: choose one in Voice input."
+msgstr "音声入力の AI プロバイダーがまだ選ばれていません。「音声入力」で選んでください。"
+
+#: ui/voice.slint:814
+msgid "Voice input does not know yet how to hear: choose it in Voice input."
+msgstr "音声入力の聞き取り方がまだ選ばれていません。「音声入力」で選んでください。"
+
+#: ui/voice.slint:815
+msgid "Voice input has no model yet: choose one in Voice input."
+msgstr "音声入力のモデルがまだ選ばれていません。「音声入力」で選んでください。"
+
+#: ui/voice.slint:822
+msgid "The AI vendor's address in Voice input is not one FinchGram can use."
+msgstr "音声入力に設定された AI プロバイダーのアドレスは、FinchGram では使えません。"
+
+#: ui/voice.slint:838
+msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the AI vendor you choose below, under your own key, and nothing else does. FinchGram keeps no recording."
+msgstr "チャットの入力欄で ✦ を押すか、ターミナルで /voice と入力して話し、もう一度押すか ⏎ を押すと、言葉が入力欄に入り、あなたが送信します。声は自分のキーで、下で選んだ AI プロバイダーに送られ、それ以外は何も送られません。FinchGram は録音を残しません。"
+
+#: ui/voice.slint:841
+msgid "AI vendors"
+msgstr "AI プロバイダー"
+
+#: ui/voice.slint:843
+msgid "Your AI vendors, each a name, an API format, an address and a key. Each feature below chooses one of them, and one AI vendor can serve several."
+msgstr "自分の AI プロバイダーです。それぞれ名前、API 形式、アドレス、キーを持ちます。下の各機能はこのうち 1 つを選び、1 つの AI プロバイダーを複数の機能で使えます。"
+
+#: ui/voice.slint:845
+msgid "Add an AI vendor"
+msgstr "AI プロバイダーを追加"
+
+#: ui/voice.slint:846
+msgid "New AI vendor"
+msgstr "新しい AI プロバイダー"
+
+#: ui/voice.slint:847
+msgid "Remove this AI vendor and its key"
+msgstr "この AI プロバイダーとそのキーを取り除く"
+
+#: ui/voice.slint:848
+msgid "No API format chosen yet"
+msgstr "API 形式は未選択"
+
+#: ui/voice.slint:863
+msgid "The API your AI vendor speaks: choose one."
+msgstr "AI プロバイダーが対応する API です。1 つ選んでください。"
+
+#: ui/voice.slint:914
+msgid "The language you mostly speak, which tells the AI vendor what it hears; words of other languages mixed in are kept as you say them. While you speak, a click on the language in the strip takes the next one."
+msgstr "主に話す言語です。AI プロバイダーに、どの言語を聞き取るかを伝えます。ほかの言語の言葉が混ざっても、話したとおりに残ります。話している間にバーの言語をクリックすると、次の言語に切り替わります。"
+
+#: ui/voice.slint:918
+msgid "AI vendor"
+msgstr "AI プロバイダー"
+
+#: ui/voice.slint:919
+msgid "Choose an AI vendor"
+msgstr "AI プロバイダーを選択"
+
+#: ui/voice.slint:920
+msgid "No AI vendor can do this yet: add one above."
+msgstr "これに使える AI プロバイダーはまだありません。上で追加してください。"
+
+#: ui/voice.slint:927
+msgid "Words as you speak, through OpenAI's Realtime API; or the recording when you are done, which most relays and servers of your own take."
+msgstr "OpenAI の Realtime API で話しながら言葉を表示するか、話し終えてから録音をアップロードするかを選びます。録音のアップロードには、ほとんどの中継サービスや自分のサーバーが対応しています。"
+
+#: ui/voice.slint:930
+msgid "Choose a model"
+msgstr "モデルを選択"
+
+#: ui/voice.slint:932
+msgid "Volcengine's resources, as its documentation names them: choose the one you bought."
+msgstr "Volcengine のドキュメントにあるリソース名です。購入したものを選んでください。"
+
+#: ui/voice.slint:935
+msgid "Nothing matches."
+msgstr "一致するものはありません。"
+
+#: ui/voice.slint:938
+msgid "Asking {0} for its models…"
+msgstr "{0} にモデルを問い合わせ中…"
+
+#: ui/voice.slint:939
+msgid "Add the key of {0} above to see its models."
+msgstr "モデルを表示するには、上で {0} のキーを追加してください。"
+
+#: ui/voice.slint:941
+msgid "Could not list the models of {0}: {1}"
+msgstr "{0} のモデル一覧を取得できませんでした：{1}"
+
+#: ui/voice.slint:942
+msgid "{0} lists no models for this."
+msgstr "{0} のモデル一覧に、これに使えるものがありません。"
+
+#: ui/voice.slint:951
+msgid "Tidying"
+msgstr "言葉を整える"
+
+#: ui/voice.slint:953
+msgid "A model of your choice takes um, uh and repeated words out of what voice input heard, and sets the punctuation; it never translates."
+msgstr "選んだモデルが、音声入力で聞き取った言葉から「えー」「あの」や繰り返しを取り除き、句読点を付けます。翻訳はしません。"
+
+#: ui/voice.slint:955
+msgid "Transcribe voice messages with your AI vendor"
+msgstr "自分の AI プロバイダーでボイスメッセージを文字起こしする"
+
+#: ui/voice.slint:957
+msgid "Transcribe under a voice message then sends it to the AI vendor chosen here instead of Telegram: someone else's voice, to a service of your choosing. The words are kept nowhere. Off unless you turn it on."
+msgstr "ボイスメッセージの下の「文字起こし」が、Telegram ではなく、ここで選んだ AI プロバイダーにメッセージを送るようになります。他人の声を、自分で選んだサービスに送ることになります。文字起こしした言葉はどこにも保存されません。自分でオンにしない限りオフです。"

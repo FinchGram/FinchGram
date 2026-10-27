@@ -8,12 +8,12 @@
 //! it plays. It stops at its end (the design: no playing on into the next one), and when another
 //! chat comes to the front.
 //!
-//! Transcribe (B1) shows a voice message's words under it: Telegram's own transcription first
+//! Transcribe (B1) shows a voice message's words under it: Telegram's own transcription
 //! (recognizeSpeech: Telegram Premium, a few tries a week without it, or a group boosted for it),
-//! its words coming into the message as Telegram has them; when Telegram cannot, the user's own
-//! speech service (src/speech/messages.rs), only if they allowed it in voice input's panel, since
-//! that hands the message to a service of their choosing. A second click hides the words, a third
-//! shows them again.
+//! its words coming into the message as Telegram has them; or, when the user turned on transcribing
+//! voice messages in voice input's panel, the AI vendor they chose there, straight away, not
+//! Telegram (src/speech/messages.rs; the maintainer's word of 2026-10-26), which hands the message
+//! to a service of their choosing. A second click hides the words, a third shows them again.
 //!
 //! A new one is recorded by the microphone into an M4A file (platform::VoiceRecorder: AAC, which
 //! TDLib takes as a voice message) in the caches folder, and sent as inputMessageVoiceNote with
@@ -337,7 +337,7 @@ fn transcribe(message_id: i64) {
             Words::Hidden
         } else {
             match (store.own_transcripts.get(&key), &voice_note.speech_recognition_result) {
-                (Some(OwnTranscript::Failed(_)), _) => Words::OwnFailed,
+                (Some(OwnTranscript::Failed(_) | OwnTranscript::NotSetUp), _) => Words::OwnFailed,
                 (Some(_), _) => Words::Shown,
                 (None, Some(SpeechRecognitionResult::Pending { .. } | SpeechRecognitionResult::Text { .. })) => Words::Shown,
                 (None, Some(SpeechRecognitionResult::Error { .. })) => Words::TelegramCannot,
@@ -357,10 +357,10 @@ fn transcribe(message_id: i64) {
         Words::Shown => change(|store| {
             store.transcripts_hidden.insert(key);
         }),
-        // Telegram could not, or the user's service failed: the user's service (again), when it
-        // may; else the reason is hidden, and the next click asks Telegram again.
+        // Telegram could not, or the user's vendor failed: the user's vendor (again) while
+        // transcribing is theirs; else the reason is hidden, and the next click asks Telegram again.
         Words::TelegramCannot | Words::OwnFailed => {
-            if own_service_allowed() {
+            if crate::speech::transcribes_messages() {
                 transcribe_with_own_service(chat_id, message_id, voice_note);
             } else {
                 change(|store| {
@@ -369,6 +369,8 @@ fn transcribe(message_id: i64) {
                 });
             }
         }
+        // The user's vendor transcribes, when they turned that on: Telegram is not asked.
+        Words::None if crate::speech::transcribes_messages() => transcribe_with_own_service(chat_id, message_id, voice_note),
         Words::None => {
             let slot = super::context();
             send(json!({ "@type": "recognizeSpeech", "chat_id": chat_id, "message_id": message_id }), move |answer| {
@@ -379,23 +381,13 @@ fn transcribe(message_id: i64) {
                     Error::Stopped => err.to_string(),
                 };
                 super::in_context(slot, || {
-                    if own_service_allowed() {
-                        transcribe_with_own_service(chat_id, message_id, voice_note);
-                    } else {
-                        change(|store| {
-                            store.transcript_refusals.insert(key, Refusal::of(&reason));
-                        });
-                    }
+                    change(|store| {
+                        store.transcript_refusals.insert(key, Refusal::of(&reason));
+                    });
                 });
             });
         }
     }
-}
-
-/// Whether a voice message may go to the user's own speech service: they allowed it, and the
-/// service is set up (a key where one is needed).
-fn own_service_allowed() -> bool {
-    crate::speech::transcribes_messages() && crate::speech::message_options().is_ok()
 }
 
 /// The store changed for the open chat's rows, and the rows drawn again.
@@ -407,11 +399,19 @@ fn change(work: impl FnOnce(&mut store::Store)) {
     store::refresh();
 }
 
-/// The voice message's file, then its words from the user's own service; the words, or why not,
-/// into the store for the session.
+/// The voice message's file, then its words from the user's own vendor; the words, or why not,
+/// into the store for the session. With no vendor or model chosen (or no key for a vendor's own
+/// address), the message says to choose them.
 fn transcribe_with_own_service(chat_id: i64, message_id: i64, voice_note: api::VoiceNote) {
-    let Ok(options) = crate::speech::message_options() else { return };
     let key = (chat_id, message_id);
+    let Ok(options) = crate::speech::message_options() else {
+        change(|store| {
+            store.own_transcripts.insert(key, OwnTranscript::NotSetUp);
+            store.transcript_refusals.remove(&key);
+            store.transcripts_hidden.remove(&key);
+        });
+        return;
+    };
     let slot = super::context();
     change(|store| {
         store.own_transcripts.insert(key, OwnTranscript::Pending);

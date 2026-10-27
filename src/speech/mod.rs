@@ -6,24 +6,27 @@
 //! service and nowhere else, and FinchGram keeps no recording. (The microphone in the composer is
 //! voice messages', src/telegram/voice.rs.)
 //!
-//! The user adds connections: a name of theirs, an API format, an address and a key, any vendor,
-//! relay or server of their own that speaks one of the formats (service.rs). Each ability picks a
-//! connection and a model: for each main language the user speaks (a profile), the speech
-//! recognition that hears it (OpenAI's realtime transcription or its upload, Alibaba Cloud's Qwen,
-//! ByteDance's Doubao: realtime.rs, upload.rs, doubao.rs) and the text model that tidies the words
-//! (Chat Completions, Anthropic's or Google's format: tidy.rs); and the one that transcribes voice
-//! messages (messages.rs). Which main language is used is chosen in the panel, or in the strip while
-//! speaking; words of other languages mixed in are kept as spoken.
+//! The user adds AI vendors: a name of theirs, an API format, an address and a key, any vendor,
+//! relay or server of their own that speaks one of the formats (service.rs). Three AI features use
+//! them, each with its own switch, its vendor and its model, chosen by the user from lists (the
+//! vendor's own list of models) and by nobody else: nothing is chosen until the user chooses (the
+//! maintainer's word of 2026-10-26). Voice input hears the user (OpenAI's realtime transcription or
+//! its upload, Alibaba Cloud's Qwen, ByteDance's Doubao: realtime.rs, upload.rs, doubao.rs); tidying
+//! puts its words in order (Chat Completions, Anthropic's or Google's format: tidy.rs); and voice
+//! messages are transcribed by their own vendor (messages.rs). The main language, chosen in the
+//! panel or in the strip while speaking, only tells the vendor what is spoken; words of other
+//! languages mixed in are kept as spoken.
 //!
 //! Voice input is a tool of the toolbox's AI category (src/toolbox.rs, ui/pages/voice-input.slint),
 //! off until the user turns it on there: off, the sparkle is not in the composer, and Terminal's
-//! /voice, or the button of a stop for want of a key, opens its panel, where the connections and
-//! the abilities are set.
+//! /voice, or the button of a stop for want of a vendor, a model or a key, opens its panel, where
+//! the vendors and the features are set.
 //!
 //! One dictation at a time, its state here on the UI thread. The microphone's samples come from
 //! one of the system's threads (src/platform/microphone.rs); the session runs on a thread of its
 //! own ("voice", `dictation::dictate`), which reports back through the event loop. The keys are
-//! the database's (`database::credential`, `voice_input.connection.<id>`), never in settings.toml.
+//! the database's (`database::credential`, `voice_input.connection.<id>`, named when the vendors
+//! were called connections), never in settings.toml.
 
 mod audio;
 pub mod dictation;
@@ -35,6 +38,7 @@ mod tidy;
 mod upload;
 
 use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use std::rc::Rc;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
@@ -45,13 +49,13 @@ use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
 use crate::database::{credential, remove_credential, save_credential};
 use crate::platform::{self, MicrophoneAccess};
-use crate::settings::{Settings, VoiceConnection, VoiceInput, VoiceProfile};
-use crate::{Conversation, KeyCheck, MainWindow, Recorder, Toolbox, Voice, VoiceChoice, VoiceChoiceRow, VoiceConnectionRow, VoiceLanguage, VoiceLanguageRow, VoiceProblem, VoiceState};
+use crate::settings::{AiVendor, Settings, VoiceInput};
+use crate::{Conversation, KeyCheck, MainWindow, ModelsState, Recorder, Toolbox, Voice, VoiceItem, VoiceLanguage, VoiceLanguageRow, VoiceProblem, VoiceState, VoiceVendorRow};
 #[cfg(test)]
 pub use audio::wav;
 pub use audio::wav_samples;
 use dictation::{Input, Options, Report};
-use service::{AddressProblem, ConnectionFormat, Endpoint, FailureKind, KeyAnswer, Speech, SpeechFormat, Tidy};
+use service::{Ability, AddressProblem, ConnectionFormat, Endpoint, FailureKind, KeyAnswer, ListProblem, Speech, SpeechFormat, Tidy};
 
 /// 0.7.0's and 0.7.1's one key, OpenAI's.
 const OLD_KEY: &str = "openai_api_key";
@@ -85,12 +89,12 @@ pub fn is_language(code: &str) -> bool {
     LANGUAGES.iter().any(|(_, known)| *known == code)
 }
 
-/// The database's name for a connection's key.
+/// The database's name for a vendor's key (named when the vendors were called connections).
 fn key_name(id: &str) -> String {
     format!("voice_input.connection.{id}")
 }
 
-/// A connection's key; none for a connection that is not there, or has none.
+/// A vendor's key; none for a vendor that is not there, or has none.
 fn key_of(id: &str) -> Option<String> {
     if id.is_empty() { None } else { credential(&key_name(id)) }
 }
@@ -103,10 +107,95 @@ thread_local! {
     static GENERATION: Cell<u64> = const { Cell::new(0) };
     /// When the microphone was pressed to start the dictation, while it is still held.
     static PRESSED: Cell<Option<Instant>> = const { Cell::new(None) };
-    /// Counted up with every check of a connection, so that only the last one's answer shows.
+    /// Counted up with every check of a vendor, so that only the last one's answer shows.
     static CHECKS: Cell<u64> = const { Cell::new(0) };
-    /// The connection open in the panel for editing, by id; "" for none.
+    /// The vendor open in the panel for editing, by id; "" for none.
     static OPEN: RefCell<String> = const { RefCell::new(String::new()) };
+    /// The models each vendor offers, by vendor id and ability, as it listed them this run.
+    static MODELS: RefCell<HashMap<(String, Ability), Models>> = RefCell::new(HashMap::new());
+    /// The lists asked for and not answered yet, by the number of the request: only the last
+    /// request's answer is kept.
+    static PENDING: RefCell<HashMap<(String, Ability), u64>> = RefCell::new(HashMap::new());
+    static LISTS: Cell<u64> = const { Cell::new(0) };
+    /// What is typed in each feature's search over its models.
+    static SEARCH: RefCell<HashMap<Feature, String>> = RefCell::new(HashMap::new());
+}
+
+/// What a vendor said of its models this run.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum Models {
+    Loading,
+    Listed(Vec<String>),
+    /// Its own address without its key: not asked.
+    NeedKey,
+    Refused,
+    Failed(String),
+}
+
+/// The three AI features, as the panel names them.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+enum Feature {
+    /// Voice input: the user's speech.
+    Speech,
+    /// Tidying what voice input heard.
+    Tidy,
+    /// Transcribing voice messages.
+    Messages,
+}
+
+impl Feature {
+    const ALL: [Feature; 3] = [Feature::Speech, Feature::Tidy, Feature::Messages];
+
+    fn of(name: &str) -> Option<Feature> {
+        match name {
+            "speech" => Some(Feature::Speech),
+            "tidy" => Some(Feature::Tidy),
+            "messages" => Some(Feature::Messages),
+            _ => None,
+        }
+    }
+
+    fn ability(self) -> Ability {
+        match self {
+            Feature::Tidy => Ability::Write,
+            Feature::Speech | Feature::Messages => Ability::Hear,
+        }
+    }
+
+    /// Whether a vendor of `format` can do it.
+    fn can(self, format: ConnectionFormat) -> bool {
+        match self.ability() {
+            Ability::Hear => format.hears(),
+            Ability::Write => format.writes(),
+        }
+    }
+
+    fn vendor(self, voice_input: &VoiceInput) -> &str {
+        match self {
+            Feature::Speech => &voice_input.vendor,
+            Feature::Tidy => &voice_input.tidy_vendor,
+            Feature::Messages => &voice_input.messages_vendor,
+        }
+    }
+
+    fn model(self, voice_input: &VoiceInput) -> &str {
+        match self {
+            Feature::Speech => &voice_input.model,
+            Feature::Tidy => &voice_input.tidy_model,
+            Feature::Messages => &voice_input.messages_model,
+        }
+    }
+
+    /// Its vendor and model, both chosen anew (a vendor's models are its own).
+    fn choose(self, voice_input: &mut VoiceInput, vendor: &str, model: &str) {
+        let (chosen, its_model) = match self {
+            Feature::Speech => (&mut voice_input.vendor, &mut voice_input.model),
+            Feature::Tidy => (&mut voice_input.tidy_vendor, &mut voice_input.tidy_model),
+            Feature::Messages => (&mut voice_input.messages_vendor, &mut voice_input.messages_model),
+        };
+        *chosen = vendor.to_string();
+        *its_model = model.to_string();
+    }
 }
 
 struct App {
@@ -132,7 +221,7 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     // was kept. The choice is written with the next save of the settings.
     let on = {
         let mut settings = settings.borrow_mut();
-        let has_key = settings.voice_input.connections.iter().any(|connection| key_of(&connection.id).is_some());
+        let has_key = settings.voice_input.vendors.iter().any(|vendor| key_of(&vendor.id).is_some());
         *settings.voice_input.enabled.get_or_insert(has_key)
     };
     let voice = ui.global::<Voice>();
@@ -151,68 +240,69 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     voice.on_cancel_adding(|| with_ui(|ui| ui.global::<Voice>().set_adding(false)));
     voice.on_add_language(|code| add_language(&code));
     voice.on_remove_language(remove_language);
-    voice.on_add_connection(add_connection);
-    voice.on_toggle_connection(|id| toggle_connection(&id));
-    voice.on_edit_connection_label(|text| edit_connection(ConnectionField::Label, &text));
-    voice.on_edit_connection_url(|text| edit_connection(ConnectionField::Url, &text));
-    voice.on_set_connection_format(|name| set_connection_format(&name));
-    voice.on_check_connection(check_connection);
-    voice.on_save_connection_key(|text| save_key(&text));
-    voice.on_remove_connection_key(remove_key);
-    voice.on_remove_connection(remove_connection);
+    voice.on_add_vendor(add_vendor);
+    voice.on_toggle_vendor(|id| toggle_vendor(&id));
+    voice.on_edit_vendor_label(|text| edit_vendor(VendorField::Label, &text));
+    voice.on_edit_vendor_url(|text| edit_vendor(VendorField::Url, &text));
+    voice.on_set_vendor_format(|name| set_vendor_format(&name));
+    voice.on_check_vendor(check_vendor);
+    voice.on_save_vendor_key(|text| save_key(&text));
+    voice.on_remove_vendor_key(remove_key);
+    voice.on_remove_vendor(remove_vendor);
     voice.on_open_key_page(open_key_page);
-    voice.on_choose(|which, id| choose(&which, &id));
+    voice.on_choose_vendor(|which, id| choose_vendor(&which, &id));
+    voice.on_choose_model(|which, model| choose_model(&which, &model));
+    voice.on_search_models(|which, text| search_models(&which, &text));
     voice.on_set_mode(|mode| set_mode(&mode));
-    voice.on_edit_model(|which, text| edit_model(&which, &text));
     voice.on_edit_keywords(|text| edit_keywords(&text));
     voice.on_set_tidy(set_tidy);
     voice.on_set_transcribe_messages(set_transcribe_messages);
 }
 
-/// 0.7's keys into the connections its settings became (settings.rs), and the connections that
-/// turn out to be the same (one format, one address, one key: a key copied to two languages in
-/// 0.7.2) made one. Once: a connection's `key_from` goes with its key.
+/// 0.7's keys into the vendors its settings became (settings.rs), and the vendors that turn out to
+/// be the same (one format, one address, one key: a key copied to two languages in 0.7.2) made one.
+/// Once: a vendor's `key_from` goes with its key.
 fn adopt_keys(settings: &mut Settings) {
     let voice_input = &mut settings.voice_input;
-    if !voice_input.connections.iter().any(|connection| connection.key_from.is_some()) {
+    if !voice_input.vendors.iter().any(|vendor| vendor.key_from.is_some()) {
         return;
     }
     let mut adopted: Vec<String> = Vec::new();
-    for connection in &mut voice_input.connections {
-        let Some(from) = connection.key_from.take() else { continue };
+    for vendor in &mut voice_input.vendors {
+        let Some(from) = vendor.key_from.take() else { continue };
         // 0.7.2 moved 0.7.1's key under the first profile's name at its start, even when its
         // settings were not written again: the key is under either name. 0.7.1's was OpenAI's.
         let (key, source) = match credential(&from) {
             Some(key) => (Some(key), from),
-            None if connection.format == "openai" => (credential(OLD_KEY), OLD_KEY.to_string()),
+            None if vendor.format == "openai" => (credential(OLD_KEY), OLD_KEY.to_string()),
             None => continue,
         };
         let Some(key) = key else { continue };
-        let name = key_name(&connection.id);
+        let name = key_name(&vendor.id);
         if credential(&name).is_none()
             && let Err(err) = save_credential(&name, &key)
         {
             eprintln!("voice input: cannot move a key of 0.7: {err}");
-            connection.key_from = Some(source);
+            vendor.key_from = Some(source);
             continue;
         }
         adopted.push(source);
     }
     // The same format, address and key twice: the first one stays, and takes the other's place.
     // One whose key could not move yet is left as it is, for the next start.
-    let mut keys: Vec<Option<String>> = voice_input.connections.iter().map(|connection| key_of(&connection.id)).collect();
+    let mut keys: Vec<Option<String>> = voice_input.vendors.iter().map(|vendor| key_of(&vendor.id)).collect();
     let mut index = 0;
-    while index < voice_input.connections.len() {
+    while index < voice_input.vendors.len() {
         let twin = (0..index).find(|&earlier| {
-            let (a, b) = (&voice_input.connections[earlier], &voice_input.connections[index]);
+            let (a, b) = (&voice_input.vendors[earlier], &voice_input.vendors[index]);
             a.format == b.format && a.url == b.url && keys[earlier] == keys[index] && a.key_from.is_none() && b.key_from.is_none()
         });
         match twin {
             Some(earlier) => {
-                let (gone, kept) = (voice_input.connections[index].id.clone(), voice_input.connections[earlier].id.clone());
+                let (gone, kept) = (voice_input.vendors[index].id.clone(), voice_input.vendors[earlier].id.clone());
                 repoint(voice_input, &gone, &kept);
                 let _ = remove_credential(&key_name(&gone));
-                voice_input.connections.remove(index);
+                voice_input.vendors.remove(index);
                 keys.remove(index);
             }
             None => index += 1,
@@ -220,25 +310,19 @@ fn adopt_keys(settings: &mut Settings) {
     }
     // An old key goes once every connection that took it has its copy.
     for source in adopted {
-        if !voice_input.connections.iter().any(|connection| connection.key_from.as_deref() == Some(source.as_str())) {
+        if !voice_input.vendors.iter().any(|vendor| vendor.key_from.as_deref() == Some(source.as_str())) {
             let _ = remove_credential(&source);
         }
     }
     settings.save();
 }
 
-/// What used connection `gone` uses `kept` from now on ("" for none).
+/// The features that used vendor `gone` use `kept` from now on, the same vendor merged into it.
 fn repoint(voice_input: &mut VoiceInput, gone: &str, kept: &str) {
-    for profile in &mut voice_input.profiles {
-        if profile.connection == gone {
-            profile.connection = kept.to_string();
+    for vendor in [&mut voice_input.vendor, &mut voice_input.tidy_vendor, &mut voice_input.messages_vendor] {
+        if vendor == gone {
+            *vendor = kept.to_string();
         }
-        if profile.tidy_connection == gone {
-            profile.tidy_connection = kept.to_string();
-        }
-    }
-    if voice_input.messages_connection == gone {
-        voice_input.messages_connection = kept.to_string();
     }
 }
 
@@ -261,71 +345,82 @@ fn state() -> VoiceState {
     state
 }
 
-/// A connection as the services take it; none when it is not there, Err when its address is not one.
+/// A vendor as the services take it; none when it is not there or has no format yet, Err when its
+/// address is not one.
 fn endpoint_of(voice_input: &VoiceInput, id: &str) -> Option<Result<Endpoint, AddressProblem>> {
-    let connection = voice_input.connection(id)?;
-    Some(Endpoint::new(&connection.format, &connection.url, &connection.label))
+    let vendor = voice_input.find_vendor(id)?;
+    ConnectionFormat::known(&vendor.format)?;
+    Some(Endpoint::new(&vendor.format, &vendor.url, &vendor.label))
 }
 
-/// The speech service of a profile: its connection, how, its model.
-fn speech_of(voice_input: &VoiceInput, profile: &VoiceProfile) -> Result<Speech, VoiceProblem> {
-    let endpoint = endpoint_of(voice_input, &profile.connection).ok_or(VoiceProblem::NoService)?.map_err(|_| VoiceProblem::BadAddress)?;
-    Speech::new(endpoint, profile.mode == "upload", &profile.model).ok_or(VoiceProblem::NoService)
+/// Voice input's speech service: its vendor, how it hears, its model; what is not chosen yet stops
+/// it, and the strip says which.
+fn speech_of(voice_input: &VoiceInput) -> Result<Speech, VoiceProblem> {
+    let format = voice_input.find_vendor(&voice_input.vendor).and_then(|vendor| ConnectionFormat::known(&vendor.format)).filter(|format| format.hears()).ok_or(VoiceProblem::NoService)?;
+    if format == ConnectionFormat::OpenAi && voice_input.mode.is_empty() {
+        return Err(VoiceProblem::NoMode);
+    }
+    if voice_input.model.trim().is_empty() {
+        return Err(VoiceProblem::NoModel);
+    }
+    let endpoint = endpoint_of(voice_input, &voice_input.vendor).ok_or(VoiceProblem::NoService)?.map_err(|_| VoiceProblem::BadAddress)?;
+    Speech::new(endpoint, voice_input.mode == "upload", &voice_input.model).ok_or(VoiceProblem::NoModel)
 }
 
-/// A dictation's settings, from a profile: Err with the problem that stops it.
-fn options_of(voice_input: &VoiceInput, profile: &VoiceProfile, recorded: bool) -> Result<Options, VoiceProblem> {
-    let speech = speech_of(voice_input, profile)?;
-    let speech_key = key_of(&profile.connection);
+/// Tidying's text model and its key, when it is on and all of it is chosen; none for the words as
+/// heard (the panel says what is missing).
+fn tidy_of(voice_input: &VoiceInput) -> Option<(Tidy, Option<String>)> {
+    if !voice_input.tidy {
+        return None;
+    }
+    let endpoint = endpoint_of(voice_input, &voice_input.tidy_vendor)?.ok()?;
+    let tidy = Tidy::new(endpoint, &voice_input.tidy_model)?;
+    let key = key_of(&voice_input.tidy_vendor);
+    if key.is_none() && tidy.official() { None } else { Some((tidy, key)) }
+}
+
+/// A dictation's settings: Err with the problem that stops it.
+fn dictation_options(voice_input: &VoiceInput) -> Result<Options, VoiceProblem> {
+    let speech = speech_of(voice_input)?;
+    let speech_key = key_of(&voice_input.vendor);
     // The vendor's own address wants a key; a server of the user's own may not.
     if speech_key.is_none() && speech.official() {
         return Err(VoiceProblem::NoKey);
     }
-    let tidy = if profile.tidy && !recorded {
-        endpoint_of(voice_input, &profile.tidy_connection)
-            .and_then(Result::ok)
-            .and_then(|endpoint| Tidy::new(endpoint, &profile.tidy_model))
-            .and_then(|tidy| {
-                let key = key_of(&profile.tidy_connection);
-                // Without its key the words go in as heard; the panel says what is missing.
-                if key.is_none() && tidy.official() { None } else { Some((tidy, key)) }
-            })
-    } else {
-        None
-    };
     Ok(Options {
         speech,
         speech_key,
-        language: profile.language.clone(),
-        keywords: dictation::keywords(&profile.keywords),
-        delay: profile.delay.clone(),
-        tidy,
-        recorded,
+        language: voice_input.language.clone(),
+        keywords: dictation::keywords(&voice_input.keywords),
+        delay: voice_input.delay.clone(),
+        tidy: tidy_of(voice_input),
+        recorded: false,
     })
 }
 
-/// The voice messages' own (src/speech/messages.rs): the connection chosen for them, which takes
-/// an OpenAI connection's upload and finds the language itself; or, with none chosen, the speech
-/// recognition of the main language in use.
+/// A voice message's settings (src/speech/messages.rs): its own vendor and model, which upload the
+/// file when the vendor is OpenAI-compatible; the language is found from the message itself, and
+/// nothing is tidied (the words are someone else's).
+fn messages_options_of(voice_input: &VoiceInput) -> Result<Options, VoiceProblem> {
+    let format = voice_input.find_vendor(&voice_input.messages_vendor).and_then(|vendor| ConnectionFormat::known(&vendor.format)).filter(|format| format.hears()).ok_or(VoiceProblem::NoService)?;
+    if voice_input.messages_model.trim().is_empty() {
+        return Err(VoiceProblem::NoModel);
+    }
+    let endpoint = endpoint_of(voice_input, &voice_input.messages_vendor).ok_or(VoiceProblem::NoService)?.map_err(|_| VoiceProblem::BadAddress)?;
+    let speech = Speech::new(endpoint, format == ConnectionFormat::OpenAi, &voice_input.messages_model).ok_or(VoiceProblem::NoModel)?;
+    let speech_key = key_of(&voice_input.messages_vendor);
+    if speech_key.is_none() && speech.official() {
+        return Err(VoiceProblem::NoKey);
+    }
+    Ok(Options { speech, speech_key, language: "auto".into(), keywords: Vec::new(), delay: String::new(), tidy: None, recorded: true })
+}
+
+/// The voice messages' own settings, from the settings in use.
 pub fn message_options() -> Result<Options, VoiceProblem> {
-    with_settings(|settings| {
-        let voice_input = &settings.voice_input;
-        if voice_input.messages_connection.is_empty() {
-            return options_of(voice_input, voice_input.current(), true);
-        }
-        let own = VoiceProfile {
-            connection: voice_input.messages_connection.clone(),
-            mode: "upload".into(),
-            model: voice_input.messages_model.clone(),
-            tidy: false,
-            ..VoiceProfile::default()
-        };
-        options_of(voice_input, &own, true)
-    })
-    .unwrap_or(Err(VoiceProblem::NoService))
+    with_settings(|settings| messages_options_of(&settings.voice_input)).unwrap_or(Err(VoiceProblem::NoService))
 }
 
-/// Whether the user lets their own service transcribe voice messages.
+/// Whether voice messages are transcribed by the user's own vendor, not Telegram.
 pub fn transcribes_messages() -> bool {
     with_settings(|settings| settings.voice_input.transcribe_messages).unwrap_or(false)
 }
@@ -376,7 +471,7 @@ fn start() {
     GENERATION.set(generation);
     end_dictation();
     show_strip_service();
-    let options = match with_settings(|settings| options_of(&settings.voice_input, settings.voice_input.current(), false)).unwrap_or(Err(VoiceProblem::NoService)) {
+    let options = match with_settings(|settings| dictation_options(&settings.voice_input)).unwrap_or(Err(VoiceProblem::NoService)) {
         Ok(options) => options,
         Err(problem) => {
             fail(problem, "");
@@ -415,19 +510,19 @@ fn start() {
     }
 }
 
-/// The strip's words of the profile in use: who hears it, its language, whether words come
-/// while the user speaks.
+/// The strip's words: who hears the user, the main language in use, whether words come while the
+/// user speaks.
 fn show_strip_service() {
     let found = with_settings(|settings| {
         let voice_input = &settings.voice_input;
-        let profile = voice_input.current();
-        let speech = speech_of(voice_input, profile).ok();
-        (speech, profile.language.clone(), voice_input.profiles.len())
+        let speech = speech_of(voice_input).ok();
+        let vendor = voice_input.find_vendor(&voice_input.vendor).map(label_of).unwrap_or_default();
+        (speech, vendor, voice_input.language.clone(), voice_input.main_languages.len())
     });
-    let Some((speech, language, count)) = found else { return };
+    let Some((speech, vendor, language, count)) = found else { return };
     with_ui(|ui| {
         let voice = ui.global::<Voice>();
-        voice.set_service(speech.as_ref().map(Speech::shown).unwrap_or_default().into());
+        voice.set_service(speech.as_ref().map(Speech::shown).unwrap_or(vendor).into());
         voice.set_live(speech.as_ref().is_some_and(|speech| live(speech, &language)));
         voice.set_language_name(language_name(&language).into());
         voice.set_can_switch(count > 1);
@@ -544,11 +639,12 @@ fn cancel() {
 fn next_language() {
     let changed = with_settings(|settings| {
         let voice_input = &mut settings.voice_input;
-        if voice_input.profiles.len() < 2 {
+        let count = voice_input.main_languages.len();
+        if count < 2 {
             return false;
         }
-        let index = voice_input.profiles.iter().position(|profile| profile.language == voice_input.language).unwrap_or(0);
-        voice_input.language = voice_input.profiles[(index + 1) % voice_input.profiles.len()].language.clone();
+        let index = voice_input.main_languages.iter().position(|language| *language == voice_input.language).unwrap_or(0);
+        voice_input.language = voice_input.main_languages[(index + 1) % count].clone();
         settings.save();
         true
     })
@@ -571,7 +667,7 @@ fn act() {
     with_ui(|ui| problem = ui.global::<Voice>().get_problem());
     cancel();
     match problem {
-        VoiceProblem::NoKey | VoiceProblem::NoService | VoiceProblem::RefusedKey | VoiceProblem::BadAddress => with_ui(open_panel),
+        VoiceProblem::NoKey | VoiceProblem::NoService | VoiceProblem::NoMode | VoiceProblem::NoModel | VoiceProblem::RefusedKey | VoiceProblem::BadAddress => with_ui(open_panel),
         VoiceProblem::MicrophoneDenied => platform::open_microphone_settings(),
         _ => {}
     }
@@ -685,21 +781,24 @@ fn open_panel(ui: &MainWindow) {
     ui.global::<Toolbox>().invoke_open_tool("voice-input".into());
 }
 
-/// The panel's switch, or its card's: on, the sparkle shows in the composer; off, it goes, and a
-/// dictation going on is dropped.
+/// Voice input's switch, in its panel or on its card: on, the sparkle shows in the composer; off,
+/// it goes, and a dictation going on is dropped.
 fn set_on(on: bool) {
     with_settings(|settings| {
         settings.voice_input.enabled = Some(on);
         settings.save();
     });
-    with_ui(|ui| ui.global::<Voice>().set_on(on));
+    with_ui(|ui| {
+        ui.global::<Voice>().set_on(on);
+        refresh(ui, false);
+    });
     if !on && state() != VoiceState::Idle {
         cancel();
     }
 }
 
-/// The connection open for editing, as the panel shows it.
-struct OpenConnection {
+/// The vendor open for editing, as the panel shows it.
+struct OpenVendor {
     label: String,
     format: String,
     url: String,
@@ -711,115 +810,141 @@ struct OpenConnection {
     shown: String,
 }
 
+/// A feature as the panel shows it: the vendors that can do it, the one chosen, its models (as the
+/// vendor listed them, narrowed by the search), the one chosen, and what the vendor said of them.
+struct FeatureView {
+    vendors: Vec<VoiceItem>,
+    vendor: String,
+    vendor_label: String,
+    format: String,
+    models: Vec<VoiceItem>,
+    model: String,
+    state: ModelsState,
+    detail: String,
+}
+
 /// What the panel shows of the settings, with the keys' letters (the database's, or the
 /// screenshots' own).
 struct PanelView {
     languages: Vec<VoiceLanguage>,
     addable: Vec<VoiceLanguage>,
     language_name: String,
-    connections: Vec<VoiceConnectionRow>,
-    open: Option<OpenConnection>,
-    speech_choices: Vec<VoiceChoice>,
-    speech_format: String,
-    speech_mode: String,
-    speech_model: String,
-    speech_model_placeholder: String,
+    vendors: Vec<VoiceVendorRow>,
+    open: Option<OpenVendor>,
+    speech: FeatureView,
+    mode: String,
     keywords: String,
-    tidy: bool,
-    tidy_choices: Vec<VoiceChoice>,
-    tidy_model: String,
-    tidy_model_placeholder: String,
-    transcribe_messages: bool,
-    message_choices: Vec<VoiceChoice>,
-    messages_model: String,
-    messages_model_placeholder: String,
+    tidy_on: bool,
+    tidy: FeatureView,
+    messages_on: bool,
+    messages: FeatureView,
 }
 
 fn format_of(voice_input: &VoiceInput, id: &str) -> Option<ConnectionFormat> {
-    voice_input.connection(id).map(|connection| ConnectionFormat::from_name(&connection.format))
+    voice_input.find_vendor(id).and_then(|vendor| ConnectionFormat::known(&vendor.format))
 }
 
-fn panel_view(voice_input: &VoiceInput, open: &str, key_hint: &dyn Fn(&str) -> Option<String>) -> PanelView {
-    let profile = voice_input.current();
-    let chip = |code: &str, on: bool| VoiceLanguage { code: code.into(), name: language_name(code).into(), on };
-    let languages = voice_input.profiles.iter().map(|other| chip(&other.language, other.language == profile.language)).collect();
-    let mut addable: Vec<VoiceLanguage> = Vec::new();
-    if !voice_input.profiles.iter().any(|other| other.language == "auto") {
-        addable.push(chip("auto", false));
-    }
-    addable.extend(LANGUAGES.iter().filter(|(_, code)| !voice_input.profiles.iter().any(|other| other.language == *code)).map(|(_, code)| chip(code, false)));
-    let connections = voice_input
-        .connections
+fn feature_view(voice_input: &VoiceInput, feature: Feature, models: &dyn Fn(&str, Ability) -> Option<Models>, search: &str) -> FeatureView {
+    let vendors = voice_input
+        .vendors
         .iter()
-        .map(|connection| {
-            let hint = key_hint(&connection.id);
-            VoiceConnectionRow {
-                id: connection.id.as_str().into(),
-                label: label_of(connection).into(),
-                format: connection.format.as_str().into(),
-                // An address that is no address shows as typed, for the user to know the row.
-                host: Endpoint::new(&connection.format, &connection.url, "").map(|endpoint| endpoint.address.shown()).unwrap_or_else(|_| connection.url.trim().to_string()).into(),
+        .filter(|vendor| ConnectionFormat::known(&vendor.format).is_some_and(|format| feature.can(format)))
+        .map(|vendor| VoiceItem { id: vendor.id.as_str().into(), label: label_of(vendor).into() })
+        .collect();
+    let id = feature.vendor(voice_input);
+    let chosen = voice_input.find_vendor(id);
+    let listed = chosen.and_then(|_| models(id, feature.ability()));
+    let (state, detail) = match &listed {
+        None => (ModelsState::None, String::new()),
+        Some(Models::Loading) => (ModelsState::Loading, String::new()),
+        Some(Models::Listed(list)) if list.is_empty() => (ModelsState::Empty, String::new()),
+        Some(Models::Listed(_)) => (ModelsState::Listed, String::new()),
+        Some(Models::NeedKey) => (ModelsState::NeedKey, String::new()),
+        Some(Models::Refused) => (ModelsState::Refused, String::new()),
+        Some(Models::Failed(detail)) => (ModelsState::Failed, detail.clone()),
+    };
+    let needle = search.trim().to_lowercase();
+    let models = match &listed {
+        Some(Models::Listed(list)) => list.iter().filter(|model| needle.is_empty() || model.to_lowercase().contains(&needle)).map(|model| VoiceItem { id: model.as_str().into(), label: model.as_str().into() }).collect(),
+        _ => Vec::new(),
+    };
+    FeatureView {
+        vendors,
+        vendor: id.to_string(),
+        vendor_label: chosen.map(label_of).unwrap_or_default(),
+        format: chosen.map(|vendor| vendor.format.clone()).unwrap_or_default(),
+        models,
+        model: feature.model(voice_input).to_string(),
+        state,
+        detail,
+    }
+}
+
+fn panel_view(voice_input: &VoiceInput, open: &str, key_hint: &dyn Fn(&str) -> Option<String>, models: &dyn Fn(&str, Ability) -> Option<Models>, search: &dyn Fn(Feature) -> String) -> PanelView {
+    let chip = |code: &str| VoiceLanguage { code: code.into(), name: language_name(code).into(), on: code == voice_input.language };
+    let languages = voice_input.main_languages.iter().map(|code| chip(code)).collect();
+    let mut addable: Vec<VoiceLanguage> = Vec::new();
+    let set_up = |code: &str| voice_input.main_languages.iter().any(|language| language == code);
+    if !set_up("auto") {
+        addable.push(chip("auto"));
+    }
+    addable.extend(LANGUAGES.iter().filter(|(_, code)| !set_up(code)).map(|(_, code)| chip(code)));
+    let vendors = voice_input
+        .vendors
+        .iter()
+        .map(|vendor| {
+            let hint = key_hint(&vendor.id);
+            // An address that is no address shows as typed, for the user to know the row.
+            let host = match ConnectionFormat::known(&vendor.format) {
+                Some(_) => Endpoint::new(&vendor.format, &vendor.url, "").map(|endpoint| endpoint.address.shown()).unwrap_or_else(|_| vendor.url.trim().to_string()),
+                None => vendor.url.trim().to_string(),
+            };
+            VoiceVendorRow {
+                id: vendor.id.as_str().into(),
+                label: label_of(vendor).into(),
+                format: vendor.format.as_str().into(),
+                host: host.into(),
                 has_key: hint.is_some(),
                 key_hint: hint.unwrap_or_default().into(),
             }
         })
         .collect();
-    let open = voice_input.connection(open).map(|connection| {
-        let format = ConnectionFormat::from_name(&connection.format);
-        let endpoint = Endpoint::new(&connection.format, &connection.url, &connection.label);
-        let hint = key_hint(&connection.id);
-        OpenConnection {
-            label: connection.label.clone(),
-            format: connection.format.clone(),
-            url: connection.url.clone(),
-            url_placeholder: format.default_url().into(),
-            url_problem: problem_number(endpoint.as_ref().err()),
+    let open = voice_input.find_vendor(open).map(|vendor| {
+        let format = ConnectionFormat::known(&vendor.format);
+        let endpoint = format.map(|_| Endpoint::new(&vendor.format, &vendor.url, &vendor.label));
+        let hint = key_hint(&vendor.id);
+        OpenVendor {
+            label: vendor.label.clone(),
+            format: vendor.format.clone(),
+            url: vendor.url.clone(),
+            url_placeholder: format.map(ConnectionFormat::default_url).unwrap_or_default().into(),
+            url_problem: problem_number(endpoint.as_ref().and_then(|endpoint| endpoint.as_ref().err())),
             has_key: hint.is_some(),
             key_hint: hint.unwrap_or_default(),
-            official: endpoint.as_ref().is_ok_and(Endpoint::official),
-            shown: label_of(connection),
+            official: endpoint.as_ref().is_some_and(|endpoint| endpoint.as_ref().is_ok_and(Endpoint::official)),
+            shown: label_of(vendor),
         }
     });
-    let choices = |chosen: &str, fits: fn(ConnectionFormat) -> bool| -> Vec<VoiceChoice> {
-        voice_input
-            .connections
-            .iter()
-            .filter(|connection| fits(ConnectionFormat::from_name(&connection.format)))
-            .map(|connection| VoiceChoice { id: connection.id.as_str().into(), label: label_of(connection).into(), on: connection.id == chosen })
-            .collect()
-    };
-    let speech_format = format_of(voice_input, &profile.connection);
-    let upload = profile.mode == "upload";
-    let tidy_format = format_of(voice_input, &profile.tidy_connection);
-    let messages_format = format_of(voice_input, &voice_input.messages_connection);
-    let mut message_choices = vec![VoiceChoice { id: SharedString::new(), label: SharedString::new(), on: voice_input.messages_connection.is_empty() }];
-    message_choices.extend(choices(&voice_input.messages_connection, ConnectionFormat::hears));
     PanelView {
         languages,
         addable,
-        language_name: language_name(&profile.language),
-        connections,
+        language_name: language_name(&voice_input.language),
+        vendors,
         open,
-        speech_choices: choices(&profile.connection, ConnectionFormat::hears),
-        speech_format: speech_format.map(ConnectionFormat::name).unwrap_or_default().into(),
-        speech_mode: profile.mode.clone(),
-        speech_model: profile.model.clone(),
-        speech_model_placeholder: speech_format.map(|format| format.speech_model(upload)).unwrap_or_default().into(),
-        keywords: profile.keywords.clone(),
-        tidy: profile.tidy,
-        tidy_choices: choices(&profile.tidy_connection, ConnectionFormat::writes),
-        tidy_model: profile.tidy_model.clone(),
-        tidy_model_placeholder: tidy_format.map(ConnectionFormat::text_model).unwrap_or_default().into(),
-        transcribe_messages: voice_input.transcribe_messages,
-        message_choices,
-        messages_model: voice_input.messages_model.clone(),
-        messages_model_placeholder: messages_format.map(|format| format.speech_model(true)).unwrap_or_default().into(),
+        speech: feature_view(voice_input, Feature::Speech, models, &search(Feature::Speech)),
+        mode: voice_input.mode.clone(),
+        keywords: voice_input.keywords.clone(),
+        tidy_on: voice_input.tidy,
+        tidy: feature_view(voice_input, Feature::Tidy, models, &search(Feature::Tidy)),
+        messages_on: voice_input.transcribe_messages,
+        messages: feature_view(voice_input, Feature::Messages, models, &search(Feature::Messages)),
     }
 }
 
-/// A connection's name, its address's host when it has none.
-fn label_of(connection: &VoiceConnection) -> String {
-    if connection.label.trim().is_empty() { service::default_label(&connection.format, &connection.url) } else { connection.label.trim().to_string() }
+/// A vendor's name: the user's, else its own for its own address or its host ("" while it has
+/// neither a format nor an address: the panel calls it a new vendor).
+fn label_of(vendor: &AiVendor) -> String {
+    if vendor.label.trim().is_empty() { service::default_label(&vendor.format, &vendor.url) } else { vendor.label.trim().to_string() }
 }
 
 /// What is wrong with an address, as the panel numbers it: 0 nothing; 1 not an address; 2 a name
@@ -841,10 +966,16 @@ fn show_panel(ui: &MainWindow) {
 /// The panel drawn again; `typed`: the boxes the user types into too (not while they type in one).
 fn refresh(ui: &MainWindow, typed: bool) {
     let open = OPEN.with(|open| open.borrow().clone());
-    let Some(view) = with_settings(|settings| panel_view(&settings.voice_input, &open, &|id| credential(&key_name(id)).as_deref().map(hint))) else {
+    let known = |id: &str, ability: Ability| MODELS.with(|models| models.borrow().get(&(id.to_string(), ability)).cloned());
+    let search = |feature: Feature| SEARCH.with(|search| search.borrow().get(&feature).cloned().unwrap_or_default());
+    let Some(view) = with_settings(|settings| panel_view(&settings.voice_input, &open, &|id| credential(&key_name(id)).as_deref().map(hint), &known, &search)) else {
         return;
     };
     apply(ui, view, typed);
+}
+
+fn items(items: Vec<VoiceItem>) -> ModelRc<VoiceItem> {
+    ModelRc::new(VecModel::from(items))
 }
 
 fn apply(ui: &MainWindow, view: PanelView, typed: bool) {
@@ -853,46 +984,55 @@ fn apply(ui: &MainWindow, view: PanelView, typed: bool) {
     voice.set_language_rows(lines(view.languages));
     voice.set_addable_rows(lines(view.addable));
     voice.set_language_name(view.language_name.into());
-    voice.set_connections(ModelRc::new(VecModel::from(view.connections)));
+    voice.set_vendors(ModelRc::new(VecModel::from(view.vendors)));
     match view.open {
         Some(open) => {
-            voice.set_open_connection(OPEN.with(|id| id.borrow().clone()).into());
+            voice.set_open_vendor(OPEN.with(|id| id.borrow().clone()).into());
             if typed {
-                voice.set_connection_label(open.label.into());
-                voice.set_connection_url(open.url.into());
+                voice.set_vendor_label(open.label.into());
+                voice.set_vendor_url(open.url.into());
             }
-            voice.set_connection_format(open.format.into());
-            voice.set_connection_url_placeholder(open.url_placeholder.into());
-            voice.set_connection_url_problem(open.url_problem);
-            voice.set_connection_has_key(open.has_key);
-            voice.set_connection_key_hint(open.key_hint.into());
-            voice.set_connection_official(open.official);
-            voice.set_connection_shown(open.shown.into());
+            voice.set_vendor_format(open.format.into());
+            voice.set_vendor_url_placeholder(open.url_placeholder.into());
+            voice.set_vendor_url_problem(open.url_problem);
+            voice.set_vendor_has_key(open.has_key);
+            voice.set_vendor_key_hint(open.key_hint.into());
+            voice.set_vendor_official(open.official);
+            voice.set_vendor_shown(open.shown.into());
         }
-        None => voice.set_open_connection(SharedString::new()),
+        None => voice.set_open_vendor(SharedString::new()),
     }
-    voice.set_speech_choices(choice_lines(view.speech_choices));
-    voice.set_speech_format(view.speech_format.into());
-    voice.set_speech_mode(view.speech_mode.into());
-    voice.set_speech_model_placeholder(view.speech_model_placeholder.into());
-    voice.set_tidy(view.tidy);
-    voice.set_tidy_choices(choice_lines(view.tidy_choices));
-    voice.set_tidy_model_placeholder(view.tidy_model_placeholder.into());
-    voice.set_transcribe_messages(view.transcribe_messages);
-    voice.set_message_choices(choice_lines(view.message_choices));
-    voice.set_messages_model_placeholder(view.messages_model_placeholder.into());
+    let speech = view.speech;
+    voice.set_speech_vendors(items(speech.vendors));
+    voice.set_speech_vendor(speech.vendor.into());
+    voice.set_speech_vendor_label(speech.vendor_label.into());
+    voice.set_speech_format(speech.format.into());
+    voice.set_speech_mode(view.mode.into());
+    voice.set_speech_models(items(speech.models));
+    voice.set_speech_model(speech.model.into());
+    voice.set_speech_models_state(speech.state);
+    voice.set_speech_models_detail(speech.detail.into());
+    voice.set_tidy(view.tidy_on);
+    let tidy = view.tidy;
+    voice.set_tidy_vendors(items(tidy.vendors));
+    voice.set_tidy_vendor(tidy.vendor.into());
+    voice.set_tidy_vendor_label(tidy.vendor_label.into());
+    voice.set_tidy_models(items(tidy.models));
+    voice.set_tidy_model(tidy.model.into());
+    voice.set_tidy_models_state(tidy.state);
+    voice.set_tidy_models_detail(tidy.detail.into());
+    voice.set_transcribe_messages(view.messages_on);
+    let messages = view.messages;
+    voice.set_messages_vendors(items(messages.vendors));
+    voice.set_messages_vendor(messages.vendor.into());
+    voice.set_messages_vendor_label(messages.vendor_label.into());
+    voice.set_messages_models(items(messages.models));
+    voice.set_messages_model(messages.model.into());
+    voice.set_messages_models_state(messages.state);
+    voice.set_messages_models_detail(messages.detail.into());
     if typed {
-        voice.set_speech_model(view.speech_model.into());
         voice.set_keywords(view.keywords.into());
-        voice.set_tidy_model(view.tidy_model.into());
-        voice.set_messages_model(view.messages_model.into());
     }
-}
-
-/// Connections to choose from, three in a line.
-fn choice_lines(choices: Vec<VoiceChoice>) -> ModelRc<VoiceChoiceRow> {
-    let lines: Vec<VoiceChoiceRow> = choices.chunks(3).map(|line| VoiceChoiceRow { choices: ModelRc::new(VecModel::from(line.to_vec())) }).collect();
-    ModelRc::new(VecModel::from(lines))
 }
 
 /// Chips in lines of PER_LINE.
@@ -902,24 +1042,26 @@ fn lines(chips: Vec<VoiceLanguage>) -> ModelRc<VoiceLanguageRow> {
 }
 
 /// The panel for the screenshot test (src/screenshots.rs): `voice_input` as the settings, the
-/// connection `open` open, with keys whose letters are `hints` (by connection id).
+/// vendor `open` open, with keys whose letters are `hints` and models `models` (by vendor id).
 #[cfg(test)]
-pub fn show_for_pictures(ui: &MainWindow, voice_input: &VoiceInput, open: &str, hints: &[(&str, &str)]) {
+pub fn show_for_pictures(ui: &MainWindow, voice_input: &VoiceInput, open: &str, hints: &[(&str, &str)], models: &[(&str, &[&str])]) {
     OPEN.with(|id| *id.borrow_mut() = open.to_string());
-    let view = panel_view(voice_input, open, &|id| hints.iter().find(|(known, _)| *known == id).map(|(_, hint)| hint.to_string()));
+    let known = |id: &str, _: Ability| models.iter().find(|(known, _)| *known == id).map(|(_, list)| Models::Listed(list.iter().map(|model| model.to_string()).collect()));
+    let view = panel_view(voice_input, open, &|id| hints.iter().find(|(known, _)| *known == id).map(|(_, hint)| hint.to_string()), &known, &|_| String::new());
     apply(ui, view, true);
-    let profile = voice_input.current();
-    let speech = speech_of(voice_input, profile).ok();
+    let speech = speech_of(voice_input).ok();
     let voice = ui.global::<Voice>();
     voice.set_service(speech.as_ref().map(Speech::shown).unwrap_or_default().into());
-    voice.set_live(speech.as_ref().is_some_and(|speech| live(speech, &profile.language)));
-    voice.set_can_switch(voice_input.profiles.len() > 1);
+    voice.set_live(speech.as_ref().is_some_and(|speech| live(speech, &voice_input.language)));
+    voice.set_can_switch(voice_input.main_languages.len() > 1);
 }
 
-/// A main language chosen in the panel: the one used from now on, and its abilities shown.
+// ---- the main languages ------------------------------------------------------------------------
+
+/// A main language chosen in the panel: the one used from now on.
 fn choose_language(code: &str) {
     with_settings(|settings| {
-        if settings.voice_input.profiles.iter().any(|profile| profile.language == code) {
+        if settings.voice_input.main_languages.iter().any(|language| language == code) {
             settings.voice_input.language = code.to_string();
             settings.save();
         }
@@ -930,19 +1072,16 @@ fn choose_language(code: &str) {
     });
 }
 
-/// A main language added: its abilities start as the ones in use (the same connections), and it
-/// is the one used from now on.
+/// A main language added, and used from now on.
 fn add_language(code: &str) {
     if code != "auto" && !is_language(code) {
         return;
     }
     with_settings(|settings| {
         let voice_input = &mut settings.voice_input;
-        if voice_input.profiles.iter().any(|profile| profile.language == code) {
-            return;
+        if !voice_input.main_languages.iter().any(|language| language == code) {
+            voice_input.main_languages.push(code.to_string());
         }
-        let from = voice_input.current().clone();
-        voice_input.profiles.push(VoiceProfile { language: code.to_string(), ..from });
         voice_input.language = code.to_string();
         settings.save();
     });
@@ -952,56 +1091,49 @@ fn add_language(code: &str) {
     });
 }
 
-/// The main language in use removed; the first one left is used. The connections stay.
+/// The main language in use removed; the first one left is used.
 fn remove_language() {
     with_settings(|settings| {
         let voice_input = &mut settings.voice_input;
-        if voice_input.profiles.len() < 2 {
+        if voice_input.main_languages.len() < 2 {
             return;
         }
         let language = voice_input.language.clone();
-        voice_input.profiles.retain(|profile| profile.language != language);
-        voice_input.language = voice_input.profiles[0].language.clone();
+        voice_input.main_languages.retain(|other| *other != language);
+        voice_input.language = voice_input.main_languages[0].clone();
         settings.save();
     });
     with_ui(show_panel);
 }
 
-// ---- connections -------------------------------------------------------------------------------
+// ---- the AI vendors ----------------------------------------------------------------------------
 
-/// A new connection, OpenAI's by default, open for the user to name, point and key; the main
-/// language's abilities that have none take it.
-fn add_connection() {
+/// A new vendor, with nothing chosen: no name, no format, no address, open for the user to fill
+/// in. No feature takes it until the user chooses it there.
+fn add_vendor() {
     let id = with_settings(|settings| {
         let voice_input = &mut settings.voice_input;
-        let id = voice_input.next_connection_id();
-        voice_input.connections.push(VoiceConnection { id: id.clone(), label: service::default_label("openai", ""), ..VoiceConnection::default() });
-        let profile = voice_input.current_mut();
-        if profile.connection.is_empty() {
-            profile.connection = id.clone();
-        }
-        if profile.tidy_connection.is_empty() {
-            profile.tidy_connection = id.clone();
-        }
+        let id = voice_input.next_vendor_id();
+        voice_input.vendors.push(AiVendor { id: id.clone(), ..AiVendor::default() });
         settings.save();
         id
     });
     let Some(id) = id else { return };
     OPEN.with(|open| *open.borrow_mut() = id);
     with_ui(|ui| {
-        ui.global::<Voice>().set_connection_check(KeyCheck::None);
+        ui.global::<Voice>().set_vendor_check(KeyCheck::None);
         show_panel(ui);
     });
 }
 
-/// A connection's row clicked: open for editing, or closed.
-fn toggle_connection(id: &str) {
+/// A vendor's row clicked: open for editing, or closed.
+fn toggle_vendor(id: &str) {
     OPEN.with(|open| {
         let mut open = open.borrow_mut();
         *open = if *open == id { String::new() } else { id.to_string() };
     });
     with_ui(|ui| {
-        ui.global::<Voice>().set_connection_check(KeyCheck::None);
+        ui.global::<Voice>().set_vendor_check(KeyCheck::None);
         show_panel(ui);
     });
 }
@@ -1010,92 +1142,71 @@ fn open_id() -> String {
     OPEN.with(|open| open.borrow().clone())
 }
 
-enum ConnectionField {
+enum VendorField {
     Label,
     Url,
 }
 
-/// The open connection's name or address typed: kept as typed, and what is said of it shown.
-fn edit_connection(field: ConnectionField, text: &str) {
+/// The open vendor's name or address typed: kept as typed, and what is said of it shown. What the
+/// vendor said of its models is forgotten with its old address (asked again once it is typed).
+fn edit_vendor(field: VendorField, text: &str) {
     let id = open_id();
     with_settings(|settings| {
-        if let Some(connection) = settings.voice_input.connections.iter_mut().find(|connection| connection.id == id) {
+        if let Some(vendor) = settings.voice_input.vendors.iter_mut().find(|vendor| vendor.id == id) {
             match field {
-                ConnectionField::Label => connection.label = text.trim().to_string(),
-                ConnectionField::Url => connection.url = text.trim().to_string(),
+                VendorField::Label => vendor.label = text.trim().to_string(),
+                VendorField::Url => {
+                    vendor.url = text.trim().to_string();
+                    forget_models(&id);
+                }
             }
             settings.save();
         }
     });
     with_ui(|ui| {
-        ui.global::<Voice>().set_connection_check(KeyCheck::None);
+        ui.global::<Voice>().set_vendor_check(KeyCheck::None);
         refresh(ui, false);
     });
 }
 
-/// The open connection's format chosen: its name follows when it was the format's own, and the
-/// abilities it can no longer do are left without it.
-fn set_connection_format(name: &str) {
-    if !service::CONNECTION_FORMATS.contains(&name) {
-        return;
-    }
+/// The open vendor's format chosen: its name follows when it was the format's own; the features
+/// it can no longer do are left without it, and the models chosen from it go (they were the old
+/// format's).
+fn set_vendor_format(name: &str) {
+    let Some(format) = ConnectionFormat::known(name) else { return };
     let id = open_id();
-    let changed = with_settings(|settings| {
+    let label = with_settings(|settings| {
         let voice_input = &mut settings.voice_input;
-        let connection = voice_input.connections.iter_mut().find(|connection| connection.id == id)?;
-        if connection.format == name {
+        let vendor = voice_input.vendors.iter_mut().find(|vendor| vendor.id == id)?;
+        if vendor.format == name {
             return None;
         }
-        if connection.label.is_empty() || connection.label == service::default_label(&connection.format, &connection.url) {
-            connection.label = service::default_label(name, &connection.url);
+        if vendor.label.is_empty() || vendor.label == service::default_label(&vendor.format, &vendor.url) {
+            vendor.label = service::default_label(name, &vendor.url);
         }
-        connection.format = name.to_string();
-        let format = ConnectionFormat::from_name(name);
-        for profile in &mut voice_input.profiles {
-            if profile.connection == id {
-                profile.model.clear();
-                if !format.hears() {
-                    profile.connection.clear();
-                }
-            }
-            if profile.tidy_connection == id {
-                profile.tidy_model.clear();
-                if !format.writes() {
-                    profile.tidy_connection.clear();
-                }
+        vendor.format = name.to_string();
+        let label = vendor.label.clone();
+        for feature in Feature::ALL {
+            if feature.vendor(voice_input) == id {
+                let kept = if feature.can(format) { id.clone() } else { String::new() };
+                feature.choose(voice_input, &kept, "");
             }
         }
-        if voice_input.messages_connection == id {
-            voice_input.messages_model.clear();
-            if !format.hears() {
-                voice_input.messages_connection.clear();
-            }
+        if voice_input.vendor == id && format != ConnectionFormat::OpenAi {
+            voice_input.mode.clear();
         }
         settings.save();
-        Some(())
+        Some(label)
     })
     .flatten();
-    if changed.is_some() {
-        with_ui(|ui| {
-            // The name may follow the format, and models typed for the old one went: the boxes
-            // show what is kept now.
-            let kept = with_settings(|settings| {
-                let voice_input = &settings.voice_input;
-                let label = voice_input.connection(&id).map(|connection| connection.label.clone()).unwrap_or_default();
-                let profile = voice_input.current();
-                (label, profile.model.clone(), profile.tidy_model.clone(), voice_input.messages_model.clone())
-            });
-            refresh(ui, false);
-            if let Some((label, model, tidy_model, messages_model)) = kept {
-                let voice = ui.global::<Voice>();
-                voice.set_connection_label(label.into());
-                voice.set_speech_model(model.into());
-                voice.set_tidy_model(tidy_model.into());
-                voice.set_messages_model(messages_model.into());
-            }
-        });
-        check_connection();
-    }
+    let Some(label) = label else { return };
+    forget_models(&id);
+    with_ui(|ui| {
+        refresh(ui, false);
+        // The name may follow the format.
+        ui.global::<Voice>().set_vendor_label(label.into());
+    });
+    check_vendor();
 }
 
 /// The key as the panel shows it: its first letters and its last four.
@@ -1129,8 +1240,9 @@ fn save_key(text: &str) {
         set_check(KeyCheck::Failed, &err);
         return;
     }
+    forget_models(&id);
     with_ui(|ui| refresh(ui, false));
-    check_connection();
+    check_vendor();
 }
 
 fn remove_key() {
@@ -1141,22 +1253,31 @@ fn remove_key() {
     {
         eprintln!("voice input: cannot remove the key: {err}");
     }
+    forget_models(&id);
     with_ui(|ui| {
         refresh(ui, false);
-        ui.global::<Voice>().set_connection_check(KeyCheck::None);
+        ui.global::<Voice>().set_vendor_check(KeyCheck::None);
     });
 }
 
-/// The open connection removed, with its key; the abilities that used it have none.
-fn remove_connection() {
+/// The open vendor removed, with its key; the features that used it have none, nor its models.
+fn remove_vendor() {
     let id = open_id();
     with_settings(|settings| {
         let voice_input = &mut settings.voice_input;
-        voice_input.connections.retain(|connection| connection.id != id);
-        repoint(voice_input, &id, "");
+        voice_input.vendors.retain(|vendor| vendor.id != id);
+        for feature in Feature::ALL {
+            if feature.vendor(voice_input) == id {
+                feature.choose(voice_input, "", "");
+            }
+        }
+        if voice_input.vendor.is_empty() {
+            voice_input.mode.clear();
+        }
         settings.save();
     });
     let _ = remove_credential(&key_name(&id));
+    forget_models(&id);
     OPEN.with(|open| open.borrow_mut().clear());
     with_ui(show_panel);
 }
@@ -1164,16 +1285,17 @@ fn remove_connection() {
 fn set_check(check: KeyCheck, detail: &str) {
     with_ui(|ui| {
         let voice = ui.global::<Voice>();
-        voice.set_connection_check(check);
-        voice.set_connection_check_detail(detail.into());
+        voice.set_vendor_check(check);
+        voice.set_vendor_check_detail(detail.into());
     });
 }
 
-/// The open connection asked, on a thread of its own, whether it answers at its address and
-/// takes the key; the answer shows under it. Nothing is asked of an address that is not one, nor
-/// of a vendor's own address without a key.
-fn check_connection() {
+/// The open vendor asked, on a thread of its own, whether it answers at its address and takes the
+/// key; the answer shows under it, and the features that use it ask for its models again. Nothing
+/// is asked of an address that is not one, nor of a vendor's own address without a key.
+fn check_vendor() {
     let id = open_id();
+    want_models_of(&id);
     let Some(Some(Ok(endpoint))) = with_settings(|settings| endpoint_of(&settings.voice_input, &id)) else {
         return set_check(KeyCheck::None, "");
     };
@@ -1202,7 +1324,7 @@ fn check_connection() {
     }
 }
 
-/// The page of the open connection's vendor's keys.
+/// The page of the open vendor's keys.
 fn open_key_page() {
     let id = open_id();
     if let Some(Some(format)) = with_settings(|settings| format_of(&settings.voice_input, &id)) {
@@ -1210,101 +1332,166 @@ fn open_key_page() {
     }
 }
 
-// ---- the abilities -----------------------------------------------------------------------------
+// ---- the vendors' models -----------------------------------------------------------------------
 
-/// A connection chosen for an ability ("speech", "tidy", "messages"; "" for the messages' default):
-/// a model typed for another format goes.
-fn choose(which: &str, id: &str) {
-    with_settings(|settings| {
-        let voice_input = &mut settings.voice_input;
-        let format = format_of(voice_input, id);
-        match which {
-            "speech" => {
-                let before = format_of(voice_input, &voice_input.current().connection);
-                let profile = voice_input.current_mut();
-                profile.connection = id.to_string();
-                if before != format {
-                    profile.model.clear();
+/// The models of vendor `id` for `ability` asked for, unless they are known or on their way: on a
+/// thread of its own, and the panel shows them when they come. A vendor's own address without its
+/// key is not asked: the panel says to add the key.
+fn want_models(voice_input: &VoiceInput, id: &str, ability: Ability) {
+    let slot = (id.to_string(), ability);
+    if id.is_empty() || MODELS.with(|models| models.borrow().contains_key(&slot)) {
+        return;
+    }
+    let Some(Ok(endpoint)) = endpoint_of(voice_input, id) else { return };
+    let key = key_of(id);
+    if key.is_none() && endpoint.official() {
+        MODELS.with(|models| models.borrow_mut().insert(slot, Models::NeedKey));
+        return;
+    }
+    let number = LISTS.get() + 1;
+    LISTS.set(number);
+    PENDING.with(|pending| pending.borrow_mut().insert(slot.clone(), number));
+    MODELS.with(|models| models.borrow_mut().insert(slot.clone(), Models::Loading));
+    let spawned = std::thread::Builder::new().name("voice-models".into()).spawn({
+        let slot = slot.clone();
+        move || {
+            let answer = service::list_models(&endpoint, key.as_deref(), ability);
+            let _ = slint::invoke_from_event_loop(move || {
+                if PENDING.with(|pending| pending.borrow().get(&slot) != Some(&number)) {
+                    return;
                 }
-            }
-            "tidy" => {
-                let before = format_of(voice_input, &voice_input.current().tidy_connection);
-                let profile = voice_input.current_mut();
-                profile.tidy_connection = id.to_string();
-                if before != format {
-                    profile.tidy_model.clear();
-                }
-            }
-            _ => {
-                if format_of(voice_input, &voice_input.messages_connection) != format {
-                    voice_input.messages_model.clear();
-                }
-                voice_input.messages_connection = id.to_string();
-            }
+                PENDING.with(|pending| pending.borrow_mut().remove(&slot));
+                let listed = match answer {
+                    Ok(list) => Models::Listed(list),
+                    Err(ListProblem::Refused) => Models::Refused,
+                    Err(ListProblem::Failed(detail)) => Models::Failed(detail),
+                };
+                MODELS.with(|models| models.borrow_mut().insert(slot, listed));
+                with_ui(|ui| refresh(ui, false));
+            });
         }
-        settings.save();
     });
-    with_ui(show_panel);
+    if let Err(err) = spawned {
+        PENDING.with(|pending| pending.borrow_mut().remove(&slot));
+        MODELS.with(|models| models.borrow_mut().insert(slot, Models::Failed(err.to_string())));
+    }
 }
 
-/// How an OpenAI connection hears the main language: as it is spoken, or uploaded at the end; a
-/// model typed for the other way goes.
+/// The models of the features that use vendor `id` asked for again.
+fn want_models_of(id: &str) {
+    if id.is_empty() {
+        return;
+    }
+    with_settings(|settings| {
+        let voice_input = &settings.voice_input;
+        for feature in Feature::ALL {
+            if feature.vendor(voice_input) == id {
+                want_models(voice_input, id, feature.ability());
+            }
+        }
+    });
+    with_ui(|ui| refresh(ui, false));
+}
+
+/// What vendor `id` said of its models forgotten: its address, key or format changed.
+fn forget_models(id: &str) {
+    MODELS.with(|models| models.borrow_mut().retain(|(vendor, _), _| vendor != id));
+    PENDING.with(|pending| pending.borrow_mut().retain(|(vendor, _), _| vendor != id));
+}
+
+// ---- the features ------------------------------------------------------------------------------
+
+/// A vendor chosen for a feature ("speech", "tidy", "messages") from its list: the model chosen
+/// from the vendor before goes (a vendor's models are its own), and the new one's are asked for.
+/// How voice input hears stays only from one OpenAI-compatible vendor to another.
+fn choose_vendor(which: &str, id: &str) {
+    let Some(feature) = Feature::of(which) else { return };
+    with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        let Some(format) = format_of(voice_input, id).filter(|format| feature.can(*format)) else { return };
+        if feature.vendor(voice_input) != id {
+            let before = format_of(voice_input, feature.vendor(voice_input));
+            feature.choose(voice_input, id, "");
+            if feature == Feature::Speech && !(format == ConnectionFormat::OpenAi && before == Some(ConnectionFormat::OpenAi)) {
+                voice_input.mode.clear();
+            }
+            settings.save();
+        }
+        want_models(&settings.voice_input, id, feature.ability());
+    });
+    SEARCH.with(|search| search.borrow_mut().remove(&feature));
+    with_ui(|ui| refresh(ui, false));
+}
+
+/// A model chosen for a feature from its vendor's list.
+fn choose_model(which: &str, model: &str) {
+    let Some(feature) = Feature::of(which) else { return };
+    with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        let vendor = feature.vendor(voice_input).to_string();
+        if !vendor.is_empty() {
+            feature.choose(voice_input, &vendor, model.trim());
+            settings.save();
+        }
+    });
+    SEARCH.with(|search| search.borrow_mut().remove(&feature));
+    with_ui(|ui| refresh(ui, false));
+}
+
+/// What is typed in a feature's search over its models (opening the list types nothing): the list
+/// narrowed to it, and the models asked for if they are not known yet.
+fn search_models(which: &str, text: &str) {
+    let Some(feature) = Feature::of(which) else { return };
+    SEARCH.with(|search| search.borrow_mut().insert(feature, text.to_string()));
+    with_settings(|settings| {
+        let voice_input = &settings.voice_input;
+        want_models(voice_input, feature.vendor(voice_input), feature.ability());
+    });
+    with_ui(|ui| refresh(ui, false));
+}
+
+/// How an OpenAI-compatible vendor hears voice input: as it is spoken, or uploaded at the end.
 fn set_mode(mode: &str) {
     if mode != "realtime" && mode != "upload" {
         return;
     }
     with_settings(|settings| {
-        let profile = settings.voice_input.current_mut();
-        if profile.mode != mode {
-            profile.mode = mode.to_string();
-            profile.model.clear();
+        if format_of(&settings.voice_input, &settings.voice_input.vendor) == Some(ConnectionFormat::OpenAi) && settings.voice_input.mode != mode {
+            settings.voice_input.mode = mode.to_string();
             settings.save();
         }
     });
-    with_ui(show_panel);
-}
-
-/// A model typed, kept as typed.
-fn edit_model(which: &str, text: &str) {
-    with_settings(|settings| {
-        let voice_input = &mut settings.voice_input;
-        let text = text.trim().to_string();
-        match which {
-            "speech" => voice_input.current_mut().model = text,
-            "tidy" => voice_input.current_mut().tidy_model = text,
-            _ => voice_input.messages_model = text,
-        }
-        settings.save();
-    });
+    with_ui(|ui| refresh(ui, false));
 }
 
 fn edit_keywords(text: &str) {
     with_settings(|settings| {
-        settings.voice_input.current_mut().keywords = text.trim().to_string();
+        settings.voice_input.keywords = text.trim().to_string();
         settings.save();
     });
 }
 
+/// Tidying's switch.
 fn set_tidy(on: bool) {
     with_settings(|settings| {
-        settings.voice_input.current_mut().tidy = on;
+        settings.voice_input.tidy = on;
         settings.save();
     });
-    with_ui(show_panel);
+    with_ui(|ui| refresh(ui, false));
 }
 
+/// Transcribing voice messages' switch.
 fn set_transcribe_messages(on: bool) {
     with_settings(|settings| {
         settings.voice_input.transcribe_messages = on;
         settings.save();
     });
-    with_ui(|ui| ui.global::<Voice>().set_transcribe_messages(on));
+    with_ui(|ui| refresh(ui, false));
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::settings::VoiceConnection;
 
     #[test]
     fn words_join_as_their_script_is_written() {
@@ -1346,72 +1533,103 @@ mod tests {
         assert_eq!(key_name("3"), "voice_input.connection.3");
     }
 
-    /// OpenAI (1) for any language, Doubao (2) and Anthropic (3) for Chinese, in use.
-    fn three_connections() -> VoiceInput {
-        let mut voice_input = VoiceInput {
-            connections: vec![
-                VoiceConnection { id: "1".into(), label: "OpenAI".into(), ..VoiceConnection::default() },
-                VoiceConnection { id: "2".into(), label: "豆包语音".into(), format: "doubao".into(), ..VoiceConnection::default() },
-                VoiceConnection { id: "3".into(), label: "Claude 中转".into(), format: "anthropic".into(), url: "https://relay.example.com".into(), ..VoiceConnection::default() },
-                    ],
+    /// OpenAI-compatible (1), Doubao (2), a Claude relay (3), a vendor not filled in yet (4):
+    /// Doubao hears Chinese, the relay tidies, OpenAI transcribes voice messages.
+    fn three_vendors() -> VoiceInput {
+        VoiceInput {
+            main_languages: vec!["auto".into(), "zh-cn".into()],
+            language: "zh-cn".into(),
+            vendors: vec![
+                AiVendor { id: "1".into(), label: "OpenAI".into(), format: "openai".into(), ..AiVendor::default() },
+                AiVendor { id: "2".into(), label: "豆包语音".into(), format: "doubao".into(), ..AiVendor::default() },
+                AiVendor { id: "3".into(), label: "Claude 中转".into(), format: "anthropic".into(), url: "https://relay.example.com".into(), ..AiVendor::default() },
+                AiVendor { id: "4".into(), ..AiVendor::default() },
+            ],
+            vendor: "2".into(),
+            model: "volc.seedasr.sauc.duration".into(),
+            tidy: true,
+            tidy_vendor: "3".into(),
+            tidy_model: "claude-haiku-5-5".into(),
+            transcribe_messages: true,
+            messages_vendor: "1".into(),
+            messages_model: "gpt-transcribe".into(),
             ..VoiceInput::default()
-        };
-        voice_input.profiles[0].connection = "1".into();
-        voice_input.profiles[0].tidy_connection = "1".into();
-        voice_input.profiles.push(VoiceProfile { language: "zh-cn".into(), connection: "2".into(), tidy_connection: "3".into(), ..VoiceProfile::default() });
-        voice_input.language = "zh-cn".into();
-        voice_input
+        }
     }
 
     #[test]
-    fn each_ability_offers_the_connections_that_can_do_it() {
-        let voice_input = three_connections();
-        let view = panel_view(&voice_input, "2", &|id| (id == "2").then(|| "6f1…9b2c".to_string()));
-        let ids = |choices: &[VoiceChoice]| choices.iter().map(|choice| (choice.id.to_string(), choice.on)).collect::<Vec<_>>();
-        // Speech: OpenAI and Doubao, not Anthropic; Doubao chosen.
-        assert_eq!(ids(&view.speech_choices), vec![("1".to_string(), false), ("2".to_string(), true)]);
-        // Tidying: OpenAI and Anthropic, not Doubao; Anthropic chosen.
-        assert_eq!(ids(&view.tidy_choices), vec![("1".to_string(), false), ("3".to_string(), true)]);
-        // Voice messages: the speech recognition's by default, then the ones that hear.
-        assert_eq!(ids(&view.message_choices), vec![(String::new(), true), ("1".to_string(), false), ("2".to_string(), false)]);
-        assert_eq!((view.speech_format.as_str(), view.speech_model_placeholder.as_str()), ("doubao", "volc.seedasr.sauc.duration"));
-        assert_eq!(view.tidy_model_placeholder.as_str(), "claude-haiku-5-5");
-        // The connections listed, the open one's fields.
-        assert_eq!(view.connections.iter().map(|row| (row.label.to_string(), row.host.to_string(), row.has_key)).collect::<Vec<_>>(), vec![
-            ("OpenAI".to_string(), "api.openai.com".to_string(), false),
-            ("豆包语音".to_string(), "openspeech.bytedance.com".to_string(), true),
-            ("Claude 中转".to_string(), "relay.example.com".to_string(), false),
+    fn each_feature_offers_the_vendors_that_can_do_it_and_their_models_as_listed() {
+        let voice_input = three_vendors();
+        let listed = |id: &str, _: Ability| match id {
+            "1" => Some(Models::Listed(vec!["gpt-transcribe".into(), "whisper-1".into(), "gpt-5-mini".into()])),
+            "2" => Some(Models::Listed(service::DOUBAO_RESOURCES.iter().map(|resource| resource.to_string()).collect())),
+            _ => Some(Models::Loading),
+        };
+        let view = panel_view(&voice_input, "2", &|id| (id == "2").then(|| "6f1…9b2c".to_string()), &listed, &|feature| if feature == Feature::Messages { "whisp".into() } else { String::new() });
+        let ids = |items: &[VoiceItem]| items.iter().map(|item| item.id.to_string()).collect::<Vec<_>>();
+        // Voice input: OpenAI and Doubao, not Anthropic, not the one with no format.
+        assert_eq!(ids(&view.speech.vendors), vec!["1", "2"]);
+        assert_eq!((view.speech.vendor_label.as_str(), view.speech.format.as_str(), view.speech.state), ("豆包语音", "doubao", ModelsState::Listed));
+        assert_eq!(view.speech.models.len(), 4);
+        // Tidying: OpenAI and Anthropic, not Doubao; the relay's models on their way.
+        assert_eq!(ids(&view.tidy.vendors), vec!["1", "3"]);
+        assert_eq!((view.tidy.state, view.tidy.model.as_str()), (ModelsState::Loading, "claude-haiku-5-5"));
+        // Voice messages: what was typed in its search narrows the list.
+        assert_eq!(ids(&view.messages.vendors), vec!["1", "2"]);
+        assert_eq!(ids(&view.messages.models), vec!["whisper-1"]);
+        // The vendors listed, the open one's fields; the new one has neither a name nor a format.
+        assert_eq!(view.vendors.iter().map(|row| (row.label.to_string(), row.format.to_string(), row.host.to_string(), row.has_key)).collect::<Vec<_>>(), vec![
+            ("OpenAI".to_string(), "openai".to_string(), "api.openai.com".to_string(), false),
+            ("豆包语音".to_string(), "doubao".to_string(), "openspeech.bytedance.com".to_string(), true),
+            ("Claude 中转".to_string(), "anthropic".to_string(), "relay.example.com".to_string(), false),
+            (String::new(), String::new(), String::new(), false),
         ]);
         let open = view.open.expect("the open one");
         assert_eq!((open.format.as_str(), open.key_hint.as_str(), open.official, open.url_problem), ("doubao", "6f1…9b2c", true, 0));
         assert_eq!(view.language_name, "简体中文");
+        // Nothing chosen: no vendor, no models asked for.
+        let empty = panel_view(&VoiceInput { vendors: voice_input.vendors.clone(), ..VoiceInput::default() }, "", &|_| None, &listed, &|_| String::new());
+        assert_eq!((empty.speech.vendor.as_str(), empty.speech.model.as_str(), empty.speech.state), ("", "", ModelsState::None));
+        assert!(!empty.tidy_on && !empty.messages_on);
     }
 
     #[test]
-    fn a_profile_hears_and_tidies_through_its_connections() {
-        let voice_input = three_connections();
-        let speech = speech_of(&voice_input, voice_input.current()).map_err(|_| "no speech").expect("Doubao");
-        assert_eq!((speech.format, speech.shown().as_str()), (SpeechFormat::Doubao, "豆包语音"));
-        // An OpenAI connection uploading.
-        let mut upload = voice_input.profiles[0].clone();
-        upload.mode = "upload".into();
-        assert_eq!(speech_of(&voice_input, &upload).map(|speech| speech.format).map_err(|_| "no speech"), Ok(SpeechFormat::OpenAiTranscriptions));
-        // None chosen, or one that cannot hear: no service.
-        let mut none = voice_input.profiles[0].clone();
-        none.connection.clear();
-        assert!(matches!(speech_of(&voice_input, &none), Err(VoiceProblem::NoService)));
-        none.connection = "3".into();
-        assert!(matches!(speech_of(&voice_input, &none), Err(VoiceProblem::NoService)));
+    fn voice_input_needs_its_vendor_its_way_of_hearing_and_its_model() {
+        let mut voice_input = three_vendors();
+        let speech = speech_of(&voice_input).map_err(|_| "no speech").expect("Doubao");
+        assert_eq!((speech.format, speech.shown().as_str(), speech.model.as_str()), (SpeechFormat::Doubao, "豆包语音", "volc.seedasr.sauc.duration"));
+        // An OpenAI-compatible vendor, no way of hearing chosen, then uploading.
+        voice_input.vendor = "1".into();
+        voice_input.model = "gpt-transcribe".into();
+        assert!(matches!(speech_of(&voice_input), Err(VoiceProblem::NoMode)));
+        voice_input.mode = "upload".into();
+        assert_eq!(speech_of(&voice_input).map(|speech| speech.format).map_err(|_| "no speech"), Ok(SpeechFormat::OpenAiTranscriptions));
+        // No model chosen; a vendor that cannot hear, or none.
+        voice_input.model.clear();
+        assert!(matches!(speech_of(&voice_input), Err(VoiceProblem::NoModel)));
+        voice_input.vendor = "3".into();
+        assert!(matches!(speech_of(&voice_input), Err(VoiceProblem::NoService)));
+        voice_input.vendor.clear();
+        assert!(matches!(speech_of(&voice_input), Err(VoiceProblem::NoService)));
+        // Voice messages: their own vendor, which uploads; OpenAI's own address wants a key, a relay
+        // may not; nothing chosen, nothing sent.
+        let mut voice_input = three_vendors();
+        assert!(matches!(messages_options_of(&voice_input), Err(VoiceProblem::NoKey)));
+        voice_input.vendors[0].url = "https://relay.example.com/v1".into();
+        let messages = messages_options_of(&voice_input).map_err(|_| "no options").expect("a relay");
+        assert_eq!((messages.speech.format, messages.language.as_str(), messages.recorded, messages.tidy.is_none()), (SpeechFormat::OpenAiTranscriptions, "auto", true, true));
+        assert!(matches!(messages_options_of(&VoiceInput { messages_model: String::new(), ..voice_input.clone() }), Err(VoiceProblem::NoModel)));
+        assert!(matches!(messages_options_of(&VoiceInput::default()), Err(VoiceProblem::NoService)));
     }
 
     #[test]
     fn words_show_while_speaking_except_for_uploads_and_doubaos_other_languages() {
         let endpoint = |format: &str| Endpoint::new(format, "", "").expect("the default address");
         let speech = |format: &str, upload: bool, model: &str| Speech::new(endpoint(format), upload, model).expect("it hears");
-        assert!(live(&speech("openai", false, ""), "auto"));
+        assert!(live(&speech("openai", false, "gpt-live-transcribe"), "auto"));
         assert!(!live(&speech("openai", false, "gpt-transcribe"), "auto"));
-        assert!(!live(&speech("openai", true, ""), "zh-cn"));
-        assert!(live(&speech("dashscope", false, ""), "ja"));
-        assert!(live(&speech("doubao", false, ""), "zh-tw") && !live(&speech("doubao", false, ""), "ja"));
+        assert!(!live(&speech("openai", true, "gpt-transcribe"), "zh-cn"));
+        assert!(live(&speech("dashscope", false, "qwen3-asr-flash-realtime"), "ja"));
+        assert!(live(&speech("doubao", false, "volc.seedasr.sauc.duration"), "zh-tw") && !live(&speech("doubao", false, "volc.seedasr.sauc.duration"), "ja"));
     }
 }

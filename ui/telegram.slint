@@ -265,8 +265,9 @@ export struct RoundNote {
 // listened to. Which one plays, and how far, is Conversation's (voice-playing …), so that the row
 // stays the same while it plays.
 // Why a voice message has no words: Telegram wants Premium for them (or the week's tries are
-// used up), it is too long for Telegram, or the service failed (its words in the detail).
-export enum TranscriptProblem { none, premium, too-long, failed }
+// used up), it is too long for Telegram, the service failed (its words in the detail), or the
+// user's own transcription is on with no AI vendor or model chosen.
+export enum TranscriptProblem { none, premium, too-long, failed, not-set-up }
 
 export struct VoiceNote {
     shown: bool,

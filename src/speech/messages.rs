@@ -1,9 +1,9 @@
-//! A voice message's words by the user's own speech service: the design's Transcribe (the fifth
-//! round, B1) when Telegram's own transcription cannot be had (src/telegram/voice.rs) and the
-//! user allows it (`[voice_input] transcribe_messages`, off until they turn it on in the panel).
-//! It hands Telegram's content, someone's voice, to the service the user chose, for the one
-//! message they clicked (docs/voice-input.md); the words are kept in memory for the session
-//! (the store's own_transcripts) and written nowhere.
+//! A voice message's words by the user's own AI vendor: the design's Transcribe (the fifth round,
+//! B1) when the user turned on transcribing voice messages in the panel (`[voice_input]
+//! transcribe_messages`, off until then), with the vendor and model chosen for it, instead of
+//! Telegram's own transcription (src/telegram/voice.rs). It hands Telegram's content, someone's
+//! voice, to the vendor the user chose, for the one message they clicked (docs/voice-input.md);
+//! the words are kept in memory for the session (the store's own_transcripts) and written nowhere.
 //!
 //! The file goes as it is to the upload format; for the realtime formats libmpv decodes it to the
 //! service's rate first (src/player/decode.rs), and the sound goes out as fast as the service

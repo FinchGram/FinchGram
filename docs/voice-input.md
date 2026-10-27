@@ -6,8 +6,10 @@ Status: step 1, the user's own key, built on 2026-10-25 at the maintainer's word
 ("咱们做一下这个语音输入吧，就是语音输入，转文字，类似微信那样") with OpenAI alone, and opened to any vendor on
 2026-10-26, at the maintainer's word that Chinese was far below WeChat's voice input and that the
 services should go by their API's format and the user's own address and keys ("应该允许大家自己找vendor，
-而不是固定成openai"), with a set of its own for each main language, and the words right first
-("以语音转文字的准确度为第一"). An address of the user's own also covers most of step 3 (a server on
+而不是固定成openai"), and the words right first ("以语音转文字的准确度为第一"); later the same day the
+services became AI vendors the user adds, and voice input, tidying and transcribing voice messages
+three features, each with its own switch, vendor and model, chosen by the user from lists and by
+nobody else. An address of the user's own also covers most of step 3 (a server on
 their Mac or network). Steps 2, 4 and 5 are not built. Voice input was decided on 2026-10-21 as the
 first of the AI features. There was no design round: the microphone is the one the design already
 drew in every composer, the strip above the composer is drawn the way each theme draws its strip
@@ -32,33 +34,48 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   words…", and the words go into the composer after what it holds (with a space where the script has
   spaces), the cursor after them, for the user to send. A dictation finishes by itself after five
   minutes, so that a microphone left open does not go on costing the user.
-- **When it cannot.** The strip says why, naming the service, with a button where something can be
-  put right: no connection chosen for the main language's speech recognition (Set up, which opens
-  the panel), no key (Add key, the same), an address FinchGram cannot use (Change
-  address), the microphone not allowed (Open System Settings), the service refusing the key (401 or
-  403: Change key) or the credit or the pace (429), the network, the service's own message, nothing
-  heard. The first time, macOS asks whether FinchGram may use the microphone.
-- **Connections, then abilities** (the maintainer's model of 2026-10-26: "可以让用户添加多个不同的url和
-  key组合，并且同时选一下格式，还要有一个label…然后，每个能力，选一个组合"). The user adds connections,
-  each a name of theirs, an API format, an address (empty: the vendor's own) and a key, and each
-  ability picks one connection and a model (empty: the format's own). A connection does everything
-  its format can: *OpenAI-compatible* hears (realtime, or an upload at the end) and tidies, so one
-  OpenAI key serves both; *Alibaba Cloud Model Studio* hears (Qwen-ASR) and tidies (Qwen, in its
-  OpenAI-compatible mode), one key for both; *Anthropic* and *Gemini* tidy; *Doubao speech* hears.
-  An ability lists only the connections that can do it. The connection list shows each one's name,
-  format, host and key; a click opens it to change its name, format, address and key, or to remove
-  it (the abilities that used it then have none).
-- **Main languages.** The user picks the language they mostly speak, or "any language"; words of
-  other languages mixed in are kept as spoken (each format is told so in its own way, below), and the
-  main language fixes the script (简体 or 繁體). Each main language has its abilities of its own: the
-  connection that hears it (and, for an OpenAI one, how: as the user speaks, or when they are done),
-  the words to know, the connection that tidies it. Adding a language starts with the abilities in
-  use (Chinese through Doubao, English through OpenAI, say: two connections, chosen per language).
-- **Speech recognition, by its connection's format.** With a model and words to know (names and
-  terms the user says often, separated by commas), which each format takes as hints:
+- **When it cannot.** The strip says why, naming the vendor, with a button where something can be
+  put right: no AI vendor chosen for voice input, no way of hearing chosen for an OpenAI-compatible
+  one, no model chosen (each Set up, which opens the panel), no key (Add key, the same), an address
+  FinchGram cannot use (Change address), the microphone not allowed (Open System Settings), the
+  vendor refusing the key (401 or 403: Change key) or the credit or the pace (429), the network,
+  the vendor's own message, nothing heard. The first time, macOS asks whether FinchGram may use the
+  microphone.
+- **AI vendors, then three features** (the maintainer's words of 2026-10-26: first "可以让用户添加多个
+  不同的url和key组合，并且同时选一下格式，还要有一个label…然后，每个能力，选一个组合"; then "把那个connection改了，
+  名字叫ai vendor", "每一个feature…应该分别有开关", "用一个下拉菜单来选，不要做任何假设和默认", and for the
+  models "用户选模型，而不是手动填写，默认不选任何模型"). The user adds AI vendors, each a name of theirs,
+  an API format, an address (empty: the vendor's own) and a key; a new one starts with none of them
+  chosen. A vendor does everything its format can: *OpenAI-compatible* hears (realtime, or an upload
+  at the end) and writes, so one OpenAI key serves both; *Alibaba Cloud Model Studio* hears
+  (Qwen-ASR) and writes (Qwen, in its OpenAI-compatible mode), one key for both; *Anthropic* and
+  *Gemini* write; *Doubao speech* hears. Three AI features use them, each with its own switch (off
+  until the user turns it on) and its own vendor and model, chosen from dropdown lists: **voice
+  input** (the tool's own switch; also the main languages, how an OpenAI-compatible vendor hears,
+  the words to know), **tidying** what voice input heard, and **transcribing voice messages**.
+  Nothing is chosen for the user: no vendor, no model, no way of hearing, until they choose; a
+  feature lists only the vendors that can do it. The vendor list shows each one's name, format,
+  host and key; a click opens it to change its name, format, address and key, or to remove it (the
+  features that used it then have none). One panel holds them all, in that order (the maintainer's
+  choice of a panel in three sections over a card each).
+- **Models.** Chosen from the vendor's own list, with a search over it, never typed: OpenAI-compatible
+  vendors' `GET …/models` (all of them, as listed), Anthropic's `GET /v1/models`, Gemini's
+  `GET /v1beta/models` (those that generate content, by its own mark), Model Studio's catalog
+  (`GET /api/v1/models`, by its own capability: `Realtime-ASR` for hearing, `TG` for writing); Doubao,
+  whose API lists none, offers the four resources its documentation names. A list is asked for when
+  a vendor is chosen for a feature, when the list is opened, and again after the vendor's key,
+  format or address changes; it is kept for the session, and what the vendor said shows under it
+  (asking, a key wanted, the key refused, its error, no models).
+- **Main languages.** The user picks the language they mostly speak, or "any language", and may add
+  others to switch between in the strip; the main language only tells the vendor what is spoken
+  (the maintainer's answer: one vendor for each feature, not one for each language). Words of other
+  languages mixed in are kept as spoken (each format is told so in its own way, below), and the main
+  language fixes the script (简体 or 繁體).
+- **Voice input, by its vendor's format.** With the model chosen and words to know (names and terms
+  the user says often, separated by commas), which each format takes as hints:
   - *OpenAI Realtime* (`wss://…/realtime?intent=transcription`, 24 kHz): a `session.update` of type
-    `transcription` with the model (`gpt-live-transcribe`), `delay: "xhigh"` (the most context: the
-    live words show later and are right more often; a profile's `delay` in settings.toml takes
+    `transcription` with the model chosen (`gpt-live-transcribe`, say), `delay: "xhigh"` (the most
+    context: the live words show later and are right more often; `delay` in settings.toml takes
     another), the main language (`languages: ["zh-cn"]` for the models of 2026, `language: "zh"`
     for the older ones, never both), a sentence of context (`prompt`: a chat message dictated,
     mainly in that language, other languages mixed in to be written as spoken), the words to know
@@ -69,10 +86,10 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   - *OpenAI-compatible upload* (`POST …/audio/transcriptions`, the format the most services, relays
     and servers of one's own speak: OpenAI, Groq, SiliconFlow (whose SenseVoice is strong in
     Chinese), Mistral, speaches, LocalAI, vLLM): the recording is kept while the user speaks and
-    goes up as one WAV file at 16 kHz once they are done, with the model (`gpt-transcribe`), the
-    language by ISO 639-1, and a prompt: for Chinese a line in the script wanted that leaves English
+    goes up as one WAV file at 16 kHz once they are done, with the model chosen, the language by
+    ISO 639-1, and a prompt: for Chinese a line in the script wanted that leaves English
     words as they are, and the words to know. No words while the user speaks.
-  - *Qwen (Alibaba Cloud)* (`wss://dashscope-intl.aliyuncs.com/api-ws/v1/realtime?model=qwen3-asr-flash-realtime`,
+  - *Qwen (Alibaba Cloud)* (`wss://dashscope-intl.aliyuncs.com/api-ws/v1/realtime?model=<the model chosen>`,
     Model Studio's key as a bearer token; Beijing's host or a workspace's by the address): a
     `session.update` with `input_audio_format: "pcm"`, `sample_rate: 16000`, the language
     (`input_audio_transcription.language`), the words to know as context (`…corpus.text`), and the
@@ -90,73 +107,79 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
     (`ja-JP`, …), the words at the end. 繁體 is written by Doubao itself (`output_zh_variant: "tw"`);
     the words to know go as hot words (`corpus.context`). The key is the new console's
     (`X-Api-Key`); the old console's App ID and Access Token go into the key's field as
-    `appid:token`. The model is the resource billed (`X-Api-Resource-Id`, Seed-ASR 2.0 by the hour,
-    `volc.seedasr.sauc.duration`, unless the user names another).
-- **Tidying, by its connection's format.** A switch (on by default), then a connection and a model:
-  *OpenAI's Chat Completions* (the format nearly every vendor, relay and local server speaks;
-  `gpt-5-mini` by default, able enough to put a misheard word right; the `system` role every
-  server takes; `store: false` and `reasoning_effort: "minimal"` only where they belong, OpenAI
-  itself and its GPT-5 models), *Anthropic's Messages* (`claude-haiku-5-5`; `anthropic-version:
+    `appid:token`. The model is the resource billed (`X-Api-Resource-Id`): one of the four
+    Volcengine's documentation names (streaming recognition 1.0 and 2.0, by the hour or by
+    concurrency, `volc.bigasr.sauc.*` and `volc.seedasr.sauc.*`), the one the user bought.
+- **Tidying, by its vendor's format.** Its switch, then a vendor and a model:
+  *OpenAI's Chat Completions* (the format nearly every vendor, relay and local server speaks; the
+  `system` role every server takes; `store: false` and `reasoning_effort: "minimal"` only where they
+  belong, OpenAI itself and its GPT-5 models), *Anthropic's Messages* (`anthropic-version:
   2023-06-01`, which relays and other vendors' Claude-format endpoints know; the key as `x-api-key`,
   and to an address not Anthropic's as a bearer token too; `output_config.effort: "low"` for the
   models that take it, Claude 4.6 and later; no `temperature`, which the API refuses since
-  2026-10-21), *Google's Gemini* (`generateContent`, `x-goog-api-key`, `gemini-3.5-flash-lite`).
-  The instructions: take out filler, stutters, repeats and false starts; set the punctuation; put
-  right a word the recognition clearly misheard (a homophone, 在 for 再) where the context makes it
-  certain, and only there; keep the speaker's words, tone and every language as spoken; write the
-  main language's script; never translate, rephrase, answer or add. An answer much longer than the
-  words is not taken, nor is an error: the words go in as heard.
+  2026-10-21), *Google's Gemini* (`generateContent`, `x-goog-api-key`). The instructions: take out
+  filler, stutters, repeats and false starts; set the punctuation; put right a word the recognition
+  clearly misheard (a homophone, 在 for 再) where the context makes it certain, and only there; keep
+  the speaker's words, tone and every language as spoken; write the main language's script; never
+  translate, rephrase, answer or add. An answer much longer than the words is not taken, nor is an
+  error, nor is anything when tidying is on with no vendor or model chosen: the words go in as heard.
 - **Addresses.** Empty is the vendor's own; a pasted endpoint (`…/v1/audio/transcriptions`,
   `wss://…/api-ws/v1/realtime?model=…`) is taken as its base. Plain http goes only to this Mac or the
   local network, where a server of one's own runs; a name and password in the address are refused;
   redirects are never followed, so that a key in a header does not go to another host.
-- **Keys.** One per connection, a credential in the app's database, table `credentials`, sealed to
-  its name, `voice_input.connection.<id>` (no layout change); shown by its first and last letters,
-  with Remove. A connection is checked when its key is saved, its format chosen or its address done
-  being typed: the list of models for the HTTP formats, the WebSocket's handshake for the realtime
-  ones (whose servers may list none); the answer shows under it. A vendor's own address wants a key;
-  one of the user's own may not, and then none is sent.
+- **Keys.** One per vendor, a credential in the app's database, table `credentials`, sealed to its
+  name, `voice_input.connection.<id>` (named when the vendors were called connections; no layout
+  change); shown by its first and last letters, with Remove. A vendor is checked when its key is
+  saved, its format chosen or its address done being typed: the list of models (Model Studio's
+  catalog for it), and for Doubao the WebSocket's handshake under each of its four resources, any of
+  which the user may have bought; the answer shows under it. A vendor's own address wants a key; one
+  of the user's own may not, and then none is sent.
 - **The words right first (2026-10-26).** OpenAI's live model at `xhigh`; words to know for every
-  format; Doubao's two passes; Qwen's context; the tidying that puts misheard words right with
-  `gpt-5-mini`; and the microphone's sound resampled band-limited (`audio.rs`: a windowed sinc
-  under a Blackman window, 16 zero crossings, below 92 % of the lower rate's half), where the
-  averaging of before let a 10 kHz hiss fold into 16 kHz's band at half its loudness, right where
-  Chinese's s, sh, x, z, c and q are (a test keeps it out by more than 49 dB).
-- **Voice messages.** Transcribe under a voice message (the design's fifth round, B1, greyed until
-  now): Telegram's own transcription first (`recognizeSpeech`: Telegram Premium, a few tries a week
-  without it, or a group boosted for it), its words coming into the message as Telegram has them
-  (`voiceNote.speech_recognition_result`, pending with the words so far, done, or failed); a second
-  click hides the words, a third shows them again. When Telegram cannot and the user turned on
-  "Transcribe voice messages with your own service" in the panel (off by default), the message goes
-  to the connection chosen for voice messages (by default the main language in use's speech
-  recognition; an OpenAI connection chosen for them uploads): its file as it is to the upload format, or
-  decoded by libmpv's PCM writer (`src/player/decode.rs`, faster than real time) to the service's
-  rate for the realtime ones; no tidying. The words are kept in memory for the session, nowhere
-  else. Otherwise the bubble says that Telegram wants Premium, and where the user's own service is.
-  This hands Telegram's content (someone else's voice) to a service of the user's choosing, which
-  touches clause 1.5 of the API terms (see [mcp.md](mcp.md)): off by default, one message at the
-  user's click, nothing stored, as the maintainer decided for the MCP server on 2026-10-12; built
-  at the maintainer's word of 2026-10-26 ("语音信息转文字！可以一起做了"), and theirs to keep or remove.
-- **The settings file.** `[voice_input]` has `enabled`, `language` (the main language in use),
-  `transcribe_messages`, `messages_connection` and `messages_model` (empty: the speech recognition's),
-  a `[[voice_input.connections]]` for each connection (`id`, `label`, `format`, `url`), and a
-  `[[voice_input.profiles]]` for each main language: `language`, `connection`, `mode` (`realtime` or
-  `upload`), `model`, `keywords`, `tidy`, `tidy_connection`, `tidy_model`, and `delay` when set by
-  hand. Older files migrate: 0.7.0's and 0.7.1's `languages`, `tidy`, `model` and `tidy_model` make
-  the first profile and an OpenAI connection (one language chosen is the main one, several or none
-  are any language; models that were 0.7's defaults become the formats' own); 0.7.2's per-language
-  formats, addresses and keys become connections, one for each address and key. Their keys move into
-  the connections at the next start (`key_from` points at the old credential until then, even across a
-  save), and connections that turn out to share a format, an address and a key become one.
-- **The code.** `src/speech/mod.rs` (the state on the UI thread, the panel, the connections, the
-  profiles and the keys),
-  `dictation.rs` (a dictation from the first sound to the words), `service.rs` (formats, addresses,
-  connections, checks), `realtime.rs` (OpenAI's and Qwen's sessions), `doubao.rs`, `upload.rs`,
-  `tidy.rs`, `messages.rs` (voice messages), `audio.rs`; `src/player/decode.rs`;
-  `src/telegram/voice.rs` (Transcribe); `ui/voice.slint`, each theme's composer and strip,
-  `ui/pages/voice-input.slint` in each theme's toolbox; the screenshot scenes `voice-*`
-  (`voice-upload`, `voice-transcripts`, the panel's `voice-input-doubao` (a connection open), `…-speech`, `…-tidy`,
-  `voice-input-relay`, `voice-input-upload` among them) and `toolbox-ai`.
+  format; Doubao's two passes; Qwen's context; the tidying that puts misheard words right; and the
+  microphone's sound resampled band-limited (`audio.rs`: a windowed sinc under a Blackman window, 16
+  zero crossings, below 92 % of the lower rate's half), where the averaging of before let a 10 kHz
+  hiss fold into 16 kHz's band at half its loudness, right where Chinese's s, sh, x, z, c and q are
+  (a test keeps it out by more than 49 dB).
+- **Voice messages.** Transcribe under a voice message (the design's fifth round, B1). With the
+  third feature off, it is Telegram's own transcription (`recognizeSpeech`: Telegram Premium, a few
+  tries a week without it, or a group boosted for it), its words coming into the message as
+  Telegram has them (`voiceNote.speech_recognition_result`, pending with the words so far, done, or
+  failed), and when Telegram cannot, the bubble says that Telegram wants Premium and where the
+  user's own vendor can be set. With it on, Telegram is not asked: the message goes straight to the
+  vendor and model chosen for voice messages (the maintainer's answer of 2026-10-26, "直接用 AI
+  vendor"): its file as it is to an OpenAI-compatible vendor's upload, or decoded by libmpv's PCM
+  writer (`src/player/decode.rs`, faster than real time) to the rate of the realtime ones; the
+  language found from the message itself; no tidying. With nothing chosen, the bubble says to
+  choose them. A second click hides the words, a third shows them again; they are kept in memory
+  for the session, nowhere else. This hands Telegram's content (someone else's voice) to a service
+  of the user's choosing, which touches clause 1.5 of the API terms (see [mcp.md](mcp.md)): off by
+  default, one message at the user's click, nothing stored, as the maintainer decided for the MCP
+  server on 2026-10-12; built at the maintainer's word of 2026-10-26 ("语音信息转文字！可以一起做了"),
+  and theirs to keep or remove.
+- **The settings file.** `[voice_input]` has `enabled` (voice input's switch), `language` and
+  `main_languages`, a `[[voice_input.vendors]]` for each vendor (`id`, `label`, `format`, `url`),
+  then each feature's own: voice input's `vendor`, `mode` (`realtime`, `upload` or none), `model`,
+  `keywords` and `delay` (only when set by hand); `tidy`, `tidy_vendor`, `tidy_model`;
+  `transcribe_messages`, `messages_vendor`, `messages_model`. "" is nothing chosen. Older files
+  migrate, and keep hearing and tidying as they did, with the models they used named: 0.7.0's and
+  0.7.1's `languages`, `tidy`, `model` and `tidy_model` make an OpenAI vendor for voice input and
+  tidying (one language chosen is the main one, several or none are any language); 0.7.2's
+  per-language formats, addresses and keys become vendors, one for each address and key; 0.7.3's
+  connections are the vendors (`connections` and `messages_connection` are read as `vendors` and
+  `messages_vendor`), and its choices for each main language become the features' own, those of the
+  main language in use, with every language's words to know (tidying on with no vendor is off;
+  voice messages sent to the speech recognition are sent to its vendor, uploading). The keys move
+  into the vendors at the next start (`key_from` points at the old credential until then, even across
+  a save), and vendors that turn out to share a format, an address and a key become one.
+- **The code.** `src/speech/mod.rs` (the state on the UI thread, the panel, the vendors and their
+  models, the features and the keys), `dictation.rs` (a dictation from the first sound to the
+  words), `service.rs` (formats, addresses, model lists, connections, checks), `realtime.rs`
+  (OpenAI's and Qwen's sessions), `doubao.rs`, `upload.rs`, `tidy.rs`, `messages.rs` (voice
+  messages), `audio.rs`; `src/player/decode.rs`; `src/telegram/voice.rs` (Transcribe);
+  `ui/voice.slint`, each theme's composer and strip, `ui/pages/voice-input.slint` in each theme's
+  toolbox; the screenshot scenes `voice-*` (`voice-upload`, `voice-transcripts`, `voice-no-service`,
+  the panel's `voice-input-doubao` (a vendor open), `…-speech`, `…-tidy`, `voice-input-choose`
+  (nothing chosen), `voice-input-relay`, `voice-input-upload` among them) and `toolbox-ai`.
 - **Different from the plan.** Built without the design round. The settings are a panel of the
   toolbox, not rows of Input. The words show in the strip while the user speaks and go into the
   composer once, tidied, at the end. They go at the end of what the composer holds, not at the
@@ -165,7 +188,7 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   5 is the user's choice of main language, by hand.
 - **Tried live.** OpenAI's realtime session, by the maintainer on 0.7.0 and 0.7.1: English good,
   Chinese far below WeChat's. Qwen, Doubao, the upload, Anthropic's and Gemini's tidying and the
-  voice messages' own-service path follow their documents of October 2026 and are tested in those
+  voice messages' own-vendor path and the model lists follow their documents of October 2026 and are tested in those
   shapes; this machine has no key for them. The decoding of an Opus voice message is tested with a
   real one.
 

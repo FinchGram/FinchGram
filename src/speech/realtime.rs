@@ -355,9 +355,14 @@ mod tests {
     use super::*;
     use crate::speech::service::{Endpoint, Speech};
 
-    /// "openai-realtime" or "qwen-realtime", at the vendor's own address.
+    /// "openai-realtime" or "qwen-realtime", at the vendor's own address; "" for the live models.
     fn options(format: &str, model: &str, language: &str) -> Options {
         let connection = if format == "qwen-realtime" { "dashscope" } else { "openai" };
+        let model = match (connection, model) {
+            ("dashscope", "") => "qwen3-asr-flash-realtime",
+            (_, "") => "gpt-live-transcribe",
+            (_, model) => model,
+        };
         Options {
             speech: Speech::new(Endpoint::new(connection, "", "").expect("the default address"), false, model).expect("it hears"),
             speech_key: Some("sk-test".into()),

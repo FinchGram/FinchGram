@@ -196,8 +196,8 @@ fn fill(ui: &MainWindow) {
     password.set_recovery_email("z•••@gmail.com".into());
     password.set_reset_date(reset_date());
 
-    // Voice input's panel: no connection yet, one profile for any language.
-    crate::speech::show_for_pictures(ui, &crate::settings::VoiceInput::default(), "", &[]);
+    // Voice input's panel: no AI vendor yet, nothing chosen.
+    crate::speech::show_for_pictures(ui, &crate::settings::VoiceInput::default(), "", &[], &[]);
 }
 
 /// When a reset asked for today can be completed, as in the design.
@@ -1851,7 +1851,7 @@ fn voice_messages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn
 /// language is being added, then scrolled to Chinese's speech recognition and its tidying and the
 /// voice messages; English through OpenAI's upload, and a connection whose address is plain http.
 fn voice_panel(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
-    use crate::settings::{VoiceConnection, VoiceInput, VoiceProfile};
+    use crate::settings::{AiVendor, VoiceInput};
     let app = ui.global::<AppState>();
     let voice = ui.global::<Voice>();
     let toolbox = ui.global::<Toolbox>();
@@ -1859,65 +1859,74 @@ fn voice_panel(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&s
     app.set_page(Page::Chats);
     crate::toolbox::show_for_pictures(ui, &["downloads"], "ai", "voice-input", "");
     toolbox.set_open(true);
-    crate::speech::show_for_pictures(ui, &VoiceInput::default(), "", &[]);
+    // Nothing yet: no AI vendor, every feature off.
+    crate::speech::show_for_pictures(ui, &VoiceInput::default(), "", &[], &[]);
     save(window, &name("voice-input-off"));
     voice.set_on(true);
     save(window, &name("voice-input"));
-    // A connection just added, OpenAI's by default, a key that is not one.
-    let mut fresh = VoiceInput::default();
-    fresh.connections.push(VoiceConnection { id: "1".into(), label: "OpenAI".into(), ..VoiceConnection::default() });
-    fresh.profiles[0].connection = "1".into();
-    fresh.profiles[0].tidy_connection = "1".into();
-    crate::speech::show_for_pictures(ui, &fresh, "1", &[]);
-    voice.set_connection_check(KeyCheck::Malformed);
+    // A vendor just added: no name, no format, a key that is not one.
+    let fresh = VoiceInput { vendors: vec![AiVendor { id: "1".into(), ..AiVendor::default() }], ..VoiceInput::default() };
+    crate::speech::show_for_pictures(ui, &fresh, "1", &[], &[]);
+    voice.set_vendor_check(KeyCheck::Malformed);
     save(window, &name("voice-input-malformed"));
-    crate::speech::show_for_pictures(ui, &fresh, "1", &[("1", "sk-…4f2a")]);
-    voice.set_connection_check(KeyCheck::Works);
+    // Named OpenAI, OpenAI-compatible, its key taken; no feature has chosen it.
+    let openai = VoiceInput { vendors: vec![AiVendor { id: "1".into(), label: "OpenAI".into(), format: "openai".into(), ..AiVendor::default() }], ..VoiceInput::default() };
+    crate::speech::show_for_pictures(ui, &openai, "1", &[("1", "sk-…4f2a")], &[]);
+    voice.set_vendor_check(KeyCheck::Works);
     save(window, &name("voice-input-key"));
-    // OpenAI for any language; Doubao hears Chinese, a relay of Claude's tidies it.
-    let mut three = VoiceInput {
-        connections: vec![
-            VoiceConnection { id: "1".into(), label: "OpenAI".into(), ..VoiceConnection::default() },
-            VoiceConnection { id: "2".into(), label: "豆包语音".into(), format: "doubao".into(), ..VoiceConnection::default() },
-            VoiceConnection { id: "3".into(), label: "Claude relay".into(), format: "anthropic".into(), url: "https://relay.example.com".into(), ..VoiceConnection::default() },
-            ],
+    // Three vendors, each feature on with its own: Doubao hears Chinese, a relay of Claude's tidies,
+    // OpenAI transcribes voice messages.
+    let openai_models: &[&str] = &["gpt-4o-mini-transcribe", "gpt-4o-transcribe", "gpt-5-mini", "gpt-live-transcribe", "gpt-transcribe", "whisper-1"];
+    let claude_models: &[&str] = &["claude-haiku-5-5", "claude-opus-5-5", "claude-sonnet-5-5"];
+    let models: [(&str, &[&str]); 3] = [("1", openai_models), ("2", &crate::speech::service::DOUBAO_RESOURCES), ("3", claude_models)];
+    let three = VoiceInput {
+        main_languages: vec!["auto".into(), "zh-cn".into()],
+        language: "zh-cn".into(),
+        vendors: vec![
+            AiVendor { id: "1".into(), label: "OpenAI".into(), format: "openai".into(), ..AiVendor::default() },
+            AiVendor { id: "2".into(), label: "豆包语音".into(), format: "doubao".into(), ..AiVendor::default() },
+            AiVendor { id: "3".into(), label: "Claude relay".into(), format: "anthropic".into(), url: "https://relay.example.com".into(), ..AiVendor::default() },
+        ],
+        vendor: "2".into(),
+        model: "volc.seedasr.sauc.duration".into(),
+        keywords: "陈思远, FinchGram, PikPak".into(),
+        tidy: true,
+        tidy_vendor: "3".into(),
+        tidy_model: "claude-haiku-5-5".into(),
+        transcribe_messages: true,
+        messages_vendor: "1".into(),
+        messages_model: "gpt-transcribe".into(),
         ..VoiceInput::default()
     };
-    three.profiles[0].connection = "1".into();
-    three.profiles[0].tidy_connection = "1".into();
-    three.profiles.push(VoiceProfile {
-        language: "zh-cn".into(),
-        connection: "2".into(),
-        keywords: "陈思远, FinchGram, PikPak".into(),
-        tidy_connection: "3".into(),
-        ..VoiceProfile::default()
-    });
-    three.language = "zh-cn".into();
-    three.transcribe_messages = true;
     let keys = [("1", "sk-…4f2a"), ("2", "6f1…9b2c"), ("3", "sk-…7d1e")];
-    crate::speech::show_for_pictures(ui, &three, "2", &keys);
-    voice.set_connection_check(KeyCheck::Works);
+    crate::speech::show_for_pictures(ui, &three, "2", &keys, &models);
+    voice.set_on(true);
+    voice.set_vendor_check(KeyCheck::Works);
     voice.set_adding(true);
     save(window, &name("voice-input-doubao"));
     voice.set_adding(false);
-    crate::speech::show_for_pictures(ui, &three, "", &keys);
+    crate::speech::show_for_pictures(ui, &three, "", &keys, &models);
     scroll(window, 800.0, 400.0, 520.0);
     save(window, &name("voice-input-doubao-speech"));
     scroll(window, 800.0, 400.0, 600.0);
     save(window, &name("voice-input-doubao-tidy"));
     scroll(window, 800.0, 400.0, -1120.0);
-    // English uploaded through OpenAI; a connection over plain http to the internet, open.
-    let mut english = three.clone();
-    english.connections.push(VoiceConnection { id: "4".into(), label: "My relay".into(), url: "http://relay.example.com/v1".into(), ..VoiceConnection::default() });
-    english.profiles[0] = VoiceProfile { language: "en".into(), connection: "1".into(), mode: "upload".into(), tidy_connection: "1".into(), ..VoiceProfile::default() };
-    english.language = "en".into();
-    crate::speech::show_for_pictures(ui, &english, "4", &keys);
-    voice.set_connection_check(KeyCheck::None);
+    // Every feature on, nothing chosen for any: each list says what to choose.
+    let choose = VoiceInput { vendor: String::new(), model: String::new(), tidy_vendor: String::new(), tidy_model: String::new(), messages_vendor: String::new(), messages_model: String::new(), ..three.clone() };
+    crate::speech::show_for_pictures(ui, &choose, "", &keys, &models);
+    scroll(window, 800.0, 400.0, 520.0);
+    save(window, &name("voice-input-choose"));
+    scroll(window, 800.0, 400.0, -520.0);
+    // English uploaded through OpenAI; a vendor over plain http to the internet, open.
+    let mut english = VoiceInput { main_languages: vec!["en".into()], language: "en".into(), vendor: "1".into(), mode: "upload".into(), model: "gpt-transcribe".into(), ..three.clone() };
+    english.vendors.push(AiVendor { id: "4".into(), label: "My relay".into(), format: "openai".into(), url: "http://relay.example.com/v1".into(), ..AiVendor::default() });
+    crate::speech::show_for_pictures(ui, &english, "4", &keys, &models);
+    voice.set_vendor_check(KeyCheck::None);
     save(window, &name("voice-input-relay"));
     scroll(window, 800.0, 400.0, 900.0);
     save(window, &name("voice-input-upload"));
     scroll(window, 800.0, 400.0, -900.0);
-    crate::speech::show_for_pictures(ui, &VoiceInput::default(), "", &[]);
+    crate::speech::show_for_pictures(ui, &VoiceInput::default(), "", &[], &[]);
     voice.set_on(false);
     toolbox.set_open(false);
     set_toolbox(ui);

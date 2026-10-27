@@ -63,15 +63,16 @@ client, not made by Telegram.
 - **Voice messages.** Play them in the chat, with their waveform, the time and 1×, 1.5× or 2×;
   listening tells the sender, as in Telegram's own apps. Hold the microphone to record one: let go
   to send it, drag left to cancel, drag up to lock it, then stop it to listen before it goes.
-- **Voice input.** Press the sparkle in the composer and speak: the words go into the box, tidied
-  of um and uh, for you to send. You add your services as connections, each a name, an API format,
-  your own key and, if you like, your own address (a relay, or a server on your network), and choose
-  one for each job: for the speech, OpenAI's realtime transcription, Qwen and Doubao (both strong in
-  Chinese), or any service that speaks OpenAI's transcription API; for the tidying, OpenAI's,
-  Anthropic's or Gemini's format. Each main language takes its own, and words of other languages
+- **Voice input.** Press the sparkle in the composer and speak: the words go into the box for you to
+  send. You add your AI vendors, each a name, an API format, your own key and, if you like, your own
+  address (a relay, or a server on your network). Voice input, tidying its words of um and uh, and
+  transcribing voice messages are three features, each with its own switch, and you choose each
+  one's AI vendor and model from lists; nothing is chosen for you. For speech: OpenAI's realtime
+  transcription, Qwen and Doubao (both strong in Chinese), or any service that speaks OpenAI's
+  transcription API; for tidying: OpenAI's, Anthropic's or Gemini's format. Words of other languages
   mixed in are kept as you say them. Toolbox → AI → Voice input, off until you turn it on.
-  Transcribe under a voice message uses Telegram's own transcription, or your own service if you
-  turn that on. See [docs/voice-input.md](docs/voice-input.md).
+  Transcribe under a voice message uses Telegram's own transcription, or, once you turn that on,
+  your own AI vendor. See [docs/voice-input.md](docs/voice-input.md).
 - **AI assistants.** Claude Desktop, Claude Code and other apps that speak the Model Context
   Protocol can read your chats and act in them through FinchGram, once you let them: Toolbox → AI access, off until you turn it on, with the chats you choose and whether an assistant may send, and
   a question the first time an app connects. See [docs/mcp.md](docs/mcp.md).
@@ -160,8 +161,8 @@ FinchGram does what Telegram's own apps do, and nothing they forbid. A message i
 you see it, the other side sees you typing and online as in any Telegram app, sponsored messages in
 channels are shown, self-destructing media opens once, and nothing from Telegram goes to any AI
 unless you let an assistant in (Toolbox → AI access) or turn on transcribing voice messages with
-your own service. Nothing leaves your machine except to Telegram, to GitHub for updates, and, while
-you use voice input, your voice to the speech service you chose, under your own key.
+your own AI vendor. Nothing leaves your machine except to Telegram, to GitHub for updates, and, while
+you use voice input, your voice to the AI vendor you chose, under your own key.
 
 ## Development
 

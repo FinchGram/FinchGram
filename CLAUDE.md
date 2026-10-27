@@ -68,20 +68,22 @@ things fit together.
   Telegram's, the maintainer's word), off until the user turns it on in its panel there
   (ui/pages/voice-input.slint), where its settings are; then the composer's sparkle (Terminal:
   /voice; the microphone is voice messages'). Never fixed to one vendor ("应该允许大家自己找vendor"):
-  the user adds connections, each a label, an API format (OpenAI-compatible, Anthropic, Gemini,
+  the user adds AI vendors, each a label, an API format (OpenAI-compatible, Anthropic, Gemini,
   Alibaba Cloud Model Studio, Doubao speech), an address (a vendor's, a relay's, a server of their
-  own) and a key (`[[voice_input.connections]]`), and each ability picks a connection and a model
-  (the maintainer's model of 2026-10-26: "每个能力，选一个组合"): per main language
-  (`[[voice_input.profiles]]`; words of other languages mixed in are kept as spoken) the speech
-  recognition (OpenAI realtime or upload, Qwen, Doubao's binary protocol) and the tidying (Chat
-  Completions, Anthropic's Messages, Gemini), and the voice messages' own. The words right come
+  own) and a key (`[[voice_input.vendors]]`). Three AI features use them, each with its own switch,
+  vendor and model, chosen from dropdown lists (the models as the vendor's own API lists them) and
+  NOTHING chosen or assumed for the user (the maintainer's words of 2026-10-26: "你别多管闲事，用一个
+  下拉菜单来选，不要做任何假设和默认", "默认不选任何模型，不要自作主张"): voice input (OpenAI realtime or
+  upload, Qwen, Doubao's binary protocol; the main language only tells the vendor what is spoken,
+  words of other languages mixed in are kept as spoken), tidying its words (Chat Completions,
+  Anthropic's Messages, Gemini), and transcribing voice messages; one panel, three sections. The words right come
   first ("以语音转文字的准确度为第一", 2026-10-26): OpenAI's live model at `delay: xhigh`, words to know
   for every format, band-limited resampling, a tidying that puts misheard words right. No model
   inside the app (the installer stays small); the keys are credentials in the database
-  (`credentials`, `voice_input.connection.<id>`), never in settings.toml; the sessions are
+  (`credentials`, `voice_input.connection.<id>`, one per AI vendor), never in settings.toml; the sessions are
   blocking (tungstenite WebSockets, ureq) on threads of their own, not async. Transcribe under a
-  voice message (the design's B1) is Telegram's own transcription (recognizeSpeech) first; the
-  user's own service only when they turn that on, off by default. Built without a design round,
+  voice message (the design's B1) is Telegram's own transcription (recognizeSpeech); with the third
+  feature on (off by default), the user's own vendor instead, Telegram not asked. Built without a design round,
   drawn in each theme's own style; steps 2, 4 and 5 of docs/voice-input.md (a plan, the OS's
   recognizers, a router) are not built.
 - Backward compatibility, since 2026-10-24 (the app is public): every change to the database's
@@ -136,9 +138,8 @@ things fit together.
   are shown. FinchGram trains nothing and hands nothing of Telegram to any AI on its own; what of
   Telegram reaches an AI is only what the user hands it through the MCP server (docs/mcp.md): off
   by default, within the chats the user chose, never indexed or stored for it, and reading that
-  marks nothing as read; and a voice message the user asks to transcribe with their own speech
-  service when Telegram's own transcription cannot: off by default, one message at their click, the
-  words stored nowhere. The maintainer decided this on 2026-10-12 knowing the terms' clause 1.5,
+  marks nothing as read; and a voice message the user asks to transcribe with their own AI vendor,
+  once they turned that on: off by default, one message at their click, the words stored nowhere. The maintainer decided this on 2026-10-12 knowing the terms' clause 1.5,
   and built the second on 2026-10-26 ("语音信息转文字！可以一起做了"). Voice input sends the user's own
-  voice to the speech service they chose, under their own key, while they dictate; that is not
+  voice to the AI vendor they chose, under their own key, while they dictate; that is not
   Telegram's data.

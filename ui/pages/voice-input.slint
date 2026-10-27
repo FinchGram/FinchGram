@@ -1,14 +1,16 @@
 // Voice input's panel in the toolbox, the AI category's second tool (src/speech/,
-// docs/voice-input.md): the switch that puts the sparkle in the composer, then, while it is on, the
-// connections the user added (each a name, an API format, an address and a key: a vendor's, a
-// relay's, a server of the user's own), the main languages the user speaks, and for the one in use
-// its abilities, each a connection and a model: the speech recognition and the tidying; last, voice
-// messages. No design round draws it: it has the AI access panel's shape (ui/pages/ai-access.slint)
-// and the settings' own rows, in every theme.
+// docs/voice-input.md): the AI vendors the user added (each a name, an API format, an address and
+// a key: a vendor's, a relay's, a server of the user's own), then three AI features, each with its
+// own switch, its AI vendor and its model chosen from lists, nothing chosen until the user chooses
+// (the maintainer's word of 2026-10-26): voice input (with the main languages, which only tell the
+// vendor what is spoken), tidying its words, transcribing voice messages. No design round draws it:
+// it has the AI access panel's shape (ui/pages/ai-access.slint) and the settings' own rows, and its
+// lists are drawn as the login page's list of countries, in every theme.
+import { ListView } from "std-widgets.slint";
 import { Look } from "../look.slint";
 import { Icon, Field, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
 import { Card, Separator, SwitchRow, SmallButton, Chip } from "rows.slint";
-import { Voice, VoiceWords, VoiceChoiceRow } from "../voice.slint";
+import { Voice, VoiceWords, VoiceItem } from "../voice.slint";
 import { Toolbox, ToolboxWords } from "../toolbox.slint";
 
 // A row's head: an icon, what it is, and a line under it.
@@ -60,7 +62,7 @@ component Note {
 }
 
 // The main languages set up, as chips (the one in use on), and Add; while adding, the languages
-// that can be.
+// that can be; the one in use can be removed while there are others.
 component LanguagesRow {
     VerticalLayout {
         padding-left: 16px;
@@ -115,6 +117,18 @@ component LanguagesRow {
                             Voice.add-language(language.code);
                         }
                     }
+                }
+            }
+        }
+        if Voice.can-remove && !Voice.adding: HorizontalLayout {
+            padding-left: 34px;
+            alignment: start;
+            Link {
+                text: VoiceWords.remove-language(VoiceWords.language-label(Voice.language-name));
+                icon: "trash";
+                font-size: 13px;
+                clicked => {
+                    Voice.remove-language();
                 }
             }
         }
@@ -176,9 +190,192 @@ component TextRow {
     }
 }
 
-// A connection in the list: its name, its format and host, its key's letters; a click opens it
+// A box that shows what is chosen, or faint what to choose, and the list to choose from below it;
+// a long list has a search box over it. Drawn as the login page's list of countries.
+component Dropdown {
+    in property <string> chosen;            // what the box shows; "" for nothing chosen
+    in property <string> placeholder;
+    in property <[VoiceItem]> items;
+    in property <bool> searchable;
+    in property <bool> enabled: true;
+    in property <string> font-family: Look.font;
+    callback picked(VoiceItem);
+    callback search(string);
+    min-height: 36px;
+    box := Rectangle {
+        height: 36px;
+        border-radius: Look.radius;
+        background: Look.bg;
+        border-width: 1px;
+        border-color: touch.has-hover && root.enabled ? Look.line-strong : Look.line;
+        opacity: root.enabled ? 1 : 0.5;
+        HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            spacing: 8px;
+            Text {
+                horizontal-stretch: 1;
+                text: root.chosen != "" ? root.chosen : root.placeholder;
+                color: root.chosen != "" ? Look.text : Look.faint;
+                font-size: 14px;
+                font-family: root.chosen != "" ? root.font-family : Look.font;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "caret-down";
+                    size: 14px;
+                    color: Look.faint;
+                }
+            }
+        }
+        touch := TouchArea {
+            enabled: root.enabled;
+            mouse-cursor: root.enabled ? pointer : default;
+            clicked => {
+                root.search("");
+                list.show();
+            }
+        }
+    }
+    list := PopupWindow {
+        x: box.x;
+        y: box.y + box.height + 6px;
+        width: box.width;
+        height: min(320px, (root.searchable ? 42px : 0px) + 16px + max(1, root.items.length) * 34px);
+        close-policy: PopupClosePolicy.close-on-click-outside;
+
+        Rectangle {
+            border-radius: Look.radius;
+            background: Look.bg;
+            border-width: 1px;
+            border-color: Look.line-strong;
+            drop-shadow-blur: 24px;
+            drop-shadow-offset-y: 8px;
+            drop-shadow-color: #0000002e;
+            clip: true;
+
+            VerticalLayout {
+                padding: 8px;
+                spacing: 6px;
+                if root.searchable: Field {
+                    height: 36px;
+                    font-size: 14px;
+                    padding-x: 10px;
+                    placeholder: VoiceWords.search();
+                    init => {
+                        self.focus-text();
+                    }
+                    edited(words) => {
+                        root.search(words);
+                    }
+                    accepted => {
+                        if root.items.length > 0 {
+                            root.picked(root.items[0]);
+                            list.close();
+                        }
+                    }
+                }
+                if root.items.length == 0: Text {
+                    height: 34px;
+                    text: VoiceWords.nothing-matches();
+                    color: Look.faint;
+                    font-size: 13px;
+                    vertical-alignment: center;
+                }
+                ListView {
+                    vertical-stretch: 1;
+                    vertical-scrollbar-policy: always-off;
+                    horizontal-scrollbar-policy: always-off;
+                    for item in root.items: Rectangle {
+                        height: 34px;
+                        border-radius: Look.radius / 2;
+                        background: row.has-hover ? Look.sel : item.label == root.chosen ? Look.side : transparent;
+
+                        HorizontalLayout {
+                            padding-left: 8px;
+                            padding-right: 8px;
+                            Text {
+                                horizontal-stretch: 1;
+                                text: item.label;
+                                color: Look.text;
+                                font-size: 14px;
+                                font-family: root.font-family;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                        }
+
+                        row := TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.picked(item);
+                                list.close();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// A feature's choice from a list: an icon, what it is, the box, and a line under it.
+component DropdownRow {
+    in property <string> icon;
+    in property <string> title;
+    in property <string> note;
+    in property <string> chosen;
+    in property <string> placeholder;
+    in property <[VoiceItem]> items;
+    in property <bool> searchable;
+    in property <bool> enabled: true;
+    in property <string> font-family: Look.font;
+    in property <string> message;
+    in property <int> tone;
+    callback picked(VoiceItem);
+    callback search(string);
+    VerticalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 8px;
+        RowHead {
+            icon: root.icon;
+            title: root.title;
+            note: root.note;
+        }
+        HorizontalLayout {
+            padding-left: 34px;
+            Dropdown {
+                horizontal-stretch: 1;
+                chosen: root.chosen;
+                placeholder: root.placeholder;
+                items: root.items;
+                searchable: root.searchable;
+                enabled: root.enabled;
+                font-family: root.font-family;
+                picked(item) => {
+                    root.picked(item);
+                }
+                search(text) => {
+                    root.search(text);
+                }
+            }
+        }
+        if root.message != "": Note {
+            text: root.message;
+            tone: root.tone;
+        }
+    }
+}
+
+// An AI vendor in the list: its name, its format and host, its key's letters; a click opens it
 // for editing, or closes it.
-component ConnectionRow inherits Rectangle {
+component VendorRow inherits Rectangle {
     in property <string> label;
     in property <string> format;
     in property <string> host;
@@ -206,14 +403,14 @@ component ConnectionRow inherits Rectangle {
             alignment: center;
             spacing: 2px;
             Text {
-                text: root.label;
-                color: Look.text;
+                text: root.label != "" ? root.label : VoiceWords.new-vendor();
+                color: root.label != "" ? Look.text : Look.muted;
                 font-size: 15px;
                 font-weight: 500;
                 overflow: elide;
             }
             Text {
-                text: VoiceWords.format-name(root.format) + (root.host != "" ? " · " + root.host : "");
+                text: (root.format != "" ? VoiceWords.format-name(root.format) : VoiceWords.no-format()) + (root.host != "" ? " · " + root.host : "");
                 color: Look.muted;
                 font-size: 13px;
                 overflow: elide;
@@ -245,8 +442,8 @@ component ConnectionRow inherits Rectangle {
     }
 }
 
-// The open connection's key: a box to paste it into, or its letters and Remove once it is kept;
-// under them, what the last check said, and where the vendor's keys are made.
+// The open vendor's key: a box to paste it into, or its letters and Remove once it is kept; under
+// them, what the last check said, and where the vendor's keys are made.
 component KeyRow {
     VerticalLayout {
         padding-left: 16px;
@@ -262,27 +459,27 @@ component KeyRow {
                 title: VoiceWords.key();
                 note: VoiceWords.key-note();
             }
-            if Voice.connection-has-key: VerticalLayout {
+            if Voice.vendor-has-key: VerticalLayout {
                 alignment: center;
                 Text {
-                    text: Voice.connection-key-hint;
+                    text: Voice.vendor-key-hint;
                     color: Look.muted;
                     font-family: Look.mono;
                     font-size: 13px;
                 }
             }
-            if Voice.connection-has-key: VerticalLayout {
+            if Voice.vendor-has-key: VerticalLayout {
                 alignment: center;
                 SmallButton {
                     text: Look.terminal ? "[" + VoiceWords.remove().to-lowercase() + "]" : VoiceWords.remove();
                     quiet: Look.terminal;
                     clicked => {
-                        Voice.remove-connection-key();
+                        Voice.remove-vendor-key();
                     }
                 }
             }
         }
-        if !Voice.connection-has-key: HorizontalLayout {
+        if !Voice.vendor-has-key: HorizontalLayout {
             padding-left: 34px;
             spacing: 8px;
             key-field := Field {
@@ -294,7 +491,7 @@ component KeyRow {
                 input-type: InputType.password;
                 placeholder: VoiceWords.key-placeholder();
                 accepted(text) => {
-                    Voice.save-connection-key(text);
+                    Voice.save-vendor-key(text);
                 }
             }
             VerticalLayout {
@@ -303,7 +500,7 @@ component KeyRow {
                     text: Look.terminal ? "[" + VoiceWords.save().to-lowercase() + "]" : VoiceWords.save();
                     primary: !Look.terminal;
                     clicked => {
-                        Voice.save-connection-key(key-field.text);
+                        Voice.save-vendor-key(key-field.text);
                     }
                 }
             }
@@ -312,10 +509,10 @@ component KeyRow {
             text: VoiceWords.check-text();
             tone: VoiceWords.check-tone();
         }
-        if !Voice.connection-has-key && Voice.connection-official: HorizontalLayout {
+        if !Voice.vendor-has-key && Voice.vendor-official: HorizontalLayout {
             padding-left: 34px;
             Link {
-                text: VoiceWords.get-key(VoiceWords.vendor(Voice.connection-format));
+                text: VoiceWords.get-key(VoiceWords.vendor(Voice.vendor-format));
                 trailing-icon: "arrow-square-out";
                 font-size: 13px;
                 clicked => {
@@ -326,8 +523,8 @@ component KeyRow {
     }
 }
 
-// The open connection: its name, its format, its address, its key, and its removal.
-component ConnectionForm inherits Rectangle {
+// The open vendor: its name, its format, its address, its key, and its removal.
+component VendorForm inherits Rectangle {
     height: form.preferred-height;
     background: Look.bg.transparentize(0.6);
     form := VerticalLayout {
@@ -336,9 +533,9 @@ component ConnectionForm inherits Rectangle {
             title: VoiceWords.name();
             note: VoiceWords.name-note();
             font-family: Look.font;
-            text <=> Voice.connection-label;
+            text <=> Voice.vendor-label;
             edited(text) => {
-                Voice.edit-connection-label(text);
+                Voice.edit-vendor-label(text);
             }
         }
         Separator { }
@@ -351,7 +548,7 @@ component ConnectionForm inherits Rectangle {
             RowHead {
                 icon: "plugs";
                 title: VoiceWords.api-format();
-                note: VoiceWords.format-note(Voice.connection-format);
+                note: VoiceWords.format-note(Voice.vendor-format);
             }
             HorizontalLayout {
                 padding-left: 34px;
@@ -362,9 +559,9 @@ component ConnectionForm inherits Rectangle {
                         spacing: 8px;
                         for format in ["openai", "anthropic", "gemini"]: Chip {
                             label: VoiceWords.format-name(format);
-                            on: Voice.connection-format == format;
+                            on: Voice.vendor-format == format;
                             clicked => {
-                                Voice.set-connection-format(format);
+                                Voice.set-vendor-format(format);
                             }
                         }
                     }
@@ -373,9 +570,9 @@ component ConnectionForm inherits Rectangle {
                         spacing: 8px;
                         for format in ["dashscope", "doubao"]: Chip {
                             label: VoiceWords.format-name(format);
-                            on: Voice.connection-format == format;
+                            on: Voice.vendor-format == format;
                             clicked => {
-                                Voice.set-connection-format(format);
+                                Voice.set-vendor-format(format);
                             }
                         }
                     }
@@ -387,14 +584,14 @@ component ConnectionForm inherits Rectangle {
             icon: "globe-simple";
             title: VoiceWords.address();
             note: VoiceWords.address-note();
-            placeholder: Voice.connection-url-placeholder;
-            problem: VoiceWords.address-problem(Voice.connection-url-problem);
-            text <=> Voice.connection-url;
+            placeholder: Voice.vendor-url-placeholder;
+            problem: VoiceWords.address-problem(Voice.vendor-url-problem);
+            text <=> Voice.vendor-url;
             edited(text) => {
-                Voice.edit-connection-url(text);
+                Voice.edit-vendor-url(text);
             }
             done => {
-                Voice.check-connection();
+                Voice.check-vendor();
             }
         }
         Separator { }
@@ -404,53 +601,19 @@ component ConnectionForm inherits Rectangle {
             padding-bottom: 14px;
             alignment: start;
             Link {
-                text: VoiceWords.remove-connection();
+                text: VoiceWords.remove-vendor();
                 icon: "trash";
                 font-size: 13px;
                 clicked => {
-                    Voice.remove-connection();
+                    Voice.remove-vendor();
                 }
             }
         }
     }
 }
 
-// The connection an ability takes: the ones that can do it as chips, in lines; or that none can.
-component ChoiceRow {
-    in property <string> which;
-    in property <[VoiceChoiceRow]> rows;
-    VerticalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        padding-top: 12px;
-        padding-bottom: 14px;
-        spacing: 10px;
-        RowHead {
-            icon: "plugs-connected";
-            title: VoiceWords.connection();
-            note: root.rows.length == 0 ? VoiceWords.none-can() : "";
-        }
-        if root.rows.length > 0: HorizontalLayout {
-            padding-left: 34px;
-            VerticalLayout {
-                spacing: 8px;
-                for row in root.rows: HorizontalLayout {
-                    alignment: start;
-                    spacing: 8px;
-                    for choice in row.choices: Chip {
-                        label: VoiceWords.choice-label(choice);
-                        on: choice.on;
-                        clicked => {
-                            Voice.choose(root.which, choice.id);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-// How an OpenAI connection hears: as the user speaks, or the recording at the end.
+// How an OpenAI-compatible vendor hears: as the user speaks, or the recording at the end; neither
+// until the user chooses.
 component ModeRow {
     VerticalLayout {
         padding-left: 16px;
@@ -469,7 +632,7 @@ component ModeRow {
             spacing: 8px;
             Chip {
                 label: VoiceWords.mode-realtime();
-                on: Voice.speech-mode != "upload";
+                on: Voice.speech-mode == "realtime";
                 clicked => {
                     Voice.set-mode("realtime");
                 }
@@ -510,45 +673,35 @@ export component VoicePanel {
                 line-height-factor: Look.leading(1.6);
             }
         }
-        Card {
-            SwitchRow {
-                icon: "sparkle";
-                title: VoiceWords.switch-title();
-                description: VoiceWords.switch-note();
-                on: Voice.on;
-                toggled => {
-                    Voice.set-on(!Voice.on);
-                }
-            }
-        }
-        if Voice.on: VerticalLayout {
+        // The AI vendors.
+        VerticalLayout {
             spacing: 8px;
             SectionLabel {
-                label: VoiceWords.connections();
+                label: VoiceWords.vendors();
             }
             Paragraph {
-                text: VoiceWords.connections-note();
+                text: VoiceWords.vendors-note();
                 color: Look.muted;
                 font-size: 13px;
             }
             Card {
-                for row[index] in Voice.connections: VerticalLayout {
+                for row[index] in Voice.vendors: VerticalLayout {
                     if index > 0: Separator { }
-                    ConnectionRow {
+                    VendorRow {
                         label: row.label;
                         format: row.format;
                         host: row.host;
                         has-key: row.has-key;
                         key-hint: row.key-hint;
-                        open: Voice.open-connection == row.id;
+                        open: Voice.open-vendor == row.id;
                         clicked => {
-                            Voice.toggle-connection(row.id);
+                            Voice.toggle-vendor(row.id);
                         }
                     }
-                    if Voice.open-connection == row.id: Separator { }
-                    if Voice.open-connection == row.id: ConnectionForm { }
+                    if Voice.open-vendor == row.id: Separator { }
+                    if Voice.open-vendor == row.id: VendorForm { }
                 }
-                if Voice.connections.length > 0: Separator { }
+                if Voice.vendors.length > 0: Separator { }
                 Rectangle {
                     height: add-row.preferred-height;
                     background: add-touch.has-hover ? Look.sel : transparent;
@@ -568,7 +721,7 @@ export component VoicePanel {
                         }
                         Text {
                             horizontal-stretch: 1;
-                            text: VoiceWords.add-connection();
+                            text: VoiceWords.add-vendor();
                             color: Look.accent-ink;
                             font-size: 15px;
                             font-weight: 500;
@@ -578,40 +731,66 @@ export component VoicePanel {
                     add-touch := TouchArea {
                         mouse-cursor: pointer;
                         clicked => {
-                            Voice.add-connection();
+                            Voice.add-vendor();
                         }
                     }
                 }
             }
         }
-        if Voice.on: Card {
-            LanguagesRow { }
-        }
-        if Voice.on: VerticalLayout {
+        // Voice input: its switch is the tool's.
+        VerticalLayout {
             spacing: 8px;
             SectionLabel {
-                label: VoiceWords.speech-section(VoiceWords.language-label(Voice.language-name));
+                label: VoiceWords.voice-input();
             }
             Card {
-                ChoiceRow {
-                    which: "speech";
-                    rows: Voice.speech-choices;
+                SwitchRow {
+                    icon: "sparkle";
+                    title: VoiceWords.switch-title();
+                    description: VoiceWords.switch-note();
+                    on: Voice.on;
+                    toggled => {
+                        Voice.set-on(!Voice.on);
+                    }
                 }
-                if Voice.speech-format == "openai": Separator { }
-                if Voice.speech-format == "openai": ModeRow { }
-                if Voice.speech-format != "": Separator { }
-                if Voice.speech-format != "": TextRow {
+                if Voice.on: Separator { }
+                if Voice.on: LanguagesRow { }
+                if Voice.on: Separator { }
+                if Voice.on: DropdownRow {
+                    icon: "plugs-connected";
+                    title: VoiceWords.ai-vendor();
+                    chosen: Voice.speech-vendor-label;
+                    placeholder: VoiceWords.choose-vendor();
+                    items: Voice.speech-vendors;
+                    enabled: Voice.speech-vendors.length > 0;
+                    message: Voice.speech-vendors.length == 0 ? VoiceWords.none-can() : "";
+                    picked(item) => {
+                        Voice.choose-vendor("speech", item.id);
+                    }
+                }
+                if Voice.on && Voice.speech-format == "openai": Separator { }
+                if Voice.on && Voice.speech-format == "openai": ModeRow { }
+                if Voice.on && Voice.speech-vendor != "": Separator { }
+                if Voice.on && Voice.speech-vendor != "": DropdownRow {
                     icon: "robot";
                     title: VoiceWords.model();
                     note: VoiceWords.model-note(Voice.speech-format);
-                    placeholder: Voice.speech-model-placeholder;
-                    text <=> Voice.speech-model;
-                    edited(text) => {
-                        Voice.edit-model("speech", text);
+                    chosen: Voice.speech-model;
+                    placeholder: VoiceWords.choose-model();
+                    items: Voice.speech-models;
+                    searchable: true;
+                    font-family: Look.mono;
+                    message: VoiceWords.models-note(Voice.speech-models-state, Voice.speech-vendor-label, Voice.speech-models-detail);
+                    tone: VoiceWords.models-tone(Voice.speech-models-state);
+                    picked(item) => {
+                        Voice.choose-model("speech", item.id);
+                    }
+                    search(text) => {
+                        Voice.search-models("speech", text);
                     }
                 }
-                if Voice.speech-format != "": Separator { }
-                if Voice.speech-format != "": TextRow {
+                if Voice.on: Separator { }
+                if Voice.on: TextRow {
                     icon: "book-open";
                     title: VoiceWords.keywords();
                     note: VoiceWords.keywords-note();
@@ -624,10 +803,11 @@ export component VoicePanel {
                 }
             }
         }
-        if Voice.on: VerticalLayout {
+        // Tidying what voice input heard.
+        VerticalLayout {
             spacing: 8px;
             SectionLabel {
-                label: VoiceWords.tidy-section(VoiceWords.language-label(Voice.language-name));
+                label: VoiceWords.tidy-section();
             }
             Card {
                 SwitchRow {
@@ -640,36 +820,40 @@ export component VoicePanel {
                     }
                 }
                 if Voice.tidy: Separator { }
-                if Voice.tidy: ChoiceRow {
-                    which: "tidy";
-                    rows: Voice.tidy-choices;
-                }
-                if Voice.tidy && Voice.tidy-model-placeholder != "": Separator { }
-                if Voice.tidy && Voice.tidy-model-placeholder != "": TextRow {
-                    icon: "robot";
-                    title: VoiceWords.model();
-                    note: VoiceWords.model-note("");
-                    placeholder: Voice.tidy-model-placeholder;
-                    text <=> Voice.tidy-model;
-                    edited(text) => {
-                        Voice.edit-model("tidy", text);
+                if Voice.tidy: DropdownRow {
+                    icon: "plugs-connected";
+                    title: VoiceWords.ai-vendor();
+                    chosen: Voice.tidy-vendor-label;
+                    placeholder: VoiceWords.choose-vendor();
+                    items: Voice.tidy-vendors;
+                    enabled: Voice.tidy-vendors.length > 0;
+                    message: Voice.tidy-vendors.length == 0 ? VoiceWords.none-can() : "";
+                    picked(item) => {
+                        Voice.choose-vendor("tidy", item.id);
                     }
                 }
-            }
-            if Voice.can-remove: HorizontalLayout {
-                alignment: start;
-                padding-top: 4px;
-                Link {
-                    text: VoiceWords.remove-language(VoiceWords.language-label(Voice.language-name));
-                    icon: "trash";
-                    font-size: 13px;
-                    clicked => {
-                        Voice.remove-language();
+                if Voice.tidy && Voice.tidy-vendor != "": Separator { }
+                if Voice.tidy && Voice.tidy-vendor != "": DropdownRow {
+                    icon: "robot";
+                    title: VoiceWords.model();
+                    chosen: Voice.tidy-model;
+                    placeholder: VoiceWords.choose-model();
+                    items: Voice.tidy-models;
+                    searchable: true;
+                    font-family: Look.mono;
+                    message: VoiceWords.models-note(Voice.tidy-models-state, Voice.tidy-vendor-label, Voice.tidy-models-detail);
+                    tone: VoiceWords.models-tone(Voice.tidy-models-state);
+                    picked(item) => {
+                        Voice.choose-model("tidy", item.id);
+                    }
+                    search(text) => {
+                        Voice.search-models("tidy", text);
                     }
                 }
             }
         }
-        if Voice.on: VerticalLayout {
+        // Transcribing voice messages.
+        VerticalLayout {
             spacing: 8px;
             SectionLabel {
                 label: VoiceWords.messages-section();
@@ -685,19 +869,34 @@ export component VoicePanel {
                     }
                 }
                 if Voice.transcribe-messages: Separator { }
-                if Voice.transcribe-messages: ChoiceRow {
-                    which: "messages";
-                    rows: Voice.message-choices;
+                if Voice.transcribe-messages: DropdownRow {
+                    icon: "plugs-connected";
+                    title: VoiceWords.ai-vendor();
+                    chosen: Voice.messages-vendor-label;
+                    placeholder: VoiceWords.choose-vendor();
+                    items: Voice.messages-vendors;
+                    enabled: Voice.messages-vendors.length > 0;
+                    message: Voice.messages-vendors.length == 0 ? VoiceWords.none-can() : "";
+                    picked(item) => {
+                        Voice.choose-vendor("messages", item.id);
+                    }
                 }
-                if Voice.transcribe-messages && Voice.messages-model-placeholder != "": Separator { }
-                if Voice.transcribe-messages && Voice.messages-model-placeholder != "": TextRow {
+                if Voice.transcribe-messages && Voice.messages-vendor != "": Separator { }
+                if Voice.transcribe-messages && Voice.messages-vendor != "": DropdownRow {
                     icon: "robot";
                     title: VoiceWords.model();
-                    note: VoiceWords.model-note("");
-                    placeholder: Voice.messages-model-placeholder;
-                    text <=> Voice.messages-model;
-                    edited(text) => {
-                        Voice.edit-model("messages", text);
+                    chosen: Voice.messages-model;
+                    placeholder: VoiceWords.choose-model();
+                    items: Voice.messages-models;
+                    searchable: true;
+                    font-family: Look.mono;
+                    message: VoiceWords.models-note(Voice.messages-models-state, Voice.messages-vendor-label, Voice.messages-models-detail);
+                    tone: VoiceWords.models-tone(Voice.messages-models-state);
+                    picked(item) => {
+                        Voice.choose-model("messages", item.id);
+                    }
+                    search(text) => {
+                        Voice.search-models("messages", text);
                     }
                 }
             }

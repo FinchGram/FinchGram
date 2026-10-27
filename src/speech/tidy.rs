@@ -1,6 +1,6 @@
 //! The words tidied by a text model (docs/voice-input.md): filler, repeats and false starts out,
-//! punctuation set, nothing translated, the main language's script kept. Through the profile's
-//! text model in one of three formats: Chat Completions (OpenAI's, and nearly every vendor's,
+//! punctuation set, nothing translated, the main language's script kept. Through the text model
+//! the user chose for tidying, in one of three formats: Chat Completions (OpenAI's, and nearly every vendor's,
 //! relay's and local server's), Anthropic's Messages, Google's Gemini. Asked not to be stored
 //! where the format lets FinchGram ask.
 
@@ -185,7 +185,7 @@ mod tests {
 
     #[test]
     fn chat_completions_ask_openai_itself_not_to_store_and_others_plainly() {
-        let official = Tidy::new(Endpoint::new("openai", "", "").expect("an address"), "").expect("OpenAI");
+        let official = Tidy::new(Endpoint::new("openai", "", "").expect("an address"), "gpt-5-mini").expect("OpenAI");
         let request = openai_request(&official, "rules", "um hello");
         assert_eq!(request["messages"], json!([{ "role": "system", "content": "rules" }, { "role": "user", "content": "um hello" }]));
         assert_eq!((request["store"].as_bool(), request["reasoning_effort"].as_str()), (Some(false), Some("minimal")));

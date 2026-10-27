@@ -438,13 +438,14 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 - Voice input (`src/speech/`, [voice-input.md](voice-input.md)): a tool of the toolbox's AI
   category, off until the user turns it on; the composer's sparkle while it is on (Terminal:
   `/voice`, which opens its panel while it is off).
-  The user adds connections (a name, an API format, an address, a key), any vendor, relay or
-  server of their own that speaks one of the formats, and each ability picks a connection and a
-  model: per main language (a profile) the speech recognition and the tidying, and the voice
-  messages' own. `mod.rs` is a dictation's state on the UI thread (idle, listening, finishing, tidying,
-  or failed with a reason), the strip's words, the words put into the composer at the end, the
-  profiles and their keys, and the toolbox's Voice input panel; `dictation.rs` is a dictation from
-  the first sound to the words; `service.rs` the formats, the addresses and the connections;
+  The user adds AI vendors (a name, an API format, an address, a key), any vendor, relay or
+  server of their own that speaks one of the formats, and three features, each with its own switch,
+  vendor and model chosen from lists (the vendor's own list of models), nothing chosen for the
+  user: voice input, tidying its words, transcribing voice messages. `mod.rs` is a dictation's state
+  on the UI thread (idle, listening, finishing, tidying, or failed with a reason), the strip's words,
+  the words put into the composer at the end, the vendors, their models and their keys, and the
+  toolbox's Voice input panel; `dictation.rs` is a dictation from the first sound to the words;
+  `service.rs` the formats, the addresses, the model lists and the connections;
   `realtime.rs` OpenAI's and Qwen's realtime sessions, `doubao.rs` Doubao's binary protocol,
   `upload.rs` OpenAI's `/audio/transcriptions`, `tidy.rs` the tidying in three formats,
   `messages.rs` a voice message through the user's own service; `audio.rs` turns the microphone's
@@ -542,7 +543,7 @@ database holds the servers of the downloads page with their passwords and whethe
 allows changes on each (docs/downloads.md), the
 programs allowed or turned away at AI access (docs/mcp.md), the keys of the SSH servers the
 user trusted, with the day (docs/downloads.md), and the app's own credentials that are no server's,
-each sealed to its name: voice input's keys, one for each connection
+each sealed to its name: voice input's keys, one for each AI vendor
 (`voice_input.connection.<id>`, docs/voice-input.md);
 what comes after (a download queue that outlives a restart, logs, per-chat settings) gets a table
 when it is built.

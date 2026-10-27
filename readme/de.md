@@ -65,16 +65,18 @@ ein inoffizieller Client, nicht von Telegram gemacht.
   Anhören sieht der Absender, wie in Telegrams eigenen Apps. Zum Aufnehmen das Mikrofon halten:
   loslassen sendet, nach links ziehen bricht ab, nach oben ziehen sperrt die Aufnahme, und
   gestoppt lässt sie sich vor dem Senden anhören.
-- **Spracheingabe.** Drück ✦ im Eingabefeld und sprich: Der Text landet ohne Äh und Ähm im Feld,
-  damit du ihn abschickst. Deine Dienste legst du als Verbindungen an, jede mit einem Namen, dem
-  Format ihrer API, deinem eigenen Schlüssel und, wenn du willst, deiner eigenen Adresse (ein Relay
-  oder ein Server in deinem Netz), und wählst für jede Aufgabe eine: für die Sprache OpenAIs
-  Echtzeit-Transkription, Qwen und Doubao (beide stark im Chinesischen) oder jeden Dienst, der
-  OpenAIs Transkriptions-API spricht; für das Aufräumen das Format von OpenAI, Anthropic oder Gemini.
-  Jede Hauptsprache wählt ihre eigenen, und eingestreute Wörter anderer Sprachen bleiben, wie du sie
-  sagst. Werkzeuge → AI → Spracheingabe, aus, bis du sie einschaltest. „Transkribieren“ unter einer
-  Sprachnachricht nutzt Telegrams eigene Transkription, oder deinen eigenen Dienst, wenn du das
-  einschaltest. Siehe [docs/voice-input.md](../docs/voice-input.md).
+- **Spracheingabe.** Drück ✦ im Eingabefeld und sprich: Der Text landet im Feld, damit du ihn
+  abschickst. Du legst deine KI-Anbieter an, jeden mit einem Namen, dem Format seiner API, deinem
+  eigenen Schlüssel und, wenn du willst, deiner eigenen Adresse (ein Relay oder ein Server in deinem
+  Netz). Spracheingabe, das Aufräumen des Textes (ohne Äh und Ähm) und das Transkribieren von
+  Sprachnachrichten sind drei Funktionen, jede mit eigenem Schalter, und für jede wählst du
+  KI-Anbieter und Modell aus Listen; nichts wird für dich gewählt. Für die Sprache: OpenAIs
+  Echtzeit-Transkription, Qwen und Doubao (beide stark im Chinesischen) oder jeder Dienst, der
+  OpenAIs Transkriptions-API spricht; für das Aufräumen: das Format von OpenAI, Anthropic oder
+  Gemini. Eingestreute Wörter anderer Sprachen bleiben, wie du sie sagst. Werkzeuge → AI →
+  Spracheingabe, aus, bis du sie einschaltest. „Transkribieren“ unter einer Sprachnachricht nutzt
+  Telegrams eigene Transkription oder, wenn du das einschaltest, deinen eigenen KI-Anbieter. Siehe
+  [docs/voice-input.md](../docs/voice-input.md).
 - **KI-Assistenten.** Claude Desktop, Claude Code und andere Apps, die das Model Context Protocol
   sprechen, können über FinchGram deine Chats lesen und darin handeln, sobald du es erlaubst:
   Werkzeuge → KI-Zugriff, aus, bis du es einschaltest, mit den Chats, die du wählst, und ob ein
@@ -169,9 +171,9 @@ FinchGram tut, was Telegrams eigene Apps tun, und nichts, was sie verbieten. Ein
 gelesen, wenn du sie siehst, die Gegenseite sieht dich tippen und online wie in jeder Telegram-App,
 gesponserte Nachrichten in Kanälen werden gezeigt, selbstzerstörende Medien öffnen sich einmal, und
 nichts von Telegram geht an irgendeine KI, außer du lässt einen Assistenten herein (Werkzeuge →
-KI-Zugriff) oder schaltest das Transkribieren von Sprachnachrichten mit deinem eigenen Dienst ein.
+KI-Zugriff) oder schaltest das Transkribieren von Sprachnachrichten mit deinem eigenen KI-Anbieter ein.
 Nichts verlässt deinen Rechner außer zu Telegram, zu GitHub für Updates und, während du die
-Spracheingabe benutzt, deine Stimme mit deinem eigenen Schlüssel zu dem Spracherkennungsdienst, den
+Spracheingabe benutzt, deine Stimme mit deinem eigenen Schlüssel zu dem KI-Anbieter, den
 du gewählt hast.
 
 ## Entwicklung
