@@ -100,6 +100,11 @@ objc2-avf-audio = { version = "0.3", default-features = false, features = [
     "AVAudioTime", "AVAudioTypes",
 ] }
 objc2-av-foundation = { version = "0.3", default-features = false, features = ["std", "block2", "AVCaptureDevice", "AVMediaFormat"] }
+# Pictures the image crate cannot read (HEIC, TIFF, GIF, AVIF, …), for a chat's photo
+# (src/platform/macos.rs): ImageIO reads them, turned the way they were taken, and Core Graphics
+# draws them into pixels; the same objc2 family.
+objc2-image-io = { version = "0.3", default-features = false, features = ["std", "CGImageSource", "objc2-core-graphics"] }
+objc2-core-graphics = { version = "0.3", default-features = false, features = ["std", "CGBitmapContext", "CGColorSpace", "CGContext", "CGImage"] }
 
 [build-dependencies]
 slint-build = "~1.18"

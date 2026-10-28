@@ -19,7 +19,7 @@ use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use serde_json::{Value, json};
-use slint::{ComponentHandle, Image, ModelRc, SharedString, Timer, TimerMode, VecModel};
+use slint::{ComponentHandle, Image, ModelRc, Rgba8Pixel, SharedPixelBuffer, SharedString, Timer, TimerMode, VecModel};
 
 use super::api::{self, AdministratorRights, BasicGroupFullInfo, ChatInviteLink, ChatInviteLinks, ChatMember, ChatMemberStatus, ChatMembers, ChatType, CheckChatUsernameResult, MessageSender};
 use super::store::{self, Names, Store, initial};
@@ -35,6 +35,9 @@ const CHECK_AFTER: Duration = Duration::from_millis(500);
 const TITLE_AFTER: Duration = Duration::from_millis(900);
 /// The new photo's side, in pixels: what Telegram's own apps upload.
 const PHOTO_SIDE: u32 = 640;
+/// The picture cropped is read no larger than this on its longer side: a 640-pixel square even at
+/// the crop's largest zoom.
+const CROP_SOURCE: u32 = 4096;
 
 /// The rights of a group's administrator and of a channel's, in the design's order.
 const GROUP_RIGHTS: [&str; 9] = ["info", "del", "ban", "invite", "pin", "topics", "call", "anon", "promote"];
@@ -85,6 +88,13 @@ struct Crop {
     height: u32,
 }
 
+/// The photo just sent, shown in the chat's photo's place until Telegram's new one is here: the
+/// picture, and the chat's photo (its small file) when it was sent.
+struct NewPhoto {
+    image: Image,
+    before: Option<i32>,
+}
+
 #[derive(Default)]
 struct State {
     /// The chat managed; 0 for none (the page is shut).
@@ -127,6 +137,7 @@ struct State {
     errors: HashMap<&'static str, String>,
     saving: bool,
     crop: Option<Crop>,
+    new_photo: Option<NewPhoto>,
 }
 
 thread_local! {
@@ -388,6 +399,8 @@ struct Facts {
     description: String,
     picture: Image,
     has_picture: bool,
+    /// The chat's photo (its small file), and whether it is downloaded.
+    photo: Option<(i32, bool)>,
     status: ChatMemberStatus,
     can_set_username: bool,
     permissions: api::ChatPermissions,
@@ -419,6 +432,7 @@ fn facts(store: &Store, names: &Names, chat_id: i64, basic_full: Option<&BasicGr
         description: String::new(),
         picture,
         has_picture,
+        photo: chat.photo.as_ref().map(|photo| (photo.small.id, store.avatars.contains(&photo.small.id))),
         status: ChatMemberStatus::Member,
         can_set_username: false,
         permissions: chat.permissions.clone(),
@@ -659,8 +673,12 @@ fn refresh() {
         manage.set_name(state.title.clone().into());
         manage.set_description(state.description.clone().into());
         manage.set_initial(initial(&state.title));
-        manage.set_picture(facts.picture.clone());
-        manage.set_has_picture(facts.has_picture);
+        let (picture, has_picture) = match &state.new_photo {
+            Some(new) if facts.photo.map(|(id, _)| id) == new.before || facts.photo.is_some_and(|(_, here)| !here) => (new.image.clone(), true),
+            _ => (facts.picture.clone(), facts.has_picture),
+        };
+        manage.set_picture(picture);
+        manage.set_has_picture(has_picture);
         manage.set_name_error(name_error.clone());
         manage.set_profile_error(error("profile"));
         manage.set_can_info(can("info"));
@@ -1828,20 +1846,32 @@ fn change_photo() {
 fn pick_photo() {
     let lookups = lookups();
     let slot = super::context();
-    crate::platform::choose_files(true, move |paths| {
-        let Some(path) = paths.into_iter().next() else { return };
+    crate::platform::choose_picture(move |path| {
+        let Some(path) = path else { return };
         super::in_context(slot, || {
             crate::images::load(path.clone(), move |image| {
                 super::in_context(slot, || {
-                    let Some(image) = image else { return };
                     if lookups != self::lookups() {
                         return;
                     }
+                    // Said, not let go: a file the panel offered that turns out to be no picture.
+                    let Some(image) = image else {
+                        let mut words = SharedString::new();
+                        with_ui(|ui| words = ui.global::<ManageWords>().invoke_cannot_read_picture());
+                        STATE.with(|state| {
+                            let mut state = state.borrow_mut();
+                            state.crop = None;
+                            state.page = Page::Main;
+                        });
+                        set_error("profile", words.to_string());
+                        return;
+                    };
                     let size = image.size();
                     STATE.with(|state| {
                         let mut state = state.borrow_mut();
                         state.crop = Some(Crop { path, image, width: size.width, height: size.height });
                         state.page = Page::Crop;
+                        state.errors.remove("profile");
                     });
                     with_ui(|ui| {
                         let manage = ui.global::<ChatManage>();
@@ -1875,19 +1905,36 @@ fn use_photo() {
         let _ = slint::invoke_from_event_loop(move || {
             super::in_context(slot, || {
                 if lookups != self::lookups() {
+                    if let Ok((cropped, _)) = &result {
+                        let _ = std::fs::remove_file(cropped);
+                    }
                     return;
                 }
                 match result {
-                    Ok(cropped) => {
-                        let request = json!({
-                            "@type": "setChatPhoto", "chat_id": chat_id,
-                            "photo": { "@type": "inputChatPhotoStatic", "photo": { "@type": "inputFileLocal", "path": cropped } },
-                        });
-                        ask("profile", request, |_| {});
+                    Ok((cropped, pixels)) => {
+                        // The page shows the new photo at once; Telegram's takes its place once here.
+                        let before = store::with(|store| store.chats.get(&chat_id).and_then(|chat| chat.photo.as_ref().map(|photo| photo.small.id))).flatten();
                         STATE.with(|state| {
                             let mut state = state.borrow_mut();
                             state.crop = None;
                             state.page = Page::Main;
+                            state.errors.remove("profile");
+                            state.new_photo = Some(NewPhoto { image: Image::from_rgba8(pixels), before });
+                        });
+                        let request = json!({
+                            "@type": "setChatPhoto", "chat_id": chat_id,
+                            "photo": { "@type": "inputChatPhotoStatic", "photo": { "@type": "inputFileLocal", "path": cropped.as_str() } },
+                        });
+                        send(request, move |answer| {
+                            // TDLib answers once the photo is up and set (or refused): the file is done.
+                            let _ = std::fs::remove_file(&cropped);
+                            if lookups != self::lookups() {
+                                return;
+                            }
+                            if let Err(Error::Telegram { message, .. }) = answer {
+                                STATE.with(|state| state.borrow_mut().new_photo = None);
+                                set_error("profile", errors::explain(&message));
+                            }
                         });
                         refresh();
                     }
@@ -1899,9 +1946,10 @@ fn use_photo() {
 }
 
 /// The square the frame shows of the picture at `zoom`, with the picture's overflow placed by
-/// `ox` and `oy` (0 … 1), as a JPEG file of [`PHOTO_SIDE`] pixels a side.
-fn crop_file(path: &std::path::Path, width: u32, height: u32, zoom: f32, ox: f32, oy: f32) -> Result<String, String> {
-    let picture = image::open(path).map_err(|err| format!("cannot read the picture: {err}"))?;
+/// `ox` and `oy` (0 … 1), as a JPEG file of [`PHOTO_SIDE`] pixels a side; with its pixels, for the
+/// page to show at once.
+fn crop_file(path: &std::path::Path, width: u32, height: u32, zoom: f32, ox: f32, oy: f32) -> Result<(String, SharedPixelBuffer<Rgba8Pixel>), String> {
+    let picture = crate::images::read(path, CROP_SOURCE).map_err(|err| format!("cannot read the picture: {err}"))?;
     let (width, height) = if picture.width() > 0 && picture.height() > 0 { (picture.width(), picture.height()) } else { (width, height) };
     let (left, top, side) = crop_rect(width, height, zoom, ox, oy);
     let cropped = picture.crop_imm(left, top, side, side).resize_exact(PHOTO_SIDE, PHOTO_SIDE, image::imageops::FilterType::Lanczos3);
@@ -1913,7 +1961,8 @@ fn crop_file(path: &std::path::Path, width: u32, height: u32, zoom: f32, ox: f32
     let mut encoder = image::codecs::jpeg::JpegEncoder::new_with_quality(&mut bytes, 90);
     encoder.encode_image(&cropped.to_rgb8()).map_err(|err| format!("cannot encode the photo: {err}"))?;
     std::fs::write(&file, bytes.into_inner()).map_err(|err| format!("cannot write {}: {err}", file.display()))?;
-    Ok(file.to_string_lossy().into_owned())
+    let rgba = cropped.to_rgba8();
+    Ok((file.to_string_lossy().into_owned(), SharedPixelBuffer::clone_from_slice(rgba.as_raw(), rgba.width(), rgba.height())))
 }
 
 /// Where the frame sits in the picture, in its pixels: the square's left, top and side. The

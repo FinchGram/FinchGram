@@ -569,6 +569,10 @@ msgstr "관리자 권한"
 msgid "Change photo"
 msgstr "사진 변경"
 
+#: ui/chat-manage.slint:228
+msgid "FinchGram cannot read this picture. Choose another one."
+msgstr "FinchGram에서 이 이미지를 읽을 수 없습니다. 다른 이미지를 선택하세요."
+
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922 ui/pages/settings.slint:1269
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922 ui/pages/settings.slint:1269 ui/voice.slint:894

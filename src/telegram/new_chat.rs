@@ -300,8 +300,8 @@ fn toggle(user_id: i64) {
 /// the chat exists.
 fn choose_photo() {
     let chosen_for = opening();
-    crate::platform::choose_files(true, move |paths| {
-        let Some(path) = paths.into_iter().next() else { return };
+    crate::platform::choose_picture(move |path| {
+        let Some(path) = path else { return };
         let shown = path.clone();
         crate::images::load(path, move |picture| {
             let Some(picture) = picture else { return };
@@ -348,12 +348,8 @@ fn set_photo(chat_id: i64, path: PathBuf) {
 /// The picture at `path` as Telegram takes a chat's photo: square, from the middle, at most
 /// [`PHOTO_SIDE`] wide, JPEG. The file it was written to.
 fn prepare_photo(path: &std::path::Path) -> Result<String, String> {
-    let picture = image::ImageReader::open(path)
-        .map_err(|err| err.to_string())?
-        .with_guessed_format()
-        .map_err(|err| err.to_string())?
-        .decode()
-        .map_err(|err| err.to_string())?;
+    // Read as the dialog showed it: turned the way it was taken, whatever kind of picture.
+    let picture = crate::images::read(path, 2 * PHOTO_SIDE)?;
     let side = picture.width().min(picture.height());
     if side == 0 {
         return Err("an empty picture".into());

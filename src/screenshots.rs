@@ -1172,9 +1172,26 @@ fn extras(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -
         set_manage(ui);
         save(window, &name("manage"));
         let manage = ui.global::<ChatManage>();
+        // A click on the photo asks for a new one: nothing in front of it takes the click. The
+        // point is inside the photo in every theme's picture.
+        let asked = Rc::new(std::cell::Cell::new(false));
+        manage.on_change_photo({
+            let asked = asked.clone();
+            move || asked.set(true)
+        });
+        click(window, 1015.0, 145.0);
+        assert!(asked.get(), "{}: a click on the photo does not reach change-photo", name("manage"));
         manage.set_page(ManagePage::Rights);
         manage.set_title("Administrator rights".into());
         save(window, &name("manage-rights"));
+        // The crop page: a landscape picture picked for the group's photo, framed square.
+        manage.set_page(ManagePage::Crop);
+        manage.set_title("Change photo".into());
+        manage.set_source(gradient(1200, 800, 210.0));
+        manage.set_zoom(1.2);
+        manage.set_offset_x(0.5);
+        manage.set_offset_y(0.5);
+        save(window, &name("manage-crop"));
         manage.set_page(ManagePage::Main);
         manage.set_open(false);
         info.set_open(false);

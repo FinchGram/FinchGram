@@ -363,6 +363,28 @@ pub fn choose_files(media: bool, chosen: impl FnOnce(Vec<std::path::PathBuf>) + 
     panel.beginWithCompletionHandler(&handler);
 }
 
+/// The open panel for one picture: every kind of picture macOS reads (the "public.image" type).
+pub fn choose_picture(chosen: impl FnOnce(Option<std::path::PathBuf>) + 'static) {
+    let Some(mtm) = MainThreadMarker::new() else { return };
+    let panel = NSOpenPanel::openPanel(mtm);
+    panel.setCanChooseFiles(true);
+    panel.setCanChooseDirectories(false);
+    panel.setAllowsMultipleSelection(false);
+    // The panel's newer way takes UTTypes, another framework for the same type.
+    #[allow(deprecated)]
+    panel.setAllowedFileTypes(Some(&NSArray::from_retained_slice(&[NSString::from_str("public.image")])));
+    let chosen = RefCell::new(Some(chosen));
+    let read_from = panel.clone();
+    let handler = RcBlock::new(move |response: NSModalResponse| {
+        let path = if response == MODAL_OK { read_from.URL().and_then(|url| url.path()).map(|path| std::path::PathBuf::from(path.to_string())) } else { None };
+        if let Some(chosen) = chosen.borrow_mut().take() {
+            chosen(path);
+        }
+    });
+    OPEN_PANEL.with(|open| *open.borrow_mut() = Some(panel.clone()));
+    panel.beginWithCompletionHandler(&handler);
+}
+
 /// The open panel for one folder: where downloads go. `chosen` runs on the UI thread once the
 /// panel closes, with nothing when it was cancelled.
 pub fn choose_folder(chosen: impl FnOnce(Option<std::path::PathBuf>) + 'static) {
@@ -452,6 +474,58 @@ pub fn pasteboard_image() -> Option<Vec<u8>> {
     // SAFETY: an empty dictionary is a correct set of properties.
     let data = unsafe { bitmap.representationUsingType_properties(NSBitmapImageFileType::PNG, &NSDictionary::new()) }?;
     Some(data.to_vec())
+}
+
+// ---- pictures ---------------------------------------------------------------------------------
+
+/// A picture by ImageIO, which reads what macOS reads: its thumbnail of at most `largest` pixels on
+/// the longer side, made from the picture itself and turned the way it was taken (the EXIF
+/// orientation a phone's photo carries), drawn by Core Graphics into RGBA pixels.
+pub fn read_picture(path: &std::path::Path, largest: u32) -> Option<image::RgbaImage> {
+    use objc2_core_foundation::{CFBoolean, CFData, CFMutableDictionary, CFNumber, CFString, CFType, CGPoint, CGRect, CGSize};
+    use objc2_core_graphics::{CGBitmapContextCreate, CGColorSpace, CGContext, CGImage, CGImageAlphaInfo, kCGColorSpaceSRGB};
+    use objc2_image_io::{
+        CGImageSource, kCGImageSourceCreateThumbnailFromImageAlways, kCGImageSourceCreateThumbnailWithTransform, kCGImageSourceThumbnailMaxPixelSize,
+    };
+    let bytes = std::fs::read(path).ok()?;
+    let data = CFData::from_bytes(&bytes);
+    // SAFETY: the data is the file's bytes; no options.
+    let source = unsafe { CGImageSource::with_data(&data, None) }?;
+    let options = CFMutableDictionary::<CFString, CFType>::empty();
+    let largest = CFNumber::new_i32(i32::try_from(largest).unwrap_or(i32::MAX));
+    // SAFETY: ImageIO's constants are only read; the dictionary keeps its own references.
+    unsafe {
+        options.set(kCGImageSourceCreateThumbnailFromImageAlways, AsRef::<CFType>::as_ref(CFBoolean::new(true)));
+        options.set(kCGImageSourceCreateThumbnailWithTransform, AsRef::<CFType>::as_ref(CFBoolean::new(true)));
+        options.set(kCGImageSourceThumbnailMaxPixelSize, AsRef::<CFType>::as_ref(&*largest));
+    }
+    // SAFETY: the options are the keys ImageIO documents for a thumbnail.
+    let picture = unsafe { CGImageSource::thumbnail_at_index(&source, 0, Some(options.as_opaque())) }?;
+    let (width, height) = (CGImage::width(Some(&picture)), CGImage::height(Some(&picture)));
+    if width == 0 || height == 0 {
+        return None;
+    }
+    let mut pixels = vec![0u8; width.checked_mul(height)?.checked_mul(4)?];
+    // SAFETY: sRGB's name is a constant of the framework.
+    let space = CGColorSpace::with_name(Some(unsafe { kCGColorSpaceSRGB }))?;
+    // SAFETY: `pixels` holds `height` rows of `width` RGBA pixels and outlives the context, which
+    // draws into it (premultiplied, the byte order R, G, B, A).
+    let context = unsafe {
+        CGBitmapContextCreate(pixels.as_mut_ptr().cast(), width, height, 8, width * 4, Some(&space), CGImageAlphaInfo::PremultipliedLast.0)
+    }?;
+    let frame = CGRect::new(CGPoint::new(0.0, 0.0), CGSize::new(width as f64, height as f64));
+    CGContext::draw_image(Some(&context), frame, Some(&picture));
+    drop(context);
+    // Straight alpha again, as the image crate keeps it.
+    for pixel in pixels.as_chunks_mut::<4>().0 {
+        let alpha = u32::from(pixel[3]);
+        if alpha > 0 && alpha < 255 {
+            for channel in &mut pixel[..3] {
+                *channel = ((u32::from(*channel) * 255 + alpha / 2) / alpha).min(255) as u8;
+            }
+        }
+    }
+    image::RgbaImage::from_raw(u32::try_from(width).ok()?, u32::try_from(height).ok()?, pixels)
 }
 
 // ---- the screen -----------------------------------------------------------------------------

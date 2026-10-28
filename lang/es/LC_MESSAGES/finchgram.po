@@ -573,6 +573,10 @@ msgstr "Permisos de administrador"
 msgid "Change photo"
 msgstr "Cambiar foto"
 
+#: ui/chat-manage.slint:228
+msgid "FinchGram cannot read this picture. Choose another one."
+msgstr "FinchGram no puede leer esta imagen. Elige otra."
+
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922 ui/pages/settings.slint:1269
 #: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922 ui/pages/settings.slint:1269 ui/voice.slint:894

@@ -250,8 +250,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   (checkChatUsername after Telegram's own rules, setSupergroupUsername) or show its invite link
   (the primary one, else replacePrimaryChatInviteLink, with a copy button), and the third invites
   subscribers (addChatMembers); a new chat is a contact's; a new contact is added by phone number
-  (importContacts), a number with no account said so. A photo chosen goes up once the chat exists
-  (setChatPhoto, cut square and made 640 pixels wide first). What Telegram refuses is shown in the
+  (importContacts), a number with no account said so. A photo chosen (any picture macOS reads,
+  `images::read`) goes up once the chat exists (setChatPhoto, cut square and made 640 pixels wide
+  first). What Telegram refuses is shown in the
   dialog, which stays open; the service messages a new chat shows are the servers' own.
 - Bots (`bots.rs`; no design yet, so the pages draw these plainly in their own colours): the
   buttons under a bot's message (replyMarkupInlineKeyboard) share their row's width under the
@@ -386,8 +387,11 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     the Manage row swaps the info panel for the page, in the same column; Back or Esc gives the
     panel back. The page is drawn once for the three themes (ui/chat-manage-panel.slint), each
     handing it its tokens (ManageLook, in ui/<theme>/chat-info.slint), as the design's one markup
-    takes a token set per theme. On it: the photo (a picture from the system's file panel, cropped
-    square on the crop page with a zoom and a drag, scaled to 640 pixels, setChatPhoto), the name
+    takes a token set per theme. On it: the photo (a picture from the system's file panel, any
+    kind macOS reads: HEIC, TIFF, GIF and the rest through ImageIO when the image crate cannot,
+    turned the way it was taken by its EXIF orientation (`images::read`); cropped square on the
+    crop page with a zoom and a drag, scaled to 640 pixels, setChatPhoto; the new photo shows at
+    once, until Telegram's is here; a picture that cannot be read is said), the name
     and the description, saved together by the head's Save (setChatTitle, setChatDescription);
     public or private (checkChatUsername as the username is typed, after a pause, with three
     usernames to try when it is taken; setSupergroupUsername), and for a private chat the primary
@@ -466,11 +470,14 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   the unread count on the Dock icon, and its bounce (Settings → Notifications & sounds); the folder
   chooser for the Downloads page, the Keychain, where the keys of the two databases are, and the
   microphone with the question whether FinchGram may use it: AVAudioEngine's tap for voice input,
-  AVAudioRecorder for voice messages (`microphone.rs`).
+  AVAudioRecorder for voice messages (`microphone.rs`); the open panel for one picture of any kind,
+  and ImageIO for the pictures the image crate cannot read (HEIC, TIFF, GIF, AVIF, …), turned the
+  way they were taken.
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
 - `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
 - `src/images.rs`: pictures (photos, video stills, the photos of chats and people, the tiny previews
-  in messages), decoded off the UI thread, and a cache of them.
+  in messages), decoded off the UI thread, and a cache of them; a photo turned by its EXIF
+  orientation, and what the image crate cannot read read by the platform (`read`).
 - `src/screenshots.rs`: every page in every theme, light and dark, drawn to a PNG with made-up data
   by Slint's software renderer (`cargo test screenshots -- --ignored`).
 - `src/telegram/timing.rs`: how long the pages take to follow the store, with many made-up chats and

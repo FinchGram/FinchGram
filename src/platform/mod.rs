@@ -144,6 +144,28 @@ pub fn choose_files(media: bool, chosen: impl FnOnce(Vec<std::path::PathBuf>) + 
     }
 }
 
+/// The open panel for one picture, of any kind the system reads (HEIC, TIFF, GIF, … besides JPEG,
+/// PNG and WebP): a chat's photo. `chosen` runs on the UI thread once the panel closes, with
+/// nothing when it was cancelled.
+pub fn choose_picture(chosen: impl FnOnce(Option<std::path::PathBuf>) + 'static) {
+    #[cfg(target_os = "macos")]
+    macos::choose_picture(chosen);
+    #[cfg(not(target_os = "macos"))]
+    chosen(None);
+}
+
+/// A picture the image crate cannot read (HEIC, TIFF, GIF, AVIF, …), read by the system: turned
+/// the way it was taken, no larger than `largest` pixels on its longer side.
+pub fn read_picture(path: &std::path::Path, largest: u32) -> Option<image::RgbaImage> {
+    #[cfg(target_os = "macos")]
+    return macos::read_picture(path, largest);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = (path, largest);
+        None
+    }
+}
+
 /// Show a file in the system's file manager (the Finder).
 pub fn reveal_file(path: &str) {
     #[cfg(target_os = "macos")]

@@ -171,7 +171,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   新建频道在第一步就建出来，和 Telegram 官方应用一样，这样第二步才能检查并设置公开链接（先按 Telegram 自己的规则，再
   checkChatUsername，然后 setSupergroupUsername）或显示邀请链接（主邀请链接，没有就 replacePrimaryChatInviteLink，旁边
   有复制按钮），第三步邀请订阅者（addChatMembers）；新建私聊是选一个联系人；添加联系人按手机号（importContacts），没注册
-  的号码会说明。选好的头像在聊天建出后上传（setChatPhoto，先裁成正方形、缩到 640 像素）。Telegram 拒绝的都显示在对话框里，
+  的号码会说明。选好的头像（macOS 能读的图片都行，`images::read`）在聊天建出后上传（setChatPhoto，先裁成正方形、
+  缩到 640 像素）。Telegram 拒绝的都显示在对话框里，
   对话框不关；新聊天里的系统消息是服务器自己发的。
 - 机器人（`bots.rs`；还没有设计稿，所以各页面用自己的颜色朴素地画）：机器人消息下面的按钮（replyMarkupInlineKeyboard）
   在气泡下面按行平分宽度，按它的类型做 Telegram 官方应用做的事。callback 问机器人（getCallbackQueryAnswer，等待时按钮
@@ -253,7 +254,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   - 管理群组 / 频道（`manage.rs`，设计的“管理群组 / 频道”一轮，ChatManage）：「管理」那一行把资料面板换成这一页，
     还在同一栏里；返回或 Esc 换回面板。这一页三套主题只画一次（ui/chat-manage-panel.slint），各主题把自己的一组令牌
     （ManageLook，在 ui/<theme>/chat-info.slint 里）交给它，和设计稿一份标记配三套令牌的做法一样。页上有：头像（从系统的
-    文件选择框选一张图，在裁剪页里拖动、缩放后裁成正方形，缩到 640 像素，setChatPhoto）、名字和简介，由右上的“保存”
+    文件选择框选一张图，macOS 能读的都行：image crate 读不了的 HEIC、TIFF、GIF 等交给 ImageIO，并按 EXIF 方向转正
+    （`images::read`）；在裁剪页里拖动、缩放后裁成正方形，缩到 640 像素，setChatPhoto；新头像立刻显示，直到 Telegram
+    那边的到了；读不了的图片会提示）、名字和简介，由右上的“保存”
     一起保存（setChatTitle、setChatDescription）；公开或私有（边打用户名边查，停顿后 checkChatUsername，被占用时给三个
     可以试的；setSupergroupUsername），私有时显示主邀请链接（确认后 replacePrimaryChatInviteLink）和另建的链接，带名称、
     过期时间和人数上限（getChatInviteLinks、createChatInviteLink、revokeChatInviteLink）；成员（getSupergroupMembers，
@@ -303,10 +306,12 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   TDLib 关好）、菜单栏图标、开机时启动（SMAppService，macOS 13 及以上）；通过系统的 UserNotifications 框架发通知
   （只有打包成 .app 才有，`cargo run` 时没有）、Dock 图标上的未读数，以及让 Dock 图标跳一下（设置 → 通知与声音）；
   下载页面用的选目录面板和钥匙串（WebDAV 服务器的密码），以及麦克风和能不能用它的那一问：语音输入用 AVAudioEngine
-  的 tap，语音消息用 AVAudioRecorder（`microphone.rs`）。
+  的 tap，语音消息用 AVAudioRecorder（`microphone.rs`）；选一张图片的面板（什么格式都行），以及 image crate 读不了的图片
+  （HEIC、TIFF、GIF、AVIF 等）交给 ImageIO 读，并按拍摄时的方向转正。
 - `src/update.rs`：自动更新（[conventions.md](conventions.zh-Hans.md) 第 3 节）。
 - `src/settings.rs`、`src/i18n.rs`、`src/fonts.rs`（界面字体，编译进可执行文件）。
-- `src/images.rs`：图片（照片、视频封面、聊天和联系人的头像、消息里自带的小预览图）在界面线程之外解码，并缓存最近的。
+- `src/images.rs`：图片（照片、视频封面、聊天和联系人的头像、消息里自带的小预览图）在界面线程之外解码，并缓存最近的；
+  照片按 EXIF 方向转正，image crate 读不了的交给平台层读（`read`）。
 - `src/screenshots.rs`：用 Slint 的软件渲染器和假数据，把每套主题的每个页面（浅色和深色）画成 PNG
   （`cargo test screenshots -- --ignored`）。
 - `src/telegram/timing.rs`：用同样的方式、很多假聊天和假消息，量页面跟上 store 要多久
