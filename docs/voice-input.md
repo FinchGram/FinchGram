@@ -117,12 +117,23 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
     concurrency, `volc.bigasr.sauc.*` and `volc.seedasr.sauc.*`), the one the user bought.
 - **Tidying, by its vendor's format.** Its switch, then a vendor and a model:
   *OpenAI's Chat Completions* (the format nearly every vendor, relay and local server speaks; the
-  `system` role every server takes; `store: false` and `reasoning_effort: "minimal"` only where they
-  belong, OpenAI itself and its GPT-5 models), *Anthropic's Messages* (`anthropic-version:
-  2023-06-01`, which relays and other vendors' Claude-format endpoints know; the key as `x-api-key`,
-  and to an address not Anthropic's as a bearer token too; `output_config.effort: "low"` for the
-  models that take it, Claude 4.6 and later; no `temperature`, which the API refuses since
-  2026-10-21), *Google's Gemini* (`generateContent`, `x-goog-api-key`). The instructions: take out
+  `system` role every server takes; `store: false` only to OpenAI itself), *Anthropic's Messages*
+  (`anthropic-version: 2023-06-01`, which relays and other vendors' Claude-format endpoints know;
+  the key as `x-api-key`, and to an address not Anthropic's as a bearer token too; no
+  `temperature`, which the API refuses since 2026-10-21), *Google's Gemini* (`generateContent`,
+  `x-goog-api-key`). Each model is asked to think least, as its vendor names it (`tidy.rs`,
+  `least_thinking`): tidying is a short job, and a model that reasons first only makes the user
+  wait. In Chat Completions, `reasoning_effort` at each family's least: `minimal` for the first
+  GPT-5 models, `none` from GPT-5.1 on, `low` for GPT-6.1 Sol and GPT-6 Astra (which always think),
+  the o-series, gpt-oss and Grok 3 Mini, and Gemini's in Google's OpenAI-compatible mode; DeepSeek's
+  `thinking: {"type": "disabled"}` (V4 thinks unless told not to; Doubao's, GLM's and Kimi's take
+  the same field); Model Studio's `enable_thinking: false`. In Anthropic's format,
+  `output_config.effort: "low"` from Claude 4.6 on, and the thinking off where it can be (`disabled`
+  for Opus 5, Sonnet 5 and Haiku 5.5, `between_tools` for Sonnet 5.5; Opus 5.5, Fable and Mythos
+  always think). In Gemini's, `thinkingBudget` 0 for 2.5 Flash and 128 for 2.5 Pro,
+  `thinkingLevel` `minimal` for Flash and `low` for Pro from Gemini 3 on. A model that refuses one
+  of these with a 400 that names it is asked again the next way down, the last asking nothing, and
+  the way it took is kept for the session. The instructions: take out
   filler, stutters, repeats and false starts; set the punctuation; put right a word the recognition
   clearly misheard (a homophone, 在 for 再) where the context makes it certain, and only there; keep
   the speaker's words, tone and every language as spoken; write the main language's script; never

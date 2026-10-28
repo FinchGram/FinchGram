@@ -73,11 +73,18 @@
     的形式填进密钥框。模型就是计费的资源（`X-Api-Resource-Id`）：火山引擎文档列出的四个之一（流式识别 1.0 和 2.0，按小时或按并发，
     `volc.bigasr.sauc.*` 和 `volc.seedasr.sauc.*`），用户买了哪个就选哪个。
 - **整理文字，按服务商的格式。** 它的开关，然后是服务商和模型：*OpenAI 的 Chat Completions*（几乎所有厂商、中转站和
-  本地服务器都支持的格式；用每个服务器都认的 `system` 角色；`store: false` 和 `reasoning_effort: "minimal"` 只发给该发
-  的地方，即 OpenAI 自己和它的 GPT-5 模型）、*Anthropic 的 Messages*（`anthropic-version: 2023-06-01`，中转站和其他厂商
-  的 Claude 格式接口都认；密钥放 `x-api-key`，发给非 Anthropic 的地址时也作 bearer token；支持的模型（Claude 4.6 及以后）
-  用 `output_config.effort: "low"`；不发 `temperature`，2026-10-21 起 API 拒收）、*Google 的 Gemini*（`generateContent`、
-  `x-goog-api-key`）。指令：去掉口头禅、结巴、重复和说错又改的部分；加上标点；只有上下文能确定时，才改正识别明显听错的词
+  本地服务器都支持的格式；用每个服务器都认的 `system` 角色；`store: false` 只发给 OpenAI 自己）、*Anthropic 的 Messages*
+  （`anthropic-version: 2023-06-01`，中转站和其他厂商的 Claude 格式接口都认；密钥放 `x-api-key`，发给非 Anthropic 的地址
+  时也作 bearer token；不发 `temperature`，2026-10-21 起 API 拒收）、*Google 的 Gemini*（`generateContent`、
+  `x-goog-api-key`）。每个模型都按它厂商的叫法，要求它推理得最少（`tidy.rs` 的 `least_thinking`）：整理文字是个小活，
+  模型先推理一番只会让用户干等。Chat Completions 里，`reasoning_effort` 用每个系列最低的那一档：最早的 GPT-5 模型是
+  `minimal`，GPT-5.1 起是 `none`，GPT-6.1 Sol 和 GPT-6 Astra（它们总要推理）、o 系列、gpt-oss、Grok 3 Mini 是 `low`，
+  Google 的 OpenAI 兼容模式下的 Gemini 也按它自己的；DeepSeek 用 `thinking: {"type": "disabled"}`（V4 不说就推理；豆包、
+  GLM、Kimi 也用同一个字段）；阿里云百炼用 `enable_thinking: false`。Anthropic 的格式里，Claude 4.6 起用
+  `output_config.effort: "low"`，能关推理的就关（Opus 5、Sonnet 5、Haiku 5.5 用 `disabled`，Sonnet 5.5 用
+  `between_tools`；Opus 5.5、Fable、Mythos 总要推理）。Gemini 的格式里，2.5 Flash 用 `thinkingBudget` 0，2.5 Pro 用 128，
+  Gemini 3 起 Flash 用 `thinkingLevel` `minimal`，Pro 用 `low`。模型若回 400 并点名拒收其中一项，就退一档再问一次，最后一档
+  什么都不加；它接受的那一档在本次运行里记住。指令：去掉口头禅、结巴、重复和说错又改的部分；加上标点；只有上下文能确定时，才改正识别明显听错的词
   （同音字，比如把“在”改成“再”）；保留说话人的用词、语气和每种语言的原样；按主要语言的字体写；绝不翻译、改写、回答或添加。
   比原文长很多的回答不采用，出错也不采用，整理打开了但没选服务商或模型时也不整理：字照听到的原样进去。
 - **地址。** 留空就是厂商自己的；粘贴进来的完整接口（`…/v1/audio/transcriptions`、`wss://…/api-ws/v1/realtime?model=…`）
