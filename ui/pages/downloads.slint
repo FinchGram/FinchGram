@@ -1109,8 +1109,9 @@ component FormField {
 
 // The answers of the dialogs: the safe one is filled; an unsafe one (Trust new key, Replace) is
 // an outline in the danger colour; Delete, which the dialog is for, is filled in it. One that
-// cannot be taken now (Move here, in the folder the items are in) is faded.
-component AnswerButton inherits Rectangle {
+// cannot be taken now (Move here, in the folder the items are in) is faded. Voice input's vendor
+// dialog has them too (ui/pages/voice-input.slint).
+export component AnswerButton inherits Rectangle {
     in property <string> text;
     in property <bool> primary;
     in property <bool> danger;

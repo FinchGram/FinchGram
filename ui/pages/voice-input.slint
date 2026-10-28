@@ -1,17 +1,20 @@
 // Voice input's panel in the toolbox, the AI category's second tool (src/speech/,
 // docs/voice-input.md): the AI vendors the user added (each a name, an API format, an address and
-// a key: a vendor's, a relay's, a server of the user's own), then three AI features, each with its
-// own switch, its AI vendor and its model chosen from lists, nothing chosen until the user chooses
-// (the maintainer's word of 2026-10-26): voice input (with the main languages, which only tell the
-// vendor what is spoken), tidying its words, transcribing voice messages. No design round draws it:
-// it has the AI access panel's shape (ui/pages/ai-access.slint) and the settings' own rows, and its
-// lists are drawn as the login page's list of countries, in every theme.
+// a key: a vendor's, a relay's, a server of the user's own), added and changed in a dialog with
+// one Save for all of it, then three AI features, each with its own switch, its AI vendor and its
+// model chosen from lists, nothing chosen until the user chooses (the maintainer's words of
+// 2026-10-26): voice input (with the main languages, which only tell the vendor what is spoken),
+// tidying its words, transcribing voice messages. No design round draws it: it has the AI access
+// panel's shape (ui/pages/ai-access.slint) and the settings' own rows, its lists are drawn as the
+// login page's list of countries and its dialog as the Downloads page's, in every theme.
 import { ListView } from "std-widgets.slint";
 import { Look } from "../look.slint";
 import { Icon, Field, SectionLabel, Heading, Paragraph, Link } from "../widgets.slint";
 import { Card, Separator, SwitchRow, SmallButton, Chip } from "rows.slint";
-import { Voice, VoiceWords, VoiceItem } from "../voice.slint";
+import { Voice, VoiceWords, VoiceItem, VoiceVendorRow } from "../voice.slint";
 import { Toolbox, ToolboxWords } from "../toolbox.slint";
+import { KeyScope } from "../chat.slint";
+import { AnswerButton } from "downloads.slint";
 
 // A row's head: an icon, what it is, and a line under it.
 component RowHead {
@@ -373,15 +376,10 @@ component DropdownRow {
     }
 }
 
-// An AI vendor in the list: its name, its format and host, its key's letters; a click opens it
-// for editing, or closes it.
+// An AI vendor in the list: its name, its format and host, its key's letters, and what the check
+// after it was saved said; a click opens it in the dialog.
 component VendorRow inherits Rectangle {
-    in property <string> label;
-    in property <string> format;
-    in property <string> host;
-    in property <bool> has-key;
-    in property <string> key-hint;
-    in property <bool> open;
+    in property <VoiceVendorRow> vendor;
     callback clicked();
     background: touch.has-hover ? Look.sel : transparent;
     HorizontalLayout {
@@ -403,15 +401,21 @@ component VendorRow inherits Rectangle {
             alignment: center;
             spacing: 2px;
             Text {
-                text: root.label != "" ? root.label : VoiceWords.new-vendor();
-                color: root.label != "" ? Look.text : Look.muted;
+                text: root.vendor.label != "" ? root.vendor.label : VoiceWords.new-vendor();
+                color: root.vendor.label != "" ? Look.text : Look.muted;
                 font-size: 15px;
                 font-weight: 500;
                 overflow: elide;
             }
             Text {
-                text: (root.format != "" ? VoiceWords.format-name(root.format) : VoiceWords.no-format()) + (root.host != "" ? " · " + root.host : "");
+                text: (root.vendor.format != "" ? VoiceWords.format-name(root.vendor.format) : VoiceWords.no-format()) + (root.vendor.host != "" ? " · " + root.vendor.host : "");
                 color: Look.muted;
+                font-size: 13px;
+                overflow: elide;
+            }
+            if VoiceWords.check-text(root.vendor) != "": Text {
+                text: VoiceWords.check-text(root.vendor);
+                color: VoiceWords.check-tone(root.vendor.check) == 2 ? Look.ok : VoiceWords.check-tone(root.vendor.check) == 1 ? Look.danger : Look.faint;
                 font-size: 13px;
                 overflow: elide;
             }
@@ -419,8 +423,8 @@ component VendorRow inherits Rectangle {
         VerticalLayout {
             alignment: center;
             Text {
-                text: root.has-key ? root.key-hint : VoiceWords.no-key();
-                color: root.has-key ? Look.muted : Look.faint;
+                text: root.vendor.has-key ? root.vendor.key-hint : VoiceWords.no-key();
+                color: root.vendor.has-key ? Look.muted : Look.faint;
                 font-family: Look.mono;
                 font-size: 13px;
             }
@@ -428,7 +432,7 @@ component VendorRow inherits Rectangle {
         VerticalLayout {
             alignment: center;
             Icon {
-                name: root.open ? "caret-down" : "caret-right";
+                name: "caret-right";
                 size: 14px;
                 color: Look.faint;
             }
@@ -442,118 +446,155 @@ component VendorRow inherits Rectangle {
     }
 }
 
-// The open vendor's key: a box to paste it into, or its letters and Remove once it is kept; under
-// them, what the last check said, and where the vendor's keys are made.
-component KeyRow {
+// A box of the dialog: its label above, a line under it, what is wrong with it in the danger
+// colour; its own text, typed.
+component DialogField {
+    in property <string> label;
+    in property <string> note;
+    in property <string> placeholder;
+    in property <string> problem;
+    in property <string> font-family: Look.font;
+    in property <InputType> input-type: InputType.text;
+    in-out property <string> text;
+    callback edited(string);
+    callback accepted();
     VerticalLayout {
-        padding-left: 16px;
-        padding-right: 16px;
-        padding-top: 12px;
-        padding-bottom: 12px;
-        spacing: 10px;
-        HorizontalLayout {
-            spacing: 14px;
-            RowHead {
-                horizontal-stretch: 1;
-                icon: "key";
-                title: VoiceWords.key();
-                note: VoiceWords.key-note();
+        spacing: 6px;
+        Text {
+            text: root.label;
+            color: Look.text;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        Field {
+            height: 36px;
+            text <=> root.text;
+            font-size: 14px;
+            font-family: root.font-family;
+            input-type: root.input-type;
+            placeholder: root.placeholder;
+            error: root.problem != "";
+            edited(text) => {
+                root.edited(text);
             }
-            if Voice.vendor-has-key: VerticalLayout {
-                alignment: center;
-                Text {
-                    text: Voice.vendor-key-hint;
-                    color: Look.muted;
-                    font-family: Look.mono;
-                    font-size: 13px;
-                }
-            }
-            if Voice.vendor-has-key: VerticalLayout {
-                alignment: center;
-                SmallButton {
-                    text: Look.terminal ? "[" + VoiceWords.remove().to-lowercase() + "]" : VoiceWords.remove();
-                    quiet: Look.terminal;
-                    clicked => {
-                        Voice.remove-vendor-key();
-                    }
-                }
+            accepted => {
+                root.accepted();
             }
         }
-        if !Voice.vendor-has-key: HorizontalLayout {
-            padding-left: 34px;
-            spacing: 8px;
-            key-field := Field {
-                horizontal-stretch: 1;
-                height: 36px;
-                fill: Look.bg;
-                font-size: 14px;
-                font-family: Look.mono;
-                input-type: InputType.password;
-                placeholder: VoiceWords.key-placeholder();
-                accepted(text) => {
-                    Voice.save-vendor-key(text);
-                }
-            }
-            VerticalLayout {
-                alignment: center;
-                SmallButton {
-                    text: Look.terminal ? "[" + VoiceWords.save().to-lowercase() + "]" : VoiceWords.save();
-                    primary: !Look.terminal;
-                    clicked => {
-                        Voice.save-vendor-key(key-field.text);
-                    }
-                }
-            }
+        if root.problem != "": Paragraph {
+            text: root.problem;
+            color: Look.danger;
+            font-size: 13px;
         }
-        if VoiceWords.check-text() != "": Note {
-            text: VoiceWords.check-text();
-            tone: VoiceWords.check-tone();
-        }
-        if !Voice.vendor-has-key && Voice.vendor-official: HorizontalLayout {
-            padding-left: 34px;
-            Link {
-                text: VoiceWords.get-key(VoiceWords.vendor(Voice.vendor-format));
-                trailing-icon: "arrow-square-out";
-                font-size: 13px;
-                clicked => {
-                    Voice.open-key-page();
-                }
-            }
+        if root.note != "": Paragraph {
+            text: root.note;
+            color: Look.faint;
+            font-size: 12px;
         }
     }
 }
 
-// The open vendor: its name, its format, its address, its key, and its removal.
-component VendorForm inherits Rectangle {
-    height: form.preferred-height;
-    background: Look.bg.transparentize(0.6);
-    form := VerticalLayout {
-        TextRow {
-            icon: "pencil-simple";
-            title: VoiceWords.name();
-            note: VoiceWords.name-note();
-            font-family: Look.font;
-            text <=> Voice.vendor-label;
-            edited(text) => {
-                Voice.edit-vendor-label(text);
+// The dialog that adds an AI vendor or changes one, over everything (ui/app.slint): its name, its
+// format, its address and its key, kept together when the user saves (the maintainer's word:
+// "是整个save"), dropped on Cancel or Esc. Changing one, it can also be removed, with its key, at
+// once. Drawn as the Downloads page's dialogs; ⏎ saves.
+export component VendorDialog inherits Rectangle {
+    property <bool> can-save: Voice.vendor-format != "" && Voice.vendor-url-problem == 0;
+    background: #00000059;
+
+    // Clicks on the backdrop stay there.
+    TouchArea { }
+
+    KeyScope {
+        width: parent.width;
+        height: parent.height;
+        enter => {
+            if root.can-save {
+                Voice.save-vendor();
             }
         }
-        Separator { }
-        VerticalLayout {
-            padding-left: 16px;
-            padding-right: 16px;
-            padding-top: 12px;
-            padding-bottom: 14px;
-            spacing: 10px;
-            RowHead {
-                icon: "plugs";
-                title: VoiceWords.api-format();
-                note: VoiceWords.format-note(Voice.vendor-format);
-            }
-            HorizontalLayout {
-                padding-left: 34px;
+        escape => {
+            Voice.cancel-vendor();
+        }
+
+        box := Rectangle {
+            x: (parent.width - self.width) / 2;
+            y: max(24px, (parent.height - self.height) / 2);
+            // Terminal's monospace needs the room for its bracketed format chips.
+            width: min(Look.terminal ? 600px : 520px, parent.width - 48px);
+            height: body.preferred-height;
+            border-radius: Look.dialog-radius;
+            background: Look.bg;
+            border-width: 1px;
+            border-color: Look.line-strong;
+            drop-shadow-blur: 80px;
+            drop-shadow-offset-y: 30px;
+            drop-shadow-color: #00000057;
+
+            // Clicks inside stay inside.
+            TouchArea { }
+
+            body := VerticalLayout {
+                padding-left: 24px;
+                padding-right: 24px;
+                padding-top: 24px;
+                padding-bottom: 20px;
+                spacing: 16px;
+                HorizontalLayout {
+                    spacing: 14px;
+                    VerticalLayout {
+                        alignment: start;
+                        Rectangle {
+                            width: 40px;
+                            height: 40px;
+                            border-radius: Look.radius;
+                            background: Look.soft;
+                            Icon {
+                                name: "plugs-connected";
+                                size: 20px;
+                                color: Look.soft-ink;
+                            }
+                        }
+                    }
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        spacing: 5px;
+                        padding-top: 1px;
+                        alignment: start;
+                        Paragraph {
+                            text: Look.heading-prefix + (Voice.vendor-new ? VoiceWords.add-vendor() : Voice.vendor-title != "" ? Voice.vendor-title : VoiceWords.new-vendor());
+                            color: Look.text;
+                            font-size: 18px;
+                            font-weight: 600;
+                            letter-spacing: Look.heading-tracking * 18px;
+                            line-height-factor: Look.leading(1.35);
+                        }
+                        Paragraph {
+                            text: VoiceWords.dialog-note();
+                            color: Look.muted;
+                            font-size: 14px;
+                            line-height-factor: Look.leading(1.5);
+                        }
+                    }
+                }
+                DialogField {
+                    label: VoiceWords.name();
+                    note: VoiceWords.name-note();
+                    text <=> Voice.vendor-label;
+                    accepted => {
+                        if root.can-save {
+                            Voice.save-vendor();
+                        }
+                    }
+                }
                 VerticalLayout {
                     spacing: 8px;
+                    Text {
+                        text: VoiceWords.api-format();
+                        color: Look.text;
+                        font-size: 14px;
+                        font-weight: 500;
+                    }
                     HorizontalLayout {
                         alignment: start;
                         spacing: 8px;
@@ -576,36 +617,114 @@ component VendorForm inherits Rectangle {
                             }
                         }
                     }
+                    Paragraph {
+                        text: VoiceWords.format-note(Voice.vendor-format);
+                        color: Look.faint;
+                        font-size: 12px;
+                    }
                 }
-            }
-        }
-        Separator { }
-        TextRow {
-            icon: "globe-simple";
-            title: VoiceWords.address();
-            note: VoiceWords.address-note();
-            placeholder: Voice.vendor-url-placeholder;
-            problem: VoiceWords.address-problem(Voice.vendor-url-problem);
-            text <=> Voice.vendor-url;
-            edited(text) => {
-                Voice.edit-vendor-url(text);
-            }
-            done => {
-                Voice.check-vendor();
-            }
-        }
-        Separator { }
-        KeyRow { }
-        HorizontalLayout {
-            padding-left: 50px;
-            padding-bottom: 14px;
-            alignment: start;
-            Link {
-                text: VoiceWords.remove-vendor();
-                icon: "trash";
-                font-size: 13px;
-                clicked => {
-                    Voice.remove-vendor();
+                DialogField {
+                    label: VoiceWords.address();
+                    note: VoiceWords.address-note();
+                    placeholder: Voice.vendor-url-placeholder;
+                    problem: VoiceWords.address-problem(Voice.vendor-url-problem);
+                    font-family: Look.mono;
+                    text <=> Voice.vendor-url;
+                    edited(text) => {
+                        Voice.edit-vendor-url(text);
+                    }
+                    accepted => {
+                        if root.can-save {
+                            Voice.save-vendor();
+                        }
+                    }
+                }
+                VerticalLayout {
+                    spacing: 6px;
+                    DialogField {
+                        label: VoiceWords.key();
+                        note: VoiceWords.key-note();
+                        placeholder: Voice.vendor-has-key && !Voice.vendor-key-remove ? Voice.vendor-key-hint : VoiceWords.key-placeholder();
+                        problem: Voice.vendor-key-problem ? VoiceWords.malformed-key() : "";
+                        font-family: Look.mono;
+                        input-type: InputType.password;
+                        text <=> Voice.vendor-key;
+                        accepted => {
+                            if root.can-save {
+                                Voice.save-vendor();
+                            }
+                        }
+                    }
+                    // A key kept: it stays unless another is typed, or it is marked to go.
+                    if Voice.vendor-has-key: HorizontalLayout {
+                        spacing: 10px;
+                        alignment: start;
+                        Text {
+                            text: Voice.vendor-key-remove ? VoiceWords.key-goes-note() : VoiceWords.key-kept-note();
+                            color: Voice.vendor-key-remove ? Look.danger : Look.muted;
+                            font-size: 13px;
+                            vertical-alignment: center;
+                        }
+                        Link {
+                            text: Voice.vendor-key-remove ? VoiceWords.keep-key() : VoiceWords.remove-key();
+                            font-size: 13px;
+                            clicked => {
+                                Voice.toggle-key-removal();
+                            }
+                        }
+                    }
+                    if !Voice.vendor-has-key && Voice.vendor-official: HorizontalLayout {
+                        alignment: start;
+                        Link {
+                            text: VoiceWords.get-key(VoiceWords.vendor(Voice.vendor-format));
+                            trailing-icon: "arrow-square-out";
+                            font-size: 13px;
+                            clicked => {
+                                Voice.open-key-page();
+                            }
+                        }
+                    }
+                }
+                // Removing a vendor changed, on a line of its own: its words are long in some languages.
+                if !Voice.vendor-new: HorizontalLayout {
+                    alignment: start;
+                    Link {
+                        text: VoiceWords.remove-vendor();
+                        icon: "trash";
+                        font-size: 13px;
+                        clicked => {
+                            Voice.remove-vendor();
+                        }
+                    }
+                }
+                VerticalLayout {
+                    spacing: 8px;
+                    padding-top: 2px;
+                    // Terminal says what Esc does, as its other dialogs do.
+                    if Look.terminal: Text {
+                        text: VoiceWords.esc-cancel();
+                        color: Look.faint;
+                        font-family: Look.mono;
+                        font-size: 12px;
+                    }
+                    HorizontalLayout {
+                        alignment: end;
+                        spacing: 10px;
+                        AnswerButton {
+                            text: VoiceWords.cancel();
+                            clicked => {
+                                Voice.cancel-vendor();
+                            }
+                        }
+                        AnswerButton {
+                            text: VoiceWords.save() + Look.enter-hint;
+                            primary: true;
+                            enabled: root.can-save;
+                            clicked => {
+                                Voice.save-vendor();
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -688,18 +807,11 @@ export component VoicePanel {
                 for row[index] in Voice.vendors: VerticalLayout {
                     if index > 0: Separator { }
                     VendorRow {
-                        label: row.label;
-                        format: row.format;
-                        host: row.host;
-                        has-key: row.has-key;
-                        key-hint: row.key-hint;
-                        open: Voice.open-vendor == row.id;
+                        vendor: row;
                         clicked => {
-                            Voice.toggle-vendor(row.id);
+                            Voice.edit-vendor(row.id);
                         }
                     }
-                    if Voice.open-vendor == row.id: Separator { }
-                    if Voice.open-vendor == row.id: VendorForm { }
                 }
                 if Voice.vendors.length > 0: Separator { }
                 Rectangle {

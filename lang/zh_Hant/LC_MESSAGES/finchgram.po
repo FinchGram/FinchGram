@@ -14,64 +14,64 @@ msgstr ""
 msgid "View"
 msgstr "檢視"
 
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:934
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:934
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:946
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:946
 msgid "Search"
 msgstr "搜尋"
 
-#: ui/app.slint:70
+#: ui/app.slint:71
 msgid "Search in Chat"
 msgstr "在聊天中搜尋"
 
-#: ui/app.slint:81 ui/chat-info.slint:67
+#: ui/app.slint:82 ui/chat-info.slint:67
 msgid "Chat Info"
 msgstr "聊天資料"
 
-#: ui/app.slint:91 ui/toolbox.slint:106
+#: ui/app.slint:92 ui/toolbox.slint:106
 msgid "Toolbox"
 msgstr "百寶箱"
 
-#: ui/app.slint:102 ui/pages/settings.slint:397
+#: ui/app.slint:103 ui/pages/settings.slint:397
 msgid "Workbench"
 msgstr "工作台"
 
-#: ui/app.slint:110 ui/pages/settings.slint:405
+#: ui/app.slint:111 ui/pages/settings.slint:405
 msgid "Terminal"
 msgstr "終端機"
 
-#: ui/app.slint:118 ui/pages/settings.slint:413
+#: ui/app.slint:119 ui/pages/settings.slint:413
 msgid "Broadsheet"
 msgstr "報紙"
 
 #. The tools.
-#: ui/app.slint:127 ui/pages/downloads.slint:1981 ui/toolbox.slint:119
+#: ui/app.slint:128 ui/pages/downloads.slint:1982 ui/toolbox.slint:119
 msgid "Downloads"
 msgstr "下載"
 
-#: ui/app.slint:135
+#: ui/app.slint:136
 msgid "Settings…"
 msgstr "設定…"
 
-#: ui/app.slint:145
+#: ui/app.slint:146
 msgctxt "menu"
 msgid "Account"
 msgstr "帳號"
 
-#: ui/app.slint:158
+#: ui/app.slint:159
 msgid "Add Account…"
 msgstr "新增帳號…"
 
-#: ui/app.slint:168
+#: ui/app.slint:169
 msgid "Help"
 msgstr "輔助說明"
 
-#: ui/app.slint:171
+#: ui/app.slint:172
 msgid "Update to {}…"
 msgstr "更新到 {}…"
 
-#: ui/app.slint:172
+#: ui/app.slint:173
 msgid "Check for Updates…"
 msgstr "檢查更新…"
 
@@ -108,15 +108,15 @@ msgstr "補充說明（選填）"
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
 msgstr "取消"
 
@@ -129,10 +129,10 @@ msgstr "檢舉"
 
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344 ui/terminal/terminal.slint:1839
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
 msgid "Delete"
 msgstr "刪除"
 
@@ -151,8 +151,8 @@ msgstr "深色"
 msgid "Accounts"
 msgstr "帳號"
 
-#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2008
-#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2008 ui/workbench/sidebar.slint:555
+#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2009
+#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2009 ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "聊天"
 
@@ -197,9 +197,9 @@ msgid "Latest message"
 msgstr "最新訊息"
 
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:849
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:849
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2599
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2599 ui/voice.slint:854
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2599 ui/voice.slint:854
 msgid "Name"
 msgstr "名稱"
 
@@ -565,9 +565,9 @@ msgstr "管理員權限"
 msgid "Change photo"
 msgstr "更換大頭貼"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:889
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922 ui/pages/settings.slint:1269
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922 ui/pages/settings.slint:1269 ui/voice.slint:894
 msgid "Save"
 msgstr "儲存"
 
@@ -575,7 +575,7 @@ msgstr "儲存"
 msgid "Got it"
 msgstr "知道了"
 
-#: ui/pages/downloads.slint:3116
+#: ui/pages/downloads.slint:3117
 msgctxt "on the photo"
 msgid "Change"
 msgstr "更換"
@@ -672,8 +672,8 @@ msgid "Primary invite link"
 msgstr "主要邀請連結"
 
 #: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562
-#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
-#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
 msgid "Copy"
 msgstr "複製"
 
@@ -802,8 +802,8 @@ msgstr "搜尋聯絡人"
 msgid "No contacts to add"
 msgstr "沒有可以新增的聯絡人"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2921
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2921
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2922
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2922
 msgid "Add"
 msgstr "新增"
 
@@ -832,8 +832,8 @@ msgid "Remove {0} from the channel?"
 msgstr "把 {0} 移出頻道？"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
-#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952
-#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:890
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2953
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2953 ui/voice.slint:895
 msgid "Remove"
 msgstr "移除"
 
@@ -1201,8 +1201,8 @@ msgstr "這個聊天和它的訊息會從你的列表裡移除。"
 msgid "Also delete for {0}"
 msgstr "同時為 {0} 刪除"
 
-#: ui/chat.slint:329 ui/pages/downloads.slint:2357
-#: ui/chat.slint:329 ui/pages/downloads.slint:2357 ui/pages/downloads.slint:3262
+#: ui/chat.slint:329 ui/pages/downloads.slint:2358
+#: ui/chat.slint:329 ui/pages/downloads.slint:2358 ui/pages/downloads.slint:3263
 msgid "Open"
 msgstr "打開"
 
@@ -1238,11 +1238,11 @@ msgstr "檔案"
 msgid "Poll"
 msgstr "投票"
 
-#: ui/chat.slint:343 ui/voice.slint:784
+#: ui/chat.slint:343 ui/voice.slint:789
 msgid "Not available yet"
 msgstr "尚未開放"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:790
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:795
 msgid "Not allowed in this group"
 msgstr "這個群組不允許"
 
@@ -1267,7 +1267,7 @@ msgstr ""
 "截圖需要在「系統設定 › 隱私權與安全性」裡允許螢幕錄製。如果列表裡已經有 "
 "FinchGram，把它關掉再打開一次。"
 
-#: ui/chat.slint:351 ui/voice.slint:789 ui/voice.slint:832
+#: ui/chat.slint:351 ui/voice.slint:794 ui/voice.slint:837
 msgid "Open System Settings"
 msgstr "打開系統設定"
 
@@ -1359,7 +1359,7 @@ msgstr "只看一次"
 msgid "Hide with spoiler"
 msgstr "劇透遮罩"
 
-#: ui/chat.slint:387 ui/voice.slint:766
+#: ui/chat.slint:387 ui/voice.slint:771
 msgid "Send"
 msgstr "傳送"
 
@@ -1424,13 +1424,13 @@ msgid "Not sent"
 msgstr "未傳送"
 
 #: ui/chat.slint:412 ui/pages/downloads.slint:1019
-#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3347
-#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3347
+#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3348
+#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3348
 msgid "Retry"
 msgstr "重試"
 
-#: ui/chat.slint:414 ui/pages/downloads.slint:2363
-#: ui/chat.slint:414 ui/pages/downloads.slint:2363
+#: ui/chat.slint:414 ui/pages/downloads.slint:2364
+#: ui/chat.slint:414 ui/pages/downloads.slint:2364
 msgid "Download"
 msgstr "下載"
 
@@ -1456,7 +1456,7 @@ msgstr "點一下查看"
 msgid "Reply"
 msgstr "回覆"
 
-#: ui/chat.slint:838 ui/pages/downloads.slint:3204
+#: ui/chat.slint:838 ui/pages/downloads.slint:3205
 msgid "Edit"
 msgstr "編輯"
 
@@ -1802,7 +1802,7 @@ msgstr "對方必須已有 Telegram 帳號"
 msgid "Next"
 msgstr "下一步"
 
-#: ui/compose.slint:225 ui/pages/downloads.slint:1930
+#: ui/compose.slint:225 ui/pages/downloads.slint:1931
 msgid "Skip"
 msgstr "略過"
 
@@ -1811,7 +1811,7 @@ msgid "Invite {n} person"
 msgid_plural "Invite {n} people"
 msgstr[0] "邀請 {n} 人"
 
-#: ui/compose.slint:229 ui/voice.slint:809
+#: ui/compose.slint:229 ui/voice.slint:814
 msgid "Done"
 msgstr "完成"
 
@@ -1942,8 +1942,8 @@ msgid "It can be revoked and made anew in the channel's settings."
 msgstr "可以在頻道設定裡撤銷並重新產生。"
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:562
-#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
-#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
 msgid "Copied"
 msgstr "已複製"
 
@@ -2929,7 +2929,7 @@ msgid ""
 "Not connected: you didn’t trust the server’s key. Your password wasn’t sent."
 msgstr "未連線：你沒有信任伺服器的金鑰。密碼沒有送出。"
 
-#: ui/pages/downloads.slint:37 ui/pages/downloads.slint:2457
+#: ui/pages/downloads.slint:37 ui/pages/downloads.slint:2458
 msgid "Not connected. This server’s key has changed."
 msgstr "未連線。這台伺服器的金鑰變了。"
 
@@ -3169,8 +3169,8 @@ msgstr "以 http:// 或 https:// 開頭，位址裡可以包含資料夾。"
 msgid "Default port {}."
 msgstr "預設連接埠 {}。"
 
-#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2501
-#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2501
+#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2502
+#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2502
 msgid "Add server"
 msgstr "新增伺服器"
 
@@ -3178,8 +3178,8 @@ msgstr "新增伺服器"
 msgid "Filter this folder"
 msgstr "篩選這個資料夾"
 
-#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2998
-#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2998
+#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2999
+#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2999
 msgid "Transfers"
 msgstr "傳輸"
 
@@ -3204,245 +3204,246 @@ msgstr "{0} 只允許讀取。"
 msgid "Show"
 msgstr "顯示"
 
-#: ui/pages/downloads.slint:1028 ui/pages/downloads.slint:2467
+#: ui/pages/downloads.slint:1028 ui/pages/downloads.slint:2468
 msgid "Check key"
 msgstr "核對金鑰"
 
-#: ui/pages/downloads.slint:1272
+#: ui/pages/downloads.slint:1273
 msgid "This server’s key has changed"
 msgstr "這台伺服器的金鑰變了"
 
-#: ui/pages/downloads.slint:1272
+#: ui/pages/downloads.slint:1273
 msgid "Trust this server’s key?"
 msgstr "信任這台伺服器的金鑰嗎？"
 
-#: ui/pages/downloads.slint:1280
+#: ui/pages/downloads.slint:1281
 msgid ""
 "It isn’t the server you connected to before, or someone is between you and "
 "it."
 msgstr "不是同一台伺服器，或者你和它之間有人。"
 
-#: ui/pages/downloads.slint:1281
+#: ui/pages/downloads.slint:1282
 msgid ""
 "This is the first time you connect to this server. Compare the fingerprint "
 "with the one its owner gave you. If you can’t, don’t continue."
 msgstr ""
 "這是第一次連線到這台伺服器。請和伺服器方給你的指紋核對；核對不了就別繼續。"
 
-#: ui/pages/downloads.slint:1291
+#: ui/pages/downloads.slint:1292
 msgid "Server"
 msgstr "伺服器"
 
-#: ui/pages/downloads.slint:1316
+#: ui/pages/downloads.slint:1317
 msgid "Trusted earlier · {0}"
 msgstr "先前信任的 · {0}"
 
-#: ui/pages/downloads.slint:1317
+#: ui/pages/downloads.slint:1318
 msgid "Trusted since {0} · {1}"
 msgstr "{0} 起信任 · {1}"
 
-#: ui/pages/downloads.slint:1322
+#: ui/pages/downloads.slint:1323
 msgid "Shown now · {0}"
 msgstr "現在給出的 · {0}"
 
-#: ui/pages/downloads.slint:1322
+#: ui/pages/downloads.slint:1323
 msgid "{0} key · SHA256 fingerprint"
 msgstr "{0} 金鑰 · SHA256 指紋"
 
-#: ui/pages/downloads.slint:1340
+#: ui/pages/downloads.slint:1341
 msgid ""
 "Nothing has been sent. If the owner says the key changed, check the new "
 "fingerprint with them first."
 msgstr "什麼都沒送出。如果伺服器方說換過金鑰，先和他們核對新指紋。"
 
-#: ui/pages/downloads.slint:1341
+#: ui/pages/downloads.slint:1342
 msgid "Your password isn’t sent until you trust the key."
 msgstr "你確認之前，密碼不會送出。"
 
-#: ui/pages/downloads.slint:1352
+#: ui/pages/downloads.slint:1353
 msgid "esc  don’t connect"
 msgstr "esc  不連線"
 
-#: ui/pages/downloads.slint:1352 ui/pages/downloads.slint:1561
+#: ui/pages/downloads.slint:1353 ui/pages/downloads.slint:1562
+#: ui/pages/downloads.slint:1353 ui/pages/downloads.slint:1562
 msgid "esc  cancel"
 msgstr "esc  取消"
 
-#: ui/pages/downloads.slint:1367
+#: ui/pages/downloads.slint:1368
 msgid "Trust new key"
 msgstr "信任新金鑰"
 
-#: ui/pages/downloads.slint:1374
+#: ui/pages/downloads.slint:1375
 msgid "Don’t connect"
 msgstr "不連線"
 
-#: ui/pages/downloads.slint:1374
+#: ui/pages/downloads.slint:1375
 msgid "Trust and continue"
 msgstr "信任並繼續"
 
-#: ui/pages/downloads.slint:1517
+#: ui/pages/downloads.slint:1518
 msgid "Already there"
 msgstr "已經在那裡"
 
-#: ui/pages/downloads.slint:1529
+#: ui/pages/downloads.slint:1530
 msgid "and {0} more"
 msgstr "還有 {0} 項"
 
-#: ui/pages/downloads.slint:1598
+#: ui/pages/downloads.slint:1599
 msgid "Can’t move a folder into itself"
 msgstr "不能移進它自己"
 
-#: ui/pages/downloads.slint:1598
+#: ui/pages/downloads.slint:1599
 msgid "Current folder"
 msgstr "目前所在"
 
-#: ui/pages/downloads.slint:1628
+#: ui/pages/downloads.slint:1629
 msgid "Delete “{0}”?"
 msgstr "刪除「{0}」？"
 
-#: ui/pages/downloads.slint:1628
+#: ui/pages/downloads.slint:1629
 msgid "Delete {0} items?"
 msgstr "刪除 {0} 項？"
 
-#: ui/pages/downloads.slint:1629
+#: ui/pages/downloads.slint:1630
 msgid "Deleted on {0} itself. There’s no trash, and it can’t be undone."
 msgstr "在 {0} 上直接刪除。沒有垃圾桶，刪了不能復原。"
 
-#: ui/pages/downloads.slint:1639
+#: ui/pages/downloads.slint:1640
 msgid "Folders are deleted with everything in them."
 msgstr "資料夾會連同裡面的東西一起刪除。"
 
-#: ui/pages/downloads.slint:1655
+#: ui/pages/downloads.slint:1656
 msgid "Delete {0} items"
 msgstr "刪除 {0} 項"
 
-#: ui/pages/downloads.slint:1670
+#: ui/pages/downloads.slint:1671
 msgid "Move “{0}” to…"
 msgstr "把「{0}」移動到…"
 
-#: ui/pages/downloads.slint:1670 ui/pages/downloads.slint:3299
+#: ui/pages/downloads.slint:1671 ui/pages/downloads.slint:3300
 msgid "Move {0} items to…"
 msgstr "把 {0} 項移動到…"
 
-#: ui/pages/downloads.slint:1671
+#: ui/pages/downloads.slint:1672
 msgid "Within {0} only."
 msgstr "只能在 {0} 裡面移動。"
 
-#: ui/pages/downloads.slint:1761
+#: ui/pages/downloads.slint:1762
 msgid "Folder name"
 msgstr "資料夾名稱"
 
-#: ui/pages/downloads.slint:1815
+#: ui/pages/downloads.slint:1816
 msgid "No folders here"
 msgstr "這裡沒有資料夾"
 
-#: ui/pages/downloads.slint:1824
+#: ui/pages/downloads.slint:1825
 msgid "Move to: {0}"
 msgstr "移到：{0}"
 
-#: ui/pages/downloads.slint:1824
+#: ui/pages/downloads.slint:1825
 msgid "Already in this folder."
 msgstr "已經在這個資料夾裡了。"
 
-#: ui/pages/downloads.slint:1855
+#: ui/pages/downloads.slint:1856
 msgid "New folder"
 msgstr "新增資料夾"
 
-#: ui/pages/downloads.slint:1877
+#: ui/pages/downloads.slint:1878
 msgid "Move here"
 msgstr "移到這裡"
 
-#: ui/pages/downloads.slint:1896
+#: ui/pages/downloads.slint:1897
 msgid "“{0}” is already in {1}"
 msgstr "「{1}」裡已經有「{0}」"
 
-#: ui/pages/downloads.slint:1896
+#: ui/pages/downloads.slint:1897
 msgid "{0} items are already in {1}"
 msgstr "「{1}」裡已經有 {0} 個同名項"
 
-#: ui/pages/downloads.slint:1897
+#: ui/pages/downloads.slint:1898
 msgid "Choose before uploading."
 msgstr "上傳前先選一個。"
 
-#: ui/pages/downloads.slint:1897
+#: ui/pages/downloads.slint:1898
 msgid "Choose before moving."
 msgstr "移動前先選一個。"
 
-#: ui/pages/downloads.slint:1898
+#: ui/pages/downloads.slint:1899
 msgid "The other one uploads as usual."
 msgstr "另一項照常上傳。"
 
-#: ui/pages/downloads.slint:1898
+#: ui/pages/downloads.slint:1899
 msgid "The other one moves as usual."
 msgstr "另一項照常移動。"
 
-#: ui/pages/downloads.slint:1899
+#: ui/pages/downloads.slint:1900
 msgid "The other {0} upload as usual."
 msgstr "其餘 {0} 項照常上傳。"
 
-#: ui/pages/downloads.slint:1899
+#: ui/pages/downloads.slint:1900
 msgid "The other {0} move as usual."
 msgstr "其餘 {0} 項照常移動。"
 
-#: ui/pages/downloads.slint:1913
+#: ui/pages/downloads.slint:1914
 msgid ""
 "Keep both adds “(2)” to the name. Replace deletes the one that’s there; it "
 "can’t be undone."
 msgstr "「都保留」會在新名字後加「(2)」。「取代」會刪掉原來那個，不能復原。"
 
-#: ui/pages/downloads.slint:1913
+#: ui/pages/downloads.slint:1914
 msgid "Folders aren’t merged."
 msgstr "資料夾不會合併。"
 
-#: ui/pages/downloads.slint:1923
+#: ui/pages/downloads.slint:1924
 msgid "Replace"
 msgstr "取代"
 
-#: ui/pages/downloads.slint:1936
+#: ui/pages/downloads.slint:1937
 msgid "Keep both"
 msgstr "都保留"
 
-#: ui/pages/downloads.slint:2020
+#: ui/pages/downloads.slint:2021
 msgid "Servers"
 msgstr "伺服器"
 
-#: ui/pages/downloads.slint:2275
+#: ui/pages/downloads.slint:2276
 msgid "Modified"
 msgstr "修改日期"
 
-#: ui/pages/downloads.slint:2280
+#: ui/pages/downloads.slint:2281
 msgid "Size"
 msgstr "大小"
 
-#: ui/pages/downloads.slint:2305
+#: ui/pages/downloads.slint:2306
 msgid "Nothing in this folder matches “{0}”"
 msgstr "這個資料夾裡沒有符合「{0}」的項目"
 
-#: ui/pages/downloads.slint:2327
+#: ui/pages/downloads.slint:2328
 msgid "{0} selected · {1}"
 msgstr "已選取 {0} 個項目 · {1}"
 
-#: ui/pages/downloads.slint:2336
+#: ui/pages/downloads.slint:2337
 msgid "Move…"
 msgstr "移動…"
 
-#: ui/pages/downloads.slint:2350
+#: ui/pages/downloads.slint:2351
 msgid "Clear"
 msgstr "清除"
 
-#: ui/pages/downloads.slint:2399
+#: ui/pages/downloads.slint:2400
 msgid "This folder is empty"
 msgstr "這個資料夾是空的"
 
-#: ui/pages/downloads.slint:2457
+#: ui/pages/downloads.slint:2458
 msgid "Not connected yet. Check this server’s key first."
 msgstr "還沒連線。先核對這台伺服器的金鑰。"
 
 #
-#: ui/pages/downloads.slint:2484
+#: ui/pages/downloads.slint:2485
 msgid "No servers yet"
 msgstr "還沒有伺服器"
 
-#: ui/pages/downloads.slint:2487
+#: ui/pages/downloads.slint:2488
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -3451,19 +3452,19 @@ msgstr ""
 "加入 NAS、seedbox、PikPak、Alist / OpenList 的 WebDAV 位址，或是你用 vget "
 "serve 分享的資料夾，然後就能在這裡瀏覽，挑選想要的檔案。"
 
-#: ui/pages/downloads.slint:2493
+#: ui/pages/downloads.slint:2494
 msgid ""
 "Cloud drives without WebDAV can be reached through OpenList. FinchGram "
 "changes nothing on a server unless you allow it for that server."
 msgstr "沒有 WebDAV 的網盤可以透過 OpenList 接入。除非你為某台伺服器允許，FinchGram 不會變更伺服器上的任何東西。"
 
-#: ui/pages/downloads.slint:2566
+#: ui/pages/downloads.slint:2567
 msgid "Edit server"
 msgstr "編輯伺服器"
 
 #
 #
-#: ui/pages/downloads.slint:2569
+#: ui/pages/downloads.slint:2570
 msgid ""
 "The address of the server, and the account it gave you. The password is kept "
 "sealed in FinchGram's database on this Mac."
@@ -3471,73 +3472,73 @@ msgstr ""
 "伺服器的位址，以及它給你的帳號。密碼封起來存在這台 Mac 上 FinchGram 的資料庫"
 "裡。"
 
-#: ui/pages/downloads.slint:2579
+#: ui/pages/downloads.slint:2580
 msgid "Protocol"
 msgstr "協定"
 
-#: ui/pages/downloads.slint:2613 ui/voice.slint:878
+#: ui/pages/downloads.slint:2614 ui/voice.slint:883
 msgid "Address"
 msgstr "位址"
 
-#: ui/pages/downloads.slint:2622
+#: ui/pages/downloads.slint:2623
 msgid "Port"
 msgstr "連接埠"
 
-#: ui/pages/downloads.slint:2642
+#: ui/pages/downloads.slint:2643
 msgid "Server key"
 msgstr "伺服器金鑰"
 
-#: ui/pages/downloads.slint:2678
+#: ui/pages/downloads.slint:2679
 msgid "First seen {0}"
 msgstr "第一次見到 {0}"
 
-#: ui/pages/downloads.slint:2686
+#: ui/pages/downloads.slint:2687
 msgid "Forget this key"
 msgstr "忘掉這把金鑰"
 
-#: ui/pages/downloads.slint:2718
+#: ui/pages/downloads.slint:2719
 msgid "Forgotten. You’ll check it again on the next connection."
 msgstr "已忘掉。下次連線時會重新請你核對。"
 
-#: ui/pages/downloads.slint:2718
+#: ui/pages/downloads.slint:2719
 msgid "Not seen yet. You’ll check it the first time you connect."
 msgstr "還沒見過。第一次連線時會請你核對。"
 
 #
-#: ui/pages/downloads.slint:2737
+#: ui/pages/downloads.slint:2738
 msgid "Sign in with"
 msgstr "登入方式"
 
-#: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760
-#: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760 ui/pages/settings.slint:1227
+#: ui/pages/downloads.slint:2746 ui/pages/downloads.slint:2761
+#: ui/pages/downloads.slint:2746 ui/pages/downloads.slint:2761 ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "密碼"
 
-#: ui/pages/downloads.slint:2749
+#: ui/pages/downloads.slint:2750
 msgid "Key"
 msgstr "金鑰"
 
 #
-#: ui/pages/downloads.slint:2754
+#: ui/pages/downloads.slint:2755
 msgid "Key sign-in isn’t in this version."
 msgstr "金鑰登入此版本暫不支援。"
 
-#: ui/pages/downloads.slint:2793
+#: ui/pages/downloads.slint:2794
 msgid "Allow changes to files on this server"
 msgstr "允許變更這台伺服器上的檔案"
 
-#: ui/pages/downloads.slint:2799
+#: ui/pages/downloads.slint:2800
 msgid ""
 "Delete, move, rename and upload on the server. Deleted files can’t be "
 "recovered."
 msgstr "在伺服器上刪除、移動、重新命名、上傳。刪掉的檔案找不回來。"
 
-#: ui/pages/downloads.slint:2805
+#: ui/pages/downloads.slint:2806
 msgid "This server said it only allows reading."
 msgstr "這台伺服器說它只允許讀取。"
 
 #
-#: ui/pages/downloads.slint:2842
+#: ui/pages/downloads.slint:2843
 msgid ""
 "Over FTP the password and the files travel in the clear: use this server "
 "only on a network you trust, or FTPS."
@@ -3545,81 +3546,81 @@ msgstr ""
 "走 FTP 時密碼和檔案都是明文傳輸：這個伺服器只在你信任的網路裡用，或者改用 "
 "FTPS。"
 
-#: ui/pages/downloads.slint:2843
+#: ui/pages/downloads.slint:2844
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
 msgstr "走 http 時密碼和檔案都是明文傳輸：這個伺服器只在你信任的網路裡用。"
 
-#: ui/pages/downloads.slint:2879
+#: ui/pages/downloads.slint:2880
 msgid "Testing…"
 msgstr "正在測試…"
 
-#: ui/pages/downloads.slint:2931
+#: ui/pages/downloads.slint:2932
 msgid "Test connection"
 msgstr "測試連線"
 
-#: ui/pages/downloads.slint:3005
+#: ui/pages/downloads.slint:3006
 msgid "{0} down · {1} up"
 msgstr "下 {0} · 上 {1}"
 
-#: ui/pages/downloads.slint:3006
+#: ui/pages/downloads.slint:3007
 msgid "{0} active"
 msgstr "{0} 個進行中"
 
-#: ui/pages/downloads.slint:3019
+#: ui/pages/downloads.slint:3020
 msgid "Clear finished"
 msgstr "清除已完成"
 
-#: ui/pages/downloads.slint:3042
+#: ui/pages/downloads.slint:3043
 msgid "Hide"
 msgstr "隱藏"
 
-#: ui/pages/downloads.slint:3110
+#: ui/pages/downloads.slint:3111
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "每個檔案 {0} 條連線 · 下載到 {1}"
 
-#: ui/pages/downloads.slint:3116
+#: ui/pages/downloads.slint:3117
 msgid "Change"
 msgstr "變更"
 
-#: ui/pages/downloads.slint:3221
+#: ui/pages/downloads.slint:3222
 msgid "Copy address"
 msgstr "複製位址"
 
-#: ui/pages/downloads.slint:3230
+#: ui/pages/downloads.slint:3231
 msgid "Download {0} items"
 msgstr "下載 {0} 項"
 
-#: ui/pages/downloads.slint:3246
+#: ui/pages/downloads.slint:3247
 msgid "Download folder"
 msgstr "下載整個資料夾"
 
-#: ui/pages/downloads.slint:3270
+#: ui/pages/downloads.slint:3271
 msgid "Copy link"
 msgstr "複製連結"
 
-#: ui/pages/downloads.slint:3290
+#: ui/pages/downloads.slint:3291
 msgid "Rename"
 msgstr "重新命名"
 
-#: ui/pages/downloads.slint:3299
+#: ui/pages/downloads.slint:3300
 msgid "Move to…"
 msgstr "移動到…"
 
-#: ui/pages/downloads.slint:3312
+#: ui/pages/downloads.slint:3313
 msgid "Delete {0} items…"
 msgstr "刪除 {0} 項…"
 
-#: ui/pages/downloads.slint:3312
+#: ui/pages/downloads.slint:3313
 msgid "Delete…"
 msgstr "刪除…"
 
-#: ui/pages/downloads.slint:111 ui/pages/downloads.slint:3330
+#: ui/pages/downloads.slint:111 ui/pages/downloads.slint:3331
 msgid "The server doesn’t allow changes."
 msgstr "伺服器不允許變更。"
 
-#: ui/pages/downloads.slint:3365
+#: ui/pages/downloads.slint:3366
 msgid "Remove from list"
 msgstr "從列表中移除"
 
@@ -4730,7 +4731,7 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ 切換 · ↑/↓ 音量 · space 播放 · esc 關閉"
 
-#: ui/toolbox.slint:133 ui/voice.slint:757
+#: ui/toolbox.slint:133 ui/voice.slint:762
 msgid "Voice input"
 msgstr "語音輸入"
 
@@ -4739,103 +4740,103 @@ msgid "Speak, and the words go into the composer, through the AI vendor you choo
 msgstr "說話，文字就會進到輸入框裡；用的是你選的 AI 服務商"
 
 #. The sparkle's tip.
-#: ui/voice.slint:759
+#: ui/voice.slint:764
 msgid "Finish voice input"
 msgstr "結束語音輸入"
 
 #. The sparkle's tip.
-#: ui/voice.slint:759
+#: ui/voice.slint:764
 msgid "Voice input: click, or hold while you speak"
 msgstr "語音輸入：點一下，或按住說話"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:762
+#: ui/voice.slint:767
 msgid "Record voice message"
 msgstr "錄製語音訊息"
 
-#: ui/voice.slint:763
+#: ui/voice.slint:768
 msgid "Release to send · Drag left to cancel"
 msgstr "放開傳送 · 向左拖曳取消"
 
-#: ui/voice.slint:764
+#: ui/voice.slint:769
 msgid "Release to cancel"
 msgstr "放開取消"
 
-#: ui/voice.slint:765
+#: ui/voice.slint:770
 msgid "Hold to record. Release to send."
 msgstr "按住錄音，放開傳送。"
 
-#: ui/voice.slint:767
+#: ui/voice.slint:772
 msgid "Stop"
 msgstr "停止"
 
-#: ui/voice.slint:769
+#: ui/voice.slint:774
 msgid "Transcribe"
 msgstr "轉文字"
 
-#: ui/voice.slint:785
+#: ui/voice.slint:790
 msgid "Couldn't download"
 msgstr "下載失敗"
 
-#: ui/voice.slint:787
+#: ui/voice.slint:792
 msgid "Loading…"
 msgstr "載入中…"
 
-#: ui/voice.slint:788
+#: ui/voice.slint:793
 msgid "Microphone access is off."
 msgstr "麥克風權限已關閉。"
 
-#: ui/voice.slint:798
+#: ui/voice.slint:803
 msgid "Listening · {0}"
 msgstr "正在聽 · {0}"
 
-#: ui/voice.slint:800
+#: ui/voice.slint:805
 msgid "Finishing…"
 msgstr "正在收尾…"
 
-#: ui/voice.slint:801
+#: ui/voice.slint:806
 msgid "Tidying the words…"
 msgstr "正在整理文字…"
 
-#: ui/voice.slint:802
+#: ui/voice.slint:807
 msgid "Voice input stopped"
 msgstr "語音輸入已停止"
 
 #. In the words' place before any came.
-#: ui/voice.slint:805
+#: ui/voice.slint:810
 msgid "Speak now"
 msgstr "請說話"
 
-#: ui/voice.slint:808
+#: ui/voice.slint:813
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ 完成 · Esc 取消"
 
-#: ui/voice.slint:817
+#: ui/voice.slint:822
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram 不能使用麥克風。請在「系統設定 › 隱私權與安全性 › 麥克風」裡允許。"
 
-#: ui/voice.slint:818
+#: ui/voice.slint:823
 msgid "No microphone could be opened: {0}"
 msgstr "無法開啟麥克風：{0}"
 
-#: ui/voice.slint:823
+#: ui/voice.slint:828
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "什麼也沒聽到。「系統設定 › 聲音」裡選的麥克風對嗎？"
 
-#: ui/voice.slint:829
+#: ui/voice.slint:834
 msgid "Add key"
 msgstr "加入金鑰"
 
-#: ui/voice.slint:830
+#: ui/voice.slint:835
 msgid "Change key"
 msgstr "更換金鑰"
 
 #. The toolbox's Voice input panel.
-#: ui/voice.slint:910
+#: ui/voice.slint:922
 msgid "Use voice input"
 msgstr "使用語音輸入"
 
-#: ui/voice.slint:952
+#: ui/voice.slint:964
 msgid "Tidy the words"
 msgstr "整理文字"
 
@@ -4899,326 +4900,346 @@ msgstr "頻道以閱讀模式打開：長文排版，方便閱讀。"
 msgid "Manage accounts"
 msgstr "管理帳號"
 
-#: ui/voice.slint:770 ui/voice.slint:781
+#: ui/voice.slint:775 ui/voice.slint:786
 msgid "Transcribing…"
 msgstr "正在轉文字…"
 
-#: ui/voice.slint:779
+#: ui/voice.slint:784
 msgid "Too long for Telegram to transcribe."
 msgstr "太長了，Telegram 轉不了。"
 
-#: ui/voice.slint:780
+#: ui/voice.slint:785
 msgid "Could not transcribe it: {0}"
 msgstr "沒能轉成文字：{0}"
 
-#: ui/voice.slint:798
+#: ui/voice.slint:803
 msgid "Connecting to {0}…"
 msgstr "正在連線 {0}…"
 
-#: ui/voice.slint:805
+#: ui/voice.slint:810
 msgid "Speak now: the words come when you are done"
 msgstr "請說話，說完後出字"
 
-#: ui/voice.slint:807
+#: ui/voice.slint:812
 msgid "Any language"
 msgstr "任何語言"
 
-#: ui/voice.slint:816
+#: ui/voice.slint:821
 msgid "Voice input needs your API key for {0}."
 msgstr "語音輸入需要你的 {0} API 金鑰。"
 
-#: ui/voice.slint:819 ui/voice.slint:899 ui/voice.slint:940
+#: ui/voice.slint:824 ui/voice.slint:903 ui/voice.slint:952
 msgid "{0} refused the key."
 msgstr "{0} 拒絕了這個金鑰。"
 
-#: ui/voice.slint:820
+#: ui/voice.slint:825
 msgid "{0} says the key is out of credit or used too fast: {1}"
 msgstr "{0} 說這個金鑰額度不足，或用得太快：{1}"
 
-#: ui/voice.slint:821
+#: ui/voice.slint:826
 msgid "Could not reach {0}: {1}"
 msgstr "無法連線 {0}：{1}"
 
-#: ui/voice.slint:824
+#: ui/voice.slint:829
 msgid "{0} said: {1}"
 msgstr "{0} 說：{1}"
 
-#: ui/voice.slint:831
+#: ui/voice.slint:836
 msgid "Change address"
 msgstr "更改位址"
 
-#: ui/voice.slint:911
+#: ui/voice.slint:923
 msgid "Puts the sparkle in every chat's composer; when off, nothing goes to any service"
 msgstr "在每個聊天的輸入框裡放上 ✦；關閉時，什麼都不會傳給任何服務"
 
-#: ui/voice.slint:912
+#: ui/voice.slint:924
 msgid "Main language"
 msgstr "主要語言"
 
-#: ui/voice.slint:917
+#: ui/voice.slint:929
 msgid "Remove {0}"
 msgstr "移除「{0}」"
 
-#: ui/voice.slint:852
+#: ui/voice.slint:857
 msgid "API format"
 msgstr "介面格式"
 
-#: ui/voice.slint:879
+#: ui/voice.slint:884
 msgid "Empty for the vendor's own. For a relay or a server of your own, its base URL."
 msgstr "留空就用廠商自己的。用中轉站或你自己的伺服器時，填它的 base URL。"
 
-#: ui/voice.slint:881
+#: ui/voice.slint:886
 msgid "That is not an address: it starts with https://"
 msgstr "這不是位址：位址以 https:// 開頭"
 
-#: ui/voice.slint:882
+#: ui/voice.slint:887
 msgid "Leave the name and password out of the address."
 msgstr "位址裡不要帶使用者名稱和密碼。"
 
-#: ui/voice.slint:883
+#: ui/voice.slint:888
 msgid "Plain http goes only to this Mac or the local network: use https."
 msgstr "明文 http 只能連本機或區域網路：請用 https。"
 
-#: ui/voice.slint:929
+#: ui/voice.slint:941
 msgid "Model"
 msgstr "模型"
 
-#: ui/voice.slint:948
+#: ui/voice.slint:960
 msgid "Words to know"
 msgstr "熱詞"
 
-#: ui/voice.slint:949
+#: ui/voice.slint:961
 msgid "Names and terms you often say, separated by commas: the service listens for them, so they come out right."
 msgstr "你常說的人名和術語，用逗號隔開：辨識服務會特別留意它們，讓它們寫對。"
 
-#: ui/voice.slint:950
+#: ui/voice.slint:962
 msgid "Names, products, terms"
 msgstr "人名、產品名、術語"
 
-#: ui/voice.slint:886
+#: ui/voice.slint:891
 msgid "API key"
 msgstr "API 金鑰"
 
-#: ui/voice.slint:887
+#: ui/voice.slint:892
 msgid "Your own key: the service bills it for what it does. It is kept sealed in FinchGram's database on this Mac."
 msgstr "你自己的金鑰：服務的費用記在它上面。金鑰封起來存在這台 Mac 上 FinchGram 的資料庫裡。"
 
-#: ui/voice.slint:888
+#: ui/voice.slint:893
 msgid "Paste the key"
 msgstr "貼上金鑰"
 
-#: ui/voice.slint:891
+#: ui/voice.slint:896
 msgid "Get a key from {0}"
 msgstr "到 {0} 取得金鑰"
 
-#: ui/voice.slint:894
+#: ui/voice.slint:915
 msgid "That does not look like an API key."
 msgstr "這看起來不像 API 金鑰。"
 
-#: ui/voice.slint:895
+#: ui/voice.slint:899
 msgid "Checking with {0}…"
 msgstr "正在向 {0} 檢查…"
 
-#: ui/voice.slint:897
+#: ui/voice.slint:901
 msgid "{0} answers and takes the key."
 msgstr "{0} 有回應，金鑰可用。"
 
-#: ui/voice.slint:897
+#: ui/voice.slint:901
 msgid "{0} answers."
 msgstr "{0} 有回應。"
 
-#: ui/voice.slint:900
+#: ui/voice.slint:904
 msgid "Could not check: {0}"
 msgstr "無法檢查：{0}"
 
-#: ui/voice.slint:954
+#: ui/voice.slint:966
 msgid "Voice messages"
 msgstr "語音訊息"
 
-#: ui/voice.slint:828
+#: ui/voice.slint:833
 msgid "Set up"
 msgstr "去設定"
 
-#: ui/voice.slint:850
+#: ui/voice.slint:855
 msgid "What you call it, so that you know it when you choose."
 msgstr "你給它取的名稱，選的時候好認。"
 
-#: ui/voice.slint:851
+#: ui/voice.slint:856
 msgid "no key"
 msgstr "沒有金鑰"
 
-#: ui/voice.slint:857 ui/voice.slint:874
+#: ui/voice.slint:862 ui/voice.slint:879
 msgid "Alibaba Cloud Model Studio"
 msgstr "阿里雲百煉"
 
-#: ui/voice.slint:858
+#: ui/voice.slint:863
 msgid "Doubao speech (Volcengine)"
 msgstr "豆包語音（火山引擎）"
 
-#: ui/voice.slint:859
+#: ui/voice.slint:864
 msgid "OpenAI-compatible"
 msgstr "OpenAI 相容"
 
-#: ui/voice.slint:864
+#: ui/voice.slint:869
 msgid "Tidying: Claude's Messages API, Anthropic's and the relays' and vendors' that speak it."
 msgstr "整理文字：Claude 的 Messages API，Anthropic 自己的，以及支援這種格式的中轉站和廠商的。"
 
-#: ui/voice.slint:865
+#: ui/voice.slint:870
 msgid "Tidying: Google's Gemini API."
 msgstr "整理文字：Google 的 Gemini API。"
 
-#: ui/voice.slint:866
+#: ui/voice.slint:871
 msgid "Speech recognition (Qwen-ASR, strong in Chinese and its dialects) and tidying (Qwen), one key for both."
 msgstr "語音辨識（Qwen-ASR，中文和方言很強）和整理文字（通義千問），一個金鑰兩樣都能用。"
 
-#: ui/voice.slint:867
+#: ui/voice.slint:872
 msgid "Speech recognition: Doubao's Seed-ASR, strong in Chinese. A key from Volcengine's speech console."
 msgstr "語音辨識：豆包的 Seed-ASR，中文很強。金鑰在火山引擎的豆包語音主控台申請。"
 
-#: ui/voice.slint:868
+#: ui/voice.slint:873
 msgid "Speech recognition and tidying: OpenAI, and nearly every other service that speaks its API: Groq, SiliconFlow, DeepSeek, Kimi, OpenRouter, Ollama, relays, a Whisper server of your own."
 msgstr "語音辨識和整理文字：OpenAI，以及幾乎所有支援它這種介面的服務：Groq、SiliconFlow、DeepSeek、Kimi、OpenRouter、Ollama、各種中轉站、你自己的 Whisper 伺服器。"
 
-#: ui/voice.slint:875
+#: ui/voice.slint:880
 msgid "Volcengine"
 msgstr "火山引擎"
 
-#: ui/voice.slint:921
+#: ui/voice.slint:933
 msgid "How it hears"
 msgstr "辨識方式"
 
-#: ui/voice.slint:922
+#: ui/voice.slint:934
 msgid "As you speak"
 msgstr "邊說邊出字"
 
-#: ui/voice.slint:923
+#: ui/voice.slint:935
 msgid "When you are done"
 msgstr "說完再出字"
 
-#: ui/voice.slint:925
+#: ui/voice.slint:937
 msgid "The recording goes up when you are done: what most relays and servers of your own take."
 msgstr "說完後把錄音傳上去：大多數中轉站和自架伺服器只支援這種。"
 
-#: ui/voice.slint:926
+#: ui/voice.slint:938
 msgid "Words show as you speak, through OpenAI's Realtime API."
 msgstr "說話時就出字，走 OpenAI 的 Realtime API。"
 
-#: ui/voice.slint:774
+#: ui/voice.slint:779
 msgid "Telegram transcribes voice messages with Premium, or a few times a week without it. Your own AI vendor can do it too: Toolbox → AI → Voice input."
 msgstr "Telegram 的語音轉文字要 Premium，沒有 Premium 每週只能用幾次。你自己的 AI 服務商也能轉：百寶箱 → AI → 語音輸入。"
 
-#: ui/voice.slint:777
+#: ui/voice.slint:782
 msgid "Voice messages have no AI vendor or model yet: choose them in Toolbox → AI → Voice input."
 msgstr "語音訊息轉文字還沒選 AI 服務商或模型：到百寶箱 → AI → 語音輸入裡選。"
 
-#: ui/voice.slint:813
+#: ui/voice.slint:818
 msgid "Voice input has no AI vendor yet: choose one in Voice input."
 msgstr "語音輸入還沒選 AI 服務商：在語音輸入裡選一個。"
 
-#: ui/voice.slint:814
+#: ui/voice.slint:819
 msgid "Voice input does not know yet how to hear: choose it in Voice input."
 msgstr "語音輸入還沒選辨識方式：在語音輸入裡選一個。"
 
-#: ui/voice.slint:815
+#: ui/voice.slint:820
 msgid "Voice input has no model yet: choose one in Voice input."
 msgstr "語音輸入還沒選模型：在語音輸入裡選一個。"
 
-#: ui/voice.slint:822
+#: ui/voice.slint:827
 msgid "The AI vendor's address in Voice input is not one FinchGram can use."
 msgstr "語音輸入裡這個 AI 服務商的位址，FinchGram 無法使用。"
 
-#: ui/voice.slint:838
+#: ui/voice.slint:843
 msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the AI vendor you choose below, under your own key, and nothing else does. FinchGram keeps no recording."
 msgstr "在聊天的輸入框裡按一下 ✦（終端機主題裡輸入 /voice），然後說話；再按一下，或按 ⏎，文字就會進到輸入框裡，由你來傳送。你的聲音以你自己的金鑰傳給你在下面選的 AI 服務商，其他什麼都不傳。FinchGram 不保留任何錄音。"
 
-#: ui/voice.slint:841
+#: ui/voice.slint:846
 msgid "AI vendors"
 msgstr "AI 服務商"
 
-#: ui/voice.slint:843
+#: ui/voice.slint:848
 msgid "Your AI vendors, each a name, an API format, an address and a key. Each feature below chooses one of them, and one AI vendor can serve several."
 msgstr "你的 AI 服務商：每個都有名稱、介面格式、位址和金鑰。下面每個功能各從中選一個，一個 AI 服務商可以同時給好幾個功能用。"
 
-#: ui/voice.slint:845
+#: ui/voice.slint:850
 msgid "Add an AI vendor"
 msgstr "新增 AI 服務商"
 
-#: ui/voice.slint:846
+#: ui/voice.slint:851
 msgid "New AI vendor"
 msgstr "新的 AI 服務商"
 
-#: ui/voice.slint:847
+#: ui/voice.slint:852
 msgid "Remove this AI vendor and its key"
 msgstr "移除這個 AI 服務商及其金鑰"
 
-#: ui/voice.slint:848
+#: ui/voice.slint:853
 msgid "No API format chosen yet"
 msgstr "還沒選介面格式"
 
-#: ui/voice.slint:863
+#: ui/voice.slint:868
 msgid "The API your AI vendor speaks: choose one."
 msgstr "你的 AI 服務商用的是哪種介面：選一個。"
 
-#: ui/voice.slint:914
+#: ui/voice.slint:926
 msgid "The language you mostly speak, which tells the AI vendor what it hears; words of other languages mixed in are kept as you say them. While you speak, a click on the language in the strip takes the next one."
 msgstr "你平時主要說的語言，用來告訴 AI 服務商它聽到的是什麼語言；夾在裡面的其他語言，照你說的原樣保留。說話時點一下語音列上的語言，就換到下一種。"
 
-#: ui/voice.slint:918
+#: ui/voice.slint:930
 msgid "AI vendor"
 msgstr "AI 服務商"
 
-#: ui/voice.slint:919
+#: ui/voice.slint:931
 msgid "Choose an AI vendor"
 msgstr "選擇 AI 服務商"
 
-#: ui/voice.slint:920
+#: ui/voice.slint:932
 msgid "No AI vendor can do this yet: add one above."
 msgstr "還沒有能做這件事的 AI 服務商：先在上面新增一個。"
 
-#: ui/voice.slint:927
+#: ui/voice.slint:939
 msgid "Words as you speak, through OpenAI's Realtime API; or the recording when you are done, which most relays and servers of your own take."
 msgstr "邊說邊出字，走 OpenAI 的 Realtime API；或是說完再把錄音傳上去，大多數中轉站和自架伺服器只支援這種。"
 
-#: ui/voice.slint:930
+#: ui/voice.slint:942
 msgid "Choose a model"
 msgstr "選擇模型"
 
-#: ui/voice.slint:932
+#: ui/voice.slint:944
 msgid "Volcengine's resources, as its documentation names them: choose the one you bought."
 msgstr "火山引擎文件裡列出的資源：選你買的那個。"
 
-#: ui/voice.slint:935
+#: ui/voice.slint:947
 msgid "Nothing matches."
 msgstr "沒有符合的項目。"
 
-#: ui/voice.slint:938
+#: ui/voice.slint:950
 msgid "Asking {0} for its models…"
 msgstr "正在向 {0} 取得模型清單…"
 
-#: ui/voice.slint:939
+#: ui/voice.slint:951
 msgid "Add the key of {0} above to see its models."
 msgstr "先在上面填好 {0} 的金鑰，才能看到它的模型。"
 
-#: ui/voice.slint:941
+#: ui/voice.slint:953
 msgid "Could not list the models of {0}: {1}"
 msgstr "無法取得 {0} 的模型清單：{1}"
 
-#: ui/voice.slint:942
+#: ui/voice.slint:954
 msgid "{0} lists no models for this."
 msgstr "{0} 沒有能做這件事的模型。"
 
-#: ui/voice.slint:951
+#: ui/voice.slint:963
 msgid "Tidying"
 msgstr "整理文字"
 
-#: ui/voice.slint:953
+#: ui/voice.slint:965
 msgid "A model of your choice takes um, uh and repeated words out of what voice input heard, and sets the punctuation; it never translates."
 msgstr "由你選的模型去掉語音輸入聽到的「嗯」「呃」這類贅詞和重複的字詞，並加上標點；它從不翻譯。"
 
-#: ui/voice.slint:955
+#: ui/voice.slint:967
 msgid "Transcribe voice messages with your AI vendor"
 msgstr "用你的 AI 服務商把語音訊息轉文字"
 
-#: ui/voice.slint:957
+#: ui/voice.slint:969
 msgid "Transcribe under a voice message then sends it to the AI vendor chosen here instead of Telegram: someone else's voice, to a service of your choosing. The words are kept nowhere. Off unless you turn it on."
 msgstr "打開後，語音訊息下面的「轉文字」不再交給 Telegram，而是傳給這裡選的 AI 服務商：也就是把別人的聲音傳給你選的服務。轉出來的字哪裡都不保存。預設關閉。"
+
+#: ui/voice.slint:914
+msgid "Its name, the API it speaks, its address and your key. Nothing is kept until you save."
+msgstr "名稱、它用的介面、位址和你的金鑰。按「儲存」之前，什麼都不會記下。"
+
+#: ui/voice.slint:916
+msgid "Leave it empty to keep this key."
+msgstr "留空就保留目前的金鑰。"
+
+#: ui/voice.slint:917
+msgid "Remove the key"
+msgstr "移除金鑰"
+
+#: ui/voice.slint:918
+msgid "The key goes when you save."
+msgstr "儲存時會移除這個金鑰。"
+
+#: ui/voice.slint:919
+msgid "Keep the key"
+msgstr "保留金鑰"

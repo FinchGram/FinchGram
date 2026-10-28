@@ -107,10 +107,13 @@ thread_local! {
     static GENERATION: Cell<u64> = const { Cell::new(0) };
     /// When the microphone was pressed to start the dictation, while it is still held.
     static PRESSED: Cell<Option<Instant>> = const { Cell::new(None) };
-    /// Counted up with every check of a vendor, so that only the last one's answer shows.
+    /// Counted up with every check of a vendor; the number of each vendor's last one, so that only
+    /// its answer shows; and what each vendor's last check said, under its row.
     static CHECKS: Cell<u64> = const { Cell::new(0) };
-    /// The vendor open in the panel for editing, by id; "" for none.
-    static OPEN: RefCell<String> = const { RefCell::new(String::new()) };
+    static CHECKING: RefCell<HashMap<String, u64>> = RefCell::new(HashMap::new());
+    static CHECKED: RefCell<HashMap<String, (KeyCheck, String)>> = RefCell::new(HashMap::new());
+    /// The vendor dialog's draft while it is open.
+    static DRAFT: RefCell<Option<Draft>> = const { RefCell::new(None) };
     /// The models each vendor offers, by vendor id and ability, as it listed them this run.
     static MODELS: RefCell<HashMap<(String, Ability), Models>> = RefCell::new(HashMap::new());
     /// The lists asked for and not answered yet, by the number of the request: only the last
@@ -119,6 +122,15 @@ thread_local! {
     static LISTS: Cell<u64> = const { Cell::new(0) };
     /// What is typed in each feature's search over its models.
     static SEARCH: RefCell<HashMap<Feature, String>> = RefCell::new(HashMap::new());
+}
+
+/// The vendor dialog's draft: the vendor changed (none: a new one), the format chosen, whether the
+/// key kept goes. What is typed (the name, the address, a new key) is the dialog's own, read when
+/// the user saves.
+struct Draft {
+    id: Option<String>,
+    format: String,
+    remove_key: bool,
 }
 
 /// What a vendor said of its models this run.
@@ -241,13 +253,12 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     voice.on_add_language(|code| add_language(&code));
     voice.on_remove_language(remove_language);
     voice.on_add_vendor(add_vendor);
-    voice.on_toggle_vendor(|id| toggle_vendor(&id));
-    voice.on_edit_vendor_label(|text| edit_vendor(VendorField::Label, &text));
-    voice.on_edit_vendor_url(|text| edit_vendor(VendorField::Url, &text));
+    voice.on_edit_vendor(|id| edit_vendor(&id));
     voice.on_set_vendor_format(|name| set_vendor_format(&name));
-    voice.on_check_vendor(check_vendor);
-    voice.on_save_vendor_key(|text| save_key(&text));
-    voice.on_remove_vendor_key(remove_key);
+    voice.on_edit_vendor_url(|text| edit_vendor_url(&text));
+    voice.on_toggle_key_removal(toggle_key_removal);
+    voice.on_save_vendor(save_vendor);
+    voice.on_cancel_vendor(cancel_vendor);
     voice.on_remove_vendor(remove_vendor);
     voice.on_open_key_page(open_key_page);
     voice.on_choose_vendor(|which, id| choose_vendor(&which, &id));
@@ -797,19 +808,6 @@ fn set_on(on: bool) {
     }
 }
 
-/// The vendor open for editing, as the panel shows it.
-struct OpenVendor {
-    label: String,
-    format: String,
-    url: String,
-    url_placeholder: String,
-    url_problem: i32,
-    has_key: bool,
-    key_hint: String,
-    official: bool,
-    shown: String,
-}
-
 /// A feature as the panel shows it: the vendors that can do it, the one chosen, its models (as the
 /// vendor listed them, narrowed by the search), the one chosen, and what the vendor said of them.
 struct FeatureView {
@@ -824,13 +822,12 @@ struct FeatureView {
 }
 
 /// What the panel shows of the settings, with the keys' letters (the database's, or the
-/// screenshots' own).
+/// screenshots' own) and what each vendor's last check said.
 struct PanelView {
     languages: Vec<VoiceLanguage>,
     addable: Vec<VoiceLanguage>,
     language_name: String,
     vendors: Vec<VoiceVendorRow>,
-    open: Option<OpenVendor>,
     speech: FeatureView,
     mode: String,
     keywords: String,
@@ -880,7 +877,13 @@ fn feature_view(voice_input: &VoiceInput, feature: Feature, models: &dyn Fn(&str
     }
 }
 
-fn panel_view(voice_input: &VoiceInput, open: &str, key_hint: &dyn Fn(&str) -> Option<String>, models: &dyn Fn(&str, Ability) -> Option<Models>, search: &dyn Fn(Feature) -> String) -> PanelView {
+fn panel_view(
+    voice_input: &VoiceInput,
+    key_hint: &dyn Fn(&str) -> Option<String>,
+    checks: &dyn Fn(&str) -> (KeyCheck, String),
+    models: &dyn Fn(&str, Ability) -> Option<Models>,
+    search: &dyn Fn(Feature) -> String,
+) -> PanelView {
     let chip = |code: &str| VoiceLanguage { code: code.into(), name: language_name(code).into(), on: code == voice_input.language };
     let languages = voice_input.main_languages.iter().map(|code| chip(code)).collect();
     let mut addable: Vec<VoiceLanguage> = Vec::new();
@@ -894,6 +897,7 @@ fn panel_view(voice_input: &VoiceInput, open: &str, key_hint: &dyn Fn(&str) -> O
         .iter()
         .map(|vendor| {
             let hint = key_hint(&vendor.id);
+            let (check, check_detail) = checks(&vendor.id);
             // An address that is no address shows as typed, for the user to know the row.
             let host = match ConnectionFormat::known(&vendor.format) {
                 Some(_) => Endpoint::new(&vendor.format, &vendor.url, "").map(|endpoint| endpoint.address.shown()).unwrap_or_else(|_| vendor.url.trim().to_string()),
@@ -906,31 +910,16 @@ fn panel_view(voice_input: &VoiceInput, open: &str, key_hint: &dyn Fn(&str) -> O
                 host: host.into(),
                 has_key: hint.is_some(),
                 key_hint: hint.unwrap_or_default().into(),
+                check,
+                check_detail: check_detail.into(),
             }
         })
         .collect();
-    let open = voice_input.find_vendor(open).map(|vendor| {
-        let format = ConnectionFormat::known(&vendor.format);
-        let endpoint = format.map(|_| Endpoint::new(&vendor.format, &vendor.url, &vendor.label));
-        let hint = key_hint(&vendor.id);
-        OpenVendor {
-            label: vendor.label.clone(),
-            format: vendor.format.clone(),
-            url: vendor.url.clone(),
-            url_placeholder: format.map(ConnectionFormat::default_url).unwrap_or_default().into(),
-            url_problem: problem_number(endpoint.as_ref().and_then(|endpoint| endpoint.as_ref().err())),
-            has_key: hint.is_some(),
-            key_hint: hint.unwrap_or_default(),
-            official: endpoint.as_ref().is_some_and(|endpoint| endpoint.as_ref().is_ok_and(Endpoint::official)),
-            shown: label_of(vendor),
-        }
-    });
     PanelView {
         languages,
         addable,
         language_name: language_name(&voice_input.language),
         vendors,
-        open,
         speech: feature_view(voice_input, Feature::Speech, models, &search(Feature::Speech)),
         mode: voice_input.mode.clone(),
         keywords: voice_input.keywords.clone(),
@@ -963,12 +952,14 @@ fn show_panel(ui: &MainWindow) {
     refresh(ui, true);
 }
 
-/// The panel drawn again; `typed`: the boxes the user types into too (not while they type in one).
+/// The panel drawn again; `typed`: the box the user types the words to know into too (not while
+/// they type in it). The vendor dialog is apart: nothing here touches what is typed in it.
 fn refresh(ui: &MainWindow, typed: bool) {
-    let open = OPEN.with(|open| open.borrow().clone());
+    let key_hint = |id: &str| credential(&key_name(id)).as_deref().map(hint);
+    let checks = |id: &str| CHECKED.with(|checked| checked.borrow().get(id).cloned()).unwrap_or((KeyCheck::None, String::new()));
     let known = |id: &str, ability: Ability| MODELS.with(|models| models.borrow().get(&(id.to_string(), ability)).cloned());
     let search = |feature: Feature| SEARCH.with(|search| search.borrow().get(&feature).cloned().unwrap_or_default());
-    let Some(view) = with_settings(|settings| panel_view(&settings.voice_input, &open, &|id| credential(&key_name(id)).as_deref().map(hint), &known, &search)) else {
+    let Some(view) = with_settings(|settings| panel_view(&settings.voice_input, &key_hint, &checks, &known, &search)) else {
         return;
     };
     apply(ui, view, typed);
@@ -985,23 +976,6 @@ fn apply(ui: &MainWindow, view: PanelView, typed: bool) {
     voice.set_addable_rows(lines(view.addable));
     voice.set_language_name(view.language_name.into());
     voice.set_vendors(ModelRc::new(VecModel::from(view.vendors)));
-    match view.open {
-        Some(open) => {
-            voice.set_open_vendor(OPEN.with(|id| id.borrow().clone()).into());
-            if typed {
-                voice.set_vendor_label(open.label.into());
-                voice.set_vendor_url(open.url.into());
-            }
-            voice.set_vendor_format(open.format.into());
-            voice.set_vendor_url_placeholder(open.url_placeholder.into());
-            voice.set_vendor_url_problem(open.url_problem);
-            voice.set_vendor_has_key(open.has_key);
-            voice.set_vendor_key_hint(open.key_hint.into());
-            voice.set_vendor_official(open.official);
-            voice.set_vendor_shown(open.shown.into());
-        }
-        None => voice.set_open_vendor(SharedString::new()),
-    }
     let speech = view.speech;
     voice.set_speech_vendors(items(speech.vendors));
     voice.set_speech_vendor(speech.vendor.into());
@@ -1041,14 +1015,20 @@ fn lines(chips: Vec<VoiceLanguage>) -> ModelRc<VoiceLanguageRow> {
     ModelRc::new(VecModel::from(lines))
 }
 
-/// The panel for the screenshot test (src/screenshots.rs): `voice_input` as the settings, the
-/// vendor `open` open, with keys whose letters are `hints` and models `models` (by vendor id).
+/// The panel for the screenshot test (src/screenshots.rs): `voice_input` as the settings, keys
+/// whose letters are `hints`, models `models` and checks `checks` (by vendor id); with `dialog`, the
+/// vendor dialog open on that vendor ("" for a new one).
 #[cfg(test)]
-pub fn show_for_pictures(ui: &MainWindow, voice_input: &VoiceInput, open: &str, hints: &[(&str, &str)], models: &[(&str, &[&str])]) {
-    OPEN.with(|id| *id.borrow_mut() = open.to_string());
+pub fn show_for_pictures(ui: &MainWindow, voice_input: &VoiceInput, dialog: Option<&str>, hints: &[(&str, &str)], models: &[(&str, &[&str])], checks: &[(&str, KeyCheck)]) {
+    let key_hint = |id: &str| hints.iter().find(|(known, _)| *known == id).map(|(_, hint)| hint.to_string());
     let known = |id: &str, _: Ability| models.iter().find(|(known, _)| *known == id).map(|(_, list)| Models::Listed(list.iter().map(|model| model.to_string()).collect()));
-    let view = panel_view(voice_input, open, &|id| hints.iter().find(|(known, _)| *known == id).map(|(_, hint)| hint.to_string()), &known, &|_| String::new());
+    let checked = |id: &str| checks.iter().find(|(known, _)| *known == id).map(|(_, check)| (*check, String::new())).unwrap_or((KeyCheck::None, String::new()));
+    let view = panel_view(voice_input, &key_hint, &checked, &known, &|_| String::new());
     apply(ui, view, true);
+    match dialog {
+        Some(id) => show_dialog(ui, dialog_view(voice_input, (!id.is_empty()).then_some(id), &key_hint)),
+        None => close_dialog(ui),
+    }
     let speech = speech_of(voice_input).ok();
     let voice = ui.global::<Voice>();
     voice.set_service(speech.as_ref().map(Speech::shown).unwrap_or_default().into());
@@ -1106,107 +1086,265 @@ fn remove_language() {
     with_ui(show_panel);
 }
 
-// ---- the AI vendors ----------------------------------------------------------------------------
+// ---- the AI vendors and their dialog -----------------------------------------------------------
 
-/// A new vendor, with nothing chosen: no name, no format, no address, open for the user to fill
-/// in. No feature takes it until the user chooses it there.
-fn add_vendor() {
-    let id = with_settings(|settings| {
-        let voice_input = &mut settings.voice_input;
-        let id = voice_input.next_vendor_id();
-        voice_input.vendors.push(AiVendor { id: id.clone(), ..AiVendor::default() });
-        settings.save();
-        id
-    });
-    let Some(id) = id else { return };
-    OPEN.with(|open| *open.borrow_mut() = id);
-    with_ui(|ui| {
-        ui.global::<Voice>().set_vendor_check(KeyCheck::None);
-        show_panel(ui);
-    });
+/// What the vendor dialog shows of a vendor, or of a new one.
+struct DialogView {
+    new: bool,
+    title: String,
+    label: String,
+    format: String,
+    url: String,
+    url_placeholder: String,
+    url_problem: i32,
+    has_key: bool,
+    key_hint: String,
+    official: bool,
 }
 
-/// A vendor's row clicked: open for editing, or closed.
-fn toggle_vendor(id: &str) {
-    OPEN.with(|open| {
-        let mut open = open.borrow_mut();
-        *open = if *open == id { String::new() } else { id.to_string() };
-    });
-    with_ui(|ui| {
-        ui.global::<Voice>().set_vendor_check(KeyCheck::None);
-        show_panel(ui);
-    });
-}
-
-fn open_id() -> String {
-    OPEN.with(|open| open.borrow().clone())
-}
-
-enum VendorField {
-    Label,
-    Url,
-}
-
-/// The open vendor's name or address typed: kept as typed, and what is said of it shown. What the
-/// vendor said of its models is forgotten with its old address (asked again once it is typed).
-fn edit_vendor(field: VendorField, text: &str) {
-    let id = open_id();
-    with_settings(|settings| {
-        if let Some(vendor) = settings.voice_input.vendors.iter_mut().find(|vendor| vendor.id == id) {
-            match field {
-                VendorField::Label => vendor.label = text.trim().to_string(),
-                VendorField::Url => {
-                    vendor.url = text.trim().to_string();
-                    forget_models(&id);
-                }
+fn dialog_view(voice_input: &VoiceInput, id: Option<&str>, key_hint: &dyn Fn(&str) -> Option<String>) -> DialogView {
+    match id.and_then(|id| voice_input.find_vendor(id)) {
+        Some(vendor) => {
+            let hint = key_hint(&vendor.id);
+            let (url_placeholder, url_problem, official) = address_state(&vendor.format, &vendor.url);
+            DialogView {
+                new: false,
+                title: label_of(vendor),
+                label: vendor.label.clone(),
+                format: vendor.format.clone(),
+                url: vendor.url.clone(),
+                url_placeholder,
+                url_problem,
+                has_key: hint.is_some(),
+                key_hint: hint.unwrap_or_default(),
+                official,
             }
-            settings.save();
         }
-    });
+        None => DialogView {
+            new: true,
+            title: String::new(),
+            label: String::new(),
+            format: String::new(),
+            url: String::new(),
+            url_placeholder: String::new(),
+            url_problem: 0,
+            has_key: false,
+            key_hint: String::new(),
+            official: false,
+        },
+    }
+}
+
+/// An address as the dialog judges it for `format`: the placeholder (the format's own address),
+/// what is wrong with it, and whether it is the vendor's own. With no format yet, an address typed
+/// can still be no address.
+fn address_state(format: &str, url: &str) -> (String, i32, bool) {
+    match ConnectionFormat::known(format) {
+        Some(known) => {
+            let endpoint = Endpoint::new(format, url, "");
+            (known.default_url().to_string(), problem_number(endpoint.as_ref().err()), endpoint.as_ref().is_ok_and(Endpoint::official))
+        }
+        None if url.trim().is_empty() => (String::new(), 0, false),
+        None => (String::new(), problem_number(service::Address::parse(url, "").err().as_ref()), false),
+    }
+}
+
+fn show_dialog(ui: &MainWindow, view: DialogView) {
+    let voice = ui.global::<Voice>();
+    voice.set_vendor_new(view.new);
+    voice.set_vendor_title(view.title.into());
+    voice.set_vendor_label(view.label.into());
+    voice.set_vendor_format(view.format.into());
+    voice.set_vendor_url(view.url.into());
+    voice.set_vendor_url_placeholder(view.url_placeholder.into());
+    voice.set_vendor_url_problem(view.url_problem);
+    voice.set_vendor_key(SharedString::new());
+    voice.set_vendor_has_key(view.has_key);
+    voice.set_vendor_key_hint(view.key_hint.into());
+    voice.set_vendor_key_remove(false);
+    voice.set_vendor_key_problem(false);
+    voice.set_vendor_official(view.official);
+    voice.set_vendor_dialog(true);
+}
+
+/// The dialog closed; a key typed in it is not kept in the window.
+fn close_dialog(ui: &MainWindow) {
+    let voice = ui.global::<Voice>();
+    voice.set_vendor_dialog(false);
+    voice.set_vendor_key(SharedString::new());
+    voice.set_vendor_key_problem(false);
+}
+
+/// "Add an AI vendor": the dialog, with nothing chosen. Nothing is kept until the user saves.
+fn add_vendor() {
+    DRAFT.with(|draft| *draft.borrow_mut() = Some(Draft { id: None, format: String::new(), remove_key: false }));
+    let view = with_settings(|settings| dialog_view(&settings.voice_input, None, &|_| None));
     with_ui(|ui| {
-        ui.global::<Voice>().set_vendor_check(KeyCheck::None);
-        refresh(ui, false);
+        if let Some(view) = view {
+            show_dialog(ui, view);
+        }
     });
 }
 
-/// The open vendor's format chosen: its name follows when it was the format's own; the features
-/// it can no longer do are left without it, and the models chosen from it go (they were the old
-/// format's).
+/// A vendor's row clicked: the dialog, with what it has.
+fn edit_vendor(id: &str) {
+    let view = with_settings(|settings| {
+        let voice_input = &settings.voice_input;
+        voice_input.find_vendor(id)?;
+        Some(dialog_view(voice_input, Some(id), &|id| key_of(id).as_deref().map(hint)))
+    })
+    .flatten();
+    let Some(view) = view else { return };
+    DRAFT.with(|draft| *draft.borrow_mut() = Some(Draft { id: Some(id.to_string()), format: view.format.clone(), remove_key: false }));
+    with_ui(|ui| show_dialog(ui, view));
+}
+
+/// A format chosen in the dialog: what the address is judged by, and its placeholder.
 fn set_vendor_format(name: &str) {
-    let Some(format) = ConnectionFormat::known(name) else { return };
-    let id = open_id();
-    let label = with_settings(|settings| {
+    if ConnectionFormat::known(name).is_none() {
+        return;
+    }
+    DRAFT.with(|draft| {
+        if let Some(draft) = draft.borrow_mut().as_mut() {
+            draft.format = name.to_string();
+        }
+    });
+    with_ui(|ui| {
+        let voice = ui.global::<Voice>();
+        voice.set_vendor_format(name.into());
+        let (placeholder, problem, official) = address_state(name, &voice.get_vendor_url());
+        voice.set_vendor_url_placeholder(placeholder.into());
+        voice.set_vendor_url_problem(problem);
+        voice.set_vendor_official(official);
+    });
+}
+
+/// The address typed in the dialog: what is wrong with it shows (the box itself is the dialog's).
+fn edit_vendor_url(text: &str) {
+    let format = DRAFT.with(|draft| draft.borrow().as_ref().map(|draft| draft.format.clone())).unwrap_or_default();
+    let (_, problem, official) = address_state(&format, text);
+    with_ui(|ui| {
+        let voice = ui.global::<Voice>();
+        voice.set_vendor_url_problem(problem);
+        voice.set_vendor_official(official);
+    });
+}
+
+/// The key kept marked to go when the user saves, or kept again.
+fn toggle_key_removal() {
+    let remove = DRAFT.with(|draft| {
+        let mut draft = draft.borrow_mut();
+        let draft = draft.as_mut()?;
+        draft.remove_key = !draft.remove_key;
+        Some(draft.remove_key)
+    });
+    if let Some(remove) = remove {
+        with_ui(|ui| ui.global::<Voice>().set_vendor_key_remove(remove));
+    }
+}
+
+/// The dialog dropped (Cancel, Esc): nothing of it is kept.
+fn cancel_vendor() {
+    DRAFT.with(|draft| *draft.borrow_mut() = None);
+    with_ui(close_dialog);
+}
+
+/// The dialog saved, all of it at once (the maintainer's word: one Save, not one for the key): the
+/// vendor's name, format and address, and its key, a new one typed in place of any kept, or the
+/// kept one gone when marked to. A changed format leaves the features it can no longer do without
+/// the vendor, and the models chosen from it go (they were the old format's). Then the vendor is
+/// checked, under its row, and the features that use it ask for its models again.
+fn save_vendor() {
+    let Some((id, format, remove_key)) = DRAFT.with(|draft| draft.borrow().as_ref().map(|draft| (draft.id.clone(), draft.format.clone(), draft.remove_key))) else { return };
+    let Some(known) = ConnectionFormat::known(&format) else { return };
+    let (mut label, mut url, mut key) = (String::new(), String::new(), String::new());
+    with_ui(|ui| {
+        let voice = ui.global::<Voice>();
+        label = voice.get_vendor_label().trim().to_string();
+        url = voice.get_vendor_url().trim().to_string();
+        key = voice.get_vendor_key().trim().to_string();
+    });
+    let (_, problem, _) = address_state(&format, &url);
+    if problem != 0 {
+        return with_ui(|ui| ui.global::<Voice>().set_vendor_url_problem(problem));
+    }
+    if !key.is_empty() && !looks_like_a_key(&key) {
+        return with_ui(|ui| ui.global::<Voice>().set_vendor_key_problem(true));
+    }
+    let saved = with_settings(|settings| {
         let voice_input = &mut settings.voice_input;
-        let vendor = voice_input.vendors.iter_mut().find(|vendor| vendor.id == id)?;
-        if vendor.format == name {
-            return None;
-        }
-        if vendor.label.is_empty() || vendor.label == service::default_label(&vendor.format, &vendor.url) {
-            vendor.label = service::default_label(name, &vendor.url);
-        }
-        vendor.format = name.to_string();
-        let label = vendor.label.clone();
+        let id = match &id {
+            Some(id) => {
+                let vendor = voice_input.vendors.iter_mut().find(|vendor| vendor.id == *id)?;
+                let format_changed = vendor.format != format;
+                vendor.label = label.clone();
+                vendor.format = format.clone();
+                vendor.url = url.clone();
+                if format_changed {
+                    for feature in Feature::ALL {
+                        if feature.vendor(voice_input) == id.as_str() {
+                            let kept = if feature.can(known) { id.clone() } else { String::new() };
+                            feature.choose(voice_input, &kept, "");
+                        }
+                    }
+                    if voice_input.vendor == *id && known != ConnectionFormat::OpenAi {
+                        voice_input.mode.clear();
+                    }
+                }
+                id.clone()
+            }
+            None => {
+                let id = voice_input.next_vendor_id();
+                voice_input.vendors.push(AiVendor { id: id.clone(), label: label.clone(), format: format.clone(), url: url.clone(), key_from: None });
+                id
+            }
+        };
+        settings.save();
+        Some(id)
+    })
+    .flatten();
+    let Some(id) = saved else { return };
+    let stored = if !key.is_empty() {
+        save_credential(&key_name(&id), &key)
+    } else if remove_key {
+        remove_credential(&key_name(&id))
+    } else {
+        Ok(())
+    };
+    forget_models(&id);
+    DRAFT.with(|draft| *draft.borrow_mut() = None);
+    with_ui(close_dialog);
+    match stored {
+        Ok(()) => check_vendor(&id),
+        Err(err) => set_check(&id, KeyCheck::Failed, &err),
+    }
+    want_models_of(&id);
+}
+
+/// The vendor in the dialog removed, with its key, at once; the features that used it have none.
+fn remove_vendor() {
+    let Some(id) = DRAFT.with(|draft| draft.borrow().as_ref().and_then(|draft| draft.id.clone())) else { return };
+    with_settings(|settings| {
+        let voice_input = &mut settings.voice_input;
+        voice_input.vendors.retain(|vendor| vendor.id != id);
         for feature in Feature::ALL {
             if feature.vendor(voice_input) == id {
-                let kept = if feature.can(format) { id.clone() } else { String::new() };
-                feature.choose(voice_input, &kept, "");
+                feature.choose(voice_input, "", "");
             }
         }
-        if voice_input.vendor == id && format != ConnectionFormat::OpenAi {
+        if voice_input.vendor.is_empty() {
             voice_input.mode.clear();
         }
         settings.save();
-        Some(label)
-    })
-    .flatten();
-    let Some(label) = label else { return };
-    forget_models(&id);
-    with_ui(|ui| {
-        refresh(ui, false);
-        // The name may follow the format.
-        ui.global::<Voice>().set_vendor_label(label.into());
     });
-    check_vendor();
+    let _ = remove_credential(&key_name(&id));
+    forget_models(&id);
+    CHECKED.with(|checked| checked.borrow_mut().remove(&id));
+    DRAFT.with(|draft| *draft.borrow_mut() = None);
+    with_ui(|ui| {
+        close_dialog(ui);
+        show_panel(ui);
+    });
 }
 
 /// The key as the panel shows it: its first letters and its last four.
@@ -1225,109 +1363,60 @@ fn looks_like_a_key(key: &str) -> bool {
     key.len() >= 8 && key.chars().all(|character| character.is_ascii_graphic())
 }
 
-fn save_key(text: &str) {
-    let key = text.trim();
-    CHECKS.set(CHECKS.get() + 1);
-    let id = open_id();
-    if id.is_empty() {
-        return;
-    }
-    if !looks_like_a_key(key) {
-        set_check(KeyCheck::Malformed, "");
-        return;
-    }
-    if let Err(err) = save_credential(&key_name(&id), key) {
-        set_check(KeyCheck::Failed, &err);
-        return;
-    }
-    forget_models(&id);
+/// What vendor `id`'s check said, under its row.
+fn set_check(id: &str, check: KeyCheck, detail: &str) {
+    CHECKED.with(|checked| {
+        let mut checked = checked.borrow_mut();
+        if check == KeyCheck::None {
+            checked.remove(id);
+        } else {
+            checked.insert(id.to_string(), (check, detail.to_string()));
+        }
+    });
     with_ui(|ui| refresh(ui, false));
-    check_vendor();
 }
 
-fn remove_key() {
-    CHECKS.set(CHECKS.get() + 1);
-    let id = open_id();
-    if !id.is_empty()
-        && let Err(err) = remove_credential(&key_name(&id))
-    {
-        eprintln!("voice input: cannot remove the key: {err}");
-    }
-    forget_models(&id);
-    with_ui(|ui| {
-        refresh(ui, false);
-        ui.global::<Voice>().set_vendor_check(KeyCheck::None);
-    });
-}
-
-/// The open vendor removed, with its key; the features that used it have none, nor its models.
-fn remove_vendor() {
-    let id = open_id();
-    with_settings(|settings| {
-        let voice_input = &mut settings.voice_input;
-        voice_input.vendors.retain(|vendor| vendor.id != id);
-        for feature in Feature::ALL {
-            if feature.vendor(voice_input) == id {
-                feature.choose(voice_input, "", "");
-            }
-        }
-        if voice_input.vendor.is_empty() {
-            voice_input.mode.clear();
-        }
-        settings.save();
-    });
-    let _ = remove_credential(&key_name(&id));
-    forget_models(&id);
-    OPEN.with(|open| open.borrow_mut().clear());
-    with_ui(show_panel);
-}
-
-fn set_check(check: KeyCheck, detail: &str) {
-    with_ui(|ui| {
-        let voice = ui.global::<Voice>();
-        voice.set_vendor_check(check);
-        voice.set_vendor_check_detail(detail.into());
-    });
-}
-
-/// The open vendor asked, on a thread of its own, whether it answers at its address and takes the
-/// key; the answer shows under it, and the features that use it ask for its models again. Nothing
-/// is asked of an address that is not one, nor of a vendor's own address without a key.
-fn check_vendor() {
-    let id = open_id();
-    want_models_of(&id);
-    let Some(Some(Ok(endpoint))) = with_settings(|settings| endpoint_of(&settings.voice_input, &id)) else {
-        return set_check(KeyCheck::None, "");
+/// Vendor `id` asked, on a thread of its own, whether it answers at its address and takes the
+/// key; the answer shows under its row. Nothing is asked of an address that is not one, nor of a
+/// vendor's own address without a key.
+fn check_vendor(id: &str) {
+    let Some(Some(Ok(endpoint))) = with_settings(|settings| endpoint_of(&settings.voice_input, id)) else {
+        return set_check(id, KeyCheck::None, "");
     };
-    let key = key_of(&id);
+    let key = key_of(id);
     if key.is_none() && endpoint.official() {
-        return set_check(KeyCheck::None, "");
+        return set_check(id, KeyCheck::None, "");
     }
     let number = CHECKS.get() + 1;
     CHECKS.set(number);
-    set_check(KeyCheck::Checking, "");
-    let spawned = std::thread::Builder::new().name("voice-check".into()).spawn(move || {
-        let answer = service::check_connection(&endpoint, key.as_deref());
-        let _ = slint::invoke_from_event_loop(move || {
-            if number != CHECKS.get() {
-                return;
-            }
-            match answer {
-                KeyAnswer::Works => set_check(KeyCheck::Works, ""),
-                KeyAnswer::Refused => set_check(KeyCheck::Refused, ""),
-                KeyAnswer::Failed(err) => set_check(KeyCheck::Failed, &err),
-            }
-        });
+    CHECKING.with(|checking| checking.borrow_mut().insert(id.to_string(), number));
+    set_check(id, KeyCheck::Checking, "");
+    let id = id.to_string();
+    let spawned = std::thread::Builder::new().name("voice-check".into()).spawn({
+        let id = id.clone();
+        move || {
+            let answer = service::check_connection(&endpoint, key.as_deref());
+            let _ = slint::invoke_from_event_loop(move || {
+                if CHECKING.with(|checking| checking.borrow().get(&id) != Some(&number)) {
+                    return;
+                }
+                match answer {
+                    KeyAnswer::Works => set_check(&id, KeyCheck::Works, ""),
+                    KeyAnswer::Refused => set_check(&id, KeyCheck::Refused, ""),
+                    KeyAnswer::Failed(err) => set_check(&id, KeyCheck::Failed, &err),
+                }
+            });
+        }
     });
     if spawned.is_err() {
-        set_check(KeyCheck::None, "");
+        set_check(&id, KeyCheck::None, "");
     }
 }
 
-/// The page of the open vendor's keys.
+/// The page where the format chosen in the dialog makes its keys.
 fn open_key_page() {
-    let id = open_id();
-    if let Some(Some(format)) = with_settings(|settings| format_of(&settings.voice_input, &id)) {
+    let format = DRAFT.with(|draft| draft.borrow().as_ref().map(|draft| draft.format.clone())).unwrap_or_default();
+    if let Some(format) = ConnectionFormat::known(&format) {
         platform::open_link(format.key_page());
     }
 }
@@ -1565,7 +1654,9 @@ mod tests {
             "2" => Some(Models::Listed(service::DOUBAO_RESOURCES.iter().map(|resource| resource.to_string()).collect())),
             _ => Some(Models::Loading),
         };
-        let view = panel_view(&voice_input, "2", &|id| (id == "2").then(|| "6f1…9b2c".to_string()), &listed, &|feature| if feature == Feature::Messages { "whisp".into() } else { String::new() });
+        let key_hint = |id: &str| (id == "2").then(|| "6f1…9b2c".to_string());
+        let checks = |id: &str| if id == "2" { (KeyCheck::Works, String::new()) } else { (KeyCheck::None, String::new()) };
+        let view = panel_view(&voice_input, &key_hint, &checks, &listed, &|feature| if feature == Feature::Messages { "whisp".into() } else { String::new() });
         let ids = |items: &[VoiceItem]| items.iter().map(|item| item.id.to_string()).collect::<Vec<_>>();
         // Voice input: OpenAI and Doubao, not Anthropic, not the one with no format.
         assert_eq!(ids(&view.speech.vendors), vec!["1", "2"]);
@@ -1577,18 +1668,27 @@ mod tests {
         // Voice messages: what was typed in its search narrows the list.
         assert_eq!(ids(&view.messages.vendors), vec!["1", "2"]);
         assert_eq!(ids(&view.messages.models), vec!["whisper-1"]);
-        // The vendors listed, the open one's fields; the new one has neither a name nor a format.
-        assert_eq!(view.vendors.iter().map(|row| (row.label.to_string(), row.format.to_string(), row.host.to_string(), row.has_key)).collect::<Vec<_>>(), vec![
-            ("OpenAI".to_string(), "openai".to_string(), "api.openai.com".to_string(), false),
-            ("豆包语音".to_string(), "doubao".to_string(), "openspeech.bytedance.com".to_string(), true),
-            ("Claude 中转".to_string(), "anthropic".to_string(), "relay.example.com".to_string(), false),
-            (String::new(), String::new(), String::new(), false),
+        // The vendors listed with their last checks; the new one has neither a name nor a format.
+        assert_eq!(view.vendors.iter().map(|row| (row.label.to_string(), row.format.to_string(), row.host.to_string(), row.has_key, row.check)).collect::<Vec<_>>(), vec![
+            ("OpenAI".to_string(), "openai".to_string(), "api.openai.com".to_string(), false, KeyCheck::None),
+            ("豆包语音".to_string(), "doubao".to_string(), "openspeech.bytedance.com".to_string(), true, KeyCheck::Works),
+            ("Claude 中转".to_string(), "anthropic".to_string(), "relay.example.com".to_string(), false, KeyCheck::None),
+            (String::new(), String::new(), String::new(), false, KeyCheck::None),
         ]);
-        let open = view.open.expect("the open one");
-        assert_eq!((open.format.as_str(), open.key_hint.as_str(), open.official, open.url_problem), ("doubao", "6f1…9b2c", true, 0));
         assert_eq!(view.language_name, "简体中文");
+        // The dialog: a vendor changed, with what it has; a new one, with nothing.
+        let changed = dialog_view(&voice_input, Some("2"), &key_hint);
+        assert_eq!((changed.new, changed.title.as_str(), changed.format.as_str(), changed.key_hint.as_str(), changed.official, changed.url_problem), (false, "豆包语音", "doubao", "6f1…9b2c", true, 0));
+        let new = dialog_view(&voice_input, None, &key_hint);
+        assert!(new.new && new.label.is_empty() && new.format.is_empty() && !new.has_key && new.url_placeholder.is_empty());
+        // Addresses as the dialog judges them, with a format and before one is chosen.
+        assert_eq!(address_state("openai", ""), ("https://api.openai.com/v1".to_string(), 0, true));
+        assert_eq!(address_state("openai", "http://relay.example.com/v1"), ("https://api.openai.com/v1".to_string(), 3, false));
+        assert_eq!(address_state("", "relay.example.com"), (String::new(), 1, false));
+        assert_eq!(address_state("", ""), (String::new(), 0, false));
         // Nothing chosen: no vendor, no models asked for.
-        let empty = panel_view(&VoiceInput { vendors: voice_input.vendors.clone(), ..VoiceInput::default() }, "", &|_| None, &listed, &|_| String::new());
+        let none = |_: &str| (KeyCheck::None, String::new());
+        let empty = panel_view(&VoiceInput { vendors: voice_input.vendors.clone(), ..VoiceInput::default() }, &|_| None, &none, &listed, &|_| String::new());
         assert_eq!((empty.speech.vendor.as_str(), empty.speech.model.as_str(), empty.speech.state), ("", "", ModelsState::None));
         assert!(!empty.tidy_on && !empty.messages_on);
     }

@@ -14,64 +14,64 @@ msgstr ""
 msgid "View"
 msgstr "Darstellung"
 
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:934
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:934
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:946
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:946
 msgid "Search"
 msgstr "Suchen"
 
-#: ui/app.slint:70
+#: ui/app.slint:71
 msgid "Search in Chat"
 msgstr "Im Chat suchen"
 
-#: ui/app.slint:81 ui/chat-info.slint:67
+#: ui/app.slint:82 ui/chat-info.slint:67
 msgid "Chat Info"
 msgstr "Chat-Infos"
 
-#: ui/app.slint:91 ui/toolbox.slint:106
+#: ui/app.slint:92 ui/toolbox.slint:106
 msgid "Toolbox"
 msgstr "Werkzeuge"
 
-#: ui/app.slint:102 ui/pages/settings.slint:397
+#: ui/app.slint:103 ui/pages/settings.slint:397
 msgid "Workbench"
 msgstr "Workbench"
 
-#: ui/app.slint:110 ui/pages/settings.slint:405
+#: ui/app.slint:111 ui/pages/settings.slint:405
 msgid "Terminal"
 msgstr "Terminal"
 
-#: ui/app.slint:118 ui/pages/settings.slint:413
+#: ui/app.slint:119 ui/pages/settings.slint:413
 msgid "Broadsheet"
 msgstr "Broadsheet"
 
 #. The tools.
-#: ui/app.slint:127 ui/pages/downloads.slint:1981 ui/toolbox.slint:119
+#: ui/app.slint:128 ui/pages/downloads.slint:1982 ui/toolbox.slint:119
 msgid "Downloads"
 msgstr "Downloads"
 
-#: ui/app.slint:135
+#: ui/app.slint:136
 msgid "Settings…"
 msgstr "Einstellungen…"
 
-#: ui/app.slint:145
+#: ui/app.slint:146
 msgctxt "menu"
 msgid "Account"
 msgstr "Account"
 
-#: ui/app.slint:158
+#: ui/app.slint:159
 msgid "Add Account…"
 msgstr "Account hinzufügen…"
 
-#: ui/app.slint:168
+#: ui/app.slint:169
 msgid "Help"
 msgstr "Hilfe"
 
-#: ui/app.slint:171
+#: ui/app.slint:172
 msgid "Update to {}…"
 msgstr "Auf {} aktualisieren…"
 
-#: ui/app.slint:172
+#: ui/app.slint:173
 msgid "Check for Updates…"
 msgstr "Nach Updates suchen…"
 
@@ -108,15 +108,15 @@ msgstr "Kommentar hinzufügen (optional)"
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -129,10 +129,10 @@ msgstr "Melden"
 
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344 ui/terminal/terminal.slint:1839
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
 msgid "Delete"
 msgstr "Löschen"
 
@@ -151,8 +151,8 @@ msgstr "Dunkel"
 msgid "Accounts"
 msgstr "Accounts"
 
-#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2008
-#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2008 ui/workbench/sidebar.slint:555
+#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2009
+#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2009 ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "Chats"
 
@@ -197,9 +197,9 @@ msgid "Latest message"
 msgstr "Neueste Nachricht"
 
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:849
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:849
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2599
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2599 ui/voice.slint:854
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2599 ui/voice.slint:854
 msgid "Name"
 msgstr "Name"
 
@@ -573,9 +573,9 @@ msgstr "Administratorrechte"
 msgid "Change photo"
 msgstr "Foto ändern"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:889
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922 ui/pages/settings.slint:1269
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922 ui/pages/settings.slint:1269 ui/voice.slint:894
 msgid "Save"
 msgstr "Sichern"
 
@@ -583,7 +583,7 @@ msgstr "Sichern"
 msgid "Got it"
 msgstr "Verstanden"
 
-#: ui/pages/downloads.slint:3116
+#: ui/pages/downloads.slint:3117
 msgctxt "on the photo"
 msgid "Change"
 msgstr "Ändern"
@@ -682,8 +682,8 @@ msgid "Primary invite link"
 msgstr "Primärer Einladungslink"
 
 #: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562
-#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
-#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
 msgid "Copy"
 msgstr "Kopieren"
 
@@ -818,8 +818,8 @@ msgstr "Kontakte suchen"
 msgid "No contacts to add"
 msgstr "Keine Kontakte zum Hinzufügen"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2921
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2921
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2922
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2922
 msgid "Add"
 msgstr "Hinzufügen"
 
@@ -848,8 +848,8 @@ msgid "Remove {0} from the channel?"
 msgstr "{0} aus dem Kanal entfernen?"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
-#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952
-#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:890
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2953
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2953 ui/voice.slint:895
 msgid "Remove"
 msgstr "Entfernen"
 
@@ -1232,8 +1232,8 @@ msgstr "Der Chat und seine Nachrichten verschwinden aus deiner Liste."
 msgid "Also delete for {0}"
 msgstr "Auch für {0} löschen"
 
-#: ui/chat.slint:329 ui/pages/downloads.slint:2357
-#: ui/chat.slint:329 ui/pages/downloads.slint:2357 ui/pages/downloads.slint:3262
+#: ui/chat.slint:329 ui/pages/downloads.slint:2358
+#: ui/chat.slint:329 ui/pages/downloads.slint:2358 ui/pages/downloads.slint:3263
 msgid "Open"
 msgstr "Öffnen"
 
@@ -1269,11 +1269,11 @@ msgstr "Datei"
 msgid "Poll"
 msgstr "Umfrage"
 
-#: ui/chat.slint:343 ui/voice.slint:784
+#: ui/chat.slint:343 ui/voice.slint:789
 msgid "Not available yet"
 msgstr "Noch nicht verfügbar"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:790
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:795
 msgid "Not allowed in this group"
 msgstr "In dieser Gruppe nicht erlaubt"
 
@@ -1299,7 +1299,7 @@ msgstr ""
 "Datenschutz & Sicherheit. Steht FinchGram schon in der Liste, schalte es aus "
 "und wieder ein."
 
-#: ui/chat.slint:351 ui/voice.slint:789 ui/voice.slint:832
+#: ui/chat.slint:351 ui/voice.slint:794 ui/voice.slint:837
 msgid "Open System Settings"
 msgstr "Systemeinstellungen öffnen"
 
@@ -1395,7 +1395,7 @@ msgstr "Einmal ansehen"
 msgid "Hide with spoiler"
 msgstr "Mit Spoiler verbergen"
 
-#: ui/chat.slint:387 ui/voice.slint:766
+#: ui/chat.slint:387 ui/voice.slint:771
 msgid "Send"
 msgstr "Senden"
 
@@ -1460,13 +1460,13 @@ msgid "Not sent"
 msgstr "Nicht gesendet"
 
 #: ui/chat.slint:412 ui/pages/downloads.slint:1019
-#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3347
-#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3347
+#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3348
+#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3348
 msgid "Retry"
 msgstr "Erneut versuchen"
 
-#: ui/chat.slint:414 ui/pages/downloads.slint:2363
-#: ui/chat.slint:414 ui/pages/downloads.slint:2363
+#: ui/chat.slint:414 ui/pages/downloads.slint:2364
+#: ui/chat.slint:414 ui/pages/downloads.slint:2364
 msgid "Download"
 msgstr "Herunterladen"
 
@@ -1492,7 +1492,7 @@ msgstr "Zum Ansehen antippen"
 msgid "Reply"
 msgstr "Antworten"
 
-#: ui/chat.slint:838 ui/pages/downloads.slint:3204
+#: ui/chat.slint:838 ui/pages/downloads.slint:3205
 msgid "Edit"
 msgstr "Bearbeiten"
 
@@ -1856,7 +1856,7 @@ msgstr "Die Person muss bei Telegram sein"
 msgid "Next"
 msgstr "Weiter"
 
-#: ui/compose.slint:225 ui/pages/downloads.slint:1930
+#: ui/compose.slint:225 ui/pages/downloads.slint:1931
 msgid "Skip"
 msgstr "Überspringen"
 
@@ -1866,7 +1866,7 @@ msgid_plural "Invite {n} people"
 msgstr[0] "{n} Person einladen"
 msgstr[1] "{n} Personen einladen"
 
-#: ui/compose.slint:229 ui/voice.slint:809
+#: ui/compose.slint:229 ui/voice.slint:814
 msgid "Done"
 msgstr "Fertig"
 
@@ -2001,8 +2001,8 @@ msgstr ""
 "In den Einstellungen des Kanals lässt er sich widerrufen und neu erstellen."
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:562
-#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
-#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
 msgid "Copied"
 msgstr "Kopiert"
 
@@ -3019,7 +3019,7 @@ msgstr ""
 "Nicht verbunden: du hast dem Schlüssel des Servers nicht vertraut. Dein "
 "Passwort wurde nicht gesendet."
 
-#: ui/pages/downloads.slint:37 ui/pages/downloads.slint:2457
+#: ui/pages/downloads.slint:37 ui/pages/downloads.slint:2458
 msgid "Not connected. This server’s key has changed."
 msgstr "Nicht verbunden. Der Schlüssel dieses Servers hat sich geändert."
 
@@ -3261,8 +3261,8 @@ msgstr "http:// oder https://. Ein Ordner kann Teil der Adresse sein."
 msgid "Default port {}."
 msgstr "Standardport {}."
 
-#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2501
-#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2501
+#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2502
+#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2502
 msgid "Add server"
 msgstr "Server hinzufügen"
 
@@ -3270,8 +3270,8 @@ msgstr "Server hinzufügen"
 msgid "Filter this folder"
 msgstr "Diesen Ordner filtern"
 
-#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2998
-#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2998
+#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2999
+#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2999
 msgid "Transfers"
 msgstr "Übertragungen"
 
@@ -3296,26 +3296,26 @@ msgstr "{0} erlaubt nur Lesen."
 msgid "Show"
 msgstr "Anzeigen"
 
-#: ui/pages/downloads.slint:1028 ui/pages/downloads.slint:2467
+#: ui/pages/downloads.slint:1028 ui/pages/downloads.slint:2468
 msgid "Check key"
 msgstr "Schlüssel prüfen"
 
-#: ui/pages/downloads.slint:1272
+#: ui/pages/downloads.slint:1273
 msgid "This server’s key has changed"
 msgstr "Der Schlüssel dieses Servers hat sich geändert"
 
-#: ui/pages/downloads.slint:1272
+#: ui/pages/downloads.slint:1273
 msgid "Trust this server’s key?"
 msgstr "Dem Schlüssel dieses Servers vertrauen?"
 
-#: ui/pages/downloads.slint:1280
+#: ui/pages/downloads.slint:1281
 msgid ""
 "It isn’t the server you connected to before, or someone is between you and "
 "it."
 msgstr ""
 "Das ist nicht der Server von vorher, oder jemand sitzt zwischen dir und ihm."
 
-#: ui/pages/downloads.slint:1281
+#: ui/pages/downloads.slint:1282
 msgid ""
 "This is the first time you connect to this server. Compare the fingerprint "
 "with the one its owner gave you. If you can’t, don’t continue."
@@ -3324,27 +3324,27 @@ msgstr ""
 "Fingerabdruck mit dem, den dir der Betreiber gegeben hat. Wenn du das nicht "
 "kannst, mach nicht weiter."
 
-#: ui/pages/downloads.slint:1291
+#: ui/pages/downloads.slint:1292
 msgid "Server"
 msgstr "Server"
 
-#: ui/pages/downloads.slint:1316
+#: ui/pages/downloads.slint:1317
 msgid "Trusted earlier · {0}"
 msgstr "Früher vertraut · {0}"
 
-#: ui/pages/downloads.slint:1317
+#: ui/pages/downloads.slint:1318
 msgid "Trusted since {0} · {1}"
 msgstr "Vertraut seit {0} · {1}"
 
-#: ui/pages/downloads.slint:1322
+#: ui/pages/downloads.slint:1323
 msgid "Shown now · {0}"
 msgstr "Jetzt gezeigt · {0}"
 
-#: ui/pages/downloads.slint:1322
+#: ui/pages/downloads.slint:1323
 msgid "{0} key · SHA256 fingerprint"
 msgstr "{0}-Schlüssel · SHA256-Fingerabdruck"
 
-#: ui/pages/downloads.slint:1340
+#: ui/pages/downloads.slint:1341
 msgid ""
 "Nothing has been sent. If the owner says the key changed, check the new "
 "fingerprint with them first."
@@ -3352,194 +3352,195 @@ msgstr ""
 "Nichts wurde gesendet. Wenn der Betreiber sagt, der Schlüssel habe sich "
 "geändert, prüfe zuerst den neuen Fingerabdruck mit ihm."
 
-#: ui/pages/downloads.slint:1341
+#: ui/pages/downloads.slint:1342
 msgid "Your password isn’t sent until you trust the key."
 msgstr "Dein Passwort wird erst gesendet, wenn du dem Schlüssel vertraust."
 
-#: ui/pages/downloads.slint:1352
+#: ui/pages/downloads.slint:1353
 msgid "esc  don’t connect"
 msgstr "esc  nicht verbinden"
 
-#: ui/pages/downloads.slint:1352 ui/pages/downloads.slint:1561
+#: ui/pages/downloads.slint:1353 ui/pages/downloads.slint:1562
+#: ui/pages/downloads.slint:1353 ui/pages/downloads.slint:1562
 msgid "esc  cancel"
 msgstr "esc  abbrechen"
 
-#: ui/pages/downloads.slint:1367
+#: ui/pages/downloads.slint:1368
 msgid "Trust new key"
 msgstr "Neuem Schlüssel vertrauen"
 
-#: ui/pages/downloads.slint:1374
+#: ui/pages/downloads.slint:1375
 msgid "Don’t connect"
 msgstr "Nicht verbinden"
 
-#: ui/pages/downloads.slint:1374
+#: ui/pages/downloads.slint:1375
 msgid "Trust and continue"
 msgstr "Vertrauen und fortfahren"
 
-#: ui/pages/downloads.slint:1517
+#: ui/pages/downloads.slint:1518
 msgid "Already there"
 msgstr "Schon dort"
 
-#: ui/pages/downloads.slint:1529
+#: ui/pages/downloads.slint:1530
 msgid "and {0} more"
 msgstr "und {0} weitere"
 
-#: ui/pages/downloads.slint:1598
+#: ui/pages/downloads.slint:1599
 msgid "Can’t move a folder into itself"
 msgstr "Ein Ordner kann nicht in sich selbst verschoben werden"
 
-#: ui/pages/downloads.slint:1598
+#: ui/pages/downloads.slint:1599
 msgid "Current folder"
 msgstr "Aktueller Ordner"
 
-#: ui/pages/downloads.slint:1628
+#: ui/pages/downloads.slint:1629
 msgid "Delete “{0}”?"
 msgstr "„{0}“ löschen?"
 
-#: ui/pages/downloads.slint:1628
+#: ui/pages/downloads.slint:1629
 msgid "Delete {0} items?"
 msgstr "{0} Objekte löschen?"
 
-#: ui/pages/downloads.slint:1629
+#: ui/pages/downloads.slint:1630
 msgid "Deleted on {0} itself. There’s no trash, and it can’t be undone."
 msgstr "Wird direkt auf {0} gelöscht. Es gibt keinen Papierkorb, und es lässt sich nicht rückgängig machen."
 
-#: ui/pages/downloads.slint:1639
+#: ui/pages/downloads.slint:1640
 msgid "Folders are deleted with everything in them."
 msgstr "Ordner werden mit allem darin gelöscht."
 
-#: ui/pages/downloads.slint:1655
+#: ui/pages/downloads.slint:1656
 msgid "Delete {0} items"
 msgstr "{0} Objekte löschen"
 
-#: ui/pages/downloads.slint:1670
+#: ui/pages/downloads.slint:1671
 msgid "Move “{0}” to…"
 msgstr "„{0}“ verschieben nach…"
 
-#: ui/pages/downloads.slint:1670 ui/pages/downloads.slint:3299
+#: ui/pages/downloads.slint:1671 ui/pages/downloads.slint:3300
 msgid "Move {0} items to…"
 msgstr "{0} Objekte verschieben nach…"
 
-#: ui/pages/downloads.slint:1671
+#: ui/pages/downloads.slint:1672
 msgid "Within {0} only."
 msgstr "Nur innerhalb von {0}."
 
-#: ui/pages/downloads.slint:1761
+#: ui/pages/downloads.slint:1762
 msgid "Folder name"
 msgstr "Ordnername"
 
-#: ui/pages/downloads.slint:1815
+#: ui/pages/downloads.slint:1816
 msgid "No folders here"
 msgstr "Hier gibt es keine Ordner"
 
-#: ui/pages/downloads.slint:1824
+#: ui/pages/downloads.slint:1825
 msgid "Move to: {0}"
 msgstr "Verschieben nach: {0}"
 
-#: ui/pages/downloads.slint:1824
+#: ui/pages/downloads.slint:1825
 msgid "Already in this folder."
 msgstr "Schon in diesem Ordner."
 
-#: ui/pages/downloads.slint:1855
+#: ui/pages/downloads.slint:1856
 msgid "New folder"
 msgstr "Neuer Ordner"
 
-#: ui/pages/downloads.slint:1877
+#: ui/pages/downloads.slint:1878
 msgid "Move here"
 msgstr "Hierher verschieben"
 
-#: ui/pages/downloads.slint:1896
+#: ui/pages/downloads.slint:1897
 msgid "“{0}” is already in {1}"
 msgstr "„{0}“ ist schon in {1}"
 
-#: ui/pages/downloads.slint:1896
+#: ui/pages/downloads.slint:1897
 msgid "{0} items are already in {1}"
 msgstr "{0} Objekte sind schon in {1}"
 
-#: ui/pages/downloads.slint:1897
+#: ui/pages/downloads.slint:1898
 msgid "Choose before uploading."
 msgstr "Entscheide vor dem Hochladen."
 
-#: ui/pages/downloads.slint:1897
+#: ui/pages/downloads.slint:1898
 msgid "Choose before moving."
 msgstr "Entscheide vor dem Verschieben."
 
-#: ui/pages/downloads.slint:1898
+#: ui/pages/downloads.slint:1899
 msgid "The other one uploads as usual."
 msgstr "Das andere wird wie üblich hochgeladen."
 
-#: ui/pages/downloads.slint:1898
+#: ui/pages/downloads.slint:1899
 msgid "The other one moves as usual."
 msgstr "Das andere wird wie üblich verschoben."
 
-#: ui/pages/downloads.slint:1899
+#: ui/pages/downloads.slint:1900
 msgid "The other {0} upload as usual."
 msgstr "Die anderen {0} werden wie üblich hochgeladen."
 
-#: ui/pages/downloads.slint:1899
+#: ui/pages/downloads.slint:1900
 msgid "The other {0} move as usual."
 msgstr "Die anderen {0} werden wie üblich verschoben."
 
-#: ui/pages/downloads.slint:1913
+#: ui/pages/downloads.slint:1914
 msgid ""
 "Keep both adds “(2)” to the name. Replace deletes the one that’s there; it "
 "can’t be undone."
 msgstr "Beide behalten hängt „(2)“ an den Namen. Ersetzen löscht das vorhandene; das lässt sich nicht rückgängig machen."
 
-#: ui/pages/downloads.slint:1913
+#: ui/pages/downloads.slint:1914
 msgid "Folders aren’t merged."
 msgstr "Ordner werden nicht zusammengeführt."
 
-#: ui/pages/downloads.slint:1923
+#: ui/pages/downloads.slint:1924
 msgid "Replace"
 msgstr "Ersetzen"
 
-#: ui/pages/downloads.slint:1936
+#: ui/pages/downloads.slint:1937
 msgid "Keep both"
 msgstr "Beide behalten"
 
-#: ui/pages/downloads.slint:2020
+#: ui/pages/downloads.slint:2021
 msgid "Servers"
 msgstr "Server"
 
-#: ui/pages/downloads.slint:2275
+#: ui/pages/downloads.slint:2276
 msgid "Modified"
 msgstr "Geändert"
 
-#: ui/pages/downloads.slint:2280
+#: ui/pages/downloads.slint:2281
 msgid "Size"
 msgstr "Größe"
 
-#: ui/pages/downloads.slint:2305
+#: ui/pages/downloads.slint:2306
 msgid "Nothing in this folder matches “{0}”"
 msgstr "Keine Treffer für „{0}“ in diesem Ordner"
 
-#: ui/pages/downloads.slint:2327
+#: ui/pages/downloads.slint:2328
 msgid "{0} selected · {1}"
 msgstr "{0} ausgewählt · {1}"
 
-#: ui/pages/downloads.slint:2336
+#: ui/pages/downloads.slint:2337
 msgid "Move…"
 msgstr "Verschieben…"
 
-#: ui/pages/downloads.slint:2350
+#: ui/pages/downloads.slint:2351
 msgid "Clear"
 msgstr "Auswahl aufheben"
 
-#: ui/pages/downloads.slint:2399
+#: ui/pages/downloads.slint:2400
 msgid "This folder is empty"
 msgstr "Dieser Ordner ist leer"
 
-#: ui/pages/downloads.slint:2457
+#: ui/pages/downloads.slint:2458
 msgid "Not connected yet. Check this server’s key first."
 msgstr "Noch nicht verbunden. Prüfe zuerst den Schlüssel dieses Servers."
 
 #
-#: ui/pages/downloads.slint:2484
+#: ui/pages/downloads.slint:2485
 msgid "No servers yet"
 msgstr "Noch keine Server"
 
-#: ui/pages/downloads.slint:2487
+#: ui/pages/downloads.slint:2488
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -3550,19 +3551,19 @@ msgstr ""
 "kannst du hier darin stöbern und die Dateien auswählen, die du haben "
 "möchtest."
 
-#: ui/pages/downloads.slint:2493
+#: ui/pages/downloads.slint:2494
 msgid ""
 "Cloud drives without WebDAV can be reached through OpenList. FinchGram "
 "changes nothing on a server unless you allow it for that server."
 msgstr "Cloud-Speicher ohne WebDAV sind über OpenList erreichbar. FinchGram ändert nichts auf einem Server, solange du es für diesen Server nicht erlaubst."
 
-#: ui/pages/downloads.slint:2566
+#: ui/pages/downloads.slint:2567
 msgid "Edit server"
 msgstr "Server bearbeiten"
 
 #
 #
-#: ui/pages/downloads.slint:2569
+#: ui/pages/downloads.slint:2570
 msgid ""
 "The address of the server, and the account it gave you. The password is kept "
 "sealed in FinchGram's database on this Mac."
@@ -3570,73 +3571,73 @@ msgstr ""
 "Die Adresse des Servers und das Konto, das er dir gegeben hat. Das Passwort "
 "liegt versiegelt in der Datenbank von FinchGram auf diesem Mac."
 
-#: ui/pages/downloads.slint:2579
+#: ui/pages/downloads.slint:2580
 msgid "Protocol"
 msgstr "Protokoll"
 
-#: ui/pages/downloads.slint:2613 ui/voice.slint:878
+#: ui/pages/downloads.slint:2614 ui/voice.slint:883
 msgid "Address"
 msgstr "Adresse"
 
-#: ui/pages/downloads.slint:2622
+#: ui/pages/downloads.slint:2623
 msgid "Port"
 msgstr "Port"
 
-#: ui/pages/downloads.slint:2642
+#: ui/pages/downloads.slint:2643
 msgid "Server key"
 msgstr "Serverschlüssel"
 
-#: ui/pages/downloads.slint:2678
+#: ui/pages/downloads.slint:2679
 msgid "First seen {0}"
 msgstr "Zuerst gesehen am {0}"
 
-#: ui/pages/downloads.slint:2686
+#: ui/pages/downloads.slint:2687
 msgid "Forget this key"
 msgstr "Diesen Schlüssel vergessen"
 
-#: ui/pages/downloads.slint:2718
+#: ui/pages/downloads.slint:2719
 msgid "Forgotten. You’ll check it again on the next connection."
 msgstr "Vergessen. Bei der nächsten Verbindung prüfst du ihn erneut."
 
-#: ui/pages/downloads.slint:2718
+#: ui/pages/downloads.slint:2719
 msgid "Not seen yet. You’ll check it the first time you connect."
 msgstr "Noch nicht gesehen. Du prüfst ihn bei der ersten Verbindung."
 
 #
-#: ui/pages/downloads.slint:2737
+#: ui/pages/downloads.slint:2738
 msgid "Sign in with"
 msgstr "Anmelden mit"
 
-#: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760
-#: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760 ui/pages/settings.slint:1227
+#: ui/pages/downloads.slint:2746 ui/pages/downloads.slint:2761
+#: ui/pages/downloads.slint:2746 ui/pages/downloads.slint:2761 ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "Passwort"
 
-#: ui/pages/downloads.slint:2749
+#: ui/pages/downloads.slint:2750
 msgid "Key"
 msgstr "Schlüssel"
 
 #
-#: ui/pages/downloads.slint:2754
+#: ui/pages/downloads.slint:2755
 msgid "Key sign-in isn’t in this version."
 msgstr "Anmeldung mit Schlüssel gibt es in dieser Version noch nicht."
 
-#: ui/pages/downloads.slint:2793
+#: ui/pages/downloads.slint:2794
 msgid "Allow changes to files on this server"
 msgstr "Änderungen an Dateien auf diesem Server erlauben"
 
-#: ui/pages/downloads.slint:2799
+#: ui/pages/downloads.slint:2800
 msgid ""
 "Delete, move, rename and upload on the server. Deleted files can’t be "
 "recovered."
 msgstr "Auf dem Server löschen, verschieben, umbenennen und hochladen. Gelöschte Dateien sind nicht wiederherstellbar."
 
-#: ui/pages/downloads.slint:2805
+#: ui/pages/downloads.slint:2806
 msgid "This server said it only allows reading."
 msgstr "Dieser Server hat gesagt, er erlaube nur Lesen."
 
 #
-#: ui/pages/downloads.slint:2842
+#: ui/pages/downloads.slint:2843
 msgid ""
 "Over FTP the password and the files travel in the clear: use this server "
 "only on a network you trust, or FTPS."
@@ -3644,7 +3645,7 @@ msgstr ""
 "Über FTP gehen Passwort und Dateien im Klartext: nutze diesen Server nur in "
 "einem Netz, dem du vertraust, oder FTPS."
 
-#: ui/pages/downloads.slint:2843
+#: ui/pages/downloads.slint:2844
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
@@ -3652,75 +3653,75 @@ msgstr ""
 "Über http gehen Passwort und Dateien unverschlüsselt durchs Netz: nutze "
 "diesen Server nur in einem Netzwerk, dem du vertraust."
 
-#: ui/pages/downloads.slint:2879
+#: ui/pages/downloads.slint:2880
 msgid "Testing…"
 msgstr "Wird getestet…"
 
-#: ui/pages/downloads.slint:2931
+#: ui/pages/downloads.slint:2932
 msgid "Test connection"
 msgstr "Verbindung testen"
 
-#: ui/pages/downloads.slint:3005
+#: ui/pages/downloads.slint:3006
 msgid "{0} down · {1} up"
 msgstr "{0} runter · {1} hoch"
 
-#: ui/pages/downloads.slint:3006
+#: ui/pages/downloads.slint:3007
 msgid "{0} active"
 msgstr "{0} aktiv"
 
-#: ui/pages/downloads.slint:3019
+#: ui/pages/downloads.slint:3020
 msgid "Clear finished"
 msgstr "Abgeschlossene entfernen"
 
-#: ui/pages/downloads.slint:3042
+#: ui/pages/downloads.slint:3043
 msgid "Hide"
 msgstr "Ausblenden"
 
-#: ui/pages/downloads.slint:3110
+#: ui/pages/downloads.slint:3111
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "{0} Verbindungen pro Datei · Downloads landen in {1}"
 
-#: ui/pages/downloads.slint:3116
+#: ui/pages/downloads.slint:3117
 msgid "Change"
 msgstr "Ändern"
 
-#: ui/pages/downloads.slint:3221
+#: ui/pages/downloads.slint:3222
 msgid "Copy address"
 msgstr "Adresse kopieren"
 
-#: ui/pages/downloads.slint:3230
+#: ui/pages/downloads.slint:3231
 msgid "Download {0} items"
 msgstr "{0} Objekte herunterladen"
 
-#: ui/pages/downloads.slint:3246
+#: ui/pages/downloads.slint:3247
 msgid "Download folder"
 msgstr "Ordner herunterladen"
 
-#: ui/pages/downloads.slint:3270
+#: ui/pages/downloads.slint:3271
 msgid "Copy link"
 msgstr "Link kopieren"
 
-#: ui/pages/downloads.slint:3290
+#: ui/pages/downloads.slint:3291
 msgid "Rename"
 msgstr "Umbenennen"
 
-#: ui/pages/downloads.slint:3299
+#: ui/pages/downloads.slint:3300
 msgid "Move to…"
 msgstr "Verschieben nach…"
 
-#: ui/pages/downloads.slint:3312
+#: ui/pages/downloads.slint:3313
 msgid "Delete {0} items…"
 msgstr "{0} Objekte löschen…"
 
-#: ui/pages/downloads.slint:3312
+#: ui/pages/downloads.slint:3313
 msgid "Delete…"
 msgstr "Löschen…"
 
-#: ui/pages/downloads.slint:111 ui/pages/downloads.slint:3330
+#: ui/pages/downloads.slint:111 ui/pages/downloads.slint:3331
 msgid "The server doesn’t allow changes."
 msgstr "Der Server erlaubt keine Änderungen."
 
-#: ui/pages/downloads.slint:3365
+#: ui/pages/downloads.slint:3366
 msgid "Remove from list"
 msgstr "Aus der Liste entfernen"
 
@@ -4868,7 +4869,7 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ wechseln · ↑/↓ lautstärke · leertaste abspielen · esc schließen"
 
-#: ui/toolbox.slint:133 ui/voice.slint:757
+#: ui/toolbox.slint:133 ui/voice.slint:762
 msgid "Voice input"
 msgstr "Spracheingabe"
 
@@ -4877,103 +4878,103 @@ msgid "Speak, and the words go into the composer, through the AI vendor you choo
 msgstr "Sprich, und der Text landet im Eingabefeld, über den KI-Anbieter deiner Wahl"
 
 #. The sparkle's tip.
-#: ui/voice.slint:759
+#: ui/voice.slint:764
 msgid "Finish voice input"
 msgstr "Spracheingabe beenden"
 
 #. The sparkle's tip.
-#: ui/voice.slint:759
+#: ui/voice.slint:764
 msgid "Voice input: click, or hold while you speak"
 msgstr "Spracheingabe: klicken, oder gedrückt halten, während du sprichst"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:762
+#: ui/voice.slint:767
 msgid "Record voice message"
 msgstr "Sprachnachricht aufnehmen"
 
-#: ui/voice.slint:763
+#: ui/voice.slint:768
 msgid "Release to send · Drag left to cancel"
 msgstr "Loslassen zum Senden · Nach links ziehen zum Abbrechen"
 
-#: ui/voice.slint:764
+#: ui/voice.slint:769
 msgid "Release to cancel"
 msgstr "Loslassen zum Abbrechen"
 
-#: ui/voice.slint:765
+#: ui/voice.slint:770
 msgid "Hold to record. Release to send."
 msgstr "Halten zum Aufnehmen. Loslassen zum Senden."
 
-#: ui/voice.slint:767
+#: ui/voice.slint:772
 msgid "Stop"
 msgstr "Stoppen"
 
-#: ui/voice.slint:769
+#: ui/voice.slint:774
 msgid "Transcribe"
 msgstr "Transkribieren"
 
-#: ui/voice.slint:785
+#: ui/voice.slint:790
 msgid "Couldn't download"
 msgstr "Download fehlgeschlagen"
 
-#: ui/voice.slint:787
+#: ui/voice.slint:792
 msgid "Loading…"
 msgstr "Wird geladen…"
 
-#: ui/voice.slint:788
+#: ui/voice.slint:793
 msgid "Microphone access is off."
 msgstr "Der Mikrofonzugriff ist aus."
 
-#: ui/voice.slint:798
+#: ui/voice.slint:803
 msgid "Listening · {0}"
 msgstr "Hört zu · {0}"
 
-#: ui/voice.slint:800
+#: ui/voice.slint:805
 msgid "Finishing…"
 msgstr "Wird abgeschlossen…"
 
-#: ui/voice.slint:801
+#: ui/voice.slint:806
 msgid "Tidying the words…"
 msgstr "Text wird bereinigt…"
 
-#: ui/voice.slint:802
+#: ui/voice.slint:807
 msgid "Voice input stopped"
 msgstr "Spracheingabe gestoppt"
 
 #. In the words' place before any came.
-#: ui/voice.slint:805
+#: ui/voice.slint:810
 msgid "Speak now"
 msgstr "Sprich jetzt"
 
-#: ui/voice.slint:808
+#: ui/voice.slint:813
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ fertig · Esc abbrechen"
 
-#: ui/voice.slint:817
+#: ui/voice.slint:822
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram darf das Mikrofon nicht benutzen. Erlaube es unter Systemeinstellungen → Datenschutz & Sicherheit → Mikrofon."
 
-#: ui/voice.slint:818
+#: ui/voice.slint:823
 msgid "No microphone could be opened: {0}"
 msgstr "Kein Mikrofon ließ sich öffnen: {0}"
 
-#: ui/voice.slint:823
+#: ui/voice.slint:828
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "Es war nichts zu hören. Ist unter Systemeinstellungen → Ton das richtige Mikrofon gewählt?"
 
-#: ui/voice.slint:829
+#: ui/voice.slint:834
 msgid "Add key"
 msgstr "Schlüssel hinzufügen"
 
-#: ui/voice.slint:830
+#: ui/voice.slint:835
 msgid "Change key"
 msgstr "Schlüssel ändern"
 
 #. The toolbox's Voice input panel.
-#: ui/voice.slint:910
+#: ui/voice.slint:922
 msgid "Use voice input"
 msgstr "Spracheingabe verwenden"
 
-#: ui/voice.slint:952
+#: ui/voice.slint:964
 msgid "Tidy the words"
 msgstr "Text bereinigen"
 
@@ -5037,326 +5038,346 @@ msgstr "Kanäle öffnen sich im Lesemodus: lange Beiträge, zum Lesen gesetzt."
 msgid "Manage accounts"
 msgstr "Accounts verwalten"
 
-#: ui/voice.slint:770 ui/voice.slint:781
+#: ui/voice.slint:775 ui/voice.slint:786
 msgid "Transcribing…"
 msgstr "Wird transkribiert…"
 
-#: ui/voice.slint:779
+#: ui/voice.slint:784
 msgid "Too long for Telegram to transcribe."
 msgstr "Für Telegram zu lang zum Transkribieren."
 
-#: ui/voice.slint:780
+#: ui/voice.slint:785
 msgid "Could not transcribe it: {0}"
 msgstr "Transkription fehlgeschlagen: {0}"
 
-#: ui/voice.slint:798
+#: ui/voice.slint:803
 msgid "Connecting to {0}…"
 msgstr "Verbindung zu {0}…"
 
-#: ui/voice.slint:805
+#: ui/voice.slint:810
 msgid "Speak now: the words come when you are done"
 msgstr "Sprich jetzt: Der Text kommt erst, wenn du fertig bist"
 
-#: ui/voice.slint:807
+#: ui/voice.slint:812
 msgid "Any language"
 msgstr "Beliebige Sprache"
 
-#: ui/voice.slint:816
+#: ui/voice.slint:821
 msgid "Voice input needs your API key for {0}."
 msgstr "Die Spracheingabe braucht deinen API-Schlüssel für {0}."
 
-#: ui/voice.slint:819 ui/voice.slint:899 ui/voice.slint:940
+#: ui/voice.slint:824 ui/voice.slint:903 ui/voice.slint:952
 msgid "{0} refused the key."
 msgstr "{0} hat den Schlüssel abgelehnt."
 
-#: ui/voice.slint:820
+#: ui/voice.slint:825
 msgid "{0} says the key is out of credit or used too fast: {1}"
 msgstr "Laut {0} hat der Schlüssel kein Guthaben mehr oder wird zu schnell benutzt: {1}"
 
-#: ui/voice.slint:821
+#: ui/voice.slint:826
 msgid "Could not reach {0}: {1}"
 msgstr "{0} ist nicht erreichbar: {1}"
 
-#: ui/voice.slint:824
+#: ui/voice.slint:829
 msgid "{0} said: {1}"
 msgstr "{0} sagt: {1}"
 
-#: ui/voice.slint:831
+#: ui/voice.slint:836
 msgid "Change address"
 msgstr "Adresse ändern"
 
-#: ui/voice.slint:911
+#: ui/voice.slint:923
 msgid "Puts the sparkle in every chat's composer; when off, nothing goes to any service"
 msgstr "Zeigt ✦ im Eingabefeld jedes Chats; aus, geht nichts an irgendeinen Dienst"
 
-#: ui/voice.slint:912
+#: ui/voice.slint:924
 msgid "Main language"
 msgstr "Hauptsprache"
 
-#: ui/voice.slint:917
+#: ui/voice.slint:929
 msgid "Remove {0}"
 msgstr "{0} entfernen"
 
-#: ui/voice.slint:852
+#: ui/voice.slint:857
 msgid "API format"
 msgstr "API-Format"
 
-#: ui/voice.slint:879
+#: ui/voice.slint:884
 msgid "Empty for the vendor's own. For a relay or a server of your own, its base URL."
 msgstr "Leer lassen für die Adresse des Anbieters. Für ein Relay oder einen eigenen Server dessen Basis-URL."
 
-#: ui/voice.slint:881
+#: ui/voice.slint:886
 msgid "That is not an address: it starts with https://"
 msgstr "Das ist keine Adresse: Adressen beginnen mit https://"
 
-#: ui/voice.slint:882
+#: ui/voice.slint:887
 msgid "Leave the name and password out of the address."
 msgstr "Lass Name und Passwort aus der Adresse weg."
 
-#: ui/voice.slint:883
+#: ui/voice.slint:888
 msgid "Plain http goes only to this Mac or the local network: use https."
 msgstr "Reines http geht nur an diesen Mac oder ins lokale Netzwerk: Verwende https."
 
-#: ui/voice.slint:929
+#: ui/voice.slint:941
 msgid "Model"
 msgstr "Modell"
 
-#: ui/voice.slint:948
+#: ui/voice.slint:960
 msgid "Words to know"
 msgstr "Eigenes Vokabular"
 
-#: ui/voice.slint:949
+#: ui/voice.slint:961
 msgid "Names and terms you often say, separated by commas: the service listens for them, so they come out right."
 msgstr "Namen und Begriffe, die du oft sagst, durch Kommas getrennt: Der Dienst achtet gezielt auf sie, damit sie richtig erkannt werden."
 
-#: ui/voice.slint:950
+#: ui/voice.slint:962
 msgid "Names, products, terms"
 msgstr "Namen, Produkte, Begriffe"
 
-#: ui/voice.slint:886
+#: ui/voice.slint:891
 msgid "API key"
 msgstr "API-Schlüssel"
 
-#: ui/voice.slint:887
+#: ui/voice.slint:892
 msgid "Your own key: the service bills it for what it does. It is kept sealed in FinchGram's database on this Mac."
 msgstr "Dein eigener Schlüssel: Der Dienst rechnet darüber ab, was er tut. Der Schlüssel liegt versiegelt in der Datenbank von FinchGram auf diesem Mac."
 
-#: ui/voice.slint:888
+#: ui/voice.slint:893
 msgid "Paste the key"
 msgstr "Schlüssel einfügen"
 
-#: ui/voice.slint:891
+#: ui/voice.slint:896
 msgid "Get a key from {0}"
 msgstr "Schlüssel bei {0} holen"
 
-#: ui/voice.slint:894
+#: ui/voice.slint:915
 msgid "That does not look like an API key."
 msgstr "Das sieht nicht nach einem API-Schlüssel aus."
 
-#: ui/voice.slint:895
+#: ui/voice.slint:899
 msgid "Checking with {0}…"
 msgstr "Wird bei {0} geprüft…"
 
-#: ui/voice.slint:897
+#: ui/voice.slint:901
 msgid "{0} answers and takes the key."
 msgstr "{0} antwortet und nimmt den Schlüssel an."
 
-#: ui/voice.slint:897
+#: ui/voice.slint:901
 msgid "{0} answers."
 msgstr "{0} antwortet."
 
-#: ui/voice.slint:900
+#: ui/voice.slint:904
 msgid "Could not check: {0}"
 msgstr "Prüfung nicht möglich: {0}"
 
-#: ui/voice.slint:954
+#: ui/voice.slint:966
 msgid "Voice messages"
 msgstr "Sprachnachrichten"
 
-#: ui/voice.slint:828
+#: ui/voice.slint:833
 msgid "Set up"
 msgstr "Einrichten"
 
-#: ui/voice.slint:850
+#: ui/voice.slint:855
 msgid "What you call it, so that you know it when you choose."
 msgstr "Wie du sie nennst, damit du sie beim Auswählen erkennst."
 
-#: ui/voice.slint:851
+#: ui/voice.slint:856
 msgid "no key"
 msgstr "kein Schlüssel"
 
-#: ui/voice.slint:857 ui/voice.slint:874
+#: ui/voice.slint:862 ui/voice.slint:879
 msgid "Alibaba Cloud Model Studio"
 msgstr "Alibaba Cloud Model Studio"
 
-#: ui/voice.slint:858
+#: ui/voice.slint:863
 msgid "Doubao speech (Volcengine)"
 msgstr "Doubao-Sprachdienst (Volcengine)"
 
-#: ui/voice.slint:859
+#: ui/voice.slint:864
 msgid "OpenAI-compatible"
 msgstr "OpenAI-kompatibel"
 
-#: ui/voice.slint:864
+#: ui/voice.slint:869
 msgid "Tidying: Claude's Messages API, Anthropic's and the relays' and vendors' that speak it."
 msgstr "Textbereinigung: die Messages API von Claude, bei Anthropic und bei den Relays und Anbietern, die sie beherrschen."
 
-#: ui/voice.slint:865
+#: ui/voice.slint:870
 msgid "Tidying: Google's Gemini API."
 msgstr "Textbereinigung: die Gemini-API von Google."
 
-#: ui/voice.slint:866
+#: ui/voice.slint:871
 msgid "Speech recognition (Qwen-ASR, strong in Chinese and its dialects) and tidying (Qwen), one key for both."
 msgstr "Spracherkennung (Qwen-ASR, stark bei Chinesisch und seinen Dialekten) und Textbereinigung (Qwen), ein Schlüssel für beide."
 
-#: ui/voice.slint:867
+#: ui/voice.slint:872
 msgid "Speech recognition: Doubao's Seed-ASR, strong in Chinese. A key from Volcengine's speech console."
 msgstr "Spracherkennung: Seed-ASR von Doubao, stark bei Chinesisch. Ein Schlüssel aus der Sprachdienst-Konsole von Volcengine."
 
-#: ui/voice.slint:868
+#: ui/voice.slint:873
 msgid "Speech recognition and tidying: OpenAI, and nearly every other service that speaks its API: Groq, SiliconFlow, DeepSeek, Kimi, OpenRouter, Ollama, relays, a Whisper server of your own."
 msgstr "Spracherkennung und Textbereinigung: OpenAI und fast jeder andere Dienst, der dieselbe API beherrscht: Groq, SiliconFlow, DeepSeek, Kimi, OpenRouter, Ollama, Relays, ein eigener Whisper-Server."
 
-#: ui/voice.slint:875
+#: ui/voice.slint:880
 msgid "Volcengine"
 msgstr "Volcengine"
 
-#: ui/voice.slint:921
+#: ui/voice.slint:933
 msgid "How it hears"
 msgstr "Wie zugehört wird"
 
-#: ui/voice.slint:922
+#: ui/voice.slint:934
 msgid "As you speak"
 msgstr "Während du sprichst"
 
-#: ui/voice.slint:923
+#: ui/voice.slint:935
 msgid "When you are done"
 msgstr "Wenn du fertig bist"
 
-#: ui/voice.slint:925
+#: ui/voice.slint:937
 msgid "The recording goes up when you are done: what most relays and servers of your own take."
 msgstr "Die Aufnahme wird hochgeladen, wenn du fertig bist: Das nehmen die meisten Relays und eigenen Server an."
 
-#: ui/voice.slint:926
+#: ui/voice.slint:938
 msgid "Words show as you speak, through OpenAI's Realtime API."
 msgstr "Der Text erscheint, während du sprichst, über die Realtime API von OpenAI."
 
-#: ui/voice.slint:774
+#: ui/voice.slint:779
 msgid "Telegram transcribes voice messages with Premium, or a few times a week without it. Your own AI vendor can do it too: Toolbox → AI → Voice input."
 msgstr "Telegram transkribiert Sprachnachrichten mit Premium, ohne Premium ein paar Mal pro Woche. Dein eigener KI-Anbieter kann das auch: Werkzeuge → AI → Spracheingabe."
 
-#: ui/voice.slint:777
+#: ui/voice.slint:782
 msgid "Voice messages have no AI vendor or model yet: choose them in Toolbox → AI → Voice input."
 msgstr "Für Sprachnachrichten ist noch kein KI-Anbieter oder Modell gewählt: Wähle sie unter Werkzeuge → AI → Spracheingabe."
 
-#: ui/voice.slint:813
+#: ui/voice.slint:818
 msgid "Voice input has no AI vendor yet: choose one in Voice input."
 msgstr "Die Spracheingabe hat noch keinen KI-Anbieter: Wähle in der Spracheingabe einen aus."
 
-#: ui/voice.slint:814
+#: ui/voice.slint:819
 msgid "Voice input does not know yet how to hear: choose it in Voice input."
 msgstr "Die Spracheingabe weiß noch nicht, wie sie zuhören soll: Wähle es in der Spracheingabe aus."
 
-#: ui/voice.slint:815
+#: ui/voice.slint:820
 msgid "Voice input has no model yet: choose one in Voice input."
 msgstr "Die Spracheingabe hat noch kein Modell: Wähle in der Spracheingabe eines aus."
 
-#: ui/voice.slint:822
+#: ui/voice.slint:827
 msgid "The AI vendor's address in Voice input is not one FinchGram can use."
 msgstr "Die Adresse des KI-Anbieters in der Spracheingabe kann FinchGram nicht verwenden."
 
-#: ui/voice.slint:838
+#: ui/voice.slint:843
 msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the AI vendor you choose below, under your own key, and nothing else does. FinchGram keeps no recording."
 msgstr "Drück im Eingabefeld eines Chats auf ✦, oder tipp in Terminal /voice, und sprich; drück noch einmal oder ⏎, und der Text steht im Feld, und du schickst ihn ab. Deine Stimme geht mit deinem eigenen Schlüssel an den KI-Anbieter, den du unten wählst, sonst nichts. FinchGram behält keine Aufnahme."
 
-#: ui/voice.slint:841
+#: ui/voice.slint:846
 msgid "AI vendors"
 msgstr "KI-Anbieter"
 
-#: ui/voice.slint:843
+#: ui/voice.slint:848
 msgid "Your AI vendors, each a name, an API format, an address and a key. Each feature below chooses one of them, and one AI vendor can serve several."
 msgstr "Deine KI-Anbieter, jeweils mit Name, API-Format, Adresse und Schlüssel. Jede Funktion weiter unten wählt einen davon, und ein KI-Anbieter kann mehrere übernehmen."
 
-#: ui/voice.slint:845
+#: ui/voice.slint:850
 msgid "Add an AI vendor"
 msgstr "KI-Anbieter hinzufügen"
 
-#: ui/voice.slint:846
+#: ui/voice.slint:851
 msgid "New AI vendor"
 msgstr "Neuer KI-Anbieter"
 
-#: ui/voice.slint:847
+#: ui/voice.slint:852
 msgid "Remove this AI vendor and its key"
 msgstr "Diesen KI-Anbieter samt Schlüssel entfernen"
 
-#: ui/voice.slint:848
+#: ui/voice.slint:853
 msgid "No API format chosen yet"
 msgstr "Noch kein API-Format gewählt"
 
-#: ui/voice.slint:863
+#: ui/voice.slint:868
 msgid "The API your AI vendor speaks: choose one."
 msgstr "Die API, die dein KI-Anbieter beherrscht: Wähle eine aus."
 
-#: ui/voice.slint:914
+#: ui/voice.slint:926
 msgid "The language you mostly speak, which tells the AI vendor what it hears; words of other languages mixed in are kept as you say them. While you speak, a click on the language in the strip takes the next one."
 msgstr "Die Sprache, die du meistens sprichst und die dem KI-Anbieter sagt, was er hört; eingestreute Wörter anderer Sprachen bleiben so, wie du sie sagst. Während du sprichst, wechselt ein Klick auf die Sprache in der Leiste zur nächsten."
 
-#: ui/voice.slint:918
+#: ui/voice.slint:930
 msgid "AI vendor"
 msgstr "KI-Anbieter"
 
-#: ui/voice.slint:919
+#: ui/voice.slint:931
 msgid "Choose an AI vendor"
 msgstr "KI-Anbieter wählen"
 
-#: ui/voice.slint:920
+#: ui/voice.slint:932
 msgid "No AI vendor can do this yet: add one above."
 msgstr "Das kann noch kein KI-Anbieter: Füge oben einen hinzu."
 
-#: ui/voice.slint:927
+#: ui/voice.slint:939
 msgid "Words as you speak, through OpenAI's Realtime API; or the recording when you are done, which most relays and servers of your own take."
 msgstr "Der Text erscheint, während du sprichst, über die Realtime API von OpenAI; oder die Aufnahme wird hochgeladen, wenn du fertig bist, was die meisten Relays und eigenen Server annehmen."
 
-#: ui/voice.slint:930
+#: ui/voice.slint:942
 msgid "Choose a model"
 msgstr "Modell wählen"
 
-#: ui/voice.slint:932
+#: ui/voice.slint:944
 msgid "Volcengine's resources, as its documentation names them: choose the one you bought."
 msgstr "Die Ressourcen von Volcengine, wie sie in seiner Dokumentation heißen: Wähle die aus, die du gekauft hast."
 
-#: ui/voice.slint:935
+#: ui/voice.slint:947
 msgid "Nothing matches."
 msgstr "Keine Treffer."
 
-#: ui/voice.slint:938
+#: ui/voice.slint:950
 msgid "Asking {0} for its models…"
 msgstr "Modelle werden bei {0} abgefragt…"
 
-#: ui/voice.slint:939
+#: ui/voice.slint:951
 msgid "Add the key of {0} above to see its models."
 msgstr "Füge oben den Schlüssel für {0} hinzu, um die Modelle zu sehen."
 
-#: ui/voice.slint:941
+#: ui/voice.slint:953
 msgid "Could not list the models of {0}: {1}"
 msgstr "Die Modelle von {0} ließen sich nicht abrufen: {1}"
 
-#: ui/voice.slint:942
+#: ui/voice.slint:954
 msgid "{0} lists no models for this."
 msgstr "{0} listet dafür keine Modelle auf."
 
-#: ui/voice.slint:951
+#: ui/voice.slint:963
 msgid "Tidying"
 msgstr "Textbereinigung"
 
-#: ui/voice.slint:953
+#: ui/voice.slint:965
 msgid "A model of your choice takes um, uh and repeated words out of what voice input heard, and sets the punctuation; it never translates."
 msgstr "Ein Modell deiner Wahl entfernt Äh, Ähm und doppelte Wörter aus dem, was die Spracheingabe gehört hat, und setzt die Satzzeichen; es übersetzt nie."
 
-#: ui/voice.slint:955
+#: ui/voice.slint:967
 msgid "Transcribe voice messages with your AI vendor"
 msgstr "Sprachnachrichten mit deinem KI-Anbieter transkribieren"
 
-#: ui/voice.slint:957
+#: ui/voice.slint:969
 msgid "Transcribe under a voice message then sends it to the AI vendor chosen here instead of Telegram: someone else's voice, to a service of your choosing. The words are kept nowhere. Off unless you turn it on."
 msgstr "„Transkribieren“ unter einer Sprachnachricht schickt sie dann statt an Telegram an den hier gewählten KI-Anbieter: die Stimme eines anderen, an einen Dienst deiner Wahl. Der Text wird nirgends gespeichert. Aus, solange du es nicht einschaltest."
+
+#: ui/voice.slint:914
+msgid "Its name, the API it speaks, its address and your key. Nothing is kept until you save."
+msgstr "Sein Name, die API, die er spricht, seine Adresse und dein Schlüssel. Nichts wird übernommen, bevor du auf Sichern klickst."
+
+#: ui/voice.slint:916
+msgid "Leave it empty to keep this key."
+msgstr "Leer lassen, um diesen Schlüssel zu behalten."
+
+#: ui/voice.slint:917
+msgid "Remove the key"
+msgstr "Schlüssel entfernen"
+
+#: ui/voice.slint:918
+msgid "The key goes when you save."
+msgstr "Der Schlüssel wird beim Sichern entfernt."
+
+#: ui/voice.slint:919
+msgid "Keep the key"
+msgstr "Schlüssel behalten"

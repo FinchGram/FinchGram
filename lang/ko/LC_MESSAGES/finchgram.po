@@ -14,64 +14,64 @@ msgstr ""
 msgid "View"
 msgstr "보기"
 
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:934
-#: ui/app.slint:60 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:934
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:946
+#: ui/app.slint:61 ui/broadsheet/actions.slint:171 ui/chat-info.slint:69 ui/terminal/actions.slint:166 ui/voice.slint:946
 msgid "Search"
 msgstr "검색"
 
-#: ui/app.slint:70
+#: ui/app.slint:71
 msgid "Search in Chat"
 msgstr "채팅에서 검색"
 
-#: ui/app.slint:81 ui/chat-info.slint:67
+#: ui/app.slint:82 ui/chat-info.slint:67
 msgid "Chat Info"
 msgstr "채팅 정보"
 
-#: ui/app.slint:91 ui/toolbox.slint:106
+#: ui/app.slint:92 ui/toolbox.slint:106
 msgid "Toolbox"
 msgstr "도구 상자"
 
-#: ui/app.slint:102 ui/pages/settings.slint:397
+#: ui/app.slint:103 ui/pages/settings.slint:397
 msgid "Workbench"
 msgstr "워크벤치"
 
-#: ui/app.slint:110 ui/pages/settings.slint:405
+#: ui/app.slint:111 ui/pages/settings.slint:405
 msgid "Terminal"
 msgstr "터미널"
 
-#: ui/app.slint:118 ui/pages/settings.slint:413
+#: ui/app.slint:119 ui/pages/settings.slint:413
 msgid "Broadsheet"
 msgstr "브로드시트"
 
 #. The tools.
-#: ui/app.slint:127 ui/pages/downloads.slint:1981 ui/toolbox.slint:119
+#: ui/app.slint:128 ui/pages/downloads.slint:1982 ui/toolbox.slint:119
 msgid "Downloads"
 msgstr "다운로드"
 
-#: ui/app.slint:135
+#: ui/app.slint:136
 msgid "Settings…"
 msgstr "설정…"
 
-#: ui/app.slint:145
+#: ui/app.slint:146
 msgctxt "menu"
 msgid "Account"
 msgstr "계정"
 
-#: ui/app.slint:158
+#: ui/app.slint:159
 msgid "Add Account…"
 msgstr "계정 추가…"
 
-#: ui/app.slint:168
+#: ui/app.slint:169
 msgid "Help"
 msgstr "도움말"
 
-#: ui/app.slint:171
+#: ui/app.slint:172
 msgid "Update to {}…"
 msgstr "{} 버전으로 업데이트…"
 
-#: ui/app.slint:172
+#: ui/app.slint:173
 msgid "Check for Updates…"
 msgstr "업데이트 확인…"
 
@@ -108,15 +108,15 @@ msgstr "설명 추가 (선택 사항)"
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839
 #: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
-#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1361 ui/pages/downloads.slint:1871 ui/pages/downloads.slint:3338 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
+#: ui/broadsheet/actions.slint:449 ui/broadsheet/actions.slint:539 ui/broadsheet/broadsheet.slint:2839 ui/chat.slint:386 ui/compose.slint:244 ui/pages/downloads.slint:1362 ui/pages/downloads.slint:1872 ui/pages/downloads.slint:3339 ui/pages/settings.slint:1209 ui/terminal/actions.slint:464 ui/terminal/terminal.slint:1854 ui/workbench/actions.slint:458 ui/workbench/actions.slint:728
 msgid "Cancel"
 msgstr "취소"
 
@@ -129,10 +129,10 @@ msgstr "신고"
 
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821
 #: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
-#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2343 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344 ui/terminal/terminal.slint:1839
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
+#: ui/broadsheet/actions.slint:545 ui/broadsheet/broadsheet.slint:2821 ui/chat.slint:413 ui/chat.slint:847 ui/pages/downloads.slint:2344 ui/terminal/terminal.slint:1839 ui/workbench/actions.slint:554
 msgid "Delete"
 msgstr "삭제"
 
@@ -151,8 +151,8 @@ msgstr "다크"
 msgid "Accounts"
 msgstr "계정"
 
-#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2008
-#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2008 ui/workbench/sidebar.slint:555
+#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2009
+#: ui/broadsheet/broadsheet.slint:328 ui/pages/downloads.slint:2009 ui/workbench/sidebar.slint:555
 msgid "Chats"
 msgstr "채팅"
 
@@ -197,9 +197,9 @@ msgid "Latest message"
 msgstr "최신 메시지"
 
 #: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:849
-#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2598 ui/voice.slint:849
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2599
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2599 ui/voice.slint:854
+#: ui/broadsheet/broadsheet.slint:668 ui/chat-manage.slint:233 ui/pages/downloads.slint:2599 ui/voice.slint:854
 msgid "Name"
 msgstr "이름"
 
@@ -569,9 +569,9 @@ msgstr "관리자 권한"
 msgid "Change photo"
 msgstr "사진 변경"
 
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269
-#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2921 ui/pages/settings.slint:1269 ui/voice.slint:889
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922 ui/pages/settings.slint:1269
+#: ui/chat-manage.slint:229 ui/pages/downloads.slint:2922 ui/pages/settings.slint:1269 ui/voice.slint:894
 msgid "Save"
 msgstr "저장"
 
@@ -579,7 +579,7 @@ msgstr "저장"
 msgid "Got it"
 msgstr "확인"
 
-#: ui/pages/downloads.slint:3116
+#: ui/pages/downloads.slint:3117
 msgctxt "on the photo"
 msgid "Change"
 msgstr "변경"
@@ -676,8 +676,8 @@ msgid "Primary invite link"
 msgstr "기본 초대 링크"
 
 #: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562
-#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
-#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
+#: ui/chat-manage.slint:260 ui/compose.slint:287 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
 msgid "Copy"
 msgstr "복사"
 
@@ -807,8 +807,8 @@ msgstr "연락처 검색"
 msgid "No contacts to add"
 msgstr "추가할 연락처가 없습니다"
 
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2921
-#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2921
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2922
+#: ui/chat-manage.slint:293 ui/compose.slint:231 ui/pages/downloads.slint:2922
 msgid "Add"
 msgstr "추가"
 
@@ -837,8 +837,8 @@ msgid "Remove {0} from the channel?"
 msgstr "{0}님을 채널에서 제거하시겠습니까?"
 
 #: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461
-#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952
-#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2952 ui/voice.slint:890
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2953
+#: ui/chat-manage.slint:300 ui/chat.slint:372 ui/pages/ai-access.slint:461 ui/pages/downloads.slint:2953 ui/voice.slint:895
 msgid "Remove"
 msgstr "제거"
 
@@ -1212,8 +1212,8 @@ msgstr "채팅과 메시지가 목록에서 사라집니다."
 msgid "Also delete for {0}"
 msgstr "{0}님에게서도 삭제"
 
-#: ui/chat.slint:329 ui/pages/downloads.slint:2357
-#: ui/chat.slint:329 ui/pages/downloads.slint:2357 ui/pages/downloads.slint:3262
+#: ui/chat.slint:329 ui/pages/downloads.slint:2358
+#: ui/chat.slint:329 ui/pages/downloads.slint:2358 ui/pages/downloads.slint:3263
 msgid "Open"
 msgstr "열기"
 
@@ -1249,11 +1249,11 @@ msgstr "파일"
 msgid "Poll"
 msgstr "투표"
 
-#: ui/chat.slint:343 ui/voice.slint:784
+#: ui/chat.slint:343 ui/voice.slint:789
 msgid "Not available yet"
 msgstr "아직 사용할 수 없음"
 
-#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:790
+#: ui/chat.slint:344 ui/chat.slint:347 ui/voice.slint:795
 msgid "Not allowed in this group"
 msgstr "이 그룹에서는 허용되지 않음"
 
@@ -1278,7 +1278,7 @@ msgstr ""
 "스크린샷을 찍으려면 시스템 설정 → 개인정보 보호 및 보안에서 화면 기록을 허용"
 "해야 합니다. FinchGram이 이미 목록에 있다면 껐다가 다시 켜세요."
 
-#: ui/chat.slint:351 ui/voice.slint:789 ui/voice.slint:832
+#: ui/chat.slint:351 ui/voice.slint:794 ui/voice.slint:837
 msgid "Open System Settings"
 msgstr "시스템 설정 열기"
 
@@ -1370,7 +1370,7 @@ msgstr "한 번 보기"
 msgid "Hide with spoiler"
 msgstr "스포일러로 가리기"
 
-#: ui/chat.slint:387 ui/voice.slint:766
+#: ui/chat.slint:387 ui/voice.slint:771
 msgid "Send"
 msgstr "보내기"
 
@@ -1435,13 +1435,13 @@ msgid "Not sent"
 msgstr "전송되지 않음"
 
 #: ui/chat.slint:412 ui/pages/downloads.slint:1019
-#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3347
-#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3347
+#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3348
+#: ui/chat.slint:412 ui/pages/downloads.slint:1019 ui/pages/downloads.slint:3348
 msgid "Retry"
 msgstr "다시 시도"
 
-#: ui/chat.slint:414 ui/pages/downloads.slint:2363
-#: ui/chat.slint:414 ui/pages/downloads.slint:2363
+#: ui/chat.slint:414 ui/pages/downloads.slint:2364
+#: ui/chat.slint:414 ui/pages/downloads.slint:2364
 msgid "Download"
 msgstr "다운로드"
 
@@ -1467,7 +1467,7 @@ msgstr "클릭하여 보기"
 msgid "Reply"
 msgstr "답장"
 
-#: ui/chat.slint:838 ui/pages/downloads.slint:3204
+#: ui/chat.slint:838 ui/pages/downloads.slint:3205
 msgid "Edit"
 msgstr "편집"
 
@@ -1820,7 +1820,7 @@ msgstr "상대방이 Telegram에 가입되어 있어야 합니다"
 msgid "Next"
 msgstr "다음"
 
-#: ui/compose.slint:225 ui/pages/downloads.slint:1930
+#: ui/compose.slint:225 ui/pages/downloads.slint:1931
 msgid "Skip"
 msgstr "건너뛰기"
 
@@ -1829,7 +1829,7 @@ msgid "Invite {n} person"
 msgid_plural "Invite {n} people"
 msgstr[0] "{n}명 초대"
 
-#: ui/compose.slint:229 ui/voice.slint:809
+#: ui/compose.slint:229 ui/voice.slint:814
 msgid "Done"
 msgstr "완료"
 
@@ -1960,8 +1960,8 @@ msgid "It can be revoked and made anew in the channel's settings."
 msgstr "채널 설정에서 취소하고 새로 만들 수 있습니다."
 
 #: ui/compose.slint:288 ui/pages/ai-access.slint:562
-#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
-#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1165
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
+#: ui/compose.slint:288 ui/pages/ai-access.slint:562 ui/pages/downloads.slint:1166
 msgid "Copied"
 msgstr "복사됨"
 
@@ -2962,7 +2962,7 @@ msgid ""
 "Not connected: you didn’t trust the server’s key. Your password wasn’t sent."
 msgstr "연결 안 됨: 서버 키를 신뢰하지 않아 비밀번호를 보내지 않았습니다."
 
-#: ui/pages/downloads.slint:37 ui/pages/downloads.slint:2457
+#: ui/pages/downloads.slint:37 ui/pages/downloads.slint:2458
 msgid "Not connected. This server’s key has changed."
 msgstr "연결 안 됨. 이 서버의 키가 바뀌었습니다."
 
@@ -3202,8 +3202,8 @@ msgstr "http:// 또는 https://. 주소에 폴더 경로를 포함할 수 있습
 msgid "Default port {}."
 msgstr "기본 포트는 {}입니다."
 
-#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2501
-#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2501
+#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2502
+#: ui/pages/downloads.slint:440 ui/pages/downloads.slint:2502
 msgid "Add server"
 msgstr "서버 추가"
 
@@ -3211,8 +3211,8 @@ msgstr "서버 추가"
 msgid "Filter this folder"
 msgstr "이 폴더 필터링"
 
-#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2998
-#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2998
+#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2999
+#: ui/pages/downloads.slint:542 ui/pages/downloads.slint:2999
 msgid "Transfers"
 msgstr "전송"
 
@@ -3237,25 +3237,25 @@ msgstr "{0}은(는) 읽기만 허용합니다."
 msgid "Show"
 msgstr "표시"
 
-#: ui/pages/downloads.slint:1028 ui/pages/downloads.slint:2467
+#: ui/pages/downloads.slint:1028 ui/pages/downloads.slint:2468
 msgid "Check key"
 msgstr "키 확인"
 
-#: ui/pages/downloads.slint:1272
+#: ui/pages/downloads.slint:1273
 msgid "This server’s key has changed"
 msgstr "이 서버의 키가 바뀌었습니다"
 
-#: ui/pages/downloads.slint:1272
+#: ui/pages/downloads.slint:1273
 msgid "Trust this server’s key?"
 msgstr "이 서버의 키를 신뢰할까요?"
 
-#: ui/pages/downloads.slint:1280
+#: ui/pages/downloads.slint:1281
 msgid ""
 "It isn’t the server you connected to before, or someone is between you and "
 "it."
 msgstr "이전에 연결했던 서버가 아니거나, 중간에 누군가 있습니다."
 
-#: ui/pages/downloads.slint:1281
+#: ui/pages/downloads.slint:1282
 msgid ""
 "This is the first time you connect to this server. Compare the fingerprint "
 "with the one its owner gave you. If you can’t, don’t continue."
@@ -3263,27 +3263,27 @@ msgstr ""
 "이 서버에 처음 연결합니다. 서버 관리자가 알려 준 지문과 비교하세요. 비교할 "
 "수 없다면 계속하지 마세요."
 
-#: ui/pages/downloads.slint:1291
+#: ui/pages/downloads.slint:1292
 msgid "Server"
 msgstr "서버"
 
-#: ui/pages/downloads.slint:1316
+#: ui/pages/downloads.slint:1317
 msgid "Trusted earlier · {0}"
 msgstr "이전부터 신뢰 · {0}"
 
-#: ui/pages/downloads.slint:1317
+#: ui/pages/downloads.slint:1318
 msgid "Trusted since {0} · {1}"
 msgstr "{0}부터 신뢰 · {1}"
 
-#: ui/pages/downloads.slint:1322
+#: ui/pages/downloads.slint:1323
 msgid "Shown now · {0}"
 msgstr "지금 제시됨 · {0}"
 
-#: ui/pages/downloads.slint:1322
+#: ui/pages/downloads.slint:1323
 msgid "{0} key · SHA256 fingerprint"
 msgstr "{0} 키 · SHA256 지문"
 
-#: ui/pages/downloads.slint:1340
+#: ui/pages/downloads.slint:1341
 msgid ""
 "Nothing has been sent. If the owner says the key changed, check the new "
 "fingerprint with them first."
@@ -3291,194 +3291,195 @@ msgstr ""
 "아무것도 보내지 않았습니다. 관리자가 키를 바꿨다고 하면 먼저 새 지문을 확인하"
 "세요."
 
-#: ui/pages/downloads.slint:1341
+#: ui/pages/downloads.slint:1342
 msgid "Your password isn’t sent until you trust the key."
 msgstr "키를 신뢰하기 전에는 비밀번호를 보내지 않습니다."
 
-#: ui/pages/downloads.slint:1352
+#: ui/pages/downloads.slint:1353
 msgid "esc  don’t connect"
 msgstr "esc  연결 안 함"
 
-#: ui/pages/downloads.slint:1352 ui/pages/downloads.slint:1561
+#: ui/pages/downloads.slint:1353 ui/pages/downloads.slint:1562
+#: ui/pages/downloads.slint:1353 ui/pages/downloads.slint:1562
 msgid "esc  cancel"
 msgstr "esc  취소"
 
-#: ui/pages/downloads.slint:1367
+#: ui/pages/downloads.slint:1368
 msgid "Trust new key"
 msgstr "새 키 신뢰"
 
-#: ui/pages/downloads.slint:1374
+#: ui/pages/downloads.slint:1375
 msgid "Don’t connect"
 msgstr "연결 안 함"
 
-#: ui/pages/downloads.slint:1374
+#: ui/pages/downloads.slint:1375
 msgid "Trust and continue"
 msgstr "신뢰하고 계속"
 
-#: ui/pages/downloads.slint:1517
+#: ui/pages/downloads.slint:1518
 msgid "Already there"
 msgstr "이미 있음"
 
-#: ui/pages/downloads.slint:1529
+#: ui/pages/downloads.slint:1530
 msgid "and {0} more"
 msgstr "외 {0}개"
 
-#: ui/pages/downloads.slint:1598
+#: ui/pages/downloads.slint:1599
 msgid "Can’t move a folder into itself"
 msgstr "폴더를 자기 자신 안으로 옮길 수 없습니다"
 
-#: ui/pages/downloads.slint:1598
+#: ui/pages/downloads.slint:1599
 msgid "Current folder"
 msgstr "현재 폴더"
 
-#: ui/pages/downloads.slint:1628
+#: ui/pages/downloads.slint:1629
 msgid "Delete “{0}”?"
 msgstr "“{0}”을(를) 삭제할까요?"
 
-#: ui/pages/downloads.slint:1628
+#: ui/pages/downloads.slint:1629
 msgid "Delete {0} items?"
 msgstr "{0}개 항목을 삭제할까요?"
 
-#: ui/pages/downloads.slint:1629
+#: ui/pages/downloads.slint:1630
 msgid "Deleted on {0} itself. There’s no trash, and it can’t be undone."
 msgstr "{0}에서 바로 삭제됩니다. 휴지통은 없으며 되돌릴 수 없습니다."
 
-#: ui/pages/downloads.slint:1639
+#: ui/pages/downloads.slint:1640
 msgid "Folders are deleted with everything in them."
 msgstr "폴더는 안의 모든 것과 함께 삭제됩니다."
 
-#: ui/pages/downloads.slint:1655
+#: ui/pages/downloads.slint:1656
 msgid "Delete {0} items"
 msgstr "{0}개 항목 삭제"
 
-#: ui/pages/downloads.slint:1670
+#: ui/pages/downloads.slint:1671
 msgid "Move “{0}” to…"
 msgstr "“{0}”을(를) 다음으로 이동…"
 
-#: ui/pages/downloads.slint:1670 ui/pages/downloads.slint:3299
+#: ui/pages/downloads.slint:1671 ui/pages/downloads.slint:3300
 msgid "Move {0} items to…"
 msgstr "{0}개 항목을 다음으로 이동…"
 
-#: ui/pages/downloads.slint:1671
+#: ui/pages/downloads.slint:1672
 msgid "Within {0} only."
 msgstr "{0} 안에서만 이동할 수 있습니다."
 
-#: ui/pages/downloads.slint:1761
+#: ui/pages/downloads.slint:1762
 msgid "Folder name"
 msgstr "폴더 이름"
 
-#: ui/pages/downloads.slint:1815
+#: ui/pages/downloads.slint:1816
 msgid "No folders here"
 msgstr "여기에 폴더가 없습니다"
 
-#: ui/pages/downloads.slint:1824
+#: ui/pages/downloads.slint:1825
 msgid "Move to: {0}"
 msgstr "이동 위치: {0}"
 
-#: ui/pages/downloads.slint:1824
+#: ui/pages/downloads.slint:1825
 msgid "Already in this folder."
 msgstr "이미 이 폴더에 있습니다."
 
-#: ui/pages/downloads.slint:1855
+#: ui/pages/downloads.slint:1856
 msgid "New folder"
 msgstr "새 폴더"
 
-#: ui/pages/downloads.slint:1877
+#: ui/pages/downloads.slint:1878
 msgid "Move here"
 msgstr "여기로 이동"
 
-#: ui/pages/downloads.slint:1896
+#: ui/pages/downloads.slint:1897
 msgid "“{0}” is already in {1}"
 msgstr "“{0}”이(가) 이미 {1}에 있습니다"
 
-#: ui/pages/downloads.slint:1896
+#: ui/pages/downloads.slint:1897
 msgid "{0} items are already in {1}"
 msgstr "{0}개 항목이 이미 {1}에 있습니다"
 
-#: ui/pages/downloads.slint:1897
+#: ui/pages/downloads.slint:1898
 msgid "Choose before uploading."
 msgstr "업로드하기 전에 선택하세요."
 
-#: ui/pages/downloads.slint:1897
+#: ui/pages/downloads.slint:1898
 msgid "Choose before moving."
 msgstr "이동하기 전에 선택하세요."
 
-#: ui/pages/downloads.slint:1898
+#: ui/pages/downloads.slint:1899
 msgid "The other one uploads as usual."
 msgstr "다른 하나는 그대로 업로드됩니다."
 
-#: ui/pages/downloads.slint:1898
+#: ui/pages/downloads.slint:1899
 msgid "The other one moves as usual."
 msgstr "다른 하나는 그대로 이동됩니다."
 
-#: ui/pages/downloads.slint:1899
+#: ui/pages/downloads.slint:1900
 msgid "The other {0} upload as usual."
 msgstr "나머지 {0}개는 그대로 업로드됩니다."
 
-#: ui/pages/downloads.slint:1899
+#: ui/pages/downloads.slint:1900
 msgid "The other {0} move as usual."
 msgstr "나머지 {0}개는 그대로 이동됩니다."
 
-#: ui/pages/downloads.slint:1913
+#: ui/pages/downloads.slint:1914
 msgid ""
 "Keep both adds “(2)” to the name. Replace deletes the one that’s there; it "
 "can’t be undone."
 msgstr "“둘 다 유지”는 이름에 “(2)”를 붙입니다. “바꾸기”는 기존 항목을 삭제하며 되돌릴 수 없습니다."
 
-#: ui/pages/downloads.slint:1913
+#: ui/pages/downloads.slint:1914
 msgid "Folders aren’t merged."
 msgstr "폴더는 병합되지 않습니다."
 
-#: ui/pages/downloads.slint:1923
+#: ui/pages/downloads.slint:1924
 msgid "Replace"
 msgstr "바꾸기"
 
-#: ui/pages/downloads.slint:1936
+#: ui/pages/downloads.slint:1937
 msgid "Keep both"
 msgstr "둘 다 유지"
 
-#: ui/pages/downloads.slint:2020
+#: ui/pages/downloads.slint:2021
 msgid "Servers"
 msgstr "서버"
 
-#: ui/pages/downloads.slint:2275
+#: ui/pages/downloads.slint:2276
 msgid "Modified"
 msgstr "수정일"
 
-#: ui/pages/downloads.slint:2280
+#: ui/pages/downloads.slint:2281
 msgid "Size"
 msgstr "크기"
 
-#: ui/pages/downloads.slint:2305
+#: ui/pages/downloads.slint:2306
 msgid "Nothing in this folder matches “{0}”"
 msgstr "이 폴더에는 “{0}”에 해당하는 항목이 없습니다"
 
-#: ui/pages/downloads.slint:2327
+#: ui/pages/downloads.slint:2328
 msgid "{0} selected · {1}"
 msgstr "{0}개 선택됨 · {1}"
 
-#: ui/pages/downloads.slint:2336
+#: ui/pages/downloads.slint:2337
 msgid "Move…"
 msgstr "이동…"
 
-#: ui/pages/downloads.slint:2350
+#: ui/pages/downloads.slint:2351
 msgid "Clear"
 msgstr "선택 해제"
 
-#: ui/pages/downloads.slint:2399
+#: ui/pages/downloads.slint:2400
 msgid "This folder is empty"
 msgstr "이 폴더는 비어 있습니다"
 
-#: ui/pages/downloads.slint:2457
+#: ui/pages/downloads.slint:2458
 msgid "Not connected yet. Check this server’s key first."
 msgstr "아직 연결되지 않았습니다. 먼저 이 서버의 키를 확인하세요."
 
 #
-#: ui/pages/downloads.slint:2484
+#: ui/pages/downloads.slint:2485
 msgid "No servers yet"
 msgstr "아직 서버가 없습니다"
 
-#: ui/pages/downloads.slint:2487
+#: ui/pages/downloads.slint:2488
 msgid ""
 "Add the WebDAV address of a NAS, a seedbox, PikPak, Alist / OpenList, or a "
 "folder you share with vget serve. Then browse it here and pick the files you "
@@ -3487,19 +3488,19 @@ msgstr ""
 "NAS, 시드박스, PikPak, Alist / OpenList의 WebDAV 주소나 vget serve로 공유하"
 "는 폴더를 추가하세요. 그런 다음 여기에서 둘러보고 원하는 파일을 고르세요."
 
-#: ui/pages/downloads.slint:2493
+#: ui/pages/downloads.slint:2494
 msgid ""
 "Cloud drives without WebDAV can be reached through OpenList. FinchGram "
 "changes nothing on a server unless you allow it for that server."
 msgstr "WebDAV가 없는 클라우드는 OpenList를 통해 쓸 수 있습니다. FinchGram은 해당 서버에 대해 허용하지 않는 한 서버의 어떤 것도 바꾸지 않습니다."
 
-#: ui/pages/downloads.slint:2566
+#: ui/pages/downloads.slint:2567
 msgid "Edit server"
 msgstr "서버 편집"
 
 #
 #
-#: ui/pages/downloads.slint:2569
+#: ui/pages/downloads.slint:2570
 msgid ""
 "The address of the server, and the account it gave you. The password is kept "
 "sealed in FinchGram's database on this Mac."
@@ -3507,73 +3508,73 @@ msgstr ""
 "서버 주소와 서버가 준 계정. 비밀번호는 봉인된 채 이 Mac의 FinchGram 데이터베"
 "이스에 보관됩니다."
 
-#: ui/pages/downloads.slint:2579
+#: ui/pages/downloads.slint:2580
 msgid "Protocol"
 msgstr "프로토콜"
 
-#: ui/pages/downloads.slint:2613 ui/voice.slint:878
+#: ui/pages/downloads.slint:2614 ui/voice.slint:883
 msgid "Address"
 msgstr "주소"
 
-#: ui/pages/downloads.slint:2622
+#: ui/pages/downloads.slint:2623
 msgid "Port"
 msgstr "포트"
 
-#: ui/pages/downloads.slint:2642
+#: ui/pages/downloads.slint:2643
 msgid "Server key"
 msgstr "서버 키"
 
-#: ui/pages/downloads.slint:2678
+#: ui/pages/downloads.slint:2679
 msgid "First seen {0}"
 msgstr "처음 본 날 {0}"
 
-#: ui/pages/downloads.slint:2686
+#: ui/pages/downloads.slint:2687
 msgid "Forget this key"
 msgstr "이 키 잊기"
 
-#: ui/pages/downloads.slint:2718
+#: ui/pages/downloads.slint:2719
 msgid "Forgotten. You’ll check it again on the next connection."
 msgstr "잊었습니다. 다음 연결 때 다시 확인합니다."
 
-#: ui/pages/downloads.slint:2718
+#: ui/pages/downloads.slint:2719
 msgid "Not seen yet. You’ll check it the first time you connect."
 msgstr "아직 본 적 없습니다. 처음 연결할 때 확인합니다."
 
 #
-#: ui/pages/downloads.slint:2737
+#: ui/pages/downloads.slint:2738
 msgid "Sign in with"
 msgstr "로그인 방식"
 
-#: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760
-#: ui/pages/downloads.slint:2745 ui/pages/downloads.slint:2760 ui/pages/settings.slint:1227
+#: ui/pages/downloads.slint:2746 ui/pages/downloads.slint:2761
+#: ui/pages/downloads.slint:2746 ui/pages/downloads.slint:2761 ui/pages/settings.slint:1227
 msgid "Password"
 msgstr "암호"
 
-#: ui/pages/downloads.slint:2749
+#: ui/pages/downloads.slint:2750
 msgid "Key"
 msgstr "키"
 
 #
-#: ui/pages/downloads.slint:2754
+#: ui/pages/downloads.slint:2755
 msgid "Key sign-in isn’t in this version."
 msgstr "키 로그인은 이 버전에서 지원하지 않습니다."
 
-#: ui/pages/downloads.slint:2793
+#: ui/pages/downloads.slint:2794
 msgid "Allow changes to files on this server"
 msgstr "이 서버의 파일 변경 허용"
 
-#: ui/pages/downloads.slint:2799
+#: ui/pages/downloads.slint:2800
 msgid ""
 "Delete, move, rename and upload on the server. Deleted files can’t be "
 "recovered."
 msgstr "서버에서 삭제, 이동, 이름 바꾸기, 업로드를 합니다. 삭제한 파일은 복구할 수 없습니다."
 
-#: ui/pages/downloads.slint:2805
+#: ui/pages/downloads.slint:2806
 msgid "This server said it only allows reading."
 msgstr "이 서버는 읽기만 허용한다고 밝혔습니다."
 
 #
-#: ui/pages/downloads.slint:2842
+#: ui/pages/downloads.slint:2843
 msgid ""
 "Over FTP the password and the files travel in the clear: use this server "
 "only on a network you trust, or FTPS."
@@ -3581,7 +3582,7 @@ msgstr ""
 "FTP에서는 비밀번호와 파일이 평문으로 오갑니다: 이 서버는 믿을 수 있는 네트워"
 "크에서만 쓰거나 FTPS를 쓰세요."
 
-#: ui/pages/downloads.slint:2843
+#: ui/pages/downloads.slint:2844
 msgid ""
 "Over http the password and the files travel in the clear: use this server "
 "only on a network you trust."
@@ -3589,75 +3590,75 @@ msgstr ""
 "http로는 비밀번호와 파일이 평문으로 전송됩니다. 이 서버는 신뢰할 수 있는 네트"
 "워크에서만 사용하세요."
 
-#: ui/pages/downloads.slint:2879
+#: ui/pages/downloads.slint:2880
 msgid "Testing…"
 msgstr "테스트 중…"
 
-#: ui/pages/downloads.slint:2931
+#: ui/pages/downloads.slint:2932
 msgid "Test connection"
 msgstr "연결 테스트"
 
-#: ui/pages/downloads.slint:3005
+#: ui/pages/downloads.slint:3006
 msgid "{0} down · {1} up"
 msgstr "내려받기 {0} · 올리기 {1}"
 
-#: ui/pages/downloads.slint:3006
+#: ui/pages/downloads.slint:3007
 msgid "{0} active"
 msgstr "{0}개 진행 중"
 
-#: ui/pages/downloads.slint:3019
+#: ui/pages/downloads.slint:3020
 msgid "Clear finished"
 msgstr "완료 항목 지우기"
 
-#: ui/pages/downloads.slint:3042
+#: ui/pages/downloads.slint:3043
 msgid "Hide"
 msgstr "가리기"
 
-#: ui/pages/downloads.slint:3110
+#: ui/pages/downloads.slint:3111
 msgid "{0} connections per file · Downloads go to {1}"
 msgstr "파일당 연결 {0}개 · 다운로드 위치: {1}"
 
-#: ui/pages/downloads.slint:3116
+#: ui/pages/downloads.slint:3117
 msgid "Change"
 msgstr "변경"
 
-#: ui/pages/downloads.slint:3221
+#: ui/pages/downloads.slint:3222
 msgid "Copy address"
 msgstr "주소 복사"
 
-#: ui/pages/downloads.slint:3230
+#: ui/pages/downloads.slint:3231
 msgid "Download {0} items"
 msgstr "{0}개 항목 다운로드"
 
-#: ui/pages/downloads.slint:3246
+#: ui/pages/downloads.slint:3247
 msgid "Download folder"
 msgstr "폴더 다운로드"
 
-#: ui/pages/downloads.slint:3270
+#: ui/pages/downloads.slint:3271
 msgid "Copy link"
 msgstr "링크 복사"
 
-#: ui/pages/downloads.slint:3290
+#: ui/pages/downloads.slint:3291
 msgid "Rename"
 msgstr "이름 바꾸기"
 
-#: ui/pages/downloads.slint:3299
+#: ui/pages/downloads.slint:3300
 msgid "Move to…"
 msgstr "다음으로 이동…"
 
-#: ui/pages/downloads.slint:3312
+#: ui/pages/downloads.slint:3313
 msgid "Delete {0} items…"
 msgstr "{0}개 항목 삭제…"
 
-#: ui/pages/downloads.slint:3312
+#: ui/pages/downloads.slint:3313
 msgid "Delete…"
 msgstr "삭제…"
 
-#: ui/pages/downloads.slint:111 ui/pages/downloads.slint:3330
+#: ui/pages/downloads.slint:111 ui/pages/downloads.slint:3331
 msgid "The server doesn’t allow changes."
 msgstr "서버가 변경을 허용하지 않습니다."
 
-#: ui/pages/downloads.slint:3365
+#: ui/pages/downloads.slint:3366
 msgid "Remove from list"
 msgstr "목록에서 제거"
 
@@ -4776,7 +4777,7 @@ msgctxt "terminal"
 msgid "←/→ switch · ↑/↓ volume · space play · esc close"
 msgstr "←/→ 전환 · ↑/↓ 음량 · space 재생 · esc 닫기"
 
-#: ui/toolbox.slint:133 ui/voice.slint:757
+#: ui/toolbox.slint:133 ui/voice.slint:762
 msgid "Voice input"
 msgstr "음성 입력"
 
@@ -4785,103 +4786,103 @@ msgid "Speak, and the words go into the composer, through the AI vendor you choo
 msgstr "말하면 입력창에 글자가 들어갑니다. 직접 고른 AI 제공업체로 동작합니다"
 
 #. The sparkle's tip.
-#: ui/voice.slint:759
+#: ui/voice.slint:764
 msgid "Finish voice input"
 msgstr "음성 입력 끝내기"
 
 #. The sparkle's tip.
-#: ui/voice.slint:759
+#: ui/voice.slint:764
 msgid "Voice input: click, or hold while you speak"
 msgstr "음성 입력: 클릭하거나, 누른 채로 말하세요"
 
 #. Voice messages (the design's fifth round, its words).
-#: ui/voice.slint:762
+#: ui/voice.slint:767
 msgid "Record voice message"
 msgstr "음성 메시지 녹음"
 
-#: ui/voice.slint:763
+#: ui/voice.slint:768
 msgid "Release to send · Drag left to cancel"
 msgstr "놓으면 전송 · 왼쪽으로 끌면 취소"
 
-#: ui/voice.slint:764
+#: ui/voice.slint:769
 msgid "Release to cancel"
 msgstr "놓으면 취소"
 
-#: ui/voice.slint:765
+#: ui/voice.slint:770
 msgid "Hold to record. Release to send."
 msgstr "누른 채 녹음하고, 놓으면 전송합니다."
 
-#: ui/voice.slint:767
+#: ui/voice.slint:772
 msgid "Stop"
 msgstr "정지"
 
-#: ui/voice.slint:769
+#: ui/voice.slint:774
 msgid "Transcribe"
 msgstr "받아쓰기"
 
-#: ui/voice.slint:785
+#: ui/voice.slint:790
 msgid "Couldn't download"
 msgstr "다운로드하지 못했습니다"
 
-#: ui/voice.slint:787
+#: ui/voice.slint:792
 msgid "Loading…"
 msgstr "불러오는 중…"
 
-#: ui/voice.slint:788
+#: ui/voice.slint:793
 msgid "Microphone access is off."
 msgstr "마이크 접근이 꺼져 있습니다."
 
-#: ui/voice.slint:798
+#: ui/voice.slint:803
 msgid "Listening · {0}"
 msgstr "듣는 중 · {0}"
 
-#: ui/voice.slint:800
+#: ui/voice.slint:805
 msgid "Finishing…"
 msgstr "마무리하는 중…"
 
-#: ui/voice.slint:801
+#: ui/voice.slint:806
 msgid "Tidying the words…"
 msgstr "문장을 다듬는 중…"
 
-#: ui/voice.slint:802
+#: ui/voice.slint:807
 msgid "Voice input stopped"
 msgstr "음성 입력이 멈췄습니다"
 
 #. In the words' place before any came.
-#: ui/voice.slint:805
+#: ui/voice.slint:810
 msgid "Speak now"
 msgstr "말씀하세요"
 
-#: ui/voice.slint:808
+#: ui/voice.slint:813
 msgid "⏎ done · Esc cancel"
 msgstr "⏎ 완료 · Esc 취소"
 
-#: ui/voice.slint:817
+#: ui/voice.slint:822
 msgid "FinchGram may not use the microphone. Allow it in System Settings → Privacy & Security → Microphone."
 msgstr "FinchGram이 마이크를 사용할 수 없습니다. 시스템 설정 → 개인정보 보호 및 보안 → 마이크에서 허용하세요."
 
-#: ui/voice.slint:818
+#: ui/voice.slint:823
 msgid "No microphone could be opened: {0}"
 msgstr "마이크를 열 수 없습니다: {0}"
 
-#: ui/voice.slint:823
+#: ui/voice.slint:828
 msgid "Nothing was heard. Is the right microphone chosen in System Settings → Sound?"
 msgstr "아무것도 들리지 않았습니다. 시스템 설정 → 사운드에서 올바른 마이크가 선택되어 있나요?"
 
-#: ui/voice.slint:829
+#: ui/voice.slint:834
 msgid "Add key"
 msgstr "키 추가"
 
-#: ui/voice.slint:830
+#: ui/voice.slint:835
 msgid "Change key"
 msgstr "키 변경"
 
 #. The toolbox's Voice input panel.
-#: ui/voice.slint:910
+#: ui/voice.slint:922
 msgid "Use voice input"
 msgstr "음성 입력 사용"
 
-#: ui/voice.slint:952
+#: ui/voice.slint:964
 msgid "Tidy the words"
 msgstr "문장 다듬기"
 
@@ -4945,326 +4946,346 @@ msgstr "채널은 읽기 모드로 열립니다. 긴 게시물을 읽기 좋게 
 msgid "Manage accounts"
 msgstr "계정 관리"
 
-#: ui/voice.slint:770 ui/voice.slint:781
+#: ui/voice.slint:775 ui/voice.slint:786
 msgid "Transcribing…"
 msgstr "받아쓰는 중…"
 
-#: ui/voice.slint:779
+#: ui/voice.slint:784
 msgid "Too long for Telegram to transcribe."
 msgstr "너무 길어서 Telegram이 받아쓸 수 없습니다."
 
-#: ui/voice.slint:780
+#: ui/voice.slint:785
 msgid "Could not transcribe it: {0}"
 msgstr "받아쓰지 못했습니다: {0}"
 
-#: ui/voice.slint:798
+#: ui/voice.slint:803
 msgid "Connecting to {0}…"
 msgstr "{0}에 연결하는 중…"
 
-#: ui/voice.slint:805
+#: ui/voice.slint:810
 msgid "Speak now: the words come when you are done"
 msgstr "말씀하세요: 말을 마치면 글자가 나타납니다"
 
-#: ui/voice.slint:807
+#: ui/voice.slint:812
 msgid "Any language"
 msgstr "모든 언어"
 
-#: ui/voice.slint:816
+#: ui/voice.slint:821
 msgid "Voice input needs your API key for {0}."
 msgstr "음성 입력에는 본인의 {0} API 키가 필요합니다."
 
-#: ui/voice.slint:819 ui/voice.slint:899 ui/voice.slint:940
+#: ui/voice.slint:824 ui/voice.slint:903 ui/voice.slint:952
 msgid "{0} refused the key."
 msgstr "{0}에서 키를 거부했습니다."
 
-#: ui/voice.slint:820
+#: ui/voice.slint:825
 msgid "{0} says the key is out of credit or used too fast: {1}"
 msgstr "{0}에 따르면 이 키의 크레딧이 떨어졌거나 너무 빠르게 사용되고 있습니다: {1}"
 
-#: ui/voice.slint:821
+#: ui/voice.slint:826
 msgid "Could not reach {0}: {1}"
 msgstr "{0}에 연결할 수 없습니다: {1}"
 
-#: ui/voice.slint:824
+#: ui/voice.slint:829
 msgid "{0} said: {1}"
 msgstr "{0}의 응답: {1}"
 
-#: ui/voice.slint:831
+#: ui/voice.slint:836
 msgid "Change address"
 msgstr "주소 변경"
 
-#: ui/voice.slint:911
+#: ui/voice.slint:923
 msgid "Puts the sparkle in every chat's composer; when off, nothing goes to any service"
 msgstr "모든 채팅의 입력창에 ✦를 표시합니다. 끄면 어떤 서비스로도 아무것도 보내지 않습니다"
 
-#: ui/voice.slint:912
+#: ui/voice.slint:924
 msgid "Main language"
 msgstr "주 언어"
 
-#: ui/voice.slint:917
+#: ui/voice.slint:929
 msgid "Remove {0}"
 msgstr "{0} 제거"
 
-#: ui/voice.slint:852
+#: ui/voice.slint:857
 msgid "API format"
 msgstr "API 형식"
 
-#: ui/voice.slint:879
+#: ui/voice.slint:884
 msgid "Empty for the vendor's own. For a relay or a server of your own, its base URL."
 msgstr "비워 두면 업체의 기본 주소를 씁니다. 중계 서비스나 직접 운영하는 서버라면 그 기본 URL을 넣으세요."
 
-#: ui/voice.slint:881
+#: ui/voice.slint:886
 msgid "That is not an address: it starts with https://"
 msgstr "주소가 아닙니다. 주소는 https://로 시작합니다."
 
-#: ui/voice.slint:882
+#: ui/voice.slint:887
 msgid "Leave the name and password out of the address."
 msgstr "주소에 사용자 이름과 암호를 넣지 마세요."
 
-#: ui/voice.slint:883
+#: ui/voice.slint:888
 msgid "Plain http goes only to this Mac or the local network: use https."
 msgstr "일반 http는 이 Mac이나 로컬 네트워크에서만 쓸 수 있습니다. https를 사용하세요."
 
-#: ui/voice.slint:929
+#: ui/voice.slint:941
 msgid "Model"
 msgstr "모델"
 
-#: ui/voice.slint:948
+#: ui/voice.slint:960
 msgid "Words to know"
 msgstr "알려 둘 단어"
 
-#: ui/voice.slint:949
+#: ui/voice.slint:961
 msgid "Names and terms you often say, separated by commas: the service listens for them, so they come out right."
 msgstr "자주 말하는 이름과 용어를 쉼표로 구분해 적으세요. 서비스가 이 단어들을 염두에 두고 들으므로 정확하게 받아씁니다."
 
-#: ui/voice.slint:950
+#: ui/voice.slint:962
 msgid "Names, products, terms"
 msgstr "이름, 제품, 용어"
 
-#: ui/voice.slint:886
+#: ui/voice.slint:891
 msgid "API key"
 msgstr "API 키"
 
-#: ui/voice.slint:887
+#: ui/voice.slint:892
 msgid "Your own key: the service bills it for what it does. It is kept sealed in FinchGram's database on this Mac."
 msgstr "본인의 키입니다. 서비스가 처리한 만큼 이 키에 요금을 청구합니다. 키는 봉인된 채 이 Mac의 FinchGram 데이터베이스에 보관됩니다."
 
-#: ui/voice.slint:888
+#: ui/voice.slint:893
 msgid "Paste the key"
 msgstr "키를 붙여 넣으세요"
 
-#: ui/voice.slint:891
+#: ui/voice.slint:896
 msgid "Get a key from {0}"
 msgstr "{0}에서 키 받기"
 
-#: ui/voice.slint:894
+#: ui/voice.slint:915
 msgid "That does not look like an API key."
 msgstr "API 키가 아닌 것 같습니다."
 
-#: ui/voice.slint:895
+#: ui/voice.slint:899
 msgid "Checking with {0}…"
 msgstr "{0}에 확인하는 중…"
 
-#: ui/voice.slint:897
+#: ui/voice.slint:901
 msgid "{0} answers and takes the key."
 msgstr "{0}에서 응답했고 키도 유효합니다."
 
-#: ui/voice.slint:897
+#: ui/voice.slint:901
 msgid "{0} answers."
 msgstr "{0}에서 응답했습니다."
 
-#: ui/voice.slint:900
+#: ui/voice.slint:904
 msgid "Could not check: {0}"
 msgstr "확인할 수 없습니다: {0}"
 
-#: ui/voice.slint:954
+#: ui/voice.slint:966
 msgid "Voice messages"
 msgstr "음성 메시지"
 
-#: ui/voice.slint:828
+#: ui/voice.slint:833
 msgid "Set up"
 msgstr "설정하기"
 
-#: ui/voice.slint:850
+#: ui/voice.slint:855
 msgid "What you call it, so that you know it when you choose."
 msgstr "선택할 때 알아볼 수 있도록 붙이는 이름입니다."
 
-#: ui/voice.slint:851
+#: ui/voice.slint:856
 msgid "no key"
 msgstr "키 없음"
 
-#: ui/voice.slint:857 ui/voice.slint:874
+#: ui/voice.slint:862 ui/voice.slint:879
 msgid "Alibaba Cloud Model Studio"
 msgstr "Alibaba Cloud Model Studio"
 
-#: ui/voice.slint:858
+#: ui/voice.slint:863
 msgid "Doubao speech (Volcengine)"
 msgstr "Doubao 음성 (Volcengine)"
 
-#: ui/voice.slint:859
+#: ui/voice.slint:864
 msgid "OpenAI-compatible"
 msgstr "OpenAI 호환"
 
-#: ui/voice.slint:864
+#: ui/voice.slint:869
 msgid "Tidying: Claude's Messages API, Anthropic's and the relays' and vendors' that speak it."
 msgstr "문장 다듬기: Claude의 Messages API입니다. Anthropic과 이 API를 지원하는 중계 서비스, 업체에서 씁니다."
 
-#: ui/voice.slint:865
+#: ui/voice.slint:870
 msgid "Tidying: Google's Gemini API."
 msgstr "문장 다듬기: Google의 Gemini API입니다."
 
-#: ui/voice.slint:866
+#: ui/voice.slint:871
 msgid "Speech recognition (Qwen-ASR, strong in Chinese and its dialects) and tidying (Qwen), one key for both."
 msgstr "음성 인식 (Qwen-ASR, 중국어와 중국어 방언에 강함)과 문장 다듬기 (Qwen)에 씁니다. 키 하나로 둘 다 사용합니다."
 
-#: ui/voice.slint:867
+#: ui/voice.slint:872
 msgid "Speech recognition: Doubao's Seed-ASR, strong in Chinese. A key from Volcengine's speech console."
 msgstr "음성 인식: Doubao의 Seed-ASR로, 중국어에 강합니다. Volcengine 음성 콘솔에서 받은 키를 씁니다."
 
-#: ui/voice.slint:868
+#: ui/voice.slint:873
 msgid "Speech recognition and tidying: OpenAI, and nearly every other service that speaks its API: Groq, SiliconFlow, DeepSeek, Kimi, OpenRouter, Ollama, relays, a Whisper server of your own."
 msgstr "음성 인식과 문장 다듬기: OpenAI를 비롯해 Groq, SiliconFlow, DeepSeek, Kimi, OpenRouter, Ollama, 중계 서비스, 직접 운영하는 Whisper 서버 등 OpenAI API를 지원하는 거의 모든 서비스에서 씁니다."
 
-#: ui/voice.slint:875
+#: ui/voice.slint:880
 msgid "Volcengine"
 msgstr "Volcengine"
 
-#: ui/voice.slint:921
+#: ui/voice.slint:933
 msgid "How it hears"
 msgstr "듣는 방식"
 
-#: ui/voice.slint:922
+#: ui/voice.slint:934
 msgid "As you speak"
 msgstr "말하는 동안"
 
-#: ui/voice.slint:923
+#: ui/voice.slint:935
 msgid "When you are done"
 msgstr "말을 마친 뒤"
 
-#: ui/voice.slint:925
+#: ui/voice.slint:937
 msgid "The recording goes up when you are done: what most relays and servers of your own take."
 msgstr "말을 마치면 녹음이 업로드됩니다. 대부분의 중계 서비스와 직접 운영하는 서버가 이 방식을 지원합니다."
 
-#: ui/voice.slint:926
+#: ui/voice.slint:938
 msgid "Words show as you speak, through OpenAI's Realtime API."
 msgstr "OpenAI의 Realtime API를 통해 말하는 동안 글자가 나타납니다."
 
-#: ui/voice.slint:774
+#: ui/voice.slint:779
 msgid "Telegram transcribes voice messages with Premium, or a few times a week without it. Your own AI vendor can do it too: Toolbox → AI → Voice input."
 msgstr "Telegram은 Premium이 있으면 음성 메시지를 받아써 주고, 없으면 일주일에 몇 번만 받아써 줍니다. 도구 상자 → AI → 음성 입력에서 AI 제공업체를 직접 설정해 받아쓸 수도 있습니다."
 
-#: ui/voice.slint:777
+#: ui/voice.slint:782
 msgid "Voice messages have no AI vendor or model yet: choose them in Toolbox → AI → Voice input."
 msgstr "음성 메시지에 쓸 AI 제공업체나 모델이 아직 선택되지 않았습니다. 도구 상자 → AI → 음성 입력에서 선택하세요."
 
-#: ui/voice.slint:813
+#: ui/voice.slint:818
 msgid "Voice input has no AI vendor yet: choose one in Voice input."
 msgstr "음성 입력에 쓸 AI 제공업체가 아직 선택되지 않았습니다. 음성 입력에서 선택하세요."
 
-#: ui/voice.slint:814
+#: ui/voice.slint:819
 msgid "Voice input does not know yet how to hear: choose it in Voice input."
 msgstr "음성 입력의 듣는 방식이 아직 선택되지 않았습니다. 음성 입력에서 선택하세요."
 
-#: ui/voice.slint:815
+#: ui/voice.slint:820
 msgid "Voice input has no model yet: choose one in Voice input."
 msgstr "음성 입력에 쓸 모델이 아직 선택되지 않았습니다. 음성 입력에서 선택하세요."
 
-#: ui/voice.slint:822
+#: ui/voice.slint:827
 msgid "The AI vendor's address in Voice input is not one FinchGram can use."
 msgstr "음성 입력에 설정된 AI 제공업체 주소를 FinchGram에서 사용할 수 없습니다."
 
-#: ui/voice.slint:838
+#: ui/voice.slint:843
 msgid "Press the sparkle in a chat's composer, or type /voice in Terminal, and speak; press it again, or ⏎, and the words go into the box for you to send. Your voice goes to the AI vendor you choose below, under your own key, and nothing else does. FinchGram keeps no recording."
 msgstr "채팅 입력창에서 ✦를 누르거나 터미널에서 /voice를 입력하고 말하세요. 다시 누르거나 ⏎를 누르면 말한 내용이 입력창에 들어가고, 보내는 것은 직접 합니다. 음성은 본인의 키로 아래에서 고른 AI 제공업체에 전송되며 그 밖에는 아무것도 전송되지 않습니다. FinchGram은 녹음을 남기지 않습니다."
 
-#: ui/voice.slint:841
+#: ui/voice.slint:846
 msgid "AI vendors"
 msgstr "AI 제공업체"
 
-#: ui/voice.slint:843
+#: ui/voice.slint:848
 msgid "Your AI vendors, each a name, an API format, an address and a key. Each feature below chooses one of them, and one AI vendor can serve several."
 msgstr "직접 추가한 AI 제공업체입니다. 각각 이름, API 형식, 주소, 키가 있습니다. 아래의 각 기능은 이 중 하나를 골라 쓰며, AI 제공업체 하나를 여러 기능에 함께 쓸 수 있습니다."
 
-#: ui/voice.slint:845
+#: ui/voice.slint:850
 msgid "Add an AI vendor"
 msgstr "AI 제공업체 추가"
 
-#: ui/voice.slint:846
+#: ui/voice.slint:851
 msgid "New AI vendor"
 msgstr "새 AI 제공업체"
 
-#: ui/voice.slint:847
+#: ui/voice.slint:852
 msgid "Remove this AI vendor and its key"
 msgstr "이 AI 제공업체 및 해당 키 제거"
 
-#: ui/voice.slint:848
+#: ui/voice.slint:853
 msgid "No API format chosen yet"
 msgstr "API 형식을 아직 선택하지 않음"
 
-#: ui/voice.slint:863
+#: ui/voice.slint:868
 msgid "The API your AI vendor speaks: choose one."
 msgstr "AI 제공업체가 지원하는 API입니다. 하나를 선택하세요."
 
-#: ui/voice.slint:914
+#: ui/voice.slint:926
 msgid "The language you mostly speak, which tells the AI vendor what it hears; words of other languages mixed in are kept as you say them. While you speak, a click on the language in the strip takes the next one."
 msgstr "주로 말하는 언어로, AI 제공업체에 어떤 언어를 듣는지 알려 줍니다. 섞어 말한 다른 언어의 단어는 말한 그대로 유지됩니다. 말하는 동안 입력창 위 막대에 표시된 언어를 클릭하면 다음 언어로 바뀝니다."
 
-#: ui/voice.slint:918
+#: ui/voice.slint:930
 msgid "AI vendor"
 msgstr "AI 제공업체"
 
-#: ui/voice.slint:919
+#: ui/voice.slint:931
 msgid "Choose an AI vendor"
 msgstr "AI 제공업체 선택"
 
-#: ui/voice.slint:920
+#: ui/voice.slint:932
 msgid "No AI vendor can do this yet: add one above."
 msgstr "이 기능을 지원하는 AI 제공업체가 아직 없습니다. 위에서 AI 제공업체를 추가하세요."
 
-#: ui/voice.slint:927
+#: ui/voice.slint:939
 msgid "Words as you speak, through OpenAI's Realtime API; or the recording when you are done, which most relays and servers of your own take."
 msgstr "말하는 동안 OpenAI의 Realtime API를 통해 글자가 나타나거나, 말을 마친 뒤 녹음이 업로드됩니다. 대부분의 중계 서비스와 직접 운영하는 서버는 녹음을 업로드하는 방식을 지원합니다."
 
-#: ui/voice.slint:930
+#: ui/voice.slint:942
 msgid "Choose a model"
 msgstr "모델 선택"
 
-#: ui/voice.slint:932
+#: ui/voice.slint:944
 msgid "Volcengine's resources, as its documentation names them: choose the one you bought."
 msgstr "Volcengine 문서에 나오는 이름 그대로의 리소스입니다. 구매한 리소스를 선택하세요."
 
-#: ui/voice.slint:935
+#: ui/voice.slint:947
 msgid "Nothing matches."
 msgstr "일치하는 항목이 없습니다."
 
-#: ui/voice.slint:938
+#: ui/voice.slint:950
 msgid "Asking {0} for its models…"
 msgstr "{0}에 모델 목록을 요청하는 중…"
 
-#: ui/voice.slint:939
+#: ui/voice.slint:951
 msgid "Add the key of {0} above to see its models."
 msgstr "모델 목록을 보려면 위에서 {0}의 키를 추가하세요."
 
-#: ui/voice.slint:941
+#: ui/voice.slint:953
 msgid "Could not list the models of {0}: {1}"
 msgstr "{0}의 모델 목록을 가져올 수 없습니다: {1}"
 
-#: ui/voice.slint:942
+#: ui/voice.slint:954
 msgid "{0} lists no models for this."
 msgstr "{0}의 모델 목록에 이 기능에 쓸 모델이 없습니다."
 
-#: ui/voice.slint:951
+#: ui/voice.slint:963
 msgid "Tidying"
 msgstr "문장 다듬기"
 
-#: ui/voice.slint:953
+#: ui/voice.slint:965
 msgid "A model of your choice takes um, uh and repeated words out of what voice input heard, and sets the punctuation; it never translates."
 msgstr "선택한 모델이 음성 입력으로 들은 내용에서 '음', '어' 같은 말과 반복된 단어를 빼고 문장 부호를 넣습니다. 번역은 하지 않습니다."
 
-#: ui/voice.slint:955
+#: ui/voice.slint:967
 msgid "Transcribe voice messages with your AI vendor"
 msgstr "AI 제공업체로 음성 메시지 받아쓰기"
 
-#: ui/voice.slint:957
+#: ui/voice.slint:969
 msgid "Transcribe under a voice message then sends it to the AI vendor chosen here instead of Telegram: someone else's voice, to a service of your choosing. The words are kept nowhere. Off unless you turn it on."
 msgstr "이 기능을 켜면 음성 메시지 아래의 받아쓰기 버튼이 Telegram 대신 여기에서 선택한 AI 제공업체로 메시지를 보냅니다. 다른 사람의 음성을 내가 고른 서비스로 보내는 것입니다. 받아쓴 내용은 어디에도 저장되지 않습니다. 직접 켜기 전에는 꺼져 있습니다."
+
+#: ui/voice.slint:914
+msgid "Its name, the API it speaks, its address and your key. Nothing is kept until you save."
+msgstr "이름, 쓰는 API, 주소, 본인의 키. '저장'을 누르기 전에는 아무것도 남지 않습니다."
+
+#: ui/voice.slint:916
+msgid "Leave it empty to keep this key."
+msgstr "비워 두면 이 키를 그대로 씁니다."
+
+#: ui/voice.slint:917
+msgid "Remove the key"
+msgstr "키 제거"
+
+#: ui/voice.slint:918
+msgid "The key goes when you save."
+msgstr "저장하면 이 키가 제거됩니다."
+
+#: ui/voice.slint:919
+msgid "Keep the key"
+msgstr "키 유지"

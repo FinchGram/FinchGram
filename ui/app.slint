@@ -24,6 +24,7 @@ import { SettingsPage } from "pages/settings.slint";
 import { MediaViewer } from "viewer.slint";
 import { ProfilePage } from "pages/profile.slint";
 import { AllowDialog } from "pages/ai-access.slint";
+import { VendorDialog } from "pages/voice-input.slint";
 import { DownloadsPage } from "pages/downloads.slint";
 
 // Re-exported so Rust can reach them through slint::include_modules!().
@@ -193,6 +194,8 @@ export component MainWindow inherits Window {
     if AppState.page == Page.downloads: DownloadsPage { }
     // The media viewer, over everything while it is open: a chat's media, or a downloaded file.
     if ((root.ready && AppState.page == Page.chats) || AppState.page == Page.downloads) && Viewer.open: MediaViewer { }
+    // An AI vendor added or changed in voice input's panel: its dialog, over the toolbox.
+    if Voice.vendor-dialog: VendorDialog { }
     // An AI assistant's app is connecting for the first time: the question, over whatever is open.
     if AiAccess.ask-open: AllowDialog { }
 }

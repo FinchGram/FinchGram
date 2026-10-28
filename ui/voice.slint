@@ -37,7 +37,8 @@ export struct VoiceLanguageRow {
 
 // An AI vendor the user added, as the panel lists it: its id, its name ("" when it has none yet),
 // its format ("openai", "anthropic", "gemini", "dashscope", "doubao"; "" until chosen), its
-// address's host (or the address as typed when it is not one), and its key's letters.
+// address's host (or the address as typed when it is not one), its key's letters, and what the
+// check after it was last saved said (none: nothing checked this run).
 export struct VoiceVendorRow {
     id: string,
     label: string,
@@ -45,6 +46,8 @@ export struct VoiceVendorRow {
     host: string,
     has-key: bool,
     key-hint: string,
+    check: KeyCheck,
+    check-detail: string,
 }
 
 // One item of a dropdown: an AI vendor (its id, its name) or a model (its name, twice).
@@ -106,30 +109,32 @@ export global Voice {
     callback cancel-adding();
     callback add-language(string);
     callback remove-language();
-    // The AI vendors, and the one open for editing (by id, "" for none) with its fields: what is
-    // typed into its boxes are their own properties, so that typing is never interrupted.
+    // The AI vendors, and the dialog that adds one or changes one: what it holds is a draft, kept
+    // only when the user saves it, all of it at once; Cancel or Esc drops it. What is typed into
+    // its boxes are their own properties, so that typing is never interrupted.
     in-out property <[VoiceVendorRow]> vendors;
-    in-out property <string> open-vendor;
-    in-out property <string> vendor-label;
-    in-out property <string> vendor-url;
-    in-out property <string> vendor-format;
+    in-out property <bool> vendor-dialog;               // the dialog is open
+    in-out property <bool> vendor-new;                  // adding a vendor, not changing one
+    in-out property <string> vendor-title;              // the name of the vendor changed
+    in-out property <string> vendor-label;              // as typed
+    in-out property <string> vendor-format;             // "" until chosen
+    in-out property <string> vendor-url;                // as typed
     in-out property <string> vendor-url-placeholder;
     in-out property <int> vendor-url-problem;           // 0 none, 1 not an address, 2 a name and password, 3 plain http
-    in-out property <bool> vendor-has-key;
+    in-out property <string> vendor-key;                // a key typed, to replace any kept
+    in-out property <bool> vendor-has-key;              // the vendor changed keeps a key already
     in-out property <string> vendor-key-hint;
+    in-out property <bool> vendor-key-remove;           // the kept key goes when the user saves
+    in-out property <bool> vendor-key-problem;          // what was typed is not a key
     in-out property <bool> vendor-official;             // the vendor's own address: the link to its keys shows
-    in-out property <string> vendor-shown;              // its name, for what the check says
-    in-out property <KeyCheck> vendor-check;
-    in-out property <string> vendor-check-detail;
     callback add-vendor();
-    callback toggle-vendor(string);
-    callback edit-vendor-label(string);
-    callback edit-vendor-url(string);
+    callback edit-vendor(string);
     callback set-vendor-format(string);
-    callback check-vendor();                            // the address typed is done: ask the vendor
-    callback save-vendor-key(string);
-    callback remove-vendor-key();
-    callback remove-vendor();
+    callback edit-vendor-url(string);                   // as typed: what is wrong with it shows
+    callback toggle-key-removal();
+    callback save-vendor();
+    callback cancel-vendor();
+    callback remove-vendor();                           // the vendor changed, with its key, at once
     callback open-key-page();                           // the vendor's page of API keys, in the browser
     // The three AI features, each with its AI vendor and its model, chosen from lists; nothing is
     // chosen until the user chooses: voice input ("speech"; how an OpenAI-compatible vendor hears,
@@ -889,23 +894,30 @@ export global VoiceWords {
     public pure function save() -> string { return @tr("Save"); }
     public pure function remove() -> string { return @tr("Remove"); }
     public pure function get-key(vendor: string) -> string { return @tr("Get a key from {0}", vendor); }
-    // What the last check of the open vendor said.
-    public pure function check-text() -> string {
-        if Voice.vendor-check == KeyCheck.malformed { return @tr("That does not look like an API key."); }
-        if Voice.vendor-check == KeyCheck.checking { return @tr("Checking with {0}…", Voice.vendor-shown); }
-        if Voice.vendor-check == KeyCheck.works {
-            return Voice.vendor-has-key ? @tr("{0} answers and takes the key.", Voice.vendor-shown) : @tr("{0} answers.", Voice.vendor-shown);
+    // What the check of a vendor said after it was saved, under its row.
+    public pure function check-text(row: VoiceVendorRow) -> string {
+        if row.check == KeyCheck.checking { return @tr("Checking with {0}…", row.label); }
+        if row.check == KeyCheck.works {
+            return row.has-key ? @tr("{0} answers and takes the key.", row.label) : @tr("{0} answers.", row.label);
         }
-        if Voice.vendor-check == KeyCheck.refused { return @tr("{0} refused the key.", Voice.vendor-shown); }
-        if Voice.vendor-check == KeyCheck.failed { return @tr("Could not check: {0}", Voice.vendor-check-detail); }
+        if row.check == KeyCheck.refused { return @tr("{0} refused the key.", row.label); }
+        if row.check == KeyCheck.failed { return @tr("Could not check: {0}", row.check-detail); }
         return "";
     }
     // Faint, a warning, or a good word: what the check deserves.
-    public pure function check-tone() -> int {
-        if Voice.vendor-check == KeyCheck.works { return 2; }
-        if Voice.vendor-check == KeyCheck.malformed || Voice.vendor-check == KeyCheck.refused || Voice.vendor-check == KeyCheck.failed { return 1; }
+    public pure function check-tone(check: KeyCheck) -> int {
+        if check == KeyCheck.works { return 2; }
+        if check == KeyCheck.refused || check == KeyCheck.failed { return 1; }
         return 0;
     }
+    // The dialog.
+    public pure function dialog-note() -> string { return @tr("Its name, the API it speaks, its address and your key. Nothing is kept until you save."); }
+    public pure function malformed-key() -> string { return @tr("That does not look like an API key."); }
+    public pure function key-kept-note() -> string { return @tr("Leave it empty to keep this key."); }
+    public pure function remove-key() -> string { return @tr("Remove the key"); }
+    public pure function key-goes-note() -> string { return @tr("The key goes when you save."); }
+    public pure function keep-key() -> string { return @tr("Keep the key"); }
+    public pure function esc-cancel() -> string { return @tr("esc  cancel"); }
     // The features.
     public pure function switch-title() -> string { return @tr("Use voice input"); }
     public pure function switch-note() -> string { return @tr("Puts the sparkle in every chat's composer; when off, nothing goes to any service"); }

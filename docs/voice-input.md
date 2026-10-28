@@ -55,9 +55,14 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   the words to know), **tidying** what voice input heard, and **transcribing voice messages**.
   Nothing is chosen for the user: no vendor, no model, no way of hearing, until they choose; a
   feature lists only the vendors that can do it. The vendor list shows each one's name, format,
-  host and key; a click opens it to change its name, format, address and key, or to remove it (the
-  features that used it then have none). One panel holds them all, in that order (the maintainer's
-  choice of a panel in three sections over a card each).
+  host and key, and what its check said after it was last saved. "Add an AI vendor", or a click on
+  one, opens a dialog with its name, format, address and key, kept together by one Save and dropped
+  by Cancel or Esc (the maintainer's words of 2026-10-27: a popup, and "不是单独的一个save，是整个save");
+  nothing is kept before, and typing in it never redraws the panel (the inline form of 0.7.3 and
+  0.7.4 lost the focus at every letter). A key kept stays unless another is typed or it is marked
+  to go; the dialog also removes the vendor, with its key, at once (the features that used it then
+  have none). One panel holds them all, in that order (the maintainer's choice of a panel in three
+  sections over a card each).
 - **Models.** Chosen from the vendor's own list, with a search over it, never typed: OpenAI-compatible
   vendors' `GET …/models` (all of them, as listed), Anthropic's `GET /v1/models`, Gemini's
   `GET /v1beta/models` (those that generate content, by its own mark), Model Studio's catalog
@@ -129,10 +134,9 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   redirects are never followed, so that a key in a header does not go to another host.
 - **Keys.** One per vendor, a credential in the app's database, table `credentials`, sealed to its
   name, `voice_input.connection.<id>` (named when the vendors were called connections; no layout
-  change); shown by its first and last letters, with Remove. A vendor is checked when its key is
-  saved, its format chosen or its address done being typed: the list of models (Model Studio's
-  catalog for it), and for Doubao the WebSocket's handshake under each of its four resources, any of
-  which the user may have bought; the answer shows under it. A vendor's own address wants a key; one
+  change); shown by its first and last letters. A vendor is checked when its dialog is saved: the
+  list of models (Model Studio's catalog for it), and for Doubao the WebSocket's handshake under each of its four resources, any of
+  which the user may have bought; the answer shows under its row. A vendor's own address wants a key; one
   of the user's own may not, and then none is sent.
 - **The words right first (2026-10-26).** OpenAI's live model at `xhigh`; words to know for every
   format; Doubao's two passes; Qwen's context; the tidying that puts misheard words right; and the
@@ -178,8 +182,10 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   messages), `audio.rs`; `src/player/decode.rs`; `src/telegram/voice.rs` (Transcribe);
   `ui/voice.slint`, each theme's composer and strip, `ui/pages/voice-input.slint` in each theme's
   toolbox; the screenshot scenes `voice-*` (`voice-upload`, `voice-transcripts`, `voice-no-service`,
-  the panel's `voice-input-doubao` (a vendor open), `…-speech`, `…-tidy`, `voice-input-choose`
-  (nothing chosen), `voice-input-relay`, `voice-input-upload` among them) and `toolbox-ai`.
+  the panel's `voice-input-add` and `voice-input-malformed` (the dialog, empty and wrongly filled),
+  `voice-input-key` and `…-key-remove` (a key kept), `voice-input-doubao` (the checks under the
+  rows), `…-dialog`, `…-speech`, `…-tidy`, `voice-input-choose` (nothing chosen),
+  `voice-input-relay`, `voice-input-upload` among them) and `toolbox-ai`.
 - **Different from the plan.** Built without the design round. The settings are a panel of the
   toolbox, not rows of Input. The words show in the strip while the user speaks and go into the
   composer once, tidied, at the end. They go at the end of what the composer holds, not at the
