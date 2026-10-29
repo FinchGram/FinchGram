@@ -514,27 +514,42 @@ fn photo_name(unix: i32) -> String {
 /// it got.
 pub fn save_to_downloads(from: &Path, name: &str) -> std::io::Result<String> {
     let folder = dirs::download_dir().ok_or_else(|| std::io::Error::other("no Downloads folder"))?;
-    let target = free_path(&folder, name);
-    std::fs::copy(from, &target)?;
+    let target = save_into(&folder, from, name)?;
     crate::platform::mark_downloaded(&target, None);
     Ok(target.file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_default())
 }
 
-fn free_path(folder: &Path, name: &str) -> PathBuf {
+/// How many names are tried for a file: "name.ext", then "name (2).ext" up to this.
+const MOST_NAMES: u32 = 10_000;
+
+/// `from` copied into `folder` under `name`, or the first free "name (n)" after it. The file is
+/// made with O_CREAT | O_EXCL (`create_new`), which makes nothing where anything already is, a
+/// link included, whatever it points to: `Path::exists` would follow a link to a file that is not
+/// there, call the name free, and the copy would land where the link points, anywhere this app
+/// can write. Returns the path it got.
+fn save_into(folder: &Path, from: &Path, name: &str) -> std::io::Result<PathBuf> {
     // Only the last part of the name counts: it comes from other people's messages.
     let name = Path::new(name).file_name().map(|name| name.to_string_lossy().into_owned()).unwrap_or_else(|| "file".into());
-    let first = folder.join(&name);
-    if !first.exists() {
-        return first;
-    }
     let (stem, extension) = match name.rsplit_once('.') {
         Some((stem, extension)) if !stem.is_empty() => (stem.to_string(), format!(".{extension}")),
         _ => (name.clone(), String::new()),
     };
-    (2..)
-        .map(|n| folder.join(format!("{stem} ({n}){extension}")))
-        .find(|path| !path.exists())
-        .unwrap_or(first)
+    let mut source = std::fs::File::open(from)?;
+    for n in 1..=MOST_NAMES {
+        let target = if n == 1 { folder.join(&name) } else { folder.join(format!("{stem} ({n}){extension}")) };
+        let mut file = match std::fs::File::options().write(true).create_new(true).open(&target) {
+            Ok(file) => file,
+            Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => continue,
+            Err(err) => return Err(err),
+        };
+        if let Err(err) = std::io::copy(&mut source, &mut file) {
+            drop(file);
+            let _ = std::fs::remove_file(&target);
+            return Err(err);
+        }
+        return Ok(target);
+    }
+    Err(std::io::Error::other(format!("{MOST_NAMES} names for {name} are taken")))
 }
 
 fn shown_id() -> Option<String> {
@@ -566,11 +581,23 @@ mod tests {
     #[test]
     fn a_taken_name_gets_a_number_and_a_path_stays_in_the_folder() {
         let folder = std::env::temp_dir().join(format!("finchgram-downloads-{}", std::process::id()));
-        std::fs::create_dir_all(&folder).expect("a folder");
-        assert_eq!(free_path(&folder, "clip.mp4"), folder.join("clip.mp4"));
-        std::fs::write(folder.join("clip.mp4"), b"").expect("written");
-        assert_eq!(free_path(&folder, "clip.mp4"), folder.join("clip (2).mp4"));
-        assert_eq!(free_path(&folder, "../../etc/clip.mp4"), folder.join("clip (2).mp4"));
+        let _ = std::fs::remove_dir_all(&folder);
+        std::fs::create_dir_all(folder.join("downloads")).expect("a folder");
+        let downloads = folder.join("downloads");
+        let from = folder.join("source.mp4");
+        std::fs::write(&from, b"video").expect("written");
+        assert_eq!(save_into(&downloads, &from, "clip.mp4").expect("saved"), downloads.join("clip.mp4"));
+        assert_eq!(std::fs::read(downloads.join("clip.mp4")).expect("read"), b"video");
+        assert_eq!(save_into(&downloads, &from, "clip.mp4").expect("saved"), downloads.join("clip (2).mp4"));
+        assert_eq!(save_into(&downloads, &from, "../../etc/clip.mp4").expect("saved"), downloads.join("clip (3).mp4"));
+        assert_eq!(save_into(&downloads, &from, "notes").expect("saved"), downloads.join("notes"));
+        assert_eq!(save_into(&downloads, &from, "notes").expect("saved"), downloads.join("notes (2)"));
+        // A link in the folder to a file that is not there: not followed, the name is taken.
+        let elsewhere = folder.join("elsewhere.mp4");
+        std::os::unix::fs::symlink(&elsewhere, downloads.join("photo.jpg")).expect("a link");
+        assert_eq!(save_into(&downloads, &from, "photo.jpg").expect("saved"), downloads.join("photo (2).jpg"));
+        assert!(!elsewhere.exists(), "the copy followed the link out of the folder");
+        assert!(std::fs::symlink_metadata(downloads.join("photo.jpg")).expect("the link").file_type().is_symlink());
         let _ = std::fs::remove_dir_all(&folder);
     }
 

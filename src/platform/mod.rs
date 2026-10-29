@@ -155,13 +155,42 @@ pub fn choose_picture(chosen: impl FnOnce(Option<std::path::PathBuf>) + 'static)
 }
 
 /// A picture the image crate cannot read (HEIC, TIFF, GIF, AVIF, …), read by the system: turned
-/// the way it was taken, no larger than `largest` pixels on its longer side.
-pub fn read_picture(path: &std::path::Path, largest: u32) -> Option<image::RgbaImage> {
+/// the way it was taken, no larger than `largest` pixels on its longer side. One whose header
+/// promises more than `most_bytes` of pixels (RGBA, as the file has them) is not decoded at all.
+pub fn read_picture(path: &std::path::Path, largest: u32, most_bytes: u64) -> Option<image::RgbaImage> {
     #[cfg(target_os = "macos")]
-    return macos::read_picture(path, largest);
+    return macos::read_picture(path, largest, most_bytes);
     #[cfg(not(target_os = "macos"))]
     {
-        let _ = (path, largest);
+        let _ = (path, largest, most_bytes);
+        None
+    }
+}
+
+/// The code signature of the process `pid`, as the system validates it under a certificate Apple
+/// issued (Developer ID, the App Store, or Apple's own): its signing identifier and, when the
+/// certificate names one, its Team ID. None for a program without such a signature (unsigned,
+/// signed ad hoc, or under a certificate Apple did not issue), or one that is gone. What the MCP
+/// server tells apps apart by (src/mcp/peer.rs), and what this app knows itself by.
+pub fn code_signature(pid: i32) -> Option<(String, Option<String>)> {
+    #[cfg(target_os = "macos")]
+    return macos::code_signature(pid);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = pid;
+        None
+    }
+}
+
+/// The same for the program in the file at `path` (an executable, or an app bundle), not running;
+/// the file is read and hashed, so one changed since it was signed has none. What finchgram-tdlib
+/// is held to before it is started (src/telegram/process.rs).
+pub fn file_code_signature(path: &std::path::Path) -> Option<(String, Option<String>)> {
+    #[cfg(target_os = "macos")]
+    return macos::file_code_signature(path);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = path;
         None
     }
 }

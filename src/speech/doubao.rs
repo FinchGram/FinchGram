@@ -51,6 +51,10 @@ const SUCCESS: u32 = 20_000_000;
 
 /// How long the last words may take once the last piece went.
 const LAST_WORDS_WAIT: Duration = Duration::from_secs(20);
+/// The most an answer may hold, unpacked: the words of a dictation with their timing are some
+/// kilobytes. A frame that unpacks to more is not read further, so that a service, or something
+/// standing in for it, cannot have the app unpack a few kilobytes into all its memory.
+const MOST_UNPACKED: u64 = 4 * 1024 * 1024;
 /// A recorded sound's pieces go this far apart: faster than spoken, slow enough for the service,
 /// which wants its pieces paced.
 const FILE_PACE: Duration = Duration::from_millis(40);
@@ -147,10 +151,17 @@ fn parse(frame: &[u8]) -> Result<Answer, String> {
     };
     let payload = |at: usize, size: usize| -> Result<Vec<u8>, String> {
         let bytes = frame.get(at..at + size).ok_or("a frame cut short")?;
+        let too_much = || format!("a frame holds more than {MOST_UNPACKED} bytes");
         if compression == GZIP {
             let mut unpacked = Vec::new();
-            flate2::read::GzDecoder::new(bytes).read_to_end(&mut unpacked).map_err(|err| err.to_string())?;
+            // One byte past the most, to know that there was more.
+            flate2::read::GzDecoder::new(bytes).take(MOST_UNPACKED + 1).read_to_end(&mut unpacked).map_err(|err| err.to_string())?;
+            if unpacked.len() as u64 > MOST_UNPACKED {
+                return Err(too_much());
+            }
             Ok(unpacked)
+        } else if bytes.len() as u64 > MOST_UNPACKED {
+            Err(too_much())
         } else {
             Ok(bytes.to_vec())
         }
@@ -325,6 +336,22 @@ mod tests {
         let mut compressed = answer(0b0011, &packed);
         compressed[2] = 0x11;
         assert!(matches!(parse(&compressed), Ok(Answer::Words { last: true, .. })));
+        // A frame that unpacks to more than any answer could hold is refused, before it is held
+        // whole: 16 MB of spaces pack into some kilobytes.
+        let mut bomb = Vec::new();
+        {
+            use std::io::Write as _;
+            let mut encoder = flate2::write::GzEncoder::new(&mut bomb, flate2::Compression::default());
+            let spaces = vec![b' '; 1024 * 1024];
+            for _ in 0..16 {
+                encoder.write_all(&spaces).expect("written");
+            }
+            encoder.finish().expect("finished");
+        }
+        assert!(bomb.len() < 64 * 1024, "{}", bomb.len());
+        let mut compressed = answer(0b0011, &bomb);
+        compressed[2] = 0x11;
+        assert_eq!(parse(&compressed), Err(format!("a frame holds more than {MOST_UNPACKED} bytes")));
         // An error frame: its code and message.
         let message = r#"{"error":"empty audio"}"#;
         let mut error = vec![0x11, 0xF0, 0x10, 0x00];

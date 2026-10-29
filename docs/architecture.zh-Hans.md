@@ -61,7 +61,10 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 ## 外壳怎么跟 finchgram-tdlib 通信
 
 - 这个程序只在一个地方找：可执行文件旁边（.app 里的 `Contents/MacOS/`；`cargo run` 时是
-  `target/<profile>/`，由 build.rs 从 `vendor/tdlib/bin/` 复制过去）。
+  `target/<profile>/`，由 build.rs 从 `vendor/tdlib/bin/` 复制过去）。正式版由一个团队签名（scripts/sign.sh），
+  这个程序也一起签；app 只在它带着同一团队的、完好的签名时才启动它（`src/telegram/process.rs`）：它会拿到
+  Telegram 数据库的密钥（钥匙串只交给 app 本身的那把），机器上别的东西换进来的程序也会拿到。没有团队签名的
+  FinchGram（`cargo run`、ad hoc 签名的包）没有可比对的东西，直接启动。
 - 标准输入：请求，一行一个 JSON 对象。每个请求带一个 `"@extra"` 编号，TDLib 会把它原样放进回复里，
   回复再交给发请求时给的回调。
 - 标准输出：回复和更新，一行一个。一个读取线程负责解析，只有在它的收件箱原本是空的时候才去叫醒 UI 线程，
@@ -311,7 +314,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - `src/update.rs`：自动更新（[conventions.md](conventions.zh-Hans.md) 第 3 节）。
 - `src/settings.rs`、`src/i18n.rs`、`src/fonts.rs`（界面字体，编译进可执行文件）。
 - `src/images.rs`：图片（照片、视频封面、聊天和联系人的头像、消息里自带的小预览图）在界面线程之外解码，并缓存最近的；
-  照片按 EXIF 方向转正，image crate 读不了的交给平台层读（`read`）。
+  照片按 EXIF 方向转正，image crate 读不了的交给平台层读（`read`）。文件头声称的像素超过 256 MiB 的图片，两边都不解码：
+  几十个字节的文件头就能要走几个 GB 的内存。
 - `src/screenshots.rs`：用 Slint 的软件渲染器和假数据，把每套主题的每个页面（浅色和深色）画成 PNG
   （`cargo test screenshots -- --ignored`）。
 - `src/telegram/timing.rs`：用同样的方式、很多假聊天和假消息，量页面跟上 store 要多久
@@ -354,14 +358,16 @@ FinchGram 自己要留的、既不是偏好设置也不是 Telegram 的东西，
 决定；0.5.9 及以前整库用 SQLCipher 加密）。只有密码那一列（以及凭据的值，见下）是封起来的：AES-256-GCM，密钥随机生成、第一次就存进钥匙串
 "FinchGram" 名下（account 是“database”），只有本应用能读；封的时候绑定它所属的服务器（协议、地址、端口和账号是封印的
 附加认证数据，密文挪到写着另一台服务器的行里打不开）；app 在服务器的表单里显示密码，用户要看在那儿看。AI 访问里允许过
-的程序，每行带一个用同一把密钥算出的标签：不是 FinchGram 写的行、或事后被改过的行，都不算数；SSH 服务器的密钥、以及
+的程序，每行带一个用同一把密钥算出的标签，算在程序、答案和当时登录的 Telegram 账号上：不是 FinchGram 写的行、事后被改过的行、
+或者从另一个账号那时候留下来的行，都不算数；SSH 服务器的密钥、以及
 settings.toml 里的 AI 访问设置（`settings::Mcp::seal`，启动时由 src/mcp/access.rs 核对）同样带标签。TDLib 的
 数据库从 0.4.18 起也有一把自己的密钥，同样存法（account 是“tdlib”）。规矩：偏好设置进 settings.toml，它要小、要能手改；
 记录进数据库；Telegram 自己的状态归 TDLib。现在数据库里放的是下载页的服务器、它们的密码和用户是否允许改动每一台（docs/downloads.zh-Hans.md）、
 AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任过的 SSH 服务器密钥和信任的日期
-（docs/downloads.zh-Hans.md），以及 app 自己的、不属于哪台服务器的凭据，每个都封到自己的名字上：语音输入的密钥，每个 AI 服务商一个
-（`voice_input.connection.<id>`，docs/voice-input.zh-Hans.md）；以后的东西（重启后还在的下载队列、
-日志、每个聊天的设置）建的时候再加表。
+（docs/downloads.zh-Hans.md），以及 app 自己的、不属于哪台服务器的凭据：语音输入的密钥，每个 AI 服务商一个
+（`voice_input.connection.<id>`，docs/voice-input.zh-Hans.md），每个都封到自己的名字、再加上服务商的 API 格式和地址
+（照 settings.toml 里写的）上，所以服务商的地址被 FinchGram 自己的对话框以外的东西改过之后，密钥就打不开了，要用户重新输入；
+以后的东西（重启后还在的下载队列、日志、每个聊天的设置）建的时候再加表。
 
 从 0.6.0 起表结构有编号：SQLite 自带的 `PRAGMA user_version` 存着 `LAYOUT`，每改一次表就加一，每一步在
 `database::upgrade` 里有对应的迁移。旧版本的文件先原样复制一份到 `~/Documents/FinchGram/backup/`（副本里密码仍是封着的），
@@ -370,7 +376,9 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
 有六颗星）。表结构 2（0.6.2 之后）把密码重新封到各自的服务器上、给程序的行加了标签（之前的行没有东西能担保，一律丢掉，
 每个程序再被问一次），并给 SSH 服务器的密钥记下信任的日期。表结构 3（0.6.3 之后）给 SSH 服务器的密钥也加了标签，之前的
 行丢掉，每台 SFTP 服务器再出示一次密钥。表结构 4 给服务器加了 `allow_changes`，之前的服务器一律关；表结构 5 加了
-`credentials`，按名字存 app 自己的秘密（两个都在 0.6.3 之后）。settings 的键名改动必须带 serde alias，钥匙串条目的名字永远不改。
+`credentials`，按名字存 app 自己的秘密（两个都在 0.6.3 之后）。表结构 6（0.7.5 之后）把凭据连同服务商的格式和地址一起封起来
+（之前的密钥在那次首次启动时由语音输入重新封一遍，也只有那一次还能打开），并给程序的行标上当时允许的账号；之前的行没写账号，
+一律丢掉，每个程序再被问一次。settings 的键名改动必须带 serde alias，钥匙串条目的名字永远不改。
 
 ## 平台
 

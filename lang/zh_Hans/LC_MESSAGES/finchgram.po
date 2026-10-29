@@ -2842,6 +2842,12 @@ msgstr "允许一个无法识别的程序使用你的 Telegram 账号吗？"
 msgid "macOS reports this program as the one connecting to FinchGram."
 msgstr "macOS 报告正在连接 FinchGram 的是这个程序。"
 
+#: ui/pages/ai-access.slint:782
+msgid ""
+"“{0}” runs whatever script it is given, so macOS can't say which one this "
+"is. Your answer lasts only while it runs."
+msgstr "「{0}」会运行任何给它的脚本，macOS 说不出这次是哪一个。你的回答只在它运行期间有效。"
+
 #: ui/pages/ai-access.slint:779
 msgid ""
 "macOS wouldn't say which program this is. Allow it only if you've just set "

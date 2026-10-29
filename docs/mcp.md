@@ -155,14 +155,21 @@ credentials from the environment". FinchGram's answer has three layers:
    inside the VS Code extension are one app, allowed once. A program without such a signature
    (unsigned, signed ad hoc, or under a certificate Apple did not issue; Apple's own programs carry
    no team) is remembered by its path instead: the program itself, with its links followed, and
-   not its app bundle, which may hold other programs that are not it. The answers are rows of the
+   not its app bundle, which may hold other programs that are not it. An interpreter (node, bun,
+   deno, python, ruby, perl, php, java, osascript, …) is remembered by nothing: the system names
+   the interpreter, not the script it runs, which is only an argument, and one a script can lie
+   about through the interpreter's own switches and variables, so an answer kept for node would
+   stand for every script anyone runs with node. The dialog says so, makes Don't Allow the safe
+   choice, and the answer lasts for the run and that process only, as for a program the system
+   would not name. The answers kept are rows of the
    app's database (docs/architecture.md, The app's database), each with a tag under the key the
-   Keychain holds for this app alone: a row written into the file by anything else, or whose
-   answer was turned since, is not believed, and the program is asked about as if it were new. The
-   answer is also
-   for one Telegram account, the one the settings are for: when that account is gone and another
-   takes its place, every answer and the chosen chats are dropped, so that nothing allowed for one
-   account carries over to the next. When the system cannot
+   Keychain holds for this app alone, over the program, the answer and the Telegram account it was
+   given for: a row written into the file by anything else, whose answer was turned since, or
+   kept from another account's time and put back, is not believed, and the program is asked about
+   as if it were new. The
+   answer is for one Telegram account, the one the settings are for: when that account is gone and
+   another takes its place, every answer and the chosen chats are dropped, so that nothing allowed
+   for one account carries over to the next. When the system cannot
    name the program, the
    dialog says so and makes Don't Allow the safe choice. Such a program's answer lasts for the run
    and for that process only (its pid and when it started); one the system cannot place at all, not

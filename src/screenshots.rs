@@ -2083,6 +2083,13 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
     ai.set_ask_path("/Applications/Cursor.app".into());
     ai.set_ask_open(true);
     save(window, &name("ai-allow"));
+    // An interpreter: named, but the answer is not kept.
+    ai.set_ask_name("node".into());
+    ai.set_ask_initial("N".into());
+    ai.set_ask_path("/opt/homebrew/bin/node".into());
+    ai.set_ask_kept(false);
+    save(window, &name("ai-allow-interpreter"));
+    ai.set_ask_kept(true);
     ai.set_ask_name(SharedString::new());
     ai.set_ask_initial(SharedString::new());
     ai.set_ask_path("pid 48213".into());

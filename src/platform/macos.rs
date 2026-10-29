@@ -481,16 +481,30 @@ pub fn pasteboard_image() -> Option<Vec<u8>> {
 /// A picture by ImageIO, which reads what macOS reads: its thumbnail of at most `largest` pixels on
 /// the longer side, made from the picture itself and turned the way it was taken (the EXIF
 /// orientation a phone's photo carries), drawn by Core Graphics into RGBA pixels.
-pub fn read_picture(path: &std::path::Path, largest: u32) -> Option<image::RgbaImage> {
+pub fn read_picture(path: &std::path::Path, largest: u32, most_bytes: u64) -> Option<image::RgbaImage> {
     use objc2_core_foundation::{CFBoolean, CFData, CFMutableDictionary, CFNumber, CFString, CFType, CGPoint, CGRect, CGSize};
     use objc2_core_graphics::{CGBitmapContextCreate, CGColorSpace, CGContext, CGImage, CGImageAlphaInfo, kCGColorSpaceSRGB};
     use objc2_image_io::{
-        CGImageSource, kCGImageSourceCreateThumbnailFromImageAlways, kCGImageSourceCreateThumbnailWithTransform, kCGImageSourceThumbnailMaxPixelSize,
+        CGImageSource, kCGImagePropertyPixelHeight, kCGImagePropertyPixelWidth, kCGImageSourceCreateThumbnailFromImageAlways,
+        kCGImageSourceCreateThumbnailWithTransform, kCGImageSourceThumbnailMaxPixelSize,
     };
     let bytes = std::fs::read(path).ok()?;
     let data = CFData::from_bytes(&bytes);
     // SAFETY: the data is the file's bytes; no options.
     let source = unsafe { CGImageSource::with_data(&data, None) }?;
+    // The picture's size from its header, before a pixel is decoded: a few bytes of header can
+    // promise gigabytes, which ImageIO would set out to decode (the thumbnail of a JPEG apart).
+    // SAFETY: no options; the dictionary's keys are strings, its values vary.
+    let properties = unsafe { CGImageSource::properties_at_index(&source, 0, None) }?;
+    let properties: objc2_core_foundation::CFRetained<objc2_core_foundation::CFDictionary<CFType, CFType>> = unsafe { objc2_core_foundation::CFRetained::cast_unchecked(properties) };
+    // SAFETY: the framework's constants are only read.
+    let pixels = |key: &CFString| properties.get(AsRef::<CFType>::as_ref(key)).and_then(|value| value.downcast::<CFNumber>().ok()).and_then(|value| value.as_i64());
+    let (width, height) = unsafe { (pixels(kCGImagePropertyPixelWidth)?, pixels(kCGImagePropertyPixelHeight)?) };
+    let promised = u64::try_from(width).ok()?.checked_mul(u64::try_from(height).ok()?)?.checked_mul(4)?;
+    if width <= 0 || height <= 0 || promised > most_bytes {
+        eprintln!("images: {} is {width}×{height} pixels, which would decode to {promised} bytes, more than the {most_bytes} FinchGram decodes", path.display());
+        return None;
+    }
     let options = CFMutableDictionary::<CFString, CFType>::empty();
     let largest = CFNumber::new_i32(i32::try_from(largest).unwrap_or(i32::MAX));
     // SAFETY: ImageIO's constants are only read; the dictionary keeps its own references.
@@ -1005,6 +1019,103 @@ pub fn keychain_read(service: &str, account: &str) -> Result<Option<String>, Str
     let value: CFRetained<CFType> = unsafe { CFRetained::from_raw(pointer) };
     let data = value.downcast::<CFData>().map_err(|_| "the Keychain answered with something that is not data".to_string())?;
     Ok(Some(String::from_utf8_lossy(&data.to_vec()).into_owned()))
+}
+
+// ---- code signatures -------------------------------------------------------------------------
+
+/// What a signature must meet to be believed: a certificate chain to Apple's root, which is a
+/// Developer ID, an App Store or Apple's own certificate; the framework then holds the team in
+/// the signature to the one in the certificate. Without this, a signature under a self-made
+/// certificate, or none at all (ad hoc), passes as valid and could name any team and identifier
+/// it likes.
+const APPLE_ISSUED: &str = "anchor apple generic";
+
+/// The code signature of the process `pid`, validated under APPLE_ISSUED: its identifier and,
+/// when the certificate names one, its team. None for a program without such a signature, or one
+/// that is gone.
+pub fn code_signature(pid: i32) -> Option<(String, Option<String>)> {
+    use objc2_core_foundation::{CFDictionary, CFNumber, CFNumberType, CFRetained, CFString, CFType};
+    use objc2_security::{SecCSFlags, SecCode, SecStaticCode, errSecSuccess, kSecGuestAttributePid};
+    // SAFETY: `pid` is an i32, which is what SInt32Type reads; CFNumber copies the value.
+    let number = unsafe { CFNumber::new(None, CFNumberType::SInt32Type, std::ptr::from_ref(&pid).cast()) }?;
+    // SAFETY: the framework's constant is only read.
+    let attributes = CFDictionary::<CFString, CFType>::from_slices(&[unsafe { kSecGuestAttributePid }], &[AsRef::<CFType>::as_ref(&*number)]);
+    let mut code: *mut SecCode = std::ptr::null_mut();
+    // SAFETY: the attributes name a process, as the framework documents; `code` is where it puts
+    // its answer.
+    let status = unsafe { SecCode::copy_guest_with_attributes(None, Some(attributes.as_opaque()), SecCSFlags::DefaultFlags, NonNull::from(&mut code)) };
+    if status != errSecSuccess {
+        return None;
+    }
+    // SAFETY: the framework handed over one reference, which is ours to release.
+    let code: CFRetained<SecCode> = unsafe { CFRetained::from_raw(NonNull::new(code)?) };
+    let requirement = apple_issued()?;
+    // SAFETY: both are valid objects from the calls above.
+    if unsafe { code.check_validity(SecCSFlags::DefaultFlags, Some(&*requirement)) } != errSecSuccess {
+        return None;
+    }
+    // SAFETY: a SecCode is a SecStaticCode as well, the framework says ("SecCodeRef is a subtype
+    // of SecStaticCodeRef"), and `code` keeps it alive.
+    let as_static: &SecStaticCode = unsafe { CFRetained::as_ptr(&code).cast::<SecStaticCode>().as_ref() };
+    signing_information(as_static)
+}
+
+/// The code signature of the program in the file at `path` (an executable, or an app bundle),
+/// validated under APPLE_ISSUED, the file read and hashed for it: None for one unsigned, signed
+/// under no certificate Apple issued, or changed since it was signed.
+pub fn file_code_signature(path: &std::path::Path) -> Option<(String, Option<String>)> {
+    use objc2_core_foundation::{CFRetained, CFURL};
+    use objc2_security::{SecCSFlags, SecStaticCode, errSecSuccess};
+    let url = CFURL::from_file_path(path)?;
+    let mut code: *const SecStaticCode = std::ptr::null();
+    // SAFETY: a file URL, as the framework asks; `code` is where it puts its answer.
+    let status = unsafe { SecStaticCode::create_with_path(&url, SecCSFlags::DefaultFlags, NonNull::from(&mut code)) };
+    if status != errSecSuccess {
+        return None;
+    }
+    // SAFETY: one reference that is ours.
+    let code: CFRetained<SecStaticCode> = unsafe { CFRetained::from_raw(NonNull::new(code.cast_mut())?) };
+    let requirement = apple_issued()?;
+    // SAFETY: both are valid objects from the calls above.
+    if unsafe { code.check_validity(SecCSFlags::DefaultFlags, Some(&*requirement)) } != errSecSuccess {
+        return None;
+    }
+    signing_information(&code)
+}
+
+/// APPLE_ISSUED in the framework's own form.
+fn apple_issued() -> Option<objc2_core_foundation::CFRetained<objc2_security::SecRequirement>> {
+    use objc2_core_foundation::{CFRetained, CFString};
+    use objc2_security::{SecCSFlags, SecRequirement, errSecSuccess};
+    let text = CFString::from_str(APPLE_ISSUED);
+    let mut requirement: *mut SecRequirement = std::ptr::null_mut();
+    // SAFETY: a requirement in the framework's own language; `requirement` is where it goes.
+    let status = unsafe { SecRequirement::create_with_string(&text, SecCSFlags::DefaultFlags, NonNull::from(&mut requirement)) };
+    if status != errSecSuccess {
+        return None;
+    }
+    // SAFETY: one reference that is ours.
+    Some(unsafe { CFRetained::from_raw(NonNull::new(requirement)?) })
+}
+
+/// The identifier and the team in the signature of `code`, which is validated already.
+fn signing_information(code: &objc2_security::SecStaticCode) -> Option<(String, Option<String>)> {
+    use objc2_core_foundation::{CFDictionary, CFRetained, CFString, CFType};
+    use objc2_security::{SecCSFlags, SecCode, errSecSuccess, kSecCSSigningInformation, kSecCodeInfoIdentifier, kSecCodeInfoTeamIdentifier};
+    let mut information: *const CFDictionary = std::ptr::null();
+    // The team comes with the certificates (kSecCSSigningInformation), not with the basic facts.
+    let wanted = SecCSFlags(kSecCSSigningInformation);
+    // SAFETY: `information` is where the dictionary goes.
+    let status = unsafe { SecCode::copy_signing_information(code, wanted, NonNull::from(&mut information)) };
+    if status != errSecSuccess {
+        return None;
+    }
+    // SAFETY: one reference that is ours; the dictionary's keys are strings, its values vary.
+    let information: CFRetained<CFDictionary<CFType, CFType>> = unsafe { CFRetained::from_raw(NonNull::new(information.cast_mut())?.cast()) };
+    let text_of = |key: &CFString| information.get(AsRef::<CFType>::as_ref(key)).and_then(|value| value.downcast::<CFString>().ok()).map(|value| value.to_string());
+    // SAFETY: the framework's constants are only read.
+    let (identifier, team) = unsafe { (text_of(kSecCodeInfoIdentifier), text_of(kSecCodeInfoTeamIdentifier)) };
+    Some((identifier?, team))
 }
 
 // ---- free space ------------------------------------------------------------------------------

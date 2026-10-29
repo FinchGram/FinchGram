@@ -14,6 +14,11 @@ use slint::{Image, Rgba8Pixel, SharedPixelBuffer};
 
 /// A picture larger than this on its longer side is scaled down: the pages show it far smaller.
 const LARGEST: u32 = 2048;
+/// The most a picture may decode to, in bytes, its pixels as the file holds them and before any
+/// scaling: 256 MiB, 64 million RGBA pixels or 89 million RGB ones, which a phone's photo is far
+/// under. The file's header is read first, and a picture whose header promises more is not
+/// decoded: a few bytes of header can ask for gigabytes.
+const MOST_DECODED: u64 = 256 * 1024 * 1024;
 
 type Ready = Box<dyn FnOnce(Option<Image>)>;
 
@@ -85,22 +90,29 @@ fn decode(path: &Path) -> Option<SharedPixelBuffer<Rgba8Pixel>> {
 
 /// The picture in the file at `path`, turned the way it was taken (the EXIF orientation a phone's
 /// photo carries), no larger than `largest` pixels on its longer side. What the image crate cannot
-/// read (HEIC, TIFF, GIF, AVIF, …) the system reads (src/platform/).
+/// read (HEIC, TIFF, GIF, AVIF, …) the system reads (src/platform/). Neither decodes a picture
+/// whose header promises more than MOST_DECODED.
 pub fn read(path: &Path, largest: u32) -> Result<image::DynamicImage, String> {
     let picture = match read_oriented(path) {
         Ok(picture) => picture,
-        Err(err) => crate::platform::read_picture(path, largest).map(image::DynamicImage::ImageRgba8).ok_or(err)?,
+        Err(err) => crate::platform::read_picture(path, largest, MOST_DECODED).map(image::DynamicImage::ImageRgba8).ok_or(err)?,
     };
     Ok(if picture.width().max(picture.height()) > largest { picture.thumbnail(largest, largest) } else { picture })
 }
 
 fn read_oriented(path: &Path) -> Result<image::DynamicImage, String> {
-    let mut decoder = image::ImageReader::open(path)
-        .map_err(|err| err.to_string())?
-        .with_guessed_format()
-        .map_err(|err| err.to_string())?
-        .into_decoder()
-        .map_err(|err| err.to_string())?;
+    let mut reader = image::ImageReader::open(path).map_err(|err| err.to_string())?.with_guessed_format().map_err(|err| err.to_string())?;
+    let mut limits = image::Limits::default();
+    limits.max_alloc = Some(MOST_DECODED);
+    reader.limits(limits);
+    let mut decoder = reader.into_decoder().map_err(|err| err.to_string())?;
+    // The header says how large the picture is before a pixel is decoded; the limits above are
+    // for the decoders that enforce them, which not all do.
+    let (width, height) = decoder.dimensions();
+    let bytes = decoder.total_bytes();
+    if bytes > MOST_DECODED {
+        return Err(format!("{width}×{height} pixels would decode to {bytes} bytes, more than the {MOST_DECODED} FinchGram decodes"));
+    }
     let orientation = decoder.orientation().unwrap_or(image::metadata::Orientation::NoTransforms);
     let mut picture = image::DynamicImage::from_decoder(decoder).map_err(|err| err.to_string())?;
     picture.apply_orientation(orientation);
@@ -180,6 +192,44 @@ mod tests {
         let broken = directory.join("broken.jpg");
         std::fs::write(&broken, b"not a picture").expect("written");
         assert!(decode(&broken).is_none());
+        let _ = std::fs::remove_dir_all(&directory);
+    }
+
+    /// The 54 bytes of a BMP's headers and nothing after them, promising `width` × `height`
+    /// pixels of 24 bits.
+    fn bmp_header(width: i32, height: i32) -> Vec<u8> {
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(b"BM");
+        bytes.extend_from_slice(&54u32.to_le_bytes()); // the file's size, as far as it goes
+        bytes.extend_from_slice(&[0, 0, 0, 0]);
+        bytes.extend_from_slice(&54u32.to_le_bytes()); // where the pixels start
+        bytes.extend_from_slice(&40u32.to_le_bytes()); // BITMAPINFOHEADER
+        bytes.extend_from_slice(&width.to_le_bytes());
+        bytes.extend_from_slice(&height.to_le_bytes());
+        bytes.extend_from_slice(&1u16.to_le_bytes()); // planes
+        bytes.extend_from_slice(&24u16.to_le_bytes()); // bits per pixel
+        bytes.extend_from_slice(&[0; 24]); // no compression, the rest unused
+        assert_eq!(bytes.len(), 54);
+        bytes
+    }
+
+    #[test]
+    fn a_header_that_promises_gigabytes_is_refused_before_anything_is_decoded() {
+        let directory = std::env::temp_dir().join(format!("finchgram-bomb-{}", std::process::id()));
+        std::fs::create_dir_all(&directory).expect("a directory");
+        let bomb = directory.join("bomb.bmp");
+        std::fs::write(&bomb, bmp_header(40_000, 40_000)).expect("written");
+        let err = read_oriented(&bomb).expect_err("refused");
+        assert!(err.contains("40000×40000") && err.contains("4800000000 bytes"), "{err}");
+        // The system's reader does not take it in its place either.
+        assert!(read(&bomb, LARGEST).is_err());
+        assert!(decode(&bomb).is_none());
+        // A header within the budget is read as far as its pixels go: this one has none, and is
+        // refused for that, not for its size.
+        let short = directory.join("short.bmp");
+        std::fs::write(&short, bmp_header(8, 8)).expect("written");
+        let err = read_oriented(&short).expect_err("no pixels");
+        assert!(!err.contains("decodes"), "{err}");
         let _ = std::fs::remove_dir_all(&directory);
     }
 

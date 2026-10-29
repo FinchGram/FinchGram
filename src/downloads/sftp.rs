@@ -29,7 +29,9 @@ use super::http::Http;
 use super::remote::{Entry, Error};
 use super::{log, transfer};
 
-/// How long a connection may take to be ready, and how long a read may bring nothing.
+/// How long a session may take to be ready, all of it (the connection, the key, the password, the
+/// SFTP subsystem: a server may stall any step, and russh's own timeouts do not cover them all),
+/// and how long a read may bring nothing.
 const CONNECT_PATIENCE: Duration = Duration::from_secs(30);
 const READ_PATIENCE: u64 = 60;
 /// A chunk of a file, as the WebDAV engine cuts it; a piece of a chunk asked for at once.
@@ -121,9 +123,16 @@ impl Server {
     }
 
     /// A session: connected, the key checked against the one trusted, signed in, the SFTP
-    /// subsystem up. A key not trusted, or another than the trusted one, ends it before the
-    /// password goes out, with the key the server showed.
+    /// subsystem up, all within CONNECT_PATIENCE. A key not trusted, or another than the trusted
+    /// one, ends it before the password goes out, with the key the server showed.
     async fn session(&self) -> Result<Session, Error> {
+        match tokio::time::timeout(CONNECT_PATIENCE, self.open_session()).await {
+            Ok(session) => session,
+            Err(_) => Err(Error::Unreachable("the server did not answer in time".into())),
+        }
+    }
+
+    async fn open_session(&self) -> Result<Session, Error> {
         let trust = Arc::new(Trust { known: self.known_key.clone(), shown: Mutex::new(None), changed: AtomicBool::new(false), unknown: AtomicBool::new(false) });
         let config = Arc::new(client::Config {
             inactivity_timeout: Some(Duration::from_secs(READ_PATIENCE * 2)),
@@ -131,9 +140,9 @@ impl Server {
             ..Default::default()
         });
         let connecting = client::connect(config, (self.host.as_str(), self.port()), Handler { trust: trust.clone() });
-        let mut handle = match tokio::time::timeout(CONNECT_PATIENCE, connecting).await {
-            Ok(Ok(handle)) => handle,
-            Ok(Err(err)) => {
+        let mut handle = match connecting.await {
+            Ok(handle) => handle,
+            Err(err) => {
                 let shown = trust.shown.lock().unwrap().clone().unwrap_or_default();
                 if trust.changed.load(Ordering::Relaxed) {
                     return Err(Error::KeyChanged(shown));
@@ -143,7 +152,6 @@ impl Server {
                 }
                 return Err(ssh_error(err));
             }
-            Err(_) => return Err(Error::Unreachable("the server did not answer in time".into())),
         };
         match handle.authenticate_password(self.username.clone(), self.password.clone()).await {
             Ok(AuthResult::Success) => {}

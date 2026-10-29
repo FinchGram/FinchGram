@@ -15,6 +15,16 @@ use std::path::{Path, PathBuf};
 const WRAPPERS: &[&str] = &["sh", "bash", "zsh", "dash", "fish", "env"];
 /// How far up the parents to look for the program behind the bridge.
 const ANCESTORS: usize = 6;
+/// Programs that run whatever script they are given. The system names the interpreter, not the
+/// script (which is only an argument, and one the script can lie about through the interpreter's
+/// own switches and variables), so an answer kept for one would stand for every script anyone
+/// runs with it: theirs are kept for the run and the process only (`Host::kept`), as for a
+/// program the system would not name. By the file's name, with its version taken off:
+/// "python3.12", "Python" (the one inside Python.framework), "ruby3.3".
+const INTERPRETERS: &[&str] = &[
+    "node", "nodejs", "bun", "deno", "electron", "python", "pythonw", "ruby", "perl", "php", "java", "osascript", "lua", "luajit", "tclsh", "wish", "rscript", "julia", "pwsh",
+    "powershell", "dotnet",
+];
 
 /// A program's code signature, as the system validated it, under a certificate Apple issued to a
 /// team (Developer ID or the App Store). It is the same whatever the program's version and
@@ -101,10 +111,26 @@ impl Host {
         }
     }
 
-    /// The system named the program: its answer can be kept for next time.
+    /// The system named the program.
     pub fn identified(&self) -> bool {
         self.path.is_some()
     }
+
+    /// The user's answer about the program can be kept for next time: the system named it, and
+    /// it is not an interpreter (INTERPRETERS), whose name says nothing about the script it runs.
+    /// Otherwise the answer lasts for the run and this process only (access.rs).
+    pub fn kept(&self) -> bool {
+        self.path.as_ref().is_some_and(|path| !is_interpreter(path))
+    }
+}
+
+/// Whether `path` names one of INTERPRETERS: its file name in small letters, any version number
+/// at the end taken off.
+fn is_interpreter(path: &Path) -> bool {
+    let Some(name) = path.file_name().and_then(|name| name.to_str()) else { return false };
+    let name = name.to_ascii_lowercase();
+    let base = name.trim_end_matches(|c: char| c.is_ascii_digit() || c == '.');
+    INTERPRETERS.contains(&base)
 }
 
 /// The program behind `stream`: the process that connected, unless that is our own bridge or a
@@ -188,13 +214,6 @@ mod system {
     use std::os::fd::AsRawFd;
     use std::os::unix::net::UnixStream;
     use std::path::PathBuf;
-    use std::ptr::NonNull;
-
-    use objc2_core_foundation::{CFDictionary, CFNumber, CFNumberType, CFRetained, CFString, CFType};
-    use objc2_security::{
-        SecCSFlags, SecCode, SecRequirement, SecStaticCode, errSecSuccess, kSecCSSigningInformation, kSecCodeInfoIdentifier,
-        kSecCodeInfoTeamIdentifier, kSecGuestAttributePid,
-    };
 
     use super::Signature;
 
@@ -209,12 +228,6 @@ mod system {
     const PROC_PIDTBSDINFO: i32 = 3;
     /// PROC_PIDPATHINFO_MAXSIZE: four times MAXPATHLEN.
     const PATH_BUFFER: usize = 4 * 1024;
-    /// What a signature must meet to be believed: a certificate chain to Apple's root, which is a
-    /// Developer ID, an App Store or Apple's own certificate; the framework then holds the team in
-    /// the signature to the one in the certificate. Without this, a signature under a self-made
-    /// certificate, or none at all (ad hoc), passes as valid and could name any team and
-    /// identifier it likes.
-    const APPLE_ISSUED: &str = "anchor apple generic";
 
     /// libproc's proc_bsdinfo, as far as its parent process id.
     #[repr(C)]
@@ -288,51 +301,11 @@ mod system {
         Some(bsd_info(pid)?.pbi_start_tvsec)
     }
 
-    /// The code signature of the process `pid`, validated under APPLE_ISSUED: its identifier and,
-    /// when the certificate names one, its team. None for a program without such a signature, or
-    /// one that is gone.
+    /// The code signature of the process `pid`, as the system validates it under a certificate
+    /// Apple issued (src/platform/): its identifier and, when the certificate names one, its team.
+    /// None for a program without such a signature, or one that is gone.
     pub fn signing_of(pid: i32) -> Option<(String, Option<String>)> {
-        // SAFETY: `pid` is an i32, which is what SInt32Type reads; CFNumber copies the value.
-        let number = unsafe { CFNumber::new(None, CFNumberType::SInt32Type, std::ptr::from_ref(&pid).cast()) }?;
-        // SAFETY: the framework's constant is only read.
-        let attributes = CFDictionary::<CFString, CFType>::from_slices(&[unsafe { kSecGuestAttributePid }], &[AsRef::<CFType>::as_ref(&*number)]);
-        let mut code: *mut SecCode = std::ptr::null_mut();
-        // SAFETY: the attributes name a process, as the framework documents; `code` is where it
-        // puts its answer.
-        let status = unsafe { SecCode::copy_guest_with_attributes(None, Some(attributes.as_opaque()), SecCSFlags::DefaultFlags, NonNull::from(&mut code)) };
-        if status != errSecSuccess {
-            return None;
-        }
-        // SAFETY: the framework handed over one reference, which is ours to release.
-        let code: CFRetained<SecCode> = unsafe { CFRetained::from_raw(NonNull::new(code)?) };
-        let text = CFString::from_str(APPLE_ISSUED);
-        let mut requirement: *mut SecRequirement = std::ptr::null_mut();
-        // SAFETY: a requirement in the framework's own language; `requirement` is where it goes.
-        let status = unsafe { SecRequirement::create_with_string(&text, SecCSFlags::DefaultFlags, NonNull::from(&mut requirement)) };
-        if status != errSecSuccess {
-            return None;
-        }
-        // SAFETY: as above, one reference that is ours.
-        let requirement: CFRetained<SecRequirement> = unsafe { CFRetained::from_raw(NonNull::new(requirement)?) };
-        // SAFETY: both are valid objects from the calls above.
-        if unsafe { code.check_validity(SecCSFlags::DefaultFlags, Some(&*requirement)) } != errSecSuccess {
-            return None;
-        }
-        let mut information: *const CFDictionary = std::ptr::null();
-        // The team comes with the certificates (kSecCSSigningInformation), not with the basic facts.
-        let wanted = SecCSFlags(kSecCSSigningInformation);
-        // SAFETY: a SecCode is a SecStaticCode as well, the framework says ("SecCodeRef is a
-        // subtype of SecStaticCodeRef"); `information` is where the dictionary goes.
-        let status = unsafe { SecCode::copy_signing_information(CFRetained::as_ptr(&code).cast::<SecStaticCode>().as_ref(), wanted, NonNull::from(&mut information)) };
-        if status != errSecSuccess {
-            return None;
-        }
-        // SAFETY: one reference that is ours; the dictionary's keys are strings, its values vary.
-        let information: CFRetained<CFDictionary<CFType, CFType>> = unsafe { CFRetained::from_raw(NonNull::new(information.cast_mut())?.cast()) };
-        let text_of = |key: &CFString| information.get(AsRef::<CFType>::as_ref(key)).and_then(|value| value.downcast::<CFString>().ok()).map(|value| value.to_string());
-        // SAFETY: the framework's constants are only read.
-        let (identifier, team) = unsafe { (text_of(kSecCodeInfoIdentifier), text_of(kSecCodeInfoTeamIdentifier)) };
-        Some((identifier?, team))
+        crate::platform::code_signature(pid)
     }
 
     /// The signature a program's answer is remembered by: one from a team.
@@ -397,6 +370,36 @@ mod tests {
         assert_eq!(program_name(Path::new("/opt/homebrew/bin/node")), "node");
         assert_eq!(program_name(Path::new("/Users/x/tools/3.0")), "tools");
         assert_eq!(program_name(Path::new("/")), "program");
+    }
+
+    #[test]
+    fn an_interpreters_answer_is_not_kept_whatever_its_signature() {
+        for path in [
+            "/opt/homebrew/bin/node",
+            "/usr/local/bin/node",
+            "/opt/homebrew/Cellar/python@3.12/3.12.4/Frameworks/Python.framework/Versions/3.12/Resources/Python.app/Contents/MacOS/Python",
+            "/usr/bin/python3",
+            "/opt/homebrew/bin/python3.12",
+            "/opt/homebrew/opt/ruby/bin/ruby",
+            "/Users/x/.bun/bin/bun",
+            "/usr/bin/osascript",
+            "/usr/bin/java",
+            "/opt/homebrew/bin/php8.3",
+            "/Users/x/project/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
+        ] {
+            assert!(is_interpreter(Path::new(path)), "{path}");
+            let host = Host { pid: 20, path: Some(PathBuf::from(path)), signature: None, started: 5 };
+            assert!(host.identified() && !host.kept(), "{path}");
+        }
+        // Signed by a team or not, the interpreter is still the interpreter.
+        let signed = Signature { team: "HHGW6JJ4A4".into(), identifier: "node".into() };
+        let node = Host { pid: 21, path: Some(PathBuf::from("/usr/local/bin/node")), signature: Some(signed), started: 5 };
+        assert!(!node.kept());
+        for path in ["/Applications/Claude.app/Contents/MacOS/Claude", "/Users/x/.local/share/claude/versions/2.1.306", "/Users/x/bin/nodeish", "/usr/bin/javac", "/opt/homebrew/bin/node-gyp"] {
+            assert!(!is_interpreter(Path::new(path)), "{path}");
+            assert!(Host { pid: 22, path: Some(PathBuf::from(path)), signature: None, started: 5 }.kept(), "{path}");
+        }
+        assert!(!Host { pid: 23, path: None, signature: None, started: 5 }.kept());
     }
 
     #[test]

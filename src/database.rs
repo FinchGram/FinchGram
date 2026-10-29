@@ -4,7 +4,7 @@
 //! only those) nor Telegram's (that is TDLib's database): the servers of the downloads page with
 //! their passwords and whether the user allows changes on each, the programs the user has allowed
 //! or turned away at AI access, the keys of the SSH servers the user trusted, with when, and the
-//! app's own credentials that are no server's (the OpenAI key of voice input). Only
+//! app's own credentials that are no server's (the keys of voice input's AI vendors). Only
 //! the password column (and a credential's value) is sealed
 //! (AES-256-GCM, `cipher` below) under
 //! a random key made the first time and kept in the Keychain under FinchGram's name
@@ -13,12 +13,17 @@
 //! A password is sealed to its server (protocol, address, port and account are the seal's
 //! additional data), so that the sealed text copied into a row that names another server does
 //! not open there: a program that can write the file could otherwise point a server at itself and
-//! have the app send it the password. The rows of the programs allowed carry a tag under the same
-//! key (`seal`), so that a row written by anything but FinchGram, or changed since, is not
-//! believed: the user is asked about the program as if it were new. The SSH servers' keys carry
-//! a tag the same way, over the host, the port, the key and the day, so that a key swapped in
-//! the file is a key not trusted. The AI access settings in settings.toml carry one too
-//! (`settings::Mcp::seal`, checked by src/mcp/access.rs), under the key drawn here (`tag`).
+//! have the app send it the password. A credential is sealed to its name and to what its owner
+//! binds it to, an AI vendor's API format and address (src/speech/mod.rs), for the same reason:
+//! the address is in settings.toml, and a program that can write that file could otherwise point
+//! the vendor at a server of its own and have the app send the key there. The rows of the
+//! programs allowed carry a tag under the same key (`seal`), over the program, the answer and the
+//! Telegram account the answer was given for, so that a row written by anything but FinchGram,
+//! changed since, or kept from another account's time, is not believed: the user is asked about
+//! the program as if it were new. The SSH servers' keys carry a tag the same way, over the host,
+//! the port, the key and the day, so that a key swapped in the file is a key not trusted. The AI
+//! access settings in settings.toml carry one too (`settings::Mcp::seal`, checked by
+//! src/mcp/access.rs), under the key drawn here (`tag`).
 //!
 //! The layout is numbered: SQLite's `PRAGMA user_version` holds LAYOUT, counted up with every
 //! change to a table, each change with its step in `upgrade`. A file from an older FinchGram is
@@ -53,7 +58,13 @@ const KEY_ACCOUNT: &str = "database";
 ///    and upload on the server (the design's ninth round); off for every server of before.
 /// 5 (after 0.6.3): `credentials`, the app's own secrets that are no server's, each value sealed
 ///    to its name: the OpenAI key of voice input (src/speech/, docs/voice-input.md).
-pub const LAYOUT: i32 = 5;
+/// 6 (after 0.7.5): a credential's value sealed to its name and to what its owner binds it to (an
+///    AI vendor's key to the vendor's API format and address, src/speech/mod.rs); the values of
+///    layout 5 are sealed again that way by their owner at the first start, and only then
+///    (`unbound_credential`). The programs' rows tagged for the Telegram account they were
+///    allowed for; the rows of before dropped, since they name none (every program asks again,
+///    once).
+pub const LAYOUT: i32 = 6;
 
 /// The tables of layout 1, as 0.6.0 made them.
 const TABLES_OF_LAYOUT_1: &str = "CREATE TABLE IF NOT EXISTS servers (
@@ -86,6 +97,9 @@ const SQLITE_HEADER: &[u8; 16] = b"SQLite format 3\0";
 thread_local! {
     static DATABASE: RefCell<Option<Connection>> = const { RefCell::new(None) };
     static KEY: RefCell<Option<[u8; 32]>> = const { RefCell::new(None) };
+    /// The layout the file had when this run opened it, when that was an older one: for the owner
+    /// of a credential to seal it again (`unbound_credential`), this once.
+    static UPGRADED_FROM: std::cell::Cell<Option<i32>> = const { std::cell::Cell::new(None) };
 }
 
 /// A server of the downloads page, as the user named it (docs/downloads.md).
@@ -139,10 +153,12 @@ pub struct McpApp {
 }
 
 impl McpApp {
-    /// What the row's tag is over: what it is remembered by, and the answer. Where it is, its
-    /// name and when it was last used are only shown.
-    fn sealed_text(&self) -> String {
-        format!("mcp_app\0{}\0{}", self.key, u8::from(self.allowed))
+    /// What the row's tag is over: what it is remembered by, the answer, and the Telegram account
+    /// the answer was given for (`settings::Mcp::account`), so that a row kept from before
+    /// another account signed in does not stand for this one. Where it is, its name and when it
+    /// was last used are only shown.
+    fn sealed_text(&self, account: i64) -> String {
+        format!("mcp_app\0{}\0{}\0{account}", self.key, u8::from(self.allowed))
     }
 }
 
@@ -154,15 +170,23 @@ pub fn open() -> Result<(), String> {
     let path = file().ok_or("the system has no folder for FinchGram's database")?;
     let key = key()?;
     let backup = backup_folder().ok_or("the system has no Documents folder for FinchGram's backups")?;
-    let connection = open_at(&path, &key, &backup)?;
+    let (connection, upgraded_from) = open_at_noting(&path, &key, &backup)?;
     DATABASE.with(|slot| *slot.borrow_mut() = Some(connection));
     KEY.with(|slot| *slot.borrow_mut() = Some(key));
+    UPGRADED_FROM.with(|slot| slot.set(upgraded_from));
     Ok(())
 }
 
 /// Whether the database is open, its key at hand.
 pub fn is_open() -> bool {
     KEY.with(|slot| slot.borrow().is_some())
+}
+
+/// The layout the file had when this run opened it, when that was an older one than LAYOUT:
+/// this is the first start with this FinchGram, and what a step could not seal again itself is
+/// sealed again now by its owner. None for a file that was at LAYOUT, or new.
+pub fn upgraded_from() -> Option<i32> {
+    UPGRADED_FROM.with(|slot| slot.get())
 }
 
 /// The tag of `text` under the key only this app has (`cipher::tag`), for what is kept outside
@@ -207,8 +231,9 @@ fn decode_key(encoded: &str) -> Result<[u8; 32], String> {
 }
 
 /// `path` opened, made when it is not there, brought up to LAYOUT when it is older (a copy of it
-/// in `backup` first), refused when it is newer or not a database.
-fn open_at(path: &Path, key: &[u8; 32], backup: &Path) -> Result<Connection, String> {
+/// in `backup` first), refused when it is newer or not a database; and the layout it was brought
+/// up from, when it was an older one.
+fn open_at_noting(path: &Path, key: &[u8; 32], backup: &Path) -> Result<(Connection, Option<i32>), String> {
     if let Some(folder) = path.parent() {
         std::fs::create_dir_all(folder).map_err(|err| format!("cannot create {}: {err}", folder.display()))?;
     }
@@ -222,7 +247,7 @@ fn open_at(path: &Path, key: &[u8; 32], backup: &Path) -> Result<Connection, Str
     if tables == 0 {
         // A new file: the newest layout at once.
         upgrade(&connection, 0, key)?;
-        return Ok(connection);
+        return Ok((connection, None));
     }
     if version > LAYOUT {
         return Err(format!("{} was made by a newer FinchGram (layout {version}; this one knows {LAYOUT}): update FinchGram to use it", path.display()));
@@ -230,8 +255,9 @@ fn open_at(path: &Path, key: &[u8; 32], backup: &Path) -> Result<Connection, Str
     if version < LAYOUT {
         copy_aside(&connection, path, backup, &format!("layout-{version}"))?;
         upgrade(&connection, version, key)?;
+        return Ok((connection, Some(version)));
     }
-    Ok(connection)
+    Ok((connection, None))
 }
 
 /// The file of 0.5.9 and before, encrypted as a whole: moved into `backup` with its journal,
@@ -309,6 +335,15 @@ fn upgrade(connection: &Connection, from: i32, key: &[u8; 32]) -> Result<(), Str
                     connection
                         .execute_batch("CREATE TABLE IF NOT EXISTS credentials (name TEXT PRIMARY KEY, value TEXT NOT NULL);")
                         .map_err(|err| err.to_string())
+                }
+                6 => {
+                    // The programs' rows are tagged for a Telegram account from here on; the rows
+                    // of before name none and would not be believed, so they go: each program
+                    // asks again, once. The credentials stay as they are, sealed to their names
+                    // alone: what each is bound to besides (an AI vendor's format and address)
+                    // is in settings.toml, which the owner reads, so the owner seals them again
+                    // at this start (`unbound_credential`).
+                    connection.execute_batch("DELETE FROM mcp_apps;").map_err(|err| err.to_string())
                 }
                 _ => Err(format!("no step to layout {to}")),
             }
@@ -537,12 +572,15 @@ fn write_servers(connection: &Connection, servers: &[ServerRecord]) -> rusqlite:
 
 // ---- the credentials ---------------------------------------------------------------------------
 
-/// A secret of the app's own that is no server's, by its name: the OpenAI key of voice input
-/// (src/speech/, "openai_api_key"). Sealed to its name, so that a sealed text copied into a row of
-/// another name does not open there. None when there is none, or it cannot be opened.
-pub fn credential(name: &str) -> Option<String> {
+/// A secret of the app's own that is no server's, by its name: the key of one of voice input's AI
+/// vendors (src/speech/mod.rs, "voice_input.connection.<id>"). Sealed to its name and to
+/// `binding`, what its owner binds it to (the vendor's API format and address), so that a sealed
+/// text copied into a row of another name does not open there, and one whose vendor was pointed
+/// at another address in settings.toml does not open either: the key is not sent there. None when
+/// there is none, or it cannot be opened.
+pub fn credential(name: &str, binding: &str) -> Option<String> {
     let key = sealing_key()?;
-    match with(|connection| read_credential(connection, &key, name)) {
+    match with(|connection| read_credential(connection, &key, name, binding)) {
         Ok(secret) => secret,
         Err(err) => {
             eprintln!("database: cannot read the credential {name}: {err}");
@@ -551,13 +589,32 @@ pub fn credential(name: &str) -> Option<String> {
     }
 }
 
-/// Keep `secret` under `name`, in place of what was there; an empty secret removes the row.
-pub fn save_credential(name: &str, secret: &str) -> Result<(), String> {
+/// A credential as layout 5 sealed it, to its name alone: for its owner to seal it again, bound,
+/// at the first start that brought the file up from that layout, and never after. None at any
+/// other time, whatever the row holds: a value of the old form put back into the file later is
+/// not opened, so that it cannot be sealed again to an address of someone else's choosing.
+pub fn unbound_credential(name: &str) -> Option<String> {
+    if !upgraded_from().is_some_and(|from| from < 6) {
+        return None;
+    }
+    let key = sealing_key()?;
+    match with(|connection| read_unbound_credential(connection, &key, name)) {
+        Ok(secret) => secret,
+        Err(err) => {
+            eprintln!("database: cannot read the credential {name} of layout 5: {err}");
+            None
+        }
+    }
+}
+
+/// Keep `secret` under `name`, sealed to it and to `binding`, in place of what was there; an
+/// empty secret removes the row.
+pub fn save_credential(name: &str, binding: &str, secret: &str) -> Result<(), String> {
     if secret.is_empty() {
         return remove_credential(name);
     }
     let key = sealing_key().ok_or("the database is not open")?;
-    let sealed = cipher::seal(&key, &credential_binding(name), secret)?;
+    let sealed = cipher::seal(&key, &credential_binding(name, binding), secret)?;
     with(|connection| write_credential(connection, name, &sealed))
 }
 
@@ -565,14 +622,27 @@ pub fn remove_credential(name: &str) -> Result<(), String> {
     with(|connection| connection.execute("DELETE FROM credentials WHERE name = ?1", params![name]).map(|_| ()))
 }
 
-/// What a credential's secret is sealed to: its name.
-fn credential_binding(name: &str) -> String {
+/// What a credential's secret is sealed to: its name, and what its owner binds it to.
+fn credential_binding(name: &str, binding: &str) -> String {
+    format!("credential\0{name}\0{binding}")
+}
+
+/// What layout 5 sealed a credential's secret to: its name alone.
+fn credential_binding_of_layout_5(name: &str) -> String {
     format!("credential\0{name}")
 }
 
-fn read_credential(connection: &Connection, key: &[u8; 32], name: &str) -> rusqlite::Result<Option<String>> {
+fn read_credential(connection: &Connection, key: &[u8; 32], name: &str, binding: &str) -> rusqlite::Result<Option<String>> {
+    read_credential_bound(connection, key, name, &credential_binding(name, binding))
+}
+
+fn read_unbound_credential(connection: &Connection, key: &[u8; 32], name: &str) -> rusqlite::Result<Option<String>> {
+    read_credential_bound(connection, key, name, &credential_binding_of_layout_5(name))
+}
+
+fn read_credential_bound(connection: &Connection, key: &[u8; 32], name: &str, binding: &str) -> rusqlite::Result<Option<String>> {
     let sealed: Option<String> = connection.query_row("SELECT value FROM credentials WHERE name = ?1", params![name], |row| row.get(0)).optional()?;
-    Ok(sealed.and_then(|sealed| match cipher::open(key, &credential_binding(name), &sealed) {
+    Ok(sealed.and_then(|sealed| match cipher::open(key, binding, &sealed) {
         Ok(secret) if !secret.is_empty() => Some(secret),
         Ok(_) => None,
         Err(err) => {
@@ -662,11 +732,12 @@ fn delete_ssh_host(connection: &Connection, host: &str, port: u16) -> rusqlite::
 
 // ---- the programs at AI access -----------------------------------------------------------------
 
-/// The programs that have connected to the MCP server, in the order they first did; a row that
-/// is not FinchGram's as it wrote it is left out.
-pub fn mcp_apps() -> Vec<McpApp> {
+/// The programs that have connected to the MCP server while the Telegram account `account` was
+/// the one the settings are for, in the order they first did; a row that is not FinchGram's as
+/// it wrote it, for this account, is left out.
+pub fn mcp_apps(account: i64) -> Vec<McpApp> {
     let Some(sealing) = sealing_key() else { return Vec::new() };
-    match with(|connection| read_mcp_apps(connection, &sealing)) {
+    match with(|connection| read_mcp_apps(connection, &sealing, account)) {
         Ok(apps) => apps,
         Err(err) => {
             eprintln!("database: cannot read the programs: {err}");
@@ -675,20 +746,21 @@ pub fn mcp_apps() -> Vec<McpApp> {
     }
 }
 
-/// The program remembered by `key`, if it has connected before; none for a row that is not
-/// FinchGram's as it wrote it, so the program is asked about as if it were new.
-pub fn mcp_app(key: &str) -> Option<McpApp> {
+/// The program remembered by `key`, if it has connected before, for the account `account`; none
+/// for a row that is not FinchGram's as it wrote it for this account, so the program is asked
+/// about as if it were new.
+pub fn mcp_app(key: &str, account: i64) -> Option<McpApp> {
     let sealing = sealing_key()?;
-    with(|connection| read_mcp_app(connection, &sealing, key)).unwrap_or_else(|err| {
+    with(|connection| read_mcp_app(connection, &sealing, key, account)).unwrap_or_else(|err| {
         eprintln!("database: cannot read a program: {err}");
         None
     })
 }
 
-/// Keep `app`, in place of what was kept under its key.
-pub fn save_mcp_app(app: &McpApp) -> Result<(), String> {
+/// Keep `app`, answered for the account `account`, in place of what was kept under its key.
+pub fn save_mcp_app(app: &McpApp, account: i64) -> Result<(), String> {
     let sealing = sealing_key().ok_or("the database is not open")?;
-    with(|connection| write_mcp_app(connection, &sealing, app))
+    with(|connection| write_mcp_app(connection, &sealing, app, account))
 }
 
 /// Forget the program remembered by `key`; nothing happens when there is none.
@@ -701,33 +773,34 @@ pub fn clear_mcp_apps() -> Result<(), String> {
     with(|connection| connection.execute("DELETE FROM mcp_apps", []).map(|_| ()))
 }
 
-fn read_mcp_apps(connection: &Connection, sealing: &[u8; 32]) -> rusqlite::Result<Vec<McpApp>> {
+fn read_mcp_apps(connection: &Connection, sealing: &[u8; 32], account: i64) -> rusqlite::Result<Vec<McpApp>> {
     let mut statement = connection.prepare("SELECT key, path, name, allowed, last_used, seal FROM mcp_apps ORDER BY rowid")?;
     let rows: Vec<(McpApp, String)> = statement.query_map([], mcp_app_row)?.collect::<rusqlite::Result<_>>()?;
-    Ok(rows.into_iter().filter_map(|row| believed(sealing, row)).collect())
+    Ok(rows.into_iter().filter_map(|row| believed(sealing, row, account)).collect())
 }
 
-fn read_mcp_app(connection: &Connection, sealing: &[u8; 32], key: &str) -> rusqlite::Result<Option<McpApp>> {
+fn read_mcp_app(connection: &Connection, sealing: &[u8; 32], key: &str, account: i64) -> rusqlite::Result<Option<McpApp>> {
     let row = connection.query_row("SELECT key, path, name, allowed, last_used, seal FROM mcp_apps WHERE key = ?1", params![key], mcp_app_row).optional()?;
-    Ok(row.and_then(|row| believed(sealing, row)))
+    Ok(row.and_then(|row| believed(sealing, row, account)))
 }
 
 fn mcp_app_row(row: &rusqlite::Row) -> rusqlite::Result<(McpApp, String)> {
     Ok((McpApp { key: row.get(0)?, path: row.get(1)?, name: row.get(2)?, allowed: row.get::<_, i64>(3)? != 0, last_used: row.get(4)? }, row.get(5)?))
 }
 
-/// The row when it is FinchGram's as it wrote it: its tag is the row's under the key only this app
-/// has. One written by anything else, or with its answer turned since, is not.
-fn believed(sealing: &[u8; 32], (app, seal): (McpApp, String)) -> Option<McpApp> {
-    if cipher::tag_matches(sealing, &app.sealed_text(), &seal) {
+/// The row when it is FinchGram's as it wrote it for the account `account`: its tag is the row's
+/// under the key only this app has. One written by anything else, with its answer turned since,
+/// or kept from another account's time, is not.
+fn believed(sealing: &[u8; 32], (app, seal): (McpApp, String), account: i64) -> Option<McpApp> {
+    if cipher::tag_matches(sealing, &app.sealed_text(account), &seal) {
         return Some(app);
     }
-    eprintln!("database: the row of the program {} was not written by FinchGram, or was changed since: not believed", app.key);
+    eprintln!("database: the row of the program {} was not written by FinchGram for this account, or was changed since: not believed", app.key);
     None
 }
 
-fn write_mcp_app(connection: &Connection, sealing: &[u8; 32], app: &McpApp) -> rusqlite::Result<()> {
-    let seal = cipher::tag(sealing, &app.sealed_text());
+fn write_mcp_app(connection: &Connection, sealing: &[u8; 32], app: &McpApp, account: i64) -> rusqlite::Result<()> {
+    let seal = cipher::tag(sealing, &app.sealed_text(account));
     connection
         .execute(
             "INSERT INTO mcp_apps (key, path, name, allowed, last_used, seal) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
@@ -750,6 +823,11 @@ mod tests {
 
     fn a_key(byte: u8) -> [u8; 32] {
         [byte; 32]
+    }
+
+    /// The file opened or made, as `open_at_noting`, without the layout it came from.
+    fn open_at(path: &Path, key: &[u8; 32], backup: &Path) -> Result<Connection, String> {
+        open_at_noting(path, key, backup).map(|(connection, _)| connection)
     }
 
     fn a_server(name: &str, password: &str) -> ServerRecord {
@@ -779,6 +857,22 @@ mod tests {
         connection.execute_batch("PRAGMA user_version = 1;").expect("stamped");
     }
 
+    /// A file as 0.7.5 left it: layout 5, a credential sealed to its name alone, and a program
+    /// allowed, its row tagged without an account.
+    fn layout_five(path: &Path, key: &[u8; 32]) {
+        let connection = open_at(path, key, &path.with_file_name("unused-backup")).expect("a new file");
+        connection
+            .execute("INSERT INTO credentials (name, value) VALUES ('voice_input.connection.1', ?1)", params![cipher::seal(key, &credential_binding_of_layout_5("voice_input.connection.1"), "sk-live-1234").expect("sealed")])
+            .expect("a credential");
+        connection
+            .execute(
+                "INSERT INTO mcp_apps (key, path, name, allowed, last_used, seal) VALUES ('Q6L2SF6YDW/com.anthropic.claude-code', '/x', 'claude', 1, 10, ?1)",
+                params![cipher::tag(key, "mcp_app\0Q6L2SF6YDW/com.anthropic.claude-code\x001")],
+            )
+            .expect("a program");
+        connection.execute_batch("PRAGMA user_version = 5;").expect("stamped");
+    }
+
     #[test]
     fn a_new_file_gets_the_newest_layout_and_no_backup() {
         let (path, backup) = scratch("new");
@@ -786,12 +880,13 @@ mod tests {
         let version: i32 = connection.query_row("PRAGMA user_version", [], |row| row.get(0)).expect("version");
         assert_eq!(version, LAYOUT);
         assert_eq!(read_servers(&connection, &a_key(1)).expect("read"), vec![]);
-        assert_eq!(read_mcp_apps(&connection, &a_key(1)).expect("read"), vec![]);
+        assert_eq!(read_mcp_apps(&connection, &a_key(1), 0).expect("read"), vec![]);
         assert!(!backup.exists());
         drop(connection);
-        // Opened again, it is the same layout, and still nothing is copied.
-        let connection = open_at(&path, &a_key(1), &backup).expect("opened again");
+        // Opened again, it is the same layout, nothing is copied, and it was brought up from nothing.
+        let (connection, upgraded_from) = open_at_noting(&path, &a_key(1), &backup).expect("opened again");
         assert_eq!(connection.query_row("PRAGMA user_version", [], |row| row.get::<_, i32>(0)).expect("version"), LAYOUT);
+        assert_eq!(upgraded_from, None);
         assert!(!backup.exists());
         let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
     }
@@ -912,8 +1007,9 @@ mod tests {
         let (path, backup) = scratch("older");
         let key = a_key(8);
         layout_one(&path, &key);
-        let connection = open_at(&path, &key, &backup).expect("brought up");
+        let (connection, upgraded_from) = open_at_noting(&path, &key, &backup).expect("brought up");
         assert_eq!(connection.query_row("PRAGMA user_version", [], |row| row.get::<_, i32>(0)).expect("version"), LAYOUT);
+        assert_eq!(upgraded_from, Some(1));
         // The password is sealed to its server now, and opens; changes on the server stay off
         // until the user allows them.
         let servers = read_servers(&connection, &key).expect("read");
@@ -921,7 +1017,7 @@ mod tests {
         let stored: String = connection.query_row("SELECT password FROM servers", [], |row| row.get(0)).expect("the column");
         assert!(stored.starts_with("v2:"), "{stored}");
         // The programs of before are not carried over: nothing vouches for their rows.
-        assert_eq!(read_mcp_apps(&connection, &key).expect("read"), vec![]);
+        assert_eq!(read_mcp_apps(&connection, &key, 0).expect("read"), vec![]);
         assert_eq!(connection.query_row("SELECT count(*) FROM mcp_apps", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
         // A server's key taken on by 0.6.2, without the user's look at it, is not carried over:
         // the server shows its key once more.
@@ -947,6 +1043,30 @@ mod tests {
     }
 
     #[test]
+    fn layout_five_keeps_its_credentials_for_their_owner_to_seal_again_and_drops_the_programs() {
+        let (path, backup) = scratch("layout-five");
+        let key = a_key(18);
+        layout_five(&path, &key);
+        let (connection, upgraded_from) = open_at_noting(&path, &key, &backup).expect("brought up");
+        assert_eq!(upgraded_from, Some(5));
+        assert_eq!(connection.query_row("PRAGMA user_version", [], |row| row.get::<_, i32>(0)).expect("version"), LAYOUT);
+        // The credential is still there, sealed to its name alone: it opens for the step that
+        // seals it again, and not as a bound credential.
+        assert_eq!(read_unbound_credential(&connection, &key, "voice_input.connection.1").expect("read"), Some("sk-live-1234".to_string()));
+        assert_eq!(read_credential(&connection, &key, "voice_input.connection.1", "openai\0").expect("read"), None);
+        // Sealed again by its owner, it opens bound and no longer unbound.
+        let bound = cipher::seal(&key, &credential_binding("voice_input.connection.1", "openai\0"), "sk-live-1234").expect("sealed");
+        write_credential(&connection, "voice_input.connection.1", &bound).expect("written");
+        assert_eq!(read_credential(&connection, &key, "voice_input.connection.1", "openai\0").expect("read"), Some("sk-live-1234".to_string()));
+        assert_eq!(read_unbound_credential(&connection, &key, "voice_input.connection.1").expect("read"), None);
+        // The program allowed under layout 5 is gone: its row named no account.
+        assert_eq!(connection.query_row("SELECT count(*) FROM mcp_apps", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
+        assert_eq!(std::fs::read_dir(&backup).expect("the backup folder").count(), 1);
+        drop(connection);
+        let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
+    }
+
+    #[test]
     fn a_password_of_layout_one_under_a_key_that_is_gone_is_left_empty() {
         let (path, backup) = scratch("older-key");
         layout_one(&path, &a_key(13));
@@ -960,8 +1080,9 @@ mod tests {
     fn programs_are_kept_by_their_key_and_forgotten_one_by_one_or_all_at_once() {
         let (path, backup) = scratch("apps");
         let key = a_key(9);
+        let account = 777_000_001;
         let connection = open_at(&path, &key, &backup).expect("a new database");
-        assert_eq!(read_mcp_apps(&connection, &key).expect("read"), vec![]);
+        assert_eq!(read_mcp_apps(&connection, &key, account).expect("read"), vec![]);
         let claude = McpApp {
             key: "Q6L2SF6YDW/com.anthropic.claudefordesktop".into(),
             path: "/Applications/Claude.app".into(),
@@ -976,20 +1097,24 @@ mod tests {
             allowed: false,
             last_used: 0,
         };
-        write_mcp_app(&connection, &key, &claude).expect("write");
-        write_mcp_app(&connection, &key, &code).expect("write");
-        assert_eq!(read_mcp_apps(&connection, &key).expect("read"), vec![claude.clone(), code.clone()]);
+        write_mcp_app(&connection, &key, &claude, account).expect("write");
+        write_mcp_app(&connection, &key, &code, account).expect("write");
+        assert_eq!(read_mcp_apps(&connection, &key, account).expect("read"), vec![claude.clone(), code.clone()]);
         // Again under the same key, from another copy of the program: the one record, brought up
         // to date, where it is now included.
         let elsewhere = "/Users/x/.vscode/extensions/anthropic.claude-code-2.1.305-darwin-arm64/resources/native-binary/claude";
         let used = McpApp { path: elsewhere.into(), last_used: 20, ..code.clone() };
-        write_mcp_app(&connection, &key, &used).expect("write again");
-        assert_eq!(read_mcp_app(&connection, &key, &code.key).expect("read one"), Some(used));
-        assert_eq!(read_mcp_app(&connection, &key, "/nowhere").expect("read none"), None);
+        write_mcp_app(&connection, &key, &used, account).expect("write again");
+        assert_eq!(read_mcp_app(&connection, &key, &code.key, account).expect("read one"), Some(used));
+        assert_eq!(read_mcp_app(&connection, &key, "/nowhere", account).expect("read none"), None);
+        // For another account, the rows are not answers: a row kept from one account's time and
+        // put back after another signed in stands for nothing.
+        assert_eq!(read_mcp_app(&connection, &key, &code.key, 777_000_002).expect("read"), None);
+        assert_eq!(read_mcp_apps(&connection, &key, 777_000_002).expect("read"), vec![]);
         connection.execute("DELETE FROM mcp_apps WHERE key = ?1", params![code.key]).expect("remove");
-        assert_eq!(read_mcp_apps(&connection, &key).expect("read").len(), 1);
+        assert_eq!(read_mcp_apps(&connection, &key, account).expect("read").len(), 1);
         connection.execute("DELETE FROM mcp_apps", []).expect("clear");
-        assert_eq!(read_mcp_apps(&connection, &key).expect("read"), vec![]);
+        assert_eq!(read_mcp_apps(&connection, &key, account).expect("read"), vec![]);
         drop(connection);
         let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
     }
@@ -998,30 +1123,31 @@ mod tests {
     fn a_programs_row_written_by_anything_else_or_turned_since_is_not_believed() {
         let (path, backup) = scratch("apps-forged");
         let key = a_key(15);
+        let account = 777_000_001;
         let connection = open_at(&path, &key, &backup).expect("a new database");
         let code = McpApp { key: "Q6L2SF6YDW/com.anthropic.claude-code".into(), path: "/x".into(), name: "claude".into(), allowed: false, last_used: 0 };
-        write_mcp_app(&connection, &key, &code).expect("write");
+        write_mcp_app(&connection, &key, &code, account).expect("write");
         // A row another program put into the file, allowing itself: not FinchGram's.
         connection
             .execute("INSERT INTO mcp_apps (key, path, name, allowed, last_used, seal) VALUES ('/Users/x/evil', '/Users/x/evil', 'evil', 1, 0, '')", [])
             .expect("a forged row");
         connection
-            .execute("INSERT INTO mcp_apps (key, path, name, allowed, last_used, seal) VALUES ('/Users/x/evil2', '/Users/x/evil2', 'evil', 1, 0, ?1)", params![cipher::tag(&a_key(16), "mcp_app\0/Users/x/evil2\x001")])
+            .execute("INSERT INTO mcp_apps (key, path, name, allowed, last_used, seal) VALUES ('/Users/x/evil2', '/Users/x/evil2', 'evil', 1, 0, ?1)", params![cipher::tag(&a_key(16), "mcp_app\0/Users/x/evil2\x001\x00777000001")])
             .expect("a forged row under a guessed key");
-        assert_eq!(read_mcp_app(&connection, &key, "/Users/x/evil").expect("read"), None);
-        assert_eq!(read_mcp_app(&connection, &key, "/Users/x/evil2").expect("read"), None);
-        assert_eq!(read_mcp_apps(&connection, &key).expect("read"), vec![code.clone()]);
+        assert_eq!(read_mcp_app(&connection, &key, "/Users/x/evil", account).expect("read"), None);
+        assert_eq!(read_mcp_app(&connection, &key, "/Users/x/evil2", account).expect("read"), None);
+        assert_eq!(read_mcp_apps(&connection, &key, account).expect("read"), vec![code.clone()]);
         // FinchGram's own row with its answer turned behind its back: not believed either, so the
         // program is asked about again.
         connection.execute("UPDATE mcp_apps SET allowed = 1 WHERE key = ?1", params![code.key]).expect("turned");
-        assert_eq!(read_mcp_app(&connection, &key, &code.key).expect("read"), None);
-        assert_eq!(read_mcp_apps(&connection, &key).expect("read"), vec![]);
+        assert_eq!(read_mcp_app(&connection, &key, &code.key, account).expect("read"), None);
+        assert_eq!(read_mcp_apps(&connection, &key, account).expect("read"), vec![]);
         // Where it is, its name and its last use are only shown: a change there is no forgery.
-        write_mcp_app(&connection, &key, &McpApp { allowed: true, ..code.clone() }).expect("allowed");
+        write_mcp_app(&connection, &key, &McpApp { allowed: true, ..code.clone() }, account).expect("allowed");
         connection.execute("UPDATE mcp_apps SET path = '/elsewhere', last_used = 99 WHERE key = ?1", params![code.key]).expect("moved");
-        assert_eq!(read_mcp_app(&connection, &key, &code.key).expect("read").map(|app| (app.allowed, app.path)), Some((true, "/elsewhere".to_string())));
+        assert_eq!(read_mcp_app(&connection, &key, &code.key, account).expect("read").map(|app| (app.allowed, app.path)), Some((true, "/elsewhere".to_string())));
         // The row's tag from one file does not carry its answer into another: the key differs.
-        assert_eq!(read_mcp_app(&connection, &a_key(17), &code.key).expect("read"), None);
+        assert_eq!(read_mcp_app(&connection, &a_key(17), &code.key, account).expect("read"), None);
         drop(connection);
         let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
     }
@@ -1060,28 +1186,36 @@ mod tests {
     }
 
     #[test]
-    fn a_credential_is_kept_by_its_name_and_opens_there_alone() {
+    fn a_credential_is_kept_by_its_name_and_opens_there_alone_bound_to_its_vendor() {
         let (path, backup) = scratch("credentials");
         let key = a_key(11);
+        let (name, vendor) = ("voice_input.connection.1", "openai\0https://relay.example/v1");
         let connection = open_at(&path, &key, &backup).expect("a new file");
-        assert_eq!(read_credential(&connection, &key, "openai_api_key").expect("read"), None);
-        let sealed = cipher::seal(&key, &credential_binding("openai_api_key"), "sk-live-1234").expect("sealed");
-        write_credential(&connection, "openai_api_key", &sealed).expect("written");
-        assert_eq!(read_credential(&connection, &key, "openai_api_key").expect("read"), Some("sk-live-1234".to_string()));
+        assert_eq!(read_credential(&connection, &key, name, vendor).expect("read"), None);
+        let sealed = cipher::seal(&key, &credential_binding(name, vendor), "sk-live-1234").expect("sealed");
+        write_credential(&connection, name, &sealed).expect("written");
+        assert_eq!(read_credential(&connection, &key, name, vendor).expect("read"), Some("sk-live-1234".to_string()));
         // Written again: the one row changes.
-        let again = cipher::seal(&key, &credential_binding("openai_api_key"), "sk-live-5678").expect("sealed");
-        write_credential(&connection, "openai_api_key", &again).expect("written");
-        assert_eq!(read_credential(&connection, &key, "openai_api_key").expect("read"), Some("sk-live-5678".to_string()));
+        let again = cipher::seal(&key, &credential_binding(name, vendor), "sk-live-5678").expect("sealed");
+        write_credential(&connection, name, &again).expect("written");
+        assert_eq!(read_credential(&connection, &key, name, vendor).expect("read"), Some("sk-live-5678".to_string()));
         assert_eq!(connection.query_row("SELECT count(*) FROM credentials", [], |row| row.get::<_, i64>(0)).expect("count"), 1);
         // The sealed text copied under another name does not open there, and under another key
         // not at all; the column holds no key in the clear.
         write_credential(&connection, "other", &again).expect("written");
-        assert_eq!(read_credential(&connection, &key, "other").expect("read"), None);
-        assert_eq!(read_credential(&connection, &a_key(12), "openai_api_key").expect("read"), None);
-        let stored: String = connection.query_row("SELECT value FROM credentials WHERE name = 'openai_api_key'", [], |row| row.get(0)).expect("the column");
+        assert_eq!(read_credential(&connection, &key, "other", vendor).expect("read"), None);
+        assert_eq!(read_credential(&connection, &a_key(12), name, vendor).expect("read"), None);
+        let stored: String = connection.query_row("SELECT value FROM credentials WHERE name = ?1", params![name], |row| row.get(0)).expect("the column");
         assert!(stored.starts_with("v2:") && !stored.contains("sk-live"), "{stored}");
-        connection.execute("DELETE FROM credentials WHERE name = ?1", params!["openai_api_key"]).expect("removed");
-        assert_eq!(read_credential(&connection, &key, "openai_api_key").expect("read"), None);
+        // The vendor pointed at another address, or given another format, in settings.toml: the
+        // key does not open, so it is not sent there.
+        assert_eq!(read_credential(&connection, &key, name, "openai\0https://evil.example/v1").expect("read"), None);
+        assert_eq!(read_credential(&connection, &key, name, "anthropic\0https://relay.example/v1").expect("read"), None);
+        assert_eq!(read_credential(&connection, &key, name, "openai\0").expect("read"), None);
+        // Nor does a bound credential open as one of layout 5.
+        assert_eq!(read_unbound_credential(&connection, &key, name).expect("read"), None);
+        connection.execute("DELETE FROM credentials WHERE name = ?1", params![name]).expect("removed");
+        assert_eq!(read_credential(&connection, &key, name, vendor).expect("read"), None);
         drop(connection);
         let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
     }

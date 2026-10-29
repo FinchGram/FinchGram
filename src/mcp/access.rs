@@ -31,8 +31,9 @@ thread_local! {
     static STATE: RefCell<Option<State>> = const { RefCell::new(None) };
 }
 
-/// A program the system would not name, allowed or turned away for this run: by "pid N", and
-/// only for the process that was, by when it started (peer.rs).
+/// A program whose answer is not kept (`Host::kept`, peer.rs: the system would not name it, or it
+/// is an interpreter that runs any script), allowed or turned away for this run: by its key ("pid
+/// N", or the interpreter), and only for the process that was, by when it started.
 struct SessionApp {
     app: McpApp,
     started: u64,
@@ -41,8 +42,8 @@ struct SessionApp {
 struct State {
     ui: slint::Weak<MainWindow>,
     settings: Rc<RefCell<Settings>>,
-    /// Programs the system would not name: their answers last while FinchGram runs, and only
-    /// for the process they were given for.
+    /// Programs whose answers are not kept: they last while FinchGram runs, and only for the
+    /// process they were given for.
     session_apps: Vec<SessionApp>,
     /// How many connections each program has open now, by the key it is remembered by.
     live: HashMap<String, usize>,
@@ -155,9 +156,10 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         }
     });
     ai.on_allow_app(|key| {
-        if let Some(mut app) = database::mcp_app(&key) {
+        let account = bound_account();
+        if let Some(mut app) = database::mcp_app(&key, account) {
             app.allowed = true;
-            if let Err(err) = database::save_mcp_app(&app) {
+            if let Err(err) = database::save_mcp_app(&app, account) {
                 eprintln!("mcp: cannot allow the program: {err}");
             }
         }
@@ -183,13 +185,22 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
 /// their defaults (the server off; the user sets them again on the page). The first start with
 /// this code, before the Keychain says the settings were tagged once, takes the file as it is
 /// and tags it. While the database is not open there is no key to check with, and nothing can be
-/// allowed anyway.
+/// allowed anyway. When the Keychain will not say whether the settings were tagged once, they
+/// cannot be checked, and settings that cannot be checked are not believed either: the defaults,
+/// the same as for a file that fails its check.
 fn verify_policy(settings: &Rc<RefCell<Settings>>) {
     if !database::is_open() {
         return;
     }
-    match crate::platform::keychain_read(crate::platform::KEYCHAIN_SERVICE, POLICY_TAGGED) {
-        Ok(Some(_)) => {}
+    let believed = match crate::platform::keychain_read(crate::platform::KEYCHAIN_SERVICE, POLICY_TAGGED) {
+        Ok(Some(_)) => {
+            let (text, seal) = {
+                let settings = settings.borrow();
+                (settings.mcp.sealed_text(), settings.mcp.seal.clone())
+            };
+            // Settings never touched (nothing on, no tag) are nothing to doubt.
+            database::tag_matches(&text, &seal) || (seal.is_empty() && text == Mcp::default().sealed_text())
+        }
         Ok(None) => {
             settings.borrow().save();
             if let Err(err) = crate::platform::keychain_store(crate::platform::KEYCHAIN_SERVICE, POLICY_TAGGED, "1") {
@@ -199,19 +210,14 @@ fn verify_policy(settings: &Rc<RefCell<Settings>>) {
         }
         Err(err) => {
             eprintln!("mcp: cannot ask the Keychain whether the AI access settings are tagged: {err}");
-            return;
+            false
         }
-    }
-    let (text, seal) = {
-        let settings = settings.borrow();
-        (settings.mcp.sealed_text(), settings.mcp.seal.clone())
     };
-    // Settings never touched (nothing on, no tag) are nothing to doubt.
-    if database::tag_matches(&text, &seal) || (seal.is_empty() && text == Mcp::default().sealed_text()) {
+    if believed {
         return;
     }
-    eprintln!("mcp: the AI access settings in settings.toml were not written by FinchGram, or were changed since: back to the defaults");
-    super::log("the AI access settings in settings.toml were not FinchGram's as it wrote them: back to the defaults, the server off");
+    eprintln!("mcp: the AI access settings in settings.toml were not written by FinchGram, were changed since, or cannot be checked: back to the defaults");
+    super::log("the AI access settings in settings.toml were not FinchGram's as it wrote them, or could not be checked: back to the defaults, the server off");
     settings.borrow_mut().mcp = Mcp::default();
     settings.borrow().save();
 }
@@ -230,18 +236,19 @@ pub fn admit(host: Host, answer: mpsc::Sender<Admission>) {
         }
         let key = host.key();
         let now = now();
+        let account = state.settings.borrow().mcp.account;
         // A program the system could not place at all, not even its process: nothing to ask the
         // user about, and nothing to remember an answer by.
         if !host.identified() && host.pid == 0 {
             super::log("a program the system could not identify at all: turned away");
             return Some(Admission::Denied);
         }
-        if let Some(mut app) = database::mcp_app(&key) {
+        if let Some(mut app) = database::mcp_app(&key, account) {
             // Where it is now: a newer version, or another copy, of the same program.
             app.path = host.location();
             app.name = host.name();
             app.last_used = now;
-            if let Err(err) = database::save_mcp_app(&app) {
+            if let Err(err) = database::save_mcp_app(&app, account) {
                 eprintln!("mcp: cannot note the program's use: {err}");
             }
             return Some(if app.allowed { Admission::Allowed } else { Admission::Denied });
@@ -314,7 +321,7 @@ pub fn admitted(host: &Host) -> bool {
         let settings = state.settings.borrow();
         let key = host.key();
         settings.mcp.enabled
-            && database::mcp_app(&key)
+            && database::mcp_app(&key, settings.mcp.account)
                 .or_else(|| state.session_apps.iter().find(|known| known.app.key == key && known.started == host.started).map(|known| known.app.clone()))
                 .is_some_and(|app| app.allowed)
     })
@@ -364,9 +371,10 @@ pub fn record(host: &Host, activity: Activity) {
         let mut slot = slot.borrow_mut();
         let state = slot.as_mut()?;
         let key = host.key();
-        if let Some(mut app) = database::mcp_app(&key) {
+        let account = state.settings.borrow().mcp.account;
+        if let Some(mut app) = database::mcp_app(&key, account) {
             app.last_used = now;
-            if let Err(err) = database::save_mcp_app(&app) {
+            if let Err(err) = database::save_mcp_app(&app, account) {
                 eprintln!("mcp: cannot note the program's use: {err}");
             }
         }
@@ -420,6 +428,7 @@ fn show_question() {
     ai.set_ask_initial(initial(&name).into());
     ai.set_ask_name(name.into());
     ai.set_ask_path(host.location().into());
+    ai.set_ask_kept(host.kept());
     ai.set_ask_open(true);
     crate::platform::show_window(&ui);
 }
@@ -451,14 +460,16 @@ fn turn_away_waiting() {
     }
 }
 
-/// Keep the answer: in the database for a program the system named, else for this run only.
+/// Keep the answer: in the database, for this account, for a program whose answer can be kept
+/// (`Host::kept`), else for this run and this process only.
 fn remember(host: &Host, allowed: bool) {
     let app = McpApp { key: host.key(), path: host.location(), name: host.name(), allowed, last_used: now() };
     STATE.with(|slot| {
         let mut slot = slot.borrow_mut();
         let Some(state) = slot.as_mut() else { return };
-        if host.identified() {
-            if let Err(err) = database::save_mcp_app(&app) {
+        if host.kept() {
+            let account = state.settings.borrow().mcp.account;
+            if let Err(err) = database::save_mcp_app(&app, account) {
                 eprintln!("mcp: cannot keep the answer about the program: {err}");
             }
         } else {
@@ -507,9 +518,9 @@ fn show_policy(ui: &MainWindow) {
     replace(&ai.get_all_chats(), crate::telegram::in_account(mcp.account, || picker_chats(ui, &query, &mcp.chats)).unwrap_or_default());
 }
 
-/// The programs that have connected, the remembered ones first, then this run's unnamed ones.
+/// The programs that have connected, the remembered ones first, then this run's own.
 fn show_apps(ui: &MainWindow) {
-    let kept = database::mcp_apps();
+    let kept = database::mcp_apps(bound_account());
     let rows: Vec<AiApp> = STATE
         .with(|slot| {
             let slot = slot.borrow();

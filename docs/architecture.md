@@ -76,6 +76,11 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
 
 - The program is looked for in one place only: next to the executable (`Contents/MacOS/` in the
   .app; `target/<profile>/` for `cargo run`, where build.rs copies it from `vendor/tdlib/bin/`).
+  A release is signed by a team (scripts/sign.sh), the program with it, and starts the program
+  only when it carries the same team's signature, unbroken (`src/telegram/process.rs`): it gets
+  the key of the Telegram database, which the Keychain gives the app alone, and a program put in
+  its place by something else on the machine would get it too. A FinchGram without a team's
+  signature (`cargo run`, a bundle signed ad hoc) has nothing to hold it to, and starts it.
 - Standard input: requests, one JSON object per line. Each carries an `"@extra"` number; TDLib
   copies it into the answer, which goes to the callback given with the request.
 - Standard output: answers and updates, one per line. A reader thread parses them and wakes the UI
@@ -477,7 +482,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
 - `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
 - `src/images.rs`: pictures (photos, video stills, the photos of chats and people, the tiny previews
   in messages), decoded off the UI thread, and a cache of them; a photo turned by its EXIF
-  orientation, and what the image crate cannot read read by the platform (`read`).
+  orientation, and what the image crate cannot read read by the platform (`read`). A picture
+  whose header promises more than 256 MiB of pixels is not decoded by either, since a few bytes
+  of header can ask for gigabytes.
 - `src/screenshots.rs`: every page in every theme, light and dark, drawn to a PNG with made-up data
   by Slint's software renderer (`cargo test screenshots -- --ignored`).
 - `src/telegram/timing.rs`: how long the pages take to follow the store, with many made-up chats and
@@ -540,18 +547,21 @@ under a random key made the first time and kept in the Keychain under "FinchGram
 "database"), where only this app reads it, and sealed to the server it is for (its protocol,
 address, port and account are the seal's additional data, so that the sealed text does not open in
 a row naming another server); the app shows a password in the server's form, so the user can read
-it there. The rows of the programs allowed at AI access carry a tag under the same key, so that a
-row written by anything but FinchGram, or changed since, is not believed; so do the SSH servers'
-keys, and the AI access settings in settings.toml (`settings::Mcp::seal`, checked at the start by
-src/mcp/access.rs). TDLib's database has a key of its own kept the same way (the account
+it there. The rows of the programs allowed at AI access carry a tag under the same key, over the
+program, the answer and the Telegram account it was given for, so that a row written by anything
+but FinchGram, changed since, or kept from another account's time, is not believed; so do the SSH
+servers' keys, and the AI access settings in settings.toml (`settings::Mcp::seal`, checked at the
+start by src/mcp/access.rs). TDLib's database has a key of its own kept the same way (the account
 "tdlib"), since 0.4.18. The rule: preferences go into settings.toml, which stays small and
 readable by hand; records go into the database; Telegram's own state is TDLib's. Today the
 database holds the servers of the downloads page with their passwords and whether the user
 allows changes on each (docs/downloads.md), the
 programs allowed or turned away at AI access (docs/mcp.md), the keys of the SSH servers the
-user trusted, with the day (docs/downloads.md), and the app's own credentials that are no server's,
-each sealed to its name: voice input's keys, one for each AI vendor
-(`voice_input.connection.<id>`, docs/voice-input.md);
+user trusted, with the day (docs/downloads.md), and the app's own credentials that are no server's:
+voice input's keys, one for each AI vendor (`voice_input.connection.<id>`, docs/voice-input.md),
+each sealed to its name and to the vendor's API format and address as settings.toml has them, so
+that a vendor pointed at another address by anything but FinchGram's own dialog has no key until
+the user types it again;
 what comes after (a download queue that outlives a restart, logs, per-chat settings) gets a table
 when it is built.
 
@@ -568,7 +578,11 @@ Layout 2 (after 0.6.2) sealed the passwords to their servers, gave the programs'
 once) and the SSH servers' keys the day they were trusted. Layout 3 (after 0.6.3) gave the SSH
 servers' keys a tag of their own; the rows of before were dropped, so every SFTP server shows its
 key once more. Layout 4 gave the servers `allow_changes`, off for every server of before; layout 5
-added `credentials`, the app's own secrets by name (both after 0.6.3).
+added `credentials`, the app's own secrets by name (both after 0.6.3). Layout 6 (after 0.7.5)
+sealed a credential to its vendor's format and address as well as its name (the keys of before
+are sealed again that way by voice input at that first start, the only time they still open) and
+tagged the programs' rows for the account they were allowed for; the rows of before named none
+and were dropped, so every program asks again once.
 Settings keys are never renamed without a serde alias, and the Keychain items keep their names.
 
 ## Platforms

@@ -4,7 +4,11 @@
 //!
 //! The program is only ever looked for next to our own executable: in `Contents/MacOS/` of the
 //! .app, or in `target/<profile>/` for `cargo run`, where build.rs copies it from vendor/tdlib/bin/.
-//! Never anywhere else on the machine.
+//! Never anywhere else on the machine. A release is signed by a team (scripts/sign.sh), the
+//! program with it: then the program is started only when it carries the same team's signature,
+//! unbroken (`location`). It gets the key of the Telegram database, which the Keychain gives
+//! this app alone, and everything of the account: a program put in its place by something else
+//! on the machine would get them too.
 //!
 //! Lines are written by a thread of their own, so the UI never waits for a full pipe. What the
 //! program writes is read and parsed on another thread and collected in an [`Inbox`]; the UI thread
@@ -140,15 +144,24 @@ pub fn shut_down_all(processes: Vec<Process>, timeout: Duration) {
     }
 }
 
-/// finchgram-tdlib next to our executable.
+/// finchgram-tdlib next to our executable, and ours: when this FinchGram is signed by a team (a
+/// release), the program must be signed by the same team and unchanged since, or it is not
+/// started. A FinchGram without such a signature (development: `cargo run`, a bundle signed ad
+/// hoc) has nothing to hold the program to, and starts the one that is there.
 fn location() -> Result<PathBuf, String> {
     let exe = std::env::current_exe().map_err(|err| format!("cannot find our own executable: {err}"))?;
     let program = exe.parent().ok_or("our executable is not in a folder")?.join(PROGRAM);
-    if program.is_file() {
-        Ok(program)
-    } else {
-        Err(format!("{} is missing: the app is packaged wrongly", program.display()))
+    if !program.is_file() {
+        return Err(format!("{} is missing: the app is packaged wrongly", program.display()));
     }
+    if let Some(ours) = crate::platform::code_signature(std::process::id() as i32).and_then(|(_, team)| team) {
+        match crate::platform::file_code_signature(&program) {
+            Some((_, Some(team))) if team == ours => {}
+            Some((_, Some(team))) => return Err(format!("{} is signed by another team ({team}, not FinchGram's {ours}): it is not FinchGram's, and is not started", program.display())),
+            _ => return Err(format!("{} is not signed by FinchGram's team, or was changed since it was signed: it is not started", program.display())),
+        }
+    }
+    Ok(program)
 }
 
 /// One line from the program: an answer when it carries our "@extra", else an update. Updates

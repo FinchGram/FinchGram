@@ -26,7 +26,9 @@
 //! one of the system's threads (src/platform/microphone.rs); the session runs on a thread of its
 //! own ("voice", `dictation::dictate`), which reports back through the event loop. The keys are
 //! the database's (`database::credential`, `voice_input.connection.<id>`, named when the vendors
-//! were called connections), never in settings.toml.
+//! were called connections), never in settings.toml; each is sealed to its vendor's API format
+//! and address as well as its name (`key_binding`), so that a vendor pointed at another address
+//! in settings.toml, by anything but the dialog, has no key until the user types it again.
 
 mod audio;
 pub mod dictation;
@@ -47,7 +49,7 @@ use std::time::{Duration, Instant};
 
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 
-use crate::database::{credential, remove_credential, save_credential};
+use crate::database::{credential, remove_credential, save_credential, unbound_credential};
 use crate::platform::{self, MicrophoneAccess};
 use crate::settings::{AiVendor, Settings, VoiceInput};
 use crate::{Conversation, KeyCheck, MainWindow, ModelsState, Recorder, Toolbox, Voice, VoiceItem, VoiceLanguage, VoiceLanguageRow, VoiceProblem, VoiceState, VoiceVendorRow};
@@ -94,9 +96,25 @@ fn key_name(id: &str) -> String {
     format!("voice_input.connection.{id}")
 }
 
-/// A vendor's key; none for a vendor that is not there, or has none.
-fn key_of(id: &str) -> Option<String> {
-    if id.is_empty() { None } else { credential(&key_name(id)) }
+/// What a vendor's key is sealed to besides its name (`database::credential`): the vendor's API
+/// format and address, as settings.toml has them. The key then opens only for the vendor as the
+/// user saved it: a program that can write settings.toml but not read the Keychain could
+/// otherwise point the vendor at a server of its own and have the next check, listing or
+/// dictation send the key there. The dialog seals the key again when it changes either
+/// (`save_vendor`); a change made any other way leaves the vendor without a key, for the user to
+/// type again.
+fn key_binding(vendor: &AiVendor) -> String {
+    format!("{}\0{}", vendor.format, vendor.url)
+}
+
+/// A vendor's key; none for one that has none.
+fn key_of_vendor(vendor: &AiVendor) -> Option<String> {
+    credential(&key_name(&vendor.id), &key_binding(vendor))
+}
+
+/// The key of the vendor `id`; none for a vendor that is not there, or has none.
+fn key_of(voice_input: &VoiceInput, id: &str) -> Option<String> {
+    voice_input.find_vendor(id).and_then(key_of_vendor)
 }
 
 thread_local! {
@@ -229,11 +247,12 @@ struct Dictation {
 
 pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     adopt_keys(&mut settings.borrow_mut());
+    bind_keys(&settings.borrow().voice_input);
     // A settings file from before the switch (0.7.0) has none: voice input is on there when a key
     // was kept. The choice is written with the next save of the settings.
     let on = {
         let mut settings = settings.borrow_mut();
-        let has_key = settings.voice_input.vendors.iter().any(|vendor| key_of(&vendor.id).is_some());
+        let has_key = settings.voice_input.vendors.iter().any(|vendor| key_of_vendor(vendor).is_some());
         *settings.voice_input.enabled.get_or_insert(has_key)
     };
     let voice = ui.global::<Voice>();
@@ -283,15 +302,16 @@ fn adopt_keys(settings: &mut Settings) {
         let Some(from) = vendor.key_from.take() else { continue };
         // 0.7.2 moved 0.7.1's key under the first profile's name at its start, even when its
         // settings were not written again: the key is under either name. 0.7.1's was OpenAI's.
-        let (key, source) = match credential(&from) {
+        // Those keys are sealed to their names alone, as 0.7 sealed them, and open only at the
+        // first start that brings the database up (database::unbound_credential).
+        let (key, source) = match unbound_credential(&from) {
             Some(key) => (Some(key), from),
-            None if vendor.format == "openai" => (credential(OLD_KEY), OLD_KEY.to_string()),
+            None if vendor.format == "openai" => (unbound_credential(OLD_KEY), OLD_KEY.to_string()),
             None => continue,
         };
         let Some(key) = key else { continue };
-        let name = key_name(&vendor.id);
-        if credential(&name).is_none()
-            && let Err(err) = save_credential(&name, &key)
+        if key_of_vendor(vendor).is_none()
+            && let Err(err) = save_credential(&key_name(&vendor.id), &key_binding(vendor), &key)
         {
             eprintln!("voice input: cannot move a key of 0.7: {err}");
             vendor.key_from = Some(source);
@@ -301,7 +321,7 @@ fn adopt_keys(settings: &mut Settings) {
     }
     // The same format, address and key twice: the first one stays, and takes the other's place.
     // One whose key could not move yet is left as it is, for the next start.
-    let mut keys: Vec<Option<String>> = voice_input.vendors.iter().map(|vendor| key_of(&vendor.id)).collect();
+    let mut keys: Vec<Option<String>> = voice_input.vendors.iter().map(key_of_vendor).collect();
     let mut index = 0;
     while index < voice_input.vendors.len() {
         let twin = (0..index).find(|&earlier| {
@@ -326,6 +346,23 @@ fn adopt_keys(settings: &mut Settings) {
         }
     }
     settings.save();
+}
+
+/// The keys of 0.7.5 and before, sealed to their names alone, sealed again to their vendors'
+/// format and address (`key_binding`): at the first start that brought the database up from
+/// layout 5, which is the only time they open (database::unbound_credential). A key that is bound
+/// already is left as it is.
+fn bind_keys(voice_input: &VoiceInput) {
+    for vendor in &voice_input.vendors {
+        let name = key_name(&vendor.id);
+        if key_of_vendor(vendor).is_some() {
+            continue;
+        }
+        let Some(key) = unbound_credential(&name) else { continue };
+        if let Err(err) = save_credential(&name, &key_binding(vendor), &key) {
+            eprintln!("voice input: cannot seal the key of {} to its vendor: {err}", label_of(vendor));
+        }
+    }
 }
 
 /// The features that used vendor `gone` use `kept` from now on, the same vendor merged into it.
@@ -386,14 +423,14 @@ fn tidy_of(voice_input: &VoiceInput) -> Option<(Tidy, Option<String>)> {
     }
     let endpoint = endpoint_of(voice_input, &voice_input.tidy_vendor)?.ok()?;
     let tidy = Tidy::new(endpoint, &voice_input.tidy_model)?;
-    let key = key_of(&voice_input.tidy_vendor);
+    let key = key_of(voice_input, &voice_input.tidy_vendor);
     if key.is_none() && tidy.official() { None } else { Some((tidy, key)) }
 }
 
 /// A dictation's settings: Err with the problem that stops it.
 fn dictation_options(voice_input: &VoiceInput) -> Result<Options, VoiceProblem> {
     let speech = speech_of(voice_input)?;
-    let speech_key = key_of(&voice_input.vendor);
+    let speech_key = key_of(voice_input, &voice_input.vendor);
     // The vendor's own address wants a key; a server of the user's own may not.
     if speech_key.is_none() && speech.official() {
         return Err(VoiceProblem::NoKey);
@@ -419,7 +456,7 @@ fn messages_options_of(voice_input: &VoiceInput) -> Result<Options, VoiceProblem
     }
     let endpoint = endpoint_of(voice_input, &voice_input.messages_vendor).ok_or(VoiceProblem::NoService)?.map_err(|_| VoiceProblem::BadAddress)?;
     let speech = Speech::new(endpoint, format == ConnectionFormat::OpenAi, &voice_input.messages_model).ok_or(VoiceProblem::NoModel)?;
-    let speech_key = key_of(&voice_input.messages_vendor);
+    let speech_key = key_of(voice_input, &voice_input.messages_vendor);
     if speech_key.is_none() && speech.official() {
         return Err(VoiceProblem::NoKey);
     }
@@ -879,7 +916,7 @@ fn feature_view(voice_input: &VoiceInput, feature: Feature, models: &dyn Fn(&str
 
 fn panel_view(
     voice_input: &VoiceInput,
-    key_hint: &dyn Fn(&str) -> Option<String>,
+    key_hint: &dyn Fn(&AiVendor) -> Option<String>,
     checks: &dyn Fn(&str) -> (KeyCheck, String),
     models: &dyn Fn(&str, Ability) -> Option<Models>,
     search: &dyn Fn(Feature) -> String,
@@ -896,7 +933,7 @@ fn panel_view(
         .vendors
         .iter()
         .map(|vendor| {
-            let hint = key_hint(&vendor.id);
+            let hint = key_hint(vendor);
             let (check, check_detail) = checks(&vendor.id);
             // An address that is no address shows as typed, for the user to know the row.
             let host = match ConnectionFormat::known(&vendor.format) {
@@ -955,7 +992,7 @@ fn show_panel(ui: &MainWindow) {
 /// The panel drawn again; `typed`: the box the user types the words to know into too (not while
 /// they type in it). The vendor dialog is apart: nothing here touches what is typed in it.
 fn refresh(ui: &MainWindow, typed: bool) {
-    let key_hint = |id: &str| credential(&key_name(id)).as_deref().map(hint);
+    let key_hint = |vendor: &AiVendor| key_of_vendor(vendor).as_deref().map(hint);
     let checks = |id: &str| CHECKED.with(|checked| checked.borrow().get(id).cloned()).unwrap_or((KeyCheck::None, String::new()));
     let known = |id: &str, ability: Ability| MODELS.with(|models| models.borrow().get(&(id.to_string(), ability)).cloned());
     let search = |feature: Feature| SEARCH.with(|search| search.borrow().get(&feature).cloned().unwrap_or_default());
@@ -1020,7 +1057,7 @@ fn lines(chips: Vec<VoiceLanguage>) -> ModelRc<VoiceLanguageRow> {
 /// vendor dialog open on that vendor ("" for a new one).
 #[cfg(test)]
 pub fn show_for_pictures(ui: &MainWindow, voice_input: &VoiceInput, dialog: Option<&str>, hints: &[(&str, &str)], models: &[(&str, &[&str])], checks: &[(&str, KeyCheck)]) {
-    let key_hint = |id: &str| hints.iter().find(|(known, _)| *known == id).map(|(_, hint)| hint.to_string());
+    let key_hint = |vendor: &AiVendor| hints.iter().find(|(known, _)| *known == vendor.id).map(|(_, hint)| hint.to_string());
     let known = |id: &str, _: Ability| models.iter().find(|(known, _)| *known == id).map(|(_, list)| Models::Listed(list.iter().map(|model| model.to_string()).collect()));
     let checked = |id: &str| checks.iter().find(|(known, _)| *known == id).map(|(_, check)| (*check, String::new())).unwrap_or((KeyCheck::None, String::new()));
     let view = panel_view(voice_input, &key_hint, &checked, &known, &|_| String::new());
@@ -1102,10 +1139,10 @@ struct DialogView {
     official: bool,
 }
 
-fn dialog_view(voice_input: &VoiceInput, id: Option<&str>, key_hint: &dyn Fn(&str) -> Option<String>) -> DialogView {
+fn dialog_view(voice_input: &VoiceInput, id: Option<&str>, key_hint: &dyn Fn(&AiVendor) -> Option<String>) -> DialogView {
     match id.and_then(|id| voice_input.find_vendor(id)) {
         Some(vendor) => {
-            let hint = key_hint(&vendor.id);
+            let hint = key_hint(vendor);
             let (url_placeholder, url_problem, official) = address_state(&vendor.format, &vendor.url);
             DialogView {
                 new: false,
@@ -1191,7 +1228,7 @@ fn edit_vendor(id: &str) {
     let view = with_settings(|settings| {
         let voice_input = &settings.voice_input;
         voice_input.find_vendor(id)?;
-        Some(dialog_view(voice_input, Some(id), &|id| key_of(id).as_deref().map(hint)))
+        Some(dialog_view(voice_input, Some(id), &|vendor| key_of_vendor(vendor).as_deref().map(hint)))
     })
     .flatten();
     let Some(view) = view else { return };
@@ -1273,6 +1310,9 @@ fn save_vendor() {
     }
     let saved = with_settings(|settings| {
         let voice_input = &mut settings.voice_input;
+        // The key kept while the format or the address changes is sealed to the old ones: read
+        // now, sealed again to the new ones below.
+        let kept_key = id.as_deref().and_then(|id| key_of(voice_input, id));
         let id = match &id {
             Some(id) => {
                 let vendor = voice_input.vendors.iter_mut().find(|vendor| vendor.id == *id)?;
@@ -1299,15 +1339,19 @@ fn save_vendor() {
                 id
             }
         };
+        let binding = voice_input.find_vendor(&id).map(key_binding)?;
         settings.save();
-        Some(id)
+        Some((id, binding, kept_key))
     })
     .flatten();
-    let Some(id) = saved else { return };
+    let Some((id, binding, kept_key)) = saved else { return };
     let stored = if !key.is_empty() {
-        save_credential(&key_name(&id), &key)
+        save_credential(&key_name(&id), &binding, &key)
     } else if remove_key {
         remove_credential(&key_name(&id))
+    } else if let Some(kept) = kept_key {
+        // Sealed again to the vendor as it is now (its format and address may have changed).
+        save_credential(&key_name(&id), &binding, &kept)
     } else {
         Ok(())
     };
@@ -1380,10 +1424,9 @@ fn set_check(id: &str, check: KeyCheck, detail: &str) {
 /// key; the answer shows under its row. Nothing is asked of an address that is not one, nor of a
 /// vendor's own address without a key.
 fn check_vendor(id: &str) {
-    let Some(Some(Ok(endpoint))) = with_settings(|settings| endpoint_of(&settings.voice_input, id)) else {
+    let Some((Some(Ok(endpoint)), key)) = with_settings(|settings| (endpoint_of(&settings.voice_input, id), key_of(&settings.voice_input, id))) else {
         return set_check(id, KeyCheck::None, "");
     };
-    let key = key_of(id);
     if key.is_none() && endpoint.official() {
         return set_check(id, KeyCheck::None, "");
     }
@@ -1432,7 +1475,7 @@ fn want_models(voice_input: &VoiceInput, id: &str, ability: Ability) {
         return;
     }
     let Some(Ok(endpoint)) = endpoint_of(voice_input, id) else { return };
-    let key = key_of(id);
+    let key = key_of(voice_input, id);
     if key.is_none() && endpoint.official() {
         MODELS.with(|models| models.borrow_mut().insert(slot, Models::NeedKey));
         return;
@@ -1654,7 +1697,7 @@ mod tests {
             "2" => Some(Models::Listed(service::DOUBAO_RESOURCES.iter().map(|resource| resource.to_string()).collect())),
             _ => Some(Models::Loading),
         };
-        let key_hint = |id: &str| (id == "2").then(|| "6f1…9b2c".to_string());
+        let key_hint = |vendor: &AiVendor| (vendor.id == "2").then(|| "6f1…9b2c".to_string());
         let checks = |id: &str| if id == "2" { (KeyCheck::Works, String::new()) } else { (KeyCheck::None, String::new()) };
         let view = panel_view(&voice_input, &key_hint, &checks, &listed, &|feature| if feature == Feature::Messages { "whisp".into() } else { String::new() });
         let ids = |items: &[VoiceItem]| items.iter().map(|item| item.id.to_string()).collect::<Vec<_>>();

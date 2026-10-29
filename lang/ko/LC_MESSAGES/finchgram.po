@@ -2873,6 +2873,12 @@ msgstr "알 수 없는 프로그램에 내 Telegram 계정 사용을 허용할�
 msgid "macOS reports this program as the one connecting to FinchGram."
 msgstr "macOS에 따르면 FinchGram에 연결하는 프로그램은 이것입니다."
 
+#: ui/pages/ai-access.slint:782
+msgid ""
+"“{0}” runs whatever script it is given, so macOS can't say which one this "
+"is. Your answer lasts only while it runs."
+msgstr "'{0}'은(는) 주어진 어떤 스크립트든 실행하므로 macOS는 이것이 어느 스크립트인지 알려 줄 수 없습니다. 답변은 이것이 실행되는 동안에만 유효합니다."
+
 #: ui/pages/ai-access.slint:779
 msgid ""
 "macOS wouldn't say which program this is. Allow it only if you've just set "

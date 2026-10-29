@@ -144,8 +144,12 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   local network, where a server of one's own runs; a name and password in the address are refused;
   redirects are never followed, so that a key in a header does not go to another host.
 - **Keys.** One per vendor, a credential in the app's database, table `credentials`, sealed to its
-  name, `voice_input.connection.<id>` (named when the vendors were called connections; no layout
-  change); shown by its first and last letters. A vendor is checked when its dialog is saved: the
+  name, `voice_input.connection.<id>` (named when the vendors were called connections), and since
+  layout 6 to the vendor's API format and address as settings.toml has them: a vendor pointed at
+  another address, or given another format, by anything but the dialog has no key until the user
+  types it again, so a program that can write settings.toml cannot have the key sent to a server of
+  its own (the dialog seals the key again when it changes either); shown by its first and last
+  letters. A vendor is checked when its dialog is saved: the
   list of models (Model Studio's catalog for it), and for Doubao the WebSocket's handshake under each of its four resources, any of
   which the user may have bought; the answer shows under its row. A vendor's own address wants a key; one
   of the user's own may not, and then none is sent.

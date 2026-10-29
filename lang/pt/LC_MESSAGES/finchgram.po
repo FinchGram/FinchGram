@@ -2916,6 +2916,12 @@ msgid "macOS reports this program as the one connecting to FinchGram."
 msgstr ""
 "Segundo o macOS, este é o programa que está se conectando ao FinchGram."
 
+#: ui/pages/ai-access.slint:782
+msgid ""
+"“{0}” runs whatever script it is given, so macOS can't say which one this "
+"is. Your answer lasts only while it runs."
+msgstr "“{0}” executa qualquer script que receba, por isso o macOS não sabe dizer qual é este. Sua resposta vale só enquanto ele estiver em execução."
+
 #: ui/pages/ai-access.slint:779
 msgid ""
 "macOS wouldn't say which program this is. Allow it only if you've just set "
