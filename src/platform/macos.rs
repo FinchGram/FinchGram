@@ -480,18 +480,25 @@ pub fn pasteboard_image() -> Option<Vec<u8>> {
 
 /// A picture by ImageIO, which reads what macOS reads: its thumbnail of at most `largest` pixels on
 /// the longer side, made from the picture itself and turned the way it was taken (the EXIF
-/// orientation a phone's photo carries), drawn by Core Graphics into RGBA pixels.
+/// orientation a phone's photo carries), drawn by Core Graphics into RGBA pixels. ImageIO reads
+/// the file itself, as much of it as it needs; nothing of it is read into memory here. A file
+/// longer than `most_bytes` is refused unread, and a picture whose header promises more than
+/// `most_bytes` of pixels is not decoded.
 pub fn read_picture(path: &std::path::Path, largest: u32, most_bytes: u64) -> Option<image::RgbaImage> {
-    use objc2_core_foundation::{CFBoolean, CFData, CFMutableDictionary, CFNumber, CFString, CFType, CGPoint, CGRect, CGSize};
+    use objc2_core_foundation::{CFBoolean, CFMutableDictionary, CFNumber, CFString, CFType, CFURL, CGPoint, CGRect, CGSize};
     use objc2_core_graphics::{CGBitmapContextCreate, CGColorSpace, CGContext, CGImage, CGImageAlphaInfo, kCGColorSpaceSRGB};
     use objc2_image_io::{
         CGImageSource, kCGImagePropertyPixelHeight, kCGImagePropertyPixelWidth, kCGImageSourceCreateThumbnailFromImageAlways,
         kCGImageSourceCreateThumbnailWithTransform, kCGImageSourceThumbnailMaxPixelSize,
     };
-    let bytes = std::fs::read(path).ok()?;
-    let data = CFData::from_bytes(&bytes);
-    // SAFETY: the data is the file's bytes; no options.
-    let source = unsafe { CGImageSource::with_data(&data, None) }?;
+    let length = std::fs::metadata(path).ok()?.len();
+    if length > most_bytes {
+        eprintln!("images: {} is {length} bytes long, more than the {most_bytes} FinchGram reads for a picture", path.display());
+        return None;
+    }
+    let url = CFURL::from_file_path(path)?;
+    // SAFETY: a file URL, which ImageIO reads from as it needs; no options.
+    let source = unsafe { CGImageSource::with_url(&url, None) }?;
     // The picture's size from its header, before a pixel is decoded: a few bytes of header can
     // promise gigabytes, which ImageIO would set out to decode (the thumbnail of a JPEG apart).
     // SAFETY: no options; the dictionary's keys are strings, its values vary.

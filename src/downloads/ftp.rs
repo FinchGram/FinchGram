@@ -19,7 +19,7 @@ use std::time::{Duration, Instant};
 use rustls_platform_verifier::ConfigVerifierExt as _;
 use suppaftp::list::ListParser;
 use suppaftp::types::FileType;
-use suppaftp::{FtpError, Mode, RustlsConnector, RustlsFtpStream, Status};
+use suppaftp::{FtpError, ImplFtpStream, Mode, Status, TlsConnector, TlsStream};
 
 use super::remote::{Entry, Error};
 use super::{log, transfer};
@@ -40,6 +40,9 @@ const MOST_ENTRIES: usize = 200_000;
 /// download, src/downloads/mod.rs).
 const MOST_DELETED_FOLDERS: usize = 100_000;
 const DEEPEST_DELETE: usize = 64;
+
+/// A control connection, plain or under TLS of our own (`Connector`).
+type Connection = ImplFtpStream<Secured>;
 
 #[derive(Debug, Clone)]
 pub struct Server {
@@ -89,23 +92,25 @@ impl Server {
     /// (src/downloads/mod.rs). A data connection goes to the address the control connection
     /// reached, whatever address PASV names: a server cannot send the client to another machine,
     /// or to the Mac itself.
-    fn connect(&self) -> Result<RustlsFtpStream, Error> {
+    fn connect(&self) -> Result<Connection, Error> {
         let socket = (self.host.as_str(), self.port())
             .to_socket_addrs()
             .map_err(|err| Error::Unreachable(err.to_string()))?
             .next()
             .ok_or_else(|| Error::Unreachable(format!("{} is not known", self.host)))?;
         let stream = if self.tls && self.port() == 990 {
-            // suppaftp's implicit TLS connects on its own, and waits for the welcome with no
-            // timeout: it is given one here, on a thread of its own, which is left to end on its
-            // own when the server keeps it waiting.
+            // suppaftp opens the TCP connection itself for implicit TLS, with the system's
+            // patience (over a minute to an address that drops everything), then waits for the
+            // welcome: under ours, which `Connector::connect` gives the socket before the
+            // handshake. A thread of its own waits for it, so that the servers' thread does not;
+            // it ends on its own, with its socket, within the two patiences.
             let host = self.host.clone();
-            with_deadline(CONNECT_PATIENCE + CONNECT_PATIENCE, move || RustlsFtpStream::connect_secure_implicit(socket, tls(), &host))?.map_err(ftp_error)?
+            with_deadline(CONNECT_PATIENCE + CONNECT_PATIENCE, move || Connection::connect_secure_implicit(socket, tls(), &host))?.map_err(ftp_error)?
         } else {
             let tcp = TcpStream::connect_timeout(&socket, CONNECT_PATIENCE).map_err(|err| Error::Unreachable(err.to_string()))?;
             let _ = tcp.set_read_timeout(Some(CONNECT_PATIENCE));
             let _ = tcp.set_write_timeout(Some(CONNECT_PATIENCE));
-            let plain = RustlsFtpStream::connect_with_stream(tcp).map_err(ftp_error)?;
+            let plain = Connection::connect_with_stream(tcp).map_err(ftp_error)?;
             if self.tls { plain.into_secure(tls(), &self.host).map_err(ftp_error)? } else { plain }
         };
         let peer = socket.ip();
@@ -307,8 +312,9 @@ fn data_connection(target: SocketAddr) -> Result<TcpStream, FtpError> {
 }
 
 /// `work` on a thread of its own, and its outcome within `patience`; past that the server is
-/// unreachable, and the thread is left to end on its own (its socket does, once the system or the
-/// server gives it up).
+/// unreachable, and the thread is left to end on its own, which it does once what it waits for
+/// gives up: the system's connection, under the system's patience, then the socket under ours
+/// (`Connector::connect`). Its outcome, a connection, is dropped with it, and closed.
 fn with_deadline<T: Send + 'static>(patience: Duration, work: impl FnOnce() -> T + Send + 'static) -> Result<T, Error> {
     let (sender, receiver) = std::sync::mpsc::channel();
     std::thread::Builder::new()
@@ -322,7 +328,7 @@ fn with_deadline<T: Send + 'static>(patience: Duration, work: impl FnOnce() -> T
 
 /// The entries of `folder` ("" for the one the account lands in) over `stream`: MLSD where the
 /// server has it, LIST parsed otherwise; "." and ".." left out.
-fn entries(stream: &mut RustlsFtpStream, folder: &str) -> Result<Vec<Entry>, Error> {
+fn entries(stream: &mut Connection, folder: &str) -> Result<Vec<Entry>, Error> {
     let where_ = if folder.is_empty() { None } else { Some(folder) };
     let entries: Vec<Entry> = match listing(stream, "MLSD", where_) {
         Ok(lines) => lines.iter().filter_map(|line| ListParser::parse_mlsd(line).ok()).map(entry_of).collect(),
@@ -344,7 +350,7 @@ fn entries(stream: &mut RustlsFtpStream, folder: &str) -> Result<Vec<Entry>, Err
 /// their files deleted as they are met, then the folders removed from the deepest up. A name
 /// that is not a name (webdav::is_plain_name) stops it: the server does not get to say what
 /// else goes.
-fn remove_tree(stream: &mut RustlsFtpStream, root: &str) -> Result<(), Error> {
+fn remove_tree(stream: &mut Connection, root: &str) -> Result<(), Error> {
     let mut folders: Vec<(String, usize)> = vec![(root.to_string(), 0)];
     let mut index = 0;
     while index < folders.len() {
@@ -384,7 +390,7 @@ enum Listing {
 /// the data connection as they come and held to the bounds (LARGEST_LISTING, LONGEST_LINE,
 /// MOST_ENTRIES), in place of suppaftp's own listing, which keeps whatever the server sends: a
 /// server that never ends its listing, or a line of it, would fill the memory.
-fn listing(stream: &mut RustlsFtpStream, command: &str, folder: Option<&str>) -> Result<Vec<String>, Listing> {
+fn listing(stream: &mut Connection, command: &str, folder: Option<&str>) -> Result<Vec<String>, Listing> {
     let command = match folder {
         Some(folder) => format!("{command} {folder}"),
         None => command.to_string(),
@@ -431,7 +437,7 @@ fn listing(stream: &mut RustlsFtpStream, command: &str, folder: Option<&str>) ->
 }
 
 /// TLS as the HTTP client has it: the Mac's own trust store.
-fn tls() -> RustlsConnector {
+fn tls() -> Connector {
     static CONFIG: std::sync::OnceLock<Arc<rustls::ClientConfig>> = std::sync::OnceLock::new();
     let config = CONFIG.get_or_init(|| {
         let config = rustls::ClientConfig::with_platform_verifier().unwrap_or_else(|_| {
@@ -439,7 +445,71 @@ fn tls() -> RustlsConnector {
         });
         Arc::new(config)
     });
-    RustlsConnector::from(config.clone())
+    Connector(config.clone())
+}
+
+/// What puts a connection under TLS, the control connection and the data connections alike, in
+/// place of suppaftp's own rustls connector: that one takes the socket as it comes, and for
+/// implicit FTPS (port 990) it is suppaftp that opens the TCP connection, then waits for the
+/// welcome on it with no end. This one gives the socket CONNECT_PATIENCE before the handshake,
+/// when nothing gave it a patience yet (an explicit connection has its own from `connect`, a data
+/// connection READ_PATIENCE from `data_connection`): the handshake, the welcome and the login each
+/// wait that long at most.
+#[derive(Debug)]
+struct Connector(Arc<rustls::ClientConfig>);
+
+impl TlsConnector for Connector {
+    type Stream = Secured;
+
+    fn connect(&self, domain: &str, stream: TcpStream) -> Result<Secured, FtpError> {
+        if matches!(stream.read_timeout(), Ok(None)) {
+            let _ = stream.set_read_timeout(Some(CONNECT_PATIENCE));
+        }
+        if matches!(stream.write_timeout(), Ok(None)) {
+            let _ = stream.set_write_timeout(Some(CONNECT_PATIENCE));
+        }
+        let name = rustls::pki_types::ServerName::try_from(domain.to_string()).map_err(|err| FtpError::SecureError(err.to_string()))?;
+        let connection = rustls::ClientConnection::new(self.0.clone(), name).map_err(|err| FtpError::SecureError(err.to_string()))?;
+        Ok(Secured { stream: rustls::StreamOwned::new(connection, stream), close_notify: true })
+    }
+}
+
+/// A connection under TLS, as suppaftp reads and writes it. The server is told the session is
+/// over (close_notify) when it is dropped, as suppaftp's own rustls stream does, unless its socket
+/// was taken out of it first.
+#[derive(Debug)]
+struct Secured {
+    stream: rustls::StreamOwned<rustls::ClientConnection, TcpStream>,
+    close_notify: bool,
+}
+
+impl TlsStream for Secured {
+    type InnerStream = rustls::StreamOwned<rustls::ClientConnection, TcpStream>;
+
+    fn tcp_stream(mut self) -> Result<TcpStream, FtpError> {
+        let socket = self.stream.sock.try_clone().map_err(FtpError::ConnectionError)?;
+        self.close_notify = false;
+        let _ = self.stream.flush();
+        Ok(socket)
+    }
+
+    fn get_ref(&self) -> &TcpStream {
+        &self.stream.sock
+    }
+
+    fn mut_ref(&mut self) -> &mut Self::InnerStream {
+        &mut self.stream
+    }
+}
+
+impl Drop for Secured {
+    fn drop(&mut self) {
+        if self.close_notify {
+            let _ = self.stream.flush();
+            self.stream.conn.send_close_notify();
+            let _ = self.stream.conn.write_tls(&mut self.stream.sock);
+        }
+    }
 }
 
 fn entry_of(file: suppaftp::list::File) -> Entry {
@@ -476,5 +546,32 @@ fn ftp_error(error: FtpError) -> Error {
             status => Error::Unreadable(format!("{} ({})", String::from_utf8_lossy(&response.body).trim(), status as u32)),
         },
         other => Error::Unreadable(other.to_string()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::TcpListener;
+
+    #[test]
+    fn a_connection_is_given_patience_before_the_handshake_and_keeps_the_patience_it_has() {
+        // A server that takes the connection and says nothing.
+        let listener = TcpListener::bind("127.0.0.1:0").expect("a port");
+        let silent = listener.local_addr().expect("an address");
+        let stream = TcpStream::connect(silent).expect("connected");
+        let secured = tls().connect("localhost", stream).expect("wrapped");
+        assert_eq!(secured.get_ref().read_timeout().expect("asked"), Some(CONNECT_PATIENCE));
+        assert_eq!(secured.get_ref().write_timeout().expect("asked"), Some(CONNECT_PATIENCE));
+        // A socket with a patience of its own keeps it, and the handshake is held to it: the
+        // read gives up when the patience says, not when the server does.
+        let stream = TcpStream::connect(silent).expect("connected");
+        stream.set_read_timeout(Some(Duration::from_millis(200))).expect("set");
+        let mut secured = tls().connect("localhost", stream).expect("wrapped");
+        assert_eq!(secured.get_ref().read_timeout().expect("asked"), Some(Duration::from_millis(200)));
+        let started = Instant::now();
+        let err = secured.mut_ref().read(&mut [0u8; 16]).expect_err("the server said nothing");
+        assert!(matches!(err.kind(), std::io::ErrorKind::WouldBlock | std::io::ErrorKind::TimedOut), "{err}");
+        assert!(started.elapsed() < Duration::from_secs(5), "{:?}", started.elapsed());
     }
 }

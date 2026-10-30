@@ -85,7 +85,9 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
   copies it into the answer, which goes to the callback given with the request.
 - Standard output: answers and updates, one per line. A reader thread parses them and wakes the UI
   thread only when its inbox was empty, so a burst of updates arrives as one batch. Updates nothing
-  follows yet are dropped there.
+  follows yet are dropped there. The inbox holds ten thousand at most: past that the reader waits
+  for the UI thread to take them, and the program waits on its pipe in turn; a line over 64 MB,
+  which nothing TDLib says comes near, is dropped.
 - Standard error: TDLib's log (errors only, until the shell asks for more).
 - `finchgram-tdlib --version` prints TDLib's version and commit; the vendor build checks it.
 

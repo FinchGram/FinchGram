@@ -19,6 +19,10 @@ const LARGEST: u32 = 2048;
 /// under. The file's header is read first, and a picture whose header promises more is not
 /// decoded: a few bytes of header can ask for gigabytes.
 const MOST_DECODED: u64 = 256 * 1024 * 1024;
+/// The most a message's tiny preview may be: in base64, and in pixels on either side. TDLib's are
+/// a few hundred bytes and about 40 pixels (`preview`).
+const LONGEST_PREVIEW: usize = 64 * 1024;
+const LARGEST_PREVIEW: u32 = 512;
 
 type Ready = Box<dyn FnOnce(Option<Image>)>;
 
@@ -52,10 +56,29 @@ pub fn load(path: impl Into<PathBuf>, ready: impl FnOnce(Option<Image>) + 'stati
     });
 }
 
-/// A message's tiny preview: a base64 JPEG of about 40 pixels, small enough to decode at once.
+/// A message's tiny preview: a base64 JPEG of about 40 pixels, small enough to decode at once, on
+/// the UI thread. TDLib builds it under a fixed header from the few hundred bytes the server
+/// sends, with the width and the height in a byte each (255 at most; "usually doesn't exceed 40",
+/// its documentation says): one beyond LONGEST_PREVIEW or LARGEST_PREVIEW is not a preview, and
+/// is None like one that is not a picture.
 pub fn preview(base64_jpeg: &str) -> Option<Image> {
+    preview_within(base64_jpeg, LONGEST_PREVIEW, LARGEST_PREVIEW)
+}
+
+fn preview_within(base64_jpeg: &str, longest: usize, largest: u32) -> Option<Image> {
+    if base64_jpeg.len() > longest {
+        return None;
+    }
     let bytes = base64::engine::general_purpose::STANDARD.decode(base64_jpeg).ok()?;
-    let picture = image::load_from_memory(&bytes).ok()?;
+    let mut reader = image::ImageReader::new(std::io::Cursor::new(bytes)).with_guessed_format().ok()?;
+    // The header is checked against these before a pixel is decoded, and the decoding held to
+    // them.
+    let mut limits = image::Limits::default();
+    limits.max_image_width = Some(largest);
+    limits.max_image_height = Some(largest);
+    limits.max_alloc = Some(u64::from(largest) * u64::from(largest) * 4);
+    reader.limits(limits);
+    let picture = reader.decode().ok()?;
     Some(Image::from_rgba8(pixels(picture)))
 }
 
@@ -91,7 +114,8 @@ fn decode(path: &Path) -> Option<SharedPixelBuffer<Rgba8Pixel>> {
 /// The picture in the file at `path`, turned the way it was taken (the EXIF orientation a phone's
 /// photo carries), no larger than `largest` pixels on its longer side. What the image crate cannot
 /// read (HEIC, TIFF, GIF, AVIF, …) the system reads (src/platform/). Neither decodes a picture
-/// whose header promises more than MOST_DECODED.
+/// whose header promises more than MOST_DECODED, and the system does not read a file longer than
+/// that at all.
 pub fn read(path: &Path, largest: u32) -> Result<image::DynamicImage, String> {
     let picture = match read_oriented(path) {
         Ok(picture) => picture,
@@ -174,11 +198,15 @@ mod tests {
     }
 
     #[test]
-    fn a_preview_is_decoded_from_base64() {
+    fn a_preview_is_decoded_from_base64_within_its_bounds() {
         let data = base64::engine::general_purpose::STANDARD.encode(jpeg(40, 30));
         let picture = preview(&data).expect("a picture");
         assert_eq!((picture.size().width, picture.size().height), (40, 30));
         assert!(preview("not base64!").is_none());
+        // Longer than a preview may be, or larger, it is not decoded.
+        assert!(preview_within(&data, data.len(), 40).is_some());
+        assert!(preview_within(&data, data.len() - 1, 40).is_none());
+        assert!(preview_within(&data, data.len(), 39).is_none());
     }
 
     #[test]

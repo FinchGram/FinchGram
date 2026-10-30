@@ -12,13 +12,14 @@
 //!
 //! Lines are written by a thread of their own, so the UI never waits for a full pipe. What the
 //! program writes is read and parsed on another thread and collected in an [`Inbox`]; the UI thread
-//! is only woken when the inbox was empty, so a burst of updates arrives as one batch.
+//! is only woken when the inbox was empty, so a burst of updates arrives as one batch. Neither a
+//! line nor the inbox grows without end (LONGEST_LINE, MOST_WAITING).
 
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufRead, BufReader, Read, Write};
 use std::path::PathBuf;
 use std::process::{Child, Command, ExitStatus, Stdio};
 use std::sync::mpsc::{self, Sender};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Condvar, Mutex};
 use std::time::{Duration, Instant};
 
 use serde_json::Value;
@@ -27,6 +28,15 @@ use super::Error;
 use super::api::{TdError, Update};
 
 pub const PROGRAM: &str = "finchgram-tdlib";
+
+/// A line from the program longer than this is dropped, and said so: nothing TDLib says comes
+/// near it (a hundred messages with their texts are a few megabytes), so it is the program gone
+/// wrong, and a line without end would otherwise fill the memory.
+const LONGEST_LINE: usize = 64 * 1024 * 1024;
+/// How much the inbox holds before the reader thread waits for the UI thread to take it, and how
+/// long it waits at most (`Inbox::push`).
+const MOST_WAITING: usize = 10_000;
+const WAIT_FOR_UI: Duration = Duration::from_secs(2);
 
 /// One message from the program, parsed.
 pub enum Output {
@@ -38,20 +48,31 @@ pub enum Output {
     Ended,
 }
 
-/// What the reader thread has parsed and the UI thread not yet taken.
+/// What the reader thread has parsed and the UI thread not yet taken. It holds MOST_WAITING at
+/// most: past that the reader waits for the UI thread to take them, and reads nothing meanwhile,
+/// so the program's pipe fills and the program waits in turn, rather than a burst of updates
+/// piling up here while the UI thread is busy. Not for ever: a UI thread that takes nothing (the
+/// app closing) does not hold the reader.
 #[derive(Clone, Default)]
-pub struct Inbox(Arc<Mutex<Vec<Output>>>);
+pub struct Inbox(Arc<(Mutex<Vec<Output>>, Condvar)>);
 
 impl Inbox {
     /// True when the inbox was empty, that is when nobody has been woken for it yet.
     fn push(&self, output: Output) -> bool {
-        let mut outputs = self.0.lock().unwrap();
+        let (outputs, taken) = &*self.0;
+        let mut outputs = outputs.lock().unwrap();
+        if outputs.len() >= MOST_WAITING {
+            outputs = taken.wait_timeout_while(outputs, WAIT_FOR_UI, |outputs| outputs.len() >= MOST_WAITING).unwrap().0;
+        }
         outputs.push(output);
         outputs.len() == 1
     }
 
     pub fn take(&self) -> Vec<Output> {
-        std::mem::take(&mut *self.0.lock().unwrap())
+        let (outputs, taken) = &*self.0;
+        let outputs = std::mem::take(&mut *outputs.lock().unwrap());
+        taken.notify_all();
+        outputs
     }
 }
 
@@ -87,14 +108,13 @@ impl Process {
         });
 
         std::thread::spawn(move || {
-            for line in BufReader::new(stdout).lines() {
-                let Ok(line) = line else { break };
-                if let Some(output) = parse(&line)
+            read_lines(stdout, LONGEST_LINE, |line| {
+                if let Some(output) = parse(line)
                     && inbox.push(output)
                 {
                     wake();
                 }
-            }
+            });
             if inbox.push(Output::Ended) {
                 wake();
             }
@@ -162,6 +182,48 @@ fn location() -> Result<PathBuf, String> {
         }
     }
     Ok(program)
+}
+
+/// The lines of `input` to `each`, without their line ends, until it ends. One longer than
+/// `longest` is dropped, with a note, and the next read.
+fn read_lines(input: impl Read, longest: usize, mut each: impl FnMut(&str)) {
+    let mut reader = BufReader::new(input);
+    let mut line = Vec::new();
+    loop {
+        line.clear();
+        match (&mut reader).take(longest as u64 + 1).read_until(b'\n', &mut line) {
+            Ok(0) | Err(_) => return,
+            Ok(_) => {}
+        }
+        if line.len() > longest && line.last() != Some(&b'\n') {
+            eprintln!("telegram: a line from {PROGRAM} is longer than {} MB: dropped", longest / (1024 * 1024));
+            if !skip_line(&mut reader) {
+                return;
+            }
+            continue;
+        }
+        while matches!(line.last(), Some(b'\n' | b'\r')) {
+            line.pop();
+        }
+        each(&String::from_utf8_lossy(&line));
+    }
+}
+
+/// The rest of the line `reader` is in, read and dropped: false when the input ended first.
+fn skip_line(reader: &mut impl BufRead) -> bool {
+    loop {
+        let (newline, length) = match reader.fill_buf() {
+            Ok([]) | Err(_) => return false,
+            Ok(buffer) => (buffer.iter().position(|&byte| byte == b'\n'), buffer.len()),
+        };
+        match newline {
+            Some(at) => {
+                reader.consume(at + 1);
+                return true;
+            }
+            None => reader.consume(length),
+        }
+    }
 }
 
 /// One line from the program: an answer when it carries our "@extra", else an update. Updates
@@ -254,5 +316,38 @@ mod tests {
         assert!(!inbox.push(Output::Ended), "later ones join the batch");
         assert_eq!(inbox.take().len(), 2);
         assert!(inbox.push(Output::Ended), "after the batch was taken, the next message wakes it again");
+    }
+
+    #[test]
+    fn a_full_inbox_holds_the_reader_until_the_ui_thread_takes_it() {
+        let inbox = Inbox::default();
+        for _ in 0..MOST_WAITING {
+            inbox.push(Output::Ended);
+        }
+        let pushing = {
+            let inbox = inbox.clone();
+            std::thread::spawn(move || {
+                let started = Instant::now();
+                inbox.push(Output::Ended);
+                started.elapsed()
+            })
+        };
+        std::thread::sleep(Duration::from_millis(100));
+        assert!(!pushing.is_finished(), "the reader waits while the inbox is full");
+        assert_eq!(inbox.take().len(), MOST_WAITING);
+        let waited = pushing.join().expect("pushed");
+        assert!(waited >= Duration::from_millis(100) && waited < WAIT_FOR_UI, "{waited:?}");
+        assert_eq!(inbox.take().len(), 1);
+    }
+
+    #[test]
+    fn a_line_without_end_is_dropped_and_the_next_read() {
+        let mut lines = Vec::new();
+        read_lines(&b"{\"a\":1}\nthis line is far too long to be read\n{\"b\":2}\r\n{\"c\":3}"[..], 16, |line| lines.push(line.to_string()));
+        assert_eq!(lines, vec!["{\"a\":1}", "{\"b\":2}", "{\"c\":3}"]);
+        // A line of exactly the bound is within it; the one past it is dropped whole.
+        let mut lines = Vec::new();
+        read_lines(&b"0123456789abcdef\n0123456789abcdefg\nx"[..], 16, |line| lines.push(line.to_string()));
+        assert_eq!(lines, vec!["0123456789abcdef", "x"]);
     }
 }
