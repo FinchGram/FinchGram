@@ -2702,6 +2702,20 @@ fn screenshots() {
             save(&window, &name("viewer-photo"));
             open_viewer(&ui, 2);
             save(&window, &name("viewer-video"));
+            // The video arriving as it plays: what has come on the seek bar, and the spinner while
+            // mpv waits for more.
+            {
+                let viewer = ui.global::<Viewer>();
+                viewer.set_position(12.0);
+                viewer.set_arrived_from(0.1);
+                viewer.set_arrived_to(0.45);
+                viewer.set_loading(true);
+                save(&window, &name("viewer-video-arriving"));
+                viewer.set_loading(false);
+                viewer.set_arrived_from(0.0);
+                viewer.set_arrived_to(0.0);
+                viewer.set_position(0.0);
+            }
             // The volume tray out, as after ↑ ↓: at 60, then with the sound off. It comes out over
             // 160 ms: it starts now, and is out when the next picture is taken, a second later.
             {

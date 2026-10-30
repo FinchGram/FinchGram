@@ -648,6 +648,15 @@ component PictureViewer inherits Rectangle {
                                     border-radius: root.look.track-radius;
                                     background: #ffffff33;
                                 }
+                                // What has arrived of a video playing as it comes.
+                                Rectangle {
+                                    x: parent.width * Viewer.arrived-from;
+                                    y: (parent.height - self.height) / 2;
+                                    width: parent.width * max(0, Viewer.arrived-to - Viewer.arrived-from);
+                                    height: root.look.track-height;
+                                    border-radius: root.look.track-radius;
+                                    background: #ffffff59;
+                                }
                                 Rectangle {
                                     x: 0;
                                     y: (parent.height - self.height) / 2;
@@ -876,9 +885,12 @@ component TermArrow inherits Rectangle {
     }
 }
 
-// Terminal's progress bar: forty dashes, the part played in the accent over the rest.
+// Terminal's progress bar: forty dashes, the part played in the accent over the rest, and what has
+// arrived of a video playing as it comes in between.
 component TermBar inherits Rectangle {
     in property <float> done;
+    in property <float> arrived-from;
+    in property <float> arrived-to;
     in property <color> accent;
     width: rest.preferred-width;
     height: rest.preferred-height;
@@ -887,6 +899,17 @@ component TermBar inherits Rectangle {
         text: "────────────────────────────────────────";
         color: #3d443f;
         letter-spacing: -1px;
+    }
+    arrived := Rectangle {
+        x: parent.width * Math.round(max(0, min(1, root.arrived-from)) * 40) / 40;
+        width: max(0px, parent.width * Math.round(max(0, min(1, root.arrived-to)) * 40) / 40 - self.x);
+        clip: true;
+        TermText {
+            x: -arrived.x;
+            text: "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
+            color: #6b746e;
+            letter-spacing: -1px;
+        }
     }
     Rectangle {
         x: 0;
@@ -1194,6 +1217,8 @@ component TextViewer inherits Rectangle {
                         }
                         TermBar {
                             done: state.done;
+                            arrived-from: Viewer.arrived-from;
+                            arrived-to: Viewer.arrived-to;
                             accent: root.accent;
                             TouchArea {
                                 mouse-cursor: pointer;

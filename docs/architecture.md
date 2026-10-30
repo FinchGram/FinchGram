@@ -611,8 +611,9 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
    with random keys kept in the Keychain (The app's database, above).
 2. **Where downloaded files go**: settled on 2026-10-20: `~/Documents/FinchGram/media_cache`, where
    the user can see the folder and clear it (what is cleared is fetched again when looked at); no
-   size limit, by the maintainer's choice. What is fetched when, and what is to come (fetching
-   ahead, playing while downloading), is in [media-files.md](media-files.md).
+   size limit, by the maintainer's choice. What is fetched when, how a video plays while it
+   downloads (since 2026-10-29), and what is to come (fetching ahead), is in
+   [media-files.md](media-files.md).
 3. **Media playback** (the media center): voice messages (any format mpv reads), video, GIFs and animated stickers
    (WebM, Lottie). Decided on 2026-09-30: mpv. It comes as libmpv, built from pinned sources by
    `vendor/mpv/build.sh` as finchgram-tdlib is: mpv with FFmpeg, libplacebo and libass (FreeType,

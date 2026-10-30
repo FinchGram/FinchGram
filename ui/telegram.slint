@@ -574,6 +574,8 @@ export global Viewer {
     in-out property <bool> loading;              // the video is downloading before it plays
     in-out property <bool> ended;                // played to its end
     in-out property <float> position;            // seconds into the video
+    in-out property <float> arrived-from;        // what of a video has arrived while it plays as it comes, as parts of the file: from here
+    in-out property <float> arrived-to;          // to here; both 0 while it plays from the disk (viewer.rs)
     in-out property <int> speed;                 // 0 … 3: 1×, 1.5×, 2×, 0.5×
     in-out property <int> volume;                // 0 … 100, as the user last left it (settings.toml); muting keeps it
     in-out property <bool> muted;                // remembered too

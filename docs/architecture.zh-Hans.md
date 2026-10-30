@@ -401,7 +401,7 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
 
 1. **数据库加密**：0.4.18 定了。TDLib 的数据库和 app 自己的数据库都用随机密钥加密，密钥放钥匙串（见上面
    “app 自己的数据库”）。
-2. **下载的文件放哪**：2026-10-20 定了：`~/Documents/FinchGram/media_cache`，用户看得见、可以自己清（清掉的看的时候会重新取）；不设大小上限，维护者的选择。什么时候取什么、还有什么要做（提前下载、边下边播），见 [media-files.zh-Hans.md](media-files.zh-Hans.md)。
+2. **下载的文件放哪**：2026-10-20 定了：`~/Documents/FinchGram/media_cache`，用户看得见、可以自己清（清掉的看的时候会重新取）；不设大小上限，维护者的选择。什么时候取什么、视频怎么边下边播（2026-10-29 起）、还有什么要做（提前下载），见 [media-files.zh-Hans.md](media-files.zh-Hans.md)。
 3. **媒体播放**（媒体中心）：语音消息（mpv 能读的格式都行）、视频、GIF 和动态贴纸（WebM、Lottie）。2026-09-30 定了：用 mpv。
    它以 libmpv 的形式出现，跟 finchgram-tdlib 一样由 `vendor/mpv/build.sh` 从锁定的源码构建：mpv 加上 FFmpeg、
    libplacebo 和 libass（FreeType、FriBidi、HarfBuzz），全部静态链接进一个只依赖 macOS 的库；app 链接它，

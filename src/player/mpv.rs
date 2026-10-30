@@ -1,5 +1,5 @@
-//! The part of libmpv's C API the player uses (client.h, render.h and render_gl.h of mpv 0.41.0,
-//! client API 2.5), declared by hand. libmpv is linked by build.rs from vendor/mpv/bin/.
+//! The part of libmpv's C API the player uses (client.h, render.h, render_gl.h and stream_cb.h of
+//! mpv 0.41.0, client API 2.5), declared by hand. libmpv is linked by build.rs from vendor/mpv/bin/.
 
 #![allow(non_camel_case_types)]
 
@@ -29,6 +29,11 @@ pub const MPV_EVENT_PROPERTY_CHANGE: mpv_event_id = 22;
 
 pub const MPV_END_FILE_REASON_EOF: c_int = 0;
 pub const MPV_END_FILE_REASON_ERROR: c_int = 4;
+
+/// What a stream's callbacks answer with (client.h's mpv_error).
+pub const MPV_ERROR_LOADING_FAILED: c_int = -13;
+pub const MPV_ERROR_UNSUPPORTED: c_int = -18;
+pub const MPV_ERROR_GENERIC: c_int = -20;
 
 #[repr(C)]
 pub struct mpv_event {
@@ -83,8 +88,28 @@ pub struct mpv_opengl_fbo {
     pub internal_format: c_int,
 }
 
+/// A stream of the app's own, read through callbacks (stream_cb.h): what `mpv_stream_cb_add_ro`
+/// registers for a protocol, and what the open callback fills in for each stream opened.
+pub type mpv_stream_cb_read_fn = unsafe extern "C" fn(cookie: *mut c_void, buf: *mut c_char, nbytes: u64) -> i64;
+pub type mpv_stream_cb_seek_fn = unsafe extern "C" fn(cookie: *mut c_void, offset: i64) -> i64;
+pub type mpv_stream_cb_size_fn = unsafe extern "C" fn(cookie: *mut c_void) -> i64;
+pub type mpv_stream_cb_close_fn = unsafe extern "C" fn(cookie: *mut c_void);
+pub type mpv_stream_cb_cancel_fn = unsafe extern "C" fn(cookie: *mut c_void);
+pub type mpv_stream_cb_open_ro_fn = unsafe extern "C" fn(user_data: *mut c_void, uri: *mut c_char, info: *mut mpv_stream_cb_info) -> c_int;
+
+#[repr(C)]
+pub struct mpv_stream_cb_info {
+    pub cookie: *mut c_void,
+    pub read_fn: Option<mpv_stream_cb_read_fn>,
+    pub seek_fn: Option<mpv_stream_cb_seek_fn>,
+    pub size_fn: Option<mpv_stream_cb_size_fn>,
+    pub close_fn: Option<mpv_stream_cb_close_fn>,
+    pub cancel_fn: Option<mpv_stream_cb_cancel_fn>,
+}
+
 #[link(name = "mpv")]
 unsafe extern "C" {
+    pub fn mpv_stream_cb_add_ro(ctx: *mut mpv_handle, protocol: *const c_char, user_data: *mut c_void, open_fn: mpv_stream_cb_open_ro_fn) -> c_int;
     pub fn mpv_create() -> *mut mpv_handle;
     pub fn mpv_initialize(ctx: *mut mpv_handle) -> c_int;
     pub fn mpv_terminate_destroy(ctx: *mut mpv_handle);

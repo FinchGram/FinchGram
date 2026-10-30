@@ -1701,6 +1701,12 @@ pub struct LocalFile {
     pub is_downloading_completed: bool,
     #[serde(default)]
     pub downloaded_size: i64,
+    /// Where the download goes on from, and how many bytes from there are on the disk, ready to
+    /// be read: what a file played as it arrives reads (src/player/stream.rs).
+    #[serde(default)]
+    pub download_offset: i64,
+    #[serde(default)]
+    pub downloaded_prefix_size: i64,
 }
 
 /// The file on Telegram's servers: how much of ours has reached them.

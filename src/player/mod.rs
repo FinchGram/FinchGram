@@ -4,12 +4,14 @@
 //! viewer shows that texture as an image (Viewer.frame). What mpv reports goes to the Viewer
 //! global: the position, playing or not, the end.
 //!
-//! Everything runs on the UI thread; mpv's own threads only ask the event loop to look.
+//! Everything runs on the UI thread; mpv's own threads only ask the event loop to look, and read
+//! a file played as it arrives (`stream`).
 
 pub mod audio;
 pub mod decode;
 mod mpv;
 pub mod probe;
+pub mod stream;
 
 use std::cell::RefCell;
 use std::ffi::{CStr, CString, c_char, c_int, c_void};
@@ -32,6 +34,8 @@ const PAUSED: u64 = 2;
 const ENDED: u64 = 3;
 const WIDTH: u64 = 4;
 const HEIGHT: u64 = 5;
+/// mpv waits for bytes of a file played as it arrives (paused-for-cache): the viewer's spinner.
+const BUFFERING: u64 = 6;
 
 struct Player {
     ui: slint::Weak<MainWindow>,
@@ -118,6 +122,9 @@ pub fn install(ui: &MainWindow) {
 
 /// Play the file at `path` from its start; a GIF loops. `volume` is 0 … 100.
 pub fn play(path: &str, looping: bool, speed: f64, volume: i32, muted: bool) {
+    if !path.starts_with("finchgram://") {
+        stream::withdraw();
+    }
     with_player(|player| {
         if player.mpv.is_null()
             && let Err(err) = player.start()
@@ -136,6 +143,14 @@ pub fn play(path: &str, looping: bool, speed: f64, volume: i32, muted: bool) {
             player.load(load);
         }
     });
+}
+
+/// Play a file as it arrives, through `stream` (stream.rs), from its start; as `play` otherwise.
+/// The viewer's spinner stays until mpv has opened it (`loading`), and comes back while mpv
+/// waits for bytes.
+pub fn play_stream(stream: std::sync::Arc<stream::Stream>, looping: bool, speed: f64, volume: i32, muted: bool) {
+    let url = stream::offer(stream);
+    play(&url, looping, speed, volume, muted);
 }
 
 pub fn is_loaded() -> bool {
@@ -173,8 +188,9 @@ pub fn set_muted(muted: bool) {
     with_player(|player| player.command(&["set", "mute", if muted { "yes" } else { "no" }]));
 }
 
-/// Nothing plays: the file is let go and its frame no longer shown.
+/// Nothing plays: the file is let go and its frame no longer shown; a stream is over.
 pub fn stop() {
+    stream::withdraw();
     with_player(|player| {
         player.waiting = None;
         if player.loaded {
@@ -242,8 +258,14 @@ impl Player {
                 (ENDED, c"eof-reached", mpv::MPV_FORMAT_FLAG),
                 (WIDTH, c"dwidth", mpv::MPV_FORMAT_INT64),
                 (HEIGHT, c"dheight", mpv::MPV_FORMAT_INT64),
+                (BUFFERING, c"paused-for-cache", mpv::MPV_FORMAT_FLAG),
             ] {
                 mpv::mpv_observe_property(mpv, id, name.as_ptr(), format);
+            }
+            // Files played as they arrive: "finchgram://" URLs, read through stream.rs.
+            let status = mpv::mpv_stream_cb_add_ro(mpv, c"finchgram".as_ptr(), ptr::null_mut(), stream::open);
+            if status < 0 {
+                eprintln!("player: cannot play files as they arrive: {}", error_string(status));
             }
             mpv::mpv_set_wakeup_callback(mpv, wake_for_events, ptr::null_mut());
             self.mpv = mpv;
@@ -311,17 +333,24 @@ impl Player {
                             ENDED => self.ended = *(property.data as *const c_int) != 0,
                             WIDTH => self.width = *(property.data as *const i64),
                             HEIGHT => self.height = *(property.data as *const i64),
+                            BUFFERING => {
+                                let waiting = *(property.data as *const c_int) != 0 && self.loaded;
+                                self.with_viewer(|viewer| viewer.set_loading(waiting));
+                            }
                             _ => {}
                         }
                     }
                     self.report();
                 }
+                // Open, and playing: a file that arrives as it plays no longer waits to start.
+                mpv::MPV_EVENT_FILE_LOADED => self.with_viewer(|viewer| viewer.set_loading(false)),
                 mpv::MPV_EVENT_END_FILE => {
                     // SAFETY: an end-of-file event carries an mpv_event_end_file.
                     let end = unsafe { &*(event.data as *const mpv::mpv_event_end_file) };
                     if end.reason == mpv::MPV_END_FILE_REASON_ERROR {
                         eprintln!("player: cannot play the file: {}", error_string(end.error));
                         self.loaded = false;
+                        self.with_viewer(|viewer| viewer.set_loading(false));
                         self.report();
                     }
                 }

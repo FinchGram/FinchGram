@@ -1,7 +1,8 @@
 //! The media viewer (the design's media-viewer.js): the open chat's photos, videos and GIFs over the
 //! whole window, one at a time. A photo is shown in its largest size, downloaded when it is shown,
-//! so that it can be zoomed into. A video is downloaded whole, then plays through mpv
-//! (src/player/); a GIF loops. "Download" copies the file into the Downloads folder, where TDLib
+//! so that it can be zoomed into. A video plays through mpv (src/player/) as it arrives, read from
+//! the file TDLib is downloading (files::stream); one on the disk plays from it. A GIF loops.
+//! "Download" copies the file into the Downloads folder, where TDLib
 //! says the content may be saved (the chat may restrict it); "locate" closes the viewer and brings
 //! its message into sight. A photo or video sent to self-destruct is shown on its own, and TDLib
 //! is told it was opened, which starts its end (view_secret). A video's volume and mute are the
@@ -163,6 +164,8 @@ fn view(message_id: i64, autoplay: bool) {
         viewer.set_index(index as i32);
         viewer.set_zoom(0);
         viewer.set_position(0.0);
+        viewer.set_arrived_from(0.0);
+        viewer.set_arrived_to(0.0);
         viewer.set_speed(0);
         viewer.set_saved(SharedString::new());
         viewer.set_playing(false);
@@ -211,6 +214,8 @@ fn view_secret(message_id: i64) {
         viewer.set_index(0);
         viewer.set_zoom(0);
         viewer.set_position(0.0);
+        viewer.set_arrived_from(0.0);
+        viewer.set_arrived_to(0.0);
         viewer.set_speed(0);
         viewer.set_saved(SharedString::new());
         viewer.set_playing(false);
@@ -276,28 +281,38 @@ fn open_content(message_id: i64) {
     });
 }
 
-/// Download the video shown, whole, then play it: unless something else is shown by then.
+/// Play the video shown: from its file when that is on the disk, else as it arrives, through a
+/// stream of the player's fed by what TDLib says of the file (files::stream,
+/// src/player/stream.rs). The spinner shows until mpv has opened it, and while mpv waits for
+/// bytes; the seek bar shows what has arrived.
 fn start_video(message_id: i64) {
     let Some((file, looping)) = message_content(message_id, |content| {
         Some((store::original(content)?.clone(), matches!(content, MessageContent::Animation { .. })))
     }) else {
         return;
     };
-    with_viewer(|viewer| viewer.set_loading(true));
-    files::download(&file, ASKED, move |path| {
-        let mut still_shown = false;
-        let (mut speed, mut volume, mut muted) = (0, 100, false);
-        with_viewer(|viewer| {
-            viewer.set_loading(false);
-            still_shown = viewer.get_open() && shown_id().as_deref() == Some(message_id.to_string().as_str());
-            speed = viewer.get_speed();
-            volume = viewer.get_volume();
-            muted = viewer.get_muted();
-        });
-        if still_shown {
-            player::play(&path, looping, SPEEDS[speed as usize], volume, muted);
-        }
+    let (mut speed, mut volume, mut muted) = (0, 100, false);
+    with_viewer(|viewer| {
+        speed = viewer.get_speed();
+        volume = viewer.get_volume();
+        muted = viewer.get_muted();
+        viewer.set_arrived_from(0.0);
+        viewer.set_arrived_to(0.0);
     });
+    let speed = SPEEDS[speed as usize];
+    if let Some(path) = files::completed(&file) {
+        with_viewer(|viewer| viewer.set_loading(false));
+        player::play(&path, looping, speed, volume, muted);
+        return;
+    }
+    with_viewer(|viewer| viewer.set_loading(true));
+    let stream = files::stream(&file, ASKED, |from, to| {
+        with_viewer(|viewer| {
+            viewer.set_arrived_from(from);
+            viewer.set_arrived_to(to);
+        });
+    });
+    player::play_stream(stream, looping, speed, volume, muted);
 }
 
 fn play_pause() {
@@ -332,6 +347,8 @@ pub fn view_file(path: &str, video: bool) {
         viewer.set_index(0);
         viewer.set_zoom(0);
         viewer.set_position(0.0);
+        viewer.set_arrived_from(0.0);
+        viewer.set_arrived_to(0.0);
         viewer.set_speed(0);
         viewer.set_saved(SharedString::new());
         viewer.set_playing(false);
@@ -398,6 +415,8 @@ fn show(index: i32) {
         viewer.set_index(index);
         viewer.set_zoom(0);
         viewer.set_position(0.0);
+        viewer.set_arrived_from(0.0);
+        viewer.set_arrived_to(0.0);
         viewer.set_loading(false);
         shown = item.id.parse().ok();
     });
