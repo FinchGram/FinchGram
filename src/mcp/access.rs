@@ -244,14 +244,20 @@ pub fn admit(host: Host, answer: mpsc::Sender<Admission>) {
             return Some(Admission::Denied);
         }
         if let Some(mut app) = database::mcp_app(&key, account) {
-            // Where it is now: a newer version, or another copy, of the same program.
-            app.path = host.location();
-            app.name = host.name();
-            app.last_used = now;
-            if let Err(err) = database::save_mcp_app(&app, account) {
-                eprintln!("mcp: cannot note the program's use: {err}");
+            if app.identity == host.identity() {
+                // Where it is now: a newer version, or another copy, of the same program.
+                app.path = host.location();
+                app.name = host.name();
+                app.last_used = now;
+                if let Err(err) = database::save_mcp_app(&app, account) {
+                    eprintln!("mcp: cannot note the program's use: {err}");
+                }
+                return Some(if app.allowed { Admission::Allowed } else { Admission::Denied });
             }
-            return Some(if app.allowed { Admission::Allowed } else { Admission::Denied });
+            // The program at the path is not the one the user answered about: its code changed,
+            // by an update or by another program put in its place. The user is asked again, and
+            // told so (`show_question`); their answer takes the row.
+            super::log(&format!("{}: its code is not the code the user answered about: asked again", host.describe()));
         }
         if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.key == key && known.started == host.started) {
             known.app.last_used = now;
@@ -323,7 +329,7 @@ pub fn admitted(host: &Host) -> bool {
         settings.mcp.enabled
             && database::mcp_app(&key, settings.mcp.account)
                 .or_else(|| state.session_apps.iter().find(|known| known.app.key == key && known.started == host.started).map(|known| known.app.clone()))
-                .is_some_and(|app| app.allowed)
+                .is_some_and(|app| app.allowed && app.identity == host.identity())
     })
 }
 
@@ -429,6 +435,9 @@ fn show_question() {
     ai.set_ask_name(name.into());
     ai.set_ask_path(host.location().into());
     ai.set_ask_kept(host.kept());
+    ai.set_ask_unsigned(host.kept() && host.signature.is_none());
+    // Answered about before, under other code: an update, or another program in its place.
+    ai.set_ask_changed(host.kept() && database::mcp_app(&host.key(), bound_account()).is_some_and(|app| app.identity != host.identity()));
     ai.set_ask_open(true);
     crate::platform::show_window(&ui);
 }
@@ -463,7 +472,7 @@ fn turn_away_waiting() {
 /// Keep the answer: in the database, for this account, for a program whose answer can be kept
 /// (`Host::kept`), else for this run and this process only.
 fn remember(host: &Host, allowed: bool) {
-    let app = McpApp { key: host.key(), path: host.location(), name: host.name(), allowed, last_used: now() };
+    let app = McpApp { key: host.key(), path: host.location(), name: host.name(), allowed, last_used: now(), identity: host.identity() };
     STATE.with(|slot| {
         let mut slot = slot.borrow_mut();
         let Some(state) = slot.as_mut() else { return };

@@ -2918,6 +2918,14 @@ msgstr "¿Permitir que un programa no identificado use tu cuenta de Telegram?"
 msgid "macOS reports this program as the one connecting to FinchGram."
 msgstr "Según macOS, este es el programa que se conecta a FinchGram."
 
+#: ui/pages/ai-access.slint:783
+msgid "“{0}” has changed since you last answered about it: an update, or another program in its place. macOS can't say which."
+msgstr "«{0}» ha cambiado desde la última vez que respondiste: una actualización, u otro programa en su lugar. macOS no puede decir cuál."
+
+#: ui/pages/ai-access.slint:784
+msgid "macOS reports this program as the one connecting to FinchGram. It isn't signed by a developer, so FinchGram will ask again when it changes."
+msgstr "Según macOS, este es el programa que se conecta a FinchGram. No está firmado por un desarrollador, así que FinchGram volverá a preguntar cuando cambie."
+
 #: ui/pages/ai-access.slint:782
 msgid ""
 "“{0}” runs whatever script it is given, so macOS can't say which one this "

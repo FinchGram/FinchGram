@@ -46,7 +46,8 @@ things fit together.
   every theme: `src/mcp/access.rs`, ui/pages/ai-access.slint), off by default; each app is allowed
   by the user the first time it connects, through the dialog, and remembered by its code signature
   as macOS validates it (Team ID and signing identifier, the same through updates and for every
-  copy), or by its path when it has no signature from a team.
+  copy), or, when it has no signature from a team, by its path and the cdhash of its code (since
+  2026-10-29: an update changes the hash, and the program asks again, the dialog saying it changed).
 - The Downloads page (`src/downloads/`, docs/downloads.md, the design's "FinchGram Desktop 下载"
   round, built in every theme) is a client over WebDAV, FTP, FTPS or SFTP (the last three since
   0.6.0) whose WebDAV engine follows the maintainer's vget: 8 MB chunks over up to 12

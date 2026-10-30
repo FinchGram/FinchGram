@@ -182,6 +182,21 @@ pub fn code_signature(pid: i32) -> Option<(String, Option<String>)> {
     }
 }
 
+/// The cdhash of the code the process `pid` runs, in hex: what the system knows the code by, signed
+/// by a team or only ad hoc (every program that runs on Apple silicon is at least that), and what
+/// changes with the program's bytes. None for a program with no signature at all, or one that is
+/// gone. What the MCP server remembers a program without a team's signature by, with its path
+/// (src/mcp/peer.rs).
+pub fn code_hash(pid: i32) -> Option<String> {
+    #[cfg(target_os = "macos")]
+    return macos::code_hash(pid);
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = pid;
+        None
+    }
+}
+
 /// The same for the program in the file at `path` (an executable, or an app bundle), not running;
 /// the file is read and hashed, so one changed since it was signed has none. What finchgram-tdlib
 /// is held to before it is started (src/telegram/process.rs).

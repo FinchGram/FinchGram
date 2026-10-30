@@ -704,9 +704,9 @@ component AllowButton inherits Rectangle {
 // stays usable; nothing closes the dialog but an answer.
 export component AllowDialog inherits Rectangle {
     property <bool> known: AiAccess.ask-name != "";
-    // Don't Allow is the safe choice for a program the system would not name, and for an
-    // interpreter, which runs any script.
-    property <bool> known-is-safe: known && AiAccess.ask-kept;
+    // Don't Allow is the safe choice for a program the system would not name, for an interpreter,
+    // which runs any script, and for a program whose code changed since the user answered.
+    property <bool> known-is-safe: known && AiAccess.ask-kept && !AiAccess.ask-changed;
 
     box := Rectangle {
         x: (parent.width - self.width) / 2;
@@ -778,6 +778,8 @@ export component AllowDialog inherits Rectangle {
                 }
                 Paragraph {
                     text: !root.known ? @tr("macOS wouldn't say which program this is. Allow it only if you've just set one up yourself.")
+                        : AiAccess.ask-changed ? @tr("“{0}” has changed since you last answered about it: an update, or another program in its place. macOS can't say which.", AiAccess.ask-name)
+                        : AiAccess.ask-unsigned ? @tr("macOS reports this program as the one connecting to FinchGram. It isn't signed by a developer, so FinchGram will ask again when it changes.")
                         : AiAccess.ask-kept ? @tr("macOS reports this program as the one connecting to FinchGram.")
                         : @tr("“{0}” runs whatever script it is given, so macOS can't say which one this is. Your answer lasts only while it runs.", AiAccess.ask-name);
                     color: root.known-is-safe ? Look.muted : Look.danger;

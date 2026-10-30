@@ -116,9 +116,12 @@ AI 访问，按设计（设计画的是设置 → AI 访问；2026-10-24 起是�
    Security 框架按 `anchor apple generic`（Apple 签发的证书：Developer ID、App Store 或 Apple 自己的）验证运行中进程的
    签名，答案记在签名里的 Team ID 和签名标识之下（Claude Code 是 "Q6L2SF6YDW/com.anthropic.claude-code"，Claude
    Desktop 是 "Q6L2SF6YDW/com.anthropic.claudefordesktop"），升级、换个地方安装都不变：单独安装的 Claude Code 和
-   VS Code 扩展里的那个是同一个 app，允许一次就够。没有这种签名的程序（未签名、ad hoc 签名、或证书不是 Apple
-   签发的；Apple 自己的程序没有 team）改按路径记：程序本身（链接解析过的路径），而不是它的 app 包，因为一个包里
-   可能还装着别的程序。解释器（node、bun、deno、python、ruby、perl、php、java、osascript……）什么都不记：系统报的是
+   VS Code 扩展里的那个是同一个 app，允许一次就够。没有这种签名的程序（ad hoc 签名的，Mac 上编译出来的程序链接器都
+   会这么签；或证书不是 Apple 签发的；Apple 自己的程序没有 team）按路径加代码的 cdhash 记：路径是程序本身（链接解析过
+   的路径），而不是它的 app 包，因为一个包里可能还装着别的程序；cdhash 是系统认这段代码用的哈希（macOS 自己给 ad hoc
+   程序记隐私权限也用它），程序一更新它就变，于是会再问一次，对话框会说明它变了，因为换成别的程序放在同一位置看起来是
+   一样的。完全没有签名的程序（Rosetta 下的 Intel 程序可能没有）没有东西可以把答案系在上面，答案只在本次运行、只对那个
+   进程有效，和解释器一样。解释器（node、bun、deno、python、ruby、perl、php、java、osascript……）什么都不记：系统报的是
    解释器，不是它在跑的脚本，脚本只是一个参数，而且脚本能借解释器自己的开关和环境变量把参数伪装成别的；给 node 记一个
    答案，等于给任何人用 node 跑的任何脚本都记了。对话框会说明这一点，把“不允许”做成稳妥的按钮，答案只在本次运行、
    只对那个进程有效，和系统说不出名字的程序一样。记下来的答案是 app 自己数据库里的行（docs/architecture.zh-Hans.md，“app 自己的数据库”），每一行带着

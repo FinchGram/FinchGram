@@ -5,7 +5,8 @@
 //! Security framework for the program's code signature), so nothing connecting can claim to be
 //! something else. The name and the place go into the log, into Settings → AI access's list of
 //! apps, and into the dialog that asks the user to allow an app (access.rs); the signature is what
-//! the user's answer is remembered by.
+//! the user's answer is remembered by, or, for a program without one from a team, its path and the
+//! hash of its code.
 
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
@@ -54,6 +55,10 @@ pub struct Host {
     pub path: Option<PathBuf>,
     /// Its code signature, when it has a valid one from a team.
     pub signature: Option<Signature>,
+    /// The cdhash of its code (src/platform/), for a program without a signature from a team:
+    /// what its answer is held to besides its path (`identity`). None for one with such a
+    /// signature, which needs none, and for one with no signature at all.
+    pub hash: Option<String>,
     /// When the process started, in seconds since the epoch; 0 when the system would not say. A
     /// program the system would not name is remembered for the run by its pid and this: a later
     /// process under the same pid (pids are reused) is a stranger (access.rs).
@@ -116,11 +121,20 @@ impl Host {
         self.path.is_some()
     }
 
-    /// The user's answer about the program can be kept for next time: the system named it, and
-    /// it is not an interpreter (INTERPRETERS), whose name says nothing about the script it runs.
+    /// The user's answer about the program can be kept for next time: the system named it, it is
+    /// not an interpreter (INTERPRETERS), whose name says nothing about the script it runs, and
+    /// there is something to hold the answer to, a signature from a team or the hash of its code.
     /// Otherwise the answer lasts for the run and this process only (access.rs).
     pub fn kept(&self) -> bool {
-        self.path.as_ref().is_some_and(|path| !is_interpreter(path))
+        self.path.as_ref().is_some_and(|path| !is_interpreter(path)) && (self.signature.is_some() || self.hash.is_some())
+    }
+
+    /// What a kept answer is held to besides the key: nothing for a program with a signature from
+    /// a team, which is its key, the same through every update; for one without, the cdhash of
+    /// its code, which an update changes, so that the program at the path is asked about again
+    /// (access.rs), and one put in its place is not taken for it.
+    pub fn identity(&self) -> String {
+        if self.signature.is_some() { String::new() } else { self.hash.clone().unwrap_or_default() }
     }
 }
 
@@ -136,7 +150,7 @@ fn is_interpreter(path: &Path) -> bool {
 /// The program behind `stream`: the process that connected, unless that is our own bridge or a
 /// shell, in which case the one that started it.
 pub fn host_of(stream: &UnixStream) -> Host {
-    let Some(peer) = system::peer_pid(stream) else { return Host { pid: 0, path: None, signature: None, started: 0 } };
+    let Some(peer) = system::peer_pid(stream) else { return Host { pid: 0, path: None, signature: None, hash: None, started: 0 } };
     let ours = std::env::current_exe().ok().and_then(|exe| exe.canonicalize().ok());
     let mut pid = peer;
     let mut path = system::path_of(pid);
@@ -160,7 +174,9 @@ pub fn host_of(stream: &UnixStream) -> Host {
     // The path with its links followed: a program without a signature is remembered by it.
     let path = if ours_or_wrapper { None } else { path.map(|path| path.canonicalize().unwrap_or(path)) };
     let signature = if path.is_some() { system::signature_of(pid) } else { None };
-    Host { pid, path, signature, started: system::started_at(pid).unwrap_or(0) }
+    // A program without a signature from a team is held to its code besides its path.
+    let hash = if path.is_some() && signature.is_none() { system::code_hash(pid) } else { None };
+    Host { pid, path, signature, hash, started: system::started_at(pid).unwrap_or(0) }
 }
 
 /// Whether the process at the other end of `stream` is this very program: for the bridge
@@ -313,6 +329,12 @@ mod system {
         let (identifier, team) = signing_of(pid)?;
         Some(Signature { team: team?, identifier })
     }
+
+    /// The cdhash of the code the process `pid` runs (src/platform/), signed by a team or only ad
+    /// hoc: None for a program with no signature at all, or one that is gone.
+    pub fn code_hash(pid: i32) -> Option<String> {
+        crate::platform::code_hash(pid)
+    }
 }
 
 #[cfg(not(target_os = "macos"))]
@@ -341,31 +363,40 @@ mod system {
     pub fn signature_of(_pid: i32) -> Option<Signature> {
         None
     }
+
+    pub fn code_hash(_pid: i32) -> Option<String> {
+        None
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    /// A cdhash, as the system gives it.
+    fn hash() -> String {
+        "4f".repeat(20)
+    }
+
     #[test]
     fn a_program_in_an_app_bundle_is_named_after_the_bundle() {
-        let claude = Host { pid: 7, path: Some(PathBuf::from("/Applications/Claude.app/Contents/MacOS/Claude")), signature: None, started: 0 };
+        let claude = Host { pid: 7, path: Some(PathBuf::from("/Applications/Claude.app/Contents/MacOS/Claude")), signature: None, hash: None, started: 0 };
         assert_eq!(claude.describe(), "Claude (/Applications/Claude.app)");
-        let tool = Host { pid: 8, path: Some(PathBuf::from("/Users/x/.local/bin/claude")), signature: None, started: 0 };
+        let tool = Host { pid: 8, path: Some(PathBuf::from("/Users/x/.local/bin/claude")), signature: None, hash: None, started: 0 };
         assert_eq!(tool.describe(), "claude (/Users/x/.local/bin/claude)");
         // Without a signature from a team, the program itself is the key, not its bundle: two
         // programs in one unsigned bundle are two answers.
         assert_eq!((claude.name(), claude.location(), claude.key()), ("Claude".to_string(), "/Applications/Claude.app".to_string(), "/Applications/Claude.app/Contents/MacOS/Claude".to_string()));
-        let helper = Host { pid: 7, path: Some(PathBuf::from("/Applications/Claude.app/Contents/Helpers/other")), signature: None, started: 0 };
+        let helper = Host { pid: 7, path: Some(PathBuf::from("/Applications/Claude.app/Contents/Helpers/other")), signature: None, hash: None, started: 0 };
         assert_eq!((helper.name(), helper.location()), (claude.name(), claude.location()));
         assert_ne!(helper.key(), claude.key());
         assert_eq!((tool.name(), tool.key()), ("claude".to_string(), "/Users/x/.local/bin/claude".to_string()));
-        let nameless = Host { pid: 9, path: None, signature: None, started: 0 };
+        let nameless = Host { pid: 9, path: None, signature: None, hash: None, started: 0 };
         assert_eq!((nameless.describe(), nameless.name(), nameless.key(), nameless.identified()), ("pid 9".into(), String::new(), "pid 9".into(), false));
-        assert_eq!(Host { pid: 0, path: None, signature: None, started: 0 }.describe(), "an unknown process");
-        assert_eq!(Host { pid: 0, path: None, signature: None, started: 0 }.key(), "unknown");
+        assert_eq!(Host { pid: 0, path: None, signature: None, hash: None, started: 0 }.describe(), "an unknown process");
+        assert_eq!(Host { pid: 0, path: None, signature: None, hash: None, started: 0 }.key(), "unknown");
         assert_eq!(bundle_of(Path::new("/usr/bin/node")), None);
-        let versioned = Host { pid: 10, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.296")), signature: None, started: 0 };
+        let versioned = Host { pid: 10, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.296")), signature: None, hash: None, started: 0 };
         assert_eq!((versioned.name(), versioned.key()), ("claude".to_string(), "/Users/x/.local/share/claude/versions/2.1.296".to_string()));
         assert_eq!(program_name(Path::new("/opt/homebrew/bin/node")), "node");
         assert_eq!(program_name(Path::new("/Users/x/tools/3.0")), "tools");
@@ -388,26 +419,29 @@ mod tests {
             "/Users/x/project/node_modules/electron/dist/Electron.app/Contents/MacOS/Electron",
         ] {
             assert!(is_interpreter(Path::new(path)), "{path}");
-            let host = Host { pid: 20, path: Some(PathBuf::from(path)), signature: None, started: 5 };
+            let host = Host { pid: 20, path: Some(PathBuf::from(path)), signature: None, hash: Some(hash()), started: 5 };
             assert!(host.identified() && !host.kept(), "{path}");
         }
         // Signed by a team or not, the interpreter is still the interpreter.
         let signed = Signature { team: "HHGW6JJ4A4".into(), identifier: "node".into() };
-        let node = Host { pid: 21, path: Some(PathBuf::from("/usr/local/bin/node")), signature: Some(signed), started: 5 };
+        let node = Host { pid: 21, path: Some(PathBuf::from("/usr/local/bin/node")), signature: Some(signed), hash: None, started: 5 };
         assert!(!node.kept());
         for path in ["/Applications/Claude.app/Contents/MacOS/Claude", "/Users/x/.local/share/claude/versions/2.1.306", "/Users/x/bin/nodeish", "/usr/bin/javac", "/opt/homebrew/bin/node-gyp"] {
             assert!(!is_interpreter(Path::new(path)), "{path}");
-            assert!(Host { pid: 22, path: Some(PathBuf::from(path)), signature: None, started: 5 }.kept(), "{path}");
+            // Kept by the hash of its code; with no signature at all, there is nothing to keep
+            // the answer by.
+            assert!(Host { pid: 22, path: Some(PathBuf::from(path)), signature: None, hash: Some(hash()), started: 5 }.kept(), "{path}");
+            assert!(!Host { pid: 22, path: Some(PathBuf::from(path)), signature: None, hash: None, started: 5 }.kept(), "{path}");
         }
-        assert!(!Host { pid: 23, path: None, signature: None, started: 5 }.kept());
+        assert!(!Host { pid: 23, path: None, signature: None, hash: Some(hash()), started: 5 }.kept());
     }
 
     #[test]
     fn a_signed_program_is_remembered_by_its_signature_wherever_it_is() {
         let signature = Signature { team: "Q6L2SF6YDW".into(), identifier: "com.anthropic.claude-code".into() };
-        let standalone = Host { pid: 11, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.306")), signature: Some(signature.clone()), started: 0 };
+        let standalone = Host { pid: 11, path: Some(PathBuf::from("/Users/x/.local/share/claude/versions/2.1.306")), signature: Some(signature.clone()), hash: None, started: 0 };
         let inside_vscode = "/Users/x/.vscode/extensions/anthropic.claude-code-2.1.305-darwin-arm64/resources/native-binary/claude";
-        let extension = Host { pid: 12, path: Some(PathBuf::from(inside_vscode)), signature: Some(signature), started: 0 };
+        let extension = Host { pid: 12, path: Some(PathBuf::from(inside_vscode)), signature: Some(signature), hash: None, started: 0 };
         assert_eq!(standalone.key(), "Q6L2SF6YDW/com.anthropic.claude-code");
         assert_eq!(extension.key(), standalone.key());
         assert_eq!((standalone.name(), standalone.location()), ("claude".to_string(), "/Users/x/.local/share/claude/versions/2.1.306".to_string()));
@@ -417,9 +451,16 @@ mod tests {
             pid: 13,
             path: Some(PathBuf::from("/Applications/Claude.app/Contents/MacOS/Claude")),
             signature: Some(Signature { team: "Q6L2SF6YDW".into(), identifier: "com.anthropic.claudefordesktop".into() }),
+            hash: None,
             started: 0,
         };
         assert_eq!((desktop.name(), desktop.location(), desktop.key()), ("Claude".to_string(), "/Applications/Claude.app".to_string(), "Q6L2SF6YDW/com.anthropic.claudefordesktop".to_string()));
+        // A program without a team's signature is held to its path and to its code: the hash is
+        // its identity. A signed program's identity is nothing, its signature being its key.
+        let tool = Host { pid: 14, path: Some(PathBuf::from("/Users/x/bin/tool")), signature: None, hash: Some(hash()), started: 0 };
+        assert_eq!((tool.key(), tool.identity(), tool.kept()), ("/Users/x/bin/tool".to_string(), hash(), true));
+        assert_eq!(tool.describe(), "tool (/Users/x/bin/tool)");
+        assert_eq!((desktop.identity(), standalone.identity()), (String::new(), String::new()));
     }
 
     #[cfg(target_os = "macos")]
@@ -446,10 +487,15 @@ mod tests {
         let pid = i32::try_from(sleep.id()).expect("a pid");
         assert_eq!(system::signing_of(pid), Some(("com.apple.sleep".to_string(), None)));
         assert_eq!(system::signature_of(pid), None);
+        // Every program that runs has a cdhash: Apple's own, and this test program, signed ad hoc
+        // by the linker under no certificate at all.
+        let is_hash = |hash: Option<String>| hash.is_some_and(|hash| hash.len() == 40 && hash.bytes().all(|byte| byte.is_ascii_hexdigit()));
+        assert!(is_hash(system::code_hash(pid)));
         let _ = sleep.kill();
         let _ = sleep.wait();
-        // This test program: signed ad hoc by the linker, under no certificate at all.
         assert_eq!(system::signing_of(std::process::id() as i32), None);
+        assert!(is_hash(system::code_hash(std::process::id() as i32)));
         assert_eq!(system::signature_of(-1), None);
+        assert_eq!(system::code_hash(-1), None);
     }
 }

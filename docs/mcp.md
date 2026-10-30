@@ -153,9 +153,15 @@ credentials from the environment". FinchGram's answer has three layers:
    "Q6L2SF6YDW/com.anthropic.claudefordesktop" for Claude Desktop), which stay the same through
    every update and for every copy of the program: Claude Code installed on its own and the one
    inside the VS Code extension are one app, allowed once. A program without such a signature
-   (unsigned, signed ad hoc, or under a certificate Apple did not issue; Apple's own programs carry
-   no team) is remembered by its path instead: the program itself, with its links followed, and
-   not its app bundle, which may hold other programs that are not it. An interpreter (node, bun,
+   (signed ad hoc, as the linker signs everything built on a Mac, or under a certificate Apple did
+   not issue; Apple's own programs carry no team) is remembered by its path, the program itself
+   with its links followed and not its app bundle, which may hold other programs that are not it,
+   and by the cdhash of its code, the hash the system knows the code by (macOS keeps its own
+   privacy answers for ad hoc programs under it too): an update changes it, so the program asks
+   again, and the dialog says it changed, since another program put in its place would look the
+   same. One with no signature at all (an Intel program under Rosetta may have none) has nothing
+   to hold an answer to, and its answer lasts for the run and the process, as an interpreter's
+   does. An interpreter (node, bun,
    deno, python, ruby, perl, php, java, osascript, …) is remembered by nothing: the system names
    the interpreter, not the script it runs, which is only an argument, and one a script can lie
    about through the interpreter's own switches and variables, so an answer kept for node would

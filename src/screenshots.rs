@@ -2090,6 +2090,17 @@ fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str
     ai.set_ask_kept(false);
     save(window, &name("ai-allow-interpreter"));
     ai.set_ask_kept(true);
+    // A program without a developer's signature: kept by its code, and asked again when that
+    // changes; then the same program, its code changed since the user answered.
+    ai.set_ask_name("tgcli".into());
+    ai.set_ask_initial("T".into());
+    ai.set_ask_path("/Users/lin/.local/bin/tgcli".into());
+    ai.set_ask_unsigned(true);
+    save(window, &name("ai-allow-unsigned"));
+    ai.set_ask_changed(true);
+    save(window, &name("ai-allow-changed"));
+    ai.set_ask_unsigned(false);
+    ai.set_ask_changed(false);
     ai.set_ask_name(SharedString::new());
     ai.set_ask_initial(SharedString::new());
     ai.set_ask_path("pid 48213".into());

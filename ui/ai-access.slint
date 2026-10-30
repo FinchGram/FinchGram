@@ -68,6 +68,8 @@ export global AiAccess {
     in-out property <string> ask-path;               // where it is
     in-out property <string> ask-initial;            // the name's first letter, for its square
     in-out property <bool> ask-kept: true;           // the answer is kept; false for an interpreter (node, python…), whose answer lasts only while it runs
+    in-out property <bool> ask-unsigned;             // kept by the program's code rather than a developer's signature: it asks again when it changes
+    in-out property <bool> ask-changed;              // answered about before, and its code changed since: an update, or another program in its place
 
     callback opened();                               // the page is shown: Rust refreshes the lists
     callback set-on(bool);

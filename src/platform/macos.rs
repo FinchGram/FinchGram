@@ -1041,8 +1041,56 @@ const APPLE_ISSUED: &str = "anchor apple generic";
 /// when the certificate names one, its team. None for a program without such a signature, or one
 /// that is gone.
 pub fn code_signature(pid: i32) -> Option<(String, Option<String>)> {
+    use objc2_core_foundation::CFRetained;
+    use objc2_security::{SecCSFlags, SecStaticCode, errSecSuccess};
+    let code = running_code(pid)?;
+    let requirement = apple_issued()?;
+    // SAFETY: both are valid objects from the calls above.
+    if unsafe { code.check_validity(SecCSFlags::DefaultFlags, Some(&*requirement)) } != errSecSuccess {
+        return None;
+    }
+    // SAFETY: a SecCode is a SecStaticCode as well, the framework says ("SecCodeRef is a subtype
+    // of SecStaticCodeRef"), and `code` keeps it alive.
+    let as_static: &SecStaticCode = unsafe { CFRetained::as_ptr(&code).cast::<SecStaticCode>().as_ref() };
+    signing_information(as_static)
+}
+
+/// The cdhash of the code the process `pid` runs: the hash over its code signature's directory,
+/// by which the system knows the code, and which changes with the program's bytes, as a path does
+/// not. Every program that runs on Apple silicon carries a signature, if only the ad hoc one the
+/// linker writes, and so a cdhash; it is validated under no requirement, which an ad hoc signature
+/// passes, and which only says that the signature holds for the code as it is. None for a program
+/// with no signature at all (an Intel program under Rosetta may have none), one whose signature
+/// does not hold, or a process that is gone. In hex, as `codesign -dvvv` prints it. What the MCP
+/// server remembers a program without a team's signature by, besides its path (src/mcp/peer.rs).
+pub fn code_hash(pid: i32) -> Option<String> {
+    use objc2_core_foundation::{CFData, CFDictionary, CFRetained, CFType};
+    use objc2_security::{SecCSFlags, SecCode, SecStaticCode, errSecSuccess, kSecCodeInfoUnique};
+    let code = running_code(pid)?;
+    // SAFETY: a valid object from the call above; no requirement.
+    if unsafe { code.check_validity(SecCSFlags::DefaultFlags, None) } != errSecSuccess {
+        return None;
+    }
+    // SAFETY: as in `code_signature`.
+    let as_static: &SecStaticCode = unsafe { CFRetained::as_ptr(&code).cast::<SecStaticCode>().as_ref() };
+    let mut information: *const CFDictionary = std::ptr::null();
+    // SAFETY: `information` is where the dictionary goes; the basic facts hold the cdhash.
+    let status = unsafe { SecCode::copy_signing_information(as_static, SecCSFlags::DefaultFlags, NonNull::from(&mut information)) };
+    if status != errSecSuccess {
+        return None;
+    }
+    // SAFETY: one reference that is ours; the dictionary's keys are strings, its values vary.
+    let information: CFRetained<CFDictionary<CFType, CFType>> = unsafe { CFRetained::from_raw(NonNull::new(information.cast_mut())?.cast()) };
+    // SAFETY: the framework's constant is only read.
+    let unique = information.get(AsRef::<CFType>::as_ref(unsafe { kSecCodeInfoUnique }))?.downcast::<CFData>().ok()?;
+    let bytes = unique.to_vec();
+    (!bytes.is_empty()).then(|| bytes.iter().map(|byte| format!("{byte:02x}")).collect())
+}
+
+/// The code the process `pid` runs, as the system has it.
+fn running_code(pid: i32) -> Option<objc2_core_foundation::CFRetained<objc2_security::SecCode>> {
     use objc2_core_foundation::{CFDictionary, CFNumber, CFNumberType, CFRetained, CFString, CFType};
-    use objc2_security::{SecCSFlags, SecCode, SecStaticCode, errSecSuccess, kSecGuestAttributePid};
+    use objc2_security::{SecCSFlags, SecCode, errSecSuccess, kSecGuestAttributePid};
     // SAFETY: `pid` is an i32, which is what SInt32Type reads; CFNumber copies the value.
     let number = unsafe { CFNumber::new(None, CFNumberType::SInt32Type, std::ptr::from_ref(&pid).cast()) }?;
     // SAFETY: the framework's constant is only read.
@@ -1055,16 +1103,7 @@ pub fn code_signature(pid: i32) -> Option<(String, Option<String>)> {
         return None;
     }
     // SAFETY: the framework handed over one reference, which is ours to release.
-    let code: CFRetained<SecCode> = unsafe { CFRetained::from_raw(NonNull::new(code)?) };
-    let requirement = apple_issued()?;
-    // SAFETY: both are valid objects from the calls above.
-    if unsafe { code.check_validity(SecCSFlags::DefaultFlags, Some(&*requirement)) } != errSecSuccess {
-        return None;
-    }
-    // SAFETY: a SecCode is a SecStaticCode as well, the framework says ("SecCodeRef is a subtype
-    // of SecStaticCodeRef"), and `code` keeps it alive.
-    let as_static: &SecStaticCode = unsafe { CFRetained::as_ptr(&code).cast::<SecStaticCode>().as_ref() };
-    signing_information(as_static)
+    Some(unsafe { CFRetained::from_raw(NonNull::new(code)?) })
 }
 
 /// The code signature of the program in the file at `path` (an executable, or an app bundle),

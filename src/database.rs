@@ -64,7 +64,10 @@ const KEY_ACCOUNT: &str = "database";
 ///    (`unbound_credential`). The programs' rows tagged for the Telegram account they were
 ///    allowed for; the rows of before dropped, since they name none (every program asks again,
 ///    once).
-pub const LAYOUT: i32 = 6;
+/// 7 (after 0.7.6): `mcp_apps.identity`, what a program's answer is held to besides its key (the
+///    cdhash of a program without a team's signature, src/mcp/peer.rs), in the row's tag; the
+///    rows of before dropped, since they name none (every program asks again, once).
+pub const LAYOUT: i32 = 7;
 
 /// The tables of layout 1, as 0.6.0 made them.
 const TABLES_OF_LAYOUT_1: &str = "CREATE TABLE IF NOT EXISTS servers (
@@ -150,15 +153,19 @@ pub struct McpApp {
     pub allowed: bool,
     /// When it last connected or asked for something, in seconds since the epoch; 0 for never.
     pub last_used: i64,
+    /// What the answer is held to besides the key (`Host::identity`): the cdhash of the code of a
+    /// program without a team's signature, so that the program at the path asks again once its
+    /// code changes; "" for one with such a signature, which is its key.
+    pub identity: String,
 }
 
 impl McpApp {
-    /// What the row's tag is over: what it is remembered by, the answer, and the Telegram account
-    /// the answer was given for (`settings::Mcp::account`), so that a row kept from before
-    /// another account signed in does not stand for this one. Where it is, its name and when it
-    /// was last used are only shown.
+    /// What the row's tag is over: what it is remembered by, the answer, the Telegram account the
+    /// answer was given for (`settings::Mcp::account`), so that a row kept from before another
+    /// account signed in does not stand for this one, and the identity the answer is held to.
+    /// Where it is, its name and when it was last used are only shown.
     fn sealed_text(&self, account: i64) -> String {
-        format!("mcp_app\0{}\0{}\0{account}", self.key, u8::from(self.allowed))
+        format!("mcp_app\0{}\0{}\0{account}\0{}", self.key, u8::from(self.allowed), self.identity)
     }
 }
 
@@ -344,6 +351,15 @@ fn upgrade(connection: &Connection, from: i32, key: &[u8; 32]) -> Result<(), Str
                     // is in settings.toml, which the owner reads, so the owner seals them again
                     // at this start (`unbound_credential`).
                     connection.execute_batch("DELETE FROM mcp_apps;").map_err(|err| err.to_string())
+                }
+                7 => {
+                    // What a program's answer is held to besides its key: the cdhash of the code
+                    // of a program without a team's signature, so that the same program updated,
+                    // or another put in its place, is asked about again. The rows of before name
+                    // none and would not be believed, so they go: each program asks again, once.
+                    connection
+                        .execute_batch("ALTER TABLE mcp_apps ADD COLUMN identity TEXT NOT NULL DEFAULT ''; DELETE FROM mcp_apps;")
+                        .map_err(|err| err.to_string())
                 }
                 _ => Err(format!("no step to layout {to}")),
             }
@@ -774,18 +790,18 @@ pub fn clear_mcp_apps() -> Result<(), String> {
 }
 
 fn read_mcp_apps(connection: &Connection, sealing: &[u8; 32], account: i64) -> rusqlite::Result<Vec<McpApp>> {
-    let mut statement = connection.prepare("SELECT key, path, name, allowed, last_used, seal FROM mcp_apps ORDER BY rowid")?;
+    let mut statement = connection.prepare("SELECT key, path, name, allowed, last_used, identity, seal FROM mcp_apps ORDER BY rowid")?;
     let rows: Vec<(McpApp, String)> = statement.query_map([], mcp_app_row)?.collect::<rusqlite::Result<_>>()?;
     Ok(rows.into_iter().filter_map(|row| believed(sealing, row, account)).collect())
 }
 
 fn read_mcp_app(connection: &Connection, sealing: &[u8; 32], key: &str, account: i64) -> rusqlite::Result<Option<McpApp>> {
-    let row = connection.query_row("SELECT key, path, name, allowed, last_used, seal FROM mcp_apps WHERE key = ?1", params![key], mcp_app_row).optional()?;
+    let row = connection.query_row("SELECT key, path, name, allowed, last_used, identity, seal FROM mcp_apps WHERE key = ?1", params![key], mcp_app_row).optional()?;
     Ok(row.and_then(|row| believed(sealing, row, account)))
 }
 
 fn mcp_app_row(row: &rusqlite::Row) -> rusqlite::Result<(McpApp, String)> {
-    Ok((McpApp { key: row.get(0)?, path: row.get(1)?, name: row.get(2)?, allowed: row.get::<_, i64>(3)? != 0, last_used: row.get(4)? }, row.get(5)?))
+    Ok((McpApp { key: row.get(0)?, path: row.get(1)?, name: row.get(2)?, allowed: row.get::<_, i64>(3)? != 0, last_used: row.get(4)?, identity: row.get(5)? }, row.get(6)?))
 }
 
 /// The row when it is FinchGram's as it wrote it for the account `account`: its tag is the row's
@@ -803,9 +819,9 @@ fn write_mcp_app(connection: &Connection, sealing: &[u8; 32], app: &McpApp, acco
     let seal = cipher::tag(sealing, &app.sealed_text(account));
     connection
         .execute(
-            "INSERT INTO mcp_apps (key, path, name, allowed, last_used, seal) VALUES (?1, ?2, ?3, ?4, ?5, ?6)
-             ON CONFLICT(key) DO UPDATE SET path = excluded.path, name = excluded.name, allowed = excluded.allowed, last_used = excluded.last_used, seal = excluded.seal",
-            params![app.key, app.path, app.name, i64::from(app.allowed), app.last_used, seal],
+            "INSERT INTO mcp_apps (key, path, name, allowed, last_used, identity, seal) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+             ON CONFLICT(key) DO UPDATE SET path = excluded.path, name = excluded.name, allowed = excluded.allowed, last_used = excluded.last_used, identity = excluded.identity, seal = excluded.seal",
+            params![app.key, app.path, app.name, i64::from(app.allowed), app.last_used, app.identity, seal],
         )
         .map(|_| ())
 }
@@ -857,10 +873,26 @@ mod tests {
         connection.execute_batch("PRAGMA user_version = 1;").expect("stamped");
     }
 
+    /// The tables as layouts 2 to 5 left them, on those of layout 1: what 0.7.5 and 0.7.6 made.
+    fn tables_of_layout_five(connection: &Connection) {
+        connection.execute_batch(TABLES_OF_LAYOUT_1).expect("the tables of layout 1");
+        connection
+            .execute_batch(
+                "ALTER TABLE mcp_apps ADD COLUMN seal TEXT NOT NULL DEFAULT '';
+                 ALTER TABLE ssh_hosts ADD COLUMN first_seen INTEGER NOT NULL DEFAULT 0;
+                 ALTER TABLE ssh_hosts ADD COLUMN seal TEXT NOT NULL DEFAULT '';
+                 ALTER TABLE servers ADD COLUMN allow_changes INTEGER NOT NULL DEFAULT 0;
+                 CREATE TABLE IF NOT EXISTS credentials (name TEXT PRIMARY KEY, value TEXT NOT NULL);",
+            )
+            .expect("the columns of layouts 2 to 5");
+    }
+
     /// A file as 0.7.5 left it: layout 5, a credential sealed to its name alone, and a program
     /// allowed, its row tagged without an account.
     fn layout_five(path: &Path, key: &[u8; 32]) {
-        let connection = open_at(path, key, &path.with_file_name("unused-backup")).expect("a new file");
+        std::fs::create_dir_all(path.parent().expect("the folder")).expect("mkdir");
+        let connection = Connection::open(path).expect("a file");
+        tables_of_layout_five(&connection);
         connection
             .execute("INSERT INTO credentials (name, value) VALUES ('voice_input.connection.1', ?1)", params![cipher::seal(key, &credential_binding_of_layout_5("voice_input.connection.1"), "sk-live-1234").expect("sealed")])
             .expect("a credential");
@@ -871,6 +903,21 @@ mod tests {
             )
             .expect("a program");
         connection.execute_batch("PRAGMA user_version = 5;").expect("stamped");
+    }
+
+    /// A file as 0.7.6 left it: layout 6, a program allowed, its row tagged for an account, with
+    /// nothing besides its key to hold the answer to.
+    fn layout_six(path: &Path, key: &[u8; 32], account: i64) {
+        std::fs::create_dir_all(path.parent().expect("the folder")).expect("mkdir");
+        let connection = Connection::open(path).expect("a file");
+        tables_of_layout_five(&connection);
+        connection
+            .execute(
+                "INSERT INTO mcp_apps (key, path, name, allowed, last_used, seal) VALUES ('/Users/x/bin/tool', '/Users/x/bin/tool', 'tool', 1, 10, ?1)",
+                params![cipher::tag(key, &format!("mcp_app\0/Users/x/bin/tool\x001\0{account}"))],
+            )
+            .expect("a program");
+        connection.execute_batch("PRAGMA user_version = 6;").expect("stamped");
     }
 
     #[test]
@@ -1067,6 +1114,26 @@ mod tests {
     }
 
     #[test]
+    fn layout_six_drops_the_programs_whose_rows_hold_their_answers_to_nothing() {
+        let (path, backup) = scratch("layout-six");
+        let key = a_key(19);
+        let account = 777_000_001;
+        layout_six(&path, &key, account);
+        let (connection, upgraded_from) = open_at_noting(&path, &key, &backup).expect("brought up");
+        assert_eq!(upgraded_from, Some(6));
+        assert_eq!(connection.query_row("PRAGMA user_version", [], |row| row.get::<_, i32>(0)).expect("version"), LAYOUT);
+        // The program allowed under layout 6 is gone: nothing says which code its answer was for.
+        assert_eq!(connection.query_row("SELECT count(*) FROM mcp_apps", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
+        // Answered about again, by its path and its code, it is read back whole.
+        let tool = McpApp { key: "/Users/x/bin/tool".into(), path: "/Users/x/bin/tool".into(), name: "tool".into(), allowed: true, last_used: 10, identity: "4f".repeat(20) };
+        write_mcp_app(&connection, &key, &tool, account).expect("write");
+        assert_eq!(read_mcp_apps(&connection, &key, account).expect("read"), vec![tool]);
+        assert_eq!(std::fs::read_dir(&backup).expect("the backup folder").count(), 1);
+        drop(connection);
+        let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
+    }
+
+    #[test]
     fn a_password_of_layout_one_under_a_key_that_is_gone_is_left_empty() {
         let (path, backup) = scratch("older-key");
         layout_one(&path, &a_key(13));
@@ -1089,6 +1156,7 @@ mod tests {
             name: "Claude".into(),
             allowed: true,
             last_used: 10,
+            identity: String::new(),
         };
         let code = McpApp {
             key: "Q6L2SF6YDW/com.anthropic.claude-code".into(),
@@ -1096,6 +1164,7 @@ mod tests {
             name: "claude".into(),
             allowed: false,
             last_used: 0,
+            identity: String::new(),
         };
         write_mcp_app(&connection, &key, &claude, account).expect("write");
         write_mcp_app(&connection, &key, &code, account).expect("write");
@@ -1107,6 +1176,14 @@ mod tests {
         write_mcp_app(&connection, &key, &used, account).expect("write again");
         assert_eq!(read_mcp_app(&connection, &key, &code.key, account).expect("read one"), Some(used));
         assert_eq!(read_mcp_app(&connection, &key, "/nowhere", account).expect("read none"), None);
+        // A program without a team's signature is kept by its path and its code, its identity.
+        let tool = McpApp { key: "/Users/x/bin/tool".into(), path: "/Users/x/bin/tool".into(), name: "tool".into(), allowed: true, last_used: 5, identity: "4f".repeat(20) };
+        write_mcp_app(&connection, &key, &tool, account).expect("write");
+        assert_eq!(read_mcp_app(&connection, &key, &tool.key, account).expect("read one"), Some(tool.clone()));
+        // Its identity turned behind its back, to another program's code: not believed.
+        connection.execute("UPDATE mcp_apps SET identity = 'ffff' WHERE key = ?1", params![tool.key]).expect("turned");
+        assert_eq!(read_mcp_app(&connection, &key, &tool.key, account).expect("read"), None);
+        connection.execute("DELETE FROM mcp_apps WHERE key = ?1", params![tool.key]).expect("remove");
         // For another account, the rows are not answers: a row kept from one account's time and
         // put back after another signed in stands for nothing.
         assert_eq!(read_mcp_app(&connection, &key, &code.key, 777_000_002).expect("read"), None);
@@ -1125,7 +1202,7 @@ mod tests {
         let key = a_key(15);
         let account = 777_000_001;
         let connection = open_at(&path, &key, &backup).expect("a new database");
-        let code = McpApp { key: "Q6L2SF6YDW/com.anthropic.claude-code".into(), path: "/x".into(), name: "claude".into(), allowed: false, last_used: 0 };
+        let code = McpApp { key: "Q6L2SF6YDW/com.anthropic.claude-code".into(), path: "/x".into(), name: "claude".into(), allowed: false, last_used: 0, identity: String::new() };
         write_mcp_app(&connection, &key, &code, account).expect("write");
         // A row another program put into the file, allowing itself: not FinchGram's.
         connection
