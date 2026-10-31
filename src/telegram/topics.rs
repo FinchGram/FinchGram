@@ -44,12 +44,14 @@ fn with_conversation(change: impl FnOnce(&Conversation)) {
 
 /// A chat came to the front. A group with topics opens on its list: true, and conversation.rs
 /// loads no messages; its topics are fetched (anew each time: they are few, and their unread
-/// counts move).
+/// counts move). The topic open, if any, was the last chat's: none is open in this one, whatever
+/// it is. Left set, it went with every message and draft of a chat without topics
+/// ([`topic_json`]), and TDLib refused them all with "Chat is not a forum".
 pub fn chat_opened(chat_id: i64) -> bool {
     let forum = store::with(|store| {
+        store.open_topic = None;
         let forum = store.chats.get(&chat_id).is_some_and(|chat| store.is_forum(chat));
         if forum {
-            store.open_topic = None;
             store.histories.remove(&chat_id);
         }
         forum
@@ -283,5 +285,37 @@ mod tests {
         sort(&mut topics);
         let ids: Vec<i32> = topics.iter().map(|topic| topic.info.forum_topic_id).collect();
         assert_eq!(ids, [3, 2, 1]);
+    }
+
+    /// A topic was open in a group with topics; then a plain group came to the front. What is
+    /// sent there names no topic: TDLib refuses a topic in a chat without them ("Chat is not a
+    /// forum"), and it once did, for every message and draft, until the user opened a forum again.
+    #[test]
+    fn a_topic_open_does_not_follow_into_a_chat_without_topics() {
+        const FORUM: i64 = -1001;
+        const GROUP: i64 = -2;
+        let group: api::Chat = serde_json::from_value(json!({
+            "@type": "chat", "id": GROUP, "type": { "@type": "chatTypeBasicGroup", "basic_group_id": 2 },
+            "title": "a plain group", "permissions": { "@type": "chatPermissions", "can_send_basic_messages": true },
+            "positions": [], "is_marked_as_unread": false, "unread_count": 0, "last_read_inbox_message_id": 0,
+            "last_read_outbox_message_id": 0, "unread_mention_count": 0,
+            "notification_settings": { "@type": "chatNotificationSettings", "use_default_mute_for": true, "mute_for": 0 }
+        }))
+        .expect("a chat");
+        let slot = crate::telegram::context();
+        store::add(slot);
+        store::with(|store| {
+            store.chats.insert(GROUP, group);
+            store.open = Some(FORUM);
+            store.open_topic = Some(5);
+        });
+        assert_eq!(topic_json(GROUP), serde_json::Value::Null, "the topic is the forum's, not the group's");
+
+        // conversation::open puts the chat in front, then tells topics.rs.
+        store::with(|store| store.open = Some(GROUP));
+        assert!(!chat_opened(GROUP));
+        assert_eq!(store::with(|store| store.open_topic), Some(None));
+        assert_eq!(topic_json(GROUP), serde_json::Value::Null);
+        store::remove(slot);
     }
 }
