@@ -87,6 +87,20 @@ things fit together.
   feature on (off by default), the user's own vendor instead, Telegram not asked. Built without a design round,
   drawn in each theme's own style; steps 2, 4 and 5 of docs/voice-input.md (a plan, the OS's
   recognizers, a router) are not built.
+- Music (`src/music/`, docs/music.md; the maintainer's word of 2026-10-30, "咱们来做一个新的feature吧，就是
+  music", the canvas "FinchGram 音乐" of 2026-10-31, built in every theme): a music player, a tool of
+  the toolbox of its own, NOT a client named after any server ("music就是单纯的一个tool，而不是依赖于
+  其他什么server之类的"). Its sources are servers the user adds inside it that speak the Subsonic API
+  (Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel…), each a library looked at one at a time
+  and never merged ("当然是不能合并了"); internet radio was dropped as too niche; Telegram's own
+  audio and local folders are not sources in this version; Jellyfin and Emby stay separate (grey)
+  tools. The toolbox's Media category was dissolved the same day: Music, Live streams, Jellyfin and
+  Emby are each a category of their own ("全部打散"). Songs stream through the app's own HTTP
+  client (ureq, the Keychain's roots too) into `~/Documents/FinchGram/music_cache/`, and the music
+  mpv (an instance of its own, gapless) reads them as they arrive through the `finchgram://` stream
+  callbacks, because the vendored FFmpeg has no network code and keeps none. The sources with their
+  passwords are in the database (`music_sources`, layout 8), each password sealed to its source;
+  the volume, order, queue column and cache limit are settings.toml's `[music]`.
 - Backward compatibility, since 2026-10-24 (the app is public): every change to the database's
   layout, to settings.toml's keys or to the Keychain items comes with its migration. The database
   carries `PRAGMA user_version` (LAYOUT in `src/database.rs`); an older file is first copied as it

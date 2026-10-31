@@ -17,8 +17,8 @@ import { Look } from "look.slint";
 
 // A tool of the toolbox.
 export struct ToolRow {
-    id: string,             // "downloads", "live", "jellyfin", "emby", "hiding", "scheduled", "ai-access", "voice-input"
-    category: string,       // "transfers", "media", "messages", "ai"
+    id: string,             // "downloads", "music", "live", "jellyfin", "emby", "hiding", "scheduled", "ai-access", "voice-input"
+    category: string,       // "transfers", "music", "live", "jellyfin", "emby", "messages", "ai"
     name: string,
     line: string,           // what it is, in a few words
     icon: string,           // its Phosphor icon
@@ -43,9 +43,9 @@ export struct ProtocolRow {
 
 // A category, with the tools shown of it.
 export struct ToolSection {
-    id: string,             // "accounts", "transfers", "media", "messages", "ai", "bar"
+    id: string,             // "accounts", "transfers", "music", "live", "jellyfin", "emby", "messages", "ai", "bar"
     label: string,
-    letter: string,         // Broadsheet's A … F
+    letter: string,         // Broadsheet's A … I
     icon: string,
     accounts: bool,         // the accounts section: Toolbox.accounts in place of tools
     pins: bool,             // the bar's section: every tool that can stand on it, a switch each
@@ -108,7 +108,8 @@ export global ToolboxWords {
     public pure function all() -> string { return @tr("All"); }
     public pure function accounts() -> string { return @tr("Accounts"); }
     public pure function transfers() -> string { return @tr("Transfers"); }
-    public pure function media() -> string { return @tr("Media"); }
+    public pure function music() -> string { return @tr("Music"); }
+    public pure function music-line() -> string { return @tr("A music player; add your own servers as its sources"); }
     public pure function messages() -> string { return @tr("Messages"); }
     public pure function ai() -> string { return "AI"; }
     // The bar's section, named after the theme's bar.

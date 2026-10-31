@@ -1,0 +1,204 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "searchResult3": {
+   "song": [
+    {
+     "id": "73Hws53gBD5NwQrJ0mfoME",
+     "parent": "6eN50qMlAGeIrH6hvfXKcf",
+     "isDir": false,
+     "title": "Blue w/ DRWN.",
+     "album": "Clockwork",
+     "artist": "Philanthrope",
+     "track": 2,
+     "year": 2017,
+     "coverArt": "mf-73Hws53gBD5NwQrJ0mfoME_8688cbb37309ebcd",
+     "size": 4978885,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "starred": "2026-10-29T07:41:49.966800163Z",
+     "duration": 123,
+     "bitRate": 320,
+     "path": "Philanthrope/Clockwork/02 - Blue w_ DRWN..mp3",
+     "playCount": 298,
+     "created": "2025-03-26T22:26:45.218368988Z",
+     "albumId": "6eN50qMlAGeIrH6hvfXKcf",
+     "artistId": "38PAmSo4uDRmfAEy5byHbr",
+     "type": "music",
+     "userRating": 1,
+     "averageRating": 1,
+     "bookmarkPosition": 88000,
+     "played": "2026-10-29T20:14:00.736Z",
+     "bpm": 0,
+     "comment": "Visit http://chillhop.bandcamp.com",
+     "sortName": "blue w/ drwn.",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "38PAmSo4uDRmfAEy5byHbr",
+       "name": "Philanthrope"
+      }
+     ],
+     "displayArtist": "Philanthrope",
+     "albumArtists": [
+      {
+       "id": "38PAmSo4uDRmfAEy5byHbr",
+       "name": "Philanthrope"
+      }
+     ],
+     "displayAlbumArtist": "Philanthrope",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "0m8DvZhjOzvcdonRTqnCDf",
+     "parent": "77FBd5orlEFByzriDngu35",
+     "isDir": false,
+     "title": "Blue Dawn",
+     "album": "Chillhop Essentials - Winter 2016",
+     "artist": "Mono:Massive",
+     "track": 9,
+     "year": 2016,
+     "coverArt": "mf-0m8DvZhjOzvcdonRTqnCDf_7004c407d732a413",
+     "size": 7262865,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 178,
+     "bitRate": 320,
+     "path": "Chillhop Music/Chillhop Essentials - Winter 2016/09 - Blue Dawn.mp3",
+     "playCount": 194,
+     "created": "2025-03-26T22:26:39.542268319Z",
+     "albumId": "77FBd5orlEFByzriDngu35",
+     "artistId": "0tb3KmwPDPbXTVZX9EbHqC",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-29T20:09:11.056Z",
+     "bpm": 0,
+     "comment": "Visit http://chillhop.bandcamp.com",
+     "sortName": "blue dawn",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [
+      "TCACU1638248"
+     ],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "0tb3KmwPDPbXTVZX9EbHqC",
+       "name": "Mono:Massive"
+      }
+     ],
+     "displayArtist": "Mono:Massive",
+     "albumArtists": [
+      {
+       "id": "2rQGkB3GNqsHtobxn6qcWB",
+       "name": "Chillhop Music"
+      }
+     ],
+     "displayAlbumArtist": "Chillhop Music",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "3FhiEeF4xTWpbP9nuZy2jD",
+     "parent": "1wg9e3B8bWmiVRZWZBJux3",
+     "isDir": false,
+     "title": "Blue Monday",
+     "album": "Live at The Casbah - 2005-04-29",
+     "artist": "The New Deal",
+     "track": 10,
+     "year": 2005,
+     "coverArt": "mf-3FhiEeF4xTWpbP9nuZy2jD_51f5041620034dc3",
+     "size": 16573253,
+     "contentType": "audio/flac",
+     "suffix": "flac",
+     "duration": 166,
+     "bitRate": 787,
+     "path": "The New Deal/Live at The Casbah - 2005-04-29/02-10 - Blue Monday.flac",
+     "playCount": 94,
+     "discNumber": 2,
+     "created": "2025-03-26T22:26:46.983408239Z",
+     "albumId": "1wg9e3B8bWmiVRZWZBJux3",
+     "artistId": "7i6ciuZJca8cG0V2xXwDcC",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T05:53:05.598360718Z",
+     "bpm": 0,
+     "comment": "https://archive.org/details/tnd2005-04-29.flac",
+     "sortName": "blue monday",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 16,
+     "moods": [],
+     "artists": [
+      {
+       "id": "7i6ciuZJca8cG0V2xXwDcC",
+       "name": "The New Deal"
+      }
+     ],
+     "displayArtist": "The New Deal",
+     "albumArtists": [
+      {
+       "id": "7i6ciuZJca8cG0V2xXwDcC",
+       "name": "The New Deal"
+      }
+     ],
+     "displayAlbumArtist": "The New Deal",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    }
+   ]
+  }
+ }
+}

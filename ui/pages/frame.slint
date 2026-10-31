@@ -3,6 +3,7 @@
 // A page puts both columns into the frame.
 import { Look } from "../look.slint";
 import { WindowButtonsSpace, WindowMover } from "../widgets.slint";
+import { Music, PlayerBar } from "../music.slint";
 
 export component PageFrame inherits Rectangle {
     in property <string> title;
@@ -42,6 +43,8 @@ export component PageFrame inherits Rectangle {
             vertical-stretch: 1;
             @children
         }
+        // What plays, while something does (ui/music.slint).
+        if Music.playing: PlayerBar { }
     }
 }
 

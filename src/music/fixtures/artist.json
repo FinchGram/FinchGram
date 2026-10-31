@@ -1,0 +1,267 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "artist": {
+   "id": "63sqASlAfjbGMuLP4JhnZU",
+   "name": "Various Artists",
+   "albumCount": 5,
+   "userRating": 1,
+   "averageRating": 1,
+   "musicBrainzId": "89ad4ac3-39f7-470e-963a-56509c546377",
+   "sortName": "various artists",
+   "roles": [
+    "albumartist",
+    "maincredit"
+   ],
+   "album": [
+    {
+     "id": "6oq0g9th4iTM8a0y0T88tr",
+     "name": "netBloc Vol. 24: tiuqottigeloot",
+     "artist": "Various Artists",
+     "artistId": "63sqASlAfjbGMuLP4JhnZU",
+     "coverArt": "al-6oq0g9th4iTM8a0y0T88tr_de1d39e3b5f3cf8c",
+     "songCount": 12,
+     "duration": 2615,
+     "playCount": 3521,
+     "created": "2025-03-26T22:26:49.228824721Z",
+     "year": 2009,
+     "genre": "Netlabel",
+     "played": "2026-10-31T07:22:38.408624156Z",
+     "userRating": 5,
+     "averageRating": 5,
+     "genres": [
+      {
+       "name": "Netlabel"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": true,
+     "sortName": "netbloc vol. 24: tiuqottigeloot",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [],
+     "moods": [],
+     "artists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayArtist": "Various Artists",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "1oqZxJSpvlAKDojUiclmjs",
+     "name": "Filthy Rhythm, Dirty Soul Mixtape Vol. 3",
+     "artist": "Various Artists",
+     "artistId": "63sqASlAfjbGMuLP4JhnZU",
+     "coverArt": "al-1oqZxJSpvlAKDojUiclmjs_19a56842e92f2035",
+     "songCount": 14,
+     "duration": 2844,
+     "playCount": 4076,
+     "created": "2025-03-26T22:26:40.645344701Z",
+     "starred": "2026-10-24T03:36:25.765659329Z",
+     "year": 2013,
+     "genre": "Blues",
+     "played": "2026-10-31T05:21:40.106370552Z",
+     "userRating": 5,
+     "averageRating": 5,
+     "genres": [
+      {
+       "name": "Blues"
+      },
+      {
+       "name": "R&B"
+      },
+      {
+       "name": "Hip hop"
+      },
+      {
+       "name": "Hip-Hop"
+      },
+      {
+       "name": "Other"
+      },
+      {
+       "name": "Soul"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": true,
+     "sortName": "filthy rhythm, dirty soul mixtape vol. 3",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [
+      {
+       "name": "Special"
+      }
+     ],
+     "moods": [],
+     "artists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayArtist": "Various Artists",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "6dGMsiesuYw9lti9yGIGWY",
+     "name": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Various Artists",
+     "artistId": "63sqASlAfjbGMuLP4JhnZU",
+     "coverArt": "al-6dGMsiesuYw9lti9yGIGWY_ebbb154f246c04a5",
+     "songCount": 11,
+     "duration": 2954,
+     "playCount": 9865,
+     "created": "2025-03-26T22:26:49.315688846Z",
+     "starred": "2026-10-29T23:06:42.240908346Z",
+     "year": 2013,
+     "played": "2026-10-31T10:15:14.834349914Z",
+     "userRating": 5,
+     "averageRating": 5,
+     "genres": [],
+     "musicBrainzId": "",
+     "isCompilation": true,
+     "sortName": "netbloc vol. 42: live, the universe & everything",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [],
+     "moods": [],
+     "artists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayArtist": "Various Artists",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "5xhNxRFhSPTFsVsPkCNq8N",
+     "name": "NCS: Infinity",
+     "artist": "Various Artists",
+     "artistId": "63sqASlAfjbGMuLP4JhnZU",
+     "coverArt": "al-5xhNxRFhSPTFsVsPkCNq8N_c364ac78b2327e35",
+     "songCount": 15,
+     "duration": 3384,
+     "playCount": 6002,
+     "created": "2025-03-26T22:26:43.129828999Z",
+     "year": 2015,
+     "played": "2026-10-31T06:29:16.53372589Z",
+     "userRating": 5,
+     "averageRating": 5,
+     "genres": [],
+     "musicBrainzId": "97b74e59-f194-40b6-9bc9-cb7267364ffd",
+     "isCompilation": true,
+     "sortName": "ncs: infinity",
+     "discTitles": [],
+     "originalReleaseDate": {
+      "year": 2015,
+      "month": 7,
+      "day": 31
+     },
+     "releaseDate": {},
+     "releaseTypes": [
+      "compilation"
+     ],
+     "recordLabels": [
+      {
+       "name": "NoCopyrightSounds"
+      }
+     ],
+     "moods": [],
+     "artists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayArtist": "Various Artists",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "1miu9y4jqvTifR9EbB56F8",
+     "name": "Filthy Rhythm, Dirty Soul Mixtape Vol. 7",
+     "artist": "Various Artists",
+     "artistId": "63sqASlAfjbGMuLP4JhnZU",
+     "coverArt": "al-1miu9y4jqvTifR9EbB56F8_a046cb07f821c91a",
+     "songCount": 12,
+     "duration": 2703,
+     "playCount": 2456,
+     "created": "2025-03-26T22:26:42.612573609Z",
+     "year": 2017,
+     "genre": "Hip  Hop",
+     "played": "2026-10-31T11:58:42.669Z",
+     "userRating": 3,
+     "averageRating": 3,
+     "genres": [
+      {
+       "name": "Hip  Hop"
+      },
+      {
+       "name": "Party Breaks"
+      },
+      {
+       "name": "Big Beat"
+      },
+      {
+       "name": "Funk"
+      },
+      {
+       "name": "Hip Hop"
+      },
+      {
+       "name": "Hip Hop Breaks"
+      },
+      {
+       "name": "Reggae"
+      },
+      {
+       "name": "Regggae Hip Hop"
+      },
+      {
+       "name": "Swing Breaks"
+      },
+      {
+       "name": "SwingHop"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": true,
+     "sortName": "filthy rhythm, dirty soul mixtape vol. 7",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [],
+     "moods": [],
+     "artists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayArtist": "Various Artists",
+     "explicitStatus": "",
+     "version": ""
+    }
+   ]
+  }
+ }
+}

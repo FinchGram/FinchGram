@@ -67,7 +67,9 @@ const KEY_ACCOUNT: &str = "database";
 /// 7 (after 0.7.6): `mcp_apps.identity`, what a program's answer is held to besides its key (the
 ///    cdhash of a program without a team's signature, src/mcp/peer.rs), in the row's tag; the
 ///    rows of before dropped, since they name none (every program asks again, once).
-pub const LAYOUT: i32 = 7;
+/// 8 (after 0.7.7): `music_sources`, the servers of the music page (src/music/, docs/music.md),
+///    each password sealed to its source, as a download server's is to its server.
+pub const LAYOUT: i32 = 8;
 
 /// The tables of layout 1, as 0.6.0 made them.
 const TABLES_OF_LAYOUT_1: &str = "CREATE TABLE IF NOT EXISTS servers (
@@ -361,6 +363,24 @@ fn upgrade(connection: &Connection, from: i32, key: &[u8; 32]) -> Result<(), Str
                         .execute_batch("ALTER TABLE mcp_apps ADD COLUMN identity TEXT NOT NULL DEFAULT ''; DELETE FROM mcp_apps;")
                         .map_err(|err| err.to_string())
                 }
+                8 => {
+                    // The music page's sources: a server that speaks the Subsonic API, with its
+                    // account, the password sealed to the source as a download server's is.
+                    connection
+                        .execute_batch(
+                            "CREATE TABLE IF NOT EXISTS music_sources (
+                                 id INTEGER PRIMARY KEY,
+                                 position INTEGER NOT NULL,
+                                 name TEXT NOT NULL,
+                                 kind TEXT NOT NULL,
+                                 address TEXT NOT NULL,
+                                 port INTEGER NOT NULL,
+                                 username TEXT NOT NULL,
+                                 password TEXT NOT NULL
+                             );",
+                        )
+                        .map_err(|err| err.to_string())
+                }
                 _ => Err(format!("no step to layout {to}")),
             }
         };
@@ -574,6 +594,95 @@ fn write_servers(connection: &Connection, servers: &[ServerRecord]) -> rusqlite:
             .execute(
                 "INSERT INTO servers (position, name, protocol, address, port, username, password, allow_changes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
                 params![position as i64, server.name, server.protocol, server.address, i64::from(server.port), server.username, server.password, i64::from(server.allow_changes)],
+            )
+            .map(|_| ())
+    });
+    match written {
+        Ok(()) => connection.execute_batch("COMMIT;"),
+        Err(err) => {
+            let _ = connection.execute_batch("ROLLBACK;");
+            Err(err)
+        }
+    }
+}
+
+// ---- the music sources -------------------------------------------------------------------------
+
+/// A source of the music page (src/music/, docs/music.md): a server of the user's own that speaks
+/// the Subsonic API, as they named it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct MusicSourceRecord {
+    pub name: String,
+    /// What it speaks: "subsonic", the one kind this version has.
+    pub kind: String,
+    /// As typed, never with a port in it: "https://nas.home", or with a folder,
+    /// "https://nas.home/music".
+    pub address: String,
+    /// 0 for the address's own.
+    pub port: u16,
+    pub username: String,
+    /// In the clear here; sealed in the file.
+    pub password: String,
+}
+
+impl MusicSourceRecord {
+    /// What the password is sealed to: the source it is for, so that the sealed text does not
+    /// open in a row that names any other.
+    fn binding(&self) -> String {
+        format!("music\0{}\0{}\0{}\0{}", self.kind, self.address, self.port, self.username)
+    }
+}
+
+/// The music page's sources, in the order the user keeps them, their passwords opened.
+pub fn music_sources() -> Vec<MusicSourceRecord> {
+    let Some(key) = sealing_key() else { return Vec::new() };
+    match with(|connection| read_music_sources(connection, &key)) {
+        Ok(sources) => sources,
+        Err(err) => {
+            eprintln!("database: cannot read the music sources: {err}");
+            Vec::new()
+        }
+    }
+}
+
+/// Keep `sources` as the music page's sources, in this order, in place of the ones kept before.
+pub fn save_music_sources(sources: &[MusicSourceRecord]) -> Result<(), String> {
+    let key = sealing_key().ok_or("the database is not open")?;
+    let mut sealed = Vec::with_capacity(sources.len());
+    for source in sources {
+        sealed.push(MusicSourceRecord { password: cipher::seal(&key, &source.binding(), &source.password)?, ..source.clone() });
+    }
+    with(|connection| write_music_sources(connection, &sealed))
+}
+
+fn read_music_sources(connection: &Connection, key: &[u8; 32]) -> rusqlite::Result<Vec<MusicSourceRecord>> {
+    let mut statement = connection.prepare("SELECT name, kind, address, port, username, password FROM music_sources ORDER BY position, id")?;
+    let rows = statement.query_map([], |row| {
+        let mut source = MusicSourceRecord {
+            name: row.get(0)?,
+            kind: row.get(1)?,
+            address: row.get(2)?,
+            port: u16::try_from(row.get::<_, i64>(3)?).unwrap_or(0),
+            username: row.get(4)?,
+            password: row.get(5)?,
+        };
+        source.password = cipher::open(key, &source.binding(), &source.password).unwrap_or_else(|err| {
+            eprintln!("database: the password of {} cannot be opened: {err}", source.address);
+            String::new()
+        });
+        Ok(source)
+    })?;
+    rows.collect()
+}
+
+/// `sources` written as they are: their passwords sealed already.
+fn write_music_sources(connection: &Connection, sources: &[MusicSourceRecord]) -> rusqlite::Result<()> {
+    connection.execute_batch("BEGIN; DELETE FROM music_sources;")?;
+    let written: rusqlite::Result<()> = sources.iter().enumerate().try_for_each(|(position, source)| {
+        connection
+            .execute(
+                "INSERT INTO music_sources (position, name, kind, address, port, username, password) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                params![position as i64, source.name, source.kind, source.address, i64::from(source.port), source.username, source.password],
             )
             .map(|_| ())
     });
@@ -1050,6 +1159,35 @@ mod tests {
     }
 
     #[test]
+    fn music_sources_are_kept_in_order_with_their_passwords_sealed() {
+        let (path, backup) = scratch("music-sources");
+        let key = a_key(21);
+        let connection = open_at(&path, &key, &backup).expect("a new database");
+        let source = |name: &str, address: &str, port: u16, username: &str, password: &str| MusicSourceRecord {
+            name: name.into(),
+            kind: "subsonic".into(),
+            address: address.into(),
+            port,
+            username: username.into(),
+            password: password.into(),
+        };
+        let sources = vec![source("Home NAS", "https://nas.home", 4533, "me", "secret"), source("Studio", "https://music.studio.example", 0, "me", "")];
+        let sealed: Vec<MusicSourceRecord> = sources.iter().map(|source| MusicSourceRecord { password: cipher::seal(&key, &source.binding(), &source.password).expect("sealed"), ..source.clone() }).collect();
+        write_music_sources(&connection, &sealed).expect("written");
+        assert_eq!(read_music_sources(&connection, &key).expect("read"), sources);
+        let stored: String = connection.query_row("SELECT password FROM music_sources WHERE name = 'Home NAS'", [], |row| row.get(0)).expect("the column");
+        assert!(stored.starts_with("v2:") && !stored.contains("secret"), "{stored}");
+        // Written again the other way round: the order is what is kept.
+        let reversed: Vec<MusicSourceRecord> = sealed.iter().rev().cloned().collect();
+        write_music_sources(&connection, &reversed).expect("written");
+        assert_eq!(read_music_sources(&connection, &key).expect("read").iter().map(|source| source.name.as_str()).collect::<Vec<_>>(), vec!["Studio", "Home NAS"]);
+        // A password sealed to one source does not open in a row that names another account.
+        connection.execute("UPDATE music_sources SET username = 'someone' WHERE name = 'Home NAS'", []).expect("changed");
+        assert_eq!(read_music_sources(&connection, &key).expect("read")[1].password, "");
+        let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
+    }
+
+    #[test]
     fn an_older_layout_is_copied_aside_and_brought_up() {
         let (path, backup) = scratch("older");
         let key = a_key(8);
@@ -1070,8 +1208,10 @@ mod tests {
         // the server shows its key once more.
         assert_eq!(read_ssh_host(&connection, &key, "sb-ams.example.net", 22).expect("read"), None);
         assert_eq!(connection.query_row("SELECT count(*) FROM ssh_hosts", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
-        // The credentials of layout 5 have their table, with nothing in it yet.
+        // The credentials of layout 5 have their table, with nothing in it yet; so do the music
+        // sources of layout 8.
         assert_eq!(connection.query_row("SELECT count(*) FROM credentials", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
+        assert_eq!(connection.query_row("SELECT count(*) FROM music_sources", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
         // The file as it was is in the backup folder, the password sealed as before.
         let copies: Vec<PathBuf> = std::fs::read_dir(&backup).expect("the backup folder").flatten().map(|entry| entry.path()).collect();
         assert_eq!(copies.len(), 1);

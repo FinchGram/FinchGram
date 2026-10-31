@@ -310,7 +310,10 @@ export component TerminalToolbox inherits Rectangle {
     pure function category-label(id: string) -> string {
         if id == "accounts" { return ToolboxWords.accounts(); }
         if id == "transfers" { return ToolboxWords.transfers(); }
-        if id == "media" { return ToolboxWords.media(); }
+        if id == "music" { return ToolboxWords.music(); }
+        if id == "live" { return ToolboxWords.live(); }
+        if id == "jellyfin" { return ToolboxWords.jellyfin(); }
+        if id == "emby" { return ToolboxWords.emby(); }
         if id == "messages" { return ToolboxWords.messages(); }
         if id == "ai" { return ToolboxWords.ai(); }
         if id == "bar" { return ToolboxWords.bar(); }

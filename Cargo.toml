@@ -30,7 +30,7 @@ image = { version = "0.25", default-features = false, features = ["bmp", "jpeg",
 base64 = "0.23"                                 # TDLib's bytes (a photo's tiny preview)
 glow = "0.18"                                   # the video's OpenGL texture (src/player/); Slint's renderer uses it too
 # The self-updater (src/update.rs) and the release signing tool (src/bin/).
-ureq = "3"
+ureq = { version = "3", features = ["platform-verifier"] }    # the Keychain's roots too, for a music server of the user's own
 semver = "1"
 # WebDAV (src/downloads/): PROPFIND answers are XML; roxmltree is in the tree already (resvg).
 roxmltree = "0.21"
@@ -44,6 +44,7 @@ hyper-rustls = { version = "0.27", default-features = false, features = ["http1"
 http-body-util = "0.1"
 bytes = "1"
 sha2 = "0.11"
+md-5 = "0.11"                                   # Subsonic's token: md5(password + salt), the API's own rule
 ed25519-dalek = "3"
 hex = "0.4"
 rusqlite = { version = "0.40.2", features = ["bundled"] }

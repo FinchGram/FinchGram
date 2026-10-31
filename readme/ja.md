@@ -38,6 +38,7 @@ FinchGram は Telegram 公式のライブラリ [TDLib](https://core.telegram.or
   `vget serve` で共有しているフォルダを、アプリの中で閲覧できます。ファイルは複数の接続で同時に受け取り、止まっても続きから
   再開します。写真と動画は届くとビューアで開き、パスワードは封印して FinchGram のデータベースに保存されます。
   [docs/downloads.md](../docs/downloads.md) を参照。
+- **音楽。** 自分のサーバーのための音楽プレーヤー：Navidrome、gonic、LMS、Ampache、Nextcloud Music、Koel（Subsonic API を話すサーバーならどれでも）を追加すると、そのライブラリを内蔵プレーヤーで再生できます。曲間の途切れなし、キューつき、再生バーはどのページでも下部に；曲は再生しながらキャッシュされます。
 - **送信。** 写真、動画、ファイルはクリップから送信できるほか、ウィンドウにドラッグするか貼り付けても送れます。送る前に
   カードで確認：キャプションを付ける、写真として送るかファイルとして送るか、最大 10 個をアルバムにまとめる、個人チャットでは
   自動消滅タイマー、サイレント送信。
@@ -111,6 +112,12 @@ vget と同じ仕組みです。右側のキューには速度と残りが表示
 FinchGram は、そのサーバーに対して許可しない限りサーバー上の何も変更せず（許可すれば削除・移動・名前の変更・アップロードができます）、パスワードは平文のファイルではなく、封印して FinchGram のデータベースに保存されます。詳細と、まだないもの
 （自己署名証明書は拒否されます：LAN では http を、あるいは正規の証明書を使ってください）は
 [docs/downloads.md](../docs/downloads.md) にあります。
+
+## 音楽ページ
+
+<p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="音楽ページ"></p>
+
+表示 → 音楽、またはツールボックスの「音楽」。ソースを追加します：Subsonic API を話す自分のサーバー（Navidrome、gonic、LMS、Ampache、Nextcloud Music、Koel など）のアドレスとアカウント。パスワードは FinchGram のデータベースに封印して保存されます。アルバム、アーティスト、曲、ジャンル、プレイリスト、お気に入りをたどり、アルバムを再生またはシャッフルし、曲をキューに追加；星はサーバーに書き戻されます。曲は FinchGram 自身の HTTP クライアントで `~/Documents/FinchGram/music_cache` に届き、届きながら途切れなく次々と再生されます。再生バーはどのページでも下部に残ります。詳しくは [docs/music.md](../docs/music.md)。
 
 ## 仕組み
 
@@ -215,6 +222,7 @@ src/
   player/                # libmpv による動画再生。OpenGL でウィンドウに描画
   screenshot/            # スクリーンショット機能：撮影、オーバーレイ、書き込み、画像
   downloads/             # ダウンロードページ：WebDAV・FTP・FTPS・SFTP、複数接続のエンジン付き
+  music/                 # 音楽ページ：Subsonic API クライアント、キャッシュへの取得、キューと再生バー
     remote.rs            #   三つのクライアントの共通の顔：一覧、確認、取得
     webdav.rs            #   PROPFIND の一覧、アドレス、Basic 認証
     ftp.rs               #   suppaftp による FTP と FTPS：単一ストリーム、REST で再開

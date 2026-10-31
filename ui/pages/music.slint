@@ -1,0 +1,1505 @@
+// Music, from the canvas of 2026-10-31 ("FinchGram 音乐", third draft): the library's sections and
+// the sources on the left, what is looked at in the middle (a grid of albums, an album with its
+// songs, a list of names or songs, the form for a source), the queue on the right, which hides.
+// One page for the three themes, in Look's colours and shapes; Rust fills the Music global
+// (src/music/). The player bar at the foot is the window's (ui/music.slint), not the page's.
+import { AppState, Page } from "../state.slint";
+import { Music, MusicWords, SourceRow, SourceStatus, MusicSection, MusicView, MusicState, AlbumRow, TrackRow, NameRow, QueueRow, MusicFormError, SourceTest, CoverTile } from "../music.slint";
+import { Look } from "../look.slint";
+import { Icon, Spinner, Field, PrimaryButton, Heading, Paragraph, Link } from "../widgets.slint";
+import { PageFrame } from "frame.slint";
+import { SmallButton } from "rows.slint";
+
+// A section of the library, in the left column.
+component SectionRow inherits Rectangle {
+    in property <MusicSection> section;
+    in property <string> icon;
+    property <bool> active: Music.view != MusicView.form && Music.section == root.section;
+    property <color> ink: active && !Look.broadsheet ? Look.accent-ink : Look.text;
+    height: 34px;
+    border-radius: Look.radius;
+    background: active || touch.has-hover ? Look.sel : transparent;
+
+    HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 18px;
+                color: root.ink;
+            }
+        }
+        Text {
+            text: MusicWords.section(root.section);
+            color: root.ink;
+            font-size: 14px;
+            font-weight: root.active ? 600 : 400;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Music.choose-section(root.section);
+        }
+    }
+}
+
+// A source in the left column: its name, what it speaks, its host and whether it answers.
+component SourceItem inherits Rectangle {
+    in property <SourceRow> source;
+    in property <int> index;
+    in property <bool> active;
+    property <color> ink: active && !Look.broadsheet ? Look.accent-ink : Look.text;
+    height: content.preferred-height;
+    border-radius: Look.radius;
+    background: active || touch.has-hover ? Look.sel : transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Music.select-source(root.index);
+        }
+        pointer-event(event) => {
+            if event.button == PointerEventButton.right && event.kind == PointerEventKind.down {
+                Music.edit-source(root.index);
+            }
+        }
+    }
+
+    content := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 9px;
+        padding-bottom: 9px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: start;
+            padding-top: 1px;
+            Icon {
+                name: "hard-drives";
+                size: 19px;
+                color: root.ink;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            alignment: start;
+            HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+                Text {
+                    text: root.source.name;
+                    color: root.ink;
+                    font-size: 14px;
+                    font-weight: root.active ? 600 : 400;
+                    overflow: elide;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        height: 16px;
+                        width: badge.preferred-width + 10px;
+                        border-radius: Look.button-radius;
+                        border-width: 1px;
+                        border-color: Look.line-strong;
+                        badge := Text {
+                            width: parent.width;
+                            height: parent.height;
+                            text: root.source.kind;
+                            color: Look.muted;
+                            font-family: Look.mono;
+                            font-size: 10px;
+                            font-weight: 500;
+                            letter-spacing: 0.3px;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+            HorizontalLayout {
+                spacing: 5px;
+                alignment: start;
+                Text {
+                    text: root.source.host + " ·";
+                    color: Look.faint;
+                    font-size: 12px;
+                    line-height-factor: Look.leading(1.45);
+                    overflow: elide;
+                }
+                if root.source.status == SourceStatus.checking: VerticalLayout {
+                    alignment: center;
+                    Spinner {
+                        size: 11px;
+                        color: Look.faint;
+                    }
+                }
+                Text {
+                    text: MusicWords.status(root.source.status);
+                    color: root.source.status == SourceStatus.password-rejected || root.source.status == SourceStatus.failed ? Look.danger : Look.faint;
+                    font-size: 12px;
+                    line-height-factor: Look.leading(1.45);
+                }
+            }
+        }
+    }
+}
+
+// The last row of the sources: a new one.
+component AddSourceRow inherits Rectangle {
+    property <bool> active: Music.view == MusicView.form && !Music.form-editing;
+    property <color> ink: active ? (Look.broadsheet ? Look.text : Look.accent-ink) : Look.muted;
+    height: content.preferred-height;
+    border-radius: Look.radius;
+    background: active || touch.has-hover ? Look.sel : transparent;
+
+    content := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        padding-top: 9px;
+        padding-bottom: 9px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "plus";
+                size: 19px;
+                color: root.ink;
+            }
+        }
+        Text {
+            text: @tr("Add source");
+            color: root.ink;
+            font-size: 14px;
+            font-weight: root.active ? 600 : 400;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Music.add-source();
+        }
+    }
+}
+
+// A small round button on a row: star, queue, remove.
+component RowButton inherits Rectangle {
+    in property <string> icon;
+    in property <color> ink: Look.muted;
+    in property <bool> shown: true;
+    callback clicked();
+    width: 28px;
+    height: 28px;
+    border-radius: 14px;
+    background: touch.has-hover ? Look.sel : transparent;
+    opacity: shown || touch.has-hover ? 1 : 0;
+
+    Icon {
+        name: root.icon;
+        size: 16px;
+        color: root.ink;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// An album of the grid.
+component AlbumCard inherits Rectangle {
+    in property <AlbumRow> album;
+    callback clicked();
+    callback play();
+    height: self.width + 46px;
+
+    VerticalLayout {
+        spacing: 4px;
+        alignment: start;
+        Rectangle {
+            height: root.width;
+            CoverTile {
+                width: parent.width;
+                height: parent.height;
+                cover: root.album.cover;
+                has-cover: root.album.has-cover;
+                initials: root.album.initials;
+                tint: root.album.tint;
+            }
+            // Play, over the cover while the pointer is on it.
+            if touch.has-hover: Rectangle {
+                x: parent.width - 44px;
+                y: parent.height - 44px;
+                width: 36px;
+                height: 36px;
+                border-radius: 18px;
+                background: Look.accent;
+                Icon {
+                    name: "play";
+                    size: 18px;
+                    color: Look.on-accent;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.play();
+                    }
+                }
+            }
+        }
+        Text {
+            text: root.album.name;
+            color: Look.text;
+            font-size: 14px;
+            font-weight: 500;
+            overflow: elide;
+        }
+        Text {
+            text: root.album.year == "" ? root.album.artist : root.album.artist + " · " + root.album.year;
+            color: Look.muted;
+            font-size: 12px;
+            overflow: elide;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A song: in an album (its number), or in a list (its album's tile and artist).
+component TrackItem inherits Rectangle {
+    in property <TrackRow> track;
+    in property <int> index;
+    in property <bool> in-album;
+    property <color> ink: track.playing && !Look.broadsheet ? Look.accent-ink : Look.text;
+    height: in-album ? 42px : 52px;
+    border-radius: Look.button-radius;
+    background: track.playing ? Look.sel : touch.has-hover ? Look.sel.with-alpha(0.5) : transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Music.play-track(root.index);
+        }
+    }
+
+    HorizontalLayout {
+        padding-left: 4px;
+        padding-right: 6px;
+        spacing: 12px;
+        // The number, or that it plays.
+        if root.in-album: Rectangle {
+            width: 36px;
+            if !root.track.playing: Text {
+                width: parent.width;
+                height: parent.height;
+                text: root.track.number;
+                color: Look.faint;
+                font-family: Look.mono;
+                font-size: 12px;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+            if root.track.playing: Icon {
+                name: Music.paused ? "pause" : "play";
+                size: 14px;
+                color: Look.accent;
+            }
+        }
+        if !root.in-album: VerticalLayout {
+            alignment: center;
+            padding-left: 4px;
+            Rectangle {
+                width: 36px;
+                height: 36px;
+                CoverTile {
+                    width: parent.width;
+                    height: parent.height;
+                    cover: root.track.cover;
+                    has-cover: root.track.has-cover;
+                    initials: root.track.initials;
+                    tint: root.track.tint;
+                    font-size: 12px;
+                    border-radius: Look.button-radius;
+                }
+                if root.track.playing: Rectangle {
+                    width: parent.width;
+                    height: parent.height;
+                    border-radius: Look.button-radius;
+                    background: Look.text.with-alpha(0.45);
+                    Icon {
+                        name: Music.paused ? "pause" : "play";
+                        size: 16px;
+                        color: #ffffff;
+                    }
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.track.title;
+                color: root.ink;
+                font-size: 14px;
+                font-weight: root.track.playing ? 600 : 400;
+                overflow: elide;
+            }
+            if !root.in-album: Text {
+                text: root.track.album == "" ? root.track.artist : root.track.artist + " · " + root.track.album;
+                color: Look.muted;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            RowButton {
+                icon: "queue";
+                shown: false;
+                clicked => {
+                    Music.queue-track(root.index);
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            RowButton {
+                icon: root.track.starred ? "heart-filled" : "heart";
+                ink: root.track.starred ? Look.accent : Look.muted;
+                shown: root.track.starred;
+                clicked => {
+                    Music.star-track(root.index, !root.track.starred);
+                }
+            }
+        }
+        Text {
+            width: 44px;
+            text: root.track.duration;
+            color: Look.muted;
+            font-family: Look.mono;
+            font-size: 12px;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// An artist, a genre or a playlist.
+component NameItem inherits Rectangle {
+    in property <NameRow> entry;
+    in property <string> icon;
+    height: 48px;
+    border-radius: Look.button-radius;
+    background: touch.has-hover ? Look.sel : transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Music.open-name(root.entry.id);
+        }
+    }
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 20px;
+                color: Look.muted;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.entry.name;
+                color: Look.text;
+                font-size: 14px;
+                font-weight: 500;
+                overflow: elide;
+            }
+            if root.entry.line != "": Text {
+                text: root.entry.line;
+                color: Look.muted;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "caret-right";
+                size: 14px;
+                color: Look.faint;
+            }
+        }
+    }
+}
+
+// A song of the queue.
+component QueueItem inherits Rectangle {
+    in property <QueueRow> entry;
+    in property <int> index;
+    property <color> ink: entry.current && !Look.broadsheet ? Look.accent-ink : Look.text;
+    height: 50px;
+    border-radius: Look.radius;
+    background: entry.current ? Look.sel : touch.has-hover ? Look.sel.with-alpha(0.5) : transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            Music.play-queued(root.index);
+        }
+    }
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 4px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            CoverTile {
+                width: 34px;
+                height: 34px;
+                cover: root.entry.cover;
+                has-cover: root.entry.has-cover;
+                initials: root.entry.initials;
+                tint: root.entry.tint;
+                font-size: 11px;
+                border-radius: Look.button-radius;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: root.entry.title;
+                color: root.ink;
+                font-size: 14px;
+                font-weight: root.entry.current ? 600 : 400;
+                overflow: elide;
+            }
+            Text {
+                text: root.entry.album == "" ? root.entry.artist : root.entry.artist + " · " + root.entry.album;
+                color: Look.muted;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        if root.entry.current: VerticalLayout {
+            alignment: center;
+            Icon {
+                name: Music.paused ? "pause" : "play";
+                size: 14px;
+                color: Look.accent;
+            }
+        }
+        Text {
+            text: root.entry.duration;
+            color: Look.muted;
+            font-family: Look.mono;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+        VerticalLayout {
+            alignment: center;
+            RowButton {
+                icon: "x";
+                shown: false;
+                clicked => {
+                    Music.remove-queued(root.index);
+                }
+            }
+        }
+    }
+}
+
+// A field of the form: its label above, a hint below.
+component FormField {
+    in property <string> label;
+    in property <string> hint;
+    in property <string> placeholder;
+    in-out property <string> text;
+    in property <InputType> input-type: InputType.text;
+    callback accepted();
+
+    VerticalLayout {
+        spacing: 6px;
+        Text {
+            text: root.label;
+            color: Look.muted;
+            font-size: 13px;
+        }
+        Field {
+            text <=> root.text;
+            placeholder: root.placeholder;
+            input-type: root.input-type;
+            accepted => {
+                root.accepted();
+            }
+        }
+        if root.hint != "": Paragraph {
+            text: root.hint;
+            color: Look.faint;
+            font-size: 12px;
+        }
+    }
+}
+
+// A word button with an icon before it, on the page colour: Shuffle, Add to queue, the order.
+component IconButton inherits Rectangle {
+    in property <string> text;
+    in property <string> icon;
+    in property <string> trailing-icon;
+    in property <bool> enabled: true;
+    callback clicked();
+    height: 34px;
+    width: content.preferred-width + 24px;
+    border-radius: Look.button-radius;
+    background: touch.has-hover ? Look.sel : Look.bg;
+    border-width: 1px;
+    border-color: Look.line-strong;
+    opacity: enabled ? 1 : 0.5;
+
+    content := HorizontalLayout {
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 8px;
+        if root.icon != "": VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 16px;
+                color: Look.text;
+            }
+        }
+        Text {
+            text: root.text;
+            color: Look.text;
+            font-size: 14px;
+            font-weight: 500;
+            vertical-alignment: center;
+        }
+        if root.trailing-icon != "": VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.trailing-icon;
+                size: 14px;
+                color: Look.muted;
+            }
+        }
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// The box that narrows the albums shown to the names matching what is typed.
+component FilterBox inherits Rectangle {
+    width: 180px;
+    height: 34px;
+    border-radius: Look.button-radius;
+    background: Look.field;
+    border-width: Look.field-border;
+    border-color: input.has-focus ? Look.accent : Look.line;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "magnifying-glass";
+                size: 15px;
+                color: Look.faint;
+            }
+        }
+        Rectangle {
+            horizontal-stretch: 1;
+            if Music.filter == "" && !input.has-focus: Text {
+                x: 0;
+                width: parent.width;
+                height: parent.height;
+                text: @tr("Filter albums");
+                color: Look.faint;
+                font-size: 14px;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            input := TextInput {
+                width: parent.width;
+                height: parent.height;
+                text: Music.filter;
+                color: Look.text;
+                font-size: 14px;
+                selection-background-color: Look.input-sel;
+                selection-foreground-color: Look.text;
+                text-cursor-width: Look.cursor-width;
+                single-line: true;
+                vertical-alignment: center;
+                edited => {
+                    Music.set-filter(self.text);
+                }
+            }
+        }
+    }
+}
+
+export component MusicPage inherits Rectangle {
+    property <bool> queue-shown: Music.queue-open && Music.queue.length > 0;
+    property <bool> has-source: Music.current >= 0;
+    background: Look.bg;
+
+    init => {
+        Music.opened();
+    }
+
+    PageFrame {
+        title: @tr("Music");
+
+        // The library and the sources.
+        Rectangle {
+            width: 260px;
+            background: Look.side;
+
+            Flickable {
+                width: parent.width;
+                height: parent.height;
+                mouse-drag-pan-enabled: false;
+                content-height: max(self.height, column.preferred-height);
+
+                column := VerticalLayout {
+                    width: parent.width;
+                    padding-left: 16px;
+                    padding-right: 16px;
+                    padding-top: 10px;
+                    padding-bottom: 16px;
+                    spacing: 2px;
+                    alignment: start;
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-bottom: 8px;
+                        alignment: start;
+                        Link {
+                            text: @tr("Chats");
+                            icon: "arrow-left";
+                            font-size: 13px;
+                            clicked => {
+                                AppState.page = Page.chats;
+                            }
+                        }
+                    }
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-bottom: 10px;
+                        Heading {
+                            label: @tr("Library");
+                            size: Look.nav-heading-size;
+                        }
+                    }
+                    if root.has-source: SectionRow { section: MusicSection.albums; icon: "vinyl-record"; }
+                    if root.has-source: SectionRow { section: MusicSection.artists; icon: "users"; }
+                    if root.has-source: SectionRow { section: MusicSection.songs; icon: "music-note"; }
+                    if root.has-source: SectionRow { section: MusicSection.genres; icon: "tag"; }
+                    if root.has-source: SectionRow { section: MusicSection.playlists; icon: "playlist"; }
+                    if root.has-source: SectionRow { section: MusicSection.favourites; icon: "heart"; }
+                    if !root.has-source: HorizontalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        Paragraph {
+                            text: @tr("Add a source below, and its library shows here.");
+                            color: Look.faint;
+                            font-size: 13px;
+                        }
+                    }
+                    HorizontalLayout {
+                        padding-left: 12px;
+                        padding-top: 22px;
+                        padding-bottom: 10px;
+                        Heading {
+                            label: @tr("Sources");
+                            size: Look.nav-heading-size;
+                        }
+                    }
+                    for source[index] in Music.sources: SourceItem {
+                        source: source;
+                        index: index;
+                        active: Music.view == MusicView.form ? Music.form-editing && Music.current == index : Music.current == index;
+                    }
+                    Rectangle { height: 4px; }
+                    AddSourceRow { }
+                }
+            }
+
+            Rectangle {
+                x: parent.width - 1px;
+                width: 1px;
+                background: Look.line;
+            }
+        }
+
+        // What is looked at.
+        Rectangle {
+            horizontal-stretch: 1;
+
+            Flickable {
+                width: parent.width;
+                height: parent.height;
+                mouse-drag-pan-enabled: false;
+                content-height: max(self.height, middle.preferred-height);
+
+                middle := VerticalLayout {
+                    width: parent.width;
+                    padding-left: 32px;
+                    padding-right: 32px;
+                    padding-top: 26px;
+                    padding-bottom: 32px;
+                    spacing: 0px;
+                    alignment: start;
+
+                    // No source yet: the invitation.
+                    if Music.view == MusicView.none: VerticalLayout {
+                        padding-top: 120px;
+                        spacing: 14px;
+                        alignment: start;
+                        HorizontalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "music-note";
+                                size: 40px;
+                                color: Look.faint;
+                            }
+                        }
+                        Text {
+                            text: @tr("No sources yet");
+                            color: Look.text;
+                            font-size: 20px;
+                            font-weight: 600;
+                            horizontal-alignment: center;
+                        }
+                        Paragraph {
+                            text: @tr("A source is a music server of your own that speaks the Subsonic API: Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel and others. Its library is played here, in the built-in player.");
+                            color: Look.muted;
+                            font-size: 15px;
+                            horizontal-alignment: center;
+                        }
+                        HorizontalLayout {
+                            alignment: center;
+                            padding-top: 6px;
+                            PrimaryButton {
+                                text: @tr("Add source");
+                                height: 42px;
+                                font-size: 15px;
+                                clicked => {
+                                    Music.add-source();
+                                }
+                            }
+                        }
+                    }
+
+                    // The heading of a section, an artist's albums, a genre's, a playlist.
+                    if Music.view != MusicView.none && Music.view != MusicView.form && Music.view != MusicView.album: VerticalLayout {
+                        spacing: 14px;
+                        alignment: start;
+                        if Music.back: HorizontalLayout {
+                            alignment: start;
+                            padding-bottom: 2px;
+                            Link {
+                                text: Music.section == MusicSection.artists ? @tr("Artists") : Music.section == MusicSection.genres ? @tr("Genres") : @tr("Playlists");
+                                icon: "caret-left";
+                                font-size: 13px;
+                                clicked => {
+                                    Music.go-back();
+                                }
+                            }
+                        }
+                        HorizontalLayout {
+                            spacing: 10px;
+                            alignment: start;
+                            VerticalLayout {
+                                alignment: center;
+                                Icon {
+                                    name: Music.view == MusicView.albums ? "vinyl-record" : Music.view == MusicView.names ? (Music.section == MusicSection.artists ? "users" : Music.section == MusicSection.genres ? "tag" : "playlist") : "music-note";
+                                    size: 20px;
+                                    color: Look.muted;
+                                }
+                            }
+                            Text {
+                                text: Music.sources[Music.current].name;
+                                color: Look.muted;
+                                font-size: 20px;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                            Text {
+                                text: "/";
+                                color: Look.faint;
+                                font-size: 20px;
+                                vertical-alignment: center;
+                            }
+                            Text {
+                                text: Music.title;
+                                color: Look.text;
+                                font-size: 20px;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                                overflow: elide;
+                            }
+                        }
+                        HorizontalLayout {
+                            spacing: 10px;
+                            Text {
+                                horizontal-stretch: 0;
+                                min-width: self.preferred-width;
+                                text: Music.subtitle;
+                                color: Look.text;
+                                font-size: 14px;
+                                font-weight: 500;
+                                vertical-alignment: center;
+                            }
+                            Rectangle { horizontal-stretch: 1; }
+                            if Music.view == MusicView.albums: FilterBox { }
+                            if Music.view == MusicView.albums && Music.sortable: IconButton {
+                                text: MusicWords.sort(Music.sort);
+                                trailing-icon: "caret-down";
+                                clicked => {
+                                    Music.set-sort(Music.sort == "newest" ? "name" : Music.sort == "name" ? "artist" : Music.sort == "artist" ? "frequent" : Music.sort == "frequent" ? "recent" : Music.sort == "recent" ? "random" : "newest");
+                                }
+                            }
+                            IconButton {
+                                icon: "arrows-clockwise";
+                                clicked => {
+                                    Music.refresh();
+                                }
+                            }
+                            if !root.queue-shown && Music.queue.length > 0: IconButton {
+                                text: @tr("Queue") + " " + Music.queue-count;
+                                trailing-icon: "caret-right";
+                                clicked => {
+                                    Music.toggle-queue();
+                                }
+                            }
+                        }
+                    }
+
+                    // Loading, or what went wrong.
+                    if Music.state == MusicState.loading && Music.view != MusicView.form && Music.view != MusicView.none: HorizontalLayout {
+                        padding-top: 60px;
+                        alignment: center;
+                        spacing: 10px;
+                        VerticalLayout {
+                            alignment: center;
+                            Spinner {
+                                size: 18px;
+                                color: Look.muted;
+                            }
+                        }
+                        Text {
+                            text: @tr("Loading…");
+                            color: Look.muted;
+                            font-size: 14px;
+                            vertical-alignment: center;
+                        }
+                    }
+                    if Music.state == MusicState.error && Music.view != MusicView.form && Music.view != MusicView.none: VerticalLayout {
+                        padding-top: 60px;
+                        spacing: 12px;
+                        alignment: start;
+                        HorizontalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "warning-circle";
+                                size: 28px;
+                                color: Look.danger;
+                            }
+                        }
+                        Paragraph {
+                            text: Music.problem;
+                            color: Look.danger;
+                            font-size: 14px;
+                            horizontal-alignment: center;
+                        }
+                        HorizontalLayout {
+                            alignment: center;
+                            SmallButton {
+                                text: @tr("Try again");
+                                clicked => {
+                                    Music.refresh();
+                                }
+                            }
+                        }
+                    }
+
+                    // The grid of albums.
+                    if Music.view == MusicView.albums && Music.state == MusicState.ready: VerticalLayout {
+                        padding-top: 22px;
+                        spacing: 24px;
+                        alignment: start;
+                        grid := Rectangle {
+                            property <length> gap: 24px;
+                            property <int> columns: max(2, Math.floor((self.width + gap) / (172px + gap)));
+                            property <length> cell: (self.width - gap * (columns - 1)) / columns;
+                            property <length> row-height: cell + 46px + gap;
+                            height: Music.albums.length == 0 ? 0px : Math.ceil(Music.albums.length / columns) * row-height - gap;
+                            for album[i] in Music.albums: AlbumCard {
+                                x: Math.mod(i, grid.columns) * (grid.cell + grid.gap);
+                                y: Math.floor(i / grid.columns) * grid.row-height;
+                                width: grid.cell;
+                                album: album;
+                                clicked => {
+                                    Music.open-album(album.id);
+                                }
+                                play => {
+                                    Music.play-album(album.id, false);
+                                }
+                            }
+                        }
+                        if Music.albums.length == 0: Paragraph {
+                            text: Music.filter == "" ? @tr("No albums here.") : @tr("No album matches “{}”.", Music.filter);
+                            color: Look.muted;
+                            font-size: 14px;
+                        }
+                        if Music.more: HorizontalLayout {
+                            alignment: start;
+                            SmallButton {
+                                text: Music.loading-more ? @tr("Loading…") : @tr("More albums");
+                                enabled: !Music.loading-more;
+                                clicked => {
+                                    Music.load-more();
+                                }
+                            }
+                        }
+                    }
+
+                    // An album with its songs.
+                    if Music.view == MusicView.album: VerticalLayout {
+                        spacing: 0px;
+                        alignment: start;
+                        HorizontalLayout {
+                            alignment: start;
+                            padding-bottom: 14px;
+                            Link {
+                                text: @tr("Albums");
+                                icon: "caret-left";
+                                font-size: 13px;
+                                clicked => {
+                                    Music.go-back();
+                                }
+                            }
+                        }
+                        HorizontalLayout {
+                            spacing: 24px;
+                            alignment: start;
+                            CoverTile {
+                                width: 150px;
+                                height: 150px;
+                                cover: Music.album.cover;
+                                has-cover: Music.album.has-cover;
+                                initials: Music.album.initials;
+                                tint: Music.album.tint;
+                            }
+                            VerticalLayout {
+                                horizontal-stretch: 1;
+                                alignment: end;
+                                spacing: 6px;
+                                Text {
+                                    text: Music.album.name;
+                                    color: Look.text;
+                                    font-size: 24px;
+                                    font-weight: 600;
+                                    wrap: word-wrap;
+                                }
+                                Text {
+                                    text: Music.album.artist;
+                                    color: Look.accent-ink;
+                                    font-size: 15px;
+                                    overflow: elide;
+                                }
+                                Text {
+                                    text: Music.album-line;
+                                    color: Look.muted;
+                                    font-size: 13px;
+                                    overflow: elide;
+                                }
+                                HorizontalLayout {
+                                    padding-top: 10px;
+                                    spacing: 10px;
+                                    alignment: start;
+                                    PrimaryButton {
+                                        text: @tr("Play");
+                                        height: 34px;
+                                        font-size: 14px;
+                                        padding-x: 18px;
+                                        clicked => {
+                                            Music.play-album(Music.album.id, false);
+                                        }
+                                    }
+                                    IconButton {
+                                        text: @tr("Shuffle");
+                                        icon: "shuffle";
+                                        clicked => {
+                                            Music.play-album(Music.album.id, true);
+                                        }
+                                    }
+                                    IconButton {
+                                        text: @tr("Add to queue");
+                                        icon: "queue";
+                                        clicked => {
+                                            Music.queue-album(Music.album.id);
+                                        }
+                                    }
+                                    VerticalLayout {
+                                        alignment: center;
+                                        RowButton {
+                                            width: 34px;
+                                            height: 34px;
+                                            border-radius: 17px;
+                                            icon: Music.album.starred ? "heart-filled" : "heart";
+                                            ink: Music.album.starred ? Look.accent : Look.muted;
+                                            clicked => {
+                                                Music.star-album(Music.album.id, !Music.album.starred);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if Music.state == MusicState.loading: HorizontalLayout {
+                            padding-top: 40px;
+                            alignment: center;
+                            Spinner {
+                                size: 18px;
+                                color: Look.muted;
+                            }
+                        }
+                        if Music.state == MusicState.error: HorizontalLayout {
+                            padding-top: 30px;
+                            Paragraph {
+                                text: Music.problem;
+                                color: Look.danger;
+                                font-size: 14px;
+                            }
+                        }
+                        if Music.state == MusicState.ready: VerticalLayout {
+                            padding-top: 22px;
+                            spacing: 0px;
+                            HorizontalLayout {
+                                height: 30px;
+                                padding-left: 4px;
+                                padding-right: 6px;
+                                spacing: 12px;
+                                Text {
+                                    width: 36px;
+                                    text: "#";
+                                    color: Look.faint;
+                                    font-size: Look.section-size;
+                                    font-weight: Look.section-weight;
+                                    letter-spacing: Look.section-spacing;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                                Text {
+                                    horizontal-stretch: 1;
+                                    text: Look.section-prefix + (Look.workbench ? @tr("TITLE") : @tr("Title"));
+                                    color: Look.faint;
+                                    font-size: Look.section-size;
+                                    font-weight: Look.section-weight;
+                                    letter-spacing: Look.section-spacing;
+                                    vertical-alignment: center;
+                                }
+                                Text {
+                                    width: 44px;
+                                    text: Look.workbench ? @tr("LENGTH") : @tr("Length");
+                                    color: Look.faint;
+                                    font-size: Look.section-size;
+                                    font-weight: Look.section-weight;
+                                    letter-spacing: Look.section-spacing;
+                                    horizontal-alignment: right;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            Rectangle { height: 1px; background: Look.line; }
+                            for track[index] in Music.tracks: TrackItem {
+                                track: track;
+                                index: index;
+                                in-album: true;
+                            }
+                        }
+                    }
+
+                    // Artists, genres or playlists.
+                    if Music.view == MusicView.names && Music.state == MusicState.ready: VerticalLayout {
+                        padding-top: 16px;
+                        spacing: 2px;
+                        alignment: start;
+                        for name in Music.names: NameItem {
+                            entry: name;
+                            icon: Music.section == MusicSection.artists ? "user" : Music.section == MusicSection.genres ? "tag" : "playlist";
+                        }
+                        if Music.names.length == 0: Paragraph {
+                            text: @tr("Nothing here yet.");
+                            color: Look.muted;
+                            font-size: 14px;
+                        }
+                    }
+
+                    // Songs: a playlist's, the favourites, every song.
+                    if Music.view == MusicView.tracks && Music.state == MusicState.ready: VerticalLayout {
+                        padding-top: 16px;
+                        spacing: 2px;
+                        alignment: start;
+                        if Music.tracks.length > 0: HorizontalLayout {
+                            padding-bottom: 10px;
+                            spacing: 10px;
+                            alignment: start;
+                            PrimaryButton {
+                                text: @tr("Play all");
+                                height: 34px;
+                                font-size: 14px;
+                                padding-x: 18px;
+                                clicked => {
+                                    Music.play-track(0);
+                                }
+                            }
+                            IconButton {
+                                text: @tr("Shuffle");
+                                icon: "shuffle";
+                                clicked => {
+                                    Music.play-track(-1);
+                                }
+                            }
+                        }
+                        for track[index] in Music.tracks: TrackItem {
+                            track: track;
+                            index: index;
+                            in-album: false;
+                        }
+                        if Music.tracks.length == 0: Paragraph {
+                            text: @tr("Nothing here yet.");
+                            color: Look.muted;
+                            font-size: 14px;
+                        }
+                        if Music.more: HorizontalLayout {
+                            padding-top: 12px;
+                            alignment: start;
+                            SmallButton {
+                                text: Music.loading-more ? @tr("Loading…") : @tr("More songs");
+                                enabled: !Music.loading-more;
+                                clicked => {
+                                    Music.load-more();
+                                }
+                            }
+                        }
+                    }
+
+                    // Adding or editing a source.
+                    if Music.view == MusicView.form: HorizontalLayout {
+                        alignment: start;
+                        VerticalLayout {
+                            preferred-width: 480px;
+                            max-width: 480px;
+                            spacing: 20px;
+                            alignment: start;
+                            VerticalLayout {
+                                spacing: 6px;
+                                Heading {
+                                    label: Music.form-editing ? @tr("Edit source") : @tr("Add source");
+                                }
+                                Paragraph {
+                                    text: @tr("A server that speaks the Subsonic API: Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel, or Bandcamp for the music you bought. The password is kept sealed in FinchGram's database on this Mac.");
+                                    color: Look.muted;
+                                    font-size: 15px;
+                                    line-height-factor: Look.leading(1.55);
+                                }
+                            }
+                            FormField {
+                                label: @tr("Name");
+                                placeholder: "Home NAS";
+                                text <=> Music.form-name;
+                                accepted => {
+                                    Music.submit-form();
+                                }
+                            }
+                            VerticalLayout {
+                                spacing: 6px;
+                                HorizontalLayout {
+                                    spacing: 10px;
+                                    FormField {
+                                        horizontal-stretch: 1;
+                                        label: @tr("Address");
+                                        placeholder: "https://nas.home:4533/";
+                                        text <=> Music.form-address;
+                                        accepted => {
+                                            Music.submit-form();
+                                        }
+                                    }
+                                    FormField {
+                                        width: 112px;
+                                        label: @tr("Port");
+                                        placeholder: "4533";
+                                        input-type: InputType.number;
+                                        text <=> Music.form-port;
+                                        accepted => {
+                                            Music.submit-form();
+                                        }
+                                    }
+                                }
+                                Paragraph {
+                                    text: @tr("http:// or https://. A folder may be part of the address. Navidrome listens on port 4533 unless told otherwise.");
+                                    color: Look.faint;
+                                    font-size: 12px;
+                                }
+                            }
+                            FormField {
+                                label: @tr("Username");
+                                text <=> Music.form-username;
+                                accepted => {
+                                    Music.submit-form();
+                                }
+                            }
+                            FormField {
+                                label: @tr("Password");
+                                input-type: InputType.password;
+                                text <=> Music.form-password;
+                                accepted => {
+                                    Music.submit-form();
+                                }
+                            }
+                            if Music.form-error != MusicFormError.none: HorizontalLayout {
+                                spacing: 8px;
+                                alignment: start;
+                                VerticalLayout {
+                                    alignment: start;
+                                    padding-top: 1px;
+                                    Icon {
+                                        name: "warning-circle";
+                                        size: 17px;
+                                        color: Look.danger;
+                                    }
+                                }
+                                Paragraph {
+                                    text: MusicWords.form-error(Music.form-error);
+                                    color: Look.danger;
+                                    font-size: 14px;
+                                    line-height-factor: Look.leading(1.5);
+                                }
+                            }
+                            if Music.test-state == SourceTest.testing: HorizontalLayout {
+                                spacing: 8px;
+                                alignment: start;
+                                VerticalLayout {
+                                    alignment: center;
+                                    Spinner {
+                                        size: 16px;
+                                        color: Look.muted;
+                                    }
+                                }
+                                Text {
+                                    text: @tr("Testing…");
+                                    color: Look.muted;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                }
+                            }
+                            if Music.test-state == SourceTest.ok || Music.test-state == SourceTest.failed: HorizontalLayout {
+                                spacing: 8px;
+                                alignment: start;
+                                VerticalLayout {
+                                    alignment: start;
+                                    padding-top: 1px;
+                                    Icon {
+                                        name: Music.test-state == SourceTest.ok ? "check-circle" : "warning-circle";
+                                        size: 17px;
+                                        color: Music.test-state == SourceTest.ok ? Look.ok : Look.danger;
+                                    }
+                                }
+                                Paragraph {
+                                    text: Music.test-line;
+                                    color: Music.test-state == SourceTest.ok ? Look.ok : Look.danger;
+                                    font-size: 14px;
+                                    line-height-factor: Look.leading(1.5);
+                                }
+                            }
+                            HorizontalLayout {
+                                padding-top: 4px;
+                                spacing: 10px;
+                                PrimaryButton {
+                                    text: Music.form-editing ? @tr("Save") : @tr("Add");
+                                    height: 42px;
+                                    font-size: 15px;
+                                    clicked => {
+                                        Music.submit-form();
+                                    }
+                                }
+                                VerticalLayout {
+                                    alignment: center;
+                                    SmallButton {
+                                        text: @tr("Test connection");
+                                        enabled: Music.test-state != SourceTest.testing;
+                                        clicked => {
+                                            Music.test-connection();
+                                        }
+                                    }
+                                }
+                                VerticalLayout {
+                                    alignment: center;
+                                    SmallButton {
+                                        text: @tr("Cancel");
+                                        quiet: true;
+                                        clicked => {
+                                            Music.cancel-form();
+                                        }
+                                    }
+                                }
+                                Rectangle { horizontal-stretch: 1; }
+                                if Music.form-editing: VerticalLayout {
+                                    alignment: center;
+                                    Link {
+                                        text: @tr("Remove");
+                                        icon: "trash";
+                                        color: Look.danger;
+                                        font-weight: 600;
+                                        clicked => {
+                                            Music.remove-from-form();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // The queue, when it is not empty and not hidden.
+        if root.queue-shown: Rectangle {
+            width: 380px;
+            background: Look.side;
+
+            Rectangle {
+                x: 0;
+                width: 1px;
+                background: Look.line;
+            }
+
+            VerticalLayout {
+                padding-top: 26px;
+                HorizontalLayout {
+                    padding-left: 20px;
+                    padding-right: 14px;
+                    padding-bottom: 4px;
+                    spacing: 8px;
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        spacing: 3px;
+                        alignment: start;
+                        Heading {
+                            label: @tr("Queue");
+                            size: Look.nav-heading-size;
+                            wrap: no-wrap;
+                            overflow: elide;
+                        }
+                        Text {
+                            text: Music.queue-line;
+                            color: Look.muted;
+                            font-size: 13px;
+                            overflow: elide;
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: start;
+                        SmallButton {
+                            text: @tr("Clear");
+                            clicked => {
+                                Music.clear-queue();
+                            }
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: start;
+                        padding-top: 4px;
+                        Link {
+                            text: @tr("Hide");
+                            trailing-icon: "caret-right";
+                            color: Look.muted;
+                            font-size: 17px;
+                            font-weight: 500;
+                            clicked => {
+                                Music.toggle-queue();
+                            }
+                        }
+                    }
+                }
+                Flickable {
+                    vertical-stretch: 1;
+                    mouse-drag-pan-enabled: false;
+                    content-height: max(self.height, rows.preferred-height);
+                    rows := VerticalLayout {
+                        width: parent.width;
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        padding-top: 8px;
+                        padding-bottom: 12px;
+                        spacing: 2px;
+                        alignment: start;
+                        for queued[index] in Music.queue: VerticalLayout {
+                            spacing: 2px;
+                            if queued.label != "": HorizontalLayout {
+                                padding-left: 8px;
+                                padding-top: index == 0 ? 0px : 14px;
+                                padding-bottom: 4px;
+                                Text {
+                                    text: Look.section-prefix + (Look.workbench ? queued.label.to-uppercase() : queued.label);
+                                    color: Look.faint;
+                                    font-size: Look.section-size;
+                                    font-weight: Look.section-weight;
+                                    letter-spacing: Look.section-spacing;
+                                }
+                            }
+                            QueueItem {
+                                entry: queued;
+                                index: index;
+                            }
+                        }
+                    }
+                }
+                Rectangle {
+                    height: 1px;
+                    background: Look.line;
+                }
+                HorizontalLayout {
+                    padding-left: 20px;
+                    padding-right: 20px;
+                    padding-top: 12px;
+                    padding-bottom: 14px;
+                    Paragraph {
+                        text: Music.cache-line;
+                        color: Look.faint;
+                        font-size: 12px;
+                    }
+                }
+            }
+        }
+    }
+}

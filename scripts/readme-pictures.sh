@@ -20,8 +20,10 @@ PICTURES=(
   workbench-light-settings-general
   workbench-light-ai-access
   workbench-light-downloads
+  workbench-light-music
   zh-workbench-chats
   zh-workbench-downloads
+  zh-workbench-music
 )
 mkdir -p "$TO"
 for name in "${PICTURES[@]}"; do

@@ -5261,3 +5261,253 @@ msgstr "儲存時會移除這個金鑰。"
 #: ui/voice.slint:919
 msgid "Keep the key"
 msgstr "保留金鑰"
+
+#: ui/app.slint:139 ui/pages/music.slint:679 ui/toolbox.slint:111
+msgid "Music"
+msgstr "音樂"
+
+#: ui/music.slint:184 ui/pages/music.slint:1002
+msgid "Albums"
+msgstr "專輯"
+
+#: ui/music.slint:185 ui/pages/music.slint:829
+msgid "Artists"
+msgstr "藝人"
+
+#: ui/music.slint:186
+msgid "Songs"
+msgstr "歌曲"
+
+#: ui/music.slint:187 ui/pages/music.slint:829
+msgid "Genres"
+msgstr "曲風"
+
+#: ui/music.slint:188 ui/pages/music.slint:829
+msgid "Playlists"
+msgstr "播放清單"
+
+#: ui/music.slint:189
+msgid "Favourites"
+msgstr "收藏"
+
+#: ui/music.slint:192
+msgid "By name"
+msgstr "依名稱"
+
+#: ui/music.slint:193
+msgid "By artist"
+msgstr "依藝人"
+
+#: ui/music.slint:194
+msgid "Most played"
+msgstr "最常播放"
+
+#: ui/music.slint:195
+msgid "Recently played"
+msgstr "最近播放"
+
+#: ui/music.slint:196
+msgid "Random"
+msgstr "隨機"
+
+#: ui/music.slint:197
+msgid "Recently added"
+msgstr "最近新增"
+
+#: ui/music.slint:204
+msgid "Not a Subsonic server"
+msgstr "不是 Subsonic 伺服器"
+
+#: ui/music.slint:208
+msgid "Give the source a name."
+msgstr "請為來源取個名稱。"
+
+#: ui/music.slint:209
+msgid "The address has to start with http:// or https:// and name the server."
+msgstr "位址必須以 http:// 或 https:// 開頭，並包含伺服器名稱。"
+
+#: ui/music.slint:210
+msgid "The port has to be a number from 1 to 65535."
+msgstr "連接埠得是 1 到 65535 之間的數字。"
+
+#: ui/music.slint:214
+msgid "Repeat all"
+msgstr "全部重複"
+
+#: ui/music.slint:215
+msgid "Repeat one"
+msgstr "單曲重複"
+
+#: ui/music.slint:216
+msgid "Repeat off"
+msgstr "不重複"
+
+#: ui/music.slint:218
+msgid "{n} song"
+msgid_plural "{n} songs"
+msgstr[0] "{n} 首歌"
+
+#: ui/music.slint:219
+msgid "{n} album"
+msgid_plural "{n} albums"
+msgstr[0] "{n} 張專輯"
+
+#: ui/pages/music.slint:177 ui/pages/music.slint:811 ui/pages/music.slint:1226
+msgid "Add source"
+msgstr "新增來源"
+
+#: ui/pages/music.slint:644
+msgid "Filter albums"
+msgstr "篩選專輯"
+
+#: ui/pages/music.slint:717
+msgid "Library"
+msgstr "曲庫"
+
+#: ui/pages/music.slint:731
+msgid "Add a source below, and its library shows here."
+msgstr "在下面新增一個來源，它的曲庫就會顯示在這裡。"
+
+#: ui/pages/music.slint:741
+msgid "Sources"
+msgstr "來源"
+
+#: ui/pages/music.slint:795
+msgid "No sources yet"
+msgstr "還沒有來源"
+
+#: ui/pages/music.slint:802
+msgid ""
+"A source is a music server of your own that speaks the Subsonic API: "
+"Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel and others. Its "
+"library is played here, in the built-in player."
+msgstr "來源就是你自己的音樂伺服器，只要它支援 Subsonic API：Navidrome、gonic、LMS、Ampache、Nextcloud Music、Koel 等都行。它的曲庫在這裡用內建播放器播放。"
+
+#: ui/pages/music.slint:896 ui/pages/music.slint:1417
+msgid "Queue"
+msgstr "播放佇列"
+
+#: ui/pages/music.slint:945
+msgid "Try again"
+msgstr "再試一次"
+
+#: ui/pages/music.slint:978
+msgid "No albums here."
+msgstr "這裡沒有專輯。"
+
+#: ui/pages/music.slint:978
+msgid "No album matches “{}”."
+msgstr "沒有符合「{}」的專輯。"
+
+#: ui/pages/music.slint:985
+msgid "More albums"
+msgstr "更多專輯"
+
+#: ui/pages/music.slint:1049
+msgid "Play"
+msgstr "播放"
+
+#: ui/pages/music.slint:1058 ui/pages/music.slint:1185
+msgid "Shuffle"
+msgstr "隨機播放"
+
+#: ui/pages/music.slint:1065
+msgid "Add to queue"
+msgstr "加入播放佇列"
+
+#: ui/pages/music.slint:1123
+msgid "TITLE"
+msgstr "標題"
+
+#: ui/pages/music.slint:1132
+msgid "LENGTH"
+msgstr "時長"
+
+#: ui/pages/music.slint:1132
+msgid "Length"
+msgstr "時長"
+
+#: ui/pages/music.slint:1160 ui/pages/music.slint:1198
+msgid "Nothing here yet."
+msgstr "這裡還什麼都沒有。"
+
+#: ui/pages/music.slint:1176
+msgid "Play all"
+msgstr "全部播放"
+
+#: ui/pages/music.slint:1206
+msgid "More songs"
+msgstr "更多歌曲"
+
+#: ui/pages/music.slint:1226
+msgid "Edit source"
+msgstr "編輯來源"
+
+#: ui/pages/music.slint:1229
+msgid ""
+"A server that speaks the Subsonic API: Navidrome, gonic, LMS, Ampache, "
+"Nextcloud Music, Koel, or Bandcamp for the music you bought. The password is "
+"kept sealed in FinchGram's database on this Mac."
+msgstr "支援 Subsonic API 的伺服器：Navidrome、gonic、LMS、Ampache、Nextcloud Music、Koel，或是 Bandcamp，聽你買過的音樂。密碼封起來存在這台 Mac 上 FinchGram 的資料庫裡。"
+
+#: ui/pages/music.slint:1268
+msgid ""
+"http:// or https://. A folder may be part of the address. Navidrome listens "
+"on port 4533 unless told otherwise."
+msgstr "以 http:// 或 https:// 開頭，位址裡可以包含資料夾。Navidrome 沒特別改的話，監聽 4533 連接埠。"
+
+#: ui/toolbox.slint:112
+msgid "A music player; add your own servers as its sources"
+msgstr "音樂播放器；把你自己的伺服器加進來當來源"
+
+#: ui/pages/music.slint:1123
+msgid "Title"
+msgstr "標題"
+
+#: ui/music.slint:220
+msgid "{n} artist"
+msgid_plural "{n} artists"
+msgstr[0] "{n} 位藝人"
+
+#: ui/music.slint:221
+msgid "{n} genre"
+msgid_plural "{n} genres"
+msgstr[0] "{n} 個類型"
+
+#: ui/music.slint:222
+msgid "{n} playlist"
+msgid_plural "{n} playlists"
+msgstr[0] "{n} 個播放清單"
+
+#: ui/music.slint:223
+msgid "OpenSubsonic, {n} extension"
+msgid_plural "OpenSubsonic, {n} extensions"
+msgstr[0] "OpenSubsonic，{n} 個擴充"
+
+#: ui/music.slint:224
+msgid "Up next"
+msgstr "接下來"
+
+#: ui/music.slint:225
+msgid "Added by you"
+msgstr "你加入的"
+
+#: ui/music.slint:226
+msgid "{} cached on this Mac"
+msgstr "這台 Mac 上快取了 {}"
+
+#: ui/music.slint:230
+msgid "The server refused the password."
+msgstr "伺服器拒絕了密碼。"
+
+#: ui/music.slint:231
+msgid "The server says: {0} ({1})"
+msgstr "伺服器說：{0}（{1}）"
+
+#: ui/music.slint:233
+msgid "Cannot reach the server: {0}"
+msgstr "無法連線伺服器：{0}"
+
+#: ui/music.slint:234
+msgid "The server did not answer the Subsonic way: {0}"
+msgstr "伺服器的回應不是 Subsonic 的格式：{0}"

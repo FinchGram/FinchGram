@@ -44,6 +44,7 @@ Es un cliente no oficial, no hecho por Telegram.
   llegan por varias conexiones a la vez y continúan tras una interrupción; las fotos y los vídeos se
   abren en el visor cuando llegan; las contraseñas se guardan selladas en la base de datos de FinchGram. Ver
   [docs/downloads.md](../docs/downloads.md).
+- **Música.** Un reproductor de música para tus propios servidores: añade un servidor Navidrome, gonic, LMS, Ampache, Nextcloud Music o Koel (cualquiera que hable la API de Subsonic) y reproduce su biblioteca en el reproductor integrado, sin cortes entre canciones, con cola y una barra de reproducción al pie de cada página; las canciones se guardan en caché mientras suenan.
 - **Envío.** Fotos, vídeos y archivos desde el clip, arrastrándolos a la ventana o pegándolos. Una
   tarjeta los muestra antes de enviarlos: con un pie, como foto o como archivo, juntos en un álbum de
   hasta diez, con temporizador de autodestrucción en un chat privado, sin sonido.
@@ -148,6 +149,12 @@ mantenedor. La cola de la derecha muestra la velocidad y lo que queda; Abrir tra
 vídeo y lo muestra en el visor. FinchGram no cambia nada en un servidor salvo que lo permitas para ese servidor (entonces puede borrar, mover, renombrar y subir ahí), y la contraseña va sellada a la base de
 datos de FinchGram, nunca a un archivo de texto. En [docs/downloads.md](../docs/downloads.md) están los detalles y lo que
 aún falta (un certificado autofirmado se rechaza: usa http en la red local o un certificado real).
+
+## La página de Música
+
+<p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="La página de Música"></p>
+
+Ver → Música, o Música en la caja de herramientas. Añade una fuente: un servidor tuyo que hable la API de Subsonic (Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel…), su dirección y tu cuenta; la contraseña se guarda sellada en la base de datos de FinchGram. Recorre sus álbumes, artistas, canciones, géneros, listas y favoritos, reproduce un álbum o mézclalo, añade canciones a la cola; las estrellas vuelven al servidor. Las canciones llegan por el cliente HTTP propio de FinchGram a `~/Documents/FinchGram/music_cache` y suenan mientras llegan, una tras otra sin cortes; la barra de reproducción queda al pie de cada página. Detalles en [docs/music.md](../docs/music.md).
 
 ## Cómo está hecho
 
@@ -260,6 +267,7 @@ src/
   player/                # el vídeo con libmpv, dibujado en la ventana con OpenGL
   screenshot/            # la herramienta de captura: la captura, la capa, las anotaciones, la imagen
   downloads/             # la página de Descargas: WebDAV, FTP, FTPS y SFTP, con un motor de varias conexiones
+  music/                 # la página de Música: el cliente de la API de Subsonic, canciones traídas a la caché, la cola y la barra de reproducción
     remote.rs            #   una sola cara para los tres clientes: listar, comprobar, traer
     webdav.rs            #   listados PROPFIND, direcciones, autenticación Basic
     ftp.rs               #   FTP y FTPS con suppaftp: un flujo, REST para continuar

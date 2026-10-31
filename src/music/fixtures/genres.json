@@ -1,0 +1,198 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "genres": {
+   "genre": [
+    {
+     "value": "Electronic",
+     "songCount": 73,
+     "albumCount": 10
+    },
+    {
+     "value": "Rock",
+     "songCount": 28,
+     "albumCount": 6
+    },
+    {
+     "value": "Hip-Hop",
+     "songCount": 26,
+     "albumCount": 3
+    },
+    {
+     "value": "americana",
+     "songCount": 16,
+     "albumCount": 1
+    },
+    {
+     "value": "country",
+     "songCount": 14,
+     "albumCount": 1
+    },
+    {
+     "value": "Punk",
+     "songCount": 13,
+     "albumCount": 1
+    },
+    {
+     "value": "Netlabel",
+     "songCount": 12,
+     "albumCount": 1
+    },
+    {
+     "value": "Classical",
+     "songCount": 10,
+     "albumCount": 1
+    },
+    {
+     "value": "Unknown",
+     "songCount": 10,
+     "albumCount": 1
+    },
+    {
+     "value": "Trip-Hop",
+     "songCount": 9,
+     "albumCount": 1
+    },
+    {
+     "value": "Ebm",
+     "songCount": 7,
+     "albumCount": 1
+    },
+    {
+     "value": "Pop",
+     "songCount": 6,
+     "albumCount": 2
+    },
+    {
+     "value": "poprock",
+     "songCount": 6,
+     "albumCount": 1
+    },
+    {
+     "value": "Electro",
+     "songCount": 5,
+     "albumCount": 1
+    },
+    {
+     "value": "Blues",
+     "songCount": 3,
+     "albumCount": 2
+    },
+    {
+     "value": "Funk",
+     "songCount": 2,
+     "albumCount": 2
+    },
+    {
+     "value": "Hip hop",
+     "songCount": 2,
+     "albumCount": 2
+    },
+    {
+     "value": "bluesrock",
+     "songCount": 2,
+     "albumCount": 2
+    },
+    {
+     "value": "Hip  Hop",
+     "songCount": 2,
+     "albumCount": 1
+    },
+    {
+     "value": "Party Breaks",
+     "songCount": 2,
+     "albumCount": 1
+    },
+    {
+     "value": "R&B",
+     "songCount": 2,
+     "albumCount": 1
+    },
+    {
+     "value": "indie",
+     "songCount": 2,
+     "albumCount": 1
+    },
+    {
+     "value": "Big Beat",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "Hip Hop Breaks",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "Other",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "Reggae",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "Regggae Hip Hop",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "Soul",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "Swing Breaks",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "SwingHop",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "alternativerock",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "electrofunk",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "hiphop",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "newage",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "rnb",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "rockandroll",
+     "songCount": 1,
+     "albumCount": 1
+    },
+    {
+     "value": "smoothjazz",
+     "songCount": 1,
+     "albumCount": 1
+    }
+   ]
+  }
+ }
+}

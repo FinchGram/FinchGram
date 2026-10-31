@@ -1,0 +1,12 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "artistInfo2": {
+   "musicBrainzId": "89ad4ac3-39f7-470e-963a-56509c546377"
+  }
+ }
+}

@@ -20,8 +20,17 @@ const READ_FAILED: i64 = -1;
 /// arrived; this is for the file on the disk growing without a word.
 const LOOK_AGAIN: Duration = Duration::from_millis(500);
 
-/// The one stream mpv may open, by its URL: the video the viewer shows, until another or none.
-static CURRENT: Mutex<Option<(String, Arc<Stream>)>> = Mutex::new(None);
+/// Who offered a stream: the media viewer's video, of which there is one at a time, or the music
+/// player (src/player/music.rs), which keeps the song playing and the next one; each withdraws
+/// its own.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Owner {
+    Video,
+    Music,
+}
+
+/// The streams mpv may open, by their URLs.
+static OFFERED: Mutex<Vec<(String, Arc<Stream>, Owner)>> = Mutex::new(Vec::new());
 /// Each stream gets a URL of its own, so that a load under way cannot open a later one.
 static NEXT: AtomicU64 = AtomicU64::new(1);
 
@@ -180,21 +189,54 @@ impl State {
 
 // ---- mpv's side ----------------------------------------------------------------------------------
 
-/// The URL mpv plays `stream` by: the one it may open from now on, in place of any before, which
-/// is over.
+/// The URL the video player plays `stream` by: the one it may open from now on, in place of any
+/// video stream before, which is over.
 pub(super) fn offer(stream: Arc<Stream>) -> String {
-    let url = format!("finchgram://{}", NEXT.fetch_add(1, Ordering::Relaxed));
-    if let Some((_, before)) = CURRENT.lock().unwrap().replace((url.clone(), stream)) {
-        before.cancel();
-    }
-    url
+    withdraw();
+    offer_for(Owner::Video, stream)
 }
 
-/// No stream is to be opened, and the one offered is over.
+/// No video stream is to be opened, and the one offered is over.
 pub(super) fn withdraw() {
-    if let Some((_, stream)) = CURRENT.lock().unwrap().take() {
-        stream.cancel();
-    }
+    OFFERED.lock().unwrap().retain(|(_, stream, owner)| {
+        if *owner == Owner::Video {
+            stream.cancel();
+        }
+        *owner != Owner::Video
+    });
+}
+
+/// The URL the music player plays `stream` by, beside the music streams offered before (the song
+/// playing keeps its stream while the next is offered).
+pub fn offer_music(stream: Arc<Stream>) -> String {
+    offer_for(Owner::Music, stream)
+}
+
+/// The music stream at `url` is over: mpv may not open it, and a read under way returns.
+pub fn withdraw_music(url: &str) {
+    OFFERED.lock().unwrap().retain(|(offered, stream, owner)| {
+        if *owner == Owner::Music && offered == url {
+            stream.cancel();
+            return false;
+        }
+        true
+    });
+}
+
+/// Every music stream is over.
+pub fn withdraw_all_music() {
+    OFFERED.lock().unwrap().retain(|(_, stream, owner)| {
+        if *owner == Owner::Music {
+            stream.cancel();
+        }
+        *owner != Owner::Music
+    });
+}
+
+fn offer_for(owner: Owner, stream: Arc<Stream>) -> String {
+    let url = format!("finchgram://{}", NEXT.fetch_add(1, Ordering::Relaxed));
+    OFFERED.lock().unwrap().push((url.clone(), stream, owner));
+    url
 }
 
 /// mpv opens a "finchgram://" URL: the stream offered under it, through its callbacks. The
@@ -202,7 +244,7 @@ pub(super) fn withdraw() {
 pub(super) unsafe extern "C" fn open(_: *mut c_void, uri: *mut c_char, info: *mut mpv::mpv_stream_cb_info) -> c_int {
     // SAFETY: mpv hands a C string that lives for the call.
     let uri = unsafe { CStr::from_ptr(uri) }.to_string_lossy().into_owned();
-    let stream = CURRENT.lock().unwrap().as_ref().filter(|(url, _)| *url == uri).map(|(_, stream)| stream.clone());
+    let stream = OFFERED.lock().unwrap().iter().find(|(url, _, _)| *url == uri).map(|(_, stream, _)| stream.clone());
     let Some(stream) = stream else { return mpv::MPV_ERROR_LOADING_FAILED };
     // SAFETY: mpv hands the structure to fill in, which lives for the call.
     unsafe {
@@ -347,8 +389,13 @@ mod tests {
         let _ = std::fs::remove_dir_all(&folder);
     }
 
+    /// The streams offered are one list for the process: the tests that offer and withdraw take
+    /// turns.
+    static TURN: Mutex<()> = Mutex::new(());
+
     #[test]
     fn mpv_opens_the_stream_offered_under_its_url_and_no_other() {
+        let _turn = TURN.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
         let stream = Stream::new(0, |_| {}, |_, _| {});
         let url = offer(stream.clone());
         assert!(url.starts_with("finchgram://"));
@@ -369,5 +416,41 @@ mod tests {
         withdraw();
         // SAFETY: as above.
         assert_eq!(unsafe { open(std::ptr::null_mut(), right.as_ptr().cast_mut(), &mut info) }, mpv::MPV_ERROR_LOADING_FAILED);
+    }
+
+    #[test]
+    fn the_music_player_offers_its_streams_beside_each_other_and_the_videos() {
+        let _turn = TURN.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let (song, next, video) = (Stream::new(0, |_| {}, |_, _| {}), Stream::new(0, |_| {}, |_, _| {}), Stream::new(0, |_| {}, |_, _| {}));
+        let song_url = offer_music(song.clone());
+        let next_url = offer_music(next.clone());
+        let video_url = offer(video.clone());
+        let mut info = mpv::mpv_stream_cb_info { cookie: std::ptr::null_mut(), read_fn: None, seek_fn: None, size_fn: None, close_fn: None, cancel_fn: None };
+        for url in [&song_url, &next_url, &video_url] {
+            let url = CString::new(url.as_str()).expect("a string");
+            // SAFETY: a C string and a structure that live for the call.
+            assert_eq!(unsafe { open(std::ptr::null_mut(), url.as_ptr().cast_mut(), &mut info) }, 0);
+            // SAFETY: the cookie `open` made, given back once.
+            unsafe { close(info.cookie) };
+        }
+        // Closed by mpv, each is over; still, the song's stream alone is withdrawn, the next stays offered.
+        withdraw_music(&song_url);
+        let gone = CString::new(song_url.as_str()).expect("a string");
+        let kept = CString::new(next_url.as_str()).expect("a string");
+        // SAFETY: as above.
+        assert_eq!(unsafe { open(std::ptr::null_mut(), gone.as_ptr().cast_mut(), &mut info) }, mpv::MPV_ERROR_LOADING_FAILED);
+        // SAFETY: as above.
+        assert_eq!(unsafe { open(std::ptr::null_mut(), kept.as_ptr().cast_mut(), &mut info) }, 0);
+        // SAFETY: as above.
+        unsafe { close(info.cookie) };
+        // The video's withdrawal leaves the music alone, and the music's leaves the video alone.
+        withdraw();
+        // SAFETY: as above.
+        assert_eq!(unsafe { open(std::ptr::null_mut(), kept.as_ptr().cast_mut(), &mut info) }, 0);
+        // SAFETY: as above.
+        unsafe { close(info.cookie) };
+        withdraw_all_music();
+        // SAFETY: as above.
+        assert_eq!(unsafe { open(std::ptr::null_mut(), kept.as_ptr().cast_mut(), &mut info) }, mpv::MPV_ERROR_LOADING_FAILED);
     }
 }

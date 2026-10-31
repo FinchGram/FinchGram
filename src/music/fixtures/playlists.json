@@ -1,0 +1,47 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "playlists": {
+   "playlist": [
+    {
+     "id": "5an21m7KsBcqSRh0JiRb6E",
+     "name": "2026-10-25",
+     "songCount": 83,
+     "duration": 27184,
+     "public": true,
+     "owner": "demo",
+     "created": "2026-10-25T20:29:14.0999303Z",
+     "changed": "2026-10-30T23:59:23.186317247Z",
+     "coverArt": "pl-5an21m7KsBcqSRh0JiRb6E_92faff2949cc8158",
+     "readonly": false
+    },
+    {
+     "id": "1vMFssOmPtzHzlZN1IbPGZ",
+     "name": "2026-10-25Want U",
+     "songCount": 8,
+     "duration": 2267,
+     "owner": "demo",
+     "created": "2026-10-25T17:51:14.69328973Z",
+     "changed": "2026-10-31T00:01:17.588961199Z",
+     "coverArt": "pl-1vMFssOmPtzHzlZN1IbPGZ_da0e05f0a2ef5086",
+     "readonly": false
+    },
+    {
+     "id": "1ttMNMdlBy8Uta17l6mtx4",
+     "name": "3",
+     "songCount": 14,
+     "duration": 2773,
+     "owner": "demo",
+     "created": "2026-10-27T00:04:55.983242769Z",
+     "changed": "2026-10-30T12:49:21.941540917Z",
+     "coverArt": "pl-1ttMNMdlBy8Uta17l6mtx4_4cbe1c25677d43e4",
+     "readonly": false
+    }
+   ]
+  }
+ }
+}

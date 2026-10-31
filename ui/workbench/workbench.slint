@@ -5,6 +5,7 @@ import { AppState, Page, Connection } from "../state.slint";
 import { Toolbox, ToolboxWords } from "../toolbox.slint";
 import { WorkbenchToolbox } from "toolbox.slint";
 import { Downloads } from "../downloads.slint";
+import { Music, PlayerBar } from "../music.slint";
 import { ChatInfo } from "../chat-info.slint";
 import { Chats, Conversation, Account, Accounts } from "../telegram.slint";
 import { Fmt } from "../format.slint";
@@ -623,15 +624,18 @@ export component WorkbenchWindow inherits Rectangle {
                 horizontal-stretch: 1;
             }
         }
+        // What plays, while something does (ui/music.slint), above the status bar.
+        if Music.playing: PlayerBar { }
         StatusBar { }
     }
 
-    // The toolbox, over the sidebar and the messages, under the title bar and above the status bar.
+    // The toolbox, over the sidebar and the messages, under the title bar and above the player
+    // bar and the status bar.
     WorkbenchToolbox {
         x: 52px;
         y: 40px;
         width: root.width - 52px;
-        height: root.height - 40px - 24px;
+        height: root.height - 40px - 24px - (Music.playing ? 60px : 0px);
     }
 
     // A message's menu and the dialogs of its actions, over everything; the search over everything

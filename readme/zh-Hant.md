@@ -32,6 +32,7 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
 - **下載。** 媒體中心裡的下載客戶端，走 WebDAV、FTP、FTPS 或 SFTP：你的 NAS、seedbox、PikPak、Alist/OpenList，或者用 `vget serve` 分享的
   資料夾，都能在 app 裡瀏覽。檔案走多條連線同時下載，中斷後可以接著下；照片和影片一到就在檢視器裡打開；密碼封在 FinchGram
   的資料庫裡。見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
+- **音樂。** 播放你自己伺服器上音樂的播放器：新增一個 Navidrome、gonic、LMS、Ampache、Nextcloud Music 或 Koel（任何會說 Subsonic API 的伺服器），在內建播放器裡播它的曲庫，首尾無縫，有佇列，播放列在每一頁底部；歌邊播邊快取。
 - **傳送。** 照片、影片和檔案可以從迴紋針選單傳送，也可以拖進視窗或直接貼上。送出之前先在一張卡片裡顯示：
   可以加說明文字，按照片傳或按檔案傳，最多十個合成一個相簿，私訊裡可以設自毀計時器，也可以靜音傳送。
 - **截圖。** 輸入列裡的剪刀或 ⌘⇧A 會定住螢幕：取一個視窗或拖一個選取範圍，畫上方框、橢圓、箭頭、畫筆、文字和馬賽克，
@@ -98,6 +99,12 @@ FinchGram 是一個 MCP 伺服器：你 Mac 上的 AI 助理應用程式（Claud
 命令列工具 vget 一個做法。右邊的佇列顯示速度和還剩多少；「打開」會把照片或影片取回來，在檢視器裡顯示。除非你為某台伺服器允許，FinchGram 不會變更
 伺服器上的任何東西（允許後可以在那台上刪除、移動、重新命名、上傳）；密碼封起來存進 FinchGram 的資料庫，永遠不以明文寫進檔案。細節和還沒做的部分見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
 （自簽憑證會被拒絕：區域網路裡用 http，或者用正式的憑證）。
+
+## 音樂頁面
+
+<p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="音樂頁面"></p>
+
+顯示 → 音樂，或百寶箱裡的音樂。新增一個來源：你自己的、會說 Subsonic API 的伺服器（Navidrome、gonic、LMS、Ampache、Nextcloud Music、Koel……），填位址和帳號；密碼封存在 FinchGram 的資料庫裡。瀏覽它的專輯、藝人、歌曲、類型、播放清單和收藏，播放或隨機播放一張專輯，把歌加進佇列；打星會寫回伺服器。歌透過 FinchGram 自己的 HTTP 客戶端進到 `~/Documents/FinchGram/music_cache`，邊到邊播，首尾無縫；播放列留在每一頁的底部。詳見 [docs/music.md](../docs/music.md)。
 
 ## 怎麼做的
 
@@ -197,6 +204,7 @@ src/
   player/                # 用 libmpv 播放影片，經 OpenGL 畫進視窗
   screenshot/            # 截圖工具：截取、覆蓋層、標註、成圖
   downloads/             # 下載頁面：WebDAV、FTP、FTPS 和 SFTP，帶多連線下載引擎
+  music/                 # 音樂頁面：Subsonic API 客戶端、邊播邊下的快取、佇列與播放列
     remote.rs            #   三個客戶端的同一張臉：列目錄、檢查伺服器、取檔案
     webdav.rs            #   PROPFIND 目錄列表、位址、Basic 驗證
     ftp.rs               #   FTP 和 FTPS，用 suppaftp：單一串流，REST 接著下

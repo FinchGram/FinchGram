@@ -3,6 +3,7 @@
 import { ListView } from "std-widgets.slint";
 import { Toolbox } from "../toolbox.slint";
 import { BroadsheetToolbox } from "toolbox.slint";
+import { Music, PlayerBar } from "../music.slint";
 import { InfoPanel } from "chat-info.slint";
 import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
@@ -3850,14 +3851,16 @@ export component BroadsheetWindow inherits Rectangle {
                 horizontal-stretch: 1;
             }
         }
+        // What plays, while something does (ui/music.slint), at the foot.
+        if Music.playing: PlayerBar { }
     }
 
-    // The toolbox, from the rail's right over the list, under the title bar.
+    // The toolbox, from the rail's right over the list, under the title bar and above the player bar.
     BroadsheetToolbox {
         x: 80px;
         y: 40px;
         width: root.width - 80px;
-        height: root.height - 40px;
+        height: root.height - 40px - (Music.playing ? 60px : 0px);
     }
 
     // A message's menu and the dialogs of its actions, over everything; the search over everything

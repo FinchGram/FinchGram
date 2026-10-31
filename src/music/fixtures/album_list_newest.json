@@ -1,0 +1,248 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "albumList2": {
+   "album": [
+    {
+     "id": "6dGMsiesuYw9lti9yGIGWY",
+     "name": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Various Artists",
+     "artistId": "63sqASlAfjbGMuLP4JhnZU",
+     "coverArt": "al-6dGMsiesuYw9lti9yGIGWY_ebbb154f246c04a5",
+     "songCount": 11,
+     "duration": 2954,
+     "playCount": 9865,
+     "created": "2025-03-26T22:26:49.315688846Z",
+     "starred": "2026-10-29T23:06:42.240908346Z",
+     "year": 2013,
+     "played": "2026-10-31T10:15:14.834349914Z",
+     "userRating": 5,
+     "averageRating": 5,
+     "genres": [],
+     "musicBrainzId": "",
+     "isCompilation": true,
+     "sortName": "netbloc vol. 42: live, the universe & everything",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [],
+     "moods": [],
+     "artists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayArtist": "Various Artists",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "6oq0g9th4iTM8a0y0T88tr",
+     "name": "netBloc Vol. 24: tiuqottigeloot",
+     "artist": "Various Artists",
+     "artistId": "63sqASlAfjbGMuLP4JhnZU",
+     "coverArt": "al-6oq0g9th4iTM8a0y0T88tr_de1d39e3b5f3cf8c",
+     "songCount": 12,
+     "duration": 2615,
+     "playCount": 3521,
+     "created": "2025-03-26T22:26:49.228824721Z",
+     "year": 2009,
+     "genre": "Netlabel",
+     "played": "2026-10-31T07:22:38.408624156Z",
+     "userRating": 5,
+     "averageRating": 5,
+     "genres": [
+      {
+       "name": "Netlabel"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": true,
+     "sortName": "netbloc vol. 24: tiuqottigeloot",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [],
+     "moods": [],
+     "artists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayArtist": "Various Artists",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "4ArIoYRbh0CaV7mFckEkXe",
+     "name": "Fairytale",
+     "artist": "Natasha Beller",
+     "artistId": "40opqiyTRvIX5R96ih5pDL",
+     "coverArt": "al-4ArIoYRbh0CaV7mFckEkXe_e468b385c2afebf3",
+     "songCount": 9,
+     "duration": 1841,
+     "playCount": 11464,
+     "created": "2025-03-26T22:26:49.199997383Z",
+     "year": 2018,
+     "genre": "Trip-Hop",
+     "played": "2026-10-31T06:31:46.694279912Z",
+     "userRating": 4,
+     "averageRating": 4,
+     "genres": [
+      {
+       "name": "Trip-Hop"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": false,
+     "sortName": "fairytale",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [],
+     "moods": [],
+     "artists": [
+      {
+       "id": "40opqiyTRvIX5R96ih5pDL",
+       "name": "Natasha Beller"
+      }
+     ],
+     "displayArtist": "Natasha Beller",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "24FP6ZabS8uIixYYSpJ963",
+     "name": "the procacci remixes, vol. I",
+     "artist": "pornophonique",
+     "artistId": "24jpYAI4N8TG0cCAYyzZk5",
+     "coverArt": "al-24FP6ZabS8uIixYYSpJ963_d96df0df355c27d1",
+     "songCount": 4,
+     "duration": 1175,
+     "playCount": 1583,
+     "created": "2025-03-26T22:26:49.004857922Z",
+     "year": 2007,
+     "genre": "Electronic",
+     "played": "2026-10-31T00:07:14.904680967Z",
+     "userRating": 4,
+     "averageRating": 4,
+     "genres": [
+      {
+       "name": "Electronic"
+      },
+      {
+       "name": "Funk"
+      },
+      {
+       "name": "Pop"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": false,
+     "sortName": "the procacci remixes, vol. i",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [
+      {
+       "name": "http://www.jamendo.com"
+      }
+     ],
+     "moods": [],
+     "artists": [
+      {
+       "id": "24jpYAI4N8TG0cCAYyzZk5",
+       "name": "pornophonique"
+      }
+     ],
+     "displayArtist": "pornophonique",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "2cahnhu6UPen2wbYDm4CHK",
+     "name": "8-bit lagerfeuer",
+     "artist": "pornophonique",
+     "artistId": "24jpYAI4N8TG0cCAYyzZk5",
+     "coverArt": "al-2cahnhu6UPen2wbYDm4CHK_7eb6dcd5d7a140cd",
+     "songCount": 8,
+     "duration": 1954,
+     "playCount": 6550,
+     "created": "2025-03-26T22:26:48.822020234Z",
+     "year": 2007,
+     "played": "2026-10-31T04:22:31.595305531Z",
+     "userRating": 5,
+     "averageRating": 5,
+     "genres": [],
+     "musicBrainzId": "",
+     "isCompilation": false,
+     "sortName": "8-bit lagerfeuer",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [],
+     "moods": [],
+     "artists": [
+      {
+       "id": "24jpYAI4N8TG0cCAYyzZk5",
+       "name": "pornophonique"
+      }
+     ],
+     "displayArtist": "pornophonique",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "2XMTbqZ3RrqTpD4gCVw0So",
+     "name": "Sophisticated Wickedness",
+     "artist": "Ugress",
+     "artistId": "5xcMPJdeEgNrGtnzYbzAqb",
+     "coverArt": "al-2XMTbqZ3RrqTpD4gCVw0So_4063ad22508f9482",
+     "songCount": 5,
+     "duration": 803,
+     "playCount": 2647,
+     "created": "2025-03-26T22:26:48.139459754Z",
+     "year": 2006,
+     "genre": "Electronic",
+     "played": "2026-10-31T09:15:55.027485407Z",
+     "userRating": 4,
+     "averageRating": 4,
+     "genres": [
+      {
+       "name": "Electronic"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": false,
+     "sortName": "sophisticated wickedness",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [],
+     "moods": [],
+     "artists": [
+      {
+       "id": "5xcMPJdeEgNrGtnzYbzAqb",
+       "name": "Ugress"
+      }
+     ],
+     "displayArtist": "Ugress",
+     "explicitStatus": "",
+     "version": ""
+    }
+   ]
+  }
+ }
+}

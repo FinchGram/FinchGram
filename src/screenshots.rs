@@ -2760,7 +2760,12 @@ fn screenshots() {
             app.set_page(Page::Profile);
             save(&window, &name("profile"));
             downloads(&ui, &window, theme, &name);
+            music(&ui, &window, &name);
+            // The chat window while a song plays: the player bar above the status bar.
+            fill_music(&ui);
             app.set_page(Page::Chats);
+            save(&window, &name("chats-playing"));
+            ui.global::<crate::Music>().set_playing(false);
         }
     }
 
@@ -2818,6 +2823,10 @@ fn screenshots() {
     fill_downloads(&ui);
     app.set_page(Page::Downloads);
     save(&window, "zh-workbench-downloads");
+    fill_music(&ui);
+    app.set_page(Page::Music);
+    save(&window, "zh-workbench-music");
+    ui.global::<crate::Music>().set_playing(false);
     app.set_page(Page::Chats);
 
     // The other languages, light, Workbench: the chat window and Settings → General, every script
@@ -2837,4 +2846,224 @@ fn screenshots() {
         app.set_page(Page::Chats);
     }
     let _ = login.get_countries().row_count();
+}
+
+/// The Music page as it is looked at (the canvas "FinchGram 音乐" of 2026-10-31): two Subsonic
+/// sources, the albums of the first, Kind of Blue open with So What playing, a queue of seven,
+/// and the player bar.
+fn fill_music(ui: &MainWindow) {
+    use crate::{AlbumRow, Music, MusicFormError, MusicSection, MusicState, MusicView, NameRow, QueueRow, RepeatMode, SourceRow, SourceStatus, SourceTest, TrackRow};
+    let music = ui.global::<Music>();
+    let words = ui.global::<crate::MusicWords>();
+    let source = |name: &str, host: &str, status: SourceStatus| SourceRow { name: name.into(), host: host.into(), kind: "Subsonic".into(), status };
+    let album = |id: &str, name: &str, artist: &str, year: &str, initials: &str, tint: i32, starred: bool| AlbumRow {
+        id: id.into(),
+        name: name.into(),
+        artist: artist.into(),
+        year: year.into(),
+        initials: initials.into(),
+        tint,
+        cover: Image::default(),
+        has_cover: false,
+        starred,
+    };
+    let track = |id: &str, number: &str, title: &str, artist: &str, album: &str, duration: &str, starred: bool, playing: bool, tint: i32| TrackRow {
+        id: id.into(),
+        number: number.into(),
+        title: title.into(),
+        artist: artist.into(),
+        album: album.into(),
+        duration: duration.into(),
+        starred,
+        playing,
+        initials: album.split_whitespace().filter_map(|word| word.chars().next()).take(2).collect::<String>().to_uppercase().into(),
+        tint,
+        cover: Image::default(),
+        has_cover: false,
+    };
+    let queued = |title: &str, artist: &str, album: &str, duration: &str, current: bool, added: bool, label: &str, tint: i32| QueueRow {
+        title: title.into(),
+        artist: artist.into(),
+        album: album.into(),
+        duration: duration.into(),
+        current,
+        added,
+        label: label.into(),
+        initials: album.split_whitespace().filter_map(|word| word.chars().next()).take(2).collect::<String>().to_uppercase().into(),
+        tint,
+        cover: Image::default(),
+        has_cover: false,
+    };
+    music.set_sources(model(vec![source("Home NAS", "nas.home", SourceStatus::Connected), source("Studio", "music.studio.example", SourceStatus::Connected)]));
+    music.set_current(0);
+    music.set_section(MusicSection::Albums);
+    music.set_view(MusicView::Albums);
+    music.set_state(MusicState::Ready);
+    music.set_problem(SharedString::new());
+    music.set_title(words.invoke_section(MusicSection::Albums));
+    music.set_subtitle(words.invoke_albums(312));
+    music.set_back(false);
+    music.set_sort("newest".into());
+    music.set_sortable(true);
+    music.set_filter(SharedString::new());
+    music.set_more(true);
+    music.set_loading_more(false);
+    music.set_albums(model(vec![
+        album("a1", "Kind of Blue", "Miles Davis", "1959", "KB", 0, true),
+        album("a2", "Blue Train", "John Coltrane", "1958", "BT", 6, false),
+        album("a3", "Rumours", "Fleetwood Mac", "1977", "R", 3, false),
+        album("a4", "OK Computer", "Radiohead", "1997", "OK", 1, false),
+        album("a5", "Abbey Road", "The Beatles", "1969", "AR", 2, true),
+        album("a6", "Random Access Memories", "Daft Punk", "2013", "RA", 5, false),
+        album("a7", "In Rainbows", "Radiohead", "2007", "IR", 7, false),
+        album("a8", "Blue", "Joni Mitchell", "1971", "B", 6, false),
+        album("a9", "The Köln Concert", "Keith Jarrett", "1975", "TK", 3, false),
+        album("a10", "Hounds of Love", "Kate Bush", "1985", "HL", 1, false),
+        album("a11", "Discovery", "Daft Punk", "2001", "D", 2, false),
+        album("a12", "Nevermind", "Nirvana", "1991", "N", 5, false),
+        album("a13", "Aja", "Steely Dan", "1977", "A", 0, false),
+        album("a14", "Hejira", "Joni Mitchell", "1976", "H", 6, false),
+        album("a15", "Grace", "Jeff Buckley", "1994", "G", 3, false),
+    ]));
+    music.set_album(album("a1", "Kind of Blue", "Miles Davis", "1959", "KB", 0, true));
+    music.set_album_line("1959 · Jazz · 5 songs, 45:44 · FLAC".into());
+    music.set_tracks(model(vec![
+        track("s1", "1", "So What", "Miles Davis", "Kind of Blue", "9:22", false, true, 0),
+        track("s2", "2", "Freddie Freeloader", "Miles Davis", "Kind of Blue", "9:46", false, false, 0),
+        track("s3", "3", "Blue in Green", "Miles Davis", "Kind of Blue", "5:37", true, false, 0),
+        track("s4", "4", "All Blues", "Miles Davis", "Kind of Blue", "11:33", false, false, 0),
+        track("s5", "5", "Flamenco Sketches", "Miles Davis", "Kind of Blue", "9:26", false, false, 0),
+    ]));
+    music.set_names(model(vec![
+        NameRow { id: "r1".into(), name: "Daft Punk".into(), line: words.invoke_albums(2) },
+        NameRow { id: "r2".into(), name: "Fleetwood Mac".into(), line: words.invoke_albums(1) },
+        NameRow { id: "r3".into(), name: "Jeff Buckley".into(), line: words.invoke_albums(1) },
+        NameRow { id: "r4".into(), name: "John Coltrane".into(), line: words.invoke_albums(1) },
+        NameRow { id: "r5".into(), name: "Joni Mitchell".into(), line: words.invoke_albums(2) },
+        NameRow { id: "r6".into(), name: "Kate Bush".into(), line: words.invoke_albums(1) },
+        NameRow { id: "r7".into(), name: "Keith Jarrett".into(), line: words.invoke_albums(1) },
+        NameRow { id: "r8".into(), name: "Miles Davis".into(), line: words.invoke_albums(5) },
+        NameRow { id: "r9".into(), name: "Nirvana".into(), line: words.invoke_albums(1) },
+        NameRow { id: "r10".into(), name: "Radiohead".into(), line: words.invoke_albums(2) },
+        NameRow { id: "r11".into(), name: "Steely Dan".into(), line: words.invoke_albums(1) },
+        NameRow { id: "r12".into(), name: "The Beatles".into(), line: words.invoke_albums(1) },
+    ]));
+    music.set_queue(model(vec![
+        queued("So What", "Miles Davis", "Kind of Blue", "9:22", true, false, &words.invoke_up_next(), 0),
+        queued("Freddie Freeloader", "Miles Davis", "Kind of Blue", "9:46", false, false, "", 0),
+        queued("Blue in Green", "Miles Davis", "Kind of Blue", "5:37", false, false, "", 0),
+        queued("All Blues", "Miles Davis", "Kind of Blue", "11:33", false, false, "", 0),
+        queued("Flamenco Sketches", "Miles Davis", "Kind of Blue", "9:26", false, false, "", 0),
+        queued("Blue Train", "John Coltrane", "Blue Train", "10:43", false, true, &words.invoke_added_by_you(), 6),
+        queued("Naima", "John Coltrane", "Giant Steps", "4:21", false, true, "", 6),
+    ]));
+    music.set_queue_open(true);
+    music.set_queue_count(7);
+    music.set_queue_line(format!("Kind of Blue · {} · 1:00:48", words.invoke_songs(7)).into());
+    music.set_cache_line(words.invoke_cached("1.2 GB".into()));
+    music.set_playing(true);
+    music.set_paused(false);
+    music.set_buffering(false);
+    music.set_song_title("So What".into());
+    music.set_song_artist("Miles Davis".into());
+    music.set_song_album("Kind of Blue".into());
+    music.set_song_starred(false);
+    music.set_song_initials("SW".into());
+    music.set_song_tint(0);
+    music.set_song_cover(Image::default());
+    music.set_song_has_cover(false);
+    music.set_position(221.0);
+    music.set_duration(562.0);
+    music.set_position_label("3:41".into());
+    music.set_duration_label("9:22".into());
+    music.set_volume(70);
+    music.set_shuffle(false);
+    music.set_repeat(RepeatMode::All);
+    music.set_form_editing(false);
+    music.set_form_name(SharedString::new());
+    music.set_form_address(SharedString::new());
+    music.set_form_port(SharedString::new());
+    music.set_form_username(SharedString::new());
+    music.set_form_password(SharedString::new());
+    music.set_form_error(MusicFormError::None);
+    music.set_test_state(SourceTest::None);
+    music.set_test_line(SharedString::new());
+}
+
+/// The Music page's scenes: the albums with the queue and the bar, the queue hidden, an album, the
+/// artists, the favourites, the form for a new source and after its test, a source that cannot
+/// be reached, and no source yet.
+fn music(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    use crate::{Music, MusicSection, MusicState, MusicView, SourceTest, TrackRow};
+    let app = ui.global::<AppState>();
+    let music = ui.global::<Music>();
+    fill_music(ui);
+    app.set_page(Page::Music);
+    save(window, &name("music"));
+    music.set_queue_open(false);
+    save(window, &name("music-collapsed"));
+    music.set_queue_open(true);
+    music.set_view(MusicView::Album);
+    save(window, &name("music-album"));
+    music.set_view(MusicView::Names);
+    music.set_section(MusicSection::Artists);
+    music.set_title(ui.global::<crate::MusicWords>().invoke_section(MusicSection::Artists));
+    music.set_subtitle(ui.global::<crate::MusicWords>().invoke_artists(12));
+    save(window, &name("music-artists"));
+    music.set_view(MusicView::Tracks);
+    music.set_section(MusicSection::Favourites);
+    music.set_title(ui.global::<crate::MusicWords>().invoke_section(MusicSection::Favourites));
+    music.set_subtitle(format!("{} · 36:38", ui.global::<crate::MusicWords>().invoke_songs(4)).into());
+    music.set_more(false);
+    let favourite = |id: &str, title: &str, artist: &str, album: &str, duration: &str, playing: bool, tint: i32| TrackRow {
+        id: id.into(),
+        number: SharedString::new(),
+        title: title.into(),
+        artist: artist.into(),
+        album: album.into(),
+        duration: duration.into(),
+        starred: true,
+        playing,
+        initials: album.split_whitespace().filter_map(|word| word.chars().next()).take(2).collect::<String>().to_uppercase().into(),
+        tint,
+        cover: Image::default(),
+        has_cover: false,
+    };
+    music.set_tracks(model(vec![
+        favourite("f1", "Blue in Green", "Miles Davis", "Kind of Blue", "5:37", false, 0),
+        favourite("f2", "Naima", "John Coltrane", "Giant Steps", "4:21", false, 6),
+        favourite("f3", "Dreams", "Fleetwood Mac", "Rumours", "4:14", false, 3),
+        favourite("f4", "Paranoid Android", "Radiohead", "OK Computer", "6:23", false, 1),
+    ]));
+    save(window, &name("music-favourites"));
+    // The form: a new source, then after a test that worked.
+    music.set_section(MusicSection::Albums);
+    music.set_view(MusicView::Form);
+    music.set_form_name("Studio".into());
+    music.set_form_address("https://music.studio.example".into());
+    music.set_form_username("yumin".into());
+    music.set_form_password("secret".into());
+    save(window, &name("music-add"));
+    music.set_test_state(SourceTest::Ok);
+    music.set_test_line("Navidrome 0.64.2 · OpenSubsonic, 7 extensions".into());
+    save(window, &name("music-add-tested"));
+    music.set_test_state(SourceTest::None);
+    music.set_test_line(SharedString::new());
+    // The source cannot be reached.
+    fill_music(ui);
+    music.set_state(MusicState::Error);
+    music.set_problem(ui.global::<crate::MusicWords>().invoke_problem("unreachable".into(), "nas.home".into(), SharedString::new()));
+    save(window, &name("music-error"));
+    music.set_state(MusicState::Ready);
+    // No source yet: nothing plays, nothing is queued.
+    music.set_sources(model(Vec::new()));
+    music.set_current(-1);
+    music.set_view(MusicView::None);
+    music.set_playing(false);
+    music.set_queue(model(Vec::new()));
+    music.set_queue_count(0);
+    save(window, &name("music-none"));
+    fill_music(ui);
+    music.set_playing(false);
+    app.set_page(Page::Chats);
 }

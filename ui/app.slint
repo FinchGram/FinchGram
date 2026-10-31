@@ -26,6 +26,8 @@ import { ProfilePage } from "pages/profile.slint";
 import { AllowDialog } from "pages/ai-access.slint";
 import { VendorDialog } from "pages/voice-input.slint";
 import { DownloadsPage } from "pages/downloads.slint";
+import { Music, MusicWords, SourceRow, SourceStatus, MusicSection, MusicView, MusicState, AlbumRow, TrackRow, NameRow, QueueRow, MusicFormError, SourceTest, RepeatMode } from "music.slint";
+import { MusicPage } from "pages/music.slint";
 
 // Re-exported so Rust can reach them through slint::include_modules!().
 export { ShotWindow, Shot, ShotTool, ShotCursor, ShotBox, ShotPath, ShotText, ShotCell, Screenshot }
@@ -42,6 +44,7 @@ export { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember }
 export { ChatManage, ManageWords, ManageLook, ManagePage, UsernameCheck, ManageToggle, ManageChip, ManagePerson, ManageLink, ManageChoice }
 export { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow }
 export { Voice, VoiceWords, VoiceState, VoiceProblem, KeyCheck, VoiceLanguage, VoiceLanguageRow, VoiceVendorRow, VoiceItem, ModelsState, Recorder, RecordStage }
+export { Music, MusicWords, SourceRow, SourceStatus, MusicSection, MusicView, MusicState, AlbumRow, TrackRow, NameRow, QueueRow, MusicFormError, SourceTest, RepeatMode }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";
@@ -133,6 +136,14 @@ export component MainWindow inherits Window {
                 }
             }
             MenuItem {
+                title: @tr("Music");
+                shortcut: @keys(Control + Alt + M);
+                activated => {
+                    AppState.show-window();
+                    AppState.page = Page.music;
+                }
+            }
+            MenuItem {
                 title: @tr("Settings…");
                 shortcut: @keys(Control + Comma);
                 activated => {
@@ -185,13 +196,14 @@ export component MainWindow inherits Window {
     // Until Telegram is ready, the login pages; then the theme's chat window, or a shared page.
     property <bool> ready: AppState.telegram-state == TelegramState.ready;
 
-    if !root.ready && AppState.page != Page.settings && AppState.page != Page.downloads: LoginPage { }
+    if !root.ready && AppState.page != Page.settings && AppState.page != Page.downloads && AppState.page != Page.music: LoginPage { }
     if root.ready && AppState.page == Page.chats && AppState.theme == Theme.workbench: WorkbenchWindow { }
     if root.ready && AppState.page == Page.chats && AppState.theme == Theme.broadsheet: BroadsheetWindow { }
     if root.ready && AppState.page == Page.chats && AppState.theme == Theme.terminal: TerminalWindow { }
     if AppState.page == Page.settings: SettingsPage { }
     if root.ready && AppState.page == Page.profile: ProfilePage { }
     if AppState.page == Page.downloads: DownloadsPage { }
+    if AppState.page == Page.music: MusicPage { }
     // The media viewer, over everything while it is open: a chat's media, or a downloaded file.
     if ((root.ready && AppState.page == Page.chats) || AppState.page == Page.downloads) && Viewer.open: MediaViewer { }
     // An AI vendor added or changed in voice input's panel: its dialog, over the toolbox.

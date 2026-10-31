@@ -43,6 +43,7 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
   por várias conexões ao mesmo tempo e continuam de onde pararam; fotos e vídeos abrem no
   visualizador quando chegam; as senhas ficam seladas no banco de dados do FinchGram. Veja
   [docs/downloads.md](../docs/downloads.md).
+- **Música.** Um player de música para os seus próprios servidores: adicione um servidor Navidrome, gonic, LMS, Ampache, Nextcloud Music ou Koel (qualquer um que fale a API Subsonic) e toque a biblioteca dele no player embutido, sem intervalo entre faixas, com fila e uma barra de reprodução no pé de cada página; as músicas ficam em cache enquanto tocam.
 - **Envio.** Fotos, vídeos e arquivos pelo clipe, arrastando-os para a janela ou colando-os. Um cartão
   os mostra antes de ir: com legenda, como foto ou como arquivo, juntos num álbum de até dez, com
   timer de autodestruição num chat privado, sem som.
@@ -147,6 +148,12 @@ foto ou um vídeo e o mostra no visualizador. O FinchGram não altera nada em um
 dados do FinchGram, nunca para um arquivo em texto claro. [docs/downloads.md](../docs/downloads.md) tem os detalhes e
 o que ainda falta (um certificado autoassinado é recusado: use http na rede local, ou um
 certificado de verdade).
+
+## A página de Música
+
+<p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="A página de Música"></p>
+
+Exibir → Música, ou Música na caixa de ferramentas. Adicione uma fonte: um servidor seu que fale a API Subsonic (Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel…), o endereço dele e a sua conta; a senha fica selada no banco de dados do FinchGram. Percorra álbuns, artistas, músicas, gêneros, playlists e favoritos, toque um álbum ou embaralhe-o, ponha músicas na fila; as estrelas voltam para o servidor. As músicas chegam pelo cliente HTTP do próprio FinchGram em `~/Documents/FinchGram/music_cache` e tocam enquanto chegam, uma após a outra sem intervalo; a barra de reprodução fica no pé de cada página. Detalhes em [docs/music.md](../docs/music.md).
 
 ## Como é feito
 
@@ -258,6 +265,7 @@ src/
   player/                # o vídeo com a libmpv, desenhado na janela com OpenGL
   screenshot/            # a ferramenta de captura: a captura, a camada, as anotações, a imagem
   downloads/             # a página de Downloads: WebDAV, FTP, FTPS e SFTP, com um motor de várias conexões
+  music/                 # a página de Música: o cliente da API Subsonic, músicas trazidas para o cache, a fila e a barra de reprodução
     remote.rs            #   uma só face para os três clientes: listar, verificar, buscar
     webdav.rs            #   listagens PROPFIND, endereços, autenticação Basic
     ftp.rs               #   FTP e FTPS com suppaftp: um fluxo, REST para continuar

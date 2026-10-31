@@ -117,6 +117,12 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
   between reads), or one upload at the end (ureq), then the request that tidies the words (ureq). A
   voice message transcribed by the user's own service has a "voice-message" thread, which has libmpv
   decode its file first. They report to the UI thread through the event loop; nothing of it is async.
+- Music (`src/music/`, [music.md](music.md)) has a "music" thread that asks the user's server (the
+  Subsonic API over ureq, blocking), one request at a time, a "music-covers" thread for the covers,
+  which are many and slow, and a "music-fetch" thread per song on its way, which reads the song
+  over HTTPS with Range requests into the cache while the music mpv reads the file through the
+  `finchgram://` stream callbacks on a thread of mpv's own. All of them report through the event
+  loop; nothing of it is async.
 - A panic on the UI thread ends the app: Slint calls into the app through `extern "C"` functions,
   which no panic unwinds through, so Rust aborts there, and macOS's crash report shows abort() and
   nothing of the cause. The panic's message and place go into `panic.log` next to settings.toml
@@ -349,7 +355,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     "/tools 传输" or "/tools transfers" jumps to a category, the same command again or Esc closes,
     /accounts is the accounts category). ⌘J opens it in every theme (View → Toolbox). A search box
     at the top filters by name (⏎ opens the first tool found), the categories stand at the left
-    (All, then accounts, transfers, media, messages, AI; in toolbox.rs a category is a row
+    (All, then accounts, transfers, music, live streams, Jellyfin, Emby, messages, AI: the
+    design's Media category was dissolved on 2026-10-31 at the maintainer's word, each of its
+    tools a category of its own; in toolbox.rs a category is a row
     of one table and a tool a row of another), the sections at the right: the accounts as tiles
     (⌘1–⌘0; adding one), then every tool of each category with a line about it and what goes
     on: a card opens the tool and shuts the toolbox, and a tool that can be off (AI access, voice
@@ -371,7 +379,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     Telegram's, so a tool). The tools the design draws
     but FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled messages) are
     listed faded and cannot be pinned; so is Emby, which the maintainer added beside Jellyfin on
-    2026-10-24, beyond the design's round (a media server page is still to be designed). At the
+    2026-10-24, beyond the design's round (a media server page is still to be designed); Music
+    (`src/music/`, [music.md](music.md)) is a page of its own, like Downloads. At the
     foot: the settings and the profile (the design's faded "AI settings" button left the same day,
     at the maintainer's word). Two of the maintainer's decisions of 2026-10-23 stand: the screenshot is not in the
     toolbox (its scissors stay under the composer, with their shortcut), and the gear stays off
@@ -446,6 +455,16 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   a "changes" thread per batch of changes.
   The servers with their passwords go into the app's database (below), the folder into settings.toml; a downloaded
   photo or video opens in the media viewer (`viewer.rs`, `view_file`). The page needs no account.
+- Music (`src/music/`, [music.md](music.md); the maintainer's word of 2026-10-30, the canvas of
+  2026-10-31): a music player, a tool of the toolbox of its own, whose sources are servers the user
+  adds inside it that speak the Subsonic API (Navidrome, gonic, LMS, Ampache, Nextcloud Music,
+  Koel), each a library looked at one at a time, never merged. `subsonic.rs` is the API client
+  (token authentication, OpenSubsonic's extensions read where a server has them), `fetch.rs`
+  brings a song over HTTPS into `~/Documents/FinchGram/music_cache/` while `src/player/music.rs`,
+  an mpv of its own with gapless playback, reads it as it arrives through `src/player/stream.rs`;
+  `mod.rs` is the page's state, the library, the queue and the player bar at the foot of every
+  page. The sources with their passwords go into the database (`music_sources`), the volume and
+  the order into settings.toml. The page needs no account.
 - Voice input (`src/speech/`, [voice-input.md](voice-input.md)): a tool of the toolbox's AI
   category, off until the user turns it on; the composer's sparkle while it is on (Terminal:
   `/voice`, which opens its panel while it is off).
@@ -584,7 +603,10 @@ added `credentials`, the app's own secrets by name (both after 0.6.3). Layout 6 
 sealed a credential to its vendor's format and address as well as its name (the keys of before
 are sealed again that way by voice input at that first start, the only time they still open) and
 tagged the programs' rows for the account they were allowed for; the rows of before named none
-and were dropped, so every program asks again once.
+and were dropped, so every program asks again once. Layout 7 (after 0.7.6) added `mcp_apps.identity`,
+the cdhash a program without a team's signature is held to besides its path, in the row's tag;
+the rows of before were dropped once more. Layout 8 (after 0.7.7) added `music_sources`, the
+music page's servers, each password sealed to its source.
 Settings keys are never renamed without a serde alias, and the Keychain items keep their names.
 
 ## Platforms
@@ -624,6 +646,8 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
    process, so a crafted video that breaks a decoder takes the window with it. FFmpeg is
    built without network code, encoders or devices, and follows upstream; should that not be enough,
    playback moves into a sandboxed helper process that hands its picture over (IOSurface on macOS).
+   Music keeps it that way: songs from the user's own server come through the app's HTTP client
+   into a cache file, which an mpv of the music's own reads as it arrives ([music.md](music.md)).
    Lottie stickers need something else (rlottie), and WebM stickers a VP9 decoder that keeps their
    transparency (libvpx; FFmpeg's own leaves it out). Until then a moving sticker shows its still
    thumbnail; still stickers show as they are.

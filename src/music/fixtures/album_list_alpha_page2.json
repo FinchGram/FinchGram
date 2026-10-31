@@ -1,0 +1,137 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "albumList2": {
+   "album": [
+    {
+     "id": "5mCHAKT6FQSLoJKREdMum8",
+     "name": "Brighten",
+     "artist": "Back On Earth",
+     "artistId": "04HrSORpypcLGNUdQp37gn",
+     "coverArt": "al-5mCHAKT6FQSLoJKREdMum8_b225bb6fbf9f2dd0",
+     "songCount": 3,
+     "duration": 560,
+     "playCount": 1266,
+     "created": "2025-03-26T22:26:35.344479456Z",
+     "year": 2013,
+     "played": "2026-10-31T10:15:22.671212473Z",
+     "userRating": 4,
+     "averageRating": 4,
+     "genres": [],
+     "musicBrainzId": "",
+     "isCompilation": false,
+     "sortName": "brighten",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [
+      {
+       "name": "http://www.jamendo.com"
+      }
+     ],
+     "moods": [],
+     "artists": [
+      {
+       "id": "04HrSORpypcLGNUdQp37gn",
+       "name": "Back On Earth"
+      }
+     ],
+     "displayArtist": "Back On Earth",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "3Ss0LvMLYHiAOYlMrwcxtj",
+     "name": "The Butcher's Ballroom",
+     "artist": "Diablo Swing Orchestra",
+     "artistId": "1HwxFm38Myi4KG5WMEDS2K",
+     "coverArt": "al-3Ss0LvMLYHiAOYlMrwcxtj_a36347d281b468b5",
+     "songCount": 13,
+     "duration": 3009,
+     "playCount": 2892,
+     "created": "2025-03-26T22:26:39.814531353Z",
+     "year": 2009,
+     "genre": "Rock",
+     "played": "2026-10-31T08:58:01.264892104Z",
+     "userRating": 5,
+     "averageRating": 5,
+     "genres": [
+      {
+       "name": "Rock"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": false,
+     "sortName": "butcher's ballroom",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [
+      {
+       "name": "http://www.jamendo.com"
+      }
+     ],
+     "moods": [],
+     "artists": [
+      {
+       "id": "1HwxFm38Myi4KG5WMEDS2K",
+       "name": "Diablo Swing Orchestra"
+      }
+     ],
+     "displayArtist": "Diablo Swing Orchestra",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "5hUTgQpLbrUXmkn8D6Jbwc",
+     "name": "Can I Have Your Love Tonight",
+     "artist": "Konstentyn",
+     "artistId": "17aaSbOlAlhrMGvNYo5Ufa",
+     "coverArt": "al-5hUTgQpLbrUXmkn8D6Jbwc_338eb00c43c8131d",
+     "songCount": 1,
+     "duration": 302,
+     "playCount": 745,
+     "created": "2025-03-26T22:26:41.02330302Z",
+     "year": 2020,
+     "genre": "smoothjazz",
+     "played": "2026-10-30T21:45:12.026363198Z",
+     "userRating": 3,
+     "averageRating": 3,
+     "genres": [
+      {
+       "name": "smoothjazz"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": false,
+     "sortName": "can i have your love tonight",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [
+      {
+       "name": "http://www.jamendo.com"
+      }
+     ],
+     "moods": [],
+     "artists": [
+      {
+       "id": "17aaSbOlAlhrMGvNYo5Ufa",
+       "name": "Konstentyn"
+      }
+     ],
+     "displayArtist": "Konstentyn",
+     "explicitStatus": "",
+     "version": ""
+    }
+   ]
+  }
+ }
+}

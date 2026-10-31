@@ -34,6 +34,7 @@ FinchGram은 Telegram 공식 라이브러리 [TDLib](https://core.telegram.org/t
 - **다운로드.** 미디어 센터의 다운로드 클라이언트, WebDAV·FTP·FTPS·SFTP 지원: 내 NAS, 시드박스, PikPak, Alist/OpenList, 또는 `vget serve`로 공유한
   폴더를 앱 안에서 둘러봅니다. 파일은 여러 연결로 한꺼번에 받고 멈춘 뒤에도 이어서 받으며, 사진과 동영상은 도착하면
   뷰어에서 열리고, 비밀번호는 봉인된 채 FinchGram의 데이터베이스에 보관됩니다. [docs/downloads.md](../docs/downloads.md) 참고.
+- **음악.** 내 서버를 위한 음악 플레이어: Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel(Subsonic API를 쓰는 서버라면 무엇이든)을 추가하면 그 라이브러리를 내장 플레이어로 재생합니다. 곡 사이 끊김 없음, 대기열 지원, 재생 막대는 모든 페이지 하단에; 곡은 재생하면서 캐시됩니다.
 - **보내기.** 사진, 동영상, 파일은 클립 메뉴에서 보내거나 창에 끌어다 놓거나 붙여 넣어 보낼 수 있습니다. 보내기 전에
   카드로 확인합니다: 설명 추가, 사진으로 또는 파일로, 최대 10개를 앨범으로 묶기, 개인 채팅에서는 자동 삭제 타이머,
   소리 없이 보내기.
@@ -105,6 +106,12 @@ FinchGram은 MCP 서버입니다. Mac의 AI 어시스턴트 앱(Claude Desktop, 
 표시되고, '열기'는 사진이나 동영상을 받아 뷰어에 보여 줍니다. FinchGram은 해당 서버에 대해 허용하지 않는 한 서버의 어떤 것도 바꾸지 않으며(허용하면 거기서 삭제, 이동, 이름 바꾸기, 업로드를 할 수 있습니다), 비밀번호는 평문 파일이
 아니라 봉인된 채 FinchGram의 데이터베이스에 들어갑니다. 자세한 내용과 아직 없는 것(자체 서명 인증서는 거부됩니다: LAN에서는 http를, 아니면
 정식 인증서를 쓰세요)은 [docs/downloads.md](../docs/downloads.md)에 있습니다.
+
+## 음악 페이지
+
+<p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="음악 페이지"></p>
+
+보기 → 음악, 또는 도구 상자의 '음악'. 소스를 추가합니다: Subsonic API를 쓰는 내 서버(Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel 등)의 주소와 계정. 비밀번호는 FinchGram 데이터베이스에 봉인되어 보관됩니다. 앨범, 아티스트, 곡, 장르, 재생목록, 즐겨찾기를 둘러보고, 앨범을 재생하거나 섞어 듣고, 곡을 대기열에 넣습니다; 별은 서버에 다시 기록됩니다. 곡은 FinchGram 자체 HTTP 클라이언트로 `~/Documents/FinchGram/music_cache`에 받아지며 받는 대로 끊김 없이 이어서 재생됩니다. 재생 막대는 모든 페이지 하단에 남습니다. 자세한 내용은 [docs/music.md](../docs/music.md).
 
 ## 어떻게 만들었나
 
@@ -209,6 +216,7 @@ src/
   player/                # libmpv로 동영상 재생. OpenGL로 창에 그림
   screenshot/            # 스크린샷 도구: 캡처, 오버레이, 주석, 그림
   downloads/             # 다운로드 페이지: WebDAV, FTP, FTPS, SFTP, 다중 연결 엔진
+  music/                 # 음악 페이지: Subsonic API 클라이언트, 캐시로 받는 곡, 대기열과 재생 막대
     remote.rs            #   세 클라이언트의 공통 얼굴: 목록, 확인, 받기
     webdav.rs            #   PROPFIND 목록, 주소, Basic 인증
     ftp.rs               #   suppaftp로 FTP와 FTPS: 단일 스트림, REST로 이어받기

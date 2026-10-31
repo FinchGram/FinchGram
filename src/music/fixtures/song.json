@@ -1,0 +1,73 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "song": {
+   "id": "0uTqxDgHNaihj2pIciP0h8",
+   "parent": "6dGMsiesuYw9lti9yGIGWY",
+   "isDir": false,
+   "title": "Feijão",
+   "album": "netBloc Vol. 42: Live, The Universe & Everything",
+   "artist": "Dr. Quandary",
+   "track": 1,
+   "year": 2013,
+   "coverArt": "mf-0uTqxDgHNaihj2pIciP0h8_ebbb154f246c04a5",
+   "size": 5365035,
+   "contentType": "audio/mpeg",
+   "suffix": "mp3",
+   "starred": "2026-10-31T07:22:37.913575272Z",
+   "duration": 218,
+   "bitRate": 192,
+   "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/01 - Feijão.mp3",
+   "playCount": 3757,
+   "created": "2025-03-26T22:26:49.348640872Z",
+   "albumId": "6dGMsiesuYw9lti9yGIGWY",
+   "artistId": "0VBxu6h9ST5P62ePfkmG1P",
+   "type": "music",
+   "userRating": 2,
+   "averageRating": 2,
+   "bookmarkPosition": 113000,
+   "played": "2026-10-31T06:01:52.801452802Z",
+   "bpm": 0,
+   "comment": "Courtesy of https://blocsonic.com",
+   "sortName": "feijao",
+   "mediaType": "song",
+   "musicBrainzId": "",
+   "isrc": [],
+   "genres": [],
+   "replayGain": {
+    "trackGain": 0,
+    "albumGain": 0,
+    "trackPeak": 1,
+    "albumPeak": 1
+   },
+   "channelCount": 2,
+   "samplingRate": 44100,
+   "bitDepth": 0,
+   "moods": [],
+   "artists": [
+    {
+     "id": "0VBxu6h9ST5P62ePfkmG1P",
+     "name": "Dr. Quandary"
+    }
+   ],
+   "displayArtist": "Dr. Quandary",
+   "albumArtists": [
+    {
+     "id": "63sqASlAfjbGMuLP4JhnZU",
+     "name": "Various Artists"
+    }
+   ],
+   "displayAlbumArtist": "Various Artists",
+   "contributors": [],
+   "displayComposer": "",
+   "explicitStatus": "",
+   "groupings": [],
+   "works": [],
+   "movements": []
+  }
+ }
+}

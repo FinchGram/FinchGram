@@ -91,6 +91,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   用户所选语音识别服务的阻塞 WebSocket（rustls 上的 tungstenite；每次读最多等 20 毫秒，声音在两次读之间发出去），或者
   说完时上传一次（ureq），之后是整理文字的请求（ureq）。用用户自己的服务转写语音消息时有一个“voice-message”线程，
   先让 libmpv 解码它的文件。它们通过事件循环向 UI 线程汇报；都不是 async。
+- 音乐（`src/music/`，[music.zh-Hans.md](music.zh-Hans.md)）有一个“music”线程问用户的服务器（ureq 上的 Subsonic API，阻塞式），
+  一次一个请求；一个“music-covers”线程取封面，封面多而慢；每首在路上的歌一个“music-fetch”线程，用 Range 请求把歌经
+  HTTPS 读进缓存，同时音乐自己的 mpv 在它自己的线程上通过 `finchgram://` 流回调读这个文件。它们都通过事件循环汇报；都不是 async。
 - UI 线程上的 panic 会结束整个 app：Slint 通过 `extern "C"` 函数调进 app 的代码，panic 不能穿过这样的函数，Rust 在那里
   直接 abort，macOS 的崩溃报告里只看得到 abort()，看不到原因。所以 panic 的内容和位置先写进 settings.toml 旁边的
   `panic.log`（`src/main.rs`）：从 Dock 启动的 app 没有终端可以打印。崩溃留下什么、报告怎么读，见
@@ -233,7 +236,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
     点活动栏顶部的 logo，面板从左边滑出盖住列表和会话区，780px，其余压遮罩；Broadsheet 从窄栏的 logo 滑出，820px，排成报纸的
     索引；Terminal 不用抽屉，/tools 把清单放在窗格的位置（命令行和底栏留着；“/tools 传输”或“/tools transfers”直接跳到一类，
     再输一次同一个命令或按 Esc 关，/accounts 就是账号这一类）。三套主题都可以按 ⌘J（显示 → 百宝箱）。顶部一个搜索框按名字
-    过滤（⏎ 打开找到的第一个工具），左边是分类（全部，然后账号、传输、媒体、消息、AI；toolbox.rs 里一类是一张表的一行，
+    过滤（⏎ 打开找到的第一个工具），左边是分类（全部，然后账号、传输、音乐、直播、Jellyfin、Emby、消息、AI：设计里的“媒体”一类
+    2026-10-31 按维护者的话拆散了，其中每个工具各成一类；toolbox.rs 里一类是一张表的一行，
     一个工具是另一张表的一行），右边是各段：账号排成一格一格（⌘1–⌘0；添加账号），然后每一类的每个工具，各带一句说明和
     正在发生的事：点卡片打开工具并关上百宝箱，能关掉的工具（AI 访问、语音输入）在卡片上有自己的开关，和它面板上的是同一个。钉到栏上
     单独一类，叫活动栏（Broadsheet 叫窄栏，Terminal 叫底栏），排在最后：一个工具一个开关，活动栏、窄栏和 Terminal 的底栏只
@@ -244,7 +248,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
     的卡片（ui/pages/ai-access.slint 的 AiPanel：开关、聊天范围、应用、日志；ui/pages/voice-input.slint 的 VoicePanel：
     开关，然后是密钥、语言和整理）。两个都不是设置页的一节，设置页只放 FinchGram 自己的偏好（AI 访问是维护者 2026-10-24
     定的，语音输入是 2026-10-26：它不是 Telegram 的功能，所以是一个工具）。设计画了而 FinchGram 还没有的工具（直播、Jellyfin、关键词隐藏、定时消息）灰着列出、不能钉；Emby
-    也是，它是维护者 2026-10-24 在 Jellyfin 旁边加的，不在设计那一轮里（片库页还没设计）。底部是
+    也是，它是维护者 2026-10-24 在 Jellyfin 旁边加的，不在设计那一轮里（片库页还没设计）；音乐（`src/music/`，
+    [music.zh-Hans.md](music.zh-Hans.md)）和下载一样是一个自己的页面。底部是
     设置和我的资料（设计里灰着的“AI 设置”按钮同一天按维护者的话去掉了）。维护者 2026-10-23 定的两条照旧：截图不进百宝箱（剪刀留在输入框下面，快捷键照旧），齿轮
     不回到各栏上（设置在百宝箱、菜单栏和 ⌘, 里）。没钉住的工具有动静时（下载在进行）或别的账号有未读时（Broadsheet 除外，
     它的窄栏本来就列着）logo 上有一个点；钉住的工具的点画在它自己的图标上。
@@ -293,6 +298,12 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   切成 8 MB 的块、最多 12 条连接并发取进 `.part` 文件，停了接着来，照 vget 的做法；`mod.rs` 是 UI 线程上的页面状态、
   一个负责列目录的“servers”线程、每个在传的文件一个线程（同时两个），以及每批改动一个“changes”线程。密码进 macOS 钥匙串，服务器和下载目录进
   settings.toml；下好的照片或视频在媒体查看器里打开（`viewer.rs` 的 `view_file`）。这个页面不需要账号。
+- 音乐（`src/music/`，[music.zh-Hans.md](music.zh-Hans.md)；维护者 2026-10-30 提出，2026-10-31 的画布）：一个音乐播放器，
+  百宝箱里独立的一个工具，来源是用户在工具里添加的、会说 Subsonic API 的自家服务器（Navidrome、gonic、LMS、Ampache、
+  Nextcloud Music、Koel），每个来源一个曲库，一次看一个，从不合并。`subsonic.rs` 是 API 客户端（token 认证，服务器有
+  OpenSubsonic 扩展时读出来），`fetch.rs` 把歌经 HTTPS 取进 `~/Documents/FinchGram/music_cache/`，同时
+  `src/player/music.rs`——音乐自己的一个 mpv，无缝衔接——通过 `src/player/stream.rs` 边到边读；`mod.rs` 是页面状态、
+  曲库、队列和每一页底部的播放条。来源连密码进数据库（`music_sources`），音量和顺序进 settings.toml。这个页面不需要账号。
 - 语音输入（`src/speech/`，[voice-input.zh-Hans.md](voice-input.zh-Hans.md)）：百宝箱“AI”一类里的一个工具，用户打开之前是关的；
   打开时输入框里有 ✦（终端里是 `/voice`，关着的时候它打开语音输入的面板）。用户添加 AI 服务商（名字、API 格式、地址、
   密钥），任何支持其中一种格式的厂商、中转站或用户自己的服务器都行；三个功能各有自己的开关，服务商和模型都从列表里选（模型
@@ -379,7 +390,9 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
 行丢掉，每台 SFTP 服务器再出示一次密钥。表结构 4 给服务器加了 `allow_changes`，之前的服务器一律关；表结构 5 加了
 `credentials`，按名字存 app 自己的秘密（两个都在 0.6.3 之后）。表结构 6（0.7.5 之后）把凭据连同服务商的格式和地址一起封起来
 （之前的密钥在那次首次启动时由语音输入重新封一遍，也只有那一次还能打开），并给程序的行标上当时允许的账号；之前的行没写账号，
-一律丢掉，每个程序再被问一次。settings 的键名改动必须带 serde alias，钥匙串条目的名字永远不改。
+一律丢掉，每个程序再被问一次。表结构 7（0.7.6 之后）加了 `mcp_apps.identity`：没有团队签名的程序除路径之外还要对上的
+代码哈希，记在行的标签里；之前的行又丢掉一次。表结构 8（0.7.7 之后）加了 `music_sources`，音乐页面的服务器，每个密码封起来时
+绑定到它的来源。settings 的键名改动必须带 serde alias，钥匙串条目的名字永远不改。
 
 ## 平台
 
@@ -409,7 +422,8 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
    一张纹理（`src/player/`），能硬解的用 VideoToolbox；媒体查看器显示这张纹理。代价是 libmpv 在 app 的进程里
    解码，一个故意构造的视频如果弄坏了解码器，窗口会跟着一起崩。FFmpeg 构建时
    去掉了网络、编码器和设备，并跟着上游升级；如果还不够，就把播放挪进一个沙箱里的辅助进程，由它把画面交给 app
-   （macOS 上用 IOSurface）。Lottie 贴纸要另想办法（rlottie），WebM 贴纸要能保留透明通道的 VP9 解码（libvpx；
+   （macOS 上用 IOSurface）。音乐也守着这条：用户自己服务器上的歌经 app 的 HTTP 客户端进缓存文件，由音乐自己的 mpv
+   边到边读（[music.zh-Hans.md](music.zh-Hans.md)）。Lottie 贴纸要另想办法（rlottie），WebM 贴纸要能保留透明通道的 VP9 解码（libvpx；
    FFmpeg 自带的 VP9 解码器会丢掉透明通道）。在那之前，动态贴纸只显示它的静态缩略图；静态贴纸照原样显示。
 4. **渲染**：暂时用 Slint 的默认渲染器（FemtoVG）。设计稿的字体都已打包，界面用到的中文、日文、韩文和阿拉伯文由
    Noto Sans SC、JP、KR、Arabic 提供，不归任何文字的符号区块（广告里的花体字母、带圈数字、箭头）由 Noto Sans Math 和

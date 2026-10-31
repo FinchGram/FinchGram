@@ -16,6 +16,7 @@ pub struct mpv_render_context {
 }
 
 pub type mpv_format = c_int;
+pub const MPV_FORMAT_STRING: mpv_format = 1;
 pub const MPV_FORMAT_FLAG: mpv_format = 3;
 pub const MPV_FORMAT_INT64: mpv_format = 4;
 pub const MPV_FORMAT_DOUBLE: mpv_format = 5;

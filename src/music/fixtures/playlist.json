@@ -1,0 +1,303 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "playlist": {
+   "id": "5an21m7KsBcqSRh0JiRb6E",
+   "name": "2026-10-25",
+   "songCount": 83,
+   "duration": 27184,
+   "public": true,
+   "owner": "demo",
+   "created": "2026-10-25T20:29:14.0999303Z",
+   "changed": "2026-10-30T23:59:23.186317247Z",
+   "coverArt": "pl-5an21m7KsBcqSRh0JiRb6E_92faff2949cc8158",
+   "readonly": false,
+   "entry": [
+    {
+     "id": "5xj7uhGFRB18s698zo2xEK",
+     "parent": "0Ym8paFKy66zzPaF8dBsPF",
+     "isDir": false,
+     "title": "The Effects of Time Travel",
+     "album": "First Words",
+     "artist": "The Polish Ambassador",
+     "track": 1,
+     "year": 2014,
+     "coverArt": "mf-5xj7uhGFRB18s698zo2xEK_9cff2a5633baffb3",
+     "size": 1063088,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 43,
+     "bitRate": 189,
+     "path": "The Polish Ambassador/First Words/01 - The Effects of Time Travel.mp3",
+     "playCount": 1182,
+     "created": "2025-03-26T22:26:47.987077052Z",
+     "albumId": "0Ym8paFKy66zzPaF8dBsPF",
+     "artistId": "3Vy6szDT2gBLGKc8yCcf5r",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T00:46:25.747637288Z",
+     "bpm": 0,
+     "comment": "http://www.jamendo.com cc_standard",
+     "sortName": "the effects of time travel",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayArtist": "The Polish Ambassador",
+     "albumArtists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayAlbumArtist": "The Polish Ambassador",
+     "contributors": [
+      {
+       "role": "composer",
+       "artist": {
+        "id": "3Vy6szDT2gBLGKc8yCcf5r",
+        "name": "The Polish Ambassador"
+       }
+      }
+     ],
+     "displayComposer": "The Polish Ambassador",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "5xj7uhGFRB18s698zo2xEK",
+     "parent": "0Ym8paFKy66zzPaF8dBsPF",
+     "isDir": false,
+     "title": "The Effects of Time Travel",
+     "album": "First Words",
+     "artist": "The Polish Ambassador",
+     "track": 1,
+     "year": 2014,
+     "coverArt": "mf-5xj7uhGFRB18s698zo2xEK_9cff2a5633baffb3",
+     "size": 1063088,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 43,
+     "bitRate": 189,
+     "path": "The Polish Ambassador/First Words/01 - The Effects of Time Travel.mp3",
+     "playCount": 1182,
+     "created": "2025-03-26T22:26:47.987077052Z",
+     "albumId": "0Ym8paFKy66zzPaF8dBsPF",
+     "artistId": "3Vy6szDT2gBLGKc8yCcf5r",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T00:46:25.747637288Z",
+     "bpm": 0,
+     "comment": "http://www.jamendo.com cc_standard",
+     "sortName": "the effects of time travel",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayArtist": "The Polish Ambassador",
+     "albumArtists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayAlbumArtist": "The Polish Ambassador",
+     "contributors": [
+      {
+       "role": "composer",
+       "artist": {
+        "id": "3Vy6szDT2gBLGKc8yCcf5r",
+        "name": "The Polish Ambassador"
+       }
+      }
+     ],
+     "displayComposer": "The Polish Ambassador",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "1FglGEZLElPyhKDGrihEcW",
+     "parent": "0Ym8paFKy66zzPaF8dBsPF",
+     "isDir": false,
+     "title": "Remember Me Future Girl",
+     "album": "First Words",
+     "artist": "The Polish Ambassador",
+     "track": 2,
+     "year": 2014,
+     "coverArt": "mf-1FglGEZLElPyhKDGrihEcW_9cff2a5633baffb3",
+     "size": 7449587,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 267,
+     "bitRate": 222,
+     "path": "The Polish Ambassador/First Words/02 - Remember Me Future Girl.mp3",
+     "playCount": 221,
+     "created": "2025-03-26T22:26:47.964209987Z",
+     "albumId": "0Ym8paFKy66zzPaF8dBsPF",
+     "artistId": "3Vy6szDT2gBLGKc8yCcf5r",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-28T10:46:44.977612673Z",
+     "bpm": 0,
+     "comment": "http://www.jamendo.com cc_standard",
+     "sortName": "remember me future girl",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayArtist": "The Polish Ambassador",
+     "albumArtists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayAlbumArtist": "The Polish Ambassador",
+     "contributors": [
+      {
+       "role": "composer",
+       "artist": {
+        "id": "3Vy6szDT2gBLGKc8yCcf5r",
+        "name": "The Polish Ambassador"
+       }
+      }
+     ],
+     "displayComposer": "The Polish Ambassador",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "49nfSqMozdmDPSKtQ74Ae9",
+     "parent": "0Ym8paFKy66zzPaF8dBsPF",
+     "isDir": false,
+     "title": "Lions in the Street",
+     "album": "First Words",
+     "artist": "The Polish Ambassador",
+     "track": 3,
+     "year": 2014,
+     "coverArt": "mf-49nfSqMozdmDPSKtQ74Ae9_9cff2a5633baffb3",
+     "size": 7636811,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 325,
+     "bitRate": 187,
+     "path": "The Polish Ambassador/First Words/03 - Lions in the Street.mp3",
+     "playCount": 167,
+     "created": "2025-03-26T22:26:47.976664427Z",
+     "albumId": "0Ym8paFKy66zzPaF8dBsPF",
+     "artistId": "3Vy6szDT2gBLGKc8yCcf5r",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-22T07:47:01.674532742Z",
+     "bpm": 0,
+     "comment": "http://www.jamendo.com cc_standard",
+     "sortName": "lions in the street",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayArtist": "The Polish Ambassador",
+     "albumArtists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayAlbumArtist": "The Polish Ambassador",
+     "contributors": [
+      {
+       "role": "composer",
+       "artist": {
+        "id": "3Vy6szDT2gBLGKc8yCcf5r",
+        "name": "The Polish Ambassador"
+       }
+      }
+     ],
+     "displayComposer": "The Polish Ambassador",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    }
+   ]
+  }
+ }
+}

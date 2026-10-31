@@ -1,0 +1,551 @@
+// Music (the maintainer's word of 2026-10-30, drawn on the canvas "FinchGram 音乐" of 2026-10-31): a
+// music player of the toolbox's own, a tool like Downloads. Its sources are servers of the user's
+// own that speak the Subsonic API, each a library of its own, looked at one at a time and never
+// merged (the maintainer's word). Rust fills this global (src/music/) and does what its callbacks
+// ask; the page (pages/music.slint) shows it in every theme, and the player bar at the foot of the
+// window shows what plays wherever the user is.
+import { Look, AccountColors } from "look.slint";
+import { Icon, Spinner } from "widgets.slint";
+import { AppState, Page } from "state.slint";
+
+// Whether a source answers: asked when the page opens, and whenever it is looked at.
+export enum SourceStatus { unknown, checking, connected, password-rejected, not-reachable, failed }
+
+export struct SourceRow {
+    name: string,
+    host: string,           // "nas.home", out of the address
+    kind: string,           // what it speaks: "Subsonic"
+    status: SourceStatus,
+}
+
+// The library's sections, in the column's order.
+export enum MusicSection { albums, artists, songs, genres, playlists, favourites }
+
+// What the middle column shows: a grid of albums (a section's, an artist's, a genre's), one album
+// with its songs, a list of names (artists, genres, playlists), a list of songs (a playlist's, the
+// favourites, every song), the form for a source, or the invitation to add the first source.
+export enum MusicView { albums, album, names, tracks, form, none }
+
+// Whether what the middle column shows has arrived.
+export enum MusicState { ready, loading, error }
+
+export struct AlbumRow {
+    id: string,
+    name: string,
+    artist: string,
+    year: string,           // "1959"; "" when the server did not say
+    initials: string,       // "KB", for the tile that stands in for the cover
+    tint: int,              // which of the ten hues the tile takes
+    cover: image,
+    has-cover: bool,
+    starred: bool,
+}
+
+export struct TrackRow {
+    id: string,
+    number: string,         // "1"; "" in a list that is not an album's
+    title: string,
+    artist: string,
+    album: string,
+    duration: string,       // "9:22"
+    starred: bool,
+    playing: bool,          // the song playing now
+    initials: string,
+    tint: int,
+    cover: image,
+    has-cover: bool,
+}
+
+// An artist, a genre or a playlist, in the names list.
+export struct NameRow {
+    id: string,
+    name: string,
+    line: string,           // "12 albums", "40 albums · 512 songs", "23 songs · 1:12:40"
+}
+
+export struct QueueRow {
+    title: string,
+    artist: string,
+    album: string,
+    duration: string,
+    current: bool,          // the song playing
+    added: bool,            // put there by the user, after what the album or list brought
+    label: string,          // a heading over this row: "Up next", "Added by you"; "" for none
+    initials: string,
+    tint: int,
+    cover: image,
+    has-cover: bool,
+}
+
+// What is wrong with the form when Add, Save or Test connection is pressed.
+export enum MusicFormError { none, name, address, port }
+
+// The form's "Test connection".
+export enum SourceTest { none, testing, ok, failed }
+
+export enum RepeatMode { off, all, one }
+
+export global Music {
+    in-out property <[SourceRow]> sources;
+    in-out property <int> current: -1;              // the source looked at; -1 for none
+    in-out property <MusicSection> section: MusicSection.albums;
+    in-out property <MusicView> view: MusicView.none;
+    in-out property <MusicState> state: MusicState.ready;
+    in-out property <string> problem;               // when state is error: a sentence
+    in-out property <string> title;                 // the middle column's heading: "Albums", an artist's name, a playlist's
+    in-out property <string> subtitle;              // "312 albums", "23 songs · 1:12:40"
+    in-out property <bool> back;                    // the heading has a way back: an artist's albums came from Artists
+    in-out property <string> sort: "newest";        // the albums' order: "newest", "name", "artist", "frequent", "recent", "random"
+    in-out property <bool> sortable;                // the grid is a section's own, which can be ordered
+    in-out property <string> filter;
+    in-out property <[AlbumRow]> albums;
+    in-out property <bool> more;                    // another page of albums can be fetched
+    in-out property <bool> loading-more;
+    in-out property <AlbumRow> album;               // the album open
+    in-out property <string> album-line;            // "1959 · Jazz · 5 songs, 45:44"
+    in-out property <[TrackRow]> tracks;
+    in-out property <[NameRow]> names;
+    // The queue: what plays, and what follows.
+    in-out property <[QueueRow]> queue;
+    in-out property <bool> queue-open: true;        // the user's choice (settings.toml); the column shows when the queue is not empty
+    in-out property <int> queue-count;
+    in-out property <string> queue-line;            // "Playing from Kind of Blue · 5 songs, 45:44"
+    in-out property <string> cache-line;            // "1.2 GB cached on this Mac"
+    // What plays: the bar at the foot of the window.
+    in-out property <bool> playing;                 // a song is loaded: the bar shows
+    in-out property <bool> paused;
+    in-out property <bool> buffering;               // mpv waits for bytes
+    in-out property <string> song-title;
+    in-out property <string> song-artist;
+    in-out property <string> song-album;
+    in-out property <bool> song-starred;
+    in-out property <string> song-initials;
+    in-out property <int> song-tint;
+    in-out property <image> song-cover;
+    in-out property <bool> song-has-cover;
+    in-out property <float> position;               // seconds
+    in-out property <float> duration;
+    in-out property <string> position-label;        // "3:41"
+    in-out property <string> duration-label;
+    in-out property <int> volume: 100;              // 0 … 100 (settings.toml)
+    in-out property <bool> shuffle;
+    in-out property <RepeatMode> repeat: RepeatMode.off;
+    // Adding or editing a source: the form in the middle column.
+    in-out property <bool> form-editing;            // Save and Remove instead of Add
+    in-out property <string> form-name;
+    in-out property <string> form-address;
+    in-out property <string> form-port;             // as typed; "" for the address's own
+    in-out property <string> form-username;
+    in-out property <string> form-password;
+    in-out property <MusicFormError> form-error;
+    in-out property <SourceTest> test-state;
+    in-out property <string> test-line;             // what the test found ("Navidrome 0.64.2"), or why it failed
+
+    callback opened();                              // the page is shown
+    callback select-source(int);
+    callback add-source();                          // the form, empty
+    callback edit-source(int);
+    callback remove-source(int);
+    callback submit-form();                         // Add, or Save
+    callback cancel-form();
+    callback test-connection();
+    callback remove-from-form();                    // editing: the source goes
+    callback choose-section(MusicSection);
+    callback set-sort(string);
+    callback set-filter(string);
+    callback load-more();                           // the next page of albums
+    callback refresh();
+    callback open-album(string);
+    callback open-name(string);                     // an artist, a genre or a playlist, by id
+    callback go-back();
+    callback play-album(string, bool);              // the album, shuffled or not: it is the queue
+    callback queue-album(string);                   // after what is queued
+    callback play-track(int);                       // a song of the tracks shown, by index; the ones shown follow it
+    callback queue-track(int);
+    callback star-album(string, bool);
+    callback star-track(int, bool);                 // of the tracks shown
+    callback star-song(bool);                       // the song playing
+    callback toggle-pause();
+    callback next();
+    callback previous();
+    callback seek(float);                           // 0 … 1 of the song
+    callback set-volume(int);
+    callback toggle-shuffle();
+    callback cycle-repeat();                        // off → all → one → off
+    callback play-queued(int);
+    callback remove-queued(int);
+    callback clear-queue();
+    callback toggle-queue();
+    callback stop();                                // the bar's ×: nothing plays, the bar goes
+}
+
+export global MusicWords {
+    public pure function section(section: MusicSection) -> string {
+        if section == MusicSection.albums { return @tr("Albums"); }
+        if section == MusicSection.artists { return @tr("Artists"); }
+        if section == MusicSection.songs { return @tr("Songs"); }
+        if section == MusicSection.genres { return @tr("Genres"); }
+        if section == MusicSection.playlists { return @tr("Playlists"); }
+        return @tr("Favourites");
+    }
+    public pure function sort(sort: string) -> string {
+        if sort == "name" { return @tr("By name"); }
+        if sort == "artist" { return @tr("By artist"); }
+        if sort == "frequent" { return @tr("Most played"); }
+        if sort == "recent" { return @tr("Recently played"); }
+        if sort == "random" { return @tr("Random"); }
+        return @tr("Recently added");
+    }
+    public pure function status(status: SourceStatus) -> string {
+        if status == SourceStatus.connected { return @tr("Connected"); }
+        if status == SourceStatus.checking { return @tr("Checking…"); }
+        if status == SourceStatus.password-rejected { return @tr("Password rejected"); }
+        if status == SourceStatus.not-reachable { return @tr("Not reachable"); }
+        if status == SourceStatus.failed { return @tr("Not a Subsonic server"); }
+        return "";
+    }
+    public pure function form-error(error: MusicFormError) -> string {
+        if error == MusicFormError.name { return @tr("Give the source a name."); }
+        if error == MusicFormError.address { return @tr("The address has to start with http:// or https:// and name the server."); }
+        if error == MusicFormError.port { return @tr("The port has to be a number from 1 to 65535."); }
+        return "";
+    }
+    public pure function repeat(mode: RepeatMode) -> string {
+        if mode == RepeatMode.all { return @tr("Repeat all"); }
+        if mode == RepeatMode.one { return @tr("Repeat one"); }
+        return @tr("Repeat off");
+    }
+    public pure function songs(n: int) -> string { return @tr("{n} song" | "{n} songs" % n); }
+    public pure function albums(n: int) -> string { return @tr("{n} album" | "{n} albums" % n); }
+    public pure function artists(n: int) -> string { return @tr("{n} artist" | "{n} artists" % n); }
+    public pure function genres(n: int) -> string { return @tr("{n} genre" | "{n} genres" % n); }
+    public pure function playlists(n: int) -> string { return @tr("{n} playlist" | "{n} playlists" % n); }
+    public pure function extensions(n: int) -> string { return @tr("OpenSubsonic, {n} extension" | "OpenSubsonic, {n} extensions" % n); }
+    public pure function up-next() -> string { return @tr("Up next"); }
+    public pure function added-by-you() -> string { return @tr("Added by you"); }
+    public pure function cached(size: string) -> string { return @tr("{} cached on this Mac", size); }
+    // Why something could not be fetched: the password refused, the server's own words with its
+    // code, HTTP's status, no connection, or an answer that is not Subsonic's.
+    public pure function problem(kind: string, detail: string, code: string) -> string {
+        if kind == "password" { return @tr("The server refused the password."); }
+        if kind == "server" { return @tr("The server says: {0} ({1})", detail, code); }
+        if kind == "http" { return @tr("The server answered HTTP {0}", detail); }
+        if kind == "unreachable" { return @tr("Cannot reach the server: {0}", detail); }
+        return @tr("The server did not answer the Subsonic way: {0}", detail);
+    }
+}
+
+// A cover, or the tile with the album's initials that stands in for one.
+export component CoverTile inherits Rectangle {
+    in property <image> cover;
+    in property <bool> has-cover;
+    in property <string> initials;
+    in property <int> tint;
+    in property <length> font-size: self.width * 0.3;
+    border-radius: Look.radius;
+    background: AccountColors.tint(root.tint, Look.dark);
+    clip: true;
+
+    if root.has-cover: Image {
+        width: parent.width;
+        height: parent.height;
+        source: root.cover;
+        image-fit: ImageFit.cover;
+    }
+    if !root.has-cover: Text {
+        width: parent.width;
+        height: parent.height;
+        text: root.initials;
+        color: AccountColors.tint-ink(root.tint, Look.dark);
+        font-size: root.font-size;
+        font-weight: 600;
+        letter-spacing: root.font-size * 0.02;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// A round button of the player bar.
+component BarButton inherits Rectangle {
+    in property <string> icon;
+    in property <length> icon-size: 18px;
+    in property <color> ink: Look.text;
+    in property <bool> enabled: true;
+    in property <bool> filled;              // the play button: the accent disc
+    callback clicked();
+    width: filled ? 36px : 34px;
+    height: self.width;
+    border-radius: self.width / 2;
+    background: filled ? Look.accent : touch.has-hover && enabled ? Look.sel : transparent;
+    opacity: enabled ? 1 : 0.4;
+
+    Icon {
+        name: root.icon;
+        size: root.icon-size;
+        color: root.filled ? Look.on-accent : root.ink;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A bar to seek in, or to set the volume: a track, the part done, a knob while the pointer is
+// near.
+component Slider inherits Rectangle {
+    in property <float> fraction;           // 0 … 1
+    in property <bool> enabled: true;
+    callback changed(float);
+    height: 20px;
+    property <length> track-height: 4px;
+
+    Rectangle {
+        y: (parent.height - root.track-height) / 2;
+        height: root.track-height;
+        border-radius: root.track-height / 2;
+        background: Look.off;
+        Rectangle {
+            x: 0;
+            width: parent.width * max(0, min(1, root.fraction));
+            height: parent.height;
+            border-radius: parent.border-radius;
+            background: root.enabled ? Look.accent : Look.faint;
+        }
+    }
+    if touch.has-hover || touch.pressed: Rectangle {
+        x: root.width * max(0, min(1, root.fraction)) - 6px;
+        y: (parent.height - 12px) / 2;
+        width: 12px;
+        height: 12px;
+        border-radius: 6px;
+        background: Look.accent;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: pointer;
+        pointer-event(event) => {
+            if event.kind == PointerEventKind.down && event.button == PointerEventButton.left {
+                root.changed(max(0, min(1, self.mouse-x / root.width)));
+            }
+        }
+        moved => {
+            if self.pressed {
+                root.changed(max(0, min(1, self.mouse-x / root.width)));
+            }
+        }
+    }
+}
+
+// The player bar at the foot of the window, while a song plays: the song, the transport, how
+// far it is, the queue and the volume, and the way to the music page.
+export component PlayerBar inherits Rectangle {
+    height: 60px;
+    background: Look.side;
+
+    Rectangle {
+        y: 0;
+        height: 1px;
+        background: Look.line;
+    }
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 12px;
+        spacing: 12px;
+        // The song.
+        VerticalLayout {
+            alignment: center;
+            CoverTile {
+                width: 40px;
+                height: 40px;
+                cover: Music.song-cover;
+                has-cover: Music.song-has-cover;
+                initials: Music.song-initials;
+                tint: Music.song-tint;
+                font-size: 14px;
+            }
+        }
+        VerticalLayout {
+            width: 200px;
+            alignment: center;
+            spacing: 2px;
+            Text {
+                text: Music.song-title;
+                color: Look.text;
+                font-size: 14px;
+                font-weight: 500;
+                overflow: elide;
+            }
+            Text {
+                text: Music.song-album == "" ? Music.song-artist : Music.song-artist + " · " + Music.song-album;
+                color: Look.muted;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            BarButton {
+                icon: Music.song-starred ? "heart-filled" : "heart";
+                ink: Music.song-starred ? Look.accent : Look.muted;
+                clicked => {
+                    Music.star-song(!Music.song-starred);
+                }
+            }
+        }
+        // The transport, and how far the song is.
+        HorizontalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 8px;
+            VerticalLayout {
+                alignment: center;
+                BarButton {
+                    icon: "shuffle";
+                    ink: Music.shuffle ? Look.accent : Look.muted;
+                    clicked => {
+                        Music.toggle-shuffle();
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                BarButton {
+                    icon: "skip-back";
+                    clicked => {
+                        Music.previous();
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                BarButton {
+                    icon: Music.paused ? "play" : "pause";
+                    filled: true;
+                    clicked => {
+                        Music.toggle-pause();
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                BarButton {
+                    icon: "skip-forward";
+                    clicked => {
+                        Music.next();
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 34px;
+                    height: 34px;
+                    BarButton {
+                        icon: "repeat";
+                        ink: Music.repeat == RepeatMode.off ? Look.muted : Look.accent;
+                        clicked => {
+                            Music.cycle-repeat();
+                        }
+                    }
+                    if Music.repeat == RepeatMode.one: Text {
+                        x: parent.width - 12px;
+                        y: 2px;
+                        text: "1";
+                        color: Look.accent;
+                        font-size: 9px;
+                        font-weight: 700;
+                    }
+                }
+            }
+            Rectangle { width: 4px; }
+            Text {
+                width: 38px;
+                text: Music.position-label;
+                color: Look.muted;
+                font-family: Look.mono;
+                font-size: 12px;
+                horizontal-alignment: right;
+                vertical-alignment: center;
+            }
+            VerticalLayout {
+                alignment: center;
+                Slider {
+                    width: 340px;
+                    fraction: Music.duration > 0 ? Music.position / Music.duration : 0;
+                    enabled: Music.duration > 0;
+                    changed(fraction) => {
+                        Music.seek(fraction);
+                    }
+                }
+            }
+            if Music.buffering: VerticalLayout {
+                alignment: center;
+                Spinner {
+                    size: 12px;
+                    color: Look.faint;
+                }
+            }
+            Text {
+                width: 38px;
+                text: Music.duration-label;
+                color: Look.muted;
+                font-family: Look.mono;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+        }
+        // The queue, the volume, the page.
+        VerticalLayout {
+            alignment: center;
+            BarButton {
+                icon: "queue";
+                ink: Music.queue-open ? Look.accent : Look.muted;
+                clicked => {
+                    Music.toggle-queue();
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            HorizontalLayout {
+                spacing: 6px;
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: Music.volume == 0 ? "speaker-x" : Music.volume < 50 ? "speaker-low" : "speaker-high";
+                        size: 18px;
+                        color: Look.muted;
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Slider {
+                        width: 80px;
+                        fraction: Music.volume / 100;
+                        changed(fraction) => {
+                            Music.set-volume(round(fraction * 100));
+                        }
+                    }
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            BarButton {
+                icon: AppState.page == Page.music ? "x" : "arrows-out-simple";
+                ink: Look.muted;
+                clicked => {
+                    if AppState.page == Page.music {
+                        Music.stop();
+                    } else {
+                        AppState.page = Page.music;
+                    }
+                }
+            }
+        }
+    }
+}

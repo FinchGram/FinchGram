@@ -1,0 +1,217 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "randomSongs": {
+   "song": [
+    {
+     "id": "4FD2xfCOOp5OfRa4IbJNg3",
+     "parent": "5gMe1SlZZzuOMkRVWJaodV",
+     "isDir": false,
+     "title": "Kosmonaut",
+     "album": "Kosmonaut",
+     "artist": "Ugress",
+     "track": 1,
+     "year": 2006,
+     "genre": "Electronic",
+     "coverArt": "al-5gMe1SlZZzuOMkRVWJaodV_3a5adeada2b60bb7",
+     "size": 2979968,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 186,
+     "bitRate": 128,
+     "path": "Ugress/Kosmonaut/01 - Kosmonaut.mp3",
+     "playCount": 870,
+     "created": "2025-03-26T22:26:47.824676918Z",
+     "albumId": "5gMe1SlZZzuOMkRVWJaodV",
+     "artistId": "5xcMPJdeEgNrGtnzYbzAqb",
+     "type": "music",
+     "bookmarkPosition": 7947,
+     "played": "2026-10-28T20:01:25.289612566Z",
+     "bpm": 0,
+     "comment": "www.ugress.com",
+     "sortName": "kosmonaut",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [
+      {
+       "name": "Electronic"
+      }
+     ],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "5xcMPJdeEgNrGtnzYbzAqb",
+       "name": "Ugress"
+      }
+     ],
+     "displayArtist": "Ugress",
+     "albumArtists": [
+      {
+       "id": "5xcMPJdeEgNrGtnzYbzAqb",
+       "name": "Ugress"
+      }
+     ],
+     "displayAlbumArtist": "Ugress",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "5xj7uhGFRB18s698zo2xEK",
+     "parent": "0Ym8paFKy66zzPaF8dBsPF",
+     "isDir": false,
+     "title": "The Effects of Time Travel",
+     "album": "First Words",
+     "artist": "The Polish Ambassador",
+     "track": 1,
+     "year": 2014,
+     "coverArt": "mf-5xj7uhGFRB18s698zo2xEK_9cff2a5633baffb3",
+     "size": 1063088,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 43,
+     "bitRate": 189,
+     "path": "The Polish Ambassador/First Words/01 - The Effects of Time Travel.mp3",
+     "playCount": 1182,
+     "created": "2025-03-26T22:26:47.987077052Z",
+     "albumId": "0Ym8paFKy66zzPaF8dBsPF",
+     "artistId": "3Vy6szDT2gBLGKc8yCcf5r",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T00:46:25.747637288Z",
+     "bpm": 0,
+     "comment": "http://www.jamendo.com cc_standard",
+     "sortName": "the effects of time travel",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayArtist": "The Polish Ambassador",
+     "albumArtists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayAlbumArtist": "The Polish Ambassador",
+     "contributors": [
+      {
+       "role": "composer",
+       "artist": {
+        "id": "3Vy6szDT2gBLGKc8yCcf5r",
+        "name": "The Polish Ambassador"
+       }
+      }
+     ],
+     "displayComposer": "The Polish Ambassador",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "2pte3jTfhMz2lgksqtmlrz",
+     "parent": "4ArIoYRbh0CaV7mFckEkXe",
+     "isDir": false,
+     "title": "Senseless Song",
+     "album": "Fairytale",
+     "artist": "Natasha Beller",
+     "track": 9,
+     "year": 2018,
+     "genre": "Trip-Hop",
+     "coverArt": "mf-2pte3jTfhMz2lgksqtmlrz_e468b385c2afebf3",
+     "size": 6013090,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "starred": "2026-10-24T20:30:47.183152973Z",
+     "duration": 227,
+     "bitRate": 192,
+     "path": "Natasha Beller/Fairytale/09 - Senseless Song.mp3",
+     "playCount": 524,
+     "created": "2025-03-26T22:26:49.214146025Z",
+     "albumId": "4ArIoYRbh0CaV7mFckEkXe",
+     "artistId": "40opqiyTRvIX5R96ih5pDL",
+     "type": "music",
+     "userRating": 1,
+     "averageRating": 1,
+     "played": "2026-10-30T20:09:13.231602762Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com/",
+     "sortName": "senseless song",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [
+      {
+       "name": "Trip-Hop"
+      }
+     ],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "40opqiyTRvIX5R96ih5pDL",
+       "name": "Natasha Beller"
+      }
+     ],
+     "displayArtist": "Natasha Beller",
+     "albumArtists": [
+      {
+       "id": "40opqiyTRvIX5R96ih5pDL",
+       "name": "Natasha Beller"
+      }
+     ],
+     "displayAlbumArtist": "Natasha Beller",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    }
+   ]
+  }
+ }
+}

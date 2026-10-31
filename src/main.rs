@@ -11,6 +11,7 @@ mod fonts;
 mod i18n;
 mod images;
 mod mcp;
+mod music;
 mod platform;
 mod player;
 mod screenshot;
@@ -148,6 +149,7 @@ fn main() -> Result<(), slint::PlatformError> {
         eprintln!("database: {err}");
     }
     downloads::connect(&ui, settings.clone());
+    music::connect(&ui, settings.clone());
     telegram::connect_viewer_settings(&ui, settings.clone());
     telegram::connect_chat_order(&ui, settings.clone());
     telegram::connect_chat_info(&ui, settings.clone());

@@ -10,6 +10,7 @@
 pub mod audio;
 pub mod decode;
 mod mpv;
+pub mod music;
 pub mod probe;
 pub mod stream;
 

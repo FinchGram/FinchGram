@@ -5429,3 +5429,283 @@ msgstr "سيُزال المفتاح عند الحفظ."
 #: ui/voice.slint:919
 msgid "Keep the key"
 msgstr "الإبقاء على المفتاح"
+
+#: ui/app.slint:139 ui/pages/music.slint:679 ui/toolbox.slint:111
+msgid "Music"
+msgstr "الموسيقى"
+
+#: ui/music.slint:184 ui/pages/music.slint:1002
+msgid "Albums"
+msgstr "الألبومات"
+
+#: ui/music.slint:185 ui/pages/music.slint:829
+msgid "Artists"
+msgstr "الفنانون"
+
+#: ui/music.slint:186
+msgid "Songs"
+msgstr "الأغاني"
+
+#: ui/music.slint:187 ui/pages/music.slint:829
+msgid "Genres"
+msgstr "الأنواع"
+
+#: ui/music.slint:188 ui/pages/music.slint:829
+msgid "Playlists"
+msgstr "قوائم التشغيل"
+
+#: ui/music.slint:189
+msgid "Favourites"
+msgstr "المفضلة"
+
+#: ui/music.slint:192
+msgid "By name"
+msgstr "حسب الاسم"
+
+#: ui/music.slint:193
+msgid "By artist"
+msgstr "حسب الفنان"
+
+#: ui/music.slint:194
+msgid "Most played"
+msgstr "الأكثر تشغيلًا"
+
+#: ui/music.slint:195
+msgid "Recently played"
+msgstr "المشغّلة مؤخرًا"
+
+#: ui/music.slint:196
+msgid "Random"
+msgstr "عشوائي"
+
+#: ui/music.slint:197
+msgid "Recently added"
+msgstr "المضافة مؤخرًا"
+
+#: ui/music.slint:204
+msgid "Not a Subsonic server"
+msgstr "ليس خادم Subsonic"
+
+#: ui/music.slint:208
+msgid "Give the source a name."
+msgstr "أدخل اسمًا للمصدر."
+
+#: ui/music.slint:209
+msgid "The address has to start with http:// or https:// and name the server."
+msgstr "يجب أن يبدأ العنوان بـ http:// أو https:// وأن يتضمن اسم الخادم."
+
+#: ui/music.slint:210
+msgid "The port has to be a number from 1 to 65535."
+msgstr "يجب أن يكون المنفذ رقمًا بين 1 و65535."
+
+#: ui/music.slint:214
+msgid "Repeat all"
+msgstr "تكرار الكل"
+
+#: ui/music.slint:215
+msgid "Repeat one"
+msgstr "تكرار أغنية واحدة"
+
+#: ui/music.slint:216
+msgid "Repeat off"
+msgstr "إيقاف التكرار"
+
+#: ui/music.slint:218
+msgid "{n} song"
+msgid_plural "{n} songs"
+msgstr[0] "{n} أغنية"
+msgstr[1] "{n} أغنية"
+msgstr[2] "{n} أغنيتان"
+msgstr[3] "{n} أغانٍ"
+msgstr[4] "{n} أغنية"
+msgstr[5] "{n} أغنية"
+
+#: ui/music.slint:219
+msgid "{n} album"
+msgid_plural "{n} albums"
+msgstr[0] "{n} ألبوم"
+msgstr[1] "{n} ألبوم"
+msgstr[2] "{n} ألبومان"
+msgstr[3] "{n} ألبومات"
+msgstr[4] "{n} ألبومًا"
+msgstr[5] "{n} ألبوم"
+
+#: ui/pages/music.slint:177 ui/pages/music.slint:811 ui/pages/music.slint:1226
+msgid "Add source"
+msgstr "إضافة مصدر"
+
+#: ui/pages/music.slint:644
+msgid "Filter albums"
+msgstr "تصفية الألبومات"
+
+#: ui/pages/music.slint:717
+msgid "Library"
+msgstr "المكتبة"
+
+#: ui/pages/music.slint:731
+msgid "Add a source below, and its library shows here."
+msgstr "أضف مصدرًا أدناه، وستظهر مكتبته هنا."
+
+#: ui/pages/music.slint:741
+msgid "Sources"
+msgstr "المصادر"
+
+#: ui/pages/music.slint:795
+msgid "No sources yet"
+msgstr "لا توجد مصادر بعد"
+
+#: ui/pages/music.slint:802
+msgid ""
+"A source is a music server of your own that speaks the Subsonic API: "
+"Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel and others. Its "
+"library is played here, in the built-in player."
+msgstr "المصدر هو خادم موسيقى خاص بك يدعم واجهة Subsonic API: Navidrome وgonic وLMS وAmpache وNextcloud Music وKoel وغيرها. تُشغَّل مكتبته هنا، في المشغّل المدمج."
+
+#: ui/pages/music.slint:896 ui/pages/music.slint:1417
+msgid "Queue"
+msgstr "قائمة الانتظار"
+
+#: ui/pages/music.slint:945
+msgid "Try again"
+msgstr "حاول مرة أخرى"
+
+#: ui/pages/music.slint:978
+msgid "No albums here."
+msgstr "لا توجد ألبومات هنا."
+
+#: ui/pages/music.slint:978
+msgid "No album matches “{}”."
+msgstr "لا يوجد ألبوم يطابق «{}»."
+
+#: ui/pages/music.slint:985
+msgid "More albums"
+msgstr "المزيد من الألبومات"
+
+#: ui/pages/music.slint:1049
+msgid "Play"
+msgstr "تشغيل"
+
+#: ui/pages/music.slint:1058 ui/pages/music.slint:1185
+msgid "Shuffle"
+msgstr "تشغيل عشوائي"
+
+#: ui/pages/music.slint:1065
+msgid "Add to queue"
+msgstr "إضافة إلى قائمة الانتظار"
+
+#: ui/pages/music.slint:1123
+msgid "TITLE"
+msgstr "العنوان"
+
+#: ui/pages/music.slint:1132
+msgid "LENGTH"
+msgstr "المدة"
+
+#: ui/pages/music.slint:1132
+msgid "Length"
+msgstr "المدة"
+
+#: ui/pages/music.slint:1160 ui/pages/music.slint:1198
+msgid "Nothing here yet."
+msgstr "لا شيء هنا بعد."
+
+#: ui/pages/music.slint:1176
+msgid "Play all"
+msgstr "تشغيل الكل"
+
+#: ui/pages/music.slint:1206
+msgid "More songs"
+msgstr "المزيد من الأغاني"
+
+#: ui/pages/music.slint:1226
+msgid "Edit source"
+msgstr "تعديل المصدر"
+
+#: ui/pages/music.slint:1229
+msgid ""
+"A server that speaks the Subsonic API: Navidrome, gonic, LMS, Ampache, "
+"Nextcloud Music, Koel, or Bandcamp for the music you bought. The password is "
+"kept sealed in FinchGram's database on this Mac."
+msgstr "خادم يدعم واجهة Subsonic API: Navidrome أو gonic أو LMS أو Ampache أو Nextcloud Music أو Koel، أو Bandcamp للموسيقى التي اشتريتها. تُحفظ كلمة المرور مختومة في قاعدة بيانات FinchGram على هذا Mac."
+
+#: ui/pages/music.slint:1268
+msgid ""
+"http:// or https://. A folder may be part of the address. Navidrome listens "
+"on port 4533 unless told otherwise."
+msgstr "يبدأ بـ http:// أو https://. يمكن أن يتضمن العنوان مجلدًا. يستمع Navidrome على المنفذ 4533 ما لم يُضبط على غيره."
+
+#: ui/toolbox.slint:112
+msgid "A music player; add your own servers as its sources"
+msgstr "مشغّل موسيقى؛ أضف خوادمك الخاصة لتكون مصادره"
+
+#: ui/pages/music.slint:1123
+msgid "Title"
+msgstr "العنوان"
+
+#: ui/music.slint:220
+msgid "{n} artist"
+msgid_plural "{n} artists"
+msgstr[0] "{n} فنان"
+msgstr[1] "{n} فنان"
+msgstr[2] "{n} فنانان"
+msgstr[3] "{n} فنانين"
+msgstr[4] "{n} فنانًا"
+msgstr[5] "{n} فنان"
+
+#: ui/music.slint:221
+msgid "{n} genre"
+msgid_plural "{n} genres"
+msgstr[0] "{n} نوع"
+msgstr[1] "{n} نوع"
+msgstr[2] "{n} نوعان"
+msgstr[3] "{n} أنواع"
+msgstr[4] "{n} نوعًا"
+msgstr[5] "{n} نوع"
+
+#: ui/music.slint:222
+msgid "{n} playlist"
+msgid_plural "{n} playlists"
+msgstr[0] "{n} قائمة تشغيل"
+msgstr[1] "{n} قائمة تشغيل"
+msgstr[2] "{n} قائمتا تشغيل"
+msgstr[3] "{n} قوائم تشغيل"
+msgstr[4] "{n} قائمة تشغيل"
+msgstr[5] "{n} قائمة تشغيل"
+
+#: ui/music.slint:223
+msgid "OpenSubsonic, {n} extension"
+msgid_plural "OpenSubsonic, {n} extensions"
+msgstr[0] "OpenSubsonic، {n} امتداد"
+msgstr[1] "OpenSubsonic، {n} امتداد"
+msgstr[2] "OpenSubsonic، امتدادان"
+msgstr[3] "OpenSubsonic، {n} امتدادات"
+msgstr[4] "OpenSubsonic، {n} امتدادًا"
+msgstr[5] "OpenSubsonic، {n} امتداد"
+
+#: ui/music.slint:224
+msgid "Up next"
+msgstr "التالي"
+
+#: ui/music.slint:225
+msgid "Added by you"
+msgstr "أضفتها أنت"
+
+#: ui/music.slint:226
+msgid "{} cached on this Mac"
+msgstr "{} مخزّنة مؤقتًا على هذا الـ Mac"
+
+#: ui/music.slint:230
+msgid "The server refused the password."
+msgstr "رفض الخادم كلمة المرور."
+
+#: ui/music.slint:231
+msgid "The server says: {0} ({1})"
+msgstr "يقول الخادم: {0} ({1})"
+
+#: ui/music.slint:233
+msgid "Cannot reach the server: {0}"
+msgstr "تعذّر الوصول إلى الخادم: {0}"
+
+#: ui/music.slint:234
+msgid "The server did not answer the Subsonic way: {0}"
+msgstr "لم يجب الخادم بطريقة Subsonic: {0}"

@@ -52,6 +52,10 @@ pub struct Settings {
     /// The downloads page (src/downloads/, docs/downloads.md): where files go, how many connections
     /// a file comes over, whether the queue column shows.
     pub downloads: Downloads,
+    /// The music page (src/music/, docs/music.md): the volume, shuffle and repeat, whether the queue
+    /// column shows, the source looked at last, how much the cache may hold. The sources with
+    /// their passwords are the database's (database::music_sources), never here.
+    pub music: Music,
     /// The toolbox (src/toolbox.rs): which tools are pinned to the activity bar, in the
     /// toolbox's order; one list for the three themes.
     pub toolbox: Toolbox,
@@ -448,6 +452,30 @@ pub struct Downloads {
     pub queue_shown: bool,
 }
 
+/// The music page's own settings.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Music {
+    /// 0 … 100.
+    pub volume: u32,
+    pub shuffle: bool,
+    /// "off", "all" or "one".
+    pub repeat: String,
+    /// The queue column of the page shows; the user can hide it.
+    pub queue_shown: bool,
+    /// The source looked at last, by name; "" for the first.
+    pub source: String,
+    /// How many megabytes of songs the cache (~/Documents/FinchGram/music_cache) keeps before the
+    /// oldest go; 0 for no limit.
+    pub cache_limit_mb: u64,
+}
+
+impl Default for Music {
+    fn default() -> Self {
+        Music { volume: 100, shuffle: false, repeat: "off".to_string(), queue_shown: true, source: String::new(), cache_limit_mb: 2048 }
+    }
+}
+
 impl Default for Downloads {
     fn default() -> Self {
         Downloads { folder: String::new(), connections: crate::downloads::transfer::DEFAULT_CONNECTIONS as u32, queue_shown: true }
@@ -725,6 +753,7 @@ impl Default for Settings {
             screenshots: Screenshots::default(),
             mcp: Mcp::default(),
             downloads: Downloads::default(),
+            music: Music::default(),
             toolbox: Toolbox::default(),
             voice_input: VoiceInput::default(),
         }

@@ -5307,3 +5307,253 @@ msgstr "저장하면 이 키가 제거됩니다."
 #: ui/voice.slint:919
 msgid "Keep the key"
 msgstr "키 유지"
+
+#: ui/app.slint:139 ui/pages/music.slint:679 ui/toolbox.slint:111
+msgid "Music"
+msgstr "음악"
+
+#: ui/music.slint:184 ui/pages/music.slint:1002
+msgid "Albums"
+msgstr "앨범"
+
+#: ui/music.slint:185 ui/pages/music.slint:829
+msgid "Artists"
+msgstr "아티스트"
+
+#: ui/music.slint:186
+msgid "Songs"
+msgstr "노래"
+
+#: ui/music.slint:187 ui/pages/music.slint:829
+msgid "Genres"
+msgstr "장르"
+
+#: ui/music.slint:188 ui/pages/music.slint:829
+msgid "Playlists"
+msgstr "플레이리스트"
+
+#: ui/music.slint:189
+msgid "Favourites"
+msgstr "즐겨찾기"
+
+#: ui/music.slint:192
+msgid "By name"
+msgstr "이름순"
+
+#: ui/music.slint:193
+msgid "By artist"
+msgstr "아티스트순"
+
+#: ui/music.slint:194
+msgid "Most played"
+msgstr "재생 횟수순"
+
+#: ui/music.slint:195
+msgid "Recently played"
+msgstr "최근 재생순"
+
+#: ui/music.slint:196
+msgid "Random"
+msgstr "무작위"
+
+#: ui/music.slint:197
+msgid "Recently added"
+msgstr "최근 추가순"
+
+#: ui/music.slint:204
+msgid "Not a Subsonic server"
+msgstr "Subsonic 서버가 아님"
+
+#: ui/music.slint:208
+msgid "Give the source a name."
+msgstr "소스 이름을 입력하세요."
+
+#: ui/music.slint:209
+msgid "The address has to start with http:// or https:// and name the server."
+msgstr "주소는 http:// 또는 https://로 시작하고 서버 이름을 포함해야 합니다."
+
+#: ui/music.slint:210
+msgid "The port has to be a number from 1 to 65535."
+msgstr "포트는 1에서 65535 사이의 숫자여야 합니다."
+
+#: ui/music.slint:214
+msgid "Repeat all"
+msgstr "전체 반복"
+
+#: ui/music.slint:215
+msgid "Repeat one"
+msgstr "한 곡 반복"
+
+#: ui/music.slint:216
+msgid "Repeat off"
+msgstr "반복 끔"
+
+#: ui/music.slint:218
+msgid "{n} song"
+msgid_plural "{n} songs"
+msgstr[0] "{n}곡"
+
+#: ui/music.slint:219
+msgid "{n} album"
+msgid_plural "{n} albums"
+msgstr[0] "앨범 {n}개"
+
+#: ui/pages/music.slint:177 ui/pages/music.slint:811 ui/pages/music.slint:1226
+msgid "Add source"
+msgstr "소스 추가"
+
+#: ui/pages/music.slint:644
+msgid "Filter albums"
+msgstr "앨범 필터링"
+
+#: ui/pages/music.slint:717
+msgid "Library"
+msgstr "라이브러리"
+
+#: ui/pages/music.slint:731
+msgid "Add a source below, and its library shows here."
+msgstr "아래에서 소스를 추가하면 그 라이브러리가 여기에 표시됩니다."
+
+#: ui/pages/music.slint:741
+msgid "Sources"
+msgstr "소스"
+
+#: ui/pages/music.slint:795
+msgid "No sources yet"
+msgstr "아직 소스가 없습니다"
+
+#: ui/pages/music.slint:802
+msgid ""
+"A source is a music server of your own that speaks the Subsonic API: "
+"Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel and others. Its "
+"library is played here, in the built-in player."
+msgstr "소스는 Subsonic API를 지원하는 내 음악 서버입니다. Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel 등이 있습니다. 그 라이브러리를 여기에서 내장 플레이어로 재생합니다."
+
+#: ui/pages/music.slint:896 ui/pages/music.slint:1417
+msgid "Queue"
+msgstr "재생 대기열"
+
+#: ui/pages/music.slint:945
+msgid "Try again"
+msgstr "다시 시도"
+
+#: ui/pages/music.slint:978
+msgid "No albums here."
+msgstr "여기에는 앨범이 없습니다."
+
+#: ui/pages/music.slint:978
+msgid "No album matches “{}”."
+msgstr "“{}”에 해당하는 앨범이 없습니다."
+
+#: ui/pages/music.slint:985
+msgid "More albums"
+msgstr "앨범 더 보기"
+
+#: ui/pages/music.slint:1049
+msgid "Play"
+msgstr "재생"
+
+#: ui/pages/music.slint:1058 ui/pages/music.slint:1185
+msgid "Shuffle"
+msgstr "셔플"
+
+#: ui/pages/music.slint:1065
+msgid "Add to queue"
+msgstr "재생 대기열에 추가"
+
+#: ui/pages/music.slint:1123
+msgid "TITLE"
+msgstr "제목"
+
+#: ui/pages/music.slint:1132
+msgid "LENGTH"
+msgstr "길이"
+
+#: ui/pages/music.slint:1132
+msgid "Length"
+msgstr "길이"
+
+#: ui/pages/music.slint:1160 ui/pages/music.slint:1198
+msgid "Nothing here yet."
+msgstr "아직 아무것도 없습니다."
+
+#: ui/pages/music.slint:1176
+msgid "Play all"
+msgstr "모두 재생"
+
+#: ui/pages/music.slint:1206
+msgid "More songs"
+msgstr "노래 더 보기"
+
+#: ui/pages/music.slint:1226
+msgid "Edit source"
+msgstr "소스 편집"
+
+#: ui/pages/music.slint:1229
+msgid ""
+"A server that speaks the Subsonic API: Navidrome, gonic, LMS, Ampache, "
+"Nextcloud Music, Koel, or Bandcamp for the music you bought. The password is "
+"kept sealed in FinchGram's database on this Mac."
+msgstr "Subsonic API를 지원하는 서버입니다. Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel, 또는 구입한 음악이라면 Bandcamp도 됩니다. 비밀번호는 봉인된 채 이 Mac의 FinchGram 데이터베이스에 보관됩니다."
+
+#: ui/pages/music.slint:1268
+msgid ""
+"http:// or https://. A folder may be part of the address. Navidrome listens "
+"on port 4533 unless told otherwise."
+msgstr "http:// 또는 https://. 주소에 폴더 경로를 포함할 수 있습니다. Navidrome은 따로 설정하지 않았다면 4533 포트를 사용합니다."
+
+#: ui/toolbox.slint:112
+msgid "A music player; add your own servers as its sources"
+msgstr "음악 플레이어. 내 서버를 소스로 추가"
+
+#: ui/pages/music.slint:1123
+msgid "Title"
+msgstr "제목"
+
+#: ui/music.slint:220
+msgid "{n} artist"
+msgid_plural "{n} artists"
+msgstr[0] "아티스트 {n}명"
+
+#: ui/music.slint:221
+msgid "{n} genre"
+msgid_plural "{n} genres"
+msgstr[0] "장르 {n}개"
+
+#: ui/music.slint:222
+msgid "{n} playlist"
+msgid_plural "{n} playlists"
+msgstr[0] "재생목록 {n}개"
+
+#: ui/music.slint:223
+msgid "OpenSubsonic, {n} extension"
+msgid_plural "OpenSubsonic, {n} extensions"
+msgstr[0] "OpenSubsonic, 확장 {n}개"
+
+#: ui/music.slint:224
+msgid "Up next"
+msgstr "다음 곡"
+
+#: ui/music.slint:225
+msgid "Added by you"
+msgstr "직접 추가함"
+
+#: ui/music.slint:226
+msgid "{} cached on this Mac"
+msgstr "이 Mac에 {} 캐시됨"
+
+#: ui/music.slint:230
+msgid "The server refused the password."
+msgstr "서버가 비밀번호를 거부했습니다."
+
+#: ui/music.slint:231
+msgid "The server says: {0} ({1})"
+msgstr "서버 응답: {0} ({1})"
+
+#: ui/music.slint:233
+msgid "Cannot reach the server: {0}"
+msgstr "서버에 연결할 수 없습니다: {0}"
+
+#: ui/music.slint:234
+msgid "The server did not answer the Subsonic way: {0}"
+msgstr "서버 응답이 Subsonic 형식이 아닙니다: {0}"

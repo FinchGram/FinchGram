@@ -1,0 +1,241 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "starred2": {
+   "album": [
+    {
+     "id": "0Ym8paFKy66zzPaF8dBsPF",
+     "name": "First Words",
+     "artist": "The Polish Ambassador",
+     "artistId": "3Vy6szDT2gBLGKc8yCcf5r",
+     "coverArt": "al-0Ym8paFKy66zzPaF8dBsPF_9cff2a5633baffb3",
+     "songCount": 22,
+     "duration": 7212,
+     "playCount": 3397,
+     "created": "2025-03-26T22:26:47.934266112Z",
+     "starred": "2026-10-31T07:10:26.116928957Z",
+     "year": 2014,
+     "genre": "Electronic",
+     "played": "2026-10-31T05:53:14.062485829Z",
+     "userRating": 5,
+     "averageRating": 5,
+     "genres": [
+      {
+       "name": "Electronic"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": false,
+     "sortName": "first words",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [
+      {
+       "name": "http://www.jamendo.com"
+      }
+     ],
+     "moods": [],
+     "artists": [
+      {
+       "id": "3Vy6szDT2gBLGKc8yCcf5r",
+       "name": "The Polish Ambassador"
+      }
+     ],
+     "displayArtist": "The Polish Ambassador",
+     "explicitStatus": "",
+     "version": ""
+    },
+    {
+     "id": "4YmahYjTLJyCPvqjT7975H",
+     "name": "Between two worlds",
+     "artist": "Maya Filipič",
+     "artistId": "5vrYCaubPfhYUEBmovhIIB",
+     "coverArt": "al-4YmahYjTLJyCPvqjT7975H_477d1f3d7a12126e",
+     "songCount": 11,
+     "duration": 2186,
+     "playCount": 7016,
+     "created": "2025-03-26T22:26:41.427305785Z",
+     "starred": "2026-10-31T06:30:44.639717196Z",
+     "year": 2008,
+     "genre": "Classical",
+     "played": "2026-10-31T03:34:11.669253457Z",
+     "userRating": 5,
+     "averageRating": 5,
+     "genres": [
+      {
+       "name": "Classical"
+      },
+      {
+       "name": "newage"
+      }
+     ],
+     "musicBrainzId": "",
+     "isCompilation": false,
+     "sortName": "between two worlds",
+     "discTitles": [],
+     "originalReleaseDate": {},
+     "releaseDate": {},
+     "releaseTypes": [],
+     "recordLabels": [
+      {
+       "name": "http://www.jamendo.com"
+      }
+     ],
+     "moods": [],
+     "artists": [
+      {
+       "id": "5vrYCaubPfhYUEBmovhIIB",
+       "name": "Maya Filipič"
+      }
+     ],
+     "displayArtist": "Maya Filipič",
+     "explicitStatus": "",
+     "version": ""
+    }
+   ],
+   "song": [
+    {
+     "id": "72Qy0UWUIO65440cPDZm6X",
+     "parent": "5mCHAKT6FQSLoJKREdMum8",
+     "isDir": false,
+     "title": "Give It Up Feat. Marty from Early Seasons",
+     "album": "Brighten",
+     "artist": "Back On Earth",
+     "track": 2,
+     "year": 2013,
+     "coverArt": "mf-72Qy0UWUIO65440cPDZm6X_b225bb6fbf9f2dd0",
+     "size": 4094976,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "starred": "2026-10-31T08:36:36.124792147Z",
+     "duration": 168,
+     "bitRate": 193,
+     "path": "Back On Earth/Brighten/02 - Give It Up Feat. Marty from Early Seasons.mp3",
+     "playCount": 360,
+     "created": "2025-03-26T22:26:35.349975523Z",
+     "albumId": "5mCHAKT6FQSLoJKREdMum8",
+     "artistId": "04HrSORpypcLGNUdQp37gn",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T10:15:22.671212473Z",
+     "bpm": 0,
+     "comment": "http://www.jamendo.com cc_standard",
+     "sortName": "give it up feat. marty from early seasons",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "04HrSORpypcLGNUdQp37gn",
+       "name": "Back On Earth"
+      }
+     ],
+     "displayArtist": "Back On Earth",
+     "albumArtists": [
+      {
+       "id": "04HrSORpypcLGNUdQp37gn",
+       "name": "Back On Earth"
+      }
+     ],
+     "displayAlbumArtist": "Back On Earth",
+     "contributors": [
+      {
+       "role": "composer",
+       "artist": {
+        "id": "04HrSORpypcLGNUdQp37gn",
+        "name": "Back On Earth"
+       }
+      }
+     ],
+     "displayComposer": "Back On Earth",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "7imfABRzkfEqPNEuJDP3tG",
+     "parent": "5xhNxRFhSPTFsVsPkCNq8N",
+     "isDir": false,
+     "title": "Candyland",
+     "album": "NCS: Infinity",
+     "artist": "Tobu",
+     "track": 1,
+     "year": 2015,
+     "coverArt": "mf-7imfABRzkfEqPNEuJDP3tG_c364ac78b2327e35",
+     "size": 8051812,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "starred": "2026-10-31T07:28:28.454136737Z",
+     "duration": 200,
+     "bitRate": 320,
+     "path": "Various Artists/NCS: Infinity/01-01 - Candyland.mp3",
+     "playCount": 1483,
+     "discNumber": 1,
+     "created": "2025-03-26T22:26:43.181792204Z",
+     "albumId": "5xhNxRFhSPTFsVsPkCNq8N",
+     "artistId": "3zxaaqGVTnodjh29Bk0vma",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T06:29:12.734484772Z",
+     "bpm": 128,
+     "comment": "",
+     "sortName": "candyland",
+     "mediaType": "song",
+     "musicBrainzId": "442d2a5d-3d72-46a9-812b-090cf0a54c35",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "3zxaaqGVTnodjh29Bk0vma",
+       "name": "Tobu"
+      }
+     ],
+     "displayArtist": "Tobu",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    }
+   ]
+  }
+ }
+}

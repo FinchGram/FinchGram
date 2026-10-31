@@ -5415,3 +5415,259 @@ msgstr "La clé sera retirée à l’enregistrement."
 #: ui/voice.slint:919
 msgid "Keep the key"
 msgstr "Garder la clé"
+
+#: ui/app.slint:139 ui/pages/music.slint:679 ui/toolbox.slint:111
+msgid "Music"
+msgstr "Musique"
+
+#: ui/music.slint:184 ui/pages/music.slint:1002
+msgid "Albums"
+msgstr "Albums"
+
+#: ui/music.slint:185 ui/pages/music.slint:829
+msgid "Artists"
+msgstr "Artistes"
+
+#: ui/music.slint:186
+msgid "Songs"
+msgstr "Morceaux"
+
+#: ui/music.slint:187 ui/pages/music.slint:829
+msgid "Genres"
+msgstr "Genres"
+
+#: ui/music.slint:188 ui/pages/music.slint:829
+msgid "Playlists"
+msgstr "Playlists"
+
+#: ui/music.slint:189
+msgid "Favourites"
+msgstr "Favoris"
+
+#: ui/music.slint:192
+msgid "By name"
+msgstr "Par nom"
+
+#: ui/music.slint:193
+msgid "By artist"
+msgstr "Par artiste"
+
+#: ui/music.slint:194
+msgid "Most played"
+msgstr "Les plus écoutés"
+
+#: ui/music.slint:195
+msgid "Recently played"
+msgstr "Écoutés récemment"
+
+#: ui/music.slint:196
+msgid "Random"
+msgstr "Aléatoire"
+
+#: ui/music.slint:197
+msgid "Recently added"
+msgstr "Ajoutés récemment"
+
+#: ui/music.slint:204
+msgid "Not a Subsonic server"
+msgstr "Pas un serveur Subsonic"
+
+#: ui/music.slint:208
+msgid "Give the source a name."
+msgstr "Donnez un nom à la source."
+
+#: ui/music.slint:209
+msgid "The address has to start with http:// or https:// and name the server."
+msgstr "L’adresse doit commencer par http:// ou https:// et indiquer le serveur."
+
+#: ui/music.slint:210
+msgid "The port has to be a number from 1 to 65535."
+msgstr "Le port doit être un nombre entre 1 et 65535."
+
+#: ui/music.slint:214
+msgid "Repeat all"
+msgstr "Tout répéter"
+
+#: ui/music.slint:215
+msgid "Repeat one"
+msgstr "Répéter un morceau"
+
+#: ui/music.slint:216
+msgid "Repeat off"
+msgstr "Ne pas répéter"
+
+#: ui/music.slint:218
+msgid "{n} song"
+msgid_plural "{n} songs"
+msgstr[0] "{n} morceau"
+msgstr[1] "{n} morceaux"
+
+#: ui/music.slint:219
+msgid "{n} album"
+msgid_plural "{n} albums"
+msgstr[0] "{n} album"
+msgstr[1] "{n} albums"
+
+#: ui/pages/music.slint:177 ui/pages/music.slint:811 ui/pages/music.slint:1226
+msgid "Add source"
+msgstr "Ajouter une source"
+
+#: ui/pages/music.slint:644
+msgid "Filter albums"
+msgstr "Filtrer les albums"
+
+#: ui/pages/music.slint:717
+msgid "Library"
+msgstr "Bibliothèque"
+
+#: ui/pages/music.slint:731
+msgid "Add a source below, and its library shows here."
+msgstr "Ajoutez une source ci-dessous, et sa bibliothèque apparaîtra ici."
+
+#: ui/pages/music.slint:741
+msgid "Sources"
+msgstr "Sources"
+
+#: ui/pages/music.slint:795
+msgid "No sources yet"
+msgstr "Pas encore de source"
+
+#: ui/pages/music.slint:802
+msgid ""
+"A source is a music server of your own that speaks the Subsonic API: "
+"Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel and others. Its "
+"library is played here, in the built-in player."
+msgstr "Une source est un serveur de musique à vous qui prend en charge l’API Subsonic : Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel et d’autres. Sa bibliothèque est lue ici, dans le lecteur intégré."
+
+#: ui/pages/music.slint:896 ui/pages/music.slint:1417
+msgid "Queue"
+msgstr "File d’attente"
+
+#: ui/pages/music.slint:945
+msgid "Try again"
+msgstr "Réessayer"
+
+#: ui/pages/music.slint:978
+msgid "No albums here."
+msgstr "Aucun album ici."
+
+#: ui/pages/music.slint:978
+msgid "No album matches “{}”."
+msgstr "Aucun album ne correspond à « {} »."
+
+#: ui/pages/music.slint:985
+msgid "More albums"
+msgstr "Plus d’albums"
+
+#: ui/pages/music.slint:1049
+msgid "Play"
+msgstr "Lire"
+
+#: ui/pages/music.slint:1058 ui/pages/music.slint:1185
+msgid "Shuffle"
+msgstr "Lecture aléatoire"
+
+#: ui/pages/music.slint:1065
+msgid "Add to queue"
+msgstr "Ajouter à la file d’attente"
+
+#: ui/pages/music.slint:1123
+msgid "TITLE"
+msgstr "TITRE"
+
+#: ui/pages/music.slint:1132
+msgid "LENGTH"
+msgstr "DURÉE"
+
+#: ui/pages/music.slint:1132
+msgid "Length"
+msgstr "Durée"
+
+#: ui/pages/music.slint:1160 ui/pages/music.slint:1198
+msgid "Nothing here yet."
+msgstr "Rien ici pour l’instant."
+
+#: ui/pages/music.slint:1176
+msgid "Play all"
+msgstr "Tout lire"
+
+#: ui/pages/music.slint:1206
+msgid "More songs"
+msgstr "Plus de morceaux"
+
+#: ui/pages/music.slint:1226
+msgid "Edit source"
+msgstr "Modifier la source"
+
+#: ui/pages/music.slint:1229
+msgid ""
+"A server that speaks the Subsonic API: Navidrome, gonic, LMS, Ampache, "
+"Nextcloud Music, Koel, or Bandcamp for the music you bought. The password is "
+"kept sealed in FinchGram's database on this Mac."
+msgstr "Un serveur qui prend en charge l’API Subsonic : Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel, ou Bandcamp pour la musique que vous avez achetée. Le mot de passe est conservé scellé dans la base de données de FinchGram sur ce Mac."
+
+#: ui/pages/music.slint:1268
+msgid ""
+"http:// or https://. A folder may be part of the address. Navidrome listens "
+"on port 4533 unless told otherwise."
+msgstr "http:// ou https://. L’adresse peut inclure un dossier. Navidrome écoute sur le port 4533, sauf configuration contraire."
+
+#: ui/toolbox.slint:112
+msgid "A music player; add your own servers as its sources"
+msgstr "Un lecteur de musique ; ajoutez vos propres serveurs comme sources"
+
+#: ui/pages/music.slint:1123
+msgid "Title"
+msgstr "Titre"
+
+#: ui/music.slint:220
+msgid "{n} artist"
+msgid_plural "{n} artists"
+msgstr[0] "{n} artiste"
+msgstr[1] "{n} artistes"
+
+#: ui/music.slint:221
+msgid "{n} genre"
+msgid_plural "{n} genres"
+msgstr[0] "{n} genre"
+msgstr[1] "{n} genres"
+
+#: ui/music.slint:222
+msgid "{n} playlist"
+msgid_plural "{n} playlists"
+msgstr[0] "{n} liste de lecture"
+msgstr[1] "{n} listes de lecture"
+
+#: ui/music.slint:223
+msgid "OpenSubsonic, {n} extension"
+msgid_plural "OpenSubsonic, {n} extensions"
+msgstr[0] "OpenSubsonic, {n} extension"
+msgstr[1] "OpenSubsonic, {n} extensions"
+
+#: ui/music.slint:224
+msgid "Up next"
+msgstr "À suivre"
+
+#: ui/music.slint:225
+msgid "Added by you"
+msgstr "Ajoutés par vous"
+
+#: ui/music.slint:226
+msgid "{} cached on this Mac"
+msgstr "{} en cache sur ce Mac"
+
+#: ui/music.slint:230
+msgid "The server refused the password."
+msgstr "Le serveur a refusé le mot de passe."
+
+#: ui/music.slint:231
+msgid "The server says: {0} ({1})"
+msgstr "Le serveur dit : {0} ({1})"
+
+#: ui/music.slint:233
+msgid "Cannot reach the server: {0}"
+msgstr "Impossible de joindre le serveur : {0}"
+
+#: ui/music.slint:234
+msgid "The server did not answer the Subsonic way: {0}"
+msgstr "Le serveur n'a pas répondu à la manière de Subsonic : {0}"

@@ -1,0 +1,727 @@
+{
+ "subsonic-response": {
+  "status": "ok",
+  "version": "1.16.1",
+  "type": "navidrome",
+  "serverVersion": "0.64.2 (10114574)",
+  "openSubsonic": true,
+  "album": {
+   "id": "6dGMsiesuYw9lti9yGIGWY",
+   "name": "netBloc Vol. 42: Live, The Universe & Everything",
+   "artist": "Various Artists",
+   "artistId": "63sqASlAfjbGMuLP4JhnZU",
+   "coverArt": "al-6dGMsiesuYw9lti9yGIGWY_ebbb154f246c04a5",
+   "songCount": 11,
+   "duration": 2954,
+   "playCount": 9865,
+   "created": "2025-03-26T22:26:49.315688846Z",
+   "starred": "2026-10-29T23:06:42.240908346Z",
+   "year": 2013,
+   "played": "2026-10-31T10:15:14.834349914Z",
+   "userRating": 5,
+   "averageRating": 5,
+   "genres": [],
+   "musicBrainzId": "",
+   "isCompilation": true,
+   "sortName": "netbloc vol. 42: live, the universe & everything",
+   "discTitles": [],
+   "originalReleaseDate": {},
+   "releaseDate": {},
+   "releaseTypes": [],
+   "recordLabels": [],
+   "moods": [],
+   "artists": [
+    {
+     "id": "63sqASlAfjbGMuLP4JhnZU",
+     "name": "Various Artists"
+    }
+   ],
+   "displayArtist": "Various Artists",
+   "explicitStatus": "",
+   "version": "",
+   "song": [
+    {
+     "id": "0uTqxDgHNaihj2pIciP0h8",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "Feijão",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Dr. Quandary",
+     "track": 1,
+     "year": 2013,
+     "coverArt": "mf-0uTqxDgHNaihj2pIciP0h8_ebbb154f246c04a5",
+     "size": 5365035,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "starred": "2026-10-31T07:22:37.913575272Z",
+     "duration": 218,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/01 - Feijão.mp3",
+     "playCount": 3757,
+     "created": "2025-03-26T22:26:49.348640872Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "0VBxu6h9ST5P62ePfkmG1P",
+     "type": "music",
+     "userRating": 2,
+     "averageRating": 2,
+     "bookmarkPosition": 113000,
+     "played": "2026-10-31T06:01:52.801452802Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "feijao",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "0VBxu6h9ST5P62ePfkmG1P",
+       "name": "Dr. Quandary"
+      }
+     ],
+     "displayArtist": "Dr. Quandary",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "0j0F4WPUjFFvKCjGFQsTIb",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "SYNESTHESIA",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Devaine",
+     "track": 2,
+     "year": 2013,
+     "coverArt": "mf-0j0F4WPUjFFvKCjGFQsTIb_ebbb154f246c04a5",
+     "size": 5543085,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "starred": "2026-10-18T08:06:23.072877572Z",
+     "duration": 226,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/02 - SYNESTHESIA.mp3",
+     "playCount": 1437,
+     "created": "2025-03-26T22:26:49.352557817Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "0jqNp8NTvpoMvgjzacg2ff",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T06:04:57.938567748Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "synesthesia",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "0jqNp8NTvpoMvgjzacg2ff",
+       "name": "Devaine"
+      }
+     ],
+     "displayArtist": "Devaine",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "5jcBwJ9qHBZBYeoCqa5idl",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "Tomorrow's Here Today",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Celebration",
+     "track": 3,
+     "year": 2013,
+     "coverArt": "mf-5jcBwJ9qHBZBYeoCqa5idl_ebbb154f246c04a5",
+     "size": 5682906,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 231,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/03 - Tomorrow's Here Today.mp3",
+     "playCount": 959,
+     "created": "2025-03-26T22:26:49.356545517Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "7xSSgejYrro426gR2QH0Je",
+     "type": "music",
+     "played": "2026-10-31T03:41:59.996644975Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "tomorrow's here today",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "7xSSgejYrro426gR2QH0Je",
+       "name": "Celebration"
+      }
+     ],
+     "displayArtist": "Celebration",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "1S5GKfn1mrTKM9lALZKod7",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "Time Lines",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Pete Lund",
+     "track": 4,
+     "year": 2013,
+     "coverArt": "mf-1S5GKfn1mrTKM9lALZKod7_ebbb154f246c04a5",
+     "size": 7606340,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "starred": "2026-10-24T16:43:58.80812656Z",
+     "duration": 312,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/04 - Time Lines.mp3",
+     "playCount": 861,
+     "created": "2025-03-26T22:26:49.358593992Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "7hjBDuZB7XHFqQzGsacseH",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T04:06:04.371000333Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "time lines",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "7hjBDuZB7XHFqQzGsacseH",
+       "name": "Pete Lund"
+      }
+     ],
+     "displayArtist": "Pete Lund",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "2yq2KRKVLZO5VJIek41pKY",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "Chosen",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Stephane TV",
+     "track": 5,
+     "year": 2013,
+     "coverArt": "mf-2yq2KRKVLZO5VJIek41pKY_ebbb154f246c04a5",
+     "size": 6190085,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 253,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/05 - Chosen.mp3",
+     "playCount": 534,
+     "created": "2025-03-26T22:26:49.350623723Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "4OJIIZzEW88x9f3YR6jxWN",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T10:15:14.834349914Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "chosen",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "4OJIIZzEW88x9f3YR6jxWN",
+       "name": "Stephane TV"
+      }
+     ],
+     "displayArtist": "Stephane TV",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "07XbbATCyT1WjDwIWRYi6z",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "Monochromatic Butterfly",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Divenere",
+     "track": 6,
+     "year": 2013,
+     "coverArt": "mf-07XbbATCyT1WjDwIWRYi6z_ebbb154f246c04a5",
+     "size": 6733654,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "starred": "2026-10-24T08:29:44.435543012Z",
+     "duration": 275,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/06 - Monochromatic Butterfly.mp3",
+     "playCount": 489,
+     "created": "2025-03-26T22:26:49.354550569Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "1IcxKCiC6XnloE11jzEkPE",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T04:14:58.443584519Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "monochromatic butterfly",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "1IcxKCiC6XnloE11jzEkPE",
+       "name": "Divenere"
+      }
+     ],
+     "displayArtist": "Divenere",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "5szBAYqYHOon1ak8u5KZO7",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "Building The Machine",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Post Human Era",
+     "track": 7,
+     "year": 2013,
+     "coverArt": "mf-5szBAYqYHOon1ak8u5KZO7_ebbb154f246c04a5",
+     "size": 5786353,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 236,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/07 - Building The Machine.mp3",
+     "playCount": 481,
+     "created": "2025-03-26T22:26:49.344498341Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "3FEM0uXZff9JKLYqO8ZdOL",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-31T04:18:55.319131209Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "building the machine",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "3FEM0uXZff9JKLYqO8ZdOL",
+       "name": "Post Human Era"
+      }
+     ],
+     "displayArtist": "Post Human Era",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "1ZnvZp399Ph7xwdh6YrFfd",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "diku",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Pavel Tukki",
+     "track": 8,
+     "year": 2013,
+     "coverArt": "mf-1ZnvZp399Ph7xwdh6YrFfd_ebbb154f246c04a5",
+     "size": 11370477,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 468,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/08 - diku.mp3",
+     "playCount": 327,
+     "created": "2025-03-26T22:26:49.337934811Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "01IYwp4mXheRgU3APvTxIK",
+     "type": "music",
+     "userRating": 4,
+     "averageRating": 4,
+     "played": "2026-10-30T23:54:25.765815841Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "diku",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "01IYwp4mXheRgU3APvTxIK",
+       "name": "Pavel Tukki"
+      }
+     ],
+     "displayArtist": "Pavel Tukki",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "4DGPJVj2lOUxaefQSi4yyS",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "Solitude",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "entertainment for the braindead",
+     "track": 9,
+     "year": 2013,
+     "coverArt": "mf-4DGPJVj2lOUxaefQSi4yyS_ebbb154f246c04a5",
+     "size": 4174498,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 169,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/09 - Solitude.mp3",
+     "playCount": 406,
+     "created": "2025-03-26T22:26:49.346717054Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "0J9w62acgfFA26lWw42xRP",
+     "type": "music",
+     "userRating": 5,
+     "averageRating": 5,
+     "played": "2026-10-29T14:53:58.608Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "solitude",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "0J9w62acgfFA26lWw42xRP",
+       "name": "entertainment for the braindead"
+      }
+     ],
+     "displayArtist": "entertainment for the braindead",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "5kHpQP0f1nbrHOE1U7LcCo",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "Nevado",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Zhada",
+     "track": 10,
+     "year": 2013,
+     "coverArt": "mf-5kHpQP0f1nbrHOE1U7LcCo_ebbb154f246c04a5",
+     "size": 9623195,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 396,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/10 - Nevado.mp3",
+     "playCount": 282,
+     "created": "2025-03-26T22:26:49.340227185Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "2mzm1hYaXE3hULchNQjtVh",
+     "type": "music",
+     "played": "2026-10-27T12:55:27.502567553Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "nevado",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "2mzm1hYaXE3hULchNQjtVh",
+       "name": "Zhada"
+      }
+     ],
+     "displayArtist": "Zhada",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    },
+    {
+     "id": "42hU0YqcbsvKar6Qbmx9af",
+     "parent": "6dGMsiesuYw9lti9yGIGWY",
+     "isDir": false,
+     "title": "EggShells",
+     "album": "netBloc Vol. 42: Live, The Universe & Everything",
+     "artist": "Dead Poets",
+     "track": 11,
+     "year": 2013,
+     "coverArt": "mf-42hU0YqcbsvKar6Qbmx9af_ebbb154f246c04a5",
+     "size": 4131847,
+     "contentType": "audio/mpeg",
+     "suffix": "mp3",
+     "duration": 167,
+     "bitRate": 192,
+     "path": "Various Artists/netBloc Vol. 42: Live, The Universe & Everything/11 - EggShells.mp3",
+     "playCount": 332,
+     "created": "2025-03-26T22:26:49.342338564Z",
+     "albumId": "6dGMsiesuYw9lti9yGIGWY",
+     "artistId": "5YmjdUAubz4SJkrwrj2HLF",
+     "type": "music",
+     "played": "2026-10-30T00:05:30.09Z",
+     "bpm": 0,
+     "comment": "Courtesy of https://blocsonic.com",
+     "sortName": "eggshells",
+     "mediaType": "song",
+     "musicBrainzId": "",
+     "isrc": [],
+     "genres": [],
+     "replayGain": {
+      "trackGain": 0,
+      "albumGain": 0,
+      "trackPeak": 1,
+      "albumPeak": 1
+     },
+     "channelCount": 2,
+     "samplingRate": 44100,
+     "bitDepth": 0,
+     "moods": [],
+     "artists": [
+      {
+       "id": "5YmjdUAubz4SJkrwrj2HLF",
+       "name": "Dead Poets"
+      }
+     ],
+     "displayArtist": "Dead Poets",
+     "albumArtists": [
+      {
+       "id": "63sqASlAfjbGMuLP4JhnZU",
+       "name": "Various Artists"
+      }
+     ],
+     "displayAlbumArtist": "Various Artists",
+     "contributors": [],
+     "displayComposer": "",
+     "explicitStatus": "",
+     "groupings": [],
+     "works": [],
+     "movements": []
+    }
+   ]
+  }
+ }
+}

@@ -47,6 +47,7 @@ un client non officiel, qui n'est pas fait par Telegram.
   arrivent par plusieurs connexions à la fois et reprennent après un arrêt ; les photos et vidéos
   s'ouvrent dans la visionneuse dès qu'elles arrivent ; les mots de passe sont conservés scellés dans la
   base de données de FinchGram. Voir [docs/downloads.md](../docs/downloads.md).
+- **Musique.** Un lecteur de musique pour vos propres serveurs : ajoutez un serveur Navidrome, gonic, LMS, Ampache, Nextcloud Music ou Koel (tout ce qui parle l'API Subsonic) et écoutez sa bibliothèque dans le lecteur intégré, sans blanc entre les morceaux, avec une file d'attente et une barre de lecture au bas de chaque page ; les morceaux sont mis en cache pendant la lecture.
 - **Envoi.** Photos, vidéos et fichiers depuis le trombone, en les glissant dans la fenêtre ou en les
   collant. Une carte les montre avant l'envoi : avec une légende, en photo ou en fichier, ensemble
   dans un album de dix au plus, avec un minuteur d'autodestruction dans une discussion privée, sans
@@ -162,6 +163,12 @@ rien sur un serveur sauf si vous l’autorisez pour ce serveur (il peut alors y 
 [docs/downloads.md](../docs/downloads.md) donne les détails et ce qui manque encore (un certificat
 autosigné est refusé : utilisez http sur le réseau local, ou un vrai certificat).
 
+## La page Musique
+
+<p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="La page Musique"></p>
+
+Affichage → Musique, ou Musique dans la boîte à outils. Ajoutez une source : un serveur à vous qui parle l'API Subsonic (Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel…), son adresse et votre compte ; le mot de passe est conservé scellé dans la base de données de FinchGram. Parcourez ses albums, artistes, morceaux, genres, listes de lecture et favoris, lisez un album ou mélangez-le, ajoutez des morceaux à la file ; les étoiles repartent vers le serveur. Les morceaux arrivent par le client HTTP de FinchGram dans `~/Documents/FinchGram/music_cache` et jouent à mesure qu'ils arrivent, l'un après l'autre sans blanc ; la barre de lecture reste au bas de chaque page. Détails dans [docs/music.md](../docs/music.md).
+
 ## Comment c'est fait
 
 L'application est une coquille. Telegram lui-même est l'affaire de TDLib, qui tourne comme un
@@ -274,6 +281,7 @@ src/
   player/                # la vidéo avec libmpv, dessinée dans la fenêtre par OpenGL
   screenshot/            # l'outil de capture : la capture, le calque, les annotations, l'image
   downloads/             # la page Téléchargements : WebDAV, FTP, FTPS et SFTP, avec un moteur à plusieurs connexions
+  music/                 # la page Musique : le client de l'API Subsonic, les morceaux mis en cache, la file et la barre de lecture
     remote.rs            #   une seule façade pour les trois clients : lister, vérifier, récupérer
     webdav.rs            #   les listes PROPFIND, les adresses, l'authentification Basic
     ftp.rs               #   FTP et FTPS via suppaftp : un flux, REST pour reprendre

@@ -17,6 +17,7 @@ import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope,
 import { ExtraWords, ReactionChips, ReactionPicker, RoundNoteView, ContactCardView, TopicList } from "../extras.slint";
 import { Look } from "../look.slint";
 import { Downloads } from "../downloads.slint";
+import { Music, PlayerBar } from "../music.slint";
 import { TerminalPalette as P } from "palette.slint";
 import { Sign } from "signs.slint";
 import { Voice, VoiceState, VoiceWords, Recorder, RecordStage, RecordDrag } from "../voice.slint";
@@ -1985,6 +1986,7 @@ component CommandLine inherits Rectangle {
         { command: "/dm", description: ComposeWords.new-chat() },
         { command: "/contact", description: ComposeWords.add-contact() },
         { command: "/tools", description: ToolboxWords.title() },
+        { command: "/music", description: ToolboxWords.music() },
         { command: "/accounts", description: ToolboxWords.accounts() },
         { command: "/settings", description: ToolboxWords.settings() },
         { command: "/me", description: ToolboxWords.profile() },
@@ -2030,6 +2032,8 @@ component CommandLine inherits Rectangle {
             // The toolbox in the pane's place (toolbox.slint): "/tools 传输" at a category; the
             // same command again closes it. Words that name no category leave it as it is.
             Toolbox.command(line);
+        } else if line.starts-with("/music") {
+            AppState.page = Page.music;
         } else if line.starts-with("/accounts") {
             Toolbox.command("accounts");
         } else if line.starts-with("/settings") {
@@ -2627,6 +2631,8 @@ export component TerminalWindow inherits Rectangle {
                 line := CommandLine { }
             }
         }
+        // What plays, while something does (ui/music.slint), above the status bar.
+        if Music.playing: PlayerBar { }
         StatusBar {
             search => {
                 line.focus-line();

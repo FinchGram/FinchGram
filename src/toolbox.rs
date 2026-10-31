@@ -6,10 +6,14 @@
 //! tools, one list for the three themes (`[toolbox] pinned` in settings.toml; nothing by default:
 //! the user pins what they want, the maintainer's word of 2026-10-24). Downloads is a family: the
 //! protocols a server can speak are listed under it; a protocol is a server's property, chosen
-//! when a server is added (src/downloads/), never a tool of its own. The tools the design draws
-//! but FinchGram does not have yet (live streams, Jellyfin, keyword hiding, scheduled messages)
-//! are listed faded, and cannot be pinned; so is Emby, which the maintainer added beside
-//! Jellyfin on 2026-10-24, beyond the design's round. The AI category holds AI access and voice
+//! when a server is added (src/downloads/), never a tool of its own. Music (src/music/) is a
+//! tool of its own, a player whose sources are servers the user adds inside it: not a family,
+//! and no server's client by name (the maintainer's word of 2026-10-31). The tools the design
+//! draws but FinchGram does not have yet (live streams, Jellyfin, keyword hiding, scheduled
+//! messages) are listed faded, and cannot be pinned; so is Emby, which the maintainer added
+//! beside Jellyfin on 2026-10-24, beyond the design's round. Since 2026-10-31 the design's Media
+//! category is no more: Music, Live streams, Jellyfin and Emby are each a category of their own
+//! ("全部打散", the maintainer's word). The AI category holds AI access and voice
 //! input (src/speech/, a tool since 2026-10-26 at the maintainer's word: not Telegram's, and off
 //! until the user turns it on), each a panel of the toolbox's own: its card, or its pinned button,
 //! shows the panel in the sections' place, with a link back to the category's cards. The
@@ -39,11 +43,12 @@ struct Tool {
 }
 
 /// The tools, in the toolbox's order.
-const TOOLS: [Tool; 8] = [
+const TOOLS: [Tool; 9] = [
     Tool { id: "downloads", category: "transfers", icon: "download-simple", sigil: "↓", key: "⌥⌘L", built: true, switchable: false, family: true },
-    Tool { id: "live", category: "media", icon: "broadcast", sigil: "◉", key: "", built: false, switchable: false, family: false },
-    Tool { id: "jellyfin", category: "media", icon: "film-reel", sigil: "▷", key: "", built: false, switchable: false, family: false },
-    Tool { id: "emby", category: "media", icon: "television", sigil: "■", key: "", built: false, switchable: false, family: false },
+    Tool { id: "music", category: "music", icon: "music-note", sigil: "♪", key: "⌥⌘M", built: true, switchable: false, family: false },
+    Tool { id: "live", category: "live", icon: "broadcast", sigil: "◉", key: "", built: false, switchable: false, family: false },
+    Tool { id: "jellyfin", category: "jellyfin", icon: "film-reel", sigil: "▷", key: "", built: false, switchable: false, family: false },
+    Tool { id: "emby", category: "emby", icon: "television", sigil: "■", key: "", built: false, switchable: false, family: false },
     Tool { id: "hiding", category: "messages", icon: "funnel-simple", sigil: "⊘", key: "", built: false, switchable: false, family: false },
     Tool { id: "scheduled", category: "messages", icon: "clock", sigil: "○", key: "", built: false, switchable: false, family: false },
     Tool { id: "ai-access", category: "ai", icon: "plugs-connected", sigil: "◆", key: "", built: true, switchable: true, family: false },
@@ -55,13 +60,16 @@ const PANELS: [&str; 2] = ["ai-access", "voice-input"];
 
 /// The categories, in the column's order: id, icon, Broadsheet's letter. The last is the bar's
 /// section, where tools are pinned.
-const CATEGORIES: [(&str, &str, &str); 6] = [
+const CATEGORIES: [(&str, &str, &str); 9] = [
     ("accounts", "users-three", "A"),
     ("transfers", "arrows-down-up", "B"),
-    ("media", "film-strip", "C"),
-    ("messages", "chat-text", "D"),
-    ("ai", "sparkle", "E"),
-    ("bar", "push-pin", "F"),
+    ("music", "music-note", "C"),
+    ("live", "broadcast", "D"),
+    ("jellyfin", "film-reel", "E"),
+    ("emby", "television", "F"),
+    ("messages", "chat-text", "G"),
+    ("ai", "sparkle", "H"),
+    ("bar", "push-pin", "I"),
 ];
 
 /// The protocols of the downloads family: id, name, default port, whether FinchGram speaks it
@@ -228,9 +236,9 @@ fn open(ui: &MainWindow) {
 /// The tool's page comes and the toolbox shuts; a tool that is a panel of the toolbox's own (AI
 /// access, voice input) has the toolbox open at its panel instead.
 fn open_tool(ui: &MainWindow, id: &str) {
-    if id == "downloads" {
+    if id == "downloads" || id == "music" {
         ui.global::<Toolbox>().set_open(false);
-        ui.global::<AppState>().set_page(Page::Downloads);
+        ui.global::<AppState>().set_page(if id == "music" { Page::Music } else { Page::Downloads });
         return;
     }
     let Some(tool) = TOOLS.iter().find(|tool| tool.id == id && PANELS.contains(&tool.id)) else { return };
@@ -262,6 +270,7 @@ fn set_view(category: &str, query: &str) {
 /// in the UI language; "all" for none. None for words that name no category.
 fn category_named(ui: &MainWindow, words: &str) -> Option<String> {
     let words = words.trim().to_lowercase();
+    let words = words.strip_prefix("/tools").map_or(words.as_str(), str::trim).to_string();
     if words.is_empty() {
         return Some("all".to_string());
     }
@@ -279,7 +288,10 @@ fn label_of(words: &ToolboxWords, category: &str) -> SharedString {
     match category {
         "accounts" => words.invoke_accounts(),
         "transfers" => words.invoke_transfers(),
-        "media" => words.invoke_media(),
+        "music" => words.invoke_music(),
+        "live" => words.invoke_live(),
+        "jellyfin" => words.invoke_jellyfin(),
+        "emby" => words.invoke_emby(),
         "messages" => words.invoke_messages(),
         "ai" => words.invoke_ai(),
         _ => words.invoke_bar(),
@@ -310,6 +322,7 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, panel: &str, query: 
         .map(|tool| {
             let (name, line): (SharedString, SharedString) = match tool.id {
                 "downloads" => (words.invoke_downloads(), words.invoke_downloads_line()),
+                "music" => (words.invoke_music(), words.invoke_music_line()),
                 "live" => (words.invoke_live(), words.invoke_live_line()),
                 "jellyfin" => (words.invoke_jellyfin(), words.invoke_jellyfin_line()),
                 "emby" => (words.invoke_emby(), words.invoke_emby_line()),

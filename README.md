@@ -43,6 +43,7 @@ client, not made by Telegram.
   PikPak, Alist/OpenList or a folder shared with `vget serve`, browsed in the app. Files come over several connections at
   once and go on after a stop; photos and videos open in the viewer when they arrive; passwords
   stay sealed in FinchGram's database. See [docs/downloads.md](docs/downloads.md).
+- **Music.** A music player for your own servers: add a Navidrome, gonic, LMS, Ampache, Nextcloud Music or Koel server (anything that speaks the Subsonic API) and play its library in the built-in player, gapless, with a queue and a player bar at the foot of every page; songs are cached as they play.
 - **Sending.** Photos, videos and files from the paperclip, by dragging them onto the window, or by
   pasting them. A card shows them before they go: with a caption, as a photo or as a file, together
   as an album of up to ten, with a self-destruct timer in a private chat, without sound.
@@ -144,6 +145,12 @@ on a server unless you allow it for that server (then it can delete, move, renam
 there), and the password goes sealed into FinchGram's database, never into a plain file.
 [docs/downloads.md](docs/downloads.md) has the details and what is not there yet (a self-signed
 certificate is refused: use http on the LAN, or a real certificate).
+
+## The Music page
+
+<p align="center"><img src="docs/screenshots/workbench-light-music.png" width="800" alt="The Music page"></p>
+
+View → Music, or the toolbox's Music. Add a source: a server of your own that speaks the Subsonic API (Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel…), its address and your account; the password is kept sealed in FinchGram's database. Browse its albums, artists, songs, genres, playlists and favourites, play or shuffle an album, add songs to the queue; stars go back to the server. Songs come through FinchGram's own HTTP client into `~/Documents/FinchGram/music_cache` and play as they arrive, one after another without a gap; the player bar stays at the foot of every page. [docs/music.md](docs/music.md) has the details.
 
 ## How it is built
 
@@ -252,6 +259,7 @@ src/
   player/                # video through libmpv, drawn into the window with OpenGL
   screenshot/            # the screenshot tool: capture, the overlay, annotations, the picture
   downloads/             # the Downloads page: WebDAV, FTP, FTPS and SFTP, with a multi-connection engine
+  music/                 # the Music page: the Subsonic API client, songs fetched into the cache, the queue and the player bar
     remote.rs            #   one face on the three clients: list a folder, check a server, fetch a file
     webdav.rs            #   PROPFIND listings, addresses, Basic authentication
     ftp.rs               #   FTP and FTPS over suppaftp: one stream, REST to go on after a stop
