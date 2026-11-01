@@ -19,8 +19,7 @@ concurrency:
 
 jobs:
   macos-arm64:
-    # GitHub's own runner, free for a public repository: nobody waits on a check, so it stays off
-    # the paid Blacksmith runner that compiles releases (release.yml).
+    # GitHub's own runner, free for a public repository, like release.yml's.
     runs-on: macos-latest # Apple silicon
     # A cold run (no cache yet, or the lock file changed) compiles the whole dependency tree twice,
     # once for clippy's check and once for the tests' build: about 35 minutes on the 3-core runner,

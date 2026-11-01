@@ -8,9 +8,9 @@
 # FINCHGRAM_API_HASH in the environment the app has no Telegram API credentials (docs/conventions.md).
 #
 # Signing (scripts/sign.sh, run at the end) is ad hoc by default: a bundle for this machine only.
-# The release workflow bundles ad hoc on a Blacksmith runner, then signs the bundle again with the
-# Developer ID on GitHub's own runner (.github/workflows/release.yml). To sign here with a
-# certificate of your own:
+# The release workflow bundles ad hoc in its build job, then signs the bundle again with the
+# Developer ID in its publish job, on a fresh runner (.github/workflows/release.yml). To sign here
+# with a certificate of your own:
 #   SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" scripts/bundle.sh
 set -euo pipefail
 

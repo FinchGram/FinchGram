@@ -1,23 +1,25 @@
 name: release
 
 # A "Release v<version>" commit pushed to main (made by scripts/release.sh, with its v<version>
-# tag) builds the app on clean Apple-silicon runners, keeps the result as an artifact for a week,
-# and publishes it as a release of this repository, from which installed copies of the app update
-# themselves (src/update.rs). Other pushes only run check.yml (clippy and the tests): since
-# 2026-10-23, at the maintainer's word, no app is built for them. The run starts on the push to
-# main rather than on the tag so that its Rust build cache is saved on the default branch, the only
-# place caches are shared from: the next release starts warm. Nothing is ever built on a developer
-# machine.
+# tag) builds the app on clean Apple-silicon runners and publishes it as a release of this
+# repository, from which installed copies of the app update themselves (src/update.rs). Other
+# pushes only run check.yml (clippy and the tests): since 2026-10-23, at the maintainer's word, no
+# app is built for them. The run starts on the push to main rather than on the tag so that its Rust
+# build cache is saved on the default branch, the only place caches are shared from: the next
+# release starts warm. Nothing is ever built on a developer machine.
 #
-# Two jobs since 2026-10-26, the maintainer's choice. Compiling, nearly all of a release (53 to 94
-# minutes on GitHub's free 3-core runner in October 2026), runs on a Blacksmith runner: an Apple M4
-# with 6 cores, paid by the minute, with 150 free minutes a month. Signing, notarizing and
-# publishing run on GitHub's own runner, so that the three keys (the Developer ID certificate,
-# Apple's notary key, the update signing key) never reach a machine outside GitHub. The build job
-# gets only the Telegram api_id and api_hash, which are in the app anyway. The Blacksmith app is
-# installed on the FinchGram organization; rulesets let only the maintainer write branches and tags,
-# so no other actor can put a workflow of its own where these secrets are (docs/conventions.md,
-# Release first).
+# Two jobs, both on GitHub's own runners, which cost nothing for a public repository. The build job
+# compiles and bundles with only the Telegram api_id and api_hash, which are in the app anyway. The
+# publish job signs, notarizes and publishes on a fresh runner, so that the three keys (the
+# Developer ID certificate, Apple's notary key, the update signing key) are never on a machine that
+# ran the build's third-party code (the crates' build scripts and macros); and a publish that failed
+# can be re-run alone, without compiling again, while the build's bundle is kept (a day).
+# Compiling is nearly all of a release, about an hour on the free 3-core runner, so the maintainer
+# starts a release before the night. From 2026-10-26 to 2026-11-01 the build job ran on a paid
+# Blacksmith runner, an Apple M4 with 6 cores: 22 minutes, but about $1.80 a release once its free
+# minutes were used, and the maintainer dropped it for the cost. Rulesets let only the maintainer
+# write branches and tags, so no other actor can put a workflow of its own where these secrets are
+# (docs/conventions.md, Release first).
 #
 # Every Action is pinned to a commit (its full SHA, the version beside it), never to a tag or a
 # branch, which can be moved: these jobs build, sign and publish what users install, and what runs
@@ -42,12 +44,13 @@ jobs:
   build:
     # Only the release commits, and a run started by hand.
     if: github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, 'Release v')
-    runs-on: blacksmith-6vcpu-macos-latest # Apple M4, 6 cores, 24 GB
+    runs-on: macos-latest # GitHub's own, Apple silicon, 3 cores
     permissions:
       contents: read
-    # Every minute here is paid for: a warm build should take well under half an hour, a cold one
-    # (no cache yet, or new dependencies) under an hour.
-    timeout-minutes: 75
+    # A release took 53 to 95 minutes on this runner in October 2026, more when the cache misses
+    # (new dependencies, or no release for a week, after which GitHub drops the cache); the limit
+    # leaves room for a slow one.
+    timeout-minutes: 180
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
       version: ${{ steps.meta.outputs.version }}

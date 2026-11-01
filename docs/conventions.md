@@ -95,16 +95,19 @@ As in Coova Studio.
   the Rust toolchain, the caches, the artifacts) is pinned to a commit by its full SHA, the version
   beside it, never to a tag or branch that can be moved: what runs on the runner that signs
   releases is what was reviewed. To update one, change the SHA.
-- Two jobs since 2026-10-26, the maintainer's choice. The build job compiles and bundles on a
-  Blacksmith runner (an Apple M4 with 6 cores, paid by the minute, 150 free minutes a month; the
-  Blacksmith app is installed on the FinchGram organization), with only the Telegram api_id and
-  api_hash, which are in the app anyway. The publish job, on GitHub's own runner, signs the bundle
-  with the Developer ID (`scripts/sign.sh`), has Apple notarize it, signs `SHA256SUMS` and
-  publishes: the three keys never reach a machine outside GitHub. Rulesets let only the
-  maintainer (the repository's admins) create, update or delete branches and tags, so that no
-  other actor, the Blacksmith app included (it may write to the repository, for its own pull
-  requests), can put a workflow of its own where the keys are. `check.yml` stays on GitHub's free
-  runner: nobody waits on a check.
+- Two jobs, both on GitHub's own runners, which cost nothing for a public repository. The build
+  job compiles and bundles, with only the Telegram api_id and api_hash, which are in the app
+  anyway. The publish job, on a fresh runner, signs the bundle with the Developer ID
+  (`scripts/sign.sh`), has Apple notarize it, signs `SHA256SUMS` and publishes: the three keys are
+  never on a machine that ran the build's third-party code (the crates' build scripts and macros),
+  and a publish that failed (at Apple's notary, say) can be re-run alone, without compiling again,
+  while the build's bundle is kept (a day). Rulesets let only the maintainer (the repository's
+  admins) create, update or delete branches and tags, so that no other actor can put a workflow
+  of its own where the keys are. `check.yml` runs on the same free runner.
+- A release takes about an hour on the free 3-core runner (53 to 95 minutes in October 2026), so
+  the maintainer starts one before the night. From 2026-10-26 to 2026-11-01 the build job ran on
+  a Blacksmith runner (an Apple M4 with 6 cores, paid by the minute): 22 minutes, but about $1.80
+  a release once its free minutes were used, and the maintainer dropped it for the cost.
 - Artifacts count against the organization's Actions storage, 0.5 GB a month on GitHub's Free plan,
   measured by the hour (on 2026-10-26 a week of release copies, 4.2 GB, had used 90% of a month's):
   a release keeps no artifact (its files are on its release page), the bundle the build job hands

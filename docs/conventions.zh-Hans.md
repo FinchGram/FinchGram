@@ -75,12 +75,15 @@ libmpv 跟 finchgram-tdlib 一样照这个做：`vendor/mpv/build.sh` 按锁定�
   `scripts/bundle.sh`，本地想试试打包后的 app 也用它；本地打出来的包永远不发布。流程用到的每个 Action（checkout、
   Rust 工具链、缓存、产物）都按完整的 commit SHA 锁定，旁边注明版本，不用可以被挪动的 tag 或分支：在给 release
   签名的机器上跑的，必须是审过的那份代码。要升级就改 SHA。
-- 从 2026-10-26 起分两个 job，维护者定的。构建 job 在 Blacksmith 的机器上编译、打包（Apple M4，6 核，按分钟
-  计费，每月 150 分钟免费；Blacksmith 的 app 装在 FinchGram 组织上），只拿到 Telegram 的 api_id 和 api_hash，
-  这两个本来就在 app 里。发布 job 在 GitHub 自己的机器上用 Developer ID 给包签名（`scripts/sign.sh`）、送苹果
-  公证、给 `SHA256SUMS` 签名并发布：三把密钥从不离开 GitHub 的机器。规则集（ruleset）只允许维护者（仓库管理员）
-  创建、更新、删除分支和 tag，这样别的任何参与方，包括 Blacksmith 的 app（它有往仓库写的权限，给它自己开 PR 用），
-  都没法把自己的 workflow 放到密钥所在的地方。`check.yml` 留在 GitHub 的免费机器上：检查没人在等。
+- 分两个 job，都在 GitHub 自己的机器上跑，公开仓库不花钱。构建 job 编译、打包，只拿到 Telegram 的 api_id 和
+  api_hash，这两个本来就在 app 里。发布 job 换一台干净的机器，用 Developer ID 给包签名（`scripts/sign.sh`）、
+  送苹果公证、给 `SHA256SUMS` 签名并发布：三把密钥从不出现在跑过构建里第三方代码（各个 crate 的构建脚本和宏）的
+  机器上；发布失败了（比如卡在苹果公证），在构建出的包保留的一天里可以单独重跑发布 job，不用重新编译。规则集
+  （ruleset）只允许维护者（仓库管理员）创建、更新、删除分支和 tag，这样别的任何参与方都没法把自己的 workflow
+  放到密钥所在的地方。`check.yml` 也在同样的免费机器上跑。
+- 在免费的 3 核机器上发一次版要一个小时左右（2026 年 10 月是 53 到 95 分钟），所以维护者晚上睡觉前发版。
+  2026-10-26 到 2026-11-01 构建 job 曾在 Blacksmith 的机器上跑（Apple M4，6 核，按分钟计费）：22 分钟，
+  但免费额度用完后每次发版约 1.8 美元，维护者嫌贵，去掉了。
 - 产物（artifact）算在组织的 Actions 存储里，GitHub 免费版每月 0.5 GB，按小时累计（2026-10-26 一周的 release
   副本有 4.2 GB，用掉了一个月的 90%）：release 不留产物（文件都在 release 页面上），构建 job 交给发布 job 的包
   发布后就删，手动启动的运行留三天。

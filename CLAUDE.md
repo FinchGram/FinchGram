@@ -133,12 +133,15 @@ things fit together.
 - Releases are only ever built by GitHub Actions, and the maintainer tests the installed release, not
   a local build. So FinchGram's own api_id lives only in the repository's Actions secrets
   (`FINCHGRAM_API_ID`, `FINCHGRAM_API_HASH`); never store it on the machine or in a file.
-- The release workflow has two jobs since 2026-10-26 (the maintainer's choice, docs/conventions.md):
-  compiling on a Blacksmith runner (M4, paid by the minute, 150 free minutes a month), then signing,
-  notarizing and publishing on GitHub's own runner, so that the Developer ID, the notary key and
-  the update signing key never leave GitHub; rulesets let only the maintainer write branches and
-  tags. Checks stay on GitHub's free runner. Artifacts count against the organization's 0.5 GB of
-  Actions storage a month, measured by the hour: keep none that a release page already holds.
+- The release workflow runs on GitHub's own runners, free for a public repository, in two jobs
+  (docs/conventions.md): compiling, then signing, notarizing and publishing on a fresh runner, so
+  that the Developer ID, the notary key and the update signing key are never on the machine that
+  ran the build's third-party code; rulesets let only the maintainer write branches and tags. A
+  release takes about an hour there, so the maintainer starts it before the night
+  ("每天晚上睡觉前发版", 2026-11-01); the paid Blacksmith runner the build used from 2026-10-26 (22
+  minutes, about $1.80 a release) was dropped for its cost. Artifacts count against the
+  organization's 0.5 GB of Actions storage a month, measured by the hour: keep none that a release
+  page already holds.
 - Build and check: `scripts/fetch-tdlib.sh`, `scripts/fetch-mpv.sh` and `scripts/fetch-fonts.sh` once, then `cargo build`,
   `cargo test --workspace`, `cargo clippy --workspace --all-targets` (keep it free of warnings;
   `--workspace` takes in the release signing tool, `crates/finchgram-release-sign/`). After changing the UI, run

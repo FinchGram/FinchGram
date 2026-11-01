@@ -230,7 +230,7 @@ Die Datenbank von TDLib und die heruntergeladenen Dateien liegen in
 .github/workflows/
   mpv.yml                # baut libmpv auf einer sauberen Maschine; veröffentlicht mpv-*-Tags als Releases
   check.yml              # Clippy und die Tests bei jedem Push auf main
-  release.yml            # für die Release-v*-Commits: kompiliert die App auf Blacksmith, signiert und veröffentlicht sie auf GitHub
+  release.yml            # baut und veröffentlicht die App für die Release-v*-Commits
   tdlib.yml              # baut finchgram-tdlib auf einer sauberen Maschine; veröffentlicht tdlib-*-Tags als Releases
 Cargo.toml
 build.rs                 # kompiliert ui/app.slint, bündelt lang/, kopiert vendor/tdlib/bin/ neben die ausführbare Datei

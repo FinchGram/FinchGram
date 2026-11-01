@@ -169,7 +169,7 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 .github/workflows/
   mpv.yml                # يبني libmpv على جهاز نظيف؛ وينشر وسوم mpv-* كإصدارات
   check.yml              # clippy والاختبارات مع كل push إلى main
-  release.yml            # لإيداعات Release v*: يصرّف التطبيق على Blacksmith، ثم يوقّعه وينشره على GitHub
+  release.yml            # يبني التطبيق وينشره لإيداعات Release v*
   tdlib.yml              # يبني finchgram-tdlib على جهاز نظيف؛ وينشر وسوم tdlib-* كإصدارات
 Cargo.toml
 build.rs                 # يصرّف ui/app.slint، ويضمّن lang/، وينسخ vendor/tdlib/bin/ بجوار الملف التنفيذي

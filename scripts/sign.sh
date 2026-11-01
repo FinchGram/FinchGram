@@ -3,9 +3,9 @@
 # first, then the app with its entitlements (the microphone: scripts/FinchGram.entitlements).
 #
 # scripts/bundle.sh runs it at the end of every bundle, ad hoc unless SIGN_IDENTITY says otherwise.
-# The release workflow bundles on a Blacksmith runner (ad hoc), then signs the same bundle again
-# here with the Developer ID on GitHub's own runner, so that the certificate never leaves GitHub
-# (.github/workflows/release.yml, docs/conventions.md, Release first):
+# The release workflow bundles in its build job (ad hoc), then signs the same bundle again here
+# with the Developer ID in its publish job, on a fresh runner, so that the certificate is never on
+# the machine that compiled (.github/workflows/release.yml, docs/conventions.md, Release first):
 #   SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" scripts/sign.sh dist/FinchGram.app
 # A Developer ID gets the hardened runtime and a timestamp too: they are for notarization.
 set -euo pipefail

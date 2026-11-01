@@ -223,7 +223,7 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 .github/workflows/
   mpv.yml                # собирает libmpv на чистой машине; публикует теги mpv-* как релизы
   check.yml              # clippy и тесты при каждом push в main
-  release.yml            # для коммитов Release v*: компилирует приложение на Blacksmith, подписывает и публикует его на GitHub
+  release.yml            # собирает и публикует приложение для коммитов Release v*
   tdlib.yml              # собирает finchgram-tdlib на чистой машине; публикует теги tdlib-* как релизы
 Cargo.toml
 build.rs                 # компилирует ui/app.slint, встраивает lang/, копирует vendor/tdlib/bin/ рядом с исполняемым файлом
