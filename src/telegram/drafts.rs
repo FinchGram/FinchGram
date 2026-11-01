@@ -65,16 +65,25 @@ pub fn entering(chat_id: i64) {
 }
 
 /// Telegram has a draft for the chat in front from another device: the composer takes it, unless
-/// the user is writing something else here.
+/// the user is writing something else here. The echo of the composer's own save comes this way
+/// too, and changes nothing (same_words).
 pub fn draft_changed(chat_id: i64) {
     if actions::editing(chat_id) {
         return;
     }
     let words = store::with(|store| store.chats.get(&chat_id).map(|chat| store.draft_of(chat))).flatten().unwrap_or_default();
     let typing = SAVE.with(|save| save.borrow().as_ref().is_some_and(|(id, _)| *id == chat_id));
-    if !typing && composer_words() != words {
+    if !typing && !same_words(&composer_words(), &words) {
         actions::set_draft(&words);
     }
+}
+
+/// Whether the composer and Telegram's draft say the same, the whitespace at either end aside: a
+/// draft goes to Telegram without it (save_now), and Telegram trims it too. So when "word " is saved
+/// after a pause and comes back as "word", the composer keeps the space the user is about to
+/// write after.
+fn same_words(composer: &str, telegram: &str) -> bool {
+    composer.trim() == telegram.trim()
 }
 
 /// The draft goes to Telegram: what is kept here, else what the composer holds when the chat is
@@ -136,4 +145,28 @@ pub fn sent(chat_id: i64) {
         store.drafts.remove(&chat_id);
         store.dirty.chats = true;
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::same_words;
+
+    #[test]
+    fn the_echo_of_a_save_leaves_the_composer_as_it_is() {
+        // Saved after a pause without the whitespace at the end, and back from Telegram so.
+        assert!(same_words("word ", "word"));
+        assert!(same_words("first line\n", "first line"));
+        assert!(same_words("词\u{3000}", "词"));
+        assert!(same_words("  word", "word"));
+        assert!(same_words("   ", ""));
+        assert!(same_words("word", "word"));
+    }
+
+    #[test]
+    fn a_draft_written_elsewhere_is_taken() {
+        assert!(!same_words("word ", "word and more"));
+        assert!(!same_words("", "from the phone"));
+        assert!(!same_words("word ", ""));
+        assert!(!same_words("two  words", "two words"));
+    }
 }
