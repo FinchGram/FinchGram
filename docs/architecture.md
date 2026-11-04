@@ -626,6 +626,10 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
   [voice-input.md](voice-input.md) is built (2026-10-25), open to any vendor and to servers the user
   runs since 2026-10-26; the others are not: a plan sold by FinchGram, the operating systems' own
   recognizers, and a router between them (today the user picks the main language).
+- **A livelier bird in the menu bar.** Planned on 2026-11-04 for a day the maintainer feels like
+  it ([menu-bar-icon.md](menu-bar-icon.md)): a dot on the menu bar's mark while there are unread
+  messages, and a hop when a message comes, under "Flash taskbar"; today the icon is a still
+  template image with a menu.
 
 ## Open questions
 
