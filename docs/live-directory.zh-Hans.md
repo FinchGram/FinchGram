@@ -3,22 +3,26 @@
 [English](live-directory.md)
 
 状态：一份契约，2026-11-07 按维护者的话写下（“先定义出来一个api contract，我自己建一个api，用honojs，开源出来 … 任何人都
-可以提pr … 任何人也可以fork走，自建”）。FinchGram 读它；服务端由维护者用 Hono 在一个单独的仓库里做，开源，接受 PR，也可以
-fork。FinchGram 这边还没做。机器可读的版本是 [live-directory.openapi.yaml](live-directory.openapi.yaml)（OpenAPI 3.1）；这一页
-解释它，并说明客户端怎么用。
+可以提pr … 任何人也可以fork走，自建”）。FinchGram 自己的目录在 `https://services.finchgram.com/live`，由
+[FinchGram/Services](https://github.com/FinchGram/Services) 提供：维护者各项服务的网站，同一天用官网的技术栈搭起来（Cloudflare
+Workers 上的 TanStack Start，没有另起一个 Hono 服务端），接受 PR，也可以 fork。FinchGram 自己还不读目录。机器可读的版本是
+[live-directory.openapi.yaml](live-directory.openapi.yaml)（OpenAPI 3.1），和那个仓库里的 `src/live/openapi.yaml` 是同一个文件，
+那边的测试保证两份一致；这一页解释它，并说明客户端怎么用。
 
 ## 它是什么
 
 一个目录说明哪些直播源值得看：会开直播的 Telegram 频道或个人、Owncast 服务器、PeerTube 频道、广播机构通过 HLS 提供的流。它
 不说现在谁在播：客户端自己去问每个源（Telegram 走 TDLib，和今天的直播视图一样，见 docs/live-streams.zh-Hans.md；其他的走源自己
 的 API）。所以目录就是一张靠 PR 改动的清单，原样提供，没有要轮询的东西，除了一个静态服务器之外不用一直跑任何东西：Cloudflare
-Workers 加 Hono，或者任何回答同样 JSON 的 HTTPS 服务器。
+上的一个 Worker（FinchGram 自己的就是），或者任何回答同样 JSON 的 HTTPS 服务器。
 
 谁都可以开一个。客户端可以认识好几个目录，各凭各的地址；目录之间不合并，每个都单独看（和音乐的来源一样）。
 
 ## 约定
 
-- **传输。**只用 HTTPS。所有路径都在 `/v1/` 下。GET 和 HEAD；CORS 用 OPTIONS。没有 cookie，没有认证，请求里没有任何表明是谁在问的东西。
+- **传输。**只用 HTTPS。一个目录凭它的基础地址来认，可以带路径，也可以不带（FinchGram 自己的是
+  `https://services.finchgram.com/live`），所有路径都在它下面的 `/v1/` 里。GET 和 HEAD；CORS 用 OPTIONS。没有 cookie，没有
+  认证，请求里没有任何表明是谁在问的东西。
 - **格式。**UTF-8 的 JSON（`application/json; charset=utf-8`）。字段名用 snake_case。日期和时间用 RFC 3339（`2026-11-07T05:09:47Z`；
   只有日期：`2026-11-07`）。
 - **语言。**BCP 47 标签，写法和 FinchGram 一样：`en`、`zh-Hans`、`zh-Hant`、`ja`、`pt`；不需要地区时不带地区。国家用 ISO 3166-1
@@ -31,7 +35,8 @@ Workers 加 Hono，或者任何回答同样 JSON 的 HTTPS 服务器。
   `304 Not Modified`。
 - **CORS。**`Access-Control-Allow-Origin: *`，网页也能读目录。
 - **错误**是状态码加一个 JSON：`{"error": {"code": "not_found", "message": "No source mika-keys"}}`。错误码：`bad_request`（400）、
-  `not_found`（404）、`rate_limited`（429，带 `Retry-After`）、`internal`（500）。
+  `not_found`（404）、`method_not_allowed`（405，带 `Allow`：目录是只读的）、`rate_limited`（429，带 `Retry-After`）、
+  `internal`（500）。
 
 ## 接口
 
@@ -175,24 +180,24 @@ Workers 加 Hono，或者任何回答同样 JSON 的 HTTPS 服务器。
 - **从不发送。**关于用户或账号的任何东西都不会发给目录：一个普通的 GET，没有 cookie，`User-Agent: FinchGram/<版本>`。
 - **守住的规矩。**不认识的种类跳过，不认识的字段忽略，NSFW 不显示，超过 16 MB 的回答不收，图片和聊天头像一样去取。
 
-## 一个能用 PR 改动的仓库
+## FinchGram 自己的目录
 
-给服务端仓库的建议，让一次贡献就是一个文件加一次检查：
+由 [FinchGram/Services](https://github.com/FinchGram/Services) 提供，一次贡献就是一个文件加一次检查：
 
 ```
-data/directory.json          GET /v1/directory 回答的内容，不含 counts 和 updated
-data/categories.json         分类
-data/sources/<id>.json       每个源一个文件；文件名就是它的 id
-schema/                      每种文件的 JSON Schema，取自 OpenAPI 文件的 components
-src/index.ts                 Hono：路由，读构建时打包进去的数据
-.github/workflows/check.yml  每个 PR 都按 schema 校验每个文件
+data/live/directory.json       GET /v1/directory 回答的内容，不含构建时算出来的部分
+data/live/categories.json      14 个共用分类，用 FinchGram 的 11 种语言命名
+data/live/sources/<id>.json    每个源一个文件；文件名就是它的 id
+src/live/openapi.yaml          这份契约（和本仓库那份是同一个文件）
+src/routes/live/v1/            路由；契约本身也放在 /live/v1/openapi.yaml 上
 ```
 
-数据在构建 Worker 时打包进去，所以 PR 合并后，下一次部署就生效；fork 部署自己的 Worker，就有了自己的目录。`counts` 和 `updated`
-在构建时生成。
+每个文件都要按契约检查：跑测试时、每个 PR 上、每次构建前，没通过的文件到不了 Worker；数据在构建时打包进 Worker，所以 PR
+合并后下一次部署就生效，fork 部署自己的 Worker 就有了自己的目录。`updated` 是最近一次加入或修改源的日子，`kinds` 是目录里有的
+种类，`counts` 是数量。怎么加源，看那个仓库的 CONTRIBUTING.md。目录开张时是空的：放什么由维护者决定。
 
 ## 待定
 
 1. FinchGram 是自带它自己的目录，还是列表从空开始、由用户按地址添加（维护者 2026-10-26 定的规矩是不替用户做任何选择）。
-2. 它的地址（比如 `https://live.finchgram.com/v1/`），以及签不签名。
+2. 签不签名（地址已经定了：`https://services.finchgram.com/live`，2026-11-07）。
 3. 它的规矩：收哪些种类，谁来审 PR。

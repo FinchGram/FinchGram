@@ -112,6 +112,12 @@ things fit together.
   (`src/player/live.rs`, `pipe.rs`); other streams are listed for the phone. Going live gives the
   RTMP address and key for OBS; FinchGram captures nothing itself. Paid comments are shown, not
   sent, for now. While the view is open the open chat is not marked as seen.
+- services.finchgram.com (`../FinchGramServices`, github.com/FinchGram/Services; the maintainer's word
+  of 2026-11-07, "我想做一个services.finchgram.com … live api只是其中一个"): the site of the services the
+  maintainer runs for FinchGram, on the website's stack. FinchGram never depends on one: each is
+  optional, the app works without it, and the app's updates stay on GitHub Releases. Its first service
+  is the live directory (docs/live-directory.md, read by FinchGram not yet), whose OpenAPI file is the
+  same in both repositories.
 - Backward compatibility, since 2026-10-24 (the app is public): every change to the database's
   layout, to settings.toml's keys or to the Keychain items comes with its migration. The database
   carries `PRAGMA user_version` (LAYOUT in `src/database.rs`); an older file is first copied as it

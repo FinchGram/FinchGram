@@ -3,11 +3,14 @@
 [中文](live-directory.zh-Hans.md)
 
 Status: a contract, written on 2026-11-07 at the maintainer's word ("先定义出来一个api contract，我自己建一个
-api，用honojs，开源出来 … 任何人都可以提pr … 任何人也可以fork走，自建"). FinchGram reads it; the maintainer builds
-the server, with Hono, in a repository of its own, open to pull requests and to forks. Nothing of it
-is built in FinchGram yet. The machine-readable form is
-[live-directory.openapi.yaml](live-directory.openapi.yaml) (OpenAPI 3.1); this page explains it and
-says how a client behaves.
+api，用honojs，开源出来 … 任何人都可以提pr … 任何人也可以fork走，自建"). FinchGram's own directory is served at
+`https://services.finchgram.com/live` by [FinchGram/Services](https://github.com/FinchGram/Services),
+the site of the maintainer's services (built the same day on the website's stack, TanStack Start on
+Cloudflare Workers, rather than a Hono server of its own), open to pull requests and to forks.
+FinchGram itself does not read a directory yet. The machine-readable form is
+[live-directory.openapi.yaml](live-directory.openapi.yaml) (OpenAPI 3.1), the same file as
+`src/live/openapi.yaml` in that repository, whose tests keep the two identical; this page explains it
+and says how a client behaves.
 
 ## What it is
 
@@ -16,15 +19,18 @@ an Owncast server, a PeerTube channel, a stream a broadcaster offers over HLS. I
 live now: the client asks each source itself (TDLib for Telegram, as the live streams' view does
 today, docs/live-streams.md; the source's own API for the others). So a directory is a list that
 changes by pull request, served as it is, with nothing to poll and nothing to keep running beyond a
-static server: Cloudflare Workers with Hono, or any HTTPS server that answers the same JSON.
+static server: a Worker on Cloudflare, as FinchGram's own is, or any HTTPS server that answers the
+same JSON.
 
 Anyone may run one. A client may know several directories, each by its address; none is merged into
 another, each is looked at as itself (as the music sources are).
 
 ## Conventions
 
-- **Transport.** HTTPS only. Every path is under `/v1/`. GET and HEAD; OPTIONS for CORS. No cookies,
-  no authentication, nothing in the request that says who asks.
+- **Transport.** HTTPS only. A directory is known by its base address, with a path or without one
+  (FinchGram's own: `https://services.finchgram.com/live`), and every path is under `/v1/` below it.
+  GET and HEAD; OPTIONS for CORS. No cookies, no authentication, nothing in the request that says
+  who asks.
 - **Format.** JSON in UTF-8 (`application/json; charset=utf-8`). Names are snake_case. Dates and
   times are RFC 3339 (`2026-11-07T05:09:47Z`; a date alone: `2026-11-07`).
 - **Languages.** BCP 47 tags, written as FinchGram writes them: `en`, `zh-Hans`, `zh-Hant`, `ja`,
@@ -39,8 +45,9 @@ another, each is looked at as itself (as the music sources are).
   request with `If-None-Match` gets `304 Not Modified` when nothing changed.
 - **CORS.** `Access-Control-Allow-Origin: *`, so that web pages may read a directory too.
 - **Errors** are a status code with a JSON body: `{"error": {"code": "not_found", "message": "No
-  source mika-keys"}}`. Codes: `bad_request` (400), `not_found` (404), `rate_limited` (429, with
-  `Retry-After`), `internal` (500).
+  source mika-keys"}}`. Codes: `bad_request` (400), `not_found` (404), `method_not_allowed` (405,
+  with `Allow`: the directory is read-only), `rate_limited` (429, with `Retry-After`), `internal`
+  (500).
 
 ## The endpoints
 
@@ -201,26 +208,29 @@ streams only with their permission. A fork decides its own, and answers for it.
 - **Kept to.** Unknown kinds skipped, unknown fields ignored, NSFW left out, answers over 16 MB
   refused, pictures fetched as the chat photos are.
 
-## A repository a pull request can change
+## FinchGram's own directory
 
-A suggestion for the server's repository, so that a contribution is one file and a check:
+[FinchGram/Services](https://github.com/FinchGram/Services) serves it, so that a contribution is one
+file and a check:
 
 ```
-data/directory.json          what GET /v1/directory answers, without counts and updated
-data/categories.json         the categories
-data/sources/<id>.json       one source each; the file's name is its id
-schema/                      the JSON Schema of each, from the OpenAPI file's components
-src/index.ts                 Hono: the routes, reading the data bundled at build time
-.github/workflows/check.yml  validates every file against the schema on each pull request
+data/live/directory.json       what GET /v1/directory answers, without what the build counts
+data/live/categories.json      the fourteen shared categories, named in FinchGram's eleven languages
+data/live/sources/<id>.json    one source each; the file's name is its id
+src/live/openapi.yaml          this contract (the same file as this repository's)
+src/routes/live/v1/            the routes; the contract itself is served at /live/v1/openapi.yaml
 ```
 
-The data is bundled into the Worker when it is built, so a merged pull request is live at the next
-deploy, and a fork that deploys its own Worker has its own directory. `counts` and `updated` are
-made at build time.
+Every file is checked against the contract by the tests, on each pull request, and before each
+build, so a file that fails never reaches the Worker; the data is bundled into it, so a merged pull
+request is live at the next deploy, and a fork that deploys its own Worker has its own directory.
+`updated` is the newest day a source was added or changed, `kinds` the kinds it holds, `counts` how
+many. The repository's CONTRIBUTING.md says how to add a source. It opened empty: what goes in is
+the maintainer's.
 
 ## To decide
 
 1. Whether FinchGram comes with its own directory added, or the list starts empty and the user adds
    one by its address (the maintainer's rule of 2026-10-26 is that nothing is chosen for the user).
-2. Its address (for example `https://live.finchgram.com/v1/`) and whether it signs.
+2. Whether it signs (its address is `https://services.finchgram.com/live`, decided 2026-11-07).
 3. Its policy: which kinds it takes, and who reviews a pull request.

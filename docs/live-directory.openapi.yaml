@@ -1,6 +1,7 @@
 # The live directory's contract (docs/live-directory.md), in OpenAPI 3.1. A server that answers
 # these paths with these shapes is a directory FinchGram can read; its components are JSON Schema
-# 2020-12, for validating a directory's data files too.
+# 2020-12, for validating a directory's data files too. The same file is in FinchGram/Services
+# (src/live/openapi.yaml), whose tests keep the two identical; change both.
 openapi: 3.1.0
 info:
   title: FinchGram live directory
@@ -12,9 +13,16 @@ info:
     client asks each source. Read-only, HTTPS, JSON in UTF-8, no authentication and no cookies.
     Within v1, fields are only added: a client ignores fields it does not know and skips sources
     of a kind it does not know.
+
+    A directory is known by its base address, with a path or without one; the paths below are
+    under it. FinchGram's own is https://services.finchgram.com/live.
 servers:
-  - url: https://live.example.com
-    description: Any server that answers this contract; the paths are under /v1/.
+  - url: "{directory}"
+    description: A directory's base address.
+    variables:
+      directory:
+        default: https://services.finchgram.com/live
+        description: Any server that answers this contract, with a path or without one.
 paths:
   /v1/directory:
     get:
@@ -245,7 +253,10 @@ components:
           description: "A mailto: address, or an https URL."
           pattern: "^(mailto:|https://)"
           maxLength: 255
-        updated: { type: string, format: date-time }
+        updated:
+          type: string
+          format: date-time
+          description: When its list of sources last changed.
         kinds:
           type: array
           items: { $ref: "#/components/schemas/Kind" }
@@ -410,5 +421,7 @@ components:
           type: object
           required: [code, message]
           properties:
-            code: { type: string, enum: [bad_request, not_found, rate_limited, internal] }
+            code:
+              type: string
+              enum: [bad_request, not_found, method_not_allowed, rate_limited, internal]
             message: { type: string }
