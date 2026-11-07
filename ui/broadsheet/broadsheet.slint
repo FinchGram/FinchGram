@@ -25,8 +25,10 @@ import { BroadsheetActions } from "actions.slint";
 import { BroadsheetAttachments } from "attachments.slint";
 import { BroadsheetCompose } from "compose.slint";
 import { Search, NewChat, NewDialog, ComposeWords } from "../compose.slint";
+import { Live, LiveWords } from "../live.slint";
+import { LiveList, LivePane, LiveMark, LiveBar } from "../pages/live.slint";
 
-export enum BroadsheetView { chats, channels, bots, filters, scheduled }
+export enum BroadsheetView { chats, channels, bots, live, filters, scheduled }
 
 component DuoIcon inherits Icon {
     duotone: true;
@@ -285,6 +287,7 @@ component ViewButton inherits Rectangle {
     in property <string> label;
     in property <bool> active;
     in property <bool> enabled: true;
+    in property <bool> dot;                   // something new there (live streams: somebody is live)
     callback activated();
     height: 44px;
     border-radius: 4px;
@@ -308,6 +311,15 @@ component ViewButton inherits Rectangle {
             font-size: 11px;
             horizontal-alignment: center;
         }
+    }
+
+    if root.dot: Rectangle {
+        x: parent.width / 2 + 7px;
+        y: 6px;
+        width: 7px;
+        height: 7px;
+        border-radius: 3.5px;
+        background: P.danger;
     }
 
     touch := TouchArea {
@@ -346,6 +358,15 @@ component Views {
             active: root.view == BroadsheetView.bots;
             activated => {
                 root.view = BroadsheetView.bots;
+            }
+        }
+        ViewButton {
+            icon: "broadcast";
+            label: LiveWords.view();
+            active: root.view == BroadsheetView.live;
+            dot: root.view != BroadsheetView.live && Live.count > 0;
+            activated => {
+                root.view = BroadsheetView.live;
             }
         }
     }
@@ -820,6 +841,10 @@ component ChatLine inherits Rectangle {
                     overflow: elide;
                     vertical-alignment: center;
                 }
+                if root.chat.live: VerticalLayout {
+                    alignment: center;
+                    LiveMark { }
+                }
                 if root.chat.mention: VerticalLayout {
                     alignment: center;
                     MentionMark { }
@@ -886,6 +911,10 @@ component ChannelLine inherits Rectangle {
                     font-size: 15px;
                     font-weight: 600;
                     overflow: elide;
+                }
+                if root.chat.live: VerticalLayout {
+                    alignment: center;
+                    LiveMark { }
                 }
                 if root.chat.unread > 0: Badge {
                     count: root.chat.unread;
@@ -1052,7 +1081,8 @@ component ListColumn inherits Rectangle {
                 Text {
                     horizontal-stretch: 1;
                     text: root.view == BroadsheetView.channels ? @tr("Channels")
-                        : root.view == BroadsheetView.bots ? @tr("Bots") : Account.name;
+                        : root.view == BroadsheetView.bots ? @tr("Bots")
+                        : root.view == BroadsheetView.live ? LiveWords.view() : Account.name;
                     color: P.text;
                     font-size: 28px;
                     font-weight: 600;
@@ -1241,6 +1271,9 @@ component ListColumn inherits Rectangle {
                     root.show-menu(chat, 0, left, top);
                 }
             }
+        }
+        if root.view == BroadsheetView.live: LiveList {
+            vertical-stretch: 1;
         }
         if root.view == BroadsheetView.bots: Flickable {
             vertical-stretch: 1;
@@ -3182,6 +3215,8 @@ component ConversationPane inherits Rectangle {
             }
         }
         if Conversation.search-open: SearchLine { }
+        // The chat is live: what is on, and Watch (pages/live.slint).
+        if Live.in-chat.id != "": LiveBar { }
         if Conversation.pinned-message.shown: PinnedBar { }
         if Conversation.topic-id != "": TopicBar { }
 
@@ -3838,12 +3873,24 @@ export component BroadsheetWindow inherits Rectangle {
     property <BroadsheetView> view: BroadsheetView.chats;
     background: P.bg;
 
+    // The live streams' view covers the open chat while it is open; the toolbox's Live opens it.
+    init => {
+        Live.show(false);
+    }
+    changed view => {
+        Live.show(root.view == BroadsheetView.live);
+    }
+    property <int> live-requests: Live.show-requests;
+    changed live-requests => {
+        root.view = BroadsheetView.live;
+    }
+
     VerticalLayout {
         TitleBar { }
         HorizontalLayout {
             vertical-stretch: 1;
             rail := Rail { }
-            ListColumn {
+            list := ListColumn {
                 view <=> root.view;
                 room: root.width - rail.width - 388px - (Conversation.chat-id != "" && ChatInfo.open ? 320px : 0px);
             }
@@ -3853,6 +3900,14 @@ export component BroadsheetWindow inherits Rectangle {
         }
         // What plays, while something does (ui/music.slint), at the foot.
         if Music.playing: PlayerBar { }
+    }
+
+    // The live streams' pane, in the place of the conversation and the info panel.
+    if root.view == BroadsheetView.live: LivePane {
+        x: rail.width + list.width;
+        y: 40px;
+        width: root.width - self.x;
+        height: root.height - 40px - (Music.playing ? 60px : 0px);
     }
 
     // The toolbox, from the rail's right over the list, under the title bar and above the player bar.

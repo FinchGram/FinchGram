@@ -14,6 +14,8 @@ import {
     AttachWords, FileCardView, SearchInput, SearchWords, ButtonGrid, BotWords,
 } from "../chat.slint";
 import { WorkbenchPalette as P } from "palette.slint";
+import { Live } from "../live.slint";
+import { LiveBar } from "../pages/live.slint";
 import { Voice, VoiceState, VoiceWords, LevelBars, WordsTail, VoiceNoteView, RecordRow, LockTag, MicDeniedBar, Recorder, RecordStage, RecordDrag, PlaySign } from "../voice.slint";
 import { ExtraWords, ReactionChips, ReactionPicker, RoundNoteView, ContactCardView, TopicList } from "../extras.slint";
 
@@ -2219,6 +2221,8 @@ component Pane {
             }
         }
         if Conversation.search-open: SearchLine { }
+        // The chat is live: what is on, and Watch (pages/live.slint).
+        if Live.in-chat.id != "": LiveBar { }
         if Conversation.pinned-message.shown: PinnedBar { }
         if Conversation.topic-id != "": TopicBar { }
 

@@ -1,0 +1,262 @@
+// Live streams (docs/live-streams.md; the maintainer's word of 2026-11-07, drawn on the canvas
+// "FinchGram Live"): Telegram's own, the live stories of contacts and channels and the live
+// streams and video chats of chats, a fourth view on the left beside chats, channels and bots.
+// FinchGram has no WebRTC: it plays what Telegram serves as a stream (an RTMP stream, from OBS and
+// the like), and lists the rest as for the phone. Going live gives the address and key OBS needs.
+// Rust fills this global (src/telegram/live.rs); the list and the pane (pages/live.slint) are drawn
+// in every theme's look.
+import { Moment, ChatKind } from "telegram.slint";
+
+// What a live stream is: a person's or a channel's live story, a channel's live stream, a group's
+// video chat.
+export enum LiveKind { story, stream, video-chat }
+
+// One live stream in the list.
+export struct LiveRow {
+    id: string,             // what Live.watch takes
+    chat-id: string,
+    kind: LiveKind,
+    name: string,           // who is live: the person, the channel, the group
+    title: string,          // the stream's own title, if it has one
+    initial: string,
+    picture: image,
+    has-picture: bool,
+    chat-kind: ChatKind,    // the avatar's colours
+    viewers: int,           // -1 while unknown
+    playable: bool,         // Telegram serves it as a stream; false: only over WebRTC (the phone)
+    mine: bool,             // the user's own: opened as its host
+}
+
+// Where the stream open is.
+//   idle: none open. joining: joining it and waiting for its first second. waiting: joined, and
+//   nothing comes yet (the broadcaster's OBS is not sending). playing. phone: sent over WebRTC
+//   only. ended: it is over. failed: it could not be joined (Live.problem says why).
+export enum LiveState { idle, joining, waiting, playing, phone, ended, failed }
+
+// A comment in the stream's column.
+export struct LiveComment {
+    id: int,
+    name: string,
+    initial: string,
+    text: string,
+    stars: int,             // paid with so many Stars; 0: free
+    tier: int,              // 0 free, 1 … 3 the paid levels' colours, the highest 3
+    host: bool,             // from the broadcaster
+    mine: bool,
+    deletable: bool,
+}
+
+// One of the top supporters of a live story, for its host.
+export struct LiveDonor {
+    name: string,
+    stars: int,
+    tier: int,
+}
+
+// Where the user can go live: their own story, or a channel they manage.
+export struct LiveTarget {
+    chat-id: string,
+    name: string,
+    initial: string,
+    picture: image,
+    has-picture: bool,
+    story: bool,            // their own live story; false: the channel's live stream
+}
+
+export global Live {
+    // The list: live stories, and the chats' live streams and video chats.
+    in-out property <[LiveRow]> stories;
+    in-out property <[LiveRow]> chats;
+    in-out property <int> count;                // live now, for the entry's dot
+    in-out property <bool> shown;               // the view is open: covers the open chat
+    callback show(bool);                        // the view opens or closes (it loads the stories when it opens)
+    in-out property <int> show-requests;        // each step: the theme opens the view (the toolbox's Live, /live)
+    in-out property <LiveRow> in-chat;          // the open chat's own live stream, for the bar under its header; id "" for none
+
+    // The stream open.
+    in-out property <string> open-id;
+    in-out property <LiveRow> open;
+    in-out property <LiveState> state;
+    in-out property <string> problem;
+    in-out property <image> frame;              // its picture while it plays (src/player/live.rs)
+    in-out property <bool> buffering;
+    in-out property <bool> playing;
+    in-out property <int> viewers;
+    in-out property <string> since;             // "14:02", when it started
+    in-out property <int> volume: 100;
+    in-out property <bool> muted;
+    in-out property <[LiveComment]> comments;
+    in-out property <bool> comments-on;         // the stream allows comments
+    in-out property <bool> can-comment;         // and the user may write one
+    in-out property <int> paid-from;            // the Stars each comment costs (the host's are free); 0: free
+    in-out property <string> link;              // t.me/…/s/live, when it has one
+    callback watch(string);                     // a row's id
+    callback watch-link(string) -> bool;        // a link pasted: false when it is not one
+    callback close();
+    callback toggle-mute();
+    callback set-volume(int);
+    callback send-comment(string);
+    callback copy-link();
+
+    // The user's own stream, open as its host.
+    in-out property <bool> hosting;
+    in-out property <int> stars-total;
+    in-out property <[LiveDonor]> donors;
+    in-out property <bool> ending;              // asked whether to end it
+    callback delete-comment(int);
+    callback toggle-comments();
+    callback end-live();                        // after the question
+    callback ask-end(bool);
+
+    // Going live: the form.
+    in-out property <bool> going-live;
+    in-out property <[LiveTarget]> targets;
+    in-out property <int> target;               // index into targets
+    in-out property <int> privacy;              // 0 everyone, 1 contacts, 2 close friends
+    in-out property <bool> allow-comments: true;
+    in-out property <string> paid-minimum;      // the field: Stars each comment costs; "" or 0: free
+    in-out property <string> stream-title;      // a channel's live stream; "" the channel's name
+    in-out property <string> server;            // the RTMP address OBS sends to
+    in-out property <string> key;               // and its key
+    in-out property <bool> key-shown;
+    in-out property <bool> starting;
+    in-out property <string> start-problem;
+    callback open-go-live();
+    callback close-go-live();
+    callback choose-target(int);
+    callback start();
+    callback copy-server();
+    callback copy-key();
+    callback new-key();
+}
+
+// The words every theme shows of live streams.
+export global LiveWords {
+    public pure function view() -> string { return @tr("Live"); }
+    public pure function stories() -> string { return @tr("Live stories"); }
+    public pure function chats() -> string { return @tr("Channels and groups"); }
+    public pure function live-mark() -> string { return @tr("LIVE"); }
+    public pure function host-mark() -> string { return @tr("HOST"); }
+    public pure function go-live() -> string { return @tr("Go live"); }
+    public pure function kind(what: LiveKind) -> string {
+        if what == LiveKind.story { return @tr("Live story"); }
+        if what == LiveKind.stream { return @tr("Live stream"); }
+        return @tr("Video chat");
+    }
+    // The row's second line: the stream's title, or what it is.
+    public pure function line(row: LiveRow) -> string {
+        if !row.playable { return @tr("Watch on your phone"); }
+        return row.title != "" ? row.title : kind(row.kind);
+    }
+    public pure function viewers(count: int) -> string { return @tr("{n} watching" | "{n} watching" % count); }
+    public pure function nobody-live() -> string { return @tr("Nobody you follow is live"); }
+    public pure function nobody-live-line() -> string {
+        return @tr("Live stories of your contacts and of the channels you follow, and live streams in your chats, show up here while they are on.");
+    }
+    public pure function any-public() -> string { return @tr("Any public live story"); }
+    public pure function link-placeholder() -> string { return "t.me/username/s/live"; }
+    public pure function watch() -> string { return @tr("Watch"); }
+    public pure function not-a-link() -> string { return @tr("Not a link to a live story"); }
+    public pure function phone-note() -> string {
+        return @tr("Streams from a phone's camera play here once Telegram serves them as a stream; until then they are listed for the phone.");
+    }
+    public pure function empty-title() -> string { return @tr("Live streams open here"); }
+    public pure function empty-line() -> string {
+        return @tr("Pick one on the left when somebody is live, paste a link to a public live story, or go live yourself: FinchGram gives you the address and key for OBS.");
+    }
+    public pure function started(what: LiveKind, since: string) -> string {
+        return since == "" ? kind(what) : @tr("{} · started {}", kind(what), since);
+    }
+    public pure function state(state: LiveState) -> string {
+        if state == LiveState.joining { return @tr("Joining…"); }
+        if state == LiveState.waiting { return @tr("Waiting for the stream"); }
+        if state == LiveState.ended { return @tr("The live stream has ended"); }
+        if state == LiveState.phone { return @tr("Watch this one on your phone"); }
+        if state == LiveState.failed { return @tr("Could not join"); }
+        return "";
+    }
+    public pure function phone-explained() -> string {
+        return @tr("Telegram sends this live stream over WebRTC, which FinchGram does not have. Streams from OBS, and live streams with a large audience, play here.");
+    }
+    public pure function watch-note() -> string {
+        return @tr("Streamed through Telegram, a few seconds behind. Watching joins as a viewer: the host sees you among them, as in Telegram's own apps.");
+    }
+    public pure function copy-link() -> string { return @tr("Copy link"); }
+    public pure function link-copied() -> string { return @tr("Link copied"); }
+    public pure function comments() -> string { return @tr("Comments"); }
+    public pure function paid-from(stars: int) -> string { return @tr("Paid from ★ {}", stars); }
+    public pure function comments-off() -> string { return @tr("Comments are off"); }
+    public pure function say() -> string { return @tr("Say something…"); }
+    public pure function reply-as-host() -> string { return @tr("Reply as the host…"); }
+    public pure function free-note() -> string { return @tr("Free comments show for 10 seconds. Paid ones stay pinned for longer."); }
+    public pure function paid-note(stars: int) -> string {
+        return @tr("Comments here cost ★ {} each. Paid comments are sent from Telegram's own apps for now.", stars);
+    }
+    public pure function host-note() -> string { return @tr("Your comments are free. Deleting one removes it for everyone."); }
+    public pure function tipped(stars: int) -> string { return @tr("tipped ★ {}", stars); }
+    public pure function delete-comment() -> string { return @tr("Delete this comment"); }
+
+    // The host.
+    public pure function end(what: LiveKind) -> string {
+        return what == LiveKind.story ? @tr("End live story") : @tr("End live stream");
+    }
+    public pure function end-question() -> string { return @tr("End it for everyone?"); }
+    public pure function end-line(what: LiveKind) -> string {
+        return what == LiveKind.story ? @tr("The viewers are told it has ended, and the recording stays as a story.")
+            : @tr("The viewers are told it has ended.");
+    }
+    public pure function cancel() -> string { return @tr("Cancel"); }
+    public pure function watching-now() -> string { return @tr("Watching now"); }
+    public pure function stars-so-far() -> string { return @tr("Stars so far"); }
+    public pure function top-supporters() -> string { return @tr("Top supporters"); }
+    public pure function comments-allowed() -> string { return @tr("Comments on"); }
+    public pure function preview-note() -> string { return @tr("What the viewers see, a few seconds late"); }
+
+    // Going live.
+    public pure function go-live-line() -> string {
+        return @tr("A live stream on Telegram, sent from OBS or any app that streams over RTMP. Your contacts see a live story in their story list; a channel's live stream shows in the channel.");
+    }
+    public pure function where() -> string { return @tr("Where"); }
+    public pure function my-story() -> string { return @tr("My live story"); }
+    public pure function channel-stream(name: string) -> string { return @tr("{} · live stream", name); }
+    public pure function who() -> string { return @tr("Who can see it"); }
+    public pure function privacy(index: int) -> string {
+        if index == 1 { return @tr("Contacts"); }
+        if index == 2 { return @tr("Close friends"); }
+        return @tr("Everyone");
+    }
+    public pure function stream-title() -> string { return @tr("Title"); }
+    public pure function stream-title-placeholder() -> string { return @tr("The channel's name, if left empty"); }
+    public pure function viewers-comment() -> string { return @tr("Viewers can comment"); }
+    public pure function paid-minimum() -> string { return @tr("Paid comments from"); }
+    public pure function paid-minimum-note() -> string { return @tr("0 or empty: every comment is free. Yours are always free."); }
+    public pure function your-stream() -> string { return @tr("Your stream"); }
+    public pure function obs-note() -> string {
+        return @tr("FinchGram does not use your camera or screen. Put these two lines into OBS (Settings › Stream › Service: Custom), then start streaming there.");
+    }
+    public pure function server() -> string { return @tr("Server"); }
+    public pure function key() -> string { return @tr("Stream key"); }
+    public pure function copy() -> string { return @tr("Copy"); }
+    public pure function show-key() -> string { return @tr("Show"); }
+    public pure function hide-key() -> string { return @tr("Hide"); }
+    public pure function new-key() -> string { return @tr("Get a new key"); }
+    public pure function key-note() -> string { return @tr("Anyone with the key can stream in your name."); }
+    public pure function start(story: bool) -> string { return story ? @tr("Start live story") : @tr("Start live stream"); }
+    public pure function start-note() -> string {
+        return @tr("It starts at once; viewers wait for the picture until OBS connects. One live story at a time.");
+    }
+    public pure function good-to-know() -> string { return @tr("Good to know"); }
+    public pure function good-to-know-line() -> string {
+        return @tr("Telegram recommends software encoding (x264 in OBS). Viewers are a few seconds behind. Paid comments arrive as Stars on your account, Telegram keeping its share.");
+    }
+    public pure function waiting-for-obs() -> string { return @tr("Your stream shows here once OBS is sending"); }
+    public pure function in-chat(row: LiveRow) -> string {
+        return row.viewers >= 0 ? @tr("{} · {}", line(row), viewers(row.viewers)) : line(row);
+    }
+
+    // Why a live story could not start, why a link led nowhere.
+    public pure function premium-needed() -> string { return @tr("Live stories need Telegram Premium on this account."); }
+    public pure function boost-needed() -> string { return @tr("This channel needs more boosts before it can post stories."); }
+    public pure function story-limit() -> string { return @tr("Telegram allows no more stories from this account for now."); }
+    public pure function not-live-now() -> string { return @tr("No live story there right now."); }
+}

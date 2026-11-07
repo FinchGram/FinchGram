@@ -35,6 +35,7 @@ FinchGram은 Telegram 공식 라이브러리 [TDLib](https://core.telegram.org/t
   폴더를 앱 안에서 둘러봅니다. 파일은 여러 연결로 한꺼번에 받고 멈춘 뒤에도 이어서 받으며, 사진과 동영상은 도착하면
   뷰어에서 열리고, 비밀번호는 봉인된 채 FinchGram의 데이터베이스에 보관됩니다. [docs/downloads.md](../docs/downloads.md) 참고.
 - **음악.** 내 서버를 위한 음악 플레이어: Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel(Subsonic API를 쓰는 서버라면 무엇이든)을 추가하면 그 라이브러리를 내장 플레이어로 재생합니다. 곡 사이 끊김 없음, 대기열 지원, 재생 막대는 모든 페이지 하단에; 곡은 재생하면서 캐시됩니다.
+- **라이브 방송.** Telegram 자체의 라이브를 채팅·채널·봇 옆의 보기에서: 연락처와 팔로우하는 채널의 라이브 스토리, 채팅의 라이브 방송과 영상 채팅을 댓글과 함께. OBS 등으로 송출한 방송은 앱에서 바로 재생됩니다. 라이브 스토리나 채널 라이브 방송을 시작할 수도 있으며, FinchGram이 OBS에 넣을 주소와 키를 알려 줍니다.
 - **보내기.** 사진, 동영상, 파일은 클립 메뉴에서 보내거나 창에 끌어다 놓거나 붙여 넣어 보낼 수 있습니다. 보내기 전에
   카드로 확인합니다: 설명 추가, 사진으로 또는 파일로, 최대 10개를 앨범으로 묶기, 개인 채팅에서는 자동 삭제 타이머,
   소리 없이 보내기.
@@ -112,6 +113,12 @@ FinchGram은 MCP 서버입니다. Mac의 AI 어시스턴트 앱(Claude Desktop, 
 <p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="음악 페이지"></p>
 
 보기 → 음악, 또는 도구 상자의 '음악'. 소스를 추가합니다: Subsonic API를 쓰는 내 서버(Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel 등)의 주소와 계정. 비밀번호는 FinchGram 데이터베이스에 봉인되어 보관됩니다. 앨범, 아티스트, 곡, 장르, 재생목록, 즐겨찾기를 둘러보고, 앨범을 재생하거나 섞어 듣고, 곡을 대기열에 넣습니다; 별은 서버에 다시 기록됩니다. 곡은 FinchGram 자체 HTTP 클라이언트로 `~/Documents/FinchGram/music_cache`에 받아지며 받는 대로 끊김 없이 이어서 재생됩니다. 재생 막대는 모든 페이지 하단에 남습니다. 자세한 내용은 [docs/music.md](../docs/music.md).
+
+## 라이브 방송
+
+<p align="center"><img src="../docs/screenshots/workbench-light-live.png" width="800" alt="라이브 스토리 보기"></p>
+
+왼쪽 네 번째 항목(채팅·채널·봇 옆, Terminal에서는 LIVE 또는 /live)에 지금 방송 중인 사람이 나옵니다: 연락처와 팔로우하는 채널의 라이브 스토리, 채팅의 라이브 방송과 영상 채팅. 누군가 방송 중이면 항목에 빨간 점이 붙고, 방송 중인 채팅은 채팅 목록과 헤더 아래에도 표시됩니다. 클릭하면 댓글 옆에서 방송이 재생됩니다. FinchGram에는 WebRTC가 없어서 Telegram이 스트림으로 보내는 방송, 즉 RTMP로 송출되는 모든 방송(OBS, XSplit, ffmpeg)을 재생합니다. 휴대폰 카메라로 하는 방송은 휴대폰에서 보도록 목록에 나옵니다. 무료 댓글은 여기서 쓸 수 있고, 유료 댓글은 등급별 색으로 표시되며 보내기는 당분간 Telegram 공식 앱에서 합니다. '라이브 시작'은 내 라이브 스토리나 채널 라이브 방송을 Telegram에서 시작하고 OBS에 넣을 서버와 키를 보여 줍니다. 내 방송은 호스트로 열려 시청자 수, Stars, 상위 후원자, 댓글 삭제, 종료를 다룹니다. 시청은 Telegram 공식 앱과 같이 시청자로 참여하는 것입니다. 자세한 내용은 [docs/live-streams.md](../docs/live-streams.md).
 
 ## 어떻게 만들었나
 

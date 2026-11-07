@@ -94,6 +94,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - 音乐（`src/music/`，[music.zh-Hans.md](music.zh-Hans.md)）有一个“music”线程问用户的服务器（ureq 上的 Subsonic API，阻塞式），
   一次一个请求；一个“music-covers”线程取封面，封面多而慢；每首在路上的歌一个“music-fetch”线程，用 Range 请求把歌经
   HTTPS 读进缓存，同时音乐自己的 mpv 在它自己的线程上通过 `finchgram://` 流回调读这个文件。它们都通过事件循环汇报；都不是 async。
+- 直播（`src/telegram/live.rs`，[live-streams.zh-Hans.md](live-streams.zh-Hans.md)）没有自己的线程：直播的每一秒是一个 TDLib
+  请求（getGroupCallStreamSegment），在 UI 线程上收到回答，在那里重封装（`src/player/remux.rs`）并推进内存里的管道
+  （`src/player/pipe.rs`），直播自己的 mpv 在它自己的线程上通过 `finchgram-live://` 流回调读这个管道，等还没到的字节。
 - UI 线程上的 panic 会结束整个 app：Slint 通过 `extern "C"` 函数调进 app 的代码，panic 不能穿过这样的函数，Rust 在那里
   直接 abort，macOS 的崩溃报告里只看得到 abort()，看不到原因。所以 panic 的内容和位置先写进 settings.toml 旁边的
   `panic.log`（`src/main.rs`）：从 Dock 启动的 app 没有终端可以打印。崩溃留下什么、报告怎么读，见
@@ -247,7 +250,7 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
     AI 访问和语音输入，各是百宝箱自己的一个面板：点它的卡片，或者它在栏上的按钮，右边直接是配置本身，上面有“‹ AI”回到这一类
     的卡片（ui/pages/ai-access.slint 的 AiPanel：开关、聊天范围、应用、日志；ui/pages/voice-input.slint 的 VoicePanel：
     开关，然后是密钥、语言和整理）。两个都不是设置页的一节，设置页只放 FinchGram 自己的偏好（AI 访问是维护者 2026-10-24
-    定的，语音输入是 2026-10-26：它不是 Telegram 的功能，所以是一个工具）。设计画了而 FinchGram 还没有的工具（直播、Jellyfin、关键词隐藏、定时消息）灰着列出、不能钉；Emby
+    定的，语音输入是 2026-10-26：它不是 Telegram 的功能，所以是一个工具）。设计画了而 FinchGram 还没有的工具（Jellyfin、关键词隐藏、定时消息）灰着列出、不能钉；“直播”打开聊天窗口自己的直播视图（见下），它在左侧已经有位置，也不能钉；Emby
     也是，它是维护者 2026-10-24 在 Jellyfin 旁边加的，不在设计那一轮里（片库页还没设计）；音乐（`src/music/`，
     [music.zh-Hans.md](music.zh-Hans.md)）和下载一样是一个自己的页面。底部是
     设置和我的资料（设计里灰着的“AI 设置”按钮同一天按维护者的话去掉了）。维护者 2026-10-23 定的两条照旧：截图不进百宝箱（剪刀留在输入框下面，快捷键照旧），齿轮
@@ -304,6 +307,17 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   OpenSubsonic 扩展时读出来），`fetch.rs` 把歌经 HTTPS 取进 `~/Documents/FinchGram/music_cache/`，同时
   `src/player/music.rs`——音乐自己的一个 mpv，无缝衔接——通过 `src/player/stream.rs` 边到边读；`mod.rs` 是页面状态、
   曲库、队列和每一页底部的播放条。来源连密码进数据库（`music_sources`），音量和顺序进 settings.toml。这个页面不需要账号。
+- 直播（`src/telegram/live.rs`，[live-streams.zh-Hans.md](live-streams.zh-Hans.md)；维护者 2026-11-07 的话，画布“FinchGram Live”）：
+  Telegram 自己的直播，左侧聊天、频道、机器人旁边的第四个视图，三个主题都有（Terminal 是 LIVE 和 `/live`），列表和面板在
+  ui/pages/live.slint 里画一次。谁在直播：故事列表里的直播动态（loadActiveStories、updateChatActiveStories、getStory），以及
+  聊天的视频聊天和直播（聊天的 video_chat、getGroupCall）；聊天列表给它们打标记，正在直播的聊天在标题下面有一条横栏可以打开。
+  FinchGram 没有 WebRTC：RTMP 直播以观众身份加入，带一个不含媒体的负载（和 Telegram 网页版加入时一样），然后一秒一秒地取；
+  每一秒是 Telegram 的头部加一个完整的 MP4 文件，`src/player/remux.rs` 把它们接成一路 Matroska 流，交给直播自己的 mpv
+  （`src/player/live.rs`，画进 Live.frame，就像查看器的画进 Viewer.frame）。其他直播列出来标“在手机上看”，不加入。评论是
+  群通话的消息（免费评论在这里发；付费评论只显示，发送交给 Telegram 自己的应用）；用户自己的直播以主播身份打开（观看人数、
+  Stars、打赏榜、删评论、结束）。开播把直播动态（startLiveStory）或频道直播（createVideoChat）作为 RTMP 直播开起来，并显示
+  给 OBS 用的地址和密钥（getLiveStoryRtmpUrl、getVideoChatRtmpUrl）。视图开着时会盖住打开的聊天：那里新到的消息在视图关上之前
+  不标为已看；关上视图就离开直播。
 - 语音输入（`src/speech/`，[voice-input.zh-Hans.md](voice-input.zh-Hans.md)）：百宝箱“AI”一类里的一个工具，用户打开之前是关的；
   打开时输入框里有 ✦（终端里是 `/voice`，关着的时候它打开语音输入的面板）。用户添加 AI 服务商（名字、API 格式、地址、
   密钥），任何支持其中一种格式的厂商、中转站或用户自己的服务器都行；三个功能各有自己的开关，服务商和模型都从列表里选（模型
@@ -411,6 +425,9 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
   以及在它们之间选择的路由（现在由用户自己选主要语言）。
 - **菜单栏里更生动的小鸟**。2026-11-04 列入计划，等维护者有心情再做（[menu-bar-icon.zh-Hans.md](menu-bar-icon.zh-Hans.md)）：
   有未读时菜单栏的 mark 上一个点，来消息时跳一下，归“任务栏闪烁提醒”管；现在的图标是一张静止的模板图加一个菜单。
+- **更多直播**。第一版已经做了（2026-11-07，[live-streams.zh-Hans.md](live-streams.zh-Hans.md)）：Telegram 自己的直播，只限 RTMP
+  直播。还没做：观众多时 Telegram 自动切成 stream 模式的直播（声音和画面分开送）、发付费评论、用户自带的 HLS 流、用 Mac 自己的
+  摄像头或屏幕开播。不做点对点，也不做自己的中继：一个主播对许多观众时中继就是架构本身，而 Telegram 跑着它。
 
 ## 还没定的事
 

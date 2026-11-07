@@ -242,6 +242,7 @@ pub fn open(chat_id: i64) {
         super::viewer::chat_changed();
         super::voice::chat_changed();
         super::chat_info::chat_changed();
+        super::live::chat_changed();
         if let Some(previous) = previous {
             send(json!({ "@type": "closeChat", "chat_id": previous }), |_| {});
         }
@@ -362,6 +363,7 @@ pub(super) fn close(chat_id: i64) {
         Then::Open(next) => open(next),
         Then::ShowNone => {
             actions::chat_changed(None);
+            super::live::chat_changed();
             protect_window();
             store::refresh();
         }
@@ -410,6 +412,7 @@ fn close_all() {
         send(json!({ "@type": "closeChat", "chat_id": chat_id }), |_| {});
     }
     actions::chat_changed(None);
+    super::live::chat_changed();
     protect_window();
     store::refresh();
 }
@@ -747,10 +750,11 @@ fn view_newest(chat_id: i64) {
     }
 }
 
-/// The messages are on the screen of the open chat. While the window is in the background they
-/// are not seen yet: they wait until it comes to the front, as in Telegram's own apps.
+/// The messages are on the screen of the open chat. While the window is in the background, or the
+/// live streams' view covers the chat (live.rs), they are not seen yet: they wait until it comes to
+/// the front, as in Telegram's own apps.
 pub fn view(chat_id: i64, message_ids: Vec<i64>) {
-    if !super::window_is_in_front() || !super::is_front() {
+    if !super::window_is_in_front() || !super::is_front() || super::live::covers_chat() {
         UNSEEN.with(|unseen| unseen.borrow_mut().push((super::context(), chat_id, message_ids)));
         return;
     }

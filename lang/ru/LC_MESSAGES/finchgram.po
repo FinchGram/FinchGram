@@ -3640,7 +3640,7 @@ msgstr "Пароль"
 
 #: ui/pages/downloads.slint:2750
 msgid "Key"
-msgstr "ключу"
+msgstr "Ключ"
 
 #
 #: ui/pages/downloads.slint:2755
@@ -5663,3 +5663,306 @@ msgstr "Не удаётся связаться с сервером: {0}"
 #: ui/music.slint:234
 msgid "The server did not answer the Subsonic way: {0}"
 msgstr "Сервер ответил не по протоколу Subsonic: {0}"
+
+#: ui/live.slint:135
+msgid "Live"
+msgstr "Эфиры"
+
+#: ui/live.slint:136
+msgid "Live stories"
+msgstr "Трансляции в историях"
+
+#: ui/live.slint:137
+msgid "Channels and groups"
+msgstr "Каналы и группы"
+
+#: ui/live.slint:138
+msgid "LIVE"
+msgstr "ЭФИР"
+
+#: ui/live.slint:139
+msgid "HOST"
+msgstr "ВЕДУЩИЙ"
+
+#: ui/live.slint:140
+msgid "Go live"
+msgstr "Выйти в эфир"
+
+#: ui/live.slint:142
+msgid "Live story"
+msgstr "Трансляция в истории"
+
+#: ui/live.slint:143
+msgid "Live stream"
+msgstr "Трансляция"
+
+#: ui/live.slint:144
+msgid "Video chat"
+msgstr "Видеочат"
+
+#: ui/live.slint:148
+msgid "Watch on your phone"
+msgstr "Смотрите на телефоне"
+
+#: ui/live.slint:151
+msgid "{n} watching"
+msgid_plural "{n} watching"
+msgstr[0] "{n} зритель"
+msgstr[1] "{n} зрителя"
+msgstr[2] "{n} зрителей"
+
+#: ui/live.slint:152
+msgid "Nobody you follow is live"
+msgstr "Никто из ваших контактов и каналов не в эфире"
+
+#: ui/live.slint:154
+msgid "Live stories of your contacts and of the channels you follow, and live streams in your chats, show up here while they are on."
+msgstr "Здесь появляются трансляции в историях ваших контактов и каналов, на которые вы подписаны, а также трансляции в ваших чатах, пока они идут."
+
+#: ui/live.slint:156
+msgid "Any public live story"
+msgstr "Любая публичная трансляция в истории"
+
+#: ui/live.slint:158
+msgid "Watch"
+msgstr "Смотреть"
+
+#: ui/live.slint:159
+msgid "Not a link to a live story"
+msgstr "Это не ссылка на трансляцию в истории"
+
+#: ui/live.slint:161
+msgid "Streams from a phone's camera play here once Telegram serves them as a stream; until then they are listed for the phone."
+msgstr "Трансляции с камеры телефона воспроизводятся здесь, как только Telegram начинает передавать их потоком; до тех пор их можно смотреть только на телефоне."
+
+#: ui/live.slint:163
+msgid "Live streams open here"
+msgstr "Здесь открываются трансляции"
+
+#: ui/live.slint:165
+msgid "Pick one on the left when somebody is live, paste a link to a public live story, or go live yourself: FinchGram gives you the address and key for OBS."
+msgstr "Выберите трансляцию слева, когда кто-то в эфире, вставьте ссылку на публичную трансляцию в истории или выйдите в эфир сами: FinchGram даст вам адрес и ключ для OBS."
+
+#: ui/live.slint:168
+msgid "{} · started {}"
+msgstr "{} · начало в {}"
+
+#: ui/live.slint:171
+msgid "Joining…"
+msgstr "Подключение…"
+
+#: ui/live.slint:172
+msgid "Waiting for the stream"
+msgstr "Ожидание трансляции"
+
+#: ui/live.slint:173
+msgid "The live stream has ended"
+msgstr "Трансляция завершена"
+
+#: ui/live.slint:174
+msgid "Watch this one on your phone"
+msgstr "Эту трансляцию смотрите на телефоне"
+
+#: ui/live.slint:175
+msgid "Could not join"
+msgstr "Не удалось подключиться"
+
+#: ui/live.slint:179
+msgid "Telegram sends this live stream over WebRTC, which FinchGram does not have. Streams from OBS, and live streams with a large audience, play here."
+msgstr "Telegram передаёт эту трансляцию через WebRTC, которого нет в FinchGram. Трансляции из OBS и трансляции с большой аудиторией воспроизводятся здесь."
+
+#: ui/live.slint:182
+msgid "Streamed through Telegram, a few seconds behind. Watching joins as a viewer: the host sees you among them, as in Telegram's own apps."
+msgstr "Трансляция идёт через Telegram с задержкой в несколько секунд. При просмотре вы подключаетесь как зритель: ведущий видит вас среди зрителей, как в официальных приложениях Telegram."
+
+#: ui/live.slint:185
+msgid "Link copied"
+msgstr "Ссылка скопирована"
+
+#: ui/live.slint:186
+msgid "Comments"
+msgstr "Комментарии"
+
+#: ui/live.slint:187
+msgid "Paid from ★ {}"
+msgstr "Платные от ★ {}"
+
+#: ui/live.slint:188
+msgid "Comments are off"
+msgstr "Комментарии выключены"
+
+#: ui/live.slint:189
+msgid "Say something…"
+msgstr "Напишите что-нибудь…"
+
+#: ui/live.slint:190
+msgid "Reply as the host…"
+msgstr "Ответьте как ведущий…"
+
+#: ui/live.slint:191
+msgid "Free comments show for 10 seconds. Paid ones stay pinned for longer."
+msgstr "Бесплатные комментарии видны 10 секунд. Платные остаются закреплёнными дольше."
+
+#: ui/live.slint:193
+msgid "Comments here cost ★ {} each. Paid comments are sent from Telegram's own apps for now."
+msgstr "Каждый комментарий здесь стоит ★ {}. Платные комментарии пока можно отправлять только из официальных приложений Telegram."
+
+#: ui/live.slint:195
+msgid "Your comments are free. Deleting one removes it for everyone."
+msgstr "Ваши комментарии бесплатны. Если удалить комментарий, он исчезнет у всех."
+
+#: ui/live.slint:196
+msgid "tipped ★ {}"
+msgstr "отправил(а) ★ {}"
+
+#: ui/live.slint:197
+msgid "Delete this comment"
+msgstr "Удалить этот комментарий"
+
+#: ui/live.slint:201
+msgid "End live story"
+msgstr "Завершить трансляцию"
+
+#: ui/live.slint:201
+msgid "End live stream"
+msgstr "Завершить трансляцию"
+
+#: ui/live.slint:203
+msgid "End it for everyone?"
+msgstr "Завершить для всех?"
+
+#: ui/live.slint:205
+msgid "The viewers are told it has ended, and the recording stays as a story."
+msgstr "Зрители узнают, что трансляция завершилась, а запись останется в виде истории."
+
+#: ui/live.slint:206
+msgid "The viewers are told it has ended."
+msgstr "Зрители узнают, что трансляция завершилась."
+
+#: ui/live.slint:209
+msgid "Watching now"
+msgstr "Смотрят сейчас"
+
+#: ui/live.slint:210
+msgid "Stars so far"
+msgstr "Заработано звёзд"
+
+#: ui/live.slint:211
+msgid "Top supporters"
+msgstr "Больше всех поддержали"
+
+#: ui/live.slint:212
+msgid "Comments on"
+msgstr "Комментарии включены"
+
+#: ui/live.slint:213
+msgid "What the viewers see, a few seconds late"
+msgstr "Что видят зрители, с задержкой в несколько секунд"
+
+#: ui/live.slint:217
+msgid "A live stream on Telegram, sent from OBS or any app that streams over RTMP. Your contacts see a live story in their story list; a channel's live stream shows in the channel."
+msgstr "Трансляция в Telegram из OBS или любого приложения, которое вещает по RTMP. Трансляция в истории видна вашим контактам в списке историй; трансляция канала — в самом канале."
+
+#: ui/live.slint:219
+msgid "Where"
+msgstr "Где"
+
+#: ui/live.slint:220
+msgid "My live story"
+msgstr "Моя история"
+
+#: ui/live.slint:221
+msgid "{} · live stream"
+msgstr "{} · трансляция"
+
+#: ui/live.slint:222
+msgid "Who can see it"
+msgstr "Кто может смотреть"
+
+#: ui/live.slint:225
+msgid "Close friends"
+msgstr "Близкие друзья"
+
+#: ui/live.slint:226
+msgid "Everyone"
+msgstr "Все"
+
+#: ui/live.slint:229
+msgid "The channel's name, if left empty"
+msgstr "Название канала, если оставить пустым"
+
+#: ui/live.slint:230
+msgid "Viewers can comment"
+msgstr "Зрители могут комментировать"
+
+#: ui/live.slint:231
+msgid "Paid comments from"
+msgstr "Платные комментарии от"
+
+#: ui/live.slint:232
+msgid "0 or empty: every comment is free. Yours are always free."
+msgstr "0 или пусто: все комментарии бесплатны. Ваши всегда бесплатны."
+
+#: ui/live.slint:233
+msgid "Your stream"
+msgstr "Ваша трансляция"
+
+#: ui/live.slint:235
+msgid "FinchGram does not use your camera or screen. Put these two lines into OBS (Settings › Stream › Service: Custom), then start streaming there."
+msgstr "FinchGram не использует вашу камеру или экран. Вставьте эти две строки в OBS (Настройки › Трансляция › Сервис: Настраиваемый), затем начните трансляцию там."
+
+#: ui/live.slint:242
+msgid "Get a new key"
+msgstr "Получить новый ключ"
+
+#: ui/live.slint:243
+msgid "Anyone with the key can stream in your name."
+msgstr "С этим ключом любой может вести эфир от вашего имени."
+
+#: ui/live.slint:244
+msgid "Start live story"
+msgstr "Начать трансляцию в истории"
+
+#: ui/live.slint:244
+msgid "Start live stream"
+msgstr "Начать трансляцию"
+
+#: ui/live.slint:246
+msgid "It starts at once; viewers wait for the picture until OBS connects. One live story at a time."
+msgstr "Трансляция начинается сразу; пока OBS не подключится, зрители ждут изображения. Одновременно можно вести только одну трансляцию в истории."
+
+#: ui/live.slint:248
+msgid "Good to know"
+msgstr "Полезно знать"
+
+#: ui/live.slint:250
+msgid "Telegram recommends software encoding (x264 in OBS). Viewers are a few seconds behind. Paid comments arrive as Stars on your account, Telegram keeping its share."
+msgstr "Telegram рекомендует программное кодирование (x264 в OBS). Зрители видят трансляцию с задержкой в несколько секунд. Платные комментарии приходят на ваш аккаунт звёздами, за вычетом доли Telegram."
+
+#: ui/live.slint:252
+msgid "Your stream shows here once OBS is sending"
+msgstr "Ваша трансляция появится здесь, когда OBS начнёт передачу"
+
+#: ui/live.slint:254
+msgid "{} · {}"
+msgstr "{} · {}"
+
+#: ui/live.slint:258
+msgid "Live stories need Telegram Premium on this account."
+msgstr "Для трансляций в историях нужен Telegram Premium в этом аккаунте."
+
+#: ui/live.slint:259
+msgid "This channel needs more boosts before it can post stories."
+msgstr "Этому каналу нужно больше голосов, чтобы публиковать истории."
+
+#: ui/live.slint:260
+msgid "Telegram allows no more stories from this account for now."
+msgstr "Telegram пока не позволяет этому аккаунту публиковать новые истории."
+
+#: ui/live.slint:261
+msgid "No live story there right now."
+msgstr "По этой ссылке сейчас нет трансляции."
+
+#: ui/live.slint:238
+msgid "Stream key"
+msgstr "Ключ трансляции"

@@ -5509,3 +5509,304 @@ msgstr "无法连接服务器：{0}"
 #: ui/music.slint:234
 msgid "The server did not answer the Subsonic way: {0}"
 msgstr "服务器的回答不是 Subsonic 的格式：{0}"
+
+#: ui/live.slint:135
+msgid "Live"
+msgstr "直播"
+
+#: ui/live.slint:136
+msgid "Live stories"
+msgstr "直播动态"
+
+#: ui/live.slint:137
+msgid "Channels and groups"
+msgstr "频道和群组"
+
+#: ui/live.slint:138
+msgid "LIVE"
+msgstr "直播"
+
+#: ui/live.slint:139
+msgid "HOST"
+msgstr "主播"
+
+#: ui/live.slint:140
+msgid "Go live"
+msgstr "开直播"
+
+#: ui/live.slint:142
+msgid "Live story"
+msgstr "直播动态"
+
+#: ui/live.slint:143
+msgid "Live stream"
+msgstr "直播"
+
+#: ui/live.slint:144
+msgid "Video chat"
+msgstr "语音聊天"
+
+#: ui/live.slint:148
+msgid "Watch on your phone"
+msgstr "请在手机上观看"
+
+#: ui/live.slint:151
+msgid "{n} watching"
+msgid_plural "{n} watching"
+msgstr[0] "{n} 人正在观看"
+
+#: ui/live.slint:152
+msgid "Nobody you follow is live"
+msgstr "你关注的人都没在直播"
+
+#: ui/live.slint:154
+msgid "Live stories of your contacts and of the channels you follow, and live streams in your chats, show up here while they are on."
+msgstr "联系人和你订阅的频道的直播动态，以及你聊天里的直播，进行时都会显示在这里。"
+
+#: ui/live.slint:156
+msgid "Any public live story"
+msgstr "任何公开的直播动态"
+
+#: ui/live.slint:158
+msgid "Watch"
+msgstr "观看"
+
+#: ui/live.slint:159
+msgid "Not a link to a live story"
+msgstr "这不是直播动态的链接"
+
+#: ui/live.slint:161
+msgid "Streams from a phone's camera play here once Telegram serves them as a stream; until then they are listed for the phone."
+msgstr "用手机摄像头开的直播，要等 Telegram 以直播流的形式提供，才能在这里播放；在那之前只会列出来，供你在手机上观看。"
+
+#: ui/live.slint:163
+msgid "Live streams open here"
+msgstr "直播会在这里打开"
+
+#: ui/live.slint:165
+msgid "Pick one on the left when somebody is live, paste a link to a public live story, or go live yourself: FinchGram gives you the address and key for OBS."
+msgstr "有人直播时在左边选一个，或者粘贴公开直播动态的链接，也可以自己开直播：FinchGram 会给你 OBS 要用的地址和密钥。"
+
+#: ui/live.slint:168
+msgid "{} · started {}"
+msgstr "{} · {} 开始"
+
+#: ui/live.slint:171
+msgid "Joining…"
+msgstr "正在加入…"
+
+#: ui/live.slint:172
+msgid "Waiting for the stream"
+msgstr "正在等待直播画面"
+
+#: ui/live.slint:173
+msgid "The live stream has ended"
+msgstr "直播已结束"
+
+#: ui/live.slint:174
+msgid "Watch this one on your phone"
+msgstr "这场直播请在手机上观看"
+
+#: ui/live.slint:175
+msgid "Could not join"
+msgstr "无法加入"
+
+#: ui/live.slint:179
+msgid "Telegram sends this live stream over WebRTC, which FinchGram does not have. Streams from OBS, and live streams with a large audience, play here."
+msgstr "Telegram 用 WebRTC 传送这场直播，而 FinchGram 没有 WebRTC。用 OBS 推流的直播，以及观众很多的直播，都能在这里播放。"
+
+#: ui/live.slint:182
+msgid "Streamed through Telegram, a few seconds behind. Watching joins as a viewer: the host sees you among them, as in Telegram's own apps."
+msgstr "经 Telegram 转播，会比现场晚几秒。观看时你会以观众身份加入：和在 Telegram 官方应用里一样，主播能在观众里看到你。"
+
+#: ui/live.slint:185
+msgid "Link copied"
+msgstr "链接已拷贝"
+
+#: ui/live.slint:186
+msgid "Comments"
+msgstr "评论"
+
+#: ui/live.slint:187
+msgid "Paid from ★ {}"
+msgstr "付费 ★ {} 起"
+
+#: ui/live.slint:188
+msgid "Comments are off"
+msgstr "评论已关闭"
+
+#: ui/live.slint:189
+msgid "Say something…"
+msgstr "说点什么…"
+
+#: ui/live.slint:190
+msgid "Reply as the host…"
+msgstr "以主播身份回复…"
+
+#: ui/live.slint:191
+msgid "Free comments show for 10 seconds. Paid ones stay pinned for longer."
+msgstr "免费评论显示 10 秒，付费评论置顶更久。"
+
+#: ui/live.slint:193
+msgid "Comments here cost ★ {} each. Paid comments are sent from Telegram's own apps for now."
+msgstr "这里每条评论需要 ★ {}。付费评论暂时只能在 Telegram 官方应用里发送。"
+
+#: ui/live.slint:195
+msgid "Your comments are free. Deleting one removes it for everyone."
+msgstr "你的评论免费。删除评论后，所有人都看不到它。"
+
+#: ui/live.slint:196
+msgid "tipped ★ {}"
+msgstr "打赏了 ★ {}"
+
+#: ui/live.slint:197
+msgid "Delete this comment"
+msgstr "删除这条评论"
+
+#: ui/live.slint:201
+msgid "End live story"
+msgstr "结束直播动态"
+
+#: ui/live.slint:201
+msgid "End live stream"
+msgstr "结束直播"
+
+#: ui/live.slint:203
+msgid "End it for everyone?"
+msgstr "要为所有人结束直播吗？"
+
+#: ui/live.slint:205
+msgid "The viewers are told it has ended, and the recording stays as a story."
+msgstr "观众会看到直播已结束，录像会保留为一条动态。"
+
+#: ui/live.slint:206
+msgid "The viewers are told it has ended."
+msgstr "观众会看到直播已结束。"
+
+#: ui/live.slint:209
+msgid "Watching now"
+msgstr "正在观看"
+
+#: ui/live.slint:210
+msgid "Stars so far"
+msgstr "已收到的星星"
+
+#: ui/live.slint:211
+msgid "Top supporters"
+msgstr "打赏榜"
+
+#: ui/live.slint:212
+msgid "Comments on"
+msgstr "允许评论"
+
+#: ui/live.slint:213
+msgid "What the viewers see, a few seconds late"
+msgstr "观众看到的画面，会晚几秒"
+
+#: ui/live.slint:217
+msgid "A live stream on Telegram, sent from OBS or any app that streams over RTMP. Your contacts see a live story in their story list; a channel's live stream shows in the channel."
+msgstr "在 Telegram 上直播，画面从 OBS 或任何能用 RTMP 推流的应用发出。联系人会在动态列表里看到你的直播动态；频道的直播显示在频道里。"
+
+#: ui/live.slint:219
+msgid "Where"
+msgstr "在哪里直播"
+
+#: ui/live.slint:220
+msgid "My live story"
+msgstr "我的直播动态"
+
+#: ui/live.slint:221
+msgid "{} · live stream"
+msgstr "{} · 直播"
+
+#: ui/live.slint:222
+msgid "Who can see it"
+msgstr "谁可以看到"
+
+#: ui/live.slint:225
+msgid "Close friends"
+msgstr "密友"
+
+#: ui/live.slint:226
+msgid "Everyone"
+msgstr "所有人"
+
+#: ui/live.slint:229
+msgid "The channel's name, if left empty"
+msgstr "留空则用频道名称"
+
+#: ui/live.slint:230
+msgid "Viewers can comment"
+msgstr "观众可以评论"
+
+#: ui/live.slint:231
+msgid "Paid comments from"
+msgstr "付费评论起价"
+
+#: ui/live.slint:232
+msgid "0 or empty: every comment is free. Yours are always free."
+msgstr "填 0 或留空：所有评论都免费。你自己的评论始终免费。"
+
+#: ui/live.slint:233
+msgid "Your stream"
+msgstr "推流设置"
+
+#: ui/live.slint:235
+msgid "FinchGram does not use your camera or screen. Put these two lines into OBS (Settings › Stream › Service: Custom), then start streaming there."
+msgstr "FinchGram 不会使用你的摄像头或屏幕。把下面两行填进 OBS（设置 › 直播 › 服务：自定义），然后在 OBS 里开始直播。"
+
+#: ui/live.slint:242
+msgid "Get a new key"
+msgstr "获取新密钥"
+
+#: ui/live.slint:243
+msgid "Anyone with the key can stream in your name."
+msgstr "拿到密钥的人都能以你的名义直播。"
+
+#: ui/live.slint:244
+msgid "Start live story"
+msgstr "开始直播动态"
+
+#: ui/live.slint:244
+msgid "Start live stream"
+msgstr "开始直播"
+
+#: ui/live.slint:246
+msgid "It starts at once; viewers wait for the picture until OBS connects. One live story at a time."
+msgstr "直播会立即开始；OBS 连上之前，观众要等画面出来。同一时间只能有一个直播动态。"
+
+#: ui/live.slint:248
+msgid "Good to know"
+msgstr "须知"
+
+#: ui/live.slint:250
+msgid "Telegram recommends software encoding (x264 in OBS). Viewers are a few seconds behind. Paid comments arrive as Stars on your account, Telegram keeping its share."
+msgstr "Telegram 建议用软件编码（OBS 里选 x264）。观众看到的会晚几秒。付费评论会以星星的形式进到你的账号，Telegram 会抽取它的分成。"
+
+#: ui/live.slint:252
+msgid "Your stream shows here once OBS is sending"
+msgstr "OBS 开始推流后，你的直播画面会显示在这里"
+
+#: ui/live.slint:254
+msgid "{} · {}"
+msgstr "{} · {}"
+
+#: ui/live.slint:258
+msgid "Live stories need Telegram Premium on this account."
+msgstr "这个账号需要开通 Telegram Premium 才能发布直播动态。"
+
+#: ui/live.slint:259
+msgid "This channel needs more boosts before it can post stories."
+msgstr "这个频道需要更多助推才能发布动态。"
+
+#: ui/live.slint:260
+msgid "Telegram allows no more stories from this account for now."
+msgstr "Telegram 暂时不允许这个账号再发布动态。"
+
+#: ui/live.slint:261
+msgid "No live story there right now."
+msgstr "对方现在没有直播动态。"
+
+#: ui/live.slint:238
+msgid "Stream key"
+msgstr "推流密钥"

@@ -59,6 +59,7 @@ export struct ChatRow {
     blocked: bool,          // a user we have blocked: the menu offers Unblock
     reportable: bool,       // Telegram takes reports of it
     deletable: bool,        // the chat can be deleted for us (for the other side too, when Telegram says so)
+    live: bool,             // a live story or live stream of the chat is on (src/telegram/live.rs): the LIVE mark
 }
 
 // What a chat's menu asks before doing: blocking a user, leaving a group or channel, deleting a

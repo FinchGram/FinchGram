@@ -1,5 +1,6 @@
 // Workbench's side bar: the chat tree (every folder, collapsible, like an editor's files), the
-// channels, the bots. Which one shows is chosen in the activity bar (workbench.slint).
+// channels, the bots, the live streams. Which one shows is chosen in the activity bar
+// (workbench.slint).
 import { ListView } from "std-widgets.slint";
 import { AppState, Connection, Theme } from "../state.slint";
 import { Chats, Conversation, Account, ChatRow, TreeRow, ChatKind, ChatOrder } from "../telegram.slint";
@@ -11,8 +12,10 @@ import { UnreadBadge, MentionBadge, UnreadDot } from "badges.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 import { NewChat, NewDialog, ComposeWords } from "../compose.slint";
 import { ExtraWords } from "../extras.slint";
+import { Live, LiveWords } from "../live.slint";
+import { LiveList, LiveMark } from "../pages/live.slint";
 
-export enum WorkbenchView { chats, channels, bots, filters, scheduled }
+export enum WorkbenchView { chats, channels, bots, live, filters, scheduled }
 
 // The small uppercase heading above the side bar's list, with the pencil at its end: a new group,
 // channel or chat, or a new contact (compose.slint).
@@ -254,6 +257,10 @@ component TreeLine inherits Rectangle {
                     vertical-alignment: center;
                     overflow: elide;
                 }
+                if root.item.chat.live: VerticalLayout {
+                    alignment: center;
+                    LiveMark { }
+                }
                 if root.item.chat.mention: VerticalLayout {
                     alignment: center;
                     MentionBadge { }
@@ -334,6 +341,10 @@ component ChannelLine inherits Rectangle {
                 font-weight: 600;
                 overflow: elide;
                 vertical-alignment: center;
+            }
+            if root.chat.live: VerticalLayout {
+                alignment: center;
+                LiveMark { }
             }
             if root.chat.unread > 0: VerticalLayout {
                 alignment: center;
@@ -552,6 +563,7 @@ export component WorkbenchSidebar inherits Rectangle {
         SideHeading {
             title: root.view == WorkbenchView.channels ? @tr("Channels") + " · " + Chats.channels.length
                 : root.view == WorkbenchView.bots ? @tr("Bots") + " · " + (Chats.official-bots.length + Chats.bots.length)
+                : root.view == WorkbenchView.live ? LiveWords.view() + " · " + Live.count
                 : @tr("Chats");
         }
 
@@ -628,6 +640,10 @@ export component WorkbenchSidebar inherits Rectangle {
             Footnote {
                 text: Chats.channels.length == 0 ? @tr("This account has no channels.") : @tr("Channels open in reading mode: long posts, set for reading.");
             }
+        }
+
+        if root.view == WorkbenchView.live: LiveList {
+            vertical-stretch: 1;
         }
 
         if root.view == WorkbenchView.bots: Flickable {

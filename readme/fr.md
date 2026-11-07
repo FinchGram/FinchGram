@@ -48,6 +48,7 @@ un client non officiel, qui n'est pas fait par Telegram.
   s'ouvrent dans la visionneuse dès qu'elles arrivent ; les mots de passe sont conservés scellés dans la
   base de données de FinchGram. Voir [docs/downloads.md](../docs/downloads.md).
 - **Musique.** Un lecteur de musique pour vos propres serveurs : ajoutez un serveur Navidrome, gonic, LMS, Ampache, Nextcloud Music ou Koel (tout ce qui parle l'API Subsonic) et écoutez sa bibliothèque dans le lecteur intégré, sans blanc entre les morceaux, avec une file d'attente et une barre de lecture au bas de chaque page ; les morceaux sont mis en cache pendant la lecture.
+- **Directs.** Ceux de Telegram, dans une vue à côté des discussions, des canaux et des bots : les stories en direct de vos contacts et des canaux que vous suivez, les directs et appels vidéo de vos discussions, avec leurs commentaires. Les directs envoyés depuis OBS et consorts se lisent dans l'app. Passez en direct avec une story ou le direct d'un canal : FinchGram vous donne l'adresse et la clé à mettre dans OBS.
 - **Envoi.** Photos, vidéos et fichiers depuis le trombone, en les glissant dans la fenêtre ou en les
   collant. Une carte les montre avant l'envoi : avec une légende, en photo ou en fichier, ensemble
   dans un album de dix au plus, avec un minuteur d'autodestruction dans une discussion privée, sans
@@ -168,6 +169,12 @@ autosigné est refusé : utilisez http sur le réseau local, ou un vrai certific
 <p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="La page Musique"></p>
 
 Affichage → Musique, ou Musique dans la boîte à outils. Ajoutez une source : un serveur à vous qui parle l'API Subsonic (Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel…), son adresse et votre compte ; le mot de passe est conservé scellé dans la base de données de FinchGram. Parcourez ses albums, artistes, morceaux, genres, listes de lecture et favoris, lisez un album ou mélangez-le, ajoutez des morceaux à la file ; les étoiles repartent vers le serveur. Les morceaux arrivent par le client HTTP de FinchGram dans `~/Documents/FinchGram/music_cache` et jouent à mesure qu'ils arrivent, l'un après l'autre sans blanc ; la barre de lecture reste au bas de chaque page. Détails dans [docs/music.md](../docs/music.md).
+
+## Directs
+
+<p align="center"><img src="../docs/screenshots/workbench-light-live.png" width="800" alt="Regarder une story en direct"></p>
+
+La quatrième entrée à gauche, à côté des discussions, des canaux et des bots (LIVE dans Terminal, ou /live), liste qui est en direct : les stories en direct de vos contacts et des canaux que vous suivez, et les directs et appels vidéo de vos discussions ; un point rouge s'allume sur l'entrée tant que quelqu'un l'est, et une discussion en direct le signale dans la liste et sous son en-tête. Un clic lit le direct à côté de ses commentaires. FinchGram n'a pas de WebRTC : il lit ce que Telegram envoie en flux, c'est-à-dire tout direct envoyé en RTMP (OBS, XSplit, ffmpeg) ; un direct filmé depuis un téléphone est listé pour le téléphone. Vous écrivez ici des commentaires gratuits ; les payants s'affichent dans leurs couleurs, et leur envoi reste pour l'instant aux apps de Telegram. « Passer en direct » lance votre story en direct, ou le direct d'un canal, sur Telegram et affiche le serveur et la clé pour OBS ; votre propre direct s'ouvre en tant qu'hôte, avec ses spectateurs, ses Stars, ses meilleurs soutiens, la suppression des commentaires et la fin. Regarder rejoint le direct comme spectateur, comme dans les apps de Telegram. Les détails sont dans [docs/live-streams.md](../docs/live-streams.md).
 
 ## Comment c'est fait
 

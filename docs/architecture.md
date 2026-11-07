@@ -123,6 +123,11 @@ finchgram-tdlib   a separate program next to the executable, as ffmpeg is for Co
   over HTTPS with Range requests into the cache while the music mpv reads the file through the
   `finchgram://` stream callbacks on a thread of mpv's own. All of them report through the event
   loop; nothing of it is async.
+- Live streams (`src/telegram/live.rs`, [live-streams.md](live-streams.md)) have no thread of their
+  own: each second of a stream is a TDLib request (getGroupCallStreamSegment), answered on the UI
+  thread, where it is remuxed (`src/player/remux.rs`) and pushed into a pipe in memory
+  (`src/player/pipe.rs`), which the live mpv reads through the `finchgram-live://` stream callbacks
+  on a thread of mpv's own, waiting for bytes that have not come yet.
 - A panic on the UI thread ends the app: Slint calls into the app through `extern "C"` functions,
   which no panic unwinds through, so Rust aborts there, and macOS's crash report shows abort() and
   nothing of the cause. The panic's message and place go into `panic.log` next to settings.toml
@@ -377,8 +382,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     the tidying). Neither is a section of Settings, which keeps FinchGram's own preferences (the
     maintainer's word of 2026-10-24 for AI access, and of 2026-10-26 for voice input: not
     Telegram's, so a tool). The tools the design draws
-    but FinchGram does not have (live streams, Jellyfin, keyword hiding, scheduled messages) are
-    listed faded and cannot be pinned; so is Emby, which the maintainer added beside Jellyfin on
+    but FinchGram does not have (Jellyfin, keyword hiding, scheduled messages) are
+    listed faded and cannot be pinned; Live streams opens the chat window's own view of them
+    (below), which has its place on the left already, and cannot be pinned either; so is Emby, which the maintainer added beside Jellyfin on
     2026-10-24, beyond the design's round (a media server page is still to be designed); Music
     (`src/music/`, [music.md](music.md)) is a page of its own, like Downloads. At the
     foot: the settings and the profile (the design's faded "AI settings" button left the same day,
@@ -465,6 +471,23 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   `mod.rs` is the page's state, the library, the queue and the player bar at the foot of every
   page. The sources with their passwords go into the database (`music_sources`), the volume and
   the order into settings.toml. The page needs no account.
+- Live streams (`src/telegram/live.rs`, [live-streams.md](live-streams.md); the maintainer's word
+  of 2026-11-07, the canvas "FinchGram Live"): Telegram's own, a fourth view on the left beside the
+  chats, the channels and the bots, in every theme (Terminal: LIVE, `/live`), the list and the pane
+  drawn once in ui/pages/live.slint. Who is live: the live stories of the story list
+  (loadActiveStories, updateChatActiveStories, getStory) and the chats' video chats and live
+  streams (a chat's video_chat, getGroupCall); the chat lists mark them, and a bar under a live
+  chat's header opens it. FinchGram has no WebRTC: an RTMP stream is joined as a viewer with a
+  payload that carries no media (as Telegram's web app joins one), then fetched a second at a
+  time; each second is Telegram's header and a whole MP4 file, which `src/player/remux.rs` turns
+  into one Matroska stream for an mpv of its own (`src/player/live.rs`, drawn into Live.frame as
+  the viewer's is into Viewer.frame). Any other stream is listed for the phone and not joined. The
+  comments are the group call's messages (free ones are sent here; paid ones are shown, and left
+  to Telegram's own apps); the user's own stream opens as its host (viewers, Stars, top supporters,
+  deleting comments, the end). Going live starts a live story (startLiveStory) or a channel's live
+  stream (createVideoChat) as an RTMP stream and shows the address and key for OBS
+  (getLiveStoryRtmpUrl, getVideoChatRtmpUrl). While the view is open it covers the open chat:
+  what arrives there is not marked as seen until it closes, and closing it leaves the stream.
 - Voice input (`src/speech/`, [voice-input.md](voice-input.md)): a tool of the toolbox's AI
   category, off until the user turns it on; the composer's sparkle while it is on (Terminal:
   `/voice`, which opens its panel while it is off).
@@ -630,6 +653,11 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
   it ([menu-bar-icon.md](menu-bar-icon.md)): a dot on the menu bar's mark while there are unread
   messages, and a hop when a message comes, under "Flash taskbar"; today the icon is a still
   template image with a menu.
+- **More live streams.** The first version is built (2026-11-07, [live-streams.md](live-streams.md)):
+  Telegram's own, RTMP streams only. Not yet: the streams Telegram switches to stream mode for a
+  large audience (their sound and pictures come apart), sending paid comments, streams the user
+  brings over HLS, and going live from the Mac's own camera or screen. No peer-to-peer and no relay
+  of our own: for one broadcaster and many viewers the relay is the architecture, and Telegram runs it.
 
 ## Open questions
 

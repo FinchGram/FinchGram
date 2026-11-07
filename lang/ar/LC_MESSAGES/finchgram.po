@@ -5709,3 +5709,309 @@ msgstr "تعذّر الوصول إلى الخادم: {0}"
 #: ui/music.slint:234
 msgid "The server did not answer the Subsonic way: {0}"
 msgstr "لم يجب الخادم بطريقة Subsonic: {0}"
+
+#: ui/live.slint:135
+msgid "Live"
+msgstr "مباشر"
+
+#: ui/live.slint:136
+msgid "Live stories"
+msgstr "القصص الحية"
+
+#: ui/live.slint:137
+msgid "Channels and groups"
+msgstr "القنوات والمجموعات"
+
+#: ui/live.slint:138
+msgid "LIVE"
+msgstr "مباشر"
+
+#: ui/live.slint:139
+msgid "HOST"
+msgstr "المضيف"
+
+#: ui/live.slint:140
+msgid "Go live"
+msgstr "بدء بث مباشر"
+
+#: ui/live.slint:142
+msgid "Live story"
+msgstr "قصة حية"
+
+#: ui/live.slint:143
+msgid "Live stream"
+msgstr "بث مباشر"
+
+#: ui/live.slint:144
+msgid "Video chat"
+msgstr "دردشة فيديو"
+
+#: ui/live.slint:148
+msgid "Watch on your phone"
+msgstr "شاهد على هاتفك"
+
+#: ui/live.slint:151
+msgid "{n} watching"
+msgid_plural "{n} watching"
+msgstr[0] "{n} مشاهد"
+msgstr[1] "{n} مشاهد"
+msgstr[2] "{n} مشاهدان"
+msgstr[3] "{n} مشاهدين"
+msgstr[4] "{n} مشاهدًا"
+msgstr[5] "{n} مشاهد"
+
+#: ui/live.slint:152
+msgid "Nobody you follow is live"
+msgstr "لا أحد ممن تتابعهم يبث الآن"
+
+#: ui/live.slint:154
+msgid "Live stories of your contacts and of the channels you follow, and live streams in your chats, show up here while they are on."
+msgstr "تظهر هنا القصص الحية لجهات اتصالك وللقنوات التي تتابعها، والبث المباشر في دردشاتك، ما دامت جارية."
+
+#: ui/live.slint:156
+msgid "Any public live story"
+msgstr "أي قصة حية عامة"
+
+#: ui/live.slint:158
+msgid "Watch"
+msgstr "مشاهدة"
+
+#: ui/live.slint:159
+msgid "Not a link to a live story"
+msgstr "ليس رابطًا لقصة حية"
+
+#: ui/live.slint:161
+msgid "Streams from a phone's camera play here once Telegram serves them as a stream; until then they are listed for the phone."
+msgstr "يُشغَّل هنا البث من كاميرا الهاتف بمجرد أن يقدّمه Telegram كتدفق؛ وحتى ذلك الحين يظهر في القائمة للمشاهدة على الهاتف."
+
+#: ui/live.slint:163
+msgid "Live streams open here"
+msgstr "يُفتح البث المباشر هنا"
+
+#: ui/live.slint:165
+msgid "Pick one on the left when somebody is live, paste a link to a public live story, or go live yourself: FinchGram gives you the address and key for OBS."
+msgstr "اختر بثًا من القائمة على اليسار عندما يبث أحدهم، أو الصق رابط قصة حية عامة، أو ابدأ بثًا بنفسك: يعطيك FinchGram العنوان والمفتاح لـ OBS."
+
+#: ui/live.slint:168
+msgid "{} · started {}"
+msgstr "{} · منذ {}"
+
+#: ui/live.slint:171
+msgid "Joining…"
+msgstr "جارٍ الانضمام…"
+
+#: ui/live.slint:172
+msgid "Waiting for the stream"
+msgstr "في انتظار البث"
+
+#: ui/live.slint:173
+msgid "The live stream has ended"
+msgstr "انتهى البث المباشر"
+
+#: ui/live.slint:174
+msgid "Watch this one on your phone"
+msgstr "شاهد هذا البث على هاتفك"
+
+#: ui/live.slint:175
+msgid "Could not join"
+msgstr "تعذر الانضمام"
+
+#: ui/live.slint:179
+msgid "Telegram sends this live stream over WebRTC, which FinchGram does not have. Streams from OBS, and live streams with a large audience, play here."
+msgstr "يرسل Telegram هذا البث عبر WebRTC، وهو غير متوفر في FinchGram. أما البث من OBS والبث ذو الجمهور الكبير فيُشغَّل هنا."
+
+#: ui/live.slint:182
+msgid "Streamed through Telegram, a few seconds behind. Watching joins as a viewer: the host sees you among them, as in Telegram's own apps."
+msgstr "يُبث عبر Telegram بتأخير بضع ثوانٍ. عند المشاهدة تنضم كمشاهد: يراك المضيف بين المشاهدين، كما في تطبيقات Telegram الرسمية."
+
+#: ui/live.slint:185
+msgid "Link copied"
+msgstr "تم نسخ الرابط"
+
+#: ui/live.slint:186
+msgid "Comments"
+msgstr "التعليقات"
+
+#: ui/live.slint:187
+msgid "Paid from ★ {}"
+msgstr "مدفوعة بدءًا من ★ {}"
+
+#: ui/live.slint:188
+msgid "Comments are off"
+msgstr "التعليقات غير مفعّلة"
+
+#: ui/live.slint:189
+msgid "Say something…"
+msgstr "قل شيئًا…"
+
+#: ui/live.slint:190
+msgid "Reply as the host…"
+msgstr "رد بصفتك المضيف…"
+
+#: ui/live.slint:191
+msgid "Free comments show for 10 seconds. Paid ones stay pinned for longer."
+msgstr "تظهر التعليقات المجانية لمدة 10 ثوانٍ. أما المدفوعة فتبقى مثبّتة مدة أطول."
+
+#: ui/live.slint:193
+msgid "Comments here cost ★ {} each. Paid comments are sent from Telegram's own apps for now."
+msgstr "يكلّف كل تعليق هنا ★ {}. يمكن حاليًا إرسال التعليقات المدفوعة من تطبيقات Telegram الرسمية فقط."
+
+#: ui/live.slint:195
+msgid "Your comments are free. Deleting one removes it for everyone."
+msgstr "تعليقاتك مجانية. حذف أي تعليق يزيله لدى الجميع."
+
+#: ui/live.slint:196
+msgid "tipped ★ {}"
+msgstr "تبرّع بـ ★ {}"
+
+#: ui/live.slint:197
+msgid "Delete this comment"
+msgstr "حذف هذا التعليق"
+
+#: ui/live.slint:201
+msgid "End live story"
+msgstr "إنهاء القصة الحية"
+
+#: ui/live.slint:201
+msgid "End live stream"
+msgstr "إنهاء البث المباشر"
+
+#: ui/live.slint:203
+msgid "End it for everyone?"
+msgstr "إنهاء البث لدى الجميع؟"
+
+#: ui/live.slint:205
+msgid "The viewers are told it has ended, and the recording stays as a story."
+msgstr "يُبلَّغ المشاهدون بانتهاء البث، ويبقى التسجيل كقصة."
+
+#: ui/live.slint:206
+msgid "The viewers are told it has ended."
+msgstr "يُبلَّغ المشاهدون بانتهاء البث."
+
+#: ui/live.slint:209
+msgid "Watching now"
+msgstr "يشاهدون الآن"
+
+#: ui/live.slint:210
+msgid "Stars so far"
+msgstr "النجوم حتى الآن"
+
+#: ui/live.slint:211
+msgid "Top supporters"
+msgstr "أبرز الداعمين"
+
+#: ui/live.slint:212
+msgid "Comments on"
+msgstr "التعليقات مفعّلة"
+
+#: ui/live.slint:213
+msgid "What the viewers see, a few seconds late"
+msgstr "ما يراه المشاهدون، بتأخير بضع ثوانٍ"
+
+#: ui/live.slint:217
+msgid "A live stream on Telegram, sent from OBS or any app that streams over RTMP. Your contacts see a live story in their story list; a channel's live stream shows in the channel."
+msgstr "بث مباشر على Telegram يُرسَل من OBS أو من أي تطبيق يبث عبر RTMP. تظهر القصة الحية لجهات اتصالك في قائمة القصص؛ ويظهر البث المباشر للقناة داخل القناة."
+
+#: ui/live.slint:219
+msgid "Where"
+msgstr "أين"
+
+#: ui/live.slint:220
+msgid "My live story"
+msgstr "قصتي الحية"
+
+#: ui/live.slint:221
+msgid "{} · live stream"
+msgstr "{} · بث مباشر"
+
+#: ui/live.slint:222
+msgid "Who can see it"
+msgstr "من يمكنه المشاهدة"
+
+#: ui/live.slint:225
+msgid "Close friends"
+msgstr "الأصدقاء المقربون"
+
+#: ui/live.slint:226
+msgid "Everyone"
+msgstr "الجميع"
+
+#: ui/live.slint:229
+msgid "The channel's name, if left empty"
+msgstr "اسم القناة إن تُرك فارغًا"
+
+#: ui/live.slint:230
+msgid "Viewers can comment"
+msgstr "يمكن للمشاهدين التعليق"
+
+#: ui/live.slint:231
+msgid "Paid comments from"
+msgstr "التعليقات المدفوعة بدءًا من"
+
+#: ui/live.slint:232
+msgid "0 or empty: every comment is free. Yours are always free."
+msgstr "0 أو فارغ: كل التعليقات مجانية. وتعليقاتك مجانية دائمًا."
+
+#: ui/live.slint:233
+msgid "Your stream"
+msgstr "بثك"
+
+#: ui/live.slint:235
+msgid "FinchGram does not use your camera or screen. Put these two lines into OBS (Settings › Stream › Service: Custom), then start streaming there."
+msgstr "لا يستخدم FinchGram الكاميرا أو الشاشة. أدخل هذين السطرين في OBS (الإعدادات › البث › الخدمة: مخصص)، ثم ابدأ البث من هناك."
+
+#: ui/live.slint:242
+msgid "Get a new key"
+msgstr "الحصول على مفتاح جديد"
+
+#: ui/live.slint:243
+msgid "Anyone with the key can stream in your name."
+msgstr "يمكن لأي شخص لديه المفتاح أن يبث باسمك."
+
+#: ui/live.slint:244
+msgid "Start live story"
+msgstr "بدء القصة الحية"
+
+#: ui/live.slint:244
+msgid "Start live stream"
+msgstr "بدء البث المباشر"
+
+#: ui/live.slint:246
+msgid "It starts at once; viewers wait for the picture until OBS connects. One live story at a time."
+msgstr "يبدأ البث فورًا؛ وينتظر المشاهدون ظهور الصورة حتى يتصل OBS. قصة حية واحدة فقط في كل مرة."
+
+#: ui/live.slint:248
+msgid "Good to know"
+msgstr "معلومات مفيدة"
+
+#: ui/live.slint:250
+msgid "Telegram recommends software encoding (x264 in OBS). Viewers are a few seconds behind. Paid comments arrive as Stars on your account, Telegram keeping its share."
+msgstr "يوصي Telegram بالترميز البرمجي (x264 في OBS). يتأخر المشاهدون بضع ثوانٍ عن البث. تصل التعليقات المدفوعة إلى حسابك على شكل نجوم، بعد أن يقتطع Telegram حصته."
+
+#: ui/live.slint:252
+msgid "Your stream shows here once OBS is sending"
+msgstr "سيظهر بثك هنا عندما يبدأ OBS بالإرسال"
+
+#: ui/live.slint:254
+msgid "{} · {}"
+msgstr "{} · {}"
+
+#: ui/live.slint:258
+msgid "Live stories need Telegram Premium on this account."
+msgstr "تتطلب القصص الحية اشتراك Telegram Premium على هذا الحساب."
+
+#: ui/live.slint:259
+msgid "This channel needs more boosts before it can post stories."
+msgstr "تحتاج هذه القناة إلى مزيد من التعزيزات قبل أن تتمكن من نشر القصص."
+
+#: ui/live.slint:260
+msgid "Telegram allows no more stories from this account for now."
+msgstr "لا يسمح Telegram بنشر المزيد من القصص من هذا الحساب حاليًا."
+
+#: ui/live.slint:261
+msgid "No live story there right now."
+msgstr "لا توجد قصة حية على هذا الرابط الآن."
+
+#: ui/live.slint:238
+msgid "Stream key"
+msgstr "مفتاح البث"

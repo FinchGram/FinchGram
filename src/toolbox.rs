@@ -46,7 +46,7 @@ struct Tool {
 const TOOLS: [Tool; 9] = [
     Tool { id: "downloads", category: "transfers", icon: "download-simple", sigil: "↓", key: "⌥⌘L", built: true, switchable: false, family: true },
     Tool { id: "music", category: "music", icon: "music-note", sigil: "♪", key: "⌥⌘M", built: true, switchable: false, family: false },
-    Tool { id: "live", category: "live", icon: "broadcast", sigil: "◉", key: "", built: false, switchable: false, family: false },
+    Tool { id: "live", category: "live", icon: "broadcast", sigil: "◉", key: "", built: true, switchable: false, family: false },
     Tool { id: "jellyfin", category: "jellyfin", icon: "film-reel", sigil: "▷", key: "", built: false, switchable: false, family: false },
     Tool { id: "emby", category: "emby", icon: "television", sigil: "■", key: "", built: false, switchable: false, family: false },
     Tool { id: "hiding", category: "messages", icon: "funnel-simple", sigil: "⊘", key: "", built: false, switchable: false, family: false },
@@ -132,7 +132,7 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         }
     });
     toolbox.on_pin(move |id, on| {
-        if !TOOLS.iter().any(|tool| tool.id == id.as_str() && tool.built) {
+        if !TOOLS.iter().any(|tool| tool.id == id.as_str() && tool.built && pinnable(tool.id)) {
             return;
         }
         let settings = VIEW.with(|view| view.borrow().as_ref().map(|view| view.settings.clone()));
@@ -233,9 +233,23 @@ fn open(ui: &MainWindow) {
     toolbox.set_opened(toolbox.get_opened() + 1);
 }
 
+/// Whether a tool may stand on the bar: not Live streams, which has its place on the left already,
+/// beside the chats, the channels and the bots.
+fn pinnable(id: &str) -> bool {
+    id != "live"
+}
+
 /// The tool's page comes and the toolbox shuts; a tool that is a panel of the toolbox's own (AI
 /// access, voice input) has the toolbox open at its panel instead.
 fn open_tool(ui: &MainWindow, id: &str) {
+    if id == "live" {
+        // Live streams are a view of the chat window's own (docs/live-streams.md): the theme opens it.
+        ui.global::<Toolbox>().set_open(false);
+        ui.global::<AppState>().set_page(Page::Chats);
+        let live = ui.global::<crate::Live>();
+        live.set_show_requests(live.get_show_requests() + 1);
+        return;
+    }
     if id == "downloads" || id == "music" {
         ui.global::<Toolbox>().set_open(false);
         ui.global::<AppState>().set_page(if id == "music" { Page::Music } else { Page::Downloads });
@@ -344,7 +358,7 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, panel: &str, query: 
                 icon: tool.icon.into(),
                 sigil: tool.sigil.into(),
                 key: tool.key.into(),
-                pinned: tool.built && pinned.iter().any(|id| id == tool.id),
+                pinned: tool.built && pinnable(tool.id) && pinned.iter().any(|id| id == tool.id),
                 grey: !tool.built,
                 switchable: tool.switchable,
                 family: tool.family,
@@ -379,7 +393,8 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, panel: &str, query: 
         }
         if id == "bar" {
             // Every tool that can stand on the bar, with whether it does; searching finds them by name.
-            let its: Vec<ToolRow> = tools.iter().filter(|(tool, hit)| !tool.grey && (!searching || *hit)).map(|(tool, _)| tool.clone()).collect();
+            let its: Vec<ToolRow> =
+                tools.iter().filter(|(tool, hit)| !tool.grey && pinnable(&tool.id) && (!searching || *hit)).map(|(tool, _)| tool.clone()).collect();
             let on_the_bar = tools.iter().filter(|(tool, _)| tool.pinned).count() as i32;
             let found = its.len() as i32;
             if searching {

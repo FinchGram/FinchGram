@@ -1112,12 +1112,22 @@ impl Store {
                     followup = Followup::Deleted { chat_id, message_ids };
                 }
             }
+            // Handled before the store (mod.rs): notifications, files, live streams (live.rs).
             Update::AuthorizationState { .. }
             | Update::ConnectionState { .. }
             | Update::File { .. }
             | Update::NotificationGroup { .. }
             | Update::ActiveNotifications { .. }
             | Update::UnreadMessageCount { .. }
+            | Update::ChatActiveStories { .. }
+            | Update::ChatVideoChat { .. }
+            | Update::GroupCall { .. }
+            | Update::StoryDeleted { .. }
+            | Update::NewGroupCallMessage { .. }
+            | Update::GroupCallMessagesDeleted { .. }
+            | Update::GroupCallMessageSendFailed { .. }
+            | Update::GroupCallMessageLevels { .. }
+            | Update::LiveStoryTopDonors { .. }
             | Update::Other => {}
         }
         followup
@@ -1420,6 +1430,7 @@ impl Store {
             blocked: chat.block_list == Some(api::BlockList::Main),
             reportable: chat.can_be_reported,
             deletable: chat.can_be_deleted_only_for_self || chat.can_be_deleted_for_all_users,
+            live: super::live::chat_is_live(chat.id),
         }
     }
 

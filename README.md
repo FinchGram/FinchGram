@@ -44,6 +44,7 @@ client, not made by Telegram.
   once and go on after a stop; photos and videos open in the viewer when they arrive; passwords
   stay sealed in FinchGram's database. See [docs/downloads.md](docs/downloads.md).
 - **Music.** A music player for your own servers: add a Navidrome, gonic, LMS, Ampache, Nextcloud Music or Koel server (anything that speaks the Subsonic API) and play its library in the built-in player, gapless, with a queue and a player bar at the foot of every page; songs are cached as they play.
+- **Live streams.** Telegram's own, in a view beside chats, channels and bots: your contacts' and channels' live stories, and the live streams and video chats of your chats, with their comments. Streams sent from OBS and the like play in the app. Go live with a live story or a channel's live stream: FinchGram gives you the address and key to put into OBS.
 - **Sending.** Photos, videos and files from the paperclip, by dragging them onto the window, or by
   pasting them. A card shows them before they go: with a caption, as a photo or as a file, together
   as an album of up to ten, with a self-destruct timer in a private chat, without sound.
@@ -151,6 +152,12 @@ certificate is refused: use http on the LAN, or a real certificate).
 <p align="center"><img src="docs/screenshots/workbench-light-music.png" width="800" alt="The Music page"></p>
 
 View → Music, or the toolbox's Music. Add a source: a server of your own that speaks the Subsonic API (Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel…), its address and your account; the password is kept sealed in FinchGram's database. Browse its albums, artists, songs, genres, playlists and favourites, play or shuffle an album, add songs to the queue; stars go back to the server. Songs come through FinchGram's own HTTP client into `~/Documents/FinchGram/music_cache` and play as they arrive, one after another without a gap; the player bar stays at the foot of every page. [docs/music.md](docs/music.md) has the details.
+
+## Live streams
+
+<p align="center"><img src="docs/screenshots/workbench-light-live.png" width="800" alt="Watching a live story"></p>
+
+The fourth entry on the left, beside chats, channels and bots (LIVE in Terminal, or /live), lists who is live now: the live stories of your contacts and of the channels you follow, and the live streams and video chats in your chats; a red dot sits on the entry while somebody is, and a chat that is live says so in the chat list and under its header. A click plays the stream beside its comments. FinchGram has no WebRTC: it plays what Telegram sends as a stream, which is every stream sent over RTMP (OBS, XSplit, ffmpeg); a stream from a phone's camera is listed for the phone. You write free comments here; paid ones show in their colours, and sending them is left to Telegram's own apps for now. Go live puts your live story, or a channel's live stream, on Telegram and shows the server and key for OBS; your own stream opens as its host, with its viewers, Stars, top supporters, deleting comments and the end. Watching joins the stream as a viewer, as in Telegram's own apps. [docs/live-streams.md](docs/live-streams.md) has the details.
 
 ## How it is built
 

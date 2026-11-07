@@ -101,6 +101,17 @@ things fit together.
   callbacks, because the vendored FFmpeg has no network code and keeps none. The sources with their
   passwords are in the database (`music_sources`, layout 8), each password sealed to its source;
   the volume, order, queue column and cache limit are settings.toml's `[music]`.
+- Live streams (`src/telegram/live.rs`, docs/live-streams.md; researched 2026-11-06, the
+  maintainer's word of 2026-11-07, "要不第一版把telegram自带的live stories搞出来吧 … 固定在左侧", the canvas
+  "FinchGram Live", built in every theme): Telegram's own live stories and chats' live streams, a
+  fourth view on the left beside chats, channels and bots (not a pinnable tool). No WebRTC, no
+  peer-to-peer, no relay of our own (for one broadcaster and many viewers the relay is the
+  architecture, and Telegram runs it): RTMP streams are joined as a viewer with a payload without
+  media and fetched a second at a time (getGroupCallStreamSegment: a header and a whole MP4),
+  remuxed into one Matroska stream (`src/player/remux.rs`) for an mpv of its own
+  (`src/player/live.rs`, `pipe.rs`); other streams are listed for the phone. Going live gives the
+  RTMP address and key for OBS; FinchGram captures nothing itself. Paid comments are shown, not
+  sent, for now. While the view is open the open chat is not marked as seen.
 - Backward compatibility, since 2026-10-24 (the app is public): every change to the database's
   layout, to settings.toml's keys or to the Keychain items comes with its migration. The database
   carries `PRAGMA user_version` (LAYOUT in `src/database.rs`); an older file is first copied as it

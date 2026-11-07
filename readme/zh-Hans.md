@@ -32,6 +32,7 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
   文件夹，在 app 里直接浏览。文件多连接并发下载，停了能接着来；照片和视频下完直接在查看器里打开；密码封在 FinchGram
   的数据库里。见 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
 - **音乐。** 播放你自己服务器上音乐的播放器：添加一个 Navidrome、gonic、LMS、Ampache、Nextcloud Music 或 Koel（任何会说 Subsonic API 的服务器），在内置播放器里播它的曲库，首尾无缝，有队列，播放条在每一页底部；歌边播边缓存。
+- **直播。** Telegram 自己的直播，在聊天、频道、机器人旁边单独一栏：联系人和你关注的频道的直播动态，以及你的聊天里的直播和视频聊天，连同评论。用 OBS 之类推流的直播在应用里就能看。也可以开播：自己的直播动态，或频道的直播，FinchGram 给出填进 OBS 的地址和密钥。
 - **发送。** 照片、视频和文件可以从回形针菜单发送，也可以拖进窗口或直接粘贴。发出去之前先在一张卡片里显示：
   可以加说明文字，按照片发或按文件发，最多十个合成一个相册，私聊里可以设自毁计时器，也可以静默发送。
 - **截图。** 输入栏里的剪刀或 ⌘⇧A 会定住屏幕：取一个窗口或拖一个选区，画上方框、椭圆、箭头、画笔、文字和马赛克，
@@ -104,6 +105,12 @@ FinchGram 是一个 MCP 服务端：你 Mac 上的 AI 助手应用（Claude Desk
 <p align="center"><img src="../docs/screenshots/zh-workbench-music.png" width="800" alt="音乐页面"></p>
 
 显示 → 音乐，或百宝箱里的音乐。添加一个来源：你自己的、会说 Subsonic API 的服务器（Navidrome、gonic、LMS、Ampache、Nextcloud Music、Koel……），填地址和账号；密码封存在 FinchGram 的数据库里。浏览它的专辑、艺术家、歌曲、流派、歌单和收藏，播放或随机播放一张专辑，把歌加进队列；打星会写回服务器。歌通过 FinchGram 自己的 HTTP 客户端进到 `~/Documents/FinchGram/music_cache`，边到边播，首尾无缝；播放条留在每一页的底部。详见 [docs/music.zh-Hans.md](../docs/music.zh-Hans.md)。
+
+## 直播
+
+<p align="center"><img src="../docs/screenshots/zh-workbench-live.png" width="800" alt="观看一条直播动态"></p>
+
+左侧第四个入口，在聊天、频道、机器人旁边（Terminal 里是 LIVE，或 /live），列出此刻谁在直播：联系人和你关注的频道的直播动态，以及你的聊天里的直播和视频聊天；有人在播时入口上有个红点，正在直播的聊天在聊天列表里和标题下方也会标出来。点一下，直播就在评论旁边播放。FinchGram 没有 WebRTC：它播放 Telegram 以流的形式发来的直播，也就是所有通过 RTMP 推流的直播（OBS、XSplit、ffmpeg）；手机摄像头开的直播会列出来，标着在手机上看。免费评论可以直接写；付费评论按档位上色显示，发付费评论暂时交给 Telegram 自己的应用。开播会把你的直播动态或频道直播开在 Telegram 上，并给出填进 OBS 的服务器地址和密钥；你自己的直播以主播身份打开，能看到观看人数、Stars、打赏榜，能删评论、结束直播。观看就是以观众身份加入，和 Telegram 自己的应用一样。详见 [docs/live-streams.zh-Hans.md](../docs/live-streams.zh-Hans.md)。
 
 ## 怎么做的
 

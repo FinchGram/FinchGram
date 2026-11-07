@@ -43,6 +43,7 @@ mod drafts;
 mod errors;
 mod files;
 mod global_search;
+mod live;
 mod login;
 mod manage;
 mod new_chat;
@@ -231,6 +232,7 @@ pub fn start(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     contacts::connect(ui);
     viewer::connect_round(ui);
     voice::connect(ui);
+    live::connect(ui);
     {
         use slint::winit_030::{EventResult, WinitWindowAccessor, winit::event::WindowEvent};
         ui.window().on_winit_window_event(|_, event| {
@@ -512,6 +514,7 @@ fn leave_front() {
     share::forget();
     admin::forget();
     password::forget();
+    live::forget();
 }
 
 /// The account's store shows: what follows its open chat follows it anew (as when a chat opens,
@@ -527,6 +530,7 @@ fn enter_front() {
         drafts::entering(open);
     }
     conversation::window_came_to_front();
+    live::refresh();
 }
 
 /// A slot without an account in it (adding was given up; empty on disk at the start) is of no use
@@ -730,6 +734,10 @@ fn on_update(update: Update) {
     if let Update::MessageSendSucceeded { message, old_message_id } | Update::MessageSendFailed { message, old_message_id } = &update {
         tools::message_sent(*old_message_id, message, matches!(update, Update::MessageSendSucceeded { .. }));
     }
+    // A chat's video chat or live stream comes with the chat (live.rs).
+    if let Update::NewChat { chat } = &update {
+        live::new_chat(chat.id, chat.video_chat.as_ref());
+    }
     match update {
         Update::AuthorizationState { authorization_state } => on_authorization_state(authorization_state),
         Update::ConnectionState { state } => set_connection(context(), connection(state)),
@@ -757,6 +765,15 @@ fn on_update(update: Update) {
         Update::UnreadMessageCount { chat_list, unread_count, unread_unmuted_count } => {
             notifications::unread_changed(chat_list, unread_count, unread_unmuted_count)
         }
+        Update::ChatActiveStories { active_stories } => live::active_stories(&active_stories),
+        Update::ChatVideoChat { chat_id, video_chat } => live::video_chat(chat_id, &video_chat),
+        Update::GroupCall { group_call } => live::group_call(&group_call),
+        Update::StoryDeleted { story_poster_chat_id, story_id } => live::story_deleted(story_poster_chat_id, story_id),
+        Update::NewGroupCallMessage { group_call_id, message } => live::comment(group_call_id, &message),
+        Update::GroupCallMessagesDeleted { group_call_id, message_ids } => live::comments_deleted(group_call_id, &message_ids),
+        Update::GroupCallMessageSendFailed { group_call_id, error, .. } => live::comment_failed(group_call_id, &error),
+        Update::GroupCallMessageLevels { levels } => live::levels(&levels),
+        Update::LiveStoryTopDonors { group_call_id, donors } => live::donors(group_call_id, &donors),
         update => match store::with(|store| store.apply(update)) {
             Some(Followup::LoadFolders) => chats::load_folders(),
             Some(Followup::View { chat_id, message_ids }) => conversation::view(chat_id, message_ids),
@@ -831,6 +848,7 @@ fn on_authorization_state(state: AuthorizationState) {
             account::load();
             chats::load_main_list();
             notifications::start();
+            live::account_ready();
             if is_front() {
                 online::set_ready(true);
             }
@@ -855,6 +873,7 @@ fn on_authorization_state(state: AuthorizationState) {
             contacts::forget();
             files::forget();
             notifications::forget();
+            live::forget_account();
             if is_front() {
                 global_search::forget();
                 new_chat::forget();

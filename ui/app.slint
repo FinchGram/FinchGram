@@ -28,6 +28,7 @@ import { VendorDialog } from "pages/voice-input.slint";
 import { DownloadsPage } from "pages/downloads.slint";
 import { Music, MusicWords, SourceRow, SourceStatus, MusicSection, MusicView, MusicState, AlbumRow, TrackRow, NameRow, QueueRow, MusicFormError, SourceTest, RepeatMode } from "music.slint";
 import { MusicPage } from "pages/music.slint";
+import { Live, LiveWords, LiveRow, LiveKind, LiveState, LiveComment, LiveDonor, LiveTarget } from "live.slint";
 
 // Re-exported so Rust can reach them through slint::include_modules!().
 export { ShotWindow, Shot, ShotTool, ShotCursor, ShotBox, ShotPath, ShotText, ShotCell, Screenshot }
@@ -45,6 +46,7 @@ export { ChatManage, ManageWords, ManageLook, ManagePage, UsernameCheck, ManageT
 export { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow }
 export { Voice, VoiceWords, VoiceState, VoiceProblem, KeyCheck, VoiceLanguage, VoiceLanguageRow, VoiceVendorRow, VoiceItem, ModelsState, Recorder, RecordStage }
 export { Music, MusicWords, SourceRow, SourceStatus, MusicSection, MusicView, MusicState, AlbumRow, TrackRow, NameRow, QueueRow, MusicFormError, SourceTest, RepeatMode }
+export { Live, LiveWords, LiveRow, LiveKind, LiveState, LiveComment, LiveDonor, LiveTarget }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";

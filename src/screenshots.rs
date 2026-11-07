@@ -71,6 +71,17 @@ fn save(window: &MinimalSoftwareWindow, name: &str) {
         .expect("write the screenshot");
 }
 
+/// Draw the window without keeping the picture: what an `if` shows is made, or let go, only when
+/// the window is drawn (a page left and come back to between two pictures).
+fn settle(window: &MinimalSoftwareWindow) {
+    let mut pixels = vec![slint::Rgb8Pixel::default(); (WIDTH * (HEIGHT + MENU_BAR)) as usize];
+    slint::platform::update_timers_and_animations();
+    window.request_redraw();
+    window.draw_if_needed(|renderer| {
+        renderer.render(&mut pixels, WIDTH as usize);
+    });
+}
+
 /// Draw the screenshot tool's overlay, which has no menu bar, into `name`.png.
 fn save_overlay(window: &MinimalSoftwareWindow, name: &str) {
     let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target").join("screenshots");
@@ -238,6 +249,7 @@ fn chat(id: &str, title: &str, kind: ChatKind, time: Moment, sender: &str, text:
         blocked: false,
         reportable: kind != ChatKind::Saved,
         deletable: kind != ChatKind::Saved,
+        live: false,
     }
 }
 
@@ -2732,6 +2744,7 @@ fn screenshots() {
             ui.global::<Viewer>().set_open(false);
             open_news(&ui);
             save(&window, &name("channel"));
+            live(&ui, &window, &name);
             app.set_page(Page::Settings);
             for (section, section_name) in
                 [(SettingsSection::General, "general"), (SettingsSection::Notifications, "notifications"), (SettingsSection::Appearance, "appearance"), (SettingsSection::Language, "language"), (SettingsSection::About, "about")]
@@ -2828,6 +2841,7 @@ fn screenshots() {
     save(&window, "zh-workbench-music");
     ui.global::<crate::Music>().set_playing(false);
     app.set_page(Page::Chats);
+    live(&ui, &window, &|page: &str| format!("zh-workbench-{page}"));
 
     // The other languages, light, Workbench: the chat window and Settings → General, every script
     // set in the bundled fonts.
@@ -2846,6 +2860,157 @@ fn screenshots() {
         app.set_page(Page::Chats);
     }
     let _ = login.get_countries().row_count();
+}
+
+/// A live stream in the list (the canvas "FinchGram Live" of 2026-11-07).
+#[allow(clippy::too_many_arguments)]
+fn live_row(id: &str, name: &str, kind: LiveKind, title: &str, viewers: i32, playable: bool, mine: bool, hue: Option<f32>) -> LiveRow {
+    LiveRow {
+        id: id.into(),
+        chat_id: id.into(),
+        kind,
+        name: name.into(),
+        title: title.into(),
+        initial: name.chars().next().map(String::from).unwrap_or_default().into(),
+        picture: hue.map(portrait).unwrap_or_default(),
+        has_picture: hue.is_some(),
+        chat_kind: if kind == LiveKind::Story { ChatKind::User } else { ChatKind::Channel },
+        viewers,
+        playable,
+        mine,
+    }
+}
+
+fn live_comment(id: i32, name: &str, text: &str, stars: i32, tier: i32, host: bool) -> LiveComment {
+    LiveComment {
+        id,
+        name: name.into(),
+        initial: name.chars().next().map(String::from).unwrap_or_default().into(),
+        text: text.into(),
+        stars,
+        tier,
+        host,
+        mine: name == "Zhou Ye",
+        deletable: true,
+    }
+}
+
+/// The live streams' view (the canvas "FinchGram Live"): who is live, nobody open; a live story
+/// playing with its comments; one sent over WebRTC only, for the phone; the user's own, as its
+/// host, and the question before ending it; the form to go live, for the story and for a channel.
+fn live(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    // The theme's window is there to be asked for the view (a page just come back to is made at
+    // the next drawing).
+    settle(window);
+    let live = ui.global::<Live>();
+    let mika = live_row("story:1:1", "Mika", LiveKind::Story, "Keycap casting night", 1284, true, false, None);
+    live.set_stories(model(vec![
+        mika.clone(),
+        live_row("story:2:1", "Alex Chen", LiveKind::Story, "", 36, true, false, Some(150.0)),
+        live_row("story:3:1", "Lin Xia", LiveKind::Story, "", 4, false, false, Some(230.0)),
+    ]));
+    live.set_chats(model(vec![live_row("chat:4", "Tech Morning", LiveKind::Stream, "Morning briefing", 3902, true, false, Some(80.0))]));
+    live.set_count(4);
+    live.set_show_requests(live.get_show_requests() + 1);
+    save(window, &name("live-empty"));
+
+    live.set_open_id(mika.id.clone());
+    live.set_open(mika);
+    live.set_state(LiveState::Playing);
+    live.set_frame(gradient(1280, 720, 20.0));
+    live.set_viewers(1284);
+    live.set_since("14:02".into());
+    live.set_link("https://t.me/mika_keys/s/live".into());
+    live.set_comments_on(true);
+    live.set_can_comment(true);
+    live.set_paid_from(0);
+    live.set_comments(model(vec![
+        live_comment(1, "Jie", "That lube station is so clean", 0, 0, false),
+        live_comment(2, "Priya", "What camera is this?", 0, 0, false),
+        live_comment(3, "Mika", "Sony ZV-E10 into OBS on the Mac, nothing fancy", 0, 0, true),
+        live_comment(4, "Sam", "First time catching this live, hello from Lisbon", 50, 1, false),
+        live_comment(5, "Alex Chen", "", 100, 1, false),
+        live_comment(6, "Omar", "Do a batch in that smoked grey, I will buy two", 500, 2, false),
+        live_comment(7, "Dan", "Brass switch plate when?? Take my Stars already", 2000, 3, false),
+        live_comment(8, "Zhou Ye", "Still have the dark set from the group buy, Mika?", 0, 0, false),
+    ]));
+    save(window, &name("live"));
+
+    live.set_open_id("story:3:1".into());
+    live.set_open(live_row("story:3:1", "Lin Xia", LiveKind::Story, "", 4, false, false, Some(230.0)));
+    live.set_state(LiveState::Phone);
+    live.set_comments(model(Vec::new()));
+    save(window, &name("live-phone"));
+
+    let own = live_row("story:5:1", "Zhou Ye", LiveKind::Story, "", 1284, true, true, Some(330.0));
+    live.set_open_id(own.id.clone());
+    live.set_open(own);
+    live.set_state(LiveState::Playing);
+    live.set_hosting(true);
+    live.set_stars_total(2450);
+    live.set_donors(model(vec![
+        LiveDonor { name: "Dan".into(), stars: 2000, tier: 3 },
+        LiveDonor { name: "Omar".into(), stars: 500, tier: 2 },
+        LiveDonor { name: "Alex".into(), stars: 100, tier: 1 },
+    ]));
+    live.set_comments(model(vec![
+        live_comment(1, "Jie", "That lube station is so clean", 0, 0, false),
+        live_comment(2, "keycapdeals_bot", "CHEAP KEYCAPS 70% OFF click here", 0, 0, false),
+        live_comment(3, "Zhou Ye", "Sony ZV-E10 into OBS on the Mac, nothing fancy", 0, 0, true),
+        live_comment(4, "Omar", "Do a batch in that smoked grey, I will buy two", 500, 2, false),
+        live_comment(5, "Dan", "Brass switch plate when?? Take my Stars already", 2000, 3, false),
+    ]));
+    save(window, &name("live-host"));
+    live.set_ending(true);
+    save(window, &name("live-end"));
+    live.set_ending(false);
+    live.set_hosting(false);
+
+    live.set_open_id(SharedString::new());
+    live.set_state(LiveState::Idle);
+    live.set_targets(model(vec![
+        LiveTarget { chat_id: "5".into(), name: "Zhou Ye".into(), initial: "Z".into(), picture: portrait(330.0), has_picture: true, story: true },
+        LiveTarget { chat_id: "4".into(), name: "Tech Morning".into(), initial: "T".into(), picture: portrait(80.0), has_picture: true, story: false },
+    ]));
+    live.set_target(0);
+    live.set_privacy(0);
+    live.set_allow_comments(true);
+    live.set_paid_minimum("50".into());
+    live.set_server("rtmps://dc4-1.rtmp.t.me/s/".into());
+    live.set_key("1817394650:pUdlD9qmHn3x-fYk2Lr8wQ".into());
+    live.set_going_live(true);
+    save(window, &name("live-go"));
+    live.set_target(1);
+    live.set_key_shown(true);
+    save(window, &name("live-go-channel"));
+    live.set_going_live(false);
+    live.set_key_shown(false);
+    live.set_target(0);
+    live.set_frame(Image::default());
+    live.set_comments(model(Vec::new()));
+
+    // Back in the chats (the theme's window anew: its view is the chats), Tech Morning live: its
+    // LIVE mark in the lists, and the bar under its header.
+    let app = ui.global::<AppState>();
+    app.set_page(Page::Settings);
+    settle(window);
+    app.set_page(Page::Chats);
+    settle(window);
+    let chats = ui.global::<Chats>();
+    let marked = |rows: ModelRc<ChatRow>| model(rows.iter().map(|row| ChatRow { live: row.id.as_str() == "news", ..row }).collect());
+    let (list, channels) = (chats.get_list(), chats.get_channels());
+    let tree: Vec<TreeRow> = chats.get_tree().iter().map(|row| TreeRow { chat: ChatRow { live: row.chat.id.as_str() == "news", ..row.chat.clone() }, ..row }).collect();
+    chats.set_list(marked(list.clone()));
+    chats.set_channels(marked(channels.clone()));
+    chats.set_tree(model(tree.clone()));
+    open_news(ui);
+    live.set_in_chat(live_row("chat:4", "Tech Morning", LiveKind::Stream, "Morning briefing", 3902, true, false, Some(80.0)));
+    save(window, &name("chats-live"));
+    live.set_in_chat(LiveRow::default());
+    live.set_count(0);
+    chats.set_list(list);
+    chats.set_channels(channels);
+    chats.set_tree(model(tree.into_iter().map(|row| TreeRow { chat: ChatRow { live: false, ..row.chat.clone() }, ..row }).collect()));
 }
 
 /// The Music page as it is looked at (the canvas "FinchGram 音乐" of 2026-10-31): two Subsonic

@@ -174,6 +174,29 @@ pub enum Update {
     #[serde(rename = "updateUnreadMessageCount")]
     UnreadMessageCount { chat_list: ChatList, unread_count: i32, unread_unmuted_count: i32 },
 
+    /// Live streams (live.rs): a chat's active stories changed (a live story among them, or no
+    /// longer), a chat's video chat began or ended, a group call changed, a story went.
+    #[serde(rename = "updateChatActiveStories")]
+    ChatActiveStories { active_stories: ChatActiveStories },
+    #[serde(rename = "updateChatVideoChat")]
+    ChatVideoChat { chat_id: i64, video_chat: VideoChat },
+    #[serde(rename = "updateGroupCall")]
+    GroupCall { group_call: GroupCall },
+    #[serde(rename = "updateStoryDeleted")]
+    StoryDeleted { story_poster_chat_id: i64, story_id: i32 },
+    /// A comment in a group call joined, one taken back, one of ours that did not go.
+    #[serde(rename = "updateNewGroupCallMessage")]
+    NewGroupCallMessage { group_call_id: i32, message: GroupCallMessage },
+    #[serde(rename = "updateGroupCallMessagesDeleted")]
+    GroupCallMessagesDeleted { group_call_id: i32, message_ids: Vec<i32> },
+    #[serde(rename = "updateGroupCallMessageSendFailed")]
+    GroupCallMessageSendFailed { group_call_id: i32, error: TdError },
+    /// The levels of paid comments in live stories: how many Stars make each.
+    #[serde(rename = "updateGroupCallMessageLevels")]
+    GroupCallMessageLevels { levels: Vec<GroupCallMessageLevel> },
+    #[serde(rename = "updateLiveStoryTopDonors")]
+    LiveStoryTopDonors { group_call_id: i32, donors: LiveStoryDonors },
+
     #[serde(other)]
     Other,
 }
@@ -704,6 +727,9 @@ pub struct Chat {
     /// People waiting for an administrator's approval to join (manage.rs); none for no requests.
     #[serde(default)]
     pub pending_join_requests: Option<ChatJoinRequestsInfo>,
+    /// Its video chat or live stream, when one is on or planned (live.rs).
+    #[serde(default)]
+    pub video_chat: Option<VideoChat>,
 }
 
 /// Requests to join a chat that wait for approval (chatJoinRequestsInfo).
@@ -2103,6 +2129,175 @@ pub struct Text {
     pub text: String,
 }
 
+// ---- live streams (live.rs) -----------------------------------------------------------------------
+
+/// A chat's video chat or live stream: 0 for none.
+#[derive(Debug, Clone, PartialEq, Default, Deserialize)]
+pub struct VideoChat {
+    pub group_call_id: i32,
+    #[serde(default)]
+    pub has_participants: bool,
+}
+
+/// The active stories a chat posted, in the order they were posted.
+#[derive(Debug, Clone, Deserialize)]
+pub struct ChatActiveStories {
+    pub chat_id: i64,
+    #[serde(default)]
+    pub stories: Vec<StoryInfo>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct StoryInfo {
+    pub story_id: i32,
+    pub date: i32,
+    #[serde(default)]
+    pub is_live: bool,
+}
+
+/// A story, as far as a live one needs it.
+#[derive(Debug, Clone, Deserialize)]
+pub struct Story {
+    pub id: i32,
+    pub date: i32,
+    pub content: StoryContent,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum StoryContent {
+    #[serde(rename = "storyContentLive")]
+    Live { group_call_id: i32, is_rtmp_stream: bool },
+    #[serde(other)]
+    Other,
+}
+
+/// A group call: a video chat, a live stream, a live story.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct GroupCall {
+    pub id: i32,
+    #[serde(default)]
+    pub title: String,
+    /// The Stars each comment costs (live stories); 0: free.
+    #[serde(default)]
+    pub paid_message_star_count: i64,
+    pub is_active: bool,
+    #[serde(default)]
+    pub is_rtmp_stream: bool,
+    #[serde(default)]
+    pub need_rejoin: bool,
+    #[serde(default)]
+    pub can_be_managed: bool,
+    #[serde(default)]
+    pub participant_count: i32,
+    #[serde(default)]
+    pub can_send_messages: bool,
+    #[serde(default)]
+    pub are_messages_allowed: bool,
+}
+
+/// A comment in a group call. Empty words with Stars: a tip, in a live story.
+#[derive(Debug, Clone, Deserialize)]
+pub struct GroupCallMessage {
+    pub message_id: i32,
+    pub sender_id: MessageSender,
+    pub text: FormattedText,
+    #[serde(default)]
+    pub paid_message_star_count: i64,
+    #[serde(default)]
+    pub is_from_owner: bool,
+    #[serde(default)]
+    pub can_be_deleted: bool,
+}
+
+/// How many Stars make a paid comment of a level (it stays pinned longer, in its colours).
+#[derive(Debug, Clone, Deserialize)]
+pub struct GroupCallMessageLevel {
+    pub min_star_count: i64,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct LiveStoryDonors {
+    pub total_star_count: i64,
+    #[serde(default)]
+    pub top_donors: Vec<PaidReactor>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct PaidReactor {
+    #[serde(default)]
+    pub sender_id: Option<MessageSender>,
+    pub star_count: i64,
+    #[serde(default)]
+    pub is_anonymous: bool,
+}
+
+/// What a group call has to stream: its channels, each up to a point in time.
+#[derive(Debug, Clone, Deserialize)]
+pub struct GroupCallStreams {
+    #[serde(default)]
+    pub streams: Vec<GroupCallStream>,
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct GroupCallStream {
+    pub channel_id: i32,
+    pub scale: i32,
+    /// Where the stream ends now: Unix time in milliseconds.
+    pub time_offset: i64,
+}
+
+/// Where OBS sends a stream, and with what key.
+#[derive(Debug, Clone, Deserialize)]
+pub struct RtmpUrl {
+    pub url: String,
+    pub stream_key: String,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct GroupCallId {
+    pub id: i32,
+}
+
+/// What starting a live story came to: the story, or why not.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "@type")]
+pub enum StartLiveStoryResult {
+    #[serde(rename = "startLiveStoryResultOk")]
+    Ok { story: Story },
+    #[serde(rename = "startLiveStoryResultFail")]
+    Fail { error_type: CanPostStoryResult },
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(tag = "@type")]
+pub enum CanPostStoryResult {
+    #[serde(rename = "canPostStoryResultPremiumNeeded")]
+    PremiumNeeded,
+    #[serde(rename = "canPostStoryResultBoostNeeded")]
+    BoostNeeded,
+    #[serde(rename = "canPostStoryResultActiveStoryLimitExceeded")]
+    ActiveStoryLimitExceeded,
+    #[serde(rename = "canPostStoryResultWeeklyLimitExceeded")]
+    WeeklyLimitExceeded { retry_after: i32 },
+    #[serde(rename = "canPostStoryResultMonthlyLimitExceeded")]
+    MonthlyLimitExceeded { retry_after: i32 },
+    #[serde(rename = "canPostStoryResultLiveStoryIsActive")]
+    LiveStoryIsActive { story_id: i32 },
+    #[serde(other)]
+    Other,
+}
+
+/// What a t.me link leads to, as far as a live story needs it.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(tag = "@type")]
+pub enum InternalLinkType {
+    #[serde(rename = "internalLinkTypeLiveStory")]
+    LiveStory { story_poster_username: String },
+    #[serde(other)]
+    Other,
+}
+
 /// TDLib's JSON writes int64 values as strings: they do not fit in a JavaScript number.
 mod int64 {
     use serde::{Deserialize, Deserializer};
@@ -2115,6 +2310,55 @@ mod int64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn live_streams_are_read_as_tdlib_writes_them() {
+        let update: Update = serde_json::from_str(
+            r#"{"@type":"updateChatActiveStories","active_stories":{"@type":"chatActiveStories","chat_id":777,"list":{"@type":"storyListMain"},"order":"55","can_be_archived":true,"max_read_story_id":3,"stories":[{"@type":"storyInfo","story_id":3,"date":1762500000,"is_for_close_friends":false,"is_live":false},{"@type":"storyInfo","story_id":4,"date":1762500100,"is_for_close_friends":false,"is_live":true}]}}"#,
+        )
+        .unwrap();
+        let Update::ChatActiveStories { active_stories } = update else { panic!("not read") };
+        assert_eq!(active_stories.chat_id, 777);
+        assert!(active_stories.stories[1].is_live && !active_stories.stories[0].is_live);
+
+        let update: Update = serde_json::from_str(
+            r#"{"@type":"updateGroupCall","group_call":{"@type":"groupCall","id":12,"unique_id":"9223372036854775000","title":"","invite_link":"","paid_message_star_count":50,"scheduled_start_date":0,"enabled_start_notification":false,"is_active":true,"is_video_chat":false,"is_live_story":true,"is_rtmp_stream":true,"is_joined":true,"need_rejoin":false,"is_owned":false,"can_be_managed":false,"participant_count":1284,"has_hidden_listeners":false,"loaded_all_participants":false,"message_sender_id":{"@type":"messageSenderUser","user_id":5},"recent_speakers":[],"is_my_video_enabled":false,"is_my_video_paused":false,"can_enable_video":false,"mute_new_participants":false,"can_toggle_mute_new_participants":false,"can_send_messages":true,"are_messages_allowed":true,"can_toggle_are_messages_allowed":false,"can_delete_messages":false,"record_duration":0,"is_video_recorded":false,"duration":0}}"#,
+        )
+        .unwrap();
+        let Update::GroupCall { group_call } = update else { panic!("not read") };
+        assert_eq!((group_call.id, group_call.participant_count, group_call.paid_message_star_count), (12, 1284, 50));
+        assert!(group_call.is_rtmp_stream && group_call.are_messages_allowed);
+
+        let update: Update = serde_json::from_str(
+            r#"{"@type":"updateNewGroupCallMessage","group_call_id":12,"message":{"@type":"groupCallMessage","message_id":7,"sender_id":{"@type":"messageSenderUser","user_id":9},"date":1762500200,"text":{"@type":"formattedText","text":"","entities":[]},"paid_message_star_count":100,"is_from_owner":false,"can_be_deleted":true}}"#,
+        )
+        .unwrap();
+        let Update::NewGroupCallMessage { group_call_id: 12, message } = update else { panic!("not read") };
+        assert_eq!((message.message_id, message.paid_message_star_count), (7, 100));
+        assert!(message.text.text.is_empty(), "a tip");
+
+        let story: Story = serde_json::from_str(
+            r#"{"@type":"story","id":4,"poster_chat_id":777,"poster_id":null,"date":1762500100,"content":{"@type":"storyContentLive","group_call_id":12,"is_rtmp_stream":true},"caption":{"@type":"formattedText","text":"","entities":[]}}"#,
+        )
+        .unwrap();
+        assert_eq!(story.content, StoryContent::Live { group_call_id: 12, is_rtmp_stream: true });
+
+        let streams: GroupCallStreams = serde_json::from_str(
+            r#"{"@type":"groupCallStreams","streams":[{"@type":"groupCallStream","channel_id":1,"scale":0,"time_offset":1762500300123}]}"#,
+        )
+        .unwrap();
+        assert_eq!(streams.streams[0], GroupCallStream { channel_id: 1, scale: 0, time_offset: 1_762_500_300_123 });
+
+        let result: StartLiveStoryResult = serde_json::from_str(
+            r#"{"@type":"startLiveStoryResultFail","error_type":{"@type":"canPostStoryResultLiveStoryIsActive","story_id":4}}"#,
+        )
+        .unwrap();
+        assert!(matches!(result, StartLiveStoryResult::Fail { error_type: CanPostStoryResult::LiveStoryIsActive { story_id: 4 } }));
+
+        // A chat without a video chat says so with an empty one.
+        let chat: VideoChat = serde_json::from_str(r#"{"@type":"videoChat","group_call_id":0,"has_participants":false,"default_participant_id":null}"#).unwrap();
+        assert_eq!(chat.group_call_id, 0);
+    }
 
     #[test]
     fn waiting_for_a_password_says_whether_it_can_be_recovered() {

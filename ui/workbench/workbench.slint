@@ -1,6 +1,6 @@
 // Workbench (the design's "1c 工作台", the default theme): an editor's layout. A title bar with the
 // account and a search box, an activity bar, the side bar with the chat tree, the chats as tabs,
-// and a status bar.
+// and a status bar. The live streams' view (pages/live.slint) takes the tabs' place while it is open.
 import { AppState, Page, Connection } from "../state.slint";
 import { Toolbox, ToolboxWords } from "../toolbox.slint";
 import { WorkbenchToolbox } from "toolbox.slint";
@@ -19,6 +19,8 @@ import { WorkbenchActions } from "actions.slint";
 import { WorkbenchAttachments } from "attachments.slint";
 import { WorkbenchCompose } from "compose.slint";
 import { Search, ComposeWords } from "../compose.slint";
+import { Live, LiveWords } from "../live.slint";
+import { LivePane } from "../pages/live.slint";
 
 // The search box in the title bar: a click, or ⌘K, opens the search over everything (compose.slint).
 component SearchBox inherits Rectangle {
@@ -150,6 +152,7 @@ component ActivityButton inherits Rectangle {
     in property <bool> active;
     in property <bool> enabled: true;
     in property <bool> dot;
+    in property <color> dot-color: P.accent;
     in property <int> count;        // a number at the corner, for downloads on their way
     callback activated();
     width: 40px;
@@ -189,7 +192,7 @@ component ActivityButton inherits Rectangle {
         width: 7px;
         height: 7px;
         border-radius: 3.5px;
-        background: P.accent;
+        background: root.dot-color;
         border-width: 2px;
         border-color: P.chrome;
     }
@@ -478,6 +481,20 @@ component ActivityBar inherits Rectangle {
                 }
             }
         }
+        // Live streams: a red dot while somebody is.
+        HorizontalLayout {
+            alignment: center;
+            ActivityButton {
+                icon: "broadcast";
+                active: root.view == WorkbenchView.live;
+                dot: root.view != WorkbenchView.live && Live.count > 0;
+                dot-color: P.danger;
+                activated => {
+                    Toolbox.close();
+                    root.view = WorkbenchView.live;
+                }
+            }
+        }
     }
 
     VerticalLayout {
@@ -605,6 +622,18 @@ export component WorkbenchWindow inherits Rectangle {
     property <WorkbenchView> view: WorkbenchView.chats;
     background: P.bg;
 
+    // The live streams' view covers the open chat while it is open; the toolbox's Live opens it.
+    init => {
+        Live.show(false);
+    }
+    changed view => {
+        Live.show(root.view == WorkbenchView.live);
+    }
+    property <int> live-requests: Live.show-requests;
+    changed live-requests => {
+        root.view = WorkbenchView.live;
+    }
+
     VerticalLayout {
         TitleBar { }
         HorizontalLayout {
@@ -612,7 +641,7 @@ export component WorkbenchWindow inherits Rectangle {
             ActivityBar {
                 view <=> root.view;
             }
-            WorkbenchSidebar {
+            sidebar := WorkbenchSidebar {
                 view: root.view;
                 room: root.width - 52px - 388px - (Conversation.chat-id != "" && ChatInfo.open ? 300px : 0px);
             }
@@ -627,6 +656,14 @@ export component WorkbenchWindow inherits Rectangle {
         // What plays, while something does (ui/music.slint), above the status bar.
         if Music.playing: PlayerBar { }
         StatusBar { }
+    }
+
+    // The live streams' pane, in the place of the tabs and the info panel.
+    if root.view == WorkbenchView.live: LivePane {
+        x: 52px + sidebar.width + 1px;
+        y: 40px;
+        width: root.width - self.x;
+        height: root.height - 40px - 24px - (Music.playing ? 60px : 0px);
     }
 
     // The toolbox, over the sidebar and the messages, under the title bar and above the player

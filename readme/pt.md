@@ -44,6 +44,7 @@ próprio Telegram, e respeita os [termos da API do Telegram](https://core.telegr
   visualizador quando chegam; as senhas ficam seladas no banco de dados do FinchGram. Veja
   [docs/downloads.md](../docs/downloads.md).
 - **Música.** Um player de música para os seus próprios servidores: adicione um servidor Navidrome, gonic, LMS, Ampache, Nextcloud Music ou Koel (qualquer um que fale a API Subsonic) e toque a biblioteca dele no player embutido, sem intervalo entre faixas, com fila e uma barra de reprodução no pé de cada página; as músicas ficam em cache enquanto tocam.
+- **Transmissões ao vivo.** As do próprio Telegram, numa vista ao lado de conversas, canais e bots: os stories ao vivo dos seus contatos e dos canais que você segue, as transmissões e videochamadas das suas conversas, com os comentários. Transmissões enviadas pelo OBS e afins tocam no app. Entre ao vivo com um story ao vivo ou a transmissão de um canal: o FinchGram mostra o endereço e a chave para o OBS.
 - **Envio.** Fotos, vídeos e arquivos pelo clipe, arrastando-os para a janela ou colando-os. Um cartão
   os mostra antes de ir: com legenda, como foto ou como arquivo, juntos num álbum de até dez, com
   timer de autodestruição num chat privado, sem som.
@@ -154,6 +155,12 @@ certificado de verdade).
 <p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="A página de Música"></p>
 
 Exibir → Música, ou Música na caixa de ferramentas. Adicione uma fonte: um servidor seu que fale a API Subsonic (Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel…), o endereço dele e a sua conta; a senha fica selada no banco de dados do FinchGram. Percorra álbuns, artistas, músicas, gêneros, playlists e favoritos, toque um álbum ou embaralhe-o, ponha músicas na fila; as estrelas voltam para o servidor. As músicas chegam pelo cliente HTTP do próprio FinchGram em `~/Documents/FinchGram/music_cache` e tocam enquanto chegam, uma após a outra sem intervalo; a barra de reprodução fica no pé de cada página. Detalhes em [docs/music.md](../docs/music.md).
+
+## Transmissões ao vivo
+
+<p align="center"><img src="../docs/screenshots/workbench-light-live.png" width="800" alt="Assistindo a um story ao vivo"></p>
+
+A quarta entrada à esquerda, ao lado de conversas, canais e bots (LIVE no Terminal, ou /live), mostra quem está ao vivo: os stories ao vivo dos seus contatos e dos canais que você segue, e as transmissões e videochamadas das suas conversas; um ponto vermelho aparece na entrada enquanto alguém está, e uma conversa ao vivo mostra isso na lista e embaixo do cabeçalho. Um clique toca a transmissão ao lado dos comentários. O FinchGram não tem WebRTC: ele toca o que o Telegram envia como fluxo, ou seja, toda transmissão enviada por RTMP (OBS, XSplit, ffmpeg); uma transmissão da câmera de um celular aparece na lista para ver no celular. Comentários gratuitos são escritos aqui; os pagos aparecem nas suas cores, e enviá-los fica por enquanto com os apps do Telegram. "Entrar ao vivo" inicia o seu story ao vivo, ou a transmissão de um canal, no Telegram e mostra o servidor e a chave para o OBS; a sua própria transmissão abre como anfitrião, com espectadores, Stars, maiores apoiadores, exclusão de comentários e o encerramento. Assistir entra na transmissão como espectador, como nos apps do Telegram. Os detalhes estão em [docs/live-streams.md](../docs/live-streams.md).
 
 ## Como é feito
 

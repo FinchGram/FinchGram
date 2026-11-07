@@ -45,6 +45,7 @@ Es un cliente no oficial, no hecho por Telegram.
   abren en el visor cuando llegan; las contraseñas se guardan selladas en la base de datos de FinchGram. Ver
   [docs/downloads.md](../docs/downloads.md).
 - **Música.** Un reproductor de música para tus propios servidores: añade un servidor Navidrome, gonic, LMS, Ampache, Nextcloud Music o Koel (cualquiera que hable la API de Subsonic) y reproduce su biblioteca en el reproductor integrado, sin cortes entre canciones, con cola y una barra de reproducción al pie de cada página; las canciones se guardan en caché mientras suenan.
+- **Directos.** Los de Telegram, en una vista junto a chats, canales y bots: las historias en directo de tus contactos y de los canales que sigues, los directos y videochats de tus chats, con sus comentarios. Los directos enviados desde OBS y similares se reproducen en la app. Emite tú mismo con una historia en directo o el directo de un canal: FinchGram te da la dirección y la clave para OBS.
 - **Envío.** Fotos, vídeos y archivos desde el clip, arrastrándolos a la ventana o pegándolos. Una
   tarjeta los muestra antes de enviarlos: con un pie, como foto o como archivo, juntos en un álbum de
   hasta diez, con temporizador de autodestrucción en un chat privado, sin sonido.
@@ -155,6 +156,12 @@ aún falta (un certificado autofirmado se rechaza: usa http en la red local o un
 <p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="La página de Música"></p>
 
 Ver → Música, o Música en la caja de herramientas. Añade una fuente: un servidor tuyo que hable la API de Subsonic (Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel…), su dirección y tu cuenta; la contraseña se guarda sellada en la base de datos de FinchGram. Recorre sus álbumes, artistas, canciones, géneros, listas y favoritos, reproduce un álbum o mézclalo, añade canciones a la cola; las estrellas vuelven al servidor. Las canciones llegan por el cliente HTTP propio de FinchGram a `~/Documents/FinchGram/music_cache` y suenan mientras llegan, una tras otra sin cortes; la barra de reproducción queda al pie de cada página. Detalles en [docs/music.md](../docs/music.md).
+
+## Directos
+
+<p align="center"><img src="../docs/screenshots/workbench-light-live.png" width="800" alt="Viendo una historia en directo"></p>
+
+La cuarta entrada a la izquierda, junto a chats, canales y bots (LIVE en Terminal, o /live), muestra quién está en directo: las historias en directo de tus contactos y de los canales que sigues, y los directos y videochats de tus chats; un punto rojo aparece en la entrada mientras alguien lo está, y un chat en directo lo indica en la lista de chats y bajo su cabecera. Un clic reproduce el directo junto a sus comentarios. FinchGram no tiene WebRTC: reproduce lo que Telegram envía como flujo, es decir, todo directo enviado por RTMP (OBS, XSplit, ffmpeg); un directo desde la cámara de un móvil aparece en la lista para verlo en el móvil. Los comentarios gratuitos se escriben aquí; los de pago se muestran con sus colores, y enviarlos queda por ahora para las apps de Telegram. «Emitir en directo» inicia tu historia en directo, o el directo de un canal, en Telegram y muestra el servidor y la clave para OBS; tu propio directo se abre como anfitrión, con sus espectadores, sus Stars, los principales apoyos, borrar comentarios y el final. Ver un directo te une a él como espectador, como en las apps de Telegram. Los detalles están en [docs/live-streams.md](../docs/live-streams.md).
 
 ## Cómo está hecho
 

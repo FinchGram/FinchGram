@@ -5557,3 +5557,304 @@ msgstr "서버에 연결할 수 없습니다: {0}"
 #: ui/music.slint:234
 msgid "The server did not answer the Subsonic way: {0}"
 msgstr "서버 응답이 Subsonic 형식이 아닙니다: {0}"
+
+#: ui/live.slint:135
+msgid "Live"
+msgstr "라이브"
+
+#: ui/live.slint:136
+msgid "Live stories"
+msgstr "라이브 스토리"
+
+#: ui/live.slint:137
+msgid "Channels and groups"
+msgstr "채널 및 그룹"
+
+#: ui/live.slint:138
+msgid "LIVE"
+msgstr "라이브"
+
+#: ui/live.slint:139
+msgid "HOST"
+msgstr "호스트"
+
+#: ui/live.slint:140
+msgid "Go live"
+msgstr "라이브 방송하기"
+
+#: ui/live.slint:142
+msgid "Live story"
+msgstr "라이브 스토리"
+
+#: ui/live.slint:143
+msgid "Live stream"
+msgstr "라이브 방송"
+
+#: ui/live.slint:144
+msgid "Video chat"
+msgstr "영상 채팅"
+
+#: ui/live.slint:148
+msgid "Watch on your phone"
+msgstr "휴대폰에서 시청"
+
+#: ui/live.slint:151
+msgid "{n} watching"
+msgid_plural "{n} watching"
+msgstr[0] "{n}명 시청 중"
+
+#: ui/live.slint:152
+msgid "Nobody you follow is live"
+msgstr "라이브 중인 팔로우 계정이 없습니다"
+
+#: ui/live.slint:154
+msgid "Live stories of your contacts and of the channels you follow, and live streams in your chats, show up here while they are on."
+msgstr "연락처와 구독 중인 채널의 라이브 스토리, 그리고 채팅의 라이브 방송이 진행되는 동안 여기에 표시됩니다."
+
+#: ui/live.slint:156
+msgid "Any public live story"
+msgstr "어떤 공개 라이브 스토리든"
+
+#: ui/live.slint:158
+msgid "Watch"
+msgstr "시청"
+
+#: ui/live.slint:159
+msgid "Not a link to a live story"
+msgstr "라이브 스토리 링크가 아닙니다"
+
+#: ui/live.slint:161
+msgid "Streams from a phone's camera play here once Telegram serves them as a stream; until then they are listed for the phone."
+msgstr "휴대폰 카메라로 하는 방송은 Telegram이 스트림으로 제공하게 되면 여기에서 재생됩니다. 그전까지는 휴대폰에서 시청하도록 목록에 표시됩니다."
+
+#: ui/live.slint:163
+msgid "Live streams open here"
+msgstr "라이브 방송은 여기에서 열립니다"
+
+#: ui/live.slint:165
+msgid "Pick one on the left when somebody is live, paste a link to a public live story, or go live yourself: FinchGram gives you the address and key for OBS."
+msgstr "누군가 라이브 중이면 왼쪽에서 고르거나, 공개 라이브 스토리 링크를 붙여 넣거나, 직접 라이브 방송을 시작하세요. FinchGram이 OBS에 넣을 주소와 키를 알려 줍니다."
+
+#: ui/live.slint:168
+msgid "{} · started {}"
+msgstr "{} · {}에 시작"
+
+#: ui/live.slint:171
+msgid "Joining…"
+msgstr "참여하는 중…"
+
+#: ui/live.slint:172
+msgid "Waiting for the stream"
+msgstr "방송을 기다리는 중"
+
+#: ui/live.slint:173
+msgid "The live stream has ended"
+msgstr "라이브 방송이 끝났습니다"
+
+#: ui/live.slint:174
+msgid "Watch this one on your phone"
+msgstr "이 방송은 휴대폰에서 시청하세요"
+
+#: ui/live.slint:175
+msgid "Could not join"
+msgstr "참여할 수 없습니다"
+
+#: ui/live.slint:179
+msgid "Telegram sends this live stream over WebRTC, which FinchGram does not have. Streams from OBS, and live streams with a large audience, play here."
+msgstr "Telegram은 이 라이브 방송을 WebRTC로 보내는데, FinchGram은 이를 지원하지 않습니다. OBS에서 보내는 방송과 시청자가 많은 라이브 방송은 여기에서 재생됩니다."
+
+#: ui/live.slint:182
+msgid "Streamed through Telegram, a few seconds behind. Watching joins as a viewer: the host sees you among them, as in Telegram's own apps."
+msgstr "Telegram을 거쳐 몇 초 늦게 전송됩니다. 시청하면 시청자로 참여하므로, Telegram 공식 앱과 마찬가지로 호스트에게 내가 시청자 중 한 명으로 보입니다."
+
+#: ui/live.slint:185
+msgid "Link copied"
+msgstr "링크를 복사했습니다"
+
+#: ui/live.slint:186
+msgid "Comments"
+msgstr "댓글"
+
+#: ui/live.slint:187
+msgid "Paid from ★ {}"
+msgstr "유료: ★ {}부터"
+
+#: ui/live.slint:188
+msgid "Comments are off"
+msgstr "댓글이 꺼져 있습니다"
+
+#: ui/live.slint:189
+msgid "Say something…"
+msgstr "댓글 입력…"
+
+#: ui/live.slint:190
+msgid "Reply as the host…"
+msgstr "호스트로 답글 달기…"
+
+#: ui/live.slint:191
+msgid "Free comments show for 10 seconds. Paid ones stay pinned for longer."
+msgstr "무료 댓글은 10초 동안 표시됩니다. 유료 댓글은 더 오래 고정됩니다."
+
+#: ui/live.slint:193
+msgid "Comments here cost ★ {} each. Paid comments are sent from Telegram's own apps for now."
+msgstr "여기서는 댓글 1개당 ★ {}입니다. 유료 댓글은 당분간 Telegram 공식 앱에서 보내야 합니다."
+
+#: ui/live.slint:195
+msgid "Your comments are free. Deleting one removes it for everyone."
+msgstr "내 댓글은 무료입니다. 댓글을 삭제하면 모두에게서 사라집니다."
+
+#: ui/live.slint:196
+msgid "tipped ★ {}"
+msgstr "★ {} 후원"
+
+#: ui/live.slint:197
+msgid "Delete this comment"
+msgstr "이 댓글 삭제"
+
+#: ui/live.slint:201
+msgid "End live story"
+msgstr "라이브 스토리 종료"
+
+#: ui/live.slint:201
+msgid "End live stream"
+msgstr "라이브 방송 종료"
+
+#: ui/live.slint:203
+msgid "End it for everyone?"
+msgstr "모두에게 방송을 종료하시겠습니까?"
+
+#: ui/live.slint:205
+msgid "The viewers are told it has ended, and the recording stays as a story."
+msgstr "시청자에게 종료되었음을 알리고, 녹화본은 스토리로 남습니다."
+
+#: ui/live.slint:206
+msgid "The viewers are told it has ended."
+msgstr "시청자에게 종료되었음을 알립니다."
+
+#: ui/live.slint:209
+msgid "Watching now"
+msgstr "지금 시청 중"
+
+#: ui/live.slint:210
+msgid "Stars so far"
+msgstr "지금까지 받은 스타"
+
+#: ui/live.slint:211
+msgid "Top supporters"
+msgstr "상위 후원자"
+
+#: ui/live.slint:212
+msgid "Comments on"
+msgstr "댓글 허용"
+
+#: ui/live.slint:213
+msgid "What the viewers see, a few seconds late"
+msgstr "시청자가 몇 초 늦게 보는 화면"
+
+#: ui/live.slint:217
+msgid "A live stream on Telegram, sent from OBS or any app that streams over RTMP. Your contacts see a live story in their story list; a channel's live stream shows in the channel."
+msgstr "OBS 등 RTMP로 송출할 수 있는 앱에서 보내는 Telegram 라이브 방송입니다. 라이브 스토리는 내 연락처에 있는 사람들의 스토리 목록에 표시되고, 채널의 라이브 방송은 해당 채널에 표시됩니다."
+
+#: ui/live.slint:219
+msgid "Where"
+msgstr "방송할 곳"
+
+#: ui/live.slint:220
+msgid "My live story"
+msgstr "내 라이브 스토리"
+
+#: ui/live.slint:221
+msgid "{} · live stream"
+msgstr "{} · 라이브 방송"
+
+#: ui/live.slint:222
+msgid "Who can see it"
+msgstr "공개 범위"
+
+#: ui/live.slint:225
+msgid "Close friends"
+msgstr "친한 친구"
+
+#: ui/live.slint:226
+msgid "Everyone"
+msgstr "모두"
+
+#: ui/live.slint:229
+msgid "The channel's name, if left empty"
+msgstr "비워 두면 채널 이름"
+
+#: ui/live.slint:230
+msgid "Viewers can comment"
+msgstr "시청자 댓글 허용"
+
+#: ui/live.slint:231
+msgid "Paid comments from"
+msgstr "유료 댓글 최소 금액"
+
+#: ui/live.slint:232
+msgid "0 or empty: every comment is free. Yours are always free."
+msgstr "0이거나 비워 두면 모든 댓글이 무료입니다. 내 댓글은 항상 무료입니다."
+
+#: ui/live.slint:233
+msgid "Your stream"
+msgstr "내 방송"
+
+#: ui/live.slint:235
+msgid "FinchGram does not use your camera or screen. Put these two lines into OBS (Settings › Stream › Service: Custom), then start streaming there."
+msgstr "FinchGram은 카메라나 화면을 사용하지 않습니다. 이 두 줄을 OBS(설정 › 방송 › 서비스: 사용자 지정)에 넣은 다음, 거기에서 방송을 시작하세요."
+
+#: ui/live.slint:242
+msgid "Get a new key"
+msgstr "새 키 받기"
+
+#: ui/live.slint:243
+msgid "Anyone with the key can stream in your name."
+msgstr "키가 있는 사람은 누구나 내 이름으로 방송할 수 있습니다."
+
+#: ui/live.slint:244
+msgid "Start live story"
+msgstr "라이브 스토리 시작"
+
+#: ui/live.slint:244
+msgid "Start live stream"
+msgstr "라이브 방송 시작"
+
+#: ui/live.slint:246
+msgid "It starts at once; viewers wait for the picture until OBS connects. One live story at a time."
+msgstr "바로 시작됩니다. OBS가 연결될 때까지 시청자는 화면을 기다리게 됩니다. 라이브 스토리는 한 번에 하나만 할 수 있습니다."
+
+#: ui/live.slint:248
+msgid "Good to know"
+msgstr "참고 사항"
+
+#: ui/live.slint:250
+msgid "Telegram recommends software encoding (x264 in OBS). Viewers are a few seconds behind. Paid comments arrive as Stars on your account, Telegram keeping its share."
+msgstr "Telegram은 소프트웨어 인코딩(OBS에서는 x264)을 권장합니다. 시청자 화면은 몇 초 늦습니다. 유료 댓글은 Telegram 몫을 뺀 스타로 내 계정에 들어옵니다."
+
+#: ui/live.slint:252
+msgid "Your stream shows here once OBS is sending"
+msgstr "OBS에서 송출을 시작하면 여기에 방송이 표시됩니다"
+
+#: ui/live.slint:254
+msgid "{} · {}"
+msgstr "{} · {}"
+
+#: ui/live.slint:258
+msgid "Live stories need Telegram Premium on this account."
+msgstr "라이브 스토리를 시작하려면 이 계정에 Telegram Premium이 필요합니다."
+
+#: ui/live.slint:259
+msgid "This channel needs more boosts before it can post stories."
+msgstr "이 채널이 스토리를 게시하려면 부스트가 더 필요합니다."
+
+#: ui/live.slint:260
+msgid "Telegram allows no more stories from this account for now."
+msgstr "Telegram 제한으로 지금은 이 계정에서 스토리를 더 게시할 수 없습니다."
+
+#: ui/live.slint:261
+msgid "No live story there right now."
+msgstr "지금 그곳에는 라이브 스토리가 없습니다."
+
+#: ui/live.slint:238
+msgid "Stream key"
+msgstr "스트림 키"
