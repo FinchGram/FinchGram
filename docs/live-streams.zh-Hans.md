@@ -233,8 +233,9 @@ Design 画布 **FinchGram Live** 上，https://claude.ai/artifact/A9SvXayxBSKmxC
 
 1. 观众多时 Telegram 切成 stream 模式的直播要不要也播（声音和每个发布者的画面分开送，要自己对齐）。
 2. 付费评论和打赏要不要从 FinchGram 发（花账号里已有的 Stars；档位来自 TDLib），每次发之前怎么问。
-3. 以后版本的源：公共电视目录在运行时按用户的选择去拉（iptv-org 的链接、Free-TV），还是只收用户自带的列表；Owncast 和
-   PeerTube 的目录。
+3. 以后版本的源。2026-11-07 起它们有了一份目录契约（[live-directory.zh-Hans.md](live-directory.zh-Hans.md)）：只读的 JSON，列
+   Telegram 创作者、Owncast 和 PeerTube 服务器、广播机构的流，维护者用 Hono 提供，谁都可以 fork 自己运行；FinchGram 还没有读它。
+   还没定的：用户自带的列表要不要也收。
 4. 要不要从 Mac 自己的摄像头或屏幕开播，这决定要不要做 RTMP 客户端和 VideoToolbox 那条流水线。
 
 ## 为此读过的

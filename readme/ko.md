@@ -120,6 +120,8 @@ FinchGram은 MCP 서버입니다. Mac의 AI 어시스턴트 앱(Claude Desktop, 
 
 왼쪽 네 번째 항목(채팅·채널·봇 옆, Terminal에서는 LIVE 또는 /live)에 지금 방송 중인 사람이 나옵니다: 연락처와 팔로우하는 채널의 라이브 스토리, 채팅의 라이브 방송과 영상 채팅. 누군가 방송 중이면 항목에 빨간 점이 붙고, 방송 중인 채팅은 채팅 목록과 헤더 아래에도 표시됩니다. 클릭하면 댓글 옆에서 방송이 재생됩니다. FinchGram에는 WebRTC가 없어서 Telegram이 스트림으로 보내는 방송, 즉 RTMP로 송출되는 모든 방송(OBS, XSplit, ffmpeg)을 재생합니다. 휴대폰 카메라로 하는 방송은 휴대폰에서 보도록 목록에 나옵니다. 무료 댓글은 여기서 쓸 수 있고, 유료 댓글은 등급별 색으로 표시되며 보내기는 당분간 Telegram 공식 앱에서 합니다. '라이브 시작'은 내 라이브 스토리나 채널 라이브 방송을 Telegram에서 시작하고 OBS에 넣을 서버와 키를 보여 줍니다. 내 방송은 호스트로 열려 시청자 수, Stars, 상위 후원자, 댓글 삭제, 종료를 다룹니다. 시청은 Telegram 공식 앱과 같이 시청자로 참여하는 것입니다. 자세한 내용은 [docs/live-streams.md](../docs/live-streams.md).
 
+라이브 디렉터리: [docs/live-directory.md](../docs/live-directory.md)는 라이브 소스를 모은 공개 디렉터리의 계약입니다(라이브를 하는 Telegram 채널과 크리에이터, Owncast와 PeerTube 서버, 방송사의 스트림). [OpenAPI 파일](../docs/live-directory.openapi.yaml)이 함께 있는 읽기 전용 JSON으로, 누구나 제공할 수 있고 풀 리퀘스트로 바꾸거나 포크해서 직접 운영할 수 있습니다. FinchGram은 아직 읽지 않습니다.
+
 ## 어떻게 만들었나
 
 앱은 껍데기입니다. Telegram 자체는 TDLib이 맡고, 실행 파일 옆에서 별도 프로그램 `finchgram-tdlib`으로 실행됩니다. 이것은

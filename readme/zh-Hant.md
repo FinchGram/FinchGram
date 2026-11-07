@@ -113,6 +113,8 @@ FinchGram 是一個 MCP 伺服器：你 Mac 上的 AI 助理應用程式（Claud
 
 左側第四個入口，在聊天、頻道、機器人旁邊（Terminal 裡是 LIVE，或 /live），列出此刻誰在直播：聯絡人和你關注的頻道的直播動態，以及你的聊天裡的直播和視訊聊天；有人在播時入口上有個紅點，正在直播的聊天在聊天列表裡和標題下方也會標出來。點一下，直播就在留言旁邊播放。FinchGram 沒有 WebRTC：它播放 Telegram 以串流形式送來的直播，也就是所有透過 RTMP 推流的直播（OBS、XSplit、ffmpeg）；手機鏡頭開的直播會列出來，標著在手機上看。免費留言可以直接寫；付費留言依級別上色顯示，發付費留言暫時交給 Telegram 自己的應用程式。開播會把你的直播動態或頻道直播開在 Telegram 上，並給出填進 OBS 的伺服器位址和金鑰；你自己的直播以主播身分開啟，能看到觀看人數、Stars、贊助榜，能刪留言、結束直播。觀看就是以觀眾身分加入，和 Telegram 自己的應用程式一樣。詳見 [docs/live-streams.md](../docs/live-streams.md)。
 
+直播目錄：[docs/live-directory.md](../docs/live-directory.md) 是一個開放的直播源目錄的契約（會開直播的 Telegram 頻道和創作者、Owncast 和 PeerTube 伺服器、廣播機構的串流），附 [OpenAPI 檔案](../docs/live-directory.openapi.yaml)：唯讀的 JSON，誰都可以提供，可以用 PR 修改，也可以 fork 走自己架設。FinchGram 還沒有讀取它。
+
 ## 怎麼做的
 
 app 是一個外殼。Telegram 本身交給 TDLib，它作為一個獨立程式跑在執行檔旁邊：`finchgram-tdlib`，由本倉庫從鎖定的

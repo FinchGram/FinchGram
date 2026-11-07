@@ -159,6 +159,8 @@ View → Music, or the toolbox's Music. Add a source: a server of your own that 
 
 The fourth entry on the left, beside chats, channels and bots (LIVE in Terminal, or /live), lists who is live now: the live stories of your contacts and of the channels you follow, and the live streams and video chats in your chats; a red dot sits on the entry while somebody is, and a chat that is live says so in the chat list and under its header. A click plays the stream beside its comments. FinchGram has no WebRTC: it plays what Telegram sends as a stream, which is every stream sent over RTMP (OBS, XSplit, ffmpeg); a stream from a phone's camera is listed for the phone. You write free comments here; paid ones show in their colours, and sending them is left to Telegram's own apps for now. Go live puts your live story, or a channel's live stream, on Telegram and shows the server and key for OBS; your own stream opens as its host, with its viewers, Stars, top supporters, deleting comments and the end. Watching joins the stream as a viewer, as in Telegram's own apps. [docs/live-streams.md](docs/live-streams.md) has the details.
 
+Live directories: [docs/live-directory.md](docs/live-directory.md) is the contract of an open directory of live sources (Telegram channels and creators who go live, Owncast and PeerTube servers, broadcasters' streams), with its [OpenAPI file](docs/live-directory.openapi.yaml): read-only JSON that anyone can serve, change by pull request, or fork and run as their own. FinchGram does not read one yet.
+
 ## How it is built
 
 The app is a shell. Telegram itself is done by TDLib, running as a separate program next to the

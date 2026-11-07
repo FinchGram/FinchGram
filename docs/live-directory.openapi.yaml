@@ -1,0 +1,414 @@
+# The live directory's contract (docs/live-directory.md), in OpenAPI 3.1. A server that answers
+# these paths with these shapes is a directory FinchGram can read; its components are JSON Schema
+# 2020-12, for validating a directory's data files too.
+openapi: 3.1.0
+info:
+  title: FinchGram live directory
+  version: "1"
+  summary: Which live sources are worth watching.
+  description: |
+    A directory lists live sources: Telegram channels and people who go live, Owncast servers,
+    PeerTube channels, streams broadcasters offer over HLS. It does not say who is live now; a
+    client asks each source. Read-only, HTTPS, JSON in UTF-8, no authentication and no cookies.
+    Within v1, fields are only added: a client ignores fields it does not know and skips sources
+    of a kind it does not know.
+servers:
+  - url: https://live.example.com
+    description: Any server that answers this contract; the paths are under /v1/.
+paths:
+  /v1/directory:
+    get:
+      operationId: getDirectory
+      summary: What the directory is.
+      parameters:
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: The directory.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+            X-Directory-Signature: { $ref: "#/components/headers/DirectorySignature" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Directory" }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Internal" }
+  /v1/categories:
+    get:
+      operationId: listCategories
+      summary: The categories its sources are filed under.
+      parameters:
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: The categories.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+            X-Directory-Signature: { $ref: "#/components/headers/DirectorySignature" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CategoryList" }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Internal" }
+  /v1/sources:
+    get:
+      operationId: listSources
+      summary: The sources, in the directory's own order.
+      parameters:
+        - $ref: "#/components/parameters/Kind"
+        - $ref: "#/components/parameters/Category"
+        - $ref: "#/components/parameters/Language"
+        - $ref: "#/components/parameters/Country"
+        - $ref: "#/components/parameters/Q"
+        - $ref: "#/components/parameters/IncludeNsfw"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Cursor"
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: A page of sources.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+            X-Directory-Signature: { $ref: "#/components/headers/DirectorySignature" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SourcePage" }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Internal" }
+  /v1/sources/{id}:
+    get:
+      operationId: getSource
+      summary: One source.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { $ref: "#/components/schemas/Id" }
+        - $ref: "#/components/parameters/IfNoneMatch"
+      responses:
+        "200":
+          description: The source.
+          headers:
+            ETag: { $ref: "#/components/headers/ETag" }
+            Cache-Control: { $ref: "#/components/headers/CacheControl" }
+            X-Directory-Signature: { $ref: "#/components/headers/DirectorySignature" }
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Source" }
+        "304": { $ref: "#/components/responses/NotModified" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+        "500": { $ref: "#/components/responses/Internal" }
+components:
+  parameters:
+    Kind:
+      name: kind
+      in: query
+      description: Only sources of these kinds; the parameter may repeat.
+      style: form
+      explode: true
+      schema:
+        type: array
+        items: { $ref: "#/components/schemas/Kind" }
+    Category:
+      name: category
+      in: query
+      description: Only sources filed under this category.
+      schema: { $ref: "#/components/schemas/Id" }
+    Language:
+      name: language
+      in: query
+      description: Only sources in this language.
+      schema: { $ref: "#/components/schemas/Language" }
+    Country:
+      name: country
+      in: query
+      description: Only sources of this country.
+      schema: { $ref: "#/components/schemas/Country" }
+    Q:
+      name: q
+      in: query
+      description: Words in the name or the description, in any case.
+      schema: { type: string, minLength: 1, maxLength: 100 }
+    IncludeNsfw:
+      name: include_nsfw
+      in: query
+      description: Include sources marked NSFW; they are left out otherwise.
+      schema: { type: boolean, default: false }
+    Limit:
+      name: limit
+      in: query
+      description: How many sources at most.
+      schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
+    Cursor:
+      name: cursor
+      in: query
+      description: Where the previous page ended (its `next`); opaque.
+      schema: { type: string, maxLength: 200 }
+    IfNoneMatch:
+      name: If-None-Match
+      in: header
+      description: The ETag of the answer the client has; 304 when nothing changed.
+      schema: { type: string }
+  headers:
+    ETag:
+      description: The answer's version.
+      schema: { type: string }
+    CacheControl:
+      description: How long the answer may be kept; suggested `public, max-age=300`.
+      schema: { type: string }
+    DirectorySignature:
+      description: >
+        Optional. `ed25519 <base64>`: the Ed25519 signature of the body's bytes exactly as sent. The
+        public key is given to the client with the directory's address, never served by the
+        directory itself.
+      schema: { type: string, pattern: "^ed25519 [A-Za-z0-9+/]{86}==$" }
+    RetryAfter:
+      description: Seconds to wait before asking again.
+      schema: { type: integer, minimum: 1 }
+  responses:
+    NotModified:
+      description: Nothing changed since the ETag given.
+    BadRequest:
+      description: A query the directory cannot read.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: No such source.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: Too many requests; Retry-After says how long to wait.
+      headers:
+        Retry-After: { $ref: "#/components/headers/RetryAfter" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Internal:
+      description: The directory failed.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+  schemas:
+    Id:
+      description: A directory's own id; stable.
+      type: string
+      pattern: "^[a-z0-9][a-z0-9-]{1,62}$"
+    Kind:
+      type: string
+      enum: [telegram, owncast, peertube, hls]
+    Language:
+      description: A BCP 47 tag as FinchGram writes them (en, zh-Hans, zh-Hant, pt).
+      type: string
+      pattern: "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$"
+    Country:
+      description: ISO 3166-1 alpha-2.
+      type: string
+      pattern: "^[A-Z]{2}$"
+    HttpsUrl:
+      type: string
+      format: uri
+      pattern: "^https://"
+      maxLength: 2048
+    HttpsOrigin:
+      description: A scheme and host (and port), no path.
+      type: string
+      pattern: "^https://[^/?#]+$"
+      maxLength: 255
+    LocalizedText:
+      description: Text by language; a client shows the UI language's, else en, else the first.
+      type: object
+      minProperties: 1
+      propertyNames: { $ref: "#/components/schemas/Language" }
+      additionalProperties: { type: string, minLength: 1, maxLength: 500 }
+    Directory:
+      type: object
+      required: [api, name, description, homepage, updated, kinds, counts]
+      properties:
+        api: { type: integer, const: 1 }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        description: { $ref: "#/components/schemas/LocalizedText" }
+        homepage: { $ref: "#/components/schemas/HttpsUrl" }
+        repository: { $ref: "#/components/schemas/HttpsUrl" }
+        policy: { $ref: "#/components/schemas/HttpsUrl" }
+        contact:
+          type: string
+          description: "A mailto: address, or an https URL."
+          pattern: "^(mailto:|https://)"
+          maxLength: 255
+        updated: { type: string, format: date-time }
+        kinds:
+          type: array
+          items: { $ref: "#/components/schemas/Kind" }
+          uniqueItems: true
+        counts:
+          type: object
+          required: [sources]
+          properties:
+            sources: { type: integer, minimum: 0 }
+    Category:
+      type: object
+      required: [id, names]
+      properties:
+        id:
+          allOf: [{ $ref: "#/components/schemas/Id" }]
+          description: >
+            These keep their meaning in every directory: news, tech, gaming, music, education,
+            sports, talk, lifestyle, finance, art, science, religion, kids, other. A directory may
+            add its own.
+        names: { $ref: "#/components/schemas/LocalizedText" }
+    CategoryList:
+      type: object
+      required: [categories]
+      properties:
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/Category" }
+    Schedule:
+      description: When the source is usually live.
+      type: object
+      required: [days, start, minutes, timezone]
+      properties:
+        days:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { type: string, enum: [mon, tue, wed, thu, fri, sat, sun] }
+        start: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
+        minutes: { type: integer, minimum: 1, maximum: 1440 }
+        timezone:
+          type: string
+          description: An IANA time zone (America/Los_Angeles, Asia/Shanghai).
+          minLength: 1
+          maxLength: 64
+    SourceBase:
+      type: object
+      required: [id, kind, name, languages, categories, nsfw, added]
+      properties:
+        id: { $ref: "#/components/schemas/Id" }
+        kind: { $ref: "#/components/schemas/Kind" }
+        name: { type: string, minLength: 1, maxLength: 100 }
+        description: { $ref: "#/components/schemas/LocalizedText" }
+        languages:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/Language" }
+        categories:
+          type: array
+          minItems: 1
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/Id" }
+        countries:
+          type: array
+          uniqueItems: true
+          items: { $ref: "#/components/schemas/Country" }
+        nsfw: { type: boolean }
+        picture: { $ref: "#/components/schemas/HttpsUrl" }
+        website: { $ref: "#/components/schemas/HttpsUrl" }
+        schedule:
+          type: array
+          items: { $ref: "#/components/schemas/Schedule" }
+        added: { type: string, format: date }
+        updated: { type: string, format: date }
+    TelegramSource:
+      allOf:
+        - $ref: "#/components/schemas/SourceBase"
+        - type: object
+          required: [kind, telegram]
+          properties:
+            kind: { const: telegram }
+            telegram:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  description: A public username, without @ or t.me.
+                  type: string
+                  pattern: "^[A-Za-z][A-Za-z0-9_]{4,31}$"
+    OwncastSource:
+      allOf:
+        - $ref: "#/components/schemas/SourceBase"
+        - type: object
+          required: [kind, owncast]
+          properties:
+            kind: { const: owncast }
+            owncast:
+              type: object
+              required: [server]
+              properties:
+                server: { $ref: "#/components/schemas/HttpsOrigin" }
+    PeertubeSource:
+      allOf:
+        - $ref: "#/components/schemas/SourceBase"
+        - type: object
+          required: [kind, peertube]
+          properties:
+            kind: { const: peertube }
+            peertube:
+              type: object
+              required: [instance, channel]
+              properties:
+                instance: { $ref: "#/components/schemas/HttpsOrigin" }
+                channel:
+                  description: The channel's handle on the instance.
+                  type: string
+                  pattern: "^[A-Za-z0-9_.-]{1,50}$"
+    HlsSource:
+      allOf:
+        - $ref: "#/components/schemas/SourceBase"
+        - type: object
+          required: [kind, hls]
+          properties:
+            kind: { const: hls }
+            hls:
+              type: object
+              required: [url]
+              additionalProperties: false
+              description: >
+                A playlist on https, played with no request headers but the client's own
+                User-Agent: a stream that needs another Referer or User-Agent does not belong here.
+              properties:
+                url: { $ref: "#/components/schemas/HttpsUrl" }
+    Source:
+      oneOf:
+        - $ref: "#/components/schemas/TelegramSource"
+        - $ref: "#/components/schemas/OwncastSource"
+        - $ref: "#/components/schemas/PeertubeSource"
+        - $ref: "#/components/schemas/HlsSource"
+      discriminator:
+        propertyName: kind
+        mapping:
+          telegram: "#/components/schemas/TelegramSource"
+          owncast: "#/components/schemas/OwncastSource"
+          peertube: "#/components/schemas/PeertubeSource"
+          hls: "#/components/schemas/HlsSource"
+    SourcePage:
+      type: object
+      required: [sources, next]
+      properties:
+        sources:
+          type: array
+          items: { $ref: "#/components/schemas/Source" }
+        next:
+          description: The cursor of the next page; null on the last.
+          type: [string, "null"]
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, enum: [bad_request, not_found, rate_limited, internal] }
+            message: { type: string }

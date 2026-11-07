@@ -323,8 +323,10 @@ draws every one of them, light and dark (`cargo test screenshots -- --ignored`, 
    and each publisher's picture come apart, and have to be put together).
 2. Whether paid comments and tips are sent from FinchGram (Stars the account holds; levels from
    TDLib), and with what question before each.
-3. The later versions' sources: a public TV directory fetched at run time at the user's choice
-   (iptv-org's links, Free-TV), or only lists the user brings; Owncast and PeerTube directories.
+3. The later versions' sources. A directory of them has a contract since 2026-11-07
+   ([live-directory.md](live-directory.md)): read-only JSON of Telegram creators, Owncast and
+   PeerTube servers and broadcasters' streams, which the maintainer serves with Hono and anyone may
+   fork and run; FinchGram does not read one yet. Still open: whether lists the user brings come too.
 4. Whether going live from the Mac's own camera or screen is wanted, which decides whether an RTMP
    client and the VideoToolbox pipeline get built.
 
