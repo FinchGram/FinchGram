@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Builds libmpv for macOS (Apple silicon) from pinned upstream sources: mpv and what it needs
-# (FFmpeg, libplacebo, and libass with FreeType, FriBidi and HarfBuzz), all linked statically into
-# one library, libmpv.2.dylib, which depends only on what ships with macOS. The app plays video
-# with it (docs/architecture.md).
+# (FFmpeg with mbedTLS and libxml2, libplacebo, and libass with FreeType, FriBidi and HarfBuzz), all
+# linked statically into one library, libmpv.2.dylib, which depends only on what ships with macOS.
+# The app plays video with it (docs/architecture.md).
 #
 #   vendor/mpv/build.sh           # everything: fetch, build each library, check, package
-#   vendor/mpv/build.sh ffmpeg    # a single step: fetch freetype fribidi harfbuzz libass ffmpeg libplacebo mpv check package install
+#   vendor/mpv/build.sh ffmpeg    # a single step: fetch freetype fribidi harfbuzz libass mbedtls libxml2 ffmpeg libplacebo mpv check package install
 #   vendor/mpv/build.sh install   # unpack the package into vendor/mpv/bin/, for local development only
 #
 # The package goes to vendor/mpv/dist/, intermediate files to vendor/mpv/work/, and the library the
@@ -42,6 +42,14 @@ FRIBIDI_SHA256="6949dcde27d41cebad1fd741fcafc36d55a1020d2d872d4a6eb3914caabbada2
 HARFBUZZ_VERSION="14.5.0"
 HARFBUZZ_URL="https://github.com/harfbuzz/harfbuzz/releases/download/$HARFBUZZ_VERSION/harfbuzz-$HARFBUZZ_VERSION.tar.xz"
 HARFBUZZ_SHA256="b7132e148358a45185c9feafd049dbaf243649d3c44414b3534d9c95d18592b9"
+
+MBEDTLS_VERSION="3.6.7" # the long-term-support branch
+MBEDTLS_URL="https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-$MBEDTLS_VERSION/mbedtls-$MBEDTLS_VERSION.tar.bz2"
+MBEDTLS_SHA256="a7e8bcbec0e6f761b4af24f25677626b35f762f68eef79c08677a363212d11f6"
+
+LIBXML2_VERSION="2.15.4"
+LIBXML2_URL="https://download.gnome.org/sources/libxml2/2.15/libxml2-$LIBXML2_VERSION.tar.xz"
+LIBXML2_SHA256="98087fd181d9070724f3fbc65c7377db03038eb92bd882374daff44940138821"
 
 MACOS_MIN="12.0" # oldest macOS the library runs on; keep in sync with the app's LSMinimumSystemVersion
 ARCH="arm64"
@@ -167,6 +175,8 @@ step_fetch() {
   extract "$(fetch_tarball "$FREETYPE_URL" "$FREETYPE_SHA256")" "$SRC/freetype"
   extract "$(fetch_tarball "$FRIBIDI_URL" "$FRIBIDI_SHA256")" "$SRC/fribidi"
   extract "$(fetch_tarball "$HARFBUZZ_URL" "$HARFBUZZ_SHA256")" "$SRC/harfbuzz"
+  extract "$(fetch_tarball "$MBEDTLS_URL" "$MBEDTLS_SHA256")" "$SRC/mbedtls"
+  extract "$(fetch_tarball "$LIBXML2_URL" "$LIBXML2_SHA256")" "$SRC/libxml2"
   fetch_git libplacebo "$LIBPLACEBO_GIT" "$LIBPLACEBO_COMMIT"
   fetch_git mpv "$MPV_GIT" "$MPV_COMMIT"
   log "all sources fetched and verified"
@@ -195,16 +205,41 @@ build_libass() {
     -Dfuzz=disabled -Dcheckasm=disabled
 }
 
+# TLS for FFmpeg's https: the library only, from its own Makefile, with its default configuration
+# (TLS 1.2 and 1.3). It has no store of its own: the app gives mpv the roots the Keychain trusts as a
+# file (src/player/).
+build_mbedtls() {
+  cd "$SRC/mbedtls"
+  make -C library -j"$JOBS" CC=clang AR=ar \
+    CFLAGS="-O2 -arch $ARCH -mmacosx-version-min=$MACOS_MIN" static
+  mkdir -p "$PREFIX/include" "$PREFIX/lib"
+  rm -rf "$PREFIX/include/mbedtls" "$PREFIX/include/psa"
+  cp -R include/mbedtls include/psa "$PREFIX/include/"
+  cp library/libmbedtls.a library/libmbedx509.a library/libmbedcrypto.a "$PREFIX/lib/"
+}
+
+# For FFmpeg's DASH demuxer, which reads a stream's MPD manifest: the smallest libxml2, its parser
+# and tree, thread-safe (each player demuxes on a thread of its own).
+build_libxml2() {
+  meson_static "$SRC/libxml2" -Dminimum=true -Dthreads=enabled -Dpython=disabled -Ddocs=disabled \
+    -Diconv=disabled -Dzlib=disabled -Dicu=disabled
+}
+
 # Decoding: FFmpeg's own decoders and demuxers, and macOS's hardware decoders (VideoToolbox). Only
-# what is named here: --disable-autodetect keeps anything installed on the build machine out. The
-# app plays files TDLib has downloaded, so there is no network code.
+# what is named here: --disable-autodetect keeps anything installed on the build machine out.
+# Network for the Live view's streams (docs/live-streams.md): HTTP, HTTPS through mbedTLS, HLS, DASH
+# through libxml2, RTSP. The players of Telegram's files and of the music cache never reach it:
+# each one names the protocols it may open (src/player/). mbedTLS's licence wants FFmpeg's version 3
+# terms (LGPL-3.0-or-later), which the app (GPL-3.0) takes.
 build_ffmpeg() {
   cd "$SRC/ffmpeg"
   ./configure --prefix="$PREFIX" --arch="$ARCH" --cc=clang \
-    --extra-cflags="-mmacosx-version-min=$MACOS_MIN" --extra-ldflags="-mmacosx-version-min=$MACOS_MIN" \
+    --extra-cflags="-mmacosx-version-min=$MACOS_MIN -I$PREFIX/include" \
+    --extra-ldflags="-mmacosx-version-min=$MACOS_MIN -L$PREFIX/lib" \
     --enable-static --disable-shared --enable-pic \
     --disable-autodetect --enable-videotoolbox --enable-audiotoolbox --enable-zlib \
-    --disable-programs --disable-doc --disable-debug --disable-network \
+    --enable-version3 --enable-network --enable-mbedtls --enable-libxml2 \
+    --disable-programs --disable-doc --disable-debug \
     --disable-avdevice --disable-devices --disable-encoders --disable-muxers
   make -j"$JOBS"
   make install
@@ -297,6 +332,19 @@ C
     -L"$OUT/lib" -Wl,-rpath,"$OUT/lib" "$OUT/lib/$LIBRARY" -o "$smoke/smoke"
   "$smoke/smoke" "$frames" || die "the smoke test did not play to the end (exit $?)"
   echo "  smoke test passed: raw video played to the end"
+  # The same over HTTP, from a server on this machine: FFmpeg's network code is in.
+  local port server
+  port=$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+  python3 -m http.server "$port" --bind 127.0.0.1 --directory "$smoke" >"$smoke/server.log" 2>&1 &
+  server=$!
+  curl -fs -o /dev/null --retry 20 --retry-delay 1 --retry-connrefused "http://127.0.0.1:$port/frames.yuv" ||
+    { kill "$server"; die "the smoke test's HTTP server did not start"; }
+  local played=0
+  "$smoke/smoke" "http://127.0.0.1:$port/frames.yuv" || played=$?
+  kill "$server"
+  wait "$server" 2>/dev/null || true
+  [ "$played" -eq 0 ] || die "the smoke test did not play over HTTP (exit $played)"
+  echo "  smoke test passed: the same over HTTP"
 }
 
 write_build_info() {
@@ -307,7 +355,9 @@ built $(date -u +%Y-%m-%dT%H:%M:%SZ) on macOS $(sw_vers -productVersion), $(xcod
 
 statically linked:
   mpv         $MPV_VERSION (git $MPV_COMMIT), GPL-2.0-or-later (LICENSE-mpv.txt)
-  FFmpeg      $FFMPEG_VERSION, LGPL-2.1-or-later (LICENSE-FFmpeg.txt)
+  FFmpeg      $FFMPEG_VERSION, LGPL-3.0-or-later (its version 3 terms, for mbedTLS) (LICENSE-FFmpeg.txt)
+  mbedTLS     $MBEDTLS_VERSION, Apache-2.0 (LICENSE-mbedTLS.txt)
+  libxml2     $LIBXML2_VERSION, MIT (LICENSE-libxml2.txt)
   libplacebo  $LIBPLACEBO_VERSION (git $LIBPLACEBO_COMMIT), LGPL-2.1-or-later (LICENSE-libplacebo.txt)
   libass      $LIBASS_VERSION, ISC (LICENSE-libass.txt)
   FreeType    $FREETYPE_VERSION, FreeType License (LICENSE-FreeType.txt)
@@ -327,7 +377,9 @@ step_package() {
   cp "$OUT/lib/$LIBRARY" "$stage/"
   cp -R "$OUT/include" "$stage/"
   cp "$SRC/mpv/LICENSE.GPL" "$stage/LICENSE-mpv.txt"
-  cp "$SRC/ffmpeg/COPYING.LGPLv2.1" "$stage/LICENSE-FFmpeg.txt"
+  cp "$SRC/ffmpeg/COPYING.LGPLv3" "$stage/LICENSE-FFmpeg.txt"
+  cp "$SRC/mbedtls/LICENSE" "$stage/LICENSE-mbedTLS.txt"
+  cp "$SRC/libxml2/Copyright" "$stage/LICENSE-libxml2.txt"
   cp "$SRC/libplacebo/LICENSE" "$stage/LICENSE-libplacebo.txt"
   cp "$SRC/libass/COPYING" "$stage/LICENSE-libass.txt"
   cp "$SRC/freetype/docs/FTL.TXT" "$stage/LICENSE-FreeType.txt"
@@ -337,7 +389,7 @@ step_package() {
   cp "$stage/BUILD-INFO.txt" "$DIST/"
   tar -czf "$DIST/$PACKAGE.tar.gz" -C "$stage" .
   # The exact sources that went into the library travel with it.
-  for url in "$FFMPEG_URL" "$LIBASS_URL" "$FREETYPE_URL" "$FRIBIDI_URL" "$HARFBUZZ_URL"; do
+  for url in "$FFMPEG_URL" "$LIBASS_URL" "$FREETYPE_URL" "$FRIBIDI_URL" "$HARFBUZZ_URL" "$MBEDTLS_URL" "$LIBXML2_URL"; do
     cp "$DOWNLOADS/$(basename "$url")" "$DIST/sources/"
   done
   git -C "$SRC/mpv" archive --format=tar.gz --prefix="mpv-$MPV_COMMIT/" -o "$DIST/sources/mpv-$MPV_COMMIT.tar.gz" HEAD
@@ -361,7 +413,7 @@ step_install() {
 
 # ---- main --------------------------------------------------------------------------------
 
-ALL_STEPS="fetch freetype fribidi harfbuzz libass ffmpeg libplacebo mpv check package"
+ALL_STEPS="fetch freetype fribidi harfbuzz libass mbedtls libxml2 ffmpeg libplacebo mpv check package"
 for step in ${*:-$ALL_STEPS}; do
   case $step in
     fetch)      step_fetch ;;
@@ -369,6 +421,8 @@ for step in ${*:-$ALL_STEPS}; do
     fribidi)    lib fribidi "$FRIBIDI_VERSION" build_fribidi ;;
     harfbuzz)   lib harfbuzz "$HARFBUZZ_VERSION" build_harfbuzz ;;
     libass)     lib libass "$LIBASS_VERSION" build_libass ;;
+    mbedtls)    lib mbedtls "$MBEDTLS_VERSION" build_mbedtls ;;
+    libxml2)    lib libxml2 "$LIBXML2_VERSION" build_libxml2 ;;
     ffmpeg)     lib ffmpeg "$FFMPEG_VERSION" build_ffmpeg ;;
     libplacebo) lib libplacebo "$LIBPLACEBO_VERSION" build_libplacebo ;;
     mpv)        run_logged mpv build_mpv ;;
