@@ -79,6 +79,16 @@ carries it in `Contents/Frameworks/`, where the executable's run path finds it a
   always the newest app, which installed copies look for to update themselves.
 - Binaries live in releases, never in git history: `vendor/*/bin/`, `vendor/*/work/`,
   `vendor/*/dist/`, `dist/` and `target/` are in .gitignore.
+- The UI is a package of its own, `crates/finchgram-ui/`: its build.rs compiles `ui/app.slint`, with
+  the translations of `lang/` bundled in, into a single Rust file of about a million lines. Inside
+  the app's package, that file was compiled again with every change to the app's Rust, and twice
+  for every check (the app and its tests, by build and by clippy alike); on its own it is compiled
+  once for all of them, and again only when `ui/` or `lang/` change. A development build keeps
+  only its line tables (`[profile.dev.package.finchgram-ui]` in Cargo.toml).
+- Cargo never deletes an old build cache, and the UI's is large: run
+  `cargo clean -p finchgram -p finchgram-ui` now and then (on 2026-11-07 the stale caches had
+  grown to 1.5 TB). The third-party crates' builds are kept, so only FinchGram's own two packages
+  compile again.
 
 ## 3. Release first, test the installed app
 

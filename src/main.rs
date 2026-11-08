@@ -32,7 +32,8 @@ use slint::{ModelRc, VecModel};
 
 use settings::Settings;
 
-slint::include_modules!();
+// The UI, a crate of its own (crates/finchgram-ui/): its windows, globals and types, as the app's.
+use finchgram_ui::*;
 
 /// How often a running app looks at the clock to see whether its daily update check is due
 /// (the check itself happens once a day, at a random moment; see update.rs). No network here.

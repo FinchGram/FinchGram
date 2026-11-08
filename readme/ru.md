@@ -235,9 +235,10 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   release.yml            # собирает и публикует приложение для коммитов Release v*
   tdlib.yml              # собирает finchgram-tdlib на чистой машине; публикует теги tdlib-* как релизы
 Cargo.toml
-build.rs                 # компилирует ui/app.slint, встраивает lang/, копирует vendor/tdlib/bin/ рядом с исполняемым файлом
+build.rs                 # копирует vendor/tdlib/bin/ рядом с исполняемым файлом
 crates/
   finchgram-release-sign/ # инструмент подписи Ed25519 для релизов, отдельный пакет
+  finchgram-ui/          # интерфейс: компилирует ui/app.slint и встраивает lang/, отдельный пакет
 docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   картинки, которые показывают README, из теста снимков (scripts/readme-pictures.sh)
 lang/                    # переводы: lang/<код>/LC_MESSAGES/finchgram.po, вкомпилированы в бинарный файл
@@ -316,7 +317,7 @@ vendor/tdlib/            # finchgram-tdlib
 ## Переводы
 
 Каждый текст интерфейса пишется как `@tr("English text")`. У строки один перевод, где бы она ни
-встречалась (build.rs отключает контекст Slint по умолчанию); если тот же английский текст в другом
+встречалась (crates/finchgram-ui/build.rs отключает контекст Slint по умолчанию); если тот же английский текст в другом
 месте требует других слов, дайте ему контекст: `@tr("menu" => "Open")`. Извлеките строки официальным
 инструментом, затем объедините их с каждым языком:
 

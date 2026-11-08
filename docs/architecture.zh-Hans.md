@@ -349,6 +349,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
 - `ui/`：`app.slint`（窗口：菜单，以及显示哪个页面）、`state.slint`、`telegram.slint` 和 `downloads.slint`（Rust 和页面共用的 global）、
   `look.slint`、`format.slint`（按界面语言写出的日期、数量和消息类型）、`widgets.slint` 和 `chat.slint`（共用的部件）、
   `viewer.slint`（覆盖整个窗口的媒体查看器）、`voice.slint`（语音输入的状态和文字）、`pages/`，以及三套主题各自的目录。
+- `crates/finchgram-ui/`：界面，单独一个包。它的 build.rs 把 `ui/app.slint` 连同 `lang/` 的翻译编译成 Rust，
+  app 把它生成的窗口、global 和类型当作自己的来用（`src/main.rs` 里的 `use finchgram_ui::*`；原因见 docs/conventions.md）。
 
 ## 多账号
 

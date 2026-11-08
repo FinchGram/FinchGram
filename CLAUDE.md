@@ -175,7 +175,9 @@ things fit together.
   page already holds.
 - Build and check: `scripts/fetch-tdlib.sh`, `scripts/fetch-mpv.sh` and `scripts/fetch-fonts.sh` once, then `cargo build`,
   `cargo test --workspace`, `cargo clippy --workspace --all-targets` (keep it free of warnings;
-  `--workspace` takes in the release signing tool, `crates/finchgram-release-sign/`). After changing the UI, run
+  `--workspace` takes in the release signing tool, `crates/finchgram-release-sign/`, and the UI,
+  `crates/finchgram-ui/`, whose generated Rust, about a million lines, compiles only when `ui/` or
+  `lang/` change). One heavy cargo job at a time: never two builds, clippy or picture runs at once. After changing the UI, run
   `cargo test screenshots -- --ignored` and look at `target/screenshots/`: every page in every theme,
   light and dark, drawn with made-up data (there is no api_id here to log in with).
 - `FINCHGRAM_TEST_DC=1` uses Telegram's test servers.

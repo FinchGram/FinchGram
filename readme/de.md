@@ -242,9 +242,10 @@ Die Datenbank von TDLib und die heruntergeladenen Dateien liegen in
   release.yml            # baut und veröffentlicht die App für die Release-v*-Commits
   tdlib.yml              # baut finchgram-tdlib auf einer sauberen Maschine; veröffentlicht tdlib-*-Tags als Releases
 Cargo.toml
-build.rs                 # kompiliert ui/app.slint, bündelt lang/, kopiert vendor/tdlib/bin/ neben die ausführbare Datei
+build.rs                 # kopiert vendor/tdlib/bin/ neben die ausführbare Datei
 crates/
   finchgram-release-sign/ # das Ed25519-Signierwerkzeug hinter den Releases, ein eigenes Paket
+  finchgram-ui/          # die Oberfläche: kompiliert ui/app.slint und bündelt lang/, ein eigenes Paket
 docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   die Bilder, die die READMEs zeigen, aus dem Bildschirmfoto-Test (scripts/readme-pictures.sh)
 lang/                    # Übersetzungen: lang/<Code>/LC_MESSAGES/finchgram.po, in die Binärdatei kompiliert
@@ -323,7 +324,7 @@ vendor/tdlib/            # finchgram-tdlib
 ## Übersetzungen
 
 Jeder Text der Oberfläche wird als `@tr("English text")` geschrieben. Ein String hat überall, wo er
-vorkommt, dieselbe Übersetzung (build.rs schaltet Slints Standardkontext ab); braucht derselbe englische
+vorkommt, dieselbe Übersetzung (crates/finchgram-ui/build.rs schaltet Slints Standardkontext ab); braucht derselbe englische
 Text an anderer Stelle andere Worte, bekommt er einen Kontext: `@tr("menu" => "Open")`. Mit dem
 offiziellen Werkzeug extrahieren, dann in jede Sprache einarbeiten:
 

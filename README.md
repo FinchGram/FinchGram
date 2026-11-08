@@ -227,9 +227,10 @@ settings in `~/Library/Application Support/FinchGram/settings.toml`.
   release.yml            # builds and publishes the app for the Release v* commits
   tdlib.yml              # builds finchgram-tdlib on a clean runner; publishes tdlib-* tags as releases
 Cargo.toml
-build.rs                 # compiles ui/app.slint, bundles lang/, copies vendor/tdlib/bin/ next to the executable
+build.rs                 # copies vendor/tdlib/bin/ next to the executable
 crates/
   finchgram-release-sign/ # the Ed25519 signing tool behind releases, a package of its own
+  finchgram-ui/          # the UI: compiles ui/app.slint with lang/ bundled in, a package of its own
 docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   the pictures the READMEs show, from the picture test (scripts/readme-pictures.sh)
 lang/                    # translations: lang/<code>/LC_MESSAGES/finchgram.po, compiled into the binary
@@ -308,7 +309,7 @@ vendor/tdlib/            # finchgram-tdlib
 ## Translations
 
 Every piece of UI text is written as `@tr("English text")`. A string has one translation wherever it
-appears (build.rs turns off Slint's default context); when the same English needs different words
+appears (crates/finchgram-ui/build.rs turns off Slint's default context); when the same English needs different words
 somewhere else, give it a context: `@tr("menu" => "Open")`. Extract with the official tool, then merge
 into each language:
 

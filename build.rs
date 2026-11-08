@@ -1,18 +1,7 @@
 use std::path::{Path, PathBuf};
 
+// The UI (ui/, lang/) is compiled by crates/finchgram-ui/build.rs.
 fn main() {
-    // Translations live in lang/<code>/LC_MESSAGES/finchgram.po and are compiled into the binary,
-    // so no gettext runtime is needed on the user's machine. No default context: a string has one
-    // translation wherever it appears, unless the .slint file gives it a context of its own
-    // (@tr("context" => "text")).
-    println!("cargo:rerun-if-changed=lang");
-
-    let config = slint_build::CompilerConfiguration::new()
-        .with_style("cupertino".into())
-        .with_bundled_translations("lang")
-        .with_default_translation_context(slint_build::DefaultTranslationContext::None);
-    slint_build::compile_with_config("ui/app.slint", config).expect("Slint UI failed to compile");
-
     copy_bundled_tdlib();
     link_bundled_mpv();
     check_bundled_fonts();

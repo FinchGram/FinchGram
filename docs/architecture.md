@@ -538,6 +538,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   counts and kinds of message in the UI language), `widgets.slint` and `chat.slint` (shared parts),
   `viewer.slint` (the media viewer, over the whole window), `voice.slint` (voice input's state and
   words), `pages/`, and the three themes' folders.
+- `crates/finchgram-ui/`: the UI as a package of its own. Its build.rs compiles `ui/app.slint` with
+  the translations of `lang/` bundled in, and the app uses the windows, globals and types it makes
+  as its own (`use finchgram_ui::*` in `src/main.rs`; docs/conventions.md says why).
 
 ## Several accounts
 

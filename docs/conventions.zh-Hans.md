@@ -62,6 +62,12 @@ libmpv 跟 finchgram-tdlib 一样照这个做：`vendor/mpv/build.sh` 按锁定�
   已安装的 app 就靠它来自动更新。
 - 二进制只放在 release 里，永远不进 git 历史：`vendor/*/bin/`、`vendor/*/work/`、`vendor/*/dist/`、
   `dist/` 和 `target/` 都在 .gitignore 里。
+- 界面单独一个包，`crates/finchgram-ui/`：它的 build.rs 把 `ui/app.slint` 连同 `lang/` 的翻译编译成一个
+  约一百万行的 Rust 文件。这个文件放在 app 自己的包里时，app 的 Rust 每改一次它就跟着重编一次，每轮检查
+  还要编两份（app 和它的测试，build 和 clippy 都是）；单独成包后只编一次，大家共用，只有 `ui/` 或 `lang/`
+  变了才重编。开发构建里它只保留行号表（Cargo.toml 里的 `[profile.dev.package.finchgram-ui]`）。
+- cargo 从不删除旧的编译缓存，而界面的缓存很大：隔一段时间运行一次 `cargo clean -p finchgram -p finchgram-ui`
+  （2026-11-07 时旧缓存已经攒到 1.5 TB）。第三方 crate 的编译结果会保留，只有 FinchGram 自己的两个包要重编。
 
 ## 3. 先发布，再测装好的 app
 

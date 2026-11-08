@@ -171,9 +171,10 @@ TDLib 的数据库和下载的文件在 `~/Library/Application Support/FinchGram
   release.yml            # Release v* 提交时构建并发布 app
   tdlib.yml              # 在干净的机器上构建 finchgram-tdlib；tdlib-* tag 发布成 release
 Cargo.toml
-build.rs                 # 编译 ui/app.slint，打包 lang/，把 vendor/tdlib/bin/ 复制到可执行文件旁边
+build.rs                 # 把 vendor/tdlib/bin/ 复制到可执行文件旁边
 crates/
   finchgram-release-sign/ # release 背后的 Ed25519 签名工具，单独一个包
+  finchgram-ui/          # 界面：编译 ui/app.slint，打包 lang/，单独一个包
 docs/                    # architecture.md、conventions.md、downloads.md、drag-and-drop.md、media-files.md、skia.md（以及中文版）
   screenshots/           #   README 里的图，来自截图测试（scripts/readme-pictures.sh）
 lang/                    # 翻译：lang/<代码>/LC_MESSAGES/finchgram.po，编译进二进制
@@ -251,7 +252,7 @@ vendor/tdlib/            # finchgram-tdlib
 
 ## 翻译
 
-界面上的每一段文字都写成 `@tr("English text")`。同一个字符串在哪里出现都只有一个译法（build.rs 关掉了
+界面上的每一段文字都写成 `@tr("English text")`。同一个字符串在哪里出现都只有一个译法（crates/finchgram-ui/build.rs 关掉了
 Slint 的默认 context）；同一句英文在别处需要不同的译法时，给它一个 context：`@tr("menu" => "Open")`。
 用官方工具提取，再合并进每种语言：
 

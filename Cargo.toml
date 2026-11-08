@@ -9,15 +9,21 @@ repository = "https://github.com/FinchGram/FinchGram"
 publish = false
 
 # The release signing tool is a package of its own (crates/finchgram-release-sign/), so that the
-# release workflow's signing job builds it alone (.github/workflows/release.yml). Plain cargo
-# commands at the top still mean the app; `--workspace` takes the tool in too.
+# release workflow's signing job builds it alone (.github/workflows/release.yml); so is the UI
+# (crates/finchgram-ui/), so that its generated Rust is compiled once and not with every change to
+# the app's. Plain cargo commands at the top still mean the app; `--workspace` takes the rest in too.
 [workspace]
-members = ["crates/finchgram-release-sign"]
+members = ["crates/finchgram-release-sign", "crates/finchgram-ui"]
 
-[dependencies]
+[workspace.dependencies]
 # ~1.18: minor upgrades are deliberate. The unstable-* features (the transparent title bar, the
 # bundled fonts, src/main.rs and src/fonts.rs) may change in any minor release.
-slint = { version = "~1.18", features = ["unstable-winit-030", "unstable-fontique-011"] }
+slint = "~1.18"
+slint-build = "~1.18"
+
+[dependencies]
+finchgram-ui = { path = "crates/finchgram-ui" }
+slint = { workspace = true, features = ["unstable-winit-030", "unstable-fontique-011"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "1"                                      # settings file
@@ -111,8 +117,10 @@ objc2-av-foundation = { version = "0.3", default-features = false, features = ["
 objc2-image-io = { version = "0.3", default-features = false, features = ["std", "CGImageProperties", "CGImageSource", "objc2-core-graphics"] }
 objc2-core-graphics = { version = "0.3", default-features = false, features = ["std", "CGBitmapContext", "CGColorSpace", "CGContext", "CGImage"] }
 
-[build-dependencies]
-slint-build = "~1.18"
+# The UI's generated Rust in a development build: line tables only (enough for a backtrace), so its
+# million lines compile faster and their build cache stays smaller; nobody steps through it.
+[profile.dev.package.finchgram-ui]
+debug = "line-tables-only"
 
 [profile.release]
 strip = true

@@ -184,9 +184,10 @@ TDLib의 데이터베이스와 내려받은 파일은 `~/Library/Application Sup
   release.yml            # Release v* 커밋에서 앱을 빌드해 릴리스로 공개
   tdlib.yml              # 깨끗한 머신에서 finchgram-tdlib을 빌드하고, tdlib-* 태그를 릴리스로 공개
 Cargo.toml
-build.rs                 # ui/app.slint를 컴파일하고, lang/을 포함하며, vendor/tdlib/bin/을 실행 파일 옆에 복사
+build.rs                 # vendor/tdlib/bin/을 실행 파일 옆에 복사
 crates/
   finchgram-release-sign/ # 릴리스에 쓰는 Ed25519 서명 도구, 별도 패키지
+  finchgram-ui/          # UI: ui/app.slint를 컴파일하고 lang/을 포함, 별도 패키지
 docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   README에 싣는 그림, 스크린샷 테스트에서 (scripts/readme-pictures.sh)
 lang/                    # 번역: lang/<코드>/LC_MESSAGES/finchgram.po, 바이너리에 포함됨
@@ -265,7 +266,7 @@ vendor/tdlib/            # finchgram-tdlib
 ## 번역
 
 UI의 모든 텍스트는 `@tr("English text")`로 씁니다. 같은 문자열은 어디에 나오든 번역이 하나입니다
-(build.rs가 Slint의 기본 컨텍스트를 끕니다). 같은 영어 문장이 다른 곳에서 다른 말로 옮겨져야 하면
+(crates/finchgram-ui/build.rs가 Slint의 기본 컨텍스트를 끕니다). 같은 영어 문장이 다른 곳에서 다른 말로 옮겨져야 하면
 컨텍스트를 붙이세요: `@tr("menu" => "Open")`. 공식 도구로 추출한 뒤 각 언어에 병합합니다:
 
 ```sh

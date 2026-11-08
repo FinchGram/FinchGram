@@ -181,9 +181,10 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   release.yml            # يبني التطبيق وينشره لإيداعات Release v*
   tdlib.yml              # يبني finchgram-tdlib على جهاز نظيف؛ وينشر وسوم tdlib-* كإصدارات
 Cargo.toml
-build.rs                 # يصرّف ui/app.slint، ويضمّن lang/، وينسخ vendor/tdlib/bin/ بجوار الملف التنفيذي
+build.rs                 # ينسخ vendor/tdlib/bin/ بجوار الملف التنفيذي
 crates/
   finchgram-release-sign/ # أداة التوقيع Ed25519 للإصدارات، في حزمة مستقلة
+  finchgram-ui/          # الواجهة: يصرّف ui/app.slint ويضمّن lang/، في حزمة مستقلة
 docs/                    # architecture.md و conventions.md و downloads.md و drag-and-drop.md و media-files.md و skia.md (+ zh-Hans)
   screenshots/           #   الصور التي تعرضها ملفات README، من اختبار اللقطات (scripts/readme-pictures.sh)
 lang/                    # الترجمات: lang/<الرمز>/LC_MESSAGES/finchgram.po، مُضمَّنة في الملف الثنائي
@@ -261,7 +262,7 @@ vendor/tdlib/            # finchgram-tdlib
 
 ## الترجمات
 
-يُكتب كل نص في الواجهة بالشكل `@tr("English text")`. للسلسلة النصية ترجمة واحدة أينما ظهرت (يعطّل build.rs
+يُكتب كل نص في الواجهة بالشكل `@tr("English text")`. للسلسلة النصية ترجمة واحدة أينما ظهرت (يعطّل crates/finchgram-ui/build.rs
 السياق الافتراضي في Slint)؛ وعندما يحتاج النص الإنجليزي نفسه إلى كلمات مختلفة في موضع آخر، أعطه سياقًا:
 `@tr("menu" => "Open")`. استخرج النصوص بالأداة الرسمية، ثم ادمجها في كل لغة:
 

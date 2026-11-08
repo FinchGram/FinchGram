@@ -1,0 +1,25 @@
+[package]
+name = "finchgram-ui"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.92"
+description = "FinchGram's user interface: the Slint files of ui/, compiled to Rust"
+license = "GPL-3.0-only"
+repository = "https://github.com/FinchGram/FinchGram"
+publish = false
+
+# A package of its own, apart from the app's: the Slint compiler turns ui/ into a single Rust file
+# of about a million lines. Here it is compiled once, for the app, its tests and clippy alike, and
+# again only when ui/ or lang/ change; the app's own Rust compiles without it (docs/conventions.md).
+[lib]
+# No tests or benchmarks here: either would compile the whole UI a second time (and
+# `--all-targets`, which clippy and editors use, asks for both).
+test = false
+bench = false
+doctest = false
+
+[dependencies]
+slint = { workspace = true }
+
+[build-dependencies]
+slint-build = { workspace = true }

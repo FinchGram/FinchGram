@@ -233,9 +233,10 @@ O banco de dados do TDLib e os arquivos baixados ficam em
   release.yml            # compila e publica o app para os commits Release v*
   tdlib.yml              # compila o finchgram-tdlib numa máquina limpa; publica as tags tdlib-* como releases
 Cargo.toml
-build.rs                 # compila ui/app.slint, empacota lang/, copia vendor/tdlib/bin/ para junto do executável
+build.rs                 # copia vendor/tdlib/bin/ para junto do executável
 crates/
   finchgram-release-sign/ # a ferramenta de assinatura Ed25519 das releases, um pacote à parte
+  finchgram-ui/          # a interface: compila ui/app.slint e empacota lang/, um pacote à parte
 docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
   screenshots/           #   as imagens que os READMEs mostram, do teste de capturas (scripts/readme-pictures.sh)
 lang/                    # traduções: lang/<código>/LC_MESSAGES/finchgram.po, compiladas no binário
@@ -314,7 +315,7 @@ vendor/tdlib/            # finchgram-tdlib
 ## Traduções
 
 Todo texto da interface é escrito como `@tr("English text")`. Uma string tem uma única tradução onde quer
-que apareça (build.rs desliga o contexto padrão do Slint); quando o mesmo texto em inglês precisa de
+que apareça (crates/finchgram-ui/build.rs desliga o contexto padrão do Slint); quando o mesmo texto em inglês precisa de
 outras palavras em outro lugar, dê a ele um contexto: `@tr("menu" => "Open")`. Extraia os textos com a
 ferramenta oficial e depois mescle em cada idioma:
 

@@ -190,9 +190,10 @@ TDLib のデータベースとダウンロードしたファイルは `~/Library
   release.yml            # Release v* コミットでアプリをビルドして公開
   tdlib.yml              # クリーンなマシンで finchgram-tdlib をビルドし、tdlib-* タグをリリースとして公開
 Cargo.toml
-build.rs                 # ui/app.slint をコンパイルし、lang/ を同梱し、vendor/tdlib/bin/ を実行ファイルの隣にコピー
+build.rs                 # vendor/tdlib/bin/ を実行ファイルの隣にコピー
 crates/
   finchgram-release-sign/ # リリースを支える Ed25519 署名ツール（独立したパッケージ）
+  finchgram-ui/          # UI：ui/app.slint をコンパイルし、lang/ を同梱（独立したパッケージ）
 docs/                    # architecture.md、conventions.md、downloads.md、drag-and-drop.md、media-files.md、skia.md（+ zh-Hans）
   screenshots/           #   README に載せる画像。スクリーンショットテストから（scripts/readme-pictures.sh）
 lang/                    # 翻訳：lang/<コード>/LC_MESSAGES/finchgram.po、バイナリに組み込まれる
@@ -270,7 +271,7 @@ vendor/tdlib/            # finchgram-tdlib
 
 ## 翻訳
 
-UI のテキストはすべて `@tr("English text")` と書きます。同じ文字列は、どこに出てきても訳は一つです（build.rs が
+UI のテキストはすべて `@tr("English text")` と書きます。同じ文字列は、どこに出てきても訳は一つです（crates/finchgram-ui/build.rs が
 Slint のデフォルトコンテキストを無効にしています）。同じ英文でも別の場所で違う訳が必要なら、コンテキストを付けます：
 `@tr("menu" => "Open")`。公式ツールで抽出し、各言語にマージします：
 
