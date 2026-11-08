@@ -1,418 +1,325 @@
-# The live directory's contract (docs/live-directory.md), in OpenAPI 3.1. A server that answers
-# these paths with these shapes is a directory FinchGram can read; its components are JSON Schema
-# 2020-12, for validating a directory's data files too. The same file is in FinchGram/Services
-# (src/live/openapi.yaml), whose tests keep the two identical; change both.
+# The FinchGram Live Directory API, in OpenAPI 3.1: the contract of the canvas "FinchGram Desktop
+# 直播", rounds 12 and 13 (the maintainer's design, 2026-11-07). A server that answers these paths
+# with these shapes is a live directory FinchGram can read; anyone may run one. The same file is
+# docs/live-directory.openapi.yaml in FinchGram/FinchGram, whose copy the tests here keep identical.
 openapi: 3.1.0
 info:
-  title: FinchGram live directory
+  title: FinchGram Live Directory
   version: "1"
-  summary: Which live sources are worth watching.
+  summary: Channels that go live, from sources that allow it, with their live status.
   description: |
-    A directory lists live sources: Telegram channels and people who go live, Owncast servers,
-    PeerTube channels, streams broadcasters offer over HLS. It does not say who is live now; a
-    client asks each source. Read-only, HTTPS, JSON in UTF-8, no authentication and no cookies.
-    Within v1, fields are only added: a client ignores fields it does not know and skips sources
-    of a kind it does not know.
+    The directory gathers channels from sources that allow indexing (Owncast's and Xiph's
+    opt-in directories, PeerTube instances that allow it, reviewed submissions, public Telegram
+    channels), keeps a stable id for each, follows their live sessions with the time each was
+    observed, and answers searches. It never relays video, and it holds nothing about its users:
+    no accounts, no follows, no stream keys. Playback addresses are not in it either: an app asks
+    each source for one when it plays.
 
-    A directory is known by its base address, with a path or without one; the paths below are
-    under it. FinchGram's own is https://services.finchgram.com/live.
+    Every field may be null where a source does not say; an app shows its fallback words then,
+    never a 0 or an estimate. Within v1, fields are only added: an app ignores fields it does not
+    know and treats an unknown enum value as the field's fallback.
+
+    A Telegram channel's live status is not the directory's: a server has no Telegram account to
+    ask with. It lists the channel, with its username, as status unknown, and the app asks Telegram
+    itself.
 servers:
   - url: "{directory}"
-    description: A directory's base address.
+    description: A directory's base address; every path below is under it.
     variables:
       directory:
-        default: https://services.finchgram.com/live
-        description: Any server that answers this contract, with a path or without one.
+        default: https://services.finchgram.com/live/api/v1
+        description: Any server that answers this contract.
 paths:
-  /v1/directory:
+  /search:
     get:
-      operationId: getDirectory
-      summary: What the directory is.
+      operationId: search
+      summary: Channels and their live sessions, searched, filtered, sorted, one page at a time.
       parameters:
+        - { name: q, in: query, description: "Words; none to browse.", schema: { type: string, maxLength: 100 } }
+        - name: mode
+          in: query
+          description: live = sessions on now (confirmed or not), channels = every channel, upcoming = scheduled.
+          schema: { type: string, enum: [live, channels, upcoming], default: live }
+        - name: source
+          in: query
+          description: Only these sources; may repeat.
+          style: form
+          explode: true
+          schema: { type: array, items: { $ref: "#/components/schemas/SourceId" } }
+        - { name: category, in: query, schema: { $ref: "#/components/schemas/Category" } }
+        - { name: language, in: query, description: "A BCP 47 tag; zh takes in zh-Hans and zh-Hant.", schema: { $ref: "#/components/schemas/Language" } }
+        - name: status
+          in: query
+          description: In mode=channels only.
+          schema: { $ref: "#/components/schemas/Status" }
+        - name: playback
+          in: query
+          description: native = plays in the app (HLS, Icecast, Telegram's stream), external = opens elsewhere.
+          schema: { type: string, enum: [native, external] }
+        - name: content
+          in: query
+          description: The classifications to include, comma-separated; mature-rated ones only when asked.
+          schema: { type: string, default: general, pattern: "^(general|mature)(,(general|mature))?$" }
+        - name: sort
+          in: query
+          description: >
+            relevance with words, recommended without. recommended: confirmed live first, then the
+            app's languages (Accept-Language), then those that started within the hour; within each
+            of these the sources take turns, each in its own order (its viewer counts, then name).
+            viewers compares only within a source and puts channels without a count last; it is
+            never a cross-platform ranking.
+          schema: { type: string, enum: [relevance, recommended, recent, added, viewers] }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 24 } }
+        - { name: cursor, in: query, description: "The previous page's next_cursor; opaque.", schema: { type: string, maxLength: 200 } }
+        - name: Accept-Language
+          in: header
+          description: The languages the user chose for live channels (the app's Settings › Live), for recommended; nothing else is personal.
+          schema: { type: string }
         - $ref: "#/components/parameters/IfNoneMatch"
       responses:
         "200":
-          description: The directory.
-          headers:
-            ETag: { $ref: "#/components/headers/ETag" }
-            Cache-Control: { $ref: "#/components/headers/CacheControl" }
-            X-Directory-Signature: { $ref: "#/components/headers/DirectorySignature" }
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Directory" }
+          description: One page.
+          headers: { ETag: { $ref: "#/components/headers/ETag" }, Cache-Control: { $ref: "#/components/headers/CacheControl" }, Vary: { description: "Accept-Language", schema: { type: string } } }
+          content: { application/json: { schema: { $ref: "#/components/schemas/SearchPage" } } }
         "304": { $ref: "#/components/responses/NotModified" }
+        "400": { $ref: "#/components/responses/Failure" }
         "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Internal" }
-  /v1/categories:
+  /suggest:
     get:
-      operationId: listCategories
-      summary: The categories its sources are filed under.
+      operationId: suggest
+      summary: While the user types (debounced by the app, the older request cancelled).
       parameters:
-        - $ref: "#/components/parameters/IfNoneMatch"
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 1, maxLength: 100 } }
       responses:
         "200":
-          description: The categories.
-          headers:
-            ETag: { $ref: "#/components/headers/ETag" }
-            Cache-Control: { $ref: "#/components/headers/CacheControl" }
-            X-Directory-Signature: { $ref: "#/components/headers/DirectorySignature" }
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/CategoryList" }
-        "304": { $ref: "#/components/responses/NotModified" }
-        "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Internal" }
-  /v1/sources:
+          description: Words to search for, channels, and filters that match.
+          headers: { Cache-Control: { $ref: "#/components/headers/CacheControl" } }
+          content: { application/json: { schema: { $ref: "#/components/schemas/Suggestions" } } }
+        "400": { $ref: "#/components/responses/Failure" }
+  /channels/lookup:
+    get:
+      operationId: lookupChannel
+      summary: >
+        A link the user pasted, matched against the directory's records only: a platform and a
+        handle (telegram + its username, peertube + channel@host, owncast + its host), or a host
+        alone. The server visits no address; an app sends no path, query or credentials.
+      parameters:
+        - { name: platform, in: query, schema: { $ref: "#/components/schemas/SourceId" } }
+        - { name: handle, in: query, description: "With platform.", schema: { type: string, maxLength: 100 } }
+        - { name: host, in: query, schema: { type: string, maxLength: 255 } }
+      responses:
+        "200":
+          description: The channel, or null when the directory has none, or several on that host (an instance, a radio server).
+          content: { application/json: { schema: { type: object, required: [channel], properties: { channel: { oneOf: [{ $ref: "#/components/schemas/Result" }, { type: "null" }] } } } } }
+        "400": { $ref: "#/components/responses/Failure" }
+  /channels/{id}:
+    get:
+      operationId: getChannel
+      parameters: [{ name: id, in: path, required: true, schema: { $ref: "#/components/schemas/ChannelId" } }]
+      responses:
+        "200":
+          description: The channel, its session if it has one, how it plays.
+          content: { application/json: { schema: { $ref: "#/components/schemas/Result" } } }
+        "404": { $ref: "#/components/responses/Failure" }
+  /channels/{id}/sessions:
+    get:
+      operationId: getSessions
+      parameters: [{ name: id, in: path, required: true, schema: { $ref: "#/components/schemas/ChannelId" } }]
+      responses:
+        "200":
+          description: Its recent sessions, newest first.
+          content: { application/json: { schema: { type: object, required: [sessions], properties: { sessions: { type: array, items: { $ref: "#/components/schemas/Session" } } } } } }
+        "404": { $ref: "#/components/responses/Failure" }
+  /channels/{id}/schedule:
+    get:
+      operationId: getSchedule
+      parameters: [{ name: id, in: path, required: true, schema: { $ref: "#/components/schemas/ChannelId" } }]
+      responses:
+        "200":
+          description: Its announced sessions, soonest first; empty for a source without schedules.
+          content: { application/json: { schema: { type: object, required: [schedule], properties: { schedule: { type: array, items: { $ref: "#/components/schemas/Scheduled" } } } } } }
+        "404": { $ref: "#/components/responses/Failure" }
+  /sources:
     get:
       operationId: listSources
-      summary: The sources, in the directory's own order.
-      parameters:
-        - $ref: "#/components/parameters/Kind"
-        - $ref: "#/components/parameters/Category"
-        - $ref: "#/components/parameters/Language"
-        - $ref: "#/components/parameters/Country"
-        - $ref: "#/components/parameters/Q"
-        - $ref: "#/components/parameters/IncludeNsfw"
-        - $ref: "#/components/parameters/Limit"
-        - $ref: "#/components/parameters/Cursor"
-        - $ref: "#/components/parameters/IfNoneMatch"
+      summary: Each source's capabilities and the state of its last sync.
       responses:
         "200":
-          description: A page of sources.
-          headers:
-            ETag: { $ref: "#/components/headers/ETag" }
-            Cache-Control: { $ref: "#/components/headers/CacheControl" }
-            X-Directory-Signature: { $ref: "#/components/headers/DirectorySignature" }
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/SourcePage" }
-        "304": { $ref: "#/components/responses/NotModified" }
-        "400": { $ref: "#/components/responses/BadRequest" }
-        "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Internal" }
-  /v1/sources/{id}:
-    get:
-      operationId: getSource
-      summary: One source.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { $ref: "#/components/schemas/Id" }
-        - $ref: "#/components/parameters/IfNoneMatch"
+          description: Every source the directory knows, indexed or not.
+          headers: { Cache-Control: { $ref: "#/components/headers/CacheControl" } }
+          content: { application/json: { schema: { type: object, required: [sources], properties: { sources: { type: array, items: { $ref: "#/components/schemas/Source" } } } } } }
+  /submissions:
+    post:
+      operationId: submit
+      summary: A public channel suggested for the directory. Not in this version (phase 2).
       responses:
-        "200":
-          description: The source.
-          headers:
-            ETag: { $ref: "#/components/headers/ETag" }
-            Cache-Control: { $ref: "#/components/headers/CacheControl" }
-            X-Directory-Signature: { $ref: "#/components/headers/DirectorySignature" }
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Source" }
-        "304": { $ref: "#/components/responses/NotModified" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "429": { $ref: "#/components/responses/RateLimited" }
-        "500": { $ref: "#/components/responses/Internal" }
+        "501": { $ref: "#/components/responses/Failure" }
 components:
   parameters:
-    Kind:
-      name: kind
-      in: query
-      description: Only sources of these kinds; the parameter may repeat.
-      style: form
-      explode: true
-      schema:
-        type: array
-        items: { $ref: "#/components/schemas/Kind" }
-    Category:
-      name: category
-      in: query
-      description: Only sources filed under this category.
-      schema: { $ref: "#/components/schemas/Id" }
-    Language:
-      name: language
-      in: query
-      description: Only sources in this language.
-      schema: { $ref: "#/components/schemas/Language" }
-    Country:
-      name: country
-      in: query
-      description: Only sources of this country.
-      schema: { $ref: "#/components/schemas/Country" }
-    Q:
-      name: q
-      in: query
-      description: Words in the name or the description, in any case.
-      schema: { type: string, minLength: 1, maxLength: 100 }
-    IncludeNsfw:
-      name: include_nsfw
-      in: query
-      description: Include sources marked NSFW; they are left out otherwise.
-      schema: { type: boolean, default: false }
-    Limit:
-      name: limit
-      in: query
-      description: How many sources at most.
-      schema: { type: integer, minimum: 1, maximum: 500, default: 100 }
-    Cursor:
-      name: cursor
-      in: query
-      description: Where the previous page ended (its `next`); opaque.
-      schema: { type: string, maxLength: 200 }
     IfNoneMatch:
-      name: If-None-Match
-      in: header
-      description: The ETag of the answer the client has; 304 when nothing changed.
-      schema: { type: string }
+      { name: If-None-Match, in: header, description: "The ETag the app has; 304 when nothing changed.", schema: { type: string } }
   headers:
-    ETag:
-      description: The answer's version.
-      schema: { type: string }
-    CacheControl:
-      description: How long the answer may be kept; suggested `public, max-age=300`.
-      schema: { type: string }
-    DirectorySignature:
-      description: >
-        Optional. `ed25519 <base64>`: the Ed25519 signature of the body's bytes exactly as sent. The
-        public key is given to the client with the directory's address, never served by the
-        directory itself.
-      schema: { type: string, pattern: "^ed25519 [A-Za-z0-9+/]{86}==$" }
-    RetryAfter:
-      description: Seconds to wait before asking again.
-      schema: { type: integer, minimum: 1 }
+    ETag: { description: "The answer's version.", schema: { type: string } }
+    CacheControl: { description: "How long the answer may be kept: a minute for what changes with the syncs, five for /sources.", schema: { type: string } }
   responses:
-    NotModified:
-      description: Nothing changed since the ETag given.
-    BadRequest:
-      description: A query the directory cannot read.
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/Error" }
-    NotFound:
-      description: No such source.
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/Error" }
+    NotModified: { description: "Nothing changed since the ETag given." }
+    Failure:
+      description: "{ error: { code, message } } with the status: bad_request 400, not_found 404, method_not_allowed 405, rate_limited 429, internal 500, not_implemented 501."
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
     RateLimited:
       description: Too many requests; Retry-After says how long to wait.
-      headers:
-        Retry-After: { $ref: "#/components/headers/RetryAfter" }
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/Error" }
-    Internal:
-      description: The directory failed.
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/Error" }
+      headers: { Retry-After: { schema: { type: integer } } }
+      content: { application/json: { schema: { $ref: "#/components/schemas/Error" } } }
   schemas:
-    Id:
-      description: A directory's own id; stable.
+    SourceId:
       type: string
-      pattern: "^[a-z0-9][a-z0-9-]{1,62}$"
-    Kind:
-      type: string
-      enum: [telegram, owncast, peertube, hls]
-    Language:
-      description: A BCP 47 tag as FinchGram writes them (en, zh-Hans, zh-Hant, pt).
-      type: string
-      pattern: "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$"
-    Country:
-      description: ISO 3166-1 alpha-2.
-      type: string
-      pattern: "^[A-Z]{2}$"
-    HttpsUrl:
-      type: string
-      format: uri
-      pattern: "^https://"
-      maxLength: 2048
-    HttpsOrigin:
-      description: A scheme and host (and port), no path.
-      type: string
-      pattern: "^https://[^/?#]+$"
-      maxLength: 255
-    LocalizedText:
-      description: Text by language; a client shows the UI language's, else en, else the first.
-      type: object
-      minProperties: 1
-      propertyNames: { $ref: "#/components/schemas/Language" }
-      additionalProperties: { type: string, minLength: 1, maxLength: 500 }
-    Directory:
-      type: object
-      required: [api, name, description, homepage, updated, kinds, counts]
-      properties:
-        api: { type: integer, const: 1 }
-        name: { type: string, minLength: 1, maxLength: 100 }
-        description: { $ref: "#/components/schemas/LocalizedText" }
-        homepage: { $ref: "#/components/schemas/HttpsUrl" }
-        repository: { $ref: "#/components/schemas/HttpsUrl" }
-        policy: { $ref: "#/components/schemas/HttpsUrl" }
-        contact:
-          type: string
-          description: "A mailto: address, or an https URL."
-          pattern: "^(mailto:|https://)"
-          maxLength: 255
-        updated:
-          type: string
-          format: date-time
-          description: When its list of sources last changed.
-        kinds:
-          type: array
-          items: { $ref: "#/components/schemas/Kind" }
-          uniqueItems: true
-        counts:
-          type: object
-          required: [sources]
-          properties:
-            sources: { type: integer, minimum: 0 }
+      enum: [owncast, peertube, icecast, hls, telegram, twitch, youtube, kick, bilibili]
+    ChannelId: { type: string, pattern: "^fg_ch_[A-Za-z0-9_-]{1,60}$" }
+    SessionId: { type: string, pattern: "^fg_se_[A-Za-z0-9_-]{1,60}$" }
     Category:
+      type: string
+      enum: [music, gaming, talk, technology, creative, irl, education, events, news, sports, other]
+    Language: { type: string, pattern: "^[a-z]{2,3}(-[A-Z][a-z]{3})?(-[A-Z]{2})?$" }
+    DateTime: { type: [string, "null"], format: date-time }
+    Status:
+      description: >
+        live = the latest observation is within the source's time to live and says live; stale =
+        live when last observed, but that observation expired less than 60 minutes ago; offline =
+        a valid observation (within 30 minutes) says not live; unknown = no reliable observation
+        for 60 minutes, a source that is paused or not integrated, or one the directory cannot ask
+        (Telegram's channels: the app asks).
+      type: string
+      enum: [live, stale, offline, unknown]
+    Channel:
       type: object
-      required: [id, names]
+      required: [id, name, source, source_ref, url, classification]
       properties:
-        id:
-          allOf: [{ $ref: "#/components/schemas/Id" }]
-          description: >
-            These keep their meaning in every directory: news, tech, gaming, music, education,
-            sports, talk, lifestyle, finance, art, science, religion, kids, other. A directory may
-            add its own.
-        names: { $ref: "#/components/schemas/LocalizedText" }
-    CategoryList:
+        id: { $ref: "#/components/schemas/ChannelId" }
+        name: { type: string }
+        source: { $ref: "#/components/schemas/SourceId" }
+        source_ref: { type: string, description: "The channel's id at its source: a host, a host and channel, a username." }
+        url: { type: string, format: uri, description: "The channel's own address, never a temporary playback one." }
+        handle: { type: [string, "null"], description: "Telegram: its public username, without @." }
+        category: { oneOf: [{ $ref: "#/components/schemas/Category" }, { type: "null" }] }
+        language: { oneOf: [{ $ref: "#/components/schemas/Language" }, { type: "null" }] }
+        classification: { type: string, enum: [general, mature], description: "mature: strong language, violence or gambling. Adult streams are not listed in this version." }
+        tags: { type: array, items: { type: string } }
+        added_at: { $ref: "#/components/schemas/DateTime" }
+        last_live_at: { $ref: "#/components/schemas/DateTime" }
+    Session:
       type: object
-      required: [categories]
+      required: [id, status]
       properties:
-        categories:
-          type: array
-          items: { $ref: "#/components/schemas/Category" }
-    Schedule:
-      description: When the source is usually live.
-      type: object
-      required: [days, start, minutes, timezone]
-      properties:
-        days:
-          type: array
-          minItems: 1
-          uniqueItems: true
-          items: { type: string, enum: [mon, tue, wed, thu, fri, sat, sun] }
-        start: { type: string, pattern: "^([01][0-9]|2[0-3]):[0-5][0-9]$" }
-        minutes: { type: integer, minimum: 1, maximum: 1440 }
-        timezone:
-          type: string
-          description: An IANA time zone (America/Los_Angeles, Asia/Shanghai).
-          minLength: 1
-          maxLength: 64
-    SourceBase:
-      type: object
-      required: [id, kind, name, languages, categories, nsfw, added]
-      properties:
-        id: { $ref: "#/components/schemas/Id" }
-        kind: { $ref: "#/components/schemas/Kind" }
-        name: { type: string, minLength: 1, maxLength: 100 }
-        description: { $ref: "#/components/schemas/LocalizedText" }
-        languages:
-          type: array
-          minItems: 1
-          uniqueItems: true
-          items: { $ref: "#/components/schemas/Language" }
-        categories:
-          type: array
-          minItems: 1
-          uniqueItems: true
-          items: { $ref: "#/components/schemas/Id" }
-        countries:
-          type: array
-          uniqueItems: true
-          items: { $ref: "#/components/schemas/Country" }
-        nsfw: { type: boolean }
-        picture: { $ref: "#/components/schemas/HttpsUrl" }
-        website: { $ref: "#/components/schemas/HttpsUrl" }
-        schedule:
-          type: array
-          items: { $ref: "#/components/schemas/Schedule" }
-        added: { type: string, format: date }
-        updated: { type: string, format: date }
-    TelegramSource:
-      allOf:
-        - $ref: "#/components/schemas/SourceBase"
-        - type: object
-          required: [kind, telegram]
-          properties:
-            kind: { const: telegram }
-            telegram:
-              type: object
-              required: [username]
+        id: { $ref: "#/components/schemas/SessionId" }
+        title: { type: [string, "null"] }
+        started_at: { $ref: "#/components/schemas/DateTime" }
+        status: { $ref: "#/components/schemas/Status" }
+        observed_at: { $ref: "#/components/schemas/DateTime" }
+        expires_at: { $ref: "#/components/schemas/DateTime" }
+        last_confirmed_live_at: { $ref: "#/components/schemas/DateTime" }
+        viewers:
+          oneOf:
+            - type: object
+              required: [value, kind]
               properties:
-                username:
-                  description: A public username, without @ or t.me.
-                  type: string
-                  pattern: "^[A-Za-z][A-Za-z0-9_]{4,31}$"
-    OwncastSource:
-      allOf:
-        - $ref: "#/components/schemas/SourceBase"
-        - type: object
-          required: [kind, owncast]
-          properties:
-            kind: { const: owncast }
-            owncast:
-              type: object
-              required: [server]
-              properties:
-                server: { $ref: "#/components/schemas/HttpsOrigin" }
-    PeertubeSource:
-      allOf:
-        - $ref: "#/components/schemas/SourceBase"
-        - type: object
-          required: [kind, peertube]
-          properties:
-            kind: { const: peertube }
-            peertube:
-              type: object
-              required: [instance, channel]
-              properties:
-                instance: { $ref: "#/components/schemas/HttpsOrigin" }
-                channel:
-                  description: The channel's handle on the instance.
-                  type: string
-                  pattern: "^[A-Za-z0-9_.-]{1,50}$"
-    HlsSource:
-      allOf:
-        - $ref: "#/components/schemas/SourceBase"
-        - type: object
-          required: [kind, hls]
-          properties:
-            kind: { const: hls }
-            hls:
-              type: object
-              required: [url]
-              additionalProperties: false
-              description: >
-                A playlist on https, played with no request headers but the client's own
-                User-Agent: a stream that needs another Referer or User-Agent does not belong here.
-              properties:
-                url: { $ref: "#/components/schemas/HttpsUrl" }
-    Source:
-      oneOf:
-        - $ref: "#/components/schemas/TelegramSource"
-        - $ref: "#/components/schemas/OwncastSource"
-        - $ref: "#/components/schemas/PeertubeSource"
-        - $ref: "#/components/schemas/HlsSource"
-      discriminator:
-        propertyName: kind
-        mapping:
-          telegram: "#/components/schemas/TelegramSource"
-          owncast: "#/components/schemas/OwncastSource"
-          peertube: "#/components/schemas/PeertubeSource"
-          hls: "#/components/schemas/HlsSource"
-    SourcePage:
+                value: { type: integer, minimum: 0 }
+                kind: { type: string, enum: [exact, self_reported, listeners] }
+            - type: "null"
+        thumbnail:
+          oneOf:
+            - { type: object, required: [url], properties: { url: { type: string, format: uri }, observed_at: { $ref: "#/components/schemas/DateTime" } } }
+            - type: "null"
+    Scheduled:
       type: object
-      required: [sources, next]
+      required: [title, starts_at]
       properties:
+        title: { type: string }
+        starts_at: { type: string, format: date-time }
+        url: { type: [string, "null"], format: uri }
+    Playback:
+      description: What the source can play (methods, from its configuration) apart from whether this one plays now (availability).
+      type: object
+      required: [methods, availability]
+      properties:
+        methods: { type: array, items: { type: string, enum: [hls, dash, icecast, telegram, official_embed, external] } }
+        availability: { type: string, enum: [available, unconfirmed, sign_in, unavailable] }
+        reason: { type: [string, "null"] }
+    Result:
+      type: object
+      required: [status, channel, session, playback]
+      properties:
+        status: { $ref: "#/components/schemas/Status" }
+        channel: { $ref: "#/components/schemas/Channel" }
+        session: { oneOf: [{ $ref: "#/components/schemas/Session" }, { type: "null" }] }
+        playback: { $ref: "#/components/schemas/Playback" }
+        upcoming: { oneOf: [{ $ref: "#/components/schemas/Scheduled" }, { type: "null" }] }
+        attribution: { type: [string, "null"] }
+    SearchPage:
+      type: object
+      required: [snapshot, generated_at, total, next_cursor, partial, items, facets, sources]
+      properties:
+        snapshot: { type: string, description: "The data version the cursor pages through; a page of another snapshot may repeat an item, which the app drops by session or channel id." }
+        generated_at: { type: string, format: date-time }
+        total:
+          type: object
+          required: [value, relation]
+          properties:
+            value: { type: [integer, "null"] }
+            relation: { type: string, enum: [eq, gte, unknown] }
+        next_cursor: { type: [string, "null"] }
+        partial: { type: boolean }
+        missing_sources: { type: array, items: { $ref: "#/components/schemas/SourceId" } }
+        items: { type: array, items: { $ref: "#/components/schemas/Result" } }
+        facets:
+          type: object
+          required: [approximate]
+          properties:
+            source: { type: object, additionalProperties: { type: integer } }
+            category: { type: object, additionalProperties: { type: integer } }
+            language: { type: object, additionalProperties: { type: integer } }
+            approximate: { type: boolean }
         sources:
           type: array
-          items: { $ref: "#/components/schemas/Source" }
-        next:
-          description: The cursor of the next page; null on the last.
-          type: [string, "null"]
+          items:
+            type: object
+            required: [id, status]
+            properties:
+              id: { $ref: "#/components/schemas/SourceId" }
+              status: { $ref: "#/components/schemas/SyncStatus" }
+              last_successful_sync_at: { $ref: "#/components/schemas/DateTime" }
+    Suggestions:
+      type: object
+      required: [queries, channels, filters]
+      properties:
+        queries: { type: array, items: { type: string } }
+        channels: { type: array, items: { type: object, required: [id, name, source], properties: { id: { $ref: "#/components/schemas/ChannelId" }, name: { type: string }, source: { $ref: "#/components/schemas/SourceId" } } } }
+        filters: { type: array, items: { type: object, required: [kind, value], properties: { kind: { type: string, enum: [source, category, language] }, value: { type: string } } } }
+    SyncStatus: { type: string, enum: [ok, degraded, rate_limited, failed, none] }
+    Source:
+      type: object
+      required: [id, indexing, capabilities, status]
+      properties:
+        id: { $ref: "#/components/schemas/SourceId" }
+        indexing: { type: string, enum: [enabled, not_integrated, paused, restricted_by_terms, disabled_by_source] }
+        discovery: { type: array, items: { type: string } }
+        capabilities:
+          type: object
+          properties:
+            live_status: { description: "true, or \"client\" when the app asks the source itself (Telegram).", oneOf: [{ type: boolean }, { const: client }] }
+            schedules: { oneOf: [{ type: boolean }, { const: feed }] }
+            viewer_counts: { type: string, enum: [exact, self_reported, listeners, none] }
+            thumbnails: { oneOf: [{ type: boolean }, { const: some }] }
+            playback: { type: array, items: { type: string } }
+            auth: { type: string, enum: [none, optional, required, telegram] }
+        attribution:
+          oneOf:
+            - { type: object, required: [text, link_required], properties: { text: { type: string }, link_required: { type: boolean } } }
+            - type: "null"
+        cache: { type: object, properties: { status_ttl_s: { type: integer }, max_metadata_age_s: { type: integer } } }
+        status: { $ref: "#/components/schemas/SyncStatus" }
+        last_successful_sync_at: { $ref: "#/components/schemas/DateTime" }
+        retry_after_s: { type: [integer, "null"] }
+        message: { type: [string, "null"] }
     Error:
       type: object
       required: [error]
@@ -421,7 +328,5 @@ components:
           type: object
           required: [code, message]
           properties:
-            code:
-              type: string
-              enum: [bad_request, not_found, method_not_allowed, rate_limited, internal]
+            code: { type: string, enum: [bad_request, not_found, method_not_allowed, rate_limited, internal, not_implemented] }
             message: { type: string }

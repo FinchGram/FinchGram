@@ -2745,9 +2745,10 @@ fn screenshots() {
             open_news(&ui);
             save(&window, &name("channel"));
             live(&ui, &window, &name);
+            live_directory(&ui, &window, &name);
             app.set_page(Page::Settings);
             for (section, section_name) in
-                [(SettingsSection::General, "general"), (SettingsSection::Notifications, "notifications"), (SettingsSection::Appearance, "appearance"), (SettingsSection::Language, "language"), (SettingsSection::About, "about")]
+                [(SettingsSection::General, "general"), (SettingsSection::Notifications, "notifications"), (SettingsSection::Appearance, "appearance"), (SettingsSection::Language, "language"), (SettingsSection::Live, "live"), (SettingsSection::About, "about")]
             {
                 app.set_settings_section(section);
                 save(&window, &name(&format!("settings-{section_name}")));
@@ -2842,6 +2843,7 @@ fn screenshots() {
     ui.global::<crate::Music>().set_playing(false);
     app.set_page(Page::Chats);
     live(&ui, &window, &|page: &str| format!("zh-workbench-{page}"));
+    live_directory(&ui, &window, &|page: &str| format!("zh-workbench-{page}"));
 
     // The other languages, light, Workbench: the chat window and Settings → General, every script
     // set in the bundled fonts.
@@ -2860,6 +2862,355 @@ fn screenshots() {
         app.set_page(Page::Chats);
     }
     let _ = login.get_countries().row_count();
+}
+
+/// A channel of the live directory, as the pages show one (the canvas "FinchGram Desktop 直播",
+/// rounds 12 and 13): made-up names, the canvas's own kind of data.
+#[allow(clippy::too_many_arguments)]
+fn live_channel(id: &str, source: LiveSource, name: &str, title: &str, status: LiveStatus, viewers: i32, started: i32, category: LiveCategory, language: &str, thumb: Option<f32>) -> LiveChannel {
+    let play = match status {
+        LiveStatus::Live if source == LiveSource::Icecast => LivePlay::Listen,
+        LiveStatus::Live => LivePlay::Watch,
+        LiveStatus::Stale => LivePlay::TryOpening,
+        _ => LivePlay::Unavailable,
+    };
+    let why = match status {
+        LiveStatus::Stale => LiveWhy::NotConfirmed,
+        LiveStatus::Offline => LiveWhy::Offline,
+        LiveStatus::Unknown => LiveWhy::Unknown,
+        LiveStatus::Live => LiveWhy::None,
+    };
+    LiveChannel {
+        id: id.into(),
+        source,
+        name: name.into(),
+        title: title.into(),
+        initial: name.chars().find(|c| c.is_alphanumeric()).map(String::from).unwrap_or_default().into(),
+        hue: crate::live::hue_of(id),
+        thumbnail: thumb.map(|hue| gradient(480, 270, hue)).unwrap_or_default(),
+        has_thumbnail: thumb.is_some(),
+        status,
+        observed_minutes: if status == LiveStatus::Live { 1 } else { 18 },
+        started_minutes: started,
+        last_live_minutes: if status == LiveStatus::Offline { 2 * 24 * 60 } else { -1 },
+        viewers,
+        self_reported: source == LiveSource::Owncast,
+        audio: source == LiveSource::Icecast,
+        category,
+        language: if language.is_empty() { SharedString::new() } else { language.into() },
+        language_code: match language {
+            "English" => "en",
+            "中文" => "zh",
+            "Deutsch" => "de",
+            _ => "",
+        }
+        .into(),
+        play,
+        why,
+        host: format!("{}.example", id.trim_start_matches("fg_ch_")).into(),
+        upcoming_minutes: -1,
+        ..Default::default()
+    }
+}
+
+/// The live directory's pages (Discover, Following, Connections, Watch, the mini player), in
+/// their states, with the canvas's kind of made-up data.
+fn live_directory(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    settle(window);
+    // Settings › Live's languages, two chosen (the settings pictures show them).
+    ui.global::<LiveDirectory>().set_preferred_languages(model(
+        [("en", "English", true), ("zh-Hans", "中文（简体）", true), ("zh-Hant", "中文（繁體）", false), ("es", "Español", false), ("de", "Deutsch", false), ("ja", "日本語", false)]
+            .iter()
+            .map(|(key, label, chosen)| LiveOption { key: (*key).into(), label: (*label).into(), source: LiveSource::Owncast, category: LiveCategory::None, count: -1, chosen: *chosen })
+            .collect(),
+    ));
+    let live = ui.global::<Live>();
+    let directory = ui.global::<LiveDirectory>();
+    live.set_show_requests(live.get_show_requests() + 1);
+    let kblab = live_channel("fg_ch_kblab", LiveSource::Owncast, "Keyboard Lab", "Lubing 70 switches tonight — ask about springs", LiveStatus::Live, 214, 102, LiveCategory::Technology, "English", Some(265.0));
+    let harbour = live_channel("fg_ch_harbour", LiveSource::Peertube, "Harbour Cam", "Venice at night, from the tower", LiveStatus::Live, 31, 340, LiveCategory::Irl, "", Some(200.0));
+    let night = live_channel("fg_ch_night", LiveSource::Icecast, "Night Radio 97.5", "", LiveStatus::Live, -1, -1, LiveCategory::Music, "", None);
+    let jazz = live_channel("fg_ch_jazz", LiveSource::Owncast, "Jazz Cellar", "Trio night", LiveStatus::Live, 58, 25, LiveCategory::Music, "English", Some(30.0));
+    let etna = live_channel("fg_ch_etna", LiveSource::Peertube, "INGV Catania", "Etna, live", LiveStatus::Live, 12, 600, LiveCategory::Education, "", Some(15.0));
+    let chiptune = live_channel("fg_ch_chip", LiveSource::Owncast, "24/7 Chiptune Radio", "Only the finest chiptunes", LiveStatus::Live, -1, 2800, LiveCategory::Music, "", Some(300.0));
+    let slow = live_channel("fg_ch_slow", LiveSource::Owncast, "Synth Basement", "Modular jam", LiveStatus::Stale, -1, 80, LiveCategory::Music, "Deutsch", Some(120.0));
+    let book = live_channel("fg_ch_book", LiveSource::Owncast, "Wednesday Book Club", "", LiveStatus::Offline, -1, -1, LiveCategory::Talk, "English", None);
+    let lost = live_channel("fg_ch_lost", LiveSource::Peertube, "Orionids Watch", "", LiveStatus::Unknown, -1, -1, LiveCategory::Education, "", None);
+    let options = |pairs: &[(LiveSource, i32)]| {
+        model(pairs.iter().map(|(source, count)| LiveOption { key: SharedString::new(), label: SharedString::new(), source: *source, category: LiveCategory::None, count: *count, chosen: false }).collect())
+    };
+    directory.set_source_options(options(&[(LiveSource::Owncast, 56), (LiveSource::Peertube, 99), (LiveSource::Icecast, 8970), (LiveSource::Hls, 0), (LiveSource::Telegram, 0)]));
+    directory.set_category_options(model(
+        [(LiveCategory::Music, 7073), (LiveCategory::Gaming, 5), (LiveCategory::Talk, 107), (LiveCategory::Technology, 2), (LiveCategory::Irl, 86), (LiveCategory::Education, 4), (LiveCategory::News, 79), (LiveCategory::Sports, 18), (LiveCategory::Other, 27)]
+            .iter()
+            .map(|(category, count)| LiveOption { key: SharedString::new(), label: SharedString::new(), source: LiveSource::Owncast, category: *category, count: *count, chosen: false })
+            .collect(),
+    ));
+    directory.set_language_options(model(
+        [("de", "Deutsch", 85), ("en", "English", 3), ("ro", "Română", 2)]
+            .iter()
+            .map(|(key, label, count)| LiveOption { key: (*key).into(), label: (*label).into(), source: LiveSource::Owncast, category: LiveCategory::None, count: *count, chosen: false })
+            .collect(),
+    ));
+    directory.set_sources(model(vec![
+        LiveSourceRow { source: LiveSource::Owncast, indexed: true, sync: LiveSync::Ok, live: 56, synced_minutes: 2, viewer_counts: 0, thumbnails: true, plays_here: true },
+        LiveSourceRow { source: LiveSource::Peertube, indexed: true, sync: LiveSync::Degraded, live: 99, synced_minutes: 7, viewer_counts: 1, thumbnails: true, plays_here: true },
+        LiveSourceRow { source: LiveSource::Icecast, indexed: true, sync: LiveSync::Ok, live: 8970, synced_minutes: 11, viewer_counts: 3, thumbnails: false, plays_here: true },
+        LiveSourceRow { source: LiveSource::Hls, indexed: true, sync: LiveSync::Ok, live: 0, synced_minutes: 2, viewer_counts: 0, thumbnails: false, plays_here: true },
+        LiveSourceRow { source: LiveSource::Telegram, indexed: true, sync: LiveSync::Ok, live: 0, synced_minutes: -1, viewer_counts: 1, thumbnails: false, plays_here: true },
+        LiveSourceRow { source: LiveSource::Twitch, indexed: false, sync: LiveSync::None, live: -1, synced_minutes: -1, viewer_counts: 0, thumbnails: false, plays_here: false },
+        LiveSourceRow { source: LiveSource::Youtube, indexed: false, sync: LiveSync::None, live: -1, synced_minutes: -1, viewer_counts: 0, thumbnails: false, plays_here: false },
+    ]));
+    directory.set_mode_counts(model(vec![9125, 9400, 0]));
+    directory.set_playback_counts(model(vec![9125, 9125, 0]));
+    directory.set_section(LiveSection::Discover);
+    directory.set_watching(false);
+    directory.set_column_open(true);
+
+    // Discover's home: confirmed live that plays here, and the categories.
+    directory.set_home(true);
+    directory.set_home_here(model(vec![kblab.clone(), harbour.clone(), jazz.clone(), etna.clone(), chiptune.clone(), night.clone()]));
+    directory.set_home_here_count(9125);
+    directory.set_total(9125);
+    save(window, &name("live-discover"));
+    // A filter's menu open (Workbench and Broadsheet; Terminal's filters are the column's facets).
+    let theme = ui.global::<AppState>().get_theme();
+    if theme != Theme::Terminal {
+        let y = if theme == Theme::Workbench { 169.0 } else { 231.0 };
+        click(window, if theme == Theme::Workbench { 490.0 } else { 560.0 }, y);
+        save(window, &name("live-discover-menu"));
+        click(window, 1150.0, y);
+        // Further down the home: the categories and the foot.
+        scroll(window, 800.0, 500.0, 600.0);
+        save(window, &name("live-discover-categories"));
+        scroll(window, 800.0, 500.0, -600.0);
+    }
+
+    // Words searched: cards, the confirmed first and the not confirmed after.
+    directory.set_home(false);
+    directory.set_query("jazz".into());
+    directory.set_sort(LiveSort::Relevance);
+    let members = LiveChannel {
+        play: LivePlay::SignIn,
+        why: LiveWhy::SignIn,
+        ..live_channel("fg_ch_members", LiveSource::Peertube, "Makers Hall", "Members-only jam night", LiveStatus::Live, 12, 40, LiveCategory::Music, "English", Some(160.0))
+    };
+    let phone = LiveChannel {
+        play: LivePlay::Unavailable,
+        why: LiveWhy::Webrtc,
+        ..live_channel("chat:lin", LiveSource::Telegram, "Lin Xia", "Jazz on the walk home", LiveStatus::Live, 4, 6, LiveCategory::Irl, "中文", None)
+    };
+    directory.set_results(model(vec![jazz.clone(), chiptune.clone(), night.clone(), members, phone, slow.clone()]));
+    directory.set_total(6);
+    directory.set_total_relation(0);
+    directory.set_has_more(true);
+    save(window, &name("live-discover-results"));
+    directory.set_list_layout(true);
+    save(window, &name("live-discover-list"));
+    directory.set_list_layout(false);
+
+    // Every channel, recent first: every status.
+    directory.set_query(SharedString::new());
+    directory.set_mode(LiveMode::Channels);
+    directory.set_sort(LiveSort::Recent);
+    directory.set_results(model(vec![kblab.clone(), harbour.clone(), slow.clone(), book.clone(), lost.clone()]));
+    directory.set_total(9400);
+    directory.set_partial(true);
+    directory.set_total_relation(1);
+    save(window, &name("live-discover-channels"));
+    directory.set_sources_open(true);
+    save(window, &name("live-discover-sources"));
+    directory.set_sources_open(false);
+    directory.set_partial(false);
+    directory.set_total_relation(0);
+    directory.set_mode(LiveMode::Live);
+
+    // Typing: the suggestions.
+    directory.set_query("keyb".into());
+    directory.set_suggestions(model(vec![
+        LiveSuggestion { kind: 1, text: "keyboard".into(), source: LiveSource::Owncast, category: LiveCategory::None, id: SharedString::new() },
+        LiveSuggestion { kind: 1, text: "keyboards".into(), source: LiveSource::Owncast, category: LiveCategory::None, id: SharedString::new() },
+        LiveSuggestion { kind: 2, text: "Keyboard Lab".into(), source: LiveSource::Owncast, category: LiveCategory::None, id: "fg_ch_kblab".into() },
+    ]));
+    directory.set_suggestions_open(true);
+    save(window, &name("live-discover-suggest"));
+    directory.set_suggestions_open(false);
+
+    // Nothing for the words and filters chosen; then loading; then the directory not answering.
+    directory.set_query("harpsichord tuning".into());
+    directory.set_results(model(Vec::new()));
+    directory.set_total(0);
+    directory.set_has_more(false);
+    directory.set_filtered(true);
+    directory.set_playback(1);
+    save(window, &name("live-discover-empty"));
+    directory.set_filtered(false);
+    directory.set_playback(0);
+    save(window, &name("live-discover-nomatch"));
+    directory.set_query("lo-fi".into());
+    directory.set_loading(true);
+    save(window, &name("live-discover-loading"));
+    directory.set_loading(false);
+    directory.set_failed(true);
+    save(window, &name("live-discover-failed"));
+    directory.set_failed(false);
+    directory.set_query("https://live.keyboardlab.example".into());
+    directory.set_query_is_link(true);
+    save(window, &name("live-discover-link"));
+    directory.set_query_is_link(false);
+    directory.set_query(SharedString::new());
+    directory.set_mode(LiveMode::Channels);
+    directory.set_results(model(vec![kblab.clone(), harbour.clone(), slow.clone(), book.clone(), lost.clone()]));
+    directory.set_total(9400);
+    directory.set_has_more(true);
+    directory.set_page_failed(true);
+    save(window, &name("live-discover-pagefail"));
+    directory.set_page_failed(false);
+    directory.set_has_more(false);
+    directory.set_results(model(Vec::new()));
+    directory.set_total(0);
+    directory.set_mode(LiveMode::Live);
+    directory.set_query(SharedString::new());
+
+    // The content setting's question.
+    directory.set_content_asking(true);
+    save(window, &name("live-content"));
+    directory.set_content_asking(false);
+
+    // Following: live first (one followed on Telegram), then the rest.
+    let tech = LiveChannel { on_telegram: true, following: true, ..live_channel("chat:4", LiveSource::Telegram, "Tech Morning", "Morning briefing", LiveStatus::Live, 3902, -1, LiveCategory::None, "", None) };
+    directory.set_following_live(model(vec![tech, LiveChannel { following: true, ..kblab.clone() }]));
+    directory.set_following_off(model(vec![LiveChannel { following: true, ..slow.clone() }, LiveChannel { following: true, ..book.clone() }]));
+    directory.set_section(LiveSection::Following);
+    save(window, &name("live-following"));
+    directory.set_following_live(model(Vec::new()));
+    directory.set_following_off(model(Vec::new()));
+    save(window, &name("live-following-empty"));
+
+    // Connections › Open a link: one the directory has; one that plays here; a stream key.
+    directory.set_section(LiveSection::Connections);
+    directory.set_link("https://live.keyboardlab.example".into());
+    directory.set_link_state(LiveLinkState::Found);
+    directory.set_link_source(LiveSource::Owncast);
+    directory.set_link_channel(kblab.clone());
+    save(window, &name("live-link"));
+    directory.set_link("rtmp://live.example.org/app/sk_live_2Hx".into());
+    directory.set_link_state(LiveLinkState::Private);
+    save(window, &name("live-link-private"));
+    directory.set_link(SharedString::new());
+    directory.set_link_state(LiveLinkState::Empty);
+
+    // Watch: playing, then asking its source, off air, a mature-rated one, one that failed, a
+    // radio station; then the mini player over Discover.
+    directory.set_section(LiveSection::Discover);
+    directory.set_channel(kblab.clone());
+    directory.set_watching(true);
+    directory.set_column_open(false);
+    directory.set_watch_state(LiveWatch::Playing);
+    live.set_frame(gradient(1280, 720, 265.0));
+    live.set_playing(true);
+    directory.set_tech("HLS · 1080p · 6.0 Mbps".into());
+    directory.set_qualities(model(vec!["Auto".into(), "1080p".into(), "720p".into(), "480p".into()]));
+    // Owncast's chat, joined under the name the server gave.
+    directory.set_chat(true);
+    directory.set_chat_joined(true);
+    directory.set_chat_name("Fearless Giraffe".into());
+    directory.set_chat_messages(model(vec![
+        LiveComment { host: false, mine: false, deletable: false, ..live_comment(1, "tofu", "is the sound test before or after the build?", 0, 0, false) },
+        LiveComment { host: true, mine: false, deletable: false, ..live_comment(2, "Mika", "After — first the springs, then we listen to all seventy", 0, 0, true) },
+        LiveComment { host: false, mine: false, deletable: false, ..live_comment(3, "Jie", "watching in FinchGram while I keep replying in the group", 0, 0, false) },
+        LiveComment { host: false, mine: false, deletable: false, ..live_comment(4, "keebsnack", "205g0 on the stems or 3204?", 0, 0, false) },
+        LiveComment { host: false, mine: true, deletable: false, ..live_comment(5, "Fearless Giraffe", "Same lube on the springs?", 0, 0, false) },
+    ]));
+    save(window, &name("live-watch"));
+    directory.set_paused(true);
+    directory.set_behind(42);
+    save(window, &name("live-watch-paused"));
+    directory.set_paused(false);
+    directory.set_behind(0);
+    directory.set_watch_state(LiveWatch::Network);
+    save(window, &name("live-watch-network"));
+    directory.set_chat(false);
+    directory.set_chat_joined(false);
+    directory.set_chat_name(SharedString::new());
+    directory.set_chat_messages(model(Vec::new()));
+    directory.set_watch_state(LiveWatch::Expired);
+    save(window, &name("live-watch-expired"));
+    directory.set_watch_state(LiveWatch::Resolving);
+    live.set_frame(Image::default());
+    save(window, &name("live-watch-resolving"));
+    directory.set_channel(book.clone());
+    directory.set_watch_state(LiveWatch::Offline);
+    save(window, &name("live-watch-offline"));
+    directory.set_channel(LiveChannel { mature: true, ..jazz.clone() });
+    directory.set_watch_state(LiveWatch::Mature);
+    save(window, &name("live-watch-mature"));
+    directory.set_channel(harbour.clone());
+    directory.set_watch_state(LiveWatch::Failed);
+    directory.set_problem("The instance answered 404 Not Found for the live’s playlist.".into());
+    save(window, &name("live-watch-failed"));
+    directory.set_problem(SharedString::new());
+    directory.set_channel(LiveChannel { play: LivePlay::SignIn, why: LiveWhy::SignIn, ..harbour.clone() });
+    directory.set_watch_state(LiveWatch::SignIn);
+    save(window, &name("live-watch-sign-in"));
+    let twitch = live_channel("fg_ch_keebcraft", LiveSource::Twitch, "KeebCraft", "Building a 40% from scratch", LiveStatus::Live, 1200, 75, LiveCategory::Technology, "English", Some(285.0));
+    directory.set_channel(LiveChannel { play: LivePlay::Elsewhere, why: LiveWhy::OfficialPlayer, ..twitch });
+    directory.set_watch_state(LiveWatch::Elsewhere);
+    save(window, &name("live-watch-elsewhere"));
+    let linxia = live_channel("story:3:1", LiveSource::Telegram, "Lin Xia", "Walking home along the river", LiveStatus::Live, 4, -1, LiveCategory::None, "", None);
+    directory.set_channel(LiveChannel { play: LivePlay::Unavailable, why: LiveWhy::Webrtc, on_telegram: true, following: true, ..linxia });
+    directory.set_watch_state(LiveWatch::Phone);
+    save(window, &name("live-watch-phone"));
+    directory.set_channel(kblab.clone());
+    directory.set_watch_state(LiveWatch::Resolving);
+    let tech = LiveChannel { on_telegram: true, following: true, ..live_channel("fg_ch_tech", LiveSource::Telegram, "Tech Morning", "Morning briefing, live from the newsroom", LiveStatus::Live, 640, 40, LiveCategory::Technology, "English", None) };
+    directory.set_channel(tech);
+    save(window, &name("live-watch-telegram-resolving"));
+    directory.set_channel(night.clone());
+    directory.set_watch_state(LiveWatch::Playing);
+    directory.set_tech("Icecast · 128 kbps".into());
+    directory.set_qualities(model(Vec::new()));
+    save(window, &name("live-watch-audio"));
+    directory.set_channel(kblab.clone());
+    live.set_frame(gradient(1280, 720, 265.0));
+    directory.set_watching(false);
+    directory.set_column_open(true);
+    directory.set_mini(true);
+    save(window, &name("live-mini"));
+    directory.set_paused(true);
+    directory.set_section(LiveSection::Following);
+    directory.set_following_live(model(vec![LiveChannel { following: true, ..kblab.clone() }]));
+    directory.set_following_off(model(vec![LiveChannel { following: true, ..slow.clone() }, LiveChannel { following: true, ..book.clone() }, LiveChannel { following: true, ..lost.clone() }]));
+    directory.set_following_partial(true);
+    save(window, &name("live-following-partial"));
+    directory.set_following_partial(false);
+    directory.set_paused(false);
+    directory.set_section(LiveSection::Connections);
+    save(window, &name("live-connections"));
+    directory.set_section(LiveSection::Discover);
+    directory.set_mini(false);
+    live.set_frame(Image::default());
+    live.set_playing(false);
+    directory.set_toast(LiveToast::Following);
+    directory.set_toast_name("Keyboard Lab".into());
+    save(window, &name("live-toast"));
+    directory.set_toast(LiveToast::None);
+
+    // Back in the chats (the theme's window anew: its view is the chats), the stream goes on in
+    // the mini player, over the open channel.
+    let app = ui.global::<AppState>();
+    app.set_page(Page::Settings);
+    settle(window);
+    app.set_page(Page::Chats);
+    settle(window);
+    open_news(ui);
+    live.set_frame(gradient(1280, 720, 265.0));
+    directory.set_mini(true);
+    save(window, &name("live-mini-chats"));
+    directory.set_mini(false);
+    live.set_frame(Image::default());
+    directory.set_following_live(model(Vec::new()));
+    directory.set_following_off(model(Vec::new()));
 }
 
 /// A live stream in the list (the canvas "FinchGram Live" of 2026-11-07).
@@ -2911,6 +3262,37 @@ fn live(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> 
     ]));
     live.set_chats(model(vec![live_row("chat:4", "Tech Morning", LiveKind::Stream, "Morning briefing", 3902, true, false, Some(80.0))]));
     live.set_count(4);
+    // The column's Following: Telegram's live streams, followed there (src/telegram/live.rs's
+    // rows_followed in the app).
+    let directory = ui.global::<LiveDirectory>();
+    let followed: Vec<LiveChannel> = live
+        .get_stories()
+        .iter()
+        .chain(live.get_chats().iter())
+        .map(|row| LiveChannel {
+            hue: crate::live::hue_of(row.chat_id.as_str()),
+            id: row.id.clone(),
+            source: LiveSource::Telegram,
+            name: row.name.clone(),
+            title: row.title.clone(),
+            initial: row.initial.clone(),
+            picture: row.picture.clone(),
+            has_picture: row.has_picture,
+            status: LiveStatus::Live,
+            started_minutes: -1,
+            last_live_minutes: 0,
+            viewers: row.viewers,
+            play: if row.playable { LivePlay::Watch } else { LivePlay::Unavailable },
+            why: if row.playable { LiveWhy::None } else { LiveWhy::Webrtc },
+            following: true,
+            on_telegram: true,
+            upcoming_minutes: -1,
+            ..Default::default()
+        })
+        .collect();
+    directory.set_following_live(model(followed));
+    directory.set_following_off(model(Vec::new()));
+    directory.set_section(LiveSection::Discover);
     live.set_show_requests(live.get_show_requests() + 1);
     save(window, &name("live-empty"));
 
@@ -2979,13 +3361,21 @@ fn live(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> 
     live.set_server("rtmps://dc4-1.rtmp.t.me/s/".into());
     live.set_key("1817394650:pUdlD9qmHn3x-fYk2Lr8wQ".into());
     live.set_going_live(true);
+    // Going live is Broadcast's (round 13): the Telegram destinations of this version.
+    directory.set_section(LiveSection::Broadcast);
     save(window, &name("live-go"));
     live.set_target(1);
     live.set_key_shown(true);
     save(window, &name("live-go-channel"));
-    live.set_going_live(false);
-    live.set_key_shown(false);
+    // The user's own live story on: Broadcast's "On air" in the column.
+    live.set_on_air(true);
     live.set_target(0);
+    live.set_key_shown(false);
+    save(window, &name("live-go-on-air"));
+    live.set_on_air(false);
+    live.set_going_live(false);
+    directory.set_section(LiveSection::Discover);
+    directory.set_following_live(model(Vec::new()));
     live.set_frame(Image::default());
     live.set_comments(model(Vec::new()));
 

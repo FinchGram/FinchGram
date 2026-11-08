@@ -25,8 +25,8 @@ import { TerminalActions } from "actions.slint";
 import { TerminalAttachments } from "attachments.slint";
 import { TerminalCompose } from "compose.slint";
 import { Search, NewChat, NewDialog, ComposeWords } from "../compose.slint";
-import { Live, LiveWords } from "../live.slint";
-import { LiveList, LivePane, LiveMark, LiveBar } from "../pages/live.slint";
+import { Live, LiveWords, LiveDirectory, LiveSource } from "../live.slint";
+import { LiveList, LivePane, LiveMark, LiveBar, LiveMini } from "../pages/live.slint";
 
 export enum TerminalView { chats, channels, bots, live, rules, scheduled }
 
@@ -2683,6 +2683,15 @@ export component TerminalWindow inherits Rectangle {
                 line.focus-line();
             }
         }
+    }
+
+    // A live stream left playing (pages/live.slint): at the foot on the right, above the command
+    // line, over the chats and over the view's other places; Watch shows it in full. A Telegram
+    // stream ends with the view (src/telegram/live.rs), so its player goes with it.
+    if LiveDirectory.mini && !(root.view == TerminalView.live && LiveDirectory.watching)
+        && (LiveDirectory.channel.source != LiveSource.telegram || Live.open-id != ""): LiveMini {
+        x: root.width - self.width - 16px;
+        y: root.height - 26px - (Music.playing ? 60px : 0px) - self.height - (root.view == TerminalView.live ? 60px : 58px);
     }
 
     // A message's menu and the dialogs of its actions, over everything; the search over everything

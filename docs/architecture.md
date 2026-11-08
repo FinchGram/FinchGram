@@ -676,10 +676,15 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
    an OpenGL texture of ours inside Slint's own context (`src/player/`), and decodes with VideoToolbox
    where it can; the media viewer shows the texture. The price: libmpv decodes inside the app's
    process, so a crafted video that breaks a decoder takes the window with it. FFmpeg is
-   built without network code, encoders or devices, and follows upstream; should that not be enough,
-   playback moves into a sandboxed helper process that hands its picture over (IOSurface on macOS).
-   Music keeps it that way: songs from the user's own server come through the app's HTTP client
-   into a cache file, which an mpv of the music's own reads as it arrives ([music.md](music.md)).
+   built without encoders or devices, and follows upstream; should that not be enough, playback
+   moves into a sandboxed helper process that hands its picture over (IOSurface on macOS). Since
+   mpv-0.41.0-2 (2026-11-08) it has network code for the Live view's streams (the canvas "FinchGram
+   Desktop 直播", round 12): HTTP, HTTPS through mbedTLS (the Keychain's roots handed to it as a
+   file), HLS, DASH through libxml2, RTSP; only the Live view's players may reach it, each other
+   player naming the protocols it may open, files only (`LOCAL_PROTOCOLS`, `src/player/mod.rs`), so
+   that a playlist inside a Telegram file never makes FFmpeg fetch anything. Music keeps it that way:
+   songs from the user's own server come through the app's HTTP client into a cache file, which an
+   mpv of the music's own reads as it arrives ([music.md](music.md)).
    Lottie stickers need something else (rlottie), and WebM stickers a VP9 decoder that keeps their
    transparency (libvpx; FFmpeg's own leaves it out). Until then a moving sticker shows its still
    thumbnail; still stickers show as they are.

@@ -5966,3 +5966,2025 @@ msgstr "По этой ссылке сейчас нет трансляции."
 #: ui/live.slint:238
 msgid "Stream key"
 msgstr "Ключ трансляции"
+
+#: ui/live-popout.slint:15 ui/pages/live-parts.slint:186
+msgid "Pause"
+msgstr "Пауза"
+
+#: ui/live.slint:523
+msgid "Submitted streams"
+msgstr "Предложенные трансляции"
+
+#: ui/live.slint:543 ui/live.slint:655
+msgid "Following"
+msgstr "Отслеживаемые"
+
+#: ui/live.slint:544
+msgid "Broadcast"
+msgstr "Вещание"
+
+#: ui/live.slint:545
+msgid "Connections"
+msgstr "Подключения"
+
+#: ui/live.slint:546
+msgid "Discover"
+msgstr "Обзор"
+
+#: ui/live.slint:549
+msgid "All channels"
+msgstr "Все каналы"
+
+#: ui/live.slint:550
+msgid "Upcoming"
+msgstr "Предстоящие"
+
+#: ui/live.slint:551 ui/pages/live-discover.slint:93 ui/live.slint:551 ui/pages/live-discover.slint:93
+msgid "Live now"
+msgstr "Сейчас в эфире"
+
+#: ui/live.slint:554
+msgid "Relevance"
+msgstr "По релевантности"
+
+#: ui/live.slint:555
+msgid "Most viewers"
+msgstr "Больше всего зрителей"
+
+#: ui/live.slint:556
+msgid "Recently started"
+msgstr "Недавно начавшиеся"
+
+#: ui/live.slint:558
+msgid "Recommended"
+msgstr "Рекомендуемые"
+
+#: ui/live.slint:562
+msgid "Gaming"
+msgstr "Игры"
+
+#: ui/live.slint:563
+msgid "Talk"
+msgstr "Общение"
+
+#: ui/live.slint:564
+msgid "Technology"
+msgstr "Технологии"
+
+#: ui/live.slint:565
+msgid "Creative"
+msgstr "Творчество"
+
+#: ui/live.slint:566
+msgid "IRL"
+msgstr "IRL"
+
+#: ui/live.slint:567
+msgid "Education"
+msgstr "Образование"
+
+#: ui/live.slint:568
+msgid "Events"
+msgstr "События"
+
+#: ui/live.slint:569
+msgid "News"
+msgstr "Новости"
+
+#: ui/live.slint:570
+msgid "Sports"
+msgstr "Спорт"
+
+#: ui/live.slint:571
+msgid "Other"
+msgstr "Другое"
+
+#: ui/live.slint:572
+msgid "Uncategorized"
+msgstr "Без категории"
+
+#: ui/live.slint:574
+msgid "Language not given"
+msgstr "Язык не указан"
+
+#: ui/live.slint:579
+msgid "NOT CONFIRMED"
+msgstr "НЕ ПОДТВЕРЖДЕНО"
+
+#: ui/live.slint:580
+msgid "OFFLINE"
+msgstr "НЕ В ЭФИРЕ"
+
+#: ui/live.slint:581
+msgid "STATUS UNKNOWN"
+msgstr "СТАТУС НЕИЗВЕСТЕН"
+
+#: ui/live.slint:584 ui/pages/live-parts.slint:20
+msgid "On air"
+msgstr "В эфире"
+
+#: ui/live.slint:585 ui/pages/live-discover.slint:87 ui/live.slint:585 ui/pages/live-discover.slint:87
+msgid "Not confirmed"
+msgstr "Не подтверждено"
+
+#: ui/live.slint:586
+msgid "Off air"
+msgstr "Не в эфире"
+
+#: ui/live.slint:587 ui/live.slint:630 ui/pages/live-discover.slint:96
+msgid "Status unknown"
+msgstr "Статус неизвестен"
+
+#: ui/live.slint:591
+msgid "{} min"
+msgstr "{} мин"
+
+#: ui/live.slint:592
+msgid "{} h"
+msgstr "{} ч"
+
+#: ui/live.slint:593
+msgid "{} h {} min"
+msgstr "{} ч {} мин"
+
+#: ui/live.slint:597
+msgid "just now"
+msgstr "только что"
+
+#: ui/live.slint:598
+msgid "{} min ago"
+msgstr "{} мин назад"
+
+#: ui/live.slint:599
+msgid "{} h ago"
+msgstr "{} ч назад"
+
+#: ui/live.slint:600
+msgid "{} days ago"
+msgstr "{} дн. назад"
+
+#: ui/live.slint:604
+msgid "{n} listening"
+msgid_plural "{n} listening"
+msgstr[0] "{n} слушатель"
+msgstr[1] "{n} слушателя"
+msgstr[2] "{n} слушателей"
+
+#: ui/live.slint:611
+msgid "Live for {} · {}"
+msgstr "В эфире {} · {}"
+
+#: ui/live.slint:612 ui/pages/live-parts.slint:217
+msgid "Live for {}"
+msgstr "В эфире {}"
+
+#: ui/live.slint:614
+msgid "Not confirmed · last confirmed live {}"
+msgstr "Не подтверждено · эфир последний раз подтверждён {}"
+
+#: ui/live.slint:616
+msgid "Status unknown · last confirmed live {}"
+msgstr "Статус неизвестен · эфир последний раз подтверждён {}"
+
+#: ui/live.slint:617
+msgid "Status unknown · no recent answer from {}"
+msgstr "Статус неизвестен · {}: давно нет ответа"
+
+#: ui/live.slint:619
+msgid "Offline · last live {}"
+msgstr "Не в эфире · последний эфир {}"
+
+#: ui/live.slint:619 ui/pages/live-parts.slint:29
+msgid "Not seen live yet"
+msgstr "Пока не замечен в эфире"
+
+#: ui/live.slint:624
+msgid "Watch here"
+msgstr "Смотреть здесь"
+
+#: ui/live.slint:625
+msgid "Listen here"
+msgstr "Слушать здесь"
+
+#: ui/live.slint:626
+msgid "Try opening"
+msgstr "Попробовать открыть"
+
+#: ui/live.slint:627
+msgid "Sign in to watch"
+msgstr "Войти для просмотра"
+
+#: ui/live.slint:628 ui/pages/live-parts.slint:154
+msgid "Open on {}"
+msgstr "Открыть на {}"
+
+#: ui/live.slint:629 ui/pages/live-discover.slint:88 ui/live.slint:629 ui/pages/live-discover.slint:88 ui/pages/live-discover.slint:235
+msgid "Offline"
+msgstr "Не в эфире"
+
+#: ui/live.slint:631
+msgid "Unavailable"
+msgstr "Недоступно"
+
+#: ui/live.slint:634
+msgid "Not live right now"
+msgstr "Сейчас не в эфире"
+
+#: ui/live.slint:635
+msgid "{} isn't answering"
+msgstr "{}: нет ответа"
+
+#: ui/live.slint:636
+msgid "Live status isn't confirmed — the stream may have ended"
+msgstr "Статус эфира не подтверждён — трансляция могла закончиться"
+
+#: ui/live.slint:637
+msgid "Telegram sends this one over WebRTC — watch it on your phone"
+msgstr "Telegram передаёт эту трансляцию через WebRTC — смотрите её на телефоне"
+
+#: ui/live.slint:638
+msgid "{} needs an account for this stream"
+msgstr "{}: для этой трансляции нужен аккаунт"
+
+#: ui/live.slint:639
+msgid "Plays on {}'s site, in your browser"
+msgstr "Воспроизводится на сайте {}, в браузере"
+
+#: ui/live.slint:640
+msgid "{} allows only its own player, so it opens in your browser"
+msgstr "{} разрешает только собственный плеер, поэтому трансляция откроется в браузере"
+
+#: ui/live.slint:641
+msgid "FinchGram can't play this kind of stream yet"
+msgstr "FinchGram пока не умеет воспроизводить такие трансляции"
+
+#: ui/live.slint:642
+msgid "Plays in FinchGram, sound only"
+msgstr "Воспроизводится в FinchGram, только звук"
+
+#: ui/live.slint:643 ui/pages/live-discover.slint:81 ui/live.slint:643 ui/pages/live-discover.slint:81 ui/pages/live-parts.slint:273
+msgid "Plays in FinchGram"
+msgstr "Воспроизводится в FinchGram"
+
+#: ui/live.slint:645
+msgid "No thumbnail from {}"
+msgstr "{}: нет миниатюры"
+
+#: ui/live.slint:647
+msgid "Following {}"
+msgstr "Вы отслеживаете {}"
+
+#: ui/live.slint:648
+msgid "Unfollowed {}"
+msgstr "Вы больше не отслеживаете {}"
+
+#: ui/live.slint:649
+msgid "Followed on Telegram — unfollow it there"
+msgstr "Вы подписаны в Telegram — отписаться можно там"
+
+#: ui/live.slint:650
+msgid "Opened {} in your browser"
+msgstr "Открыто в браузере: {}"
+
+#: ui/live.slint:654
+msgid "Followed on Telegram"
+msgstr "Подписка в Telegram"
+
+#: ui/live.slint:655 ui/pages/live-parts.slint:197
+msgid "Follow"
+msgstr "Отслеживать"
+
+#: ui/pages/live-cards.slint:86
+msgid "Not confirmed — {} last answered {}"
+msgstr "Не подтверждено — {}: последний ответ {}"
+
+#: ui/pages/live-cards.slint:89
+msgid "{} isn’t answering — last confirmed live {}"
+msgstr "{}: нет ответа — эфир последний раз подтверждён {}"
+
+#: ui/pages/live-cards.slint:99
+msgid "Will play in FinchGram"
+msgstr "Будет воспроизводиться в FinchGram"
+
+#: ui/pages/live-cards.slint:99
+msgid "Will open on {}"
+msgstr "Откроется на {}"
+
+#: ui/pages/live-cards.slint:104
+msgid "Mature"
+msgstr "18+"
+
+#: ui/pages/live-cards.slint:104
+msgid "MATURE"
+msgstr "18+"
+
+#: ui/pages/live-cards.slint:112
+msgid "in {} min"
+msgstr "через {} мин"
+
+#: ui/pages/live-cards.slint:113
+msgid "in {} h"
+msgstr "через {} ч"
+
+#: ui/pages/live-cards.slint:114
+msgid "in {} days"
+msgstr "через {} дн."
+
+#: ui/pages/live-cards.slint:123
+msgid "{} · {} · {}"
+msgstr "{} · {} · {}"
+
+#: ui/pages/live-cards.slint:128
+msgid "viewers not shared"
+msgstr "число зрителей не сообщается"
+
+#: ui/pages/live-cards.slint:129
+msgid "{} (the server’s own count)"
+msgstr "{} (по данным самого сервера)"
+
+#: ui/pages/live-cards.slint:140
+msgid "{} · live for {}"
+msgstr "{} · в эфире {}"
+
+#: ui/pages/live-cards.slint:142
+msgid "{} · not confirmed"
+msgstr "{} · не подтверждено"
+
+#: ui/pages/live-cards.slint:143
+msgid "{} · status unknown"
+msgstr "{} · статус неизвестен"
+
+#: ui/pages/live-cards.slint:147
+msgid "live now"
+msgstr "сейчас в эфире"
+
+#: ui/pages/live-cards.slint:148
+msgid "not confirmed"
+msgstr "не подтверждено"
+
+#: ui/pages/live-cards.slint:149
+msgid "status unknown"
+msgstr "статус неизвестен"
+
+#: ui/pages/live-cards.slint:150 ui/pages/live-parts.slint:29
+msgid "last live {}"
+msgstr "последний эфир {}"
+
+#: ui/pages/live-cards.slint:150
+msgid "never live yet"
+msgstr "ещё не был в эфире"
+
+#: ui/pages/live-cards.slint:155
+msgid "▸ here"
+msgstr "▸ здесь"
+
+#: ui/pages/live-cards.slint:157
+msgid "▸ watch here"
+msgstr "▸ смотреть здесь"
+
+#: ui/pages/live-cards.slint:158
+msgid "▸ listen here"
+msgstr "▸ слушать здесь"
+
+#: ui/pages/live-cards.slint:159
+msgid "? try opening"
+msgstr "? попробовать открыть"
+
+#: ui/pages/live-cards.slint:160
+msgid "sign in"
+msgstr "войти"
+
+#: ui/pages/live-cards.slint:162
+msgid "× offline"
+msgstr "× не в эфире"
+
+#: ui/pages/live-cards.slint:163
+msgid "× unknown"
+msgstr "× неизвестно"
+
+#: ui/pages/live-cards.slint:164
+msgid "× unavailable"
+msgstr "× недоступно"
+
+#: ui/pages/live-cards.slint:1041
+msgid "loading {}"
+msgstr "загрузка {}"
+
+#: ui/pages/live-discover.slint:23
+msgid "title, channel, category, platform"
+msgstr "название, канал, категория, платформа"
+
+#: ui/pages/live-discover.slint:24
+msgid "Search streams, channels, categories, platforms"
+msgstr "Поиск трансляций, каналов, категорий, платформ"
+
+#: ui/pages/live-discover.slint:24
+msgid "Search live streams, channels, categories, platforms"
+msgstr "Поиск прямых трансляций, каналов, категорий, платформ"
+
+#: ui/pages/live-discover.slint:26
+msgid "searching…"
+msgstr "поиск…"
+
+#: ui/pages/live-discover.slint:28
+msgid "⏎ search · / focus · esc clear"
+msgstr "⏎ искать · / фокус · esc очистить"
+
+#: ui/pages/live-discover.slint:32 ui/pages/live-discover.slint:331
+msgid "recent"
+msgstr "недавние"
+
+#: ui/pages/live-discover.slint:32
+msgid "Recent searches"
+msgstr "Недавние запросы"
+
+#: ui/pages/live-discover.slint:33
+msgid "Searches"
+msgstr "Запросы"
+
+#: ui/pages/live-discover.slint:34
+msgid "channels"
+msgstr "каналы"
+
+#: ui/pages/live-discover.slint:36 ui/pages/live-discover.slint:338
+msgid "filters"
+msgstr "фильтры"
+
+#: ui/pages/live-discover.slint:36
+msgid "Filters"
+msgstr "Фильтры"
+
+#: ui/pages/live-discover.slint:39 ui/pages/live-discover.slint:275
+msgid "Source: {}"
+msgstr "Источник: {}"
+
+#: ui/pages/live-discover.slint:40 ui/pages/live-discover.slint:276
+msgid "Category: {}"
+msgstr "Категория: {}"
+
+#: ui/pages/live-discover.slint:41
+msgid "Open this link directly"
+msgstr "Открыть эту ссылку напрямую"
+
+#: ui/pages/live-discover.slint:46
+msgid "{} — not a directory search"
+msgstr "{} — это не поиск по каталогу"
+
+#: ui/pages/live-discover.slint:51
+msgid "↑↓ pick · ⏎ go · tab complete · {}"
+msgstr "↑↓ выбрать · ⏎ перейти · tab дополнить · {}"
+
+#: ui/pages/live-discover.slint:51
+msgid "links open directly"
+msgstr "ссылки открываются напрямую"
+
+#: ui/pages/live-discover.slint:51
+msgid "esc close"
+msgstr "esc закрыть"
+
+#: ui/pages/live-discover.slint:53
+msgid "Links open directly — they aren’t searched in the directory."
+msgstr "Ссылки открываются напрямую — в каталоге они не ищутся."
+
+#: ui/pages/live-discover.slint:54
+msgid "⏎ searches the directory for “{}” · ↑↓ to pick"
+msgstr "⏎ — искать «{}» в каталоге · ↑↓ — выбрать"
+
+#: ui/pages/live-discover.slint:54
+msgid "Type to search the directory, or paste a link to open it"
+msgstr "Введите запрос для поиска по каталогу или вставьте ссылку, чтобы открыть её"
+
+#: ui/pages/live-discover.slint:59
+msgid "Index"
+msgstr "Указатель"
+
+#: ui/pages/live-discover.slint:59
+msgid "Pictures"
+msgstr "Иллюстрации"
+
+#: ui/pages/live-discover.slint:60
+msgid "List"
+msgstr "Список"
+
+#: ui/pages/live-discover.slint:60
+msgid "Grid"
+msgstr "Сетка"
+
+#: ui/pages/live-discover.slint:64 ui/pages/live-discover.slint:143
+msgid "Source"
+msgstr "Источник"
+
+#: ui/pages/live-discover.slint:65
+msgid "Category"
+msgstr "Категория"
+
+#: ui/pages/live-discover.slint:67 ui/pages/live-discover.slint:214
+msgid "Plays"
+msgstr "Воспроизведение"
+
+#: ui/pages/live-discover.slint:68
+msgid "Status"
+msgstr "Статус"
+
+#: ui/pages/live-discover.slint:69
+msgid "Sort"
+msgstr "Сортировка"
+
+#: ui/pages/live-discover.slint:70
+msgid "Any"
+msgstr "Все"
+
+#: ui/pages/live-discover.slint:71
+msgid "{n} source"
+msgid_plural "{n} sources"
+msgstr[0] "{n} источник"
+msgstr[1] "{n} источника"
+msgstr[2] "{n} источников"
+
+#: ui/pages/live-discover.slint:72
+msgid "Any source"
+msgstr "Любой источник"
+
+#: ui/pages/live-discover.slint:73
+msgid "Any category"
+msgstr "Любая категория"
+
+#: ui/pages/live-discover.slint:76
+msgid "In FinchGram"
+msgstr "В FinchGram"
+
+#: ui/pages/live-discover.slint:77
+msgid "On its site"
+msgstr "На своём сайте"
+
+#: ui/pages/live-discover.slint:78 ui/pages/live-discover.slint:83
+msgid "Anywhere"
+msgstr "Где угодно"
+
+#: ui/pages/live-discover.slint:82
+msgid "Opens on its own site"
+msgstr "Открывается на своём сайте"
+
+#: ui/pages/live-discover.slint:89
+msgid "Unknown"
+msgstr "Неизвестен"
+
+#: ui/pages/live-discover.slint:91
+msgid "Any status"
+msgstr "Любой статус"
+
+#: ui/pages/live-discover.slint:100
+msgid "Recently live"
+msgstr "Недавно в эфире"
+
+#: ui/pages/live-discover.slint:104
+msgid "Twitch, YouTube, Kick and Bilibili: not integrated yet — their links still open in your browser."
+msgstr "Twitch, YouTube, Kick и Bilibili пока не поддерживаются — их ссылки по-прежнему открываются в браузере."
+
+#: ui/pages/live-discover.slint:107
+msgid "Language comes from the source. Streams that don’t give one appear only under Any."
+msgstr "Язык сообщает источник. Трансляции, у которых язык не указан, видны только при значении «Все»."
+
+#: ui/pages/live-discover.slint:110
+msgid "Twitch and YouTube allow only their own players, and Kick plays on its site. They are not integrated yet; their links open in your browser."
+msgstr "Twitch и YouTube разрешают только собственные плееры, а Kick воспроизводит трансляции на своём сайте. Они пока не поддерживаются; их ссылки открываются в браузере."
+
+#: ui/pages/live-discover.slint:113 ui/pages/live-parts.slint:92
+msgid "Not confirmed: live at the last answer, but that answer is old. Status unknown: no recent answer at all. Neither is treated as offline."
+msgstr "Не подтверждено: в последнем ответе эфир шёл, но этот ответ устарел. Статус неизвестен: свежих ответов нет вовсе. Ни то ни другое не считается статусом «Не в эфире»."
+
+#: ui/pages/live-discover.slint:116
+msgid "Relevance and Recommended put confirmed live first. Most viewers uses each source’s own counts — they aren’t comparable across platforms, and streams without a count come after, not as zero."
+msgstr "«По релевантности» и «Рекомендуемые» ставят подтверждённые эфиры первыми. «Больше всего зрителей» опирается на подсчёты каждого источника — между платформами они несравнимы, а трансляции без счётчика идут после остальных, а не считаются нулём."
+
+#: ui/pages/live-discover.slint:118
+msgid "Clear filters"
+msgstr "Сбросить фильтры"
+
+#: ui/pages/live-discover.slint:122
+msgid "Partial results — {} of {} sources are behind"
+msgstr "Неполные результаты — {} из {} источников отстают"
+
+#: ui/pages/live-discover.slint:122
+msgid "Partial results — a source is behind"
+msgstr "Неполные результаты — один источник отстаёт"
+
+#: ui/pages/live-discover.slint:126
+msgid "{} limited our requests. Its results are from {}, so its streams show “Not confirmed”."
+msgstr "{}: наши запросы ограничены. Данные получены {}, поэтому трансляции из этого источника отмечены как «Не подтверждено»."
+
+#: ui/pages/live-discover.slint:127
+msgid "{} limited our requests, so its streams show “Not confirmed”."
+msgstr "{}: наши запросы ограничены, поэтому трансляции из этого источника отмечены как «Не подтверждено»."
+
+#: ui/pages/live-discover.slint:130
+msgid "{} hasn’t answered for {}. Its streams are “Status unknown” and left out of Live now."
+msgstr "{}: нет ответа уже {}. Трансляции из этого источника отмечены как «Статус неизвестен» и не входят в список «Сейчас в эфире»."
+
+#: ui/pages/live-discover.slint:131
+msgid "{} isn’t answering. Its streams are “Status unknown” and left out of Live now."
+msgstr "{}: нет ответа. Трансляции из этого источника отмечены как «Статус неизвестен» и не входят в список «Сейчас в эфире»."
+
+#: ui/pages/live-discover.slint:133
+msgid "Some {} servers haven’t answered for {}."
+msgstr "{}: часть серверов не отвечает уже {}."
+
+#: ui/pages/live-discover.slint:134
+msgid "Some {} servers aren’t answering."
+msgstr "{}: часть серверов не отвечает."
+
+#: ui/pages/live-discover.slint:137
+msgid "{n} stream with unknown status isn’t in Live now — All channels lists it."
+msgid_plural "{n} streams with unknown status aren’t in Live now — All channels lists them."
+msgstr[0] "{n} трансляция с неизвестным статусом не входит в список «Сейчас в эфире» — она есть в списке «Все каналы»."
+msgstr[1] "{n} трансляции с неизвестным статусом не входят в список «Сейчас в эфире» — они есть в списке «Все каналы»."
+msgstr[2] "{n} трансляций с неизвестным статусом не входят в список «Сейчас в эфире» — они есть в списке «Все каналы»."
+
+#: ui/pages/live-discover.slint:140
+msgid "[hide sources]"
+msgstr "[скрыть источники]"
+
+#: ui/pages/live-discover.slint:140
+msgid "[sources]"
+msgstr "[источники]"
+
+#: ui/pages/live-discover.slint:141 ui/pages/live-discover.slint:306
+msgid "Hide sources"
+msgstr "Скрыть источники"
+
+#: ui/pages/live-discover.slint:144
+msgid "# sources"
+msgstr "# источники"
+
+#: ui/pages/live-discover.slint:145
+msgid "Provides"
+msgstr "Возможности"
+
+#: ui/pages/live-discover.slint:147
+msgid "Last answer"
+msgstr "Последний ответ"
+
+#: ui/pages/live-discover.slint:148
+msgid "State"
+msgstr "Состояние"
+
+#: ui/pages/live-discover.slint:150
+msgid "Not integrated yet — its links still open in your browser."
+msgstr "Пока не поддерживается — ссылки по-прежнему открываются в браузере."
+
+#: ui/pages/live-discover.slint:151
+msgid "live status · {} · {} · {}"
+msgstr "статус эфира · {} · {} · {}"
+
+#: ui/pages/live-discover.slint:152
+msgid "viewer counts"
+msgstr "число зрителей"
+
+#: ui/pages/live-discover.slint:152
+msgid "self-reported counts"
+msgstr "подсчёты самих серверов"
+
+#: ui/pages/live-discover.slint:152
+msgid "listener counts"
+msgstr "число слушателей"
+
+#: ui/pages/live-discover.slint:152
+msgid "no viewer counts"
+msgstr "без числа зрителей"
+
+#: ui/pages/live-discover.slint:153
+msgid "thumbnails"
+msgstr "миниатюры"
+
+#: ui/pages/live-discover.slint:153
+msgid "no thumbnails"
+msgstr "без миниатюр"
+
+#: ui/pages/live-discover.slint:154
+msgid "plays in FinchGram"
+msgstr "воспроизводится в FinchGram"
+
+#: ui/pages/live-discover.slint:154
+msgid "plays on its site"
+msgstr "воспроизводится на своём сайте"
+
+#: ui/pages/live-discover.slint:157
+msgid "Not integrated yet"
+msgstr "Пока не поддерживается"
+
+#: ui/pages/live-discover.slint:158
+msgid "Up to date"
+msgstr "Актуально"
+
+#: ui/pages/live-discover.slint:159
+msgid "Partly behind"
+msgstr "Частично отстаёт"
+
+#: ui/pages/live-discover.slint:160
+msgid "Rate-limited"
+msgstr "Запросы ограничены"
+
+#: ui/pages/live-discover.slint:161
+msgid "Not answering"
+msgstr "Не отвечает"
+
+#: ui/pages/live-discover.slint:168
+msgid "Channels · total unknown"
+msgstr "Каналы · общее число неизвестно"
+
+#: ui/pages/live-discover.slint:169
+msgid "Scheduled streams · total unknown"
+msgstr "Запланированные трансляции · общее число неизвестно"
+
+#: ui/pages/live-discover.slint:170
+msgid "Live streams · total unknown"
+msgstr "Трансляции в эфире · общее число неизвестно"
+
+#: ui/pages/live-discover.slint:173
+msgid "At least {n} channel"
+msgid_plural "At least {n} channels"
+msgstr[0] "Как минимум {n} канал"
+msgstr[1] "Как минимум {n} канала"
+msgstr[2] "Как минимум {n} каналов"
+
+#: ui/pages/live-discover.slint:174
+msgid "At least {n} scheduled stream"
+msgid_plural "At least {n} scheduled streams"
+msgstr[0] "Как минимум {n} запланированная трансляция"
+msgstr[1] "Как минимум {n} запланированные трансляции"
+msgstr[2] "Как минимум {n} запланированных трансляций"
+
+#: ui/pages/live-discover.slint:175
+msgid "At least {n} live stream"
+msgid_plural "At least {n} live streams"
+msgstr[0] "Как минимум {n} трансляция в эфире"
+msgstr[1] "Как минимум {n} трансляции в эфире"
+msgstr[2] "Как минимум {n} трансляций в эфире"
+
+#: ui/pages/live-discover.slint:177
+msgid "{n} channel"
+msgid_plural "{n} channels"
+msgstr[0] "{n} канал"
+msgstr[1] "{n} канала"
+msgstr[2] "{n} каналов"
+
+#: ui/pages/live-discover.slint:178
+msgid "{n} scheduled stream"
+msgid_plural "{n} scheduled streams"
+msgstr[0] "{n} запланированная трансляция"
+msgstr[1] "{n} запланированные трансляции"
+msgstr[2] "{n} запланированных трансляций"
+
+#: ui/pages/live-discover.slint:179
+msgid "{n} live stream"
+msgid_plural "{n} live streams"
+msgstr[0] "{n} трансляция в эфире"
+msgstr[1] "{n} трансляции в эфире"
+msgstr[2] "{n} трансляций в эфире"
+
+#: ui/pages/live-discover.slint:182
+msgid "{} for “{}”"
+msgstr "{} по запросу «{}»"
+
+#: ui/pages/live-discover.slint:184
+msgid "Loading results…"
+msgstr "Загрузка результатов…"
+
+#: ui/pages/live-discover.slint:185
+msgid "Searching…"
+msgstr "Поиск…"
+
+#: ui/pages/live-discover.slint:187
+msgid "partial — {} of {} sources behind"
+msgstr "неполные — {} из {} источников отстают"
+
+#: ui/pages/live-discover.slint:187
+msgid "partial — a source is behind"
+msgstr "неполные — один источник отстаёт"
+
+#: ui/pages/live-discover.slint:190
+msgid "counts come from each source and aren’t comparable — streams without one come after, not as zero"
+msgstr "подсчёты берутся из каждого источника и несравнимы — трансляции без счётчика идут после остальных, а не считаются нулём"
+
+#: ui/pages/live-discover.slint:191
+msgid "Recommended: confirmed live first, then your languages, recently started, and popularity within each source"
+msgstr "Рекомендуемые: сначала подтверждённые эфиры, затем ваши языки, недавно начавшиеся и популярность внутри каждого источника"
+
+#: ui/pages/live-discover.slint:195
+msgid "{n} mature-rated result hidden"
+msgid_plural "{n} mature-rated results hidden"
+msgstr[0] "Скрыт {n} результат с возрастным ограничением"
+msgstr[1] "Скрыто {n} результата с возрастным ограничением"
+msgstr[2] "Скрыто {n} результатов с возрастным ограничением"
+
+#: ui/pages/live-discover.slint:200
+msgid "Confirmed live on Owncast, PeerTube, Icecast and submitted servers"
+msgstr "Подтверждённые эфиры на Owncast, PeerTube, Icecast и предложенных серверах"
+
+#: ui/pages/live-discover.slint:201
+msgid "See all {}"
+msgstr "Показать все {}"
+
+#: ui/pages/live-discover.slint:201
+msgid "See all"
+msgstr "Показать все"
+
+#: ui/pages/live-discover.slint:202
+msgid "Not confirmed right now"
+msgstr "Сейчас не подтверждено"
+
+#: ui/pages/live-discover.slint:203
+msgid "Their sources haven’t answered recently. Opening one tries the stream; it may have ended."
+msgstr "Их источники давно не отвечали. Если открыть трансляцию, FinchGram попробует к ней подключиться; возможно, она уже закончилась."
+
+#: ui/pages/live-discover.slint:204
+msgid "By category"
+msgstr "По категориям"
+
+#: ui/pages/live-discover.slint:204
+msgid "Browse by category"
+msgstr "Обзор по категориям"
+
+#: ui/pages/live-discover.slint:209
+msgid "Scheduled stream"
+msgstr "Запланированная трансляция"
+
+#: ui/pages/live-discover.slint:210
+msgid "Stream"
+msgstr "Трансляция"
+
+#: ui/pages/live-discover.slint:212
+msgid "Category · language"
+msgstr "Категория · язык"
+
+#: ui/pages/live-discover.slint:213
+msgid "Starts"
+msgstr "Начало"
+
+#: ui/pages/live-discover.slint:213
+msgid "Viewers"
+msgstr "Зрители"
+
+#: ui/pages/live-discover.slint:217 ui/pages/live-discover.slint:218
+msgid "channel"
+msgstr "канал"
+
+#: ui/pages/live-discover.slint:217
+msgid "scheduled stream"
+msgstr "запланированная трансляция"
+
+#: ui/pages/live-discover.slint:217 ui/pages/live-discover.slint:342
+msgid "title"
+msgstr "название"
+
+#: ui/pages/live-discover.slint:218 ui/pages/live-discover.slint:343
+msgid "status"
+msgstr "статус"
+
+#: ui/pages/live-discover.slint:219
+msgid "src"
+msgstr "ист"
+
+#: ui/pages/live-discover.slint:220
+msgid "cat"
+msgstr "кат"
+
+#: ui/pages/live-discover.slint:221
+msgid "lang"
+msgstr "язык"
+
+#: ui/pages/live-discover.slint:222
+msgid "starts"
+msgstr "начало"
+
+#: ui/pages/live-discover.slint:222 ui/pages/live-discover.slint:333
+msgid "viewers"
+msgstr "зрители"
+
+#: ui/pages/live-discover.slint:223 ui/pages/live-discover.slint:344
+msgid "plays"
+msgstr "воспроизв."
+
+#: ui/pages/live-discover.slint:228
+msgid "── live · confirmed ──"
+msgstr "── в эфире · подтверждено ──"
+
+#: ui/pages/live-discover.slint:229
+msgid "── not confirmed: source behind, opening tries the stream ──"
+msgstr "── не подтверждено: источник отстаёт, можно попробовать открыть ──"
+
+#: ui/pages/live-discover.slint:230
+msgid "── offline ──"
+msgstr "── не в эфире ──"
+
+#: ui/pages/live-discover.slint:231
+msgid "── status unknown: source not answering ──"
+msgstr "── статус неизвестен: источник не отвечает ──"
+
+#: ui/pages/live-discover.slint:233
+msgid "Live now · confirmed"
+msgstr "Сейчас в эфире · подтверждено"
+
+#: ui/pages/live-discover.slint:234
+msgid "Not confirmed right now — the source hasn’t answered recently; opening one tries the stream"
+msgstr "Сейчас не подтверждено — источник давно не отвечал; при открытии FinchGram попробует подключиться"
+
+#: ui/pages/live-discover.slint:236
+msgid "Status unknown — the source isn’t answering"
+msgstr "Статус неизвестен — источник не отвечает"
+
+#: ui/pages/live-discover.slint:239
+msgid "Upcoming lists the sources that publish schedules. Follow a channel to keep it in Following."
+msgstr "В списке «Предстоящие» — только источники, которые публикуют расписание. Отслеживайте канал, чтобы он оставался в разделе «Отслеживаемые»."
+
+#: ui/pages/live-discover.slint:245
+msgid "no channels match these filters"
+msgstr "по этим фильтрам каналов нет"
+
+#: ui/pages/live-discover.slint:245
+msgid "No channels match these filters"
+msgstr "По этим фильтрам каналов нет"
+
+#: ui/pages/live-discover.slint:246
+msgid "no scheduled streams match these filters"
+msgstr "по этим фильтрам запланированных трансляций нет"
+
+#: ui/pages/live-discover.slint:246
+msgid "No scheduled streams match these filters"
+msgstr "По этим фильтрам запланированных трансляций нет"
+
+#: ui/pages/live-discover.slint:247
+msgid "no live streams match these filters"
+msgstr "по этим фильтрам трансляций в эфире нет"
+
+#: ui/pages/live-discover.slint:247
+msgid "No live streams match these filters"
+msgstr "По этим фильтрам трансляций в эфире нет"
+
+#: ui/pages/live-discover.slint:249
+msgid "nothing matches “{}”"
+msgstr "по запросу «{}» ничего нет"
+
+#: ui/pages/live-discover.slint:249
+msgid "Nothing matches “{}”"
+msgstr "По запросу «{}» ничего не найдено"
+
+#: ui/pages/live-discover.slint:250
+msgid "nothing scheduled"
+msgstr "ничего не запланировано"
+
+#: ui/pages/live-discover.slint:250
+msgid "Nothing scheduled"
+msgstr "Ничего не запланировано"
+
+#: ui/pages/live-discover.slint:251
+msgid "nothing here"
+msgstr "здесь пусто"
+
+#: ui/pages/live-discover.slint:251
+msgid "Nothing here yet"
+msgstr "Здесь пока ничего нет"
+
+#: ui/pages/live-discover.slint:254
+msgid "Nothing in {} for “{}” with {}."
+msgstr "В списке «{}» по запросу «{}» с фильтрами {} ничего нет."
+
+#: ui/pages/live-discover.slint:254
+msgid "Nothing in {} with {}."
+msgstr "В списке «{}» с фильтрами {} ничего нет."
+
+#: ui/pages/live-discover.slint:257
+msgid "Searched titles, channel names, categories, platforms and languages from {n} source, live and offline."
+msgid_plural "Searched titles, channel names, categories, platforms and languages from {n} sources, live and offline."
+msgstr[0] "Поиск по названиям, именам каналов, категориям, платформам и языкам из {n} источника — в эфире и не в эфире."
+msgstr[1] "Поиск по названиям, именам каналов, категориям, платформам и языкам из {n} источников — в эфире и не в эфире."
+msgstr[2] "Поиск по названиям, именам каналов, категориям, платформам и языкам из {n} источников — в эфире и не в эфире."
+
+#: ui/pages/live-discover.slint:258
+msgid "{n} mature-rated result is hidden."
+msgid_plural "{n} mature-rated results are hidden."
+msgstr[0] "{n} результат с возрастным ограничением скрыт."
+msgstr[1] "{n} результата с возрастным ограничением скрыты."
+msgstr[2] "{n} результатов с возрастным ограничением скрыто."
+
+#: ui/pages/live-discover.slint:261
+msgid "{} and {}"
+msgstr "{} и {}"
+
+#: ui/pages/live-discover.slint:264
+msgid "[remove {}]"
+msgstr "[убрать {}]"
+
+#: ui/pages/live-discover.slint:264
+msgid "Remove “{}”"
+msgstr "Убрать «{}»"
+
+#: ui/pages/live-discover.slint:267
+msgid "Look in {}"
+msgstr "Искать в «{}»"
+
+#: ui/pages/live-discover.slint:269
+msgid "{n} result"
+msgid_plural "{n} results"
+msgstr[0] "{n} результат"
+msgstr[1] "{n} результата"
+msgstr[2] "{n} результатов"
+
+#: ui/pages/live-discover.slint:270
+msgid "Clear all filters"
+msgstr "Сбросить все фильтры"
+
+#: ui/pages/live-discover.slint:271
+msgid "Clear the search"
+msgstr "Очистить поиск"
+
+#: ui/pages/live-discover.slint:272
+msgid "Not in the directory? Open a link in Connections"
+msgstr "Нет в каталоге? Откройте ссылку в разделе «Подключения»"
+
+#: ui/pages/live-discover.slint:273
+msgid "try: /watch <link> · esc clears the search"
+msgstr "попробуйте: /watch <ссылка> · esc очищает поиск"
+
+#: ui/pages/live-discover.slint:277
+msgid "Language: {}"
+msgstr "Язык: {}"
+
+#: ui/pages/live-discover.slint:278
+msgid "Status: {}"
+msgstr "Статус: {}"
+
+#: ui/pages/live-discover.slint:283
+msgid "the live directory didn’t answer — what’s shown may be out of date"
+msgstr "каталог эфиров не ответил — показанное может быть устаревшим"
+
+#: ui/pages/live-discover.slint:283
+msgid "the live directory didn’t answer"
+msgstr "каталог эфиров не ответил"
+
+#: ui/pages/live-discover.slint:285
+msgid "The live directory didn’t answer. What’s shown may be out of date."
+msgstr "Каталог эфиров не ответил. Показанное может быть устаревшим."
+
+#: ui/pages/live-discover.slint:285
+msgid "The live directory didn’t answer."
+msgstr "Каталог эфиров не ответил."
+
+#: ui/pages/live-discover.slint:288
+msgid "the next page didn’t load — results from here on may be missing"
+msgstr "следующая страница не загрузилась — дальнейшие результаты могут отсутствовать"
+
+#: ui/pages/live-discover.slint:288
+msgid "The next page didn’t load, so results from here on may be missing."
+msgstr "Следующая страница не загрузилась, поэтому дальнейшие результаты могут отсутствовать."
+
+#: ui/pages/live-discover.slint:290
+msgid "[r] retry"
+msgstr "[r] повторить"
+
+#: ui/pages/live-discover.slint:294
+msgid "Showing {} so far"
+msgstr "Пока показано {}"
+
+#: ui/pages/live-discover.slint:295
+msgid "Showing {} of at least {}"
+msgstr "Показано {} из {} или больше"
+
+#: ui/pages/live-discover.slint:296
+msgid "Showing {} of {}"
+msgstr "Показано {} из {}"
+
+#: ui/pages/live-discover.slint:298
+msgid "Show {} more"
+msgstr "Показать ещё {}"
+
+#: ui/pages/live-discover.slint:299
+msgid "[n] next {}"
+msgstr "[n] ещё {}"
+
+#: ui/pages/live-discover.slint:300
+msgid "[n] loading…"
+msgstr "[n] загрузка…"
+
+#: ui/pages/live-discover.slint:304
+msgid "Results from the FinchGram Live Directory (services.finchgram.com/live/api/v1). Source data from the Owncast and Xiph Icecast directories, PeerTube instances and reviewed submissions, each used under its own terms; whether a Telegram channel is live, FinchGram asks Telegram itself."
+msgstr "Результаты из каталога эфиров FinchGram (services.finchgram.com/live/api/v1). Данные источников — из каталогов Owncast и Xiph Icecast, с серверов PeerTube и из проверенных заявок, каждый на собственных условиях; в эфире ли канал Telegram, FinchGram спрашивает у самого Telegram."
+
+#: ui/pages/live-discover.slint:306
+msgid "Sources and freshness"
+msgstr "Источники и актуальность"
+
+#: ui/pages/live-discover.slint:308
+msgid "Mature-rated streams: shown"
+msgstr "Трансляции с возрастным ограничением: показаны"
+
+#: ui/pages/live-discover.slint:308
+msgid "Mature-rated streams: hidden"
+msgstr "Трансляции с возрастным ограничением: скрыты"
+
+#: ui/pages/live-discover.slint:313
+msgid "❯ that’s a link, not a search"
+msgstr "❯ это ссылка, а не запрос"
+
+#: ui/pages/live-discover.slint:313
+msgid "That’s a link, not a search"
+msgstr "Это ссылка, а не поисковый запрос"
+
+#: ui/pages/live-discover.slint:316
+msgid "The directory searches titles, channels, categories and platforms. To play this exact address, open it directly."
+msgstr "Каталог ищет по названиям, каналам, категориям и платформам. Чтобы воспроизвести именно этот адрес, откройте его напрямую."
+
+#: ui/pages/live-discover.slint:318
+msgid "FinchGram checks what it is when you open it"
+msgstr "FinchGram проверит, что это, когда вы откроете"
+
+#: ui/pages/live-discover.slint:320
+msgid "The directory searches titles, channels, categories and platforms. This is an address: {}. {}."
+msgstr "Каталог ищет по названиям, каналам, категориям и платформам. Это адрес: {}. {}."
+
+#: ui/pages/live-discover.slint:323
+msgid "[⏎ open link]"
+msgstr "[⏎ открыть ссылку]"
+
+#: ui/pages/live-discover.slint:324
+msgid "Open link ⏎"
+msgstr "Открыть ссылку ⏎"
+
+#: ui/pages/live-discover.slint:324
+msgid "Open link"
+msgstr "Открыть ссылку"
+
+#: ui/pages/live-discover.slint:328
+msgid "❯ discover"
+msgstr "❯ обзор"
+
+#: ui/pages/live-discover.slint:330
+msgid "relevance"
+msgstr "релевантность"
+
+#: ui/pages/live-discover.slint:332
+msgid "added"
+msgstr "добавленные"
+
+#: ui/pages/live-discover.slint:334
+msgid "recommended"
+msgstr "рекомендуемые"
+
+#: ui/pages/live-discover.slint:336
+msgid "sort"
+msgstr "сортировка"
+
+#: ui/pages/live-discover.slint:337
+msgid "soonest"
+msgstr "ближайшие"
+
+#: ui/pages/live-discover.slint:339
+msgid "[x clear]"
+msgstr "[x сбросить]"
+
+#: ui/pages/live-discover.slint:340
+msgid "{n} source behind"
+msgid_plural "{n} sources behind"
+msgstr[0] "{n} источник отстаёт"
+msgstr[1] "{n} источника отстают"
+msgstr[2] "{n} источников отстают"
+
+#: ui/pages/live-discover.slint:345
+msgid "category"
+msgstr "категория"
+
+#: ui/pages/live-discover.slint:346
+msgid "source"
+msgstr "источник"
+
+#: ui/pages/live-discover.slint:350
+msgid "[f unfollow]"
+msgstr "[f не отслеживать]"
+
+#: ui/pages/live-discover.slint:350
+msgid "[f follow]"
+msgstr "[f отслеживать]"
+
+#: ui/pages/live-discover.slint:352
+msgid "[o page]"
+msgstr "[o страница]"
+
+#: ui/pages/live-discover.slint:353
+msgid "updated {}"
+msgstr "обновлено {}"
+
+#: ui/pages/live-discover.slint:354
+msgid "behind"
+msgstr "отстаёт"
+
+#: ui/pages/live-discover.slint:521
+msgid "search ❯"
+msgstr "поиск ❯"
+
+#: ui/pages/live-discover.slint:2603
+msgid "the FinchGram Live Directory"
+msgstr "каталог эфиров FinchGram"
+
+#: ui/pages/live-parts.slint:19
+msgid "{} live"
+msgstr "{} в эфире"
+
+#: ui/pages/live-parts.slint:21
+msgid "On air now"
+msgstr "Сейчас в эфире"
+
+#: ui/pages/live-parts.slint:21
+msgid "Following · live"
+msgstr "Отслеживаемые · в эфире"
+
+#: ui/pages/live-parts.slint:22
+msgid "Not live now"
+msgstr "Сейчас не в эфире"
+
+#: ui/pages/live-parts.slint:23
+msgid "Channels you follow show up here, live ones first — from any source."
+msgstr "Здесь появляются каналы, которые вы отслеживаете, — сначала те, что в эфире, из любого источника."
+
+#: ui/pages/live-parts.slint:24
+msgid "Watch and broadcast"
+msgstr "Смотреть и вещать"
+
+#: ui/pages/live-parts.slint:38
+msgctxt "terminal"
+msgid "mode"
+msgstr "режим"
+
+#: ui/pages/live-parts.slint:39 ui/pages/live-parts.slint:239
+msgctxt "terminal"
+msgid "source"
+msgstr "источник"
+
+#: ui/pages/live-parts.slint:40
+msgctxt "terminal"
+msgid "plays"
+msgstr "воспроизведение"
+
+#: ui/pages/live-parts.slint:41 ui/pages/live-parts.slint:236
+msgctxt "terminal"
+msgid "status"
+msgstr "статус"
+
+#: ui/pages/live-parts.slint:42
+msgctxt "terminal"
+msgid "category"
+msgstr "категория"
+
+#: ui/pages/live-parts.slint:43
+msgctxt "terminal"
+msgid "language"
+msgstr "язык"
+
+#: ui/pages/live-parts.slint:44
+msgctxt "terminal"
+msgid "content"
+msgstr "контент"
+
+#: ui/pages/live-parts.slint:45
+msgctxt "terminal"
+msgid "anywhere"
+msgstr "где угодно"
+
+#: ui/pages/live-parts.slint:46
+msgctxt "terminal"
+msgid "in finchgram"
+msgstr "в finchgram"
+
+#: ui/pages/live-parts.slint:47
+msgctxt "terminal"
+msgid "on its site"
+msgstr "на своём сайте"
+
+#: ui/pages/live-parts.slint:48
+msgctxt "terminal"
+msgid "any"
+msgstr "все"
+
+#: ui/pages/live-parts.slint:49
+msgctxt "terminal"
+msgid "mature-rated"
+msgstr "18+"
+
+#: ui/pages/live-parts.slint:50
+msgctxt "terminal"
+msgid "not integrated yet"
+msgstr "пока не поддерживается"
+
+#: ui/pages/live-parts.slint:51
+msgctxt "terminal"
+msgid "live · confirmed"
+msgstr "в эфире · подтверждено"
+
+#: ui/pages/live-parts.slint:52
+msgctxt "terminal"
+msgid "not confirmed / unknown"
+msgstr "не подтверждено / неизвестно"
+
+#: ui/pages/live-parts.slint:53
+msgctxt "terminal"
+msgid "offline"
+msgstr "не в эфире"
+
+#: ui/pages/live-parts.slint:54
+msgctxt "terminal"
+msgid "nothing followed yet"
+msgstr "пока ничего не отслеживается"
+
+#: ui/pages/live-parts.slint:55
+msgctxt "terminal"
+msgid "send to"
+msgstr "отправить в"
+
+#: ui/pages/live-parts.slint:56
+msgctxt "terminal"
+msgid "send with"
+msgstr "отправить через"
+
+#: ui/pages/live-parts.slint:57
+msgctxt "terminal"
+msgid "add"
+msgstr "добавить"
+
+#: ui/pages/live-parts.slint:58
+msgctxt "terminal"
+msgid "broadcast to"
+msgstr "вещать в"
+
+#: ui/pages/live-parts.slint:59
+msgctxt "terminal"
+msgid "private servers"
+msgstr "частные серверы"
+
+#: ui/pages/live-parts.slint:60
+msgctxt "terminal"
+msgid "open a link"
+msgstr "открыть ссылку"
+
+#: ui/pages/live-parts.slint:61
+msgctxt "terminal"
+msgid "submit a stream"
+msgstr "предложить трансляцию"
+
+#: ui/pages/live-parts.slint:63
+msgctxt "terminal"
+msgid "FinchGram (built in)"
+msgstr "FinchGram (встроенный)"
+
+#: ui/pages/live-parts.slint:76
+msgid "Send to OBS"
+msgstr "Отправить в OBS"
+
+#: ui/pages/live-parts.slint:77
+msgid "Start in OBS"
+msgstr "Запустить в OBS"
+
+#: ui/pages/live-parts.slint:80
+msgid "Channels from every source in one list, live first"
+msgstr "Каналы из всех источников в одном списке, сначала те, что в эфире"
+
+#: ui/pages/live-parts.slint:83
+msgid "Not live"
+msgstr "Не в эфире"
+
+#: ui/pages/live-parts.slint:85
+msgid "You don’t follow anything yet. Follow channels from Discover, or open a link and follow it; they gather here, from any source."
+msgstr "Вы пока ничего не отслеживаете. Отслеживайте каналы из раздела «Обзор» или откройте ссылку и отслеживайте её — всё соберётся здесь, из любых источников."
+
+#: ui/pages/live-parts.slint:88
+msgid "Kept on this Mac, in FinchGram’s database. Following here doesn’t follow on Twitch, YouTube or anywhere else, and needs no account there."
+msgstr "Хранится на этом Mac, в базе данных FinchGram. Отслеживание здесь не подписывает вас на Twitch, YouTube или где-либо ещё, и аккаунт там не нужен."
+
+#: ui/pages/live-parts.slint:90
+msgid "Some sources are behind"
+msgstr "Некоторые источники отстают"
+
+#: ui/pages/live-parts.slint:94
+msgid "Unfollow"
+msgstr "Не отслеживать"
+
+#: ui/pages/live-parts.slint:106
+msgid "Opening {}…"
+msgstr "Открывается {}…"
+
+#: ui/pages/live-parts.slint:108
+msgid "Recognized {} · {} server"
+msgstr "Распознано: {} · сервер {}"
+
+#: ui/pages/live-parts.slint:111
+msgid "Asked for the stream address · /hls/stream.m3u8"
+msgstr "Запрошен адрес потока · /hls/stream.m3u8"
+
+#: ui/pages/live-parts.slint:112
+msgid "Asked for the stream address · HLS playlist from the API"
+msgstr "Запрошен адрес потока · плейлист HLS из API"
+
+#: ui/pages/live-parts.slint:113
+msgid "Asked for the stream address · direct stream"
+msgstr "Запрошен адрес потока · прямой поток"
+
+#: ui/pages/live-parts.slint:115
+msgid "Connecting"
+msgstr "Подключение"
+
+#: ui/pages/live-parts.slint:116 ui/pages/live-parts.slint:176
+msgid "Buffering"
+msgstr "Буферизация"
+
+#: ui/pages/live-parts.slint:117
+msgid "Found {} on Telegram"
+msgstr "Найдено в Telegram: {}"
+
+#: ui/pages/live-parts.slint:118
+msgid "Joined as a viewer · muted, no camera"
+msgstr "Подключено как зритель · микрофон выключен, без камеры"
+
+#: ui/pages/live-parts.slint:119
+msgid "Asked Telegram for the stream · one-second segments"
+msgstr "Поток запрошен у Telegram · сегменты по одной секунде"
+
+#: ui/pages/live-parts.slint:120
+msgid "FinchGram saves the channel’s own address and asks it for a stream address each time."
+msgstr "FinchGram сохраняет постоянный адрес канала и каждый раз запрашивает у него адрес потока."
+
+#: ui/pages/live-parts.slint:123
+msgid "{} is offline"
+msgstr "{} не в эфире"
+
+#: ui/pages/live-parts.slint:125
+msgid "Last live {}."
+msgstr "Последний эфир {}."
+
+#: ui/pages/live-parts.slint:125
+msgid "Not seen live yet."
+msgstr "Пока не замечен в эфире."
+
+#: ui/pages/live-parts.slint:127
+msgid "Replays, if the channel keeps them, are on its PeerTube page."
+msgstr "Записи эфиров, если канал их хранит, есть на его странице в PeerTube."
+
+#: ui/pages/live-parts.slint:129
+msgid "While you follow it, FinchGram checks every 2 minutes and puts it at the top of Following when it starts."
+msgstr "Пока вы его отслеживаете, FinchGram проверяет канал каждые 2 минуты и, когда начнётся эфир, поднимает его в начало раздела «Отслеживаемые»."
+
+#: ui/pages/live-parts.slint:131
+msgid "Open channel page"
+msgstr "Открыть страницу канала"
+
+#: ui/pages/live-parts.slint:132
+msgid "Channel page"
+msgstr "Страница канала"
+
+#: ui/pages/live-parts.slint:133
+msgid "The stream address stopped working"
+msgstr "Адрес потока перестал работать"
+
+#: ui/pages/live-parts.slint:135
+msgid "{} stopped answering at the stream address it gave — those expire. FinchGram is asking the channel for a new one."
+msgstr "Сервер {} перестал отвечать по выданному им адресу потока — такие адреса истекают. FinchGram запрашивает у канала новый."
+
+#: ui/pages/live-parts.slint:136
+msgid "The stream address stopped answering — those expire. FinchGram is asking the channel for a new one."
+msgstr "Адрес потока перестал отвечать — такие адреса истекают. FinchGram запрашивает у канала новый."
+
+#: ui/pages/live-parts.slint:139
+msgid "FinchGram keeps the channel’s own address, never the temporary one, so trying again starts from the channel."
+msgstr "FinchGram хранит постоянный адрес канала, а не временный, поэтому повторная попытка начинается с канала."
+
+#: ui/pages/live-parts.slint:143
+msgid "{} plays in {}’s own player"
+msgstr "{} воспроизводится только в плеере {}"
+
+#: ui/pages/live-parts.slint:146
+msgid "{0} doesn’t let other apps play its streams. Watch it on {0} in your browser; here it keeps its place in Following, with its live status."
+msgstr "{0} не позволяет другим приложениям воспроизводить свои трансляции. Смотрите их на {0} в браузере, а здесь канал сохраняет место в разделе «Отслеживаемые» и статус эфира."
+
+#: ui/pages/live-parts.slint:149
+msgid "{} plays on {}"
+msgstr "{} воспроизводится на {}"
+
+#: ui/pages/live-parts.slint:152
+msgid "FinchGram shows when it’s live; the stream itself plays on {}’s site."
+msgstr "FinchGram показывает, когда идёт эфир, а сама трансляция воспроизводится на сайте {}."
+
+#: ui/pages/live-parts.slint:155
+msgid "This stream needs a sign-in"
+msgstr "Для этой трансляции нужен вход"
+
+#: ui/pages/live-parts.slint:157
+msgid "{} wants a user name and password."
+msgstr "{} запрашивает имя пользователя и пароль."
+
+#: ui/pages/live-parts.slint:159
+msgid "Add as a private server…"
+msgstr "Добавить как частный сервер…"
+
+#: ui/pages/live-parts.slint:160
+msgid "Marked mature by its source"
+msgstr "Помечено источником как 18+"
+
+#: ui/pages/live-parts.slint:162
+msgid "{} marks this stream mature. Streams marked mature are hidden in Discover; Settings › Live changes that."
+msgstr "{}: эта трансляция помечена как 18+. Такие трансляции скрыты в разделе «Обзор»; изменить это можно в разделе Настройки › Эфиры."
+
+#: ui/pages/live-parts.slint:164
+msgid "I’m 18 or older"
+msgstr "Мне 18 лет или больше"
+
+#: ui/pages/live-parts.slint:167
+msgid "The directory doesn’t list sexually explicit streams. FinchGram never records or re-shares a stream."
+msgstr "В каталоге нет трансляций откровенно сексуального характера. FinchGram никогда не записывает трансляции и не распространяет их повторно."
+
+#: ui/pages/live-parts.slint:171
+msgid "Telegram sends this live stream over WebRTC, from a phone’s camera, and FinchGram doesn’t have WebRTC. Streams sent from OBS, and live streams with a large audience, play here."
+msgstr "Telegram передаёт эту трансляцию с камеры телефона через WebRTC, а в FinchGram нет WebRTC. Трансляции из OBS и трансляции с большой аудиторией воспроизводятся здесь."
+
+#: ui/pages/live-parts.slint:173
+msgid "Live status and the number watching come from your Telegram account."
+msgstr "Статус эфира и число зрителей берутся из вашего аккаунта Telegram."
+
+#: ui/pages/live-parts.slint:174
+msgid "Couldn’t play {}"
+msgstr "Не удалось воспроизвести {}"
+
+#: ui/pages/live-parts.slint:175
+msgid "Slow connection — the stream stalled, and FinchGram keeps trying."
+msgstr "Медленное соединение — трансляция остановилась, FinchGram продолжает попытки."
+
+#: ui/pages/live-parts.slint:177
+msgid "audio only"
+msgstr "только звук"
+
+#: ui/pages/live-parts.slint:179
+msgid "ON AIR"
+msgstr "В ЭФИРЕ"
+
+#: ui/pages/live-parts.slint:180
+msgid "{} · Go live"
+msgstr "{} · К прямому эфиру"
+
+#: ui/pages/live-parts.slint:190
+msgid "Quality · offered by the server"
+msgstr "Качество · варианты сервера"
+
+#: ui/pages/live-parts.slint:191
+msgid "Auto · {}"
+msgstr "Авто · {}"
+
+#: ui/pages/live-parts.slint:191
+msgid "Auto"
+msgstr "Авто"
+
+#: ui/pages/live-parts.slint:192
+msgid "now {}"
+msgstr "сейчас {}"
+
+#: ui/pages/live-parts.slint:193
+msgid "Show chat"
+msgstr "Показать чат"
+
+#: ui/pages/live-parts.slint:194
+msgid "Hide chat"
+msgstr "Скрыть чат"
+
+#: ui/pages/live-parts.slint:195
+msgid "Pop out"
+msgstr "В отдельное окно"
+
+#: ui/pages/live-parts.slint:196
+msgid "Full screen"
+msgstr "Во весь экран"
+
+#: ui/pages/live-parts.slint:199
+msgctxt "terminal"
+msgid "[▸ play]"
+msgstr "[▸ пуск]"
+
+#: ui/pages/live-parts.slint:199
+msgctxt "terminal"
+msgid "[❚❚ pause]"
+msgstr "[❚❚ пауза]"
+
+#: ui/pages/live-parts.slint:201
+msgctxt "terminal"
+msgid "live"
+msgstr "эфир"
+
+#: ui/pages/live-parts.slint:201
+msgctxt "terminal"
+msgid "[go live]"
+msgstr "[к эфиру]"
+
+#: ui/pages/live-parts.slint:204
+msgctxt "terminal"
+msgid "[muted]"
+msgstr "[без звука]"
+
+#: ui/pages/live-parts.slint:204
+msgctxt "terminal"
+msgid "[vol {}]"
+msgstr "[звук {}]"
+
+#: ui/pages/live-parts.slint:206
+msgctxt "terminal"
+msgid "[chat]"
+msgstr "[чат]"
+
+#: ui/pages/live-parts.slint:207
+msgctxt "terminal"
+msgid "[pop out]"
+msgstr "[в окно]"
+
+#: ui/pages/live-parts.slint:208
+msgctxt "terminal"
+msgid "[full]"
+msgstr "[весь экран]"
+
+#: ui/pages/live-parts.slint:209
+msgctxt "terminal"
+msgid "unfollow"
+msgstr "не отслеживать"
+
+#: ui/pages/live-parts.slint:209
+msgctxt "terminal"
+msgid "follow"
+msgstr "отслеживать"
+
+#: ui/pages/live-parts.slint:210
+msgctxt "terminal"
+msgid "page"
+msgstr "страница"
+
+#: ui/pages/live-parts.slint:215
+msgid "Viewers not shared by {}"
+msgstr "{}: число зрителей не сообщается"
+
+#: ui/pages/live-parts.slint:218
+msgid "Receiving the stream now"
+msgstr "Идёт приём трансляции"
+
+#: ui/pages/live-parts.slint:219
+msgid "Watch here · Plays in FinchGram"
+msgstr "Смотреть здесь · Воспроизводится в FinchGram"
+
+#: ui/pages/live-parts.slint:221
+msgid "Comments from Telegram · free ones sent here, paid ones from Telegram’s apps"
+msgstr "Комментарии из Telegram · бесплатные отправляются отсюда, платные — из приложений Telegram"
+
+#: ui/pages/live-parts.slint:222
+msgid "Chat from {} · read and send"
+msgstr "Чат {} · читать и писать"
+
+#: ui/pages/live-parts.slint:222
+msgid "No chat on {}"
+msgstr "{}: чата нет"
+
+#: ui/pages/live-parts.slint:225
+msgid "On air · {}"
+msgstr "В эфире · {}"
+
+#: ui/pages/live-parts.slint:226
+msgid "Not confirmed · {}"
+msgstr "Не подтверждено · {}"
+
+#: ui/pages/live-parts.slint:227
+msgid "Status unknown · {}"
+msgstr "Статус неизвестен · {}"
+
+#: ui/pages/live-parts.slint:228
+msgid "Off air · {}"
+msgstr "Не в эфире · {}"
+
+#: ui/pages/live-parts.slint:230
+msgid "on air for {}"
+msgstr "в эфире {}"
+
+#: ui/pages/live-parts.slint:232
+msgid "{} · {}."
+msgstr "{} · {}."
+
+#: ui/pages/live-parts.slint:232
+msgid "Plays on {}"
+msgstr "Воспроизводится на {}"
+
+#: ui/pages/live-parts.slint:232
+msgid "Plays in FinchGram, straight from the server"
+msgstr "Воспроизводится в FinchGram, напрямую с сервера"
+
+#: ui/pages/live-parts.slint:233
+msgid "chat from {}, read and send"
+msgstr "чат {}: читать и писать"
+
+#: ui/pages/live-parts.slint:233
+msgid "no chat on this source"
+msgstr "у этого источника нет чата"
+
+#: ui/pages/live-parts.slint:235
+msgctxt "terminal"
+msgid "title"
+msgstr "название"
+
+#: ui/pages/live-parts.slint:237
+msgctxt "terminal"
+msgid "stream"
+msgstr "поток"
+
+#: ui/pages/live-parts.slint:238
+msgctxt "terminal"
+msgid "chat"
+msgstr "чат"
+
+#: ui/pages/live-parts.slint:240
+msgctxt "terminal"
+msgid "none on this source"
+msgstr "у этого источника нет"
+
+#: ui/pages/live-parts.slint:241
+msgctxt "terminal"
+msgid "{} · read & send"
+msgstr "{} · чтение и отправка"
+
+#: ui/pages/live-parts.slint:242
+msgctxt "terminal"
+msgid "telegram · one-second segments"
+msgstr "telegram · сегменты по одной секунде"
+
+#: ui/pages/live-parts.slint:244
+msgid "Chat"
+msgstr "Чат"
+
+#: ui/pages/live-parts.slint:245
+msgid "From {}. FinchGram shows it and keeps none of it."
+msgstr "Источник: {}. FinchGram показывает чат и ничего из него не сохраняет."
+
+#: ui/pages/live-parts.slint:246
+msgid "Chat as {}"
+msgstr "Сообщение от имени {}"
+
+#: ui/pages/live-parts.slint:247
+msgctxt "terminal"
+msgid "say something"
+msgstr "напишите что-нибудь"
+
+#: ui/pages/live-parts.slint:248
+msgid "Joining the chat…"
+msgstr "Подключение к чату…"
+
+#: ui/pages/live-parts.slint:249
+msgid "{} name: {}"
+msgstr "Имя в {}: {}"
+
+#: ui/pages/live-parts.slint:251
+msgid "A new name, then Enter"
+msgstr "Новое имя, затем Enter"
+
+#: ui/pages/live-parts.slint:254
+msgid "Paused"
+msgstr "На паузе"
+
+#: ui/pages/live-parts.slint:255
+msgctxt "terminal"
+msgid "[play]"
+msgstr "[пуск]"
+
+#: ui/pages/live-parts.slint:255
+msgctxt "terminal"
+msgid "[pause]"
+msgstr "[пауза]"
+
+#: ui/pages/live-parts.slint:256
+msgctxt "terminal"
+msgid "[unmute]"
+msgstr "[вкл. звук]"
+
+#: ui/pages/live-parts.slint:256
+msgctxt "terminal"
+msgid "[mute]"
+msgstr "[выкл. звук]"
+
+#: ui/pages/live-parts.slint:257
+msgctxt "terminal"
+msgid "[live]"
+msgstr "[эфиры]"
+
+#: ui/pages/live-parts.slint:258
+msgid "Back to Live"
+msgstr "Вернуться в Эфиры"
+
+#: ui/pages/live-parts.slint:259
+msgid "Stop and close"
+msgstr "Остановить и закрыть"
+
+#: ui/pages/live-parts.slint:262
+msgid "Open a link"
+msgstr "Открыть ссылку"
+
+#: ui/pages/live-parts.slint:264
+msgid "Play or follow a stream that isn’t in the directory. Nothing is submitted — what you open stays on this Mac."
+msgstr "Воспроизведите или отслеживайте трансляцию, которой нет в каталоге. Ничего никуда не отправляется — всё, что вы открываете, остаётся на этом Mac."
+
+#: ui/pages/live-parts.slint:267
+msgid "FinchGram can open:"
+msgstr "FinchGram может открыть:"
+
+#: ui/pages/live-parts.slint:269
+msgid "Channel pages"
+msgstr "Страницы каналов"
+
+#: ui/pages/live-parts.slint:270
+msgid "Direct streams"
+msgstr "Прямые потоки"
+
+#: ui/pages/live-parts.slint:271
+msgid "It recognizes the link as you type. For a server, it asks the server what it is."
+msgstr "Ссылка распознаётся прямо при вводе. Если это сервер, FinchGram спрашивает у него, что это."
+
+#: ui/pages/live-parts.slint:272
+msgid "Asking {} what it is…"
+msgstr "Узнаём у {}, что это…"
+
+#: ui/pages/live-parts.slint:273
+msgid "Plays in FinchGram (sound only)"
+msgstr "Воспроизводится в FinchGram (только звук)"
+
+#: ui/pages/live-parts.slint:275
+msgid "Plays on {}. FinchGram opens it in your browser."
+msgstr "Воспроизводится на {}. FinchGram откроет ссылку в браузере."
+
+#: ui/pages/live-parts.slint:278
+msgid "This looks private — a sending address, or a link with a key in it. Keep it to yourself; FinchGram doesn’t open those here."
+msgstr "Похоже, это закрытые данные — адрес для отправки трансляции или ссылка с ключом. Не показывайте их никому; FinchGram такое здесь не открывает."
+
+#: ui/pages/live-parts.slint:281
+msgid "Nothing FinchGram can play. If the page has its own player, open it in your browser."
+msgstr "Здесь нет ничего, что FinchGram мог бы воспроизвести. Если у страницы есть свой плеер, откройте её в браузере."
+
+#: ui/pages/live-parts.slint:284
+msgid "The server didn’t answer: {}"
+msgstr "Сервер не ответил: {}"
+
+#: ui/pages/live-parts.slint:284
+msgid "The server didn’t answer."
+msgstr "Сервер не ответил."
+
+#: ui/pages/live-parts.slint:287
+msgid "Saved connections"
+msgstr "Сохранённые подключения"
+
+#: ui/pages/live-parts.slint:289
+msgid "Where you broadcast to, and private servers you watch from. Keys and passwords stay sealed in FinchGram’s database and are shown only when you ask."
+msgstr "Куда вы вещаете и частные серверы, с которых смотрите. Ключи и пароли хранятся запечатанными в базе данных FinchGram и показываются, только когда вы попросите."
+
+#: ui/pages/live-parts.slint:291
+msgid "Submit a stream"
+msgstr "Предложить трансляцию"
+
+#: ui/pages/live-parts.slint:292
+msgid "Suggest a public channel for the directory everyone using FinchGram sees."
+msgstr "Предложите публичный канал для каталога, который видят все пользователи FinchGram."
+
+#: ui/pages/live-parts.slint:295
+msgid "FinchGram asks Telegram whether it’s live"
+msgstr "FinchGram спрашивает у Telegram, идёт ли эфир"
+
+#: ui/pages/live-parts.slint:302
+msgid "OBS sends the stream; FinchGram gives it the destination."
+msgstr "OBS отправляет трансляцию, а FinchGram передаёт ему параметры вещания."
+
+#: ui/pages/live-parts.slint:303
+msgid "From FinchGram"
+msgstr "Из FinchGram"
+
+#: ui/pages/live-parts.slint:304
+msgid "Use OBS"
+msgstr "Через OBS"
+
+#: ui/pages/live-parts.slint:307
+msgid "OBS does the capture, scenes and encoding. FinchGram hands it the destination and shows how the stream is doing, from OBS’s own numbers."
+msgstr "OBS отвечает за захват, сцены и кодирование. FinchGram передаёт ему параметры вещания и показывает, как идёт трансляция, по данным самого OBS."
+
+#: ui/pages/live-parts.slint:309
+msgid "Connected to OBS"
+msgstr "Подключено к OBS"
+
+#: ui/pages/live-parts.slint:310
+msgid "Send the destination"
+msgstr "Передать параметры вещания"
+
+#: ui/pages/live-parts.slint:311
+msgid "Start streaming"
+msgstr "Начать трансляцию"
+
+#: ui/pages/live-parts.slint:312
+msgid "Or type it into OBS › Settings › Stream yourself:"
+msgstr "Или введите это сами в OBS › Настройки › Трансляция:"
+
+#: ui/pages/live-parts.slint:313
+msgid "Destination"
+msgstr "Куда вещать"
+
+#: ui/pages/live-parts.slint:314
+msgid "New destination…"
+msgstr "Новое место вещания…"
+
+#: ui/pages/live-parts.slint:315
+msgid "Live story · RTMPS"
+msgstr "Трансляция в истории · RTMPS"
+
+#: ui/pages/live-parts.slint:316
+msgid "Channel live stream · RTMPS"
+msgstr "Трансляция канала · RTMPS"
+
+#: ui/pages/live-parts.slint:318
+msgid "Resolution, bitrate and sound are set in OBS. FinchGram only gives the destination; the stream starts when you start it in OBS."
+msgstr "Разрешение, битрейт и звук настраиваются в OBS. FinchGram только передаёт параметры вещания; трансляция начнётся, когда вы запустите её в OBS."
+
+#: ui/pages/live.slint:1024
+msgid "Content in Live"
+msgstr "Контент в Эфирах"
+
+#: ui/pages/live.slint:1026 ui/pages/settings.slint:965
+msgid "Live sorts what it lists into four classes. Only the first two can appear in this version; what you can change here is whether mature-rated streams show."
+msgstr "Эфиры делят всё, что показывают, на четыре класса. В этой версии могут появляться только первые два; здесь можно изменить, показывать ли трансляции с возрастным ограничением."
+
+#: ui/pages/live.slint:1028 ui/pages/settings.slint:970
+msgid "Mature-rated: hidden"
+msgstr "С возрастным ограничением: скрыты"
+
+#: ui/pages/live.slint:1029
+msgid "Default. They don’t appear in Discover, search or suggestions."
+msgstr "По умолчанию. Они не появляются в разделе «Обзор», в поиске и подсказках."
+
+#: ui/pages/live.slint:1030 ui/pages/settings.slint:978
+msgid "Mature-rated: shown, marked “Mature”"
+msgstr "С возрастным ограничением: показаны с пометкой «18+»"
+
+#: ui/pages/live.slint:1031 ui/pages/settings.slint:979
+msgid "They appear with a Mature tag; opening one asks first."
+msgstr "Они показываются с пометкой «18+»; перед открытием FinchGram спросит подтверждение."
+
+#: ui/pages/live.slint:1033
+msgid "I’m 18 or older — a self-declaration, accepted only where the law doesn’t require verification"
+msgstr "Мне 18 лет или больше — это моё собственное заявление, оно принимается только там, где закон не требует проверки возраста"
+
+#: ui/pages/live.slint:1035 ui/pages/settings.slint:998
+msgid "General — listed and shown by default."
+msgstr "Общий — есть в каталоге и показывается по умолчанию."
+
+#: ui/pages/live.slint:1037 ui/pages/settings.slint:999
+msgid "Mature-rated (strong language, violence, gambling, horror — rated by the source) — listed, hidden until shown here."
+msgstr "С возрастным ограничением (ненормативная лексика, насилие, азартные игры, ужасы — по оценке источника) — есть в каталоге, но скрыт, пока вы не включите показ здесь."
+
+#: ui/pages/live.slint:1040 ui/pages/settings.slint:1000
+msgid "Sexually explicit — not in the directory in this version. Whether and how to list it is a pending policy decision, not a setting."
+msgstr "Откровенно сексуальный — в этой версии в каталоге нет. Включать ли такой контент в каталог и как — это ещё не решённый вопрос правил, а не настройка."
+
+#: ui/pages/live.slint:1043 ui/pages/settings.slint:1001
+msgid "Prohibited (illegal content, including non-consensual or underage material) — never indexed, shown or played."
+msgstr "Запрещённый (незаконный контент, в том числе материалы без согласия участников или с участием несовершеннолетних) — никогда не индексируется, не показывается и не воспроизводится."
+
+#: ui/pages/live.slint:1045
+msgid "Settings › Live › Content"
+msgstr "Настройки › Эфиры › Контент"
+
+#: ui/pages/settings.slint:962
+msgid "Content"
+msgstr "Контент"
+
+#: ui/pages/settings.slint:971
+msgid "Default. They don't appear in Discover, search or suggestions."
+msgstr "По умолчанию. Они не появляются в разделе «Обзор», в поиске и подсказках."
+
+#: ui/pages/settings.slint:987
+msgid "I'm 18 or older — a self-declaration, accepted only where the law doesn't require verification"
+msgstr "Мне 18 лет или больше — это моё собственное заявление, оно принимается только там, где закон не требует проверки возраста"
+
+#: ui/pages/settings.slint:1025
+msgid "Languages"
+msgstr "Языки"
+
+#: ui/pages/settings.slint:1028
+msgid "Recommended puts live streams in these languages first. None is chosen until you choose."
+msgstr "«Рекомендуемые» ставят трансляции на этих языках первыми. Пока вы сами не выберете, ни один язык не выбран."
+
+#: ui/toolbox.slint:164
+msgid "Live has its own place now"
+msgstr "Эфиры теперь в отдельном разделе"
+
+#: ui/pages/live-parts.slint:188
+msgctxt "sound"
+msgid "Mute"
+msgstr "Выключить звук"
+
+#: ui/pages/live-parts.slint:189
+msgctxt "sound"
+msgid "Unmute"
+msgstr "Включить звук"
+
+#: ui/pages/live-discover.slint:86 ui/pages/live-discover.slint:146
+msgctxt "status"
+msgid "Live"
+msgstr "В эфире"

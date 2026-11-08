@@ -10,9 +10,9 @@ set -euo pipefail
 
 # ---- pinned version ---------------------------------------------------------------
 REPO="FinchGram/FinchGram"                  # this repository on GitHub
-RELEASE="mpv-0.41.0-1"                      # release tag
+RELEASE="mpv-0.41.0-2"                      # release tag
 ASSET="libmpv-0.41.0-macos-arm64.tar.gz"    # asset name in that release
-SHA256="5925a815f1afad536f55dc3239c8067e41f1bb1d72041a1569dac24c56b5fcdd" # from the release's SHA256SUMS
+SHA256="ca5f45f91104a9b1b7f5fab70769db45e1fac59af9de50b18653f300e8805ac4" # from the release's SHA256SUMS
 # -----------------------------------------------------------------------------------
 
 URL="https://github.com/$REPO/releases/download/$RELEASE/$ASSET"

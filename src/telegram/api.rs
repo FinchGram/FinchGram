@@ -2143,6 +2143,10 @@ pub struct VideoChat {
 #[derive(Debug, Clone, Deserialize)]
 pub struct ChatActiveStories {
     pub chat_id: i64,
+    /// The story list they show in (storyListMain, storyListArchive); null for a chat whose
+    /// stories are in none, one the user does not follow (a live directory's channel).
+    #[serde(default)]
+    pub list: Option<serde_json::Value>,
     #[serde(default)]
     pub stories: Vec<StoryInfo>,
 }

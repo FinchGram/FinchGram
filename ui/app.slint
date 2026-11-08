@@ -28,9 +28,11 @@ import { VendorDialog } from "pages/voice-input.slint";
 import { DownloadsPage } from "pages/downloads.slint";
 import { Music, MusicWords, SourceRow, SourceStatus, MusicSection, MusicView, MusicState, AlbumRow, TrackRow, NameRow, QueueRow, MusicFormError, SourceTest, RepeatMode } from "music.slint";
 import { MusicPage } from "pages/music.slint";
-import { Live, LiveWords, LiveRow, LiveKind, LiveState, LiveComment, LiveDonor, LiveTarget } from "live.slint";
+import { LivePopOut } from "live-popout.slint";
+import { Live, LiveWords, LiveRow, LiveKind, LiveState, LiveComment, LiveDonor, LiveTarget, LiveSource, LiveStatus, LivePlay, LiveWhy, LiveCategory, LiveMode, LiveSort, LiveSection, LiveSync, LiveChannel, LiveSourceRow, LiveOption, LiveSuggestion, LiveLinkState, LiveWatch, LiveToast, LiveDirectory, LiveDirectoryWords } from "live.slint";
 
 // Re-exported so Rust can reach them through slint::include_modules!().
+export { LivePopOut }
 export { ShotWindow, Shot, ShotTool, ShotCursor, ShotBox, ShotPath, ShotText, ShotCell, Screenshot }
 export { AppState, PlatformWords, TelegramState, Connection, UpdateState, Theme, Page, SettingsSection, Language,
     NotificationSetting, Chats, Conversation, Account, Accounts, AccountRow, Login, LoginStep, CodeDelivery, Country, PasswordSettings, PasswordStep,
@@ -46,7 +48,7 @@ export { ChatManage, ManageWords, ManageLook, ManagePage, UsernameCheck, ManageT
 export { Toolbox, ToolboxWords, ToolRow, ToolSection, NavRow, ProtocolRow }
 export { Voice, VoiceWords, VoiceState, VoiceProblem, KeyCheck, VoiceLanguage, VoiceLanguageRow, VoiceVendorRow, VoiceItem, ModelsState, Recorder, RecordStage }
 export { Music, MusicWords, SourceRow, SourceStatus, MusicSection, MusicView, MusicState, AlbumRow, TrackRow, NameRow, QueueRow, MusicFormError, SourceTest, RepeatMode }
-export { Live, LiveWords, LiveRow, LiveKind, LiveState, LiveComment, LiveDonor, LiveTarget }
+export { Live, LiveWords, LiveRow, LiveKind, LiveState, LiveComment, LiveDonor, LiveTarget, LiveSource, LiveStatus, LivePlay, LiveWhy, LiveCategory, LiveMode, LiveSort, LiveSection, LiveSync, LiveChannel, LiveSourceRow, LiveOption, LiveSuggestion, LiveLinkState, LiveWatch, LiveToast, LiveDirectory, LiveDirectoryWords }
 
 export component MainWindow inherits Window {
     title: Account.name == "" ? "FinchGram" : Account.name + " — FinchGram";
@@ -69,7 +71,13 @@ export component MainWindow inherits Window {
                 activated => {
                     AppState.show-window();
                     AppState.page = Page.chats;
-                    AppState.search-requests += 1;
+                    // In the Live view, Discover's own search box (the canvas: "⌘K" in it).
+                    if Live.shown {
+                        LiveDirectory.go(LiveSection.discover);
+                        LiveDirectory.search-focus-requests += 1;
+                    } else {
+                        AppState.search-requests += 1;
+                    }
                 }
             }
             MenuItem {
@@ -143,6 +151,17 @@ export component MainWindow inherits Window {
                 activated => {
                     AppState.show-window();
                     AppState.page = Page.music;
+                }
+            }
+            // The Live view, the window's fourth view (the canvas "FinchGram Desktop 直播": ⇧⌘L).
+            MenuItem {
+                title: @tr("Live");
+                shortcut: @keys(Control + Shift + L);
+                enabled: AppState.telegram-state == TelegramState.ready;
+                activated => {
+                    AppState.show-window();
+                    AppState.page = Page.chats;
+                    Live.show-requests += 1;
                 }
             }
             MenuItem {

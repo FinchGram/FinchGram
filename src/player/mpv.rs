@@ -118,6 +118,8 @@ unsafe extern "C" {
     pub fn mpv_set_option_string(ctx: *mut mpv_handle, name: *const c_char, data: *const c_char) -> c_int;
     pub fn mpv_command(ctx: *mut mpv_handle, args: *mut *const c_char) -> c_int;
     pub fn mpv_get_property(ctx: *mut mpv_handle, name: *const c_char, format: mpv_format, data: *mut c_void) -> c_int;
+    pub fn mpv_get_property_string(ctx: *mut mpv_handle, name: *const c_char) -> *mut c_char;
+    pub fn mpv_free(data: *mut c_void);
     pub fn mpv_observe_property(ctx: *mut mpv_handle, reply_userdata: u64, name: *const c_char, format: mpv_format) -> c_int;
     pub fn mpv_wait_event(ctx: *mut mpv_handle, timeout: c_double) -> *mut mpv_event;
     pub fn mpv_set_wakeup_callback(ctx: *mut mpv_handle, callback: unsafe extern "C" fn(*mut c_void), data: *mut c_void);

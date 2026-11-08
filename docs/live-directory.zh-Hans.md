@@ -2,202 +2,152 @@
 
 [English](live-directory.md)
 
-状态：一份契约，2026-11-07 按维护者的话写下（“先定义出来一个api contract，我自己建一个api，用honojs，开源出来 … 任何人都
-可以提pr … 任何人也可以fork走，自建”）。FinchGram 自己的目录在 `https://services.finchgram.com/live`，由
-[FinchGram/Services](https://github.com/FinchGram/Services) 提供：维护者各项服务的网站，同一天用官网的技术栈搭起来（Cloudflare
-Workers 上的 TanStack Start，没有另起一个 Hono 服务端），接受 PR，也可以 fork。FinchGram 自己还不读目录。机器可读的版本是
-[live-directory.openapi.yaml](live-directory.openapi.yaml)（OpenAPI 3.1），和那个仓库里的 `src/live/openapi.yaml` 是同一个文件，
-那边的测试保证两份一致；这一页解释它，并说明客户端怎么用。
+状态：维护者的画布「FinchGram Desktop 直播」第 12、13 轮（2026-11-07；claude.ai/artifact/RxoD91XwY8uqgZNNMGcuCB）的契约，地址是维护者同日定的
+`https://services.finchgram.com/live/api/v1`。它取代了 2026-11-07 的第一版契约（那一版只是一份靠 pull request 改动的来源清单，不说谁在播）。FinchGram
+自己的目录由 [FinchGram/Services](https://github.com/FinchGram/Services) 提供，欢迎 pull request，也欢迎 fork；FinchGram 在 Live
+视图里读它（docs/live-streams.md）。机器可读的版本是 [live-directory.openapi.yaml](live-directory.openapi.yaml)（OpenAPI 3.1），与那边的
+`src/live/openapi.yaml` 是同一个文件，那边的测试保证两份一致；本页解释它，并说明 FinchGram 怎么用。
 
 ## 它是什么
 
-一个目录说明哪些直播源值得看：会开直播的 Telegram 频道或个人、Owncast 服务器、PeerTube 频道、广播机构通过 HLS 提供的流。它
-不说现在谁在播：客户端自己去问每个源（Telegram 走 TDLib，和今天的直播视图一样，见 docs/live-streams.zh-Hans.md；其他的走源自己
-的 API）。所以目录就是一张靠 PR 改动的清单，原样提供，没有要轮询的东西，除了一个静态服务器之外不用一直跑任何东西：Cloudflare
-上的一个 Worker（FinchGram 自己的就是），或者任何回答同样 JSON 的 HTTPS 服务器。
+一个会开播的**频道**的目录，频道来自允许收录的**来源**，每个频道带着它的**直播场次**和观察到的时间。它回答搜索。它不转发视频，也不保存任何用户的信息：没有账号、没有关注、没有推流密钥，请求里也没有任何能说明是谁在问的东西。播放地址也不在里面：应用播放时自己去问来源要。
 
-谁都可以开一个。客户端可以认识好几个目录，各凭各的地址；目录之间不合并，每个都单独看（和音乐的来源一样）。
+Telegram 频道在不在播，目录说了不算：服务器没有 Telegram 账号可以去问。目录列出频道和它的用户名，状态写 `unknown`，由应用自己通过 TDLib 去问 Telegram，就像 Live 视图对用户自己的聊天做的那样。
+
+谁都可以自己运行一个：fork FinchGram/Services，或者任何回答这份契约的服务器。
+
+## FinchGram 自己的目录：来源
+
+| 来源 | 频道怎么进来 | 直播状态 | 观看人数 | 播放 |
+|---|---|---|---|---|
+| Owncast | 主人自己把服务器列进 Owncast 目录的 | 目录首页，每 5 分钟；服务器在播时每 4 分钟报一次到 | 没有（每台服务器的 robots.txt 不许爬虫访问 `/api`；用户点开时由应用去问那台服务器） | 在 FinchGram 里（HLS） |
+| PeerTube | robots.txt 允许的实例上的公开直播，每天通过 SepiaSearch 找一次实例 | 每个实例，每 5 分钟 | 精确 | 在 FinchGram 里（HLS） |
+| Icecast | 服务器在 Xiph 目录（`yp.xml`）里标为公开的电台 | 每 15 分钟；某次导出里没有某个电台，不当作它下播了 | 导出里没有 | 在 FinchGram 里，只有声音 |
+| HLS | 播主通过 pull request 提交、经过审核的流 | 每 5 分钟看它们的播放列表 | 没有 | 在 FinchGram 里 |
+| Telegram | 通过 pull request 提交、经过审核的公开频道 | 应用去问 Telegram | 应用从 Telegram 拿 | 在 FinchGram 里（docs/live-streams.md） |
+| Twitch、YouTube、Kick、Bilibili | 还没接：没有开发者密钥，条款没确认 | — | — | 链接在浏览器里打开 |
+
+主人把频道从它来源的目录里撤掉，这个目录也会跟着撤：Owncast 在下一次同步，Icecast 一天之内，PeerTube 一周之内（下次读它的 robots.txt 时）。
+
+## 四种状态
+
+每个直播场次带 `observed_at`、`expires_at`、`last_confirmed_live_at` 和一个状态：
+
+- `live`：最新的观察说在播，而且还在来源的有效期内（Owncast 5 分钟，PeerTube 和 HLS 10 分钟，Icecast 20 分钟）。
+- `stale`：最后一次观察时在播，但那次观察过期不到 60 分钟。应用写「Not confirmed right now」，按钮是「Try opening」。
+- `offline`：最近 30 分钟内的一次观察说没在播。
+- `unknown`：60 分钟内没有可靠的观察，来源暂停或还没接，或者是目录没法问的来源（Telegram 的频道）。
+
+Live now 先列确认在播的，再列 stale 的；缓存的旧数据从不当成现在的。
 
 ## 约定
 
-- **传输。**只用 HTTPS。一个目录凭它的基础地址来认，可以带路径，也可以不带（FinchGram 自己的是
-  `https://services.finchgram.com/live`），所有路径都在它下面的 `/v1/` 里。GET 和 HEAD；CORS 用 OPTIONS。没有 cookie，没有
-  认证，请求里没有任何表明是谁在问的东西。
-- **格式。**UTF-8 的 JSON（`application/json; charset=utf-8`）。字段名用 snake_case。日期和时间用 RFC 3339（`2026-11-07T05:09:47Z`；
-  只有日期：`2026-11-07`）。
-- **语言。**BCP 47 标签，写法和 FinchGram 一样：`en`、`zh-Hans`、`zh-Hant`、`ja`、`pt`；不需要地区时不带地区。国家用 ISO 3166-1
-  两位字母（`US`、`CN`）。
-- **多语言文本**是从语言到文本的对象：`{"en": "Keycaps, live", "zh-Hans": "键帽直播"}`。客户端显示界面语言的，没有就用 `en`，
-  再没有就用第一个。
-- **id** 是目录自己定的：小写字母、数字和连字符，2 到 63 个字符，以字母或数字开头（`mika-keys`）。要稳定：客户端可能按 id 记住一个源。
-- **只增不改。**v1 之内字段只会增加。客户端忽略不认识的字段，跳过不认识种类的源。其他变动一律进 `/v2/`。
-- **缓存。**回答带 `Cache-Control`（建议 `public, max-age=300`）和 `ETag`；带 `If-None-Match` 的请求在没变时得到
-  `304 Not Modified`。
-- **CORS。**`Access-Control-Allow-Origin: *`，网页也能读目录。
-- **错误**是状态码加一个 JSON：`{"error": {"code": "not_found", "message": "No source mika-keys"}}`。错误码：`bad_request`（400）、
-  `not_found`（404）、`method_not_allowed`（405，带 `Allow`：目录是只读的）、`rate_limited`（429，带 `Retry-After`）、
-  `internal`（500）。
+- **传输。** HTTPS。目录用它的基础地址来认（FinchGram 自己的：`https://services.finchgram.com/live/api/v1`），所有路径都在它下面。GET 和 HEAD，CORS 用 OPTIONS。没有 cookie，不需要认证。
+- **格式。** UTF-8 的 JSON。字段名用 snake_case；时间是 UTC 的 RFC 3339。
+- **id** 是目录自己的：频道 `fg_ch_…`，场次 `fg_se_…`，由来源和频道在来源处的 id 算出来，所以每次同步、每份目录里都一样。客户端可以用 id 记住一个频道。
+- **语言** 是 FinchGram 那样写的 BCP 47 标签（`en`、`zh-Hans`、`pt`）；`language=zh` 包括 `zh-Hans` 和 `zh-Hant`。来源没说语言就是 `null`。
+- **不编数据。** 来源没说的字段一律是 `null`；应用这时显示它的兜底文字（「Language not given」「No thumbnail from Icecast」，观看人数写「—」），从不写 0 或估计值。
+- **只增不改。** v1 之内只加字段；客户端忽略不认识的字段，不认识的枚举值按该字段的兜底处理。
+- **缓存。** `Cache-Control: public, max-age=60`（`/sources` 是 300），加强 `ETag`；带 `If-None-Match` 得到 `304`。`/search` 随 `Accept-Language` 变化。
+- **CORS。** `Access-Control-Allow-Origin: *`，ETag 对网页可见。
+- **错误** 是状态码加 `{"error": {"code", "message"}}`：`bad_request` 400、`not_found` 404、`method_not_allowed` 405、`rate_limited` 429（带 `Retry-After`）、`internal` 500、`not_implemented` 501。
 
 ## 接口
 
-### GET /v1/directory
+### GET /search
 
-这个目录是什么。
+`q`（关键词；不给就是浏览）、`mode`（`live`、`channels`、`upcoming`）、`source`（可重复）、`category`、`language`、`status`（`mode=channels` 时）、`playback`（`native`、`external`）、`content`（`general`，或 `general,mature`）、`sort`、`limit`（1 到 50，默认 24）、`cursor`。
 
-```json
-{
-  "api": 1,
-  "name": "FinchGram Live",
-  "description": {"en": "Live streams picked by FinchGram's maintainer", "zh-Hans": "FinchGram 维护者挑选的直播"},
-  "homepage": "https://finchgram.com/live",
-  "repository": "https://github.com/<owner>/<repository>",
-  "policy": "https://github.com/<owner>/<repository>/blob/main/CONTRIBUTING.md",
-  "contact": "mailto:live@example.com",
-  "updated": "2026-11-07T05:09:47Z",
-  "kinds": ["telegram", "owncast", "peertube", "hls"],
-  "counts": {"sources": 42}
-}
-```
-
-`api` 在这份契约里是 1。`policy` 是目录写明收什么、不收什么的地方（见下文“内容”）。`kinds` 是它列出的源的种类。私有目录可以不写
-`repository`、`policy` 和 `contact`；其余字段总是有。
-
-### GET /v1/categories
-
-源所归的分类。
+- **Relevance**（有关键词）：名字 > 标签 > 标题 > 类别、来源和语言；匹配程度相同时，确认在播的在前，再按开播时间新的在前。
+- **Recommended**（没关键词）：确认在播是硬门槛；然后是应用的语言，应用用 `Accept-Language` 发过来（Settings › Live；请求里别的都不涉及个人）；然后是一小时内开播的。每一层里各来源轮流出，每个来源按自己的顺序（它自己的观看人数，再按名字），所以从不跨平台比较人数，也没有哪个来源能占满一页：光 Xiph 的目录就有几千个电台。
+- **Most viewers** 只在同一来源里比，没有人数的排在后面，不当作 0。
+- **翻页。** `next_cursor` 在同一个 `snapshot` 里翻；新快照的一页可能重复某一项，应用按场次或频道 id 去掉。`total` 是 `eq`、`gte`（有来源落后时）或 `unknown`；`partial` 和 `missing_sources` 说明哪个来源没回答。
+- **Facets** 统计每个筛选的选项时，当作这个筛选没设。
 
 ```json
 {
-  "categories": [
-    {"id": "tech", "names": {"en": "Technology", "zh-Hans": "科技"}},
-    {"id": "music", "names": {"en": "Music", "zh-Hans": "音乐"}}
-  ]
+  "snapshot": "s_477f57621983",
+  "generated_at": "2026-11-08T03:29:03Z",
+  "total": { "value": 9239, "relation": "eq" },
+  "next_cursor": "eyJzIjoic180NzdmNTc2MjE5ODMiLCJvIjoyNH0",
+  "partial": false,
+  "missing_sources": [],
+  "items": [{
+    "channel": {
+      "id": "fg_ch_8fe7f6e63c863d0f", "name": "Harbour Cam", "source": "peertube",
+      "source_ref": "harbour@tube.example.org", "url": "https://tube.example.org/video-channels/harbour",
+      "handle": null, "category": "irl", "language": "en", "classification": "general",
+      "tags": [], "added_at": "2026-11-08T03:15:00Z", "last_live_at": "2026-11-08T03:25:00Z"
+    },
+    "session": {
+      "id": "fg_se_1c2d3e4f5a6b7c8d", "title": "Harbour at night",
+      "started_at": "2026-11-08T01:00:00Z", "status": "live",
+      "observed_at": "2026-11-08T03:25:00Z", "expires_at": "2026-11-08T03:35:00Z",
+      "last_confirmed_live_at": "2026-11-08T03:25:00Z",
+      "viewers": { "value": 31, "kind": "exact" }, "thumbnail": null
+    },
+    "playback": { "methods": ["hls"], "availability": "available", "reason": null },
+    "upcoming": null,
+    "attribution": "PeerTube instances"
+  }],
+  "facets": { "source": { "icecast": 9082, "owncast": 56, "peertube": 101 }, "category": {}, "language": {}, "approximate": false },
+  "sources": [{ "id": "owncast", "status": "ok", "last_successful_sync_at": "2026-11-08T03:25:00Z" }]
 }
 ```
 
-为了 fork 之间说同一种话，这些 id 在每个目录里含义不变：`news`、`tech`、`gaming`、`music`、`education`、`sports`、`talk`、
-`lifestyle`、`finance`、`art`、`science`、`religion`、`kids`、`other`。目录可以再加自己的。
+### GET /suggest
 
-### GET /v1/sources
+`q`，用户打字时用（应用等 200 毫秒，新请求到来就取消旧的）：从标签里来的词、最多五个频道（在播的在前，再是名字以输入开头的），以及匹配的筛选。
 
-所有源，按目录自己的顺序（排在前面的就是它想先给人看的）。
+### GET /channels/{id}、/channels/{id}/sessions、/channels/{id}/schedule
 
-查询参数（都可选）：
+一个频道（和搜索结果里的一样）、它最近的场次（新的在前）、它预告的场次（来源没有排期就是空的）。
 
-| 名字 | 含义 |
-|---|---|
-| `kind` | 只要这种；可以重复（`kind=telegram&kind=owncast`） |
-| `category` | 只要归在这个分类下的 |
-| `language` | 只要这种语言的 |
-| `country` | 只要这个国家的 |
-| `q` | 名字或简介里的词，不分大小写 |
-| `include_nsfw` | `true` 时包含标为 NSFW 的源；否则不给 |
-| `limit` | 最多多少个，1 到 500；不给时 100 |
-| `cursor` | 上一页结束的位置（它的 `next`） |
+### GET /channels/lookup
 
-```json
-{
-  "sources": [
-    {
-      "id": "mika-keys",
-      "kind": "telegram",
-      "name": "Mika Keys",
-      "description": {"en": "Keycap casting, most Friday nights"},
-      "languages": ["en"],
-      "categories": ["tech", "art"],
-      "countries": ["US"],
-      "nsfw": false,
-      "picture": "https://example.com/mika.jpg",
-      "website": "https://mika.example",
-      "schedule": [{"days": ["fri"], "start": "20:00", "minutes": 90, "timezone": "America/Los_Angeles"}],
-      "added": "2026-11-07",
-      "updated": "2026-11-07",
-      "telegram": {"username": "mika_keys"}
-    }
-  ],
-  "next": null
-}
-```
+用户粘贴的链接，只在目录自己的记录里匹配：`platform` 加 `handle`（`telegram` 加用户名，`peertube` 加 `频道@host`，`owncast` 加 host），或者只给 `host`。服务器不去访问任何地址，应用也不发路径、查询参数或凭证。没有、或者同一个 host 上有好几个时，回答 `{"channel": null}`。
 
-`next` 是下一页的 cursor，最后一页是 `null`。几百个源的目录可以一次全给，`next` 写 `null`。
+### GET /sources
 
-### GET /v1/sources/{id}
+每个来源：`indexing`（`enabled`、`not_integrated`、`paused`、`restricted_by_terms`、`disabled_by_source`）、它怎么找频道、它的能力（`live_status` 是 true 或 `"client"`、`viewer_counts`、`thumbnails`、`playback`、`auth`）、署名、观察到的东西保留多久，以及最近一次同步（`ok`、`degraded`、`rate_limited`、`failed`、`none`）。
 
-一个源，和列表里的一样；目录里没有这个 id 时回 404。
+### POST /submissions
 
-## 一个源
+这一版没有（第二阶段）：`501`。频道通过 pull request 进来。
 
-每个源都有：
+## 播放
 
-| 字段 | 类型 | |
-|---|---|---|
-| `id` | 字符串 | 目录给它的 id（见“约定”） |
-| `kind` | 字符串 | `telegram`、`owncast`、`peertube` 或 `hls` |
-| `name` | 字符串 | 它自己的名字，1 到 100 个字符，不翻译 |
-| `languages` | 字符串数组 | 用的语言，至少一个 |
-| `categories` | 字符串数组 | 分类 id，至少一个 |
-| `nsfw` | 布尔 | 成人内容：不特意要就不给 |
-| `added` | 日期 | 进目录的日子 |
-| 以种类命名的对象 | 对象 | 见下 |
-
-还可以有：`description`（多语言文本，每种最多 500 个字符）、`countries`（字符串数组）、`picture`（方形图片的 https 地址，至少 160
-像素）、`website`（https 地址）、`schedule`（通常什么时候播：数组，每项 `{"days": ["mon" … "sun"], "start": "HH:MM", "minutes":
-1 … 1440, "timezone": IANA 时区}`）、`updated`（日期）。
-
-各种类：
-
-- **`telegram`**：`{"username": "mika_keys"}`，一个公开用户名（5 到 32 个字母、数字和下划线，以字母开头），不带 @ 和 t.me。个人的
-  直播动态、频道的直播动态或直播、群的视频聊天：是哪一种，客户端通过 TDLib 去查。
-- **`owncast`**：`{"server": "https://owncast.example.com"}`，服务器的源地址，不带路径。它的 `/api/status` 说 `online` 时就是在播；
-  播放 `/hls/stream.m3u8`。
-- **`peertube`**：`{"instance": "https://peertube.example", "channel": "keycaps"}`，实例的源地址和上面一个频道的 handle。频道有一个
-  `isLive` 且已发布的视频时就是在播；播放那个视频的 HLS 列表。
-- **`hls`**：`{"url": "https://broadcaster.example/live/index.m3u8"}`，https 上的一个播放列表。不带请求头：需要别人的 Referer 或
-  User-Agent 才能播的流，目录不能给（客户端只发自己的 User-Agent，别的什么都不发）。
-
-## 签名（可选）
-
-目录可以给回答签名，让知道它密钥的客户端分辨出被改过的回答：响应头 `X-Directory-Signature: ed25519 <base64>` 是对响应体原样
-字节的 Ed25519 签名。公钥和目录地址一起交给客户端（FinchGram 自带某个目录时会带上它的公钥）；目录自己提供的公钥证明不了什么，所以
-没有提供公钥的接口。有公钥的客户端收到没有有效签名的回答就不用它。没有公钥时，就只靠 HTTPS。
+`methods` 是来源能怎么放（`hls`、`dash`、`icecast`、`telegram`、`official_embed`、`external`）；`availability` 是这一个现在能不能放：`available`、`unconfirmed`（stale 或 unknown）、`sign_in`、`unavailable`，带一个 `reason`。应用唯一的按钮照它们来：Watch here、Listen here（Icecast）、Try opening（未确认）、Open on Twitch（只能用平台自己的播放器）、Sign in to watch、Unavailable。
 
 ## 内容
 
-目录里放什么由它的维护者决定，写在 `policy` 里。契约本身只守这几条：源是它的主人公开放出来的地方；`hls` 源是版权方自己的流，或者
-他们允许的流；观众本来没有的请求头、密钥或登录一样都不需要；成人内容要标出来。对 FinchGram 自己的目录的建议：先放 Telegram 的源
-（内容留在 Telegram 上，以观众身份通过 Telegram 的 API 观看，没有任何人的流经过目录），再放主人愿意被收录的 Owncast 和 PeerTube
-服务器，广播机构的流只在得到许可后放。fork 自己决定自己的，也自己负责。
+`classification` 是 `general` 或 `mature`（粗口、暴力或赌博）；请求不要就不给 mature，应用也默认隐藏，直到用户在 Settings › Live 里打开。成人直播这一版不收录：来源标了 NSFW 的 Owncast 服务器和 PeerTube 直播一律不进目录，因为这个标记分不出限制级和成人。审核过的频道必须是主人公开的地方；HLS 流只能是播主自己的或得到他们允许的；不能需要密钥、登录或别的应用的请求头才能放。
 
-## FinchGram 怎么读目录
+## FinchGram 怎么读它
 
-- **什么时候。**打开直播视图时读用户已有的目录，每个至多五分钟一次，或者按它的 `Cache-Control`，带 `If-None-Match`。源显示在视图
-  列表里目录名下，按目录的顺序，再按界面上的选择筛选。
-- **Telegram 源。**通过 TDLib 按用户名解析，一次几个，滚到眼前才解析，绝不一次全解：短时间解析大量用户名正是 Telegram 限制的
-  （FLOOD_WAIT）。解析过的聊天 TDLib 会记住。之后是不是在播，和视图现在一样判断：直播动态（getChatActiveStories），或者聊天的视频
-  聊天。用户已经关注的频道不用解析。
-- **其他的。**Owncast、PeerTube 和 HLS 源要等 HLS 播放器（docs/live-streams.zh-Hans.md，“待定”）；在那之前 FinchGram 把它们灰着
-  列出，作为能显示但还做不到的东西。
-- **从不发送。**关于用户或账号的任何东西都不会发给目录：一个普通的 GET，没有 cookie，`User-Agent: FinchGram/<版本>`。
-- **守住的规矩。**不认识的种类跳过，不认识的字段忽略，NSFW 不显示，超过 16 MB 的回答不收，图片和聊天头像一样去取。
+- **Discover** 用 `/search` 和 `/suggest`，把用户在 Settings › Live 里选的语言作为 `Accept-Language` 发过去。账号的任何信息都不发给目录：普通的 GET，没有 cookie，`User-Agent: FinchGram/<version>`。
+- **Watch。** 应用播放时从来源本身拿播放地址：Owncast 服务器的 `/hls/stream.m3u8`（以及它的 `/api/status`，用来看人数和在不在播）、PeerTube 视频的播放列表（`/api/v1/videos/{uuid}`）、Icecast 电台的流、HLS 播放列表；Telegram 的直播照 Live 视图那样放（TDLib）。
+- **目录里的 Telegram 频道** 在进入视野时按用户名通过 TDLib 解析，一次几个（短时间内解析很多正是 Telegram 限制的，FLOOD_WAIT），然后照 Live 视图的方式看它的直播故事和直播。
+- **关注** 只存在 Mac 上，从不发出去：应用自己去问目录或来源，关注的那些频道现在怎样。
+- **守的规矩。** 不认识的字段忽略，不认识的来源跳过，超过 16 MB 的回答拒收。
 
 ## FinchGram 自己的目录
 
-由 [FinchGram/Services](https://github.com/FinchGram/Services) 提供，一次贡献就是一个文件加一次检查：
-
 ```
-data/live/directory.json       GET /v1/directory 回答的内容，不含构建时算出来的部分
-data/live/categories.json      14 个共用分类，用 FinchGram 的 11 种语言命名
-data/live/sources/<id>.json    每个源一个文件；文件名就是它的 id
-src/live/openapi.yaml          这份契约（和本仓库那份是同一个文件）
-src/routes/live/v1/            路由；契约本身也放在 /live/v1/openapi.yaml 上
+src/live/openapi.yaml          这份契约（和本仓库的是同一个文件）
+src/live/sources.ts            每个来源的配置；src/live/sync/ 是各自的读取
+src/live/cron.ts               同步，每 5 分钟一次（Worker 的定时触发）
+src/live/snapshot.ts           一个来源的频道、观察和场次，每次同步合并一次
+src/live/search.ts             搜索、联想、排序（纯函数）
+src/routes/live/api/v1/        路由；契约本身在 /live/api/v1/openapi.yaml
+data/live/channels/<id>.json   审核过的 Telegram 频道和 HLS 流
 ```
 
-每个文件都要按契约检查：跑测试时、每个 PR 上、每次构建前，没通过的文件到不了 Worker；数据在构建时打包进 Worker，所以 PR
-合并后下一次部署就生效，fork 部署自己的 Worker 就有了自己的目录。`updated` 是最近一次加入或修改源的日子，`kinds` 是目录里有的
-种类，`counts` 是数量。怎么加源，看那个仓库的 CONTRIBUTING.md。目录开张时是空的：放什么由维护者决定。
+每个来源的快照在 D1 里是一个值（JSON、gzip、base64），所以不管来源多大，一次同步只写一次。审核过的频道在每个 pull request 上和每次构建前检查；那个仓库的 CONTRIBUTING.md 说明怎么加。现在一个都还没有：放什么由维护者决定。
 
-## 待定
+## 待决定
 
-1. FinchGram 是自带它自己的目录，还是列表从空开始、由用户按地址添加（维护者 2026-10-26 定的规矩是不替用户做任何选择）。
-2. 签不签名（地址已经定了：`https://services.finchgram.com/live`，2026-11-07）。
-3. 它的规矩：收哪些种类，谁来审 PR。
+1. 要不要写信给 Xiph（icecast@xiph.org），说明我们每 15 分钟读一次 `yp.xml`：它没写任何条款，而且这个文件不压缩有 8 MB。
+2. Twitch、YouTube、Kick：先要开发者密钥，并逐个确认条款，才能收录。
+3. 要不要收录成人直播、用什么年龄验证、哪些地区要求验证（第 12 轮的待决问题）。在此之前，来源标了 NSFW 的频道一律不收录。
+4. 提交（第二阶段）。

@@ -1,0 +1,2553 @@
+// Watch (the canvas "FinchGram Desktop 直播", rounds 12 and 13): a channel open over the section it
+// was opened from. The picture spans the pane, the channel's details under it in each theme's
+// manner, its chat beside it. A channel of the directory plays through the live player
+// (LiveDirectory's states: asked of its source, playing, stalled, off air, a question first...);
+// a Telegram stream is 0.7.10's player (the Live global): the stream, its comments, the host's
+// view of the user's own. Drawn once, in Look's colours and shapes, for the three themes.
+import { Look } from "../look.slint";
+import { Icon, Spinner, Field, Avatar, Switch, Paragraph, SectionLabel } from "../widgets.slint";
+import { SmallButton } from "rows.slint";
+import { Live, LiveWords, LiveState, LiveComment } from "../live.slint";
+import { LiveDirectory, LiveDirectoryWords, LiveChannel, LiveSource, LiveStatus, LivePlay, LiveWhy, LiveWatch, LiveCategory } from "../live.slint";
+import { Tier, LiveShape, ChannelColors, SourceChip, LiveButton, OverlayButton, PictureIcon, PictureWord, ActionWord, LiveViewWords } from "live-parts.slint";
+import { DirectoryLook } from "live-cards.slint";
+
+// A line of the details: an icon or a dot, the words, their colour.
+struct WatchLine {
+    icon: string,
+    dot: bool,
+    text: string,
+    color: color,
+}
+
+// One of Terminal's facts under the picture: "status", "● live · 214 watching".
+struct WatchFact {
+    key: string,
+    value: string,
+    color: color,
+}
+
+// ---- Telegram's player (0.7.10) ------------------------------------------------------------------
+
+// A round button beside the stream: delete a comment, the faded star.
+component RoundButton inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <color> ink: Look.muted;
+    callback clicked();
+    width: 32px;
+    height: 32px;
+    border-radius: Look.terminal ? 3px : 16px;
+    background: touch.has-hover ? Look.sel : transparent;
+    accessible-role: button;
+    accessible-label: label;
+
+    Icon {
+        name: root.icon;
+        size: 18px;
+        color: root.ink;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// Back to where Watch was opened from, at the top left of the picture.
+component BackOverPicture inherits Rectangle {
+    in property <string> label;
+    callback clicked();
+    height: 28px;
+    width: row.preferred-width + 16px;
+    border-radius: Look.button-radius;
+    background: touch.has-hover ? #00000059 : #00000047;
+    accessible-role: button;
+    accessible-label: root.label;
+
+    row := HorizontalLayout {
+        x: 6px;
+        width: parent.width - 16px;
+        spacing: 4px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "caret-left";
+                size: 15px;
+                color: #ffffff;
+                duotone: false;
+            }
+        }
+        Text {
+            text: root.label;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// The top of the picture: its shade and the way back (Terminal has its line above the picture).
+component PictureTop inherits Rectangle {
+    in property <string> label;
+    callback back();
+    height: 64px;
+    background: @linear-gradient(180deg, #0000008c 0%, #00000000 100%);
+
+    BackOverPicture {
+        x: 12px;
+        y: 10px;
+        label: root.label;
+        clicked => {
+            root.back();
+        }
+    }
+}
+
+// The live edge over the picture: "● LIVE" at the edge; "−0:42 · Go live" behind it.
+component LiveEdge inherits Rectangle {
+    in property <int> behind;
+    in property <bool> enabled: true;
+    callback clicked();
+    height: 22px;
+    width: row.preferred-width + 16px;
+    border-radius: LiveShape.pill-radius;
+    background: root.behind > 0 ? (touch.has-hover ? #ffffff38 : #ffffff29) : transparent;
+
+    row := HorizontalLayout {
+        x: 8px;
+        width: parent.width - 16px;
+        spacing: 6px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 7px;
+                height: 7px;
+                border-radius: 3.5px;
+                background: root.behind > 0 ? #9aa2ac : LiveShape.live-on-dark;
+            }
+        }
+        Text {
+            text: LiveViewWords.edge(root.behind, Look.broadsheet);
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        enabled: root.enabled && root.behind > 0;
+        mouse-cursor: self.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// The sound: the speaker and the bar (the live player's, Telegram's and the directory's alike).
+component Sound inherits HorizontalLayout {
+    in property <length> bar-width: 80px;
+    spacing: 4px;
+    VerticalLayout {
+        alignment: center;
+        PictureIcon {
+            icon: Live.muted || Live.volume == 0 ? "speaker-x" : Live.volume < 50 ? "speaker-low" : "speaker-high";
+            label: Live.muted ? LiveViewWords.unmute() : LiveViewWords.mute();
+            clicked => {
+                Live.toggle-mute();
+            }
+        }
+    }
+    VerticalLayout {
+        alignment: center;
+        bar := Rectangle {
+            width: root.bar-width;
+            height: 3px;
+            border-radius: 2px;
+            background: #ffffff4d;
+            Rectangle {
+                x: 0;
+                width: parent.width * (Live.muted ? 0 : Live.volume / 100);
+                border-radius: 2px;
+                background: #ffffff;
+            }
+            TouchArea {
+                y: -7px;
+                height: parent.height + 14px;
+                mouse-cursor: pointer;
+                clicked => {
+                    Live.set-volume(Math.round(max(0, min(1, self.mouse-x / bar.width)) * 100));
+                }
+            }
+        }
+    }
+}
+
+// Telegram's picture, or where it is: joining, waiting for the broadcaster, for the phone only,
+// over. Its viewers at the top right as Telegram's own apps show them; the sound at the foot.
+component StreamScreen inherits Rectangle {
+    in property <string> back-label;
+    callback back();
+    property <bool> shows-picture: Live.state == LiveState.playing && Live.frame.width > 0;
+    background: #0b0c0e;
+    clip: true;
+
+    if root.shows-picture: Image {
+        width: parent.width;
+        height: parent.height;
+        source: Live.frame;
+        image-fit: contain;
+    }
+
+    if !root.shows-picture: VerticalLayout {
+        alignment: center;
+        spacing: 12px;
+        padding-left: 40px;
+        padding-right: 40px;
+        if Live.state == LiveState.joining || Live.state == LiveState.waiting || (Live.state == LiveState.playing && !root.shows-picture): HorizontalLayout {
+            alignment: center;
+            Spinner {
+                size: 22px;
+                color: #c9ced6;
+            }
+        }
+        if Live.state == LiveState.phone: HorizontalLayout {
+            alignment: center;
+            Icon {
+                name: "device-mobile";
+                size: 28px;
+                color: #c9ced6;
+                duotone: false;
+            }
+        }
+        Text {
+            text: LiveWords.state(Live.state);
+            color: #ffffff;
+            font-size: 15px;
+            font-weight: 600;
+            horizontal-alignment: center;
+            wrap: word-wrap;
+        }
+        if Live.state == LiveState.phone: Text {
+            text: LiveWords.phone-explained();
+            color: #c9ced6;
+            font-size: 13px;
+            horizontal-alignment: center;
+            wrap: word-wrap;
+        }
+        if Live.state == LiveState.failed && Live.problem != "": Text {
+            text: Live.problem;
+            color: #c9ced6;
+            font-size: 13px;
+            horizontal-alignment: center;
+            wrap: word-wrap;
+        }
+    }
+
+    if root.shows-picture && Live.buffering: Rectangle {
+        Spinner {
+            size: 22px;
+            color: #ffffffcc;
+        }
+    }
+
+    if !Look.terminal: PictureTop {
+        y: 0;
+        width: parent.width;
+        label: root.back-label;
+        back => {
+            root.back();
+        }
+    }
+
+    if Live.state == LiveState.playing || Live.state == LiveState.waiting: Rectangle {
+        x: parent.width - self.width - 12px;
+        y: 12px;
+        height: 22px;
+        width: viewers.preferred-width + 14px;
+        border-radius: LiveShape.pill-radius;
+        background: #00000073;
+        viewers := HorizontalLayout {
+            x: 7px;
+            width: parent.width - 14px;
+            spacing: 5px;
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "eye";
+                    size: 13px;
+                    color: #ffffff;
+                    duotone: false;
+                }
+            }
+            Text {
+                text: Live.viewers;
+                color: #ffffff;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+        }
+    }
+
+    // The mark and the sound, at the foot of the picture.
+    if Live.state == LiveState.playing || Live.state == LiveState.waiting: Rectangle {
+        y: parent.height - self.height;
+        height: Look.terminal ? 30px : 68px;
+        background: Look.terminal ? #000000bf : @linear-gradient(180deg, #00000000 0%, #000000b8 100%);
+        if !Look.terminal: HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 28px;
+            padding-bottom: 8px;
+            spacing: 8px;
+            VerticalLayout {
+                alignment: center;
+                LiveEdge {
+                    behind: 0;
+                    enabled: false;
+                }
+            }
+            if Live.state == LiveState.playing: Sound { }
+            Rectangle { horizontal-stretch: 1; }
+        }
+        if Look.terminal: HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            spacing: 14px;
+            VerticalLayout {
+                alignment: center;
+                PictureWord {
+                    text: LiveViewWords.edge-word(0);
+                    ink: LiveShape.live-on-dark;
+                    enabled: true;
+                }
+            }
+            if Live.state == LiveState.playing: VerticalLayout {
+                alignment: center;
+                PictureWord {
+                    text: LiveViewWords.volume-word(Live.muted, Live.volume);
+                    clicked => {
+                        Live.toggle-mute();
+                    }
+                }
+            }
+            Rectangle { horizontal-stretch: 1; }
+        }
+    }
+}
+
+// A comment in the column: free (a name and the words), paid (tinted by its level, with its
+// Stars), a tip (a paid comment without words), the host's (marked).
+component CommentRow inherits Rectangle {
+    in property <LiveComment> comment;
+    property <bool> paid: comment.stars > 0 && comment.text != "";
+    property <bool> tip: comment.stars > 0 && comment.text == "";
+    height: box.preferred-height;
+    border-radius: Look.radius;
+    background: paid ? Tier.fill(comment.tier) : transparent;
+
+    box := HorizontalLayout {
+        padding-left: root.paid ? 10px : 0px;
+        padding-right: root.paid ? 10px : 0px;
+        padding-top: root.paid ? 8px : 6px;
+        padding-bottom: root.paid ? 8px : 6px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: start;
+            Avatar {
+                size: 26px;
+                radius: Look.terminal ? 3px : 6px;
+                initial: root.comment.initial;
+                fill: root.paid ? (Look.dark ? Look.bg : #ffffff) : Look.soft;
+                ink: root.paid ? Tier.ink(root.comment.tier) : Look.soft-ink;
+                font-size: 11px;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+                Text {
+                    text: root.comment.name;
+                    color: root.paid ? Tier.ink(root.comment.tier) : Look.text;
+                    font-size: 13px;
+                    font-weight: 600;
+                    overflow: elide;
+                }
+                if root.comment.host: VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        height: 15px;
+                        width: host.preferred-width + 10px;
+                        border-radius: 3px;
+                        background: Look.soft;
+                        host := Text {
+                            width: parent.width;
+                            text: LiveWords.host-mark();
+                            color: Look.soft-ink;
+                            font-size: 10px;
+                            font-weight: 600;
+                            horizontal-alignment: center;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+                if root.paid: HorizontalLayout {
+                    spacing: 3px;
+                    VerticalLayout {
+                        alignment: center;
+                        Icon {
+                            name: "star";
+                            size: 12px;
+                            color: Tier.ink(root.comment.tier);
+                        }
+                    }
+                    Text {
+                        text: root.comment.stars;
+                        color: Tier.ink(root.comment.tier);
+                        font-size: 12px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                }
+            }
+            if !root.tip: Paragraph {
+                text: root.comment.text;
+                color: root.paid ? Tier.ink(root.comment.tier) : Look.text;
+                font-size: 13px;
+                line-height-factor: Look.leading(1.4);
+            }
+            if root.tip: Text {
+                text: LiveWords.tipped(root.comment.stars);
+                color: Look.muted;
+                font-size: 13px;
+            }
+        }
+        if Live.hosting && root.comment.deletable && touch.has-hover: VerticalLayout {
+            alignment: start;
+            RoundButton {
+                width: 26px;
+                height: 26px;
+                icon: "trash";
+                label: LiveWords.delete-comment();
+                ink: Look.danger;
+                clicked => {
+                    Live.delete-comment(root.comment.id);
+                }
+            }
+        }
+    }
+    touch := TouchArea {
+        // Under the trash button, so that the button gets its click.
+        z: -1;
+    }
+}
+
+// The column of Telegram's comments beside the picture, headed as the canvas's chat column, the
+// newest at the foot, the oldest leaving at the top.
+component Comments inherits Rectangle {
+    width: Look.broadsheet ? 340px : Look.terminal ? 300px : 320px;
+    background: Look.broadsheet ? DirectoryLook.panel : Look.side;
+
+    Rectangle {
+        x: 0;
+        width: 1px;
+        background: Look.line;
+    }
+
+    VerticalLayout {
+        padding-left: 1px;
+        Rectangle {
+            height: Look.broadsheet ? 52px : Look.terminal ? 34px : 44px;
+            background: Look.terminal ? Look.hover : transparent;
+            HorizontalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                spacing: 8px;
+                Text {
+                    text: Look.terminal ? "# " + LiveWords.comments().to-lowercase() : Look.workbench ? LiveWords.comments().to-uppercase() : LiveWords.comments();
+                    color: Look.broadsheet ? Look.text : Look.terminal ? Look.muted : Look.faint;
+                    font-size: Look.broadsheet ? 17px : Look.terminal ? 13px : 11px;
+                    font-weight: Look.terminal ? 400 : 600;
+                    letter-spacing: Look.workbench ? 0.88px : 0px;
+                    vertical-alignment: center;
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: Live.paid-from > 0 ? LiveWords.paid-from(Live.paid-from) : "";
+                    color: Look.faint;
+                    font-size: 12px;
+                    horizontal-alignment: right;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    SourceChip {
+                        label: LiveViewWords.chip(LiveSource.telegram);
+                    }
+                }
+            }
+            Rectangle {
+                y: parent.height - 1px;
+                height: 1px;
+                background: Look.broadsheet ? Look.line-strong : Look.terminal ? transparent : Look.line;
+            }
+        }
+        VerticalLayout {
+            vertical-stretch: 0;
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: Live.hosting && Live.donors.length > 0 ? 12px : 0px;
+            padding-bottom: Live.hosting && Live.donors.length > 0 ? 10px : 0px;
+            spacing: 10px;
+            if Live.hosting && Live.donors.length > 0: VerticalLayout {
+                spacing: 8px;
+                SectionLabel {
+                    label: LiveWords.top-supporters();
+                }
+                HorizontalLayout {
+                    vertical-stretch: 0;
+                    spacing: 8px;
+                    alignment: start;
+                    for donor in Live.donors: Rectangle {
+                        height: 26px;
+                        width: chip.preferred-width + 16px;
+                        border-radius: Look.terminal ? 3px : 13px;
+                        background: Tier.fill(donor.tier);
+                        chip := HorizontalLayout {
+                            x: 8px;
+                            width: parent.width - 16px;
+                            spacing: 5px;
+                            Text {
+                                text: donor.name;
+                                color: Tier.ink(donor.tier);
+                                font-size: 12px;
+                                font-weight: 500;
+                                vertical-alignment: center;
+                            }
+                            VerticalLayout {
+                                alignment: center;
+                                Icon {
+                                    name: "star";
+                                    size: 12px;
+                                    color: Tier.ink(donor.tier);
+                                }
+                            }
+                            Text {
+                                text: donor.stars;
+                                color: Tier.ink(donor.tier);
+                                font-size: 12px;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if Live.hosting && Live.donors.length > 0: Rectangle {
+            height: 1px;
+            background: Look.line;
+        }
+        // The comments, anchored to the foot: older ones go out at the top.
+        Rectangle {
+            vertical-stretch: 1;
+            clip: true;
+            list := VerticalLayout {
+                y: parent.height - self.preferred-height;
+                height: self.preferred-height;
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-bottom: 6px;
+                spacing: 2px;
+                for comment in Live.comments: CommentRow {
+                    comment: comment;
+                }
+            }
+            if Live.comments.length == 0: Text {
+                text: Live.comments-on ? "" : LiveWords.comments-off();
+                color: Look.faint;
+                font-size: 13px;
+            }
+        }
+        Rectangle {
+            height: 1px;
+            background: Look.line;
+        }
+        VerticalLayout {
+            vertical-stretch: 0;
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 10px;
+            padding-bottom: 14px;
+            spacing: 8px;
+            if Live.comments-on && Live.can-comment && (Live.hosting || Live.paid-from == 0): HorizontalLayout {
+                spacing: 8px;
+                say := Field {
+                    height: 34px;
+                    font-size: 13px;
+                    padding-x: 10px;
+                    placeholder: Live.hosting ? LiveWords.reply-as-host() : LiveWords.say();
+                    accepted(text) => {
+                        if text != "" {
+                            Live.send-comment(text);
+                            self.text = "";
+                        }
+                    }
+                }
+                // Paid comments go from Telegram's own apps for now: the star stays faded.
+                RoundButton {
+                    icon: "star";
+                    label: "★";
+                    ink: Look.faint;
+                    opacity: 0.45;
+                }
+                Rectangle {
+                    width: 34px;
+                    height: 34px;
+                    border-radius: Look.button-radius;
+                    background: send-touch.has-hover ? Look.accent.darker(0.1) : Look.accent;
+                    opacity: say.text != "" ? 1 : 0.5;
+                    Icon {
+                        name: "paper-plane-tilt";
+                        size: 16px;
+                        color: Look.on-accent;
+                    }
+                    send-touch := TouchArea {
+                        enabled: say.text != "";
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Live.send-comment(say.text);
+                            say.text = "";
+                        }
+                    }
+                }
+            }
+            Paragraph {
+                text: !Live.comments-on ? LiveWords.comments-off()
+                    : Live.hosting ? LiveWords.host-note()
+                    : Live.paid-from > 0 ? LiveWords.paid-note(Live.paid-from)
+                    : LiveWords.free-note();
+                color: Look.faint;
+                font-size: 11px;
+                line-height-factor: Look.leading(1.45);
+            }
+        }
+    }
+}
+
+// What the host sees under their own stream: how many watch, the Stars so far, comments on or
+// off.
+component HostBar {
+    HorizontalLayout {
+        spacing: 28px;
+        alignment: start;
+        VerticalLayout {
+            spacing: 2px;
+            Text {
+                text: Live.viewers;
+                color: Look.text;
+                font-family: Look.mono;
+                font-size: 18px;
+                font-weight: 600;
+            }
+            SectionLabel {
+                label: LiveWords.watching-now();
+            }
+        }
+        VerticalLayout {
+            spacing: 2px;
+            HorizontalLayout {
+                spacing: 4px;
+                alignment: start;
+                VerticalLayout {
+                    alignment: center;
+                    Icon {
+                        name: "star";
+                        size: 16px;
+                        color: Tier.ink(2);
+                    }
+                }
+                Text {
+                    text: Live.stars-total;
+                    color: Tier.ink(2);
+                    font-family: Look.mono;
+                    font-size: 18px;
+                    font-weight: 600;
+                }
+            }
+            SectionLabel {
+                label: LiveWords.stars-so-far();
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            HorizontalLayout {
+                spacing: 10px;
+                Switch {
+                    on: Live.comments-on;
+                    toggled => {
+                        Live.toggle-comments();
+                    }
+                }
+                Text {
+                    text: LiveWords.comments-allowed();
+                    color: Look.text;
+                    font-size: 13px;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+}
+
+// The question before ending the user's own stream.
+export component EndQuestion inherits Rectangle {
+    background: #00000059;
+
+    TouchArea { }
+
+    Rectangle {
+        width: 380px;
+        height: card.preferred-height;
+        border-radius: Look.dialog-radius;
+        background: Look.bg;
+        drop-shadow-blur: 32px;
+        drop-shadow-offset-y: 12px;
+        drop-shadow-color: #00000040;
+        card := VerticalLayout {
+            padding: 22px;
+            spacing: 12px;
+            Text {
+                text: Look.heading-prefix + LiveWords.end-question();
+                color: Look.text;
+                font-size: 17px;
+                font-weight: 600;
+            }
+            Paragraph {
+                text: LiveWords.end-line(Live.open.kind);
+                color: Look.muted;
+                font-size: 13px;
+                line-height-factor: Look.leading(1.5);
+            }
+            HorizontalLayout {
+                padding-top: 6px;
+                spacing: 10px;
+                alignment: end;
+                SmallButton {
+                    text: LiveWords.cancel();
+                    clicked => {
+                        Live.ask-end(false);
+                    }
+                }
+                Rectangle {
+                    height: 32px;
+                    width: end-label.preferred-width + 28px;
+                    border-radius: Look.button-radius;
+                    background: end-touch.has-hover ? Look.danger.darker(0.1) : Look.danger;
+                    end-label := Text {
+                        text: LiveWords.end(Live.open.kind);
+                        color: Look.dark ? Look.bg : #ffffff;
+                        font-size: 14px;
+                        font-weight: 600;
+                    }
+                    end-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Live.end-live();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ---- a directory channel's picture ---------------------------------------------------------------
+
+// What covers the picture when it does not simply play: a question, a reason, the steps of
+// opening it. Its own lines and buttons come as its children.
+component Notice inherits Rectangle {
+    in property <bool> scrim: true;
+    in property <string> icon;
+    in property <color> icon-color: #ffffff;
+    in property <string> chip;
+    in property <string> title;
+    in property <string> body;
+    in property <string> foot;
+    background: root.scrim ? #08090bbd : transparent;
+
+    TouchArea { }
+
+    VerticalLayout {
+        alignment: center;
+        padding: 24px;
+        HorizontalLayout {
+            alignment: center;
+            VerticalLayout {
+                width: min(460px, root.width - 48px);
+                spacing: 12px;
+                if root.icon != "": HorizontalLayout {
+                    alignment: start;
+                    Rectangle {
+                        width: 38px;
+                        height: 38px;
+                        border-radius: Look.radius;
+                        background: #ffffff1a;
+                        Icon {
+                            name: root.icon;
+                            size: 21px;
+                            color: root.icon-color;
+                            duotone: false;
+                        }
+                    }
+                }
+                if root.chip != "": HorizontalLayout {
+                    alignment: start;
+                    SourceChip {
+                        height: 18px;
+                        label: root.chip;
+                        ink: #ffffff;
+                        ring: #ffffff59;
+                    }
+                }
+                Paragraph {
+                    text: root.title;
+                    color: #f2f3f5;
+                    font-size: 19px;
+                    font-weight: 600;
+                    line-height-factor: Look.leading(1.3);
+                }
+                if root.body != "": Paragraph {
+                    text: root.body;
+                    color: #ffffffbd;
+                    font-size: 14px;
+                    line-height-factor: Look.leading(1.55);
+                }
+                @children
+                if root.foot != "": Paragraph {
+                    text: root.foot;
+                    color: #ffffff80;
+                    font-size: 12px;
+                    line-height-factor: Look.leading(1.5);
+                }
+            }
+        }
+    }
+}
+
+// A step of opening a stream: done, under way, or still to come.
+component Step inherits HorizontalLayout {
+    in property <string> text;
+    // 0 done, 1 under way, 2 to come.
+    in property <int> stage;
+    spacing: 10px;
+    VerticalLayout {
+        alignment: center;
+        if root.stage == 1: Spinner {
+            size: 16px;
+            color: #ffffff;
+        }
+        if root.stage != 1: Icon {
+            name: root.stage == 0 ? "check-circle" : "circle";
+            size: 16px;
+            color: root.stage == 0 ? #ffffff : #ffffff73;
+            duotone: false;
+        }
+    }
+    Text {
+        horizontal-stretch: 1;
+        text: root.text;
+        color: root.stage == 2 ? #ffffff73 : #ffffff;
+        font-size: 13px;
+        overflow: elide;
+        vertical-alignment: center;
+    }
+}
+
+// The channel's picture, its states and its controls.
+component DirectoryScreen inherits Rectangle {
+    in property <string> back-label;
+    in property <bool> chat-shown;
+    in property <bool> has-chat;
+    callback back();
+    callback toggle-chat();
+    property <LiveChannel> channel: LiveDirectory.channel;
+    property <LiveWatch> state: LiveDirectory.watch-state;
+    property <bool> plays: state == LiveWatch.playing || state == LiveWatch.network;
+    property <bool> shows-picture: plays && Live.frame.width > 0;
+    property <bool> adult;
+    property <bool> slow-shown: true;
+    background: #0b0c0e;
+    clip: true;
+
+    // While it is asked for, or asks first: the source's picture of the stream, if it gave one.
+    if !root.plays && root.channel.has-thumbnail && root.state != LiveWatch.resolving: Image {
+        width: parent.width;
+        height: parent.height;
+        source: root.channel.thumbnail;
+        image-fit: cover;
+        opacity: 0.6;
+    }
+    if root.shows-picture: Image {
+        width: parent.width;
+        height: parent.height;
+        source: Live.frame;
+        image-fit: contain;
+    }
+    // Sound only: no picture comes.
+    if root.plays && !root.shows-picture && root.channel.audio: Text {
+        text: LiveViewWords.audio-only() + (LiveDirectory.tech != "" ? " · " + LiveDirectory.tech : "");
+        color: #ffffff73;
+        font-family: Look.mono;
+        font-size: 12px;
+        letter-spacing: 0.5px;
+    }
+    if root.plays && !root.shows-picture && !root.channel.audio && root.state == LiveWatch.playing: Spinner {
+        size: 22px;
+        color: #ffffffcc;
+    }
+
+    // Asking its source for the stream: the steps.
+    if root.state == LiveWatch.resolving: Notice {
+        scrim: false;
+        title: LiveViewWords.opening(root.channel.name);
+        foot: root.channel.source == LiveSource.telegram ? "" : LiveViewWords.resolving-foot();
+        VerticalLayout {
+            spacing: 8px;
+            padding-top: 2px;
+            padding-bottom: 2px;
+            Step {
+                stage: 0;
+                text: root.channel.source == LiveSource.telegram ? LiveViewWords.step-found-telegram(root.channel.name) : LiveViewWords.step-recognized(root.channel.name, root.channel.source);
+            }
+            Step {
+                stage: 1;
+                text: root.channel.source == LiveSource.telegram ? LiveViewWords.step-joined() : LiveViewWords.step-address(root.channel.source);
+            }
+            Step {
+                stage: 2;
+                text: root.channel.source == LiveSource.telegram ? LiveViewWords.step-segments() : LiveViewWords.step-connecting();
+            }
+            Step {
+                stage: 2;
+                text: LiveViewWords.step-buffering();
+            }
+        }
+        HorizontalLayout {
+            padding-top: 4px;
+            alignment: start;
+            OverlayButton {
+                text: LiveViewWords.cancel();
+                clicked => {
+                    root.back();
+                }
+            }
+        }
+    }
+
+    // Not live: where it is, and following it.
+    if root.state == LiveWatch.offline: Notice {
+        title: LiveViewWords.is-offline(root.channel.name);
+        body: LiveViewWords.last-live(root.channel) + (root.channel.source == LiveSource.peertube ? " " + LiveViewWords.replays() : "");
+        foot: root.channel.following ? LiveViewWords.offline-foot() : "";
+        HorizontalLayout {
+            padding-top: 4px;
+            spacing: 8px;
+            alignment: start;
+            if root.channel.source != LiveSource.telegram: OverlayButton {
+                text: LiveViewWords.open-channel-page();
+                icon: "arrow-square-out";
+                primary: true;
+                clicked => {
+                    LiveDirectory.open-elsewhere();
+                }
+            }
+            OverlayButton {
+                text: LiveDirectoryWords.follow(root.channel);
+                icon: root.channel.following ? "check" : "star";
+                primary: root.channel.source == LiveSource.telegram && !root.channel.following;
+                clicked => {
+                    LiveDirectory.follow(root.channel.id, !root.channel.following);
+                }
+            }
+        }
+    }
+
+    // Its address ran out; asked again.
+    if root.state == LiveWatch.expired: Notice {
+        icon: "warning-circle";
+        icon-color: #ffb4a8;
+        title: LiveViewWords.expired-title();
+        body: LiveViewWords.expired-line(root.channel.host);
+        foot: LiveViewWords.expired-foot();
+        HorizontalLayout {
+            padding-top: 4px;
+            spacing: 8px;
+            alignment: start;
+            OverlayButton {
+                text: LiveViewWords.try-again();
+                icon: "arrow-clockwise";
+                primary: true;
+                clicked => {
+                    LiveDirectory.open(root.channel.id);
+                }
+            }
+            OverlayButton {
+                text: LiveViewWords.channel-page();
+                icon: "arrow-square-out";
+                clicked => {
+                    LiveDirectory.open-elsewhere();
+                }
+            }
+        }
+    }
+
+    // It plays on its own site.
+    if root.state == LiveWatch.elsewhere: Notice {
+        chip: LiveViewWords.chip(root.channel.source);
+        title: root.channel.why == LiveWhy.official-player ? LiveViewWords.own-player-title(root.channel.name, root.channel.source) : LiveViewWords.own-site-title(root.channel.name, root.channel.source);
+        body: root.channel.why == LiveWhy.official-player ? LiveViewWords.own-player-line(root.channel.source) : LiveViewWords.own-site-line(root.channel.source);
+        HorizontalLayout {
+            padding-top: 4px;
+            alignment: start;
+            OverlayButton {
+                text: LiveViewWords.open-on(root.channel.source);
+                icon: "arrow-square-out";
+                primary: true;
+                clicked => {
+                    LiveDirectory.open-elsewhere();
+                }
+            }
+        }
+    }
+
+    // It needs an account at its source: private servers are not in this version.
+    if root.state == LiveWatch.sign-in: Notice {
+        icon: "lock-key";
+        title: LiveViewWords.sign-in-title();
+        body: LiveViewWords.sign-in-line(root.channel);
+        HorizontalLayout {
+            padding-top: 4px;
+            spacing: 8px;
+            alignment: start;
+            OverlayButton {
+                text: LiveViewWords.add-private-server();
+                icon: "plus";
+                enabled: false;
+            }
+            OverlayButton {
+                text: LiveViewWords.back();
+                clicked => {
+                    root.back();
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                Text {
+                    text: LiveViewWords.not-in-this-version();
+                    color: #ffffff80;
+                    font-size: 12px;
+                }
+            }
+        }
+    }
+
+    // Mature-rated: asks first.
+    if root.state == LiveWatch.mature: Notice {
+        icon: "eye-slash";
+        title: LiveViewWords.mature-title();
+        body: LiveViewWords.mature-line(root.channel.source);
+        foot: LiveViewWords.mature-foot();
+        Rectangle {
+            height: adult-row.preferred-height;
+            adult-row := HorizontalLayout {
+                spacing: 10px;
+                alignment: start;
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 18px;
+                        height: 18px;
+                        border-radius: Look.button-radius;
+                        border-width: 1.5px;
+                        border-color: #ffffffb3;
+                        background: root.adult ? #ffffff : transparent;
+                        if root.adult: Icon {
+                            name: "check";
+                            size: 13px;
+                            color: #111111;
+                            duotone: false;
+                        }
+                    }
+                }
+                Text {
+                    text: LiveViewWords.adult();
+                    color: #f2f3f5;
+                    font-size: 14px;
+                    vertical-alignment: center;
+                }
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    root.adult = !root.adult;
+                }
+            }
+        }
+        HorizontalLayout {
+            padding-top: 4px;
+            spacing: 8px;
+            alignment: start;
+            OverlayButton {
+                text: LiveViewWords.back();
+                clicked => {
+                    root.back();
+                }
+            }
+            OverlayButton {
+                text: LiveViewWords.watch();
+                icon: "play";
+                primary: true;
+                enabled: root.adult;
+                clicked => {
+                    LiveDirectory.confirm-mature();
+                }
+            }
+        }
+    }
+
+    // Sent over WebRTC: for the phone.
+    if root.state == LiveWatch.phone: Notice {
+        icon: "device-mobile";
+        title: LiveViewWords.phone-title();
+        body: LiveViewWords.phone-line();
+        foot: LiveViewWords.phone-foot();
+        HorizontalLayout {
+            padding-top: 4px;
+            alignment: start;
+            OverlayButton {
+                text: LiveViewWords.back();
+                clicked => {
+                    root.back();
+                }
+            }
+        }
+    }
+
+    // It could not be played.
+    if root.state == LiveWatch.failed: Notice {
+        icon: "warning-circle";
+        icon-color: #ffb4a8;
+        title: LiveViewWords.failed-title(root.channel.name);
+        body: LiveDirectory.problem;
+        HorizontalLayout {
+            padding-top: 4px;
+            spacing: 8px;
+            alignment: start;
+            OverlayButton {
+                text: LiveViewWords.try-again();
+                icon: "arrow-clockwise";
+                primary: true;
+                clicked => {
+                    LiveDirectory.open(root.channel.id);
+                }
+            }
+            OverlayButton {
+                text: LiveViewWords.back();
+                clicked => {
+                    root.back();
+                }
+            }
+        }
+    }
+
+    // The connection stalled: mpv tries again.
+    if root.state == LiveWatch.network: VerticalLayout {
+        alignment: center;
+        spacing: 8px;
+        HorizontalLayout {
+            alignment: center;
+            Spinner {
+                size: 34px;
+                color: #ffffff;
+            }
+        }
+        Text {
+            text: LiveViewWords.buffering();
+            color: #ffffffcc;
+            font-size: 12px;
+            horizontal-alignment: center;
+        }
+    }
+
+    if !Look.terminal: PictureTop {
+        y: 0;
+        width: parent.width;
+        label: root.back-label;
+        back => {
+            root.back();
+        }
+    }
+
+    if root.state == LiveWatch.network && root.slow-shown: Rectangle {
+        x: 12px;
+        y: Look.terminal ? 12px : 50px;
+        width: parent.width - 24px;
+        height: slow.preferred-height;
+        border-radius: Look.radius;
+        background: #141619e0;
+        border-width: 1px;
+        border-color: #ffffff14;
+        slow := HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 9px;
+            padding-bottom: 9px;
+            spacing: 10px;
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "wifi-medium";
+                    size: 16px;
+                    color: #f0c36a;
+                    duotone: false;
+                }
+            }
+            Text {
+                horizontal-stretch: 1;
+                text: LiveViewWords.slow();
+                color: #ffffff;
+                font-size: 13px;
+                wrap: word-wrap;
+                vertical-alignment: center;
+            }
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: 16px;
+                    height: 16px;
+                    opacity: 0.7;
+                    Icon {
+                        name: "x";
+                        size: 14px;
+                        color: #ffffff;
+                        duotone: false;
+                    }
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.slow-shown = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // The controls, while it plays.
+    if root.plays && !Look.terminal: Rectangle {
+        y: parent.height - self.height;
+        height: 68px;
+        background: @linear-gradient(180deg, #00000000 0%, #000000b8 100%);
+        HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            padding-top: 28px;
+            padding-bottom: 8px;
+            spacing: 8px;
+            VerticalLayout {
+                alignment: center;
+                PictureIcon {
+                    icon: LiveDirectory.paused ? "play-filled" : "pause-filled";
+                    label: LiveDirectory.paused ? LiveViewWords.play() : LiveViewWords.pause();
+                    clicked => {
+                        LiveDirectory.toggle-pause();
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                LiveEdge {
+                    behind: LiveDirectory.behind;
+                    clicked => {
+                        LiveDirectory.live-edge();
+                    }
+                }
+            }
+            Sound { }
+            Rectangle { horizontal-stretch: 1; }
+            Text {
+                text: LiveDirectory.tech;
+                color: #ffffffb3;
+                font-size: 12px;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            if LiveDirectory.qualities.length > 1: VerticalLayout {
+                alignment: center;
+                quality := Rectangle {
+                    height: 26px;
+                    width: q-row.preferred-width + 18px;
+                    border-radius: Look.button-radius;
+                    background: q-touch.has-hover ? #ffffff33 : #ffffff24;
+                    q-row := HorizontalLayout {
+                        x: 9px;
+                        width: parent.width - 18px;
+                        spacing: 5px;
+                        Text {
+                            text: LiveDirectory.quality <= 0 ? LiveViewWords.auto-quality(LiveDirectory.qualities[1]) : LiveDirectory.qualities[LiveDirectory.quality];
+                            color: #ffffff;
+                            font-size: 12px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "caret-up";
+                                size: 11px;
+                                color: #ffffff;
+                                duotone: false;
+                            }
+                        }
+                    }
+                    q-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            q-menu.show();
+                        }
+                    }
+                    q-menu := PopupWindow {
+                        x: parent.width - 230px;
+                        y: -self.height - 8px;
+                        width: 230px;
+                        close-policy: PopupClosePolicy.close-on-click-outside;
+                        Rectangle {
+                            border-radius: Look.radius;
+                            background: #1d2024;
+                            drop-shadow-blur: 32px;
+                            drop-shadow-offset-y: 12px;
+                            drop-shadow-color: #00000073;
+                            VerticalLayout {
+                                padding: 6px;
+                                HorizontalLayout {
+                                    padding-left: 8px;
+                                    padding-right: 8px;
+                                    Text {
+                                        height: 26px;
+                                        text: LiveViewWords.quality-title();
+                                        color: #ffffff80;
+                                        font-size: 11px;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                                for label[index] in LiveDirectory.qualities: Rectangle {
+                                    height: 32px;
+                                    border-radius: Look.button-radius;
+                                    background: q-item.has-hover ? #ffffff14 : transparent;
+                                    HorizontalLayout {
+                                        padding-left: 8px;
+                                        padding-right: 8px;
+                                        spacing: 8px;
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Icon {
+                                                name: "check";
+                                                size: 14px;
+                                                color: #e8eaed;
+                                                duotone: false;
+                                                opacity: index == max(0, LiveDirectory.quality) ? 1 : 0;
+                                            }
+                                        }
+                                        Text {
+                                            horizontal-stretch: 1;
+                                            text: index == 0 ? LiveViewWords.auto-quality("") : label;
+                                            color: #e8eaed;
+                                            font-size: 13px;
+                                            vertical-alignment: center;
+                                        }
+                                        if index == 0: Text {
+                                            text: LiveViewWords.now-quality(LiveDirectory.qualities[1]);
+                                            color: #ffffff80;
+                                            font-size: 11px;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                    q-item := TouchArea {
+                                        mouse-cursor: pointer;
+                                        clicked => {
+                                            LiveDirectory.set-quality(index);
+                                            q-menu.close();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                PictureIcon {
+                    icon: "chat-centered-text";
+                    label: root.chat-shown ? LiveViewWords.hide-chat() : LiveViewWords.show-chat();
+                    enabled: root.has-chat;
+                    clicked => {
+                        root.toggle-chat();
+                    }
+                }
+            }
+            // The pop-out window, on top of every app: a directory's stream once it plays. Full screen
+            // is not in this version.
+            VerticalLayout {
+                alignment: center;
+                PictureIcon {
+                    icon: "picture-in-picture";
+                    label: LiveViewWords.pop-out();
+                    enabled: LiveDirectory.channel.source != LiveSource.telegram && LiveDirectory.watch-state == LiveWatch.playing;
+                    clicked => {
+                        LiveDirectory.pop-out();
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                PictureIcon {
+                    icon: "corners-out";
+                    label: LiveViewWords.full-screen();
+                    enabled: false;
+                }
+            }
+        }
+    }
+
+    // Terminal's controls: one line of words at the foot.
+    if root.plays && Look.terminal: Rectangle {
+        y: parent.height - self.height;
+        height: 30px;
+        background: #000000bf;
+        HorizontalLayout {
+            padding-left: 12px;
+            padding-right: 12px;
+            spacing: 14px;
+            VerticalLayout {
+                alignment: center;
+                PictureWord {
+                    text: LiveViewWords.play-word(LiveDirectory.paused);
+                    clicked => {
+                        LiveDirectory.toggle-pause();
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                PictureWord {
+                    text: LiveViewWords.edge-word(LiveDirectory.behind);
+                    ink: LiveDirectory.behind > 0 ? #cfd5d1 : LiveShape.live-on-dark;
+                    clicked => {
+                        LiveDirectory.live-edge();
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                PictureWord {
+                    text: LiveViewWords.volume-word(Live.muted, Live.volume);
+                    clicked => {
+                        Live.toggle-mute();
+                    }
+                }
+            }
+            Rectangle { horizontal-stretch: 1; }
+            if LiveDirectory.qualities.length > 1: VerticalLayout {
+                alignment: center;
+                PictureWord {
+                    text: "[" + (LiveDirectory.quality <= 0 ? LiveViewWords.auto-quality(LiveDirectory.qualities[1]) : LiveDirectory.qualities[LiveDirectory.quality]).to-lowercase() + "]";
+                    clicked => {
+                        // Terminal steps through the qualities: Auto, then each variant.
+                        LiveDirectory.set-quality(Math.mod(max(0, LiveDirectory.quality) + 1, LiveDirectory.qualities.length));
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                PictureWord {
+                    text: LiveViewWords.chat-word();
+                    enabled: root.has-chat;
+                    clicked => {
+                        root.toggle-chat();
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                PictureWord {
+                    text: LiveViewWords.pop-out-word();
+                    enabled: LiveDirectory.channel.source != LiveSource.telegram && LiveDirectory.watch-state == LiveWatch.playing;
+                    clicked => {
+                        LiveDirectory.pop-out();
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: center;
+                PictureWord {
+                    text: LiveViewWords.full-word();
+                    enabled: false;
+                }
+            }
+        }
+    }
+}
+
+// ---- the chat beside a directory channel (Owncast's) ---------------------------------------------
+
+component ChatMessage inherits Rectangle {
+    in property <LiveComment> message;
+    property <color> name-color: root.message.mine ? (Look.terminal ? Look.accent : Look.accent-ink) : ChannelColors.name(root.message.initial);
+    height: body.preferred-height;
+
+    body := VerticalLayout {
+        spacing: 1px;
+        // Terminal's line: the name, then the words.
+        if Look.terminal: HorizontalLayout {
+            spacing: 8px;
+            Text {
+                text: root.message.name;
+                color: root.name-color;
+                font-size: 13px;
+                vertical-alignment: top;
+            }
+            Paragraph {
+                horizontal-stretch: 1;
+                text: root.message.text;
+                color: Look.text;
+                font-size: 13px;
+                line-height-factor: Look.leading(1.45);
+            }
+        }
+        // The others' block: the name, the host's mark, the words under them.
+        if !Look.terminal: HorizontalLayout {
+            spacing: 6px;
+            alignment: start;
+            Text {
+                text: root.message.name;
+                color: root.name-color;
+                font-size: 13px;
+                font-weight: 600;
+                overflow: elide;
+            }
+            if root.message.host: VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    height: 15px;
+                    width: host.preferred-width + 8px;
+                    border-radius: 3px;
+                    background: Look.soft;
+                    host := Text {
+                        text: LiveWords.host-mark();
+                        color: Look.soft-ink;
+                        font-size: 10px;
+                        font-weight: 600;
+                        letter-spacing: 0.4px;
+                    }
+                }
+            }
+        }
+        if !Look.terminal: Paragraph {
+            text: root.message.text;
+            color: Look.text;
+            font-size: Look.broadsheet ? 15px : 13px;
+            line-height-factor: Look.leading(1.45);
+        }
+    }
+}
+
+component OwncastChat inherits Rectangle {
+    callback hide();
+    property <bool> renaming;
+    width: Look.broadsheet ? 340px : Look.terminal ? 300px : 320px;
+    // The canvas's t.panel in Broadsheet, t.side in the others.
+    background: Look.broadsheet ? DirectoryLook.panel : Look.side;
+
+    Rectangle {
+        x: 0;
+        width: 1px;
+        background: Look.line;
+    }
+
+    VerticalLayout {
+        padding-left: 1px;
+        Rectangle {
+            height: Look.broadsheet ? 52px : Look.terminal ? 34px : 44px;
+            background: Look.terminal ? Look.hover : transparent;
+            HorizontalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                spacing: 8px;
+                Text {
+                    horizontal-stretch: 1;
+                    text: Look.terminal ? "# " + LiveViewWords.chat().to-lowercase() : Look.workbench ? LiveViewWords.chat().to-uppercase() : LiveViewWords.chat();
+                    color: Look.broadsheet ? Look.text : Look.terminal ? Look.muted : Look.faint;
+                    font-size: Look.broadsheet ? 17px : Look.terminal ? 13px : 11px;
+                    font-weight: Look.terminal ? 400 : 600;
+                    letter-spacing: Look.workbench ? 0.88px : 0px;
+                    vertical-alignment: center;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    SourceChip {
+                        label: LiveViewWords.chip(LiveDirectory.channel.source);
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    Rectangle {
+                        width: 18px;
+                        height: 18px;
+                        accessible-role: button;
+                        accessible-label: LiveViewWords.hide-chat();
+                        Icon {
+                            name: "x";
+                            size: 15px;
+                            color: Look.muted;
+                        }
+                        TouchArea {
+                            mouse-cursor: pointer;
+                            clicked => {
+                                root.hide();
+                            }
+                        }
+                    }
+                }
+            }
+            Rectangle {
+                y: parent.height - 1px;
+                height: 1px;
+                background: Look.broadsheet ? Look.line-strong : Look.terminal ? transparent : Look.line;
+            }
+        }
+        HorizontalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            padding-top: 8px;
+            padding-bottom: 4px;
+            Paragraph {
+                text: LiveViewWords.chat-note(LiveDirectory.channel.source);
+                color: Look.faint;
+                font-size: 12px;
+                line-height-factor: Look.leading(1.45);
+            }
+        }
+        // The messages, anchored to the foot: older ones go out at the top.
+        Rectangle {
+            vertical-stretch: 1;
+            clip: true;
+            VerticalLayout {
+                y: parent.height - self.preferred-height;
+                height: self.preferred-height;
+                padding-left: 14px;
+                padding-right: 14px;
+                padding-top: 6px;
+                padding-bottom: 10px;
+                spacing: Look.terminal ? 4px : Look.broadsheet ? 12px : 10px;
+                for message in LiveDirectory.chat-messages: ChatMessage {
+                    message: message;
+                }
+            }
+        }
+        VerticalLayout {
+            padding-left: 14px;
+            padding-right: 14px;
+            padding-top: 10px;
+            padding-bottom: 14px;
+            spacing: 6px;
+            Rectangle {
+                height: 36px;
+                border-radius: Look.button-radius;
+                background: Look.broadsheet ? Look.field : Look.terminal ? transparent : Look.bg;
+                border-width: Look.workbench ? 1px : 0px;
+                border-color: Look.line-strong;
+                opacity: LiveDirectory.chat-joined ? 1 : 0.6;
+                if Look.terminal: Rectangle {
+                    y: parent.height - 1px;
+                    height: 1px;
+                    background: Look.line;
+                }
+                HorizontalLayout {
+                    padding-left: Look.terminal ? 0px : 10px;
+                    padding-right: 6px;
+                    spacing: 8px;
+                    if Look.terminal: Text {
+                        text: LiveViewWords.chat().to-lowercase() + " ❯";
+                        color: Look.accent;
+                        font-size: 13px;
+                        vertical-alignment: center;
+                    }
+                    say := Field {
+                        horizontal-stretch: 1;
+                        height: 34px;
+                        font-size: 13px;
+                        padding-x: 0px;
+                        fill: transparent;
+                        ring-width: 0px;
+                        enabled: LiveDirectory.chat-joined;
+                        placeholder: !LiveDirectory.chat-joined ? LiveViewWords.chat-joining()
+                            : Look.terminal ? LiveViewWords.say-something() : LiveViewWords.chat-as(LiveDirectory.chat-name);
+                        accepted(text) => {
+                            if text != "" {
+                                LiveDirectory.send-chat(text);
+                                self.text = "";
+                            }
+                        }
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 24px;
+                            height: 24px;
+                            opacity: say.text != "" ? 1 : 0.5;
+                            accessible-role: button;
+                            accessible-label: LiveViewWords.chat();
+                            Icon {
+                                name: "paper-plane-tilt";
+                                size: 16px;
+                                color: Look.accent;
+                            }
+                            TouchArea {
+                                enabled: say.text != "" && LiveDirectory.chat-joined;
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    LiveDirectory.send-chat(say.text);
+                                    say.text = "";
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if LiveDirectory.chat-problem != "": Paragraph {
+                text: LiveDirectory.chat-problem;
+                color: Look.danger;
+                font-size: 11px;
+                line-height-factor: Look.leading(1.45);
+            }
+            // The name the server gave, and changing it: Enter keeps the new one.
+            if LiveDirectory.chat-problem == "" && LiveDirectory.chat-name != "" && !root.renaming: HorizontalLayout {
+                spacing: 4px;
+                alignment: start;
+                Text {
+                    text: LiveViewWords.chat-name(LiveDirectory.channel.source, LiveDirectory.chat-name) + " ·";
+                    color: Look.faint;
+                    font-size: 11px;
+                    overflow: elide;
+                }
+                ActionWord {
+                    text: LiveViewWords.change();
+                    font-size: 11px;
+                    clicked => {
+                        root.renaming = true;
+                    }
+                }
+            }
+            if root.renaming: Field {
+                height: 28px;
+                font-size: 12px;
+                padding-x: 8px;
+                text: LiveDirectory.chat-name;
+                placeholder: LiveViewWords.new-name();
+                accepted(text) => {
+                    if text != "" {
+                        LiveDirectory.rename-chat(text);
+                    }
+                    root.renaming = false;
+                }
+                init => {
+                    self.focus-text();
+                    self.select-all();
+                }
+            }
+        }
+    }
+}
+
+// ---- the details under the picture ---------------------------------------------------------------
+
+// Broadsheet's actions under the title: words in the accent with an icon.
+component BroadsheetAction inherits Rectangle {
+    in property <string> text;
+    in property <string> icon;
+    in property <color> ink: Look.accent-ink;
+    in property <bool> enabled: true;
+    callback clicked();
+    width: row.preferred-width;
+    height: row.preferred-height;
+    opacity: root.enabled ? 1 : 0.45;
+    accessible-role: button;
+    accessible-label: root.text;
+
+    row := HorizontalLayout {
+        spacing: 6px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 18px;
+                color: root.ink;
+            }
+        }
+        Text {
+            text: root.text;
+            color: root.ink;
+            font-size: 15px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+    TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A chip under Workbench's title: what plays, the chat, the status, with the gap after it. One
+// on another line takes no room at all (a hidden chip's gap would push the next one along).
+component CapChip inherits Rectangle {
+    in property <WatchLine> line;
+    in property <bool> shown: true;
+    visible: root.shown;
+    height: 24px;
+    width: root.shown ? chip.width + 6px : 0px;
+
+    chip := Rectangle {
+        x: 0;
+        width: cap.preferred-width + 18px;
+        height: 24px;
+        border-radius: Look.button-radius;
+        background: Look.side;
+        border-width: 1px;
+        border-color: Look.line;
+
+        cap := HorizontalLayout {
+            x: 9px;
+            width: parent.width - 18px;
+            spacing: 6px;
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: root.line.icon;
+                    size: 13px;
+                    color: root.line.color;
+                }
+            }
+            Text {
+                text: root.line.text;
+                color: root.line.color;
+                font-size: 12px;
+                vertical-alignment: center;
+            }
+        }
+    }
+}
+
+// The theme's way of showing who is live and what plays: Workbench's square, title and chips,
+// Broadsheet's kicker and byline, Terminal's facts; what the caller adds comes under them.
+component WatchInfo inherits Rectangle {
+    in property <string> initial;
+    in property <image> picture;
+    in property <bool> has-picture;
+    in property <color> avatar-fill;
+    in property <color> avatar-ink;
+    in property <string> title;
+    in property <string> name;
+    in property <string> chip;
+    in property <string> host;
+    in property <string> kicker;
+    in property <color> kicker-color;
+    in property <string> byline;
+    // The line under the title: the first with the live dot, then up to three more ("" none).
+    in property <string> meta-first;
+    in property <bool> meta-dot;
+    in property <string> meta-second;
+    in property <string> meta-third;
+    in property <string> meta-fourth;
+    in property <[WatchLine]> caps;
+    in property <string> cap-line;
+    in property <[WatchFact]> facts;
+    // The buttons: following, the channel's page, its link, the end of the user's own stream.
+    in property <bool> follow-shown;
+    in property <bool> following;
+    in property <string> follow-label;
+    in property <bool> page-shown;
+    in property <bool> copy-shown;
+    in property <bool> end-shown;
+    in property <string> end-label;
+    callback follow();
+    callback page();
+    callback copy-link();
+    callback end();
+    // The width the details have, as the page gives it: never their own (the chips' lines follow it).
+    in property <length> room;
+    // Workbench's chips: their widths (the words, the icon, the room around them), and the line
+    // each takes in the room left of the square's column.
+    property <length> caps-room: root.room - 52px - 48px;
+    property <length> cap0: m0.preferred-width + 37px;
+    property <length> cap1: m1.preferred-width + 37px;
+    property <length> cap2: m2.preferred-width + 37px;
+    property <int> line1: root.cap0 + root.cap1 + 12px <= root.caps-room ? 0 : 1;
+    property <int> line2: root.line1 == 0 ? (root.cap0 + root.cap1 + root.cap2 + 18px <= root.caps-room ? 0 : 1)
+        : (root.cap1 + root.cap2 + 12px <= root.caps-room ? 1 : 2);
+    pure function cap-line-of(index: int) -> int {
+        if index == 0 { return 0; }
+        if index == 1 { return root.line1; }
+        return root.line2;
+    }
+
+    // What the caller sets the height by (the details are as tall as their contents).
+    out property <length> needed: body.preferred-height;
+
+    // The chips' words, measured: no line, no room taken.
+    m0 := Text {
+        width: 0px;
+        height: 0px;
+        visible: false;
+        text: root.caps.length > 0 ? root.caps[0].text : "";
+        font-size: 12px;
+    }
+    m1 := Text {
+        width: 0px;
+        height: 0px;
+        visible: false;
+        text: root.caps.length > 1 ? root.caps[1].text : "";
+        font-size: 12px;
+    }
+    m2 := Text {
+        width: 0px;
+        height: 0px;
+        visible: false;
+        text: root.caps.length > 2 ? root.caps[2].text : "";
+        font-size: 12px;
+    }
+
+    body := VerticalLayout {
+        if Look.workbench: VerticalLayout {
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-top: 16px;
+            spacing: 10px;
+            HorizontalLayout {
+                spacing: 12px;
+                VerticalLayout {
+                    alignment: start;
+                    Avatar {
+                        size: 40px;
+                        radius: 10px;
+                        initial: root.initial;
+                        picture: root.picture;
+                        has-picture: root.has-picture;
+                        fill: root.avatar-fill;
+                        ink: root.avatar-ink;
+                        font-size: 15px;
+                    }
+                }
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 4px;
+                    Text {
+                        text: root.title;
+                        color: Look.text;
+                        font-size: 18px;
+                        font-weight: 600;
+                        letter-spacing: -0.18px;
+                        overflow: elide;
+                    }
+                    HorizontalLayout {
+                        spacing: 8px;
+                        alignment: start;
+                        Text {
+                            text: root.name;
+                            color: Look.text;
+                            font-size: 13px;
+                            font-weight: 600;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+                        VerticalLayout {
+                            alignment: center;
+                            SourceChip {
+                                label: root.chip;
+                            }
+                        }
+                        if root.host != "": Text {
+                            text: root.host;
+                            color: Look.faint;
+                            font-size: 13px;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+                HorizontalLayout {
+                    horizontal-stretch: 0;
+                    spacing: 8px;
+                    alignment: start;
+                    if root.follow-shown: VerticalLayout {
+                        alignment: start;
+                        LiveButton {
+                            text: root.follow-label;
+                            icon: root.following ? "star-filled" : "star";
+                            primary: !root.following;
+                            soft: root.following;
+                            padding-x: 12px;
+                            clicked => {
+                                root.follow();
+                            }
+                        }
+                    }
+                    if root.page-shown: VerticalLayout {
+                        alignment: start;
+                        LiveButton {
+                            text: LiveViewWords.channel-page();
+                            icon: "arrow-square-out";
+                            padding-x: 12px;
+                            clicked => {
+                                root.page();
+                            }
+                        }
+                    }
+                    if root.copy-shown: VerticalLayout {
+                        alignment: start;
+                        LiveButton {
+                            text: LiveWords.copy-link();
+                            icon: "link-simple";
+                            padding-x: 12px;
+                            clicked => {
+                                root.copy-link();
+                            }
+                        }
+                    }
+                    if root.end-shown: VerticalLayout {
+                        alignment: start;
+                        LiveButton {
+                            text: root.end-label;
+                            danger: true;
+                            padding-x: 12px;
+                            clicked => {
+                                root.end();
+                            }
+                        }
+                    }
+                }
+            }
+            if root.meta-first != "": HorizontalLayout {
+                padding-left: 52px;
+                spacing: 14px;
+                alignment: start;
+                HorizontalLayout {
+                    spacing: 6px;
+                    if root.meta-dot: VerticalLayout {
+                        alignment: center;
+                        Rectangle {
+                            width: 7px;
+                            height: 7px;
+                            border-radius: 3.5px;
+                            background: Look.danger;
+                        }
+                    }
+                    Text {
+                        text: root.meta-first;
+                        color: root.meta-dot ? Look.text : Look.muted;
+                        font-size: 13px;
+                        vertical-alignment: center;
+                    }
+                }
+                if root.meta-second != "": Text {
+                    text: root.meta-second;
+                    color: Look.muted;
+                    font-size: 13px;
+                    vertical-alignment: center;
+                }
+                if root.meta-third != "": Text {
+                    text: root.meta-third;
+                    color: Look.muted;
+                    font-size: 13px;
+                    vertical-alignment: center;
+                }
+                if root.meta-fourth != "": Text {
+                    text: root.meta-fourth;
+                    color: Look.muted;
+                    font-size: 13px;
+                    vertical-alignment: center;
+                }
+            }
+            // The chips wrap as the canvas's do: as many on a line as its width takes.
+            if root.caps.length > 0: Rectangle {
+                height: cap-lines.preferred-height;
+                cap-lines := VerticalLayout {
+                    padding-left: 52px;
+                    spacing: 6px;
+                    HorizontalLayout {
+                        alignment: start;
+                        for line[index] in root.caps: CapChip {
+                            line: line;
+                            shown: root.cap-line-of(index) == 0;
+                        }
+                    }
+                    if root.cap-line-of(1) >= 1 || root.cap-line-of(2) >= 1: HorizontalLayout {
+                        alignment: start;
+                        for line[index] in root.caps: CapChip {
+                            line: line;
+                            shown: root.cap-line-of(index) == 1;
+                        }
+                    }
+                    if root.cap-line-of(2) == 2: HorizontalLayout {
+                        alignment: start;
+                        for line[index] in root.caps: CapChip {
+                            line: line;
+                            shown: root.cap-line-of(index) == 2;
+                        }
+                    }
+                }
+            }
+        }
+
+        if Look.broadsheet: VerticalLayout {
+            padding-left: 28px;
+            padding-right: 28px;
+            padding-top: 18px;
+            spacing: 8px;
+            Text {
+                text: root.kicker.to-uppercase();
+                color: root.kicker-color;
+                font-size: 12px;
+                font-weight: 600;
+                letter-spacing: 0.96px;
+                overflow: elide;
+            }
+            Paragraph {
+                text: root.title;
+                color: Look.text;
+                font-size: 26px;
+                font-weight: 600;
+                letter-spacing: -0.26px;
+                line-height-factor: Look.leading(1.2);
+            }
+            Text {
+                text: root.byline;
+                color: Look.muted;
+                font-size: 14px;
+                overflow: elide;
+            }
+            HorizontalLayout {
+                spacing: 18px;
+                alignment: start;
+                if root.follow-shown: BroadsheetAction {
+                    text: root.follow-label;
+                    icon: root.following ? "star-filled" : "star";
+                    clicked => {
+                        root.follow();
+                    }
+                }
+                if root.page-shown: BroadsheetAction {
+                    text: LiveViewWords.channel-page();
+                    icon: "arrow-square-out";
+                    clicked => {
+                        root.page();
+                    }
+                }
+                if root.copy-shown: BroadsheetAction {
+                    text: LiveWords.copy-link();
+                    icon: "link-simple";
+                    clicked => {
+                        root.copy-link();
+                    }
+                }
+                if root.end-shown: BroadsheetAction {
+                    text: root.end-label;
+                    icon: "x";
+                    ink: Look.danger;
+                    clicked => {
+                        root.end();
+                    }
+                }
+                // The pop-out window, on top of every app: a directory's stream once it plays.
+                BroadsheetAction {
+                    text: LiveViewWords.pop-out();
+                    icon: "picture-in-picture";
+                    enabled: LiveDirectory.channel.source != LiveSource.telegram && LiveDirectory.watch-state == LiveWatch.playing;
+                    clicked => {
+                        LiveDirectory.pop-out();
+                    }
+                }
+            }
+            if root.cap-line != "": Paragraph {
+                text: root.cap-line;
+                color: Look.faint;
+                font-size: 13px;
+                line-height-factor: Look.leading(1.5);
+            }
+        }
+
+        if Look.terminal: VerticalLayout {
+            padding-left: 16px;
+            padding-right: 16px;
+            padding-top: 12px;
+            spacing: 3px;
+            for fact in root.facts: HorizontalLayout {
+                spacing: 12px;
+                Text {
+                    width: 72px;
+                    text: fact.key;
+                    color: Look.faint;
+                    font-size: 13px;
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: fact.value;
+                    color: fact.color;
+                    font-size: 13px;
+                    overflow: elide;
+                }
+            }
+        }
+
+        VerticalLayout {
+            padding-left: Look.workbench ? 76px : Look.broadsheet ? 28px : 16px;
+            padding-right: Look.workbench ? 24px : Look.broadsheet ? 28px : 16px;
+            padding-top: 10px;
+            padding-bottom: Look.workbench ? 20px : Look.broadsheet ? 24px : 16px;
+            spacing: 10px;
+            @children
+        }
+    }
+}
+
+component HeadWord inherits Rectangle {
+    in property <string> text;
+    in property <color> ink: Look.text;
+    callback clicked();
+    width: word.preferred-width;
+
+    word := Text {
+        text: root.text;
+        color: touch.has-hover ? Look.accent : root.ink;
+        font-size: 13px;
+        vertical-alignment: center;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// Terminal's line above the picture: the way back, who, what plays, and the actions.
+component TerminalHead inherits Rectangle {
+    in property <string> back-label;
+    in property <bool> live;
+    in property <string> name;
+    in property <string> meta;
+    in property <string> follow-word;
+    in property <bool> page-shown;
+    in property <bool> copy-shown;
+    in property <bool> end-shown;
+    in property <string> end-label;
+    callback back();
+    callback follow();
+    callback page();
+    callback copy-link();
+    callback end();
+    height: 34px;
+    background: Look.hover;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 10px;
+        HeadWord {
+            text: "[" + root.back-label + "]";
+            ink: Look.faint;
+            clicked => {
+                root.back();
+            }
+        }
+        Text {
+            text: root.live ? "◉" : "○";
+            color: root.live ? Look.danger : Look.faint;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: root.name;
+            color: Look.accent;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.meta;
+            color: Look.faint;
+            font-size: 13px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        if root.follow-word != "": HeadWord {
+            text: "[" + root.follow-word + "]";
+            clicked => {
+                root.follow();
+            }
+        }
+        if root.page-shown: HeadWord {
+            text: "[" + LiveViewWords.page-word() + "]";
+            clicked => {
+                root.page();
+            }
+        }
+        if root.copy-shown: HeadWord {
+            text: "[" + LiveWords.copy-link().to-lowercase() + "]";
+            clicked => {
+                root.copy-link();
+            }
+        }
+        if root.end-shown: HeadWord {
+            text: "[" + root.end-label.to-lowercase() + "]";
+            ink: Look.danger;
+            clicked => {
+                root.end();
+            }
+        }
+    }
+}
+
+// ---- Watch ---------------------------------------------------------------------------------------
+
+export component WatchPage inherits Rectangle {
+    // Telegram's player (0.7.10, the Live global); else a channel of the directory.
+    in property <bool> telegram;
+    callback back();
+    property <LiveChannel> channel: LiveDirectory.channel;
+    property <bool> plays: LiveDirectory.watch-state == LiveWatch.playing || LiveDirectory.watch-state == LiveWatch.network;
+    property <bool> has-chat: !root.telegram && LiveDirectory.chat && root.plays;
+    property <bool> chat-open: true;
+    property <bool> tg-live: Live.state == LiveState.playing || Live.state == LiveState.waiting;
+    property <string> back-label: LiveDirectoryWords.section(LiveDirectory.section);
+    // Followed on Telegram, when it came through the column or Following.
+    property <bool> tg-followed: LiveDirectory.watching && root.channel.on-telegram;
+    property <length> picture-most: Look.terminal ? 470px : Look.broadsheet ? 540px : 520px;
+    property <bool> on-air: root.plays || root.channel.status == LiveStatus.live;
+    property <string> quality-now: LiveDirectory.qualities.length > 1 ? (LiveDirectory.quality <= 0 ? LiveViewWords.auto-quality(LiveDirectory.qualities[1]) : LiveDirectory.qualities[LiveDirectory.quality]) : "";
+    property <string> topic: (root.channel.category != LiveCategory.none ? LiveDirectoryWords.category(root.channel.category) + " · " : "") + LiveDirectoryWords.source(root.channel.source);
+    // Each on its own: an array literal that reads a field of the channel and then the channel
+    // whole does not compile (Slint's generated Rust moves the field first).
+    property <string> channel-title: root.channel.title != "" ? root.channel.title : "—";
+    property <string> channel-status: LiveDirectoryWords.status-line(root.channel);
+    property <string> channel-host: root.channel.host != "" ? root.channel.host : "—";
+    property <string> channel-play: LiveDirectoryWords.play(root.channel) + " · " + LiveDirectoryWords.reason(root.channel);
+    property <string> tg-title: Live.open.title != "" ? Live.open.title : LiveWords.kind(Live.open.kind);
+    // The column beside the picture (Telegram's comments, Owncast's chat), and what it leaves.
+    property <bool> side-shown: root.telegram ? Live.state != LiveState.phone : root.has-chat && root.chat-open;
+    property <length> side-width: Look.broadsheet ? 340px : Look.terminal ? 300px : 320px;
+    property <length> main-width: root.width - (root.side-shown ? root.side-width : 0px);
+    background: Look.bg;
+
+    HorizontalLayout {
+        VerticalLayout {
+            horizontal-stretch: 1;
+            if Look.terminal && root.telegram: TerminalHead {
+                back-label: LiveViewWords.back-word(root.back-label);
+                live: root.tg-live;
+                name: Live.open.name;
+                meta: "telegram" + (root.tg-live ? " · " + LiveWords.viewers(Live.viewers) : "");
+                follow-word: root.tg-followed ? LiveDirectoryWords.follow(root.channel).to-lowercase() : "";
+                copy-shown: Live.link != "";
+                end-shown: Live.hosting;
+                end-label: LiveWords.end(Live.open.kind);
+                back => {
+                    root.back();
+                }
+                follow => {
+                    LiveDirectory.follow(root.channel.id, false);
+                }
+                copy-link => {
+                    Live.copy-link();
+                }
+                end => {
+                    Live.ask-end(true);
+                }
+            }
+            if Look.terminal && !root.telegram: TerminalHead {
+                back-label: LiveViewWords.back-word(root.back-label);
+                live: root.on-air;
+                name: root.channel.name;
+                meta: LiveDirectoryWords.source(root.channel.source).to-lowercase() + (root.plays && root.quality-now != "" ? " · " + root.quality-now.to-lowercase() : "")
+                    + (root.on-air ? (root.channel.viewers >= 0 ? " · " + LiveDirectoryWords.viewers(root.channel) : "") : " · " + LiveViewWords.offline());
+                follow-word: LiveViewWords.follow-word(root.channel.following);
+                page-shown: root.channel.source != LiveSource.telegram;
+                back => {
+                    root.back();
+                }
+                follow => {
+                    LiveDirectory.follow(root.channel.id, !root.channel.following);
+                }
+                page => {
+                    LiveDirectory.open-elsewhere();
+                }
+            }
+
+            if root.telegram: StreamScreen {
+                height: max(180px, min(self.width * 9 / 16, root.picture-most, root.height - tg-info.needed - (Look.terminal ? 34px : 0px)));
+                back-label: root.back-label;
+                back => {
+                    root.back();
+                }
+            }
+            if !root.telegram: DirectoryScreen {
+                height: max(180px, min(self.width * 9 / 16, root.picture-most, root.height - info.needed - (Look.terminal ? 34px : 0px)));
+                back-label: root.back-label;
+                has-chat: root.has-chat;
+                chat-shown: root.chat-open;
+                back => {
+                    root.back();
+                }
+                toggle-chat => {
+                    root.chat-open = !root.chat-open;
+                }
+            }
+
+            // Telegram's stream: who, since when, how many watch; the host's numbers.
+            tg-info := WatchInfo {
+                room: root.main-width;
+                visible: root.telegram;
+                height: root.telegram ? self.needed : 0px;
+                initial: Live.open.initial;
+                picture: Live.open.picture;
+                has-picture: Live.open.has-picture;
+                avatar-fill: Look.soft;
+                avatar-ink: Look.soft-ink;
+                title: Live.open.title != "" ? Live.open.title : LiveWords.kind(Live.open.kind);
+                name: Live.open.name;
+                chip: LiveViewWords.chip(LiveSource.telegram);
+                kicker: LiveViewWords.kicker(LiveStatus.live, root.tg-live, LiveWords.kind(Live.open.kind) + " · Telegram");
+                kicker-color: root.tg-live ? Look.danger : Look.faint;
+                byline: Live.open.name + (root.tg-live ? " · " + LiveWords.viewers(Live.viewers) : "") + (Live.since != "" ? " · " + LiveWords.started(Live.open.kind, Live.since) : "");
+                meta-first: root.tg-live ? LiveWords.viewers(Live.viewers) : "";
+                meta-dot: true;
+                meta-second: root.tg-live ? LiveWords.started(Live.open.kind, Live.since) : "";
+                caps: root.tg-live ? [
+                    { icon: "play-circle", dot: false, text: LiveViewWords.telegram-plays(), color: Look.ok },
+                    { icon: "chat-centered-text", dot: false, text: LiveViewWords.chat-cap(LiveSource.telegram, true), color: Look.muted },
+                    { icon: "pulse", dot: false, text: LiveViewWords.receiving(), color: Look.muted },
+                ] : [];
+                facts: [
+                    { key: LiveViewWords.key-title(), value: root.tg-title, color: Look.text },
+                    { key: LiveViewWords.key-status(), value: root.tg-live ? "● " + LiveWords.live-mark().to-lowercase() + " · " + LiveWords.viewers(Live.viewers) : LiveWords.state(Live.state).to-lowercase(),
+                      color: root.tg-live ? Look.danger : Look.faint },
+                    { key: LiveViewWords.key-stream(), value: LiveViewWords.telegram-stream(), color: Look.text },
+                    { key: LiveViewWords.key-chat(), value: LiveViewWords.chat-read-send(LiveSource.telegram), color: Look.text },
+                    { key: LiveViewWords.key-source(), value: Live.link != "" ? Live.link : "—", color: Look.muted },
+                ];
+                follow-shown: !Look.terminal && root.tg-followed;
+                following: true;
+                follow-label: LiveDirectoryWords.follow(root.channel);
+                copy-shown: !Look.terminal && Live.link != "";
+                end-shown: !Look.terminal && Live.hosting;
+                end-label: LiveWords.end(Live.open.kind);
+                follow => {
+                    LiveDirectory.follow(root.channel.id, false);
+                }
+                copy-link => {
+                    Live.copy-link();
+                }
+                end => {
+                    Live.ask-end(true);
+                }
+                if Live.hosting: HostBar { }
+                if Live.state == LiveState.joining || Live.state == LiveState.waiting || Live.state == LiveState.playing: Paragraph {
+                    text: Live.hosting ? LiveWords.preview-note() : LiveWords.watch-note();
+                    color: Look.faint;
+                    font-size: 12px;
+                    line-height-factor: Look.leading(1.5);
+                }
+            }
+
+            // A directory channel: what it is, and where it is.
+            info := WatchInfo {
+                room: root.main-width;
+                visible: !root.telegram;
+                height: !root.telegram ? self.needed : 0px;
+                initial: root.channel.initial;
+                picture: root.channel.picture;
+                has-picture: root.channel.has-picture;
+                avatar-fill: ChannelColors.fill(root.channel.hue);
+                avatar-ink: ChannelColors.ink(root.channel.hue);
+                title: root.channel.title != "" ? root.channel.title : root.channel.name;
+                name: root.channel.name;
+                chip: LiveViewWords.chip(root.channel.source);
+                host: root.channel.host;
+                kicker: LiveViewWords.kicker(root.channel.status, root.plays, root.topic);
+                kicker-color: root.on-air ? Look.danger : root.channel.status == LiveStatus.offline ? Look.faint : Look.warn;
+                byline: root.channel.name + (root.channel.host != "" ? " · " + root.channel.host : "")
+                    + (root.on-air ? (root.channel.viewers >= 0 ? " · " + LiveDirectoryWords.viewers(root.channel) : "")
+                        + (root.channel.started-minutes >= 0 ? " · " + LiveViewWords.on-air-for(root.channel.started-minutes) : "")
+                        : " · " + LiveDirectoryWords.status-line(root.channel));
+                meta-first: root.on-air ? LiveViewWords.watching(root.channel) : LiveDirectoryWords.status-line(root.channel);
+                meta-dot: root.on-air;
+                meta-second: root.on-air && root.channel.started-minutes >= 0 ? LiveViewWords.live-for(root.channel.started-minutes) : "";
+                meta-third: root.on-air && root.channel.category != LiveCategory.none ? LiveDirectoryWords.category(root.channel.category) : "";
+                meta-fourth: root.on-air ? root.channel.language : "";
+                caps: [
+                    { icon: root.channel.play == LivePlay.elsewhere ? "arrow-square-out" : root.channel.audio ? "headphones" : "play-circle", dot: false,
+                      text: root.channel-play,
+                      color: root.channel.play == LivePlay.watch || root.channel.play == LivePlay.listen ? Look.ok : Look.muted },
+                    { icon: "chat-centered-text", dot: false, text: LiveViewWords.chat-cap(root.channel.source, LiveDirectory.chat), color: Look.muted },
+                    { icon: "pulse", dot: false, text: root.plays ? LiveViewWords.receiving() : root.channel-status,
+                      color: root.on-air ? Look.muted : Look.warn },
+                ];
+                cap-line: LiveViewWords.cap-line(root.channel, LiveDirectory.chat);
+                facts: [
+                    { key: LiveViewWords.key-title(), value: root.channel-title, color: Look.text },
+                    { key: LiveViewWords.key-status(), value: (root.on-air ? "● " : "○ ") + root.channel-status.to-lowercase(),
+                      color: root.on-air ? Look.danger : root.channel.status == LiveStatus.offline ? Look.faint : Look.warn },
+                    { key: LiveViewWords.key-stream(), value: root.plays && LiveDirectory.tech != "" ? LiveDirectory.tech.to-lowercase() : "—", color: Look.text },
+                    { key: LiveViewWords.key-chat(), value: LiveDirectory.chat ? LiveViewWords.chat-read-send(root.channel.source) : LiveViewWords.chat-none(), color: Look.text },
+                    { key: LiveViewWords.key-source(), value: root.channel-host, color: Look.muted },
+                ];
+                follow-shown: true;
+                following: root.channel.following || root.channel.on-telegram;
+                follow-label: LiveDirectoryWords.follow(root.channel);
+                page-shown: root.channel.source != LiveSource.telegram;
+                follow => {
+                    LiveDirectory.follow(root.channel.id, !root.channel.following);
+                }
+                page => {
+                    LiveDirectory.open-elsewhere();
+                }
+            }
+            Rectangle { vertical-stretch: 1; }
+        }
+        if root.telegram && Live.state != LiveState.phone: Comments { }
+        if root.has-chat && root.chat-open: OwncastChat {
+            hide => {
+                root.chat-open = false;
+            }
+        }
+    }
+}

@@ -1,58 +1,33 @@
-// Live streams, from the canvas "FinchGram Live" of 2026-11-07 (docs/live-streams.md): the list
-// that each theme puts in its side column under its own heading (LiveList), and the pane that takes
-// the messages' place while the view is open (LivePane): the stream with its comments, the empty
-// pane, the form to go live, the host's view. Drawn once, in Look's colours and shapes, for the
-// three themes; Rust fills the Live global (src/telegram/live.rs).
-import { Look, AccountColors } from "../look.slint";
-import { Icon, Spinner, Field, PrimaryButton, Link, Avatar, Switch, Paragraph, Heading, SectionLabel } from "../widgets.slint";
-import { SmallButton, Chip } from "rows.slint";
-import { Live, LiveWords, LiveRow, LiveKind, LiveState, LiveComment, LiveDonor, LiveTarget } from "../live.slint";
+// Live streams (docs/live-streams.md; the canvas "FinchGram Desktop 直播", rounds 12 and 13): the
+// Live column each theme puts in its side column under its own heading (LiveList), the pane that
+// takes the messages' place while the view is open (LivePane: Discover, Following, Broadcast and
+// Connections, Watch over them, a short note at its foot, the content setting's question), the
+// mini player that keeps a stream going elsewhere (LiveMini), and the bar under a live chat's
+// header (LiveBar). Drawn once, in Look's colours and shapes, for the three themes; Rust fills the
+// Live global (src/telegram/live.rs) and LiveDirectory (src/live/).
+import { Look } from "../look.slint";
+import { Icon, Paragraph } from "../widgets.slint";
+import { SmallButton } from "rows.slint";
+import { Live, LiveWords } from "../live.slint";
+import { LiveDirectory, LiveDirectoryWords, LiveSection, LiveChannel, LiveStatus, LiveSource, LiveMode, LiveCategory, LiveToast } from "../live.slint";
+import { LiveMark, LiveShape, ChannelAvatar, LiveButton, PictureIcon, PictureWord, LiveViewWords } from "live-parts.slint";
+import { DirectoryLook } from "live-cards.slint";
+import { LiveDiscover } from "live-discover.slint";
+import { FollowingPage } from "live-following.slint";
+import { BroadcastPage } from "live-broadcast.slint";
+import { ConnectionsPage } from "live-connections.slint";
+import { WatchPage, EndQuestion } from "live-watch.slint";
 
-// The mark of a stream that is live: a red "● LIVE", "[LIVE]" in Terminal; grey for one that
-// plays only on the phone.
-export component LiveMark inherits Rectangle {
-    in property <bool> quiet;
-    // Over the picture: the pill in every theme, Terminal's brackets would not read there.
-    in property <bool> on-picture;
-    property <bool> text-only: Look.terminal && !on-picture;
-    property <color> fill: quiet ? Look.off : on-picture ? #d92d20 : Look.danger;
-    property <color> ink: quiet ? Look.muted : on-picture || !Look.dark ? #ffffff : Look.bg;
-    width: text-only ? label.preferred-width : label.preferred-width + 17px;
-    height: 16px;
-    border-radius: text-only ? 0px : 3px;
-    background: text-only ? transparent : fill;
+export { LiveMark }
 
-    if !root.text-only: Rectangle {
-        x: 6px;
-        y: (parent.height - self.height) / 2;
-        width: 5px;
-        height: 5px;
-        border-radius: 2.5px;
-        background: root.ink;
-    }
-    label := Text {
-        x: root.text-only ? 0px : 14px;
-        text: root.text-only ? "[" + LiveWords.live-mark() + "]" : LiveWords.live-mark();
-        color: root.text-only ? (root.quiet ? Look.faint : Look.danger) : root.ink;
-        font-family: Look.terminal ? Look.mono : Look.font;
-        font-size: 10px;
-        font-weight: 600;
-        letter-spacing: Look.terminal ? 0px : 0.8px;
-        vertical-alignment: center;
-    }
-}
-
-// The colours of a paid comment's level: the theme's accent, then orange, then red.
-global Tier {
-    public pure function fill(tier: int) -> color {
-        if tier >= 3 { return AccountColors.tint(5, Look.dark); }
-        if tier == 2 { return AccountColors.tint(3, Look.dark); }
-        return Look.soft;
-    }
-    public pure function ink(tier: int) -> color {
-        if tier >= 3 { return AccountColors.tint-ink(5, Look.dark); }
-        if tier == 2 { return AccountColors.tint-ink(3, Look.dark); }
-        return Look.soft-ink;
+// Leave for a place of the column: a Telegram stream opened outside the directory (a chat's live
+// bar, going live) is left first; a stream of the directory goes on in the mini player (Rust).
+global LiveGo {
+    public function go(section: LiveSection) {
+        if !LiveDirectory.watching && Live.open-id != "" && !(LiveDirectory.mini && LiveDirectory.channel.source == LiveSource.telegram) {
+            Live.close();
+        }
+        LiveDirectory.go(section);
     }
 }
 
@@ -106,147 +81,57 @@ export component LiveBar inherits Rectangle {
     }
 }
 
-// ---- the list ------------------------------------------------------------------------------------
+// ---- the column ------------------------------------------------------------------------------------
 
-component ListRow inherits Rectangle {
-    in property <LiveRow> entry;
-    property <bool> open: entry.id == Live.open-id;
-    property <color> ink: open && !Look.broadsheet ? Look.accent-ink : entry.playable ? Look.text : Look.faint;
-    height: 58px;
-    background: open ? Look.sel : touch.has-hover ? Look.sel.transparentize(0.4) : transparent;
-
-    HorizontalLayout {
-        padding-left: 14px;
-        padding-right: 12px;
-        spacing: 10px;
-        VerticalLayout {
-            alignment: center;
-            Avatar {
-                size: 36px;
-                radius: Look.terminal ? 3px : 8px;
-                initial: root.entry.initial;
-                picture: root.entry.picture;
-                has-picture: root.entry.has-picture;
-                opacity: root.entry.playable ? 1 : 0.55;
-                font-size: 14px;
-            }
-        }
-        VerticalLayout {
-            horizontal-stretch: 1;
-            alignment: center;
-            spacing: 3px;
-            HorizontalLayout {
-                spacing: 8px;
-                Text {
-                    horizontal-stretch: 1;
-                    text: root.entry.name;
-                    color: root.ink;
-                    font-size: 14px;
-                    font-weight: root.open ? 600 : 500;
-                    overflow: elide;
-                    vertical-alignment: center;
-                }
-                VerticalLayout {
-                    alignment: center;
-                    LiveMark {
-                        quiet: !root.entry.playable;
-                    }
-                }
-            }
-            HorizontalLayout {
-                spacing: 5px;
-                if !root.entry.playable: VerticalLayout {
-                    alignment: center;
-                    Icon {
-                        name: "device-mobile";
-                        size: 13px;
-                        color: Look.faint;
-                    }
-                }
-                Text {
-                    horizontal-stretch: 1;
-                    text: LiveWords.line(root.entry);
-                    color: root.entry.playable ? Look.muted : Look.faint;
-                    font-size: 12px;
-                    overflow: elide;
-                }
-                if root.entry.playable && root.entry.viewers >= 0: HorizontalLayout {
-                    spacing: 4px;
-                    VerticalLayout {
-                        alignment: center;
-                        Icon {
-                            name: "eye";
-                            size: 13px;
-                            color: root.open && !Look.broadsheet ? Look.accent-ink : Look.muted;
-                        }
-                    }
-                    Text {
-                        text: root.entry.viewers;
-                        color: root.open && !Look.broadsheet ? Look.accent-ink : Look.muted;
-                        font-size: 12px;
-                    }
-                }
-            }
-        }
-    }
-
-    touch := TouchArea {
-        mouse-cursor: pointer;
-        clicked => {
-            Live.watch(root.entry.id);
-        }
-    }
-}
-
-component Section {
-    in property <string> label;
-    in property <int> count;
-
-    HorizontalLayout {
-        padding-left: 14px;
-        padding-right: 14px;
-        padding-top: 10px;
-        padding-bottom: 4px;
-        spacing: 6px;
-        SectionLabel {
-            label: root.label;
-            vertical-alignment: center;
-        }
-        Text {
-            horizontal-stretch: 1;
-            text: root.count;
-            color: Look.faint;
-            font-size: Look.section-size;
-            vertical-alignment: center;
-        }
-    }
-}
-
-// The button that opens the form to go live.
-component GoLiveButton inherits Rectangle {
-    property <bool> on: Live.going-live;
-    height: 28px;
-    width: row.preferred-width + 20px;
-    border-radius: Look.button-radius;
-    background: on ? Look.sel : touch.has-hover ? Look.sel.transparentize(0.4) : transparent;
-    border-width: on ? 0px : 1px;
-    border-color: Look.line-strong;
+// A place of the column: Workbench's icon and name, Broadsheet's letter and name, with its count.
+component NavRow inherits Rectangle {
+    in property <LiveSection> section;
+    in property <string> icon;
+    in property <string> letter;
+    in property <string> count;
+    in property <bool> hot;
+    property <bool> on: LiveDirectory.section == root.section;
+    height: Look.broadsheet ? row.preferred-height : 32px;
+    border-radius: Look.broadsheet ? 2px : 6px;
+    background: root.on ? (Look.broadsheet ? Look.soft : Look.sel) : touch.has-hover ? (Look.broadsheet ? Look.sel.transparentize(0.4) : Look.hover) : transparent;
+    accessible-role: button;
+    accessible-label: LiveDirectoryWords.section(root.section);
 
     row := HorizontalLayout {
-        x: 10px;
-        spacing: 6px;
-        VerticalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        padding-top: Look.broadsheet ? 7px : 0px;
+        padding-bottom: Look.broadsheet ? 7px : 0px;
+        spacing: Look.broadsheet ? 12px : 10px;
+        if !Look.broadsheet: VerticalLayout {
             alignment: center;
             Icon {
-                name: "broadcast";
-                size: 14px;
-                color: Look.accent-ink;
+                name: root.icon;
+                size: 17px;
+                color: root.on ? Look.accent-ink : Look.muted;
             }
         }
-        Text {
-            text: Look.terminal ? "[" + LiveWords.go-live() + "]" : LiveWords.go-live();
-            color: Look.accent-ink;
+        if Look.broadsheet: Text {
+            width: 12px;
+            text: root.letter;
+            color: Look.faint;
+            font-family: Look.mono;
             font-size: 12px;
+            vertical-alignment: center;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: LiveDirectoryWords.section(root.section);
+            color: root.on ? (Look.broadsheet ? Look.soft-ink : Look.accent-ink) : Look.text;
+            font-size: Look.broadsheet ? 16px : 13px;
+            font-weight: root.on ? 600 : 400;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        Text {
+            text: root.count;
+            color: root.hot ? Look.danger : Look.faint;
+            font-size: Look.broadsheet ? 13px : 11px;
             font-weight: 600;
             vertical-alignment: center;
         }
@@ -254,136 +139,716 @@ component GoLiveButton inherits Rectangle {
     touch := TouchArea {
         mouse-cursor: pointer;
         clicked => {
-            Live.open-go-live();
+            LiveGo.go(root.section);
         }
     }
 }
 
-// The view's side column, under the theme's heading: going live, who is live, and a link.
+// A followed channel in the column: Workbench's square with its live dot; Broadsheet's lines.
+component ColumnRow inherits Rectangle {
+    in property <LiveChannel> channel;
+    property <bool> live: channel.status == LiveStatus.live;
+    property <bool> open: LiveDirectory.watching && LiveDirectory.channel.id == channel.id;
+    property <string> sub: root.live && root.channel.title != "" ? root.channel.title : LiveViewWords.column-sub(root.channel);
+    property <string> right: root.live && root.channel.viewers >= 0 ? root.channel.viewers : "";
+    height: body.preferred-height;
+    background: Look.broadsheet ? transparent : root.open || touch.has-hover ? Look.sel : transparent;
+
+    body := HorizontalLayout {
+        padding-left: Look.broadsheet ? 0px : 14px;
+        padding-right: Look.broadsheet ? 0px : 14px;
+        padding-top: Look.broadsheet ? 9px : 7px;
+        padding-bottom: Look.broadsheet ? 9px : 7px;
+        spacing: 10px;
+        if !Look.broadsheet: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 30px;
+                height: 30px;
+                ChannelAvatar {
+                    size: 30px;
+                    radius: 8px;
+                    font-size: 12px;
+                    channel: root.channel;
+                    opacity: root.live ? 1 : 0.7;
+                }
+                if root.live: Rectangle {
+                    x: parent.width - 7px;
+                    y: parent.height - 7px;
+                    width: 9px;
+                    height: 9px;
+                    border-radius: 4.5px;
+                    background: Look.danger;
+                    border-width: 2px;
+                    border-color: Look.side;
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: Look.broadsheet ? 2px : 1px;
+            opacity: root.live ? 1 : 0.7;
+            HorizontalLayout {
+                spacing: 8px;
+                Text {
+                    horizontal-stretch: 1;
+                    text: root.channel.name;
+                    color: Look.broadsheet && root.open ? Look.accent-ink : Look.text;
+                    font-size: Look.broadsheet ? 15px : 13px;
+                    font-weight: 600;
+                    overflow: elide;
+                }
+                if Look.broadsheet && root.right != "": Text {
+                    text: root.right;
+                    color: Look.danger;
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+            }
+            if root.sub != "": Text {
+                text: root.sub;
+                color: Look.muted;
+                font-size: Look.broadsheet ? 14px : 12px;
+                overflow: elide;
+            }
+        }
+        if !Look.broadsheet && root.right != "": Text {
+            text: root.right;
+            color: Look.faint;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+    }
+    if Look.broadsheet: Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: DirectoryLook.rule;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveDirectory.open(root.channel.id);
+        }
+    }
+}
+
+// A group's name in the column: "FOLLOWING · LIVE" in Workbench, ruled in Broadsheet.
+component GroupLabel inherits Rectangle {
+    in property <string> text;
+    height: label.preferred-height + (Look.broadsheet ? 6px : 14px);
+
+    label := Text {
+        x: Look.broadsheet ? 0px : 14px;
+        y: Look.broadsheet ? 0px : 10px;
+        text: Look.broadsheet ? root.text : root.text.to-uppercase();
+        color: Look.broadsheet ? Look.text : Look.faint;
+        font-size: Look.broadsheet ? 17px : 11px;
+        font-weight: 600;
+        letter-spacing: Look.broadsheet ? 0px : 0.88px;
+    }
+    if Look.broadsheet: Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: DirectoryLook.rule-strong;
+    }
+}
+
+// Terminal: a tab of the column's line ("DISCOVER", "FOLLOW", "CAST", "CONN").
+component TabWord inherits Rectangle {
+    in property <string> text;
+    in property <LiveSection> section;
+    property <bool> on: LiveDirectory.section == root.section;
+    width: word.preferred-width;
+    height: word.preferred-height;
+
+    word := Text {
+        text: root.text;
+        color: root.on ? Look.accent : touch.has-hover ? Look.text : Look.faint;
+        font-size: 12px;
+        font-weight: root.on ? 600 : 400;
+        letter-spacing: 0.48px;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveGo.go(root.section);
+        }
+    }
+}
+
+// Terminal: a group's head, "── following ──".
+component RuleHead inherits Rectangle {
+    in property <string> text;
+    height: 26px;
+
+    Text {
+        x: 16px;
+        y: 8px;
+        text: "── " + root.text + " ──";
+        color: Look.faint;
+        font-size: 12px;
+    }
+}
+
+// Terminal: a line of a facet, "(•) in finchgram  9125".
+component FacetRow inherits Rectangle {
+    in property <string> mark;
+    in property <string> label;
+    in property <int> count: -1;
+    in property <bool> on;
+    in property <bool> enabled: true;
+    callback clicked();
+    height: 22px;
+    background: touch.has-hover && root.enabled ? Look.sel : transparent;
+    opacity: !root.enabled || (root.count == 0 && !root.on) ? 0.5 : 1;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 8px;
+        Text {
+            text: root.mark;
+            color: root.on ? Look.accent : Look.faint;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.label;
+            color: root.on ? Look.text : Look.muted;
+            font-size: 13px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        if root.count >= 0: Text {
+            text: root.count;
+            color: Look.faint;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// Terminal: a facet's name, "# source".
+component FacetHead inherits Rectangle {
+    in property <string> text;
+    height: 24px;
+
+    Text {
+        x: 16px;
+        y: 8px;
+        text: "# " + root.text;
+        color: Look.faint;
+        font-size: 12px;
+    }
+}
+
+// Terminal: a row of the column, "▸ ● Keyboard Lab   oc  214".
+component TerminalRow inherits Rectangle {
+    in property <bool> selected;
+    in property <string> dot;
+    in property <color> dot-color: Look.faint;
+    in property <string> name;
+    in property <color> name-color: Look.text;
+    in property <string> code;
+    in property <string> right;
+    in property <color> right-color: Look.faint;
+    in property <bool> enabled: true;
+    callback clicked();
+    height: 26px;
+    background: root.selected || (touch.has-hover && root.enabled) ? Look.sel : transparent;
+    opacity: root.enabled ? 1 : 0.5;
+
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 16px;
+        spacing: 8px;
+        Text {
+            width: 10px;
+            text: root.selected ? "▸" : "";
+            color: Look.accent;
+            font-size: 11px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: root.dot;
+            color: root.dot-color;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.name;
+            color: root.name-color;
+            font-size: 13px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        if root.code != "": Text {
+            text: root.code;
+            color: Look.faint;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        if root.right != "": Text {
+            min-width: 32px;
+            text: root.right;
+            color: root.right-color;
+            font-size: 13px;
+            horizontal-alignment: TextHorizontalAlignment.right;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// Terminal: a followed channel's row, its mark by its status.
+component FollowedRow inherits TerminalRow {
+    in property <LiveChannel> channel;
+    property <bool> live: channel.status == LiveStatus.live;
+    property <bool> off: channel.status == LiveStatus.offline;
+    selected: LiveDirectory.watching && LiveDirectory.channel.id == channel.id;
+    dot: channel.status == LiveStatus.live ? "●" : channel.status == LiveStatus.stale ? "◌" : channel.status == LiveStatus.unknown ? "?" : "○";
+    dot-color: root.live ? Look.danger : root.off ? Look.faint : Look.warn;
+    name: channel.name;
+    name-color: root.live ? Look.text : Look.muted;
+    code: LiveDirectoryWords.code(channel.source);
+    right: root.live ? (channel.viewers >= 0 ? channel.viewers : "") : root.off ? LiveViewWords.ago-short(channel.last-live-minutes) : LiveViewWords.ago-short(channel.observed-minutes);
+    right-color: root.live ? Look.muted : root.off ? Look.faint : Look.warn;
+    clicked => {
+        LiveDirectory.open(root.channel.id);
+    }
+}
+
+// Terminal's facets of Discover, in the column (round 12): the mode, the sources, where it plays,
+// the status, the category, the language, the content setting.
+component Facets inherits VerticalLayout {
+    padding-top: 2px;
+    padding-bottom: 10px;
+    FacetHead {
+        text: LiveViewWords.facet-mode();
+    }
+    for mode[index] in [LiveMode.live, LiveMode.channels, LiveMode.upcoming]: FacetRow {
+        mark: LiveDirectory.mode == mode ? "▸" : " ";
+        on: LiveDirectory.mode == mode;
+        label: (index + 1) + " " + LiveDirectoryWords.mode(mode).to-lowercase();
+        count: index < LiveDirectory.mode-counts.length ? LiveDirectory.mode-counts[index] : -1;
+        clicked => {
+            LiveDirectory.set-mode(mode);
+        }
+    }
+    FacetHead {
+        text: LiveViewWords.facet-source();
+    }
+    for option in LiveDirectory.source-options: FacetRow {
+        mark: option.chosen ? "[x]" : "[ ]";
+        on: option.chosen;
+        label: LiveDirectoryWords.code(option.source) + "  " + LiveDirectoryWords.source(option.source).to-lowercase();
+        count: option.count;
+        clicked => {
+            LiveDirectory.toggle-source(option.source);
+        }
+    }
+    for source in LiveDirectory.sources: FacetRow {
+        visible: !source.indexed;
+        height: source.indexed ? 0px : 22px;
+        mark: "[-]";
+        label: LiveDirectoryWords.code(source.source) + "  " + LiveDirectoryWords.source(source.source).to-lowercase() + " · " + LiveViewWords.not-integrated();
+        enabled: false;
+    }
+    FacetHead {
+        text: LiveViewWords.facet-plays();
+    }
+    for label[index] in [LiveViewWords.anywhere(), LiveViewWords.in-finchgram(), LiveViewWords.on-its-site()]: FacetRow {
+        mark: LiveDirectory.playback == index ? "(•)" : "( )";
+        on: LiveDirectory.playback == index;
+        label: label;
+        count: index > 0 && index < LiveDirectory.playback-counts.length ? LiveDirectory.playback-counts[index] : -1;
+        clicked => {
+            LiveDirectory.set-playback(index);
+        }
+    }
+    if LiveDirectory.mode == LiveMode.channels: FacetHead {
+        text: LiveViewWords.facet-status();
+    }
+    if LiveDirectory.mode == LiveMode.channels: FacetRow {
+        mark: LiveDirectory.status-any ? "(•)" : "( )";
+        on: LiveDirectory.status-any;
+        label: LiveViewWords.any();
+        clicked => {
+            LiveDirectory.set-status(true, LiveStatus.live);
+        }
+    }
+    if LiveDirectory.mode == LiveMode.channels: VerticalLayout {
+        for status in [LiveStatus.live, LiveStatus.stale, LiveStatus.offline, LiveStatus.unknown]: FacetRow {
+            mark: !LiveDirectory.status-any && LiveDirectory.status-filter == status ? "(•)" : "( )";
+            on: !LiveDirectory.status-any && LiveDirectory.status-filter == status;
+            label: LiveDirectoryWords.status(status).to-lowercase();
+            clicked => {
+                LiveDirectory.set-status(false, status);
+            }
+        }
+    }
+    FacetHead {
+        text: LiveViewWords.facet-category();
+    }
+    FacetRow {
+        mark: LiveDirectory.chosen-category == LiveCategory.none ? "(•)" : "( )";
+        on: LiveDirectory.chosen-category == LiveCategory.none;
+        label: LiveViewWords.any();
+        clicked => {
+            LiveDirectory.set-category(LiveCategory.none);
+        }
+    }
+    for option in LiveDirectory.category-options: FacetRow {
+        mark: option.chosen ? "(•)" : "( )";
+        on: option.chosen;
+        label: LiveDirectoryWords.category(option.category).to-lowercase();
+        count: option.count;
+        clicked => {
+            LiveDirectory.set-category(option.category);
+        }
+    }
+    FacetHead {
+        text: LiveViewWords.facet-language();
+    }
+    FacetRow {
+        mark: LiveDirectory.chosen-language == "" ? "(•)" : "( )";
+        on: LiveDirectory.chosen-language == "";
+        label: LiveViewWords.any();
+        clicked => {
+            LiveDirectory.set-language("");
+        }
+    }
+    for option in LiveDirectory.language-options: FacetRow {
+        mark: option.chosen ? "(•)" : "( )";
+        on: option.chosen;
+        label: option.label;
+        count: option.count;
+        clicked => {
+            LiveDirectory.set-language(option.key);
+        }
+    }
+    FacetHead {
+        text: LiveViewWords.facet-content();
+    }
+    FacetRow {
+        mark: LiveDirectory.show-mature ? "[x]" : "[ ]";
+        on: LiveDirectory.show-mature;
+        label: LiveViewWords.mature-rated();
+        count: LiveDirectory.hidden-mature > 0 ? LiveDirectory.hidden-mature : -1;
+        clicked => {
+            LiveDirectory.content-asking = true;
+        }
+    }
+}
+
+// The view's side column, under the theme's heading: the four places, then the channels followed,
+// live ones first. Terminal's has its tabs, Discover's facets and the places' rows. It stays while
+// Watch is open, as the canvas keeps it (round 10: the Live column never folds away; round 13 has
+// no menu to bring it back), so LiveDirectory.column-open changes nothing here.
 export component LiveList {
-    property <bool> link-wrong;
+    property <int> live-count: LiveDirectory.following-live.length;
+    property <int> off-count: LiveDirectory.following-off.length;
 
     VerticalLayout {
-        HorizontalLayout {
-            padding-left: 14px;
-            padding-right: 14px;
-            padding-top: 6px;
-            padding-bottom: 6px;
-            alignment: start;
-            GoLiveButton { }
-        }
-
-        Flickable {
-            vertical-stretch: 1;
-            mouse-drag-pan-enabled: false;
-            VerticalLayout {
-                alignment: start;
-                if Live.stories.length > 0: Section {
-                    label: LiveWords.stories();
-                    count: Live.stories.length;
-                }
-                for row in Live.stories: ListRow {
-                    entry: row;
-                }
-                if Live.chats.length > 0: Section {
-                    label: LiveWords.chats();
-                    count: Live.chats.length;
-                }
-                for row in Live.chats: ListRow {
-                    entry: row;
-                }
-                if Live.stories.length == 0 && Live.chats.length == 0: VerticalLayout {
-                    padding-left: 16px;
-                    padding-right: 16px;
-                    padding-top: 18px;
-                    spacing: 8px;
-                    Text {
-                        text: LiveWords.nobody-live();
-                        color: Look.text;
-                        font-size: 14px;
-                        font-weight: 600;
-                        wrap: word-wrap;
-                    }
-                    Paragraph {
-                        text: LiveWords.nobody-live-line();
-                        color: Look.muted;
-                        font-size: 13px;
-                        line-height-factor: Look.leading(1.5);
-                    }
-                }
-            }
-        }
-
-        VerticalLayout {
-            padding-left: 12px;
-            padding-right: 12px;
-            padding-top: 10px;
-            padding-bottom: 12px;
-            spacing: 8px;
-            Text {
-                text: LiveWords.any-public();
-                color: Look.faint;
-                font-size: 12px;
-            }
-            HorizontalLayout {
-                spacing: 6px;
-                link := Field {
-                    height: 32px;
+        if !Look.terminal: VerticalLayout {
+            if Look.broadsheet: HorizontalLayout {
+                padding-left: 20px;
+                padding-right: 20px;
+                Text {
+                    text: LiveViewWords.column-line();
+                    color: Look.accent-ink;
                     font-size: 13px;
-                    padding-x: 10px;
-                    placeholder: LiveWords.link-placeholder();
-                    error: root.link-wrong;
-                    edited => {
-                        root.link-wrong = false;
-                    }
-                    accepted(text) => {
-                        root.link-wrong = !Live.watch-link(text);
-                    }
+                    overflow: elide;
                 }
-                SmallButton {
-                    text: LiveWords.watch();
-                    enabled: link.text != "";
-                    clicked => {
-                        root.link-wrong = !Live.watch-link(link.text);
+            }
+            VerticalLayout {
+                padding-left: Look.broadsheet ? 12px : 8px;
+                padding-right: Look.broadsheet ? 12px : 8px;
+                padding-top: Look.broadsheet ? 14px : 2px;
+                padding-bottom: Look.broadsheet ? 6px : 10px;
+                spacing: Look.broadsheet ? 0px : 2px;
+                NavRow {
+                    section: LiveSection.discover;
+                    icon: "compass";
+                    letter: "A";
+                }
+                NavRow {
+                    section: LiveSection.following;
+                    icon: "star";
+                    letter: "B";
+                    count: root.live-count > 0 ? LiveViewWords.live-count(root.live-count) : "";
+                    hot: root.live-count > 0;
+                }
+                NavRow {
+                    section: LiveSection.broadcast;
+                    icon: "video-camera";
+                    letter: "C";
+                    count: Live.on-air ? LiveViewWords.on-air() : "";
+                    hot: Live.on-air;
+                }
+                NavRow {
+                    section: LiveSection.connections;
+                    icon: "plugs-connected";
+                    letter: "D";
+                }
+            }
+            Flickable {
+                vertical-stretch: 1;
+                mouse-drag-pan-enabled: false;
+                VerticalLayout {
+                    alignment: start;
+                    padding-left: Look.broadsheet ? 20px : 0px;
+                    padding-right: Look.broadsheet ? 20px : 0px;
+                    padding-top: Look.broadsheet ? 8px : 0px;
+                    padding-bottom: Look.broadsheet ? 12px : 8px;
+                    spacing: Look.broadsheet ? 14px : 0px;
+                    if root.live-count > 0: VerticalLayout {
+                        GroupLabel {
+                            text: LiveViewWords.following-live();
+                        }
+                        for channel in LiveDirectory.following-live: ColumnRow {
+                            channel: channel;
+                        }
+                    }
+                    if root.off-count > 0: VerticalLayout {
+                        GroupLabel {
+                            text: LiveViewWords.not-live-now();
+                        }
+                        for channel in LiveDirectory.following-off: ColumnRow {
+                            channel: channel;
+                        }
+                    }
+                    if root.live-count == 0 && root.off-count == 0: HorizontalLayout {
+                        padding-left: Look.broadsheet ? 0px : 14px;
+                        padding-right: Look.broadsheet ? 0px : 14px;
+                        padding-top: Look.broadsheet ? 0px : 10px;
+                        Paragraph {
+                            text: LiveViewWords.column-empty();
+                            color: Look.faint;
+                            font-size: Look.broadsheet ? 14px : 12px;
+                            line-height-factor: Look.leading(1.5);
+                        }
                     }
                 }
             }
-            if root.link-wrong: Text {
-                text: LiveWords.not-a-link();
-                color: Look.danger;
-                font-size: 12px;
+        }
+
+        if Look.terminal: VerticalLayout {
+            HorizontalLayout {
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-top: 12px;
+                padding-bottom: 8px;
+                spacing: 12px;
+                alignment: start;
+                TabWord {
+                    text: LiveViewWords.tab-discover();
+                    section: LiveSection.discover;
+                }
+                TabWord {
+                    text: LiveViewWords.tab-following();
+                    section: LiveSection.following;
+                }
+                TabWord {
+                    text: LiveViewWords.tab-broadcast();
+                    section: LiveSection.broadcast;
+                }
+                TabWord {
+                    text: LiveViewWords.tab-connections();
+                    section: LiveSection.connections;
+                }
+            }
+            Flickable {
+                vertical-stretch: 1;
+                mouse-drag-pan-enabled: false;
+                VerticalLayout {
+                    alignment: start;
+                    if LiveDirectory.section == LiveSection.discover: Facets { }
+                    if LiveDirectory.section == LiveSection.following: VerticalLayout {
+                        padding-bottom: 6px;
+                        if root.live-count + root.off-count == 0: RuleHead {
+                            text: LiveViewWords.nothing-followed();
+                        }
+                        if root.live-count > 0: RuleHead {
+                            text: LiveViewWords.live-confirmed();
+                        }
+                        for channel in LiveDirectory.following-live: FollowedRow {
+                            channel: channel;
+                        }
+                        if root.off-count > 0: RuleHead {
+                            text: LiveViewWords.not-confirmed-unknown();
+                        }
+                        for channel in LiveDirectory.following-off: FollowedRow {
+                            visible: channel.status != LiveStatus.offline;
+                            height: channel.status != LiveStatus.offline ? 26px : 0px;
+                            channel: channel;
+                        }
+                        if root.off-count > 0: RuleHead {
+                            text: LiveViewWords.offline();
+                        }
+                        for channel in LiveDirectory.following-off: FollowedRow {
+                            visible: channel.status == LiveStatus.offline;
+                            height: channel.status == LiveStatus.offline ? 26px : 0px;
+                            channel: channel;
+                        }
+                    }
+                    if LiveDirectory.section == LiveSection.broadcast: VerticalLayout {
+                        padding-bottom: 6px;
+                        RuleHead {
+                            text: LiveViewWords.send-to();
+                        }
+                        for target[index] in Live.targets: TerminalRow {
+                            selected: index == Live.target;
+                            dot: "■";
+                            dot-color: Look.ok;
+                            name: target.story ? LiveWords.my-story() : target.name;
+                            code: "tg";
+                            clicked => {
+                                Live.choose-target(index);
+                            }
+                        }
+                        RuleHead {
+                            text: LiveViewWords.send-with();
+                        }
+                        TerminalRow {
+                            dot: "■";
+                            dot-color: Look.faint;
+                            name: LiveViewWords.built-in-row();
+                            code: "cam+mic";
+                            enabled: false;
+                        }
+                        HorizontalLayout {
+                            padding-left: 34px;
+                            Text {
+                                height: 18px;
+                                text: LiveViewWords.not-in-this-version().to-lowercase();
+                                color: Look.faint;
+                                font-size: 12px;
+                            }
+                        }
+                        TerminalRow {
+                            selected: true;
+                            dot: "■";
+                            dot-color: Look.ok;
+                            name: LiveViewWords.obs-row();
+                            code: "rtmps";
+                        }
+                    }
+                    if LiveDirectory.section == LiveSection.connections: VerticalLayout {
+                        padding-bottom: 6px;
+                        RuleHead {
+                            text: LiveViewWords.add();
+                        }
+                        TerminalRow {
+                            selected: true;
+                            dot: "■";
+                            dot-color: Look.ok;
+                            name: LiveViewWords.open-a-link-row();
+                        }
+                        TerminalRow {
+                            dot: "■";
+                            name: LiveViewWords.submit-row();
+                            code: "pub";
+                            enabled: false;
+                        }
+                        RuleHead {
+                            text: LiveViewWords.broadcast-to();
+                        }
+                        TerminalRow {
+                            dot: "■";
+                            name: LiveViewWords.not-in-this-version().to-lowercase();
+                            enabled: false;
+                        }
+                        RuleHead {
+                            text: LiveViewWords.private-servers();
+                        }
+                        TerminalRow {
+                            dot: "■";
+                            name: LiveViewWords.not-in-this-version().to-lowercase();
+                            enabled: false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ---- the pane ---------------------------------------------------------------------------------------
+
+// A short note at the foot of the view, for a few seconds.
+component Toast inherits Rectangle {
+    width: words.preferred-width + 28px;
+    height: words.preferred-height + 18px;
+    border-radius: Look.radius;
+    background: Look.text;
+    drop-shadow-blur: 24px;
+    drop-shadow-offset-y: 8px;
+    drop-shadow-color: #00000033;
+
+    words := Text {
+        text: LiveDirectoryWords.toast(LiveDirectory.toast, LiveDirectory.toast-name);
+        color: Look.bg;
+        font-size: 13px;
+    }
+}
+
+// A choice of the content setting's question: its ring, its name, what it means.
+component Choice inherits Rectangle {
+    in property <string> label;
+    in property <string> line;
+    in property <bool> on;
+    callback clicked();
+    height: row.preferred-height;
+
+    row := HorizontalLayout {
+        spacing: 10px;
+        VerticalLayout {
+            alignment: start;
+            padding-top: 2px;
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: 8px;
+                border-width: root.on ? 5px : 1.5px;
+                border-color: root.on ? Look.accent : Look.line-strong;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 1px;
+            Text {
+                text: root.label;
+                color: Look.text;
+                font-size: 14px;
+                font-weight: 600;
+                wrap: word-wrap;
             }
             Paragraph {
-                text: LiveWords.phone-note();
-                color: Look.faint;
-                font-size: 11px;
+                text: root.line;
+                color: Look.muted;
+                font-size: 13px;
                 line-height-factor: Look.leading(1.45);
             }
         }
     }
-}
-
-// ---- the pane: watching -------------------------------------------------------------------------
-
-// A round button over the picture, or beside it.
-component RoundButton inherits Rectangle {
-    in property <string> icon;
-    in property <string> label;
-    in property <color> ink: Look.muted;
-    callback clicked();
-    width: 32px;
-    height: 32px;
-    border-radius: Look.terminal ? 3px : 16px;
-    background: touch.has-hover ? Look.sel : transparent;
-    accessible-role: button;
-    accessible-label: label;
-
-    Icon {
-        name: root.icon;
-        size: 18px;
-        color: root.ink;
-    }
-    touch := TouchArea {
+    TouchArea {
         mouse-cursor: pointer;
         clicked => {
             root.clicked();
@@ -391,1057 +856,162 @@ component RoundButton inherits Rectangle {
     }
 }
 
-// The picture, or where it is: joining, waiting for the broadcaster, for the phone only, over.
-component StreamScreen inherits Rectangle {
-    property <bool> shows-picture: Live.state == LiveState.playing && Live.frame.width > 0;
-    border-radius: Look.radius;
-    background: #101214;
-    clip: true;
-
-    if root.shows-picture: Image {
-        width: parent.width;
-        height: parent.height;
-        source: Live.frame;
-        image-fit: contain;
-    }
-
-    if !root.shows-picture: VerticalLayout {
-        alignment: center;
-        spacing: 12px;
-        padding-left: 40px;
-        padding-right: 40px;
-        if Live.state == LiveState.joining || Live.state == LiveState.waiting || (Live.state == LiveState.playing && !root.shows-picture): HorizontalLayout {
-            alignment: center;
-            Spinner {
-                size: 22px;
-                color: #c9ced6;
-            }
-        }
-        if Live.state == LiveState.phone: HorizontalLayout {
-            alignment: center;
-            Icon {
-                name: "device-mobile";
-                size: 28px;
-                color: #c9ced6;
-            }
-        }
-        Text {
-            text: LiveWords.state(Live.state);
-            color: #ffffff;
-            font-size: 15px;
-            font-weight: 600;
-            horizontal-alignment: center;
-            wrap: word-wrap;
-        }
-        if Live.state == LiveState.phone: Text {
-            text: LiveWords.phone-explained();
-            color: #c9ced6;
-            font-size: 13px;
-            horizontal-alignment: center;
-            wrap: word-wrap;
-        }
-        if Live.state == LiveState.failed && Live.problem != "": Text {
-            text: Live.problem;
-            color: #c9ced6;
-            font-size: 13px;
-            horizontal-alignment: center;
-            wrap: word-wrap;
-        }
-    }
-
-    if root.shows-picture && Live.buffering: Rectangle {
-        Spinner {
-            size: 22px;
-            color: #ffffffcc;
-        }
-    }
-
-    // The mark and the viewers on the picture, as Telegram's own apps show them.
-    if Live.state == LiveState.playing || Live.state == LiveState.waiting: HorizontalLayout {
-        x: 12px;
-        y: 12px;
-        height: 18px;
-        spacing: 8px;
-        LiveMark {
-            on-picture: true;
-        }
-    }
-    if Live.state == LiveState.playing || Live.state == LiveState.waiting: Rectangle {
-        x: parent.width - self.width - 12px;
-        y: 12px;
-        height: 20px;
-        width: viewers.preferred-width + 14px;
-        border-radius: 3px;
-        background: #00000073;
-        viewers := HorizontalLayout {
-            x: 7px;
-            spacing: 5px;
-            VerticalLayout {
-                alignment: center;
-                Icon {
-                    name: "eye";
-                    size: 13px;
-                    color: #ffffff;
-                }
-            }
-            Text {
-                text: Live.viewers;
-                color: #ffffff;
-                font-size: 12px;
-                vertical-alignment: center;
-            }
-        }
-    }
-
-    // The sound, at the foot of the picture.
-    if Live.state == LiveState.playing: Rectangle {
-        y: parent.height - self.height;
-        height: 48px;
-        background: @linear-gradient(180deg, #00000000 0%, #0000008c 100%);
-        HorizontalLayout {
-            padding-left: 12px;
-            padding-right: 12px;
-            spacing: 10px;
-            VerticalLayout {
-                alignment: center;
-                RoundButton {
-                    icon: Live.muted || Live.volume == 0 ? "speaker-x" : "speaker-high";
-                    label: Live.muted ? "Unmute" : "Mute";
-                    ink: #ffffff;
-                    clicked => {
-                        Live.toggle-mute();
-                    }
-                }
-            }
-            VerticalLayout {
-                alignment: center;
-                bar := Rectangle {
-                    width: 90px;
-                    height: 4px;
-                    border-radius: 2px;
-                    background: #ffffff59;
-                    Rectangle {
-                        x: 0;
-                        width: parent.width * (Live.muted ? 0 : Live.volume / 100);
-                        border-radius: 2px;
-                        background: #ffffff;
-                    }
-                    TouchArea {
-                        y: -8px;
-                        height: parent.height + 16px;
-                        mouse-cursor: pointer;
-                        clicked => {
-                            Live.set-volume(Math.round(max(0, min(1, self.mouse-x / bar.width)) * 100));
-                        }
-                    }
-                }
-            }
-            Rectangle { horizontal-stretch: 1; }
-        }
-    }
-}
-
-// A comment in the column: free (a name and the words), paid (tinted by its level, with its
-// Stars), a tip (a paid comment without words), the host's (marked).
-component CommentRow inherits Rectangle {
-    in property <LiveComment> comment;
-    property <bool> paid: comment.stars > 0 && comment.text != "";
-    property <bool> tip: comment.stars > 0 && comment.text == "";
-    height: box.preferred-height;
-    border-radius: Look.radius;
-    background: paid ? Tier.fill(comment.tier) : transparent;
-
-    box := HorizontalLayout {
-        padding-left: root.paid ? 10px : 0px;
-        padding-right: root.paid ? 10px : 0px;
-        padding-top: root.paid ? 8px : 6px;
-        padding-bottom: root.paid ? 8px : 6px;
-        spacing: 10px;
-        VerticalLayout {
-            alignment: start;
-            Avatar {
-                size: 26px;
-                radius: Look.terminal ? 3px : 6px;
-                initial: root.comment.initial;
-                fill: root.paid ? (Look.dark ? Look.bg : #ffffff) : Look.soft;
-                ink: root.paid ? Tier.ink(root.comment.tier) : Look.soft-ink;
-                font-size: 11px;
-            }
-        }
-        VerticalLayout {
-            horizontal-stretch: 1;
-            spacing: 2px;
-            HorizontalLayout {
-                spacing: 6px;
-                alignment: start;
-                Text {
-                    text: root.comment.name;
-                    color: root.paid ? Tier.ink(root.comment.tier) : Look.text;
-                    font-size: 13px;
-                    font-weight: 600;
-                    overflow: elide;
-                }
-                if root.comment.host: VerticalLayout {
-                    alignment: center;
-                    Rectangle {
-                        height: 15px;
-                        width: host.preferred-width + 10px;
-                        border-radius: 3px;
-                        background: Look.soft;
-                        host := Text {
-                            width: parent.width;
-                            text: LiveWords.host-mark();
-                            color: Look.soft-ink;
-                            font-size: 10px;
-                            font-weight: 600;
-                            horizontal-alignment: center;
-                            vertical-alignment: center;
-                        }
-                    }
-                }
-                if root.paid: HorizontalLayout {
-                    spacing: 3px;
-                    VerticalLayout {
-                        alignment: center;
-                        Icon {
-                            name: "star";
-                            size: 12px;
-                            color: Tier.ink(root.comment.tier);
-                        }
-                    }
-                    Text {
-                        text: root.comment.stars;
-                        color: Tier.ink(root.comment.tier);
-                        font-size: 12px;
-                        font-weight: 600;
-                        vertical-alignment: center;
-                    }
-                }
-            }
-            if !root.tip: Paragraph {
-                text: root.comment.text;
-                color: root.paid ? Tier.ink(root.comment.tier) : Look.text;
-                font-size: 13px;
-                line-height-factor: Look.leading(1.4);
-            }
-            if root.tip: Text {
-                text: LiveWords.tipped(root.comment.stars);
-                color: Look.muted;
-                font-size: 13px;
-            }
-        }
-        if Live.hosting && root.comment.deletable && touch.has-hover: VerticalLayout {
-            alignment: start;
-            RoundButton {
-                width: 26px;
-                height: 26px;
-                icon: "trash";
-                label: LiveWords.delete-comment();
-                ink: Look.danger;
-                clicked => {
-                    Live.delete-comment(root.comment.id);
-                }
-            }
-        }
-    }
-    touch := TouchArea {
-        // Under the trash button, so that the button gets its click.
-        z: -1;
-    }
-}
-
-// The column of comments, the newest at the foot, the oldest leaving at the top.
-component Comments inherits Rectangle {
-    width: 340px;
-    background: Look.bg;
-
-    Rectangle {
-        x: 0;
-        width: 1px;
-        background: Look.line;
-    }
-
-    VerticalLayout {
-        padding-left: 1px;
-        VerticalLayout {
-            vertical-stretch: 0;
-            padding-left: 16px;
-            padding-right: 16px;
-            padding-top: 16px;
-            padding-bottom: 10px;
-            spacing: 10px;
-            HorizontalLayout {
-                spacing: 8px;
-                Text {
-                    text: LiveWords.comments();
-                    color: Look.text;
-                    font-size: 15px;
-                    font-weight: 600;
-                }
-                Text {
-                    horizontal-stretch: 1;
-                    text: Live.paid-from > 0 ? LiveWords.paid-from(Live.paid-from) : "";
-                    color: Look.faint;
-                    font-size: 12px;
-                    horizontal-alignment: right;
-                    vertical-alignment: center;
-                }
-            }
-            if Live.hosting && Live.donors.length > 0: VerticalLayout {
-                spacing: 8px;
-                SectionLabel {
-                    label: LiveWords.top-supporters();
-                }
-                HorizontalLayout {
-                    vertical-stretch: 0;
-                    spacing: 8px;
-                    alignment: start;
-                    for donor in Live.donors: Rectangle {
-                        height: 26px;
-                        width: chip.preferred-width + 16px;
-                        border-radius: Look.terminal ? 3px : 13px;
-                        background: Tier.fill(donor.tier);
-                        chip := HorizontalLayout {
-                            x: 8px;
-                            spacing: 5px;
-                            Text {
-                                text: donor.name;
-                                color: Tier.ink(donor.tier);
-                                font-size: 12px;
-                                font-weight: 500;
-                                vertical-alignment: center;
-                            }
-                            VerticalLayout {
-                                alignment: center;
-                                Icon {
-                                    name: "star";
-                                    size: 12px;
-                                    color: Tier.ink(donor.tier);
-                                }
-                            }
-                            Text {
-                                text: donor.stars;
-                                color: Tier.ink(donor.tier);
-                                font-size: 12px;
-                                font-weight: 600;
-                                vertical-alignment: center;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Rectangle {
-            height: 1px;
-            background: Look.line;
-        }
-        // The comments, anchored to the foot: older ones go out at the top.
-        Rectangle {
-            vertical-stretch: 1;
-            clip: true;
-            list := VerticalLayout {
-                y: parent.height - self.preferred-height;
-                height: self.preferred-height;
-                padding-left: 16px;
-                padding-right: 16px;
-                padding-bottom: 6px;
-                spacing: 2px;
-                for comment in Live.comments: CommentRow {
-                    comment: comment;
-                }
-            }
-            if Live.comments.length == 0: Text {
-                text: Live.comments-on ? "" : LiveWords.comments-off();
-                color: Look.faint;
-                font-size: 13px;
-            }
-        }
-        Rectangle {
-            height: 1px;
-            background: Look.line;
-        }
-        VerticalLayout {
-            vertical-stretch: 0;
-            padding-left: 16px;
-            padding-right: 16px;
-            padding-top: 10px;
-            padding-bottom: 14px;
-            spacing: 8px;
-            if Live.comments-on && Live.can-comment && (Live.hosting || Live.paid-from == 0): HorizontalLayout {
-                spacing: 8px;
-                say := Field {
-                    height: 34px;
-                    font-size: 13px;
-                    padding-x: 10px;
-                    placeholder: Live.hosting ? LiveWords.reply-as-host() : LiveWords.say();
-                    accepted(text) => {
-                        if text != "" {
-                            Live.send-comment(text);
-                            self.text = "";
-                        }
-                    }
-                }
-                // Paid comments go from Telegram's own apps for now: the star stays faded.
-                RoundButton {
-                    icon: "star";
-                    label: "★";
-                    ink: Look.faint;
-                    opacity: 0.45;
-                }
-                Rectangle {
-                    width: 34px;
-                    height: 34px;
-                    border-radius: Look.button-radius;
-                    background: send-touch.has-hover ? Look.accent.darker(0.1) : Look.accent;
-                    opacity: say.text != "" ? 1 : 0.5;
-                    Icon {
-                        name: "paper-plane-tilt";
-                        size: 16px;
-                        color: Look.on-accent;
-                    }
-                    send-touch := TouchArea {
-                        enabled: say.text != "";
-                        mouse-cursor: pointer;
-                        clicked => {
-                            Live.send-comment(say.text);
-                            say.text = "";
-                        }
-                    }
-                }
-            }
-            Paragraph {
-                text: !Live.comments-on ? LiveWords.comments-off()
-                    : Live.hosting ? LiveWords.host-note()
-                    : Live.paid-from > 0 ? LiveWords.paid-note(Live.paid-from)
-                    : LiveWords.free-note();
-                color: Look.faint;
-                font-size: 11px;
-                line-height-factor: Look.leading(1.45);
-            }
-        }
-    }
-}
-
-// What the host sees beside their own stream: how many watch, the Stars so far, comments on or
-// off, and the end.
-component HostBar {
-    HorizontalLayout {
-        spacing: 28px;
-        alignment: start;
-        VerticalLayout {
-            spacing: 2px;
-            Text {
-                text: Live.viewers;
-                color: Look.text;
-                font-family: Look.mono;
-                font-size: 18px;
-                font-weight: 600;
-            }
-            SectionLabel {
-                label: LiveWords.watching-now();
-            }
-        }
-        VerticalLayout {
-            spacing: 2px;
-            HorizontalLayout {
-                spacing: 4px;
-                alignment: start;
-                VerticalLayout {
-                    alignment: center;
-                    Icon {
-                        name: "star";
-                        size: 16px;
-                        color: Tier.ink(2);
-                    }
-                }
-                Text {
-                    text: Live.stars-total;
-                    color: Tier.ink(2);
-                    font-family: Look.mono;
-                    font-size: 18px;
-                    font-weight: 600;
-                }
-            }
-            SectionLabel {
-                label: LiveWords.stars-so-far();
-            }
-        }
-        VerticalLayout {
-            alignment: center;
-            HorizontalLayout {
-                spacing: 10px;
-                Switch {
-                    on: Live.comments-on;
-                    toggled => {
-                        Live.toggle-comments();
-                    }
-                }
-                Text {
-                    text: LiveWords.comments-allowed();
-                    color: Look.text;
-                    font-size: 13px;
-                    vertical-alignment: center;
-                }
-            }
-        }
-    }
-}
-
-component Watching inherits Rectangle {
-    HorizontalLayout {
-        VerticalLayout {
-            horizontal-stretch: 1;
-            padding-left: 20px;
-            padding-right: 20px;
-            padding-top: 16px;
-            padding-bottom: 16px;
-            spacing: 14px;
-            // Who is live, since when, how many watch; and closing it.
-            HorizontalLayout {
-                spacing: 12px;
-                VerticalLayout {
-                    alignment: center;
-                    Avatar {
-                        size: 34px;
-                        radius: Look.terminal ? 3px : 8px;
-                        initial: Live.open.initial;
-                        picture: Live.open.picture;
-                        has-picture: Live.open.has-picture;
-                        font-size: 14px;
-                    }
-                }
-                VerticalLayout {
-                    horizontal-stretch: 1;
-                    alignment: center;
-                    spacing: 2px;
-                    HorizontalLayout {
-                        spacing: 8px;
-                        alignment: start;
-                        Text {
-                            text: Live.open.name;
-                            color: Look.text;
-                            font-size: 16px;
-                            font-weight: 600;
-                            overflow: elide;
-                        }
-                        if Live.state == LiveState.playing || Live.state == LiveState.waiting: VerticalLayout {
-                            alignment: center;
-                            LiveMark { }
-                        }
-                    }
-                    Text {
-                        text: LiveWords.started(Live.open.kind, Live.since);
-                        color: Look.muted;
-                        font-size: 12px;
-                        overflow: elide;
-                    }
-                }
-                if Live.hosting: VerticalLayout {
-                    alignment: center;
-                    SmallButton {
-                        text: LiveWords.end(Live.open.kind);
-                        clicked => {
-                            Live.ask-end(true);
-                        }
-                    }
-                }
-                if !Live.hosting && (Live.state == LiveState.playing || Live.state == LiveState.waiting): HorizontalLayout {
-                    spacing: 6px;
-                    VerticalLayout {
-                        alignment: center;
-                        Icon {
-                            name: "eye";
-                            size: 16px;
-                            color: Look.text;
-                        }
-                    }
-                    Text {
-                        text: LiveWords.viewers(Live.viewers);
-                        color: Look.text;
-                        font-size: 13px;
-                        vertical-alignment: center;
-                    }
-                }
-                VerticalLayout {
-                    alignment: center;
-                    RoundButton {
-                        icon: "x";
-                        label: LiveWords.cancel();
-                        clicked => {
-                            Live.close();
-                        }
-                    }
-                }
-            }
-            screen := StreamScreen {
-                // 16:9 as wide as the pane allows, no taller than it leaves.
-                height: min(self.width * 9 / 16, root.height - 230px);
-            }
-            if Live.hosting: HostBar { }
-            HorizontalLayout {
-                spacing: 10px;
-                Text {
-                    horizontal-stretch: 1;
-                    text: Live.open.title != "" ? Live.open.title : LiveWords.kind(Live.open.kind);
-                    color: Look.text;
-                    font-size: 15px;
-                    font-weight: 600;
-                    overflow: elide;
-                    vertical-alignment: center;
-                }
-                if Live.link != "": SmallButton {
-                    text: LiveWords.copy-link();
-                    clicked => {
-                        Live.copy-link();
-                    }
-                }
-            }
-            if Live.state == LiveState.joining || Live.state == LiveState.waiting || Live.state == LiveState.playing: Paragraph {
-                text: Live.hosting ? LiveWords.preview-note() : LiveWords.watch-note();
-                color: Look.muted;
-                font-size: 12px;
-                line-height-factor: Look.leading(1.5);
-            }
-            Rectangle { vertical-stretch: 1; }
-        }
-        if Live.state != LiveState.phone: Comments { }
-    }
-}
-
-// ---- the pane: nothing open --------------------------------------------------------------------
-
-component Empty inherits Rectangle {
-    VerticalLayout {
-        alignment: center;
-        spacing: 12px;
-        padding-left: 40px;
-        padding-right: 40px;
-        HorizontalLayout {
-            alignment: center;
-            Rectangle {
-                width: 56px;
-                height: 56px;
-                border-radius: Look.terminal ? 3px : 14px;
-                background: Look.side;
-                Icon {
-                    name: "broadcast";
-                    size: 28px;
-                    color: Look.muted;
-                }
-            }
-        }
-        Text {
-            text: LiveWords.empty-title();
-            color: Look.text;
-            font-size: 16px;
-            font-weight: 600;
-            horizontal-alignment: center;
-        }
-        HorizontalLayout {
-            alignment: center;
-            Paragraph {
-                width: min(380px, root.width - 80px);
-                text: LiveWords.empty-line();
-                color: Look.muted;
-                font-size: 13px;
-                horizontal-alignment: center;
-                line-height-factor: Look.leading(1.5);
-            }
-        }
-        HorizontalLayout {
-            alignment: center;
-            padding-top: 6px;
-            GoLiveButton { }
-        }
-    }
-}
-
-// ---- the pane: going live -----------------------------------------------------------------------
-
-// A line of the stream's settings for OBS: its name, its value in mono, and its buttons.
-component KeyLine {
-    in property <string> label;
-    in property <string> value;
-    in property <bool> secret;
-    in property <bool> shown;
-    callback copy();
-    callback toggle();
-
-    HorizontalLayout {
-        spacing: 8px;
-        Rectangle {
-            horizontal-stretch: 1;
-            height: 34px;
-            border-radius: Look.radius;
-            background: Look.field;
-            border-width: Look.field-border;
-            border-color: Look.line;
-            HorizontalLayout {
-                padding-left: 10px;
-                padding-right: 10px;
-                spacing: 10px;
-                Text {
-                    width: 76px;
-                    text: root.label;
-                    color: Look.faint;
-                    font-size: 12px;
-                    vertical-alignment: center;
-                }
-                Text {
-                    horizontal-stretch: 1;
-                    text: root.secret && !root.shown ? (root.value == "" ? "" : "••••••••••••••••••••••") : root.value;
-                    color: Look.text;
-                    font-family: Look.mono;
-                    font-size: 12px;
-                    vertical-alignment: center;
-                    overflow: elide;
-                }
-            }
-        }
-        if root.secret: SmallButton {
-            text: root.shown ? LiveWords.hide-key() : LiveWords.show-key();
-            enabled: root.value != "";
-            clicked => {
-                root.toggle();
-            }
-        }
-        SmallButton {
-            text: LiveWords.copy();
-            enabled: root.value != "";
-            clicked => {
-                root.copy();
-            }
-        }
-    }
-}
-
-component GoLive inherits Rectangle {
-    property <bool> story: Live.target >= 0 && Live.target < Live.targets.length && Live.targets[Live.target].story;
-
-    HorizontalLayout {
-        padding-left: 32px;
-        padding-right: 32px;
-        padding-top: 22px;
-        spacing: 40px;
-        Flickable {
-            width: min(540px, root.width - 64px);
-            mouse-drag-pan-enabled: false;
-            VerticalLayout {
-                alignment: start;
-                spacing: 22px;
-                padding-bottom: 24px;
-                VerticalLayout {
-                    spacing: 6px;
-                    Link {
-                        text: LiveWords.view();
-                        icon: "caret-left";
-                        font-size: 13px;
-                        clicked => {
-                            Live.close-go-live();
-                        }
-                    }
-                    Heading {
-                        label: LiveWords.go-live();
-                        size: 20px;
-                    }
-                    Paragraph {
-                        text: LiveWords.go-live-line();
-                        color: Look.muted;
-                        font-size: 13px;
-                        line-height-factor: Look.leading(1.5);
-                    }
-                }
-                VerticalLayout {
-                    spacing: 8px;
-                    SectionLabel {
-                        label: LiveWords.where();
-                    }
-                    HorizontalLayout {
-                        spacing: 8px;
-                        alignment: start;
-                        for target[index] in Live.targets: Chip {
-                            label: target.story ? LiveWords.my-story() : LiveWords.channel-stream(target.name);
-                            on: index == Live.target;
-                            clicked => {
-                                Live.choose-target(index);
-                            }
-                        }
-                    }
-                }
-                if root.story: VerticalLayout {
-                    spacing: 8px;
-                    SectionLabel {
-                        label: LiveWords.who();
-                    }
-                    HorizontalLayout {
-                        spacing: 8px;
-                        alignment: start;
-                        for index in 3: Chip {
-                            label: LiveWords.privacy(index);
-                            on: index == Live.privacy;
-                            clicked => {
-                                Live.privacy = index;
-                            }
-                        }
-                    }
-                }
-                if !root.story: VerticalLayout {
-                    spacing: 8px;
-                    SectionLabel {
-                        label: LiveWords.stream-title();
-                    }
-                    Field {
-                        width: 320px;
-                        height: 34px;
-                        font-size: 13px;
-                        padding-x: 10px;
-                        text <=> Live.stream-title;
-                        placeholder: LiveWords.stream-title-placeholder();
-                    }
-                }
-                if root.story: VerticalLayout {
-                    spacing: 8px;
-                    SectionLabel {
-                        label: LiveWords.comments();
-                    }
-                    HorizontalLayout {
-                        spacing: 12px;
-                        alignment: start;
-                        Switch {
-                            on: Live.allow-comments;
-                            toggled => {
-                                Live.allow-comments = !Live.allow-comments;
-                            }
-                        }
-                        Text {
-                            text: LiveWords.viewers-comment();
-                            color: Look.text;
-                            font-size: 13px;
-                            vertical-alignment: center;
-                        }
-                    }
-                    if Live.allow-comments: HorizontalLayout {
-                        spacing: 10px;
-                        alignment: start;
-                        Text {
-                            text: LiveWords.paid-minimum();
-                            color: Look.text;
-                            font-size: 13px;
-                            vertical-alignment: center;
-                        }
-                        Field {
-                            width: 90px;
-                            height: 34px;
-                            font-size: 13px;
-                            padding-x: 10px;
-                            input-type: InputType.number;
-                            text <=> Live.paid-minimum;
-                            placeholder: "0";
-                        }
-                        VerticalLayout {
-                            alignment: center;
-                            Icon {
-                                name: "star";
-                                size: 14px;
-                                color: Tier.ink(2);
-                            }
-                        }
-                    }
-                    if Live.allow-comments: Paragraph {
-                        text: LiveWords.paid-minimum-note();
-                        color: Look.faint;
-                        font-size: 12px;
-                    }
-                }
-                VerticalLayout {
-                    spacing: 8px;
-                    SectionLabel {
-                        label: LiveWords.your-stream();
-                    }
-                    Paragraph {
-                        text: LiveWords.obs-note();
-                        color: Look.muted;
-                        font-size: 13px;
-                        line-height-factor: Look.leading(1.5);
-                    }
-                    KeyLine {
-                        label: LiveWords.server();
-                        value: Live.server;
-                        copy => {
-                            Live.copy-server();
-                        }
-                    }
-                    KeyLine {
-                        label: LiveWords.key();
-                        value: Live.key;
-                        secret: true;
-                        shown: Live.key-shown;
-                        copy => {
-                            Live.copy-key();
-                        }
-                        toggle => {
-                            Live.key-shown = !Live.key-shown;
-                        }
-                    }
-                    HorizontalLayout {
-                        spacing: 6px;
-                        alignment: start;
-                        Text {
-                            text: LiveWords.key-note();
-                            color: Look.faint;
-                            font-size: 12px;
-                            vertical-alignment: center;
-                        }
-                        Link {
-                            text: LiveWords.new-key();
-                            font-size: 12px;
-                            enabled: Live.key != "";
-                            clicked => {
-                                Live.new-key();
-                            }
-                        }
-                    }
-                }
-                HorizontalLayout {
-                    spacing: 14px;
-                    alignment: start;
-                    PrimaryButton {
-                        height: 38px;
-                        font-size: 14px;
-                        padding-x: 16px;
-                        text: LiveWords.start(root.story);
-                        busy: Live.starting;
-                        enabled: Live.targets.length > 0;
-                        clicked => {
-                            Live.start();
-                        }
-                    }
-                    Paragraph {
-                        horizontal-stretch: 1;
-                        text: LiveWords.start-note();
-                        color: Look.muted;
-                        font-size: 12px;
-                        line-height-factor: Look.leading(1.5);
-                    }
-                }
-                if Live.start-problem != "": Paragraph {
-                    text: Live.start-problem;
-                    color: Look.danger;
-                    font-size: 13px;
-                }
-            }
-        }
-        VerticalLayout {
-            horizontal-stretch: 1;
-            spacing: 14px;
-            alignment: start;
-            Rectangle {
-                height: self.width * 9 / 16;
-                border-radius: Look.radius;
-                background: #101214;
-                VerticalLayout {
-                    alignment: center;
-                    spacing: 8px;
-                    HorizontalLayout {
-                        alignment: center;
-                        Icon {
-                            name: "broadcast";
-                            size: 26px;
-                            color: #8b929c;
-                        }
-                    }
-                    Text {
-                        text: LiveWords.waiting-for-obs();
-                        color: #c9ced6;
-                        font-size: 13px;
-                        horizontal-alignment: center;
-                    }
-                }
-            }
-            Rectangle {
-                height: good.preferred-height;
-                border-radius: Look.radius;
-                border-width: 1px;
-                border-color: Look.line-strong;
-                good := VerticalLayout {
-                    padding: 14px;
-                    padding-left: 16px;
-                    padding-right: 16px;
-                    spacing: 4px;
-                    Text {
-                        text: LiveWords.good-to-know();
-                        color: Look.text;
-                        font-size: 13px;
-                        font-weight: 600;
-                    }
-                    Paragraph {
-                        text: LiveWords.good-to-know-line();
-                        color: Look.muted;
-                        font-size: 13px;
-                        line-height-factor: Look.leading(1.55);
-                    }
-                }
-            }
-        }
-    }
-}
-
-// ---- the question before ending -----------------------------------------------------------------
-
-component EndQuestion inherits Rectangle {
+// The content setting (Settings › Live, and Discover's notice): whether mature-rated channels show.
+// Showing them asks for the self-declaration first.
+component ContentQuestion inherits Rectangle {
+    property <bool> shown: LiveDirectory.show-mature;
+    property <bool> adult;
+    property <bool> blocked: root.shown && !LiveDirectory.show-mature && !root.adult;
     background: #00000059;
 
-    TouchArea { }
+    TouchArea {
+        clicked => {
+            LiveDirectory.content-asking = false;
+        }
+    }
 
     Rectangle {
-        width: 380px;
+        width: min(540px, root.width - 48px);
         height: card.preferred-height;
         border-radius: Look.dialog-radius;
         background: Look.bg;
         drop-shadow-blur: 32px;
         drop-shadow-offset-y: 12px;
         drop-shadow-color: #00000040;
+        TouchArea { }
         card := VerticalLayout {
-            padding: 22px;
+            padding-left: 24px;
+            padding-right: 24px;
+            padding-top: 22px;
+            padding-bottom: 20px;
             spacing: 12px;
             Text {
-                text: LiveWords.end-question();
+                text: Look.heading-prefix + LiveContentWords.title();
                 color: Look.text;
-                font-size: 17px;
+                font-size: 18px;
                 font-weight: 600;
             }
             Paragraph {
-                text: LiveWords.end-line(Live.open.kind);
+                text: LiveContentWords.intro();
                 color: Look.muted;
-                font-size: 13px;
-                line-height-factor: Look.leading(1.5);
+                font-size: 14px;
+                line-height-factor: Look.leading(1.55);
             }
-            HorizontalLayout {
-                padding-top: 6px;
-                spacing: 10px;
-                alignment: end;
-                SmallButton {
-                    text: LiveWords.cancel();
+            VerticalLayout {
+                padding-top: 4px;
+                padding-bottom: 4px;
+                spacing: 8px;
+                Choice {
+                    label: LiveContentWords.hidden();
+                    line: LiveContentWords.hidden-line();
+                    on: !root.shown;
                     clicked => {
-                        Live.ask-end(false);
+                        root.shown = false;
                     }
                 }
-                Rectangle {
-                    height: 32px;
-                    width: end-label.preferred-width + 28px;
-                    border-radius: Look.button-radius;
-                    background: end-touch.has-hover ? Look.danger.darker(0.1) : Look.danger;
-                    end-label := Text {
-                        text: LiveWords.end(Live.open.kind);
-                        color: Look.dark ? Look.bg : #ffffff;
-                        font-size: 14px;
-                        font-weight: 600;
+                Choice {
+                    label: LiveContentWords.shown();
+                    line: LiveContentWords.shown-line();
+                    on: root.shown;
+                    clicked => {
+                        root.shown = true;
                     }
-                    end-touch := TouchArea {
-                        mouse-cursor: pointer;
-                        clicked => {
-                            Live.end-live();
+                }
+            }
+            if root.shown && !LiveDirectory.show-mature: Rectangle {
+                height: adult-row.preferred-height;
+                adult-row := HorizontalLayout {
+                    padding-left: 26px;
+                    spacing: 10px;
+                    VerticalLayout {
+                        alignment: start;
+                        padding-top: 2px;
+                        Rectangle {
+                            width: 16px;
+                            height: 16px;
+                            border-radius: Look.button-radius;
+                            border-width: 1.5px;
+                            border-color: root.adult ? Look.accent : Look.line-strong;
+                            background: root.adult ? Look.accent : transparent;
+                            if root.adult: Icon {
+                                name: "check";
+                                size: 12px;
+                                color: Look.on-accent;
+                            }
                         }
+                    }
+                    Paragraph {
+                        horizontal-stretch: 1;
+                        text: LiveContentWords.adult();
+                        color: Look.text;
+                        font-size: 14px;
+                        line-height-factor: Look.leading(1.45);
+                    }
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        root.adult = !root.adult;
+                    }
+                }
+            }
+            Rectangle {
+                height: rules.preferred-height;
+                border-radius: Look.radius;
+                background: Look.side;
+                rules := VerticalLayout {
+                    padding-left: 12px;
+                    padding-right: 12px;
+                    padding-top: 10px;
+                    padding-bottom: 10px;
+                    spacing: 6px;
+                    for rule[index] in [LiveContentWords.general(), LiveContentWords.mature(), LiveContentWords.explicit(), LiveContentWords.prohibited()]: HorizontalLayout {
+                        spacing: 8px;
+                        VerticalLayout {
+                            alignment: start;
+                            padding-top: 2px;
+                            Icon {
+                                name: ["check-circle", "eye-slash", "hourglass", "prohibit"][index];
+                                size: 15px;
+                                color: Look.faint;
+                            }
+                        }
+                        Paragraph {
+                            horizontal-stretch: 1;
+                            text: rule;
+                            color: Look.muted;
+                            font-size: 13px;
+                            line-height-factor: Look.leading(1.5);
+                        }
+                    }
+                }
+            }
+            HorizontalLayout {
+                padding-top: 4px;
+                spacing: 8px;
+                Text {
+                    horizontal-stretch: 1;
+                    text: LiveContentWords.where();
+                    color: Look.faint;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                LiveButton {
+                    height: 34px;
+                    text: LiveWords.cancel();
+                    clicked => {
+                        LiveDirectory.content-asking = false;
+                    }
+                }
+                LiveButton {
+                    height: 34px;
+                    padding-x: 16px;
+                    text: LiveContentWords.save() + Look.enter-hint;
+                    primary: true;
+                    enabled: !root.blocked;
+                    clicked => {
+                        LiveDirectory.set-show-mature(root.shown);
                     }
                 }
             }
@@ -1449,12 +1019,277 @@ component EndQuestion inherits Rectangle {
     }
 }
 
-// The pane in the messages' place while the view is open.
+// The words of the content setting's question (the canvas's dv.mat).
+global LiveContentWords {
+    public pure function title() -> string { return @tr("Content in Live"); }
+    public pure function intro() -> string {
+        return @tr("Live sorts what it lists into four classes. Only the first two can appear in this version; what you can change here is whether mature-rated streams show.");
+    }
+    public pure function hidden() -> string { return @tr("Mature-rated: hidden"); }
+    public pure function hidden-line() -> string { return @tr("Default. They don’t appear in Discover, search or suggestions."); }
+    public pure function shown() -> string { return @tr("Mature-rated: shown, marked “Mature”"); }
+    public pure function shown-line() -> string { return @tr("They appear with a Mature tag; opening one asks first."); }
+    public pure function adult() -> string {
+        return @tr("I’m 18 or older — a self-declaration, accepted only where the law doesn’t require verification");
+    }
+    public pure function general() -> string { return @tr("General — listed and shown by default."); }
+    public pure function mature() -> string {
+        return @tr("Mature-rated (strong language, violence, gambling, horror — rated by the source) — listed, hidden until shown here.");
+    }
+    public pure function explicit() -> string {
+        return @tr("Sexually explicit — not in the directory in this version. Whether and how to list it is a pending policy decision, not a setting.");
+    }
+    public pure function prohibited() -> string {
+        return @tr("Prohibited (illegal content, including non-consensual or underage material) — never indexed, shown or played.");
+    }
+    public pure function where() -> string { return @tr("Settings › Live › Content"); }
+    public pure function save() -> string { return @tr("Save"); }
+}
+
+// The pane in the messages' place while the view is open: the place chosen in the column, or
+// Watch over it.
 export component LivePane inherits Rectangle {
+    // A Telegram stream open outside the directory (a chat's live bar, going live, the user's own
+    // as its host); one opened through the directory and left plays in the mini player.
+    property <bool> telegram-outside: !LiveDirectory.watching && Live.open-id != "" && !(LiveDirectory.mini && LiveDirectory.channel.source == LiveSource.telegram);
+    property <bool> watch: LiveDirectory.watching || root.telegram-outside;
+    property <bool> telegram: root.telegram-outside || (LiveDirectory.watching && LiveDirectory.channel.source == LiveSource.telegram && Live.open-id != "");
     background: Look.bg;
 
-    if Live.going-live: GoLive { }
-    if !Live.going-live && Live.open-id == "": Empty { }
-    if !Live.going-live && Live.open-id != "": Watching { }
+    if !root.watch && LiveDirectory.section == LiveSection.discover: LiveDiscover { }
+    if !root.watch && LiveDirectory.section == LiveSection.following: FollowingPage { }
+    if !root.watch && LiveDirectory.section == LiveSection.broadcast: BroadcastPage { }
+    if !root.watch && LiveDirectory.section == LiveSection.connections: ConnectionsPage { }
+    if root.watch: WatchPage {
+        telegram: root.telegram;
+        back => {
+            if LiveDirectory.watching {
+                LiveDirectory.back();
+            } else {
+                Live.close();
+            }
+        }
+    }
     if Live.ending: EndQuestion { }
+    if LiveDirectory.toast != LiveToast.none: Toast {
+        x: (parent.width - self.width) / 2;
+        y: parent.height - self.height - 28px;
+    }
+    if LiveDirectory.content-asking: ContentQuestion { }
+}
+
+// ---- the mini player ----------------------------------------------------------------------------
+
+// The stream left playing while the user is elsewhere (the canvas's "chats" scene): its picture,
+// pause and sound, back to Watch, the pop-out window, stop. Each theme puts
+// it at the foot of its window, over the chats as over the view.
+export component LiveMini inherits Rectangle {
+    property <LiveChannel> channel: LiveDirectory.channel;
+    // Telegram's streams have no pause: they come a second at a time.
+    property <bool> telegram: root.channel.source == LiveSource.telegram;
+    property <int> viewers: root.telegram ? Live.viewers : root.channel.viewers;
+    width: 300px;
+    height: box.preferred-height;
+    border-radius: Look.workbench ? 10px : Look.broadsheet ? 4px : 3px;
+    background: #0b0c0e;
+    clip: true;
+    drop-shadow-blur: 32px;
+    drop-shadow-offset-y: 12px;
+    drop-shadow-color: #0000004d;
+
+    // The clicks are the mini player's, not the page's under it.
+    TouchArea { }
+
+    box := VerticalLayout {
+        Rectangle {
+            height: root.width * 9 / 16;
+            background: #000000;
+            if Live.frame.width > 0: Image {
+                width: parent.width;
+                height: parent.height;
+                source: Live.frame;
+                image-fit: contain;
+            }
+            Rectangle {
+                x: 8px;
+                y: 8px;
+                height: 16px;
+                width: mark.preferred-width + 10px;
+                border-radius: LiveShape.pill-radius;
+                background: LiveShape.live-on-dark;
+                mark := Text {
+                    text: LiveWords.live-mark();
+                    color: #ffffff;
+                    font-size: 10px;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                }
+            }
+            if !Look.terminal: Rectangle {
+                y: parent.height - self.height;
+                height: 50px;
+                background: @linear-gradient(180deg, #00000000 0%, #000000bf 100%);
+                HorizontalLayout {
+                    padding-left: 6px;
+                    padding-right: 6px;
+                    padding-top: 18px;
+                    padding-bottom: 4px;
+                    spacing: 2px;
+                    PictureIcon {
+                        width: 28px;
+                        height: 28px;
+                        icon-size: 15px;
+                        icon: LiveDirectory.paused ? "play-filled" : "pause-filled";
+                        label: LiveDirectory.paused ? LiveViewWords.play() : LiveViewWords.pause();
+                        enabled: !root.telegram;
+                        clicked => {
+                            LiveDirectory.toggle-pause();
+                        }
+                    }
+                    PictureIcon {
+                        width: 28px;
+                        height: 28px;
+                        icon-size: 15px;
+                        icon: Live.muted ? "speaker-x" : "speaker-high";
+                        label: Live.muted ? LiveViewWords.unmute() : LiveViewWords.mute();
+                        clicked => {
+                            Live.toggle-mute();
+                        }
+                    }
+                    Rectangle { horizontal-stretch: 1; }
+                    PictureIcon {
+                        width: 28px;
+                        height: 28px;
+                        icon-size: 15px;
+                        icon: "arrows-out-simple";
+                        label: LiveViewWords.back-to-live();
+                        clicked => {
+                            Live.show-requests += 1;
+                            LiveDirectory.resume();
+                        }
+                    }
+                    // The pop-out window, on top of every app: a directory's stream (Telegram's play here).
+                    PictureIcon {
+                        width: 28px;
+                        height: 28px;
+                        icon-size: 15px;
+                        icon: "picture-in-picture";
+                        label: LiveViewWords.pop-out();
+                        enabled: LiveDirectory.channel.source != LiveSource.telegram;
+                        clicked => {
+                            LiveDirectory.pop-out();
+                        }
+                    }
+                    PictureIcon {
+                        width: 28px;
+                        height: 28px;
+                        icon-size: 15px;
+                        icon: "x";
+                        label: LiveViewWords.stop();
+                        clicked => {
+                            LiveDirectory.stop();
+                        }
+                    }
+                }
+            }
+        }
+        Rectangle {
+            height: 30px;
+            background: #15171a;
+            HorizontalLayout {
+                padding-left: 10px;
+                padding-right: 10px;
+                spacing: 8px;
+                Text {
+                    horizontal-stretch: 1;
+                    text: root.channel.name;
+                    color: #ffffff;
+                    font-size: 12px;
+                    font-weight: 600;
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+                Text {
+                    text: LiveDirectory.paused && !root.telegram ? LiveViewWords.paused()
+                        : LiveDirectoryWords.source(root.channel.source) + (root.viewers >= 0 ? " · " + root.viewers : "");
+                    color: #ffffff99;
+                    font-size: 12px;
+                    vertical-alignment: center;
+                }
+            }
+        }
+        if Look.terminal: Rectangle {
+            height: 24px;
+            background: #15171a;
+            Rectangle {
+                y: 0;
+                height: 1px;
+                background: #ffffff14;
+            }
+            HorizontalLayout {
+                padding-left: 10px;
+                padding-right: 10px;
+                spacing: 10px;
+                VerticalLayout {
+                    alignment: center;
+                    PictureWord {
+                        text: LiveViewWords.mini-play-word(LiveDirectory.paused);
+                        ink: #cfd5d1;
+                        font-size: 11px;
+                        enabled: !root.telegram;
+                        clicked => {
+                            LiveDirectory.toggle-pause();
+                        }
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    PictureWord {
+                        text: LiveViewWords.mini-mute-word(Live.muted);
+                        ink: #cfd5d1;
+                        font-size: 11px;
+                        clicked => {
+                            Live.toggle-mute();
+                        }
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    PictureWord {
+                        text: LiveViewWords.mini-live-word();
+                        ink: #cfd5d1;
+                        font-size: 11px;
+                        clicked => {
+                            Live.show-requests += 1;
+                            LiveDirectory.resume();
+                        }
+                    }
+                }
+                VerticalLayout {
+                    alignment: center;
+                    PictureWord {
+                        text: LiveViewWords.pop-out-word();
+                        ink: #cfd5d1;
+                        font-size: 11px;
+                        enabled: LiveDirectory.channel.source != LiveSource.telegram;
+                        clicked => {
+                            LiveDirectory.pop-out();
+                        }
+                    }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                VerticalLayout {
+                    alignment: center;
+                    PictureWord {
+                        text: "[x]";
+                        ink: #cfd5d1;
+                        font-size: 11px;
+                        clicked => {
+                            LiveDirectory.stop();
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

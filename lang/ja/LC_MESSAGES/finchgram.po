@@ -5894,3 +5894,1997 @@ msgstr "そこでは今、ライブストーリーは配信されていません
 #: ui/live.slint:238
 msgid "Stream key"
 msgstr "ストリームキー"
+
+#: ui/live-popout.slint:15 ui/pages/live-parts.slint:186
+msgid "Pause"
+msgstr "一時停止"
+
+#: ui/live.slint:523
+msgid "Submitted streams"
+msgstr "投稿された配信"
+
+#: ui/live.slint:543 ui/live.slint:655
+msgid "Following"
+msgstr "フォロー中"
+
+#: ui/live.slint:544
+msgid "Broadcast"
+msgstr "配信する"
+
+#: ui/live.slint:545
+msgid "Connections"
+msgstr "接続"
+
+#: ui/live.slint:546
+msgid "Discover"
+msgstr "見つける"
+
+#: ui/live.slint:549
+msgid "All channels"
+msgstr "すべてのチャンネル"
+
+#: ui/live.slint:550
+msgid "Upcoming"
+msgstr "配信予定"
+
+#: ui/live.slint:551 ui/pages/live-discover.slint:93 ui/live.slint:551 ui/pages/live-discover.slint:93
+msgid "Live now"
+msgstr "配信中"
+
+#: ui/live.slint:554
+msgid "Relevance"
+msgstr "関連度順"
+
+#: ui/live.slint:555
+msgid "Most viewers"
+msgstr "視聴者数順"
+
+#: ui/live.slint:556
+msgid "Recently started"
+msgstr "開始が新しい順"
+
+#: ui/live.slint:558
+msgid "Recommended"
+msgstr "おすすめ順"
+
+#: ui/live.slint:562
+msgid "Gaming"
+msgstr "ゲーム"
+
+#: ui/live.slint:563
+msgid "Talk"
+msgstr "トーク"
+
+#: ui/live.slint:564
+msgid "Technology"
+msgstr "テクノロジー"
+
+#: ui/live.slint:565
+msgid "Creative"
+msgstr "クリエイティブ"
+
+#: ui/live.slint:566
+msgid "IRL"
+msgstr "日常"
+
+#: ui/live.slint:567
+msgid "Education"
+msgstr "教育"
+
+#: ui/live.slint:568
+msgid "Events"
+msgstr "イベント"
+
+#: ui/live.slint:569
+msgid "News"
+msgstr "ニュース"
+
+#: ui/live.slint:570
+msgid "Sports"
+msgstr "スポーツ"
+
+#: ui/live.slint:571
+msgid "Other"
+msgstr "その他"
+
+#: ui/live.slint:572
+msgid "Uncategorized"
+msgstr "未分類"
+
+#: ui/live.slint:574
+msgid "Language not given"
+msgstr "言語の指定なし"
+
+#: ui/live.slint:579
+msgid "NOT CONFIRMED"
+msgstr "未確認"
+
+#: ui/live.slint:580
+msgid "OFFLINE"
+msgstr "オフライン"
+
+#: ui/live.slint:581
+msgid "STATUS UNKNOWN"
+msgstr "状態不明"
+
+#: ui/live.slint:584 ui/pages/live-parts.slint:20
+msgid "On air"
+msgstr "配信中"
+
+#: ui/live.slint:585 ui/pages/live-discover.slint:87 ui/live.slint:585 ui/pages/live-discover.slint:87
+msgid "Not confirmed"
+msgstr "未確認"
+
+#: ui/live.slint:586
+msgid "Off air"
+msgstr "オフライン"
+
+#: ui/live.slint:587 ui/live.slint:630 ui/pages/live-discover.slint:96
+msgid "Status unknown"
+msgstr "状態不明"
+
+#: ui/live.slint:591
+msgid "{} min"
+msgstr "{}分"
+
+#: ui/live.slint:592
+msgid "{} h"
+msgstr "{}時間"
+
+#: ui/live.slint:593
+msgid "{} h {} min"
+msgstr "{}時間{}分"
+
+#: ui/live.slint:597
+msgid "just now"
+msgstr "たった今"
+
+#: ui/live.slint:598
+msgid "{} min ago"
+msgstr "{}分前"
+
+#: ui/live.slint:599
+msgid "{} h ago"
+msgstr "{}時間前"
+
+#: ui/live.slint:600
+msgid "{} days ago"
+msgstr "{}日前"
+
+#: ui/live.slint:604
+msgid "{n} listening"
+msgid_plural "{n} listening"
+msgstr[0] "{n}人が聴取中"
+
+#: ui/live.slint:611
+msgid "Live for {} · {}"
+msgstr "配信開始から{} · {}"
+
+#: ui/live.slint:612 ui/pages/live-parts.slint:217
+msgid "Live for {}"
+msgstr "配信開始から{}"
+
+#: ui/live.slint:614
+msgid "Not confirmed · last confirmed live {}"
+msgstr "未確認 · 最後の配信確認は{}"
+
+#: ui/live.slint:616
+msgid "Status unknown · last confirmed live {}"
+msgstr "状態不明 · 最後の配信確認は{}"
+
+#: ui/live.slint:617
+msgid "Status unknown · no recent answer from {}"
+msgstr "状態不明 · 最近 {} から応答なし"
+
+#: ui/live.slint:619
+msgid "Offline · last live {}"
+msgstr "オフライン · 最後の配信は{}"
+
+#: ui/live.slint:619 ui/pages/live-parts.slint:29
+msgid "Not seen live yet"
+msgstr "まだ配信記録なし"
+
+#: ui/live.slint:624
+msgid "Watch here"
+msgstr "ここで視聴"
+
+#: ui/live.slint:625
+msgid "Listen here"
+msgstr "ここで聴く"
+
+#: ui/live.slint:626
+msgid "Try opening"
+msgstr "開いてみる"
+
+#: ui/live.slint:627
+msgid "Sign in to watch"
+msgstr "サインインして視聴"
+
+#: ui/live.slint:628 ui/pages/live-parts.slint:154
+msgid "Open on {}"
+msgstr "{} で開く"
+
+#: ui/live.slint:629 ui/pages/live-discover.slint:88 ui/live.slint:629 ui/pages/live-discover.slint:88 ui/pages/live-discover.slint:235
+msgid "Offline"
+msgstr "オフライン"
+
+#: ui/live.slint:631
+msgid "Unavailable"
+msgstr "再生不可"
+
+#: ui/live.slint:634
+msgid "Not live right now"
+msgstr "現在は配信していません"
+
+#: ui/live.slint:635
+msgid "{} isn't answering"
+msgstr "{} が応答しません"
+
+#: ui/live.slint:636
+msgid "Live status isn't confirmed — the stream may have ended"
+msgstr "配信状態が未確認です。配信は終了しているかもしれません"
+
+#: ui/live.slint:637
+msgid "Telegram sends this one over WebRTC — watch it on your phone"
+msgstr "Telegram はこの配信を WebRTC で送っています。スマートフォンで視聴してください"
+
+#: ui/live.slint:638
+msgid "{} needs an account for this stream"
+msgstr "この配信を見るには {} のアカウントが必要です"
+
+#: ui/live.slint:639
+msgid "Plays on {}'s site, in your browser"
+msgstr "ブラウザで開き、{} のサイトで再生します"
+
+#: ui/live.slint:640
+msgid "{} allows only its own player, so it opens in your browser"
+msgstr "{} は独自のプレーヤーでの再生しか認めていないため、ブラウザで開きます"
+
+#: ui/live.slint:641
+msgid "FinchGram can't play this kind of stream yet"
+msgstr "FinchGram はこの種類の配信にまだ対応していません"
+
+#: ui/live.slint:642
+msgid "Plays in FinchGram, sound only"
+msgstr "FinchGram で再生（音声のみ）"
+
+#: ui/live.slint:643 ui/pages/live-discover.slint:81 ui/live.slint:643 ui/pages/live-discover.slint:81 ui/pages/live-parts.slint:273
+msgid "Plays in FinchGram"
+msgstr "FinchGram で再生"
+
+#: ui/live.slint:645
+msgid "No thumbnail from {}"
+msgstr "{} からのサムネイルはありません"
+
+#: ui/live.slint:647
+msgid "Following {}"
+msgstr "{} をフォローしました"
+
+#: ui/live.slint:648
+msgid "Unfollowed {}"
+msgstr "{} のフォローを解除しました"
+
+#: ui/live.slint:649
+msgid "Followed on Telegram — unfollow it there"
+msgstr "Telegram でフォロー中です。解除は Telegram で行ってください"
+
+#: ui/live.slint:650
+msgid "Opened {} in your browser"
+msgstr "{} をブラウザで開きました"
+
+#: ui/live.slint:654
+msgid "Followed on Telegram"
+msgstr "Telegram でフォロー中"
+
+#: ui/live.slint:655 ui/pages/live-parts.slint:197
+msgid "Follow"
+msgstr "フォロー"
+
+#: ui/pages/live-cards.slint:86
+msgid "Not confirmed — {} last answered {}"
+msgstr "未確認：{} の最後の応答は{}"
+
+#: ui/pages/live-cards.slint:89
+msgid "{} isn’t answering — last confirmed live {}"
+msgstr "{} が応答しません。最後の配信確認は{}"
+
+#: ui/pages/live-cards.slint:99
+msgid "Will play in FinchGram"
+msgstr "FinchGram で再生予定"
+
+#: ui/pages/live-cards.slint:99
+msgid "Will open on {}"
+msgstr "{} で開く予定"
+
+#: ui/pages/live-cards.slint:104
+msgid "Mature"
+msgstr "年齢制限"
+
+#: ui/pages/live-cards.slint:104
+msgid "MATURE"
+msgstr "年齢制限"
+
+#: ui/pages/live-cards.slint:112
+msgid "in {} min"
+msgstr "{}分後"
+
+#: ui/pages/live-cards.slint:113
+msgid "in {} h"
+msgstr "{}時間後"
+
+#: ui/pages/live-cards.slint:114
+msgid "in {} days"
+msgstr "{}日後"
+
+#: ui/pages/live-cards.slint:123
+msgid "{} · {} · {}"
+msgstr "{} · {} · {}"
+
+#: ui/pages/live-cards.slint:128
+msgid "viewers not shared"
+msgstr "視聴者数は非公開"
+
+#: ui/pages/live-cards.slint:129
+msgid "{} (the server’s own count)"
+msgstr "{}（サーバー自身の集計）"
+
+#: ui/pages/live-cards.slint:140
+msgid "{} · live for {}"
+msgstr "{} · 配信開始から{}"
+
+#: ui/pages/live-cards.slint:142
+msgid "{} · not confirmed"
+msgstr "{} · 未確認"
+
+#: ui/pages/live-cards.slint:143
+msgid "{} · status unknown"
+msgstr "{} · 状態不明"
+
+#: ui/pages/live-cards.slint:147
+msgid "live now"
+msgstr "配信中"
+
+#: ui/pages/live-cards.slint:148
+msgid "not confirmed"
+msgstr "未確認"
+
+#: ui/pages/live-cards.slint:149
+msgid "status unknown"
+msgstr "状態不明"
+
+#: ui/pages/live-cards.slint:150 ui/pages/live-parts.slint:29
+msgid "last live {}"
+msgstr "最後の配信は{}"
+
+#: ui/pages/live-cards.slint:150
+msgid "never live yet"
+msgstr "配信記録なし"
+
+#: ui/pages/live-cards.slint:155
+msgid "▸ here"
+msgstr "▸ ここで再生"
+
+#: ui/pages/live-cards.slint:157
+msgid "▸ watch here"
+msgstr "▸ ここで視聴"
+
+#: ui/pages/live-cards.slint:158
+msgid "▸ listen here"
+msgstr "▸ ここで聴く"
+
+#: ui/pages/live-cards.slint:159
+msgid "? try opening"
+msgstr "? 開いてみる"
+
+#: ui/pages/live-cards.slint:160
+msgid "sign in"
+msgstr "サインイン"
+
+#: ui/pages/live-cards.slint:162
+msgid "× offline"
+msgstr "× オフライン"
+
+#: ui/pages/live-cards.slint:163
+msgid "× unknown"
+msgstr "× 不明"
+
+#: ui/pages/live-cards.slint:164
+msgid "× unavailable"
+msgstr "× 再生不可"
+
+#: ui/pages/live-cards.slint:1041
+msgid "loading {}"
+msgstr "読み込み中 {}"
+
+#: ui/pages/live-discover.slint:23
+msgid "title, channel, category, platform"
+msgstr "タイトル、チャンネル、カテゴリ、プラットフォーム"
+
+#: ui/pages/live-discover.slint:24
+msgid "Search streams, channels, categories, platforms"
+msgstr "配信、チャンネル、カテゴリ、プラットフォームを検索"
+
+#: ui/pages/live-discover.slint:24
+msgid "Search live streams, channels, categories, platforms"
+msgstr "ライブ配信、チャンネル、カテゴリ、プラットフォームを検索"
+
+#: ui/pages/live-discover.slint:26
+msgid "searching…"
+msgstr "検索中…"
+
+#: ui/pages/live-discover.slint:28
+msgid "⏎ search · / focus · esc clear"
+msgstr "⏎ 検索 · / フォーカス · esc 消去"
+
+#: ui/pages/live-discover.slint:32 ui/pages/live-discover.slint:331
+msgid "recent"
+msgstr "最近"
+
+#: ui/pages/live-discover.slint:32
+msgid "Recent searches"
+msgstr "最近の検索"
+
+#: ui/pages/live-discover.slint:33
+msgid "Searches"
+msgstr "検索候補"
+
+#: ui/pages/live-discover.slint:34
+msgid "channels"
+msgstr "チャンネル"
+
+#: ui/pages/live-discover.slint:36 ui/pages/live-discover.slint:338
+msgid "filters"
+msgstr "絞り込み"
+
+#: ui/pages/live-discover.slint:36
+msgid "Filters"
+msgstr "絞り込み"
+
+#: ui/pages/live-discover.slint:39 ui/pages/live-discover.slint:275
+msgid "Source: {}"
+msgstr "ソース：{}"
+
+#: ui/pages/live-discover.slint:40 ui/pages/live-discover.slint:276
+msgid "Category: {}"
+msgstr "カテゴリ：{}"
+
+#: ui/pages/live-discover.slint:41
+msgid "Open this link directly"
+msgstr "このリンクを直接開く"
+
+#: ui/pages/live-discover.slint:46
+msgid "{} — not a directory search"
+msgstr "{}（ディレクトリ検索ではありません）"
+
+#: ui/pages/live-discover.slint:51
+msgid "↑↓ pick · ⏎ go · tab complete · {}"
+msgstr "↑↓ 選択 · ⏎ 決定 · tab 補完 · {}"
+
+#: ui/pages/live-discover.slint:51
+msgid "links open directly"
+msgstr "リンクは直接開く"
+
+#: ui/pages/live-discover.slint:51
+msgid "esc close"
+msgstr "esc 閉じる"
+
+#: ui/pages/live-discover.slint:53
+msgid "Links open directly — they aren’t searched in the directory."
+msgstr "リンクは直接開きます。ディレクトリでは検索しません。"
+
+#: ui/pages/live-discover.slint:54
+msgid "⏎ searches the directory for “{}” · ↑↓ to pick"
+msgstr "⏎ でディレクトリから「{}」を検索 · ↑↓ で選択"
+
+#: ui/pages/live-discover.slint:54
+msgid "Type to search the directory, or paste a link to open it"
+msgstr "入力してディレクトリを検索、またはリンクを貼り付けて開く"
+
+#: ui/pages/live-discover.slint:59
+msgid "Index"
+msgstr "索引"
+
+#: ui/pages/live-discover.slint:59
+msgid "Pictures"
+msgstr "写真"
+
+#: ui/pages/live-discover.slint:60
+msgid "List"
+msgstr "リスト"
+
+#: ui/pages/live-discover.slint:60
+msgid "Grid"
+msgstr "グリッド"
+
+#: ui/pages/live-discover.slint:64 ui/pages/live-discover.slint:143
+msgid "Source"
+msgstr "ソース"
+
+#: ui/pages/live-discover.slint:65
+msgid "Category"
+msgstr "カテゴリ"
+
+#: ui/pages/live-discover.slint:67 ui/pages/live-discover.slint:214
+msgid "Plays"
+msgstr "再生場所"
+
+#: ui/pages/live-discover.slint:68
+msgid "Status"
+msgstr "状態"
+
+#: ui/pages/live-discover.slint:69
+msgid "Sort"
+msgstr "並び順"
+
+#: ui/pages/live-discover.slint:70
+msgid "Any"
+msgstr "すべて"
+
+#: ui/pages/live-discover.slint:71
+msgid "{n} source"
+msgid_plural "{n} sources"
+msgstr[0] "{n}件のソース"
+
+#: ui/pages/live-discover.slint:72
+msgid "Any source"
+msgstr "すべてのソース"
+
+#: ui/pages/live-discover.slint:73
+msgid "Any category"
+msgstr "すべてのカテゴリ"
+
+#: ui/pages/live-discover.slint:76
+msgid "In FinchGram"
+msgstr "FinchGram 内"
+
+#: ui/pages/live-discover.slint:77
+msgid "On its site"
+msgstr "配信元のサイト"
+
+#: ui/pages/live-discover.slint:78 ui/pages/live-discover.slint:83
+msgid "Anywhere"
+msgstr "どこでも"
+
+#: ui/pages/live-discover.slint:82
+msgid "Opens on its own site"
+msgstr "配信元のサイトで開く"
+
+#: ui/pages/live-discover.slint:89
+msgid "Unknown"
+msgstr "不明"
+
+#: ui/pages/live-discover.slint:91
+msgid "Any status"
+msgstr "すべての状態"
+
+#: ui/pages/live-discover.slint:100
+msgid "Recently live"
+msgstr "最近配信した順"
+
+#: ui/pages/live-discover.slint:104
+msgid "Twitch, YouTube, Kick and Bilibili: not integrated yet — their links still open in your browser."
+msgstr "Twitch、YouTube、Kick、Bilibili：まだ統合されていません。リンクはブラウザで開きます。"
+
+#: ui/pages/live-discover.slint:107
+msgid "Language comes from the source. Streams that don’t give one appear only under Any."
+msgstr "言語はソースから取得します。言語の指定がない配信は「すべての言語」でのみ表示されます。"
+
+#: ui/pages/live-discover.slint:110
+msgid "Twitch and YouTube allow only their own players, and Kick plays on its site. They are not integrated yet; their links open in your browser."
+msgstr "Twitch と YouTube は独自のプレーヤーでの再生しか認めておらず、Kick は自分のサイトで再生されます。いずれもまだ統合されていないため、リンクはブラウザで開きます。"
+
+#: ui/pages/live-discover.slint:113 ui/pages/live-parts.slint:92
+msgid "Not confirmed: live at the last answer, but that answer is old. Status unknown: no recent answer at all. Neither is treated as offline."
+msgstr "未確認：最後の応答では配信中でしたが、その応答は古いものです。状態不明：最近の応答がまったくありません。どちらもオフラインとは見なしません。"
+
+#: ui/pages/live-discover.slint:116
+msgid "Relevance and Recommended put confirmed live first. Most viewers uses each source’s own counts — they aren’t comparable across platforms, and streams without a count come after, not as zero."
+msgstr "「関連度順」と「おすすめ順」では、配信中が確認されたものが先に並びます。「視聴者数順」は各ソース独自の数を使うため、プラットフォーム間では比較できません。数のない配信は0としてではなく、後ろに並びます。"
+
+#: ui/pages/live-discover.slint:118
+msgid "Clear filters"
+msgstr "絞り込みを解除"
+
+#: ui/pages/live-discover.slint:122
+msgid "Partial results — {} of {} sources are behind"
+msgstr "一部の結果のみ：ソース{}件が遅延中（全{}件）"
+
+#: ui/pages/live-discover.slint:122
+msgid "Partial results — a source is behind"
+msgstr "一部の結果のみ：遅延中のソースがあります"
+
+#: ui/pages/live-discover.slint:126
+msgid "{} limited our requests. Its results are from {}, so its streams show “Not confirmed”."
+msgstr "{} がリクエストを制限しています。結果は{}のものなので、その配信は「未確認」と表示されます。"
+
+#: ui/pages/live-discover.slint:127
+msgid "{} limited our requests, so its streams show “Not confirmed”."
+msgstr "{} がリクエストを制限しているため、その配信は「未確認」と表示されます。"
+
+#: ui/pages/live-discover.slint:130
+msgid "{} hasn’t answered for {}. Its streams are “Status unknown” and left out of Live now."
+msgstr "{} から{}応答がありません。その配信は「状態不明」となり、「配信中」には含まれません。"
+
+#: ui/pages/live-discover.slint:131
+msgid "{} isn’t answering. Its streams are “Status unknown” and left out of Live now."
+msgstr "{} が応答しません。その配信は「状態不明」となり、「配信中」には含まれません。"
+
+#: ui/pages/live-discover.slint:133
+msgid "Some {} servers haven’t answered for {}."
+msgstr "一部の {} サーバーから{}応答がありません。"
+
+#: ui/pages/live-discover.slint:134
+msgid "Some {} servers aren’t answering."
+msgstr "一部の {} サーバーが応答しません。"
+
+#: ui/pages/live-discover.slint:137
+msgid "{n} stream with unknown status isn’t in Live now — All channels lists it."
+msgid_plural "{n} streams with unknown status aren’t in Live now — All channels lists them."
+msgstr[0] "状態不明の配信{n}件は「配信中」に含まれていません。「すべてのチャンネル」に表示されます。"
+
+#: ui/pages/live-discover.slint:140
+msgid "[hide sources]"
+msgstr "[ソースを隠す]"
+
+#: ui/pages/live-discover.slint:140
+msgid "[sources]"
+msgstr "[ソース]"
+
+#: ui/pages/live-discover.slint:141 ui/pages/live-discover.slint:306
+msgid "Hide sources"
+msgstr "ソースを隠す"
+
+#: ui/pages/live-discover.slint:144
+msgid "# sources"
+msgstr "# ソース"
+
+#: ui/pages/live-discover.slint:145
+msgid "Provides"
+msgstr "提供内容"
+
+#: ui/pages/live-discover.slint:147
+msgid "Last answer"
+msgstr "最終応答"
+
+#: ui/pages/live-discover.slint:148
+msgid "State"
+msgstr "状態"
+
+#: ui/pages/live-discover.slint:150
+msgid "Not integrated yet — its links still open in your browser."
+msgstr "まだ統合されていません。リンクはブラウザで開きます。"
+
+#: ui/pages/live-discover.slint:151
+msgid "live status · {} · {} · {}"
+msgstr "配信状態 · {} · {} · {}"
+
+#: ui/pages/live-discover.slint:152
+msgid "viewer counts"
+msgstr "視聴者数"
+
+#: ui/pages/live-discover.slint:152
+msgid "self-reported counts"
+msgstr "自己申告の数"
+
+#: ui/pages/live-discover.slint:152
+msgid "listener counts"
+msgstr "リスナー数"
+
+#: ui/pages/live-discover.slint:152
+msgid "no viewer counts"
+msgstr "視聴者数なし"
+
+#: ui/pages/live-discover.slint:153
+msgid "thumbnails"
+msgstr "サムネイル"
+
+#: ui/pages/live-discover.slint:153
+msgid "no thumbnails"
+msgstr "サムネイルなし"
+
+#: ui/pages/live-discover.slint:154
+msgid "plays in FinchGram"
+msgstr "FinchGram で再生"
+
+#: ui/pages/live-discover.slint:154
+msgid "plays on its site"
+msgstr "配信元のサイトで再生"
+
+#: ui/pages/live-discover.slint:157
+msgid "Not integrated yet"
+msgstr "未統合"
+
+#: ui/pages/live-discover.slint:158
+msgid "Up to date"
+msgstr "最新"
+
+#: ui/pages/live-discover.slint:159
+msgid "Partly behind"
+msgstr "一部遅延"
+
+#: ui/pages/live-discover.slint:160
+msgid "Rate-limited"
+msgstr "レート制限中"
+
+#: ui/pages/live-discover.slint:161
+msgid "Not answering"
+msgstr "応答なし"
+
+#: ui/pages/live-discover.slint:168
+msgid "Channels · total unknown"
+msgstr "チャンネル · 総数不明"
+
+#: ui/pages/live-discover.slint:169
+msgid "Scheduled streams · total unknown"
+msgstr "配信予定 · 総数不明"
+
+#: ui/pages/live-discover.slint:170
+msgid "Live streams · total unknown"
+msgstr "ライブ配信 · 総数不明"
+
+#: ui/pages/live-discover.slint:173
+msgid "At least {n} channel"
+msgid_plural "At least {n} channels"
+msgstr[0] "少なくとも{n}チャンネル"
+
+#: ui/pages/live-discover.slint:174
+msgid "At least {n} scheduled stream"
+msgid_plural "At least {n} scheduled streams"
+msgstr[0] "少なくとも{n}件の配信予定"
+
+#: ui/pages/live-discover.slint:175
+msgid "At least {n} live stream"
+msgid_plural "At least {n} live streams"
+msgstr[0] "少なくとも{n}件のライブ配信"
+
+#: ui/pages/live-discover.slint:177
+msgid "{n} channel"
+msgid_plural "{n} channels"
+msgstr[0] "{n}チャンネル"
+
+#: ui/pages/live-discover.slint:178
+msgid "{n} scheduled stream"
+msgid_plural "{n} scheduled streams"
+msgstr[0] "{n}件の配信予定"
+
+#: ui/pages/live-discover.slint:179
+msgid "{n} live stream"
+msgid_plural "{n} live streams"
+msgstr[0] "{n}件のライブ配信"
+
+#: ui/pages/live-discover.slint:182
+msgid "{} for “{}”"
+msgstr "{}（「{}」の検索結果）"
+
+#: ui/pages/live-discover.slint:184
+msgid "Loading results…"
+msgstr "結果を読み込み中…"
+
+#: ui/pages/live-discover.slint:185
+msgid "Searching…"
+msgstr "検索中…"
+
+#: ui/pages/live-discover.slint:187
+msgid "partial — {} of {} sources behind"
+msgstr "一部のみ：ソース{}件が遅延（全{}件）"
+
+#: ui/pages/live-discover.slint:187
+msgid "partial — a source is behind"
+msgstr "一部のみ：遅延中のソースあり"
+
+#: ui/pages/live-discover.slint:190
+msgid "counts come from each source and aren’t comparable — streams without one come after, not as zero"
+msgstr "数は各ソースのもので、互いに比較できません。数のない配信は0として扱わず、後ろに並びます"
+
+#: ui/pages/live-discover.slint:191
+msgid "Recommended: confirmed live first, then your languages, recently started, and popularity within each source"
+msgstr "おすすめ順：配信中が確認されたものを先に、次にあなたの言語、開始が新しいもの、各ソース内での人気の順"
+
+#: ui/pages/live-discover.slint:195
+msgid "{n} mature-rated result hidden"
+msgid_plural "{n} mature-rated results hidden"
+msgstr[0] "年齢制限付きの結果{n}件を非表示"
+
+#: ui/pages/live-discover.slint:200
+msgid "Confirmed live on Owncast, PeerTube, Icecast and submitted servers"
+msgstr "Owncast、PeerTube、Icecast、投稿されたサーバーで配信中を確認済み"
+
+#: ui/pages/live-discover.slint:201
+msgid "See all {}"
+msgstr "{}件をすべて表示"
+
+#: ui/pages/live-discover.slint:201
+msgid "See all"
+msgstr "すべて表示"
+
+#: ui/pages/live-discover.slint:202
+msgid "Not confirmed right now"
+msgstr "現在は未確認"
+
+#: ui/pages/live-discover.slint:203
+msgid "Their sources haven’t answered recently. Opening one tries the stream; it may have ended."
+msgstr "これらのソースは最近応答していません。開くと配信の再生を試みますが、終了している場合があります。"
+
+#: ui/pages/live-discover.slint:204
+msgid "By category"
+msgstr "カテゴリ別"
+
+#: ui/pages/live-discover.slint:204
+msgid "Browse by category"
+msgstr "カテゴリから探す"
+
+#: ui/pages/live-discover.slint:209
+msgid "Scheduled stream"
+msgstr "配信予定"
+
+#: ui/pages/live-discover.slint:210
+msgid "Stream"
+msgstr "配信"
+
+#: ui/pages/live-discover.slint:212
+msgid "Category · language"
+msgstr "カテゴリ · 言語"
+
+#: ui/pages/live-discover.slint:213
+msgid "Starts"
+msgstr "開始"
+
+#: ui/pages/live-discover.slint:213
+msgid "Viewers"
+msgstr "視聴者"
+
+#: ui/pages/live-discover.slint:217 ui/pages/live-discover.slint:218
+msgid "channel"
+msgstr "チャンネル"
+
+#: ui/pages/live-discover.slint:217
+msgid "scheduled stream"
+msgstr "配信予定"
+
+#: ui/pages/live-discover.slint:217 ui/pages/live-discover.slint:342
+msgid "title"
+msgstr "タイトル"
+
+#: ui/pages/live-discover.slint:218 ui/pages/live-discover.slint:343
+msgid "status"
+msgstr "状態"
+
+#: ui/pages/live-discover.slint:219
+msgid "src"
+msgstr "ソース"
+
+#: ui/pages/live-discover.slint:220
+msgid "cat"
+msgstr "カテゴリ"
+
+#: ui/pages/live-discover.slint:221
+msgid "lang"
+msgstr "言語"
+
+#: ui/pages/live-discover.slint:222
+msgid "starts"
+msgstr "開始"
+
+#: ui/pages/live-discover.slint:222 ui/pages/live-discover.slint:333
+msgid "viewers"
+msgstr "視聴者"
+
+#: ui/pages/live-discover.slint:223 ui/pages/live-discover.slint:344
+msgid "plays"
+msgstr "再生"
+
+#: ui/pages/live-discover.slint:228
+msgid "── live · confirmed ──"
+msgstr "── 配信中 · 確認済み ──"
+
+#: ui/pages/live-discover.slint:229
+msgid "── not confirmed: source behind, opening tries the stream ──"
+msgstr "── 未確認：ソースが遅延中、開くと再生を試みる ──"
+
+#: ui/pages/live-discover.slint:230
+msgid "── offline ──"
+msgstr "── オフライン ──"
+
+#: ui/pages/live-discover.slint:231
+msgid "── status unknown: source not answering ──"
+msgstr "── 状態不明：ソースが応答なし ──"
+
+#: ui/pages/live-discover.slint:233
+msgid "Live now · confirmed"
+msgstr "配信中 · 確認済み"
+
+#: ui/pages/live-discover.slint:234
+msgid "Not confirmed right now — the source hasn’t answered recently; opening one tries the stream"
+msgstr "現在は未確認：ソースが最近応答していません。開くと配信の再生を試みます"
+
+#: ui/pages/live-discover.slint:236
+msgid "Status unknown — the source isn’t answering"
+msgstr "状態不明：ソースが応答しません"
+
+#: ui/pages/live-discover.slint:239
+msgid "Upcoming lists the sources that publish schedules. Follow a channel to keep it in Following."
+msgstr "「配信予定」には、予定を公開しているソースのものが表示されます。チャンネルをフォローすると「フォロー中」に残ります。"
+
+#: ui/pages/live-discover.slint:245
+msgid "no channels match these filters"
+msgstr "この条件に合うチャンネルはありません"
+
+#: ui/pages/live-discover.slint:245
+msgid "No channels match these filters"
+msgstr "この条件に合うチャンネルはありません"
+
+#: ui/pages/live-discover.slint:246
+msgid "no scheduled streams match these filters"
+msgstr "この条件に合う配信予定はありません"
+
+#: ui/pages/live-discover.slint:246
+msgid "No scheduled streams match these filters"
+msgstr "この条件に合う配信予定はありません"
+
+#: ui/pages/live-discover.slint:247
+msgid "no live streams match these filters"
+msgstr "この条件に合うライブ配信はありません"
+
+#: ui/pages/live-discover.slint:247
+msgid "No live streams match these filters"
+msgstr "この条件に合うライブ配信はありません"
+
+#: ui/pages/live-discover.slint:249
+msgid "nothing matches “{}”"
+msgstr "「{}」に一致するものはありません"
+
+#: ui/pages/live-discover.slint:249
+msgid "Nothing matches “{}”"
+msgstr "「{}」に一致するものはありません"
+
+#: ui/pages/live-discover.slint:250
+msgid "nothing scheduled"
+msgstr "配信予定なし"
+
+#: ui/pages/live-discover.slint:250
+msgid "Nothing scheduled"
+msgstr "配信予定はありません"
+
+#: ui/pages/live-discover.slint:251
+msgid "nothing here"
+msgstr "何もありません"
+
+#: ui/pages/live-discover.slint:251
+msgid "Nothing here yet"
+msgstr "まだ何もありません"
+
+#: ui/pages/live-discover.slint:254
+msgid "Nothing in {} for “{}” with {}."
+msgstr "「{}」には「{}」に一致するものがありません（条件：{}）。"
+
+#: ui/pages/live-discover.slint:254
+msgid "Nothing in {} with {}."
+msgstr "「{}」には該当するものがありません（条件：{}）。"
+
+#: ui/pages/live-discover.slint:257
+msgid "Searched titles, channel names, categories, platforms and languages from {n} source, live and offline."
+msgid_plural "Searched titles, channel names, categories, platforms and languages from {n} sources, live and offline."
+msgstr[0] "{n}件のソースから、配信中・オフラインを問わず、タイトル、チャンネル名、カテゴリ、プラットフォーム、言語を検索しました。"
+
+#: ui/pages/live-discover.slint:258
+msgid "{n} mature-rated result is hidden."
+msgid_plural "{n} mature-rated results are hidden."
+msgstr[0] "年齢制限付きの結果{n}件は非表示です。"
+
+#: ui/pages/live-discover.slint:261
+msgid "{} and {}"
+msgstr "{}、{}"
+
+#: ui/pages/live-discover.slint:264
+msgid "[remove {}]"
+msgstr "[{} を解除]"
+
+#: ui/pages/live-discover.slint:264
+msgid "Remove “{}”"
+msgstr "「{}」を解除"
+
+#: ui/pages/live-discover.slint:267
+msgid "Look in {}"
+msgstr "「{}」で探す"
+
+#: ui/pages/live-discover.slint:269
+msgid "{n} result"
+msgid_plural "{n} results"
+msgstr[0] "{n}件の結果"
+
+#: ui/pages/live-discover.slint:270
+msgid "Clear all filters"
+msgstr "すべての絞り込みを解除"
+
+#: ui/pages/live-discover.slint:271
+msgid "Clear the search"
+msgstr "検索を消去"
+
+#: ui/pages/live-discover.slint:272
+msgid "Not in the directory? Open a link in Connections"
+msgstr "ディレクトリにありませんか？「接続」でリンクを開けます"
+
+#: ui/pages/live-discover.slint:273
+msgid "try: /watch <link> · esc clears the search"
+msgstr "例：/watch <リンク> · esc で検索を消去"
+
+#: ui/pages/live-discover.slint:277
+msgid "Language: {}"
+msgstr "言語：{}"
+
+#: ui/pages/live-discover.slint:278
+msgid "Status: {}"
+msgstr "状態：{}"
+
+#: ui/pages/live-discover.slint:283
+msgid "the live directory didn’t answer — what’s shown may be out of date"
+msgstr "ライブディレクトリが応答しませんでした。表示内容が古い可能性があります"
+
+#: ui/pages/live-discover.slint:283
+msgid "the live directory didn’t answer"
+msgstr "ライブディレクトリが応答しませんでした"
+
+#: ui/pages/live-discover.slint:285
+msgid "The live directory didn’t answer. What’s shown may be out of date."
+msgstr "ライブディレクトリが応答しませんでした。表示内容が古い可能性があります。"
+
+#: ui/pages/live-discover.slint:285
+msgid "The live directory didn’t answer."
+msgstr "ライブディレクトリが応答しませんでした。"
+
+#: ui/pages/live-discover.slint:288
+msgid "the next page didn’t load — results from here on may be missing"
+msgstr "次のページを読み込めませんでした。ここから先の結果が欠けている可能性があります"
+
+#: ui/pages/live-discover.slint:288
+msgid "The next page didn’t load, so results from here on may be missing."
+msgstr "次のページを読み込めなかったため、ここから先の結果が欠けている可能性があります。"
+
+#: ui/pages/live-discover.slint:290
+msgid "[r] retry"
+msgstr "[r] 再試行"
+
+#: ui/pages/live-discover.slint:294
+msgid "Showing {} so far"
+msgstr "これまでに{}件を表示"
+
+#: ui/pages/live-discover.slint:295
+msgid "Showing {} of at least {}"
+msgstr "{}件を表示（少なくとも{}件中）"
+
+#: ui/pages/live-discover.slint:296
+msgid "Showing {} of {}"
+msgstr "{}件を表示（{}件中）"
+
+#: ui/pages/live-discover.slint:298
+msgid "Show {} more"
+msgstr "さらに{}件を表示"
+
+#: ui/pages/live-discover.slint:299
+msgid "[n] next {}"
+msgstr "[n] 次の{}件"
+
+#: ui/pages/live-discover.slint:300
+msgid "[n] loading…"
+msgstr "[n] 読み込み中…"
+
+#: ui/pages/live-discover.slint:304
+msgid "Results from the FinchGram Live Directory (services.finchgram.com/live/api/v1). Source data from the Owncast and Xiph Icecast directories, PeerTube instances and reviewed submissions, each used under its own terms; whether a Telegram channel is live, FinchGram asks Telegram itself."
+msgstr "結果は FinchGram ライブディレクトリ（services.finchgram.com/live/api/v1）によるものです。ソースデータは Owncast と Xiph Icecast のディレクトリ、PeerTube インスタンス、審査済みの投稿から取得し、それぞれの規約に従って利用しています。Telegram チャンネルが配信中かどうかは、FinchGram が Telegram に直接問い合わせます。"
+
+#: ui/pages/live-discover.slint:306
+msgid "Sources and freshness"
+msgstr "ソースと更新状況"
+
+#: ui/pages/live-discover.slint:308
+msgid "Mature-rated streams: shown"
+msgstr "年齢制限付きの配信：表示"
+
+#: ui/pages/live-discover.slint:308
+msgid "Mature-rated streams: hidden"
+msgstr "年齢制限付きの配信：非表示"
+
+#: ui/pages/live-discover.slint:313
+msgid "❯ that’s a link, not a search"
+msgstr "❯ これは検索語ではなくリンクです"
+
+#: ui/pages/live-discover.slint:313
+msgid "That’s a link, not a search"
+msgstr "これは検索語ではなくリンクです"
+
+#: ui/pages/live-discover.slint:316
+msgid "The directory searches titles, channels, categories and platforms. To play this exact address, open it directly."
+msgstr "ディレクトリはタイトル、チャンネル、カテゴリ、プラットフォームを検索します。このアドレスをそのまま再生するには、直接開いてください。"
+
+#: ui/pages/live-discover.slint:318
+msgid "FinchGram checks what it is when you open it"
+msgstr "開くときに FinchGram が種類を確認します"
+
+#: ui/pages/live-discover.slint:320
+msgid "The directory searches titles, channels, categories and platforms. This is an address: {}. {}."
+msgstr "ディレクトリはタイトル、チャンネル、カテゴリ、プラットフォームを検索します。これはアドレスです：{}。{}。"
+
+#: ui/pages/live-discover.slint:323
+msgid "[⏎ open link]"
+msgstr "[⏎ リンクを開く]"
+
+#: ui/pages/live-discover.slint:324
+msgid "Open link ⏎"
+msgstr "リンクを開く ⏎"
+
+#: ui/pages/live-discover.slint:324
+msgid "Open link"
+msgstr "リンクを開く"
+
+#: ui/pages/live-discover.slint:328
+msgid "❯ discover"
+msgstr "❯ 見つける"
+
+#: ui/pages/live-discover.slint:330
+msgid "relevance"
+msgstr "関連度"
+
+#: ui/pages/live-discover.slint:332
+msgid "added"
+msgstr "追加順"
+
+#: ui/pages/live-discover.slint:334
+msgid "recommended"
+msgstr "おすすめ"
+
+#: ui/pages/live-discover.slint:336
+msgid "sort"
+msgstr "並び順"
+
+#: ui/pages/live-discover.slint:337
+msgid "soonest"
+msgstr "開始が近い順"
+
+#: ui/pages/live-discover.slint:339
+msgid "[x clear]"
+msgstr "[x 解除]"
+
+#: ui/pages/live-discover.slint:340
+msgid "{n} source behind"
+msgid_plural "{n} sources behind"
+msgstr[0] "{n}件のソースが遅延"
+
+#: ui/pages/live-discover.slint:345
+msgid "category"
+msgstr "カテゴリ"
+
+#: ui/pages/live-discover.slint:346
+msgid "source"
+msgstr "ソース"
+
+#: ui/pages/live-discover.slint:350
+msgid "[f unfollow]"
+msgstr "[f フォロー解除]"
+
+#: ui/pages/live-discover.slint:350
+msgid "[f follow]"
+msgstr "[f フォロー]"
+
+#: ui/pages/live-discover.slint:352
+msgid "[o page]"
+msgstr "[o ページ]"
+
+#: ui/pages/live-discover.slint:353
+msgid "updated {}"
+msgstr "更新：{}"
+
+#: ui/pages/live-discover.slint:354
+msgid "behind"
+msgstr "遅延"
+
+#: ui/pages/live-discover.slint:521
+msgid "search ❯"
+msgstr "検索 ❯"
+
+#: ui/pages/live-discover.slint:2603
+msgid "the FinchGram Live Directory"
+msgstr "FinchGram ライブディレクトリ"
+
+#: ui/pages/live-parts.slint:19
+msgid "{} live"
+msgstr "{}件配信中"
+
+#: ui/pages/live-parts.slint:21
+msgid "On air now"
+msgstr "現在配信中"
+
+#: ui/pages/live-parts.slint:21
+msgid "Following · live"
+msgstr "フォロー中 · 配信中"
+
+#: ui/pages/live-parts.slint:22
+msgid "Not live now"
+msgstr "現在配信なし"
+
+#: ui/pages/live-parts.slint:23
+msgid "Channels you follow show up here, live ones first — from any source."
+msgstr "フォローしたチャンネルがここに表示されます。配信中のものが先に並び、ソースは問いません。"
+
+#: ui/pages/live-parts.slint:24
+msgid "Watch and broadcast"
+msgstr "視聴と配信"
+
+#: ui/pages/live-parts.slint:38
+msgctxt "terminal"
+msgid "mode"
+msgstr "モード"
+
+#: ui/pages/live-parts.slint:39 ui/pages/live-parts.slint:239
+msgctxt "terminal"
+msgid "source"
+msgstr "ソース"
+
+#: ui/pages/live-parts.slint:40
+msgctxt "terminal"
+msgid "plays"
+msgstr "再生場所"
+
+#: ui/pages/live-parts.slint:41 ui/pages/live-parts.slint:236
+msgctxt "terminal"
+msgid "status"
+msgstr "状態"
+
+#: ui/pages/live-parts.slint:42
+msgctxt "terminal"
+msgid "category"
+msgstr "カテゴリ"
+
+#: ui/pages/live-parts.slint:43
+msgctxt "terminal"
+msgid "language"
+msgstr "言語"
+
+#: ui/pages/live-parts.slint:44
+msgctxt "terminal"
+msgid "content"
+msgstr "コンテンツ"
+
+#: ui/pages/live-parts.slint:45
+msgctxt "terminal"
+msgid "anywhere"
+msgstr "どこでも"
+
+#: ui/pages/live-parts.slint:46
+msgctxt "terminal"
+msgid "in finchgram"
+msgstr "finchgram 内"
+
+#: ui/pages/live-parts.slint:47
+msgctxt "terminal"
+msgid "on its site"
+msgstr "配信元のサイト"
+
+#: ui/pages/live-parts.slint:48
+msgctxt "terminal"
+msgid "any"
+msgstr "すべて"
+
+#: ui/pages/live-parts.slint:49
+msgctxt "terminal"
+msgid "mature-rated"
+msgstr "年齢制限付き"
+
+#: ui/pages/live-parts.slint:50
+msgctxt "terminal"
+msgid "not integrated yet"
+msgstr "未統合"
+
+#: ui/pages/live-parts.slint:51
+msgctxt "terminal"
+msgid "live · confirmed"
+msgstr "配信中 · 確認済み"
+
+#: ui/pages/live-parts.slint:52
+msgctxt "terminal"
+msgid "not confirmed / unknown"
+msgstr "未確認 / 不明"
+
+#: ui/pages/live-parts.slint:53
+msgctxt "terminal"
+msgid "offline"
+msgstr "オフライン"
+
+#: ui/pages/live-parts.slint:54
+msgctxt "terminal"
+msgid "nothing followed yet"
+msgstr "まだ何もフォローしていません"
+
+#: ui/pages/live-parts.slint:55
+msgctxt "terminal"
+msgid "send to"
+msgstr "送信先"
+
+#: ui/pages/live-parts.slint:56
+msgctxt "terminal"
+msgid "send with"
+msgstr "配信方法"
+
+#: ui/pages/live-parts.slint:57
+msgctxt "terminal"
+msgid "add"
+msgstr "追加"
+
+#: ui/pages/live-parts.slint:58
+msgctxt "terminal"
+msgid "broadcast to"
+msgstr "配信先"
+
+#: ui/pages/live-parts.slint:59
+msgctxt "terminal"
+msgid "private servers"
+msgstr "プライベートサーバー"
+
+#: ui/pages/live-parts.slint:60
+msgctxt "terminal"
+msgid "open a link"
+msgstr "リンクを開く"
+
+#: ui/pages/live-parts.slint:61
+msgctxt "terminal"
+msgid "submit a stream"
+msgstr "配信を投稿"
+
+#: ui/pages/live-parts.slint:63
+msgctxt "terminal"
+msgid "FinchGram (built in)"
+msgstr "FinchGram（内蔵）"
+
+#: ui/pages/live-parts.slint:76
+msgid "Send to OBS"
+msgstr "OBS に送信"
+
+#: ui/pages/live-parts.slint:77
+msgid "Start in OBS"
+msgstr "OBS で開始"
+
+#: ui/pages/live-parts.slint:80
+msgid "Channels from every source in one list, live first"
+msgstr "すべてのソースのチャンネルを1つのリストに、配信中を先頭に表示"
+
+#: ui/pages/live-parts.slint:83
+msgid "Not live"
+msgstr "配信なし"
+
+#: ui/pages/live-parts.slint:85
+msgid "You don’t follow anything yet. Follow channels from Discover, or open a link and follow it; they gather here, from any source."
+msgstr "まだ何もフォローしていません。「見つける」でチャンネルをフォローするか、リンクを開いてフォローしてください。ソースを問わず、ここに集まります。"
+
+#: ui/pages/live-parts.slint:88
+msgid "Kept on this Mac, in FinchGram’s database. Following here doesn’t follow on Twitch, YouTube or anywhere else, and needs no account there."
+msgstr "この Mac 上の FinchGram のデータベースに保存されます。ここでフォローしても Twitch や YouTube などでフォローされることはなく、それらのアカウントも必要ありません。"
+
+#: ui/pages/live-parts.slint:90
+msgid "Some sources are behind"
+msgstr "一部のソースが遅延しています"
+
+#: ui/pages/live-parts.slint:94
+msgid "Unfollow"
+msgstr "フォロー解除"
+
+#: ui/pages/live-parts.slint:106
+msgid "Opening {}…"
+msgstr "{} を開いています…"
+
+#: ui/pages/live-parts.slint:108
+msgid "Recognized {} · {} server"
+msgstr "{} を認識 · {} サーバー"
+
+#: ui/pages/live-parts.slint:111
+msgid "Asked for the stream address · /hls/stream.m3u8"
+msgstr "配信アドレスを要求 · /hls/stream.m3u8"
+
+#: ui/pages/live-parts.slint:112
+msgid "Asked for the stream address · HLS playlist from the API"
+msgstr "配信アドレスを要求 · API から HLS プレイリスト"
+
+#: ui/pages/live-parts.slint:113
+msgid "Asked for the stream address · direct stream"
+msgstr "配信アドレスを要求 · 直接リンク"
+
+#: ui/pages/live-parts.slint:115
+msgid "Connecting"
+msgstr "接続中"
+
+#: ui/pages/live-parts.slint:116 ui/pages/live-parts.slint:176
+msgid "Buffering"
+msgstr "バッファリング中"
+
+#: ui/pages/live-parts.slint:117
+msgid "Found {} on Telegram"
+msgstr "Telegram で {} を見つけました"
+
+#: ui/pages/live-parts.slint:118
+msgid "Joined as a viewer · muted, no camera"
+msgstr "視聴者として参加 · ミュート、カメラなし"
+
+#: ui/pages/live-parts.slint:119
+msgid "Asked Telegram for the stream · one-second segments"
+msgstr "Telegram に配信を要求 · 1秒ごとのセグメント"
+
+#: ui/pages/live-parts.slint:120
+msgid "FinchGram saves the channel’s own address and asks it for a stream address each time."
+msgstr "FinchGram はチャンネル自体のアドレスを保存し、毎回そこから配信アドレスを取得します。"
+
+#: ui/pages/live-parts.slint:123
+msgid "{} is offline"
+msgstr "{} はオフラインです"
+
+#: ui/pages/live-parts.slint:125
+msgid "Last live {}."
+msgstr "最後の配信は{}です。"
+
+#: ui/pages/live-parts.slint:125
+msgid "Not seen live yet."
+msgstr "まだ配信の記録はありません。"
+
+#: ui/pages/live-parts.slint:127
+msgid "Replays, if the channel keeps them, are on its PeerTube page."
+msgstr "チャンネルがアーカイブを残している場合は、その PeerTube ページで見られます。"
+
+#: ui/pages/live-parts.slint:129
+msgid "While you follow it, FinchGram checks every 2 minutes and puts it at the top of Following when it starts."
+msgstr "フォローしている間、FinchGram は2分ごとに確認し、配信が始まると「フォロー中」の先頭に表示します。"
+
+#: ui/pages/live-parts.slint:131
+msgid "Open channel page"
+msgstr "チャンネルページを開く"
+
+#: ui/pages/live-parts.slint:132
+msgid "Channel page"
+msgstr "チャンネルページ"
+
+#: ui/pages/live-parts.slint:133
+msgid "The stream address stopped working"
+msgstr "配信アドレスが使えなくなりました"
+
+#: ui/pages/live-parts.slint:135
+msgid "{} stopped answering at the stream address it gave — those expire. FinchGram is asking the channel for a new one."
+msgstr "{} が発行した配信アドレスが応答しなくなりました。このアドレスには期限があります。FinchGram がチャンネルに新しいアドレスを問い合わせています。"
+
+#: ui/pages/live-parts.slint:136
+msgid "The stream address stopped answering — those expire. FinchGram is asking the channel for a new one."
+msgstr "配信アドレスが応答しなくなりました。このアドレスには期限があります。FinchGram がチャンネルに新しいアドレスを問い合わせています。"
+
+#: ui/pages/live-parts.slint:139
+msgid "FinchGram keeps the channel’s own address, never the temporary one, so trying again starts from the channel."
+msgstr "FinchGram が保存するのはチャンネル自体のアドレスで、一時的なアドレスは保存しません。そのため、再試行はチャンネルからやり直します。"
+
+#: ui/pages/live-parts.slint:143
+msgid "{} plays in {}’s own player"
+msgstr "{} は {} 独自のプレーヤーで再生されます"
+
+#: ui/pages/live-parts.slint:146
+msgid "{0} doesn’t let other apps play its streams. Watch it on {0} in your browser; here it keeps its place in Following, with its live status."
+msgstr "{0} はほかのアプリでの配信の再生を認めていません。ブラウザで {0} を開いて視聴してください。ここでは配信状態とともに「フォロー中」に残ります。"
+
+#: ui/pages/live-parts.slint:149
+msgid "{} plays on {}"
+msgstr "{} は {} で再生されます"
+
+#: ui/pages/live-parts.slint:152
+msgid "FinchGram shows when it’s live; the stream itself plays on {}’s site."
+msgstr "FinchGram は配信中かどうかを表示します。配信そのものは {} のサイトで再生されます。"
+
+#: ui/pages/live-parts.slint:155
+msgid "This stream needs a sign-in"
+msgstr "この配信にはサインインが必要です"
+
+#: ui/pages/live-parts.slint:157
+msgid "{} wants a user name and password."
+msgstr "{} がユーザー名とパスワードを求めています。"
+
+#: ui/pages/live-parts.slint:159
+msgid "Add as a private server…"
+msgstr "プライベートサーバーとして追加…"
+
+#: ui/pages/live-parts.slint:160
+msgid "Marked mature by its source"
+msgstr "ソースにより年齢制限付きに指定"
+
+#: ui/pages/live-parts.slint:162
+msgid "{} marks this stream mature. Streams marked mature are hidden in Discover; Settings › Live changes that."
+msgstr "{} はこの配信を年齢制限付きに指定しています。年齢制限付きの配信は「見つける」に表示されません。「設定 › ライブ」で変更できます。"
+
+#: ui/pages/live-parts.slint:164
+msgid "I’m 18 or older"
+msgstr "18歳以上です"
+
+#: ui/pages/live-parts.slint:167
+msgid "The directory doesn’t list sexually explicit streams. FinchGram never records or re-shares a stream."
+msgstr "ディレクトリには性的に露骨な配信は掲載されていません。FinchGram が配信を録画したり再共有したりすることはありません。"
+
+#: ui/pages/live-parts.slint:171
+msgid "Telegram sends this live stream over WebRTC, from a phone’s camera, and FinchGram doesn’t have WebRTC. Streams sent from OBS, and live streams with a large audience, play here."
+msgstr "Telegram はこのライブ配信をスマートフォンのカメラから WebRTC で送っていますが、FinchGram は WebRTC に対応していません。OBS からの配信や、視聴者の多いライブ配信はここで再生できます。"
+
+#: ui/pages/live-parts.slint:173
+msgid "Live status and the number watching come from your Telegram account."
+msgstr "配信状態と視聴者数は、あなたの Telegram アカウントから取得しています。"
+
+#: ui/pages/live-parts.slint:174
+msgid "Couldn’t play {}"
+msgstr "{} を再生できませんでした"
+
+#: ui/pages/live-parts.slint:175
+msgid "Slow connection — the stream stalled, and FinchGram keeps trying."
+msgstr "接続が遅いため配信が止まりました。FinchGram は再試行を続けています。"
+
+#: ui/pages/live-parts.slint:177
+msgid "audio only"
+msgstr "音声のみ"
+
+#: ui/pages/live-parts.slint:179
+msgid "ON AIR"
+msgstr "配信中"
+
+#: ui/pages/live-parts.slint:180
+msgid "{} · Go live"
+msgstr "{} · ライブに戻る"
+
+#: ui/pages/live-parts.slint:190
+msgid "Quality · offered by the server"
+msgstr "画質 · サーバーが提供"
+
+#: ui/pages/live-parts.slint:191
+msgid "Auto · {}"
+msgstr "自動 · {}"
+
+#: ui/pages/live-parts.slint:191
+msgid "Auto"
+msgstr "自動"
+
+#: ui/pages/live-parts.slint:192
+msgid "now {}"
+msgstr "現在 {}"
+
+#: ui/pages/live-parts.slint:193
+msgid "Show chat"
+msgstr "チャットを表示"
+
+#: ui/pages/live-parts.slint:194
+msgid "Hide chat"
+msgstr "チャットを非表示"
+
+#: ui/pages/live-parts.slint:195
+msgid "Pop out"
+msgstr "別ウインドウで再生"
+
+#: ui/pages/live-parts.slint:196
+msgid "Full screen"
+msgstr "フルスクリーン"
+
+#: ui/pages/live-parts.slint:199
+msgctxt "terminal"
+msgid "[▸ play]"
+msgstr "[▸ 再生]"
+
+#: ui/pages/live-parts.slint:199
+msgctxt "terminal"
+msgid "[❚❚ pause]"
+msgstr "[❚❚ 一時停止]"
+
+#: ui/pages/live-parts.slint:201
+msgctxt "terminal"
+msgid "live"
+msgstr "ライブ"
+
+#: ui/pages/live-parts.slint:201
+msgctxt "terminal"
+msgid "[go live]"
+msgstr "[ライブに戻る]"
+
+#: ui/pages/live-parts.slint:204
+msgctxt "terminal"
+msgid "[muted]"
+msgstr "[ミュート中]"
+
+#: ui/pages/live-parts.slint:204
+msgctxt "terminal"
+msgid "[vol {}]"
+msgstr "[音量 {}]"
+
+#: ui/pages/live-parts.slint:206
+msgctxt "terminal"
+msgid "[chat]"
+msgstr "[チャット]"
+
+#: ui/pages/live-parts.slint:207
+msgctxt "terminal"
+msgid "[pop out]"
+msgstr "[別ウインドウ]"
+
+#: ui/pages/live-parts.slint:208
+msgctxt "terminal"
+msgid "[full]"
+msgstr "[全画面]"
+
+#: ui/pages/live-parts.slint:209
+msgctxt "terminal"
+msgid "unfollow"
+msgstr "フォロー解除"
+
+#: ui/pages/live-parts.slint:209
+msgctxt "terminal"
+msgid "follow"
+msgstr "フォロー"
+
+#: ui/pages/live-parts.slint:210
+msgctxt "terminal"
+msgid "page"
+msgstr "ページ"
+
+#: ui/pages/live-parts.slint:215
+msgid "Viewers not shared by {}"
+msgstr "{} は視聴者数を公開していません"
+
+#: ui/pages/live-parts.slint:218
+msgid "Receiving the stream now"
+msgstr "配信を受信中"
+
+#: ui/pages/live-parts.slint:219
+msgid "Watch here · Plays in FinchGram"
+msgstr "ここで視聴 · FinchGram で再生"
+
+#: ui/pages/live-parts.slint:221
+msgid "Comments from Telegram · free ones sent here, paid ones from Telegram’s apps"
+msgstr "Telegram のコメント · 無料はここから送信、有料は Telegram のアプリから"
+
+#: ui/pages/live-parts.slint:222
+msgid "Chat from {} · read and send"
+msgstr "{} のチャット · 閲覧と送信"
+
+#: ui/pages/live-parts.slint:222
+msgid "No chat on {}"
+msgstr "{} にはチャットがありません"
+
+#: ui/pages/live-parts.slint:225
+msgid "On air · {}"
+msgstr "配信中 · {}"
+
+#: ui/pages/live-parts.slint:226
+msgid "Not confirmed · {}"
+msgstr "未確認 · {}"
+
+#: ui/pages/live-parts.slint:227
+msgid "Status unknown · {}"
+msgstr "状態不明 · {}"
+
+#: ui/pages/live-parts.slint:228
+msgid "Off air · {}"
+msgstr "オフライン · {}"
+
+#: ui/pages/live-parts.slint:230
+msgid "on air for {}"
+msgstr "配信開始から{}"
+
+#: ui/pages/live-parts.slint:232
+msgid "{} · {}."
+msgstr "{} · {}。"
+
+#: ui/pages/live-parts.slint:232
+msgid "Plays on {}"
+msgstr "{} で再生"
+
+#: ui/pages/live-parts.slint:232
+msgid "Plays in FinchGram, straight from the server"
+msgstr "FinchGram で再生（サーバーから直接）"
+
+#: ui/pages/live-parts.slint:233
+msgid "chat from {}, read and send"
+msgstr "{} のチャット、閲覧と送信"
+
+#: ui/pages/live-parts.slint:233
+msgid "no chat on this source"
+msgstr "このソースにはチャットがありません"
+
+#: ui/pages/live-parts.slint:235
+msgctxt "terminal"
+msgid "title"
+msgstr "タイトル"
+
+#: ui/pages/live-parts.slint:237
+msgctxt "terminal"
+msgid "stream"
+msgstr "配信"
+
+#: ui/pages/live-parts.slint:238
+msgctxt "terminal"
+msgid "chat"
+msgstr "チャット"
+
+#: ui/pages/live-parts.slint:240
+msgctxt "terminal"
+msgid "none on this source"
+msgstr "このソースにはなし"
+
+#: ui/pages/live-parts.slint:241
+msgctxt "terminal"
+msgid "{} · read & send"
+msgstr "{} · 閲覧と送信"
+
+#: ui/pages/live-parts.slint:242
+msgctxt "terminal"
+msgid "telegram · one-second segments"
+msgstr "telegram · 1秒ごとのセグメント"
+
+#: ui/pages/live-parts.slint:244
+msgid "Chat"
+msgstr "チャット"
+
+#: ui/pages/live-parts.slint:245
+msgid "From {}. FinchGram shows it and keeps none of it."
+msgstr "{} のチャットです。FinchGram は表示するだけで、何も保存しません。"
+
+#: ui/pages/live-parts.slint:246
+msgid "Chat as {}"
+msgstr "{} としてチャット"
+
+#: ui/pages/live-parts.slint:247
+msgctxt "terminal"
+msgid "say something"
+msgstr "メッセージを入力"
+
+#: ui/pages/live-parts.slint:248
+msgid "Joining the chat…"
+msgstr "チャットに参加しています…"
+
+#: ui/pages/live-parts.slint:249
+msgid "{} name: {}"
+msgstr "{} での名前：{}"
+
+#: ui/pages/live-parts.slint:251
+msgid "A new name, then Enter"
+msgstr "新しい名前を入力して Enter"
+
+#: ui/pages/live-parts.slint:254
+msgid "Paused"
+msgstr "一時停止中"
+
+#: ui/pages/live-parts.slint:255
+msgctxt "terminal"
+msgid "[play]"
+msgstr "[再生]"
+
+#: ui/pages/live-parts.slint:255
+msgctxt "terminal"
+msgid "[pause]"
+msgstr "[一時停止]"
+
+#: ui/pages/live-parts.slint:256
+msgctxt "terminal"
+msgid "[unmute]"
+msgstr "[ミュート解除]"
+
+#: ui/pages/live-parts.slint:256
+msgctxt "terminal"
+msgid "[mute]"
+msgstr "[ミュート]"
+
+#: ui/pages/live-parts.slint:257
+msgctxt "terminal"
+msgid "[live]"
+msgstr "[ライブ]"
+
+#: ui/pages/live-parts.slint:258
+msgid "Back to Live"
+msgstr "ライブ画面に戻る"
+
+#: ui/pages/live-parts.slint:259
+msgid "Stop and close"
+msgstr "停止して閉じる"
+
+#: ui/pages/live-parts.slint:262
+msgid "Open a link"
+msgstr "リンクを開く"
+
+#: ui/pages/live-parts.slint:264
+msgid "Play or follow a stream that isn’t in the directory. Nothing is submitted — what you open stays on this Mac."
+msgstr "ディレクトリにない配信を再生したりフォローしたりできます。何も投稿されず、開いたものはこの Mac の中だけに残ります。"
+
+#: ui/pages/live-parts.slint:267
+msgid "FinchGram can open:"
+msgstr "FinchGram で開けるもの："
+
+#: ui/pages/live-parts.slint:269
+msgid "Channel pages"
+msgstr "チャンネルページ"
+
+#: ui/pages/live-parts.slint:270
+msgid "Direct streams"
+msgstr "ストリームの直接リンク"
+
+#: ui/pages/live-parts.slint:271
+msgid "It recognizes the link as you type. For a server, it asks the server what it is."
+msgstr "入力中にリンクを認識します。サーバーの場合は、サーバーに種類を問い合わせます。"
+
+#: ui/pages/live-parts.slint:272
+msgid "Asking {} what it is…"
+msgstr "{} に種類を問い合わせています…"
+
+#: ui/pages/live-parts.slint:273
+msgid "Plays in FinchGram (sound only)"
+msgstr "FinchGram で再生（音声のみ）"
+
+#: ui/pages/live-parts.slint:275
+msgid "Plays on {}. FinchGram opens it in your browser."
+msgstr "{} で再生されます。FinchGram はブラウザで開きます。"
+
+#: ui/pages/live-parts.slint:278
+msgid "This looks private — a sending address, or a link with a key in it. Keep it to yourself; FinchGram doesn’t open those here."
+msgstr "非公開の情報のようです（送信用のアドレスか、キーを含むリンク）。他人に教えないでください。FinchGram はこうしたリンクをここでは開きません。"
+
+#: ui/pages/live-parts.slint:281
+msgid "Nothing FinchGram can play. If the page has its own player, open it in your browser."
+msgstr "FinchGram で再生できるものはありません。ページに独自のプレーヤーがある場合は、ブラウザで開いてください。"
+
+#: ui/pages/live-parts.slint:284
+msgid "The server didn’t answer: {}"
+msgstr "サーバーが応答しませんでした：{}"
+
+#: ui/pages/live-parts.slint:284
+msgid "The server didn’t answer."
+msgstr "サーバーが応答しませんでした。"
+
+#: ui/pages/live-parts.slint:287
+msgid "Saved connections"
+msgstr "保存した接続"
+
+#: ui/pages/live-parts.slint:289
+msgid "Where you broadcast to, and private servers you watch from. Keys and passwords stay sealed in FinchGram’s database and are shown only when you ask."
+msgstr "配信先と、視聴に使うプライベートサーバーです。キーとパスワードは封印して FinchGram のデータベースに保存され、求めたときにだけ表示されます。"
+
+#: ui/pages/live-parts.slint:291
+msgid "Submit a stream"
+msgstr "配信を投稿"
+
+#: ui/pages/live-parts.slint:292
+msgid "Suggest a public channel for the directory everyone using FinchGram sees."
+msgstr "FinchGram の利用者全員が見るディレクトリに、公開チャンネルを提案します。"
+
+#: ui/pages/live-parts.slint:295
+msgid "FinchGram asks Telegram whether it’s live"
+msgstr "配信中かどうかは FinchGram が Telegram に問い合わせます"
+
+#: ui/pages/live-parts.slint:302
+msgid "OBS sends the stream; FinchGram gives it the destination."
+msgstr "配信を送るのは OBS、配信先を渡すのは FinchGram です。"
+
+#: ui/pages/live-parts.slint:303
+msgid "From FinchGram"
+msgstr "FinchGram から"
+
+#: ui/pages/live-parts.slint:304
+msgid "Use OBS"
+msgstr "OBS を使う"
+
+#: ui/pages/live-parts.slint:307
+msgid "OBS does the capture, scenes and encoding. FinchGram hands it the destination and shows how the stream is doing, from OBS’s own numbers."
+msgstr "キャプチャ、シーン、エンコードは OBS が行います。FinchGram は配信先を渡し、OBS 自身の数値をもとに配信の状況を表示します。"
+
+#: ui/pages/live-parts.slint:309
+msgid "Connected to OBS"
+msgstr "OBS に接続済み"
+
+#: ui/pages/live-parts.slint:310
+msgid "Send the destination"
+msgstr "配信先を送信"
+
+#: ui/pages/live-parts.slint:311
+msgid "Start streaming"
+msgstr "配信を開始"
+
+#: ui/pages/live-parts.slint:312
+msgid "Or type it into OBS › Settings › Stream yourself:"
+msgstr "または、自分で OBS › 設定 › 配信 に入力："
+
+#: ui/pages/live-parts.slint:313
+msgid "Destination"
+msgstr "配信先"
+
+#: ui/pages/live-parts.slint:314
+msgid "New destination…"
+msgstr "新しい配信先…"
+
+#: ui/pages/live-parts.slint:315
+msgid "Live story · RTMPS"
+msgstr "ライブストーリー · RTMPS"
+
+#: ui/pages/live-parts.slint:316
+msgid "Channel live stream · RTMPS"
+msgstr "チャンネルのライブ配信 · RTMPS"
+
+#: ui/pages/live-parts.slint:318
+msgid "Resolution, bitrate and sound are set in OBS. FinchGram only gives the destination; the stream starts when you start it in OBS."
+msgstr "解像度、ビットレート、音声は OBS で設定します。FinchGram が渡すのは配信先だけで、配信は OBS で開始したときに始まります。"
+
+#: ui/pages/live.slint:1024
+msgid "Content in Live"
+msgstr "ライブのコンテンツ"
+
+#: ui/pages/live.slint:1026 ui/pages/settings.slint:965
+msgid "Live sorts what it lists into four classes. Only the first two can appear in this version; what you can change here is whether mature-rated streams show."
+msgstr "ライブでは、表示する内容を4つの区分に分けています。このバージョンで表示されるのは最初の2つだけで、ここで変更できるのは年齢制限付きの配信を表示するかどうかです。"
+
+#: ui/pages/live.slint:1028 ui/pages/settings.slint:970
+msgid "Mature-rated: hidden"
+msgstr "年齢制限付き：非表示"
+
+#: ui/pages/live.slint:1029
+msgid "Default. They don’t appear in Discover, search or suggestions."
+msgstr "既定。「見つける」、検索、候補には表示されません。"
+
+#: ui/pages/live.slint:1030 ui/pages/settings.slint:978
+msgid "Mature-rated: shown, marked “Mature”"
+msgstr "年齢制限付き：「年齢制限」マークを付けて表示"
+
+#: ui/pages/live.slint:1031 ui/pages/settings.slint:979
+msgid "They appear with a Mature tag; opening one asks first."
+msgstr "「年齢制限」タグ付きで表示され、開くときは先に確認します。"
+
+#: ui/pages/live.slint:1033
+msgid "I’m 18 or older — a self-declaration, accepted only where the law doesn’t require verification"
+msgstr "18歳以上です（自己申告。法律で年齢確認が求められない地域でのみ有効）"
+
+#: ui/pages/live.slint:1035 ui/pages/settings.slint:998
+msgid "General — listed and shown by default."
+msgstr "一般：既定で掲載・表示されます。"
+
+#: ui/pages/live.slint:1037 ui/pages/settings.slint:999
+msgid "Mature-rated (strong language, violence, gambling, horror — rated by the source) — listed, hidden until shown here."
+msgstr "年齢制限付き（過激な言葉遣い、暴力、ギャンブル、ホラー。ソースによる指定）：掲載されますが、ここで表示を選ぶまでは非表示です。"
+
+#: ui/pages/live.slint:1040 ui/pages/settings.slint:1000
+msgid "Sexually explicit — not in the directory in this version. Whether and how to list it is a pending policy decision, not a setting."
+msgstr "性的に露骨なコンテンツ：このバージョンのディレクトリには含まれません。掲載するかどうか、どう掲載するかは未決定の方針の問題で、設定項目ではありません。"
+
+#: ui/pages/live.slint:1043 ui/pages/settings.slint:1001
+msgid "Prohibited (illegal content, including non-consensual or underage material) — never indexed, shown or played."
+msgstr "禁止（違法なコンテンツ。同意のないものや未成年者に関わるものを含む）：掲載・表示・再生は一切行いません。"
+
+#: ui/pages/live.slint:1045
+msgid "Settings › Live › Content"
+msgstr "設定 › ライブ › コンテンツ"
+
+#: ui/pages/settings.slint:962
+msgid "Content"
+msgstr "コンテンツ"
+
+#: ui/pages/settings.slint:971
+msgid "Default. They don't appear in Discover, search or suggestions."
+msgstr "既定。「見つける」、検索、候補には表示されません。"
+
+#: ui/pages/settings.slint:987
+msgid "I'm 18 or older — a self-declaration, accepted only where the law doesn't require verification"
+msgstr "18歳以上です（自己申告。法律で年齢確認が求められない地域でのみ有効）"
+
+#: ui/pages/settings.slint:1025
+msgid "Languages"
+msgstr "言語"
+
+#: ui/pages/settings.slint:1028
+msgid "Recommended puts live streams in these languages first. None is chosen until you choose."
+msgstr "「おすすめ順」では、これらの言語のライブ配信が先に並びます。自分で選ぶまでは、どの言語も選ばれていません。"
+
+#: ui/toolbox.slint:164
+msgid "Live has its own place now"
+msgstr "ライブは専用の画面に移りました"
+
+#: ui/pages/live-parts.slint:188
+msgctxt "sound"
+msgid "Mute"
+msgstr "ミュート"
+
+#: ui/pages/live-parts.slint:189
+msgctxt "sound"
+msgid "Unmute"
+msgstr "ミュート解除"
+
+#: ui/pages/live-discover.slint:86 ui/pages/live-discover.slint:146
+msgctxt "status"
+msgid "Live"
+msgstr "配信中"

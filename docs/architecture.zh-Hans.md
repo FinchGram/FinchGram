@@ -440,7 +440,7 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
    并把它放在 app 包的 Frameworks 目录里。窗口每次渲染时，mpv 在 Slint 自己的 OpenGL 上下文里把当前帧画进我们的
    一张纹理（`src/player/`），能硬解的用 VideoToolbox；媒体查看器显示这张纹理。代价是 libmpv 在 app 的进程里
    解码，一个故意构造的视频如果弄坏了解码器，窗口会跟着一起崩。FFmpeg 构建时
-   去掉了网络、编码器和设备，并跟着上游升级；如果还不够，就把播放挪进一个沙箱里的辅助进程，由它把画面交给 app
+   去掉了编码器和设备，并跟着上游升级。从 mpv-0.41.0-2（2026-11-08）起带网络，供 Live 视图播放直播（画布「FinchGram Desktop 直播」第 12 轮）：HTTP、经 mbedTLS 的 HTTPS（Keychain 的根证书以文件交给它）、HLS、经 libxml2 的 DASH、RTSP；只有 Live 视图的播放器能用到网络，其他播放器都写明自己能打开的协议，只限本地文件（`src/player/mod.rs` 的 `LOCAL_PROTOCOLS`），所以 Telegram 文件里的播放列表绝不会让 FFmpeg 去取任何东西。如果还不够，就把播放挪进一个沙箱里的辅助进程，由它把画面交给 app
    （macOS 上用 IOSurface）。音乐也守着这条：用户自己服务器上的歌经 app 的 HTTP 客户端进缓存文件，由音乐自己的 mpv
    边到边读（[music.zh-Hans.md](music.zh-Hans.md)）。Lottie 贴纸要另想办法（rlottie），WebM 贴纸要能保留透明通道的 VP9 解码（libvpx；
    FFmpeg 自带的 VP9 解码器会丢掉透明通道）。在那之前，动态贴纸只显示它的静态缩略图；静态贴纸照原样显示。

@@ -12,6 +12,7 @@
 pub mod audio;
 pub mod decode;
 pub mod live;
+pub mod popout;
 mod mpv;
 pub mod music;
 pub mod pipe;
@@ -34,6 +35,19 @@ use crate::{Live, MainWindow, Viewer};
 /// A video larger than this on its longer side is drawn this large: the viewer shows it smaller.
 const LARGEST: i64 = 2560;
 
+/// What FFmpeg may open for a player of files on the Mac (Telegram's, the music cache's): nothing
+/// over the network, not even a playlist inside a file pointing at one. mpv's own streams of the
+/// app ("finchgram://") are no FFmpeg protocol and stay open.
+pub(crate) const LOCAL_PROTOCOLS: [(&str, &str); 2] =
+    [("stream-lavf-o", "protocol_whitelist=[file,crypto,data]"), ("demuxer-lavf-o", "protocol_whitelist=[file,crypto,data]")];
+
+/// What FFmpeg may open for the Live view's streams (src/live/watch.rs): HTTP(S) for HLS, DASH and
+/// Icecast, RTSP over its transports. The certificates are checked against the Keychain's roots.
+const NETWORK_PROTOCOLS: [(&str, &str); 2] = [
+    ("stream-lavf-o", "protocol_whitelist=[https,http,tls,tcp,crypto,data,rtsp,rtp,udp]"),
+    ("demuxer-lavf-o", "protocol_whitelist=[https,http,tls,tcp,crypto,data,rtsp,rtp,udp]"),
+];
+
 /// What mpv reports, by the number given when observing it.
 const POSITION: u64 = 1;
 const PAUSED: u64 = 2;
@@ -48,21 +62,34 @@ const BUFFERING: u64 = 6;
 enum Screen {
     Viewer,
     Live,
+    /// The Live view's stream in a window of its own, on top of every app (popout.rs).
+    Popout,
 }
 
 impl Screen {
+    /// The screens of the main window.
     const ALL: [Screen; 2] = [Screen::Viewer, Screen::Live];
 
     fn index(self) -> usize {
         match self {
             Screen::Viewer => 0,
             Screen::Live => 1,
+            Screen::Popout => 2,
         }
     }
 
     /// The screen a wake-up from mpv is for: the number given with the callback.
     fn from_data(data: *mut c_void) -> Screen {
-        if data as usize == 1 { Screen::Live } else { Screen::Viewer }
+        match data as usize {
+            1 => Screen::Live,
+            2 => Screen::Popout,
+            _ => Screen::Viewer,
+        }
+    }
+
+    /// A screen that plays the network's streams (the Live view's), not files on the Mac.
+    fn networked(self) -> bool {
+        matches!(self, Screen::Live | Screen::Popout)
     }
 }
 
@@ -78,6 +105,8 @@ enum Shown {
 struct Player {
     screen: Screen,
     ui: slint::Weak<MainWindow>,
+    /// The pop-out's window, for Screen::Popout.
+    popout: Option<slint::Weak<crate::LivePopOut>>,
     /// Created when the first video plays.
     mpv: *mut mpv::mpv_handle,
     /// Created in the window's OpenGL context when the first frame is drawn.
@@ -118,17 +147,12 @@ struct Target {
 
 thread_local! {
     /// The players, by their screen's index.
-    static PLAYERS: RefCell<[Option<Player>; 2]> = const { RefCell::new([None, None]) };
-    /// Told when the live stream's mpv has come to an end: true when it failed.
-    static LIVE_ENDED: RefCell<Option<LiveEnded>> = const { RefCell::new(None) };
+    static PLAYERS: RefCell<[Option<Player>; 3]> = const { RefCell::new([None, None, None]) };
 }
 
-/// What is told of the live stream's end (live.rs's on_ended).
-type LiveEnded = Box<dyn Fn(bool)>;
-
 /// Set while the UI thread has been asked to look and has not yet: mpv wakes it once (by screen).
-static EVENTS_ASKED: [AtomicBool; 2] = [AtomicBool::new(false), AtomicBool::new(false)];
-static FRAME_ASKED: [AtomicBool; 2] = [AtomicBool::new(false), AtomicBool::new(false)];
+static EVENTS_ASKED: [AtomicBool; 3] = [AtomicBool::new(false), AtomicBool::new(false), AtomicBool::new(false)];
+static FRAME_ASKED: [AtomicBool; 3] = [AtomicBool::new(false), AtomicBool::new(false), AtomicBool::new(false)];
 
 /// Hook the players into `ui`'s rendering. Call once.
 pub fn install(ui: &MainWindow) {
@@ -138,6 +162,7 @@ pub fn install(ui: &MainWindow) {
             players[screen.index()] = Some(Player {
                 screen,
                 ui: ui.as_weak(),
+                popout: None,
                 mpv: ptr::null_mut(),
                 render: ptr::null_mut(),
                 gl: None,
@@ -171,6 +196,53 @@ pub fn install(ui: &MainWindow) {
     }
 }
 
+/// Hook the pop-out's player into `window`'s rendering: a window of its own has an OpenGL context
+/// of its own, which the main window's texture cannot be drawn in. The player (its mpv) is kept
+/// for the next pop-out; its renderer goes with the window.
+pub fn install_popout(window: &crate::LivePopOut) {
+    let main = PLAYERS.with(|players| players.borrow()[Screen::Live.index()].as_ref().map(|player| player.ui.clone()));
+    let Some(main) = main else { return };
+    PLAYERS.with(|players| {
+        let mut players = players.borrow_mut();
+        match players[Screen::Popout.index()].as_mut() {
+            Some(player) => player.popout = Some(window.as_weak()),
+            None => {
+                players[Screen::Popout.index()] = Some(Player {
+                    screen: Screen::Popout,
+                    ui: main,
+                    popout: Some(window.as_weak()),
+                    mpv: ptr::null_mut(),
+                    render: ptr::null_mut(),
+                    gl: None,
+                    target: None,
+                    handed: false,
+                    width: 0,
+                    height: 0,
+                    loaded: false,
+                    paused: false,
+                    ended: false,
+                    waiting: None,
+                })
+            }
+        }
+    });
+    let hooked = window.window().set_rendering_notifier(|state, api| {
+        let GraphicsAPI::NativeOpenGL { get_proc_address } = api else { return };
+        // SAFETY: the function pointers come from the context the window renders with.
+        let gl = matches!(state, RenderingState::RenderingSetup)
+            .then(|| Rc::new(unsafe { glow::Context::from_loader_function_cstr(|name| get_proc_address(name)) }));
+        with_screen(Screen::Popout, |player| match state {
+            RenderingState::RenderingSetup => player.gl = gl.clone(),
+            RenderingState::BeforeRendering => player.draw(get_proc_address),
+            RenderingState::RenderingTeardown => player.release_gl(),
+            _ => {}
+        });
+    });
+    if let Err(err) = hooked {
+        eprintln!("player: video cannot be drawn in the pop-out: {err}");
+    }
+}
+
 /// Play the file at `path` from its start; a GIF loops. `volume` is 0 … 100.
 pub fn play(path: &str, looping: bool, speed: f64, volume: i32, muted: bool) {
     if !path.starts_with("finchgram://") {
@@ -187,9 +259,7 @@ pub fn play(path: &str, looping: bool, speed: f64, volume: i32, muted: bool) {
         if player.render.is_null() {
             // The renderer is made when the window next renders; the file loads then.
             player.waiting = Some(load);
-            if let Some(ui) = player.ui.upgrade() {
-                ui.window().request_redraw();
-            }
+            player.redraw();
         } else {
             player.load(load);
         }
@@ -284,7 +354,19 @@ impl Player {
             // the app asks for is shown or listened to. A video stays on its last frame at its end;
             // a live stream's end is the end.
             let keep_open = if self.screen == Screen::Viewer { "yes" } else { "no" };
-            for (name, value) in [
+            let roots = if self.screen.networked() { crate::live::roots::file() } else { None };
+            let roots = roots.map(|path| path.to_string_lossy().to_string()).unwrap_or_default();
+            let reach: Vec<(&str, &str)> = match self.screen {
+                Screen::Viewer => LOCAL_PROTOCOLS.to_vec(),
+                Screen::Live | Screen::Popout if roots.is_empty() => NETWORK_PROTOCOLS.to_vec(),
+                Screen::Live | Screen::Popout => {
+                    let mut options = NETWORK_PROTOCOLS.to_vec();
+                    options.push(("tls-verify", "yes"));
+                    options.push(("tls-ca-file", roots.as_str()));
+                    options
+                }
+            };
+            for (name, value) in reach.into_iter().chain([
                 ("config", "no"),
                 ("vo", "libmpv"),
                 ("hwdec", "auto-safe"),
@@ -296,7 +378,7 @@ impl Player {
                 ("osd-level", "0"),
                 ("audio-display", "no"),
                 ("sub-auto", "no"),
-            ] {
+            ]) {
                 let (name, value) = (CString::new(name).unwrap_or_default(), CString::new(value).unwrap_or_default());
                 let status = mpv::mpv_set_option_string(mpv, name.as_ptr(), value.as_ptr());
                 if status < 0 {
@@ -323,6 +405,8 @@ impl Player {
             let status = match self.screen {
                 Screen::Viewer => mpv::mpv_stream_cb_add_ro(mpv, c"finchgram".as_ptr(), ptr::null_mut(), stream::open),
                 Screen::Live => mpv::mpv_stream_cb_add_ro(mpv, pipe::PROTOCOL.as_ptr(), ptr::null_mut(), pipe::open),
+                // The pop-out plays the directory's streams by their addresses only.
+                Screen::Popout => 0,
             };
             if status < 0 {
                 eprintln!("player: cannot play streams of our own: {}", error_string(status));
@@ -338,6 +422,36 @@ impl Player {
         // SAFETY: an int64 property read into a local.
         let status = unsafe { mpv::mpv_get_property(self.mpv, name.as_ptr(), mpv::MPV_FORMAT_INT64, (&mut value as *mut i64).cast()) };
         if status < 0 { 0 } else { value }
+    }
+
+    /// A property by name, as a number; None when mpv has none (no stream, no such track).
+    fn property_number(&self, name: &str) -> Option<i64> {
+        if self.mpv.is_null() {
+            return None;
+        }
+        let name = CString::new(name).ok()?;
+        let mut value: i64 = 0;
+        // SAFETY: an int64 property read into a local.
+        let status = unsafe { mpv::mpv_get_property(self.mpv, name.as_ptr(), mpv::MPV_FORMAT_INT64, (&mut value as *mut i64).cast()) };
+        (status >= 0).then_some(value)
+    }
+
+    /// A property by name, as mpv writes it; None when it has none.
+    fn property_text(&self, name: &str) -> Option<String> {
+        if self.mpv.is_null() {
+            return None;
+        }
+        let name = CString::new(name).ok()?;
+        // SAFETY: mpv returns a string it allocated, or null; it is copied, then freed by mpv.
+        unsafe {
+            let text = mpv::mpv_get_property_string(self.mpv, name.as_ptr());
+            if text.is_null() {
+                return None;
+            }
+            let copied = CStr::from_ptr(text).to_string_lossy().to_string();
+            mpv::mpv_free(text.cast());
+            Some(copied)
+        }
     }
 
     fn load(&mut self, load: Load) {
@@ -403,7 +517,15 @@ impl Player {
                     self.report();
                 }
                 // Open, and playing: a file that arrives as it plays no longer waits to start.
-                mpv::MPV_EVENT_FILE_LOADED => self.tell(Shown::Loading(false)),
+                mpv::MPV_EVENT_FILE_LOADED => {
+                    self.tell(Shown::Loading(false));
+                    if self.screen == Screen::Live {
+                        let _ = slint::invoke_from_event_loop(live::loaded);
+                    }
+                    if self.screen == Screen::Popout {
+                        let _ = slint::invoke_from_event_loop(crate::live::popout::loaded);
+                    }
+                }
                 mpv::MPV_EVENT_END_FILE => {
                     // SAFETY: an end-of-file event carries an mpv_event_end_file.
                     let end = unsafe { &*(event.data as *const mpv::mpv_event_end_file) };
@@ -418,13 +540,12 @@ impl Player {
                     if self.screen == Screen::Live && (failed || end.reason == mpv::MPV_END_FILE_REASON_EOF) {
                         self.loaded = false;
                         self.report();
-                        let _ = slint::invoke_from_event_loop(move || {
-                            LIVE_ENDED.with(|ended| {
-                                if let Some(ended) = &*ended.borrow() {
-                                    ended(failed);
-                                }
-                            });
-                        });
+                        let _ = slint::invoke_from_event_loop(move || live::ended(failed));
+                    }
+                    if self.screen == Screen::Popout && (failed || end.reason == mpv::MPV_END_FILE_REASON_EOF) {
+                        self.loaded = false;
+                        self.report();
+                        let _ = slint::invoke_from_event_loop(move || crate::live::popout::ended(failed));
                     }
                 }
                 _ => {}
@@ -439,8 +560,33 @@ impl Player {
         self.tell(Shown::Ended(ended));
     }
 
+    /// The window this player draws into renders again.
+    fn redraw(&self) {
+        match self.screen {
+            Screen::Popout => {
+                if let Some(window) = self.popout.as_ref().and_then(slint::Weak::upgrade) {
+                    window.window().request_redraw();
+                }
+            }
+            _ => {
+                if let Some(ui) = self.ui.upgrade() {
+                    ui.window().request_redraw();
+                }
+            }
+        }
+    }
+
     /// Tell the page this player draws into.
     fn tell(&self, shown: Shown) {
+        if self.screen == Screen::Popout {
+            let Some(window) = self.popout.as_ref().and_then(slint::Weak::upgrade) else { return };
+            match shown {
+                Shown::Frame(frame) => window.set_frame(frame),
+                Shown::Loading(loading) => window.set_buffering(loading),
+                Shown::Playing(_) | Shown::Position(_) | Shown::Ended(_) => {}
+            }
+            return;
+        }
         let Some(ui) = self.ui.upgrade() else { return };
         match self.screen {
             Screen::Viewer => {
@@ -463,6 +609,7 @@ impl Player {
                     Shown::Position(_) | Shown::Ended(_) => {}
                 }
             }
+            Screen::Popout => {}
         }
     }
 
@@ -646,11 +793,7 @@ unsafe extern "C" fn wake_for_frame(data: *mut c_void) {
     if !FRAME_ASKED[screen.index()].swap(true, Ordering::AcqRel) {
         let _ = slint::invoke_from_event_loop(move || {
             FRAME_ASKED[screen.index()].store(false, Ordering::Release);
-            with_screen(screen, |player| {
-                if let Some(ui) = player.ui.upgrade() {
-                    ui.window().request_redraw();
-                }
-            });
+            with_screen(screen, |player| player.redraw());
         });
     }
 }

@@ -1,0 +1,2969 @@
+// Discover (the canvas "FinchGram Desktop 直播", rounds 11 to 13): search first, then the directory's
+// channels from every source, live now, every channel or what is announced, filtered and sorted.
+// Workbench (the canvas's 1c) has a big search box over segmented modes and filter buttons, then
+// cards or a table; Broadsheet (1a) the same with large words, underlined, and an index; Terminal
+// (1b) a command line over a dense table and the chosen row's details at the foot (its filters are
+// the Live column's facets). Drawn once, in Look's colours and shapes, with Look.broadsheet and
+// Look.terminal branches where the canvas differs; Rust fills LiveDirectory (src/live/).
+import { Look } from "../look.slint";
+import { Icon, Spinner, Paragraph } from "../widgets.slint";
+import {
+    LiveDirectory, LiveDirectoryWords, LiveChannel, LiveStatus, LivePlay, LiveSource, LiveCategory,
+    LiveMode, LiveSort, LiveSync, LiveSourceRow, LiveSuggestion, LiveSection
+} from "../live.slint";
+import {
+    DirectoryLook, CardWords, TerminalColumns, SourceChip, ChannelCard, SkeletonCard, ChannelRow,
+    SkeletonRow, FollowStar
+} from "live-cards.slint";
+
+// The words of Discover every theme shows (the canvas's dv).
+export global DiscoverWords {
+    // The search box.
+    public pure function placeholder() -> string {
+        if Look.terminal { return @tr("title, channel, category, platform"); }
+        return Look.broadsheet ? @tr("Search streams, channels, categories, platforms") : @tr("Search live streams, channels, categories, platforms");
+    }
+    public pure function searching() -> string { return @tr("searching…"); }
+    public pure function clear() -> string { return @tr("Clear"); }
+    public pure function keys() -> string { return @tr("⏎ search · / focus · esc clear"); }
+
+    // The suggestions under the box.
+    public pure function group(kind: int) -> string {
+        if kind == 0 { return Look.terminal ? @tr("recent") : @tr("Recent searches"); }
+        if kind == 1 { return Look.terminal ? @tr("search") : @tr("Searches"); }
+        if kind == 2 { return Look.terminal ? @tr("channels") : @tr("Channels"); }
+        if kind == 5 { return Look.terminal ? @tr("link") : @tr("Link"); }
+        return Look.terminal ? @tr("filters") : @tr("Filters");
+    }
+    public pure function suggestion(item: LiveSuggestion) -> string {
+        if item.kind == 3 { return @tr("Source: {}", LiveDirectoryWords.source(item.source)); }
+        if item.kind == 4 { return @tr("Category: {}", LiveDirectoryWords.category(item.category)); }
+        if item.kind == 5 { return @tr("Open this link directly"); }
+        return item.text;
+    }
+    public pure function suggestion-line(item: LiveSuggestion) -> string {
+        if item.kind == 2 { return LiveDirectoryWords.source(item.source); }
+        if item.kind == 5 { return @tr("{} — not a directory search", item.text); }
+        return "";
+    }
+    public pure function foot(link: bool, words: string) -> string {
+        if Look.terminal {
+            return @tr("↑↓ pick · ⏎ go · tab complete · {}", link ? @tr("links open directly") : @tr("esc close"));
+        }
+        if link { return @tr("Links open directly — they aren’t searched in the directory."); }
+        return words != "" ? @tr("⏎ searches the directory for “{}” · ↑↓ to pick", words) : @tr("Type to search the directory, or paste a link to open it");
+    }
+
+    // The modes and the layouts.
+    public pure function layout(list: bool) -> string {
+        if Look.broadsheet { return list ? @tr("Index") : @tr("Pictures"); }
+        return list ? @tr("List") : @tr("Grid");
+    }
+
+    // The filters: names, values, choices, notes.
+    public pure function source-filter() -> string { return @tr("Source"); }
+    public pure function category-filter() -> string { return @tr("Category"); }
+    public pure function language-filter() -> string { return @tr("Language"); }
+    public pure function plays-filter() -> string { return @tr("Plays"); }
+    public pure function status-filter() -> string { return @tr("Status"); }
+    public pure function sort-filter() -> string { return @tr("Sort"); }
+    public pure function any() -> string { return @tr("Any"); }
+    public pure function sources(count: int) -> string { return @tr("{n} source" | "{n} sources" % count); }
+    public pure function any-source() -> string { return @tr("Any source"); }
+    public pure function any-category() -> string { return @tr("Any category"); }
+    public pure function any-language() -> string { return @tr("Any language"); }
+    public pure function plays(playback: int) -> string {
+        if playback == 1 { return @tr("In FinchGram"); }
+        if playback == 2 { return @tr("On its site"); }
+        return @tr("Anywhere");
+    }
+    public pure function plays-choice(playback: int) -> string {
+        if playback == 1 { return @tr("Plays in FinchGram"); }
+        if playback == 2 { return @tr("Opens on its own site"); }
+        return @tr("Anywhere");
+    }
+    public pure function status-value(status: LiveStatus) -> string {
+        if status == LiveStatus.live { return @tr("status" => "Live"); }
+        if status == LiveStatus.stale { return @tr("Not confirmed"); }
+        if status == LiveStatus.offline { return @tr("Offline"); }
+        return @tr("Unknown");
+    }
+    public pure function any-status() -> string { return @tr("Any status"); }
+    public pure function status-choice(status: LiveStatus) -> string {
+        if status == LiveStatus.live { return @tr("Live now"); }
+        if status == LiveStatus.stale { return @tr("Not confirmed"); }
+        if status == LiveStatus.offline { return @tr("Offline"); }
+        return @tr("Status unknown");
+    }
+    // A sort's name: "Recently started" is "Recently live" outside Live now.
+    public pure function sort(order: LiveSort, mode: LiveMode) -> string {
+        if order == LiveSort.recent && mode != LiveMode.live { return @tr("Recently live"); }
+        return LiveDirectoryWords.sort(order);
+    }
+    public pure function source-note() -> string {
+        return @tr("Twitch, YouTube, Kick and Bilibili: not integrated yet — their links still open in your browser.");
+    }
+    public pure function language-note() -> string {
+        return @tr("Language comes from the source. Streams that don’t give one appear only under Any.");
+    }
+    public pure function plays-note() -> string {
+        return @tr("Twitch and YouTube allow only their own players, and Kick plays on its site. They are not integrated yet; their links open in your browser.");
+    }
+    public pure function status-note() -> string {
+        return @tr("Not confirmed: live at the last answer, but that answer is old. Status unknown: no recent answer at all. Neither is treated as offline.");
+    }
+    public pure function sort-note() -> string {
+        return @tr("Relevance and Recommended put confirmed live first. Most viewers uses each source’s own counts — they aren’t comparable across platforms, and streams without a count come after, not as zero.");
+    }
+    public pure function clear-filters() -> string { return @tr("Clear filters"); }
+
+    // A source that is behind (the banner), and the sources' table.
+    public pure function partial(behind: int, indexed: int) -> string {
+        return behind > 0 ? @tr("Partial results — {} of {} sources are behind", behind, indexed) : @tr("Partial results — a source is behind");
+    }
+    public pure function behind-line(row: LiveSourceRow) -> string {
+        if row.sync == LiveSync.rate-limited {
+            return row.synced-minutes >= 0 ? @tr("{} limited our requests. Its results are from {}, so its streams show “Not confirmed”.", LiveDirectoryWords.source(row.source), LiveDirectoryWords.ago(row.synced-minutes))
+                : @tr("{} limited our requests, so its streams show “Not confirmed”.", LiveDirectoryWords.source(row.source));
+        }
+        if row.sync == LiveSync.failed {
+            return row.synced-minutes >= 0 ? @tr("{} hasn’t answered for {}. Its streams are “Status unknown” and left out of Live now.", LiveDirectoryWords.source(row.source), LiveDirectoryWords.duration(row.synced-minutes))
+                : @tr("{} isn’t answering. Its streams are “Status unknown” and left out of Live now.", LiveDirectoryWords.source(row.source));
+        }
+        return row.synced-minutes >= 0 ? @tr("Some {} servers haven’t answered for {}.", LiveDirectoryWords.source(row.source), LiveDirectoryWords.duration(row.synced-minutes))
+            : @tr("Some {} servers aren’t answering.", LiveDirectoryWords.source(row.source));
+    }
+    public pure function unknown-live(count: int) -> string {
+        return @tr("{n} stream with unknown status isn’t in Live now — All channels lists it." | "{n} streams with unknown status aren’t in Live now — All channels lists them." % count);
+    }
+    public pure function sources-toggle(open: bool) -> string {
+        if Look.terminal { return open ? @tr("[hide sources]") : @tr("[sources]"); }
+        return open ? @tr("Hide sources") : @tr("Sources");
+    }
+    public pure function source-head() -> string { return @tr("Source"); }
+    public pure function sources-title() -> string { return @tr("# sources"); }
+    public pure function provides-head() -> string { return @tr("Provides"); }
+    public pure function live-head() -> string { return @tr("status" => "Live"); }
+    public pure function answer-head() -> string { return @tr("Last answer"); }
+    public pure function state-head() -> string { return @tr("State"); }
+    public pure function provides(row: LiveSourceRow) -> string {
+        if !row.indexed { return @tr("Not integrated yet — its links still open in your browser."); }
+        return @tr("live status · {} · {} · {}",
+            row.viewer-counts == 1 ? @tr("viewer counts") : row.viewer-counts == 2 ? @tr("self-reported counts") : row.viewer-counts == 3 ? @tr("listener counts") : @tr("no viewer counts"),
+            row.thumbnails ? @tr("thumbnails") : @tr("no thumbnails"),
+            row.plays-here ? @tr("plays in FinchGram") : @tr("plays on its site"));
+    }
+    public pure function sync(row: LiveSourceRow) -> string {
+        if !row.indexed { return @tr("Not integrated yet"); }
+        if row.sync == LiveSync.ok { return @tr("Up to date"); }
+        if row.sync == LiveSync.degraded { return @tr("Partly behind"); }
+        if row.sync == LiveSync.rate-limited { return @tr("Rate-limited"); }
+        if row.sync == LiveSync.failed { return @tr("Not answering"); }
+        return "—";
+    }
+
+    // The line over the results: how many, and how fresh.
+    public pure function total(mode: LiveMode, count: int, relation: int) -> string {
+        if relation == 2 {
+            if mode == LiveMode.channels { return @tr("Channels · total unknown"); }
+            if mode == LiveMode.upcoming { return @tr("Scheduled streams · total unknown"); }
+            return @tr("Live streams · total unknown");
+        }
+        if relation == 1 {
+            if mode == LiveMode.channels { return @tr("At least {n} channel" | "At least {n} channels" % count); }
+            if mode == LiveMode.upcoming { return @tr("At least {n} scheduled stream" | "At least {n} scheduled streams" % count); }
+            return @tr("At least {n} live stream" | "At least {n} live streams" % count);
+        }
+        if mode == LiveMode.channels { return @tr("{n} channel" | "{n} channels" % count); }
+        if mode == LiveMode.upcoming { return @tr("{n} scheduled stream" | "{n} scheduled streams" % count); }
+        return @tr("{n} live stream" | "{n} live streams" % count);
+    }
+    public pure function searched(total: string, words: string) -> string {
+        return words != "" ? @tr("{} for “{}”", total, words) : total;
+    }
+    public pure function loading-results() -> string { return @tr("Loading results…"); }
+    public pure function searching-results() -> string { return @tr("Searching…"); }
+    public pure function partial-short(behind: int, indexed: int) -> string {
+        return behind > 0 ? @tr("partial — {} of {} sources behind", behind, indexed) : @tr("partial — a source is behind");
+    }
+    public pure function sort-meta(order: LiveSort) -> string {
+        if order == LiveSort.viewers { return @tr("counts come from each source and aren’t comparable — streams without one come after, not as zero"); }
+        if order == LiveSort.recommended { return @tr("Recommended: confirmed live first, then your languages, recently started, and popularity within each source"); }
+        return "";
+    }
+    public pure function hidden-mature(count: int) -> string {
+        return @tr("{n} mature-rated result hidden" | "{n} mature-rated results hidden" % count);
+    }
+
+    // The groups of cards.
+    public pure function plays-here() -> string { return @tr("Plays in FinchGram"); }
+    public pure function plays-here-line() -> string { return @tr("Confirmed live on Owncast, PeerTube, Icecast and submitted servers"); }
+    public pure function see-all(count: int) -> string { return count > 0 ? @tr("See all {}", count) : @tr("See all"); }
+    public pure function not-confirmed() -> string { return @tr("Not confirmed right now"); }
+    public pure function not-confirmed-line() -> string { return @tr("Their sources haven’t answered recently. Opening one tries the stream; it may have ended."); }
+    public pure function categories() -> string { return Look.broadsheet ? @tr("By category") : @tr("Browse by category"); }
+
+    // The table.
+    public pure function table-head(mode: LiveMode) -> string {
+        if mode == LiveMode.channels { return @tr("Channel"); }
+        if mode == LiveMode.upcoming { return @tr("Scheduled stream"); }
+        return @tr("Stream");
+    }
+    public pure function category-language() -> string { return @tr("Category · language"); }
+    public pure function viewers-head(mode: LiveMode) -> string { return mode == LiveMode.upcoming ? @tr("Starts") : @tr("Viewers"); }
+    public pure function plays-head() -> string { return @tr("Plays"); }
+    // Terminal's columns.
+    public pure function columns(mode: LiveMode, index: int) -> string {
+        if index == 0 { return mode == LiveMode.channels ? @tr("channel") : mode == LiveMode.upcoming ? @tr("scheduled stream") : @tr("title"); }
+        if index == 1 { return mode == LiveMode.channels ? @tr("status") : @tr("channel"); }
+        if index == 2 { return @tr("src"); }
+        if index == 3 { return @tr("cat"); }
+        if index == 4 { return @tr("lang"); }
+        if index == 5 { return mode == LiveMode.upcoming ? @tr("starts") : @tr("viewers"); }
+        return @tr("plays");
+    }
+    // The line over a group of rows of one status.
+    public pure function group-line(status: LiveStatus) -> string {
+        if Look.terminal {
+            if status == LiveStatus.live { return @tr("── live · confirmed ──"); }
+            if status == LiveStatus.stale { return @tr("── not confirmed: source behind, opening tries the stream ──"); }
+            if status == LiveStatus.offline { return @tr("── offline ──"); }
+            return @tr("── status unknown: source not answering ──");
+        }
+        if status == LiveStatus.live { return @tr("Live now · confirmed"); }
+        if status == LiveStatus.stale { return @tr("Not confirmed right now — the source hasn’t answered recently; opening one tries the stream"); }
+        if status == LiveStatus.offline { return @tr("Offline"); }
+        return @tr("Status unknown — the source isn’t answering");
+    }
+    public pure function upcoming-note() -> string {
+        return @tr("Upcoming lists the sources that publish schedules. Follow a channel to keep it in Following.");
+    }
+
+    // Nothing found.
+    public pure function nothing(mode: LiveMode, filtered: bool, words: string) -> string {
+        if filtered {
+            if mode == LiveMode.channels { return Look.terminal ? @tr("no channels match these filters") : @tr("No channels match these filters"); }
+            if mode == LiveMode.upcoming { return Look.terminal ? @tr("no scheduled streams match these filters") : @tr("No scheduled streams match these filters"); }
+            return Look.terminal ? @tr("no live streams match these filters") : @tr("No live streams match these filters");
+        }
+        if words != "" { return Look.terminal ? @tr("nothing matches “{}”", words) : @tr("Nothing matches “{}”", words); }
+        if mode == LiveMode.upcoming { return Look.terminal ? @tr("nothing scheduled") : @tr("Nothing scheduled"); }
+        return Look.terminal ? @tr("nothing here") : @tr("Nothing here yet");
+    }
+    public pure function nothing-filtered(mode: LiveMode, words: string, filters: string) -> string {
+        return words != "" ? @tr("Nothing in {} for “{}” with {}.", LiveDirectoryWords.mode(mode), words, filters) : @tr("Nothing in {} with {}.", LiveDirectoryWords.mode(mode), filters);
+    }
+    public pure function nothing-searched(sources: int, hidden: int) -> string {
+        return @tr("Searched titles, channel names, categories, platforms and languages from {n} source, live and offline." | "Searched titles, channel names, categories, platforms and languages from {n} sources, live and offline." % sources)
+            + (hidden > 0 ? " " + @tr("{n} mature-rated result is hidden." | "{n} mature-rated results are hidden." % hidden) : "");
+    }
+    public pure function both(first: string, second: string) -> string {
+        return first == "" ? second : second == "" ? first : @tr("{} and {}", first, second);
+    }
+    public pure function remove(filter: string) -> string {
+        return Look.terminal ? @tr("[remove {}]", filter.to-lowercase()) : @tr("Remove “{}”", filter);
+    }
+    public pure function look-in(mode: LiveMode) -> string {
+        return Look.terminal ? "[" + LiveDirectoryWords.mode(mode).to-lowercase() + "]" : @tr("Look in {}", LiveDirectoryWords.mode(mode));
+    }
+    public pure function results(count: int) -> string { return @tr("{n} result" | "{n} results" % count); }
+    public pure function clear-all() -> string { return @tr("Clear all filters"); }
+    public pure function clear-search() -> string { return @tr("Clear the search"); }
+    public pure function not-listed() -> string { return @tr("Not in the directory? Open a link in Connections"); }
+    public pure function terminal-try() -> string { return @tr("try: /watch <link> · esc clears the search"); }
+    // A filter as the empty page names it.
+    public pure function source-is(names: string) -> string { return @tr("Source: {}", names); }
+    public pure function category-is(category: LiveCategory) -> string { return @tr("Category: {}", LiveDirectoryWords.category(category)); }
+    public pure function language-is(name: string) -> string { return @tr("Language: {}", name); }
+    public pure function status-is(status: LiveStatus) -> string { return @tr("Status: {}", status-choice(status)); }
+
+    // When the directory or a page did not come.
+    public pure function failed(shown: bool) -> string {
+        if Look.terminal {
+            return shown ? @tr("the live directory didn’t answer — what’s shown may be out of date") : @tr("the live directory didn’t answer");
+        }
+        return shown ? @tr("The live directory didn’t answer. What’s shown may be out of date.") : @tr("The live directory didn’t answer.");
+    }
+    public pure function page-failed() -> string {
+        return Look.terminal ? @tr("the next page didn’t load — results from here on may be missing") : @tr("The next page didn’t load, so results from here on may be missing.");
+    }
+    public pure function retry() -> string { return Look.terminal ? @tr("[r] retry") : @tr("Retry"); }
+
+    // More.
+    public pure function showing(shown: int, total: int, relation: int) -> string {
+        if relation == 2 { return @tr("Showing {} so far", shown); }
+        if relation == 1 { return @tr("Showing {} of at least {}", shown, total); }
+        return @tr("Showing {} of {}", shown, total);
+    }
+    public pure function show-more(count: int) -> string { return @tr("Show {} more", count); }
+    public pure function next(count: int) -> string { return @tr("[n] next {}", count); }
+    public pure function loading() -> string { return Look.terminal ? @tr("[n] loading…") : @tr("Loading…"); }
+
+    // The foot of the page.
+    public pure function attribution() -> string {
+        return @tr("Results from the FinchGram Live Directory (services.finchgram.com/live/api/v1). Source data from the Owncast and Xiph Icecast directories, PeerTube instances and reviewed submissions, each used under its own terms; whether a Telegram channel is live, FinchGram asks Telegram itself.");
+    }
+    public pure function sources-and-freshness(open: bool) -> string { return open ? @tr("Hide sources") : @tr("Sources and freshness"); }
+    public pure function mature-state(shown: bool) -> string {
+        return shown ? @tr("Mature-rated streams: shown") : @tr("Mature-rated streams: hidden");
+    }
+
+    // A link in the box.
+    public pure function link-title() -> string {
+        return Look.terminal ? @tr("❯ that’s a link, not a search") : @tr("That’s a link, not a search");
+    }
+    public pure function link-line() -> string {
+        return @tr("The directory searches titles, channels, categories and platforms. To play this exact address, open it directly.");
+    }
+    public pure function link-checked() -> string { return @tr("FinchGram checks what it is when you open it"); }
+    public pure function link-address(link: string) -> string {
+        return @tr("The directory searches titles, channels, categories and platforms. This is an address: {}. {}.", link, link-checked());
+    }
+    public pure function open-link() -> string {
+        if Look.terminal { return @tr("[⏎ open link]"); }
+        return Look.broadsheet ? @tr("Open link ⏎") : @tr("Open link");
+    }
+
+    // Terminal's head, its filters and the chosen row.
+    public pure function discover() -> string { return @tr("❯ discover"); }
+    public pure function sort-word(order: LiveSort) -> string {
+        if order == LiveSort.relevance { return @tr("relevance"); }
+        if order == LiveSort.recent { return @tr("recent"); }
+        if order == LiveSort.added { return @tr("added"); }
+        if order == LiveSort.viewers { return @tr("viewers"); }
+        return @tr("recommended");
+    }
+    public pure function sort-label() -> string { return @tr("sort"); }
+    public pure function soonest() -> string { return @tr("soonest"); }
+    public pure function filters-label() -> string { return @tr("filters"); }
+    public pure function clear-token() -> string { return @tr("[x clear]"); }
+    public pure function behind-short(behind: int) -> string { return @tr("{n} source behind" | "{n} sources behind" % behind); }
+    public pure function preview-key(index: int) -> string {
+        if index == 0 { return @tr("title"); }
+        if index == 1 { return @tr("status"); }
+        if index == 2 { return @tr("plays"); }
+        if index == 3 { return @tr("category"); }
+        return @tr("source");
+    }
+    public pure function act-key(channel: LiveChannel) -> string { return "[⏎ " + LiveDirectoryWords.play(channel).to-lowercase() + "]"; }
+    public pure function follow-key(channel: LiveChannel) -> string {
+        return channel.following || channel.on-telegram ? @tr("[f unfollow]") : @tr("[f follow]");
+    }
+    public pure function page-key() -> string { return @tr("[o page]"); }
+    public pure function updated(minutes: int) -> string { return @tr("updated {}", LiveDirectoryWords.ago(minutes)); }
+    public pure function behind() -> string { return @tr("behind"); }
+}
+
+// What several parts of the page read from LiveDirectory.
+global Discover {
+    // The channels the page lists: the home's own while nothing is asked, the results otherwise.
+    out property <[LiveChannel]> rows: LiveDirectory.home ? LiveDirectory.home-here : LiveDirectory.results;
+    // The box holds a link, not words.
+    out property <bool> link: LiveDirectory.query-is-link && LiveDirectory.query != "";
+    out property <string> words: link ? "" : LiveDirectory.query;
+    // The first answer is on its way (placeholders); a newer one (the old results stay, faded).
+    out property <bool> first-load: LiveDirectory.loading && rows.length == 0;
+    out property <bool> refreshing: LiveDirectory.loading && rows.length > 0;
+    // Nothing for what is asked.
+    out property <bool> empty: !LiveDirectory.home && !link && !LiveDirectory.loading && !LiveDirectory.failed && LiveDirectory.results.length == 0;
+    // Live now as cards (Workbench and Broadsheet); the rest as a table.
+    out property <bool> cards: !Look.terminal && LiveDirectory.mode == LiveMode.live && !LiveDirectory.list-layout;
+    out property <bool> table: !LiveDirectory.home && !link && !cards && (LiveDirectory.results.length > 0 || first-load);
+    // The results of a page (src/live/mod.rs: GRID_PAGE, LIST_PAGE), and how many the next brings.
+    out property <int> page: LiveDirectory.mode == LiveMode.live && !LiveDirectory.list-layout ? 18 : 30;
+    out property <int> next: LiveDirectory.total-relation == 0 && LiveDirectory.total > rows.length ? min(page, LiveDirectory.total - rows.length) : page;
+    // Placeholders: a first page's, or the next page's while it comes.
+    out property <int> skeletons: first-load ? (cards ? 6 : 8) : LiveDirectory.more-loading ? next : 0;
+    out property <bool> more: LiveDirectory.has-more && !LiveDirectory.home && !first-load && !link && rows.length > 0;
+    // How many of the results are confirmed live: they come first, and the canvas gives them a grid
+    // of their own.
+    out property <int> confirmed: confirmed-count();
+
+    // The sources: listed by the directory, and behind (their last sync not good).
+    out property <int> indexed: indexed-at(0) + indexed-at(1) + indexed-at(2) + indexed-at(3) + indexed-at(4) + indexed-at(5) + indexed-at(6) + indexed-at(7) + indexed-at(8);
+    out property <int> behind: behind-at(0) + behind-at(1) + behind-at(2) + behind-at(3) + behind-at(4) + behind-at(5) + behind-at(6) + behind-at(7) + behind-at(8);
+
+    // The filters set.
+    out property <int> chosen-sources: chosen-at(0) + chosen-at(1) + chosen-at(2) + chosen-at(3) + chosen-at(4) + chosen-at(5) + chosen-at(6) + chosen-at(7) + chosen-at(8);
+    out property <string> chosen-source-names: join(join(join(join(join(join(join(join(name-at(0), name-at(1)), name-at(2)), name-at(3)), name-at(4)), name-at(5)), name-at(6)), name-at(7)), name-at(8));
+    out property <LiveCategory> category: first(category-at(0), first(category-at(1), first(category-at(2), first(category-at(3), first(category-at(4), first(category-at(5),
+        first(category-at(6), first(category-at(7), first(category-at(8), first(category-at(9), first(category-at(10), category-at(11))))))))))));
+    out property <bool> status-set: LiveDirectory.mode == LiveMode.channels && !LiveDirectory.status-any;
+    out property <bool> filtered: chosen-sources > 0 || category != LiveCategory.none || LiveDirectory.language-chosen != "" || LiveDirectory.playback != 0 || status-set;
+    // The filters set, in words: "Source: Owncast and Plays in FinchGram".
+    out property <string> filter-words: DiscoverWords.both(DiscoverWords.both(DiscoverWords.both(DiscoverWords.both(
+        chosen-sources > 0 ? DiscoverWords.source-is(chosen-source-names) : "",
+        category != LiveCategory.none ? DiscoverWords.category-is(category) : ""),
+        LiveDirectory.language-chosen != "" ? DiscoverWords.language-is(LiveDirectory.language-chosen) : ""),
+        LiveDirectory.playback != 0 ? DiscoverWords.plays-choice(LiveDirectory.playback) : ""),
+        status-set ? DiscoverWords.status-is(LiveDirectory.status-filter) : "");
+
+    pure function indexed-at(index: int) -> int {
+        return index < LiveDirectory.sources.length && LiveDirectory.sources[index].indexed ? 1 : 0;
+    }
+    pure function behind-at(index: int) -> int {
+        return index < LiveDirectory.sources.length && is-behind(LiveDirectory.sources[index]) ? 1 : 0;
+    }
+    public pure function is-behind(row: LiveSourceRow) -> bool {
+        return row.indexed && (row.sync == LiveSync.degraded || row.sync == LiveSync.rate-limited || row.sync == LiveSync.failed);
+    }
+    // A source's row in the sources' table (the table holds the nine sources at most).
+    public pure function source-row(source: LiveSource) -> LiveSourceRow {
+        if LiveDirectory.sources[0].source == source { return LiveDirectory.sources[0]; }
+        if LiveDirectory.sources[1].source == source { return LiveDirectory.sources[1]; }
+        if LiveDirectory.sources[2].source == source { return LiveDirectory.sources[2]; }
+        if LiveDirectory.sources[3].source == source { return LiveDirectory.sources[3]; }
+        if LiveDirectory.sources[4].source == source { return LiveDirectory.sources[4]; }
+        if LiveDirectory.sources[5].source == source { return LiveDirectory.sources[5]; }
+        if LiveDirectory.sources[6].source == source { return LiveDirectory.sources[6]; }
+        if LiveDirectory.sources[7].source == source { return LiveDirectory.sources[7]; }
+        return LiveDirectory.sources[8];
+    }
+    // The source is chosen in the Source filter.
+    public pure function is-chosen(source: LiveSource) -> bool {
+        return chosen-of(0, source) || chosen-of(1, source) || chosen-of(2, source) || chosen-of(3, source) || chosen-of(4, source)
+            || chosen-of(5, source) || chosen-of(6, source) || chosen-of(7, source) || chosen-of(8, source);
+    }
+    pure function chosen-of(index: int, source: LiveSource) -> bool {
+        return index < LiveDirectory.source-options.length && LiveDirectory.source-options[index].source == source && LiveDirectory.source-options[index].chosen;
+    }
+    pure function chosen-at(index: int) -> int {
+        return LiveDirectory.source-options[index].chosen ? 1 : 0;
+    }
+    pure function name-at(index: int) -> string {
+        return LiveDirectory.source-options[index].chosen ? LiveDirectoryWords.source(LiveDirectory.source-options[index].source) : "";
+    }
+    pure function join(first: string, second: string) -> string {
+        return first == "" ? second : second == "" ? first : first + ", " + second;
+    }
+    pure function category-at(index: int) -> LiveCategory {
+        return LiveDirectory.category-options[index].chosen ? LiveDirectory.category-options[index].category : LiveCategory.none;
+    }
+    pure function first(one: LiveCategory, other: LiveCategory) -> LiveCategory {
+        return one != LiveCategory.none ? one : other;
+    }
+    // A binary search for the first result not confirmed live, eleven halvings: enough for 2048.
+    pure function confirmed-count() -> int {
+        let n = LiveDirectory.results.length;
+        let m0 = floor(n / 2);
+        let l1 = 0 < n && LiveDirectory.results[m0].status == LiveStatus.live ? m0 + 1 : 0;
+        let h1 = 0 < n && LiveDirectory.results[m0].status != LiveStatus.live ? m0 : n;
+        let m1 = floor((l1 + h1) / 2);
+        let l2 = l1 < h1 && LiveDirectory.results[m1].status == LiveStatus.live ? m1 + 1 : l1;
+        let h2 = l1 < h1 && LiveDirectory.results[m1].status != LiveStatus.live ? m1 : h1;
+        let m2 = floor((l2 + h2) / 2);
+        let l3 = l2 < h2 && LiveDirectory.results[m2].status == LiveStatus.live ? m2 + 1 : l2;
+        let h3 = l2 < h2 && LiveDirectory.results[m2].status != LiveStatus.live ? m2 : h2;
+        let m3 = floor((l3 + h3) / 2);
+        let l4 = l3 < h3 && LiveDirectory.results[m3].status == LiveStatus.live ? m3 + 1 : l3;
+        let h4 = l3 < h3 && LiveDirectory.results[m3].status != LiveStatus.live ? m3 : h3;
+        let m4 = floor((l4 + h4) / 2);
+        let l5 = l4 < h4 && LiveDirectory.results[m4].status == LiveStatus.live ? m4 + 1 : l4;
+        let h5 = l4 < h4 && LiveDirectory.results[m4].status != LiveStatus.live ? m4 : h4;
+        let m5 = floor((l5 + h5) / 2);
+        let l6 = l5 < h5 && LiveDirectory.results[m5].status == LiveStatus.live ? m5 + 1 : l5;
+        let h6 = l5 < h5 && LiveDirectory.results[m5].status != LiveStatus.live ? m5 : h5;
+        let m6 = floor((l6 + h6) / 2);
+        let l7 = l6 < h6 && LiveDirectory.results[m6].status == LiveStatus.live ? m6 + 1 : l6;
+        let h7 = l6 < h6 && LiveDirectory.results[m6].status != LiveStatus.live ? m6 : h6;
+        let m7 = floor((l7 + h7) / 2);
+        let l8 = l7 < h7 && LiveDirectory.results[m7].status == LiveStatus.live ? m7 + 1 : l7;
+        let h8 = l7 < h7 && LiveDirectory.results[m7].status != LiveStatus.live ? m7 : h7;
+        let m8 = floor((l8 + h8) / 2);
+        let l9 = l8 < h8 && LiveDirectory.results[m8].status == LiveStatus.live ? m8 + 1 : l8;
+        let h9 = l8 < h8 && LiveDirectory.results[m8].status != LiveStatus.live ? m8 : h8;
+        let m9 = floor((l9 + h9) / 2);
+        let l10 = l9 < h9 && LiveDirectory.results[m9].status == LiveStatus.live ? m9 + 1 : l9;
+        let h10 = l9 < h9 && LiveDirectory.results[m9].status != LiveStatus.live ? m9 : h9;
+        let m10 = floor((l10 + h10) / 2);
+        return l10 < h10 && LiveDirectory.results[m10].status == LiveStatus.live ? m10 + 1 : l10;
+    }
+}
+
+// ---- the head of the page --------------------------------------------------------------------
+
+// The search box: words for the directory, or a link to open. Its suggestions open under it, drawn
+// over the page by LiveDiscover.
+component SearchBox inherits Rectangle {
+    in-out property <int> picked: -1;       // the suggestion chosen with ↑ ↓; -1 none
+    property <bool> open: LiveDirectory.suggestions-open && LiveDirectory.suggestions.length > 0;
+    height: Look.terminal ? 30px : Look.broadsheet ? 40px : 44px;
+    border-radius: Look.workbench ? Look.radius : 0px;
+    background: Look.workbench ? Look.bg : transparent;
+    border-width: Look.workbench ? 1.5px : 0px;
+    border-color: root.open ? Look.accent : Look.line-strong;
+
+    public function focus-box() {
+        input.focus();
+    }
+
+    // Broadsheet and Terminal underline it.
+    if !Look.workbench: Rectangle {
+        y: parent.height - self.height;
+        height: Look.broadsheet ? 2px : 1px;
+        background: root.open ? Look.accent : Look.broadsheet ? Look.text : Look.line-strong;
+    }
+
+    HorizontalLayout {
+        padding-left: Look.workbench ? 14px : 0px;
+        padding-right: Look.workbench ? 8px : 0px;
+        padding-bottom: Look.broadsheet ? 8px : 0px;
+        spacing: Look.broadsheet ? 12px : Look.terminal ? 8px : 10px;
+        if !Look.terminal: VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "magnifying-glass";
+                size: Look.broadsheet ? 24px : 18px;
+                color: Look.broadsheet ? Look.accent-ink : Look.muted;
+            }
+        }
+        if Look.terminal: Text {
+            text: @tr("search ❯");
+            color: Look.accent;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+        Rectangle {
+            horizontal-stretch: 1;
+            Text {
+                width: parent.width;
+                height: parent.height;
+                visible: input.text == "" && input.preedit-text == "";
+                text: DiscoverWords.placeholder();
+                color: Look.text;
+                opacity: 0.55;
+                font-size: input.font-size;
+                vertical-alignment: center;
+                overflow: elide;
+            }
+            input := TextInput {
+                width: parent.width;
+                height: parent.height;
+                text <=> LiveDirectory.query;
+                single-line: true;
+                color: Look.text;
+                font-size: Look.broadsheet ? 22px : Look.terminal ? 13px : 15px;
+                vertical-alignment: center;
+                selection-background-color: Look.input-sel;
+                selection-foreground-color: Look.text;
+                text-cursor-width: Look.cursor-width;
+                accessible-label: DiscoverWords.placeholder();
+                edited => {
+                    root.picked = -1;
+                    LiveDirectory.typed(self.text);
+                }
+                changed has-focus => {
+                    if self.has-focus {
+                        LiveDirectory.typed(self.text);
+                    } else {
+                        LiveDirectory.suggestions-open = false;
+                        root.picked = -1;
+                    }
+                }
+                key-pressed(event) => {
+                    if self.preedit-text != "" {
+                        return reject;
+                    }
+                    if event.text == Key.Escape {
+                        if LiveDirectory.suggestions-open {
+                            LiveDirectory.suggestions-open = false;
+                            root.picked = -1;
+                            return accept;
+                        }
+                        if self.text != "" {
+                            self.text = "";
+                            LiveDirectory.search("");
+                            return accept;
+                        }
+                        return reject;
+                    }
+                    if event.text == Key.DownArrow && root.open {
+                        root.picked = min(LiveDirectory.suggestions.length - 1, root.picked + 1);
+                        return accept;
+                    }
+                    if event.text == Key.UpArrow && root.open {
+                        root.picked = max(-1, root.picked - 1);
+                        return accept;
+                    }
+                    // Tab takes the picked words or channel into the box.
+                    if event.text == Key.Tab && root.open && root.picked >= 0 && LiveDirectory.suggestions[root.picked].kind <= 2 {
+                        self.text = LiveDirectory.suggestions[root.picked].text;
+                        root.picked = -1;
+                        LiveDirectory.typed(self.text);
+                        return accept;
+                    }
+                    if event.text == Key.Return {
+                        if root.open && root.picked >= 0 && root.picked < LiveDirectory.suggestions.length {
+                            LiveDirectory.choose-suggestion(root.picked);
+                        } else {
+                            LiveDirectory.search(self.text);
+                        }
+                        root.picked = -1;
+                        return accept;
+                    }
+                    return reject;
+                }
+            }
+        }
+        if LiveDirectory.loading && Look.workbench: VerticalLayout {
+            alignment: center;
+            Spinner {
+                size: 16px;
+            }
+        }
+        if LiveDirectory.loading && !Look.workbench: Text {
+            text: DiscoverWords.searching();
+            color: Look.faint;
+            font-size: 13px;
+            font-italic: Look.broadsheet;
+            vertical-alignment: center;
+        }
+        if LiveDirectory.query != "" && Look.workbench: VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 28px;
+                height: 28px;
+                border-radius: 6px;
+                background: clear-touch.has-hover ? Look.side : transparent;
+                accessible-role: button;
+                accessible-label: DiscoverWords.clear();
+                Icon {
+                    name: "x";
+                    size: 15px;
+                    color: Look.faint;
+                }
+                clear-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        input.text = "";
+                        LiveDirectory.search("");
+                    }
+                }
+            }
+        }
+        if LiveDirectory.query != "" && Look.broadsheet: Rectangle {
+            width: clear-word.preferred-width;
+            accessible-role: button;
+            accessible-label: clear-word.text;
+            clear-word := Text {
+                x: 0;
+                text: DiscoverWords.clear();
+                color: Look.accent-ink;
+                font-size: 14px;
+                font-weight: 600;
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    input.text = "";
+                    LiveDirectory.search("");
+                }
+            }
+        }
+        if !Look.terminal: HorizontalLayout {
+            padding-left: Look.workbench ? 6px : 0px;
+            padding-right: Look.workbench ? 6px : 0px;
+            Text {
+                text: "⌘K";
+                color: Look.faint;
+                font-family: Look.mono;
+                font-size: Look.broadsheet ? 12px : 11px;
+                vertical-alignment: center;
+            }
+        }
+        if Look.terminal: Text {
+            text: DiscoverWords.keys();
+            color: Look.faint;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// One of the three modes: a segment (Workbench), an underlined word (Broadsheet), "[1] live now 23"
+// (Terminal). Its count is the total that mode would give.
+component ModeTab inherits Rectangle {
+    in property <LiveMode> mode;
+    in property <int> index;
+    property <bool> on: LiveDirectory.mode == mode;
+    property <int> count: LiveDirectory.mode-counts[index];
+    property <string> count-text: count >= 0 && !Discover.link ? "" + count + (LiveDirectory.total-relation != 0 && on ? "+" : "") : "";
+    width: Look.workbench ? row.preferred-width + 20px : row.preferred-width;
+    height: Look.workbench ? 26px : Look.broadsheet ? 31px : 18px;
+    border-radius: Look.workbench ? 6px : 0px;
+    background: Look.workbench && on ? Look.bg : transparent;
+    border-width: Look.workbench && on ? 1px : 0px;
+    border-color: Look.line;
+    drop-shadow-blur: Look.workbench && on ? 2px : 0px;
+    drop-shadow-offset-y: 1px;
+    drop-shadow-color: #00000014;
+    accessible-role: tab;
+    accessible-label: LiveDirectoryWords.mode(mode);
+
+    row := HorizontalLayout {
+        x: Look.workbench ? 10px : 0px;
+        alignment: start;
+        padding-bottom: Look.broadsheet ? 9px : 0px;
+        spacing: 6px;
+        Text {
+            text: Look.terminal ? "[" + (root.index + 1) + "] " + LiveDirectoryWords.mode(root.mode).to-lowercase() + (root.count-text != "" ? " " + root.count-text : "")
+                : LiveDirectoryWords.mode(root.mode);
+            color: Look.terminal ? (root.on ? Look.accent : Look.muted) : root.on ? Look.text : Look.muted;
+            font-size: Look.broadsheet ? 16px : 13px;
+            font-weight: Look.workbench || root.on ? 600 : 400;
+            vertical-alignment: Look.broadsheet ? TextVerticalAlignment.bottom : TextVerticalAlignment.center;
+        }
+        if !Look.terminal && root.count-text != "": Text {
+            text: root.count-text;
+            color: Look.faint;
+            font-size: Look.broadsheet ? 12px : 11px;
+            font-weight: Look.broadsheet ? 400 : 500;
+            vertical-alignment: Look.broadsheet ? TextVerticalAlignment.bottom : TextVerticalAlignment.center;
+        }
+    }
+    if Look.broadsheet && root.on: Rectangle {
+        y: parent.height - 2px;
+        height: 2px;
+        background: Look.text;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            if !root.on {
+                LiveDirectory.set-mode(root.mode);
+            }
+        }
+    }
+}
+
+// Cards or a list: a segment with an icon (Workbench), a word (Broadsheet).
+component LayoutTab inherits Rectangle {
+    in property <bool> list;
+    property <bool> on: LiveDirectory.list-layout == list;
+    width: row.preferred-width + (Look.workbench ? 18px : 0px);
+    height: Look.workbench ? 26px : 31px;
+    border-radius: Look.workbench ? 6px : 0px;
+    background: Look.workbench && on ? Look.bg : transparent;
+    border-width: Look.workbench && on ? 1px : 0px;
+    border-color: Look.line;
+    drop-shadow-blur: Look.workbench && on ? 2px : 0px;
+    drop-shadow-offset-y: 1px;
+    drop-shadow-color: #00000014;
+    accessible-role: tab;
+    accessible-label: DiscoverWords.layout(list);
+
+    row := HorizontalLayout {
+        x: Look.workbench ? 9px : 0px;
+        alignment: start;
+        padding-bottom: Look.broadsheet ? 9px : 0px;
+        spacing: 6px;
+        if Look.workbench: VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.list ? "rows" : "squares-four";
+                size: 15px;
+                color: root.on ? Look.text : Look.muted;
+            }
+        }
+        Text {
+            text: DiscoverWords.layout(root.list);
+            color: root.on ? Look.text : Look.muted;
+            font-size: Look.broadsheet ? 14px : 13px;
+            font-weight: Look.workbench || root.on ? 600 : 400;
+            vertical-alignment: Look.broadsheet ? TextVerticalAlignment.bottom : TextVerticalAlignment.center;
+        }
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveDirectory.set-list-layout(root.list);
+        }
+    }
+}
+
+// Workbench's segments sit in a tray.
+component Tray inherits Rectangle {
+    height: 32px;
+    width: segments.preferred-width;
+    border-radius: Look.radius;
+    background: Look.side;
+    border-width: 1px;
+    border-color: Look.line;
+
+    segments := HorizontalLayout {
+        padding: 3px;
+        spacing: 2px;
+        @children
+    }
+}
+
+// The filters.
+enum FilterKind { source, category, language, plays, status, sort }
+
+// A choice in a filter's menu: a radio or a box to tick, what it is, and what it would give.
+component MenuChoice inherits Rectangle {
+    in property <string> label;
+    in property <int> count: -1;
+    in property <bool> chosen;
+    in property <bool> several;     // the Source filter takes several
+    callback clicked();
+    height: 30px;
+    border-radius: Look.broadsheet ? 2px : 6px;
+    background: touch.has-hover ? (Look.broadsheet ? Look.sel : Look.side) : transparent;
+    opacity: count == 0 && !chosen ? 0.5 : 1;
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 8px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.several ? (root.chosen ? "check-square" : "square") : root.chosen ? "radio-button" : "circle";
+                size: Look.broadsheet ? 14px : 15px;
+                color: Look.accent;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.label;
+            color: Look.text;
+            font-size: Look.broadsheet ? 14px : 13px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        if root.count >= 0: Text {
+            text: root.count;
+            color: Look.faint;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+component StatusChoice inherits MenuChoice {
+    in property <LiveStatus> status;
+    callback done();
+    label: DiscoverWords.status-choice(status);
+    chosen: !LiveDirectory.status-any && LiveDirectory.status-filter == status;
+    clicked => {
+        LiveDirectory.set-status(false, root.status);
+        root.done();
+    }
+}
+
+component SortChoice inherits MenuChoice {
+    in property <LiveSort> sort;
+    callback done();
+    label: DiscoverWords.sort(sort, LiveDirectory.mode);
+    chosen: LiveDirectory.sort == sort;
+    clicked => {
+        LiveDirectory.set-sort(root.sort);
+        root.done();
+    }
+}
+
+// A filter: what it is and its value, a box in Workbench, words in Broadsheet; its menu opens under it.
+component FilterButton inherits Rectangle {
+    in property <FilterKind> kind;
+    in property <bool> right;           // the menu opens towards the left (the last ones)
+    property <bool> active: kind == FilterKind.source ? Discover.chosen-sources > 0
+        : kind == FilterKind.category ? Discover.category != LiveCategory.none
+        : kind == FilterKind.language ? LiveDirectory.language-chosen != ""
+        : kind == FilterKind.plays ? LiveDirectory.playback != 0
+        : kind == FilterKind.status ? Discover.status-set : false;
+    property <string> label: kind == FilterKind.source ? DiscoverWords.source-filter()
+        : kind == FilterKind.category ? DiscoverWords.category-filter()
+        : kind == FilterKind.language ? DiscoverWords.language-filter()
+        : kind == FilterKind.plays ? DiscoverWords.plays-filter()
+        : kind == FilterKind.status ? DiscoverWords.status-filter() : DiscoverWords.sort-filter();
+    property <string> value: kind == FilterKind.source ? (Discover.chosen-sources == 0 ? DiscoverWords.any() : Discover.chosen-sources == 1 ? Discover.chosen-source-names : DiscoverWords.sources(Discover.chosen-sources))
+        : kind == FilterKind.category ? (Discover.category == LiveCategory.none ? DiscoverWords.any() : LiveDirectoryWords.category(Discover.category))
+        : kind == FilterKind.language ? (LiveDirectory.language-chosen == "" ? DiscoverWords.any() : LiveDirectory.language-chosen)
+        : kind == FilterKind.plays ? DiscoverWords.plays(LiveDirectory.playback)
+        : kind == FilterKind.status ? (LiveDirectory.status-any ? DiscoverWords.any() : DiscoverWords.status-value(LiveDirectory.status-filter))
+        : DiscoverWords.sort(LiveDirectory.sort, LiveDirectory.mode);
+    property <string> note: kind == FilterKind.source ? DiscoverWords.source-note()
+        : kind == FilterKind.language ? DiscoverWords.language-note()
+        : kind == FilterKind.plays ? DiscoverWords.plays-note()
+        : kind == FilterKind.status ? DiscoverWords.status-note() : kind == FilterKind.sort ? DiscoverWords.sort-note() : "";
+    // The menu's choices: the "any" one, then the options.
+    property <int> choices: kind == FilterKind.source ? LiveDirectory.source-options.length + 1
+        : kind == FilterKind.category ? LiveDirectory.category-options.length + 1
+        : kind == FilterKind.language ? LiveDirectory.language-options.length + 1
+        : kind == FilterKind.plays ? 3 : kind == FilterKind.status ? 5 : 4;
+    width: row.preferred-width + (Look.workbench ? 18px : 0px);
+    height: Look.workbench ? 30px : 22px;
+    border-radius: Look.workbench ? 6px : 0px;
+    background: Look.workbench ? (active ? Look.soft : Look.bg) : transparent;
+    border-width: Look.workbench ? 1px : 0px;
+    border-color: active ? Look.accent : Look.line-strong;
+    accessible-role: button;
+    accessible-label: label + " " + value;
+
+    row := HorizontalLayout {
+        x: Look.workbench ? 10px : 0px;
+        alignment: start;
+        spacing: 5px;
+        Text {
+            text: root.label;
+            color: Look.workbench ? (root.active ? Look.soft-ink : Look.muted) : Look.faint;
+            font-size: Look.broadsheet ? 14px : 13px;
+            vertical-alignment: center;
+        }
+        Rectangle {
+            width: value-text.preferred-width;
+            value-text := Text {
+                x: 0;
+                height: parent.height;
+                text: root.value;
+                color: Look.workbench ? (root.active ? Look.soft-ink : Look.text) : root.active ? Look.accent-ink : Look.text;
+                font-size: Look.broadsheet ? 14px : 13px;
+                font-weight: 600;
+                vertical-alignment: center;
+            }
+            if Look.broadsheet && root.active: Rectangle {
+                y: parent.height - 1px;
+                height: 1px;
+                background: Look.accent-ink;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "caret-down";
+                size: 11px;
+                color: Look.workbench && root.active ? Look.soft-ink : Look.faint;
+                duotone: false;
+            }
+        }
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            menu.show();
+        }
+    }
+
+    menu := PopupWindow {
+        x: root.right ? root.width - 250px : 0px;
+        y: root.height + (Look.workbench ? 6px : 4px);
+        width: 250px;
+        height: box.height;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+
+        box := Rectangle {
+            height: min(420px, column.preferred-height);
+            border-radius: Look.broadsheet ? 4px : Look.radius;
+            background: DirectoryLook.panel;
+            border-width: 1px;
+            border-color: DirectoryLook.panel-frame;
+            drop-shadow-blur: 32px;
+            drop-shadow-offset-y: 12px;
+            drop-shadow-color: DirectoryLook.shadow;
+            clip: true;
+
+            column := VerticalLayout {
+                padding: 6px;
+                Flickable {
+                    height: min(320px, root.choices * 30px);
+                    mouse-drag-pan-enabled: false;
+                    VerticalLayout {
+                        alignment: start;
+                        if root.kind == FilterKind.source: MenuChoice {
+                            label: DiscoverWords.any-source();
+                            chosen: Discover.chosen-sources == 0;
+                            clicked => {
+                                // Every chosen source is taken off.
+                                if LiveDirectory.source-options[0].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[0].source); }
+                                if LiveDirectory.source-options[1].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[1].source); }
+                                if LiveDirectory.source-options[2].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[2].source); }
+                                if LiveDirectory.source-options[3].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[3].source); }
+                                if LiveDirectory.source-options[4].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[4].source); }
+                                if LiveDirectory.source-options[5].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[5].source); }
+                                if LiveDirectory.source-options[6].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[6].source); }
+                                if LiveDirectory.source-options[7].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[7].source); }
+                                if LiveDirectory.source-options[8].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[8].source); }
+                                menu.close();
+                            }
+                        }
+                        if root.kind == FilterKind.source: VerticalLayout {
+                            for option in LiveDirectory.source-options: MenuChoice {
+                                label: LiveDirectoryWords.source(option.source);
+                                count: option.count;
+                                chosen: option.chosen;
+                                several: true;
+                                clicked => {
+                                    LiveDirectory.toggle-source(option.source);
+                                }
+                            }
+                        }
+                        if root.kind == FilterKind.category: MenuChoice {
+                            label: DiscoverWords.any-category();
+                            chosen: Discover.category == LiveCategory.none;
+                            clicked => {
+                                LiveDirectory.set-category(LiveCategory.none);
+                                menu.close();
+                            }
+                        }
+                        if root.kind == FilterKind.category: VerticalLayout {
+                            for option in LiveDirectory.category-options: MenuChoice {
+                                label: LiveDirectoryWords.category(option.category);
+                                count: option.count;
+                                chosen: option.chosen;
+                                clicked => {
+                                    LiveDirectory.set-category(option.category);
+                                    menu.close();
+                                }
+                            }
+                        }
+                        if root.kind == FilterKind.language: MenuChoice {
+                            label: DiscoverWords.any-language();
+                            chosen: LiveDirectory.language-chosen == "";
+                            clicked => {
+                                LiveDirectory.set-language("");
+                                menu.close();
+                            }
+                        }
+                        if root.kind == FilterKind.language: VerticalLayout {
+                            for option in LiveDirectory.language-options: MenuChoice {
+                                label: option.label;
+                                count: option.count;
+                                chosen: option.chosen;
+                                clicked => {
+                                    LiveDirectory.set-language(option.key);
+                                    menu.close();
+                                }
+                            }
+                        }
+                        if root.kind == FilterKind.plays: VerticalLayout {
+                            for playback in 3: MenuChoice {
+                                label: DiscoverWords.plays-choice(playback);
+                                count: playback == 0 ? -1 : LiveDirectory.playback-counts[playback];
+                                chosen: LiveDirectory.playback == playback;
+                                clicked => {
+                                    LiveDirectory.set-playback(playback);
+                                    menu.close();
+                                }
+                            }
+                        }
+                        if root.kind == FilterKind.status: MenuChoice {
+                            label: DiscoverWords.any-status();
+                            chosen: LiveDirectory.status-any;
+                            clicked => {
+                                LiveDirectory.set-status(true, LiveStatus.live);
+                                menu.close();
+                            }
+                        }
+                        if root.kind == FilterKind.status: StatusChoice {
+                            status: LiveStatus.live;
+                            done => { menu.close(); }
+                        }
+                        if root.kind == FilterKind.status: StatusChoice {
+                            status: LiveStatus.stale;
+                            done => { menu.close(); }
+                        }
+                        if root.kind == FilterKind.status: StatusChoice {
+                            status: LiveStatus.offline;
+                            done => { menu.close(); }
+                        }
+                        if root.kind == FilterKind.status: StatusChoice {
+                            status: LiveStatus.unknown;
+                            done => { menu.close(); }
+                        }
+                        if root.kind == FilterKind.sort: SortChoice {
+                            sort: Discover.words != "" ? LiveSort.relevance : LiveSort.recommended;
+                            done => { menu.close(); }
+                        }
+                        if root.kind == FilterKind.sort: SortChoice {
+                            sort: LiveSort.recent;
+                            done => { menu.close(); }
+                        }
+                        if root.kind == FilterKind.sort: SortChoice {
+                            sort: LiveSort.added;
+                            done => { menu.close(); }
+                        }
+                        if root.kind == FilterKind.sort: SortChoice {
+                            sort: LiveSort.viewers;
+                            done => { menu.close(); }
+                        }
+                    }
+                }
+                if root.note != "": VerticalLayout {
+                    padding-top: 4px;
+                    Rectangle {
+                        height: 1px;
+                        background: DirectoryLook.rule;
+                    }
+                    Paragraph {
+                        text: root.note;
+                        color: Look.faint;
+                        font-size: Look.broadsheet ? 12px : 11px;
+                        font-italic: Look.broadsheet;
+                        line-height-factor: Look.leading(1.45);
+                        horizontal-alignment: left;
+                    }
+                }
+            }
+        }
+    }
+}
+
+// A link written in the accent ink: what a word button looks like in this page.
+component WordButton inherits Rectangle {
+    in property <string> text;
+    in property <length> font-size: 13px;
+    in property <int> font-weight: 600;
+    in property <color> ink: Look.accent-ink;
+    in property <bool> italic;
+    callback clicked();
+    width: label.preferred-width;
+    height: label.preferred-height;
+    accessible-role: button;
+    accessible-label: text;
+
+    label := Text {
+        x: 0;
+        text: root.text;
+        color: root.ink;
+        font-size: root.font-size;
+        font-weight: root.font-weight;
+        font-italic: root.italic;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// Terminal's bar over the pane: where it is, what is shown, how fresh.
+component TerminalHead inherits Rectangle {
+    height: 34px;
+    background: DirectoryLook.pane-head;
+
+    HorizontalLayout {
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: 10px;
+        Text {
+            text: DiscoverWords.discover();
+            color: Look.accent;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: LiveDirectoryWords.mode(LiveDirectory.mode).to-lowercase()
+                + (LiveDirectory.failed && Discover.rows.length == 0 ? ""
+                    : " · " + (Discover.first-load ? DiscoverWords.loading-results().to-lowercase() : Discover.refreshing ? DiscoverWords.searching-results().to-lowercase()
+                        : DiscoverWords.searched(DiscoverWords.total(LiveDirectory.mode, LiveDirectory.total, LiveDirectory.total-relation).to-lowercase(), Discover.words)));
+            color: Look.faint;
+            font-size: 13px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        if LiveDirectory.partial: Text {
+            text: Discover.behind > 0 ? DiscoverWords.behind-short(Discover.behind) : DiscoverWords.partial-short(0, 0);
+            color: Look.warn;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// Terminal's filters set, as tokens to take off.
+component TerminalToken inherits Rectangle {
+    in property <string> text;
+    callback clicked();
+    width: label.preferred-width;
+    height: label.preferred-height;
+    accessible-role: button;
+    accessible-label: text;
+
+    label := Text {
+        x: 0;
+        text: root.text + " ×";
+        color: Look.accent;
+        font-size: 13px;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// ---- the body --------------------------------------------------------------------------------
+
+// A note with a warning: a source behind, the directory or a page that did not come. Workbench
+// frames it in amber; Broadsheet rules it on the left; Terminal writes "! …".
+component Warning inherits Rectangle {
+    in property <string> title;
+    in property <bool> strong: true;    // a title over lines; a single sentence is not bold
+    in property <string> action;
+    callback acted();
+    height: lines.preferred-height;
+    border-radius: Look.workbench ? Look.radius : 0px;
+    border-width: Look.workbench ? 1px : 0px;
+    border-color: Look.warn;
+
+    if Look.broadsheet: Rectangle {
+        x: 0;
+        width: 2px;
+        background: Look.warn;
+    }
+    lines := HorizontalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        padding-left: Look.terminal ? 16px : 14px;
+        padding-right: Look.terminal ? 16px : Look.workbench ? 14px : 0px;
+        padding-top: Look.workbench ? 10px : Look.terminal ? 6px : 2px;
+        padding-bottom: Look.workbench ? 10px : Look.terminal ? 6px : 2px;
+        spacing: 10px;
+        if Look.workbench: VerticalLayout {
+            alignment: start;
+            padding-top: 1px;
+            Icon {
+                name: "warning";
+                size: 17px;
+                color: Look.warn;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: Look.terminal ? 0 : 1;
+            spacing: Look.broadsheet ? 3px : Look.terminal ? 1px : 2px;
+            alignment: start;
+            if root.title != "": Paragraph {
+                text: (Look.terminal ? "! " : "") + root.title;
+                color: Look.workbench ? Look.text : Look.broadsheet && !root.strong ? Look.muted : Look.warn;
+                font-size: Look.broadsheet ? 15px : 13px;
+                font-weight: Look.terminal || !root.strong ? 400 : 600;
+                line-height-factor: Look.leading(1.5);
+            }
+            @children
+            // In a layout of its own: a fixed width straight in the column would cap the column's.
+            if Look.broadsheet && root.action != "": HorizontalLayout {
+                alignment: start;
+                WordButton {
+                    text: root.action;
+                    font-size: 14px;
+                    clicked => {
+                        root.acted();
+                    }
+                }
+            }
+        }
+        if !Look.broadsheet && root.action != "": VerticalLayout {
+            alignment: start;
+            WordButton {
+                text: root.action;
+                ink: Look.terminal ? Look.accent : Look.accent-ink;
+                font-weight: Look.terminal ? 400 : 600;
+                clicked => {
+                    root.acted();
+                }
+            }
+        }
+        if Look.terminal: Rectangle {
+            horizontal-stretch: 1;
+        }
+    }
+}
+
+// A source's line in the warning: what is wrong with it.
+component BehindLines inherits VerticalLayout {
+    for row in LiveDirectory.sources: VerticalLayout {
+        padding-top: Discover.is-behind(row) ? (Look.broadsheet ? 3px : Look.terminal ? 1px : 2px) : 0px;
+        if Discover.is-behind(row): Paragraph {
+            text: (Look.terminal ? "! " : "") + DiscoverWords.behind-line(row);
+            color: Look.terminal ? Look.warn : Look.muted;
+            font-size: Look.broadsheet ? 14px : 13px;
+            line-height-factor: Look.leading(1.5);
+        }
+    }
+    if LiveDirectory.unknown-live > 0 && LiveDirectory.mode == LiveMode.live: VerticalLayout {
+        padding-top: Look.broadsheet ? 3px : 2px;
+        Paragraph {
+            text: (Look.terminal ? "! " : "") + DiscoverWords.unknown-live(LiveDirectory.unknown-live);
+            color: Look.terminal ? Look.warn : Look.muted;
+            font-size: Look.broadsheet ? 14px : 13px;
+            line-height-factor: Look.leading(1.5);
+        }
+    }
+}
+
+component SourcesHead inherits Text {
+    text: "";
+    color: Look.faint;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.88px;
+    vertical-alignment: center;
+    overflow: elide;
+}
+
+// The sources and what each gives: from the banner's Sources, or the foot's Sources and freshness.
+// Clicking a listed source filters by it.
+component SourcesTable inherits Rectangle {
+    height: table.preferred-height;
+    border-radius: Look.workbench ? Look.radius : 0px;
+    border-width: Look.workbench ? 1px : 0px;
+    border-color: Look.line;
+    clip: Look.workbench;
+
+    table := VerticalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        padding-left: Look.terminal ? 16px : 0px;
+        padding-right: Look.terminal ? 16px : 0px;
+        padding-top: Look.terminal ? 4px : 0px;
+        padding-bottom: Look.terminal ? 10px : 0px;
+        if Look.terminal: Text {
+            text: DiscoverWords.sources-title();
+            color: Look.faint;
+            font-size: 13px;
+        }
+        if Look.workbench: Rectangle {
+            height: 31px;
+            background: Look.side;
+            HorizontalLayout {
+                padding-left: 14px;
+                padding-right: 14px;
+                spacing: 12px;
+                SourcesHead { width: 110px; text: DiscoverWords.source-head().to-uppercase(); }
+                SourcesHead { horizontal-stretch: 1; text: DiscoverWords.provides-head().to-uppercase(); }
+                SourcesHead { width: 64px; text: DiscoverWords.live-head().to-uppercase(); }
+                SourcesHead { width: 120px; text: DiscoverWords.answer-head().to-uppercase(); }
+                SourcesHead { width: 120px; text: DiscoverWords.state-head().to-uppercase(); }
+            }
+        }
+        for row in LiveDirectory.sources: Rectangle {
+            height: line.preferred-height;
+            background: Look.workbench && touch.has-hover ? Look.side : transparent;
+            opacity: row.indexed ? 1 : 0.6;
+
+            touch := TouchArea {
+                enabled: row.indexed;
+                mouse-cursor: row.indexed ? pointer : default;
+                clicked => {
+                    if !Discover.is-chosen(row.source) {
+                        LiveDirectory.toggle-source(row.source);
+                    }
+                    LiveDirectory.toggle-sources();
+                }
+            }
+            if !Look.terminal: Rectangle {
+                y: Look.workbench ? 0px : parent.height - 1px;
+                height: 1px;
+                background: Look.workbench ? Look.line : DirectoryLook.rule;
+            }
+            line := HorizontalLayout {
+                x: 0;
+                y: 0;
+                width: parent.width;
+                height: Look.terminal ? 22px : self.preferred-height;
+                padding-left: Look.workbench ? 14px : 0px;
+                padding-right: Look.workbench ? 14px : 0px;
+                padding-top: Look.terminal ? 0px : Look.broadsheet ? 7px : 8px;
+                padding-bottom: Look.terminal ? 0px : Look.broadsheet ? 7px : 8px;
+                spacing: Look.terminal ? 10px : 12px;
+                if Look.terminal: Text {
+                    width: 10 * TerminalColumns.ch;
+                    text: LiveDirectoryWords.code(row.source);
+                    color: Look.accent;
+                    font-size: 13px;
+                    vertical-alignment: center;
+                }
+                if !Look.terminal: Paragraph {
+                    width: 110px;
+                    text: LiveDirectoryWords.source(row.source);
+                    color: Look.text;
+                    font-size: Look.broadsheet ? 14px : 13px;
+                    font-weight: 600;
+                }
+                if !Look.terminal: Paragraph {
+                    horizontal-stretch: 1;
+                    text: DiscoverWords.provides(row);
+                    color: Look.muted;
+                    font-size: Look.broadsheet ? 14px : 13px;
+                }
+                if Look.terminal: Text {
+                    horizontal-stretch: 1;
+                    height: 22px;
+                    text: DiscoverWords.provides(row);
+                    color: Look.muted;
+                    font-size: 13px;
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+                Text {
+                    width: Look.terminal ? 8 * TerminalColumns.ch : Look.broadsheet ? 70px : 64px;
+                    text: row.indexed && row.live >= 0 ? "" + row.live : "—";
+                    color: Look.text;
+                    font-size: Look.broadsheet ? 14px : 13px;
+                    vertical-alignment: Look.terminal ? TextVerticalAlignment.center : TextVerticalAlignment.top;
+                }
+                Text {
+                    width: Look.terminal ? 14 * TerminalColumns.ch : Look.broadsheet ? 130px : 120px;
+                    text: row.indexed && row.synced-minutes >= 0 ? LiveDirectoryWords.ago(row.synced-minutes) : "—";
+                    color: Look.muted;
+                    font-size: Look.broadsheet ? 14px : 13px;
+                    vertical-alignment: Look.terminal ? TextVerticalAlignment.center : TextVerticalAlignment.top;
+                }
+                Text {
+                    // Terminal: as wide as "not integrated yet", every row alike.
+                    width: Look.terminal ? 18 * TerminalColumns.ch : 120px;
+                    text: Look.terminal ? DiscoverWords.sync(row).to-lowercase() : DiscoverWords.sync(row);
+                    color: !row.indexed ? Look.faint : row.sync == LiveSync.ok ? Look.ok : Look.warn;
+                    font-size: Look.broadsheet ? 14px : 13px;
+                    font-weight: Look.terminal ? 400 : 600;
+                    vertical-alignment: Look.terminal ? TextVerticalAlignment.center : TextVerticalAlignment.top;
+                }
+            }
+        }
+    }
+}
+
+// The line over the results: how many, from where, and the mature-rated ones left out.
+component Summary inherits HorizontalLayout {
+    spacing: Look.broadsheet ? 12px : 10px;
+    Text {
+        text: Discover.first-load ? DiscoverWords.loading-results() : Discover.refreshing ? DiscoverWords.searching-results()
+            : DiscoverWords.searched(DiscoverWords.total(LiveDirectory.mode, LiveDirectory.total, LiveDirectory.total-relation), Discover.words);
+        color: Look.text;
+        font-size: Look.broadsheet ? 20px : 15px;
+        font-weight: 600;
+        vertical-alignment: bottom;
+    }
+    Text {
+        horizontal-stretch: 1;
+        text: LiveDirectory.partial ? (DiscoverWords.sort-meta(LiveDirectory.sort) != "" ? DiscoverWords.partial-short(Discover.behind, Discover.indexed) + " · " + DiscoverWords.sort-meta(LiveDirectory.sort) : DiscoverWords.partial-short(Discover.behind, Discover.indexed))
+            : DiscoverWords.sort-meta(LiveDirectory.sort);
+        color: Look.faint;
+        font-size: 13px;
+        overflow: elide;
+        vertical-alignment: bottom;
+    }
+    if LiveDirectory.hidden-mature > 0: Rectangle {
+        width: mature.preferred-width;
+        accessible-role: button;
+        accessible-label: DiscoverWords.hidden-mature(LiveDirectory.hidden-mature);
+        mature := HorizontalLayout {
+            x: 0;
+            alignment: start;
+            spacing: 5px;
+            if Look.workbench: VerticalLayout {
+                alignment: end;
+                padding-bottom: 1px;
+                Icon {
+                    name: "eye-slash";
+                    size: 14px;
+                    color: Look.muted;
+                }
+            }
+            Text {
+                text: DiscoverWords.hidden-mature(LiveDirectory.hidden-mature);
+                color: Look.muted;
+                font-size: Look.broadsheet ? 13px : 12px;
+                font-italic: Look.broadsheet;
+                vertical-alignment: bottom;
+            }
+        }
+        TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                LiveDirectory.content-asking = true;
+            }
+        }
+    }
+}
+
+// The head of a group of cards: what they are, a line about them, and See all.
+component GroupHead inherits Rectangle {
+    in property <string> letter;        // Broadsheet's A, B
+    in property <string> label;
+    in property <string> line;
+    in property <string> more;
+    callback more-clicked();
+    height: head.preferred-height;
+
+    head := HorizontalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        padding-bottom: Look.broadsheet ? 6px : 0px;
+        spacing: 10px;
+        if Look.broadsheet && root.letter != "": Text {
+            text: root.letter;
+            color: Look.faint;
+            font-family: Look.mono;
+            font-size: 12px;
+            vertical-alignment: bottom;
+        }
+        Text {
+            text: root.label;
+            color: Look.text;
+            font-size: Look.broadsheet ? 18px : 15px;
+            font-weight: 600;
+            vertical-alignment: bottom;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.line;
+            color: Look.faint;
+            font-size: Look.broadsheet ? 13px : 12px;
+            font-italic: Look.broadsheet;
+            overflow: elide;
+            vertical-alignment: bottom;
+        }
+        if root.more != "": VerticalLayout {
+            alignment: end;
+            WordButton {
+                text: root.more;
+                font-size: Look.broadsheet ? 14px : 13px;
+                clicked => {
+                    root.more-clicked();
+                }
+            }
+        }
+    }
+    if Look.broadsheet: Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: DirectoryLook.rule-strong;
+    }
+}
+
+// Cards in rows of three: channels[from] up to channels[to], then placeholders.
+component CardGrid inherits VerticalLayout {
+    in property <[LiveChannel]> channels;
+    in property <int> from;
+    in property <int> to;
+    in property <int> skeletons;
+    in property <length> card-width;
+    property <int> cards: max(0, to - from);
+    property <int> count: cards + skeletons;
+    spacing: Look.broadsheet ? 20px : 18px;
+
+    for row in ceil(root.count / 3): HorizontalLayout {
+        spacing: Look.broadsheet ? 24px : 16px;
+        alignment: start;
+        for column in min(3, root.count - row * 3): VerticalLayout {
+            width: root.card-width;
+            alignment: start;
+            if row * 3 + column < root.cards: ChannelCard {
+                channel: root.channels[root.from + row * 3 + column];
+                mode: LiveDirectory.mode;
+            }
+            if row * 3 + column >= root.cards: SkeletonCard { }
+        }
+    }
+}
+
+// A category on the home page, with how many are live in it.
+component CategoryChip inherits Rectangle {
+    in property <LiveCategory> category;
+    in property <int> count;
+    width: row.preferred-width + (Look.workbench ? 24px : 0px);
+    height: Look.workbench ? 30px : 24px;
+    border-radius: Look.workbench ? 6px : 0px;
+    border-width: Look.workbench ? 1px : 0px;
+    border-color: Look.line;
+    background: Look.workbench && touch.has-hover ? Look.side : transparent;
+    accessible-role: button;
+    accessible-label: LiveDirectoryWords.category(category);
+
+    row := HorizontalLayout {
+        x: Look.workbench ? 12px : 0px;
+        alignment: start;
+        spacing: Look.workbench ? 7px : 6px;
+        Text {
+            text: LiveDirectoryWords.category(root.category);
+            color: Look.text;
+            font-size: Look.broadsheet ? 16px : 13px;
+            vertical-alignment: Look.broadsheet ? TextVerticalAlignment.bottom : TextVerticalAlignment.center;
+        }
+        if root.count >= 0: Text {
+            text: root.count;
+            color: Look.broadsheet ? Look.danger : Look.faint;
+            font-size: Look.broadsheet ? 12px : 11px;
+            font-weight: Look.broadsheet ? 600 : 400;
+            vertical-alignment: Look.broadsheet ? TextVerticalAlignment.bottom : TextVerticalAlignment.center;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveDirectory.set-category(root.category);
+        }
+    }
+}
+
+// The line over a group of rows of one status (the table's separators).
+component GroupLine inherits Rectangle {
+    in property <LiveStatus> status;
+    height: words.preferred-height;
+
+    words := VerticalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        padding-left: Look.terminal ? 16px : Look.workbench ? 12px : 0px;
+        padding-right: Look.terminal ? 16px : Look.workbench ? 12px : 0px;
+        padding-top: Look.terminal ? 6px : Look.broadsheet ? 16px : 14px;
+        padding-bottom: Look.terminal ? 0px : 6px;
+        Paragraph {
+            text: DiscoverWords.group-line(root.status);
+            color: DirectoryLook.status(root.status);
+            font-size: Look.broadsheet ? 14px : Look.terminal ? 13px : 12px;
+            font-weight: Look.workbench ? 600 : 400;
+            font-italic: Look.broadsheet;
+            line-height-factor: Look.terminal ? Look.leading(1.7) : 1;
+        }
+    }
+    if !Look.terminal: Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: Look.workbench ? Look.line : DirectoryLook.rule-strong;
+    }
+}
+
+component TerminalHeadText inherits Text {
+    color: Look.faint;
+    font-size: 13px;
+    overflow: clip;
+    vertical-alignment: center;
+}
+
+// The head of Workbench's table and of Terminal's.
+component TableHead inherits Rectangle {
+    height: Look.terminal ? 25px : 26px;
+
+    if Look.workbench: HorizontalLayout {
+        y: 0;
+        height: 18px;
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 12px;
+        Rectangle { width: 64px; }
+        SourcesHead { horizontal-stretch: 1; text: DiscoverWords.table-head(LiveDirectory.mode).to-uppercase(); }
+        SourcesHead { width: 88px; text: DiscoverWords.source-head().to-uppercase(); }
+        SourcesHead { width: 150px; text: DiscoverWords.category-language().to-uppercase(); }
+        SourcesHead { width: 64px; text: DiscoverWords.viewers-head(LiveDirectory.mode).to-uppercase(); horizontal-alignment: right; }
+        SourcesHead { width: 150px; text: DiscoverWords.plays-head().to-uppercase(); }
+        Rectangle { width: 24px; }
+    }
+    if Look.terminal: HorizontalLayout {
+        height: 24px;
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: TerminalColumns.gap;
+        Rectangle { width: TerminalColumns.mark; }
+        Rectangle { width: TerminalColumns.dot; }
+        TerminalHeadText { horizontal-stretch: 1; text: DiscoverWords.columns(LiveDirectory.mode, 0); }
+        TerminalHeadText { width: TerminalColumns.second; text: DiscoverWords.columns(LiveDirectory.mode, 1); }
+        TerminalHeadText { width: TerminalColumns.source; text: DiscoverWords.columns(LiveDirectory.mode, 2); }
+        TerminalHeadText { width: TerminalColumns.category; text: DiscoverWords.columns(LiveDirectory.mode, 3); }
+        TerminalHeadText { width: TerminalColumns.language; text: DiscoverWords.columns(LiveDirectory.mode, 4); }
+        TerminalHeadText { width: TerminalColumns.viewers; text: DiscoverWords.columns(LiveDirectory.mode, 5); horizontal-alignment: right; }
+        TerminalHeadText { width: TerminalColumns.plays; text: DiscoverWords.columns(LiveDirectory.mode, 6); }
+    }
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: Look.line;
+    }
+}
+
+// The results as a table (every channel, what is announced, Live now as a list; Terminal always),
+// the rows of one status under a line of their own.
+component ResultsTable inherits VerticalLayout {
+    in property <[LiveChannel]> rows;
+    in property <int> selected;         // Terminal's row under the cursor
+    callback chosen(int);
+    callback shown(length, length);     // the row under the cursor is between these, in the window
+
+    if !Look.broadsheet: TableHead { }
+    for channel[index] in root.rows: VerticalLayout {
+        if LiveDirectory.mode != LiveMode.upcoming && (index == 0 || root.rows[index - 1].status != channel.status)
+            && (LiveDirectory.mode == LiveMode.channels || channel.status != LiveStatus.live): GroupLine {
+            status: channel.status;
+        }
+        ChannelRow {
+            channel: channel;
+            mode: LiveDirectory.mode;
+            index: index;
+            selected: Look.terminal && index == root.selected;
+            chosen => {
+                root.chosen(index);
+            }
+            shown(top, bottom) => {
+                root.shown(top, bottom);
+            }
+        }
+    }
+    for index in Discover.skeletons: SkeletonRow {
+        index: index;
+    }
+}
+
+// One change that would bring results back, with how many when known.
+component Change inherits Rectangle {
+    in property <string> label;
+    in property <string> icon;
+    in property <int> count: -1;
+    callback clicked();
+    height: Look.terminal ? 20px : Look.broadsheet ? row.preferred-height + 1px : 37px;
+    background: Look.workbench && touch.has-hover ? Look.side : transparent;
+    opacity: count == 0 ? 0.55 : 1;
+    accessible-role: button;
+    accessible-label: label;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+    row := HorizontalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: Look.workbench ? 36px : self.preferred-height;
+        padding-left: Look.workbench ? 12px : 0px;
+        padding-right: Look.workbench ? 12px : 0px;
+        padding-top: Look.broadsheet ? 8px : 0px;
+        padding-bottom: Look.broadsheet ? 8px : 0px;
+        spacing: Look.terminal ? 8px : 10px;
+        if Look.workbench: VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 16px;
+                color: Look.accent-ink;
+            }
+        }
+        Text {
+            horizontal-stretch: Look.terminal ? 0 : 1;
+            text: root.label;
+            color: Look.workbench ? Look.text : Look.broadsheet ? Look.accent-ink : Look.accent;
+            font-size: Look.broadsheet ? 15px : Look.terminal ? 13px : 14px;
+            font-weight: Look.broadsheet ? 600 : 400;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        if root.count >= 0: Text {
+            horizontal-stretch: Look.terminal ? 1 : 0;
+            text: Look.terminal ? "→ " + DiscoverWords.results(root.count) : DiscoverWords.results(root.count);
+            color: Look.faint;
+            font-size: Look.broadsheet ? 13px : Look.terminal ? 13px : 12px;
+            vertical-alignment: center;
+        }
+    }
+    if !Look.terminal: Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: Look.workbench ? Look.line : DirectoryLook.rule;
+    }
+}
+
+// Nothing for what is asked: what was asked, and what would bring results back.
+component Nothing inherits VerticalLayout {
+    in property <length> available;
+    property <bool> filtered: Discover.filtered;
+    spacing: Look.terminal ? 4px : Look.broadsheet ? 8px : 10px;
+    padding-top: Look.terminal ? 10px : Look.workbench ? 16px : 0px;
+    padding-bottom: Look.terminal ? 0px : Look.workbench ? 4px : 0px;
+    padding-left: Look.terminal ? 16px : 0px;
+    padding-right: Look.terminal ? 16px : 0px;
+
+    Paragraph {
+        width: Look.terminal ? root.available : min(root.available, Look.broadsheet ? 620px : 600px);
+        text: (Look.terminal ? "❯ " : "") + DiscoverWords.nothing(LiveDirectory.mode, root.filtered, Discover.words);
+        color: Look.terminal ? Look.accent : Look.text;
+        font-size: Look.broadsheet ? 24px : Look.terminal ? 13px : 17px;
+        font-weight: Look.terminal ? 400 : 600;
+        line-height-factor: Look.broadsheet ? Look.leading(1.2) : 1;
+    }
+    if root.filtered || Discover.words != "" || LiveDirectory.mode == LiveMode.upcoming: Paragraph {
+        width: Look.terminal ? root.available : min(root.available, Look.broadsheet ? 620px : 600px);
+        text: root.filtered ? DiscoverWords.nothing-filtered(LiveDirectory.mode, Discover.words, Discover.filter-words)
+            : Discover.words != "" ? DiscoverWords.nothing-searched(Discover.indexed, LiveDirectory.hidden-mature) : DiscoverWords.upcoming-note();
+        color: Look.muted;
+        font-size: Look.broadsheet ? 16px : Look.terminal ? 13px : 14px;
+        line-height-factor: Look.leading(1.55);
+    }
+    // What would bring results back: each filter taken off, the other modes.
+    HorizontalLayout {
+        alignment: start;
+        Rectangle {
+            width: Look.terminal ? root.available : min(root.available, Look.broadsheet ? 620px : 600px);
+            height: changes.preferred-height;
+            border-radius: Look.workbench ? Look.radius : 0px;
+            border-width: Look.workbench && changes.preferred-height > 0 ? 1px : 0px;
+            border-color: Look.line;
+            clip: true;
+            changes := VerticalLayout {
+                if Discover.chosen-sources > 0: Change {
+                    label: DiscoverWords.remove(DiscoverWords.source-is(Discover.chosen-source-names));
+                    icon: "x-circle";
+                    clicked => {
+                        if LiveDirectory.source-options[0].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[0].source); }
+                        if LiveDirectory.source-options[1].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[1].source); }
+                        if LiveDirectory.source-options[2].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[2].source); }
+                        if LiveDirectory.source-options[3].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[3].source); }
+                        if LiveDirectory.source-options[4].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[4].source); }
+                        if LiveDirectory.source-options[5].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[5].source); }
+                        if LiveDirectory.source-options[6].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[6].source); }
+                        if LiveDirectory.source-options[7].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[7].source); }
+                        if LiveDirectory.source-options[8].chosen { LiveDirectory.toggle-source(LiveDirectory.source-options[8].source); }
+                    }
+                }
+                if Discover.category != LiveCategory.none: Change {
+                    label: DiscoverWords.remove(DiscoverWords.category-is(Discover.category));
+                    icon: "x-circle";
+                    clicked => {
+                        LiveDirectory.set-category(LiveCategory.none);
+                    }
+                }
+                if LiveDirectory.language-chosen != "": Change {
+                    label: DiscoverWords.remove(DiscoverWords.language-is(LiveDirectory.language-chosen));
+                    icon: "x-circle";
+                    clicked => {
+                        LiveDirectory.set-language("");
+                    }
+                }
+                if LiveDirectory.playback != 0: Change {
+                    label: DiscoverWords.remove(DiscoverWords.plays-choice(LiveDirectory.playback));
+                    icon: "x-circle";
+                    count: LiveDirectory.playback-counts[0];
+                    clicked => {
+                        LiveDirectory.set-playback(0);
+                    }
+                }
+                if Discover.status-set: Change {
+                    label: DiscoverWords.remove(DiscoverWords.status-is(LiveDirectory.status-filter));
+                    icon: "x-circle";
+                    clicked => {
+                        LiveDirectory.set-status(true, LiveStatus.live);
+                    }
+                }
+                if LiveDirectory.mode != LiveMode.live && LiveDirectory.mode-counts[0] > 0: Change {
+                    label: DiscoverWords.look-in(LiveMode.live);
+                    icon: "arrow-right";
+                    count: LiveDirectory.mode-counts[0];
+                    clicked => {
+                        LiveDirectory.set-mode(LiveMode.live);
+                    }
+                }
+                if LiveDirectory.mode != LiveMode.channels && LiveDirectory.mode-counts[1] > 0: Change {
+                    label: DiscoverWords.look-in(LiveMode.channels);
+                    icon: "arrow-right";
+                    count: LiveDirectory.mode-counts[1];
+                    clicked => {
+                        LiveDirectory.set-mode(LiveMode.channels);
+                    }
+                }
+                if LiveDirectory.mode != LiveMode.upcoming && LiveDirectory.mode-counts[2] > 0: Change {
+                    label: DiscoverWords.look-in(LiveMode.upcoming);
+                    icon: "arrow-right";
+                    count: LiveDirectory.mode-counts[2];
+                    clicked => {
+                        LiveDirectory.set-mode(LiveMode.upcoming);
+                    }
+                }
+            }
+        }
+    }
+    if !Look.terminal: HorizontalLayout {
+        padding-top: 2px;
+        spacing: Look.broadsheet ? 18px : 16px;
+        alignment: start;
+        WordButton {
+            text: root.filtered ? DiscoverWords.clear-all() : DiscoverWords.clear-search();
+            font-size: Look.broadsheet ? 15px : 13px;
+            clicked => {
+                if root.filtered {
+                    LiveDirectory.clear-filters();
+                } else {
+                    LiveDirectory.search("");
+                }
+            }
+        }
+        WordButton {
+            text: DiscoverWords.not-listed();
+            font-size: Look.broadsheet ? 15px : 13px;
+            clicked => {
+                LiveDirectory.go(LiveSection.connections);
+            }
+        }
+    }
+    if Look.terminal: Text {
+        text: DiscoverWords.terminal-try();
+        color: Look.muted;
+        font-size: 13px;
+    }
+}
+
+// The next page.
+component More inherits HorizontalLayout {
+    property <string> showing: DiscoverWords.showing(Discover.rows.length, LiveDirectory.total, LiveDirectory.total-relation);
+    alignment: Look.workbench ? LayoutAlignment.center : LayoutAlignment.start;
+    spacing: Look.broadsheet ? 14px : Look.terminal ? 10px : 12px;
+    padding-left: Look.terminal ? 16px : 0px;
+    padding-top: Look.terminal ? 6px : 0px;
+    padding-bottom: Look.terminal ? 6px : 0px;
+
+    if Look.workbench: Text {
+        text: root.showing;
+        color: Look.faint;
+        font-size: 12px;
+        vertical-alignment: center;
+    }
+    if Look.workbench: Rectangle {
+        height: 32px;
+        width: more-label.preferred-width + 28px;
+        border-radius: Look.button-radius;
+        border-width: 1px;
+        border-color: Look.line-strong;
+        background: more-touch.has-hover ? Look.sel : transparent;
+        accessible-role: button;
+        accessible-label: more-label.text;
+        more-label := Text {
+            text: LiveDirectory.more-loading ? DiscoverWords.loading() : DiscoverWords.show-more(Discover.next);
+            color: Look.text;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        more-touch := TouchArea {
+            mouse-cursor: pointer;
+            clicked => {
+                if !LiveDirectory.more-loading {
+                    LiveDirectory.more();
+                }
+            }
+        }
+    }
+    if Look.broadsheet: WordButton {
+        text: LiveDirectory.more-loading ? DiscoverWords.loading() : DiscoverWords.show-more(Discover.next);
+        font-size: 15px;
+        clicked => {
+            if !LiveDirectory.more-loading {
+                LiveDirectory.more();
+            }
+        }
+    }
+    if Look.broadsheet: VerticalLayout {
+        alignment: end;
+        Text {
+            text: root.showing;
+            color: Look.faint;
+            font-size: 13px;
+        }
+    }
+    if Look.terminal: Text {
+        text: "── " + root.showing + " ──";
+        color: Look.faint;
+        font-size: 13px;
+    }
+    if Look.terminal: WordButton {
+        text: LiveDirectory.more-loading ? DiscoverWords.loading() : DiscoverWords.next(Discover.next);
+        ink: Look.accent;
+        font-weight: 400;
+        clicked => {
+            if !LiveDirectory.more-loading {
+                LiveDirectory.more();
+            }
+        }
+    }
+}
+
+// A link in the box: no search, but the way to open it.
+component LinkNote inherits Rectangle {
+    in property <length> available;
+    height: note.preferred-height;
+    width: Look.terminal ? available : min(available, 640px);
+    border-radius: Look.workbench ? Look.radius : 0px;
+    background: Look.workbench ? Look.side : transparent;
+    border-width: Look.workbench ? 1px : 0px;
+    border-color: Look.line;
+
+    note := VerticalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        padding-left: Look.workbench ? 18px : Look.terminal ? 16px : 0px;
+        padding-right: Look.workbench ? 18px : Look.terminal ? 16px : 0px;
+        padding-top: Look.workbench ? 16px : Look.terminal ? 6px : 0px;
+        padding-bottom: Look.workbench ? 16px : Look.terminal ? 12px : 16px;
+        spacing: Look.workbench ? 10px : Look.terminal ? 4px : 8px;
+        HorizontalLayout {
+            spacing: 8px;
+            alignment: start;
+            if Look.workbench: VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "link-simple";
+                    size: 18px;
+                    color: Look.accent-ink;
+                }
+            }
+            Text {
+                text: DiscoverWords.link-title();
+                color: Look.terminal ? Look.accent : Look.text;
+                font-size: Look.broadsheet ? 24px : Look.terminal ? 13px : 15px;
+                font-weight: Look.terminal ? 400 : 600;
+            }
+        }
+        if !Look.terminal: Paragraph {
+            text: Look.broadsheet ? DiscoverWords.link-address(Discover.link ? LiveDirectory.query : "") : DiscoverWords.link-line();
+            color: Look.muted;
+            font-size: Look.broadsheet ? 16px : 14px;
+            line-height-factor: Look.leading(1.55);
+        }
+        if Look.workbench: HorizontalLayout {
+            spacing: 8px;
+            alignment: start;
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: chip.preferred-width + 10px;
+                    height: 16px;
+                    border-radius: 6px;
+                    border-width: 1px;
+                    border-color: Look.line-strong;
+                    chip := Text {
+                        text: "LINK";
+                        color: Look.muted;
+                        font-family: Look.mono;
+                        font-size: 10px;
+                        font-weight: 500;
+                    }
+                }
+            }
+            Text {
+                horizontal-stretch: 1;
+                text: LiveDirectory.query;
+                color: Look.text;
+                font-size: 13px;
+                font-weight: 600;
+                overflow: elide;
+            }
+        }
+        if Look.terminal: Text {
+            text: "link · " + LiveDirectory.query;
+            color: Look.muted;
+            font-size: 13px;
+            overflow: elide;
+        }
+        if !Look.broadsheet: HorizontalLayout {
+            spacing: 6px;
+            alignment: start;
+            if Look.workbench: VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "question";
+                    size: 15px;
+                    color: Look.muted;
+                }
+            }
+            Text {
+                text: DiscoverWords.link-checked();
+                color: Look.muted;
+                font-size: 13px;
+            }
+        }
+        HorizontalLayout {
+            padding-top: Look.workbench ? 2px : 0px;
+            spacing: 8px;
+            alignment: start;
+            if Look.workbench: Rectangle {
+                height: 32px;
+                width: open-row.preferred-width + 28px;
+                border-radius: Look.button-radius;
+                background: open-touch.has-hover ? Look.accent.darker(0.1) : Look.accent;
+                accessible-role: button;
+                accessible-label: DiscoverWords.open-link();
+                open-row := HorizontalLayout {
+                    x: 14px;
+                    alignment: start;
+                    spacing: 6px;
+                    Text {
+                        text: DiscoverWords.open-link();
+                        color: Look.on-accent;
+                        font-size: 14px;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                    Text {
+                        text: "⏎";
+                        color: Look.on-accent;
+                        opacity: 0.8;
+                        font-family: Look.mono;
+                        font-size: 11px;
+                        vertical-alignment: center;
+                    }
+                }
+                open-touch := TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        LiveDirectory.search(LiveDirectory.query);
+                    }
+                }
+            }
+            if !Look.workbench: WordButton {
+                text: DiscoverWords.open-link();
+                ink: Look.terminal ? Look.accent : Look.accent-ink;
+                font-size: Look.broadsheet ? 15px : 13px;
+                font-weight: Look.terminal ? 400 : 600;
+                clicked => {
+                    LiveDirectory.search(LiveDirectory.query);
+                }
+            }
+        }
+    }
+    if Look.broadsheet: Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: DirectoryLook.rule-strong;
+    }
+}
+
+// The foot of the page: where the results come from, the sources, and the content setting.
+component Foot inherits Rectangle {
+    height: foot.preferred-height;
+
+    Rectangle {
+        y: 0;
+        height: 1px;
+        background: Look.broadsheet ? DirectoryLook.rule-strong : Look.line;
+    }
+    foot := VerticalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        padding-top: 12px;
+        spacing: 4px;
+        Paragraph {
+            text: DiscoverWords.attribution();
+            color: Look.faint;
+            font-size: Look.broadsheet ? 13px : 12px;
+            font-italic: Look.broadsheet;
+            line-height-factor: Look.leading(1.55);
+        }
+        HorizontalLayout {
+            spacing: Look.broadsheet ? 16px : 14px;
+            alignment: start;
+            WordButton {
+                text: DiscoverWords.sources-and-freshness(LiveDirectory.sources-open);
+                font-size: Look.broadsheet ? 13px : 12px;
+                clicked => {
+                    LiveDirectory.toggle-sources();
+                }
+            }
+            WordButton {
+                text: DiscoverWords.mature-state(LiveDirectory.show-mature);
+                font-size: Look.broadsheet ? 13px : 12px;
+                clicked => {
+                    LiveDirectory.content-asking = true;
+                }
+            }
+        }
+    }
+}
+
+component PreviewLine inherits HorizontalLayout {
+    in property <string> key;
+    in property <string> value;
+    in property <color> tone: Look.text;
+    spacing: 12px;
+    Text {
+        width: 8 * TerminalColumns.ch;
+        text: root.key;
+        color: Look.faint;
+        font-size: 13px;
+    }
+    Text {
+        horizontal-stretch: 1;
+        text: root.value;
+        color: root.tone;
+        font-size: 13px;
+        overflow: elide;
+    }
+}
+
+// Terminal's foot: the chosen row's picture, its details, and what to do with it.
+component Preview inherits Rectangle {
+    in property <LiveChannel> channel;
+    property <LiveSourceRow> source: Discover.source-row(channel.source);
+    height: details.preferred-height;
+    background: Look.side;
+
+    Rectangle {
+        y: 0;
+        height: 1px;
+        background: Look.line;
+    }
+    details := HorizontalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        padding-left: 16px;
+        padding-right: 16px;
+        padding-top: 10px;
+        padding-bottom: 12px;
+        spacing: 16px;
+        VerticalLayout {
+            alignment: start;
+            Rectangle {
+                width: 176px;
+                height: 99px;
+                border-radius: 3px;
+                background: DirectoryLook.picture(root.channel.hue);
+                clip: true;
+                if root.channel.has-thumbnail && root.channel.thumbnail.width > 0: Image {
+                    width: parent.width;
+                    height: parent.height;
+                    source: root.channel.thumbnail;
+                    image-fit: cover;
+                }
+                if !root.channel.has-thumbnail: Text {
+                    width: parent.width - 12px;
+                    text: LiveDirectoryWords.no-thumbnail(root.channel.source);
+                    color: DirectoryLook.picture-ink;
+                    font-size: 11px;
+                    horizontal-alignment: center;
+                    wrap: word-wrap;
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            alignment: start;
+            PreviewLine {
+                key: DiscoverWords.preview-key(0);
+                value: root.channel.title != "" ? root.channel.title : "—";
+            }
+            PreviewLine {
+                key: DiscoverWords.preview-key(1);
+                value: LiveDirectoryWords.status-line(root.channel).to-lowercase();
+                tone: DirectoryLook.status(root.channel.status);
+            }
+            PreviewLine {
+                key: DiscoverWords.preview-key(2);
+                value: (LiveDirectoryWords.play(root.channel) + " — " + LiveDirectoryWords.reason(root.channel)).to-lowercase();
+                tone: root.channel.play != LivePlay.elsewhere ? Look.accent : Look.text;
+            }
+            PreviewLine {
+                key: DiscoverWords.preview-key(3);
+                value: CardWords.meta(root.channel).to-lowercase();
+            }
+            PreviewLine {
+                key: DiscoverWords.preview-key(4);
+                value: LiveDirectoryWords.source(root.channel.source).to-lowercase()
+                    + (root.source.source == root.channel.source && root.source.indexed ? " · " + (Discover.is-behind(root.source) ? DiscoverWords.behind() : root.source.synced-minutes >= 0 ? DiscoverWords.updated(root.source.synced-minutes) : "") : "")
+                    + (root.channel.host != "" ? " · " + root.channel.host : "");
+                tone: Look.muted;
+            }
+        }
+        VerticalLayout {
+            spacing: 4px;
+            alignment: start;
+            HorizontalLayout {
+                alignment: end;
+                WordButton {
+                    text: DiscoverWords.act-key(root.channel);
+                    ink: Look.accent;
+                    font-weight: 400;
+                    clicked => {
+                        LiveDirectory.open(root.channel.id);
+                    }
+                }
+            }
+            HorizontalLayout {
+                alignment: end;
+                WordButton {
+                    text: DiscoverWords.follow-key(root.channel);
+                    ink: Look.text;
+                    font-weight: 400;
+                    clicked => {
+                        LiveDirectory.follow(root.channel.id, !root.channel.following);
+                    }
+                }
+            }
+            HorizontalLayout {
+                alignment: end;
+                WordButton {
+                    text: DiscoverWords.page-key();
+                    ink: Look.text;
+                    font-weight: 400;
+                    clicked => {
+                        LiveDirectory.open-page(root.channel.id);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ---- over the page ---------------------------------------------------------------------------
+
+component SuggestionLine inherits Rectangle {
+    in property <LiveSuggestion> item;
+    in property <bool> on;
+    callback clicked();
+    height: Look.terminal ? 24px : Look.broadsheet ? 32px : 32px;
+    border-radius: Look.terminal ? 0px : Look.broadsheet ? 2px : 6px;
+    background: on || touch.has-hover ? Look.sel : transparent;
+    accessible-role: button;
+    accessible-label: DiscoverWords.suggestion(item);
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+    HorizontalLayout {
+        padding-left: Look.terminal ? 12px : 10px;
+        padding-right: Look.terminal ? 12px : 10px;
+        spacing: 10px;
+        if Look.terminal: Text {
+            width: 10px;
+            text: root.on ? "▸" : "";
+            color: Look.accent;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        if Look.workbench: VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.item.kind == 0 ? "clock-counter-clockwise" : root.item.kind == 1 ? "magnifying-glass" : root.item.kind == 2 ? "user-circle"
+                    : root.item.kind == 3 ? "plugs" : root.item.kind == 4 ? "tag" : "link-simple";
+                size: 16px;
+                color: Look.muted;
+            }
+        }
+        Text {
+            text: DiscoverWords.suggestion(root.item);
+            color: Look.text;
+            font-size: Look.broadsheet ? 16px : Look.terminal ? 13px : 14px;
+            font-weight: Look.broadsheet ? 600 : 400;
+            vertical-alignment: center;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: DiscoverWords.suggestion-line(root.item);
+            color: Look.workbench ? Look.faint : Look.broadsheet ? Look.muted : Look.faint;
+            font-size: Look.broadsheet ? 14px : Look.terminal ? 13px : 12px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        if Look.workbench && root.item.kind == 2: VerticalLayout {
+            alignment: center;
+            SourceChip {
+                source: root.item.source;
+            }
+        }
+        if Look.terminal: Text {
+            text: root.item.kind == 2 ? LiveDirectoryWords.code(root.item.source) : root.item.kind == 3 ? "src" : root.item.kind == 4 ? "cat" : root.item.kind == 5 ? "⏎" : "";
+            color: Look.faint;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// The suggestions under the box: recent searches, words, channels, filters, or the link to open.
+component Suggestions inherits Rectangle {
+    in property <int> picked;
+    callback chose(int);
+    height: list.preferred-height;
+    border-radius: Look.terminal ? 3px : Look.broadsheet ? 4px : Look.radius;
+    background: DirectoryLook.panel;
+    border-width: 1px;
+    border-color: DirectoryLook.panel-frame;
+    drop-shadow-blur: 32px;
+    drop-shadow-offset-y: 12px;
+    drop-shadow-color: DirectoryLook.shadow;
+
+    list := VerticalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        padding-left: Look.terminal ? 0px : 6px;
+        padding-right: Look.terminal ? 0px : 6px;
+        padding-top: Look.terminal ? 6px : Look.broadsheet ? 8px : 6px;
+        padding-bottom: Look.terminal ? 6px : Look.broadsheet ? 8px : 6px;
+        for item[index] in LiveDirectory.suggestions: VerticalLayout {
+            // A group's name over its first line (sources and categories are both filters).
+            if index == 0 || (LiveDirectory.suggestions[index - 1].kind != item.kind
+                && !(LiveDirectory.suggestions[index - 1].kind >= 3 && LiveDirectory.suggestions[index - 1].kind <= 4 && item.kind >= 3 && item.kind <= 4)): HorizontalLayout {
+                padding-left: Look.terminal ? 12px : 10px;
+                padding-top: Look.workbench ? 8px : 4px;
+                padding-bottom: 4px;
+                Text {
+                    text: Look.terminal ? "# " + DiscoverWords.group(item.kind) : Look.workbench ? DiscoverWords.group(item.kind).to-uppercase() : DiscoverWords.group(item.kind);
+                    color: Look.faint;
+                    font-size: Look.workbench ? 11px : Look.broadsheet ? 12px : 13px;
+                    font-weight: Look.workbench ? 600 : 400;
+                    letter-spacing: Look.workbench ? 0.88px : 0px;
+                }
+            }
+            SuggestionLine {
+                item: item;
+                on: index == root.picked;
+                clicked => {
+                    root.chose(index);
+                }
+            }
+        }
+        Rectangle {
+            height: foot.preferred-height + (Look.workbench ? 16px : Look.terminal ? 12px : 8px);
+            Rectangle {
+                y: 4px;
+                height: Look.broadsheet ? 0px : 1px;
+                background: Look.line;
+            }
+            foot := Text {
+                x: Look.terminal ? 12px : 10px;
+                y: Look.workbench ? 12px : Look.terminal ? 10px : 6px;
+                width: parent.width - 2 * self.x;
+                text: DiscoverWords.foot(Discover.link, LiveDirectory.query);
+                color: Look.faint;
+                font-size: Look.broadsheet ? 13px : 12px;
+                font-italic: Look.broadsheet;
+                overflow: elide;
+            }
+        }
+    }
+}
+
+// One of Terminal's orders, on the modes' line.
+component SortWord inherits Rectangle {
+    in property <LiveSort> sort;
+    property <bool> on: LiveDirectory.sort == sort;
+    width: word.preferred-width;
+    height: word.preferred-height;
+    accessible-role: button;
+    accessible-label: word.text;
+
+    word := Text {
+        x: 0;
+        text: DiscoverWords.sort-word(root.sort);
+        color: root.on ? Look.accent : Look.muted;
+        font-size: 13px;
+        font-weight: root.on ? 600 : 400;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveDirectory.set-sort(root.sort);
+        }
+    }
+}
+
+// ---- the page --------------------------------------------------------------------------------
+
+export component LiveDiscover inherits Rectangle {
+    background: Look.bg;
+    // The suggestion picked with ↑ ↓, and Terminal's row under the cursor.
+    property <int> picked: -1;
+    property <int> selected: 0;
+    // A new search starts the cursor at the top again.
+    property <bool> loading: LiveDirectory.loading;
+    changed loading => {
+        if root.loading {
+            root.selected = 0;
+        }
+    }
+    property <int> focus-requests: LiveDirectory.search-focus-requests;
+    changed focus-requests => {
+        search.focus-box();
+    }
+    // The page's own margins, and the cards' width (three to a row).
+    property <length> margin: Look.broadsheet ? 36px : 28px;
+    property <length> available: root.width - 2 * root.margin;
+    property <length> card-width: floor((root.available - 2 * (Look.broadsheet ? 24px : 16px)) / 3 / 1px) * 1px;
+    property <bool> preview: Look.terminal && !Discover.link && root.selected < Discover.rows.length;
+
+    // Keep the row under the cursor in view.
+    function reveal(top: length, bottom: length) {
+        if top < results.absolute-position.y {
+            results.content-y = min(0px, results.content-y + (results.absolute-position.y - top));
+        } else if bottom > results.absolute-position.y + results.height {
+            results.content-y = max(results.height - results.content-height, results.content-y - (bottom - results.absolute-position.y - results.height));
+        }
+    }
+    function choose(index: int) {
+        root.selected = max(0, min(Discover.rows.length - 1, index));
+        keys.focus();
+    }
+
+    // Terminal's keys (the canvas's 1b): j k or ↑ ↓ to choose, ⏎ to act, f to follow, o for the
+    // page, / to search, n for the next page, 1 2 3 for the modes.
+    keys := FocusScope {
+        width: parent.width;
+        height: parent.height;
+        key-pressed(event) => {
+            if !Look.terminal || event.modifiers.control || event.modifiers.meta || event.modifiers.alt {
+                return reject;
+            }
+            if event.text == "j" || event.text == Key.DownArrow {
+                root.choose(root.selected + 1);
+                return accept;
+            }
+            if event.text == "k" || event.text == Key.UpArrow {
+                root.choose(root.selected - 1);
+                return accept;
+            }
+            if event.text == Key.Return && root.selected < Discover.rows.length {
+                LiveDirectory.open(Discover.rows[root.selected].id);
+                return accept;
+            }
+            if event.text == "f" && root.selected < Discover.rows.length {
+                LiveDirectory.follow(Discover.rows[root.selected].id, !Discover.rows[root.selected].following);
+                return accept;
+            }
+            if event.text == "o" && root.selected < Discover.rows.length {
+                LiveDirectory.open-page(Discover.rows[root.selected].id);
+                return accept;
+            }
+            if event.text == "/" {
+                search.focus-box();
+                return accept;
+            }
+            if event.text == "n" && Discover.more && !LiveDirectory.more-loading {
+                LiveDirectory.more();
+                return accept;
+            }
+            if event.text == "r" && (LiveDirectory.failed || LiveDirectory.page-failed) {
+                LiveDirectory.retry();
+                return accept;
+            }
+            if event.text == "1" {
+                LiveDirectory.set-mode(LiveMode.live);
+                return accept;
+            }
+            if event.text == "2" {
+                LiveDirectory.set-mode(LiveMode.channels);
+                return accept;
+            }
+            if event.text == "3" {
+                LiveDirectory.set-mode(LiveMode.upcoming);
+                return accept;
+            }
+            return reject;
+        }
+
+        VerticalLayout {
+            width: parent.width;
+            height: parent.height;
+            if Look.terminal: TerminalHead { }
+
+            // The head: the search box over the modes and the filters. It keeps its height: the
+            // body takes what is left.
+            VerticalLayout {
+                vertical-stretch: 0;
+                padding-left: Look.terminal ? 16px : root.margin;
+                padding-right: Look.terminal ? 16px : root.margin;
+                padding-top: Look.terminal ? 10px : Look.broadsheet ? 22px : 18px;
+                padding-bottom: Look.terminal ? 8px : Look.broadsheet ? 0px : 12px;
+                spacing: Look.terminal ? 7px : Look.broadsheet ? 14px : 10px;
+
+                if Look.broadsheet: HorizontalLayout {
+                    spacing: 14px;
+                    Text {
+                        text: LiveDirectoryWords.section(LiveSection.discover);
+                        color: Look.text;
+                        font-size: 32px;
+                        font-weight: 600;
+                        letter-spacing: -0.32px;
+                        vertical-alignment: bottom;
+                    }
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        alignment: end;
+                        padding-bottom: 5px;
+                        Text {
+                            text: @tr("the FinchGram Live Directory");
+                            color: Look.faint;
+                            font-size: 13px;
+                            overflow: elide;
+                        }
+                    }
+                }
+
+                search := SearchBox {
+                    picked <=> root.picked;
+                }
+
+                // The modes, and cards or a list.
+                if !Look.terminal: Rectangle {
+                    height: modes.preferred-height;
+                    if Look.broadsheet: Rectangle {
+                        y: parent.height - 1px;
+                        height: 1px;
+                        background: DirectoryLook.rule-strong;
+                    }
+                    modes := HorizontalLayout {
+                        spacing: Look.broadsheet ? 22px : 8px;
+                        if Look.workbench: Tray {
+                            ModeTab { mode: LiveMode.live; index: 0; }
+                            ModeTab { mode: LiveMode.channels; index: 1; }
+                            ModeTab { mode: LiveMode.upcoming; index: 2; }
+                        }
+                        if Look.broadsheet: ModeTab { mode: LiveMode.live; index: 0; }
+                        if Look.broadsheet: ModeTab { mode: LiveMode.channels; index: 1; }
+                        if Look.broadsheet: ModeTab { mode: LiveMode.upcoming; index: 2; }
+                        Rectangle {
+                            horizontal-stretch: 1;
+                        }
+                        if LiveDirectory.mode == LiveMode.live && !LiveDirectory.home && !Discover.link && Look.workbench: Tray {
+                            LayoutTab { list: false; }
+                            LayoutTab { list: true; }
+                        }
+                        if LiveDirectory.mode == LiveMode.live && !LiveDirectory.home && !Discover.link && Look.broadsheet: HorizontalLayout {
+                            spacing: 14px;
+                            LayoutTab { list: false; }
+                            LayoutTab { list: true; }
+                        }
+                    }
+                }
+
+                // The filters.
+                if !Look.terminal: HorizontalLayout {
+                    padding-bottom: Look.broadsheet ? 12px : 0px;
+                    spacing: Look.broadsheet ? 20px : 6px;
+                    alignment: start;
+                    FilterButton { kind: FilterKind.source; }
+                    FilterButton { kind: FilterKind.category; }
+                    FilterButton {
+                        kind: FilterKind.language;
+                        right: LiveDirectory.mode == LiveMode.upcoming;
+                    }
+                    FilterButton {
+                        kind: FilterKind.plays;
+                        right: LiveDirectory.mode != LiveMode.channels;
+                    }
+                    if LiveDirectory.mode == LiveMode.channels: FilterButton {
+                        kind: FilterKind.status;
+                        right: true;
+                    }
+                    if LiveDirectory.mode != LiveMode.upcoming: FilterButton {
+                        kind: FilterKind.sort;
+                        right: true;
+                    }
+                    if Discover.filtered: VerticalLayout {
+                        alignment: center;
+                        padding-left: Look.workbench ? 6px : 0px;
+                        WordButton {
+                            text: DiscoverWords.clear-filters();
+                            font-size: Look.broadsheet ? 14px : 13px;
+                            clicked => {
+                                LiveDirectory.clear-filters();
+                            }
+                        }
+                    }
+                }
+
+                // Terminal: the modes and the order on one line, the filters set as tokens, a
+                // source behind.
+                if Look.terminal: HorizontalLayout {
+                    spacing: 14px;
+                    ModeTab { mode: LiveMode.live; index: 0; }
+                    ModeTab { mode: LiveMode.channels; index: 1; }
+                    ModeTab { mode: LiveMode.upcoming; index: 2; }
+                    Rectangle {
+                        horizontal-stretch: 1;
+                    }
+                    Text {
+                        text: DiscoverWords.sort-label();
+                        color: Look.faint;
+                        font-size: 13px;
+                    }
+                    if LiveDirectory.mode == LiveMode.upcoming: Text {
+                        text: DiscoverWords.soonest();
+                        color: Look.accent;
+                        font-size: 13px;
+                        font-weight: 600;
+                    }
+                    if LiveDirectory.mode != LiveMode.upcoming: SortWord {
+                        sort: Discover.words != "" ? LiveSort.relevance : LiveSort.recommended;
+                    }
+                    if LiveDirectory.mode != LiveMode.upcoming: SortWord { sort: LiveSort.recent; }
+                    if LiveDirectory.mode != LiveMode.upcoming: SortWord { sort: LiveSort.added; }
+                    if LiveDirectory.mode != LiveMode.upcoming: SortWord { sort: LiveSort.viewers; }
+                }
+                if Look.terminal && Discover.filtered: HorizontalLayout {
+                    // Each token keeps its own gap, so that a source not chosen leaves none.
+                    spacing: 0px;
+                    alignment: start;
+                    Text {
+                        text: DiscoverWords.filters-label();
+                        color: Look.faint;
+                        font-size: 13px;
+                    }
+                    for option in LiveDirectory.source-options: HorizontalLayout {
+                        padding-left: option.chosen ? 10px : 0px;
+                        if option.chosen: TerminalToken {
+                            text: "src:" + LiveDirectoryWords.code(option.source);
+                            clicked => {
+                                LiveDirectory.toggle-source(option.source);
+                            }
+                        }
+                    }
+                    if Discover.category != LiveCategory.none: HorizontalLayout {
+                        padding-left: 10px;
+                        TerminalToken {
+                            text: "cat:" + LiveDirectoryWords.category(Discover.category).to-lowercase();
+                            clicked => {
+                                LiveDirectory.set-category(LiveCategory.none);
+                            }
+                        }
+                    }
+                    if LiveDirectory.language-chosen != "": HorizontalLayout {
+                        padding-left: 10px;
+                        TerminalToken {
+                            text: "lang:" + LiveDirectory.language-chosen.to-lowercase();
+                            clicked => {
+                                LiveDirectory.set-language("");
+                            }
+                        }
+                    }
+                    if LiveDirectory.playback != 0: HorizontalLayout {
+                        padding-left: 10px;
+                        TerminalToken {
+                            text: LiveDirectory.playback == 1 ? "plays:here" : "plays:elsewhere";
+                            clicked => {
+                                LiveDirectory.set-playback(0);
+                            }
+                        }
+                    }
+                    if Discover.status-set: HorizontalLayout {
+                        padding-left: 10px;
+                        TerminalToken {
+                            text: "is:" + DiscoverWords.status-value(LiveDirectory.status-filter).to-lowercase();
+                            clicked => {
+                                LiveDirectory.set-status(true, LiveStatus.live);
+                            }
+                        }
+                    }
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        WordButton {
+                            text: DiscoverWords.clear-token();
+                            ink: Look.muted;
+                            font-weight: 400;
+                            clicked => {
+                                LiveDirectory.clear-filters();
+                            }
+                        }
+                    }
+                }
+                if Look.terminal && LiveDirectory.partial: VerticalLayout {
+                    BehindLines { }
+                    WordButton {
+                        text: DiscoverWords.sources-toggle(LiveDirectory.sources-open);
+                        ink: Look.accent;
+                        font-weight: 400;
+                        clicked => {
+                            LiveDirectory.toggle-sources();
+                        }
+                    }
+                }
+            }
+            if Look.workbench: Rectangle {
+                height: 1px;
+                background: Look.line;
+            }
+
+            // The body: what was found.
+            // The body fills what the head leaves: a Flickable in a layout would take its content's
+            // largest size (the empty state's column is 600 px wide and short), so it sits in a
+            // Rectangle that stretches.
+            Rectangle {
+                vertical-stretch: 1;
+                results := Flickable {
+                    width: parent.width;
+                    height: parent.height;
+                    mouse-drag-pan-enabled: false;
+                    opacity: Discover.refreshing ? 0.55 : 1;
+
+                    VerticalLayout {
+                        width: results.width;
+                        alignment: start;
+                        padding-left: Look.terminal ? 0px : root.margin;
+                        padding-right: Look.terminal ? 0px : root.margin;
+                        padding-top: Look.terminal ? 0px : Look.broadsheet ? 10px : 16px;
+                        padding-bottom: Look.terminal ? 10px : Look.broadsheet ? 30px : 28px;
+                        spacing: Look.terminal ? 0px : Look.broadsheet ? 20px : 16px;
+
+                        if LiveDirectory.failed: Warning {
+                            title: DiscoverWords.failed(Discover.rows.length > 0);
+                            strong: false;
+                            action: DiscoverWords.retry();
+                            acted => {
+                                LiveDirectory.retry();
+                            }
+                        }
+                        if Look.terminal && LiveDirectory.sources-open: SourcesTable { }
+                        if Discover.link: HorizontalLayout {
+                            alignment: start;
+                            LinkNote {
+                                available: Look.terminal ? root.width : root.available;
+                            }
+                        }
+                        if !Look.terminal && LiveDirectory.partial: Warning {
+                            title: DiscoverWords.partial(Discover.behind, Discover.indexed);
+                            action: DiscoverWords.sources-toggle(LiveDirectory.sources-open);
+                            acted => {
+                                LiveDirectory.toggle-sources();
+                            }
+                            BehindLines { }
+                        }
+                        if !Look.terminal && LiveDirectory.sources-open: SourcesTable { }
+                        if !Look.terminal && !LiveDirectory.home && !Discover.link && !Discover.empty && !(LiveDirectory.failed && Discover.rows.length == 0): Summary { }
+
+                        // Home: what plays here, confirmed live.
+                        if !Look.terminal && LiveDirectory.home && !Discover.link && (LiveDirectory.home-here.length > 0 || LiveDirectory.loading): VerticalLayout {
+                            spacing: 12px;
+                            GroupHead {
+                                letter: "A";
+                                label: DiscoverWords.plays-here();
+                                line: DiscoverWords.plays-here-line();
+                                more: DiscoverWords.see-all(LiveDirectory.home-here-count);
+                                more-clicked => {
+                                    LiveDirectory.set-playback(1);
+                                }
+                            }
+                            CardGrid {
+                                channels: LiveDirectory.home-here;
+                                from: 0;
+                                to: LiveDirectory.home-here.length;
+                                skeletons: LiveDirectory.home-here.length == 0 ? 6 : 0;
+                                card-width: root.card-width;
+                            }
+                        }
+
+                        // Live now as cards: the confirmed, then the rest under a head of their own.
+                        if Discover.cards && !LiveDirectory.home && !Discover.link && (Discover.confirmed > 0 || Discover.skeletons > 0): CardGrid {
+                            channels: LiveDirectory.results;
+                            from: 0;
+                            to: Discover.confirmed;
+                            skeletons: Discover.skeletons;
+                            card-width: root.card-width;
+                        }
+                        if Discover.cards && !LiveDirectory.home && !Discover.link && LiveDirectory.results.length > Discover.confirmed: VerticalLayout {
+                            spacing: 12px;
+                            GroupHead {
+                                label: DiscoverWords.not-confirmed();
+                                line: DiscoverWords.not-confirmed-line();
+                            }
+                            CardGrid {
+                                channels: LiveDirectory.results;
+                                from: Discover.confirmed;
+                                to: LiveDirectory.results.length;
+                                card-width: root.card-width;
+                            }
+                        }
+
+                        // Home: the categories.
+                        if !Look.terminal && LiveDirectory.home && !Discover.link: VerticalLayout {
+                            spacing: 10px;
+                            if Look.workbench: Text {
+                                text: DiscoverWords.categories();
+                                color: Look.text;
+                                font-size: 15px;
+                                font-weight: 600;
+                            }
+                            if Look.broadsheet: GroupHead {
+                                letter: "B";
+                                label: DiscoverWords.categories();
+                            }
+                            FlexboxLayout {
+                                spacing-horizontal: Look.broadsheet ? 22px : 6px;
+                                spacing-vertical: 6px;
+                                cross-axis-alignment: start;
+                                for option in LiveDirectory.category-options: CategoryChip {
+                                    category: option.category;
+                                    count: option.count;
+                                }
+                            }
+                        }
+
+                        // Everything else as a table (Terminal: always).
+                        if Discover.table || (Look.terminal && !Discover.link && !Discover.empty && (Discover.rows.length > 0 || Discover.first-load)): ResultsTable {
+                            rows: Look.terminal ? Discover.rows : LiveDirectory.results;
+                            selected: root.selected;
+                            chosen(index) => {
+                                root.choose(index);
+                            }
+                            shown(top, bottom) => {
+                                root.reveal(top, bottom);
+                            }
+                        }
+                        if LiveDirectory.mode == LiveMode.upcoming && !Discover.link && !Discover.empty: Text {
+                            text: (Look.terminal ? "# " : "") + DiscoverWords.upcoming-note();
+                            color: Look.terminal ? Look.faint : Look.muted;
+                            font-size: Look.broadsheet ? 14px : 13px;
+                            font-italic: Look.broadsheet;
+                            wrap: word-wrap;
+                        }
+                        if Discover.empty: Nothing {
+                            available: Look.terminal ? root.width - 32px : root.available;
+                        }
+                        if LiveDirectory.page-failed: Warning {
+                            title: DiscoverWords.page-failed();
+                            strong: false;
+                            action: DiscoverWords.retry();
+                            acted => {
+                                LiveDirectory.retry();
+                            }
+                        }
+                        if Discover.more: More { }
+                        if !Look.terminal: Foot { }
+                    }
+                }
+            }
+
+            if root.preview: Preview {
+                channel: Discover.rows[root.selected];
+            }
+        }
+    }
+
+    // The suggestions open over the page; a click elsewhere closes them.
+    if LiveDirectory.suggestions-open && LiveDirectory.suggestions.length > 0: TouchArea {
+        y: search.absolute-position.y - root.absolute-position.y + search.height;
+        height: root.height - self.y;
+        clicked => {
+            LiveDirectory.suggestions-open = false;
+        }
+    }
+    if LiveDirectory.suggestions-open && LiveDirectory.suggestions.length > 0: Suggestions {
+        x: search.absolute-position.x - root.absolute-position.x;
+        y: search.absolute-position.y - root.absolute-position.y + search.height + (Look.terminal ? 4px : 6px);
+        width: search.width;
+        picked: root.picked;
+        chose(index) => {
+            root.picked = -1;
+            LiveDirectory.choose-suggestion(index);
+        }
+    }
+
+}

@@ -101,7 +101,7 @@ impl Audio {
             }
             // Nothing of the user's own mpv is read, no video is decoded or shown, and a file
             // played to its end is let go.
-            for (name, value) in [
+            for (name, value) in super::LOCAL_PROTOCOLS.into_iter().chain([
                 ("config", "no"),
                 ("vo", "null"),
                 ("vid", "no"),
@@ -112,7 +112,7 @@ impl Audio {
                 ("input-default-bindings", "no"),
                 ("osd-level", "0"),
                 ("sub-auto", "no"),
-            ] {
+            ]) {
                 let (name, value) = (CString::new(name).unwrap_or_default(), CString::new(value).unwrap_or_default());
                 let status = mpv::mpv_set_option_string(mpv, name.as_ptr(), value.as_ptr());
                 if status < 0 {

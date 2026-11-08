@@ -44,6 +44,7 @@ mod errors;
 mod files;
 mod global_search;
 mod live;
+mod live_check;
 mod login;
 mod manage;
 mod new_chat;
@@ -328,6 +329,38 @@ pub fn connect_chat_order(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
 /// The chat's info panel remembers whether it is open (chat_info.rs).
 pub fn connect_chat_info(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     chat_info::connect(ui, settings);
+}
+
+/// The live streams the user follows on Telegram, for the Live view's Following (src/live/).
+pub fn live_rows_followed() -> Vec<crate::LiveChannel> {
+    live::rows_followed()
+}
+
+pub use live_check::Seen as LiveSeen;
+
+/// Whether these public channels of the live directory are live (the ones on screen), asked of
+/// Telegram a username at a time; `told` hears each answer by username.
+pub fn check_live_usernames(usernames: Vec<String>, told: impl Fn(&str, LiveSeen) + 'static) {
+    live_check::check(usernames, told);
+}
+
+/// A public Telegram channel of the live directory, opened in the Live view if it is live.
+pub fn watch_live_username(username: &str, then: impl Fn(bool) + 'static) {
+    live::watch_username(username, then);
+}
+
+/// One of the user's own live streams (a row of the Live view's Telegram list), opened.
+pub fn watch_live_row(id: &str) {
+    if let Some(ui) = window() {
+        ui.global::<crate::Live>().invoke_watch(id.into());
+    }
+}
+
+/// The Telegram stream open in the Live view, closed.
+pub fn close_live() {
+    if let Some(ui) = window() {
+        ui.global::<crate::Live>().invoke_close();
+    }
 }
 
 /// The app is quitting: let every TDLib write its database out and every finchgram-tdlib end, for

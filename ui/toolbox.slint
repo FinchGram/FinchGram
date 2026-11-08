@@ -80,7 +80,11 @@ export global Toolbox {
     in-out property <int> hits;                    // while searching: the tools and accounts found
     in-out property <int> opened;                  // counts the openings: the search box takes the keyboard
     out property <bool> searching: query != "";
-    out property <bool> no-hits: searching && sections.length == 0;
+    out property <bool> no-hits: searching && sections.length == 0 && !live-hint;
+    // The words searched name Live, which is no tool any more but the window's fourth view (the
+    // canvas, round 13): a line that leads there.
+    in-out property <bool> live-hint;
+    callback open-live();
     // An unpinned tool has something going on (downloads on their way), or another account has
     // unread messages (not in Broadsheet, whose rail shows them): a dot on the logo. A pinned
     // tool's dot sits on its own icon.
@@ -157,6 +161,7 @@ export global ToolboxWords {
     public pure function hint(key: string) -> string { return @tr("{} to open · Esc to close", key); }
     // The search.
     public pure function nothing(q: string) -> string { return @tr("Nothing called “{}”", q); }
+    public pure function live-hint() -> string { return @tr("Live has its own place now"); }
     public pure function hits(n: int) -> string { return @tr("{n} item" | "{n} items" % n); }
     // Terminal.
     public pure function pin-legend() -> string { return @tr("[x] pins to the status bar · click a name to open"); }

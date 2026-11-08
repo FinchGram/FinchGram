@@ -1,0 +1,1052 @@
+// The parts of the live directory's pages (the canvas "FinchGram Desktop 直播", rounds 12 and 13):
+// a channel as a card and as a row of a list, the marks over a picture, the placeholders while
+// results come, and the colours and words they share. Drawn once, in Look's colours and shapes,
+// with small Look.broadsheet and Look.terminal branches where the canvas differs. Discover shows
+// them (live-discover.slint); Rust fills LiveDirectory (src/live/).
+import { Look } from "../look.slint";
+import { Icon, Avatar, Paragraph } from "../widgets.slint";
+import { LiveDirectory, LiveDirectoryWords, LiveChannel, LiveStatus, LivePlay, LiveWhy, LiveSource, LiveCategory, LiveMode } from "../live.slint";
+
+// The canvas's colours that Look has not, and the colours a channel takes from its hue.
+export global DirectoryLook {
+    // The hairlines of rows and groups: Broadsheet's lists have them, though its settings pages have none.
+    out property <color> rule: Look.broadsheet ? (Look.dark ? #ecebea1a : #201e1d1a) : Look.line;
+    out property <color> rule-strong: Look.broadsheet ? (Look.dark ? #ecebea47 : #201e1d3d) : Look.line-strong;
+    // Terminal's bar over a pane.
+    out property <color> pane-head: Look.dark ? #161a17 : #e6e9e3;
+    // A menu or a list of suggestions over the page: its box, its frame and its shadow.
+    out property <color> panel: Look.broadsheet ? (Look.dark ? #201f1e : #f7f6f6) : Look.workbench && Look.dark ? #1e2126 : Look.bg;
+    out property <color> panel-frame: Look.terminal ? Look.line-strong : Look.broadsheet ? DirectoryLook.rule : Look.line;
+    out property <color> shadow: Look.dark ? #0000008c : #1b1f2433;
+    // Words over a picture that has not come.
+    out property <color> picture-ink: Look.dark ? #ffffff73 : #1b1f2473;
+    // The ink on the red live mark.
+    out property <color> on-live: Look.dark || Look.terminal ? Look.bg : #ffffff;
+    // A mark over a picture: black, see-through.
+    out property <color> scrim: #0000009e;
+
+    // The flat colour of a picture, from the channel's hue (the canvas's oklch).
+    public pure function picture(hue: int) -> color {
+        return Look.dark ? oklch(0.31, 0.025, hue) : oklch(0.91, 0.02, hue);
+    }
+    public pure function avatar(hue: int) -> color {
+        return Look.dark ? oklch(0.34, 0.06, hue) : oklch(0.92, 0.045, hue);
+    }
+    public pure function avatar-ink(hue: int) -> color {
+        return Look.dark ? oklch(0.88, 0.07, hue) : oklch(0.42, 0.11, hue);
+    }
+
+    // It plays here: the action is the accent's.
+    public pure function plays-here(channel: LiveChannel) -> bool {
+        return channel.play == LivePlay.watch || channel.play == LivePlay.listen;
+    }
+    // The one action's colour (round 12): green to play here, amber to try or to sign in, grey to
+    // open elsewhere, faint when there is nothing to do.
+    public pure function play(channel: LiveChannel) -> color {
+        if plays-here(channel) { return Look.ok; }
+        if channel.play == LivePlay.try-opening || channel.play == LivePlay.sign-in { return Look.warn; }
+        if channel.play == LivePlay.elsewhere { return Look.muted; }
+        return Look.faint;
+    }
+    public pure function play-icon(channel: LiveChannel) -> string {
+        if channel.play == LivePlay.watch { return "play-circle"; }
+        if channel.play == LivePlay.listen { return "headphones"; }
+        if channel.play == LivePlay.try-opening { return "question"; }
+        if channel.play == LivePlay.sign-in { return "lock-key"; }
+        if channel.play == LivePlay.elsewhere { return "arrow-square-out"; }
+        return "prohibit";
+    }
+    // The status: red when confirmed live, amber when not confirmed or unknown, faint when off.
+    public pure function status(what: LiveStatus) -> color {
+        if what == LiveStatus.live { return Look.danger; }
+        if what == LiveStatus.offline { return Look.faint; }
+        return Look.warn;
+    }
+}
+
+// The words of a card and of a row (the canvas's mk()).
+export global CardWords {
+    // The source in a small frame: its name in capitals; HLS for a submitted stream.
+    public pure function chip(source: LiveSource) -> string {
+        return source == LiveSource.hls ? "HLS" : LiveDirectoryWords.source(source).to-uppercase();
+    }
+    // What a card or a row is called: the session's title; the channel's name in All channels;
+    // the announced session in Upcoming.
+    public pure function title(channel: LiveChannel, mode: LiveMode) -> string {
+        if mode == LiveMode.upcoming && channel.upcoming-title != "" { return channel.upcoming-title; }
+        if mode == LiveMode.channels || channel.title == "" { return channel.name; }
+        return channel.title;
+    }
+    public pure function meta(channel: LiveChannel) -> string {
+        return @tr("{} · {}", LiveDirectoryWords.category(channel.category), LiveDirectoryWords.language(channel.language));
+    }
+    // Why its status is not what it seems, or why it does not simply play.
+    public pure function note(channel: LiveChannel) -> string {
+        if channel.status == LiveStatus.stale && channel.observed-minutes >= 0 {
+            return @tr("Not confirmed — {} last answered {}", LiveDirectoryWords.source(channel.source), LiveDirectoryWords.ago(channel.observed-minutes));
+        }
+        if channel.status == LiveStatus.unknown && channel.observed-minutes >= 0 {
+            return @tr("{} isn’t answering — last confirmed live {}", LiveDirectoryWords.source(channel.source), LiveDirectoryWords.ago(channel.observed-minutes));
+        }
+        if channel.play == LivePlay.sign-in || channel.why == LiveWhy.format || channel.why == LiveWhy.webrtc {
+            return LiveDirectoryWords.reason(channel);
+        }
+        return "";
+    }
+    // The action in words; an announced session says where it will play.
+    public pure function cap(channel: LiveChannel, mode: LiveMode) -> string {
+        if mode == LiveMode.upcoming {
+            return channel.play != LivePlay.elsewhere ? @tr("Will play in FinchGram") : @tr("Will open on {}", LiveDirectoryWords.source(channel.source));
+        }
+        return LiveDirectoryWords.play(channel);
+    }
+    public pure function mature() -> string {
+        return Look.broadsheet ? @tr("Mature") : @tr("MATURE");
+    }
+    // How long it has been on, as the picture shows it: "1:42".
+    public pure function uptime(minutes: int) -> string {
+        return floor(minutes / 60) + ":" + (mod(minutes, 60) < 10 ? "0" : "") + mod(minutes, 60);
+    }
+    // When an announced session starts.
+    public pure function starts-in(minutes: int) -> string {
+        if minutes < 60 { return @tr("in {} min", minutes); }
+        if minutes < 48 * 60 { return @tr("in {} h", round(minutes / 60)); }
+        return @tr("in {} days", round(minutes / 1440));
+    }
+    // Broadsheet's line under a title: the channel, its source, how many watch or where it is now,
+    // its category and language.
+    public pure function byline(channel: LiveChannel, mode: LiveMode) -> string {
+        // The whole channel is read first: the generated code may move a field out of it.
+        let state = now(channel, mode);
+        let category = channel.category != LiveCategory.none ? " · " + LiveDirectoryWords.category(channel.category) : "";
+        let language = channel.language != "" ? ", " + channel.language : "";
+        return @tr("{} · {} · {}", channel.name, LiveDirectoryWords.source(channel.source), state) + category + language;
+    }
+    pure function now(channel: LiveChannel, mode: LiveMode) -> string {
+        if mode == LiveMode.upcoming && channel.upcoming-minutes >= 0 { return starts-in(channel.upcoming-minutes); }
+        if mode != LiveMode.channels && channel.status == LiveStatus.live {
+            if channel.viewers < 0 { return @tr("viewers not shared"); }
+            return channel.self-reported ? @tr("{} (the server’s own count)", LiveDirectoryWords.viewers(channel)) : LiveDirectoryWords.viewers(channel);
+        }
+        return LiveDirectoryWords.status-line(channel);
+    }
+    // Workbench's line under a row's title.
+    public pure function row-line(channel: LiveChannel, mode: LiveMode) -> string {
+        if mode == LiveMode.upcoming {
+            return channel.upcoming-minutes >= 0 ? @tr("{} · {}", channel.name, starts-in(channel.upcoming-minutes)) : channel.name;
+        }
+        if mode == LiveMode.channels { return LiveDirectoryWords.status-line(channel); }
+        if channel.status == LiveStatus.live {
+            return channel.started-minutes >= 0 ? @tr("{} · live for {}", channel.name, LiveDirectoryWords.duration(channel.started-minutes)) : channel.name;
+        }
+        if channel.status == LiveStatus.stale { return @tr("{} · not confirmed", channel.name); }
+        return @tr("{} · status unknown", channel.name);
+    }
+    // Terminal's second column in All channels.
+    public pure function status-short(channel: LiveChannel) -> string {
+        if channel.status == LiveStatus.live { return @tr("live now"); }
+        if channel.status == LiveStatus.stale { return @tr("not confirmed"); }
+        if channel.status == LiveStatus.unknown { return @tr("status unknown"); }
+        return channel.last-live-minutes >= 0 ? @tr("last live {}", LiveDirectoryWords.ago(channel.last-live-minutes)) : @tr("never live yet");
+    }
+    // Terminal's last column: the action, short.
+    public pure function cap-short(channel: LiveChannel, mode: LiveMode) -> string {
+        if mode == LiveMode.upcoming {
+            return channel.play != LivePlay.elsewhere ? @tr("▸ here") : "→ " + LiveDirectoryWords.source(channel.source).to-lowercase();
+        }
+        if channel.play == LivePlay.watch { return @tr("▸ watch here"); }
+        if channel.play == LivePlay.listen { return @tr("▸ listen here"); }
+        if channel.play == LivePlay.try-opening { return @tr("? try opening"); }
+        if channel.play == LivePlay.sign-in { return @tr("sign in"); }
+        if channel.play == LivePlay.elsewhere { return "→ " + LiveDirectoryWords.source(channel.source).to-lowercase(); }
+        if channel.why == LiveWhy.offline { return @tr("× offline"); }
+        if channel.why == LiveWhy.unknown { return @tr("× unknown"); }
+        return @tr("× unavailable");
+    }
+    // Terminal's mark before a row: on air, not confirmed, unknown, announced, off.
+    public pure function dot(channel: LiveChannel, mode: LiveMode) -> string {
+        if mode == LiveMode.upcoming { return "◷"; }
+        if channel.status == LiveStatus.live { return "●"; }
+        if channel.status == LiveStatus.stale { return "◌"; }
+        if channel.status == LiveStatus.unknown { return "?"; }
+        return "○";
+    }
+}
+
+// The source in a small frame, after a channel's name.
+export component SourceChip inherits Rectangle {
+    in property <LiveSource> source;
+    width: label.preferred-width + 10px;
+    height: 16px;
+    border-radius: Look.workbench ? 6px : Look.button-radius;
+    border-width: 1px;
+    border-color: DirectoryLook.rule-strong;
+
+    label := Text {
+        text: CardWords.chip(root.source);
+        color: Look.muted;
+        font-family: Look.mono;
+        font-size: 10px;
+        font-weight: 500;
+        vertical-alignment: center;
+    }
+}
+
+// A mark over a picture: the status (red when live), MATURE, the viewers, how long it has been on.
+export component PictureMark inherits Rectangle {
+    in property <string> text;
+    in property <string> icon;
+    in property <color> fill: DirectoryLook.scrim;
+    in property <color> ink: #ffffff;
+    in property <length> font-size: 11px;
+    in property <int> font-weight: 400;
+    in property <length> letter-spacing: 0px;
+    width: row.preferred-width + 12px;
+    height: 18px;
+    border-radius: Look.broadsheet ? 2px : 4px;
+    background: fill;
+
+    row := HorizontalLayout {
+        x: 6px;
+        alignment: start;
+        spacing: 4px;
+        if root.icon != "": VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 11px;
+                color: root.ink;
+                duotone: false;
+            }
+        }
+        Text {
+            text: root.text;
+            color: root.ink;
+            font-size: root.font-size;
+            font-weight: root.font-weight;
+            letter-spacing: root.letter-spacing;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// The star that follows a channel; full when followed, here or on Telegram.
+export component FollowStar inherits Rectangle {
+    in property <LiveChannel> channel;
+    in property <length> size: 17px;
+    property <bool> on: channel.following || channel.on-telegram;
+    width: size + 4px;
+    height: size + 4px;
+    accessible-role: button;
+    accessible-label: LiveDirectoryWords.follow(channel);
+
+    Icon {
+        name: root.on ? "star-filled" : "star";
+        size: root.size;
+        color: root.on ? Look.accent : Look.faint;
+        duotone: false;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveDirectory.follow(root.channel.id, !root.channel.following);
+        }
+    }
+}
+
+// Follow in words (Broadsheet): "Follow", "Following", "Followed on Telegram".
+export component FollowWord inherits Rectangle {
+    in property <LiveChannel> channel;
+    in property <length> font-size: 13px;
+    width: label.preferred-width;
+    height: label.preferred-height;
+    accessible-role: button;
+    accessible-label: label.text;
+
+    label := Text {
+        x: 0;
+        text: LiveDirectoryWords.follow(root.channel);
+        color: Look.accent-ink;
+        font-size: root.font-size;
+        font-weight: 600;
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveDirectory.follow(root.channel.id, !root.channel.following);
+        }
+    }
+}
+
+// The action and its icon, in the action's colour.
+component PlayLine {
+    in property <LiveChannel> channel;
+    in property <LiveMode> mode;
+    HorizontalLayout {
+        spacing: 5px;
+        alignment: start;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: DirectoryLook.play-icon(root.channel);
+                size: 13px;
+                color: DirectoryLook.play(root.channel);
+            }
+        }
+        Text {
+            text: CardWords.cap(root.channel, root.mode);
+            color: DirectoryLook.play(root.channel);
+            font-size: 12px;
+            font-weight: 500;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// A channel as a card (the canvas's grid): its picture with the marks over it, then what it is and
+// its one action. Workbench frames the source and follows with a star; Broadsheet writes both in
+// words. The width is given; the picture is 16:9 of it. A click does the one action.
+export component ChannelCard inherits Rectangle {
+    in property <LiveChannel> channel;
+    in property <LiveMode> mode;
+    property <bool> live: channel.status == LiveStatus.live;
+    property <bool> shows-picture: channel.has-thumbnail && channel.thumbnail.width > 0;
+    property <string> note: CardWords.note(channel);
+    height: body.preferred-height;
+
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveDirectory.open(root.channel.id);
+        }
+    }
+
+    body := VerticalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        spacing: Look.broadsheet ? 7px : 8px;
+        Rectangle {
+            height: root.width * 9 / 16;
+            border-radius: Look.broadsheet ? 2px : Look.radius;
+            background: DirectoryLook.picture(root.channel.hue);
+            clip: true;
+
+            if root.shows-picture: Image {
+                width: parent.width;
+                height: parent.height;
+                source: root.channel.thumbnail;
+                image-fit: cover;
+            }
+            if !root.channel.has-thumbnail && !Look.broadsheet: VerticalLayout {
+                alignment: center;
+                spacing: 6px;
+                HorizontalLayout {
+                    alignment: center;
+                    Avatar {
+                        size: 40px;
+                        radius: 10px;
+                        initial: root.channel.initial;
+                        picture: root.channel.picture;
+                        has-picture: root.channel.has-picture;
+                        fill: DirectoryLook.avatar(root.channel.hue);
+                        ink: DirectoryLook.avatar-ink(root.channel.hue);
+                        font-size: 16px;
+                    }
+                }
+                Text {
+                    text: LiveDirectoryWords.no-thumbnail(root.channel.source);
+                    color: DirectoryLook.picture-ink;
+                    font-size: 11px;
+                    horizontal-alignment: center;
+                }
+            }
+            if !root.channel.has-thumbnail && Look.broadsheet: Text {
+                width: parent.width - 16px;
+                text: LiveDirectoryWords.no-thumbnail(root.channel.source);
+                color: DirectoryLook.picture-ink;
+                font-size: 13px;
+                font-italic: true;
+                horizontal-alignment: center;
+                overflow: elide;
+            }
+
+            PictureMark {
+                x: 8px;
+                y: 8px;
+                text: Look.broadsheet ? LiveDirectoryWords.status(root.channel.status) : LiveDirectoryWords.badge(root.channel.status);
+                fill: root.live ? Look.danger : #00000099;
+                ink: root.live ? DirectoryLook.on-live : #ffffff;
+                font-size: Look.broadsheet ? 11px : 10px;
+                font-weight: 600;
+                letter-spacing: Look.broadsheet ? 0px : 0.6px;
+            }
+            if root.channel.mature: PictureMark {
+                x: parent.width - self.width - 8px;
+                y: 8px;
+                text: CardWords.mature();
+                font-size: Look.broadsheet ? 11px : 10px;
+                font-weight: 600;
+            }
+            if !Look.broadsheet && root.mode == LiveMode.live && root.live && root.channel.viewers >= 0: PictureMark {
+                x: 8px;
+                y: parent.height - self.height - 8px;
+                icon: root.channel.audio ? "headphones" : "eye";
+                text: root.channel.viewers;
+            }
+            if !Look.broadsheet && root.mode == LiveMode.live && root.live && root.channel.started-minutes >= 0: PictureMark {
+                x: parent.width - self.width - 8px;
+                y: parent.height - self.height - 8px;
+                text: CardWords.uptime(root.channel.started-minutes);
+            }
+        }
+
+        if !Look.broadsheet: HorizontalLayout {
+            spacing: 8px;
+            VerticalLayout {
+                horizontal-stretch: 1;
+                alignment: start;
+                spacing: 3px;
+                // Two lines at most.
+                Text {
+                    height: min(self.preferred-height, 39px);
+                    text: CardWords.title(root.channel, root.mode);
+                    color: Look.text;
+                    font-size: 14px;
+                    font-weight: 600;
+                    line-height-factor: Look.leading(1.35);
+                    wrap: word-wrap;
+                    overflow: elide;
+                    vertical-alignment: top;
+                }
+                HorizontalLayout {
+                    spacing: 6px;
+                    alignment: start;
+                    Text {
+                        text: root.channel.name;
+                        color: Look.muted;
+                        font-size: 13px;
+                        overflow: elide;
+                        vertical-alignment: center;
+                    }
+                    VerticalLayout {
+                        alignment: center;
+                        SourceChip {
+                            source: root.channel.source;
+                        }
+                    }
+                }
+                Text {
+                    text: CardWords.meta(root.channel);
+                    color: Look.faint;
+                    font-size: 12px;
+                    overflow: elide;
+                }
+                PlayLine {
+                    channel: root.channel;
+                    mode: root.mode;
+                }
+                if root.note != "": Paragraph {
+                    text: root.note;
+                    color: Look.warn;
+                    font-size: 12px;
+                }
+            }
+            VerticalLayout {
+                alignment: start;
+                FollowStar {
+                    channel: root.channel;
+                }
+            }
+        }
+
+        if Look.broadsheet: VerticalLayout {
+            spacing: 7px;
+            Paragraph {
+                text: CardWords.title(root.channel, root.mode);
+                color: Look.text;
+                font-size: 16px;
+                font-weight: 600;
+                line-height-factor: Look.leading(1.25);
+            }
+            Paragraph {
+                text: CardWords.byline(root.channel, root.mode);
+                color: Look.muted;
+                font-size: 13px;
+                line-height-factor: Look.leading(1.45);
+            }
+            HorizontalLayout {
+                spacing: 10px;
+                Text {
+                    horizontal-stretch: 1;
+                    text: CardWords.cap(root.channel, root.mode);
+                    color: DirectoryLook.play(root.channel);
+                    font-size: 13px;
+                    font-italic: true;
+                    overflow: elide;
+                }
+                FollowWord {
+                    channel: root.channel;
+                }
+            }
+            if root.note != "": Paragraph {
+                text: root.note;
+                color: Look.warn;
+                font-size: 13px;
+            }
+        }
+    }
+}
+
+// A card's place while results come.
+export component SkeletonCard inherits Rectangle {
+    height: column.preferred-height;
+
+    column := VerticalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        spacing: 8px;
+        Rectangle {
+            height: root.width * 9 / 16;
+            border-radius: Look.broadsheet ? 2px : Look.radius;
+            background: Look.hover;
+        }
+        HorizontalLayout {
+            alignment: start;
+            Rectangle {
+                width: root.width * 0.85;
+                height: Look.broadsheet ? 14px : 12px;
+                border-radius: Look.broadsheet ? 0px : 4px;
+                background: Look.hover;
+            }
+        }
+        HorizontalLayout {
+            alignment: start;
+            Rectangle {
+                width: root.width * 0.55;
+                height: Look.broadsheet ? 11px : 10px;
+                border-radius: Look.broadsheet ? 0px : 4px;
+                background: Look.hover;
+            }
+        }
+    }
+}
+
+// Terminal's columns, in characters of its 13 px mono type (the canvas's grid in ch).
+export global TerminalColumns {
+    out property <length> ch: 7.8px;
+    out property <length> gap: 10px;
+    out property <length> mark: 2 * ch;
+    out property <length> dot: 2 * ch;
+    out property <length> second: 20 * ch;
+    out property <length> source: 4 * ch;
+    out property <length> category: 6 * ch;
+    out property <length> language: 4 * ch;
+    out property <length> viewers: 7 * ch;
+    out property <length> plays: 13 * ch;
+}
+
+// Workbench's row (the canvas's table): a small picture with a dot for the status, what it is with a
+// line under it, the source, the category and language, the viewers, the action as a button, the star.
+component WorkbenchRow inherits Rectangle {
+    in property <LiveChannel> channel;
+    in property <LiveMode> mode;
+    property <bool> live: channel.status == LiveStatus.live;
+    property <bool> upcoming: mode == LiveMode.upcoming;
+    property <bool> primary: !upcoming && DirectoryLook.plays-here(channel);
+    property <bool> has-viewers: live && channel.viewers >= 0;
+    property <color> action-ink: primary ? Look.on-accent : channel.play == LivePlay.unavailable && !upcoming ? Look.faint : Look.text;
+    height: 52px;
+    background: touch.has-hover ? Look.side : transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveDirectory.open(root.channel.id);
+        }
+    }
+
+    HorizontalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        height: 52px;
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 64px;
+                height: 36px;
+                border-radius: 4px;
+                background: DirectoryLook.picture(root.channel.hue);
+                clip: true;
+                if root.mode == LiveMode.live && root.channel.has-thumbnail && root.channel.thumbnail.width > 0: Image {
+                    width: parent.width;
+                    height: parent.height;
+                    source: root.channel.thumbnail;
+                    image-fit: cover;
+                }
+                if root.mode != LiveMode.live || !root.channel.has-thumbnail || root.channel.thumbnail.width == 0: Text {
+                    text: root.channel.initial;
+                    color: DirectoryLook.avatar-ink(root.channel.hue);
+                    font-size: 13px;
+                    font-weight: 600;
+                }
+                if root.channel.status != LiveStatus.offline && !root.upcoming: Rectangle {
+                    x: 3px;
+                    y: 3px;
+                    width: 7px;
+                    height: 7px;
+                    border-radius: 3.5px;
+                    background: DirectoryLook.status(root.channel.status);
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 1px;
+            Text {
+                text: CardWords.title(root.channel, root.mode);
+                color: Look.text;
+                font-size: 14px;
+                font-weight: 600;
+                overflow: elide;
+            }
+            Text {
+                text: CardWords.row-line(root.channel, root.mode);
+                color: root.channel.status == LiveStatus.stale || root.channel.status == LiveStatus.unknown ? Look.warn : Look.muted;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        HorizontalLayout {
+            width: 88px;
+            alignment: start;
+            VerticalLayout {
+                alignment: center;
+                SourceChip {
+                    source: root.channel.source;
+                }
+            }
+        }
+        Text {
+            width: 150px;
+            text: CardWords.meta(root.channel);
+            color: Look.muted;
+            font-size: 12px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        Text {
+            width: 64px;
+            text: root.upcoming && root.channel.upcoming-minutes >= 0 ? CardWords.starts-in(root.channel.upcoming-minutes) : root.has-viewers ? "" + root.channel.viewers : "—";
+            color: root.has-viewers || root.upcoming ? Look.text : Look.faint;
+            font-size: 13px;
+            horizontal-alignment: right;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        HorizontalLayout {
+            width: 150px;
+            alignment: start;
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    height: 28px;
+                    width: min(150px, action-row.preferred-width + 20px);
+                    border-radius: Look.button-radius;
+                    background: root.primary ? (action-touch.has-hover ? Look.accent.darker(0.1) : Look.accent) : action-touch.has-hover ? Look.sel : transparent;
+                    border-width: root.primary ? 0px : 1px;
+                    border-color: Look.line-strong;
+                    action-row := HorizontalLayout {
+                        x: 10px;
+                        width: parent.width - 20px;
+                        spacing: 5px;
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: root.upcoming ? (root.channel.following ? "check" : "star") : root.channel.play == LivePlay.watch ? "play" : DirectoryLook.play-icon(root.channel);
+                                size: 12px;
+                                color: root.action-ink;
+                            }
+                        }
+                        Text {
+                            text: root.upcoming ? LiveDirectoryWords.follow(root.channel) : LiveDirectoryWords.play(root.channel);
+                            color: root.action-ink;
+                            font-size: 12px;
+                            font-weight: 600;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+                    }
+                    action-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            if root.upcoming {
+                                LiveDirectory.follow(root.channel.id, !root.channel.following);
+                            } else {
+                                LiveDirectory.open(root.channel.id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        HorizontalLayout {
+            width: 24px;
+            alignment: center;
+            VerticalLayout {
+                alignment: center;
+                FollowStar {
+                    channel: root.channel;
+                    size: 16px;
+                }
+            }
+        }
+    }
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: Look.line;
+    }
+}
+
+// Broadsheet's row (the canvas's index): a number, what it is with a line under it, the action in
+// italics, and the action and Follow in words.
+component BroadsheetRow inherits Rectangle {
+    in property <LiveChannel> channel;
+    in property <LiveMode> mode;
+    in property <int> index;
+    property <bool> upcoming: mode == LiveMode.upcoming;
+    property <string> note: CardWords.note(channel);
+    // The canvas's columns are 170 px and 112 px; actions longer than 112 px take from the 170.
+    property <length> actions-width: max(112px, actions.preferred-width);
+    height: line.preferred-height + 1px;
+
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveDirectory.open(root.channel.id);
+        }
+    }
+
+    line := HorizontalLayout {
+        x: 0;
+        y: 0;
+        width: parent.width;
+        padding-top: 11px;
+        padding-bottom: 11px;
+        spacing: 16px;
+        VerticalLayout {
+            width: 30px;
+            alignment: start;
+            Text {
+                text: (root.index < 9 ? "0" : "") + (root.index + 1);
+                color: Look.faint;
+                font-family: Look.mono;
+                font-size: 12px;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            alignment: start;
+            Paragraph {
+                text: CardWords.title(root.channel, root.mode);
+                color: Look.text;
+                font-size: 16px;
+                font-weight: 600;
+                line-height-factor: Look.leading(1.3);
+            }
+            Paragraph {
+                text: CardWords.byline(root.channel, root.mode);
+                color: Look.muted;
+                font-size: 13px;
+            }
+            if root.note != "": Paragraph {
+                text: root.note;
+                color: Look.warn;
+                font-size: 13px;
+            }
+        }
+        VerticalLayout {
+            width: 170px - (root.actions-width - 112px);
+            alignment: start;
+            Paragraph {
+                text: CardWords.cap(root.channel, root.mode);
+                color: DirectoryLook.play(root.channel);
+                font-size: 13px;
+                font-italic: true;
+            }
+        }
+        actions := HorizontalLayout {
+            width: root.actions-width;
+            alignment: end;
+            spacing: 12px;
+            if !root.upcoming: VerticalLayout {
+                alignment: start;
+                Rectangle {
+                    width: act.preferred-width;
+                    height: act.preferred-height;
+                    act := Text {
+                        x: 0;
+                        text: LiveDirectoryWords.play(root.channel);
+                        color: Look.accent-ink;
+                        font-size: 14px;
+                        font-weight: 600;
+                    }
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            LiveDirectory.open(root.channel.id);
+                        }
+                    }
+                }
+            }
+            VerticalLayout {
+                alignment: start;
+                FollowWord {
+                    channel: root.channel;
+                    font-size: 14px;
+                }
+            }
+        }
+    }
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: DirectoryLook.rule;
+    }
+}
+
+// Terminal's row: a mark for the row under the cursor, the status, then the columns.
+component TerminalRow inherits Rectangle {
+    in property <LiveChannel> channel;
+    in property <LiveMode> mode;
+    in property <bool> selected;
+    callback chosen();
+    callback shown(length, length);
+    property <bool> live: channel.status == LiveStatus.live;
+    property <bool> upcoming: mode == LiveMode.upcoming;
+    property <bool> has-viewers: live && channel.viewers >= 0;
+    height: 26px;
+    background: selected || touch.has-hover ? Look.sel : transparent;
+    changed selected => {
+        if self.selected {
+            root.shown(self.absolute-position.y, self.absolute-position.y + self.height);
+        }
+    }
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.chosen();
+        }
+        double-clicked => {
+            LiveDirectory.open(root.channel.id);
+        }
+    }
+
+    HorizontalLayout {
+        x: 0;
+        width: parent.width;
+        height: parent.height;
+        padding-left: 16px;
+        padding-right: 16px;
+        spacing: TerminalColumns.gap;
+        Text {
+            width: TerminalColumns.mark;
+            text: root.selected ? "▸" : "";
+            color: Look.accent;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        Text {
+            width: TerminalColumns.dot;
+            text: CardWords.dot(root.channel, root.mode);
+            color: root.upcoming ? Look.faint : DirectoryLook.status(root.channel.status);
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: CardWords.title(root.channel, root.mode);
+            color: root.live || root.upcoming ? Look.text : Look.muted;
+            font-size: 13px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        Text {
+            width: TerminalColumns.second;
+            text: root.mode == LiveMode.channels ? CardWords.status-short(root.channel) : root.channel.name;
+            color: Look.muted;
+            font-size: 13px;
+            overflow: elide;
+            vertical-alignment: center;
+        }
+        Text {
+            width: TerminalColumns.source;
+            text: LiveDirectoryWords.code(root.channel.source);
+            color: Look.faint;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        Text {
+            width: TerminalColumns.category;
+            text: root.channel.category == LiveCategory.none ? "—" : LiveDirectoryWords.category(root.channel.category).to-lowercase();
+            color: Look.muted;
+            font-size: 13px;
+            overflow: clip;
+            vertical-alignment: center;
+        }
+        Text {
+            width: TerminalColumns.language;
+            text: root.channel.language-code != "" ? root.channel.language-code : "—";
+            color: Look.muted;
+            font-size: 13px;
+            overflow: clip;
+            vertical-alignment: center;
+        }
+        Text {
+            width: TerminalColumns.viewers;
+            text: root.upcoming && root.channel.upcoming-minutes >= 0 ? CardWords.starts-in(root.channel.upcoming-minutes) : root.has-viewers ? "" + root.channel.viewers : "—";
+            color: root.has-viewers || root.upcoming ? Look.text : Look.faint;
+            font-size: 13px;
+            horizontal-alignment: right;
+            overflow: clip;
+            vertical-alignment: center;
+        }
+        Text {
+            width: TerminalColumns.plays;
+            text: CardWords.cap-short(root.channel, root.mode);
+            color: !root.upcoming && DirectoryLook.plays-here(root.channel) ? Look.accent : root.channel.play == LivePlay.try-opening || root.channel.play == LivePlay.sign-in ? Look.warn : Look.muted;
+            font-size: 13px;
+            overflow: clip;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// A channel as a row of a list, in the theme's manner: Workbench's table, Broadsheet's index,
+// Terminal's dense line. Terminal chooses a row with a click and acts on a double click; the others
+// act on a click.
+export component ChannelRow inherits VerticalLayout {
+    in property <LiveChannel> channel;
+    in property <LiveMode> mode;
+    in property <int> index;            // its place in the list, from 0: Broadsheet numbers the rows
+    in property <bool> selected;        // Terminal's row under the cursor
+    callback chosen();                  // Terminal: the row is clicked
+    callback shown(length, length);     // Terminal: the row under the cursor is between these, in the window
+
+    if Look.workbench: WorkbenchRow {
+        channel: root.channel;
+        mode: root.mode;
+    }
+    if Look.broadsheet: BroadsheetRow {
+        channel: root.channel;
+        mode: root.mode;
+        index: root.index;
+    }
+    if Look.terminal: TerminalRow {
+        channel: root.channel;
+        mode: root.mode;
+        selected: root.selected;
+        chosen => {
+            root.chosen();
+        }
+        shown(top, bottom) => {
+            root.shown(top, bottom);
+        }
+    }
+}
+
+// A row's place while results come.
+export component SkeletonRow inherits Rectangle {
+    in property <int> index;
+    height: Look.terminal ? 26px : Look.broadsheet ? 39px : 52px;
+
+    if Look.workbench: HorizontalLayout {
+        height: 52px;
+        padding-left: 12px;
+        padding-right: 12px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 64px;
+                height: 36px;
+                border-radius: 4px;
+                background: Look.hover;
+            }
+        }
+        HorizontalLayout {
+            horizontal-stretch: 1;
+            alignment: start;
+            VerticalLayout {
+                alignment: center;
+                Rectangle {
+                    width: (root.width - 24px - 64px - 88px - 24px) * 0.7;
+                    height: 12px;
+                    border-radius: 4px;
+                    background: Look.hover;
+                }
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 88px;
+                height: 12px;
+                border-radius: 4px;
+                background: Look.hover;
+            }
+        }
+    }
+    if Look.broadsheet: HorizontalLayout {
+        height: 38px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 24px;
+                height: 14px;
+                background: Look.hover;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            Rectangle {
+                height: 14px;
+                background: Look.hover;
+            }
+        }
+    }
+    if Look.terminal: HorizontalLayout {
+        padding-left: 16px;
+        spacing: TerminalColumns.gap;
+        alignment: start;
+        Text {
+            text: "··";
+            color: Look.faint;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+        Text {
+            text: @tr("loading {}", root.index + 1);
+            color: Look.faint;
+            font-size: 13px;
+            vertical-alignment: center;
+        }
+    }
+    if !Look.terminal: Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: DirectoryLook.rule;
+    }
+}

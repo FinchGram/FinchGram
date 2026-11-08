@@ -136,7 +136,7 @@ impl Music {
             // Nothing of the user's own mpv is read, no video is decoded or shown; songs follow
             // each other without a gap, the next opened while the current one plays; a file
             // played to its end is let go, and mpv waits for the next.
-            for (name, value) in [
+            for (name, value) in super::LOCAL_PROTOCOLS.into_iter().chain([
                 ("config", "no"),
                 ("vo", "null"),
                 ("vid", "no"),
@@ -150,7 +150,7 @@ impl Music {
                 ("cache", "yes"),
                 ("gapless-audio", "yes"),
                 ("prefetch-playlist", "yes"),
-            ] {
+            ]) {
                 let (name, value) = (CString::new(name).unwrap_or_default(), CString::new(value).unwrap_or_default());
                 let status = mpv::mpv_set_option_string(mpv, name.as_ptr(), value.as_ptr());
                 if status < 0 {

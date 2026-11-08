@@ -1,7 +1,9 @@
 //! Live streams (docs/live-streams.md): Telegram's own, in a view of their own beside the chats,
 //! the channels and the bots. Who is live: the live stories of contacts and of channels
-//! (updateChatActiveStories, after loadActiveStories), and the video chats and live streams of
-//! chats (a chat's video_chat, then getGroupCall). FinchGram has no WebRTC, so it plays what
+//! (updateChatActiveStories, after loadActiveStories), and the live streams of chats (a chat's
+//! video_chat, then getGroupCall): a channel's, or an RTMP stream wherever it is. A group's
+//! ordinary video chat is a call its members talk in, not a live stream, and is not listed
+//! (listed_call). FinchGram has no WebRTC, so it plays what
 //! Telegram serves as a stream: an RTMP stream (OBS and the like), joined as a viewer with a
 //! payload that carries no media, then fetched a second at a time with getGroupCallStreamSegment.
 //! Each second is Telegram's header and a whole MP4 file; src/player/remux.rs makes one Matroska
@@ -24,7 +26,7 @@ use std::time::{Duration, Instant};
 
 use base64::Engine as _;
 use serde_json::{Value, json};
-use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
+use slint::{ComponentHandle, ModelRc, SharedString, VecModel, Model};
 
 use super::api::{self, ChatType, MessageSender};
 use super::store::{self, Names};
@@ -64,6 +66,9 @@ enum Kind {
 struct Found {
     /// Chats with a live story: the story, and when it began.
     stories: HashMap<i64, (i32, i32)>,
+    /// Chats whose stories show in one of the user's story lists: a contact's, a channel they
+    /// follow. A channel the user looked up and does not follow is in none.
+    story_listed: HashSet<i64>,
     /// What getStory said of a live story: its group call and whether it is an RTMP stream.
     story_calls: HashMap<(i64, i32), (i32, bool)>,
     /// Chats with a video chat or live stream on: its group call.
@@ -174,7 +179,7 @@ pub fn connect(ui: &MainWindow) {
     live.on_copy_server(|| copy(&with_live_get(|live| live.get_server().to_string()), ActionNotice::Copied));
     live.on_copy_key(|| copy(&with_live_get(|live| live.get_key().to_string()), ActionNotice::Copied));
     live.on_new_key(|| fetch_rtmp_url(true));
-    crate::player::live::on_ended(player_ended);
+    crate::player::live::on_ended(crate::player::live::Owner::Telegram, player_ended);
 }
 
 // ---- who is live -------------------------------------------------------------------------------------
@@ -240,9 +245,14 @@ pub fn video_chat(chat_id: i64, video_chat: &api::VideoChat) {
 pub fn active_stories(active: &api::ChatActiveStories) {
     let slot = super::context();
     let live = active.stories.iter().find(|story| story.is_live).map(|story| (story.story_id, story.date));
-    let changed = with_found(slot, |found| match live {
-        Some(story) => found.stories.insert(active.chat_id, story) != Some(story),
-        None => found.stories.remove(&active.chat_id).is_some(),
+    let listed = active.list.as_ref().is_some_and(|list| !list.is_null());
+    let changed = with_found(slot, |found| {
+        let moved = if listed { found.story_listed.insert(active.chat_id) } else { found.story_listed.remove(&active.chat_id) };
+        let story_changed = match live {
+            Some(story) => found.stories.insert(active.chat_id, story) != Some(story),
+            None => found.stories.remove(&active.chat_id).is_some(),
+        };
+        moved || story_changed
     });
     if let Some((story_id, _)) = live {
         ask_story(slot, active.chat_id, story_id);
@@ -375,8 +385,53 @@ pub fn refresh() {
     let open_chat = store::with_slot(slot, |store| store.open).flatten().map(|chat_id| chat_id.to_string());
     let in_chat = open_chat.and_then(|chat_id| stories.iter().chain(chats.iter()).find(|row| row.chat_id.as_str() == chat_id).cloned());
     live.set_in_chat(in_chat.unwrap_or_default());
+    live.set_on_air(stories.iter().chain(chats.iter()).any(|row| row.mine));
     live.set_stories(ModelRc::new(VecModel::from(stories)));
     live.set_chats(ModelRc::new(VecModel::from(chats)));
+    // Following shows them too, as followed on Telegram.
+    crate::live::show_followed();
+}
+
+/// The live streams the user follows on Telegram (their contacts' live stories, their chats'
+/// live streams), as the live directory's pages show a channel: in Following, followed on
+/// Telegram (round 13 of the canvas).
+pub fn rows_followed() -> Vec<crate::LiveChannel> {
+    let rows: Vec<LiveRow> = with_live_get(|live| live.get_stories().iter().chain(live.get_chats().iter()).collect());
+    rows.into_iter()
+        .map(|row| {
+            let (play, why) = if row.playable { (crate::LivePlay::Watch, crate::LiveWhy::None) } else { (crate::LivePlay::Unavailable, crate::LiveWhy::Webrtc) };
+            crate::LiveChannel {
+                hue: crate::live::hue_of(row.chat_id.as_str()),
+                id: row.id,
+                source: crate::LiveSource::Telegram,
+                name: row.name,
+                title: row.title,
+                initial: row.initial,
+                picture: row.picture,
+                has_picture: row.has_picture,
+                thumbnail: slint::Image::default(),
+                has_thumbnail: false,
+                status: crate::LiveStatus::Live,
+                observed_minutes: 0,
+                started_minutes: -1,
+                last_live_minutes: 0,
+                viewers: row.viewers,
+                self_reported: false,
+                audio: false,
+                category: crate::LiveCategory::None,
+                language: slint::SharedString::new(),
+                language_code: slint::SharedString::new(),
+                mature: false,
+                play,
+                why,
+                following: true,
+                on_telegram: true,
+                host: slint::SharedString::new(),
+                upcoming_title: slint::SharedString::new(),
+                upcoming_minutes: -1,
+            }
+        })
+        .collect()
 }
 
 fn refresh_if_front(slot: Slot) {
@@ -387,19 +442,35 @@ fn refresh_if_front(slot: Slot) {
     }
 }
 
-/// Whether a chat of the account meant right now is live: a live story, or a video chat or live
-/// stream on (the chat lists' LIVE mark).
-pub fn chat_is_live(chat_id: i64) -> bool {
+/// Whether a chat of the account meant right now is live: a live story, or a live stream on (the
+/// chat lists' LIVE mark). A group's ordinary video chat is not one (listed_call).
+pub fn chat_is_live(chat: &api::Chat) -> bool {
     let slot = super::context();
     FOUND.with(|found| {
         let found = found.borrow();
         let Some(found) = found.get(&slot) else { return false };
-        let story = found.stories.get(&chat_id).is_some_and(|(story_id, _)| {
-            found.story_calls.get(&(chat_id, *story_id)).and_then(|(call, _)| found.calls.get(call)).is_none_or(|call| call.is_active)
+        let story = found.stories.get(&chat.id).is_some_and(|(story_id, _)| {
+            found.story_calls.get(&(chat.id, *story_id)).and_then(|(call, _)| found.calls.get(call)).is_none_or(|call| call.is_active)
         });
-        let call = found.chat_calls.get(&chat_id).and_then(|call| found.calls.get(call)).is_some_and(|call| call.is_active);
+        let call = found.chat_calls.get(&chat.id).and_then(|call| found.calls.get(call)).is_some_and(|call| listed_call(chat, call));
         story || call
     })
+}
+
+/// Whether a chat's group call is a live stream to list: one that is on (a video chat planned for
+/// later is not), in a channel (where only its admins speak and the rest watch), or an RTMP
+/// stream wherever it is (sent from OBS: a broadcast even in a group). A group's ordinary video
+/// chat, the call its members join to talk, is not: Telegram's own apps show it as a call to join.
+fn listed_call(chat: &api::Chat, call: &api::GroupCall) -> bool {
+    listed(is_channel(chat), call)
+}
+
+fn listed(in_channel: bool, call: &api::GroupCall) -> bool {
+    call.is_active && (in_channel || call.is_rtmp_stream)
+}
+
+fn is_channel(chat: &api::Chat) -> bool {
+    matches!(chat.kind, ChatType::Supergroup { is_channel: true, .. })
 }
 
 /// Another chat opened, or none: the bar under its header follows.
@@ -408,12 +479,15 @@ pub fn chat_changed() {
 }
 
 /// The rows of the account's live streams: live stories (the newest first), then the chats' (the
-/// largest audience first).
+/// largest audience first). Only the user's own: stories in their story lists, and chats in their
+/// chat lists.
 fn rows(slot: Slot, names: &Names) -> (Vec<LiveRow>, Vec<LiveRow>) {
-    let (stories, chat_calls, story_calls, calls) = FOUND.with(|found| {
+    let (stories, story_listed, chat_calls, story_calls, calls) = FOUND.with(|found| {
         let found = found.borrow();
         match found.get(&slot) {
-            Some(found) => (found.stories.clone(), found.chat_calls.clone(), found.story_calls.clone(), found.calls.clone()),
+            Some(found) => {
+                (found.stories.clone(), found.story_listed.clone(), found.chat_calls.clone(), found.story_calls.clone(), found.calls.clone())
+            }
             None => Default::default(),
         }
     });
@@ -422,6 +496,9 @@ fn rows(slot: Slot, names: &Names) -> (Vec<LiveRow>, Vec<LiveRow>) {
             .iter()
             .filter_map(|(&chat_id, &(story_id, date))| {
                 let chat = store.chats.get(&chat_id)?;
+                if chat_id != store.my_id && !story_listed.contains(&chat_id) {
+                    return None;
+                }
                 let call = story_calls.get(&(chat_id, story_id));
                 let facts = call.and_then(|(call, _)| calls.get(call));
                 if facts.is_some_and(|facts| !facts.is_active) {
@@ -439,13 +516,12 @@ fn rows(slot: Slot, names: &Names) -> (Vec<LiveRow>, Vec<LiveRow>) {
             .filter_map(|(&chat_id, call)| {
                 let chat = store.chats.get(&chat_id)?;
                 let facts = calls.get(call);
-                // Only what is on: a video chat planned for later is not live.
-                if facts.is_none_or(|facts| !facts.is_active) {
+                // Only a live stream that is on, in a chat of the user's lists.
+                if chat.positions.is_empty() || facts.is_none_or(|facts| !listed_call(chat, facts)) {
                     return None;
                 }
-                let kind = if matches!(chat.kind, ChatType::Supergroup { is_channel: true, .. }) { LiveKind::Stream } else { LiveKind::VideoChat };
                 let mine = facts.is_some_and(|facts| facts.can_be_managed);
-                Some(row_of(store, chat, names, format!("chat:{chat_id}"), kind, facts, facts.map(|facts| facts.is_rtmp_stream), mine))
+                Some(row_of(store, chat, names, format!("chat:{chat_id}"), LiveKind::Stream, facts, facts.map(|facts| facts.is_rtmp_stream), mine))
             })
             .collect();
         chat_rows.sort_by(|a, b| b.viewers.cmp(&a.viewers).then_with(|| a.name.cmp(&b.name)));
@@ -491,6 +567,7 @@ fn row_of(
 fn show(shown: bool) {
     let was = SHOWN.replace(shown);
     with_live(|live| live.set_shown(shown));
+    crate::live::shown(shown);
     if shown {
         load_active_stories();
         let slot = super::shown();
@@ -1139,7 +1216,10 @@ fn set_state(generation: u64, state: LiveState) {
 fn close(clear_page: bool) {
     next_generation();
     let left = WATCHING.with(|watching| watching.borrow_mut().take());
-    crate::player::live::stop();
+    // The player is shared with the directory's streams: one left in the mini player plays on.
+    if crate::player::live::owner() == crate::player::live::Owner::Telegram {
+        crate::player::live::stop();
+    }
     if let Some(watching) = left {
         if let Some(feed) = &watching.feed {
             feed.pipe.cancel();
@@ -1595,6 +1675,49 @@ fn watch_link(text: &str) -> bool {
     true
 }
 
+/// A public channel of the live directory, by its username: its live story, else its live stream
+/// (listed_call), opened as the list's rows are; `then` is told whether one was on.
+pub fn watch_username(username: &str, then: impl Fn(bool) + 'static) {
+    let slot = super::shown();
+    let then = std::rc::Rc::new(then);
+    let username = username.trim_start_matches('@').to_string();
+    super::in_context(slot, || {
+        send(json!({ "@type": "searchPublicChat", "username": username }), move |answer| {
+            let Ok(chat) = answer else { return then(false) };
+            let Some(chat_id) = chat.get("id").and_then(Value::as_i64) else { return then(false) };
+            let in_channel = chat.pointer("/type/is_channel").and_then(Value::as_bool).unwrap_or(false);
+            let call_id = chat.pointer("/video_chat/group_call_id").and_then(Value::as_i64).filter(|id| *id != 0);
+            super::in_context(slot, || {
+                send(json!({ "@type": "getChatActiveStories", "chat_id": chat_id }), move |answer| {
+                    if let Ok(Ok(active)) = answer.map(serde_json::from_value::<api::ChatActiveStories>)
+                        && let Some(story) = active.stories.iter().find(|story| story.is_live)
+                    {
+                        with_found(slot, |found| found.stories.insert(chat_id, (story.story_id, story.date)));
+                        watch(&format!("story:{chat_id}:{}", story.story_id));
+                        return then(true);
+                    }
+                    let Some(call_id) = call_id else { return then(false) };
+                    super::in_context(slot, || {
+                        send(json!({ "@type": "getGroupCall", "group_call_id": call_id }), move |answer| {
+                            match answer.map(serde_json::from_value::<api::GroupCall>) {
+                                Ok(Ok(call)) if listed(in_channel, &call) => {
+                                    with_found(slot, |found| {
+                                        found.chat_calls.insert(chat_id, call.id);
+                                        found.calls.insert(call.id, call);
+                                    });
+                                    watch(&format!("chat:{chat_id}"));
+                                    then(true);
+                                }
+                                _ => then(false),
+                            }
+                        });
+                    });
+                });
+            });
+        });
+    });
+}
+
 /// The link leads to no live story now: said in the pane.
 fn no_live_there() {
     close(true);
@@ -1716,6 +1839,17 @@ mod tests {
         assert_eq!(chunk_ms(1), Some(500));
         assert_eq!(chunk_ms(-1), Some(2000));
         assert_eq!(chunk_ms(9), None);
+    }
+
+    #[test]
+    fn a_groups_video_chat_is_not_a_live_stream() {
+        let call = |active: bool, rtmp: bool| {
+            serde_json::from_value::<api::GroupCall>(json!({ "id": 1, "is_active": active, "is_rtmp_stream": rtmp })).expect("a group call")
+        };
+        assert!(listed(true, &call(true, false)), "a channel's live stream");
+        assert!(listed(false, &call(true, true)), "an RTMP stream in a group");
+        assert!(!listed(false, &call(true, false)), "a group's video chat: a call to join");
+        assert!(!listed(true, &call(false, false)), "planned, not on yet");
     }
 
     #[test]

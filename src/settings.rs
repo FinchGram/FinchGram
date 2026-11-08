@@ -56,6 +56,9 @@ pub struct Settings {
     /// column shows, the source looked at last, how much the cache may hold. The sources with
     /// their passwords are the database's (database::music_sources), never here.
     pub music: Music,
+    /// The Live view's own (src/live/, Settings › Live): the languages Recommended puts first, and
+    /// whether mature-rated channels show. The follows are the database's.
+    pub live: Live,
     /// The toolbox (src/toolbox.rs): which tools are pinned to the activity bar, in the
     /// toolbox's order; one list for the three themes.
     pub toolbox: Toolbox,
@@ -470,6 +473,19 @@ pub struct Music {
     pub cache_limit_mb: u64,
 }
 
+/// The Live view's settings (the canvas "FinchGram Desktop 直播", round 12).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Live {
+    /// The languages of the user's choice, BCP 47 tags ("en", "zh-Hans"), sent to the live
+    /// directory as Accept-Language so that Recommended puts them first. None until chosen:
+    /// nothing is assumed for the user.
+    pub languages: Vec<String>,
+    /// Mature-rated channels (strong language, violence, gambling) show; hidden until the user
+    /// says so.
+    pub show_mature: bool,
+}
+
 impl Default for Music {
     fn default() -> Self {
         Music { volume: 100, shuffle: false, repeat: "off".to_string(), queue_shown: true, source: String::new(), cache_limit_mb: 2048 }
@@ -754,6 +770,7 @@ impl Default for Settings {
             mcp: Mcp::default(),
             downloads: Downloads::default(),
             music: Music::default(),
+            live: Live::default(),
             toolbox: Toolbox::default(),
             voice_input: VoiceInput::default(),
         }
@@ -852,6 +869,18 @@ mod tests {
         assert_eq!((read.appearance.of("workbench"), read.appearance.of("broadsheet"), read.appearance.of("terminal")), ("dark", "system", "dark"));
         let odd = Appearance { terminal: "sepia".into(), ..Appearance::default() }.sanitized();
         assert_eq!(odd, Appearance::default());
+    }
+
+    #[test]
+    fn the_live_settings_start_with_nothing_chosen_and_read_back() {
+        let read: Settings = toml::from_str("theme = \"workbench\"\n").expect("read");
+        assert!(read.live.languages.is_empty());
+        assert!(!read.live.show_mature);
+        let mut settings = Settings::default();
+        settings.live.languages = vec!["zh-Hans".to_string(), "en".to_string()];
+        settings.live.show_mature = true;
+        let read: Settings = toml::from_str(&toml::to_string_pretty(&settings).expect("write")).expect("read");
+        assert_eq!(read.live, settings.live);
     }
 
     #[test]

@@ -33,7 +33,7 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
   資料夾，都能在 app 裡瀏覽。檔案走多條連線同時下載，中斷後可以接著下；照片和影片一到就在檢視器裡打開；密碼封在 FinchGram
   的資料庫裡。見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
 - **音樂。** 播放你自己伺服器上音樂的播放器：新增一個 Navidrome、gonic、LMS、Ampache、Nextcloud Music 或 Koel（任何會說 Subsonic API 的伺服器），在內建播放器裡播它的曲庫，首尾無縫，有佇列，播放列在每一頁底部；歌邊播邊快取。
-- **直播。** Telegram 自己的直播，在聊天、頻道、機器人旁邊單獨一欄：聯絡人和你關注的頻道的直播動態，以及你的聊天裡的直播和視訊聊天，連同留言。用 OBS 之類推流的直播在應用程式裡就能看。也可以開播：自己的直播動態，或頻道的直播，FinchGram 給出填進 OBS 的位址和金鑰。
+- **直播。** 在聊天、頻道、機器人旁邊單獨一欄：發現 Owncast 和 PeerTube 伺服器、Icecast 電台和 Telegram 頻道裡此刻誰在直播，追蹤他們，在應用程式裡觀看，Owncast 的聊天室就在畫面旁邊。Telegram 自己的直播也在這裡：聯絡人和你關注的頻道的直播動態，以及你的聊天裡的直播和視訊聊天，連同留言。也可以開播：自己的直播動態，或頻道的直播，FinchGram 給出填進 OBS 的位址和金鑰。
 - **傳送。** 照片、影片和檔案可以從迴紋針選單傳送，也可以拖進視窗或直接貼上。送出之前先在一張卡片裡顯示：
   可以加說明文字，按照片傳或按檔案傳，最多十個合成一個相簿，私訊裡可以設自毀計時器，也可以靜音傳送。
 - **截圖。** 輸入列裡的剪刀或 ⌘⇧A 會定住螢幕：取一個視窗或拖一個選取範圍，畫上方框、橢圓、箭頭、畫筆、文字和馬賽克，
@@ -111,9 +111,9 @@ FinchGram 是一個 MCP 伺服器：你 Mac 上的 AI 助理應用程式（Claud
 
 <p align="center"><img src="../docs/screenshots/workbench-light-live.png" width="800" alt="觀看一則直播動態"></p>
 
-左側第四個入口，在聊天、頻道、機器人旁邊（Terminal 裡是 LIVE，或 /live），列出此刻誰在直播：聯絡人和你關注的頻道的直播動態，以及你的聊天裡的直播和視訊聊天；有人在播時入口上有個紅點，正在直播的聊天在聊天列表裡和標題下方也會標出來。點一下，直播就在留言旁邊播放。FinchGram 沒有 WebRTC：它播放 Telegram 以串流形式送來的直播，也就是所有透過 RTMP 推流的直播（OBS、XSplit、ffmpeg）；手機鏡頭開的直播會列出來，標著在手機上看。免費留言可以直接寫；付費留言依級別上色顯示，發付費留言暫時交給 Telegram 自己的應用程式。開播會把你的直播動態或頻道直播開在 Telegram 上，並給出填進 OBS 的伺服器位址和金鑰；你自己的直播以主播身分開啟，能看到觀看人數、Stars、贊助榜，能刪留言、結束直播。觀看就是以觀眾身分加入，和 Telegram 自己的應用程式一樣。詳見 [docs/live-streams.md](../docs/live-streams.md)。
+左側第四個入口，在聊天、頻道、機器人旁邊（Terminal 裡是 LIVE，或 /live），是一個匯集多個來源的直播客戶端，要登入 Telegram 才能用。**探索**搜尋 services.finchgram.com 上的直播目錄（[docs/live-directory.md](../docs/live-directory.md)，一個開放的唯讀 JSON API，誰都可以提供，可以用 PR 修改，也可以 fork 走自己架設）：此刻在播的 Owncast 和 PeerTube 頻道（來自這兩個專案各自的自願登記目錄）、Xiph 目錄裡的 Icecast 電台，以及審核過的 HLS 直播串流和 Telegram 頻道；可以依來源、分類、語言和狀態篩選，以卡片或清單顯示。**追蹤中**保存你追蹤的頻道；你 Telegram 裡的直播也算作已追蹤。**觀看**用 FinchGram 自帶的 libmpv 在應用程式裡播放直播：可以選畫質、跳回直播最新處，去看別的頁面時有迷你播放器接著播，還能開一個始終浮在其他應用程式之上的視窗；Owncast 的聊天室在畫面旁邊，能看也能發，用的是 Owncast 給你的名字，從不用你的 Telegram 名字。**連線**開啟一個連結：Owncast 或 PeerTube 的頁面、Icecast 電台、HLS 播放清單或 Telegram 頻道。**開播**會把你的直播動態或頻道直播開在 Telegram 上，並給出填進 OBS 的伺服器位址和金鑰；你自己的直播以主播身分開啟，能看到觀看人數、Stars、贊助榜，能刪留言、結束直播。
 
-直播目錄：[docs/live-directory.md](../docs/live-directory.md) 是一個開放的直播源目錄的契約（會開直播的 Telegram 頻道和創作者、Owncast 和 PeerTube 伺服器、廣播機構的串流），附 [OpenAPI 檔案](../docs/live-directory.openapi.yaml)：唯讀的 JSON，誰都可以提供，可以用 PR 修改，也可以 fork 走自己架設。FinchGram 還沒有讀取它。
+Telegram 自己的直播也在同一個檢視裡：聯絡人和你關注的頻道的直播動態，以及你的聊天裡的直播和視訊聊天；有人在播時入口上有個紅點，正在直播的聊天在聊天列表裡和標題下方也會標出來。FinchGram 沒有 WebRTC：它播放 Telegram 以串流形式送來的直播，也就是所有透過 RTMP 推流的直播（OBS、XSplit、ffmpeg）；手機鏡頭開的直播會列出來，標著在手機上看。觀看就是以觀眾身分加入，和 Telegram 自己的應用程式一樣；免費留言可以直接寫，付費留言依級別上色顯示，發付費留言暫時交給 Telegram 自己的應用程式。限制級頻道會一直隱藏，直到你在「設定 › 直播」裡選擇顯示；成人直播一律不列出。Twitch、YouTube、Kick 和 Bilibili 尚未整合。詳見 [docs/live-streams.md](../docs/live-streams.md)。
 
 ## 怎麼做的
 

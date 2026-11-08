@@ -5979,3 +5979,2011 @@ msgstr "Dort läuft gerade keine Live-Story."
 #: ui/live.slint:238
 msgid "Stream key"
 msgstr "Streamschlüssel"
+
+#: ui/live-popout.slint:15 ui/pages/live-parts.slint:186
+msgid "Pause"
+msgstr "Pausieren"
+
+#: ui/live.slint:523
+msgid "Submitted streams"
+msgstr "Eingereichte Streams"
+
+#: ui/live.slint:543 ui/live.slint:655
+msgid "Following"
+msgstr "Gefolgt"
+
+#: ui/live.slint:544
+msgid "Broadcast"
+msgstr "Streamen"
+
+#: ui/live.slint:545
+msgid "Connections"
+msgstr "Verbindungen"
+
+#: ui/live.slint:546
+msgid "Discover"
+msgstr "Entdecken"
+
+#: ui/live.slint:549
+msgid "All channels"
+msgstr "Alle Kanäle"
+
+#: ui/live.slint:550
+msgid "Upcoming"
+msgstr "Demnächst"
+
+#: ui/live.slint:551 ui/pages/live-discover.slint:93
+msgid "Live now"
+msgstr "Jetzt live"
+
+#: ui/live.slint:554
+msgid "Relevance"
+msgstr "Relevanz"
+
+#: ui/live.slint:555
+msgid "Most viewers"
+msgstr "Meiste Zuschauer"
+
+#: ui/live.slint:556
+msgid "Recently started"
+msgstr "Zuletzt gestartet"
+
+#: ui/live.slint:558
+msgid "Recommended"
+msgstr "Empfohlen"
+
+#: ui/live.slint:562
+msgid "Gaming"
+msgstr "Gaming"
+
+#: ui/live.slint:563
+msgid "Talk"
+msgstr "Talk"
+
+#: ui/live.slint:564
+msgid "Technology"
+msgstr "Technik"
+
+#: ui/live.slint:565
+msgid "Creative"
+msgstr "Kreatives"
+
+#: ui/live.slint:566
+msgid "IRL"
+msgstr "IRL"
+
+#: ui/live.slint:567
+msgid "Education"
+msgstr "Bildung"
+
+#: ui/live.slint:568
+msgid "Events"
+msgstr "Events"
+
+#: ui/live.slint:569
+msgid "News"
+msgstr "Nachrichten"
+
+#: ui/live.slint:570
+msgid "Sports"
+msgstr "Sport"
+
+#: ui/live.slint:571
+msgid "Other"
+msgstr "Sonstiges"
+
+#: ui/live.slint:572
+msgid "Uncategorized"
+msgstr "Ohne Kategorie"
+
+#: ui/live.slint:574
+msgid "Language not given"
+msgstr "Sprache nicht angegeben"
+
+#: ui/live.slint:579
+msgid "NOT CONFIRMED"
+msgstr "NICHT BESTÄTIGT"
+
+#: ui/live.slint:580
+msgid "OFFLINE"
+msgstr "OFFLINE"
+
+#: ui/live.slint:581
+msgid "STATUS UNKNOWN"
+msgstr "STATUS UNBEKANNT"
+
+#: ui/live.slint:584 ui/pages/live-parts.slint:20
+msgid "On air"
+msgstr "Auf Sendung"
+
+#: ui/live.slint:585 ui/pages/live-discover.slint:87
+msgid "Not confirmed"
+msgstr "Nicht bestätigt"
+
+#: ui/live.slint:586
+msgid "Off air"
+msgstr "Nicht auf Sendung"
+
+#: ui/live.slint:587 ui/live.slint:630 ui/pages/live-discover.slint:96
+msgid "Status unknown"
+msgstr "Status unbekannt"
+
+#: ui/live.slint:591
+msgid "{} min"
+msgstr "{} Min."
+
+#: ui/live.slint:592
+msgid "{} h"
+msgstr "{} Std."
+
+#: ui/live.slint:593
+msgid "{} h {} min"
+msgstr "{} Std. {} Min."
+
+#: ui/live.slint:597
+msgid "just now"
+msgstr "gerade eben"
+
+#: ui/live.slint:598
+msgid "{} min ago"
+msgstr "vor {} Min."
+
+#: ui/live.slint:599
+msgid "{} h ago"
+msgstr "vor {} Std."
+
+#: ui/live.slint:600
+msgid "{} days ago"
+msgstr "vor {} Tagen"
+
+#: ui/live.slint:604
+msgid "{n} listening"
+msgid_plural "{n} listening"
+msgstr[0] "{n} Zuhörer"
+msgstr[1] "{n} Zuhörer"
+
+#: ui/live.slint:611
+msgid "Live for {} · {}"
+msgstr "Live seit {} · {}"
+
+#: ui/live.slint:612 ui/pages/live-parts.slint:217
+msgid "Live for {}"
+msgstr "Live seit {}"
+
+#: ui/live.slint:614
+msgid "Not confirmed · last confirmed live {}"
+msgstr "Nicht bestätigt · zuletzt live bestätigt {}"
+
+#: ui/live.slint:616
+msgid "Status unknown · last confirmed live {}"
+msgstr "Status unbekannt · zuletzt live bestätigt {}"
+
+#: ui/live.slint:617
+msgid "Status unknown · no recent answer from {}"
+msgstr "Status unbekannt · keine aktuelle Antwort von {}"
+
+#: ui/live.slint:619
+msgid "Offline · last live {}"
+msgstr "Offline · zuletzt live {}"
+
+#: ui/live.slint:619 ui/pages/live-parts.slint:29
+msgid "Not seen live yet"
+msgstr "Noch nie live gesehen"
+
+#: ui/live.slint:624
+msgid "Watch here"
+msgstr "Hier ansehen"
+
+#: ui/live.slint:625
+msgid "Listen here"
+msgstr "Hier anhören"
+
+#: ui/live.slint:626
+msgid "Try opening"
+msgstr "Öffnen versuchen"
+
+#: ui/live.slint:627
+msgid "Sign in to watch"
+msgstr "Zum Ansehen anmelden"
+
+#: ui/live.slint:628 ui/pages/live-parts.slint:154
+msgid "Open on {}"
+msgstr "Auf {} öffnen"
+
+#: ui/live.slint:629 ui/pages/live-discover.slint:88 ui/pages/live-discover.slint:235
+msgid "Offline"
+msgstr "Offline"
+
+#: ui/live.slint:631
+msgid "Unavailable"
+msgstr "Nicht verfügbar"
+
+#: ui/live.slint:634
+msgid "Not live right now"
+msgstr "Gerade nicht live"
+
+#: ui/live.slint:635
+msgid "{} isn't answering"
+msgstr "{} antwortet nicht"
+
+#: ui/live.slint:636
+msgid "Live status isn't confirmed — the stream may have ended"
+msgstr "Live-Status nicht bestätigt – der Stream ist vielleicht schon vorbei"
+
+#: ui/live.slint:637
+msgid "Telegram sends this one over WebRTC — watch it on your phone"
+msgstr "Telegram sendet diesen über WebRTC – sieh ihn dir auf deinem Telefon an"
+
+#: ui/live.slint:638
+msgid "{} needs an account for this stream"
+msgstr "{} verlangt für diesen Stream einen Account"
+
+#: ui/live.slint:639
+msgid "Plays on {}'s site, in your browser"
+msgstr "Läuft auf der Website von {}, in deinem Browser"
+
+#: ui/live.slint:640
+msgid "{} allows only its own player, so it opens in your browser"
+msgstr "{} erlaubt nur den eigenen Player, daher öffnet sich der Stream in deinem Browser"
+
+#: ui/live.slint:641
+msgid "FinchGram can't play this kind of stream yet"
+msgstr "FinchGram kann diese Art von Stream noch nicht abspielen"
+
+#: ui/live.slint:642
+msgid "Plays in FinchGram, sound only"
+msgstr "Läuft in FinchGram, nur Ton"
+
+#: ui/live.slint:643 ui/pages/live-discover.slint:81 ui/pages/live-parts.slint:273
+msgid "Plays in FinchGram"
+msgstr "Läuft in FinchGram"
+
+#: ui/live.slint:645
+msgid "No thumbnail from {}"
+msgstr "Kein Vorschaubild von {}"
+
+#: ui/live.slint:647
+msgid "Following {}"
+msgstr "Du folgst jetzt {}"
+
+#: ui/live.slint:648
+msgid "Unfollowed {}"
+msgstr "Du folgst {} nicht mehr"
+
+#: ui/live.slint:649
+msgid "Followed on Telegram — unfollow it there"
+msgstr "Auf Telegram gefolgt – entfolgen geht nur dort"
+
+#: ui/live.slint:650
+msgid "Opened {} in your browser"
+msgstr "{} im Browser geöffnet"
+
+#: ui/live.slint:654
+msgid "Followed on Telegram"
+msgstr "Auf Telegram gefolgt"
+
+#: ui/live.slint:655 ui/pages/live-parts.slint:197
+msgid "Follow"
+msgstr "Folgen"
+
+#: ui/pages/live-cards.slint:86
+msgid "Not confirmed — {} last answered {}"
+msgstr "Nicht bestätigt – {} hat zuletzt {} geantwortet"
+
+#: ui/pages/live-cards.slint:89
+msgid "{} isn’t answering — last confirmed live {}"
+msgstr "{} antwortet nicht – zuletzt live bestätigt {}"
+
+#: ui/pages/live-cards.slint:99
+msgid "Will play in FinchGram"
+msgstr "Wird in FinchGram laufen"
+
+#: ui/pages/live-cards.slint:99
+msgid "Will open on {}"
+msgstr "Wird auf {} geöffnet"
+
+#: ui/pages/live-cards.slint:104
+msgid "Mature"
+msgstr "Ab 18"
+
+#: ui/pages/live-cards.slint:104
+msgid "MATURE"
+msgstr "AB 18"
+
+#: ui/pages/live-cards.slint:112
+msgid "in {} min"
+msgstr "in {} Min."
+
+#: ui/pages/live-cards.slint:113
+msgid "in {} h"
+msgstr "in {} Std."
+
+#: ui/pages/live-cards.slint:114
+msgid "in {} days"
+msgstr "in {} Tagen"
+
+#: ui/pages/live-cards.slint:123
+msgid "{} · {} · {}"
+msgstr "{} · {} · {}"
+
+#: ui/pages/live-cards.slint:128
+msgid "viewers not shared"
+msgstr "Zuschauerzahl nicht angegeben"
+
+#: ui/pages/live-cards.slint:129
+msgid "{} (the server’s own count)"
+msgstr "{} (Zählung des Servers)"
+
+#: ui/pages/live-cards.slint:140
+msgid "{} · live for {}"
+msgstr "{} · live seit {}"
+
+#: ui/pages/live-cards.slint:142
+msgid "{} · not confirmed"
+msgstr "{} · nicht bestätigt"
+
+#: ui/pages/live-cards.slint:143
+msgid "{} · status unknown"
+msgstr "{} · Status unbekannt"
+
+#: ui/pages/live-cards.slint:147
+msgid "live now"
+msgstr "jetzt live"
+
+#: ui/pages/live-cards.slint:148
+msgid "not confirmed"
+msgstr "nicht bestätigt"
+
+#: ui/pages/live-cards.slint:149
+msgid "status unknown"
+msgstr "status unbekannt"
+
+#: ui/pages/live-cards.slint:150 ui/pages/live-parts.slint:29
+msgid "last live {}"
+msgstr "zuletzt live {}"
+
+#: ui/pages/live-cards.slint:150
+msgid "never live yet"
+msgstr "noch nie live"
+
+#: ui/pages/live-cards.slint:155
+msgid "▸ here"
+msgstr "▸ hier"
+
+#: ui/pages/live-cards.slint:157
+msgid "▸ watch here"
+msgstr "▸ ansehen"
+
+#: ui/pages/live-cards.slint:158
+msgid "▸ listen here"
+msgstr "▸ anhören"
+
+#: ui/pages/live-cards.slint:159
+msgid "? try opening"
+msgstr "? versuchen"
+
+#: ui/pages/live-cards.slint:160
+msgid "sign in"
+msgstr "anmelden"
+
+#: ui/pages/live-cards.slint:162
+msgid "× offline"
+msgstr "× offline"
+
+#: ui/pages/live-cards.slint:163
+msgid "× unknown"
+msgstr "× unbekannt"
+
+#: ui/pages/live-cards.slint:164
+msgid "× unavailable"
+msgstr "× unverfügbar"
+
+#: ui/pages/live-cards.slint:1041
+msgid "loading {}"
+msgstr "lädt {}"
+
+#: ui/pages/live-discover.slint:23
+msgid "title, channel, category, platform"
+msgstr "titel, kanal, kategorie, plattform"
+
+#: ui/pages/live-discover.slint:24
+msgid "Search streams, channels, categories, platforms"
+msgstr "Streams, Kanäle, Kategorien, Plattformen durchsuchen"
+
+#: ui/pages/live-discover.slint:24
+msgid "Search live streams, channels, categories, platforms"
+msgstr "Livestreams, Kanäle, Kategorien, Plattformen durchsuchen"
+
+#: ui/pages/live-discover.slint:26
+msgid "searching…"
+msgstr "suche…"
+
+#: ui/pages/live-discover.slint:28
+msgid "⏎ search · / focus · esc clear"
+msgstr "⏎ suchen · / fokus · esc leeren"
+
+#: ui/pages/live-discover.slint:32 ui/pages/live-discover.slint:331
+msgid "recent"
+msgstr "zuletzt"
+
+#: ui/pages/live-discover.slint:32
+msgid "Recent searches"
+msgstr "Letzte Suchanfragen"
+
+#: ui/pages/live-discover.slint:33
+msgid "Searches"
+msgstr "Suchanfragen"
+
+#: ui/pages/live-discover.slint:34
+msgid "channels"
+msgstr "kanäle"
+
+#: ui/pages/live-discover.slint:36 ui/pages/live-discover.slint:338
+msgid "filters"
+msgstr "filter"
+
+#: ui/pages/live-discover.slint:36
+msgid "Filters"
+msgstr "Filter"
+
+#: ui/pages/live-discover.slint:39 ui/pages/live-discover.slint:275
+msgid "Source: {}"
+msgstr "Quelle: {}"
+
+#: ui/pages/live-discover.slint:40 ui/pages/live-discover.slint:276
+msgid "Category: {}"
+msgstr "Kategorie: {}"
+
+#: ui/pages/live-discover.slint:41
+msgid "Open this link directly"
+msgstr "Diesen Link direkt öffnen"
+
+#: ui/pages/live-discover.slint:46
+msgid "{} — not a directory search"
+msgstr "{} – keine Suche im Verzeichnis"
+
+#: ui/pages/live-discover.slint:51
+msgid "↑↓ pick · ⏎ go · tab complete · {}"
+msgstr "↑↓ wählen · ⏎ los · tab ergänzen · {}"
+
+#: ui/pages/live-discover.slint:51
+msgid "links open directly"
+msgstr "links öffnen sich direkt"
+
+#: ui/pages/live-discover.slint:51
+msgid "esc close"
+msgstr "esc schließen"
+
+#: ui/pages/live-discover.slint:53
+msgid "Links open directly — they aren’t searched in the directory."
+msgstr "Links öffnen sich direkt – sie werden nicht im Verzeichnis gesucht."
+
+#: ui/pages/live-discover.slint:54
+msgid "⏎ searches the directory for “{}” · ↑↓ to pick"
+msgstr "⏎ durchsucht das Verzeichnis nach „{}“ · ↑↓ zum Auswählen"
+
+#: ui/pages/live-discover.slint:54
+msgid "Type to search the directory, or paste a link to open it"
+msgstr "Tippe, um das Verzeichnis zu durchsuchen, oder füge einen Link ein, um ihn zu öffnen"
+
+#: ui/pages/live-discover.slint:59
+msgid "Index"
+msgstr "Index"
+
+#: ui/pages/live-discover.slint:59
+msgid "Pictures"
+msgstr "Bilder"
+
+#: ui/pages/live-discover.slint:60
+msgid "List"
+msgstr "Liste"
+
+#: ui/pages/live-discover.slint:60
+msgid "Grid"
+msgstr "Raster"
+
+#: ui/pages/live-discover.slint:64 ui/pages/live-discover.slint:143
+msgid "Source"
+msgstr "Quelle"
+
+#: ui/pages/live-discover.slint:65
+msgid "Category"
+msgstr "Kategorie"
+
+#: ui/pages/live-discover.slint:67 ui/pages/live-discover.slint:214
+msgid "Plays"
+msgstr "Wiedergabe"
+
+#: ui/pages/live-discover.slint:68
+msgid "Status"
+msgstr "Status"
+
+#: ui/pages/live-discover.slint:69
+msgid "Sort"
+msgstr "Sortierung"
+
+#: ui/pages/live-discover.slint:70
+msgid "Any"
+msgstr "Beliebig"
+
+#: ui/pages/live-discover.slint:71
+msgid "{n} source"
+msgid_plural "{n} sources"
+msgstr[0] "{n} Quelle"
+msgstr[1] "{n} Quellen"
+
+#: ui/pages/live-discover.slint:72
+msgid "Any source"
+msgstr "Beliebige Quelle"
+
+#: ui/pages/live-discover.slint:73
+msgid "Any category"
+msgstr "Beliebige Kategorie"
+
+#: ui/pages/live-discover.slint:76
+msgid "In FinchGram"
+msgstr "In FinchGram"
+
+#: ui/pages/live-discover.slint:77
+msgid "On its site"
+msgstr "Auf seiner Website"
+
+#: ui/pages/live-discover.slint:78 ui/pages/live-discover.slint:83
+msgid "Anywhere"
+msgstr "Überall"
+
+#: ui/pages/live-discover.slint:82
+msgid "Opens on its own site"
+msgstr "Öffnet sich auf seiner eigenen Website"
+
+#: ui/pages/live-discover.slint:89
+msgid "Unknown"
+msgstr "Unbekannt"
+
+#: ui/pages/live-discover.slint:91
+msgid "Any status"
+msgstr "Beliebiger Status"
+
+#: ui/pages/live-discover.slint:100
+msgid "Recently live"
+msgstr "Zuletzt live"
+
+#: ui/pages/live-discover.slint:104
+msgid "Twitch, YouTube, Kick and Bilibili: not integrated yet — their links still open in your browser."
+msgstr "Twitch, YouTube, Kick und Bilibili: noch nicht eingebunden – ihre Links öffnen sich weiterhin in deinem Browser."
+
+#: ui/pages/live-discover.slint:107
+msgid "Language comes from the source. Streams that don’t give one appear only under Any."
+msgstr "Die Sprache stammt von der Quelle. Streams ohne Angabe erscheinen nur unter „Beliebig“."
+
+#: ui/pages/live-discover.slint:110
+msgid "Twitch and YouTube allow only their own players, and Kick plays on its site. They are not integrated yet; their links open in your browser."
+msgstr "Twitch und YouTube erlauben nur ihre eigenen Player, und Kick läuft auf seiner Website. Sie sind noch nicht eingebunden; ihre Links öffnen sich in deinem Browser."
+
+#: ui/pages/live-discover.slint:113 ui/pages/live-parts.slint:92
+msgid "Not confirmed: live at the last answer, but that answer is old. Status unknown: no recent answer at all. Neither is treated as offline."
+msgstr "Nicht bestätigt: bei der letzten Antwort live, aber diese Antwort ist alt. Status unbekannt: gar keine aktuelle Antwort. Beides gilt nicht als offline."
+
+#: ui/pages/live-discover.slint:116
+msgid "Relevance and Recommended put confirmed live first. Most viewers uses each source’s own counts — they aren’t comparable across platforms, and streams without a count come after, not as zero."
+msgstr "„Relevanz“ und „Empfohlen“ zeigen bestätigte Livestreams zuerst. „Meiste Zuschauer“ nutzt die Zahlen der jeweiligen Quelle – sie sind zwischen Plattformen nicht vergleichbar, und Streams ohne Zahl kommen danach, nicht als null."
+
+#: ui/pages/live-discover.slint:118
+msgid "Clear filters"
+msgstr "Filter zurücksetzen"
+
+#: ui/pages/live-discover.slint:122
+msgid "Partial results — {} of {} sources are behind"
+msgstr "Unvollständige Ergebnisse – {} von {} Quellen sind im Rückstand"
+
+#: ui/pages/live-discover.slint:122
+msgid "Partial results — a source is behind"
+msgstr "Unvollständige Ergebnisse – eine Quelle ist im Rückstand"
+
+#: ui/pages/live-discover.slint:126
+msgid "{} limited our requests. Its results are from {}, so its streams show “Not confirmed”."
+msgstr "{} hat unsere Anfragen gedrosselt. Seine Ergebnisse stammen von {}, deshalb zeigen seine Streams „Nicht bestätigt“."
+
+#: ui/pages/live-discover.slint:127
+msgid "{} limited our requests, so its streams show “Not confirmed”."
+msgstr "{} hat unsere Anfragen gedrosselt, deshalb zeigen seine Streams „Nicht bestätigt“."
+
+#: ui/pages/live-discover.slint:130
+msgid "{} hasn’t answered for {}. Its streams are “Status unknown” and left out of Live now."
+msgstr "{} antwortet seit {} nicht. Seine Streams sind „Status unbekannt“ und fehlen in „Jetzt live“."
+
+#: ui/pages/live-discover.slint:131
+msgid "{} isn’t answering. Its streams are “Status unknown” and left out of Live now."
+msgstr "{} antwortet nicht. Seine Streams sind „Status unbekannt“ und fehlen in „Jetzt live“."
+
+#: ui/pages/live-discover.slint:133
+msgid "Some {} servers haven’t answered for {}."
+msgstr "Einige {}-Server antworten seit {} nicht."
+
+#: ui/pages/live-discover.slint:134
+msgid "Some {} servers aren’t answering."
+msgstr "Einige {}-Server antworten nicht."
+
+#: ui/pages/live-discover.slint:137
+msgid "{n} stream with unknown status isn’t in Live now — All channels lists it."
+msgid_plural "{n} streams with unknown status aren’t in Live now — All channels lists them."
+msgstr[0] "{n} Stream mit unbekanntem Status fehlt in „Jetzt live“ – „Alle Kanäle“ zeigt ihn."
+msgstr[1] "{n} Streams mit unbekanntem Status fehlen in „Jetzt live“ – „Alle Kanäle“ zeigt sie."
+
+#: ui/pages/live-discover.slint:140
+msgid "[hide sources]"
+msgstr "[quellen ausblenden]"
+
+#: ui/pages/live-discover.slint:140
+msgid "[sources]"
+msgstr "[quellen]"
+
+#: ui/pages/live-discover.slint:141 ui/pages/live-discover.slint:306
+msgid "Hide sources"
+msgstr "Quellen ausblenden"
+
+#: ui/pages/live-discover.slint:144
+msgid "# sources"
+msgstr "# quellen"
+
+#: ui/pages/live-discover.slint:145
+msgid "Provides"
+msgstr "Liefert"
+
+#: ui/pages/live-discover.slint:147
+msgid "Last answer"
+msgstr "Letzte Antwort"
+
+#: ui/pages/live-discover.slint:148
+msgid "State"
+msgstr "Zustand"
+
+#: ui/pages/live-discover.slint:150
+msgid "Not integrated yet — its links still open in your browser."
+msgstr "Noch nicht eingebunden – Links dorthin öffnen sich weiterhin in deinem Browser."
+
+#: ui/pages/live-discover.slint:151
+msgid "live status · {} · {} · {}"
+msgstr "Live-Status · {} · {} · {}"
+
+#: ui/pages/live-discover.slint:152
+msgid "viewer counts"
+msgstr "Zuschauerzahlen"
+
+#: ui/pages/live-discover.slint:152
+msgid "self-reported counts"
+msgstr "vom Server gemeldete Zahlen"
+
+#: ui/pages/live-discover.slint:152
+msgid "listener counts"
+msgstr "Zuhörerzahlen"
+
+#: ui/pages/live-discover.slint:152
+msgid "no viewer counts"
+msgstr "keine Zuschauerzahlen"
+
+#: ui/pages/live-discover.slint:153
+msgid "thumbnails"
+msgstr "Vorschaubilder"
+
+#: ui/pages/live-discover.slint:153
+msgid "no thumbnails"
+msgstr "keine Vorschaubilder"
+
+#: ui/pages/live-discover.slint:154
+msgid "plays in FinchGram"
+msgstr "läuft in FinchGram"
+
+#: ui/pages/live-discover.slint:154
+msgid "plays on its site"
+msgstr "läuft auf seiner Website"
+
+#: ui/pages/live-discover.slint:157
+msgid "Not integrated yet"
+msgstr "Noch nicht eingebunden"
+
+#: ui/pages/live-discover.slint:158
+msgid "Up to date"
+msgstr "Aktuell"
+
+#: ui/pages/live-discover.slint:159
+msgid "Partly behind"
+msgstr "Teils im Rückstand"
+
+#: ui/pages/live-discover.slint:160
+msgid "Rate-limited"
+msgstr "Gedrosselt"
+
+#: ui/pages/live-discover.slint:161
+msgid "Not answering"
+msgstr "Antwortet nicht"
+
+#: ui/pages/live-discover.slint:168
+msgid "Channels · total unknown"
+msgstr "Kanäle · Gesamtzahl unbekannt"
+
+#: ui/pages/live-discover.slint:169
+msgid "Scheduled streams · total unknown"
+msgstr "Geplante Streams · Gesamtzahl unbekannt"
+
+#: ui/pages/live-discover.slint:170
+msgid "Live streams · total unknown"
+msgstr "Livestreams · Gesamtzahl unbekannt"
+
+#: ui/pages/live-discover.slint:173
+msgid "At least {n} channel"
+msgid_plural "At least {n} channels"
+msgstr[0] "Mindestens {n} Kanal"
+msgstr[1] "Mindestens {n} Kanäle"
+
+#: ui/pages/live-discover.slint:174
+msgid "At least {n} scheduled stream"
+msgid_plural "At least {n} scheduled streams"
+msgstr[0] "Mindestens {n} geplanter Stream"
+msgstr[1] "Mindestens {n} geplante Streams"
+
+#: ui/pages/live-discover.slint:175
+msgid "At least {n} live stream"
+msgid_plural "At least {n} live streams"
+msgstr[0] "Mindestens {n} Livestream"
+msgstr[1] "Mindestens {n} Livestreams"
+
+#: ui/pages/live-discover.slint:177
+msgid "{n} channel"
+msgid_plural "{n} channels"
+msgstr[0] "{n} Kanal"
+msgstr[1] "{n} Kanäle"
+
+#: ui/pages/live-discover.slint:178
+msgid "{n} scheduled stream"
+msgid_plural "{n} scheduled streams"
+msgstr[0] "{n} geplanter Stream"
+msgstr[1] "{n} geplante Streams"
+
+#: ui/pages/live-discover.slint:179
+msgid "{n} live stream"
+msgid_plural "{n} live streams"
+msgstr[0] "{n} Livestream"
+msgstr[1] "{n} Livestreams"
+
+#: ui/pages/live-discover.slint:182
+msgid "{} for “{}”"
+msgstr "{} für „{}“"
+
+#: ui/pages/live-discover.slint:184
+msgid "Loading results…"
+msgstr "Ergebnisse werden geladen…"
+
+#: ui/pages/live-discover.slint:185
+msgid "Searching…"
+msgstr "Suche läuft…"
+
+#: ui/pages/live-discover.slint:187
+msgid "partial — {} of {} sources behind"
+msgstr "unvollständig – {} von {} Quellen im Rückstand"
+
+#: ui/pages/live-discover.slint:187
+msgid "partial — a source is behind"
+msgstr "unvollständig – eine Quelle ist im Rückstand"
+
+#: ui/pages/live-discover.slint:190
+msgid "counts come from each source and aren’t comparable — streams without one come after, not as zero"
+msgstr "Zahlen stammen von der jeweiligen Quelle und sind nicht vergleichbar – Streams ohne Zahl folgen danach, nicht als null"
+
+#: ui/pages/live-discover.slint:191
+msgid "Recommended: confirmed live first, then your languages, recently started, and popularity within each source"
+msgstr "Empfohlen: bestätigte Livestreams zuerst, dann deine Sprachen, kürzlich gestartete und die Beliebtheit innerhalb jeder Quelle"
+
+#: ui/pages/live-discover.slint:195
+msgid "{n} mature-rated result hidden"
+msgid_plural "{n} mature-rated results hidden"
+msgstr[0] "{n} Ergebnis ab 18 ausgeblendet"
+msgstr[1] "{n} Ergebnisse ab 18 ausgeblendet"
+
+#: ui/pages/live-discover.slint:200
+msgid "Confirmed live on Owncast, PeerTube, Icecast and submitted servers"
+msgstr "Bestätigt live auf Owncast, PeerTube, Icecast und eingereichten Servern"
+
+#: ui/pages/live-discover.slint:201
+msgid "See all {}"
+msgstr "Alle {} ansehen"
+
+#: ui/pages/live-discover.slint:201
+msgid "See all"
+msgstr "Alle ansehen"
+
+#: ui/pages/live-discover.slint:202
+msgid "Not confirmed right now"
+msgstr "Gerade nicht bestätigt"
+
+#: ui/pages/live-discover.slint:203
+msgid "Their sources haven’t answered recently. Opening one tries the stream; it may have ended."
+msgstr "Ihre Quellen haben in letzter Zeit nicht geantwortet. Beim Öffnen wird versucht, den Stream abzuspielen; er ist vielleicht schon vorbei."
+
+#: ui/pages/live-discover.slint:204
+msgid "By category"
+msgstr "Nach Kategorie"
+
+#: ui/pages/live-discover.slint:204
+msgid "Browse by category"
+msgstr "Nach Kategorie stöbern"
+
+#: ui/pages/live-discover.slint:209
+msgid "Scheduled stream"
+msgstr "Geplanter Stream"
+
+#: ui/pages/live-discover.slint:210
+msgid "Stream"
+msgstr "Stream"
+
+#: ui/pages/live-discover.slint:212
+msgid "Category · language"
+msgstr "Kategorie · Sprache"
+
+#: ui/pages/live-discover.slint:213
+msgid "Starts"
+msgstr "Beginnt"
+
+#: ui/pages/live-discover.slint:213
+msgid "Viewers"
+msgstr "Zuschauer"
+
+#: ui/pages/live-discover.slint:217 ui/pages/live-discover.slint:218
+msgid "channel"
+msgstr "kanal"
+
+#: ui/pages/live-discover.slint:217
+msgid "scheduled stream"
+msgstr "geplanter stream"
+
+#: ui/pages/live-discover.slint:217 ui/pages/live-discover.slint:342
+msgid "title"
+msgstr "titel"
+
+#: ui/pages/live-discover.slint:218 ui/pages/live-discover.slint:343
+msgid "status"
+msgstr "status"
+
+#: ui/pages/live-discover.slint:219
+msgid "src"
+msgstr "src"
+
+#: ui/pages/live-discover.slint:220
+msgid "cat"
+msgstr "cat"
+
+#: ui/pages/live-discover.slint:221
+msgid "lang"
+msgstr "lang"
+
+#: ui/pages/live-discover.slint:222
+msgid "starts"
+msgstr "beginnt"
+
+#: ui/pages/live-discover.slint:222 ui/pages/live-discover.slint:333
+msgid "viewers"
+msgstr "zusch."
+
+#: ui/pages/live-discover.slint:223 ui/pages/live-discover.slint:344
+msgid "plays"
+msgstr "wiedergabe"
+
+#: ui/pages/live-discover.slint:228
+msgid "── live · confirmed ──"
+msgstr "── live · bestätigt ──"
+
+#: ui/pages/live-discover.slint:229
+msgid "── not confirmed: source behind, opening tries the stream ──"
+msgstr "── nicht bestätigt: quelle im rückstand, öffnen probiert den stream ──"
+
+#: ui/pages/live-discover.slint:230
+msgid "── offline ──"
+msgstr "── offline ──"
+
+#: ui/pages/live-discover.slint:231
+msgid "── status unknown: source not answering ──"
+msgstr "── status unbekannt: quelle antwortet nicht ──"
+
+#: ui/pages/live-discover.slint:233
+msgid "Live now · confirmed"
+msgstr "Jetzt live · bestätigt"
+
+#: ui/pages/live-discover.slint:234
+msgid "Not confirmed right now — the source hasn’t answered recently; opening one tries the stream"
+msgstr "Gerade nicht bestätigt – die Quelle hat in letzter Zeit nicht geantwortet; beim Öffnen wird versucht, den Stream abzuspielen"
+
+#: ui/pages/live-discover.slint:236
+msgid "Status unknown — the source isn’t answering"
+msgstr "Status unbekannt – die Quelle antwortet nicht"
+
+#: ui/pages/live-discover.slint:239
+msgid "Upcoming lists the sources that publish schedules. Follow a channel to keep it in Following."
+msgstr "„Demnächst“ listet die Quellen, die Sendepläne veröffentlichen. Folge einem Kanal, um ihn unter „Gefolgt“ zu behalten."
+
+#: ui/pages/live-discover.slint:245
+msgid "no channels match these filters"
+msgstr "keine kanäle passen zu diesen filtern"
+
+#: ui/pages/live-discover.slint:245
+msgid "No channels match these filters"
+msgstr "Keine Kanäle passen zu diesen Filtern"
+
+#: ui/pages/live-discover.slint:246
+msgid "no scheduled streams match these filters"
+msgstr "keine geplanten streams passen zu diesen filtern"
+
+#: ui/pages/live-discover.slint:246
+msgid "No scheduled streams match these filters"
+msgstr "Keine geplanten Streams passen zu diesen Filtern"
+
+#: ui/pages/live-discover.slint:247
+msgid "no live streams match these filters"
+msgstr "keine livestreams passen zu diesen filtern"
+
+#: ui/pages/live-discover.slint:247
+msgid "No live streams match these filters"
+msgstr "Keine Livestreams passen zu diesen Filtern"
+
+#: ui/pages/live-discover.slint:249
+msgid "nothing matches “{}”"
+msgstr "nichts passt zu „{}“"
+
+#: ui/pages/live-discover.slint:249
+msgid "Nothing matches “{}”"
+msgstr "Nichts passt zu „{}“"
+
+#: ui/pages/live-discover.slint:250
+msgid "nothing scheduled"
+msgstr "nichts geplant"
+
+#: ui/pages/live-discover.slint:250
+msgid "Nothing scheduled"
+msgstr "Nichts geplant"
+
+#: ui/pages/live-discover.slint:251
+msgid "nothing here"
+msgstr "hier ist nichts"
+
+#: ui/pages/live-discover.slint:251
+msgid "Nothing here yet"
+msgstr "Hier ist noch nichts"
+
+#: ui/pages/live-discover.slint:254
+msgid "Nothing in {} for “{}” with {}."
+msgstr "Nichts in „{}“ für „{}“ mit {}."
+
+#: ui/pages/live-discover.slint:254
+msgid "Nothing in {} with {}."
+msgstr "Nichts in „{}“ mit {}."
+
+#: ui/pages/live-discover.slint:257
+msgid "Searched titles, channel names, categories, platforms and languages from {n} source, live and offline."
+msgid_plural "Searched titles, channel names, categories, platforms and languages from {n} sources, live and offline."
+msgstr[0] "Durchsucht: Titel, Kanalnamen, Kategorien, Plattformen und Sprachen aus {n} Quelle, live und offline."
+msgstr[1] "Durchsucht: Titel, Kanalnamen, Kategorien, Plattformen und Sprachen aus {n} Quellen, live und offline."
+
+#: ui/pages/live-discover.slint:258
+msgid "{n} mature-rated result is hidden."
+msgid_plural "{n} mature-rated results are hidden."
+msgstr[0] "{n} Ergebnis ab 18 ist ausgeblendet."
+msgstr[1] "{n} Ergebnisse ab 18 sind ausgeblendet."
+
+#: ui/pages/live-discover.slint:261
+msgid "{} and {}"
+msgstr "{} und {}"
+
+#: ui/pages/live-discover.slint:264
+msgid "[remove {}]"
+msgstr "[{} entfernen]"
+
+#: ui/pages/live-discover.slint:264
+msgid "Remove “{}”"
+msgstr "„{}“ entfernen"
+
+#: ui/pages/live-discover.slint:267
+msgid "Look in {}"
+msgstr "In „{}“ nachsehen"
+
+#: ui/pages/live-discover.slint:269
+msgid "{n} result"
+msgid_plural "{n} results"
+msgstr[0] "{n} Ergebnis"
+msgstr[1] "{n} Ergebnisse"
+
+#: ui/pages/live-discover.slint:270
+msgid "Clear all filters"
+msgstr "Alle Filter zurücksetzen"
+
+#: ui/pages/live-discover.slint:271
+msgid "Clear the search"
+msgstr "Suche leeren"
+
+#: ui/pages/live-discover.slint:272
+msgid "Not in the directory? Open a link in Connections"
+msgstr "Nicht im Verzeichnis? Öffne einen Link unter „Verbindungen“"
+
+#: ui/pages/live-discover.slint:273
+msgid "try: /watch <link> · esc clears the search"
+msgstr "versuch: /watch <link> · esc leert die suche"
+
+#: ui/pages/live-discover.slint:277
+msgid "Language: {}"
+msgstr "Sprache: {}"
+
+#: ui/pages/live-discover.slint:278
+msgid "Status: {}"
+msgstr "Status: {}"
+
+#: ui/pages/live-discover.slint:283
+msgid "the live directory didn’t answer — what’s shown may be out of date"
+msgstr "das live-verzeichnis hat nicht geantwortet – die anzeige ist vielleicht veraltet"
+
+#: ui/pages/live-discover.slint:283
+msgid "the live directory didn’t answer"
+msgstr "das live-verzeichnis hat nicht geantwortet"
+
+#: ui/pages/live-discover.slint:285
+msgid "The live directory didn’t answer. What’s shown may be out of date."
+msgstr "Das Live-Verzeichnis hat nicht geantwortet. Die Anzeige ist vielleicht veraltet."
+
+#: ui/pages/live-discover.slint:285
+msgid "The live directory didn’t answer."
+msgstr "Das Live-Verzeichnis hat nicht geantwortet."
+
+#: ui/pages/live-discover.slint:288
+msgid "the next page didn’t load — results from here on may be missing"
+msgstr "die nächste seite wurde nicht geladen – ab hier fehlen vielleicht ergebnisse"
+
+#: ui/pages/live-discover.slint:288
+msgid "The next page didn’t load, so results from here on may be missing."
+msgstr "Die nächste Seite wurde nicht geladen, daher fehlen ab hier vielleicht Ergebnisse."
+
+#: ui/pages/live-discover.slint:290
+msgid "[r] retry"
+msgstr "[r] erneut versuchen"
+
+#: ui/pages/live-discover.slint:294
+msgid "Showing {} so far"
+msgstr "Bisher {} angezeigt"
+
+#: ui/pages/live-discover.slint:295
+msgid "Showing {} of at least {}"
+msgstr "{} von mindestens {} angezeigt"
+
+#: ui/pages/live-discover.slint:296
+msgid "Showing {} of {}"
+msgstr "{} von {} angezeigt"
+
+#: ui/pages/live-discover.slint:298
+msgid "Show {} more"
+msgstr "{} weitere anzeigen"
+
+#: ui/pages/live-discover.slint:299
+msgid "[n] next {}"
+msgstr "[n] nächste {}"
+
+#: ui/pages/live-discover.slint:300
+msgid "[n] loading…"
+msgstr "[n] lädt…"
+
+#: ui/pages/live-discover.slint:304
+msgid "Results from the FinchGram Live Directory (services.finchgram.com/live/api/v1). Source data from the Owncast and Xiph Icecast directories, PeerTube instances and reviewed submissions, each used under its own terms; whether a Telegram channel is live, FinchGram asks Telegram itself."
+msgstr "Ergebnisse aus dem FinchGram-Live-Verzeichnis (services.finchgram.com/live/api/v1). Quelldaten aus den Verzeichnissen von Owncast und Xiph Icecast, aus PeerTube-Instanzen und geprüften Einreichungen, jeweils zu deren eigenen Bedingungen genutzt; ob ein Telegram-Kanal live ist, fragt FinchGram Telegram selbst."
+
+#: ui/pages/live-discover.slint:306
+msgid "Sources and freshness"
+msgstr "Quellen und Aktualität"
+
+#: ui/pages/live-discover.slint:308
+msgid "Mature-rated streams: shown"
+msgstr "Streams ab 18: angezeigt"
+
+#: ui/pages/live-discover.slint:308
+msgid "Mature-rated streams: hidden"
+msgstr "Streams ab 18: ausgeblendet"
+
+#: ui/pages/live-discover.slint:313
+msgid "❯ that’s a link, not a search"
+msgstr "❯ das ist ein link, keine suche"
+
+#: ui/pages/live-discover.slint:313
+msgid "That’s a link, not a search"
+msgstr "Das ist ein Link, keine Suche"
+
+#: ui/pages/live-discover.slint:316
+msgid "The directory searches titles, channels, categories and platforms. To play this exact address, open it directly."
+msgstr "Das Verzeichnis durchsucht Titel, Kanäle, Kategorien und Plattformen. Um genau diese Adresse abzuspielen, öffne sie direkt."
+
+#: ui/pages/live-discover.slint:318
+msgid "FinchGram checks what it is when you open it"
+msgstr "FinchGram prüft beim Öffnen, was es ist"
+
+#: ui/pages/live-discover.slint:320
+msgid "The directory searches titles, channels, categories and platforms. This is an address: {}. {}."
+msgstr "Das Verzeichnis durchsucht Titel, Kanäle, Kategorien und Plattformen. Das hier ist eine Adresse: {}. {}."
+
+#: ui/pages/live-discover.slint:323
+msgid "[⏎ open link]"
+msgstr "[⏎ link öffnen]"
+
+#: ui/pages/live-discover.slint:324
+msgid "Open link ⏎"
+msgstr "Link öffnen ⏎"
+
+#: ui/pages/live-discover.slint:324
+msgid "Open link"
+msgstr "Link öffnen"
+
+#: ui/pages/live-discover.slint:328
+msgid "❯ discover"
+msgstr "❯ entdecken"
+
+#: ui/pages/live-discover.slint:330
+msgid "relevance"
+msgstr "relevanz"
+
+#: ui/pages/live-discover.slint:332
+msgid "added"
+msgstr "hinzugefügt"
+
+#: ui/pages/live-discover.slint:334
+msgid "recommended"
+msgstr "empfohlen"
+
+#: ui/pages/live-discover.slint:336
+msgid "sort"
+msgstr "sortierung"
+
+#: ui/pages/live-discover.slint:337
+msgid "soonest"
+msgstr "früheste"
+
+#: ui/pages/live-discover.slint:339
+msgid "[x clear]"
+msgstr "[x zurücksetzen]"
+
+#: ui/pages/live-discover.slint:340
+msgid "{n} source behind"
+msgid_plural "{n} sources behind"
+msgstr[0] "{n} Quelle im Rückstand"
+msgstr[1] "{n} Quellen im Rückstand"
+
+#: ui/pages/live-discover.slint:345
+msgid "category"
+msgstr "kategorie"
+
+#: ui/pages/live-discover.slint:346
+msgid "source"
+msgstr "quelle"
+
+#: ui/pages/live-discover.slint:350
+msgid "[f unfollow]"
+msgstr "[f entfolgen]"
+
+#: ui/pages/live-discover.slint:350
+msgid "[f follow]"
+msgstr "[f folgen]"
+
+#: ui/pages/live-discover.slint:352
+msgid "[o page]"
+msgstr "[o seite]"
+
+#: ui/pages/live-discover.slint:353
+msgid "updated {}"
+msgstr "aktualisiert {}"
+
+#: ui/pages/live-discover.slint:354
+msgid "behind"
+msgstr "im rückstand"
+
+#: ui/pages/live-discover.slint:521
+msgid "search ❯"
+msgstr "suche ❯"
+
+#: ui/pages/live-discover.slint:2603
+msgid "the FinchGram Live Directory"
+msgstr "das FinchGram-Live-Verzeichnis"
+
+#: ui/pages/live-parts.slint:19
+msgid "{} live"
+msgstr "{} live"
+
+#: ui/pages/live-parts.slint:21
+msgid "On air now"
+msgstr "Jetzt auf Sendung"
+
+#: ui/pages/live-parts.slint:21
+msgid "Following · live"
+msgstr "Gefolgt · live"
+
+#: ui/pages/live-parts.slint:22
+msgid "Not live now"
+msgstr "Gerade nicht live"
+
+#: ui/pages/live-parts.slint:23
+msgid "Channels you follow show up here, live ones first — from any source."
+msgstr "Kanäle, denen du folgst, erscheinen hier, live zuerst – aus jeder Quelle."
+
+#: ui/pages/live-parts.slint:24
+msgid "Watch and broadcast"
+msgstr "Ansehen und streamen"
+
+#: ui/pages/live-parts.slint:38
+msgctxt "terminal"
+msgid "mode"
+msgstr "modus"
+
+#: ui/pages/live-parts.slint:39 ui/pages/live-parts.slint:239
+msgctxt "terminal"
+msgid "source"
+msgstr "quelle"
+
+#: ui/pages/live-parts.slint:40
+msgctxt "terminal"
+msgid "plays"
+msgstr "wiedergabe"
+
+#: ui/pages/live-parts.slint:41 ui/pages/live-parts.slint:236
+msgctxt "terminal"
+msgid "status"
+msgstr "status"
+
+#: ui/pages/live-parts.slint:42
+msgctxt "terminal"
+msgid "category"
+msgstr "kategorie"
+
+#: ui/pages/live-parts.slint:43
+msgctxt "terminal"
+msgid "language"
+msgstr "sprache"
+
+#: ui/pages/live-parts.slint:44
+msgctxt "terminal"
+msgid "content"
+msgstr "inhalt"
+
+#: ui/pages/live-parts.slint:45
+msgctxt "terminal"
+msgid "anywhere"
+msgstr "überall"
+
+#: ui/pages/live-parts.slint:46
+msgctxt "terminal"
+msgid "in finchgram"
+msgstr "in finchgram"
+
+#: ui/pages/live-parts.slint:47
+msgctxt "terminal"
+msgid "on its site"
+msgstr "auf seiner website"
+
+#: ui/pages/live-parts.slint:48
+msgctxt "terminal"
+msgid "any"
+msgstr "beliebig"
+
+#: ui/pages/live-parts.slint:49
+msgctxt "terminal"
+msgid "mature-rated"
+msgstr "ab 18"
+
+#: ui/pages/live-parts.slint:50
+msgctxt "terminal"
+msgid "not integrated yet"
+msgstr "noch nicht eingebunden"
+
+#: ui/pages/live-parts.slint:51
+msgctxt "terminal"
+msgid "live · confirmed"
+msgstr "live · bestätigt"
+
+#: ui/pages/live-parts.slint:52
+msgctxt "terminal"
+msgid "not confirmed / unknown"
+msgstr "nicht bestätigt / unbekannt"
+
+#: ui/pages/live-parts.slint:53
+msgctxt "terminal"
+msgid "offline"
+msgstr "offline"
+
+#: ui/pages/live-parts.slint:54
+msgctxt "terminal"
+msgid "nothing followed yet"
+msgstr "du folgst noch nichts"
+
+#: ui/pages/live-parts.slint:55
+msgctxt "terminal"
+msgid "send to"
+msgstr "senden an"
+
+#: ui/pages/live-parts.slint:56
+msgctxt "terminal"
+msgid "send with"
+msgstr "senden mit"
+
+#: ui/pages/live-parts.slint:57
+msgctxt "terminal"
+msgid "add"
+msgstr "hinzufügen"
+
+#: ui/pages/live-parts.slint:58
+msgctxt "terminal"
+msgid "broadcast to"
+msgstr "streamen an"
+
+#: ui/pages/live-parts.slint:59
+msgctxt "terminal"
+msgid "private servers"
+msgstr "private server"
+
+#: ui/pages/live-parts.slint:60
+msgctxt "terminal"
+msgid "open a link"
+msgstr "link öffnen"
+
+#: ui/pages/live-parts.slint:61
+msgctxt "terminal"
+msgid "submit a stream"
+msgstr "stream einreichen"
+
+#: ui/pages/live-parts.slint:63
+msgctxt "terminal"
+msgid "FinchGram (built in)"
+msgstr "FinchGram (eingebaut)"
+
+#: ui/pages/live-parts.slint:76
+msgid "Send to OBS"
+msgstr "An OBS senden"
+
+#: ui/pages/live-parts.slint:77
+msgid "Start in OBS"
+msgstr "In OBS starten"
+
+#: ui/pages/live-parts.slint:80
+msgid "Channels from every source in one list, live first"
+msgstr "Kanäle aus allen Quellen in einer Liste, live zuerst"
+
+#: ui/pages/live-parts.slint:83
+msgid "Not live"
+msgstr "Nicht live"
+
+#: ui/pages/live-parts.slint:85
+msgid "You don’t follow anything yet. Follow channels from Discover, or open a link and follow it; they gather here, from any source."
+msgstr "Du folgst noch nichts. Folge Kanälen in „Entdecken“ oder öffne einen Link und folge ihm; sie sammeln sich hier, aus jeder Quelle."
+
+#: ui/pages/live-parts.slint:88
+msgid "Kept on this Mac, in FinchGram’s database. Following here doesn’t follow on Twitch, YouTube or anywhere else, and needs no account there."
+msgstr "Gespeichert auf diesem Mac, in der Datenbank von FinchGram. Hier zu folgen heißt nicht, auf Twitch, YouTube oder anderswo zu folgen, und braucht dort keinen Account."
+
+#: ui/pages/live-parts.slint:90
+msgid "Some sources are behind"
+msgstr "Einige Quellen sind im Rückstand"
+
+#: ui/pages/live-parts.slint:94
+msgid "Unfollow"
+msgstr "Entfolgen"
+
+#: ui/pages/live-parts.slint:106
+msgid "Opening {}…"
+msgstr "{} wird geöffnet…"
+
+#: ui/pages/live-parts.slint:108
+msgid "Recognized {} · {} server"
+msgstr "{} erkannt · {}-Server"
+
+#: ui/pages/live-parts.slint:111
+msgid "Asked for the stream address · /hls/stream.m3u8"
+msgstr "Streamadresse angefragt · /hls/stream.m3u8"
+
+#: ui/pages/live-parts.slint:112
+msgid "Asked for the stream address · HLS playlist from the API"
+msgstr "Streamadresse angefragt · HLS-Playlist aus der API"
+
+#: ui/pages/live-parts.slint:113
+msgid "Asked for the stream address · direct stream"
+msgstr "Streamadresse angefragt · direkter Stream"
+
+#: ui/pages/live-parts.slint:115
+msgid "Connecting"
+msgstr "Verbindung wird aufgebaut"
+
+#: ui/pages/live-parts.slint:116 ui/pages/live-parts.slint:176
+msgid "Buffering"
+msgstr "Wird gepuffert"
+
+#: ui/pages/live-parts.slint:117
+msgid "Found {} on Telegram"
+msgstr "{} auf Telegram gefunden"
+
+#: ui/pages/live-parts.slint:118
+msgid "Joined as a viewer · muted, no camera"
+msgstr "Als Zuschauer beigetreten · Mikrofon stumm, ohne Kamera"
+
+#: ui/pages/live-parts.slint:119
+msgid "Asked Telegram for the stream · one-second segments"
+msgstr "Stream bei Telegram angefragt · Segmente von einer Sekunde"
+
+#: ui/pages/live-parts.slint:120
+msgid "FinchGram saves the channel’s own address and asks it for a stream address each time."
+msgstr "FinchGram speichert die eigene Adresse des Kanals und fragt dort jedes Mal nach einer Streamadresse."
+
+#: ui/pages/live-parts.slint:123
+msgid "{} is offline"
+msgstr "{} ist offline"
+
+#: ui/pages/live-parts.slint:125
+msgid "Last live {}."
+msgstr "Zuletzt live {}."
+
+#: ui/pages/live-parts.slint:125
+msgid "Not seen live yet."
+msgstr "Noch nie live gesehen."
+
+#: ui/pages/live-parts.slint:127
+msgid "Replays, if the channel keeps them, are on its PeerTube page."
+msgstr "Aufzeichnungen findest du, falls der Kanal sie behält, auf seiner PeerTube-Seite."
+
+#: ui/pages/live-parts.slint:129
+msgid "While you follow it, FinchGram checks every 2 minutes and puts it at the top of Following when it starts."
+msgstr "Solange du ihm folgst, prüft FinchGram alle 2 Minuten und setzt ihn in „Gefolgt“ nach oben, sobald er live geht."
+
+#: ui/pages/live-parts.slint:131
+msgid "Open channel page"
+msgstr "Kanalseite öffnen"
+
+#: ui/pages/live-parts.slint:132
+msgid "Channel page"
+msgstr "Kanalseite"
+
+#: ui/pages/live-parts.slint:133
+msgid "The stream address stopped working"
+msgstr "Die Streamadresse funktioniert nicht mehr"
+
+#: ui/pages/live-parts.slint:135
+msgid "{} stopped answering at the stream address it gave — those expire. FinchGram is asking the channel for a new one."
+msgstr "{} antwortet nicht mehr unter der angegebenen Streamadresse – solche Adressen laufen ab. FinchGram fragt den Kanal nach einer neuen."
+
+#: ui/pages/live-parts.slint:136
+msgid "The stream address stopped answering — those expire. FinchGram is asking the channel for a new one."
+msgstr "Die Streamadresse antwortet nicht mehr – solche Adressen laufen ab. FinchGram fragt den Kanal nach einer neuen."
+
+#: ui/pages/live-parts.slint:139
+msgid "FinchGram keeps the channel’s own address, never the temporary one, so trying again starts from the channel."
+msgstr "FinchGram speichert die eigene Adresse des Kanals, nie die vorübergehende, daher beginnt ein neuer Versuch beim Kanal."
+
+#: ui/pages/live-parts.slint:143
+msgid "{} plays in {}’s own player"
+msgstr "{} läuft im eigenen Player von {}"
+
+#: ui/pages/live-parts.slint:146
+msgid "{0} doesn’t let other apps play its streams. Watch it on {0} in your browser; here it keeps its place in Following, with its live status."
+msgstr "{0} lässt andere Apps seine Streams nicht abspielen. Sieh ihn dir auf {0} in deinem Browser an; hier behält er seinen Platz in „Gefolgt“, mit seinem Live-Status."
+
+#: ui/pages/live-parts.slint:149
+msgid "{} plays on {}"
+msgstr "{} läuft auf {}"
+
+#: ui/pages/live-parts.slint:152
+msgid "FinchGram shows when it’s live; the stream itself plays on {}’s site."
+msgstr "FinchGram zeigt, wann er live ist; der Stream selbst läuft auf der Website von {}."
+
+#: ui/pages/live-parts.slint:155
+msgid "This stream needs a sign-in"
+msgstr "Dieser Stream verlangt eine Anmeldung"
+
+#: ui/pages/live-parts.slint:157
+msgid "{} wants a user name and password."
+msgstr "{} verlangt einen Benutzernamen und ein Passwort."
+
+#: ui/pages/live-parts.slint:159
+msgid "Add as a private server…"
+msgstr "Als privaten Server hinzufügen…"
+
+#: ui/pages/live-parts.slint:160
+msgid "Marked mature by its source"
+msgstr "Von der Quelle als „ab 18“ eingestuft"
+
+#: ui/pages/live-parts.slint:162
+msgid "{} marks this stream mature. Streams marked mature are hidden in Discover; Settings › Live changes that."
+msgstr "{} stuft diesen Stream als „ab 18“ ein. Solche Streams sind in „Entdecken“ ausgeblendet; ändern lässt sich das unter Einstellungen › Live."
+
+#: ui/pages/live-parts.slint:164
+msgid "I’m 18 or older"
+msgstr "Ich bin 18 oder älter"
+
+#: ui/pages/live-parts.slint:167
+msgid "The directory doesn’t list sexually explicit streams. FinchGram never records or re-shares a stream."
+msgstr "Das Verzeichnis listet keine sexuell expliziten Streams. FinchGram zeichnet nie einen Stream auf und teilt ihn nie weiter."
+
+#: ui/pages/live-parts.slint:171
+msgid "Telegram sends this live stream over WebRTC, from a phone’s camera, and FinchGram doesn’t have WebRTC. Streams sent from OBS, and live streams with a large audience, play here."
+msgstr "Telegram sendet diesen Livestream über WebRTC, von der Kamera eines Telefons, und FinchGram hat kein WebRTC. Streams aus OBS und Livestreams mit großem Publikum laufen hier."
+
+#: ui/pages/live-parts.slint:173
+msgid "Live status and the number watching come from your Telegram account."
+msgstr "Live-Status und Zuschauerzahl kommen von deinem Telegram-Account."
+
+#: ui/pages/live-parts.slint:174
+msgid "Couldn’t play {}"
+msgstr "{} konnte nicht abgespielt werden"
+
+#: ui/pages/live-parts.slint:175
+msgid "Slow connection — the stream stalled, and FinchGram keeps trying."
+msgstr "Langsame Verbindung – der Stream stockt, und FinchGram versucht es weiter."
+
+#: ui/pages/live-parts.slint:177
+msgid "audio only"
+msgstr "nur Ton"
+
+#: ui/pages/live-parts.slint:179
+msgid "ON AIR"
+msgstr "AUF SENDUNG"
+
+#: ui/pages/live-parts.slint:180
+msgid "{} · Go live"
+msgstr "{} · Zum Live-Bild"
+
+#: ui/pages/live-parts.slint:190
+msgid "Quality · offered by the server"
+msgstr "Qualität · vom Server angeboten"
+
+#: ui/pages/live-parts.slint:191
+msgid "Auto · {}"
+msgstr "Auto · {}"
+
+#: ui/pages/live-parts.slint:191
+msgid "Auto"
+msgstr "Auto"
+
+#: ui/pages/live-parts.slint:192
+msgid "now {}"
+msgstr "jetzt {}"
+
+#: ui/pages/live-parts.slint:193
+msgid "Show chat"
+msgstr "Chat einblenden"
+
+#: ui/pages/live-parts.slint:194
+msgid "Hide chat"
+msgstr "Chat ausblenden"
+
+#: ui/pages/live-parts.slint:195
+msgid "Pop out"
+msgstr "Ausdocken"
+
+#: ui/pages/live-parts.slint:196
+msgid "Full screen"
+msgstr "Vollbild"
+
+#: ui/pages/live-parts.slint:199
+msgctxt "terminal"
+msgid "[▸ play]"
+msgstr "[▸ abspielen]"
+
+#: ui/pages/live-parts.slint:199
+msgctxt "terminal"
+msgid "[❚❚ pause]"
+msgstr "[❚❚ pause]"
+
+#: ui/pages/live-parts.slint:201
+msgctxt "terminal"
+msgid "live"
+msgstr "live"
+
+#: ui/pages/live-parts.slint:201
+msgctxt "terminal"
+msgid "[go live]"
+msgstr "[zum live-bild]"
+
+#: ui/pages/live-parts.slint:204
+msgctxt "terminal"
+msgid "[muted]"
+msgstr "[stumm]"
+
+#: ui/pages/live-parts.slint:204
+msgctxt "terminal"
+msgid "[vol {}]"
+msgstr "[lautstärke {}]"
+
+#: ui/pages/live-parts.slint:206
+msgctxt "terminal"
+msgid "[chat]"
+msgstr "[chat]"
+
+#: ui/pages/live-parts.slint:207
+msgctxt "terminal"
+msgid "[pop out]"
+msgstr "[ausdocken]"
+
+#: ui/pages/live-parts.slint:208
+msgctxt "terminal"
+msgid "[full]"
+msgstr "[vollbild]"
+
+#: ui/pages/live-parts.slint:209
+msgctxt "terminal"
+msgid "unfollow"
+msgstr "entfolgen"
+
+#: ui/pages/live-parts.slint:209
+msgctxt "terminal"
+msgid "follow"
+msgstr "folgen"
+
+#: ui/pages/live-parts.slint:210
+msgctxt "terminal"
+msgid "page"
+msgstr "seite"
+
+#: ui/pages/live-parts.slint:215
+msgid "Viewers not shared by {}"
+msgstr "{} nennt keine Zuschauerzahl"
+
+#: ui/pages/live-parts.slint:218
+msgid "Receiving the stream now"
+msgstr "Stream wird empfangen"
+
+#: ui/pages/live-parts.slint:219
+msgid "Watch here · Plays in FinchGram"
+msgstr "Hier ansehen · Läuft in FinchGram"
+
+#: ui/pages/live-parts.slint:221
+msgid "Comments from Telegram · free ones sent here, paid ones from Telegram’s apps"
+msgstr "Kommentare von Telegram · kostenlose sendest du hier, bezahlte aus Telegrams Apps"
+
+#: ui/pages/live-parts.slint:222
+msgid "Chat from {} · read and send"
+msgstr "Chat von {} · lesen und senden"
+
+#: ui/pages/live-parts.slint:222
+msgid "No chat on {}"
+msgstr "Kein Chat auf {}"
+
+#: ui/pages/live-parts.slint:225
+msgid "On air · {}"
+msgstr "Auf Sendung · {}"
+
+#: ui/pages/live-parts.slint:226
+msgid "Not confirmed · {}"
+msgstr "Nicht bestätigt · {}"
+
+#: ui/pages/live-parts.slint:227
+msgid "Status unknown · {}"
+msgstr "Status unbekannt · {}"
+
+#: ui/pages/live-parts.slint:228
+msgid "Off air · {}"
+msgstr "Nicht auf Sendung · {}"
+
+#: ui/pages/live-parts.slint:230
+msgid "on air for {}"
+msgstr "auf Sendung seit {}"
+
+#: ui/pages/live-parts.slint:232
+msgid "{} · {}."
+msgstr "{} · {}."
+
+#: ui/pages/live-parts.slint:232
+msgid "Plays on {}"
+msgstr "Läuft auf {}"
+
+#: ui/pages/live-parts.slint:232
+msgid "Plays in FinchGram, straight from the server"
+msgstr "Läuft in FinchGram, direkt vom Server"
+
+#: ui/pages/live-parts.slint:233
+msgid "chat from {}, read and send"
+msgstr "Chat von {}, lesen und senden"
+
+#: ui/pages/live-parts.slint:233
+msgid "no chat on this source"
+msgstr "kein Chat bei dieser Quelle"
+
+#: ui/pages/live-parts.slint:235
+msgctxt "terminal"
+msgid "title"
+msgstr "titel"
+
+#: ui/pages/live-parts.slint:237
+msgctxt "terminal"
+msgid "stream"
+msgstr "stream"
+
+#: ui/pages/live-parts.slint:238
+msgctxt "terminal"
+msgid "chat"
+msgstr "chat"
+
+#: ui/pages/live-parts.slint:240
+msgctxt "terminal"
+msgid "none on this source"
+msgstr "keiner bei dieser quelle"
+
+#: ui/pages/live-parts.slint:241
+msgctxt "terminal"
+msgid "{} · read & send"
+msgstr "{} · lesen & senden"
+
+#: ui/pages/live-parts.slint:242
+msgctxt "terminal"
+msgid "telegram · one-second segments"
+msgstr "telegram · segmente von einer sekunde"
+
+#: ui/pages/live-parts.slint:244
+msgid "Chat"
+msgstr "Chat"
+
+#: ui/pages/live-parts.slint:245
+msgid "From {}. FinchGram shows it and keeps none of it."
+msgstr "Von {}. FinchGram zeigt ihn an und speichert nichts davon."
+
+#: ui/pages/live-parts.slint:246
+msgid "Chat as {}"
+msgstr "Chatten als {}"
+
+#: ui/pages/live-parts.slint:247
+msgctxt "terminal"
+msgid "say something"
+msgstr "sag etwas"
+
+#: ui/pages/live-parts.slint:248
+msgid "Joining the chat…"
+msgstr "Chat beitreten…"
+
+#: ui/pages/live-parts.slint:249
+msgid "{} name: {}"
+msgstr "Name auf {}: {}"
+
+#: ui/pages/live-parts.slint:251
+msgid "A new name, then Enter"
+msgstr "Ein neuer Name, dann Enter"
+
+#: ui/pages/live-parts.slint:254
+msgid "Paused"
+msgstr "Pausiert"
+
+#: ui/pages/live-parts.slint:255
+msgctxt "terminal"
+msgid "[play]"
+msgstr "[abspielen]"
+
+#: ui/pages/live-parts.slint:255
+msgctxt "terminal"
+msgid "[pause]"
+msgstr "[pause]"
+
+#: ui/pages/live-parts.slint:256
+msgctxt "terminal"
+msgid "[unmute]"
+msgstr "[ton an]"
+
+#: ui/pages/live-parts.slint:256
+msgctxt "terminal"
+msgid "[mute]"
+msgstr "[stummschalten]"
+
+#: ui/pages/live-parts.slint:257
+msgctxt "terminal"
+msgid "[live]"
+msgstr "[live]"
+
+#: ui/pages/live-parts.slint:258
+msgid "Back to Live"
+msgstr "Zurück zu Live"
+
+#: ui/pages/live-parts.slint:259
+msgid "Stop and close"
+msgstr "Stoppen und schließen"
+
+#: ui/pages/live-parts.slint:262
+msgid "Open a link"
+msgstr "Link öffnen"
+
+#: ui/pages/live-parts.slint:264
+msgid "Play or follow a stream that isn’t in the directory. Nothing is submitted — what you open stays on this Mac."
+msgstr "Spiele einen Stream ab, der nicht im Verzeichnis steht, oder folge ihm. Nichts wird beim Verzeichnis eingereicht – was du öffnest, bleibt auf diesem Mac."
+
+#: ui/pages/live-parts.slint:267
+msgid "FinchGram can open:"
+msgstr "FinchGram kann öffnen:"
+
+#: ui/pages/live-parts.slint:269
+msgid "Channel pages"
+msgstr "Kanalseiten"
+
+#: ui/pages/live-parts.slint:270
+msgid "Direct streams"
+msgstr "Direkte Streams"
+
+#: ui/pages/live-parts.slint:271
+msgid "It recognizes the link as you type. For a server, it asks the server what it is."
+msgstr "Der Link wird schon beim Tippen erkannt. Bei einem Server fragt FinchGram den Server, was er ist."
+
+#: ui/pages/live-parts.slint:272
+msgid "Asking {} what it is…"
+msgstr "{} wird gefragt, was es ist…"
+
+#: ui/pages/live-parts.slint:273
+msgid "Plays in FinchGram (sound only)"
+msgstr "Läuft in FinchGram (nur Ton)"
+
+#: ui/pages/live-parts.slint:275
+msgid "Plays on {}. FinchGram opens it in your browser."
+msgstr "Läuft auf {}. FinchGram öffnet es in deinem Browser."
+
+#: ui/pages/live-parts.slint:278
+msgid "This looks private — a sending address, or a link with a key in it. Keep it to yourself; FinchGram doesn’t open those here."
+msgstr "Das sieht privat aus – eine Sendeadresse oder ein Link mit einem Schlüssel darin. Behalte ihn für dich; FinchGram öffnet so etwas hier nicht."
+
+#: ui/pages/live-parts.slint:281
+msgid "Nothing FinchGram can play. If the page has its own player, open it in your browser."
+msgstr "Nichts, was FinchGram abspielen kann. Wenn die Seite einen eigenen Player hat, öffne sie in deinem Browser."
+
+#: ui/pages/live-parts.slint:284
+msgid "The server didn’t answer: {}"
+msgstr "Der Server hat nicht geantwortet: {}"
+
+#: ui/pages/live-parts.slint:284
+msgid "The server didn’t answer."
+msgstr "Der Server hat nicht geantwortet."
+
+#: ui/pages/live-parts.slint:287
+msgid "Saved connections"
+msgstr "Gespeicherte Verbindungen"
+
+#: ui/pages/live-parts.slint:289
+msgid "Where you broadcast to, and private servers you watch from. Keys and passwords stay sealed in FinchGram’s database and are shown only when you ask."
+msgstr "Wohin du streamst und private Server, auf denen du zuschaust. Schlüssel und Passwörter bleiben versiegelt in der Datenbank von FinchGram und werden nur angezeigt, wenn du es willst."
+
+#: ui/pages/live-parts.slint:291
+msgid "Submit a stream"
+msgstr "Stream einreichen"
+
+#: ui/pages/live-parts.slint:292
+msgid "Suggest a public channel for the directory everyone using FinchGram sees."
+msgstr "Schlage einen öffentlichen Kanal für das Verzeichnis vor, das alle FinchGram-Nutzer sehen."
+
+#: ui/pages/live-parts.slint:295
+msgid "FinchGram asks Telegram whether it’s live"
+msgstr "FinchGram fragt Telegram, ob es live ist"
+
+#: ui/pages/live-parts.slint:302
+msgid "OBS sends the stream; FinchGram gives it the destination."
+msgstr "OBS sendet den Stream; FinchGram gibt ihm das Ziel."
+
+#: ui/pages/live-parts.slint:303
+msgid "From FinchGram"
+msgstr "Aus FinchGram"
+
+#: ui/pages/live-parts.slint:304
+msgid "Use OBS"
+msgstr "OBS verwenden"
+
+#: ui/pages/live-parts.slint:307
+msgid "OBS does the capture, scenes and encoding. FinchGram hands it the destination and shows how the stream is doing, from OBS’s own numbers."
+msgstr "OBS übernimmt Aufnahme, Szenen und Kodierung. FinchGram übergibt ihm das Ziel und zeigt anhand der Zahlen von OBS, wie der Stream läuft."
+
+#: ui/pages/live-parts.slint:309
+msgid "Connected to OBS"
+msgstr "Mit OBS verbunden"
+
+#: ui/pages/live-parts.slint:310
+msgid "Send the destination"
+msgstr "Ziel übermitteln"
+
+#: ui/pages/live-parts.slint:311
+msgid "Start streaming"
+msgstr "Stream starten"
+
+#: ui/pages/live-parts.slint:312
+msgid "Or type it into OBS › Settings › Stream yourself:"
+msgstr "Oder trag es selbst in OBS › Einstellungen › Stream ein:"
+
+#: ui/pages/live-parts.slint:313
+msgid "Destination"
+msgstr "Ziel"
+
+#: ui/pages/live-parts.slint:314
+msgid "New destination…"
+msgstr "Neues Ziel…"
+
+#: ui/pages/live-parts.slint:315
+msgid "Live story · RTMPS"
+msgstr "Live-Story · RTMPS"
+
+#: ui/pages/live-parts.slint:316
+msgid "Channel live stream · RTMPS"
+msgstr "Livestream im Kanal · RTMPS"
+
+#: ui/pages/live-parts.slint:318
+msgid "Resolution, bitrate and sound are set in OBS. FinchGram only gives the destination; the stream starts when you start it in OBS."
+msgstr "Auflösung, Bitrate und Ton stellst du in OBS ein. FinchGram gibt nur das Ziel vor; der Stream beginnt, wenn du ihn in OBS startest."
+
+#: ui/pages/live.slint:1024
+msgid "Content in Live"
+msgstr "Inhalte in Live"
+
+#: ui/pages/live.slint:1026 ui/pages/settings.slint:965
+msgid "Live sorts what it lists into four classes. Only the first two can appear in this version; what you can change here is whether mature-rated streams show."
+msgstr "Live ordnet alles, was es listet, in vier Klassen ein. In dieser Version können nur die ersten beiden erscheinen; hier kannst du ändern, ob Streams ab 18 angezeigt werden."
+
+#: ui/pages/live.slint:1028 ui/pages/settings.slint:970
+msgid "Mature-rated: hidden"
+msgstr "Ab 18: ausgeblendet"
+
+#: ui/pages/live.slint:1029
+msgid "Default. They don’t appear in Discover, search or suggestions."
+msgstr "Standard. Sie erscheinen nicht in „Entdecken“, in der Suche oder in Vorschlägen."
+
+#: ui/pages/live.slint:1030 ui/pages/settings.slint:978
+msgid "Mature-rated: shown, marked “Mature”"
+msgstr "Ab 18: angezeigt, als „Ab 18“ markiert"
+
+#: ui/pages/live.slint:1031 ui/pages/settings.slint:979
+msgid "They appear with a Mature tag; opening one asks first."
+msgstr "Sie erscheinen mit dem Hinweis „Ab 18“; vor dem Öffnen wird nachgefragt."
+
+#: ui/pages/live.slint:1033
+msgid "I’m 18 or older — a self-declaration, accepted only where the law doesn’t require verification"
+msgstr "Ich bin 18 oder älter – eine eigene Angabe, die nur gilt, wo das Gesetz keine Altersprüfung verlangt"
+
+#: ui/pages/live.slint:1035 ui/pages/settings.slint:998
+msgid "General — listed and shown by default."
+msgstr "Allgemein – gelistet und standardmäßig angezeigt."
+
+#: ui/pages/live.slint:1037 ui/pages/settings.slint:999
+msgid "Mature-rated (strong language, violence, gambling, horror — rated by the source) — listed, hidden until shown here."
+msgstr "Ab 18 (derbe Sprache, Gewalt, Glücksspiel, Horror – laut Einstufung der Quelle) – gelistet, ausgeblendet, bis du sie hier einblendest."
+
+#: ui/pages/live.slint:1040 ui/pages/settings.slint:1000
+msgid "Sexually explicit — not in the directory in this version. Whether and how to list it is a pending policy decision, not a setting."
+msgstr "Sexuell explizit – in dieser Version nicht im Verzeichnis. Ob und wie solche Inhalte gelistet werden, ist eine noch offene Grundsatzentscheidung, keine Einstellung."
+
+#: ui/pages/live.slint:1043 ui/pages/settings.slint:1001
+msgid "Prohibited (illegal content, including non-consensual or underage material) — never indexed, shown or played."
+msgstr "Verboten (illegale Inhalte, auch Material ohne Einwilligung oder mit Minderjährigen) – wird nie indexiert, angezeigt oder abgespielt."
+
+#: ui/pages/live.slint:1045
+msgid "Settings › Live › Content"
+msgstr "Einstellungen › Live › Inhalte"
+
+#: ui/pages/settings.slint:962
+msgid "Content"
+msgstr "Inhalte"
+
+#: ui/pages/settings.slint:971
+msgid "Default. They don't appear in Discover, search or suggestions."
+msgstr "Standard. Sie erscheinen nicht in „Entdecken“, in der Suche oder in Vorschlägen."
+
+#: ui/pages/settings.slint:987
+msgid "I'm 18 or older — a self-declaration, accepted only where the law doesn't require verification"
+msgstr "Ich bin 18 oder älter – eine eigene Angabe, die nur gilt, wo das Gesetz keine Altersprüfung verlangt"
+
+#: ui/pages/settings.slint:1025
+msgid "Languages"
+msgstr "Sprachen"
+
+#: ui/pages/settings.slint:1028
+msgid "Recommended puts live streams in these languages first. None is chosen until you choose."
+msgstr "„Empfohlen“ zeigt Livestreams in diesen Sprachen zuerst. Ausgewählt ist keine, bis du selbst wählst."
+
+#: ui/toolbox.slint:164
+msgid "Live has its own place now"
+msgstr "Live hat jetzt einen eigenen Platz"
+
+#: ui/pages/live-parts.slint:188
+msgctxt "sound"
+msgid "Mute"
+msgstr "Ton aus"
+
+#: ui/pages/live-parts.slint:189
+msgctxt "sound"
+msgid "Unmute"
+msgstr "Ton an"
+
+#: ui/pages/live-discover.slint:86 ui/pages/live-discover.slint:146
+msgctxt "status"
+msgid "Live"
+msgstr "Live"

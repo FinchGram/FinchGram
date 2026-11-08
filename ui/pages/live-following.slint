@@ -1,0 +1,322 @@
+// Following (the canvas "FinchGram Desktop 直播", rounds 12 and 13): the channels the user follows
+// here and the live streams they follow on Telegram, in one list, live first, with each channel's
+// one action. Drawn once, in Look's colours and shapes, for the three themes.
+import { Look } from "../look.slint";
+import { Icon, Heading, Paragraph } from "../widgets.slint";
+import { LiveDirectory, LiveDirectoryWords, LiveChannel, LiveStatus, LivePlay, LiveCategory, LiveSection } from "../live.slint";
+import { LiveShape, ChannelThumbnail, SourceChip, LiveButton, LiveViewWords } from "live-parts.slint";
+import { DirectoryLook } from "live-cards.slint";
+
+// A tab over the list: its name, how many it holds.
+component Tab inherits Rectangle {
+    in property <string> label;
+    in property <int> count;
+    in property <bool> on;
+    in property <bool> live;
+    callback clicked();
+    height: Look.broadsheet ? row.preferred-height + 10px : 32px;
+    width: row.preferred-width + (Look.broadsheet ? 0px : 24px);
+    border-radius: Look.broadsheet ? 0px : Look.button-radius;
+    background: root.on && !Look.broadsheet ? Look.soft : touch.has-hover && !Look.broadsheet ? Look.sel.transparentize(0.4) : transparent;
+
+    row := HorizontalLayout {
+        x: Look.broadsheet ? 0px : 12px;
+        y: Look.broadsheet ? 0px : (parent.height - self.height) / 2;
+        width: parent.width - (Look.broadsheet ? 0px : 24px);
+        height: self.preferred-height;
+        spacing: 6px;
+        Text {
+            text: root.label;
+            color: root.on ? (Look.broadsheet ? Look.text : Look.soft-ink) : Look.muted;
+            font-size: 14px;
+            font-weight: root.on ? 600 : 400;
+            vertical-alignment: center;
+        }
+        Text {
+            text: root.count;
+            color: root.live && root.count > 0 ? Look.danger : Look.faint;
+            font-size: 12px;
+            vertical-alignment: center;
+        }
+    }
+    // Broadsheet's tab: underlined while it is the one shown.
+    if Look.broadsheet && root.on: Rectangle {
+        y: parent.height - 2px;
+        height: 2px;
+        background: Look.text;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A followed channel: its picture, where it is, its one action, its star.
+component FollowingRow inherits Rectangle {
+    in property <LiveChannel> channel;
+    property <bool> live: channel.status == LiveStatus.live;
+    property <bool> primary: channel.play == LivePlay.watch || channel.play == LivePlay.listen;
+    height: row.preferred-height;
+    background: touch.has-hover ? Look.hover : transparent;
+
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            LiveDirectory.open(root.channel.id);
+        }
+    }
+    row := HorizontalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        spacing: 14px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 112px;
+                height: 63px;
+                ChannelThumbnail {
+                    channel: root.channel;
+                    border-radius: LiveShape.pill-radius;
+                    opacity: root.live ? 1 : 0.6;
+                }
+                if root.live: Rectangle {
+                    x: 5px;
+                    y: 5px;
+                    height: 15px;
+                    width: badge.preferred-width + 10px;
+                    border-radius: LiveShape.pill-radius;
+                    background: Look.danger;
+                    badge := Text {
+                        text: Look.broadsheet ? LiveViewWords.edge(0, true) : LiveDirectoryWords.badge(LiveStatus.live);
+                        color: Look.dark ? Look.bg : #ffffff;
+                        font-size: 10px;
+                        font-weight: 600;
+                        letter-spacing: 0.4px;
+                    }
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 2px;
+            HorizontalLayout {
+                spacing: 6px;
+                alignment: start;
+                Text {
+                    text: root.channel.name;
+                    color: Look.text;
+                    font-size: 15px;
+                    font-weight: 600;
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+                VerticalLayout {
+                    alignment: center;
+                    SourceChip {
+                        label: LiveViewWords.chip(root.channel.source);
+                    }
+                }
+            }
+            Text {
+                text: root.channel.title != "" ? root.channel.title : "—";
+                color: Look.muted;
+                font-size: 13px;
+                overflow: elide;
+            }
+            Text {
+                text: LiveDirectoryWords.status-line(root.channel)
+                    + (root.live && root.channel.category != LiveCategory.none ? " · " + LiveDirectoryWords.category(root.channel.category) : "");
+                color: root.live ? Look.danger : root.channel.status == LiveStatus.offline ? Look.faint : Look.warn;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            LiveButton {
+                height: 30px;
+                padding-x: 12px;
+                font-size: 13px;
+                text: LiveDirectoryWords.play(root.channel);
+                icon: LiveViewWords.play-icon(root.channel);
+                primary: root.primary;
+                clicked => {
+                    LiveDirectory.open(root.channel.id);
+                }
+            }
+        }
+        // The star: unfollowed here, or, for one followed on Telegram, there.
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 22px;
+                height: 22px;
+                accessible-role: button;
+                accessible-label: root.channel.on-telegram ? LiveDirectoryWords.follow(root.channel) : LiveViewWords.unfollow();
+                Icon {
+                    name: "star-filled";
+                    size: 17px;
+                    color: Look.accent;
+                }
+                TouchArea {
+                    mouse-cursor: pointer;
+                    clicked => {
+                        LiveDirectory.follow(root.channel.id, false);
+                    }
+                }
+            }
+        }
+    }
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        background: DirectoryLook.rule;
+    }
+}
+
+export component FollowingPage inherits Rectangle {
+    // 0 every channel, 1 the live ones, 2 the rest.
+    property <int> tab;
+    property <int> live-count: LiveDirectory.following-live.length;
+    property <int> off-count: LiveDirectory.following-off.length;
+    property <bool> empty: root.tab == 0 ? root.live-count + root.off-count == 0 : root.tab == 1 ? root.live-count == 0 : root.off-count == 0;
+    background: Look.bg;
+
+    Flickable {
+        mouse-drag-pan-enabled: false;
+        VerticalLayout {
+            alignment: start;
+            padding-left: Look.terminal ? 16px : Look.broadsheet ? 32px : 28px;
+            padding-right: Look.terminal ? 16px : Look.broadsheet ? 32px : 28px;
+            padding-top: Look.terminal ? 16px : Look.broadsheet ? 26px : 24px;
+            padding-bottom: Look.terminal ? 16px : Look.broadsheet ? 26px : 24px;
+            spacing: 16px;
+            VerticalLayout {
+                spacing: 4px;
+                Heading {
+                    label: LiveDirectoryWords.section(LiveSection.following);
+                }
+                Paragraph {
+                    text: LiveViewWords.following-line();
+                    color: Look.faint;
+                    font-size: 13px;
+                }
+            }
+            Rectangle {
+                height: tabs.preferred-height;
+                tabs := HorizontalLayout {
+                    spacing: Look.broadsheet ? 20px : 4px;
+                    alignment: start;
+                    Tab {
+                        label: LiveViewWords.all();
+                        count: root.live-count + root.off-count;
+                        on: root.tab == 0;
+                        clicked => {
+                            root.tab = 0;
+                        }
+                    }
+                    Tab {
+                        label: LiveViewWords.live-now();
+                        count: root.live-count;
+                        live: true;
+                        on: root.tab == 1;
+                        clicked => {
+                            root.tab = 1;
+                        }
+                    }
+                    Tab {
+                        label: LiveViewWords.not-live();
+                        count: root.off-count;
+                        on: root.tab == 2;
+                        clicked => {
+                            root.tab = 2;
+                        }
+                    }
+                }
+                if Look.broadsheet: Rectangle {
+                    y: parent.height - 1px;
+                    height: 1px;
+                    background: DirectoryLook.rule-strong;
+                }
+            }
+            // A source is behind: some statuses are not confirmed.
+            if LiveDirectory.following-partial: Rectangle {
+                height: partial.preferred-height;
+                border-radius: Look.radius;
+                border-width: 1px;
+                border-color: Look.warn;
+                partial := HorizontalLayout {
+                    padding-left: 14px;
+                    padding-right: 14px;
+                    padding-top: 10px;
+                    padding-bottom: 10px;
+                    spacing: 10px;
+                    VerticalLayout {
+                        alignment: start;
+                        Icon {
+                            name: "warning";
+                            size: 17px;
+                            color: Look.warn;
+                        }
+                    }
+                    VerticalLayout {
+                        horizontal-stretch: 1;
+                        spacing: 2px;
+                        Text {
+                            text: LiveViewWords.partial-title();
+                            color: Look.text;
+                            font-size: 13px;
+                            font-weight: 600;
+                        }
+                        Paragraph {
+                            text: LiveViewWords.partial-line();
+                            color: Look.muted;
+                            font-size: 13px;
+                            line-height-factor: Look.leading(1.5);
+                        }
+                    }
+                }
+            }
+            if root.empty: HorizontalLayout {
+                alignment: start;
+                Paragraph {
+                    width: min(520px, root.width - 64px);
+                    text: LiveViewWords.following-empty();
+                    color: Look.muted;
+                    font-size: 14px;
+                    line-height-factor: Look.leading(1.55);
+                }
+            }
+            if !root.empty: Rectangle {
+                height: rows.preferred-height;
+                border-radius: Look.radius;
+                border-width: Look.broadsheet ? 0px : 1px;
+                border-color: Look.line;
+                clip: true;
+                rows := VerticalLayout {
+                    for channel in LiveDirectory.following-live: FollowingRow {
+                        visible: root.tab != 2;
+                        height: root.tab != 2 ? self.preferred-height : 0px;
+                        channel: channel;
+                    }
+                    for channel in LiveDirectory.following-off: FollowingRow {
+                        visible: root.tab != 1;
+                        height: root.tab != 1 ? self.preferred-height : 0px;
+                        channel: channel;
+                    }
+                }
+            }
+            Paragraph {
+                text: LiveViewWords.following-foot();
+                color: Look.faint;
+                font-size: 12px;
+                line-height-factor: Look.leading(1.5);
+            }
+        }
+    }
+}

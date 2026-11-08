@@ -13,7 +13,7 @@ KOL；点对点的视频，中间只要一个服务器让双方发现对方；�
   going on in your groups and channels"：设计里指的是 Telegram 自己的直播，不是 FinchGram 自己的一张网。
 - 锁定的 TDLib 1.8.67 带着全部直播接口（下一节）。应用和 `finchgram-tdlib` 之间是 JSON，stdin 和 stdout 上一行一个对象；
   TDLib 的 `bytes` 用 base64，一秒视频（几百 KB）就是一行长一点，仅此而已。
-- 播放器是 libmpv，FFmpeg 编译时去掉了网络协议、编码器和封装器（`vendor/mpv/build.sh`）。mpv 自己拉不了 HLS 或 RTMP 地址；
+- 播放器是 libmpv，FFmpeg 编译时去掉了网络协议（mpv-0.41.0-2 起为 Live 视图加上了）、编码器和封装器（`vendor/mpv/build.sh`）。mpv 自己拉不了 HLS 或 RTMP 地址；
   由应用拉取，再通过 `finchgram://` 流（`src/player/stream.rs`）把字节喂给它。这个流已经能喂长度未知的文件（`size` 回
   `MPV_ERROR_UNSUPPORTED`），也不必支持 seek。音乐（`src/music/fetch.rs`）是现成的样板：ureq 拉，缓存文件边长，mpv 边读。
 - 应用没有 WebRTC，故事只认 `messageStory`，群通话一点没有。
@@ -154,7 +154,7 @@ Widevine）从结构上就做不了：应用认出密钥格式，直说。
 discontinuity 时重发）；AES-128，密钥用同一个客户端拉；discontinuity 时重置；403 和 404 分开；不认识的标签忽略。以后：byte
 range、DASH、自适应码率、备用音轨和字幕。请求头：iptv-org 的流里 5.8% 要 `User-Agent`，1.8% 要 `Referer`；填一个用户从没打开过
 的页面做 Referer 就是绕防盗链，是把播放器变成规避工具的那一件事，所以应用发自己如实的 User-Agent，每路流的请求头只收用户自己
-填的字段，绝不来自自带的列表。FFmpeg 自己的 HLS 解复用器要 FFmpeg 自己的网络（vendored 构建里是 `--disable-network`），所以
+填的字段，绝不来自自带的列表。（画布第 12 轮后来改了主意：从 mpv-0.41.0-2 起，自建的 FFmpeg 带网络，只给 Live 视图的播放器用，见 docs/architecture.md 的媒体播放一节。下面是当时的打算。）FFmpeg 自己的 HLS 解复用器要 FFmpeg 自己的网络（当时 vendored 构建里是 `--disable-network`），所以
 客户端是应用的：`m3u8-rs` 6.0.1（2026-07）解析播放列表，ureq 像音乐那样在线程上拉；Streamlink 是应用侧 HLS 客户端往 mpv 里
 灌的最近先例。
 
@@ -214,6 +214,20 @@ Annex B），或者 Matroska（更简单：长度未知的 cluster，两种编�
 - **打开的聊天：**视图开着时盖住打开的聊天，所以那里新到的消息在视图关上之前不标为已看（conversation.rs）；关上视图就离开直播
   （用户自己的直播照常继续），不让没在看的人被算成观众。
 
+## 第二版：一个看各家直播的客户端
+
+2026-11-07 维护者的话（「我其实希望你实现这个 … 既然这有telegram自带的 也有我们提供的 干脆做成这样，不好吗」）：照维护者的画布 **FinchGram Desktop 直播** 第 10 到 12 轮来做，加上第 13 轮（Telegram 作为一个来源），claude.ai/artifact/RxoD91XwY8uqgZNNMGcuCB。2026-11-08 起在三套主题里做，全部做完后一次发版。
+
+- **视图** 仍是窗口左边第四个：Live 栏里是 Discover、Following、Broadcast、Connections，下面是关注的频道（在播的在前，其余在后）；Watch 是盖在它们上面的一个状态。和窗口其他部分一样要登录 Telegram：画布原本写不登录也能用，维护者否决了（「必须要求登录 … 你都没登录，你怎么进去telegram得节目」）。百宝箱里的直播卡片去掉了；在百宝箱搜 Live 会给一行，点了直接过去；菜单里有 Live，快捷键 ⇧⌘L。
+- **目录**（services.finchgram.com/live/api/v1，见 [live-directory.zh-Hans.md](live-directory.zh-Hans.md)）在后台线程里读（`src/live/directory.rs`），带 ETag：Discover 的搜索（模式、带数量的筛选、排序、按游标翻页）、打字时的联想（最后一次按键 200 毫秒后）、各来源的状态、按 id 取关注的频道、粘贴链接的 host 或用户名。不发任何关于用户的东西：普通的 GET，`User-Agent: FinchGram/<version>`，以及用户在 Settings › Live 里选的语言作为 Accept-Language（没选就不发），Recommended 把这些语言排在前面。
+- **卡片**（`src/live/channel.rs`，`LiveChannel` 结构）：四种状态、唯一的按钮和它的理由（Watch here、Listen here、Try opening、Sign in to watch、Open on <来源>、Unavailable），观看人数只用来源自己给的，没有就不写，从不估计。缩略图从各来源取（Owncast 的从 owncast.directory，PeerTube 的从各实例），由单独的线程存进 ~/Documents/FinchGram/live_thumbnails，保留一天；取图时这些服务器会看到用户的 IP，和网上任何图片一样。
+- **Watch**（`src/live/watch.rs`）：播放时应用自己向频道的来源要播放地址，从不问目录：Owncast 服务器的 /api/status 和 /hls/stream.m3u8，PeerTube 频道当前的直播（video-channels/<名字>/videos?isLive，再取那个视频的播放列表），Icecast 电台的流，提交的播放列表。直播播放器按地址播，走自建 FFmpeg 的网络（mpv-0.41.0-2），只有 Live 视图的播放器能用到；证书按 Keychain 信任的根证书校验（`src/live/roots.rs` 把它们写给 mbedTLS）。暂停时保留期间收到的内容（mpv 的缓存），「Go live」在直播最新处重新打开；清晰度菜单列出这路流的各档。目录里的 Telegram 频道按用户名通过 TDLib 打开，播放方式和用户自己的直播一样。Owncast 的聊天在画面旁边能读也能发（`src/live/chat.rs`）：FinchGram 以匿名聊天用户加入，用 Owncast 给的名字，从不用 Telegram 的名字，什么也不保存。
+- **离开时继续播**：离开 Watch 时直播在小窗里继续，聊天视图上也有；弹出后放进一个始终置顶的独立窗口（`src/live/popout.rs`，有自己的 mpv，因为每个窗口有自己的 OpenGL 环境）。Telegram 的直播和以前一样，离开视图就停。
+- **关注**（`src/live/follows.rs`）：在这里关注的频道存在数据库里（`live_follows`，第 9 版布局），按 id 去问目录；用户在 Telegram 上关注的直播也算，标「Followed on Telegram」，要去 Telegram 取消。
+- **目录里的 Telegram 频道** 返回的状态是「未知」（目录没有账号可问）：屏幕上看得到的那些由应用去问 Telegram（`src/telegram/live_check.rs`），两秒一个用户名，Telegram 限流时按它要求的时间等；结果只留在本机。
+- **Connections › Open a link**：先按样子认链接（推流密钥或 token 一律不收；t.me 走 TDLib；Twitch、YouTube、Kick、Bilibili 在浏览器打开；.m3u8、.mpd、rtsp:// 直接播），否则只用 host 在目录里查，再不行就问那台服务器是什么（Owncast 的 /api/config、PeerTube 的视频、Icecast 的状态页）。
+- **这一版没有**（画布上画了的地方灰着）：Twitch、YouTube、Kick、Bilibili（还没有开发者密钥，条款没确认）、保存的私有服务器和 Submit a stream、FinchGram 自己采集和其他推流目的地、成人直播（不收录，维护者还没决定）。
+
 ## 设计
 
 2026-11-07 按维护者的话画的（“你自己直接画一个artifacts，把url记录下来就可以了”），Workbench 浅色，五块 1280×800 的板，在
@@ -233,9 +247,7 @@ Design 画布 **FinchGram Live** 上，https://claude.ai/artifact/A9SvXayxBSKmxC
 
 1. 观众多时 Telegram 切成 stream 模式的直播要不要也播（声音和每个发布者的画面分开送，要自己对齐）。
 2. 付费评论和打赏要不要从 FinchGram 发（花账号里已有的 Stars；档位来自 TDLib），每次发之前怎么问。
-3. 以后版本的源。2026-11-07 起它们有了一份目录契约（[live-directory.zh-Hans.md](live-directory.zh-Hans.md)）：只读的 JSON，列
-   Telegram 创作者、Owncast 和 PeerTube 服务器、广播机构的流，维护者用 Hono 提供，谁都可以 fork 自己运行；FinchGram 还没有读它。
-   还没定的：用户自带的列表要不要也收。
+3. 目录第一批审核收录哪些频道（现在一个都没有），以及要不要写信给 Xiph，说明我们在读它的 Icecast 导出（见 live-directory.zh-Hans.md 的待决定）。
 4. 要不要从 Mac 自己的摄像头或屏幕开播，这决定要不要做 RTMP 客户端和 VideoToolbox 那条流水线。
 
 ## 为此读过的

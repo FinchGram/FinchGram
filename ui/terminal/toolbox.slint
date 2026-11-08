@@ -537,6 +537,21 @@ export component TerminalToolbox inherits Rectangle {
                                 }
                             }
                         }
+                        if Toolbox.live-hint: Rectangle {
+                            height: 28px;
+                            background: live-entry.has-hover ? P.sel : transparent;
+                            T {
+                                x: 12px;
+                                text: "[◉] " + ToolboxWords.live-hint() + "  ⇧⌘L";
+                                color: P.accent;
+                            }
+                            live-entry := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    Toolbox.open-live();
+                                }
+                            }
+                        }
                         if Toolbox.no-hits: T {
                             height: 40px;
                             text: ToolboxWords.nothing(Toolbox.query);

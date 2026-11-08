@@ -10,6 +10,7 @@ import { Icon, Logo, Spinner, Field, PrimaryButton, SectionLabel, Heading, Parag
 import { FormHeading, FormError, HintLine, EmailCodeField, LinkRow, NewPasswordForm } from "password.slint";
 import { PageFrame, SideColumn } from "frame.slint";
 import { Card, Separator, SwitchRow, NavRow, SmallButton } from "rows.slint";
+import { LiveDirectory } from "../live.slint";
 
 component Category inherits Rectangle {
     in property <SettingsSection> section;
@@ -129,6 +130,13 @@ component Categories {
             section: SettingsSection.folders;
             icon: "folders";
             label: @tr("Folders");
+        }
+        // The Live view's own (the canvas "FinchGram Desktop 直播": "Settings › Live").
+        Category {
+            section: SettingsSection.live;
+            icon: "broadcast";
+            label: @tr("Live");
+            enabled: AppState.telegram-state == TelegramState.ready;
         }
         Category {
             section: SettingsSection.finch;
@@ -837,6 +845,195 @@ component LanguageSection {
                     clicked => {
                         AppState.change-language(language.code);
                     }
+                }
+            }
+        }
+    }
+}
+
+// A choice of two or more, as the canvas's content setting draws one: a ring, its words, a line.
+component ChoiceRow inherits Rectangle {
+    in property <string> title;
+    in property <string> line;
+    in property <bool> chosen;
+    in property <bool> enabled: true;
+    callback clicked();
+    min-height: column.preferred-height + 16px;
+    border-radius: Look.radius;
+    background: entry.has-hover && root.enabled ? Look.sel.transparentize(0.5) : transparent;
+    opacity: root.enabled ? 1 : 0.5;
+
+    HorizontalLayout {
+        padding: 8px;
+        padding-left: 10px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: start;
+            padding-top: 2px;
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: Look.broadsheet ? 2px : 8px;
+                border-width: root.chosen ? 5px : 1.5px;
+                border-color: root.chosen ? Look.accent : Look.line-strong;
+            }
+        }
+        column := VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 2px;
+            Text {
+                text: root.title;
+                color: Look.text;
+                font-size: 15px;
+                font-weight: root.chosen ? 600 : 400;
+                wrap: word-wrap;
+            }
+            Paragraph {
+                text: root.line;
+                color: Look.muted;
+                font-size: 13px;
+            }
+        }
+    }
+    entry := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A box to tick, with its words.
+component TickRow inherits Rectangle {
+    in property <string> text;
+    in property <bool> ticked;
+    callback toggled();
+    min-height: words.preferred-height + 12px;
+
+    HorizontalLayout {
+        padding-top: 6px;
+        padding-bottom: 6px;
+        padding-left: 10px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: start;
+            padding-top: 2px;
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: Look.broadsheet ? 1px : 4px;
+                background: root.ticked ? Look.accent : transparent;
+                border-width: root.ticked ? 0px : 1.5px;
+                border-color: Look.line-strong;
+                if root.ticked: Icon {
+                    name: "check";
+                    size: 12px;
+                    color: Look.on-accent;
+                }
+            }
+        }
+        words := Paragraph {
+            horizontal-stretch: 1;
+            text: root.text;
+            color: Look.text;
+            font-size: 14px;
+        }
+    }
+    TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.toggled();
+        }
+    }
+}
+
+// Settings › Live (the canvas "FinchGram Desktop 直播", round 12's content setting): whether
+// mature-rated streams show, and the languages Recommended puts first. Nothing chosen for the user.
+component LiveSettingsSection {
+    // "I'm 18 or older" ticked on this visit: what showing mature-rated streams asks first.
+    property <bool> of-age;
+
+    VerticalLayout {
+        spacing: 26px;
+        VerticalLayout {
+            spacing: 10px;
+            SectionLabel {
+                text: Look.section-prefix + @tr("Content");
+            }
+            Paragraph {
+                text: @tr("Live sorts what it lists into four classes. Only the first two can appear in this version; what you can change here is whether mature-rated streams show.");
+                color: Look.muted;
+                font-size: 14px;
+            }
+            ChoiceRow {
+                title: @tr("Mature-rated: hidden");
+                line: @tr("Default. They don't appear in Discover, search or suggestions.");
+                chosen: !LiveDirectory.show-mature;
+                clicked => {
+                    LiveDirectory.set-show-mature(false);
+                }
+            }
+            ChoiceRow {
+                title: @tr("Mature-rated: shown, marked “Mature”");
+                line: @tr("They appear with a Mature tag; opening one asks first.");
+                chosen: LiveDirectory.show-mature;
+                enabled: LiveDirectory.show-mature || root.of-age;
+                clicked => {
+                    LiveDirectory.set-show-mature(true);
+                }
+            }
+            TickRow {
+                text: @tr("I'm 18 or older — a self-declaration, accepted only where the law doesn't require verification");
+                ticked: root.of-age || LiveDirectory.show-mature;
+                toggled => {
+                    root.of-age = !root.of-age;
+                }
+            }
+            VerticalLayout {
+                padding-left: 10px;
+                padding-top: 6px;
+                spacing: 6px;
+                for rule[index] in [
+                    @tr("General — listed and shown by default."),
+                    @tr("Mature-rated (strong language, violence, gambling, horror — rated by the source) — listed, hidden until shown here."),
+                    @tr("Sexually explicit — not in the directory in this version. Whether and how to list it is a pending policy decision, not a setting."),
+                    @tr("Prohibited (illegal content, including non-consensual or underage material) — never indexed, shown or played."),
+                ]: HorizontalLayout {
+                    spacing: 8px;
+                    VerticalLayout {
+                        alignment: start;
+                        padding-top: 2px;
+                        Icon {
+                            name: index == 0 ? "check-circle" : index == 1 ? "eye-slash" : index == 2 ? "clock-countdown" : "prohibit";
+                            size: 15px;
+                            color: Look.faint;
+                        }
+                    }
+                    Paragraph {
+                        horizontal-stretch: 1;
+                        text: rule;
+                        color: Look.muted;
+                        font-size: 13px;
+                    }
+                }
+            }
+        }
+        VerticalLayout {
+            spacing: 10px;
+            SectionLabel {
+                text: Look.section-prefix + @tr("Languages");
+            }
+            Paragraph {
+                text: @tr("Recommended puts live streams in these languages first. None is chosen until you choose.");
+                color: Look.muted;
+                font-size: 14px;
+            }
+            for language in LiveDirectory.preferred-languages: TickRow {
+                text: language.label;
+                ticked: language.chosen;
+                toggled => {
+                    LiveDirectory.toggle-preferred-language(language.key);
                 }
             }
         }
@@ -1557,7 +1754,8 @@ export component SettingsPage inherits PageFrame {
                             : AppState.settings-section == SettingsSection.notifications ? @tr("Notifications & sounds")
                             : AppState.settings-section == SettingsSection.language ? @tr("Language")
                             : AppState.settings-section == SettingsSection.privacy ? @tr("Privacy & security")
-                            : AppState.settings-section == SettingsSection.about ? @tr("About") : @tr("Appearance");
+                            : AppState.settings-section == SettingsSection.about ? @tr("About")
+                            : AppState.settings-section == SettingsSection.live ? @tr("Live") : @tr("Appearance");
                     }
                     if root.two-step && PasswordSettings.step == PasswordStep.overview && PasswordSettings.done != PasswordChange.nothing: HorizontalLayout {
                         spacing: 6px;
@@ -1586,6 +1784,7 @@ export component SettingsPage inherits PageFrame {
                 if AppState.settings-section == SettingsSection.privacy && !root.two-step: PrivacySection { }
                 if root.two-step: PasswordSection { }
                 if AppState.settings-section == SettingsSection.about: AboutSection { }
+                if AppState.settings-section == SettingsSection.live: LiveSettingsSection { }
             }
         }
     }

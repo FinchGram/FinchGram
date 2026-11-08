@@ -771,6 +771,42 @@ export component WorkbenchToolbox inherits Rectangle {
                             // A tool's own panel (the AI access card, the voice input card), in the sections' place.
                             if Toolbox.panel == "ai-access" && !Toolbox.searching: AiPanel { }
                             if Toolbox.panel == "voice-input" && !Toolbox.searching: VoicePanel { }
+                            if Toolbox.live-hint: Rectangle {
+                                height: 40px;
+                                border-radius: 6px;
+                                background: live-entry.has-hover ? P.hover : transparent;
+                                HorizontalLayout {
+                                    padding-left: 10px;
+                                    padding-right: 10px;
+                                    spacing: 10px;
+                                    Icon {
+                                        name: "broadcast";
+                                        size: 17px;
+                                        color: P.accent;
+                                        y: (parent.height - self.height) / 2;
+                                    }
+                                    Text {
+                                        horizontal-stretch: 1;
+                                        text: ToolboxWords.live-hint();
+                                        color: P.text;
+                                        font-size: 13px;
+                                        vertical-alignment: center;
+                                    }
+                                    Text {
+                                        text: "⇧⌘L";
+                                        color: P.faint;
+                                        font-family: P.mono;
+                                        font-size: 11px;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                                live-entry := TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => {
+                                        Toolbox.open-live();
+                                    }
+                                }
+                            }
                             for section in Toolbox.sections: VerticalLayout {
                                 spacing: 8px;
                                 HorizontalLayout {

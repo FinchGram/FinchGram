@@ -749,6 +749,41 @@ export component BroadsheetToolbox inherits Rectangle {
                             // A tool's own panel (the AI access card, the voice input card), in the sections' place.
                             if Toolbox.panel == "ai-access" && !Toolbox.searching: AiPanel { }
                             if Toolbox.panel == "voice-input" && !Toolbox.searching: VoicePanel { }
+                            if Toolbox.live-hint: Rectangle {
+                                height: 44px;
+                                border-radius: 2px;
+                                background: live-entry.has-hover ? P.surface : transparent;
+                                HorizontalLayout {
+                                    padding-left: 10px;
+                                    padding-right: 10px;
+                                    spacing: 10px;
+                                    Icon {
+                                        name: "broadcast";
+                                        size: 18px;
+                                        color: P.accent;
+                                        y: (parent.height - self.height) / 2;
+                                    }
+                                    Text {
+                                        horizontal-stretch: 1;
+                                        text: ToolboxWords.live-hint();
+                                        color: P.text;
+                                        font-size: 15px;
+                                        vertical-alignment: center;
+                                    }
+                                    Text {
+                                        text: "⇧⌘L";
+                                        color: P.faint;
+                                        font-size: 12px;
+                                        vertical-alignment: center;
+                                    }
+                                }
+                                live-entry := TouchArea {
+                                    mouse-cursor: pointer;
+                                    clicked => {
+                                        Toolbox.open-live();
+                                    }
+                                }
+                            }
                             for section in Toolbox.sections: VerticalLayout {
                                 spacing: 8px;
                                 Rectangle {

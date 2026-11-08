@@ -19,8 +19,8 @@ import { WorkbenchActions } from "actions.slint";
 import { WorkbenchAttachments } from "attachments.slint";
 import { WorkbenchCompose } from "compose.slint";
 import { Search, ComposeWords } from "../compose.slint";
-import { Live, LiveWords } from "../live.slint";
-import { LivePane } from "../pages/live.slint";
+import { Live, LiveWords, LiveDirectory, LiveSource } from "../live.slint";
+import { LivePane, LiveMini } from "../pages/live.slint";
 
 // The search box in the title bar: a click, or ⌘K, opens the search over everything (compose.slint).
 component SearchBox inherits Rectangle {
@@ -664,6 +664,15 @@ export component WorkbenchWindow inherits Rectangle {
         y: 40px;
         width: root.width - self.x;
         height: root.height - 40px - 24px - (Music.playing ? 60px : 0px);
+    }
+
+    // A live stream left playing (pages/live.slint): at the foot on the right, over the chats above
+    // the composer and over the view's other places; Watch shows it in full. A Telegram stream ends
+    // with the view (src/telegram/live.rs), so its player goes with it.
+    if LiveDirectory.mini && !(root.view == WorkbenchView.live && LiveDirectory.watching)
+        && (LiveDirectory.channel.source != LiveSource.telegram || Live.open-id != ""): LiveMini {
+        x: root.width - self.width - 16px;
+        y: root.height - 24px - (Music.playing ? 60px : 0px) - self.height - (root.view == WorkbenchView.live ? 16px : 76px);
     }
 
     // The toolbox, over the sidebar and the messages, under the title bar and above the player

@@ -98,7 +98,7 @@ things fit together.
   Emby are each a category of their own ("全部打散"). Songs stream through the app's own HTTP
   client (ureq, the Keychain's roots too) into `~/Documents/FinchGram/music_cache/`, and the music
   mpv (an instance of its own, gapless) reads them as they arrive through the `finchgram://` stream
-  callbacks, because the vendored FFmpeg has no network code and keeps none. The sources with their
+  callbacks, because the music's mpv may open files only (its FFmpeg held to local protocols, src/player/mod.rs; only the Live view's players reach the network). The sources with their
   passwords are in the database (`music_sources`, layout 8), each password sealed to its source;
   the volume, order, queue column and cache limit are settings.toml's `[music]`.
 - Live streams (`src/telegram/live.rs`, docs/live-streams.md; researched 2026-11-06, the
@@ -112,12 +112,26 @@ things fit together.
   (`src/player/live.rs`, `pipe.rs`); other streams are listed for the phone. Going live gives the
   RTMP address and key for OBS; FinchGram captures nothing itself. Paid comments are shown, not
   sent, for now. While the view is open the open chat is not marked as seen.
+  Since 2026-11-08 the view is the maintainer's canvas "FinchGram Desktop 直播", rounds 12 and 13
+  ("我其实希望你实现这个"; claude.ai/artifact/RxoD91XwY8uqgZNNMGcuCB): a live client over every source,
+  Discover, Following, Watch, Connections, Broadcast (`src/live/`, ui/pages/live*.slint). Its
+  directory is services.finchgram.com/live/api/v1 (docs/live-directory.md), which lists Owncast,
+  PeerTube and Icecast from their own opt-in directories and reviewed HLS streams and Telegram
+  channels (NSFW-marked channels left out until the maintainer decides on adult streams). The app
+  asks each source for the stream when it plays (Owncast's /hls/stream.m3u8, a PeerTube live's
+  playlist, an Icecast station, an HLS playlist), through the vendored FFmpeg's network, which the
+  Live view's players alone may reach; Telegram's own streams play as above, and the live streams
+  the user follows on Telegram count as followed. Owncast's chat is read and sent beside the picture,
+  under the name Owncast gives (never the Telegram name). The view needs the Telegram login (the
+  maintainer overruled the canvas: "必须要求登录"); its follows are the database's (layout 9), its
+  languages and the content setting are Settings › Live. Twitch, YouTube, Kick and Bilibili are
+  "Not integrated yet" until the maintainer has developer keys and each one's terms are settled.
 - services.finchgram.com (`../FinchGramServices`, github.com/FinchGram/Services; the maintainer's word
   of 2026-11-07, "我想做一个services.finchgram.com … live api只是其中一个"): the site of the services the
   maintainer runs for FinchGram, on the website's stack. FinchGram never depends on one: each is
   optional, the app works without it, and the app's updates stay on GitHub Releases. Its first service
-  is the live directory (docs/live-directory.md, read by FinchGram not yet), whose OpenAPI file is the
-  same in both repositories.
+  is the live directory (docs/live-directory.md, read by the Live view's Discover), whose OpenAPI
+  file is the same in both repositories.
 - Backward compatibility, since 2026-10-24 (the app is public): every change to the database's
   layout, to settings.toml's keys or to the Keychain items comes with its migration. The database
   carries `PRAGMA user_version` (LAYOUT in `src/database.rs`); an older file is first copied as it

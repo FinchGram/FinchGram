@@ -1,0 +1,343 @@
+// Connections (the canvas "FinchGram Desktop 直播", rounds 10 to 13): Open a link, which plays or
+// follows a stream that is not in the directory, recognised as it is typed; then the saved
+// connections and Submit a stream, which are not in this version. Drawn once, in Look's colours
+// and shapes, for the three themes.
+import { Look } from "../look.slint";
+import { Icon, Spinner, Field, Heading, Paragraph } from "../widgets.slint";
+import { LiveDirectory, LiveDirectoryWords, LiveChannel, LiveLinkState, LiveStatus, LivePlay } from "../live.slint";
+import { SourceChip, LiveButton, NotInThisVersion, LiveViewWords } from "live-parts.slint";
+
+// A line of what the link turned out to be: an icon and its words, in their colour.
+component LinkLine inherits HorizontalLayout {
+    in property <string> icon;
+    in property <string> text;
+    in property <color> color: Look.muted;
+    spacing: 7px;
+    VerticalLayout {
+        alignment: start;
+        padding-top: 2px;
+        Icon {
+            name: root.icon;
+            size: 15px;
+            color: root.color;
+        }
+    }
+    Paragraph {
+        horizontal-stretch: 1;
+        text: root.text;
+        color: root.color;
+        font-size: 13px;
+        line-height-factor: Look.leading(1.5);
+    }
+}
+
+// What the box says of the link: empty, being asked, or found.
+component LinkResult inherits Rectangle {
+    property <LiveLinkState> state: LiveDirectory.link-state;
+    property <LiveChannel> channel: LiveDirectory.link-channel;
+    property <bool> named: state == LiveLinkState.found || state == LiveLinkState.playable || state == LiveLinkState.recognized;
+    height: max(96px, box.preferred-height);
+    border-radius: Look.radius;
+    background: Look.side;
+    border-width: Look.broadsheet ? 0px : 1px;
+    border-color: Look.line;
+
+    box := VerticalLayout {
+        padding-left: 14px;
+        padding-right: 14px;
+        padding-top: 12px;
+        padding-bottom: 12px;
+        spacing: 8px;
+        if root.state == LiveLinkState.empty: VerticalLayout {
+            spacing: 8px;
+            Text {
+                text: LiveViewWords.can-open();
+                color: Look.text;
+                font-size: 13px;
+                font-weight: 600;
+            }
+            HorizontalLayout {
+                spacing: 12px;
+                Text {
+                    width: 130px;
+                    text: LiveViewWords.servers();
+                    color: Look.text;
+                    font-size: 13px;
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: LiveViewWords.servers-list();
+                    color: Look.muted;
+                    font-size: 13px;
+                    overflow: elide;
+                }
+            }
+            HorizontalLayout {
+                spacing: 12px;
+                Text {
+                    width: 130px;
+                    text: LiveViewWords.channel-pages();
+                    color: Look.text;
+                    font-size: 13px;
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: LiveViewWords.pages-list();
+                    color: Look.muted;
+                    font-size: 13px;
+                    overflow: elide;
+                }
+            }
+            HorizontalLayout {
+                spacing: 12px;
+                Text {
+                    width: 130px;
+                    text: LiveViewWords.direct-streams();
+                    color: Look.text;
+                    font-size: 13px;
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: LiveViewWords.direct-list();
+                    color: Look.muted;
+                    font-family: Look.mono;
+                    font-size: 12px;
+                    overflow: elide;
+                    vertical-alignment: center;
+                }
+            }
+            Paragraph {
+                text: LiveViewWords.recognizes();
+                color: Look.faint;
+                font-size: 12px;
+            }
+        }
+        if root.state == LiveLinkState.probing: HorizontalLayout {
+            spacing: 8px;
+            VerticalLayout {
+                alignment: center;
+                Spinner {
+                    size: 15px;
+                    color: Look.muted;
+                }
+            }
+            Text {
+                horizontal-stretch: 1;
+                text: LiveViewWords.asking(LiveDirectory.link);
+                color: Look.muted;
+                font-size: 13px;
+                overflow: elide;
+                vertical-alignment: center;
+            }
+        }
+        if root.state != LiveLinkState.empty && root.state != LiveLinkState.probing: HorizontalLayout {
+            spacing: 8px;
+            alignment: start;
+            VerticalLayout {
+                alignment: center;
+                SourceChip {
+                    label: root.named ? LiveViewWords.chip(root.channel.source)
+                        : root.state == LiveLinkState.elsewhere ? LiveViewWords.chip(LiveDirectory.link-source) : LiveViewWords.link-word();
+                }
+            }
+            Text {
+                text: root.named ? root.channel.name : LiveDirectory.link;
+                color: Look.text;
+                font-size: 13px;
+                font-weight: 600;
+                overflow: elide;
+                vertical-alignment: center;
+            }
+        }
+        if root.state == LiveLinkState.found: LinkLine {
+            icon: "pulse";
+            text: LiveDirectoryWords.status-line(root.channel);
+            color: root.channel.status == LiveStatus.live ? Look.text : root.channel.status == LiveStatus.offline ? Look.muted : Look.warn;
+        }
+        if root.state == LiveLinkState.found: LinkLine {
+            icon: root.channel.play == LivePlay.elsewhere ? "arrow-square-out" : root.channel.play == LivePlay.unavailable ? "prohibit" : "play-circle";
+            text: LiveDirectoryWords.reason(root.channel);
+            color: root.channel.play == LivePlay.watch || root.channel.play == LivePlay.listen ? Look.ok : Look.muted;
+        }
+        if root.state == LiveLinkState.recognized: LinkLine {
+            icon: "play-circle";
+            text: LiveViewWords.plays-here-line(false);
+            color: Look.ok;
+        }
+        if root.state == LiveLinkState.recognized: LinkLine {
+            icon: "pulse";
+            text: LiveViewWords.asks-telegram();
+        }
+        if root.state == LiveLinkState.playable: LinkLine {
+            icon: "play-circle";
+            text: LiveViewWords.plays-here-line(root.channel.audio);
+            color: Look.ok;
+        }
+        if root.state == LiveLinkState.elsewhere: LinkLine {
+            icon: "arrow-square-out";
+            text: LiveViewWords.plays-elsewhere-line(LiveDirectory.link-source);
+        }
+        if root.state == LiveLinkState.private: LinkLine {
+            icon: "warning-circle";
+            text: LiveViewWords.private-line();
+            color: Look.danger;
+        }
+        if root.state == LiveLinkState.not-stream: LinkLine {
+            icon: "prohibit";
+            text: LiveViewWords.not-stream-line();
+            color: Look.danger;
+        }
+        if root.state == LiveLinkState.failed: LinkLine {
+            icon: "warning-circle";
+            text: LiveViewWords.link-failed(LiveDirectory.link-problem);
+            color: Look.danger;
+        }
+    }
+}
+
+// A part of Connections the canvas draws and this version does not have.
+component LaterPart inherits VerticalLayout {
+    in property <string> title;
+    in property <string> line;
+    in property <string> action;
+    spacing: 8px;
+    HorizontalLayout {
+        spacing: 12px;
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 4px;
+            opacity: 0.45;
+            Text {
+                text: Look.heading-prefix + root.title;
+                color: Look.text;
+                font-size: Look.nav-heading-size;
+                font-weight: 600;
+                letter-spacing: Look.heading-tracking * Look.nav-heading-size;
+                wrap: word-wrap;
+            }
+            Paragraph {
+                text: root.line;
+                color: Look.faint;
+                font-size: 13px;
+                line-height-factor: Look.leading(1.5);
+            }
+        }
+        if root.action != "": VerticalLayout {
+            alignment: end;
+            LiveButton {
+                text: root.action;
+                icon: "plus";
+                primary: true;
+                enabled: false;
+            }
+        }
+    }
+    NotInThisVersion { }
+}
+
+export component ConnectionsPage inherits Rectangle {
+    property <LiveLinkState> state: LiveDirectory.link-state;
+    property <LiveChannel> channel: LiveDirectory.link-channel;
+    // What the link leads to can be opened: watched here, or opened on its site.
+    property <bool> actionable: state == LiveLinkState.found || state == LiveLinkState.playable || state == LiveLinkState.recognized || state == LiveLinkState.elsewhere;
+    property <string> primary-label: state == LiveLinkState.elsewhere ? LiveViewWords.open-on(LiveDirectory.link-source)
+        : (state == LiveLinkState.found || state == LiveLinkState.playable || state == LiveLinkState.recognized) && channel.play != LivePlay.unavailable ? LiveDirectoryWords.play(channel)
+        : state == LiveLinkState.found ? LiveViewWords.open() : LiveViewWords.watch();
+    background: Look.bg;
+
+    Flickable {
+        mouse-drag-pan-enabled: false;
+        VerticalLayout {
+            alignment: start;
+            padding-left: Look.terminal ? 16px : Look.broadsheet ? 32px : 28px;
+            padding-right: Look.terminal ? 16px : Look.broadsheet ? 32px : 28px;
+            padding-top: Look.terminal ? 16px : Look.broadsheet ? 26px : 24px;
+            padding-bottom: Look.terminal ? 16px : Look.broadsheet ? 26px : 24px;
+            HorizontalLayout {
+                alignment: start;
+                VerticalLayout {
+                    width: min(760px, root.width - (Look.terminal ? 32px : 56px));
+                    spacing: 16px;
+                    VerticalLayout {
+                        spacing: 4px;
+                        Heading {
+                            label: LiveViewWords.open-a-link();
+                        }
+                        Paragraph {
+                            text: LiveViewWords.open-a-link-line();
+                            color: Look.faint;
+                            font-size: 13px;
+                            line-height-factor: Look.leading(1.5);
+                        }
+                    }
+                    VerticalLayout {
+                        spacing: 14px;
+                        link := Field {
+                            height: 40px;
+                            font-size: 13px;
+                            font-family: Look.mono;
+                            padding-x: 12px;
+                            fill: Look.bg;
+                            ring: root.state == LiveLinkState.private || root.state == LiveLinkState.not-stream || root.state == LiveLinkState.failed ? Look.danger : Look.accent;
+                            ring-width: 1.5px;
+                            text <=> LiveDirectory.link;
+                            placeholder: LiveViewWords.link-placeholder();
+                            edited(text) => {
+                                LiveDirectory.type-link(text);
+                            }
+                            accepted(text) => {
+                                if root.actionable {
+                                    LiveDirectory.open-link();
+                                }
+                            }
+                        }
+                        LinkResult { }
+                        HorizontalLayout {
+                            padding-top: 4px;
+                            spacing: 8px;
+                            Rectangle { horizontal-stretch: 1; }
+                            if LiveDirectory.link != "": LiveButton {
+                                height: 34px;
+                                text: LiveViewWords.clear();
+                                clicked => {
+                                    LiveDirectory.type-link("");
+                                }
+                            }
+                            if root.state == LiveLinkState.found && !root.channel.following && !root.channel.on-telegram: LiveButton {
+                                height: 34px;
+                                text: LiveViewWords.follow();
+                                icon: "star";
+                                clicked => {
+                                    LiveDirectory.follow(root.channel.id, true);
+                                }
+                            }
+                            LiveButton {
+                                height: 34px;
+                                padding-x: 16px;
+                                text: root.primary-label + Look.enter-hint;
+                                primary: true;
+                                enabled: root.actionable;
+                                clicked => {
+                                    LiveDirectory.open-link();
+                                }
+                            }
+                        }
+                    }
+                    Rectangle {
+                        height: 1px;
+                        background: Look.line;
+                    }
+                    LaterPart {
+                        title: LiveViewWords.saved();
+                        line: LiveViewWords.saved-line();
+                        action: LiveViewWords.add-connection();
+                    }
+                    LaterPart {
+                        title: LiveViewWords.submit();
+                        line: LiveViewWords.submit-line();
+                    }
+                }
+            }
+        }
+    }
+}

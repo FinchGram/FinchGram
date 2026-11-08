@@ -60,7 +60,8 @@ The music has an mpv of its own (`src/player/music.rs`), with no video, beside t
 the voice messages': songs follow each other without a gap, the next one queued behind the current
 one in mpv's playlist and opened ahead of time (`gapless-audio`, `prefetch-playlist`).
 
-The vendored FFmpeg has no network code, by the project's decision (docs/architecture.md), so mpv
+The music's mpv may open files only (its FFmpeg is held to local protocols, `LOCAL_PROTOCOLS` in
+`src/player/mod.rs`; only the Live view's players reach the network, docs/architecture.md), so mpv
 does not fetch a song itself. `src/music/fetch.rs` does, with the app's own HTTP client (ureq, with
 the Keychain's roots as well as the usual ones, for a server behind a certificate of the user's
 own): the server's `stream` URL is read with Range requests into a file of the cache, and mpv reads

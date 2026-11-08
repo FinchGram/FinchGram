@@ -64,6 +64,10 @@ rustls-platform-verifier = "0.7"
 tungstenite = { version = "0.30", default-features = false, features = ["handshake"] }
 # Doubao's answers (src/speech/doubao.rs) may come gzipped; flate2 is in the tree already (ureq, russh).
 flate2 = "1"
+# The live directory's addresses and a pasted link's parts (src/live/); in the tree already (rustls, tungstenite).
+url = "2"
+# The Keychain's trusted roots as a PEM file for mpv's TLS (src/live/roots.rs); in the tree already.
+rustls-native-certs = "0.8"
 
 [dev-dependencies]
 # The HTTP/2 server of the transfer engine's test (src/downloads/transfer.rs).

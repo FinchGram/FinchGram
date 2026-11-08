@@ -5810,3 +5810,1997 @@ msgstr "对方现在没有直播动态。"
 #: ui/live.slint:238
 msgid "Stream key"
 msgstr "推流密钥"
+
+#: ui/live-popout.slint:15 ui/pages/live-parts.slint:186
+msgid "Pause"
+msgstr "暂停"
+
+#: ui/live.slint:523
+msgid "Submitted streams"
+msgstr "用户提交的直播"
+
+#: ui/live.slint:543 ui/live.slint:655
+msgid "Following"
+msgstr "已关注"
+
+#: ui/live.slint:544
+msgid "Broadcast"
+msgstr "开播"
+
+#: ui/live.slint:545
+msgid "Connections"
+msgstr "连接"
+
+#: ui/live.slint:546
+msgid "Discover"
+msgstr "发现"
+
+#: ui/live.slint:549
+msgid "All channels"
+msgstr "全部频道"
+
+#: ui/live.slint:550
+msgid "Upcoming"
+msgstr "即将开播"
+
+#: ui/live.slint:551 ui/pages/live-discover.slint:93 ui/live.slint:551 ui/pages/live-discover.slint:93
+msgid "Live now"
+msgstr "正在直播"
+
+#: ui/live.slint:554
+msgid "Relevance"
+msgstr "相关度"
+
+#: ui/live.slint:555
+msgid "Most viewers"
+msgstr "观众最多"
+
+#: ui/live.slint:556
+msgid "Recently started"
+msgstr "最近开播"
+
+#: ui/live.slint:558
+msgid "Recommended"
+msgstr "推荐"
+
+#: ui/live.slint:562
+msgid "Gaming"
+msgstr "游戏"
+
+#: ui/live.slint:563
+msgid "Talk"
+msgstr "聊天"
+
+#: ui/live.slint:564
+msgid "Technology"
+msgstr "科技"
+
+#: ui/live.slint:565
+msgid "Creative"
+msgstr "创作"
+
+#: ui/live.slint:566
+msgid "IRL"
+msgstr "生活"
+
+#: ui/live.slint:567
+msgid "Education"
+msgstr "教育"
+
+#: ui/live.slint:568
+msgid "Events"
+msgstr "活动"
+
+#: ui/live.slint:569
+msgid "News"
+msgstr "新闻"
+
+#: ui/live.slint:570
+msgid "Sports"
+msgstr "体育"
+
+#: ui/live.slint:571
+msgid "Other"
+msgstr "其他"
+
+#: ui/live.slint:572
+msgid "Uncategorized"
+msgstr "未分类"
+
+#: ui/live.slint:574
+msgid "Language not given"
+msgstr "未注明语言"
+
+#: ui/live.slint:579
+msgid "NOT CONFIRMED"
+msgstr "未确认"
+
+#: ui/live.slint:580
+msgid "OFFLINE"
+msgstr "未开播"
+
+#: ui/live.slint:581
+msgid "STATUS UNKNOWN"
+msgstr "状态未知"
+
+#: ui/live.slint:584 ui/pages/live-parts.slint:20
+msgid "On air"
+msgstr "直播中"
+
+#: ui/live.slint:585 ui/pages/live-discover.slint:87 ui/live.slint:585 ui/pages/live-discover.slint:87
+msgid "Not confirmed"
+msgstr "未确认"
+
+#: ui/live.slint:586
+msgid "Off air"
+msgstr "未开播"
+
+#: ui/live.slint:587 ui/live.slint:630 ui/pages/live-discover.slint:96
+msgid "Status unknown"
+msgstr "状态未知"
+
+#: ui/live.slint:591
+msgid "{} min"
+msgstr "{} 分钟"
+
+#: ui/live.slint:592
+msgid "{} h"
+msgstr "{} 小时"
+
+#: ui/live.slint:593
+msgid "{} h {} min"
+msgstr "{} 小时 {} 分钟"
+
+#: ui/live.slint:597
+msgid "just now"
+msgstr "刚刚"
+
+#: ui/live.slint:598
+msgid "{} min ago"
+msgstr "{} 分钟前"
+
+#: ui/live.slint:599
+msgid "{} h ago"
+msgstr "{} 小时前"
+
+#: ui/live.slint:600
+msgid "{} days ago"
+msgstr "{} 天前"
+
+#: ui/live.slint:604
+msgid "{n} listening"
+msgid_plural "{n} listening"
+msgstr[0] "{n} 人正在收听"
+
+#: ui/live.slint:611
+msgid "Live for {} · {}"
+msgstr "已直播 {} · {}"
+
+#: ui/live.slint:612 ui/pages/live-parts.slint:217
+msgid "Live for {}"
+msgstr "已直播 {}"
+
+#: ui/live.slint:614
+msgid "Not confirmed · last confirmed live {}"
+msgstr "未确认 · {}还在直播"
+
+#: ui/live.slint:616
+msgid "Status unknown · last confirmed live {}"
+msgstr "状态未知 · {}还在直播"
+
+#: ui/live.slint:617
+msgid "Status unknown · no recent answer from {}"
+msgstr "状态未知 · {} 最近没有响应"
+
+#: ui/live.slint:619
+msgid "Offline · last live {}"
+msgstr "未开播 · {}直播过"
+
+#: ui/live.slint:619 ui/pages/live-parts.slint:29
+msgid "Not seen live yet"
+msgstr "还没有直播记录"
+
+#: ui/live.slint:624
+msgid "Watch here"
+msgstr "在这里观看"
+
+#: ui/live.slint:625
+msgid "Listen here"
+msgstr "在这里收听"
+
+#: ui/live.slint:626
+msgid "Try opening"
+msgstr "试着打开"
+
+#: ui/live.slint:627
+msgid "Sign in to watch"
+msgstr "登录后观看"
+
+#: ui/live.slint:628 ui/pages/live-parts.slint:154
+msgid "Open on {}"
+msgstr "在 {} 上打开"
+
+#: ui/live.slint:629 ui/pages/live-discover.slint:88 ui/live.slint:629 ui/pages/live-discover.slint:88 ui/pages/live-discover.slint:235
+msgid "Offline"
+msgstr "未开播"
+
+#: ui/live.slint:631
+msgid "Unavailable"
+msgstr "无法播放"
+
+#: ui/live.slint:634
+msgid "Not live right now"
+msgstr "现在没有直播"
+
+#: ui/live.slint:635
+msgid "{} isn't answering"
+msgstr "{} 没有响应"
+
+#: ui/live.slint:636
+msgid "Live status isn't confirmed — the stream may have ended"
+msgstr "直播状态未确认，直播可能已经结束"
+
+#: ui/live.slint:637
+msgid "Telegram sends this one over WebRTC — watch it on your phone"
+msgstr "Telegram 用 WebRTC 传送这场直播，请在手机上观看"
+
+#: ui/live.slint:638
+msgid "{} needs an account for this stream"
+msgstr "{} 需要账号才能观看这场直播"
+
+#: ui/live.slint:639
+msgid "Plays on {}'s site, in your browser"
+msgstr "用浏览器在 {} 的网站上播放"
+
+#: ui/live.slint:640
+msgid "{} allows only its own player, so it opens in your browser"
+msgstr "{} 只允许用它自己的播放器，所以会在浏览器中打开"
+
+#: ui/live.slint:641
+msgid "FinchGram can't play this kind of stream yet"
+msgstr "FinchGram 暂时还不能播放这类直播"
+
+#: ui/live.slint:642
+msgid "Plays in FinchGram, sound only"
+msgstr "在 FinchGram 中播放，只有声音"
+
+#: ui/live.slint:643 ui/pages/live-discover.slint:81 ui/live.slint:643 ui/pages/live-discover.slint:81 ui/pages/live-parts.slint:273
+msgid "Plays in FinchGram"
+msgstr "在 FinchGram 中播放"
+
+#: ui/live.slint:645
+msgid "No thumbnail from {}"
+msgstr "{} 没有提供缩略图"
+
+#: ui/live.slint:647
+msgid "Following {}"
+msgstr "已关注 {}"
+
+#: ui/live.slint:648
+msgid "Unfollowed {}"
+msgstr "已取消关注 {}"
+
+#: ui/live.slint:649
+msgid "Followed on Telegram — unfollow it there"
+msgstr "这是在 Telegram 上关注的，请到 Telegram 里取消关注"
+
+#: ui/live.slint:650
+msgid "Opened {} in your browser"
+msgstr "已在浏览器中打开 {}"
+
+#: ui/live.slint:654
+msgid "Followed on Telegram"
+msgstr "已在 Telegram 关注"
+
+#: ui/live.slint:655 ui/pages/live-parts.slint:197
+msgid "Follow"
+msgstr "关注"
+
+#: ui/pages/live-cards.slint:86
+msgid "Not confirmed — {} last answered {}"
+msgstr "未确认 · {} 上次响应：{}"
+
+#: ui/pages/live-cards.slint:89
+msgid "{} isn’t answering — last confirmed live {}"
+msgstr "{} 没有响应，{}还在直播"
+
+#: ui/pages/live-cards.slint:99
+msgid "Will play in FinchGram"
+msgstr "将在 FinchGram 中播放"
+
+#: ui/pages/live-cards.slint:99
+msgid "Will open on {}"
+msgstr "将在 {} 上打开"
+
+#: ui/pages/live-cards.slint:104
+msgid "Mature"
+msgstr "限制级"
+
+#: ui/pages/live-cards.slint:104
+msgid "MATURE"
+msgstr "限制级"
+
+#: ui/pages/live-cards.slint:112
+msgid "in {} min"
+msgstr "{} 分钟后"
+
+#: ui/pages/live-cards.slint:113
+msgid "in {} h"
+msgstr "{} 小时后"
+
+#: ui/pages/live-cards.slint:114
+msgid "in {} days"
+msgstr "{} 天后"
+
+#: ui/pages/live-cards.slint:123
+msgid "{} · {} · {}"
+msgstr "{} · {} · {}"
+
+#: ui/pages/live-cards.slint:128
+msgid "viewers not shared"
+msgstr "未公开观众人数"
+
+#: ui/pages/live-cards.slint:129
+msgid "{} (the server’s own count)"
+msgstr "{}（服务器自己统计）"
+
+#: ui/pages/live-cards.slint:140
+msgid "{} · live for {}"
+msgstr "{} · 已直播 {}"
+
+#: ui/pages/live-cards.slint:142
+msgid "{} · not confirmed"
+msgstr "{} · 未确认"
+
+#: ui/pages/live-cards.slint:143
+msgid "{} · status unknown"
+msgstr "{} · 状态未知"
+
+#: ui/pages/live-cards.slint:147
+msgid "live now"
+msgstr "正在直播"
+
+#: ui/pages/live-cards.slint:148
+msgid "not confirmed"
+msgstr "未确认"
+
+#: ui/pages/live-cards.slint:149
+msgid "status unknown"
+msgstr "状态未知"
+
+#: ui/pages/live-cards.slint:150 ui/pages/live-parts.slint:29
+msgid "last live {}"
+msgstr "{}直播过"
+
+#: ui/pages/live-cards.slint:150
+msgid "never live yet"
+msgstr "还没直播过"
+
+#: ui/pages/live-cards.slint:155
+msgid "▸ here"
+msgstr "▸ 在这里"
+
+#: ui/pages/live-cards.slint:157
+msgid "▸ watch here"
+msgstr "▸ 在这里观看"
+
+#: ui/pages/live-cards.slint:158
+msgid "▸ listen here"
+msgstr "▸ 在这里收听"
+
+#: ui/pages/live-cards.slint:159
+msgid "? try opening"
+msgstr "? 试着打开"
+
+#: ui/pages/live-cards.slint:160
+msgid "sign in"
+msgstr "需登录"
+
+#: ui/pages/live-cards.slint:162
+msgid "× offline"
+msgstr "× 未开播"
+
+#: ui/pages/live-cards.slint:163
+msgid "× unknown"
+msgstr "× 未知"
+
+#: ui/pages/live-cards.slint:164
+msgid "× unavailable"
+msgstr "× 无法播放"
+
+#: ui/pages/live-cards.slint:1041
+msgid "loading {}"
+msgstr "加载中 {}"
+
+#: ui/pages/live-discover.slint:23
+msgid "title, channel, category, platform"
+msgstr "标题、频道、分类、平台"
+
+#: ui/pages/live-discover.slint:24
+msgid "Search streams, channels, categories, platforms"
+msgstr "搜索直播、频道、分类、平台"
+
+#: ui/pages/live-discover.slint:24
+msgid "Search live streams, channels, categories, platforms"
+msgstr "搜索直播、频道、分类、平台"
+
+#: ui/pages/live-discover.slint:26
+msgid "searching…"
+msgstr "搜索中…"
+
+#: ui/pages/live-discover.slint:28
+msgid "⏎ search · / focus · esc clear"
+msgstr "⏎ 搜索 · / 聚焦 · esc 清除"
+
+#: ui/pages/live-discover.slint:32 ui/pages/live-discover.slint:331
+msgid "recent"
+msgstr "最近"
+
+#: ui/pages/live-discover.slint:32
+msgid "Recent searches"
+msgstr "最近搜索"
+
+#: ui/pages/live-discover.slint:33
+msgid "Searches"
+msgstr "搜索建议"
+
+#: ui/pages/live-discover.slint:34
+msgid "channels"
+msgstr "频道"
+
+#: ui/pages/live-discover.slint:36 ui/pages/live-discover.slint:338
+msgid "filters"
+msgstr "筛选"
+
+#: ui/pages/live-discover.slint:36
+msgid "Filters"
+msgstr "筛选"
+
+#: ui/pages/live-discover.slint:39 ui/pages/live-discover.slint:275
+msgid "Source: {}"
+msgstr "来源：{}"
+
+#: ui/pages/live-discover.slint:40 ui/pages/live-discover.slint:276
+msgid "Category: {}"
+msgstr "分类：{}"
+
+#: ui/pages/live-discover.slint:41
+msgid "Open this link directly"
+msgstr "直接打开这个链接"
+
+#: ui/pages/live-discover.slint:46
+msgid "{} — not a directory search"
+msgstr "{}（不在目录中搜索）"
+
+#: ui/pages/live-discover.slint:51
+msgid "↑↓ pick · ⏎ go · tab complete · {}"
+msgstr "↑↓ 选择 · ⏎ 前往 · tab 补全 · {}"
+
+#: ui/pages/live-discover.slint:51
+msgid "links open directly"
+msgstr "链接直接打开"
+
+#: ui/pages/live-discover.slint:51
+msgid "esc close"
+msgstr "esc 关闭"
+
+#: ui/pages/live-discover.slint:53
+msgid "Links open directly — they aren’t searched in the directory."
+msgstr "链接会直接打开，不会在目录中搜索。"
+
+#: ui/pages/live-discover.slint:54
+msgid "⏎ searches the directory for “{}” · ↑↓ to pick"
+msgstr "⏎ 在目录中搜索“{}” · ↑↓ 选择"
+
+#: ui/pages/live-discover.slint:54
+msgid "Type to search the directory, or paste a link to open it"
+msgstr "输入文字搜索目录，或粘贴链接直接打开"
+
+#: ui/pages/live-discover.slint:59
+msgid "Index"
+msgstr "索引"
+
+#: ui/pages/live-discover.slint:59
+msgid "Pictures"
+msgstr "图片"
+
+#: ui/pages/live-discover.slint:60
+msgid "List"
+msgstr "列表"
+
+#: ui/pages/live-discover.slint:60
+msgid "Grid"
+msgstr "网格"
+
+#: ui/pages/live-discover.slint:64 ui/pages/live-discover.slint:143
+msgid "Source"
+msgstr "来源"
+
+#: ui/pages/live-discover.slint:65
+msgid "Category"
+msgstr "分类"
+
+#: ui/pages/live-discover.slint:67 ui/pages/live-discover.slint:214
+msgid "Plays"
+msgstr "播放位置"
+
+#: ui/pages/live-discover.slint:68
+msgid "Status"
+msgstr "状态"
+
+#: ui/pages/live-discover.slint:69
+msgid "Sort"
+msgstr "排序"
+
+#: ui/pages/live-discover.slint:70
+msgid "Any"
+msgstr "不限"
+
+#: ui/pages/live-discover.slint:71
+msgid "{n} source"
+msgid_plural "{n} sources"
+msgstr[0] "{n} 个来源"
+
+#: ui/pages/live-discover.slint:72
+msgid "Any source"
+msgstr "任意来源"
+
+#: ui/pages/live-discover.slint:73
+msgid "Any category"
+msgstr "任意分类"
+
+#: ui/pages/live-discover.slint:76
+msgid "In FinchGram"
+msgstr "在 FinchGram 中"
+
+#: ui/pages/live-discover.slint:77
+msgid "On its site"
+msgstr "在它的网站上"
+
+#: ui/pages/live-discover.slint:78 ui/pages/live-discover.slint:83
+msgid "Anywhere"
+msgstr "不限"
+
+#: ui/pages/live-discover.slint:82
+msgid "Opens on its own site"
+msgstr "在它自己的网站上打开"
+
+#: ui/pages/live-discover.slint:89
+msgid "Unknown"
+msgstr "未知"
+
+#: ui/pages/live-discover.slint:91
+msgid "Any status"
+msgstr "任意状态"
+
+#: ui/pages/live-discover.slint:100
+msgid "Recently live"
+msgstr "最近直播过"
+
+#: ui/pages/live-discover.slint:104
+msgid "Twitch, YouTube, Kick and Bilibili: not integrated yet — their links still open in your browser."
+msgstr "Twitch、YouTube、Kick 和 Bilibili：尚未接入，它们的链接仍会在浏览器中打开。"
+
+#: ui/pages/live-discover.slint:107
+msgid "Language comes from the source. Streams that don’t give one appear only under Any."
+msgstr "语言信息来自来源。没有注明语言的直播，只在选择“任意语言”时出现。"
+
+#: ui/pages/live-discover.slint:110
+msgid "Twitch and YouTube allow only their own players, and Kick plays on its site. They are not integrated yet; their links open in your browser."
+msgstr "Twitch 和 YouTube 只允许用它们自己的播放器，Kick 则在它的网站上播放。它们尚未接入，链接会在浏览器中打开。"
+
+#: ui/pages/live-discover.slint:113 ui/pages/live-parts.slint:92
+msgid "Not confirmed: live at the last answer, but that answer is old. Status unknown: no recent answer at all. Neither is treated as offline."
+msgstr "未确认：上次响应时还在直播，但那次响应已经过时。状态未知：最近完全没有响应。这两种都不算未开播。"
+
+#: ui/pages/live-discover.slint:116
+msgid "Relevance and Recommended put confirmed live first. Most viewers uses each source’s own counts — they aren’t comparable across platforms, and streams without a count come after, not as zero."
+msgstr "“相关度”和“推荐”会把确认在直播的排在前面。“观众最多”用的是各来源自己的人数统计，不同平台之间无法比较；没有人数的直播排在后面，不按 0 计算。"
+
+#: ui/pages/live-discover.slint:118
+msgid "Clear filters"
+msgstr "清除筛选"
+
+#: ui/pages/live-discover.slint:122
+msgid "Partial results — {} of {} sources are behind"
+msgstr "结果不完整：{} 个来源滞后（共 {} 个）"
+
+#: ui/pages/live-discover.slint:122
+msgid "Partial results — a source is behind"
+msgstr "结果不完整：有一个来源滞后"
+
+#: ui/pages/live-discover.slint:126
+msgid "{} limited our requests. Its results are from {}, so its streams show “Not confirmed”."
+msgstr "{} 限制了我们的请求。它的结果停留在 {}，所以它的直播显示为“未确认”。"
+
+#: ui/pages/live-discover.slint:127
+msgid "{} limited our requests, so its streams show “Not confirmed”."
+msgstr "{} 限制了我们的请求，所以它的直播显示为“未确认”。"
+
+#: ui/pages/live-discover.slint:130
+msgid "{} hasn’t answered for {}. Its streams are “Status unknown” and left out of Live now."
+msgstr "{} 已经 {}没有响应了。它的直播显示为“状态未知”，不会出现在“正在直播”中。"
+
+#: ui/pages/live-discover.slint:131
+msgid "{} isn’t answering. Its streams are “Status unknown” and left out of Live now."
+msgstr "{} 没有响应。它的直播显示为“状态未知”，不会出现在“正在直播”中。"
+
+#: ui/pages/live-discover.slint:133
+msgid "Some {} servers haven’t answered for {}."
+msgstr "部分 {} 服务器已经 {}没有响应了。"
+
+#: ui/pages/live-discover.slint:134
+msgid "Some {} servers aren’t answering."
+msgstr "部分 {} 服务器没有响应。"
+
+#: ui/pages/live-discover.slint:137
+msgid "{n} stream with unknown status isn’t in Live now — All channels lists it."
+msgid_plural "{n} streams with unknown status aren’t in Live now — All channels lists them."
+msgstr[0] "{n} 个状态未知的直播不在“正在直播”中，可以在“全部频道”里找到。"
+
+#: ui/pages/live-discover.slint:140
+msgid "[hide sources]"
+msgstr "[隐藏来源]"
+
+#: ui/pages/live-discover.slint:140
+msgid "[sources]"
+msgstr "[来源]"
+
+#: ui/pages/live-discover.slint:141 ui/pages/live-discover.slint:306
+msgid "Hide sources"
+msgstr "隐藏来源"
+
+#: ui/pages/live-discover.slint:144
+msgid "# sources"
+msgstr "# 来源"
+
+#: ui/pages/live-discover.slint:145
+msgid "Provides"
+msgstr "提供"
+
+#: ui/pages/live-discover.slint:147
+msgid "Last answer"
+msgstr "最近响应"
+
+#: ui/pages/live-discover.slint:148
+msgid "State"
+msgstr "状态"
+
+#: ui/pages/live-discover.slint:150
+msgid "Not integrated yet — its links still open in your browser."
+msgstr "尚未接入，它的链接仍会在浏览器中打开。"
+
+#: ui/pages/live-discover.slint:151
+msgid "live status · {} · {} · {}"
+msgstr "直播状态 · {} · {} · {}"
+
+#: ui/pages/live-discover.slint:152
+msgid "viewer counts"
+msgstr "观众人数"
+
+#: ui/pages/live-discover.slint:152
+msgid "self-reported counts"
+msgstr "自报人数"
+
+#: ui/pages/live-discover.slint:152
+msgid "listener counts"
+msgstr "听众人数"
+
+#: ui/pages/live-discover.slint:152
+msgid "no viewer counts"
+msgstr "无观众人数"
+
+#: ui/pages/live-discover.slint:153
+msgid "thumbnails"
+msgstr "缩略图"
+
+#: ui/pages/live-discover.slint:153
+msgid "no thumbnails"
+msgstr "无缩略图"
+
+#: ui/pages/live-discover.slint:154
+msgid "plays in FinchGram"
+msgstr "在 FinchGram 中播放"
+
+#: ui/pages/live-discover.slint:154
+msgid "plays on its site"
+msgstr "在它的网站上播放"
+
+#: ui/pages/live-discover.slint:157
+msgid "Not integrated yet"
+msgstr "尚未接入"
+
+#: ui/pages/live-discover.slint:158
+msgid "Up to date"
+msgstr "已是最新"
+
+#: ui/pages/live-discover.slint:159
+msgid "Partly behind"
+msgstr "部分滞后"
+
+#: ui/pages/live-discover.slint:160
+msgid "Rate-limited"
+msgstr "请求受限"
+
+#: ui/pages/live-discover.slint:161
+msgid "Not answering"
+msgstr "没有响应"
+
+#: ui/pages/live-discover.slint:168
+msgid "Channels · total unknown"
+msgstr "频道 · 总数未知"
+
+#: ui/pages/live-discover.slint:169
+msgid "Scheduled streams · total unknown"
+msgstr "直播预告 · 总数未知"
+
+#: ui/pages/live-discover.slint:170
+msgid "Live streams · total unknown"
+msgstr "直播 · 总数未知"
+
+#: ui/pages/live-discover.slint:173
+msgid "At least {n} channel"
+msgid_plural "At least {n} channels"
+msgstr[0] "至少 {n} 个频道"
+
+#: ui/pages/live-discover.slint:174
+msgid "At least {n} scheduled stream"
+msgid_plural "At least {n} scheduled streams"
+msgstr[0] "至少 {n} 场直播预告"
+
+#: ui/pages/live-discover.slint:175
+msgid "At least {n} live stream"
+msgid_plural "At least {n} live streams"
+msgstr[0] "至少 {n} 场直播"
+
+#: ui/pages/live-discover.slint:177
+msgid "{n} channel"
+msgid_plural "{n} channels"
+msgstr[0] "{n} 个频道"
+
+#: ui/pages/live-discover.slint:178
+msgid "{n} scheduled stream"
+msgid_plural "{n} scheduled streams"
+msgstr[0] "{n} 场直播预告"
+
+#: ui/pages/live-discover.slint:179
+msgid "{n} live stream"
+msgid_plural "{n} live streams"
+msgstr[0] "{n} 场直播"
+
+#: ui/pages/live-discover.slint:182
+msgid "{} for “{}”"
+msgstr "{}（搜索“{}”）"
+
+#: ui/pages/live-discover.slint:184
+msgid "Loading results…"
+msgstr "正在加载结果…"
+
+#: ui/pages/live-discover.slint:185
+msgid "Searching…"
+msgstr "正在搜索…"
+
+#: ui/pages/live-discover.slint:187
+msgid "partial — {} of {} sources behind"
+msgstr "不完整：{} 个来源滞后（共 {} 个）"
+
+#: ui/pages/live-discover.slint:187
+msgid "partial — a source is behind"
+msgstr "不完整：有一个来源滞后"
+
+#: ui/pages/live-discover.slint:190
+msgid "counts come from each source and aren’t comparable — streams without one come after, not as zero"
+msgstr "人数来自各个来源，彼此无法比较；没有人数的直播排在后面，不按 0 计算"
+
+#: ui/pages/live-discover.slint:191
+msgid "Recommended: confirmed live first, then your languages, recently started, and popularity within each source"
+msgstr "推荐：先排确认在直播的，再按你的语言、最近开播和各来源内的热度排序"
+
+#: ui/pages/live-discover.slint:195
+msgid "{n} mature-rated result hidden"
+msgid_plural "{n} mature-rated results hidden"
+msgstr[0] "已隐藏 {n} 个限制级结果"
+
+#: ui/pages/live-discover.slint:200
+msgid "Confirmed live on Owncast, PeerTube, Icecast and submitted servers"
+msgstr "已确认正在 Owncast、PeerTube、Icecast 和用户提交的服务器上直播"
+
+#: ui/pages/live-discover.slint:201
+msgid "See all {}"
+msgstr "查看全部 {} 个"
+
+#: ui/pages/live-discover.slint:201
+msgid "See all"
+msgstr "查看全部"
+
+#: ui/pages/live-discover.slint:202
+msgid "Not confirmed right now"
+msgstr "暂时无法确认"
+
+#: ui/pages/live-discover.slint:203
+msgid "Their sources haven’t answered recently. Opening one tries the stream; it may have ended."
+msgstr "它们的来源最近没有响应。打开会尝试播放，但直播可能已经结束。"
+
+#: ui/pages/live-discover.slint:204
+msgid "By category"
+msgstr "按分类"
+
+#: ui/pages/live-discover.slint:204
+msgid "Browse by category"
+msgstr "按分类浏览"
+
+#: ui/pages/live-discover.slint:209
+msgid "Scheduled stream"
+msgstr "直播预告"
+
+#: ui/pages/live-discover.slint:210
+msgid "Stream"
+msgstr "直播"
+
+#: ui/pages/live-discover.slint:212
+msgid "Category · language"
+msgstr "分类 · 语言"
+
+#: ui/pages/live-discover.slint:213
+msgid "Starts"
+msgstr "开始时间"
+
+#: ui/pages/live-discover.slint:213
+msgid "Viewers"
+msgstr "观众"
+
+#: ui/pages/live-discover.slint:217 ui/pages/live-discover.slint:218
+msgid "channel"
+msgstr "频道"
+
+#: ui/pages/live-discover.slint:217
+msgid "scheduled stream"
+msgstr "直播预告"
+
+#: ui/pages/live-discover.slint:217 ui/pages/live-discover.slint:342
+msgid "title"
+msgstr "标题"
+
+#: ui/pages/live-discover.slint:218 ui/pages/live-discover.slint:343
+msgid "status"
+msgstr "状态"
+
+#: ui/pages/live-discover.slint:219
+msgid "src"
+msgstr "来源"
+
+#: ui/pages/live-discover.slint:220
+msgid "cat"
+msgstr "分类"
+
+#: ui/pages/live-discover.slint:221
+msgid "lang"
+msgstr "语言"
+
+#: ui/pages/live-discover.slint:222
+msgid "starts"
+msgstr "开始"
+
+#: ui/pages/live-discover.slint:222 ui/pages/live-discover.slint:333
+msgid "viewers"
+msgstr "观众"
+
+#: ui/pages/live-discover.slint:223 ui/pages/live-discover.slint:344
+msgid "plays"
+msgstr "播放"
+
+#: ui/pages/live-discover.slint:228
+msgid "── live · confirmed ──"
+msgstr "── 直播中 · 已确认 ──"
+
+#: ui/pages/live-discover.slint:229
+msgid "── not confirmed: source behind, opening tries the stream ──"
+msgstr "── 未确认：来源滞后，打开会尝试播放 ──"
+
+#: ui/pages/live-discover.slint:230
+msgid "── offline ──"
+msgstr "── 未开播 ──"
+
+#: ui/pages/live-discover.slint:231
+msgid "── status unknown: source not answering ──"
+msgstr "── 状态未知：来源没有响应 ──"
+
+#: ui/pages/live-discover.slint:233
+msgid "Live now · confirmed"
+msgstr "正在直播 · 已确认"
+
+#: ui/pages/live-discover.slint:234
+msgid "Not confirmed right now — the source hasn’t answered recently; opening one tries the stream"
+msgstr "暂时无法确认：来源最近没有响应，打开会尝试播放"
+
+#: ui/pages/live-discover.slint:236
+msgid "Status unknown — the source isn’t answering"
+msgstr "状态未知：来源没有响应"
+
+#: ui/pages/live-discover.slint:239
+msgid "Upcoming lists the sources that publish schedules. Follow a channel to keep it in Following."
+msgstr "“即将开播”只涵盖会发布直播日程的来源。关注一个频道，它就会一直留在“已关注”里。"
+
+#: ui/pages/live-discover.slint:245
+msgid "no channels match these filters"
+msgstr "没有符合这些筛选条件的频道"
+
+#: ui/pages/live-discover.slint:245
+msgid "No channels match these filters"
+msgstr "没有符合这些筛选条件的频道"
+
+#: ui/pages/live-discover.slint:246
+msgid "no scheduled streams match these filters"
+msgstr "没有符合这些筛选条件的直播预告"
+
+#: ui/pages/live-discover.slint:246
+msgid "No scheduled streams match these filters"
+msgstr "没有符合这些筛选条件的直播预告"
+
+#: ui/pages/live-discover.slint:247
+msgid "no live streams match these filters"
+msgstr "没有符合这些筛选条件的直播"
+
+#: ui/pages/live-discover.slint:247
+msgid "No live streams match these filters"
+msgstr "没有符合这些筛选条件的直播"
+
+#: ui/pages/live-discover.slint:249
+msgid "nothing matches “{}”"
+msgstr "没有与“{}”匹配的结果"
+
+#: ui/pages/live-discover.slint:249
+msgid "Nothing matches “{}”"
+msgstr "没有与“{}”匹配的结果"
+
+#: ui/pages/live-discover.slint:250
+msgid "nothing scheduled"
+msgstr "暂无直播预告"
+
+#: ui/pages/live-discover.slint:250
+msgid "Nothing scheduled"
+msgstr "暂无直播预告"
+
+#: ui/pages/live-discover.slint:251
+msgid "nothing here"
+msgstr "这里什么都没有"
+
+#: ui/pages/live-discover.slint:251
+msgid "Nothing here yet"
+msgstr "这里还什么都没有"
+
+#: ui/pages/live-discover.slint:254
+msgid "Nothing in {} for “{}” with {}."
+msgstr "“{}”中没有与“{}”匹配的结果（{}）。"
+
+#: ui/pages/live-discover.slint:254
+msgid "Nothing in {} with {}."
+msgstr "“{}”中没有符合条件的结果（{}）。"
+
+#: ui/pages/live-discover.slint:257
+msgid "Searched titles, channel names, categories, platforms and languages from {n} source, live and offline."
+msgid_plural "Searched titles, channel names, categories, platforms and languages from {n} sources, live and offline."
+msgstr[0] "已在 {n} 个来源中搜索标题、频道名、分类、平台和语言，包括正在直播和未开播的。"
+
+#: ui/pages/live-discover.slint:258
+msgid "{n} mature-rated result is hidden."
+msgid_plural "{n} mature-rated results are hidden."
+msgstr[0] "另有 {n} 个限制级结果已隐藏。"
+
+#: ui/pages/live-discover.slint:261
+msgid "{} and {}"
+msgstr "{}、{}"
+
+#: ui/pages/live-discover.slint:264
+msgid "[remove {}]"
+msgstr "[移除 {}]"
+
+#: ui/pages/live-discover.slint:264
+msgid "Remove “{}”"
+msgstr "移除“{}”"
+
+#: ui/pages/live-discover.slint:267
+msgid "Look in {}"
+msgstr "到“{}”中查找"
+
+#: ui/pages/live-discover.slint:269
+msgid "{n} result"
+msgid_plural "{n} results"
+msgstr[0] "{n} 个结果"
+
+#: ui/pages/live-discover.slint:270
+msgid "Clear all filters"
+msgstr "清除全部筛选"
+
+#: ui/pages/live-discover.slint:271
+msgid "Clear the search"
+msgstr "清空搜索"
+
+#: ui/pages/live-discover.slint:272
+msgid "Not in the directory? Open a link in Connections"
+msgstr "目录里没有？在“连接”中打开链接"
+
+#: ui/pages/live-discover.slint:273
+msgid "try: /watch <link> · esc clears the search"
+msgstr "试试：/watch <链接> · esc 清空搜索"
+
+#: ui/pages/live-discover.slint:277
+msgid "Language: {}"
+msgstr "语言：{}"
+
+#: ui/pages/live-discover.slint:278
+msgid "Status: {}"
+msgstr "状态：{}"
+
+#: ui/pages/live-discover.slint:283
+msgid "the live directory didn’t answer — what’s shown may be out of date"
+msgstr "直播目录没有响应，显示的内容可能已过时"
+
+#: ui/pages/live-discover.slint:283
+msgid "the live directory didn’t answer"
+msgstr "直播目录没有响应"
+
+#: ui/pages/live-discover.slint:285
+msgid "The live directory didn’t answer. What’s shown may be out of date."
+msgstr "直播目录没有响应。显示的内容可能已过时。"
+
+#: ui/pages/live-discover.slint:285
+msgid "The live directory didn’t answer."
+msgstr "直播目录没有响应。"
+
+#: ui/pages/live-discover.slint:288
+msgid "the next page didn’t load — results from here on may be missing"
+msgstr "下一页没有加载出来，后面的结果可能不全"
+
+#: ui/pages/live-discover.slint:288
+msgid "The next page didn’t load, so results from here on may be missing."
+msgstr "下一页没有加载出来，后面的结果可能不全。"
+
+#: ui/pages/live-discover.slint:290
+msgid "[r] retry"
+msgstr "[r] 重试"
+
+#: ui/pages/live-discover.slint:294
+msgid "Showing {} so far"
+msgstr "目前已显示 {} 个"
+
+#: ui/pages/live-discover.slint:295
+msgid "Showing {} of at least {}"
+msgstr "已显示 {} 个，至少共 {} 个"
+
+#: ui/pages/live-discover.slint:296
+msgid "Showing {} of {}"
+msgstr "已显示 {} 个，共 {} 个"
+
+#: ui/pages/live-discover.slint:298
+msgid "Show {} more"
+msgstr "再显示 {} 个"
+
+#: ui/pages/live-discover.slint:299
+msgid "[n] next {}"
+msgstr "[n] 下 {} 个"
+
+#: ui/pages/live-discover.slint:300
+msgid "[n] loading…"
+msgstr "[n] 加载中…"
+
+#: ui/pages/live-discover.slint:304
+msgid "Results from the FinchGram Live Directory (services.finchgram.com/live/api/v1). Source data from the Owncast and Xiph Icecast directories, PeerTube instances and reviewed submissions, each used under its own terms; whether a Telegram channel is live, FinchGram asks Telegram itself."
+msgstr "结果来自 FinchGram 直播目录（services.finchgram.com/live/api/v1）。来源数据取自 Owncast 和 Xiph Icecast 的目录、PeerTube 实例以及经过审核的提交，均按各自的条款使用；Telegram 频道是否在直播，由 FinchGram 直接向 Telegram 查询。"
+
+#: ui/pages/live-discover.slint:306
+msgid "Sources and freshness"
+msgstr "来源与更新情况"
+
+#: ui/pages/live-discover.slint:308
+msgid "Mature-rated streams: shown"
+msgstr "限制级直播：显示"
+
+#: ui/pages/live-discover.slint:308
+msgid "Mature-rated streams: hidden"
+msgstr "限制级直播：隐藏"
+
+#: ui/pages/live-discover.slint:313
+msgid "❯ that’s a link, not a search"
+msgstr "❯ 这是链接，不是搜索词"
+
+#: ui/pages/live-discover.slint:313
+msgid "That’s a link, not a search"
+msgstr "这是链接，不是搜索词"
+
+#: ui/pages/live-discover.slint:316
+msgid "The directory searches titles, channels, categories and platforms. To play this exact address, open it directly."
+msgstr "目录搜索的是标题、频道、分类和平台。要播放这个地址，请直接打开它。"
+
+#: ui/pages/live-discover.slint:318
+msgid "FinchGram checks what it is when you open it"
+msgstr "打开时 FinchGram 会检查它是什么"
+
+#: ui/pages/live-discover.slint:320
+msgid "The directory searches titles, channels, categories and platforms. This is an address: {}. {}."
+msgstr "目录搜索的是标题、频道、分类和平台。这是一个地址：{}。{}。"
+
+#: ui/pages/live-discover.slint:323
+msgid "[⏎ open link]"
+msgstr "[⏎ 打开链接]"
+
+#: ui/pages/live-discover.slint:324
+msgid "Open link ⏎"
+msgstr "打开链接 ⏎"
+
+#: ui/pages/live-discover.slint:324
+msgid "Open link"
+msgstr "打开链接"
+
+#: ui/pages/live-discover.slint:328
+msgid "❯ discover"
+msgstr "❯ 发现"
+
+#: ui/pages/live-discover.slint:330
+msgid "relevance"
+msgstr "相关度"
+
+#: ui/pages/live-discover.slint:332
+msgid "added"
+msgstr "最近添加"
+
+#: ui/pages/live-discover.slint:334
+msgid "recommended"
+msgstr "推荐"
+
+#: ui/pages/live-discover.slint:336
+msgid "sort"
+msgstr "排序"
+
+#: ui/pages/live-discover.slint:337
+msgid "soonest"
+msgstr "最早开始"
+
+#: ui/pages/live-discover.slint:339
+msgid "[x clear]"
+msgstr "[x 清除]"
+
+#: ui/pages/live-discover.slint:340
+msgid "{n} source behind"
+msgid_plural "{n} sources behind"
+msgstr[0] "{n} 个来源滞后"
+
+#: ui/pages/live-discover.slint:345
+msgid "category"
+msgstr "分类"
+
+#: ui/pages/live-discover.slint:346
+msgid "source"
+msgstr "来源"
+
+#: ui/pages/live-discover.slint:350
+msgid "[f unfollow]"
+msgstr "[f 取消关注]"
+
+#: ui/pages/live-discover.slint:350
+msgid "[f follow]"
+msgstr "[f 关注]"
+
+#: ui/pages/live-discover.slint:352
+msgid "[o page]"
+msgstr "[o 频道页]"
+
+#: ui/pages/live-discover.slint:353
+msgid "updated {}"
+msgstr "{}更新"
+
+#: ui/pages/live-discover.slint:354
+msgid "behind"
+msgstr "滞后"
+
+#: ui/pages/live-discover.slint:521
+msgid "search ❯"
+msgstr "搜索 ❯"
+
+#: ui/pages/live-discover.slint:2603
+msgid "the FinchGram Live Directory"
+msgstr "FinchGram 直播目录"
+
+#: ui/pages/live-parts.slint:19
+msgid "{} live"
+msgstr "{} 个直播中"
+
+#: ui/pages/live-parts.slint:21
+msgid "On air now"
+msgstr "正在直播"
+
+#: ui/pages/live-parts.slint:21
+msgid "Following · live"
+msgstr "已关注 · 直播中"
+
+#: ui/pages/live-parts.slint:22
+msgid "Not live now"
+msgstr "现在没在直播"
+
+#: ui/pages/live-parts.slint:23
+msgid "Channels you follow show up here, live ones first — from any source."
+msgstr "你关注的频道会显示在这里，正在直播的排在前面，来源不限。"
+
+#: ui/pages/live-parts.slint:24
+msgid "Watch and broadcast"
+msgstr "观看与开播"
+
+#: ui/pages/live-parts.slint:38
+msgctxt "terminal"
+msgid "mode"
+msgstr "模式"
+
+#: ui/pages/live-parts.slint:39 ui/pages/live-parts.slint:239
+msgctxt "terminal"
+msgid "source"
+msgstr "来源"
+
+#: ui/pages/live-parts.slint:40
+msgctxt "terminal"
+msgid "plays"
+msgstr "播放位置"
+
+#: ui/pages/live-parts.slint:41 ui/pages/live-parts.slint:236
+msgctxt "terminal"
+msgid "status"
+msgstr "状态"
+
+#: ui/pages/live-parts.slint:42
+msgctxt "terminal"
+msgid "category"
+msgstr "分类"
+
+#: ui/pages/live-parts.slint:43
+msgctxt "terminal"
+msgid "language"
+msgstr "语言"
+
+#: ui/pages/live-parts.slint:44
+msgctxt "terminal"
+msgid "content"
+msgstr "内容"
+
+#: ui/pages/live-parts.slint:45
+msgctxt "terminal"
+msgid "anywhere"
+msgstr "不限"
+
+#: ui/pages/live-parts.slint:46
+msgctxt "terminal"
+msgid "in finchgram"
+msgstr "在 finchgram 中"
+
+#: ui/pages/live-parts.slint:47
+msgctxt "terminal"
+msgid "on its site"
+msgstr "在它的网站上"
+
+#: ui/pages/live-parts.slint:48
+msgctxt "terminal"
+msgid "any"
+msgstr "不限"
+
+#: ui/pages/live-parts.slint:49
+msgctxt "terminal"
+msgid "mature-rated"
+msgstr "限制级"
+
+#: ui/pages/live-parts.slint:50
+msgctxt "terminal"
+msgid "not integrated yet"
+msgstr "尚未接入"
+
+#: ui/pages/live-parts.slint:51
+msgctxt "terminal"
+msgid "live · confirmed"
+msgstr "直播中 · 已确认"
+
+#: ui/pages/live-parts.slint:52
+msgctxt "terminal"
+msgid "not confirmed / unknown"
+msgstr "未确认 / 未知"
+
+#: ui/pages/live-parts.slint:53
+msgctxt "terminal"
+msgid "offline"
+msgstr "未开播"
+
+#: ui/pages/live-parts.slint:54
+msgctxt "terminal"
+msgid "nothing followed yet"
+msgstr "还没有关注任何频道"
+
+#: ui/pages/live-parts.slint:55
+msgctxt "terminal"
+msgid "send to"
+msgstr "推流到"
+
+#: ui/pages/live-parts.slint:56
+msgctxt "terminal"
+msgid "send with"
+msgstr "推流工具"
+
+#: ui/pages/live-parts.slint:57
+msgctxt "terminal"
+msgid "add"
+msgstr "添加"
+
+#: ui/pages/live-parts.slint:58
+msgctxt "terminal"
+msgid "broadcast to"
+msgstr "推流目标"
+
+#: ui/pages/live-parts.slint:59
+msgctxt "terminal"
+msgid "private servers"
+msgstr "私有服务器"
+
+#: ui/pages/live-parts.slint:60
+msgctxt "terminal"
+msgid "open a link"
+msgstr "打开链接"
+
+#: ui/pages/live-parts.slint:61
+msgctxt "terminal"
+msgid "submit a stream"
+msgstr "提交直播"
+
+#: ui/pages/live-parts.slint:63
+msgctxt "terminal"
+msgid "FinchGram (built in)"
+msgstr "FinchGram（内置）"
+
+#: ui/pages/live-parts.slint:76
+msgid "Send to OBS"
+msgstr "发送到 OBS"
+
+#: ui/pages/live-parts.slint:77
+msgid "Start in OBS"
+msgstr "在 OBS 中开始"
+
+#: ui/pages/live-parts.slint:80
+msgid "Channels from every source in one list, live first"
+msgstr "所有来源的频道集中在一个列表里，正在直播的排在前面"
+
+#: ui/pages/live-parts.slint:83
+msgid "Not live"
+msgstr "未在直播"
+
+#: ui/pages/live-parts.slint:85
+msgid "You don’t follow anything yet. Follow channels from Discover, or open a link and follow it; they gather here, from any source."
+msgstr "你还没有关注任何频道。可以在“发现”里关注频道，也可以打开链接后关注；不论来自哪个来源，都会汇集到这里。"
+
+#: ui/pages/live-parts.slint:88
+msgid "Kept on this Mac, in FinchGram’s database. Following here doesn’t follow on Twitch, YouTube or anywhere else, and needs no account there."
+msgstr "保存在这台 Mac 上 FinchGram 的数据库里。在这里关注，并不会在 Twitch、YouTube 或其他任何地方关注它，也不需要那里的账号。"
+
+#: ui/pages/live-parts.slint:90
+msgid "Some sources are behind"
+msgstr "部分来源滞后"
+
+#: ui/pages/live-parts.slint:94
+msgid "Unfollow"
+msgstr "取消关注"
+
+#: ui/pages/live-parts.slint:106
+msgid "Opening {}…"
+msgstr "正在打开 {}…"
+
+#: ui/pages/live-parts.slint:108
+msgid "Recognized {} · {} server"
+msgstr "已识别 {} · {} 服务器"
+
+#: ui/pages/live-parts.slint:111
+msgid "Asked for the stream address · /hls/stream.m3u8"
+msgstr "已请求直播流地址 · /hls/stream.m3u8"
+
+#: ui/pages/live-parts.slint:112
+msgid "Asked for the stream address · HLS playlist from the API"
+msgstr "已请求直播流地址 · 通过 API 获取 HLS 播放列表"
+
+#: ui/pages/live-parts.slint:113
+msgid "Asked for the stream address · direct stream"
+msgstr "已请求直播流地址 · 链接本身就是直播流"
+
+#: ui/pages/live-parts.slint:115
+msgid "Connecting"
+msgstr "正在连接"
+
+#: ui/pages/live-parts.slint:116 ui/pages/live-parts.slint:176
+msgid "Buffering"
+msgstr "正在缓冲"
+
+#: ui/pages/live-parts.slint:117
+msgid "Found {} on Telegram"
+msgstr "在 Telegram 上找到了 {}"
+
+#: ui/pages/live-parts.slint:118
+msgid "Joined as a viewer · muted, no camera"
+msgstr "已作为观众加入 · 静音，不开摄像头"
+
+#: ui/pages/live-parts.slint:119
+msgid "Asked Telegram for the stream · one-second segments"
+msgstr "已向 Telegram 请求直播流 · 每段一秒"
+
+#: ui/pages/live-parts.slint:120
+msgid "FinchGram saves the channel’s own address and asks it for a stream address each time."
+msgstr "FinchGram 保存的是频道本身的地址，每次都会向它重新请求直播流地址。"
+
+#: ui/pages/live-parts.slint:123
+msgid "{} is offline"
+msgstr "{} 未开播"
+
+#: ui/pages/live-parts.slint:125
+msgid "Last live {}."
+msgstr "{}直播过。"
+
+#: ui/pages/live-parts.slint:125
+msgid "Not seen live yet."
+msgstr "还没有直播记录。"
+
+#: ui/pages/live-parts.slint:127
+msgid "Replays, if the channel keeps them, are on its PeerTube page."
+msgstr "如果频道保留了回放，可以在它的 PeerTube 页面上观看。"
+
+#: ui/pages/live-parts.slint:129
+msgid "While you follow it, FinchGram checks every 2 minutes and puts it at the top of Following when it starts."
+msgstr "只要你关注着它，FinchGram 就会每 2 分钟检查一次，在它开播时把它放到“已关注”的最上面。"
+
+#: ui/pages/live-parts.slint:131
+msgid "Open channel page"
+msgstr "打开频道页面"
+
+#: ui/pages/live-parts.slint:132
+msgid "Channel page"
+msgstr "频道页面"
+
+#: ui/pages/live-parts.slint:133
+msgid "The stream address stopped working"
+msgstr "直播流地址失效了"
+
+#: ui/pages/live-parts.slint:135
+msgid "{} stopped answering at the stream address it gave — those expire. FinchGram is asking the channel for a new one."
+msgstr "{} 给出的直播流地址已经没有响应了，这类地址会过期。FinchGram 正在向频道请求新的地址。"
+
+#: ui/pages/live-parts.slint:136
+msgid "The stream address stopped answering — those expire. FinchGram is asking the channel for a new one."
+msgstr "直播流地址已经没有响应了，这类地址会过期。FinchGram 正在向频道请求新的地址。"
+
+#: ui/pages/live-parts.slint:139
+msgid "FinchGram keeps the channel’s own address, never the temporary one, so trying again starts from the channel."
+msgstr "FinchGram 只保存频道本身的地址，从不保存临时地址，所以重试会从频道重新开始。"
+
+#: ui/pages/live-parts.slint:143
+msgid "{} plays in {}’s own player"
+msgstr "{} 只能用 {} 自己的播放器播放"
+
+#: ui/pages/live-parts.slint:146
+msgid "{0} doesn’t let other apps play its streams. Watch it on {0} in your browser; here it keeps its place in Following, with its live status."
+msgstr "{0} 不允许其他应用播放它的直播。请在浏览器里到 {0} 上观看；在这里，它仍会留在“已关注”中，并显示直播状态。"
+
+#: ui/pages/live-parts.slint:149
+msgid "{} plays on {}"
+msgstr "{} 在 {} 上播放"
+
+#: ui/pages/live-parts.slint:152
+msgid "FinchGram shows when it’s live; the stream itself plays on {}’s site."
+msgstr "FinchGram 会显示它是否在直播；直播本身要在 {} 的网站上播放。"
+
+#: ui/pages/live-parts.slint:155
+msgid "This stream needs a sign-in"
+msgstr "这场直播需要登录"
+
+#: ui/pages/live-parts.slint:157
+msgid "{} wants a user name and password."
+msgstr "{} 需要用户名和密码。"
+
+#: ui/pages/live-parts.slint:159
+msgid "Add as a private server…"
+msgstr "添加为私有服务器…"
+
+#: ui/pages/live-parts.slint:160
+msgid "Marked mature by its source"
+msgstr "来源已将它标记为限制级"
+
+#: ui/pages/live-parts.slint:162
+msgid "{} marks this stream mature. Streams marked mature are hidden in Discover; Settings › Live changes that."
+msgstr "{} 把这场直播标记为限制级。标记为限制级的直播在“发现”中会被隐藏；可以在“设置 › 直播”中更改。"
+
+#: ui/pages/live-parts.slint:164
+msgid "I’m 18 or older"
+msgstr "我已年满 18 岁"
+
+#: ui/pages/live-parts.slint:167
+msgid "The directory doesn’t list sexually explicit streams. FinchGram never records or re-shares a stream."
+msgstr "目录不收录色情直播。FinchGram 从不录制或转发任何直播。"
+
+#: ui/pages/live-parts.slint:171
+msgid "Telegram sends this live stream over WebRTC, from a phone’s camera, and FinchGram doesn’t have WebRTC. Streams sent from OBS, and live streams with a large audience, play here."
+msgstr "Telegram 用 WebRTC 传送这场来自手机摄像头的直播，而 FinchGram 没有 WebRTC。用 OBS 推流的直播，以及观众很多的直播，都能在这里播放。"
+
+#: ui/pages/live-parts.slint:173
+msgid "Live status and the number watching come from your Telegram account."
+msgstr "直播状态和观看人数来自你的 Telegram 账号。"
+
+#: ui/pages/live-parts.slint:174
+msgid "Couldn’t play {}"
+msgstr "无法播放 {}"
+
+#: ui/pages/live-parts.slint:175
+msgid "Slow connection — the stream stalled, and FinchGram keeps trying."
+msgstr "网络较慢：直播卡住了，FinchGram 会继续尝试。"
+
+#: ui/pages/live-parts.slint:177
+msgid "audio only"
+msgstr "仅音频"
+
+#: ui/pages/live-parts.slint:179
+msgid "ON AIR"
+msgstr "直播中"
+
+#: ui/pages/live-parts.slint:180
+msgid "{} · Go live"
+msgstr "{} · 回到直播"
+
+#: ui/pages/live-parts.slint:190
+msgid "Quality · offered by the server"
+msgstr "画质 · 由服务器提供"
+
+#: ui/pages/live-parts.slint:191
+msgid "Auto · {}"
+msgstr "自动 · {}"
+
+#: ui/pages/live-parts.slint:191
+msgid "Auto"
+msgstr "自动"
+
+#: ui/pages/live-parts.slint:192
+msgid "now {}"
+msgstr "当前 {}"
+
+#: ui/pages/live-parts.slint:193
+msgid "Show chat"
+msgstr "显示聊天"
+
+#: ui/pages/live-parts.slint:194
+msgid "Hide chat"
+msgstr "隐藏聊天"
+
+#: ui/pages/live-parts.slint:195
+msgid "Pop out"
+msgstr "小窗播放"
+
+#: ui/pages/live-parts.slint:196
+msgid "Full screen"
+msgstr "全屏"
+
+#: ui/pages/live-parts.slint:199
+msgctxt "terminal"
+msgid "[▸ play]"
+msgstr "[▸ 播放]"
+
+#: ui/pages/live-parts.slint:199
+msgctxt "terminal"
+msgid "[❚❚ pause]"
+msgstr "[❚❚ 暂停]"
+
+#: ui/pages/live-parts.slint:201
+msgctxt "terminal"
+msgid "live"
+msgstr "直播"
+
+#: ui/pages/live-parts.slint:201
+msgctxt "terminal"
+msgid "[go live]"
+msgstr "[回到直播]"
+
+#: ui/pages/live-parts.slint:204
+msgctxt "terminal"
+msgid "[muted]"
+msgstr "[已静音]"
+
+#: ui/pages/live-parts.slint:204
+msgctxt "terminal"
+msgid "[vol {}]"
+msgstr "[音量 {}]"
+
+#: ui/pages/live-parts.slint:206
+msgctxt "terminal"
+msgid "[chat]"
+msgstr "[聊天]"
+
+#: ui/pages/live-parts.slint:207
+msgctxt "terminal"
+msgid "[pop out]"
+msgstr "[小窗]"
+
+#: ui/pages/live-parts.slint:208
+msgctxt "terminal"
+msgid "[full]"
+msgstr "[全屏]"
+
+#: ui/pages/live-parts.slint:209
+msgctxt "terminal"
+msgid "unfollow"
+msgstr "取消关注"
+
+#: ui/pages/live-parts.slint:209
+msgctxt "terminal"
+msgid "follow"
+msgstr "关注"
+
+#: ui/pages/live-parts.slint:210
+msgctxt "terminal"
+msgid "page"
+msgstr "频道页"
+
+#: ui/pages/live-parts.slint:215
+msgid "Viewers not shared by {}"
+msgstr "{} 未公开观众人数"
+
+#: ui/pages/live-parts.slint:218
+msgid "Receiving the stream now"
+msgstr "正在接收直播流"
+
+#: ui/pages/live-parts.slint:219
+msgid "Watch here · Plays in FinchGram"
+msgstr "在这里观看 · 在 FinchGram 中播放"
+
+#: ui/pages/live-parts.slint:221
+msgid "Comments from Telegram · free ones sent here, paid ones from Telegram’s apps"
+msgstr "来自 Telegram 的评论 · 免费评论在这里发送，付费评论请用 Telegram 官方应用"
+
+#: ui/pages/live-parts.slint:222
+msgid "Chat from {} · read and send"
+msgstr "来自 {} 的聊天 · 可查看和发送"
+
+#: ui/pages/live-parts.slint:222
+msgid "No chat on {}"
+msgstr "{} 上没有聊天"
+
+#: ui/pages/live-parts.slint:225
+msgid "On air · {}"
+msgstr "直播中 · {}"
+
+#: ui/pages/live-parts.slint:226
+msgid "Not confirmed · {}"
+msgstr "未确认 · {}"
+
+#: ui/pages/live-parts.slint:227
+msgid "Status unknown · {}"
+msgstr "状态未知 · {}"
+
+#: ui/pages/live-parts.slint:228
+msgid "Off air · {}"
+msgstr "未开播 · {}"
+
+#: ui/pages/live-parts.slint:230
+msgid "on air for {}"
+msgstr "已直播 {}"
+
+#: ui/pages/live-parts.slint:232
+msgid "{} · {}."
+msgstr "{} · {}。"
+
+#: ui/pages/live-parts.slint:232
+msgid "Plays on {}"
+msgstr "在 {} 上播放"
+
+#: ui/pages/live-parts.slint:232
+msgid "Plays in FinchGram, straight from the server"
+msgstr "在 FinchGram 中播放，直接来自服务器"
+
+#: ui/pages/live-parts.slint:233
+msgid "chat from {}, read and send"
+msgstr "来自 {} 的聊天，可查看和发送"
+
+#: ui/pages/live-parts.slint:233
+msgid "no chat on this source"
+msgstr "这个来源没有聊天"
+
+#: ui/pages/live-parts.slint:235
+msgctxt "terminal"
+msgid "title"
+msgstr "标题"
+
+#: ui/pages/live-parts.slint:237
+msgctxt "terminal"
+msgid "stream"
+msgstr "直播流"
+
+#: ui/pages/live-parts.slint:238
+msgctxt "terminal"
+msgid "chat"
+msgstr "聊天"
+
+#: ui/pages/live-parts.slint:240
+msgctxt "terminal"
+msgid "none on this source"
+msgstr "这个来源没有"
+
+#: ui/pages/live-parts.slint:241
+msgctxt "terminal"
+msgid "{} · read & send"
+msgstr "{} · 可查看和发送"
+
+#: ui/pages/live-parts.slint:242
+msgctxt "terminal"
+msgid "telegram · one-second segments"
+msgstr "telegram · 每段一秒"
+
+#: ui/pages/live-parts.slint:244
+msgid "Chat"
+msgstr "聊天"
+
+#: ui/pages/live-parts.slint:245
+msgid "From {}. FinchGram shows it and keeps none of it."
+msgstr "来自 {}。FinchGram 只显示，不保存任何内容。"
+
+#: ui/pages/live-parts.slint:246
+msgid "Chat as {}"
+msgstr "以 {} 的身份聊天"
+
+#: ui/pages/live-parts.slint:247
+msgctxt "terminal"
+msgid "say something"
+msgstr "说点什么"
+
+#: ui/pages/live-parts.slint:248
+msgid "Joining the chat…"
+msgstr "正在加入聊天…"
+
+#: ui/pages/live-parts.slint:249
+msgid "{} name: {}"
+msgstr "{} 昵称：{}"
+
+#: ui/pages/live-parts.slint:251
+msgid "A new name, then Enter"
+msgstr "输入新昵称，然后按 Enter"
+
+#: ui/pages/live-parts.slint:254
+msgid "Paused"
+msgstr "已暂停"
+
+#: ui/pages/live-parts.slint:255
+msgctxt "terminal"
+msgid "[play]"
+msgstr "[播放]"
+
+#: ui/pages/live-parts.slint:255
+msgctxt "terminal"
+msgid "[pause]"
+msgstr "[暂停]"
+
+#: ui/pages/live-parts.slint:256
+msgctxt "terminal"
+msgid "[unmute]"
+msgstr "[取消静音]"
+
+#: ui/pages/live-parts.slint:256
+msgctxt "terminal"
+msgid "[mute]"
+msgstr "[静音]"
+
+#: ui/pages/live-parts.slint:257
+msgctxt "terminal"
+msgid "[live]"
+msgstr "[直播]"
+
+#: ui/pages/live-parts.slint:258
+msgid "Back to Live"
+msgstr "回到直播页面"
+
+#: ui/pages/live-parts.slint:259
+msgid "Stop and close"
+msgstr "停止并关闭"
+
+#: ui/pages/live-parts.slint:262
+msgid "Open a link"
+msgstr "打开链接"
+
+#: ui/pages/live-parts.slint:264
+msgid "Play or follow a stream that isn’t in the directory. Nothing is submitted — what you open stays on this Mac."
+msgstr "播放或关注目录里没有的直播。不会提交任何内容，你打开的内容只保存在这台 Mac 上。"
+
+#: ui/pages/live-parts.slint:267
+msgid "FinchGram can open:"
+msgstr "FinchGram 可以打开："
+
+#: ui/pages/live-parts.slint:269
+msgid "Channel pages"
+msgstr "频道页面"
+
+#: ui/pages/live-parts.slint:270
+msgid "Direct streams"
+msgstr "直播流链接"
+
+#: ui/pages/live-parts.slint:271
+msgid "It recognizes the link as you type. For a server, it asks the server what it is."
+msgstr "输入时就会识别链接。如果是服务器，会向服务器询问它是什么。"
+
+#: ui/pages/live-parts.slint:272
+msgid "Asking {} what it is…"
+msgstr "正在询问 {} 是什么…"
+
+#: ui/pages/live-parts.slint:273
+msgid "Plays in FinchGram (sound only)"
+msgstr "在 FinchGram 中播放（只有声音）"
+
+#: ui/pages/live-parts.slint:275
+msgid "Plays on {}. FinchGram opens it in your browser."
+msgstr "在 {} 上播放。FinchGram 会在浏览器中打开它。"
+
+#: ui/pages/live-parts.slint:278
+msgid "This looks private — a sending address, or a link with a key in it. Keep it to yourself; FinchGram doesn’t open those here."
+msgstr "这看起来是私密链接：推流地址，或者带密钥的链接。请勿外传；FinchGram 不会在这里打开这类链接。"
+
+#: ui/pages/live-parts.slint:281
+msgid "Nothing FinchGram can play. If the page has its own player, open it in your browser."
+msgstr "没有 FinchGram 能播放的内容。如果这个页面有自己的播放器，请在浏览器中打开。"
+
+#: ui/pages/live-parts.slint:284
+msgid "The server didn’t answer: {}"
+msgstr "服务器没有响应：{}"
+
+#: ui/pages/live-parts.slint:284
+msgid "The server didn’t answer."
+msgstr "服务器没有响应。"
+
+#: ui/pages/live-parts.slint:287
+msgid "Saved connections"
+msgstr "已保存的连接"
+
+#: ui/pages/live-parts.slint:289
+msgid "Where you broadcast to, and private servers you watch from. Keys and passwords stay sealed in FinchGram’s database and are shown only when you ask."
+msgstr "你推流的目标，以及你观看用的私有服务器。密钥和密码封存在 FinchGram 的数据库里，只在你要求时才显示。"
+
+#: ui/pages/live-parts.slint:291
+msgid "Submit a stream"
+msgstr "提交直播"
+
+#: ui/pages/live-parts.slint:292
+msgid "Suggest a public channel for the directory everyone using FinchGram sees."
+msgstr "建议把一个公开频道收录进所有 FinchGram 用户都能看到的目录。"
+
+#: ui/pages/live-parts.slint:295
+msgid "FinchGram asks Telegram whether it’s live"
+msgstr "FinchGram 会向 Telegram 查询它是否在直播"
+
+#: ui/pages/live-parts.slint:302
+msgid "OBS sends the stream; FinchGram gives it the destination."
+msgstr "由 OBS 推流，FinchGram 告诉它推流目标。"
+
+#: ui/pages/live-parts.slint:303
+msgid "From FinchGram"
+msgstr "用 FinchGram"
+
+#: ui/pages/live-parts.slint:304
+msgid "Use OBS"
+msgstr "用 OBS"
+
+#: ui/pages/live-parts.slint:307
+msgid "OBS does the capture, scenes and encoding. FinchGram hands it the destination and shows how the stream is doing, from OBS’s own numbers."
+msgstr "采集、场景和编码都由 OBS 完成。FinchGram 把推流目标交给它，并根据 OBS 自己的数据显示推流状况。"
+
+#: ui/pages/live-parts.slint:309
+msgid "Connected to OBS"
+msgstr "已连接 OBS"
+
+#: ui/pages/live-parts.slint:310
+msgid "Send the destination"
+msgstr "发送推流目标"
+
+#: ui/pages/live-parts.slint:311
+msgid "Start streaming"
+msgstr "开始推流"
+
+#: ui/pages/live-parts.slint:312
+msgid "Or type it into OBS › Settings › Stream yourself:"
+msgstr "也可以自己填进 OBS › 设置 › 直播："
+
+#: ui/pages/live-parts.slint:313
+msgid "Destination"
+msgstr "推流目标"
+
+#: ui/pages/live-parts.slint:314
+msgid "New destination…"
+msgstr "新建推流目标…"
+
+#: ui/pages/live-parts.slint:315
+msgid "Live story · RTMPS"
+msgstr "直播动态 · RTMPS"
+
+#: ui/pages/live-parts.slint:316
+msgid "Channel live stream · RTMPS"
+msgstr "频道直播 · RTMPS"
+
+#: ui/pages/live-parts.slint:318
+msgid "Resolution, bitrate and sound are set in OBS. FinchGram only gives the destination; the stream starts when you start it in OBS."
+msgstr "分辨率、码率和声音都在 OBS 里设置。FinchGram 只提供推流目标；你在 OBS 里开始推流，直播才会开始。"
+
+#: ui/pages/live.slint:1024
+msgid "Content in Live"
+msgstr "直播内容"
+
+#: ui/pages/live.slint:1026 ui/pages/settings.slint:965
+msgid "Live sorts what it lists into four classes. Only the first two can appear in this version; what you can change here is whether mature-rated streams show."
+msgstr "“直播”把列出的内容分为四类。此版本中只会出现前两类；你在这里能改的，是要不要显示限制级直播。"
+
+#: ui/pages/live.slint:1028 ui/pages/settings.slint:970
+msgid "Mature-rated: hidden"
+msgstr "限制级：隐藏"
+
+#: ui/pages/live.slint:1029
+msgid "Default. They don’t appear in Discover, search or suggestions."
+msgstr "默认。它们不会出现在“发现”、搜索结果或搜索建议中。"
+
+#: ui/pages/live.slint:1030 ui/pages/settings.slint:978
+msgid "Mature-rated: shown, marked “Mature”"
+msgstr "限制级：显示，并标注“限制级”"
+
+#: ui/pages/live.slint:1031 ui/pages/settings.slint:979
+msgid "They appear with a Mature tag; opening one asks first."
+msgstr "它们会带着“限制级”标签显示，打开前会先询问。"
+
+#: ui/pages/live.slint:1033
+msgid "I’m 18 or older — a self-declaration, accepted only where the law doesn’t require verification"
+msgstr "我已年满 18 岁（本人声明，仅在法律不要求年龄验证的地区有效）"
+
+#: ui/pages/live.slint:1035 ui/pages/settings.slint:998
+msgid "General — listed and shown by default."
+msgstr "普通：默认列出并显示。"
+
+#: ui/pages/live.slint:1037 ui/pages/settings.slint:999
+msgid "Mature-rated (strong language, violence, gambling, horror — rated by the source) — listed, hidden until shown here."
+msgstr "限制级（粗口、暴力、赌博、恐怖，由来源评定）：会列出，但在这里选择显示之前一直隐藏。"
+
+#: ui/pages/live.slint:1040 ui/pages/settings.slint:1000
+msgid "Sexually explicit — not in the directory in this version. Whether and how to list it is a pending policy decision, not a setting."
+msgstr "色情内容：此版本的目录不收录。是否收录、如何收录尚待政策决定，不是一项设置。"
+
+#: ui/pages/live.slint:1043 ui/pages/settings.slint:1001
+msgid "Prohibited (illegal content, including non-consensual or underage material) — never indexed, shown or played."
+msgstr "禁止内容（违法内容，包括未经同意或涉及未成年人的内容）：绝不收录、显示或播放。"
+
+#: ui/pages/live.slint:1045
+msgid "Settings › Live › Content"
+msgstr "设置 › 直播 › 内容"
+
+#: ui/pages/settings.slint:962
+msgid "Content"
+msgstr "内容"
+
+#: ui/pages/settings.slint:971
+msgid "Default. They don't appear in Discover, search or suggestions."
+msgstr "默认。它们不会出现在“发现”、搜索结果或搜索建议中。"
+
+#: ui/pages/settings.slint:987
+msgid "I'm 18 or older — a self-declaration, accepted only where the law doesn't require verification"
+msgstr "我已年满 18 岁（本人声明，仅在法律不要求年龄验证的地区有效）"
+
+#: ui/pages/settings.slint:1025
+msgid "Languages"
+msgstr "语言"
+
+#: ui/pages/settings.slint:1028
+msgid "Recommended puts live streams in these languages first. None is chosen until you choose."
+msgstr "“推荐”会把这些语言的直播排在前面。在你选择之前，不会预选任何语言。"
+
+#: ui/toolbox.slint:164
+msgid "Live has its own place now"
+msgstr "直播现在有自己的入口了"
+
+#: ui/pages/live-parts.slint:188
+msgctxt "sound"
+msgid "Mute"
+msgstr "静音"
+
+#: ui/pages/live-parts.slint:189
+msgctxt "sound"
+msgid "Unmute"
+msgstr "取消静音"
+
+#: ui/pages/live-discover.slint:86 ui/pages/live-discover.slint:146
+msgctxt "status"
+msgid "Live"
+msgstr "直播中"

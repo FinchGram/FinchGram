@@ -10,6 +10,7 @@ mod toolbox;
 mod fonts;
 mod i18n;
 mod images;
+mod live;
 mod mcp;
 mod music;
 mod platform;
@@ -154,6 +155,8 @@ fn main() -> Result<(), slint::PlatformError> {
     telegram::connect_chat_order(&ui, settings.clone());
     telegram::connect_chat_info(&ui, settings.clone());
     toolbox::connect(&ui, settings.clone());
+    // The Live view's directory, Following and Watch (src/live/); its follows are the database's.
+    live::connect(&ui, settings.clone());
     // Voice input (src/speech/): its key is the database's, so after it opens.
     speech::connect(&ui, settings.clone());
     state.on_check_launch_at_login({

@@ -9,11 +9,12 @@
 //! when a server is added (src/downloads/), never a tool of its own. Music (src/music/) is a
 //! tool of its own, a player whose sources are servers the user adds inside it: not a family,
 //! and no server's client by name (the maintainer's word of 2026-10-31). The tools the design
-//! draws but FinchGram does not have yet (live streams, Jellyfin, keyword hiding, scheduled
-//! messages) are listed faded, and cannot be pinned; so is Emby, which the maintainer added
-//! beside Jellyfin on 2026-10-24, beyond the design's round. Since 2026-10-31 the design's Media
-//! category is no more: Music, Live streams, Jellyfin and Emby are each a category of their own
-//! ("全部打散", the maintainer's word). The AI category holds AI access and voice
+//! draws but FinchGram does not have yet (Jellyfin, keyword hiding, scheduled messages) are listed
+//! faded, and cannot be pinned; so is Emby, which the maintainer added beside Jellyfin on
+//! 2026-10-24, beyond the design's round. Since 2026-10-31 the design's Media category is no more:
+//! Music, Jellyfin and Emby are each a category of their own ("全部打散", the maintainer's word).
+//! Live is no tool any more but the window's fourth view (the canvas "FinchGram Desktop 直播",
+//! round 13): searching the toolbox for it gives a line that leads there. The AI category holds AI access and voice
 //! input (src/speech/, a tool since 2026-10-26 at the maintainer's word: not Telegram's, and off
 //! until the user turns it on), each a panel of the toolbox's own: its card, or its pinned button,
 //! shows the panel in the sections' place, with a link back to the category's cards. The
@@ -43,10 +44,9 @@ struct Tool {
 }
 
 /// The tools, in the toolbox's order.
-const TOOLS: [Tool; 9] = [
+const TOOLS: [Tool; 8] = [
     Tool { id: "downloads", category: "transfers", icon: "download-simple", sigil: "↓", key: "⌥⌘L", built: true, switchable: false, family: true },
     Tool { id: "music", category: "music", icon: "music-note", sigil: "♪", key: "⌥⌘M", built: true, switchable: false, family: false },
-    Tool { id: "live", category: "live", icon: "broadcast", sigil: "◉", key: "", built: true, switchable: false, family: false },
     Tool { id: "jellyfin", category: "jellyfin", icon: "film-reel", sigil: "▷", key: "", built: false, switchable: false, family: false },
     Tool { id: "emby", category: "emby", icon: "television", sigil: "■", key: "", built: false, switchable: false, family: false },
     Tool { id: "hiding", category: "messages", icon: "funnel-simple", sigil: "⊘", key: "", built: false, switchable: false, family: false },
@@ -60,16 +60,15 @@ const PANELS: [&str; 2] = ["ai-access", "voice-input"];
 
 /// The categories, in the column's order: id, icon, Broadsheet's letter. The last is the bar's
 /// section, where tools are pinned.
-const CATEGORIES: [(&str, &str, &str); 9] = [
+const CATEGORIES: [(&str, &str, &str); 8] = [
     ("accounts", "users-three", "A"),
     ("transfers", "arrows-down-up", "B"),
     ("music", "music-note", "C"),
-    ("live", "broadcast", "D"),
-    ("jellyfin", "film-reel", "E"),
-    ("emby", "television", "F"),
-    ("messages", "chat-text", "G"),
-    ("ai", "sparkle", "H"),
-    ("bar", "push-pin", "I"),
+    ("jellyfin", "film-reel", "D"),
+    ("emby", "television", "E"),
+    ("messages", "chat-text", "F"),
+    ("ai", "sparkle", "G"),
+    ("bar", "push-pin", "H"),
 ];
 
 /// The protocols of the downloads family: id, name, default port, whether FinchGram speaks it
@@ -132,7 +131,7 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
         }
     });
     toolbox.on_pin(move |id, on| {
-        if !TOOLS.iter().any(|tool| tool.id == id.as_str() && tool.built && pinnable(tool.id)) {
+        if !TOOLS.iter().any(|tool| tool.id == id.as_str() && tool.built) {
             return;
         }
         let settings = VIEW.with(|view| view.borrow().as_ref().map(|view| view.settings.clone()));
@@ -154,6 +153,14 @@ pub fn connect(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
                 "ai-access" => ui.global::<AiAccess>().invoke_set_on(on),
                 "voice-input" => ui.global::<Voice>().invoke_set_on(on),
                 _ => {}
+            }
+        }
+    });
+    toolbox.on_open_live({
+        let ui = ui.as_weak();
+        move || {
+            if let Some(ui) = ui.upgrade() {
+                open_live(&ui);
             }
         }
     });
@@ -233,23 +240,17 @@ fn open(ui: &MainWindow) {
     toolbox.set_opened(toolbox.get_opened() + 1);
 }
 
-/// Whether a tool may stand on the bar: not Live streams, which has its place on the left already,
-/// beside the chats, the channels and the bots.
-fn pinnable(id: &str) -> bool {
-    id != "live"
+/// The Live view, the window's fourth view (the toolbox's line for it, the menu's ⇧⌘L).
+pub fn open_live(ui: &MainWindow) {
+    ui.global::<Toolbox>().set_open(false);
+    ui.global::<AppState>().set_page(Page::Chats);
+    let live = ui.global::<crate::Live>();
+    live.set_show_requests(live.get_show_requests() + 1);
 }
 
 /// The tool's page comes and the toolbox shuts; a tool that is a panel of the toolbox's own (AI
 /// access, voice input) has the toolbox open at its panel instead.
 fn open_tool(ui: &MainWindow, id: &str) {
-    if id == "live" {
-        // Live streams are a view of the chat window's own (docs/live-streams.md): the theme opens it.
-        ui.global::<Toolbox>().set_open(false);
-        ui.global::<AppState>().set_page(Page::Chats);
-        let live = ui.global::<crate::Live>();
-        live.set_show_requests(live.get_show_requests() + 1);
-        return;
-    }
     if id == "downloads" || id == "music" {
         ui.global::<Toolbox>().set_open(false);
         ui.global::<AppState>().set_page(if id == "music" { Page::Music } else { Page::Downloads });
@@ -303,7 +304,6 @@ fn label_of(words: &ToolboxWords, category: &str) -> SharedString {
         "accounts" => words.invoke_accounts(),
         "transfers" => words.invoke_transfers(),
         "music" => words.invoke_music(),
-        "live" => words.invoke_live(),
         "jellyfin" => words.invoke_jellyfin(),
         "emby" => words.invoke_emby(),
         "messages" => words.invoke_messages(),
@@ -329,6 +329,10 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, panel: &str, query: 
     let words = ui.global::<ToolboxWords>();
     let needle = query.trim().to_lowercase();
     let searching = !needle.is_empty();
+    // Live is the window's fourth view now: words that name it lead there.
+    let live_name = ui.global::<crate::LiveWords>().invoke_view().to_lowercase();
+    let live_hint = searching && ["live", "直播", live_name.as_str()].iter().any(|name| name.starts_with(&needle) || needle.contains(name));
+    ui.global::<Toolbox>().set_live_hint(live_hint);
     let matches = |texts: &[&str]| !searching || texts.iter().any(|text| text.to_lowercase().contains(&needle));
 
     let tools: Vec<(ToolRow, bool)> = TOOLS
@@ -337,7 +341,6 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, panel: &str, query: 
             let (name, line): (SharedString, SharedString) = match tool.id {
                 "downloads" => (words.invoke_downloads(), words.invoke_downloads_line()),
                 "music" => (words.invoke_music(), words.invoke_music_line()),
-                "live" => (words.invoke_live(), words.invoke_live_line()),
                 "jellyfin" => (words.invoke_jellyfin(), words.invoke_jellyfin_line()),
                 "emby" => (words.invoke_emby(), words.invoke_emby_line()),
                 "hiding" => (words.invoke_hiding(), words.invoke_hiding_line()),
@@ -358,7 +361,7 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, panel: &str, query: 
                 icon: tool.icon.into(),
                 sigil: tool.sigil.into(),
                 key: tool.key.into(),
-                pinned: tool.built && pinnable(tool.id) && pinned.iter().any(|id| id == tool.id),
+                pinned: tool.built && pinned.iter().any(|id| id == tool.id),
                 grey: !tool.built,
                 switchable: tool.switchable,
                 family: tool.family,
@@ -394,7 +397,7 @@ fn fill(ui: &MainWindow, pinned: &[String], category: &str, panel: &str, query: 
         if id == "bar" {
             // Every tool that can stand on the bar, with whether it does; searching finds them by name.
             let its: Vec<ToolRow> =
-                tools.iter().filter(|(tool, hit)| !tool.grey && pinnable(&tool.id) && (!searching || *hit)).map(|(tool, _)| tool.clone()).collect();
+                tools.iter().filter(|(tool, hit)| !tool.grey && (!searching || *hit)).map(|(tool, _)| tool.clone()).collect();
             let on_the_bar = tools.iter().filter(|(tool, _)| tool.pinned).count() as i32;
             let found = its.len() as i32;
             if searching {

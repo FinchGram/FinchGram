@@ -21,7 +21,7 @@ the first version, taken on 2026-11-07 (A first version, as chosen, below). The 
 - The pinned TDLib, 1.8.67, carries the whole live API (next section). The app speaks to
   `finchgram-tdlib` in JSON, one object per line over stdin and stdout; TDLib's `bytes` come
   base64-encoded, so a second of video (a few hundred KB) is a long line, nothing more.
-- The player is libmpv with an FFmpeg built without network protocols, encoders or muxers
+- The player is libmpv with an FFmpeg built without network protocols (until mpv-0.41.0-2, which has them for the Live view), encoders or muxers
   (`vendor/mpv/build.sh`). mpv cannot fetch an HLS or RTMP address itself; the app fetches and
   hands bytes through its `finchgram://` stream (`src/player/stream.rs`), which already serves a
   file of unknown length (`size` answers `MPV_ERROR_UNSUPPORTED`) and need not seek. Music
@@ -215,9 +215,11 @@ and subtitles. Headers: 5.8% of iptv-org's streams want a `User-Agent` and 1.8% 
 Referer naming a page the user never opened is a hotlink bypass, the one thing that turns a player
 into a circumvention tool, so the app sends a truthful User-Agent of its own and takes per-stream
 headers only as fields the user types, never from a shipped list. Since FFmpeg's own HLS demuxer
-needs FFmpeg's network (`--disable-network` in the vendored build), the client is the app's:
-`m3u8-rs` 6.0.1 (2026-07) parses playlists, ureq fetches on a thread as in Music; Streamlink is
-the closest precedent of an app-side HLS client piping into mpv.
+needs FFmpeg's network (`--disable-network` in the vendored build then), the client was to be the
+app's: `m3u8-rs` 6.0.1 (2026-07) parses playlists, ureq fetches on a thread as in Music;
+Streamlink is the closest precedent of an app-side HLS client piping into mpv. Round 12 of the
+canvas decided otherwise: the vendored FFmpeg has network code since mpv-0.41.0-2, for the Live
+view's players alone (docs/architecture.md, Media playback).
 
 ## Building blocks, in Rust and on macOS
 
@@ -297,6 +299,61 @@ chat，channel，bot，对吧，加一个live stories") and built the same day, 
   marked as seen (conversation.rs) until the view closes; closing the view leaves the stream (the
   user's own stream goes on), so that nobody is counted as a viewer who is not watching.
 
+## The second version: a live client over every source
+
+Asked for on 2026-11-07 ("我其实希望你实现这个 … 既然这有telegram自带的 也有我们提供的 干脆做成这样，不好吗"):
+the maintainer's canvas **FinchGram Desktop 直播**, rounds 10 to 12, with round 13 (Telegram as a
+source), claude.ai/artifact/RxoD91XwY8uqgZNNMGcuCB. Built from 2026-11-08 in every theme, for one
+release with everything in it.
+
+- **The view** stays the window's fourth: the Live column has Discover, Following, Broadcast and
+  Connections, with the followed channels under them (live first, then the rest); Watch is a state
+  over them. It needs the Telegram login, as the rest of the window does: the canvas had it open
+  without one, and the maintainer overruled that ("必须要求登录 … 你都没登录，你怎么进去telegram得节目").
+  The toolbox's Live card is gone; searching the toolbox for Live gives a line that leads to the
+  view, and the menu has Live at ⇧⌘L.
+- **The directory** (services.finchgram.com/live/api/v1, [live-directory.md](live-directory.md)) is
+  read on a worker thread (`src/live/directory.rs`) with ETags: Discover's search (modes, filters
+  with their counts, sorts, cursor pages), the suggestions while typing (200 ms after the last key),
+  the sources' state, a followed channel by id, a pasted link's host or handle. Nothing about the
+  user goes out: a plain GET, `User-Agent: FinchGram/<version>`, and the languages chosen in
+  Settings › Live as Accept-Language (none until chosen), which Recommended puts first.
+- **Cards** (`src/live/channel.rs`, the `LiveChannel` struct): the four statuses, the one action and
+  its reason (Watch here, Listen here, Try opening, Sign in to watch, Open on <source>,
+  Unavailable), the source's own viewer count or none, never an estimate. Thumbnails are fetched
+  from their sources (owncast.directory for Owncast, each PeerTube instance) into
+  ~/Documents/FinchGram/live_thumbnails, a day's worth, by a worker of their own; fetching them shows
+  those servers the user's address, as any picture of the web does.
+- **Watch** (`src/live/watch.rs`): the app asks the channel's source for the stream when it plays,
+  never the directory: an Owncast server's /api/status and /hls/stream.m3u8, a PeerTube channel's
+  live (video-channels/<name>/videos?isLive, then the video's playlist), an Icecast station's
+  stream, a submitted playlist. The live player plays it by its address, through the vendored
+  FFmpeg's network (mpv-0.41.0-2), which only the Live view's players may reach; its certificates
+  are checked against the Keychain's roots (`src/live/roots.rs` writes them for mbedTLS). Pause
+  keeps what comes meanwhile (mpv's cache) and "Go live" opens the stream again at the edge; the
+  quality menu lists the stream's variants. A Telegram channel of the directory is opened by its
+  username through TDLib and plays as the user's own live streams do. Owncast's chat is read and
+  sent beside the picture (`src/live/chat.rs`): FinchGram joins as an anonymous chat user under the
+  name Owncast gives, never the Telegram name, and keeps none of it.
+- **Left playing:** a stream goes on in the mini player when the user leaves Watch, over the chats
+  too; the pop-out puts it in a window of its own on top of every app (`src/live/popout.rs`, an
+  mpv of its own, since a window has its own OpenGL context). Telegram's streams stop with the view,
+  as before.
+- **Following** (`src/live/follows.rs`): the channels followed here are the database's
+  (`live_follows`, layout 9) and are asked about by id; the live streams the user follows on
+  Telegram count too, marked "Followed on Telegram", unfollowed there.
+- **The directory's Telegram channels** come as status unknown (the directory has no account to
+  ask): the ones on screen are asked of Telegram (`src/telegram/live_check.rs`), a username every
+  two seconds, waiting as long as Telegram asks when it limits; the answer stays on the Mac.
+- **Connections › Open a link:** a link is recognised by its form (a stream key or a token is
+  turned away; t.me opens through TDLib; Twitch, YouTube, Kick and Bilibili open in the browser;
+  an .m3u8, .mpd or rtsp:// plays), else looked up in the directory by its host alone, else its
+  server is asked what it is (Owncast's /api/config, a PeerTube video, Icecast's status page).
+- **Not in this version** (greyed where the canvas draws them): Twitch, YouTube, Kick and Bilibili
+  (no developer keys yet, terms not settled), saved private servers and Submit a stream, FinchGram's
+  own capture and other broadcast destinations, adult streams (not listed; the maintainer's
+  decision is open).
+
 ## The design
 
 Drawn on 2026-11-07 at the maintainer's word ("你自己直接画一个artifacts，把url记录下来就可以了"),
@@ -323,10 +380,8 @@ draws every one of them, light and dark (`cargo test screenshots -- --ignored`, 
    and each publisher's picture come apart, and have to be put together).
 2. Whether paid comments and tips are sent from FinchGram (Stars the account holds; levels from
    TDLib), and with what question before each.
-3. The later versions' sources. A directory of them has a contract since 2026-11-07
-   ([live-directory.md](live-directory.md)): read-only JSON of Telegram creators, Owncast and
-   PeerTube servers and broadcasters' streams, which the maintainer serves with Hono and anyone may
-   fork and run; FinchGram does not read one yet. Still open: whether lists the user brings come too.
+3. Which channels the directory reviews in first (none yet), and whether to write to Xiph about
+   reading its Icecast export (docs/live-directory.md, To decide).
 4. Whether going live from the Mac's own camera or screen is wanted, which decides whether an RTMP
    client and the VideoToolbox pipeline get built.
 

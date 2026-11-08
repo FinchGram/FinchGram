@@ -12,7 +12,7 @@ import { UnreadBadge, MentionBadge, UnreadDot } from "badges.slint";
 import { WorkbenchPalette as P } from "palette.slint";
 import { NewChat, NewDialog, ComposeWords } from "../compose.slint";
 import { ExtraWords } from "../extras.slint";
-import { Live, LiveWords } from "../live.slint";
+import { LiveWords } from "../live.slint";
 import { LiveList, LiveMark } from "../pages/live.slint";
 
 export enum WorkbenchView { chats, channels, bots, live, filters, scheduled }
@@ -21,6 +21,8 @@ export enum WorkbenchView { chats, channels, bots, live, filters, scheduled }
 // channel or chat, or a new contact (compose.slint).
 component SideHeading {
     in property <string> title;
+    // The title alone (the live view's column: "LIVE", as its canvas has it).
+    in property <bool> plain;
 
     HorizontalLayout {
         padding-left: 14px;
@@ -38,7 +40,7 @@ component SideHeading {
             overflow: elide;
             vertical-alignment: center;
         }
-        VerticalLayout {
+        if !root.plain: VerticalLayout {
             alignment: center;
             Rectangle {
                 width: 8px;
@@ -47,13 +49,13 @@ component SideHeading {
                 background: P.accent;
             }
         }
-        Text {
+        if !root.plain: Text {
             text: Account.name;
             color: P.faint;
             font-size: 11px;
             vertical-alignment: center;
         }
-        VerticalLayout {
+        if !root.plain: VerticalLayout {
             alignment: center;
             padding-left: 4px;
             pencil := Rectangle {
@@ -561,9 +563,10 @@ export component WorkbenchSidebar inherits Rectangle {
 
     VerticalLayout {
         SideHeading {
+            plain: root.view == WorkbenchView.live;
             title: root.view == WorkbenchView.channels ? @tr("Channels") + " · " + Chats.channels.length
                 : root.view == WorkbenchView.bots ? @tr("Bots") + " · " + (Chats.official-bots.length + Chats.bots.length)
-                : root.view == WorkbenchView.live ? LiveWords.view() + " · " + Live.count
+                : root.view == WorkbenchView.live ? LiveWords.view()
                 : @tr("Chats");
         }
 

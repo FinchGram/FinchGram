@@ -1,0 +1,655 @@
+// Small parts the live view's pages share (the canvas "FinchGram Desktop 直播", round 13): the
+// live mark, a source's chip, a channel's letter square and picture, the design's buttons, on the
+// page and over the picture, and what is not in this version; with the words of the column, Watch,
+// Following, Broadcast, Connections and the mini player that LiveWords and LiveDirectoryWords do
+// not have. Drawn once, in Look's colours and shapes, for the three themes.
+import { Look, AccountColors } from "../look.slint";
+import { Icon, Avatar } from "../widgets.slint";
+import { LiveWords, LiveSource, LiveChannel, LivePlay, LiveStatus, LiveDirectoryWords } from "../live.slint";
+// Discover's colours of a channel and of the canvas's hairlines, so that a channel looks the same
+// on every page of the view.
+import { DirectoryLook } from "live-cards.slint";
+
+// The words of the live view's column and pages that the data model's words do not have (the
+// canvas's, round 13, where it has them).
+export global LiveViewWords {
+    public pure function not-in-this-version() -> string { return @tr("Not in this version"); }
+
+    // The column.
+    public pure function live-count(count: int) -> string { return @tr("{} live", count); }
+    public pure function on-air() -> string { return @tr("On air"); }
+    public pure function following-live() -> string { return Look.broadsheet ? @tr("On air now") : @tr("Following · live"); }
+    public pure function not-live-now() -> string { return @tr("Not live now"); }
+    public pure function column-empty() -> string { return @tr("Channels you follow show up here, live ones first — from any source."); }
+    public pure function column-line() -> string { return @tr("Watch and broadcast"); }
+    // The column's line under a followed channel that is not live, or live without a title: where it
+    // is (its title, while live, is the column's own).
+    public pure function column-sub(channel: LiveChannel) -> string {
+        if channel.status == LiveStatus.offline {
+            return channel.last-live-minutes >= 0 ? @tr("last live {}", LiveDirectoryWords.ago(channel.last-live-minutes)) : @tr("Not seen live yet");
+        }
+        return LiveDirectoryWords.status-line(channel);
+    }
+    // Terminal's column: its tabs and its groups.
+    public pure function tab-discover() -> string { return "DISCOVER"; }
+    public pure function tab-following() -> string { return "FOLLOW"; }
+    public pure function tab-broadcast() -> string { return "CAST"; }
+    public pure function tab-connections() -> string { return "CONN"; }
+    public pure function facet-mode() -> string { return @tr("terminal" => "mode"); }
+    public pure function facet-source() -> string { return @tr("terminal" => "source"); }
+    public pure function facet-plays() -> string { return @tr("terminal" => "plays"); }
+    public pure function facet-status() -> string { return @tr("terminal" => "status"); }
+    public pure function facet-category() -> string { return @tr("terminal" => "category"); }
+    public pure function facet-language() -> string { return @tr("terminal" => "language"); }
+    public pure function facet-content() -> string { return @tr("terminal" => "content"); }
+    public pure function anywhere() -> string { return @tr("terminal" => "anywhere"); }
+    public pure function in-finchgram() -> string { return @tr("terminal" => "in finchgram"); }
+    public pure function on-its-site() -> string { return @tr("terminal" => "on its site"); }
+    public pure function any() -> string { return @tr("terminal" => "any"); }
+    public pure function mature-rated() -> string { return @tr("terminal" => "mature-rated"); }
+    public pure function not-integrated() -> string { return @tr("terminal" => "not integrated yet"); }
+    public pure function live-confirmed() -> string { return @tr("terminal" => "live · confirmed"); }
+    public pure function not-confirmed-unknown() -> string { return @tr("terminal" => "not confirmed / unknown"); }
+    public pure function offline() -> string { return @tr("terminal" => "offline"); }
+    public pure function nothing-followed() -> string { return @tr("terminal" => "nothing followed yet"); }
+    public pure function send-to() -> string { return @tr("terminal" => "send to"); }
+    public pure function send-with() -> string { return @tr("terminal" => "send with"); }
+    public pure function add() -> string { return @tr("terminal" => "add"); }
+    public pure function broadcast-to() -> string { return @tr("terminal" => "broadcast to"); }
+    public pure function private-servers() -> string { return @tr("terminal" => "private servers"); }
+    public pure function open-a-link-row() -> string { return @tr("terminal" => "open a link"); }
+    public pure function submit-row() -> string { return @tr("terminal" => "submit a stream"); }
+    public pure function obs-row() -> string { return "OBS Studio"; }
+    public pure function built-in-row() -> string { return @tr("terminal" => "FinchGram (built in)"); }
+    // Terminal's short "ago": "3m", "2h", "4d".
+    public pure function ago-short(minutes: int) -> string {
+        if minutes < 0 { return ""; }
+        if minutes < 60 { return minutes + "m"; }
+        if minutes < 48 * 60 { return round(minutes / 60) + "h"; }
+        return round(minutes / 1440) + "d";
+    }
+
+    // A source's chip.
+    public pure function chip(what: LiveSource) -> string {
+        return what == LiveSource.hls ? "HLS" : LiveDirectoryWords.source(what).to-uppercase();
+    }
+    public pure function obs-send-button() -> string { return @tr("Send to OBS"); }
+    public pure function obs-start-button() -> string { return @tr("Start in OBS"); }
+
+    // Following.
+    public pure function following-line() -> string { return @tr("Channels from every source in one list, live first"); }
+    public pure function all() -> string { return @tr("All"); }
+    public pure function live-now() -> string { return @tr("Live now"); }
+    public pure function not-live() -> string { return @tr("Not live"); }
+    public pure function following-empty() -> string {
+        return @tr("You don’t follow anything yet. Follow channels from Discover, or open a link and follow it; they gather here, from any source.");
+    }
+    public pure function following-foot() -> string {
+        return @tr("Kept on this Mac, in FinchGram’s database. Following here doesn’t follow on Twitch, YouTube or anywhere else, and needs no account there.");
+    }
+    public pure function partial-title() -> string { return @tr("Some sources are behind"); }
+    public pure function partial-line() -> string {
+        return @tr("Not confirmed: live at the last answer, but that answer is old. Status unknown: no recent answer at all. Neither is treated as offline.");
+    }
+    public pure function unfollow() -> string { return @tr("Unfollow"); }
+    // The icon of a channel's one action.
+    public pure function play-icon(channel: LiveChannel) -> string {
+        if channel.play == LivePlay.watch { return "play"; }
+        if channel.play == LivePlay.listen { return "headphones"; }
+        if channel.play == LivePlay.try-opening { return "question"; }
+        if channel.play == LivePlay.sign-in { return "lock-key"; }
+        if channel.play == LivePlay.elsewhere { return "arrow-square-out"; }
+        return "info";
+    }
+
+    // Watch.
+    public pure function opening(name: string) -> string { return @tr("Opening {}…", name); }
+    public pure function step-recognized(name: string, source: LiveSource) -> string {
+        return @tr("Recognized {} · {} server", name, LiveDirectoryWords.source(source));
+    }
+    public pure function step-address(source: LiveSource) -> string {
+        if source == LiveSource.owncast { return @tr("Asked for the stream address · /hls/stream.m3u8"); }
+        if source == LiveSource.peertube { return @tr("Asked for the stream address · HLS playlist from the API"); }
+        return @tr("Asked for the stream address · direct stream");
+    }
+    public pure function step-connecting() -> string { return @tr("Connecting"); }
+    public pure function step-buffering() -> string { return @tr("Buffering"); }
+    public pure function step-found-telegram(name: string) -> string { return @tr("Found {} on Telegram", name); }
+    public pure function step-joined() -> string { return @tr("Joined as a viewer · muted, no camera"); }
+    public pure function step-segments() -> string { return @tr("Asked Telegram for the stream · one-second segments"); }
+    public pure function resolving-foot() -> string { return @tr("FinchGram saves the channel’s own address and asks it for a stream address each time."); }
+    public pure function cancel() -> string { return @tr("Cancel"); }
+    public pure function back() -> string { return @tr("Back"); }
+    public pure function is-offline(name: string) -> string { return @tr("{} is offline", name); }
+    public pure function last-live(channel: LiveChannel) -> string {
+        return channel.last-live-minutes >= 0 ? @tr("Last live {}.", LiveDirectoryWords.ago(channel.last-live-minutes)) : @tr("Not seen live yet.");
+    }
+    public pure function replays() -> string { return @tr("Replays, if the channel keeps them, are on its PeerTube page."); }
+    public pure function offline-foot() -> string {
+        return @tr("While you follow it, FinchGram checks every 2 minutes and puts it at the top of Following when it starts.");
+    }
+    public pure function open-channel-page() -> string { return @tr("Open channel page"); }
+    public pure function channel-page() -> string { return @tr("Channel page"); }
+    public pure function expired-title() -> string { return @tr("The stream address stopped working"); }
+    public pure function expired-line(host: string) -> string {
+        return host != "" ? @tr("{} stopped answering at the stream address it gave — those expire. FinchGram is asking the channel for a new one.", host)
+            : @tr("The stream address stopped answering — those expire. FinchGram is asking the channel for a new one.");
+    }
+    public pure function expired-foot() -> string {
+        return @tr("FinchGram keeps the channel’s own address, never the temporary one, so trying again starts from the channel.");
+    }
+    public pure function try-again() -> string { return @tr("Try again"); }
+    public pure function own-player-title(name: string, source: LiveSource) -> string {
+        return @tr("{} plays in {}’s own player", name, LiveDirectoryWords.source(source));
+    }
+    public pure function own-player-line(source: LiveSource) -> string {
+        return @tr("{0} doesn’t let other apps play its streams. Watch it on {0} in your browser; here it keeps its place in Following, with its live status.", LiveDirectoryWords.source(source));
+    }
+    public pure function own-site-title(name: string, source: LiveSource) -> string {
+        return @tr("{} plays on {}", name, LiveDirectoryWords.source(source));
+    }
+    public pure function own-site-line(source: LiveSource) -> string {
+        return @tr("FinchGram shows when it’s live; the stream itself plays on {}’s site.", LiveDirectoryWords.source(source));
+    }
+    public pure function open-on(source: LiveSource) -> string { return @tr("Open on {}", LiveDirectoryWords.source(source)); }
+    public pure function sign-in-title() -> string { return @tr("This stream needs a sign-in"); }
+    public pure function sign-in-line(channel: LiveChannel) -> string {
+        return channel.host != "" ? @tr("{} wants a user name and password.", channel.host) : LiveDirectoryWords.reason(channel) + ".";
+    }
+    public pure function add-private-server() -> string { return @tr("Add as a private server…"); }
+    public pure function mature-title() -> string { return @tr("Marked mature by its source"); }
+    public pure function mature-line(source: LiveSource) -> string {
+        return @tr("{} marks this stream mature. Streams marked mature are hidden in Discover; Settings › Live changes that.", LiveDirectoryWords.source(source));
+    }
+    public pure function adult() -> string { return @tr("I’m 18 or older"); }
+    public pure function watch() -> string { return @tr("Watch"); }
+    public pure function mature-foot() -> string {
+        return @tr("The directory doesn’t list sexually explicit streams. FinchGram never records or re-shares a stream.");
+    }
+    public pure function phone-title() -> string { return @tr("Watch this one on your phone"); }
+    public pure function phone-line() -> string {
+        return @tr("Telegram sends this live stream over WebRTC, from a phone’s camera, and FinchGram doesn’t have WebRTC. Streams sent from OBS, and live streams with a large audience, play here.");
+    }
+    public pure function phone-foot() -> string { return @tr("Live status and the number watching come from your Telegram account."); }
+    public pure function failed-title(name: string) -> string { return @tr("Couldn’t play {}", name); }
+    public pure function slow() -> string { return @tr("Slow connection — the stream stalled, and FinchGram keeps trying."); }
+    public pure function buffering() -> string { return @tr("Buffering"); }
+    public pure function audio-only() -> string { return @tr("audio only"); }
+    public pure function edge(behind: int, broadsheet: bool) -> string {
+        if behind <= 0 { return broadsheet ? @tr("ON AIR") : LiveWords.live-mark(); }
+        return @tr("{} · Go live", behind-time(behind));
+    }
+    // "−0:42", "−2:05"
+    public pure function behind-time(seconds: int) -> string {
+        return "−" + floor(seconds / 60) + ":" + (mod(seconds, 60) < 10 ? "0" : "") + mod(seconds, 60);
+    }
+    public pure function pause() -> string { return @tr("Pause"); }
+    public pure function play() -> string { return @tr("Play"); }
+    public pure function mute() -> string { return @tr("sound" => "Mute"); }
+    public pure function unmute() -> string { return @tr("sound" => "Unmute"); }
+    public pure function quality-title() -> string { return @tr("Quality · offered by the server"); }
+    public pure function auto-quality(now: string) -> string { return now != "" ? @tr("Auto · {}", now) : @tr("Auto"); }
+    public pure function now-quality(now: string) -> string { return @tr("now {}", now); }
+    public pure function show-chat() -> string { return @tr("Show chat"); }
+    public pure function hide-chat() -> string { return @tr("Hide chat"); }
+    public pure function pop-out() -> string { return @tr("Pop out"); }
+    public pure function full-screen() -> string { return @tr("Full screen"); }
+    public pure function follow() -> string { return @tr("Follow"); }
+    // Terminal's controls line.
+    public pure function play-word(paused: bool) -> string { return paused ? @tr("terminal" => "[▸ play]") : @tr("terminal" => "[❚❚ pause]"); }
+    public pure function edge-word(behind: int) -> string {
+        return behind <= 0 ? "● " + @tr("terminal" => "live") : behind-time(behind) + " " + @tr("terminal" => "[go live]");
+    }
+    public pure function volume-word(muted: bool, volume: int) -> string {
+        return muted ? @tr("terminal" => "[muted]") : @tr("terminal" => "[vol {}]", volume);
+    }
+    public pure function chat-word() -> string { return @tr("terminal" => "[chat]"); }
+    public pure function pop-out-word() -> string { return @tr("terminal" => "[pop out]"); }
+    public pure function full-word() -> string { return @tr("terminal" => "[full]"); }
+    public pure function follow-word(following: bool) -> string { return following ? @tr("terminal" => "unfollow") : @tr("terminal" => "follow"); }
+    public pure function page-word() -> string { return @tr("terminal" => "page"); }
+    public pure function back-word(section: string) -> string { return "‹ " + section.to-lowercase(); }
+    // The details under the picture.
+    public pure function watching(channel: LiveChannel) -> string {
+        if channel.viewers >= 0 { return LiveDirectoryWords.viewers(channel); }
+        return @tr("Viewers not shared by {}", LiveDirectoryWords.source(channel.source));
+    }
+    public pure function live-for(minutes: int) -> string { return @tr("Live for {}", LiveDirectoryWords.duration(minutes)); }
+    public pure function receiving() -> string { return @tr("Receiving the stream now"); }
+    public pure function telegram-plays() -> string { return @tr("Watch here · Plays in FinchGram"); }
+    public pure function chat-cap(source: LiveSource, has-chat: bool) -> string {
+        if source == LiveSource.telegram { return @tr("Comments from Telegram · free ones sent here, paid ones from Telegram’s apps"); }
+        return has-chat ? @tr("Chat from {} · read and send", LiveDirectoryWords.source(source)) : @tr("No chat on {}", LiveDirectoryWords.source(source));
+    }
+    public pure function kicker(status: LiveStatus, playing: bool, rest: string) -> string {
+        if playing || status == LiveStatus.live { return @tr("On air · {}", rest); }
+        if status == LiveStatus.stale { return @tr("Not confirmed · {}", rest); }
+        if status == LiveStatus.unknown { return @tr("Status unknown · {}", rest); }
+        return @tr("Off air · {}", rest);
+    }
+    public pure function on-air-for(minutes: int) -> string { return @tr("on air for {}", LiveDirectoryWords.duration(minutes)); }
+    public pure function cap-line(channel: LiveChannel, has-chat: bool) -> string {
+        return @tr("{} · {}.", channel.play == LivePlay.elsewhere ? @tr("Plays on {}", LiveDirectoryWords.source(channel.source)) : @tr("Plays in FinchGram, straight from the server"),
+            has-chat ? @tr("chat from {}, read and send", LiveDirectoryWords.source(channel.source)) : @tr("no chat on this source"));
+    }
+    public pure function key-title() -> string { return @tr("terminal" => "title"); }
+    public pure function key-status() -> string { return @tr("terminal" => "status"); }
+    public pure function key-stream() -> string { return @tr("terminal" => "stream"); }
+    public pure function key-chat() -> string { return @tr("terminal" => "chat"); }
+    public pure function key-source() -> string { return @tr("terminal" => "source"); }
+    public pure function chat-none() -> string { return @tr("terminal" => "none on this source"); }
+    public pure function chat-read-send(source: LiveSource) -> string { return @tr("terminal" => "{} · read & send", LiveDirectoryWords.source(source).to-lowercase()); }
+    public pure function telegram-stream() -> string { return @tr("terminal" => "telegram · one-second segments"); }
+    // The chat beside the picture (Owncast's).
+    public pure function chat() -> string { return @tr("Chat"); }
+    public pure function chat-note(source: LiveSource) -> string { return @tr("From {}. FinchGram shows it and keeps none of it.", LiveDirectoryWords.source(source)); }
+    public pure function chat-as(name: string) -> string { return @tr("Chat as {}", name); }
+    public pure function say-something() -> string { return @tr("terminal" => "say something"); }
+    public pure function chat-joining() -> string { return @tr("Joining the chat…"); }
+    public pure function chat-name(source: LiveSource, name: string) -> string { return @tr("{} name: {}", LiveDirectoryWords.source(source), name); }
+    public pure function change() -> string { return @tr("Change"); }
+    public pure function new-name() -> string { return @tr("A new name, then Enter"); }
+
+    // The mini player.
+    public pure function paused() -> string { return @tr("Paused"); }
+    public pure function mini-play-word(paused: bool) -> string { return paused ? @tr("terminal" => "[play]") : @tr("terminal" => "[pause]"); }
+    public pure function mini-mute-word(muted: bool) -> string { return muted ? @tr("terminal" => "[unmute]") : @tr("terminal" => "[mute]"); }
+    public pure function mini-live-word() -> string { return @tr("terminal" => "[live]"); }
+    public pure function back-to-live() -> string { return @tr("Back to Live"); }
+    public pure function stop() -> string { return @tr("Stop and close"); }
+
+    // Connections.
+    public pure function open-a-link() -> string { return @tr("Open a link"); }
+    public pure function open-a-link-line() -> string {
+        return @tr("Play or follow a stream that isn’t in the directory. Nothing is submitted — what you open stays on this Mac.");
+    }
+    public pure function link-placeholder() -> string { return "https://… · rtmp:// · srt:// · rtsp://"; }
+    public pure function can-open() -> string { return @tr("FinchGram can open:"); }
+    public pure function servers() -> string { return @tr("Servers"); }
+    public pure function channel-pages() -> string { return @tr("Channel pages"); }
+    public pure function direct-streams() -> string { return @tr("Direct streams"); }
+    public pure function recognizes() -> string { return @tr("It recognizes the link as you type. For a server, it asks the server what it is."); }
+    public pure function asking(host: string) -> string { return @tr("Asking {} what it is…", host); }
+    public pure function plays-here-line(audio: bool) -> string { return audio ? @tr("Plays in FinchGram (sound only)") : @tr("Plays in FinchGram"); }
+    public pure function plays-elsewhere-line(source: LiveSource) -> string {
+        return @tr("Plays on {}. FinchGram opens it in your browser.", LiveDirectoryWords.source(source));
+    }
+    public pure function private-line() -> string {
+        return @tr("This looks private — a sending address, or a link with a key in it. Keep it to yourself; FinchGram doesn’t open those here.");
+    }
+    public pure function not-stream-line() -> string {
+        return @tr("Nothing FinchGram can play. If the page has its own player, open it in your browser.");
+    }
+    public pure function link-failed(problem: string) -> string {
+        return problem != "" ? @tr("The server didn’t answer: {}", problem) : @tr("The server didn’t answer.");
+    }
+    public pure function clear() -> string { return @tr("Clear"); }
+    public pure function saved() -> string { return @tr("Saved connections"); }
+    public pure function saved-line() -> string {
+        return @tr("Where you broadcast to, and private servers you watch from. Keys and passwords stay sealed in FinchGram’s database and are shown only when you ask.");
+    }
+    public pure function submit() -> string { return @tr("Submit a stream"); }
+    public pure function submit-line() -> string { return @tr("Suggest a public channel for the directory everyone using FinchGram sees."); }
+    public pure function add-connection() -> string { return @tr("Add"); }
+    public pure function open() -> string { return @tr("Open"); }
+    public pure function asks-telegram() -> string { return @tr("FinchGram asks Telegram whether it’s live"); }
+    public pure function link-word() -> string { return "LINK"; }
+    public pure function direct-list() -> string { return ".m3u8 · .mpd · rtsp:// · Icecast"; }
+    public pure function servers-list() -> string { return "Owncast, PeerTube"; }
+    public pure function pages-list() -> string { return "Telegram, Twitch, YouTube, Kick, Bilibili"; }
+
+    // Broadcast.
+    public pure function broadcast-line() -> string { return @tr("OBS sends the stream; FinchGram gives it the destination."); }
+    public pure function from-finchgram() -> string { return @tr("From FinchGram"); }
+    public pure function use-obs() -> string { return @tr("Use OBS"); }
+    public pure function obs-studio() -> string { return "OBS Studio"; }
+    public pure function obs-line() -> string {
+        return @tr("OBS does the capture, scenes and encoding. FinchGram hands it the destination and shows how the stream is doing, from OBS’s own numbers.");
+    }
+    public pure function obs-connected() -> string { return @tr("Connected to OBS"); }
+    public pure function obs-send() -> string { return @tr("Send the destination"); }
+    public pure function obs-start() -> string { return @tr("Start streaming"); }
+    public pure function obs-type() -> string { return @tr("Or type it into OBS › Settings › Stream yourself:"); }
+    public pure function destination() -> string { return @tr("Destination"); }
+    public pure function new-destination() -> string { return @tr("New destination…"); }
+    public pure function story-kind() -> string { return @tr("Live story · RTMPS"); }
+    public pure function channel-kind() -> string { return @tr("Channel live stream · RTMPS"); }
+    public pure function set-in-obs() -> string {
+        return @tr("Resolution, bitrate and sound are set in OBS. FinchGram only gives the destination; the stream starts when you start it in OBS.");
+    }
+}
+
+// The mark of a stream that is live: a red "● LIVE", "[LIVE]" in Terminal; grey for one that
+// plays only on the phone.
+export component LiveMark inherits Rectangle {
+    in property <bool> quiet;
+    // Over the picture: the pill in every theme, Terminal's brackets would not read there.
+    in property <bool> on-picture;
+    // The words, when not "LIVE" (Broadsheet's "ON AIR").
+    in property <string> label: LiveWords.live-mark();
+    property <bool> text-only: Look.terminal && !on-picture;
+    property <color> fill: quiet ? Look.off : on-picture ? #d92d20 : Look.danger;
+    property <color> ink: quiet ? Look.muted : on-picture || !Look.dark ? #ffffff : Look.bg;
+    width: text-only ? label-text.preferred-width : label-text.preferred-width + 17px;
+    height: 16px;
+    border-radius: text-only ? 0px : 3px;
+    background: text-only ? transparent : fill;
+
+    if !root.text-only: Rectangle {
+        x: 6px;
+        y: (parent.height - self.height) / 2;
+        width: 5px;
+        height: 5px;
+        border-radius: 2.5px;
+        background: root.ink;
+    }
+    label-text := Text {
+        x: root.text-only ? 0px : 14px;
+        text: root.text-only ? "[" + root.label + "]" : root.label;
+        color: root.text-only ? (root.quiet ? Look.faint : Look.danger) : root.ink;
+        font-family: Look.terminal ? Look.mono : Look.font;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: Look.terminal ? 0px : 0.8px;
+        vertical-alignment: center;
+    }
+}
+
+// The colours of a paid comment's level: the theme's accent, then orange, then red.
+export global Tier {
+    public pure function fill(tier: int) -> color {
+        if tier >= 3 { return AccountColors.tint(5, Look.dark); }
+        if tier == 2 { return AccountColors.tint(3, Look.dark); }
+        return Look.soft;
+    }
+    public pure function ink(tier: int) -> color {
+        if tier >= 3 { return AccountColors.tint-ink(5, Look.dark); }
+        if tier == 2 { return AccountColors.tint-ink(3, Look.dark); }
+        return Look.soft-ink;
+    }
+}
+
+// The shapes of the canvas that Look has no name for.
+export global LiveShape {
+    // The small pills: a LIVE badge on a picture, the live edge, a thumbnail's corners.
+    out property <length> pill-radius: Look.terminal ? 0px : Look.broadsheet ? 2px : 4px;
+    // Over the picture, the theme's live colour as it is in the dark (the canvas's liveOnDark).
+    out property <color> live-on-dark: Look.terminal ? #ef8fb0 : Look.broadsheet ? #ff90b1 : #f97066;
+}
+
+// A channel's colours, from its hue (0 … 359), as Discover gives them (DirectoryLook): its letter
+// square's fill and letter, its picture's place while there is none; and a chat name's colour.
+export global ChannelColors {
+    public pure function fill(hue: int) -> color { return DirectoryLook.avatar(hue); }
+    public pure function ink(hue: int) -> color { return DirectoryLook.avatar-ink(hue); }
+    public pure function picture(hue: int) -> color { return DirectoryLook.picture(hue); }
+    // A comment's or a chat message's name, by its sender's initial: the same person, the same colour.
+    public pure function name(initial: string) -> color {
+        return AccountColors.accent-ink(letter(initial), Look.dark);
+    }
+    pure function letter(initial: string) -> int {
+        if initial == "A" || initial == "K" || initial == "U" || initial == "a" || initial == "k" || initial == "u" { return 0; }
+        if initial == "B" || initial == "L" || initial == "V" || initial == "b" || initial == "l" || initial == "v" { return 1; }
+        if initial == "C" || initial == "M" || initial == "W" || initial == "c" || initial == "m" || initial == "w" { return 2; }
+        if initial == "D" || initial == "N" || initial == "X" || initial == "d" || initial == "n" || initial == "x" { return 3; }
+        if initial == "E" || initial == "O" || initial == "Y" || initial == "e" || initial == "o" || initial == "y" { return 4; }
+        if initial == "F" || initial == "P" || initial == "Z" || initial == "f" || initial == "p" || initial == "z" { return 5; }
+        if initial == "G" || initial == "Q" || initial == "g" || initial == "q" { return 6; }
+        if initial == "H" || initial == "R" || initial == "h" || initial == "r" { return 7; }
+        if initial == "I" || initial == "S" || initial == "i" || initial == "s" { return 8; }
+        return 9;
+    }
+}
+
+// A channel's letter square, or its photo (Telegram's).
+export component ChannelAvatar inherits Avatar {
+    in property <LiveChannel> channel;
+    initial: channel.initial;
+    picture: channel.picture;
+    has-picture: channel.has-picture;
+    fill: ChannelColors.fill(channel.hue);
+    ink: ChannelColors.ink(channel.hue);
+}
+
+// A channel's picture of its stream, or its colour and letter while its source gives none.
+export component ChannelThumbnail inherits Rectangle {
+    in property <LiveChannel> channel;
+    in property <length> letter-size: 16px;
+    background: ChannelColors.picture(channel.hue);
+    clip: true;
+
+    if root.channel.has-thumbnail: Image {
+        width: root.width;
+        height: root.height;
+        source: root.channel.thumbnail;
+        image-fit: cover;
+    }
+    if !root.channel.has-thumbnail: Text {
+        text: root.channel.initial;
+        color: DirectoryLook.picture-ink;
+        font-size: root.letter-size;
+        font-weight: 600;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// A source's chip beside a channel's name: "OWNCAST", in mono, ringed.
+export component SourceChip inherits Rectangle {
+    in property <string> label;
+    in property <color> ink: Look.muted;
+    in property <color> ring: DirectoryLook.rule-strong;
+    height: 16px;
+    width: chip-text.preferred-width + 10px;
+    border-radius: Look.workbench ? 6px : Look.button-radius;
+    border-width: 1px;
+    border-color: root.ring;
+
+    chip-text := Text {
+        text: root.label;
+        color: root.ink;
+        font-family: Look.mono;
+        font-size: 10px;
+        font-weight: 500;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+// A button of the canvas's pages: the accent, or ringed; an icon before the words; Terminal's in
+// brackets. One not in this version is faded and takes no click.
+export component LiveButton inherits Rectangle {
+    in property <string> text;
+    in property <string> icon;
+    in property <bool> primary;
+    // The live colour (Broadcast's start), and the danger ring (a stop).
+    in property <bool> live;
+    in property <bool> danger;
+    // The accent's soft tint: something already on ("Following").
+    in property <bool> soft;
+    in property <bool> enabled: true;
+    in property <length> font-size: 14px;
+    in property <length> padding-x: 14px;
+    callback clicked();
+    property <color> ink: root.live ? (Look.dark ? Look.bg : #ffffff) : root.primary ? Look.on-accent : root.soft ? Look.soft-ink : root.danger ? Look.danger : Look.text;
+    height: 32px;
+    width: row.preferred-width + 2 * root.padding-x;
+    border-radius: Look.button-radius;
+    background: root.live ? (touch.has-hover && root.enabled ? Look.danger.darker(0.1) : Look.danger)
+        : root.primary ? (touch.has-hover && root.enabled ? Look.accent.darker(0.1) : Look.accent)
+        : root.soft ? (touch.has-hover && root.enabled ? Look.sel : Look.soft)
+        : touch.has-hover && root.enabled ? Look.sel : transparent;
+    border-width: root.primary || root.live || root.soft ? 0px : root.danger ? 1.5px : 1px;
+    border-color: root.danger ? Look.danger : Look.line-strong;
+    opacity: root.enabled ? 1 : 0.45;
+    accessible-role: button;
+    accessible-label: root.text;
+
+    row := HorizontalLayout {
+        x: root.padding-x;
+        width: parent.width - 2 * root.padding-x;
+        spacing: 6px;
+        if root.icon != "": VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: root.font-size + 1px;
+                color: root.ink;
+            }
+        }
+        Text {
+            text: Look.terminal ? "[" + root.text + "]" : root.text;
+            color: root.ink;
+            font-size: root.font-size;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A button over the picture, on the dark: white for the first action, translucent for the rest.
+export component OverlayButton inherits Rectangle {
+    in property <string> text;
+    in property <string> icon;
+    in property <bool> primary;
+    in property <bool> enabled: true;
+    callback clicked();
+    height: 34px;
+    width: row.preferred-width + 28px;
+    border-radius: Look.button-radius;
+    background: root.primary && root.enabled ? (touch.has-hover ? #e6e8eb : #ffffff)
+        : root.enabled ? (touch.has-hover ? #ffffff2e : #ffffff1f) : #ffffff14;
+    border-width: root.primary && root.enabled ? 0px : 1px;
+    border-color: #ffffff33;
+    opacity: root.enabled ? 1 : 0.45;
+    accessible-role: button;
+    accessible-label: root.text;
+
+    row := HorizontalLayout {
+        x: 14px;
+        width: parent.width - 28px;
+        spacing: 7px;
+        if root.icon != "": VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 15px;
+                color: root.primary && root.enabled ? #16181b : #ffffff;
+                duotone: false;
+            }
+        }
+        Text {
+            text: Look.terminal ? "[" + root.text + "]" : root.text;
+            color: root.primary && root.enabled ? #16181b : #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// An icon over the picture that does something: play, the sound, the quality, the chat.
+export component PictureIcon inherits Rectangle {
+    in property <string> icon;
+    in property <string> label;
+    in property <length> icon-size: 18px;
+    in property <bool> enabled: true;
+    callback clicked();
+    width: 32px;
+    height: 32px;
+    border-radius: Look.button-radius;
+    background: touch.has-hover && root.enabled ? #ffffff1f : transparent;
+    opacity: root.enabled ? 1 : 0.4;
+    accessible-role: button;
+    accessible-label: root.label;
+
+    Icon {
+        name: root.icon;
+        size: root.icon-size;
+        color: #ffffff;
+        duotone: false;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// Words in Terminal's controls line over the picture: "[pause]", clicked like a button.
+export component PictureWord inherits Rectangle {
+    in property <string> text;
+    in property <color> ink: #e8ece9;
+    in property <length> font-size: 12px;
+    in property <bool> enabled: true;
+    callback clicked();
+    width: word.preferred-width;
+    height: word.preferred-height;
+    opacity: root.enabled ? 1 : 0.45;
+
+    word := Text {
+        text: root.text;
+        color: touch.has-hover && root.enabled ? #ffffff : root.ink;
+        font-family: Look.mono;
+        font-size: root.font-size;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// Words that act, in the accent: "Copy", "Show", "Change".
+export component ActionWord inherits Rectangle {
+    in property <string> text;
+    in property <length> font-size: 13px;
+    in property <bool> enabled: true;
+    in property <color> ink: Look.accent-ink;
+    callback clicked();
+    width: word.preferred-width;
+    height: word.preferred-height;
+    opacity: root.enabled ? 1 : 0.45;
+    accessible-role: button;
+    accessible-label: root.text;
+
+    word := Text {
+        text: Look.terminal ? "[" + root.text + "]" : root.text;
+        color: root.ink;
+        font-size: root.font-size;
+        font-weight: 600;
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? pointer : default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// The quiet note on what the canvas shows and this version does not have.
+export component NotInThisVersion inherits Text {
+    text: Look.terminal ? "-- " + LiveViewWords.not-in-this-version().to-lowercase() + " --" : LiveViewWords.not-in-this-version();
+    color: Look.faint;
+    font-size: 12px;
+    font-weight: 500;
+}

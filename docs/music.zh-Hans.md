@@ -24,7 +24,7 @@
 
 音乐有自己的一个 mpv（`src/player/music.rs`），不带视频，与查看器的、语音消息的各不相扰：歌与歌之间无缝衔接，下一首排在 mpv 播放列表里当前这首的后面，并提前打开（`gapless-audio`、`prefetch-playlist`）。
 
-项目自建的 FFmpeg 按决定不含网络代码（docs/architecture.md），所以 mpv 不自己去取歌。取歌的是 `src/music/fetch.rs`，用 app 自己的 HTTP 客户端（ureq，除常规根证书外也信任 Keychain 里的，照顾用户自签证书的服务器）：以 Range 请求把服务器的 `stream` 地址读进缓存文件，mpv 通过 `finchgram://` 流回调（`src/player/stream.rs`，和 TDLib 送来的视频一个路数）边到边读。拖到还没到的位置，取歌就挪过去，之后再回头补上跳过的部分。整个文件留在缓存里，以自己的名字（在路上时叫 ".part"），下次这首歌直接从磁盘播。
+音乐的 mpv 只能打开文件（它的 FFmpeg 只限本地协议，`src/player/mod.rs` 的 `LOCAL_PROTOCOLS`；只有 Live 视图的播放器能用到网络，见 docs/architecture.md），所以 mpv 不自己去取歌。取歌的是 `src/music/fetch.rs`，用 app 自己的 HTTP 客户端（ureq，除常规根证书外也信任 Keychain 里的，照顾用户自签证书的服务器）：以 Range 请求把服务器的 `stream` 地址读进缓存文件，mpv 通过 `finchgram://` 流回调（`src/player/stream.rs`，和 TDLib 送来的视频一个路数）边到边读。拖到还没到的位置，取歌就挪过去，之后再回头补上跳过的部分。整个文件留在缓存里，以自己的名字（在路上时叫 ".part"），下次这首歌直接从磁盘播。
 
 线上送来什么格式，由服务器对名为"FinchGram"的客户端的转码设置决定；FinchGram 不特别要求什么。一首歌开始时告诉服务器（`scrobble`，`submission=false`，即"正在播放"），播过一半或四分钟（以先到者为准）再告诉一次（`submission=true`）：播放次数，以及服务器配了 Last.fm 或 ListenBrainz 时的 scrobble。
 

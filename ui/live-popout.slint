@@ -1,0 +1,110 @@
+// The pop-out player (the canvas "FinchGram Desktop 直播", round 12: "Pop out · stays on top of
+// other apps"): the mini player as a window of its own, on top of every other app, while the
+// stream plays there and not in the main window. A window has globals of its own, so Rust hands
+// it what it shows (src/live/popout.rs).
+import { Icon, Spinner } from "widgets.slint";
+
+export component LivePopOut inherits Window {
+    in property <image> frame;
+    in property <bool> buffering;
+    in property <bool> audio;                   // sound only: no picture comes
+    in property <string> name;
+    in property <string> meta;                  // its source and how many watch, or "Paused"
+    in property <bool> paused;
+    in property <bool> muted;
+    in property <string> pause-tip: @tr("Pause");
+    in property <string> play-tip: @tr("Play");
+    callback toggle-pause();
+    callback toggle-mute();
+    callback pop-in();                          // back into the main window
+    callback stop();
+    title: root.name == "" ? "FinchGram" : root.name + " — FinchGram";
+    always-on-top: true;
+    preferred-width: 340px;
+    preferred-height: 250px;
+    min-width: 240px;
+    min-height: 170px;
+    background: #0b0c0e;
+
+    VerticalLayout {
+        Rectangle {
+            vertical-stretch: 1;
+            background: #000000;
+            Image {
+                width: parent.width;
+                height: parent.height;
+                source: root.frame;
+                image-fit: contain;
+            }
+            if root.audio: Icon {
+                name: "headphones";
+                size: 40px;
+                color: #ffffff60;
+            }
+            if root.buffering && !root.audio: Spinner {
+                width: 28px;
+                height: 28px;
+            }
+            TouchArea {
+                double-clicked => {
+                    root.pop-in();
+                }
+            }
+        }
+        Rectangle {
+            height: 44px;
+            background: #16181b;
+            HorizontalLayout {
+                padding-left: 10px;
+                padding-right: 6px;
+                spacing: 4px;
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    alignment: center;
+                    Text {
+                        text: root.name;
+                        color: #ffffffe0;
+                        font-size: 13px;
+                        font-weight: 600;
+                        overflow: elide;
+                    }
+                    Text {
+                        text: root.meta;
+                        color: #ffffff8c;
+                        font-size: 11px;
+                        overflow: elide;
+                    }
+                }
+                for button[index] in [
+                    { icon: root.paused ? "play" : "pause", tip: root.paused ? root.play-tip : root.pause-tip },
+                    { icon: root.muted ? "speaker-x" : "speaker-high", tip: "" },
+                    { icon: "picture-in-picture", tip: "" },
+                    { icon: "x", tip: "" },
+                ]: Rectangle {
+                    width: 30px;
+                    border-radius: 6px;
+                    background: hit.has-hover ? #ffffff1f : transparent;
+                    Icon {
+                        name: button.icon;
+                        size: 17px;
+                        color: #ffffffd0;
+                    }
+                    hit := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            if index == 0 {
+                                root.toggle-pause();
+                            } else if index == 1 {
+                                root.toggle-mute();
+                            } else if index == 2 {
+                                root.pop-in();
+                            } else {
+                                root.stop();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

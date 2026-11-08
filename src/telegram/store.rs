@@ -1430,7 +1430,7 @@ impl Store {
             blocked: chat.block_list == Some(api::BlockList::Main),
             reportable: chat.can_be_reported,
             deletable: chat.can_be_deleted_only_for_self || chat.can_be_deleted_for_all_users,
-            live: super::live::chat_is_live(chat.id),
+            live: super::live::chat_is_live(chat),
         }
     }
 

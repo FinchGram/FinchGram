@@ -1,0 +1,742 @@
+// Broadcast (the canvas "FinchGram Desktop 直播", rounds 10 and 13): going live. This version has the
+// Telegram destinations only, 0.7.10's form to go live: the user's own live story or a channel they
+// may stream in, with the RTMP server and key for OBS; Start opens it as its host. FinchGram's own
+// capture, OBS's websocket and the other destinations are drawn, faded: not in this version.
+// Drawn once, in Look's colours and shapes, for the three themes.
+import { Look } from "../look.slint";
+import { Icon, Field, Avatar, Switch, Paragraph, Heading, SectionLabel } from "../widgets.slint";
+import { Live, LiveWords, LiveTarget, LiveDirectoryWords, LiveSection } from "../live.slint";
+import { Tier, LiveButton, ActionWord, LiveViewWords } from "live-parts.slint";
+import { DirectoryLook } from "live-cards.slint";
+
+// One of the two ways to send: FinchGram's own (not in this version) and OBS.
+component Mode inherits Rectangle {
+    in property <string> label;
+    in property <string> icon;
+    in property <bool> on;
+    in property <bool> enabled: true;
+    height: 28px;
+    width: row.preferred-width + 24px;
+    border-radius: Look.button-radius;
+    background: root.on ? Look.bg : transparent;
+    border-width: root.on ? 1px : 0px;
+    border-color: Look.line;
+    opacity: root.enabled ? 1 : 0.45;
+    drop-shadow-blur: root.on ? 2px : 0px;
+    drop-shadow-offset-y: root.on ? 1px : 0px;
+    drop-shadow-color: #00000014;
+
+    row := HorizontalLayout {
+        x: 12px;
+        width: parent.width - 24px;
+        spacing: 6px;
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: root.icon;
+                size: 15px;
+                color: root.on ? Look.text : Look.muted;
+            }
+        }
+        Text {
+            text: Look.terminal ? "[" + root.label + "]" : root.label;
+            color: root.on ? Look.text : Look.muted;
+            font-size: 13px;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+    }
+}
+
+// One choice of a segmented control (the canvas's segItem): the one chosen raised.
+component Segment inherits Rectangle {
+    in property <string> label;
+    in property <bool> on;
+    callback clicked();
+    height: 24px;
+    width: word.preferred-width + 20px;
+    border-radius: Look.button-radius;
+    background: root.on ? Look.side : touch.has-hover ? Look.sel.transparentize(0.4) : transparent;
+    border-width: root.on ? 1px : 0px;
+    border-color: Look.line;
+
+    word := Text {
+        text: root.label;
+        color: root.on ? Look.text : Look.muted;
+        font-size: 12px;
+        font-weight: 600;
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A step of OBS's websocket: not in this version.
+component ObsStep inherits Rectangle {
+    in property <string> number;
+    in property <string> title;
+    in property <string> action;
+    height: row.preferred-height;
+
+    Rectangle {
+        y: 0;
+        height: 1px;
+        background: Look.line;
+    }
+    row := HorizontalLayout {
+        padding-top: 10px;
+        spacing: 12px;
+        VerticalLayout {
+            alignment: center;
+            Rectangle {
+                width: 22px;
+                height: 22px;
+                border-radius: 11px;
+                border-width: 1.5px;
+                border-color: Look.line-strong;
+                Text {
+                    text: root.number;
+                    color: Look.text;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.title;
+            color: Look.text;
+            font-size: 14px;
+            font-weight: 600;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+        if root.action != "": VerticalLayout {
+            alignment: center;
+            LiveButton {
+                height: 30px;
+                padding-x: 12px;
+                font-size: 13px;
+                text: root.action;
+                enabled: false;
+            }
+        }
+    }
+}
+
+// A line of what OBS needs: its name, its value in mono, and its actions.
+component KeyRow inherits HorizontalLayout {
+    in property <string> label;
+    in property <string> value;
+    in property <bool> secret;
+    in property <bool> shown;
+    callback copy();
+    callback toggle();
+    spacing: 10px;
+    Text {
+        width: 84px;
+        text: root.label;
+        color: Look.faint;
+        font-size: 13px;
+        vertical-alignment: center;
+    }
+    Text {
+        horizontal-stretch: 1;
+        text: root.secret && !root.shown ? (root.value == "" ? "" : "••••••••••••••••") : root.value;
+        color: Look.text;
+        font-family: Look.mono;
+        font-size: 12px;
+        vertical-alignment: center;
+        overflow: elide;
+    }
+    if root.secret: VerticalLayout {
+        alignment: center;
+        ActionWord {
+            text: root.shown ? LiveWords.hide-key() : LiveWords.show-key();
+            enabled: root.value != "";
+            clicked => {
+                root.toggle();
+            }
+        }
+    }
+    VerticalLayout {
+        alignment: center;
+        ActionWord {
+            text: LiveWords.copy();
+            enabled: root.value != "";
+            clicked => {
+                root.copy();
+            }
+        }
+    }
+}
+
+// Where to go live: the user's own story or a channel, as the canvas's destination picker.
+component Destination inherits Rectangle {
+    property <bool> has-target: Live.target >= 0 && Live.target < Live.targets.length;
+    property <LiveTarget> target: root.has-target ? Live.targets[Live.target] : { name: "", initial: "", story: true };
+    height: 48px;
+    border-radius: Look.button-radius;
+    background: Look.field;
+    border-width: 1px;
+    border-color: Look.line-strong;
+
+    HorizontalLayout {
+        padding-left: 10px;
+        padding-right: 10px;
+        spacing: 10px;
+        VerticalLayout {
+            alignment: center;
+            Avatar {
+                size: 28px;
+                radius: Look.avatar-radius;
+                initial: root.target.initial;
+                picture: root.target.picture;
+                has-picture: root.target.has-picture;
+                font-size: 12px;
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 1px;
+            Text {
+                text: root.target.story ? LiveWords.my-story() : root.target.name;
+                color: Look.text;
+                font-size: 14px;
+                font-weight: 600;
+                overflow: elide;
+            }
+            Text {
+                text: root.target.story ? LiveViewWords.story-kind() : LiveViewWords.channel-kind();
+                color: Look.muted;
+                font-size: 12px;
+                overflow: elide;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            Icon {
+                name: "caret-up-down";
+                size: 14px;
+                color: Look.faint;
+            }
+        }
+    }
+    TouchArea {
+        enabled: Live.targets.length > 0;
+        mouse-cursor: pointer;
+        clicked => {
+            menu.show();
+        }
+    }
+    menu := PopupWindow {
+        x: 0;
+        y: parent.height + 6px;
+        width: parent.width;
+        close-policy: PopupClosePolicy.close-on-click-outside;
+        Rectangle {
+            border-radius: Look.radius;
+            background: Look.bg;
+            border-width: 1px;
+            border-color: Look.line;
+            drop-shadow-blur: 24px;
+            drop-shadow-offset-y: 8px;
+            drop-shadow-color: #00000033;
+            VerticalLayout {
+                padding: 6px;
+                for target[index] in Live.targets: Rectangle {
+                    height: 32px;
+                    border-radius: Look.button-radius;
+                    background: item.has-hover ? Look.sel : transparent;
+                    HorizontalLayout {
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        spacing: 8px;
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "check";
+                                size: 14px;
+                                color: Look.accent;
+                                opacity: index == Live.target ? 1 : 0;
+                            }
+                        }
+                        Text {
+                            horizontal-stretch: 1;
+                            text: target.story ? LiveWords.my-story() : target.name;
+                            color: Look.text;
+                            font-size: 13px;
+                            overflow: elide;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: target.story ? LiveViewWords.story-kind() : LiveViewWords.channel-kind();
+                            color: Look.faint;
+                            font-size: 11px;
+                            vertical-alignment: center;
+                        }
+                    }
+                    item := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            Live.choose-target(index);
+                            menu.close();
+                        }
+                    }
+                }
+                // Destinations other than Telegram's are not in this version.
+                Rectangle {
+                    height: 1px;
+                    background: Look.line;
+                }
+                Rectangle {
+                    height: 32px;
+                    opacity: 0.45;
+                    HorizontalLayout {
+                        padding-left: 8px;
+                        padding-right: 8px;
+                        spacing: 8px;
+                        VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "plus";
+                                size: 14px;
+                                color: Look.accent-ink;
+                            }
+                        }
+                        Text {
+                            horizontal-stretch: 1;
+                            text: LiveViewWords.new-destination();
+                            color: Look.accent-ink;
+                            font-size: 13px;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: LiveViewWords.not-in-this-version();
+                            color: Look.faint;
+                            font-size: 11px;
+                            vertical-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+export component BroadcastPage inherits Rectangle {
+    property <bool> story: Live.target >= 0 && Live.target < Live.targets.length && Live.targets[Live.target].story;
+    property <length> pad-x: Look.terminal ? 16px : Look.broadsheet ? 32px : 28px;
+    background: Look.bg;
+
+    // The form's targets, server and key are asked for when Broadcast opens.
+    init => {
+        if !Live.going-live {
+            Live.open-go-live();
+        }
+    }
+
+    Flickable {
+        mouse-drag-pan-enabled: false;
+        VerticalLayout {
+            alignment: start;
+            padding-left: root.pad-x;
+            padding-right: root.pad-x;
+            padding-top: Look.terminal ? 16px : Look.broadsheet ? 26px : 24px;
+            padding-bottom: Look.terminal ? 16px : Look.broadsheet ? 26px : 24px;
+            spacing: 16px;
+
+            HorizontalLayout {
+                spacing: 12px;
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    alignment: end;
+                    spacing: 4px;
+                    Heading {
+                        label: LiveDirectoryWords.section(LiveSection.broadcast);
+                    }
+                    Paragraph {
+                        text: LiveViewWords.broadcast-line();
+                        color: Look.faint;
+                        font-size: 13px;
+                    }
+                }
+                VerticalLayout {
+                    alignment: end;
+                    Rectangle {
+                        height: 34px;
+                        width: modes.preferred-width + 6px;
+                        border-radius: Look.radius;
+                        background: Look.side;
+                        border-width: 1px;
+                        border-color: Look.line;
+                        modes := HorizontalLayout {
+                            x: 3px;
+                            y: 3px;
+                            width: parent.width - 6px;
+                            height: parent.height - 6px;
+                            spacing: 2px;
+                            // FinchGram's own capture is not in this version.
+                            Mode {
+                                label: LiveViewWords.from-finchgram();
+                                icon: "video-camera";
+                                enabled: false;
+                            }
+                            Mode {
+                                label: LiveViewWords.use-obs();
+                                icon: "monitor-play";
+                                on: true;
+                            }
+                        }
+                    }
+                }
+            }
+
+            HorizontalLayout {
+                spacing: 20px;
+                alignment: start;
+                // OBS: its websocket, faded; what to type into it.
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    alignment: start;
+                    spacing: 12px;
+                    Rectangle {
+                        height: obs.preferred-height;
+                        border-radius: Look.radius;
+                        background: Look.field;
+                        border-width: Look.broadsheet ? 0px : 1px;
+                        border-color: Look.line;
+                        obs := VerticalLayout {
+                            padding: 16px;
+                            spacing: 12px;
+                            HorizontalLayout {
+                                spacing: 12px;
+                                opacity: 0.45;
+                                Rectangle {
+                                    width: 40px;
+                                    height: 40px;
+                                    border-radius: Look.radius;
+                                    background: Look.soft;
+                                    Icon {
+                                        name: "monitor-play";
+                                        size: 22px;
+                                        color: Look.soft-ink;
+                                    }
+                                }
+                                VerticalLayout {
+                                    horizontal-stretch: 1;
+                                    alignment: center;
+                                    spacing: 2px;
+                                    Text {
+                                        text: LiveViewWords.obs-studio();
+                                        color: Look.text;
+                                        font-size: 15px;
+                                        font-weight: 600;
+                                    }
+                                    Text {
+                                        text: LiveViewWords.not-in-this-version();
+                                        color: Look.faint;
+                                        font-size: 13px;
+                                    }
+                                }
+                            }
+                            Paragraph {
+                                opacity: 0.45;
+                                text: LiveViewWords.obs-line();
+                                color: Look.muted;
+                                font-size: 13px;
+                                line-height-factor: Look.leading(1.55);
+                            }
+                            VerticalLayout {
+                                spacing: 10px;
+                                opacity: 0.45;
+                                ObsStep {
+                                    number: "1";
+                                    title: LiveViewWords.obs-connected();
+                                }
+                                ObsStep {
+                                    number: "2";
+                                    title: LiveViewWords.obs-send();
+                                    action: LiveViewWords.obs-send-button();
+                                }
+                                ObsStep {
+                                    number: "3";
+                                    title: LiveViewWords.obs-start();
+                                    action: LiveViewWords.obs-start-button();
+                                }
+                            }
+                        }
+                    }
+                    Rectangle {
+                        height: typed.preferred-height;
+                        border-radius: Look.radius;
+                        border-width: Look.broadsheet ? 0px : 1px;
+                        border-color: Look.line;
+                        background: Look.broadsheet ? Look.side : transparent;
+                        typed := VerticalLayout {
+                            padding-left: 16px;
+                            padding-right: 16px;
+                            padding-top: 14px;
+                            padding-bottom: 14px;
+                            spacing: 8px;
+                            Paragraph {
+                                text: LiveViewWords.obs-type();
+                                color: Look.muted;
+                                font-size: 13px;
+                            }
+                            KeyRow {
+                                label: LiveWords.server();
+                                value: Live.server;
+                                copy => {
+                                    Live.copy-server();
+                                }
+                            }
+                            KeyRow {
+                                label: LiveWords.key();
+                                value: Live.key;
+                                secret: true;
+                                shown: Live.key-shown;
+                                copy => {
+                                    Live.copy-key();
+                                }
+                                toggle => {
+                                    Live.key-shown = !Live.key-shown;
+                                }
+                            }
+                            HorizontalLayout {
+                                spacing: 6px;
+                                alignment: start;
+                                Text {
+                                    text: LiveWords.key-note();
+                                    color: Look.faint;
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                }
+                                ActionWord {
+                                    text: LiveWords.new-key();
+                                    font-size: 12px;
+                                    enabled: Live.key != "";
+                                    clicked => {
+                                        Live.new-key();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // The destination, Telegram's settings for it, and the start.
+                VerticalLayout {
+                    alignment: start;
+                    Rectangle {
+                        width: 320px;
+                        height: panel.preferred-height;
+                        border-radius: Look.radius;
+                        // The canvas's t.panel in Broadsheet, t.side in the others.
+                        background: Look.broadsheet ? DirectoryLook.panel : Look.side;
+                        border-width: Look.broadsheet ? 0px : 1px;
+                        border-color: Look.line;
+                        panel := VerticalLayout {
+                            VerticalLayout {
+                                padding: 16px;
+                                spacing: 12px;
+                                SectionLabel {
+                                    label: LiveViewWords.destination();
+                                }
+                                Destination { }
+                                if Live.server != "": Text {
+                                    text: Live.server;
+                                    color: Look.faint;
+                                    font-family: Look.mono;
+                                    font-size: 12px;
+                                    overflow: elide;
+                                }
+                                if root.story: VerticalLayout {
+                                    spacing: 8px;
+                                    Text {
+                                        text: LiveWords.who();
+                                        color: Look.muted;
+                                        font-size: 13px;
+                                    }
+                                    // The canvas's segmented choice, as the options of this panel.
+                                    HorizontalLayout {
+                                        alignment: start;
+                                        Rectangle {
+                                            width: privacy.preferred-width + 4px;
+                                            height: 28px;
+                                            border-radius: Look.button-radius;
+                                            background: Look.bg;
+                                            border-width: 1px;
+                                            border-color: Look.line;
+                                            privacy := HorizontalLayout {
+                                                x: 2px;
+                                                y: 2px;
+                                                width: parent.width - 4px;
+                                                height: 24px;
+                                                spacing: 2px;
+                                                for index in 3: Segment {
+                                                    label: LiveWords.privacy(index);
+                                                    on: index == Live.privacy;
+                                                    clicked => {
+                                                        Live.privacy = index;
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                if !root.story: VerticalLayout {
+                                    spacing: 8px;
+                                    Text {
+                                        text: LiveWords.stream-title();
+                                        color: Look.muted;
+                                        font-size: 13px;
+                                    }
+                                    Field {
+                                        height: 34px;
+                                        font-size: 13px;
+                                        padding-x: 10px;
+                                        text <=> Live.stream-title;
+                                        placeholder: LiveWords.stream-title-placeholder();
+                                    }
+                                }
+                                if root.story: VerticalLayout {
+                                    spacing: 8px;
+                                    HorizontalLayout {
+                                        spacing: 10px;
+                                        alignment: start;
+                                        Switch {
+                                            on: Live.allow-comments;
+                                            toggled => {
+                                                Live.allow-comments = !Live.allow-comments;
+                                            }
+                                        }
+                                        Text {
+                                            text: LiveWords.viewers-comment();
+                                            color: Look.text;
+                                            font-size: 13px;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                    if Live.allow-comments: HorizontalLayout {
+                                        spacing: 8px;
+                                        alignment: start;
+                                        Text {
+                                            text: LiveWords.paid-minimum();
+                                            color: Look.text;
+                                            font-size: 13px;
+                                            vertical-alignment: center;
+                                        }
+                                        Field {
+                                            width: 80px;
+                                            height: 30px;
+                                            font-size: 13px;
+                                            padding-x: 8px;
+                                            input-type: InputType.number;
+                                            text <=> Live.paid-minimum;
+                                            placeholder: "0";
+                                        }
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Icon {
+                                                name: "star";
+                                                size: 14px;
+                                                color: Tier.ink(2);
+                                            }
+                                        }
+                                    }
+                                    if Live.allow-comments: Paragraph {
+                                        text: LiveWords.paid-minimum-note();
+                                        color: Look.faint;
+                                        font-size: 12px;
+                                        line-height-factor: Look.leading(1.5);
+                                    }
+                                }
+                            }
+                            Rectangle {
+                                height: 1px;
+                                background: Look.line;
+                            }
+                            VerticalLayout {
+                                padding-left: 16px;
+                                padding-right: 16px;
+                                padding-top: 14px;
+                                padding-bottom: 14px;
+                                Paragraph {
+                                    text: LiveViewWords.set-in-obs();
+                                    color: Look.faint;
+                                    font-size: 12px;
+                                    line-height-factor: Look.leading(1.5);
+                                }
+                            }
+                            Rectangle {
+                                height: 1px;
+                                background: Look.line;
+                            }
+                            VerticalLayout {
+                                padding-left: 16px;
+                                padding-right: 16px;
+                                padding-top: 14px;
+                                padding-bottom: 16px;
+                                spacing: 8px;
+                                // Telegram's stream starts here; OBS then sends to it.
+                                start-button := Rectangle {
+                                    height: 46px;
+                                    border-radius: Look.button-radius;
+                                    background: start-touch.has-hover && start-touch.enabled ? Look.danger.darker(0.1) : Look.danger;
+                                    opacity: Live.targets.length > 0 && !Live.starting ? 1 : 0.45;
+                                    accessible-role: button;
+                                    accessible-label: LiveWords.start(root.story);
+                                    HorizontalLayout {
+                                        alignment: center;
+                                        spacing: 9px;
+                                        VerticalLayout {
+                                            alignment: center;
+                                            Rectangle {
+                                                width: 10px;
+                                                height: 10px;
+                                                border-radius: 5px;
+                                                background: Look.dark ? Look.bg : #ffffff;
+                                            }
+                                        }
+                                        Text {
+                                            text: (Look.terminal ? "[" + LiveWords.start(root.story) + "]" : LiveWords.start(root.story)) + Look.enter-hint;
+                                            color: Look.dark ? Look.bg : #ffffff;
+                                            font-size: 16px;
+                                            font-weight: 600;
+                                            vertical-alignment: center;
+                                        }
+                                    }
+                                    start-touch := TouchArea {
+                                        enabled: Live.targets.length > 0 && !Live.starting;
+                                        mouse-cursor: pointer;
+                                        clicked => {
+                                            Live.start();
+                                        }
+                                    }
+                                }
+                                Paragraph {
+                                    text: LiveWords.start-note();
+                                    color: Look.faint;
+                                    font-size: 12px;
+                                    horizontal-alignment: center;
+                                    line-height-factor: Look.leading(1.5);
+                                }
+                                if Live.start-problem != "": Paragraph {
+                                    text: Live.start-problem;
+                                    color: Look.danger;
+                                    font-size: 13px;
+                                    line-height-factor: Look.leading(1.5);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

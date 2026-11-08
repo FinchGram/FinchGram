@@ -69,7 +69,10 @@ const KEY_ACCOUNT: &str = "database";
 ///    rows of before dropped, since they name none (every program asks again, once).
 /// 8 (after 0.7.7): `music_sources`, the servers of the music page (src/music/, docs/music.md),
 ///    each password sealed to its source, as a download server's is to its server.
-pub const LAYOUT: i32 = 8;
+/// 9 (after 0.7.10): `live_follows`, the channels the user follows in the Live view (src/live/,
+///    docs/live-streams.md): the live directory's id, the source and the name, in the order
+///    followed. Nothing secret, nothing sealed.
+pub const LAYOUT: i32 = 9;
 
 /// The tables of layout 1, as 0.6.0 made them.
 const TABLES_OF_LAYOUT_1: &str = "CREATE TABLE IF NOT EXISTS servers (
@@ -377,6 +380,20 @@ fn upgrade(connection: &Connection, from: i32, key: &[u8; 32]) -> Result<(), Str
                                  port INTEGER NOT NULL,
                                  username TEXT NOT NULL,
                                  password TEXT NOT NULL
+                             );",
+                        )
+                        .map_err(|err| err.to_string())
+                }
+                9 => {
+                    // The Live view's follows: none for anyone upgrading.
+                    connection
+                        .execute_batch(
+                            "CREATE TABLE IF NOT EXISTS live_follows (
+                                 id TEXT PRIMARY KEY,
+                                 position INTEGER NOT NULL,
+                                 source TEXT NOT NULL,
+                                 name TEXT NOT NULL,
+                                 added INTEGER NOT NULL
                              );",
                         )
                         .map_err(|err| err.to_string())
@@ -693,6 +710,56 @@ fn write_music_sources(connection: &Connection, sources: &[MusicSourceRecord]) -
             Err(err)
         }
     }
+}
+
+// ---- the live follows --------------------------------------------------------------------------
+
+/// A channel the user follows in the Live view (src/live/follows.rs): the live directory's id,
+/// its source ("owncast", …), its name as it was when followed, and when (seconds since 1970).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LiveFollowRecord {
+    pub id: String,
+    pub source: String,
+    pub name: String,
+    pub added: i64,
+}
+
+/// The followed channels, in the order followed.
+pub fn live_follows() -> Vec<LiveFollowRecord> {
+    let read = with(|connection| {
+        let mut statement = connection.prepare("SELECT id, source, name, added FROM live_follows ORDER BY position")?;
+        let rows = statement.query_map([], |row| Ok(LiveFollowRecord { id: row.get(0)?, source: row.get(1)?, name: row.get(2)?, added: row.get(3)? }))?;
+        rows.collect::<rusqlite::Result<Vec<_>>>()
+    });
+    match read {
+        Ok(follows) => follows,
+        Err(err) => {
+            eprintln!("database: cannot read the live follows: {err}");
+            Vec::new()
+        }
+    }
+}
+
+/// Keep `follows` as the followed channels, in this order, in place of the ones kept before.
+pub fn save_live_follows(follows: &[LiveFollowRecord]) -> Result<(), String> {
+    with(|connection| {
+        connection.execute_batch("BEGIN; DELETE FROM live_follows;")?;
+        let written: rusqlite::Result<()> = follows.iter().enumerate().try_for_each(|(position, follow)| {
+            connection
+                .execute(
+                    "INSERT INTO live_follows (id, position, source, name, added) VALUES (?1, ?2, ?3, ?4, ?5)",
+                    params![follow.id, position as i64, follow.source, follow.name, follow.added],
+                )
+                .map(|_| ())
+        });
+        match written {
+            Ok(()) => connection.execute_batch("COMMIT;"),
+            Err(err) => {
+                let _ = connection.execute_batch("ROLLBACK;");
+                Err(err)
+            }
+        }
+    })
 }
 
 // ---- the credentials ---------------------------------------------------------------------------
@@ -1048,6 +1115,23 @@ mod tests {
     }
 
     #[test]
+    fn live_follows_are_kept_in_the_order_followed() {
+        let (path, backup) = scratch("follows");
+        let connection = open_at(&path, &a_key(3), &backup).expect("a new database");
+        let follows = [
+            LiveFollowRecord { id: "fg_ch_b".into(), source: "owncast".into(), name: "Jazz Cellar".into(), added: 20 },
+            LiveFollowRecord { id: "fg_ch_a".into(), source: "peertube".into(), name: "Harbour Cam".into(), added: 10 },
+        ];
+        DATABASE.with(|kept| *kept.borrow_mut() = Some(connection));
+        save_live_follows(&follows).expect("saved");
+        assert_eq!(live_follows(), follows.to_vec());
+        save_live_follows(&follows[1..]).expect("saved again");
+        assert_eq!(live_follows(), follows[1..].to_vec());
+        DATABASE.with(|kept| *kept.borrow_mut() = None);
+        let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
+    }
+
+    #[test]
     fn servers_are_kept_in_order_with_their_passwords_sealed() {
         let (path, backup) = scratch("servers");
         let key = a_key(2);
@@ -1212,6 +1296,8 @@ mod tests {
         // sources of layout 8.
         assert_eq!(connection.query_row("SELECT count(*) FROM credentials", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
         assert_eq!(connection.query_row("SELECT count(*) FROM music_sources", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
+        // And the Live view's follows of layout 9.
+        assert_eq!(connection.query_row("SELECT count(*) FROM live_follows", [], |row| row.get::<_, i64>(0)).expect("count"), 0);
         // The file as it was is in the backup folder, the password sealed as before.
         let copies: Vec<PathBuf> = std::fs::read_dir(&backup).expect("the backup folder").flatten().map(|entry| entry.path()).collect();
         assert_eq!(copies.len(), 1);

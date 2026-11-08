@@ -25,8 +25,8 @@ import { BroadsheetActions } from "actions.slint";
 import { BroadsheetAttachments } from "attachments.slint";
 import { BroadsheetCompose } from "compose.slint";
 import { Search, NewChat, NewDialog, ComposeWords } from "../compose.slint";
-import { Live, LiveWords } from "../live.slint";
-import { LiveList, LivePane, LiveMark, LiveBar } from "../pages/live.slint";
+import { Live, LiveWords, LiveDirectory, LiveSource } from "../live.slint";
+import { LiveList, LivePane, LiveMark, LiveBar, LiveMini } from "../pages/live.slint";
 
 export enum BroadsheetView { chats, channels, bots, live, filters, scheduled }
 
@@ -3908,6 +3908,15 @@ export component BroadsheetWindow inherits Rectangle {
         y: 40px;
         width: root.width - self.x;
         height: root.height - 40px - (Music.playing ? 60px : 0px);
+    }
+
+    // A live stream left playing (pages/live.slint): at the foot on the right, over the chats above
+    // the composer and over the view's other places; Watch shows it in full. A Telegram stream ends
+    // with the view (src/telegram/live.rs), so its player goes with it.
+    if LiveDirectory.mini && !(root.view == BroadsheetView.live && LiveDirectory.watching)
+        && (LiveDirectory.channel.source != LiveSource.telegram || Live.open-id != ""): LiveMini {
+        x: root.width - self.width - 16px;
+        y: root.height - (Music.playing ? 60px : 0px) - self.height - (root.view == BroadsheetView.live ? 16px : 84px);
     }
 
     // The toolbox, from the rail's right over the list, under the title bar and above the player bar.

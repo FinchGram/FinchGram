@@ -68,6 +68,7 @@ export global Live {
     in-out property <[LiveRow]> stories;
     in-out property <[LiveRow]> chats;
     in-out property <int> count;                // live now, for the entry's dot
+    in-out property <bool> on-air;              // the user's own stream is live (a row of theirs, mine): the Live column's "On air"
     in-out property <bool> shown;               // the view is open: covers the open chat
     callback show(bool);                        // the view opens or closes (it loads the stories when it opens)
     in-out property <int> show-requests;        // each step: the theme opens the view (the toolbox's Live, /live)
@@ -259,4 +260,398 @@ export global LiveWords {
     public pure function boost-needed() -> string { return @tr("This channel needs more boosts before it can post stories."); }
     public pure function story-limit() -> string { return @tr("Telegram allows no more stories from this account for now."); }
     public pure function not-live-now() -> string { return @tr("No live story there right now."); }
+}
+
+// ---- The live directory (the canvas "FinchGram Desktop 直播", rounds 12 and 13) ---------------
+// Discover, Following, Watch and Connections: channels from every source, the directory's
+// (services.finchgram.com/live/api/v1, docs/live-directory.md) and Telegram's own. Rust fills
+// LiveDirectory (src/live/); the pages are drawn once, in Look's colours and shapes, for the
+// three themes (pages/live-*.slint).
+
+// Where a channel is from.
+export enum LiveSource { owncast, peertube, icecast, hls, telegram, twitch, youtube, kick, bilibili }
+
+// Whether it is live (round 12): live, confirmed by an observation still valid; stale, live when
+// last observed but not confirmed now; offline; unknown, nothing reliable.
+export enum LiveStatus { live, stale, offline, unknown }
+
+// The one action a channel has (round 12's six labels): Watch here, Listen here, Try opening,
+// Sign in to watch, Open on <source> (its own site), Unavailable.
+export enum LivePlay { watch, listen, try-opening, sign-in, elsewhere, unavailable }
+
+// Why it is not simply "Watch here": the reason line under the action.
+//   offline: not live now. unknown: its source is not answering. not-confirmed: live when last
+//   observed. webrtc: Telegram sends it over WebRTC (the phone). sign-in: it needs an account at
+//   its source. own-site: it plays on its source's site. official-player: only its source's own
+//   player may play it. format: sent in a format the app does not play.
+export enum LiveWhy { none, offline, unknown, not-confirmed, webrtc, sign-in, own-site, official-player, format }
+
+// The directory's categories (none: the source gave none).
+export enum LiveCategory { none, music, gaming, talk, technology, creative, irl, education, events, news, sports, other }
+
+// Discover's three modes: what is on now, every channel, what is announced.
+export enum LiveMode { live, channels, upcoming }
+
+// How results are ordered: Recommended browsing, Relevance with words; the rest are chosen.
+export enum LiveSort { recommended, relevance, viewers, recent, added }
+
+// The Live column's four places; watching is a state over them (LiveDirectory.watching).
+export enum LiveSection { discover, following, broadcast, connections }
+
+// A source's last sync (GET /sources).
+export enum LiveSync { ok, degraded, rate-limited, failed, none }
+
+// A channel, wherever it is from: a card in Discover, a row in Following or in the column.
+export struct LiveChannel {
+    id: string,                 // the directory's (fg_ch_…), or Telegram's own row id (story:…, chat:…)
+    source: LiveSource,
+    name: string,               // the channel
+    title: string,              // its session's title; "" none
+    initial: string,
+    hue: int,                   // the avatar's colour, 0 … 359, from the id
+    picture: image,             // Telegram's chat photo, when it has one
+    has-picture: bool,
+    thumbnail: image,           // the source's picture of the stream
+    has-thumbnail: bool,        // false: "No thumbnail from <source>"
+    status: LiveStatus,
+    observed-minutes: int,      // since its source last answered; -1 unknown
+    started-minutes: int,       // live for so long; -1 unknown
+    last-live-minutes: int,     // since it was last live; -1 never seen live
+    viewers: int,               // the source's own count; -1 none
+    self-reported: bool,        // the count is the server's own (Owncast)
+    audio: bool,                // sound only (Icecast): "listening"
+    category: LiveCategory,
+    language: string,           // the language's own name; "" not given
+    language-code: string,      // "en", "zh": Terminal's narrow column
+    mature: bool,
+    play: LivePlay,
+    why: LiveWhy,
+    following: bool,
+    on-telegram: bool,          // followed on Telegram: unfollowed there, not here
+    host: string,               // its site, for "Opened … in your browser"
+    upcoming-title: string,     // an announced session; "" none
+    upcoming-minutes: int,      // starts in so long; -1 none
+}
+
+// A source in the sources panel (Discover's "Sources", from GET /sources).
+export struct LiveSourceRow {
+    source: LiveSource,
+    indexed: bool,              // false: not integrated yet
+    sync: LiveSync,
+    live: int,                  // live now from it
+    synced-minutes: int,        // since its last good sync; -1 never
+    viewer-counts: int,         // 0 none, 1 exact, 2 the server's own, 3 listeners
+    thumbnails: bool,
+    plays-here: bool,
+}
+
+// One option of a filter's menu, with the results it would give.
+export struct LiveOption {
+    key: string,                // a source's or a category's name in the enum, a language code
+    label: string,              // a language's own name; the others are named by LiveWords
+    source: LiveSource,
+    category: LiveCategory,
+    count: int,
+    chosen: bool,
+}
+
+// One line of the search box's suggestions.
+//   kind 0: a recent search. 1: a word to search for. 2: a channel. 3: a source to filter by.
+//   4: a category to filter by. 5: the text is a link: open it.
+export struct LiveSuggestion {
+    kind: int,
+    text: string,
+    source: LiveSource,
+    category: LiveCategory,
+    id: string,                 // a channel's
+}
+
+// Connections › Open a link: where a pasted link has got to.
+//   empty. recognized: the app knows what it is (source set). probing: asking its server.
+//   found: a directory channel (link-channel). playable: a stream the app plays. elsewhere: it
+//   plays on its own site. private: a stream key or a token, not for here. not-stream: nothing to
+//   play there. failed: the server did not answer (link-problem).
+export enum LiveLinkState { empty, recognized, probing, found, playable, elsewhere, private, not-stream, failed }
+
+// Watching a channel of the directory (Telegram's own play as before, through Live.state).
+//   resolving: asking its source for the stream. playing. network: the connection stalled, mpv
+//   retries. offline: not live. expired: the stream's address ran out; asking again. elsewhere: it
+//   plays on its own site. sign-in: it needs an account there. mature: asks before playing.
+//   phone: Telegram sends it over WebRTC. failed: it could not be played (LiveDirectory.problem).
+export enum LiveWatch { resolving, playing, network, offline, expired, elsewhere, sign-in, mature, phone, failed }
+
+// The short notes at the bottom of the view.
+export enum LiveToast { none, following, unfollowed, followed-on-telegram, opened-in-browser }
+
+export global LiveDirectory {
+    // Where the view is.
+    in-out property <LiveSection> section;
+    in-out property <bool> watching;            // Watch is open over the section
+    in-out property <bool> column-open: true;   // the Live column (hidden while watching, the menu brings it)
+    callback go(LiveSection);
+    callback back();                            // from Watch to where it was opened
+
+    // Discover.
+    in-out property <string> query;
+    in-out property <bool> query-is-link;       // the box holds a link, not words
+    in-out property <LiveMode> mode;
+    in-out property <[int]> mode-counts;        // by LiveMode's order; -1 unknown
+    in-out property <LiveSort> sort;
+    in-out property <bool> list-layout;         // the compact list instead of cards (Terminal: always)
+    in-out property <[LiveOption]> source-options;
+    in-out property <[LiveOption]> category-options;
+    in-out property <[LiveOption]> language-options;
+    // The category and the language filtered by, for Terminal's column, whose facets mark "any"
+    // when none is chosen (round 12's facets): none / "" for any.
+    in-out property <LiveCategory> chosen-category;
+    in-out property <string> chosen-language;
+    in-out property <int> playback;             // 0 any, 1 plays in FinchGram, 2 opens elsewhere
+    in-out property <[int]> playback-counts;    // by that order
+    in-out property <LiveStatus> status-filter;
+    in-out property <bool> status-any: true;    // mode channels: no status filter
+    in-out property <bool> filtered;            // a filter is set
+    in-out property <bool> home;                // nothing typed, filtered or chosen: the home groups
+    in-out property <[LiveChannel]> home-here;  // confirmed live, plays in FinchGram
+    in-out property <int> home-here-count;
+    in-out property <[LiveChannel]> results;    // in order; confirmed live first, then the rest
+    in-out property <int> total;
+    in-out property <int> total-relation;       // 0 exactly, 1 at least (a source lags), 2 unknown
+    in-out property <bool> loading;             // a new search is on its way
+    in-out property <bool> more-loading;
+    in-out property <bool> has-more;
+    in-out property <bool> page-failed;         // the next page did not come
+    in-out property <bool> partial;             // a source is behind
+    in-out property <[LiveSourceRow]> sources;
+    in-out property <bool> sources-open;
+    in-out property <int> unknown-live;         // live when last seen, status unknown: not in Live now
+    in-out property <int> hidden-mature;        // results left out by the content setting
+    in-out property <bool> failed;              // the directory did not answer
+    in-out property <[LiveSuggestion]> suggestions;
+    in-out property <bool> suggestions-open;
+    callback search(string);                    // Enter, or a suggestion
+    callback typed(string);                     // each keystroke: the suggestions follow
+    callback choose-suggestion(int);
+    callback set-mode(LiveMode);
+    callback set-sort(LiveSort);
+    callback set-list-layout(bool);
+    callback toggle-source(LiveSource);
+    callback set-category(LiveCategory);
+    callback set-language(string);              // "" any
+    callback set-playback(int);
+    callback set-status(bool, LiveStatus);      // any, or this one
+    callback clear-filters();
+    callback more();
+    callback retry();
+    callback toggle-sources();
+    // The Language filter's value: the chosen language's own name ("Deutsch"); "" any. (The options
+    // can be many, the chosen anywhere among them.)
+    in-out property <string> language-chosen;
+    // Each step: Discover's search box takes the focus (⌘K in the Live view; Terminal's / is Discover's own).
+    in-out property <int> search-focus-requests;
+
+    // A channel's own actions.
+    callback open(string);                      // its one action: watch it, or open it elsewhere
+    callback follow(string, bool);
+    callback open-page(string);                 // its own page (its host), in the browser: Terminal's [o page]
+
+    // Following: the channels the user follows here, and the live ones they follow on Telegram.
+    in-out property <[LiveChannel]> following-live;
+    in-out property <[LiveChannel]> following-off;
+    in-out property <bool> following-partial;   // a source is behind: some statuses are not confirmed
+
+    // Connections › Open a link.
+    in-out property <string> link;
+    in-out property <LiveLinkState> link-state;
+    in-out property <LiveSource> link-source;
+    in-out property <LiveChannel> link-channel;
+    in-out property <string> link-problem;
+    callback type-link(string);
+    callback open-link();
+
+    // The content setting (Settings › Live, and Discover's notice): mature-rated channels.
+    in-out property <bool> show-mature;
+    in-out property <bool> content-asking;      // the dialog is open
+    callback set-show-mature(bool);
+    // Settings › Live › Languages: what Recommended puts first; none chosen until the user does.
+    in-out property <[LiveOption]> preferred-languages;
+    callback toggle-preferred-language(string);
+
+    // Watching a directory channel.
+    in-out property <LiveChannel> channel;
+    in-out property <LiveWatch> watch-state;
+    in-out property <string> problem;
+    in-out property <string> tech;              // "HLS · 1080p · 6.0 Mbps", what plays
+    in-out property <[string]> qualities;       // "Auto" first, then the stream's variants
+    in-out property <int> quality;
+    in-out property <bool> paused;
+    in-out property <int> behind;               // seconds behind the live edge (paused, or a seek)
+    in-out property <bool> chat;                // the source has a chat here (Owncast; Telegram's comments)
+    // Owncast's chat beside the picture (round 12: "Chat from Owncast · read and send"; Telegram's
+    // comments stay Live.comments). FinchGram joins as an anonymous chat user under the name the
+    // server gives, which the user may change; nothing of it is kept.
+    in-out property <[LiveComment]> chat-messages;
+    in-out property <string> chat-name;         // the name chatted under; "" while joining
+    in-out property <bool> chat-joined;         // messages can be sent
+    in-out property <string> chat-problem;      // why the chat could not be joined
+    callback send-chat(string);
+    callback rename-chat(string);
+    callback set-quality(int);
+    callback toggle-pause();
+    callback live-edge();
+    callback confirm-mature();                  // "Watch anyway" (asks the content setting once)
+    callback open-elsewhere();                  // the stream's own site, in the browser
+    callback stop();
+
+    // The stream left playing while the user is elsewhere: the mini player, the pop-out window.
+    in-out property <bool> mini;
+    in-out property <bool> popped-out;
+    callback resume();                          // back to Watch
+    callback pop-out();
+    callback pop-in();
+
+    // A short note at the bottom of the view ("Following Keyboard Lab"), for a few seconds.
+    in-out property <LiveToast> toast;
+    in-out property <string> toast-name;
+}
+
+// The words of the live directory every theme shows (the canvas's, rounds 12 and 13).
+export global LiveDirectoryWords {
+    public pure function source(what: LiveSource) -> string {
+        if what == LiveSource.owncast { return "Owncast"; }
+        if what == LiveSource.peertube { return "PeerTube"; }
+        if what == LiveSource.icecast { return "Icecast"; }
+        if what == LiveSource.hls { return @tr("Submitted streams"); }
+        if what == LiveSource.telegram { return "Telegram"; }
+        if what == LiveSource.twitch { return "Twitch"; }
+        if what == LiveSource.youtube { return "YouTube"; }
+        if what == LiveSource.kick { return "Kick"; }
+        return "Bilibili";
+    }
+    // Terminal's two-letter source code.
+    public pure function code(what: LiveSource) -> string {
+        if what == LiveSource.owncast { return "oc"; }
+        if what == LiveSource.peertube { return "pt"; }
+        if what == LiveSource.icecast { return "ic"; }
+        if what == LiveSource.hls { return "hl"; }
+        if what == LiveSource.telegram { return "tg"; }
+        if what == LiveSource.twitch { return "tw"; }
+        if what == LiveSource.youtube { return "yt"; }
+        if what == LiveSource.kick { return "kk"; }
+        return "bl";
+    }
+    public pure function section(what: LiveSection) -> string {
+        if what == LiveSection.following { return @tr("Following"); }
+        if what == LiveSection.broadcast { return @tr("Broadcast"); }
+        if what == LiveSection.connections { return @tr("Connections"); }
+        return @tr("Discover");
+    }
+    public pure function mode(what: LiveMode) -> string {
+        if what == LiveMode.channels { return @tr("All channels"); }
+        if what == LiveMode.upcoming { return @tr("Upcoming"); }
+        return @tr("Live now");
+    }
+    public pure function sort(what: LiveSort) -> string {
+        if what == LiveSort.relevance { return @tr("Relevance"); }
+        if what == LiveSort.viewers { return @tr("Most viewers"); }
+        if what == LiveSort.recent { return @tr("Recently started"); }
+        if what == LiveSort.added { return @tr("Recently added"); }
+        return @tr("Recommended");
+    }
+    public pure function category(what: LiveCategory) -> string {
+        if what == LiveCategory.music { return @tr("Music"); }
+        if what == LiveCategory.gaming { return @tr("Gaming"); }
+        if what == LiveCategory.talk { return @tr("Talk"); }
+        if what == LiveCategory.technology { return @tr("Technology"); }
+        if what == LiveCategory.creative { return @tr("Creative"); }
+        if what == LiveCategory.irl { return @tr("IRL"); }
+        if what == LiveCategory.education { return @tr("Education"); }
+        if what == LiveCategory.events { return @tr("Events"); }
+        if what == LiveCategory.news { return @tr("News"); }
+        if what == LiveCategory.sports { return @tr("Sports"); }
+        if what == LiveCategory.other { return @tr("Other"); }
+        return @tr("Uncategorized");
+    }
+    public pure function language(name: string) -> string { return name != "" ? name : @tr("Language not given"); }
+
+    // The status, as a badge over a picture and in words.
+    public pure function badge(what: LiveStatus) -> string {
+        if what == LiveStatus.live { return @tr("LIVE"); }
+        if what == LiveStatus.stale { return @tr("NOT CONFIRMED"); }
+        if what == LiveStatus.offline { return @tr("OFFLINE"); }
+        return @tr("STATUS UNKNOWN");
+    }
+    public pure function status(what: LiveStatus) -> string {
+        if what == LiveStatus.live { return @tr("On air"); }
+        if what == LiveStatus.stale { return @tr("Not confirmed"); }
+        if what == LiveStatus.offline { return @tr("Off air"); }
+        return @tr("Status unknown");
+    }
+    // "2 h 5 min", "40 min".
+    public pure function duration(minutes: int) -> string {
+        if minutes < 60 { return @tr("{} min", minutes); }
+        if mod(minutes, 60) == 0 { return @tr("{} h", floor(minutes / 60)); }
+        return @tr("{} h {} min", floor(minutes / 60), mod(minutes, 60));
+    }
+    // How long ago a source last answered: "just now", "3 min ago", "2 h ago".
+    public pure function ago(minutes: int) -> string {
+        if minutes < 1 { return @tr("just now"); }
+        if minutes < 60 { return @tr("{} min ago", minutes); }
+        if minutes < 48 * 60 { return @tr("{} h ago", round(minutes / 60)); }
+        return @tr("{} days ago", round(minutes / 1440));
+    }
+    public pure function viewers(channel: LiveChannel) -> string {
+        if channel.viewers < 0 { return ""; }
+        if channel.audio { return @tr("{n} listening" | "{n} listening" % channel.viewers); }
+        return @tr("{n} watching" | "{n} watching" % channel.viewers);
+    }
+    // The line that says where a channel is now (Following, All channels).
+    public pure function status-line(channel: LiveChannel) -> string {
+        if channel.status == LiveStatus.live {
+            if channel.started-minutes < 0 { return viewers(channel) != "" ? viewers(channel) : status(channel.status); }
+            return viewers(channel) != "" ? @tr("Live for {} · {}", duration(channel.started-minutes), viewers(channel))
+                : @tr("Live for {}", duration(channel.started-minutes));
+        }
+        if channel.status == LiveStatus.stale { return @tr("Not confirmed · last confirmed live {}", ago(channel.observed-minutes)); }
+        if channel.status == LiveStatus.unknown {
+            return channel.observed-minutes >= 0 ? @tr("Status unknown · last confirmed live {}", ago(channel.observed-minutes))
+                : @tr("Status unknown · no recent answer from {}", source(channel.source));
+        }
+        return channel.last-live-minutes >= 0 ? @tr("Offline · last live {}", ago(channel.last-live-minutes)) : @tr("Not seen live yet");
+    }
+
+    // The one action, and why it is that one.
+    public pure function play(channel: LiveChannel) -> string {
+        if channel.play == LivePlay.watch { return @tr("Watch here"); }
+        if channel.play == LivePlay.listen { return @tr("Listen here"); }
+        if channel.play == LivePlay.try-opening { return @tr("Try opening"); }
+        if channel.play == LivePlay.sign-in { return @tr("Sign in to watch"); }
+        if channel.play == LivePlay.elsewhere { return @tr("Open on {}", source(channel.source)); }
+        if channel.why == LiveWhy.offline { return @tr("Offline"); }
+        if channel.why == LiveWhy.unknown { return @tr("Status unknown"); }
+        return @tr("Unavailable");
+    }
+    public pure function reason(channel: LiveChannel) -> string {
+        if channel.why == LiveWhy.offline { return @tr("Not live right now"); }
+        if channel.why == LiveWhy.unknown { return @tr("{} isn't answering", source(channel.source)); }
+        if channel.why == LiveWhy.not-confirmed { return @tr("Live status isn't confirmed — the stream may have ended"); }
+        if channel.why == LiveWhy.webrtc { return @tr("Telegram sends this one over WebRTC — watch it on your phone"); }
+        if channel.why == LiveWhy.sign-in { return @tr("{} needs an account for this stream", source(channel.source)); }
+        if channel.why == LiveWhy.own-site { return @tr("Plays on {}'s site, in your browser", source(channel.source)); }
+        if channel.why == LiveWhy.official-player { return @tr("{} allows only its own player, so it opens in your browser", source(channel.source)); }
+        if channel.why == LiveWhy.format { return @tr("FinchGram can't play this kind of stream yet"); }
+        if channel.play == LivePlay.listen { return @tr("Plays in FinchGram, sound only"); }
+        return @tr("Plays in FinchGram");
+    }
+    public pure function no-thumbnail(what: LiveSource) -> string { return @tr("No thumbnail from {}", source(what)); }
+    public pure function toast(what: LiveToast, name: string) -> string {
+        if what == LiveToast.following { return @tr("Following {}", name); }
+        if what == LiveToast.unfollowed { return @tr("Unfollowed {}", name); }
+        if what == LiveToast.followed-on-telegram { return @tr("Followed on Telegram — unfollow it there"); }
+        if what == LiveToast.opened-in-browser { return @tr("Opened {} in your browser", name); }
+        return "";
+    }
+    public pure function follow(channel: LiveChannel) -> string {
+        if channel.on-telegram { return @tr("Followed on Telegram"); }
+        return channel.following ? @tr("Following") : @tr("Follow");
+    }
 }
