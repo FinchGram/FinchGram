@@ -40,6 +40,14 @@ Anyone may run one: a fork of FinchGram/Services, or any server that answers the
 A channel whose owner takes it out of its source's directory leaves this one too: Owncast at the
 next sync, Icecast within a day, PeerTube within a week (when its robots.txt is read again).
 
+What it leaves out by itself (the maintainer's word of 2026-11-08, when the app's first release
+showed what the open sources hold): Owncast servers and PeerTube lives that are webcams, along with
+PeerTube instances of webcams alone; loops that run day and night (24/7, 24h, nonstop, AutoDJ);
+tests; and Owncast's placeholder words or a live without a title. Only Owncast and PeerTube are
+judged so, by a channel's name, its stream's title and its host (src/live/quality.ts); a reviewed
+channel never is. That day 43 of their 152 lives stayed. Icecast's stations, radio by the thousand,
+are listed only when a search asks for Icecast.
+
 ## The four statuses
 
 Each live session carries `observed_at`, `expires_at` and `last_confirmed_live_at`, and one status:
@@ -82,7 +90,8 @@ current.
 
 ### GET /search
 
-`q` (words; none to browse), `mode` (`live`, `channels`, `upcoming`), `source` (repeatable),
+`q` (words; none to browse), `mode` (`live`, `channels`, `upcoming`), `source` (repeatable; without
+it, every source but those listed only when asked for, Icecast in FinchGram's),
 `category`, `language`, `status` (in `mode=channels`), `playback` (`native`, `external`),
 `content` (`general`, or `general,mature`), `sort`, `limit` (1 to 50, default 24), `cursor`.
 
@@ -199,6 +208,7 @@ src/live/sources.ts            each source's configuration; src/live/sync/ its r
 src/live/cron.ts               the syncs, every five minutes (the Worker's cron trigger)
 src/live/snapshot.ts           a source's channels, observations and sessions, merged at each sync
 src/live/search.ts             search, suggest, ranking (pure)
+src/live/quality.ts            what it leaves out of Owncast and PeerTube
 src/routes/live/api/v1/        the routes; the contract itself is served at /live/api/v1/openapi.yaml
 data/live/channels/<id>.json   the reviewed Telegram channels and HLS streams
 ```

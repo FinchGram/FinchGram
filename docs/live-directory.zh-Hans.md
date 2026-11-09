@@ -29,6 +29,8 @@ Telegram 频道在不在播，目录说了不算：服务器没有 Telegram 账�
 
 主人把频道从它来源的目录里撤掉，这个目录也会跟着撤：Owncast 在下一次同步，Icecast 一天之内，PeerTube 一周之内（下次读它的 robots.txt 时）。
 
+它自己不收录的（维护者 2026-11-08 的决定，应用第一次发布后看清了开放来源里都是什么）：是摄像头的 Owncast 服务器和 PeerTube 直播，以及只有摄像头的 PeerTube 实例；日夜不停的循环（24/7、24h、nonstop、AutoDJ）；测试；还有 Owncast 的默认占位文字，或没有标题的直播。只这样判断 Owncast 和 PeerTube，依据是频道名、直播标题和所在站点（src/live/quality.ts）；审核过的频道从不判断。那天它们的 152 个直播留下了 43 个。Icecast 的电台数以千计，只在搜索点名要 Icecast 时才列出。
+
 ## 四种状态
 
 每个直播场次带 `observed_at`、`expires_at`、`last_confirmed_live_at` 和一个状态：
@@ -56,7 +58,7 @@ Live now 先列确认在播的，再列 stale 的；缓存的旧数据从不当�
 
 ### GET /search
 
-`q`（关键词；不给就是浏览）、`mode`（`live`、`channels`、`upcoming`）、`source`（可重复）、`category`、`language`、`status`（`mode=channels` 时）、`playback`（`native`、`external`）、`content`（`general`，或 `general,mature`）、`sort`、`limit`（1 到 50，默认 24）、`cursor`。
+`q`（关键词；不给就是浏览）、`mode`（`live`、`channels`、`upcoming`）、`source`（可重复；不给时，除了只在点名时才列出的来源，其余都列出，FinchGram 的目录里这个来源是 Icecast）、`category`、`language`、`status`（`mode=channels` 时）、`playback`（`native`、`external`）、`content`（`general`，或 `general,mature`）、`sort`、`limit`（1 到 50，默认 24）、`cursor`。
 
 - **Relevance**（有关键词）：名字 > 标签 > 标题 > 类别、来源和语言；匹配程度相同时，确认在播的在前，再按开播时间新的在前。
 - **Recommended**（没关键词）：确认在播是硬门槛；然后是应用的语言，应用用 `Accept-Language` 发过来（Settings › Live；请求里别的都不涉及个人）；然后是一小时内开播的。每一层里各来源轮流出，每个来源按自己的顺序（它自己的观看人数，再按名字），所以从不跨平台比较人数，也没有哪个来源能占满一页：光 Xiph 的目录就有几千个电台。
@@ -139,6 +141,7 @@ src/live/sources.ts            每个来源的配置；src/live/sync/ 是各自�
 src/live/cron.ts               同步，每 5 分钟一次（Worker 的定时触发）
 src/live/snapshot.ts           一个来源的频道、观察和场次，每次同步合并一次
 src/live/search.ts             搜索、联想、排序（纯函数）
+src/live/quality.ts            它不收录 Owncast 和 PeerTube 里的哪些
 src/routes/live/api/v1/        路由；契约本身在 /live/api/v1/openapi.yaml
 data/live/channels/<id>.json   审核过的 Telegram 频道和 HLS 流
 ```

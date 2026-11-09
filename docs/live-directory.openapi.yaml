@@ -42,7 +42,7 @@ paths:
           schema: { type: string, enum: [live, channels, upcoming], default: live }
         - name: source
           in: query
-          description: Only these sources; may repeat.
+          description: "Only these sources; may repeat. Without it, every source but those the directory lists only when asked for by name (FinchGram's: icecast, radio stations by the thousand)."
           style: form
           explode: true
           schema: { type: array, items: { $ref: "#/components/schemas/SourceId" } }
