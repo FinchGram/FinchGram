@@ -49,7 +49,7 @@ trap 'rm -rf "$TMP"' EXIT
 while IFS='|' read -r name path sha; do
   [ -n "$name" ] || continue
   echo "downloading $name"
-  curl -fsSL --retry 3 -o "$TMP/$name" "$BASE/$path"
+  curl -fsSL --retry 3 --retry-all-errors -o "$TMP/$name" "$BASE/$path"
   actual="$(shasum -a 256 "$TMP/$name" | cut -d' ' -f1)"
   if [ "$actual" != "$sha" ]; then
     echo "SHA-256 mismatch for $name" >&2

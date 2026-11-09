@@ -28,7 +28,9 @@ case "$SHA256" in *PENDING*)
 esac
 
 echo "downloading $URL"
-curl -fL --retry 3 --progress-bar -o "$TMP/$ASSET" "$URL"
+# --retry-all-errors: GitHub's download host can answer 504 after the transfer began, which plain
+# --retry does not count as passing (the v0.7.11 release build failed so on 2026-11-08).
+curl -fL --retry 3 --retry-all-errors --progress-bar -o "$TMP/$ASSET" "$URL"
 actual="$(shasum -a 256 "$TMP/$ASSET" | cut -d' ' -f1)"
 if [ "$actual" != "$SHA256" ]; then
   echo "SHA-256 mismatch for $ASSET" >&2
