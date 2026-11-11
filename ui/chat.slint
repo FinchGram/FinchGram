@@ -311,6 +311,7 @@ export global ChatMenuWords {
         if what == ChatConfirm.login { return @tr("Log in to {0}?", name); }
         if what == ChatConfirm.block { return @tr("Block {0}?", name); }
         if what == ChatConfirm.leave { return kind == ChatKind.channel ? @tr("Leave the channel {0}?", name) : @tr("Leave the group {0}?", name); }
+        if what == ChatConfirm.clear { return @tr("Clear the history of {0}?", name); }
         return @tr("Delete the chat with {0}?", name);
     }
     // A link whose words are not its address: where it goes (Chats.confirm-title holds the site).
@@ -322,6 +323,10 @@ export global ChatMenuWords {
         if what == ChatConfirm.login { return @tr("The site asks Telegram who you are. The bot's link opens once you agree."); }
         if what == ChatConfirm.block { return @tr("They will not be able to send you messages. You can unblock them from this menu."); }
         if what == ChatConfirm.leave { return kind == ChatKind.channel ? @tr("You will stop getting its posts.") : @tr("You will stop getting its messages."); }
+        if what == ChatConfirm.clear {
+            return kind == ChatKind.group ? @tr("Its messages are deleted for you only; the other members keep theirs. The chat stays in your list.")
+                : @tr("Its messages are deleted for you; the chat stays in your list.");
+        }
         return @tr("The chat and its messages go from your list.");
     }
     public pure function revoke(name: string) -> string { return @tr("Also delete for {0}", name); }
@@ -331,6 +336,7 @@ export global ChatMenuWords {
         if what == ChatConfirm.login { return @tr("Log in"); }
         if what == ChatConfirm.block { return @tr("Block"); }
         if what == ChatConfirm.leave { return @tr("Leave"); }
+        if what == ChatConfirm.clear { return @tr("Clear"); }
         return @tr("Delete");
     }
 }

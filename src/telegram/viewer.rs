@@ -180,6 +180,23 @@ fn view(message_id: i64, autoplay: bool) {
     ask_can_save(message_id);
 }
 
+/// Show a message's photo or video once the open chat has it among the messages loaded: the
+/// shared media's tiles (info_pages.rs) send the chat to the message first, and the viewer shows
+/// what the chat has. Looked for every tenth of a second, `tries` times.
+pub(super) fn view_when_here(message_id: i64, tries: u32) {
+    let mut here = false;
+    with_ui(|ui| {
+        let names = Names::from(ui);
+        let id = SharedString::from(message_id.to_string());
+        here = store::with(|store| store.viewer_items(&names).iter().any(|item| item.id == id)).unwrap_or(false);
+    });
+    if here {
+        view(message_id, false);
+    } else if tries > 0 {
+        Timer::single_shot(Duration::from_millis(100), move || view_when_here(message_id, tries - 1));
+    }
+}
+
 /// Whether the item shown may be saved, as TDLib says (the chat may restrict saving its content):
 /// not until it has said.
 fn ask_can_save(message_id: i64) {

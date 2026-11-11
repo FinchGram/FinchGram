@@ -8079,3 +8079,200 @@ msgstr "إلغاء كتم الصوت"
 msgctxt "status"
 msgid "Live"
 msgstr "على الهواء"
+
+#: ui/chat-info-pages.slint:127
+msgid "Search members"
+msgstr "ابحث في الأعضاء"
+
+#: ui/chat-info-pages.slint:128
+msgid "Search results"
+msgstr "نتائج البحث"
+
+#: ui/chat-info-pages.slint:129
+msgid "Nobody found"
+msgstr "لم يتم العثور على أحد"
+
+#: ui/chat-info-pages.slint:130
+msgid "{0} online"
+msgstr "{0} متصل"
+
+#: ui/chat-info-pages.slint:132
+msgid "This group hides its member list: only administrators see all {0} members. You still see the administrators."
+msgstr "تُخفي هذه المجموعة قائمة أعضائها: لا يرى جميع الأعضاء، وعددهم {0}، إلا المشرفون. ولا يزال بإمكانك رؤية المشرفين."
+
+#: ui/chat-info-pages.slint:135
+msgid "You see who the administrators are and their titles. What each of them may do, only the owner and those who may add administrators see."
+msgstr "ترى من هم المشرفون وألقابهم. أما ما يستطيع كل منهم فعله فلا يراه إلا المالك ومن يملك صلاحية إضافة مشرفين."
+
+#: ui/chat-info-pages.slint:137
+msgid "No photos or videos here yet"
+msgstr "لا توجد صور أو فيديوهات هنا بعد"
+
+#: ui/chat-info-pages.slint:138
+msgid "No files here yet"
+msgstr "لا توجد ملفات هنا بعد"
+
+#: ui/chat-info-pages.slint:139
+msgid "No links here yet"
+msgstr "لا توجد روابط هنا بعد"
+
+#: ui/chat-info-pages.slint:140
+msgid "Show more"
+msgstr "عرض المزيد"
+
+#: ui/chat-info-pages.slint:143
+msgid "1 month"
+msgstr "شهر واحد"
+
+#: ui/chat-info-pages.slint:144
+msgid "{n} day"
+msgid_plural "{n} days"
+msgstr[0] "{n} يوم"
+msgstr[1] "{n} يوم"
+msgstr[2] "{n} يومان"
+msgstr[3] "{n} أيام"
+msgstr[4] "{n} يومًا"
+msgstr[5] "{n} يوم"
+
+#: ui/chat-info-pages.slint:146
+msgid "New messages are deleted for both of you this long after they are sent. Messages from before stay."
+msgstr "تُحذف الرسائل الجديدة لديكما كليكما بعد مرور هذه المدة على إرسالها. أما الرسائل السابقة فتبقى."
+
+#: ui/chat-info-pages.slint:149
+msgid "New messages in this group are deleted for everyone this long after they are sent. Messages from before stay."
+msgstr "تُحذف الرسائل الجديدة في هذه المجموعة لدى الجميع بعد مرور هذه المدة على إرسالها. أما الرسائل السابقة فتبقى."
+
+#: ui/chat-info-pages.slint:152
+msgid "New posts in this channel are deleted for everyone this long after they are published. Posts from before stay."
+msgstr "تُحذف المنشورات الجديدة في هذه القناة لدى الجميع بعد مرور هذه المدة على نشرها. أما المنشورات السابقة فتبقى."
+
+#: ui/chat-info-pages.slint:155
+msgid "{0} can change this too. A line in the chat tells you both when it changes."
+msgstr "يستطيع {0} أيضًا تغيير هذا. وعند تغييره يظهر سطر في الدردشة يُعلمكما كليكما."
+
+#: ui/chat-info-pages.slint:158
+msgid "Changing this needs the right to change the chat's info. Ask an administrator who has it."
+msgstr "يتطلب تغيير هذا صلاحية تغيير معلومات الدردشة. اطلب ذلك من مشرف يملك هذه الصلاحية."
+
+#: ui/chat-info-pages.slint:160
+msgctxt "the chat's mute"
+msgid "Mute"
+msgstr "الكتم"
+
+#: ui/chat-info-pages.slint:161
+msgid "Not muted"
+msgstr "بدون كتم"
+
+#: ui/chat-info-pages.slint:162
+msgid "For 1 hour"
+msgstr "لمدة ساعة"
+
+#: ui/chat-info-pages.slint:163
+msgid "For 8 hours"
+msgstr "لمدة 8 ساعات"
+
+#: ui/chat-info-pages.slint:164
+msgid "For 2 days"
+msgstr "لمدة يومين"
+
+#: ui/chat-info-pages.slint:165
+msgctxt "the chat's mute"
+msgid "Forever"
+msgstr "دائمًا"
+
+#: ui/chat-info-pages.slint:167
+msgid "Muted until {0}"
+msgstr "مكتوم حتى {0}"
+
+#: ui/chat-info-pages.slint:169
+msgid "Notify me while muted"
+msgstr "أشعرني حتى أثناء الكتم"
+
+#: ui/chat-info-pages.slint:170
+msgid "When someone mentions me or replies to me"
+msgstr "عندما يذكرني أحد أو يرد عليّ"
+
+#: ui/chat-info-pages.slint:171
+msgid "When a message is pinned"
+msgstr "عند تثبيت رسالة"
+
+#: ui/chat-info-pages.slint:173
+msgid "This chat only. The defaults for each kind of chat are in Settings › Notifications & sounds."
+msgstr "لهذه الدردشة فقط. الإعدادات الافتراضية لكل نوع من الدردشات موجودة في الإعدادات › الإشعارات والأصوات."
+
+#: ui/chat.slint:314
+msgid "Clear the history of {0}?"
+msgstr "مسح سجل {0}؟"
+
+#: ui/chat.slint:327
+msgid "Its messages are deleted for you only; the other members keep theirs. The chat stays in your list."
+msgstr "تُحذف الرسائل لديك فقط، ويحتفظ الأعضاء الآخرون برسائلهم. وتبقى الدردشة في قائمتك."
+
+#: ui/chat.slint:328
+msgid "Its messages are deleted for you; the chat stays in your list."
+msgstr "تُحذف الرسائل لديك، وتبقى الدردشة في قائمتك."
+
+#: ui/format.slint:89
+msgctxt "month and year"
+msgid "{0} {1}"
+msgstr "{0} {1}"
+
+#: ui/format.slint:90
+msgctxt "month, standing alone"
+msgid "January"
+msgstr "يناير"
+
+#: ui/format.slint:91
+msgctxt "month, standing alone"
+msgid "February"
+msgstr "فبراير"
+
+#: ui/format.slint:92
+msgctxt "month, standing alone"
+msgid "March"
+msgstr "مارس"
+
+#: ui/format.slint:93
+msgctxt "month, standing alone"
+msgid "April"
+msgstr "أبريل"
+
+#: ui/format.slint:94
+msgctxt "month, standing alone"
+msgid "May"
+msgstr "مايو"
+
+#: ui/format.slint:95
+msgctxt "month, standing alone"
+msgid "June"
+msgstr "يونيو"
+
+#: ui/format.slint:96
+msgctxt "month, standing alone"
+msgid "July"
+msgstr "يوليو"
+
+#: ui/format.slint:97
+msgctxt "month, standing alone"
+msgid "August"
+msgstr "أغسطس"
+
+#: ui/format.slint:98
+msgctxt "month, standing alone"
+msgid "September"
+msgstr "سبتمبر"
+
+#: ui/format.slint:99
+msgctxt "month, standing alone"
+msgid "October"
+msgstr "أكتوبر"
+
+#: ui/format.slint:100
+msgctxt "month, standing alone"
+msgid "November"
+msgstr "نوفمبر"
+
+#: ui/format.slint:101
+msgctxt "month, standing alone"
+msgid "December"
+msgstr "ديسمبر"

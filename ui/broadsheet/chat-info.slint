@@ -4,6 +4,7 @@
 import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "../chat-info.slint";
 import { ChatManage, ManageLook } from "../chat-manage.slint";
 import { ManagePanel } from "../chat-manage-panel.slint";
+import { InfoPage, InfoPagePanel, SharedTiles } from "../chat-info-pages.slint";
 import { Conversation, ChatKind, Status } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Avatar } from "../widgets.slint";
@@ -129,7 +130,16 @@ component InfoLine inherits Rectangle {
 
 component MemberLine inherits Rectangle {
     in property <InfoMember> member;
+    in property <bool> live;
     height: line.preferred-height;
+    background: live && touch.has-hover ? P.hover : transparent;
+    touch := TouchArea {
+        enabled: root.live;
+        mouse-cursor: pointer;
+        clicked => {
+            ChatInfo.run("member-" + root.member.id);
+        }
+    }
 
     line := HorizontalLayout {
         padding-top: 6px;
@@ -179,6 +189,7 @@ component MemberLine inherits Rectangle {
 // shared media's tabs. What is for later is faded.
 component Section inherits Rectangle {
     in property <InfoSection> item;
+    in property <length> tile-side;     // the shared media's tiles: the panel's width in three
     height: body.preferred-height;
 
     Rectangle {
@@ -200,27 +211,54 @@ component Section inherits Rectangle {
         if root.item.shared: VerticalLayout {
             padding-top: 4px;
             padding-bottom: 6px;
-            opacity: 0.42;
+            spacing: 10px;
+            opacity: root.item.grey ? 0.42 : 1;
             HorizontalLayout {
                 alignment: start;
                 spacing: 14px;
                 for tab[index] in root.item.tabs: VerticalLayout {
                     spacing: 3px;
-                    Text {
-                        text: tab;
-                        font-size: 14px;
-                        font-weight: index == 0 ? 600 : 400;
-                        color: index == 0 ? P.text : P.muted;
+                    HorizontalLayout {
+                        spacing: 4px;
+                        Text {
+                            text: tab;
+                            font-size: 14px;
+                            font-weight: index == 0 ? 600 : 400;
+                            color: index == 0 ? P.text : P.muted;
+                        }
+                        if root.item.counts[index] != "": Text {
+                            text: root.item.counts[index];
+                            font-size: 11px;
+                            color: P.faint;
+                            vertical-alignment: center;
+                        }
                     }
                     Rectangle {
                         height: 2px;
                         background: index == 0 ? P.accent : transparent;
                     }
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            ChatInfo.run("media-" + index);
+                        }
+                    }
+                }
+            }
+            SharedTiles {
+                rows: root.item.tiles;
+                side: root.tile-side;
+                gap: 3px;
+                radius: 2px;
+                fill: P.surface;
+                opened(id) => {
+                    ChatInfo.run("tile-" + id);
                 }
             }
         }
         for member in root.item.members: MemberLine {
             member: member;
+            live: !root.item.grey;
             opacity: root.item.grey ? 0.42 : 1;
         }
         for row in root.item.rows: InfoLine {
@@ -292,7 +330,8 @@ export component InfoPanel inherits Rectangle {
         background: P.line;
     }
     if ChatManage.open: ManagePanel { look: BroadsheetManage.look; }
-    if !ChatManage.open: Flickable {
+    if InfoPage.open && !ChatManage.open: InfoPagePanel { look: BroadsheetManage.look; }
+    if !ChatManage.open && !InfoPage.open: Flickable {
         content-height: body.preferred-height;
         body := VerticalLayout {
             width: parent.width;
@@ -386,6 +425,8 @@ export component InfoPanel inherits Rectangle {
             }
             for section in ChatInfo.sections: Section {
                 item: section;
+                // The page's sides (22px) and two gaps of 3px.
+                tile-side: (root.width - 44px - 6px) / 3;
             }
         }
     }

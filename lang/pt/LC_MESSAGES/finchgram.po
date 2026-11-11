@@ -7965,3 +7965,196 @@ msgstr "Ativar o som"
 msgctxt "status"
 msgid "Live"
 msgstr "Ao vivo"
+
+#: ui/chat-info-pages.slint:127
+msgid "Search members"
+msgstr "Buscar membros"
+
+#: ui/chat-info-pages.slint:128
+msgid "Search results"
+msgstr "Resultados da busca"
+
+#: ui/chat-info-pages.slint:129
+msgid "Nobody found"
+msgstr "Nenhum membro encontrado"
+
+#: ui/chat-info-pages.slint:130
+msgid "{0} online"
+msgstr "{0} online"
+
+#: ui/chat-info-pages.slint:132
+msgid "This group hides its member list: only administrators see all {0} members. You still see the administrators."
+msgstr "Este grupo oculta a lista de membros: só os administradores veem todos os {0} membros. Você continua vendo os administradores."
+
+#: ui/chat-info-pages.slint:135
+msgid "You see who the administrators are and their titles. What each of them may do, only the owner and those who may add administrators see."
+msgstr "Você vê quem são os administradores e os títulos deles. O que cada um pode fazer, só o dono e quem pode adicionar administradores veem."
+
+#: ui/chat-info-pages.slint:137
+msgid "No photos or videos here yet"
+msgstr "Ainda não há fotos nem vídeos"
+
+#: ui/chat-info-pages.slint:138
+msgid "No files here yet"
+msgstr "Ainda não há arquivos"
+
+#: ui/chat-info-pages.slint:139
+msgid "No links here yet"
+msgstr "Ainda não há links"
+
+#: ui/chat-info-pages.slint:140
+msgid "Show more"
+msgstr "Ver mais"
+
+#: ui/chat-info-pages.slint:143
+msgid "1 month"
+msgstr "1 mês"
+
+#: ui/chat-info-pages.slint:144
+msgid "{n} day"
+msgid_plural "{n} days"
+msgstr[0] "{n} dia"
+msgstr[1] "{n} dias"
+
+#: ui/chat-info-pages.slint:146
+msgid "New messages are deleted for both of you this long after they are sent. Messages from before stay."
+msgstr "As novas mensagens são apagadas para vocês dois quando passa esse tempo desde o envio. As anteriores continuam."
+
+#: ui/chat-info-pages.slint:149
+msgid "New messages in this group are deleted for everyone this long after they are sent. Messages from before stay."
+msgstr "As novas mensagens deste grupo são apagadas para todos quando passa esse tempo desde o envio. As anteriores continuam."
+
+#: ui/chat-info-pages.slint:152
+msgid "New posts in this channel are deleted for everyone this long after they are published. Posts from before stay."
+msgstr "As novas publicações deste canal são apagadas para todos quando passa esse tempo desde a publicação. As anteriores continuam."
+
+#: ui/chat-info-pages.slint:155
+msgid "{0} can change this too. A line in the chat tells you both when it changes."
+msgstr "{0} também pode mudar isso. Quando mudar, uma linha no chat avisa vocês dois."
+
+#: ui/chat-info-pages.slint:158
+msgid "Changing this needs the right to change the chat's info. Ask an administrator who has it."
+msgstr "Para mudar isso, você precisa da permissão de alterar as informações do chat. Peça a um administrador que a tenha."
+
+#: ui/chat-info-pages.slint:160
+msgctxt "the chat's mute"
+msgid "Mute"
+msgstr "Silenciar"
+
+#: ui/chat-info-pages.slint:161
+msgid "Not muted"
+msgstr "Não silenciar"
+
+#: ui/chat-info-pages.slint:162
+msgid "For 1 hour"
+msgstr "Por 1 hora"
+
+#: ui/chat-info-pages.slint:163
+msgid "For 8 hours"
+msgstr "Por 8 horas"
+
+#: ui/chat-info-pages.slint:164
+msgid "For 2 days"
+msgstr "Por 2 dias"
+
+#: ui/chat-info-pages.slint:165
+msgctxt "the chat's mute"
+msgid "Forever"
+msgstr "Para sempre"
+
+#: ui/chat-info-pages.slint:167
+msgid "Muted until {0}"
+msgstr "Silenciado até {0}"
+
+#: ui/chat-info-pages.slint:169
+msgid "Notify me while muted"
+msgstr "Notificar mesmo silenciado"
+
+#: ui/chat-info-pages.slint:170
+msgid "When someone mentions me or replies to me"
+msgstr "Quando alguém me mencionar ou me responder"
+
+#: ui/chat-info-pages.slint:171
+msgid "When a message is pinned"
+msgstr "Quando uma mensagem for fixada"
+
+#: ui/chat-info-pages.slint:173
+msgid "This chat only. The defaults for each kind of chat are in Settings › Notifications & sounds."
+msgstr "Só para este chat. Os padrões de cada tipo de chat ficam em Configurações › Notificações e sons."
+
+#: ui/chat.slint:314
+msgid "Clear the history of {0}?"
+msgstr "Limpar o histórico de {0}?"
+
+#: ui/chat.slint:327
+msgid "Its messages are deleted for you only; the other members keep theirs. The chat stays in your list."
+msgstr "As mensagens são apagadas só para você; os outros membros mantêm as deles. O chat continua na sua lista."
+
+#: ui/chat.slint:328
+msgid "Its messages are deleted for you; the chat stays in your list."
+msgstr "As mensagens são apagadas para você; o chat continua na sua lista."
+
+#: ui/format.slint:89
+msgctxt "month and year"
+msgid "{0} {1}"
+msgstr "{0} de {1}"
+
+#: ui/format.slint:90
+msgctxt "month, standing alone"
+msgid "January"
+msgstr "Janeiro"
+
+#: ui/format.slint:91
+msgctxt "month, standing alone"
+msgid "February"
+msgstr "Fevereiro"
+
+#: ui/format.slint:92
+msgctxt "month, standing alone"
+msgid "March"
+msgstr "Março"
+
+#: ui/format.slint:93
+msgctxt "month, standing alone"
+msgid "April"
+msgstr "Abril"
+
+#: ui/format.slint:94
+msgctxt "month, standing alone"
+msgid "May"
+msgstr "Maio"
+
+#: ui/format.slint:95
+msgctxt "month, standing alone"
+msgid "June"
+msgstr "Junho"
+
+#: ui/format.slint:96
+msgctxt "month, standing alone"
+msgid "July"
+msgstr "Julho"
+
+#: ui/format.slint:97
+msgctxt "month, standing alone"
+msgid "August"
+msgstr "Agosto"
+
+#: ui/format.slint:98
+msgctxt "month, standing alone"
+msgid "September"
+msgstr "Setembro"
+
+#: ui/format.slint:99
+msgctxt "month, standing alone"
+msgid "October"
+msgstr "Outubro"
+
+#: ui/format.slint:100
+msgctxt "month, standing alone"
+msgid "November"
+msgstr "Novembro"
+
+#: ui/format.slint:101
+msgctxt "month, standing alone"
+msgid "December"
+msgstr "Dezembro"

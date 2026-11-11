@@ -2,10 +2,12 @@
 //! squeezing it, opened with ⌘I or the header's sidebar icon and remembered across restarts
 //! (chat_info_open in settings.toml). It heads the open chat with its picture, name and status,
 //! then lists its facts (a user's phone, username and bio; a bot's or a group's description; a
-//! public group's link), its settings (notifications, pin, the folders it is in, mark as read),
-//! what is drawn for later (shared media, members, the invite link: greyed, as the design has
-//! them in this version), and the actions (block, report, leave, delete), which ask as the chat
-//! menu does (chats.rs). The rows are built here and drawn by the themes (ui/<theme>/
+//! public group's link), its settings (notifications and the mute's length, pin, the folders it is
+//! in, mark as read, auto-delete), its shared media, a group's members, the invite link an
+//! administrator has, and the actions (block, report, clear history, leave, delete), which ask as
+//! the chat menu does (chats.rs). The mute, auto-delete, the shared media, the members and the
+//! administrators open pages of their own in the panel's place (info_pages.rs, the design's
+//! round 14); only a private chat's call is still to come. The rows are built here and drawn by the themes (ui/<theme>/
 //! chat-info.slint), so that Terminal's keyboard walks the same list the pointer sees. A group's
 //! or channel's Manage row opens its management page (manage.rs) in the panel's place.
 
@@ -16,7 +18,7 @@ use std::rc::Rc;
 use serde_json::json;
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
 
-use super::api::{self, BasicGroupFullInfo, ChatMemberStatus, ChatMembers, ChatType, MessageSender, SupergroupFullInfo, UserFullInfo};
+use super::api::{self, BasicGroupFullInfo, ChatMemberStatus, ChatMembers, ChatType, FoundChatMessages, MessageSender, SupergroupFullInfo, UserFullInfo};
 use super::store::{self, Names};
 use super::{Error, actions, conversation, send, with_ui};
 use crate::settings::Settings;
@@ -24,6 +26,8 @@ use crate::{ChatInfo, ChatKind, Chats, Conversation, InfoMember, InfoRow, InfoRo
 
 /// How many of a group's members the panel lists.
 const MEMBERS: i32 = 5;
+/// How many of the newest photos and videos stand under the shared media's tabs.
+const TILES: i32 = 9;
 
 #[derive(Default)]
 struct State {
@@ -40,6 +44,10 @@ struct State {
     members: Vec<api::ChatMember>,
     /// We own the group or channel or administer it: the Manage row.
     administrator: bool,
+    /// How many photos and videos, files and links the chat holds, for the shared media's tabs.
+    counts: [Option<i32>; 3],
+    /// The newest photos and videos, for the tiles under the tabs.
+    tiles: Vec<api::Message>,
     /// The folders row shows its choices.
     folders_open: bool,
     /// Workbench's sections folded away.
@@ -81,9 +89,10 @@ fn toggle(settings: &RefCell<Settings>) {
         open = !info.get_open();
         info.set_open(open);
     });
-    // The management page shown in the panel's place goes with it.
+    // The management page, or one of the panel's own pages, shown in its place goes with it.
     if !open {
         super::manage::close();
+        super::info_pages::close();
     }
     settings.borrow_mut().chat_info_open = open;
     settings.borrow().save();
@@ -109,6 +118,7 @@ pub fn chat_changed() {
         refresh();
     }
     super::manage::chat_changed();
+    super::info_pages::chat_changed();
 }
 
 /// The store changed (store.rs): the rows follow while the panel shows; with `facts`, a full info
@@ -137,7 +147,7 @@ pub(super) fn escape() -> bool {
     if !open {
         return false;
     }
-    if super::manage::escape() {
+    if super::manage::escape() || super::info_pages::escape() {
         return true;
     }
     if STATE.with(|state| state.borrow().folders_open) {
@@ -158,6 +168,7 @@ fn administers(status: &ChatMemberStatus) -> bool {
 fn fetch(chat_id: i64) {
     let Some(kind) = store::with(|store| store.chats.get(&chat_id).map(|chat| chat.kind)).flatten() else { return };
     let lookups = STATE.with(|state| state.borrow().lookups);
+    fetch_media(chat_id, lookups);
     match kind {
         ChatType::Private { user_id } | ChatType::Secret { user_id } => {
             send(json!({ "@type": "getUserFullInfo", "user_id": user_id }), move |answer| {
@@ -223,6 +234,26 @@ fn fetch(chat_id: i64) {
     }
 }
 
+/// The shared media's counts and the newest photos and videos, for any chat.
+fn fetch_media(chat_id: i64, lookups: u64) {
+    let filters = ["searchMessagesFilterPhotoAndVideo", "searchMessagesFilterDocument", "searchMessagesFilterUrl"];
+    for (tab, filter) in filters.into_iter().enumerate() {
+        let request = json!({ "@type": "getChatMessageCount", "chat_id": chat_id, "filter": { "@type": filter }, "return_local": false });
+        send(request, move |answer| {
+            let Some(count) = answer.ok().and_then(|value| value["count"].as_i64()) else { return };
+            answered(lookups, |state| state.counts[tab] = Some(count as i32));
+        });
+    }
+    let request = json!({
+        "@type": "searchChatMessages", "chat_id": chat_id, "query": "", "sender_id": null, "from_message_id": 0,
+        "offset": 0, "limit": TILES, "filter": { "@type": "searchMessagesFilterPhotoAndVideo" },
+    });
+    send(request, move |answer| {
+        let Ok(Ok(found)) = answer.map(serde_json::from_value::<FoundChatMessages>) else { return };
+        answered(lookups, |state| state.tiles = found.messages);
+    });
+}
+
 /// An answer came, for the chat `lookups` (let go when another chat came since).
 fn answered(lookups: u64, take: impl FnOnce(&mut State)) {
     let current = STATE.with(|state| {
@@ -266,6 +297,8 @@ fn section(id: &str, title: SharedString, rows: Vec<InfoRow>, collapsed: &HashSe
         rows: ModelRc::new(VecModel::from(rows)),
         members: ModelRc::default(),
         tabs: ModelRc::default(),
+        counts: ModelRc::default(),
+        tiles: ModelRc::default(),
     }
 }
 
@@ -280,7 +313,7 @@ fn refresh() {
         let words = ui.global::<InfoWords>();
         let conversation = ui.global::<Conversation>();
         let (muted, pinned, header_members) = (conversation.get_muted(), conversation.get_pinned(), conversation.get_members());
-        let (chat_id, folders_open, collapsed, about, invite_link, admins, member_count, members, administrator) = STATE.with(|state| {
+        let (chat_id, folders_open, collapsed, about, invite_link, admins, member_count, members, administrator, counts, newest) = STATE.with(|state| {
             let state = state.borrow();
             (
                 state.chat_id,
@@ -292,6 +325,8 @@ fn refresh() {
                 state.member_count,
                 state.members.clone(),
                 state.administrator,
+                state.counts,
+                state.tiles.clone(),
             )
         });
         let built = store::with(|store| {
@@ -329,13 +364,14 @@ fn refresh() {
                         ChatMemberStatus::Administrator { .. } => words.invoke_admin(),
                         _ => SharedString::new(),
                     };
-                    Some(InfoMember { initial: store::initial(&name), name: name.into(), picture, has_picture, status, last_seen, role })
+                    Some(InfoMember { id: user_id.to_string().into(), initial: store::initial(&name), name: name.into(), picture, has_picture, status, last_seen, role })
                 })
                 .collect();
-            Some((kind, username, phone, blocked, chat.unread_count, picture, has_picture, folders, listed))
+            let tiles = super::info_pages::tiles(store, chat_id, &newest, &names);
+            Some((kind, username, phone, blocked, chat.unread_count, picture, has_picture, folders, listed, chat.message_auto_delete_time, tiles))
         })
         .flatten();
-        let Some((kind, username, phone, blocked, unread, picture, has_picture, folders, listed)) = built else {
+        let Some((kind, username, phone, blocked, unread, picture, has_picture, folders, listed, auto_delete, tiles)) = built else {
             info.set_quick(ModelRc::default());
             info.set_sections(ModelRc::default());
             return;
@@ -385,7 +421,7 @@ fn refresh() {
                 sub: if muted { words.invoke_muted_forever() } else { SharedString::new() },
                 ..row("notif", InfoRowKind::Toggle, if muted { "bell-slash" } else { "bell" }, words.invoke_notifications())
             });
-            settings.push(InfoRow { grey: true, ..row("mutefor", InfoRowKind::Nav, "clock", words.invoke_mute_for()) });
+            settings.push(row("mutefor", InfoRowKind::Nav, "clock", words.invoke_mute_for()));
         }
         settings.push(InfoRow { key: "p".into(), on: pinned, ..row("pin", InfoRowKind::Toggle, "push-pin", words.invoke_pin_chat()) });
         let in_folders: Vec<String> = folders.iter().filter(|choice| choice.inside).map(|choice| choice.name.to_string()).collect();
@@ -411,42 +447,47 @@ fn refresh() {
                 value: if unread > 0 { words.invoke_unread(unread) } else { words.invoke_no_unread() },
                 ..row("read", InfoRowKind::Action, "checks", words.invoke_mark_read())
             });
-            settings.push(InfoRow { grey: true, value: words.invoke_off(), ..row("autodel", InfoRowKind::Nav, "timer", words.invoke_auto_delete()) });
+            settings.push(InfoRow {
+                value: super::info_pages::auto_delete_label(ui, auto_delete),
+                ..row("autodel", InfoRowKind::Nav, "timer", words.invoke_auto_delete())
+            });
         }
         sections.push(section("settings", words.invoke_settings(), settings, &collapsed));
 
-        // Shared media: drawn, for later.
+        // The shared media: its tabs with how many each holds, the newest photos and videos under
+        // them; a tab or a tile opens its page (info_pages.rs).
+        let counts: Vec<SharedString> = counts.iter().map(|count| count.map(super::info_pages::grouped).unwrap_or_default().into()).collect();
         sections.push(InfoSection {
-            grey: true,
             shared: true,
             tabs: ModelRc::new(VecModel::from(vec![words.invoke_tab_media(), words.invoke_tab_files(), words.invoke_tab_links()])),
+            counts: ModelRc::new(VecModel::from(counts)),
+            tiles: ModelRc::new(VecModel::from(super::info_pages::tile_rows(tiles))),
             ..section("shared", words.invoke_shared(), Vec::new(), &collapsed)
         });
 
-        // A group's members: the first few, and the ways to all of them, for later.
+        // A group's members: the first few (a click opens the chat with one), the administrators
+        // and all of them on pages of their own.
         if group {
             let count = member_count.max(header_members);
             let title: SharedString = if count > 0 { format!("{} · {count}", words.invoke_members()).into() } else { words.invoke_members() };
             let rows = vec![
                 InfoRow {
-                    grey: true,
                     value: if admins > 0 { admins.to_string().into() } else { SharedString::new() },
                     ..row("admins", InfoRowKind::Nav, "shield-check", words.invoke_administrators())
                 },
                 InfoRow {
-                    grey: true,
                     value: if count > 0 { count.to_string().into() } else { SharedString::new() },
                     ..row("allm", InfoRowKind::Nav, "users", words.invoke_all_members())
                 },
             ];
-            sections.push(InfoSection { grey: true, members: ModelRc::new(VecModel::from(listed)), ..section("members", title, rows, &collapsed) });
+            sections.push(InfoSection { members: ModelRc::new(VecModel::from(listed)), ..section("members", title, rows, &collapsed) });
         }
 
         // The invite link an administrator has, and the group's or channel's administration.
         if group || channel {
             let mut rows = Vec::new();
             if !invite_link.is_empty() {
-                rows.push(InfoRow { grey: true, ..copy_row("invite", "link-simple", &invite_link, words.invoke_invite_link()) });
+                rows.push(copy_row("invite", "link-simple", &invite_link, words.invoke_invite_link()));
             }
             if administrator {
                 let label = if group { words.invoke_manage_group() } else { words.invoke_manage_channel() };
@@ -471,7 +512,7 @@ fn refresh() {
             doings.push(InfoRow { key: "x".into(), danger: true, ..row("report", InfoRowKind::Action, "flag", words.invoke_report()) });
         }
         if !channel {
-            doings.push(InfoRow { danger: true, grey: true, ..row("clear", InfoRowKind::Action, "broom", words.invoke_clear_history()) });
+            doings.push(InfoRow { danger: true, ..row("clear", InfoRowKind::Action, "broom", words.invoke_clear_history()) });
         }
         if group || channel {
             let label = if group { words.invoke_leave_group() } else { words.invoke_leave_channel() };
@@ -508,6 +549,8 @@ fn refresh() {
         info.set_sections(ModelRc::new(VecModel::from(sections)));
         info.set_cursor(cursor.into());
     });
+    // The shared media's tiles not here yet: downloaded now, not at the next refresh.
+    store::fetch_wanted_photos();
 }
 
 /// A row chosen, by the pointer or the keyboard.
@@ -534,6 +577,11 @@ fn run(id: &str) {
         }
         "read" => mark_read(chat_id),
         "manage" => super::manage::open(),
+        "mutefor" => super::info_pages::open_notifications(),
+        "autodel" => super::info_pages::open_auto_delete(),
+        "admins" => super::info_pages::open_admins(),
+        "allm" => super::info_pages::open_members(),
+        "clear" => super::chats::ask(chat_id, crate::ChatConfirm::Clear),
         "block" => with_ui(|ui| ui.global::<Chats>().invoke_toggle_block(chat.clone())),
         "report" => with_ui(|ui| ui.global::<Chats>().invoke_report(chat.clone())),
         "leave" => with_ui(|ui| ui.global::<Chats>().invoke_leave(chat.clone())),
@@ -541,6 +589,12 @@ fn run(id: &str) {
         _ => {
             if let Some(folder) = id.strip_prefix("fold-").and_then(|index| index.parse::<i32>().ok()) {
                 with_ui(|ui| ui.global::<Chats>().invoke_toggle_in_folder(chat.clone(), folder));
+            } else if let Some(tab) = id.strip_prefix("media-").and_then(|tab| tab.parse::<usize>().ok()) {
+                super::info_pages::open_media(tab);
+            } else if let Some(message_id) = id.strip_prefix("tile-").and_then(|id| id.parse::<i64>().ok()) {
+                super::info_pages::open_tile(message_id);
+            } else if let Some(user_id) = id.strip_prefix("member-").and_then(|id| id.parse::<i64>().ok()) {
+                conversation::open_user(user_id);
             } else if let Some(text) = STATE.with(|state| state.borrow().copies.get(id).cloned()) {
                 actions::copy_words_of(&text);
             }

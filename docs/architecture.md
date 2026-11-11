@@ -166,7 +166,7 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   `conversation.rs`, `actions.rs` (what can be done with a message), `bots.rs` (what bots put in a
   chat beyond messages, and the pinned message bar), `reactions.rs`, `topics.rs`, `drafts.rs`,
   `share.rs`, `admin.rs` (slow mode, below; `errors.rs` puts Telegram's refusals into the
-  pages' words), `chat_info.rs` (the chat's info panel, below), `manage.rs` (managing a group or
+  pages' words), `chat_info.rs` (the chat's info panel, below) and `info_pages.rs` (its pages), `manage.rs` (managing a group or
   channel, below), `account.rs` and
   `password.rs` (two-step verification) do what the pages ask for; `accounts.rs` lists the
   accounts signed in for the account menu, the toolbox and Broadsheet's rail and switches between
@@ -399,12 +399,27 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     (`chat_info_open` in settings.toml). It heads the chat with its picture, name and status, then
     its facts (a user's phone, username and bio; a bot's or group's description; a public group's
     link; getUserFullInfo, getSupergroupFullInfo, getBasicGroupFullInfo), its settings
-    (notifications, pin, the folders it is in, mark as read: viewMessages with force_read), and
-    the actions (block, report, leave, delete), which ask as the chat menu does. Shared media,
-    the members (getSupergroupMembers, the first five) and the invite link are drawn greyed, as
-    the design has them in this version; an owner or administrator has the Manage row, which
-    opens the management page below. The rows are built in Rust and drawn by each theme, so
-    Terminal's keyboard walks them: ↑ ↓, ⏎, a row's letter, Esc.
+    (notifications, the mute's length, pin, the folders it is in, mark as read: viewMessages with
+    force_read, auto-delete), the shared media (its three tabs with their counts,
+    getChatMessageCount, and the newest nine photos and videos), a group's first five members
+    (getSupergroupMembers; a click opens the chat with one), the invite link an administrator has
+    (a click copies it), and the actions (block, report, clear history, leave, delete), which ask
+    as the chat menu does (clear history: deleteChatHistory, the chat kept, "Also delete for" in a
+    private chat). An owner or administrator has the Manage row, which opens the management page
+    below. Only a private chat's Call is still greyed. The rows are built in Rust and drawn by each
+    theme, so Terminal's keyboard walks them: ↑ ↓, ⏎, a row's letter, Esc.
+  - The info panel's pages (`info_pages.rs`, the design's round 14, ui/chat-info-pages.slint), in
+    the panel's place as the management page is, drawn once for the three themes in their
+    ManageLook: the shared media in three tabs by month (searchChatMessages with the photo and
+    video, document and URL filters, sixty at a time; a tile sends the chat to its message and
+    the viewer shows it, a file downloads or shows in the Finder, a link opens), all members
+    (getSupergroupMembers, Recent or Search on Telegram's servers; a basic group's from its full
+    info, searched here), the administrators (getChatAdministrators; a group that hides its
+    members shows a member these alone, saying why), auto-delete (setChatMessageAutoDeleteTime:
+    off, a day, a week, a month; a group's or channel's needs the right to change its info, else
+    the choices are faded with the reason), and the mute's length with what still notifies
+    (setChatNotificationSettings: mute_for, disable_mention_notifications,
+    disable_pinned_message_notifications).
   - Managing a group or channel (`manage.rs`, the design's "管理群组 / 频道" round, ChatManage):
     the Manage row swaps the info panel for the page, in the same column; Back or Esc gives the
     panel back. The page is drawn once for the three themes (ui/chat-manage-panel.slint), each

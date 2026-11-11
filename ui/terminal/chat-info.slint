@@ -5,6 +5,7 @@
 import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "../chat-info.slint";
 import { ChatManage, ManageLook } from "../chat-manage.slint";
 import { ManagePanel } from "../chat-manage-panel.slint";
+import { InfoPage, InfoPagePanel } from "../chat-info-pages.slint";
 import { Conversation, ChatKind, Status, Actions } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { TerminalPalette as P } from "palette.slint";
@@ -98,24 +99,65 @@ component InfoLine inherits Rectangle {
     }
 }
 
-// One of a group's first members: a sigil for the owner (★) and administrators (☆).
-component MemberLine inherits HorizontalLayout {
+// One of a group's first members: a sigil for the owner (★) and administrators (☆); a click
+// opens the chat with them.
+component MemberLine inherits Rectangle {
     in property <InfoMember> member;
-    spacing: 8px;
-    T {
-        width: 16px;
-        text: root.member.role == InfoWords.owner() ? "★" : root.member.role == InfoWords.admin() ? "☆" : "·";
-        color: P.accent2;
+    in property <bool> live;
+    height: line.preferred-height;
+    background: live && touch.has-hover ? P.sel : transparent;
+    line := HorizontalLayout {
+        spacing: 8px;
+        T {
+            width: 16px;
+            text: root.member.role == InfoWords.owner() ? "★" : root.member.role == InfoWords.admin() ? "☆" : "·";
+            color: P.accent2;
+        }
+        T {
+            horizontal-stretch: 1;
+            text: root.member.role == "" ? root.member.name : root.member.name + " " + root.member.role;
+            overflow: elide;
+        }
+        T {
+            text: Fmt.status(root.member.status, root.member.last-seen, 0, 0);
+            color: root.member.status == Status.online ? P.accent : P.faint;
+            font-size: 12px;
+        }
     }
-    T {
-        horizontal-stretch: 1;
-        text: root.member.role == "" ? root.member.name : root.member.name + " " + root.member.role;
-        overflow: elide;
+    touch := TouchArea {
+        enabled: root.live;
+        mouse-cursor: pointer;
+        clicked => {
+            ChatInfo.run("member-" + root.member.id);
+        }
     }
-    T {
-        text: Fmt.status(root.member.status, root.member.last-seen, 0, 0);
-        color: root.member.status == Status.online ? P.accent : P.faint;
-        font-size: 12px;
+}
+
+// One of the newest photos and videos under the shared media's tabs, as a line.
+component TileLine inherits Rectangle {
+    in property <string> id;
+    in property <bool> video;
+    in property <string> words;
+    height: line.preferred-height;
+    background: touch.has-hover ? P.sel : transparent;
+    line := HorizontalLayout {
+        spacing: 8px;
+        T {
+            width: 3 * 8px;
+            text: root.video ? "vid" : "img";
+            color: P.faint;
+        }
+        T {
+            horizontal-stretch: 1;
+            text: root.words;
+            overflow: elide;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            ChatInfo.run("tile-" + root.id);
+        }
     }
 }
 
@@ -131,20 +173,40 @@ component Section inherits VerticalLayout {
     if root.item.shared: HorizontalLayout {
         alignment: start;
         spacing: 6px;
-        opacity: 0.42;
+        opacity: root.item.grey ? 0.42 : 1;
         for tab[index] in root.item.tabs: T {
-            text: (index == 0 ? "" : "│ ") + tab;
-            color: index == 0 ? P.text : P.muted;
+            text: (index == 0 ? "" : "│ ") + tab + (root.item.counts[index] != "" ? " " + root.item.counts[index] : "");
+            color: index == 0 ? P.text : tab-touch.has-hover ? P.accent : P.muted;
             font-weight: index == 0 ? 600 : 400;
+            tab-touch := TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    ChatInfo.run("media-" + index);
+                }
+            }
         }
     }
-    if root.item.shared: T {
+    // The newest few, as lines: the first row of the tiles the other themes draw.
+    if root.item.shared && root.item.tiles.length > 0: VerticalLayout {
+        for row[number] in root.item.tiles: VerticalLayout {
+            if number == 0: VerticalLayout {
+                for tile in row.tiles: VerticalLayout {
+                    if tile.id != "": TileLine {
+                        id: tile.id;
+                        video: tile.video;
+                        words: Fmt.list-time(tile.moment) + (tile.from != "" ? " · " + tile.from : "") + (tile.video ? "  " + tile.duration : "");
+                    }
+                }
+            }
+        }
+    }
+    if root.item.shared && root.item.tiles.length == 0: T {
         text: "--";
         color: P.faint;
-        opacity: 0.42;
     }
     for member in root.item.members: MemberLine {
         member: member;
+        live: !root.item.grey;
         opacity: root.item.grey ? 0.42 : 1;
     }
     for row in root.item.rows: InfoLine {
@@ -209,7 +271,8 @@ export component InfoPanel inherits Rectangle {
         }
     }
     if ChatManage.open: ManagePanel { look: TerminalManage.look; }
-    if !ChatManage.open: Flickable {
+    if InfoPage.open && !ChatManage.open: InfoPagePanel { look: TerminalManage.look; }
+    if !ChatManage.open && !InfoPage.open: Flickable {
         content-height: body.preferred-height;
         body := VerticalLayout {
             width: parent.width;

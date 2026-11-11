@@ -84,6 +84,28 @@ export global Fmt {
         return @tr("December");
     }
 
+    // A month's name standing alone, over a month of the shared media: "November" (Russian says
+    // it otherwise inside a date).
+    public pure function month-alone(n: int) -> string {
+        if n == 1 { return @tr("month, standing alone" => "January"); }
+        if n == 2 { return @tr("month, standing alone" => "February"); }
+        if n == 3 { return @tr("month, standing alone" => "March"); }
+        if n == 4 { return @tr("month, standing alone" => "April"); }
+        if n == 5 { return @tr("month, standing alone" => "May"); }
+        if n == 6 { return @tr("month, standing alone" => "June"); }
+        if n == 7 { return @tr("month, standing alone" => "July"); }
+        if n == 8 { return @tr("month, standing alone" => "August"); }
+        if n == 9 { return @tr("month, standing alone" => "September"); }
+        if n == 10 { return @tr("month, standing alone" => "October"); }
+        if n == 11 { return @tr("month, standing alone" => "November"); }
+        return @tr("month, standing alone" => "December");
+    }
+
+    // Over a month of another year in the shared media: "November 2025".
+    public pure function month-year(month: int, year: int) -> string {
+        return @tr("month and year" => "{0} {1}", month-alone(month), year);
+    }
+
     // Next to a chat in a list: "14:20", "Yesterday", "Fri", "Sep 20", "Sep 20, 2025".
     public pure function list-time(m: Moment) -> string {
         if m.day == Day.today {

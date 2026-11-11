@@ -1,0 +1,1031 @@
+// The chat info panel's pages, from the design's round 14 (the canvas FinchGram 三主题总图,
+// ChatInfoPages): the shared media in three tabs, all of a group's members, its administrators,
+// auto-delete, and how long the chat is muted with what still notifies. Drawn once for the three
+// themes, in each theme's ManageLook, in the panel's column as the management page is
+// (ui/chat-manage-panel.slint); src/telegram/info_pages.rs builds what they show.
+import { ManageLook, ManageToggle, ManageWords } from "chat-manage.slint";
+import { SectionHead, Action, ToggleRow, Card } from "chat-manage-panel.slint";
+import { Icon, Avatar, Field, Spinner } from "widgets.slint";
+import { Fmt } from "format.slint";
+import { Moment, Status } from "telegram.slint";
+
+export enum InfoPageKind { none, media, members, admins, auto-delete, notifications }
+
+export struct InfoTab {
+    label: string,
+    count: string,
+}
+
+// A photo or a video in the grid. Rows are filled up to three with empty tiles (id "").
+export struct InfoTile {
+    id: string,              // the message
+    picture: image,
+    has-picture: bool,
+    video: bool,
+    duration: string,        // a video's "0:42"
+    from: string,            // who sent it, for Terminal's line
+    moment: Moment,
+}
+
+export struct InfoTileRow {
+    tiles: [InfoTile],
+}
+
+export struct InfoFile {
+    id: string,              // the message
+    ext: string,             // "PDF"
+    name: string,
+    size: string,            // "2.4 MB"
+    from: string,
+    moment: Moment,
+    downloaded: bool,
+    downloading: bool,
+}
+
+export struct InfoLink {
+    id: string,              // the message
+    initial: string,
+    title: string,
+    url: string,
+    from: string,
+    moment: Moment,
+}
+
+// One month of a tab: its photos and videos in rows of three, its files, its links.
+export struct InfoMonth {
+    month: int,
+    year: int,
+    this-year: bool,
+    rows: [InfoTileRow],
+    files: [InfoFile],
+    links: [InfoLink],
+}
+
+export struct InfoPerson {
+    id: string,              // the user
+    name: string,
+    initial: string,
+    picture: image,
+    has-picture: bool,
+    you: bool,
+    status: Status,
+    last-seen: Moment,
+    sub: string,             // in place of the status: an administrator's role, a username found
+    role: string,            // at the right: a title, "owner", "admin"
+    owner: bool,
+    admin: bool,
+}
+
+export struct InfoChoice {
+    id: string,
+    label: string,
+    sub: string,             // under the chosen one: "Muted until 23:40"
+    on: bool,
+}
+
+export global InfoPage {
+    in-out property <bool> open;                 // a page shows in the panel's place
+    in-out property <InfoPageKind> kind;
+    in-out property <string> title;
+    in-out property <string> count;              // at the head's right: "1,284"
+    // The shared media.
+    in-out property <int> tab;                   // 0 photos and videos, 1 files, 2 links
+    in-out property <[InfoTab]> tabs;
+    in-out property <[InfoMonth]> months;
+    in-out property <bool> loading;
+    in-out property <bool> more;                 // older ones to show
+    in-out property <string> empty;              // what a tab with nothing in it says
+    // The members, the administrators.
+    in-out property <bool> searchable;
+    in-out property <string> query;
+    in-out property <string> note;               // why the list is hidden
+    in-out property <string> list-title;
+    in-out property <string> list-count;
+    in-out property <[InfoPerson]> people;
+    // Auto-delete, the notifications.
+    in-out property <string> explain;
+    in-out property <string> choices-title;
+    in-out property <[InfoChoice]> choices;
+    in-out property <bool> locked;               // we may not change it: faded, with the lock's note
+    in-out property <string> lock-note;
+    in-out property <string> toggles-title;
+    in-out property <[ManageToggle]> toggles;
+    in-out property <string> foot;
+    callback back();                             // Back, Esc: the panel again
+    callback pick-tab(int);
+    callback search(string);
+    callback choose(string);                     // a choice's id
+    callback toggle(string);                     // a switch's id
+    callback open-person(string);                // the chat with them
+    callback open-tile(string);                  // the message, in the viewer
+    callback open-file(string);                  // download it, or open it when it is here
+    callback open-link(string);                  // the message's link, in the browser
+    callback load-more();
+}
+
+export global InfoPageWords {
+    public pure function search-members() -> string { return @tr("Search members"); }
+    public pure function results() -> string { return @tr("Search results"); }
+    public pure function nobody() -> string { return @tr("Nobody found"); }
+    public pure function online(n: int) -> string { return @tr("{0} online", Fmt.count(n)); }
+    public pure function hidden-note(n: int) -> string {
+        return @tr("This group hides its member list: only administrators see all {0} members. You still see the administrators.", Fmt.count(n));
+    }
+    public pure function admins-foot() -> string {
+        return @tr("You see who the administrators are and their titles. What each of them may do, only the owner and those who may add administrators see.");
+    }
+    public pure function no-media() -> string { return @tr("No photos or videos here yet"); }
+    public pure function no-files() -> string { return @tr("No files here yet"); }
+    public pure function no-links() -> string { return @tr("No links here yet"); }
+    public pure function show-more() -> string { return @tr("Show more"); }
+    public pure function one-day() -> string { return @tr("1 day"); }
+    public pure function one-week() -> string { return @tr("1 week"); }
+    public pure function one-month() -> string { return @tr("1 month"); }
+    public pure function days(n: int) -> string { return @tr("{n} day" | "{n} days" % n); }
+    public pure function auto-delete-private() -> string {
+        return @tr("New messages are deleted for both of you this long after they are sent. Messages from before stay.");
+    }
+    public pure function auto-delete-group() -> string {
+        return @tr("New messages in this group are deleted for everyone this long after they are sent. Messages from before stay.");
+    }
+    public pure function auto-delete-channel() -> string {
+        return @tr("New posts in this channel are deleted for everyone this long after they are published. Posts from before stay.");
+    }
+    public pure function auto-delete-foot(name: string) -> string {
+        return @tr("{0} can change this too. A line in the chat tells you both when it changes.", name);
+    }
+    public pure function auto-delete-lock() -> string {
+        return @tr("Changing this needs the right to change the chat's info. Ask an administrator who has it.");
+    }
+    public pure function mute() -> string { return @tr("the chat's mute" => "Mute"); }
+    public pure function not-muted() -> string { return @tr("Not muted"); }
+    public pure function one-hour() -> string { return @tr("For 1 hour"); }
+    public pure function eight-hours() -> string { return @tr("For 8 hours"); }
+    public pure function two-days() -> string { return @tr("For 2 days"); }
+    public pure function forever() -> string { return @tr("the chat's mute" => "Forever"); }
+    public pure function muted-until(m: Moment, today: bool) -> string {
+        return @tr("Muted until {0}", today ? Fmt.clock(m) : Fmt.list-time(m) + " " + Fmt.clock(m));
+    }
+    public pure function notify-anyway() -> string { return @tr("Notify me while muted"); }
+    public pure function mentions() -> string { return @tr("When someone mentions me or replies to me"); }
+    public pure function pinned() -> string { return @tr("When a message is pinned"); }
+    public pure function notifications-foot() -> string {
+        return @tr("This chat only. The defaults for each kind of chat are in Settings › Notifications & sounds.");
+    }
+}
+
+// The three tabs: Workbench's segmented control, Broadsheet's underlined words, Terminal's words
+// between bars.
+component TabBar inherits Rectangle {
+    in property <ManageLook> look;
+    property <bool> plain: look.brackets || look.sec-rule;
+    height: row.preferred-height;
+    border-radius: plain ? 0px : 7px;
+    background: plain ? transparent : look.hover;
+    row := HorizontalLayout {
+        padding: root.plain ? 0px : 3px;
+        spacing: root.look.brackets ? 6px : root.look.sec-rule ? 16px : 3px;
+        alignment: root.plain ? start : stretch;
+        for tab[index] in InfoPage.tabs: tab-box := Rectangle {
+            property <bool> on: index == InfoPage.tab;
+            horizontal-stretch: root.plain ? 0 : 1;
+            min-width: words.preferred-width + (root.plain ? 0px : 12px);
+            height: words.preferred-height + (root.look.brackets ? 0px : root.look.sec-rule ? 6px : 8px);
+            border-radius: 5px;
+            background: self.on && !root.plain ? root.look.card : transparent;
+            words := HorizontalLayout {
+                alignment: center;
+                spacing: 4px;
+                padding-bottom: root.look.sec-rule ? 4px : 0px;
+                if root.look.brackets && index > 0: Text {
+                    text: "│";
+                    color: root.look.faint;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-s;
+                    vertical-alignment: center;
+                }
+                Text {
+                    text: tab.label;
+                    color: tab-box.on ? (root.look.brackets ? root.look.accent : root.look.text) : root.look.muted;
+                    font-family: root.look.font;
+                    font-size: root.look.sec-rule ? root.look.fs : root.look.fs-s;
+                    font-weight: tab-box.on ? 600 : 400;
+                    vertical-alignment: center;
+                }
+                Text {
+                    text: tab.count;
+                    color: root.look.faint;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-xs;
+                    vertical-alignment: center;
+                }
+            }
+            if tab-box.on && root.look.sec-rule: Rectangle {
+                y: parent.height - 2px;
+                height: 2px;
+                background: root.look.accent;
+            }
+            TouchArea {
+                mouse-cursor: pointer;
+                clicked => {
+                    InfoPage.pick-tab(index);
+                }
+            }
+        }
+    }
+}
+
+component MonthHead inherits Text {
+    in property <ManageLook> look;
+    in property <InfoMonth> month;
+    property <string> words: month.this-year ? Fmt.month-alone(month.month) : Fmt.month-year(month.month, month.year);
+    text: look.brackets ? "── " + words + " ──" : words;
+    color: look.faint;
+    font-family: look.font;
+    font-size: look.fs-xs;
+    font-weight: look.brackets ? 400 : 600;
+}
+
+// A photo or video: its picture, a video's length at the foot.
+component Tile inherits Rectangle {
+    in property <ManageLook> look;
+    in property <InfoTile> tile;
+    in property <length> side;
+    width: side;
+    height: side;
+    border-radius: look.sec-rule ? 2px : 4px;
+    clip: true;
+    background: tile.id == "" ? transparent : look.hover;
+    if root.tile.has-picture: Image {
+        width: parent.width;
+        height: parent.height;
+        source: root.tile.picture;
+        image-fit: cover;
+    }
+    if root.tile.video: Rectangle {
+        x: 4px;
+        y: parent.height - self.height - 4px;
+        width: length-row.preferred-width;
+        height: 16px;
+        border-radius: 3px;
+        background: #0000008c;
+        length-row := HorizontalLayout {
+            padding-left: 5px;
+            padding-right: 5px;
+            spacing: 3px;
+            VerticalLayout {
+                alignment: center;
+                Icon {
+                    name: "play";
+                    size: 9px;
+                    color: #ffffff;
+                }
+            }
+            Text {
+                text: root.tile.duration;
+                color: #ffffff;
+                font-family: root.look.font;
+                font-size: 10px;
+                font-weight: 500;
+                vertical-alignment: center;
+            }
+        }
+    }
+    TouchArea {
+        enabled: root.tile.id != "";
+        mouse-cursor: pointer;
+        clicked => {
+            InfoPage.open-tile(root.tile.id);
+        }
+    }
+}
+
+// Terminal's line for a photo or video: what it is, who sent it when, a video's length.
+component TileLine inherits Rectangle {
+    in property <ManageLook> look;
+    in property <InfoTile> tile;
+    height: line.preferred-height;
+    background: touch.has-hover ? look.hover : transparent;
+    line := HorizontalLayout {
+        spacing: 8px;
+        Text {
+            text: root.tile.video ? "vid" : "img";
+            color: root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: Fmt.list-time(root.tile.moment) + (root.tile.from != "" ? " · " + root.tile.from : "");
+            color: root.look.text;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+            overflow: elide;
+        }
+        if root.tile.video: Text {
+            text: root.tile.duration;
+            color: root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            InfoPage.open-tile(root.tile.id);
+        }
+    }
+}
+
+component FileLine inherits Rectangle {
+    in property <ManageLook> look;
+    in property <InfoFile> file;
+    property <string> meta: file.size + " · " + Fmt.list-time(file.moment) + (file.from != "" ? " · " + file.from : "");
+    height: line.preferred-height;
+    background: look.brackets && touch.has-hover ? look.hover : transparent;
+    line := HorizontalLayout {
+        padding-top: root.look.brackets ? 1px : 6px;
+        padding-bottom: root.look.brackets ? 1px : 6px;
+        spacing: root.look.brackets ? 8px : 10px;
+        if !root.look.brackets: Rectangle {
+            width: 36px;
+            height: 36px;
+            border-radius: root.look.r;
+            background: root.look.soft;
+            Text {
+                text: root.file.ext;
+                color: root.look.soft-ink;
+                font-family: root.look.font;
+                font-size: 10px;
+                font-weight: 600;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+        if root.look.brackets: Text {
+            width: root.look.fs * 2.5;
+            text: root.file.ext.to-lowercase();
+            color: root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            spacing: 1px;
+            Text {
+                text: root.file.name;
+                color: root.look.text;
+                font-family: root.look.font;
+                font-size: root.look.fs;
+                overflow: elide;
+            }
+            Text {
+                text: (root.look.brackets ? "↳ " : "") + root.meta;
+                color: root.look.faint;
+                font-family: root.look.font;
+                font-size: root.look.brackets ? root.look.fs : root.look.fs-xs;
+                overflow: elide;
+            }
+        }
+        VerticalLayout {
+            alignment: center;
+            if root.file.downloading: Spinner {
+                size: 16px;
+                color: root.look.link;
+            }
+            if !root.file.downloading && root.look.icons: Icon {
+                name: root.file.downloaded ? "check-circle" : "download-simple";
+                size: 17px;
+                color: root.file.downloaded ? root.look.ok : root.look.link;
+            }
+            if !root.file.downloading && root.look.brackets: Text {
+                text: root.file.downloaded ? "[✓]" : "[↓]";
+                color: root.file.downloaded ? root.look.ok : root.look.link;
+                font-family: root.look.font;
+                font-size: root.look.fs;
+            }
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            InfoPage.open-file(root.file.id);
+        }
+    }
+}
+
+component LinkLine inherits Rectangle {
+    in property <ManageLook> look;
+    in property <InfoLink> link;
+    property <string> meta: (link.from != "" ? link.from + " · " : "") + Fmt.list-time(link.moment);
+    height: line.preferred-height;
+    background: look.brackets && touch.has-hover ? look.hover : transparent;
+    line := HorizontalLayout {
+        padding-top: root.look.brackets ? 2px : 7px;
+        padding-bottom: root.look.brackets ? 2px : 7px;
+        spacing: 10px;
+        if !root.look.brackets: VerticalLayout {
+            alignment: start;
+            Rectangle {
+                width: 36px;
+                height: 36px;
+                border-radius: root.look.r;
+                background: root.look.soft;
+                Text {
+                    text: root.link.initial;
+                    color: root.look.soft-ink;
+                    font-family: root.look.font;
+                    font-size: 15px;
+                    font-weight: 600;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                }
+            }
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 1px;
+            Text {
+                text: (root.look.brackets ? "▸ " : "") + root.link.title;
+                color: root.look.text;
+                font-family: root.look.font;
+                font-size: root.look.fs;
+                font-weight: root.look.brackets ? 400 : 600;
+                wrap: word-wrap;
+                max-height: 3 * root.look.fs * 1.4;
+            }
+            Text {
+                text: (root.look.brackets ? "  " : "") + root.link.url;
+                color: root.look.link;
+                font-family: root.look.font;
+                font-size: root.look.brackets ? root.look.fs : root.look.fs-s;
+                overflow: elide;
+            }
+            Text {
+                text: (root.look.brackets ? "  " : "") + root.meta;
+                color: root.look.faint;
+                font-family: root.look.font;
+                font-size: root.look.brackets ? root.look.fs : root.look.fs-xs;
+                overflow: elide;
+            }
+        }
+    }
+    touch := TouchArea {
+        mouse-cursor: pointer;
+        clicked => {
+            InfoPage.open-link(root.link.id);
+        }
+    }
+}
+
+component PersonLine inherits Rectangle {
+    in property <ManageLook> look;
+    in property <InfoPerson> person;
+    property <string> second: person.sub != "" ? person.sub : Fmt.status(person.status, person.last-seen, 0, 0);
+    property <bool> live: !person.you;
+    height: line.preferred-height;
+    background: live && touch.has-hover ? look.hover : transparent;
+    line := HorizontalLayout {
+        padding-top: root.look.brackets ? 0px : 5px;
+        padding-bottom: root.look.brackets ? 0px : 5px;
+        spacing: root.look.brackets ? 8px : 10px;
+        if root.look.icons: VerticalLayout {
+            alignment: center;
+            Avatar {
+                size: 30px;
+                radius: root.look.r;
+                fill: root.person.owner || root.person.admin ? root.look.soft : root.look.hover;
+                ink: root.person.owner || root.person.admin ? root.look.soft-ink : root.look.text;
+                initial: root.person.initial;
+                picture: root.person.picture;
+                has-picture: root.person.has-picture;
+                font-size: 12px;
+                font-family: root.look.font;
+            }
+        }
+        if root.look.brackets: Text {
+            text: root.person.owner ? "★" : root.person.admin ? "☆" : "·";
+            color: root.look.link;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            alignment: center;
+            HorizontalLayout {
+                spacing: 4px;
+                alignment: start;
+                Text {
+                    text: root.person.name;
+                    color: root.look.text;
+                    font-family: root.look.font;
+                    font-size: root.look.fs;
+                    overflow: elide;
+                }
+                if root.person.you: Text {
+                    text: "· " + ManageWords.you();
+                    color: root.look.faint;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-xs;
+                    vertical-alignment: center;
+                }
+                if root.look.brackets && root.person.role != "": Text {
+                    text: root.person.role;
+                    color: root.look.faint;
+                    font-family: root.look.font;
+                    font-size: root.look.fs;
+                }
+            }
+            if !root.look.brackets: Text {
+                text: root.second;
+                color: root.person.sub == "" && root.person.status == Status.online ? root.look.accent : root.look.faint;
+                font-family: root.look.font;
+                font-size: root.look.fs-xs;
+                overflow: elide;
+            }
+        }
+        if root.look.brackets: Text {
+            text: root.second;
+            color: root.person.sub == "" && root.person.status == Status.online ? root.look.accent : root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+        }
+        if !root.look.brackets && root.person.role != "": Text {
+            max-width: 110px;
+            text: root.person.role;
+            color: root.person.owner ? root.look.link : root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs-xs;
+            font-italic: root.look.sec-rule;
+            vertical-alignment: center;
+            overflow: elide;
+        }
+    }
+    touch := TouchArea {
+        enabled: root.live;
+        mouse-cursor: pointer;
+        clicked => {
+            InfoPage.open-person(root.person.id);
+        }
+    }
+}
+
+// A choice among a few: a ring with a dot, Terminal's (•).
+component ChoiceLine inherits Rectangle {
+    in property <ManageLook> look;
+    in property <InfoChoice> choice;
+    in property <bool> locked;
+    height: line.preferred-height;
+    opacity: locked ? 0.45 : 1;
+    line := HorizontalLayout {
+        padding-top: 7px;
+        padding-bottom: 7px;
+        spacing: 10px;
+        if root.look.icons: VerticalLayout {
+            alignment: start;
+            padding-top: 2px;
+            Rectangle {
+                width: 16px;
+                height: 16px;
+                border-radius: 8px;
+                border-width: 1.5px;
+                border-color: root.choice.on ? root.look.accent : root.look.faint;
+                Rectangle {
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 4px;
+                    background: root.choice.on ? root.look.accent : transparent;
+                }
+            }
+        }
+        if root.look.brackets: Text {
+            text: root.choice.on ? "(•)" : "( )";
+            color: root.choice.on ? root.look.accent : root.look.faint;
+            font-family: root.look.font;
+            font-size: root.look.fs;
+        }
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: 1px;
+            Text {
+                text: root.choice.label;
+                color: root.look.text;
+                font-family: root.look.font;
+                font-size: root.look.fs;
+                font-weight: root.choice.on ? 600 : 400;
+                wrap: word-wrap;
+            }
+            if root.choice.sub != "": Text {
+                text: root.choice.sub;
+                color: root.look.faint;
+                font-family: root.look.font;
+                font-size: root.look.fs-xs;
+            }
+        }
+    }
+    TouchArea {
+        enabled: !root.locked;
+        mouse-cursor: root.locked ? default : pointer;
+        clicked => {
+            InfoPage.choose(root.choice.id);
+        }
+    }
+}
+
+// The newest photos and videos under the panel's shared media tabs, three to a row (rows are filled
+// up to three with empty tiles); a click opens one. Each theme's panel draws it with its own sizes,
+// the tile's side given from the panel's width.
+export component SharedTiles inherits VerticalLayout {
+    in property <[InfoTileRow]> rows;
+    in property <length> side;
+    in property <length> gap;
+    in property <length> radius;
+    in property <color> fill;
+    in property <bool> play-icon: true;
+    callback opened(string);
+    spacing: gap;
+    for row in root.rows: HorizontalLayout {
+        spacing: root.gap;
+        alignment: start;
+        for tile in row.tiles: Rectangle {
+            width: root.side;
+            height: root.side;
+            border-radius: root.radius;
+            clip: true;
+            background: tile.id == "" ? transparent : root.fill;
+            if tile.has-picture: Image {
+                width: parent.width;
+                height: parent.height;
+                source: tile.picture;
+                image-fit: cover;
+            }
+            if tile.video && root.play-icon: Rectangle {
+                x: 3px;
+                y: parent.height - self.height - 3px;
+                width: 14px;
+                height: 14px;
+                border-radius: 7px;
+                background: #0000008c;
+                Icon {
+                    name: "play";
+                    size: 8px;
+                    color: #ffffff;
+                }
+            }
+            TouchArea {
+                enabled: tile.id != "";
+                mouse-cursor: pointer;
+                clicked => {
+                    root.opened(tile.id);
+                }
+            }
+        }
+    }
+}
+
+// A muted line of words on the page: an explanation, a foot note.
+component Words inherits Text {
+    in property <ManageLook> look;
+    color: look.muted;
+    font-family: look.font;
+    font-size: look.fs-s;
+    wrap: word-wrap;
+}
+
+// A note in a card, with the lock: why a list is hidden, why a choice is locked.
+component LockNote inherits Card {
+    in property <string> text;
+    height: note-row.preferred-height;
+    note-row := HorizontalLayout {
+        padding: root.look.brackets ? 2px : 10px;
+        padding-left: root.look.brackets ? 10px : 12px;
+        spacing: 8px;
+        if root.look.icons: VerticalLayout {
+            alignment: start;
+            padding-top: 1px;
+            Icon {
+                name: "lock-simple";
+                size: 15px;
+                color: root.look.faint;
+            }
+        }
+        Text {
+            horizontal-stretch: 1;
+            text: root.text;
+            color: root.look.muted;
+            font-family: root.look.font;
+            font-size: root.look.fs-s;
+            wrap: word-wrap;
+        }
+    }
+}
+
+export component InfoPagePanel inherits Rectangle {
+    in property <ManageLook> look;
+    property <length> gap: look.sec-rule ? 3px : 4px;
+    property <length> side: (root.width - 2 * root.look.pad - 2 * root.gap) / 3;
+    background: root.look.panel;
+
+    // Clicks on the page stay on it.
+    TouchArea { }
+    Rectangle {
+        x: 0;
+        width: 1px;
+        background: root.look.line;
+    }
+    VerticalLayout {
+        // The head: Back, the title, a count.
+        Rectangle {
+            height: 40px;
+            HorizontalLayout {
+                padding-left: 6px;
+                padding-right: 10px;
+                spacing: 6px;
+                Rectangle {
+                    width: back-row.preferred-width + 12px;
+                    border-radius: root.look.r;
+                    background: back-touch.has-hover ? root.look.hover : transparent;
+                    back-row := HorizontalLayout {
+                        padding-left: 4px;
+                        padding-right: 8px;
+                        spacing: 3px;
+                        if root.look.icons: VerticalLayout {
+                            alignment: center;
+                            Icon {
+                                name: "caret-left";
+                                size: 15px;
+                                color: root.look.link;
+                            }
+                        }
+                        Text {
+                            text: root.look.brackets ? "[‹ " + ManageWords.back() + "]" : ManageWords.back();
+                            color: root.look.link;
+                            font-family: root.look.font;
+                            font-size: root.look.fs;
+                            vertical-alignment: center;
+                        }
+                    }
+                    back-touch := TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            InfoPage.back();
+                        }
+                    }
+                }
+                Text {
+                    horizontal-stretch: 1;
+                    text: InfoPage.title;
+                    color: root.look.text;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-t;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                    overflow: elide;
+                }
+                if InfoPage.count != "": Text {
+                    text: InfoPage.count;
+                    color: root.look.faint;
+                    font-family: root.look.font;
+                    font-size: root.look.fs-xs;
+                    vertical-alignment: center;
+                }
+            }
+            Rectangle {
+                y: parent.height - self.height;
+                height: root.look.head-rule;
+                background: root.look.head-rule > 1px ? root.look.text : root.look.line;
+            }
+        }
+        Flickable {
+            vertical-stretch: 1;
+            content-height: body.preferred-height;
+            body := VerticalLayout {
+                width: parent.width;
+                alignment: start;
+                padding-left: root.look.pad;
+                padding-right: root.look.pad;
+                padding-bottom: 20px;
+
+                // The shared media: the tabs, then each month's photos and videos, files or links.
+                if InfoPage.kind == InfoPageKind.media: VerticalLayout {
+                    padding-top: 12px;
+                    spacing: 4px;
+                    TabBar { look: root.look; }
+                    for month in InfoPage.months: VerticalLayout {
+                        spacing: root.look.brackets ? 0px : root.gap;
+                        MonthHead {
+                            look: root.look;
+                            month: month;
+                            height: self.preferred-height + (root.look.brackets ? 10px : 18px);
+                            vertical-alignment: bottom;
+                        }
+                        if InfoPage.tab == 0 && !root.look.brackets: VerticalLayout {
+                            spacing: root.gap;
+                            for row in month.rows: HorizontalLayout {
+                                spacing: root.gap;
+                                alignment: start;
+                                for tile in row.tiles: Tile {
+                                    look: root.look;
+                                    tile: tile;
+                                    side: root.side;
+                                }
+                            }
+                        }
+                        if InfoPage.tab == 0 && root.look.brackets: VerticalLayout {
+                            for row in month.rows: VerticalLayout {
+                                for tile in row.tiles: VerticalLayout {
+                                    if tile.id != "": TileLine {
+                                        look: root.look;
+                                        tile: tile;
+                                    }
+                                }
+                            }
+                        }
+                        if InfoPage.tab == 1: VerticalLayout {
+                            for file in month.files: FileLine {
+                                look: root.look;
+                                file: file;
+                            }
+                        }
+                        if InfoPage.tab == 2: VerticalLayout {
+                            for link in month.links: LinkLine {
+                                look: root.look;
+                                link: link;
+                            }
+                        }
+                    }
+                    if InfoPage.loading: HorizontalLayout {
+                        padding-top: 16px;
+                        alignment: center;
+                        Spinner {
+                            size: 18px;
+                            color: root.look.faint;
+                        }
+                    }
+                    if !InfoPage.loading && InfoPage.months.length == 0: Text {
+                        height: self.preferred-height + 32px;
+                        text: InfoPage.empty;
+                        color: root.look.faint;
+                        font-family: root.look.font;
+                        font-size: root.look.fs-s;
+                        horizontal-alignment: center;
+                        vertical-alignment: center;
+                    }
+                    if !InfoPage.loading && InfoPage.more: HorizontalLayout {
+                        padding-top: 12px;
+                        alignment: center;
+                        Action {
+                            look: root.look;
+                            text: InfoPageWords.show-more();
+                            bold: false;
+                            clicked => {
+                                InfoPage.load-more();
+                            }
+                        }
+                    }
+                }
+
+                // The members, the administrators.
+                if InfoPage.kind == InfoPageKind.members || InfoPage.kind == InfoPageKind.admins: VerticalLayout {
+                    if InfoPage.searchable: VerticalLayout {
+                        padding-top: 12px;
+                        Rectangle {
+                            height: root.look.in-h;
+                            border-radius: root.look.r;
+                            background: root.look.in-bg;
+                            border-width: root.look.ring == transparent ? 0px : max(1px, root.look.ring-width);
+                            border-color: root.look.ring;
+                            HorizontalLayout {
+                                padding-left: root.look.brackets ? 2px : 10px;
+                                padding-right: 6px;
+                                spacing: 6px;
+                                if root.look.icons: VerticalLayout {
+                                    alignment: center;
+                                    Icon {
+                                        name: "magnifying-glass";
+                                        size: 15px;
+                                        color: root.look.faint;
+                                    }
+                                }
+                                if root.look.brackets: Text {
+                                    text: "/";
+                                    color: root.look.accent;
+                                    font-family: root.look.font;
+                                    font-size: root.look.fs;
+                                    vertical-alignment: center;
+                                }
+                                Field {
+                                    horizontal-stretch: 1;
+                                    height: root.look.in-h;
+                                    text <=> InfoPage.query;
+                                    placeholder: InfoPageWords.search-members();
+                                    font-size: root.look.fs;
+                                    font-family: root.look.font;
+                                    fill: transparent;
+                                    ring: transparent;
+                                    ring-width: 0px;
+                                    padding-x: 0px;
+                                    text-color: root.look.text;
+                                    edited(text) => {
+                                        InfoPage.search(text);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if InfoPage.note != "": VerticalLayout {
+                        padding-top: 12px;
+                        LockNote {
+                            look: root.look;
+                            text: InfoPage.note;
+                        }
+                    }
+                    SectionHead {
+                        look: root.look;
+                        title: InfoPage.list-title;
+                        aside: InfoPage.list-count;
+                    }
+                    for person in InfoPage.people: PersonLine {
+                        look: root.look;
+                        person: person;
+                    }
+                    if InfoPage.loading: HorizontalLayout {
+                        padding-top: 12px;
+                        alignment: center;
+                        Spinner {
+                            size: 18px;
+                            color: root.look.faint;
+                        }
+                    }
+                    if !InfoPage.loading && InfoPage.people.length == 0: Text {
+                        height: self.preferred-height + 24px;
+                        text: InfoPageWords.nobody();
+                        color: root.look.faint;
+                        font-family: root.look.font;
+                        font-size: root.look.fs-s;
+                        vertical-alignment: center;
+                    }
+                    if InfoPage.foot != "": VerticalLayout {
+                        padding-top: 12px;
+                        Words {
+                            look: root.look;
+                            text: InfoPage.foot;
+                            color: root.look.faint;
+                            font-size: root.look.fs-xs;
+                        }
+                    }
+                }
+
+                // Auto-delete, the mute: one choice among a few, and the switches under them.
+                if InfoPage.kind == InfoPageKind.auto-delete || InfoPage.kind == InfoPageKind.notifications: VerticalLayout {
+                    if InfoPage.explain != "": VerticalLayout {
+                        padding-top: 14px;
+                        padding-bottom: 4px;
+                        Words {
+                            look: root.look;
+                            text: InfoPage.explain;
+                        }
+                    }
+                    if InfoPage.choices-title != "": SectionHead {
+                        look: root.look;
+                        title: InfoPage.choices-title;
+                    }
+                    for choice in InfoPage.choices: ChoiceLine {
+                        look: root.look;
+                        choice: choice;
+                        locked: InfoPage.locked;
+                    }
+                    if InfoPage.locked && InfoPage.lock-note != "": VerticalLayout {
+                        padding-top: 10px;
+                        LockNote {
+                            look: root.look;
+                            text: InfoPage.lock-note;
+                        }
+                    }
+                    if InfoPage.toggles.length > 0: SectionHead {
+                        look: root.look;
+                        title: InfoPage.toggles-title;
+                    }
+                    for toggle in InfoPage.toggles: ToggleRow {
+                        look: root.look;
+                        toggle: toggle;
+                        small: true;
+                        toggled => {
+                            InfoPage.toggle(toggle.id);
+                        }
+                    }
+                    if InfoPage.foot != "": VerticalLayout {
+                        padding-top: 12px;
+                        Words {
+                            look: root.look;
+                            text: InfoPage.foot;
+                            color: root.look.faint;
+                            font-size: root.look.fs-xs;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

@@ -36,6 +36,7 @@ mod api;
 mod avatars;
 mod bots;
 mod chat_info;
+mod info_pages;
 mod chats;
 mod contacts;
 mod conversation;
@@ -329,6 +330,7 @@ pub fn connect_chat_order(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
 /// The chat's info panel remembers whether it is open (chat_info.rs).
 pub fn connect_chat_info(ui: &MainWindow, settings: Rc<RefCell<Settings>>) {
     chat_info::connect(ui, settings);
+    info_pages::connect(ui);
 }
 
 /// The live streams the user follows on Telegram, for the Live view's Following (src/live/).
@@ -540,6 +542,7 @@ fn leave_front() {
     global_search::forget();
     new_chat::forget();
     chat_info::forget();
+    info_pages::forget();
     manage::forget();
     bots::forget();
     topics::forget();
@@ -911,6 +914,7 @@ fn on_authorization_state(state: AuthorizationState) {
                 global_search::forget();
                 new_chat::forget();
                 chat_info::forget();
+                info_pages::forget();
                 manage::forget();
                 bots::forget();
                 topics::forget();

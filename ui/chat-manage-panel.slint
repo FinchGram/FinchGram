@@ -8,7 +8,7 @@ import { Look } from "look.slint";
 
 // A section's header: small capitals in Workbench, a newspaper's heading in Broadsheet, a
 // "── rule ──" in Terminal.
-component SectionHead inherits Rectangle {
+export component SectionHead inherits Rectangle {
     in property <ManageLook> look;
     in property <string> title;
     in property <string> aside;
@@ -157,7 +157,7 @@ component Button inherits Rectangle {
 }
 
 // A link-like action: "New invite link", "Add member".
-component Action inherits Rectangle {
+export component Action inherits Rectangle {
     in property <ManageLook> look;
     in property <string> text;
     in property <string> icon;
@@ -236,7 +236,7 @@ component Chips inherits HorizontalLayout {
 }
 
 // A switch row: a label (and a note), the switch at the right; faded with a lock when we may not.
-component ToggleRow inherits Rectangle {
+export component ToggleRow inherits Rectangle {
     in property <ManageLook> look;
     in property <ManageToggle> toggle;
     in property <string> pending;         // the approve row's "3 requests await your approval"
@@ -661,7 +661,7 @@ component TypeRow inherits Rectangle {
 }
 
 // A card: the primary link, the new link's form.
-component Card inherits Rectangle {
+export component Card inherits Rectangle {
     in property <ManageLook> look;
     border-radius: look.rl;
     background: look.card;

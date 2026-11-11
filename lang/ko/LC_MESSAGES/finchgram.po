@@ -7852,3 +7852,195 @@ msgstr "음소거 해제"
 msgctxt "status"
 msgid "Live"
 msgstr "방송 중"
+
+#: ui/chat-info-pages.slint:127
+msgid "Search members"
+msgstr "멤버 검색"
+
+#: ui/chat-info-pages.slint:128
+msgid "Search results"
+msgstr "검색 결과"
+
+#: ui/chat-info-pages.slint:129
+msgid "Nobody found"
+msgstr "멤버를 찾을 수 없음"
+
+#: ui/chat-info-pages.slint:130
+msgid "{0} online"
+msgstr "온라인 {0}명"
+
+#: ui/chat-info-pages.slint:132
+msgid "This group hides its member list: only administrators see all {0} members. You still see the administrators."
+msgstr "이 그룹은 멤버 목록을 숨겼습니다. 멤버 {0}명 전체는 관리자만 볼 수 있으며, 관리자는 계속 볼 수 있습니다."
+
+#: ui/chat-info-pages.slint:135
+msgid "You see who the administrators are and their titles. What each of them may do, only the owner and those who may add administrators see."
+msgstr "누가 관리자인지와 그 직함은 볼 수 있습니다. 각 관리자가 무엇을 할 수 있는지는 소유자와 관리자를 추가할 수 있는 사람만 볼 수 있습니다."
+
+#: ui/chat-info-pages.slint:137
+msgid "No photos or videos here yet"
+msgstr "아직 사진이나 동영상이 없습니다"
+
+#: ui/chat-info-pages.slint:138
+msgid "No files here yet"
+msgstr "아직 파일이 없습니다"
+
+#: ui/chat-info-pages.slint:139
+msgid "No links here yet"
+msgstr "아직 링크가 없습니다"
+
+#: ui/chat-info-pages.slint:140
+msgid "Show more"
+msgstr "더 보기"
+
+#: ui/chat-info-pages.slint:143
+msgid "1 month"
+msgstr "1개월"
+
+#: ui/chat-info-pages.slint:144
+msgid "{n} day"
+msgid_plural "{n} days"
+msgstr[0] "{n}일"
+
+#: ui/chat-info-pages.slint:146
+msgid "New messages are deleted for both of you this long after they are sent. Messages from before stay."
+msgstr "새 메시지는 보낸 뒤 이 기간이 지나면 두 사람 모두에게서 삭제됩니다. 이전 메시지는 그대로 남습니다."
+
+#: ui/chat-info-pages.slint:149
+msgid "New messages in this group are deleted for everyone this long after they are sent. Messages from before stay."
+msgstr "이 그룹의 새 메시지는 보낸 뒤 이 기간이 지나면 모두에게서 삭제됩니다. 이전 메시지는 그대로 남습니다."
+
+#: ui/chat-info-pages.slint:152
+msgid "New posts in this channel are deleted for everyone this long after they are published. Posts from before stay."
+msgstr "이 채널의 새 게시물은 게시된 뒤 이 기간이 지나면 모두에게서 삭제됩니다. 이전 게시물은 그대로 남습니다."
+
+#: ui/chat-info-pages.slint:155
+msgid "{0} can change this too. A line in the chat tells you both when it changes."
+msgstr "{0}님도 이 설정을 바꿀 수 있습니다. 설정이 바뀌면 채팅에 안내가 표시되어 두 사람 모두 알 수 있습니다."
+
+#: ui/chat-info-pages.slint:158
+msgid "Changing this needs the right to change the chat's info. Ask an administrator who has it."
+msgstr "이 설정을 바꾸려면 채팅 정보 변경 권한이 필요합니다. 이 권한이 있는 관리자에게 요청하세요."
+
+#: ui/chat-info-pages.slint:160
+msgctxt "the chat's mute"
+msgid "Mute"
+msgstr "무음"
+
+#: ui/chat-info-pages.slint:161
+msgid "Not muted"
+msgstr "무음 안 함"
+
+#: ui/chat-info-pages.slint:162
+msgid "For 1 hour"
+msgstr "1시간"
+
+#: ui/chat-info-pages.slint:163
+msgid "For 8 hours"
+msgstr "8시간"
+
+#: ui/chat-info-pages.slint:164
+msgid "For 2 days"
+msgstr "2일"
+
+#: ui/chat-info-pages.slint:165
+msgctxt "the chat's mute"
+msgid "Forever"
+msgstr "영구"
+
+#: ui/chat-info-pages.slint:167
+msgid "Muted until {0}"
+msgstr "{0}까지 무음"
+
+#: ui/chat-info-pages.slint:169
+msgid "Notify me while muted"
+msgstr "무음 중에도 알림 받기"
+
+#: ui/chat-info-pages.slint:170
+msgid "When someone mentions me or replies to me"
+msgstr "누군가 나를 멘션하거나 내게 답장할 때"
+
+#: ui/chat-info-pages.slint:171
+msgid "When a message is pinned"
+msgstr "메시지가 고정될 때"
+
+#: ui/chat-info-pages.slint:173
+msgid "This chat only. The defaults for each kind of chat are in Settings › Notifications & sounds."
+msgstr "이 채팅에만 적용됩니다. 채팅 종류별 기본값은 설정 › 알림 및 소리에 있습니다."
+
+#: ui/chat.slint:314
+msgid "Clear the history of {0}?"
+msgstr "{0}의 채팅 기록을 지우시겠습니까?"
+
+#: ui/chat.slint:327
+msgid "Its messages are deleted for you only; the other members keep theirs. The chat stays in your list."
+msgstr "메시지는 나에게서만 삭제되며, 다른 멤버에게는 그대로 남습니다. 채팅은 목록에 그대로 남습니다."
+
+#: ui/chat.slint:328
+msgid "Its messages are deleted for you; the chat stays in your list."
+msgstr "메시지는 나에게서 삭제되며, 채팅은 목록에 그대로 남습니다."
+
+#: ui/format.slint:89
+msgctxt "month and year"
+msgid "{0} {1}"
+msgstr "{1}년 {0}"
+
+#: ui/format.slint:90
+msgctxt "month, standing alone"
+msgid "January"
+msgstr "1월"
+
+#: ui/format.slint:91
+msgctxt "month, standing alone"
+msgid "February"
+msgstr "2월"
+
+#: ui/format.slint:92
+msgctxt "month, standing alone"
+msgid "March"
+msgstr "3월"
+
+#: ui/format.slint:93
+msgctxt "month, standing alone"
+msgid "April"
+msgstr "4월"
+
+#: ui/format.slint:94
+msgctxt "month, standing alone"
+msgid "May"
+msgstr "5월"
+
+#: ui/format.slint:95
+msgctxt "month, standing alone"
+msgid "June"
+msgstr "6월"
+
+#: ui/format.slint:96
+msgctxt "month, standing alone"
+msgid "July"
+msgstr "7월"
+
+#: ui/format.slint:97
+msgctxt "month, standing alone"
+msgid "August"
+msgstr "8월"
+
+#: ui/format.slint:98
+msgctxt "month, standing alone"
+msgid "September"
+msgstr "9월"
+
+#: ui/format.slint:99
+msgctxt "month, standing alone"
+msgid "October"
+msgstr "10월"
+
+#: ui/format.slint:100
+msgctxt "month, standing alone"
+msgid "November"
+msgstr "11월"
+
+#: ui/format.slint:101
+msgctxt "month, standing alone"
+msgid "December"
+msgstr "12월"

@@ -748,12 +748,31 @@ fn info_section(id: &str, title: &str, rows: Vec<InfoRow>) -> InfoSection {
         rows: model(rows),
         members: ModelRc::default(),
         tabs: ModelRc::default(),
+        counts: ModelRc::default(),
+        tiles: ModelRc::default(),
     }
+}
+
+/// A photo or video of the shared media, made up: no picture, its tile in the theme's colour.
+fn info_tile(id: &str, video: bool) -> InfoTile {
+    InfoTile {
+        id: id.into(),
+        video,
+        duration: if video { "0:42".into() } else { SharedString::new() },
+        from: "Jie".into(),
+        moment: moment(Day::ThisYear, 14, 20),
+        ..InfoTile::default()
+    }
+}
+
+fn info_tiles(tiles: Vec<InfoTile>) -> InfoTileRow {
+    InfoTileRow { tiles: model(tiles) }
 }
 
 /// The info panel's sections for Keyboard Lab, as chat_info.rs would build them.
 fn info_sections() -> Vec<InfoSection> {
     let member = |name: &str, role: &str, status: Status, hour: i32| InfoMember {
+        id: name.into(),
         name: name.into(),
         initial: name.chars().next().map(|c| c.to_string()).unwrap_or_default().into(),
         picture: Image::default(),
@@ -769,15 +788,23 @@ fn info_sections() -> Vec<InfoSection> {
         ]),
         info_section("settings", "Settings", vec![
             InfoRow { on: true, ..info_row("notif", InfoRowKind::Toggle, "bell", "Notifications", "m") },
-            InfoRow { grey: true, ..info_row("mutefor", InfoRowKind::Nav, "clock", "Mute duration & exceptions", "") },
+            info_row("mutefor", InfoRowKind::Nav, "clock", "Mute duration & exceptions", ""),
             InfoRow { on: true, ..info_row("pin", InfoRowKind::Toggle, "push-pin", "Pin chat", "p") },
             InfoRow { value: "Keyboards".into(), ..info_row("folders", InfoRowKind::Nav, "folder-simple", "Add to folder", "f") },
             InfoRow { value: "42 unread".into(), ..info_row("read", InfoRowKind::Action, "checks", "Mark as read", "r") },
-            InfoRow { grey: true, value: "Off".into(), ..info_row("autodel", InfoRowKind::Nav, "timer", "Auto-delete messages", "") },
+            InfoRow { value: "Off".into(), ..info_row("autodel", InfoRowKind::Nav, "timer", "Auto-delete messages", "") },
         ]),
-        InfoSection { grey: true, shared: true, tabs: model(vec!["Photos & Videos".into(), "Files".into(), "Links".into()]), ..info_section("shared", "Shared Media", Vec::new()) },
         InfoSection {
-            grey: true,
+            shared: true,
+            tabs: model(vec!["Photos & Videos".into(), "Files".into(), "Links".into()]),
+            counts: model(vec!["1,208".into(), "312".into(), "540".into()]),
+            tiles: model(vec![
+                info_tiles(vec![info_tile("t1", false), info_tile("t2", true), info_tile("t3", false)]),
+                info_tiles(vec![info_tile("t4", false), info_tile("t5", false), info_tile("t6", true)]),
+            ]),
+            ..info_section("shared", "Shared Media", Vec::new())
+        },
+        InfoSection {
             members: model(vec![
                 member("Jie", "owner", Status::Online, 14),
                 member("Mika", "admin", Status::LastSeen, 13),
@@ -786,20 +813,183 @@ fn info_sections() -> Vec<InfoSection> {
                 member("Ken", "", Status::LastSeen, 9),
             ]),
             ..info_section("members", "Members · 486", vec![
-                InfoRow { grey: true, value: "3".into(), ..info_row("admins", InfoRowKind::Nav, "shield-check", "Administrators", "") },
-                InfoRow { grey: true, value: "486".into(), ..info_row("allm", InfoRowKind::Nav, "users", "Show all members", "") },
+                InfoRow { value: "3".into(), ..info_row("admins", InfoRowKind::Nav, "shield-check", "Administrators", "") },
+                InfoRow { value: "486".into(), ..info_row("allm", InfoRowKind::Nav, "users", "Show all members", "") },
             ])
         },
         info_section("invite", "Invite", vec![
-            InfoRow { grey: true, value: "t.me/+Kx7bQ2mL0aZj".into(), ..info_row("invite", InfoRowKind::Info, "link-simple", "Invite link", "") },
+            InfoRow { value: "t.me/+Kx7bQ2mL0aZj".into(), ..info_row("invite", InfoRowKind::Info, "link-simple", "Invite link", "") },
             info_row("manage", InfoRowKind::Nav, "gear-six", "Manage group", ""),
         ]),
         info_section("actions", "Actions", vec![
             InfoRow { danger: true, ..info_row("report", InfoRowKind::Action, "flag", "Report", "x") },
-            InfoRow { danger: true, grey: true, ..info_row("clear", InfoRowKind::Action, "broom", "Clear history", "") },
+            InfoRow { danger: true, ..info_row("clear", InfoRowKind::Action, "broom", "Clear history", "") },
             InfoRow { danger: true, ..info_row("leave", InfoRowKind::Action, "sign-out", "Leave group", "l") },
         ]),
     ]
+}
+
+/// The info panel's pages (the design's round 14) in its place, with made-up content: the shared
+/// media's three tabs, all members, a group that hides its members, auto-delete a member may not
+/// change, the mute's length and exceptions.
+fn info_pages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+    let page = ui.global::<InfoPage>();
+    let words = ui.global::<InfoPageWords>();
+    let month = |month: i32, rows: Vec<InfoTileRow>, files: Vec<InfoFile>, links: Vec<InfoLink>| InfoMonth {
+        month,
+        year: 2026,
+        this_year: true,
+        rows: model(rows),
+        files: model(files),
+        links: model(links),
+    };
+    let file = |id: &str, ext: &str, file_name: &str, size: &str, from: &str, downloaded: bool| InfoFile {
+        id: id.into(),
+        ext: ext.into(),
+        name: file_name.into(),
+        size: size.into(),
+        from: from.into(),
+        moment: moment(Day::ThisYear, 14, 20),
+        downloaded,
+        downloading: false,
+    };
+    let link = |id: &str, initial: &str, title: &str, url: &str, from: &str| InfoLink {
+        id: id.into(),
+        initial: initial.into(),
+        title: title.into(),
+        url: url.into(),
+        from: from.into(),
+        moment: moment(Day::ThisYear, 14, 20),
+    };
+    page.set_tabs(model(vec![
+        InfoTab { label: "Photos & Videos".into(), count: "1,208".into() },
+        InfoTab { label: "Files".into(), count: "312".into() },
+        InfoTab { label: "Links".into(), count: "540".into() },
+    ]));
+    page.set_title("Shared Media".into());
+    page.set_kind(InfoPageKind::Media);
+    page.set_tab(0);
+    page.set_more(true);
+    page.set_months(model(vec![
+        month(11, vec![
+            info_tiles(vec![info_tile("m1", false), info_tile("m2", true), info_tile("m3", false)]),
+            info_tiles(vec![info_tile("m4", false), info_tile("m5", false), info_tile("m6", true)]),
+            info_tiles(vec![info_tile("m7", false), info_tile("m8", false), info_tile("m9", false)]),
+        ], Vec::new(), Vec::new()),
+        month(10, vec![
+            info_tiles(vec![info_tile("m10", false), info_tile("m11", true), info_tile("m12", false)]),
+            info_tiles(vec![info_tile("m13", false), InfoTile::default(), InfoTile::default()]),
+        ], Vec::new(), Vec::new()),
+    ]));
+    page.set_open(true);
+    save(window, &name("info-media"));
+    page.set_tab(1);
+    page.set_months(model(vec![
+        month(11, Vec::new(), vec![
+            file("f1", "DXF", "Tofu65-plate-1.5mm.dxf", "184 KB", "Yuki", true),
+            file("f2", "PDF", "GMK-Olivia-colours.pdf", "2.4 MB", "Jie", false),
+            file("f3", "ZIP", "QMK-firmware-kbd67-v2.zip", "612 KB", "Ken", false),
+            file("f4", "XLSX", "Silent-switch-force-curves.xlsx", "48 KB", "Mika", true),
+        ], Vec::new()),
+        month(10, Vec::new(), vec![file("f5", "PDF", "Group-rules-and-trading.pdf", "96 KB", "Jie", true)], Vec::new()),
+    ]));
+    save(window, &name("info-files"));
+    page.set_tab(2);
+    page.set_more(false);
+    page.set_months(model(vec![
+        month(11, Vec::new(), Vec::new(), vec![
+            link("l1", "G", "GMK Olivia++ group buy: the delivery list", "geekhack.org/topic/12045", "Jie"),
+            link("l2", "T", "Eight silent linear switches, compared", "t.me/kbd_daily/812", "Mika"),
+            link("l3", "Q", "VIA configuration", "docs.qmk.fm", "Ken"),
+        ]),
+        month(10, Vec::new(), Vec::new(), vec![link("l4", "K", "Building the Tofu65 2.0", "keebtalk.com", "Mi")]),
+    ]));
+    save(window, &name("info-links"));
+
+    // All members, then a group that hides them from us: its administrators only.
+    let person = |id: &str, role: &str, title: &str, status: Status, owner: bool, admin: bool, you: bool| InfoPerson {
+        id: id.into(),
+        name: id.into(),
+        initial: id.chars().next().map(|c| c.to_string()).unwrap_or_default().into(),
+        you,
+        status,
+        last_seen: moment(Day::Today, 13, 52),
+        sub: SharedString::new(),
+        role: if title.is_empty() { role.into() } else { title.into() },
+        owner,
+        admin,
+        ..InfoPerson::default()
+    };
+    page.set_kind(InfoPageKind::Members);
+    page.set_title("Members".into());
+    page.set_count("486".into());
+    page.set_searchable(true);
+    page.set_list_title("Members".into());
+    page.set_list_count(SharedString::new());
+    page.set_people(model(vec![
+        person("Jie", "owner", "Founder", Status::Online, true, false, false),
+        person("Mika", "admin", "Switch tester", Status::Online, false, true, false),
+        person("Yuki", "admin", "", Status::LastSeen, false, true, false),
+        person("Mi", "", "", Status::Online, false, false, false),
+        person("Zhou Ye", "", "", Status::Online, false, false, true),
+        person("Ken", "", "", Status::LastSeen, false, false, false),
+        person("Lin Xia", "", "", Status::Recently, false, false, false),
+        person("Alex Chen", "", "", Status::LastSeen, false, false, false),
+    ]));
+    save(window, &name("info-members"));
+    page.set_kind(InfoPageKind::Admins);
+    page.set_searchable(false);
+    page.set_count("3".into());
+    page.set_note(words.invoke_hidden_note(486));
+    page.set_list_title("Administrators".into());
+    let admin = |id: &str, title: &str, owner: bool| InfoPerson {
+        sub: if owner { "Group owner".into() } else { "Administrator".into() },
+        role: title.into(),
+        ..person(id, "", "", Status::LastSeen, owner, !owner, false)
+    };
+    page.set_people(model(vec![admin("Jie", "Founder", true), admin("Mika", "Switch tester", false), admin("Yuki", "", false)]));
+    page.set_foot(words.invoke_admins_foot());
+    save(window, &name("info-admins"));
+    page.set_note(SharedString::new());
+    page.set_foot(SharedString::new());
+
+    // Auto-delete in a group whose info a member may not change; the mute of eight hours.
+    let choice = |id: &str, label: SharedString, sub: SharedString, on: bool| InfoChoice { id: id.into(), label, sub, on };
+    page.set_kind(InfoPageKind::AutoDelete);
+    page.set_title("Auto-delete messages".into());
+    page.set_count(SharedString::new());
+    page.set_explain(words.invoke_auto_delete_group());
+    page.set_choices_title(SharedString::new());
+    page.set_choices(model(vec![
+        choice("0", "Off".into(), SharedString::new(), true),
+        choice("86400", words.invoke_one_day(), SharedString::new(), false),
+        choice("604800", words.invoke_one_week(), SharedString::new(), false),
+        choice("2678400", words.invoke_one_month(), SharedString::new(), false),
+    ]));
+    page.set_locked(true);
+    page.set_lock_note(words.invoke_auto_delete_lock());
+    page.set_toggles(ModelRc::default());
+    save(window, &name("info-autodelete"));
+    page.set_locked(false);
+    page.set_kind(InfoPageKind::Notifications);
+    page.set_title("Mute duration & exceptions".into());
+    page.set_explain(SharedString::new());
+    page.set_choices_title(words.invoke_mute());
+    page.set_choices(model(vec![
+        choice("0", words.invoke_not_muted(), SharedString::new(), false),
+        choice("3600", words.invoke_one_hour(), SharedString::new(), false),
+        choice("28800", words.invoke_eight_hours(), words.invoke_muted_until(moment(Day::Today, 23, 40), true), true),
+        choice("172800", words.invoke_two_days(), SharedString::new(), false),
+        choice("2147483647", words.invoke_forever(), SharedString::new(), false),
+    ]));
+    page.set_toggles_title(words.invoke_notify_anyway());
+    let toggle = |id: &str, label: SharedString| ManageToggle { id: id.into(), label, note: SharedString::new(), on: true, enabled: true, lock: SharedString::new() };
+    page.set_toggles(model(vec![toggle("mentions", words.invoke_mentions()), toggle("pinned", words.invoke_pinned())]));
+    page.set_foot(words.invoke_notifications_foot());
+    save(window, &name("info-mute"));
+    page.set_foot(SharedString::new());
+    page.set_open(false);
+    page.set_kind(InfoPageKind::None);
 }
 
 fn open_keyboards(ui: &MainWindow) {
@@ -2617,8 +2807,9 @@ fn screenshots() {
                 info.set_cursor("notif".into());
                 info.set_open(true);
                 save(&window, &name("chat-info"));
-                info.set_open(false);
                 info.set_cursor(SharedString::new());
+                info_pages(&ui, &window, &name);
+                info.set_open(false);
             }
             // The toolbox from the logo (the seventh round), with two downloads on their way:
             // every category; the transfers alone, with the protocols under Downloads; a search
@@ -2692,6 +2883,9 @@ fn screenshots() {
             chats.set_confirm_revoke(true);
             chats.set_question(ChatConfirm::Delete);
             save(&window, &name("chat-delete"));
+            chats.set_confirm_revoke(false);
+            chats.set_question(ChatConfirm::Clear);
+            save(&window, &name("chat-clear"));
             // The question before a link whose words are not its address opens.
             chats.set_confirm_title("evil.example".into());
             chats.set_confirm_link("https://evil.example/login?account=lin.xia&next=%2Fwallet".into());

@@ -569,6 +569,7 @@ pub fn refresh() {
     if info_rows {
         super::chat_info::changed(info_facts);
         super::manage::facts_changed();
+        super::info_pages::changed();
     }
     if !missing.is_empty() {
         super::conversation::load_replied(missing);
@@ -911,6 +912,12 @@ impl Store {
                     self.dirty.chats = true;
                 }
             }
+            Update::ChatMessageAutoDeleteTime { chat_id, message_auto_delete_time } => {
+                if let Some(chat) = self.chats.get_mut(&chat_id) {
+                    chat.message_auto_delete_time = message_auto_delete_time;
+                    self.dirty.chat_info = true;
+                }
+            }
             Update::ScopeNotificationSettings { scope, notification_settings } => {
                 self.scope_settings.insert(scope, notification_settings);
                 self.dirty.chats = true;
@@ -1192,6 +1199,25 @@ impl Store {
     /// Whether the chats of a kind are muted, those that do not say otherwise.
     pub fn scope_muted(&self, scope: NotificationSettingsScope) -> bool {
         self.scope_settings.get(&scope).is_some_and(|settings| settings.mute_for > 0)
+    }
+
+    /// A chat's notifications with what it leaves to its kind's defaults filled in: how long it
+    /// is still muted (seconds), and whether mentions and pinned messages notify while it is.
+    pub fn notifications(&self, chat: &api::Chat) -> (i32, bool, bool) {
+        let settings = &chat.notification_settings;
+        let scope = self.scope_settings.get(&scope_of(chat));
+        let mute_for = if settings.use_default_mute_for { scope.map_or(0, |scope| scope.mute_for) } else { settings.mute_for };
+        let mentions_off = if settings.use_default_disable_mention_notifications {
+            scope.is_some_and(|scope| scope.disable_mention_notifications)
+        } else {
+            settings.disable_mention_notifications
+        };
+        let pinned_off = if settings.use_default_disable_pinned_message_notifications {
+            scope.is_some_and(|scope| scope.disable_pinned_message_notifications)
+        } else {
+            settings.disable_pinned_message_notifications
+        };
+        (mute_for, !mentions_off, !pinned_off)
     }
 
     pub fn members(&self, chat: &api::Chat) -> i32 {
@@ -2417,6 +2443,24 @@ impl Store {
             return (image, true);
         }
         match &photo.minithumbnail {
+            Some(preview) => (self.preview_image(preview), true),
+            None => (self.blank.clone(), false),
+        }
+    }
+
+    /// A picture of a message as far as it is here (the shared media's tiles): the file once
+    /// downloaded, until then the tiny preview the message carries. A file not here yet is noted, to
+    /// download as the avatars are ([`fetch_wanted_photos`]).
+    pub(super) fn picture_of(&self, file: Option<&api::File>, preview: Option<&api::Minithumbnail>) -> (Image, bool) {
+        if let Some(file) = file {
+            if let Some(image) = self.avatars.get(&file.id) {
+                return (image, true);
+            }
+            if !self.avatars_asked.contains(&file.id) {
+                self.wanted_photos.borrow_mut().push(file.clone());
+            }
+        }
+        match preview {
             Some(preview) => (self.preview_image(preview), true),
             None => (self.blank.clone(), false),
         }

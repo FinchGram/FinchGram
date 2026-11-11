@@ -7888,3 +7888,195 @@ msgstr "ミュート解除"
 msgctxt "status"
 msgid "Live"
 msgstr "配信中"
+
+#: ui/chat-info-pages.slint:127
+msgid "Search members"
+msgstr "メンバーを検索"
+
+#: ui/chat-info-pages.slint:128
+msgid "Search results"
+msgstr "検索結果"
+
+#: ui/chat-info-pages.slint:129
+msgid "Nobody found"
+msgstr "メンバーが見つかりません"
+
+#: ui/chat-info-pages.slint:130
+msgid "{0} online"
+msgstr "{0}人がオンライン"
+
+#: ui/chat-info-pages.slint:132
+msgid "This group hides its member list: only administrators see all {0} members. You still see the administrators."
+msgstr "このグループはメンバー一覧を非表示にしています。{0}人のメンバー全員を見られるのは管理者だけです。管理者はあなたにも表示されます。"
+
+#: ui/chat-info-pages.slint:135
+msgid "You see who the administrators are and their titles. What each of them may do, only the owner and those who may add administrators see."
+msgstr "管理者が誰か、またその肩書きは表示されます。各管理者に何ができるかは、オーナーと管理者を追加できる人にしか表示されません。"
+
+#: ui/chat-info-pages.slint:137
+msgid "No photos or videos here yet"
+msgstr "写真や動画はまだありません"
+
+#: ui/chat-info-pages.slint:138
+msgid "No files here yet"
+msgstr "ファイルはまだありません"
+
+#: ui/chat-info-pages.slint:139
+msgid "No links here yet"
+msgstr "リンクはまだありません"
+
+#: ui/chat-info-pages.slint:140
+msgid "Show more"
+msgstr "さらに表示"
+
+#: ui/chat-info-pages.slint:143
+msgid "1 month"
+msgstr "1か月"
+
+#: ui/chat-info-pages.slint:144
+msgid "{n} day"
+msgid_plural "{n} days"
+msgstr[0] "{n}日"
+
+#: ui/chat-info-pages.slint:146
+msgid "New messages are deleted for both of you this long after they are sent. Messages from before stay."
+msgstr "新しいメッセージは、送信からこの期間が過ぎると双方のチャットから削除されます。それ以前のメッセージは残ります。"
+
+#: ui/chat-info-pages.slint:149
+msgid "New messages in this group are deleted for everyone this long after they are sent. Messages from before stay."
+msgstr "このグループの新しいメッセージは、送信からこの期間が過ぎると全員のチャットから削除されます。それ以前のメッセージは残ります。"
+
+#: ui/chat-info-pages.slint:152
+msgid "New posts in this channel are deleted for everyone this long after they are published. Posts from before stay."
+msgstr "このチャンネルの新しい投稿は、公開からこの期間が過ぎると全員のチャットから削除されます。それ以前の投稿は残ります。"
+
+#: ui/chat-info-pages.slint:155
+msgid "{0} can change this too. A line in the chat tells you both when it changes."
+msgstr "{0} もこの設定を変更できます。変更されるとチャットにお知らせが表示され、双方に伝わります。"
+
+#: ui/chat-info-pages.slint:158
+msgid "Changing this needs the right to change the chat's info. Ask an administrator who has it."
+msgstr "この設定を変更するには、チャット情報を変更する権限が必要です。その権限を持つ管理者に頼んでください。"
+
+#: ui/chat-info-pages.slint:160
+msgctxt "the chat's mute"
+msgid "Mute"
+msgstr "ミュート"
+
+#: ui/chat-info-pages.slint:161
+msgid "Not muted"
+msgstr "ミュートしない"
+
+#: ui/chat-info-pages.slint:162
+msgid "For 1 hour"
+msgstr "1時間"
+
+#: ui/chat-info-pages.slint:163
+msgid "For 8 hours"
+msgstr "8時間"
+
+#: ui/chat-info-pages.slint:164
+msgid "For 2 days"
+msgstr "2日間"
+
+#: ui/chat-info-pages.slint:165
+msgctxt "the chat's mute"
+msgid "Forever"
+msgstr "無期限"
+
+#: ui/chat-info-pages.slint:167
+msgid "Muted until {0}"
+msgstr "{0} までミュート中"
+
+#: ui/chat-info-pages.slint:169
+msgid "Notify me while muted"
+msgstr "ミュート中も通知する"
+
+#: ui/chat-info-pages.slint:170
+msgid "When someone mentions me or replies to me"
+msgstr "自分へのメンションや返信があったとき"
+
+#: ui/chat-info-pages.slint:171
+msgid "When a message is pinned"
+msgstr "メッセージがピン留めされたとき"
+
+#: ui/chat-info-pages.slint:173
+msgid "This chat only. The defaults for each kind of chat are in Settings › Notifications & sounds."
+msgstr "このチャットだけの設定です。チャットの種類ごとのデフォルトは「設定 › 通知とサウンド」にあります。"
+
+#: ui/chat.slint:314
+msgid "Clear the history of {0}?"
+msgstr "{0} の履歴を消去しますか？"
+
+#: ui/chat.slint:327
+msgid "Its messages are deleted for you only; the other members keep theirs. The chat stays in your list."
+msgstr "メッセージはあなたのチャットからのみ削除され、ほかのメンバーには残ります。チャットはリストに残ります。"
+
+#: ui/chat.slint:328
+msgid "Its messages are deleted for you; the chat stays in your list."
+msgstr "メッセージはあなたのチャットから削除されます。チャットはリストに残ります。"
+
+#: ui/format.slint:89
+msgctxt "month and year"
+msgid "{0} {1}"
+msgstr "{1}年{0}"
+
+#: ui/format.slint:90
+msgctxt "month, standing alone"
+msgid "January"
+msgstr "1月"
+
+#: ui/format.slint:91
+msgctxt "month, standing alone"
+msgid "February"
+msgstr "2月"
+
+#: ui/format.slint:92
+msgctxt "month, standing alone"
+msgid "March"
+msgstr "3月"
+
+#: ui/format.slint:93
+msgctxt "month, standing alone"
+msgid "April"
+msgstr "4月"
+
+#: ui/format.slint:94
+msgctxt "month, standing alone"
+msgid "May"
+msgstr "5月"
+
+#: ui/format.slint:95
+msgctxt "month, standing alone"
+msgid "June"
+msgstr "6月"
+
+#: ui/format.slint:96
+msgctxt "month, standing alone"
+msgid "July"
+msgstr "7月"
+
+#: ui/format.slint:97
+msgctxt "month, standing alone"
+msgid "August"
+msgstr "8月"
+
+#: ui/format.slint:98
+msgctxt "month, standing alone"
+msgid "September"
+msgstr "9月"
+
+#: ui/format.slint:99
+msgctxt "month, standing alone"
+msgid "October"
+msgstr "10月"
+
+#: ui/format.slint:100
+msgctxt "month, standing alone"
+msgid "November"
+msgstr "11月"
+
+#: ui/format.slint:101
+msgctxt "month, standing alone"
+msgid "December"
+msgstr "12月"

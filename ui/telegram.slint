@@ -65,7 +65,7 @@ export struct ChatRow {
 // What a chat's menu asks before doing: blocking a user, leaving a group or channel, deleting a
 // chat (chats.rs); a link whose words hide its address; a bot's key that asks for the phone
 // number; a bot's button that logs in to a site (confirm-title: the site).
-export enum ChatConfirm { none, block, leave, delete, link, share-phone, login }
+export enum ChatConfirm { none, block, leave, delete, link, share-phone, login, clear }
 
 // How a folder's chats are ordered under the pinned ones, which stay on top: by the newest message
 // (Telegram's own order), by name, or by unread messages, muted chats counting as read. One choice

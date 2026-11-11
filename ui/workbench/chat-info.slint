@@ -4,6 +4,7 @@
 import { ChatInfo, InfoWords, InfoRow, InfoRowKind, InfoSection, InfoMember } from "../chat-info.slint";
 import { ChatManage, ManageLook } from "../chat-manage.slint";
 import { ManagePanel } from "../chat-manage-panel.slint";
+import { InfoPage, InfoPagePanel, SharedTiles } from "../chat-info-pages.slint";
 import { Conversation, ChatKind, Status } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Icon, Avatar } from "../widgets.slint";
@@ -132,7 +133,17 @@ component InfoLine inherits Rectangle {
 // One of a group's first members.
 component MemberLine inherits Rectangle {
     in property <InfoMember> member;
+    in property <bool> live;
     height: line.preferred-height;
+    border-radius: 6px;
+    background: live && touch.has-hover ? P.hover : transparent;
+    touch := TouchArea {
+        enabled: root.live;
+        mouse-cursor: pointer;
+        clicked => {
+            ChatInfo.run("member-" + root.member.id);
+        }
+    }
 
     line := HorizontalLayout {
         padding-left: 10px;
@@ -182,6 +193,7 @@ component MemberLine inherits Rectangle {
 // tabs. What is for later is faded.
 component Section inherits Rectangle {
     in property <InfoSection> item;
+    in property <length> tile-side;     // the shared media's tiles: the panel's width in three
     height: body.preferred-height;
 
     Rectangle {
@@ -228,12 +240,13 @@ component Section inherits Rectangle {
         if !root.item.collapsed: VerticalLayout {
             padding-left: 6px;
             padding-right: 6px;
-            if root.item.shared: HorizontalLayout {
+            if root.item.shared: VerticalLayout {
                 padding-left: 4px;
                 padding-right: 4px;
                 padding-top: 4px;
                 padding-bottom: 8px;
-                opacity: 0.42;
+                spacing: 8px;
+                opacity: root.item.grey ? 0.42 : 1;
                 Rectangle {
                     border-radius: 7px;
                     background: P.chrome;
@@ -244,10 +257,10 @@ component Section inherits Rectangle {
                         for tab[index] in root.item.tabs: Rectangle {
                             horizontal-stretch: 1;
                             border-radius: 5px;
-                            background: index == 0 ? P.bg : transparent;
+                            background: index == 0 ? P.bg : tab-touch.has-hover ? P.hover : transparent;
                             height: label.preferred-height + 8px;
                             label := Text {
-                                text: tab;
+                                text: tab + (root.item.counts[index] != "" ? " " + root.item.counts[index] : "");
                                 font-size: 11px;
                                 font-weight: index == 0 ? 600 : 400;
                                 color: index == 0 ? P.text : P.muted;
@@ -255,12 +268,29 @@ component Section inherits Rectangle {
                                 vertical-alignment: center;
                                 overflow: elide;
                             }
+                            tab-touch := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    ChatInfo.run("media-" + index);
+                                }
+                            }
                         }
+                    }
+                }
+                SharedTiles {
+                    rows: root.item.tiles;
+                    side: root.tile-side;
+                    gap: 4px;
+                    radius: 4px;
+                    fill: P.chrome;
+                    opened(id) => {
+                        ChatInfo.run("tile-" + id);
                     }
                 }
             }
             for member in root.item.members: MemberLine {
                 member: member;
+                live: !root.item.grey;
                 opacity: root.item.grey ? 0.42 : 1;
             }
             for row in root.item.rows: InfoLine {
@@ -339,7 +369,8 @@ export component InfoPanel inherits Rectangle {
         background: P.line;
     }
     if ChatManage.open: ManagePanel { look: WorkbenchManage.look; }
-    if !ChatManage.open: VerticalLayout {
+    if InfoPage.open && !ChatManage.open: InfoPagePanel { look: WorkbenchManage.look; }
+    if !ChatManage.open && !InfoPage.open: VerticalLayout {
         Rectangle {
             height: 38px;
             HorizontalLayout {
@@ -451,6 +482,8 @@ export component InfoPanel inherits Rectangle {
                 }
                 for section in ChatInfo.sections: Section {
                     item: section;
+                    // The section's sides (6px), the tiles' row (4px) and two gaps of 4px.
+                    tile-side: (root.width - 20px - 8px) / 3;
                 }
             }
         }

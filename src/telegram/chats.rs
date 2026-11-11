@@ -228,7 +228,7 @@ pub(super) fn ask_bot(chat_id: i64, what: crate::ChatConfirm, title: &str) {
 
 /// The question before something that cannot be undone: the chat's name, its kind, and for a
 /// deletion whether the messages can go for the other side too.
-fn ask(chat_id: i64, what: crate::ChatConfirm) {
+pub(super) fn ask(chat_id: i64, what: crate::ChatConfirm) {
     super::with_ui(|ui| {
         let names = store::Names::from(ui);
         let Some((title, kind, revoke_choice)) = store::with(|store| {
@@ -242,7 +242,7 @@ fn ask(chat_id: i64, what: crate::ChatConfirm) {
         let chats = ui.global::<Chats>();
         chats.set_confirm_title(title.into());
         chats.set_confirm_kind(kind);
-        chats.set_confirm_revoke_choice(what == crate::ChatConfirm::Delete && revoke_choice);
+        chats.set_confirm_revoke_choice(matches!(what, crate::ChatConfirm::Delete | crate::ChatConfirm::Clear) && revoke_choice);
         chats.set_confirm_revoke(false);
         chats.set_question(what);
     });
@@ -280,6 +280,11 @@ fn confirm() {
             let request = serde_json::json!({ "@type": "deleteChatHistory", "chat_id": chat_id, "remove_from_chat_list": true, "revoke": revoke });
             super::send(request, |answer| log_error("delete a chat", answer));
             conversation::close(chat_id);
+        }
+        // The chat info panel's Clear history: the messages go, the chat stays.
+        crate::ChatConfirm::Clear => {
+            let request = serde_json::json!({ "@type": "deleteChatHistory", "chat_id": chat_id, "remove_from_chat_list": false, "revoke": revoke });
+            super::send(request, |answer| log_error("clear a chat's history", answer));
         }
         crate::ChatConfirm::SharePhone => super::bots::share_phone(chat_id),
         crate::ChatConfirm::Login => super::bots::login_confirmed(chat_id),

@@ -122,7 +122,7 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   分发回复、重新启动和转交更新。`store.rs` 保存 TDLib 告诉我们的东西（聊天、用户、群组、文件夹、打开的聊天的消息），
   每批更新之后把页面用的 model 更新到最新，只动真正变了的行。打开的聊天只显示最新的 100 条消息，往上翻时再增加：
   页面会把每一行都排出来，其中任何一行一变就要把所有行重新量一遍，所以行数就是每条新消息的代价。
-  `login.rs`、`chats.rs`、`conversation.rs`、`actions.rs`（消息操作）、`bots.rs`（机器人在聊天里除消息之外的东西，以及置顶消息条）、`reactions.rs`、`topics.rs`、`drafts.rs`、`share.rs`、`admin.rs`（慢速模式，见下；`errors.rs` 把 Telegram 的拒绝换成页面的话）、`chat_info.rs`（聊天资料面板，见下）、`manage.rs`（管理群组 / 频道，见下）、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`accounts.rs` 给账号菜单、百宝箱和 Broadsheet 的窄栏列出登录的账号，并在它们之间切换（见下面“多账号”）；`files.rs` 负责下载文件，`avatars.rs` 负责给要显示头像的行取来聊天和联系人的头像（取到之前是首字母色块，没有头像的一直是色块），`viewer.rs` 给媒体查看器提供内容并记住它的音量（喇叭旁的音量托盘、↑ ↓ 和滚轮；settings.toml 里的 `video_volume` 和 `video_muted`，下一个视频和下次启动沿用），`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
+  `login.rs`、`chats.rs`、`conversation.rs`、`actions.rs`（消息操作）、`bots.rs`（机器人在聊天里除消息之外的东西，以及置顶消息条）、`reactions.rs`、`topics.rs`、`drafts.rs`、`share.rs`、`admin.rs`（慢速模式，见下；`errors.rs` 把 Telegram 的拒绝换成页面的话）、`chat_info.rs`（聊天资料面板，见下）和 `info_pages.rs`（面板的几页）、`manage.rs`（管理群组 / 频道，见下）、`account.rs` 和 `password.rs`（两步验证）负责页面要做的事；`accounts.rs` 给账号菜单、百宝箱和 Broadsheet 的窄栏列出登录的账号，并在它们之间切换（见下面“多账号”）；`files.rs` 负责下载文件，`avatars.rs` 负责给要显示头像的行取来聊天和联系人的头像（取到之前是首字母色块，没有头像的一直是色块），`viewer.rs` 给媒体查看器提供内容并记住它的音量（喇叭旁的音量托盘、↑ ↓ 和滚轮；settings.toml 里的 `video_volume` 和 `video_muted`，下一个视频和下次启动沿用），`rich_text.rs` 把消息里带格式的文字（粗体、链接等）转换成 Slint 的富文本。
   菜单也能做 Telegram 官方应用对聊天能做的事：拉黑或取消拉黑用户（setMessageSenderBlockList）、举报聊天（reportChat，和举报消息走同样的步骤）、
   退出群组或频道（leaveChat）、删除和某个用户或机器人的聊天（deleteChatHistory，TDLib 允许时也可以同时删掉对方那边的）；
   拉黑、退出和删除都会先问一句，退出或删除后聊天的标签页随即关闭。
@@ -260,9 +260,20 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
     右侧展开一栏，并排挤压消息、不盖住（左侧列表先让位到 220px），三套主题都有，开关状态跨聊天、跨重启记住
     （settings.toml 里的 `chat_info_open`）。开头是头像、名字和状态，然后是资料（用户的手机号、用户名和简介；
     机器人或群的描述；公开群的链接；getUserFullInfo、getSupergroupFullInfo、getBasicGroupFullInfo）、设置（通知、
-    置顶、所在文件夹、标为已读：带 force_read 的 viewMessages）和操作（屏蔽、举报、退出、删除，和聊天菜单一样会先问）。
-    共享内容、成员（getSupergroupMembers，前五位）和邀请链接按设计这一版灰着画出来；群主和管理员多一行「管理群组 /
-    管理频道」，打开下面的管理页。行在 Rust 里生成、各主题负责画，所以 Terminal 的键盘能走：↑ ↓、⏎、行的字母、Esc。
+    静音时长、置顶、所在文件夹、标为已读：带 force_read 的 viewMessages、自动删除）、共享内容（三个标签带数量，
+    getChatMessageCount；下面是最新的九张照片和视频）、群的前五位成员（getSupergroupMembers；点一下打开和他的私聊）、
+    管理员才有的邀请链接（点一下复制）和操作（屏蔽、举报、清空历史、退出、删除，和聊天菜单一样会先问；清空历史是
+    deleteChatHistory，聊天留着，私聊可以勾“同时为对方删除”）。群主和管理员多一行「管理群组 / 管理频道」，打开下面
+    的管理页。只剩私聊的「通话」还灰着。行在 Rust 里生成、各主题负责画，所以 Terminal 的键盘能走：↑ ↓、⏎、行的
+    字母、Esc。
+  - 资料面板的几页（`info_pages.rs`，设计的第 14 轮，ui/chat-info-pages.slint）：和管理页一样换掉面板、占同一栏，
+    三套主题共用一份画法，各用自己的 ManageLook。共享内容分三个标签、按月分组（searchChatMessages 加照片视频、文件、
+    链接三种过滤，一次六十条；点格子先让聊天跳到那条消息再在查看器里打开，文件点一下下载或在访达里显示，链接点开）；
+    全部成员（getSupergroupMembers，最近活跃或在 Telegram 服务器上搜索；小群从完整资料里取，在本地搜）；管理员
+    （getChatAdministrators；群隐藏了成员列表时，普通成员只看到管理员，顶上写明原因）；自动删除
+    （setChatMessageAutoDeleteTime：关、1 天、1 周、1 个月；群和频道要“修改群资料”权限，没有的整组变淡并写明原因）；
+    静音时长与静音时仍然提醒的两项（setChatNotificationSettings：mute_for、disable_mention_notifications、
+    disable_pinned_message_notifications）。
   - 管理群组 / 频道（`manage.rs`，设计的“管理群组 / 频道”一轮，ChatManage）：「管理」那一行把资料面板换成这一页，
     还在同一栏里；返回或 Esc 换回面板。这一页三套主题只画一次（ui/chat-manage-panel.slint），各主题把自己的一组令牌
     （ManageLook，在 ui/<theme>/chat-info.slint 里）交给它，和设计稿一份标记配三套令牌的做法一样。页上有：头像（从系统的

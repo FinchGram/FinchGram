@@ -7804,3 +7804,195 @@ msgstr "取消静音"
 msgctxt "status"
 msgid "Live"
 msgstr "直播中"
+
+#: ui/chat-info-pages.slint:127
+msgid "Search members"
+msgstr "搜索成员"
+
+#: ui/chat-info-pages.slint:128
+msgid "Search results"
+msgstr "搜索结果"
+
+#: ui/chat-info-pages.slint:129
+msgid "Nobody found"
+msgstr "没有找到成员"
+
+#: ui/chat-info-pages.slint:130
+msgid "{0} online"
+msgstr "{0} 人在线"
+
+#: ui/chat-info-pages.slint:132
+msgid "This group hides its member list: only administrators see all {0} members. You still see the administrators."
+msgstr "本群隐藏了成员列表：只有管理员能看到全部 {0} 位成员。你仍然能看到管理员。"
+
+#: ui/chat-info-pages.slint:135
+msgid "You see who the administrators are and their titles. What each of them may do, only the owner and those who may add administrators see."
+msgstr "你能看到谁是管理员，以及他们的头衔。每位管理员能做什么，只有群主和有权添加管理员的人才能看到。"
+
+#: ui/chat-info-pages.slint:137
+msgid "No photos or videos here yet"
+msgstr "这里还没有照片或视频"
+
+#: ui/chat-info-pages.slint:138
+msgid "No files here yet"
+msgstr "这里还没有文件"
+
+#: ui/chat-info-pages.slint:139
+msgid "No links here yet"
+msgstr "这里还没有链接"
+
+#: ui/chat-info-pages.slint:140
+msgid "Show more"
+msgstr "查看更多"
+
+#: ui/chat-info-pages.slint:143
+msgid "1 month"
+msgstr "1 个月"
+
+#: ui/chat-info-pages.slint:144
+msgid "{n} day"
+msgid_plural "{n} days"
+msgstr[0] "{n} 天"
+
+#: ui/chat-info-pages.slint:146
+msgid "New messages are deleted for both of you this long after they are sent. Messages from before stay."
+msgstr "新消息发送后，经过所选时长就会为你们双方删除。之前的消息会保留。"
+
+#: ui/chat-info-pages.slint:149
+msgid "New messages in this group are deleted for everyone this long after they are sent. Messages from before stay."
+msgstr "本群的新消息发送后，经过所选时长就会为所有人删除。之前的消息会保留。"
+
+#: ui/chat-info-pages.slint:152
+msgid "New posts in this channel are deleted for everyone this long after they are published. Posts from before stay."
+msgstr "本频道的新帖子发布后，经过所选时长就会为所有人删除。之前的帖子会保留。"
+
+#: ui/chat-info-pages.slint:155
+msgid "{0} can change this too. A line in the chat tells you both when it changes."
+msgstr "{0} 也可以修改这项设置。每次修改，聊天里都会出现一条提示，你们双方都能看到。"
+
+#: ui/chat-info-pages.slint:158
+msgid "Changing this needs the right to change the chat's info. Ask an administrator who has it."
+msgstr "这项设置需要有修改聊天资料的权限才能更改，请找有这项权限的管理员。"
+
+#: ui/chat-info-pages.slint:160
+msgctxt "the chat's mute"
+msgid "Mute"
+msgstr "静音"
+
+#: ui/chat-info-pages.slint:161
+msgid "Not muted"
+msgstr "不静音"
+
+#: ui/chat-info-pages.slint:162
+msgid "For 1 hour"
+msgstr "1 小时"
+
+#: ui/chat-info-pages.slint:163
+msgid "For 8 hours"
+msgstr "8 小时"
+
+#: ui/chat-info-pages.slint:164
+msgid "For 2 days"
+msgstr "2 天"
+
+#: ui/chat-info-pages.slint:165
+msgctxt "the chat's mute"
+msgid "Forever"
+msgstr "一直静音"
+
+#: ui/chat-info-pages.slint:167
+msgid "Muted until {0}"
+msgstr "静音到 {0}"
+
+#: ui/chat-info-pages.slint:169
+msgid "Notify me while muted"
+msgstr "静音时仍然提醒"
+
+#: ui/chat-info-pages.slint:170
+msgid "When someone mentions me or replies to me"
+msgstr "有人@我或回复我时"
+
+#: ui/chat-info-pages.slint:171
+msgid "When a message is pinned"
+msgstr "有消息被置顶时"
+
+#: ui/chat-info-pages.slint:173
+msgid "This chat only. The defaults for each kind of chat are in Settings › Notifications & sounds."
+msgstr "仅对这个聊天生效。各类聊天的默认设置在“设置 › 通知与声音”里。"
+
+#: ui/chat.slint:314
+msgid "Clear the history of {0}?"
+msgstr "清空 {0} 的历史记录？"
+
+#: ui/chat.slint:327
+msgid "Its messages are deleted for you only; the other members keep theirs. The chat stays in your list."
+msgstr "消息只会为你删除，其他成员仍能看到。聊天仍会留在你的列表里。"
+
+#: ui/chat.slint:328
+msgid "Its messages are deleted for you; the chat stays in your list."
+msgstr "消息会为你删除，聊天仍会留在你的列表里。"
+
+#: ui/format.slint:89
+msgctxt "month and year"
+msgid "{0} {1}"
+msgstr "{1}年{0}"
+
+#: ui/format.slint:90
+msgctxt "month, standing alone"
+msgid "January"
+msgstr "1月"
+
+#: ui/format.slint:91
+msgctxt "month, standing alone"
+msgid "February"
+msgstr "2月"
+
+#: ui/format.slint:92
+msgctxt "month, standing alone"
+msgid "March"
+msgstr "3月"
+
+#: ui/format.slint:93
+msgctxt "month, standing alone"
+msgid "April"
+msgstr "4月"
+
+#: ui/format.slint:94
+msgctxt "month, standing alone"
+msgid "May"
+msgstr "5月"
+
+#: ui/format.slint:95
+msgctxt "month, standing alone"
+msgid "June"
+msgstr "6月"
+
+#: ui/format.slint:96
+msgctxt "month, standing alone"
+msgid "July"
+msgstr "7月"
+
+#: ui/format.slint:97
+msgctxt "month, standing alone"
+msgid "August"
+msgstr "8月"
+
+#: ui/format.slint:98
+msgctxt "month, standing alone"
+msgid "September"
+msgstr "9月"
+
+#: ui/format.slint:99
+msgctxt "month, standing alone"
+msgid "October"
+msgstr "10月"
+
+#: ui/format.slint:100
+msgctxt "month, standing alone"
+msgid "November"
+msgstr "11月"
+
+#: ui/format.slint:101
+msgctxt "month, standing alone"
+msgid "December"
+msgstr "12月"

@@ -98,6 +98,8 @@ pub enum Update {
     MessageMentionRead { chat_id: i64, unread_mention_count: i32 },
     #[serde(rename = "updateChatNotificationSettings")]
     ChatNotificationSettings { chat_id: i64, notification_settings: ChatNotificationSettings },
+    #[serde(rename = "updateChatMessageAutoDeleteTime")]
+    ChatMessageAutoDeleteTime { chat_id: i64, message_auto_delete_time: i32 },
     #[serde(rename = "updateScopeNotificationSettings")]
     ScopeNotificationSettings { scope: NotificationSettingsScope, notification_settings: ScopeNotificationSettings },
     #[serde(rename = "updateChatIsMarkedAsUnread")]
@@ -455,6 +457,9 @@ pub struct Supergroup {
 #[derive(Debug, Clone, Default, Deserialize)]
 pub struct SupergroupFullInfo {
     pub member_count: i32,
+    /// Its members may be listed (getSupergroupMembers): not for a member when the list is hidden.
+    #[serde(default)]
+    pub can_get_members: bool,
     #[serde(default)]
     pub administrator_count: i32,
     #[serde(default)]
@@ -702,6 +707,9 @@ pub struct Chat {
     pub last_read_outbox_message_id: i64,
     pub unread_mention_count: i32,
     pub notification_settings: ChatNotificationSettings,
+    /// How long after they are sent its new messages are deleted, in seconds; 0 for never.
+    #[serde(default)]
+    pub message_auto_delete_time: i32,
     /// A user we have blocked, from messages or only from stories; none otherwise.
     #[serde(default)]
     pub block_list: Option<BlockList>,
@@ -881,10 +889,15 @@ pub struct ChatNotificationSettings {
 impl ChatNotificationSettings {
     /// These settings with `mute_for`, as TDLib takes them (setChatNotificationSettings).
     pub fn with_mute_for(&self, mute_for: i32) -> serde_json::Value {
+        Self { use_default_mute_for: false, mute_for, ..self.clone() }.request()
+    }
+
+    /// These settings as TDLib takes them (setChatNotificationSettings).
+    pub fn request(&self) -> serde_json::Value {
         serde_json::json!({
             "@type": "chatNotificationSettings",
-            "use_default_mute_for": false,
-            "mute_for": mute_for,
+            "use_default_mute_for": self.use_default_mute_for,
+            "mute_for": self.mute_for,
             "use_default_sound": self.use_default_sound,
             "sound_id": self.sound_id.to_string(),
             "use_default_show_preview": self.use_default_show_preview,
@@ -1969,6 +1982,23 @@ pub struct Game {
 #[derive(Debug, Clone, Deserialize)]
 pub struct Messages {
     pub messages: Vec<Option<Message>>,
+}
+
+/// A chat's owner and administrators (getChatAdministrators): who they are and their titles, which
+/// every member may see.
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct ChatAdministrators {
+    #[serde(default)]
+    pub administrators: Vec<ChatAdministrator>,
+}
+
+#[derive(Debug, Clone, Default, Deserialize)]
+pub struct ChatAdministrator {
+    pub user_id: i64,
+    #[serde(default)]
+    pub custom_title: String,
+    #[serde(default)]
+    pub is_owner: bool,
 }
 
 /// What searchChatMessages finds: the messages, newest first; how many there are in all (-1 when

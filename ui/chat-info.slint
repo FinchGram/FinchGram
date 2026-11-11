@@ -3,6 +3,7 @@
 // chat_info.rs) from the open chat, and the themes draw them (ui/<theme>/chat-info.slint), so
 // that Terminal's keyboard can walk the same list the pointer sees.
 import { ChatKind, Status, Moment } from "telegram.slint";
+import { InfoTileRow } from "chat-info-pages.slint";
 
 // What a row does when chosen: a fact to copy, a switch, a step into something, or an action.
 export enum InfoRowKind { info, toggle, nav, action }
@@ -23,8 +24,9 @@ export struct InfoRow {
     child: bool,            // one of the choices under the row before it: a folder
 }
 
-// A member of a group, as the panel lists the first few.
+// A member of a group, as the panel lists the first few; a click opens the chat with them.
 export struct InfoMember {
+    id: string,             // the user
     name: string,
     initial: string,
     picture: image,
@@ -43,6 +45,8 @@ export struct InfoSection {
     rows: [InfoRow],
     members: [InfoMember],
     tabs: [string],
+    counts: [string],       // how many each tab holds, "" while unknown
+    tiles: [InfoTileRow],   // the newest photos and videos under the tabs, in rows of three
 }
 
 export global ChatInfo {
