@@ -48,9 +48,9 @@ jobs:
     permissions:
       contents: read
     # A release took 53 to 95 minutes on this runner in October 2026, more when the cache misses
-    # (new dependencies, or no release for a week, after which GitHub drops the cache); the limit
-    # leaves room for a slow one.
-    timeout-minutes: 180
+    # (new dependencies, or no release for a week, after which GitHub drops the cache); v0.7.11, in
+    # November, took 2 h 25 min. The limit leaves room for a slow one (GitHub's own is 6 hours).
+    timeout-minutes: 240
     outputs:
       tag: ${{ steps.meta.outputs.tag }}
       version: ${{ steps.meta.outputs.version }}
