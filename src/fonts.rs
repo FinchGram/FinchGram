@@ -1,8 +1,10 @@
 //! The UI typefaces, compiled into the executable so every Mac shows the same letters whatever
 //! fonts it has. Each theme asks for its own (ui/look.slint): IBM Plex Sans and IBM Plex Mono for
 //! Workbench, Source Sans 3 for Broadsheet, JetBrains Mono for Terminal. Chinese, Japanese, Korean
-//! and Arabic come from Noto Sans SC, JP, KR and Arabic in all three. The files come from
-//! vendor/fonts/ (scripts/fetch-fonts.sh); build.rs fails early when they are missing.
+//! and Arabic come from Noto Sans SC, JP, KR and Arabic in all three, except that Workbench and
+//! Terminal draw Chinese with the system's PingFang, as their design does ([`system_chinese`]).
+//! The files come from vendor/fonts/ (scripts/fetch-fonts.sh); build.rs fails early when they are
+//! missing.
 //!
 //! A letter the requested font does not have is looked up in the generic families, which are set
 //! here to our own fonts: IBM Plex Sans, then the system's colour emoji font (Apple Color Emoji on
@@ -15,7 +17,7 @@
 //! families only, never in the system's fonts, so without them they were boxes (2026-10-24). What
 //! none of them has (other scripts) comes from the system's fallback fonts.
 
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 
 use slint::fontique_011::fontique::{self, FamilyId, GenericFamily};
 
@@ -95,18 +97,53 @@ pub fn register() {
     prefer("en");
 }
 
+/// What the order of the fallbacks depends on: the UI language, and whether Chinese comes from
+/// the system's own typeface.
+struct Choice {
+    language: String,
+    system_chinese: bool,
+}
+
+static CHOICE: Mutex<Choice> = Mutex::new(Choice { language: String::new(), system_chinese: false });
+
 /// Order the fallbacks for the UI language `code` ("ja", "zh_Hant", …): IBM Plex Sans, the
 /// system's colour emoji font, then the language's own script's font, then the other Noto fonts,
 /// then the symbol fonts.
 pub fn prefer(code: &str) {
+    let mut choice = CHOICE.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    choice.language = code.to_string();
+    apply(&choice);
+}
+
+/// Draw Chinese with the system's own typeface, PingFang, before Noto Sans SC. The design asks
+/// for it in Workbench and Terminal ('PingFang SC' comes before 'Noto Sans SC' in their font
+/// stacks); Broadsheet's names Noto Sans SC alone. Every Mac FinchGram runs on has PingFang (the
+/// system's Chinese font since OS X 10.11); where there is none, Noto Sans SC stays.
+pub fn system_chinese(on: bool) {
+    let mut choice = CHOICE.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+    if choice.system_chinese != on {
+        choice.system_chinese = on;
+        apply(&choice);
+    }
+}
+
+fn apply(choice: &Choice) {
     let Some(families) = FAMILIES.get() else { return };
-    let scripts: [&Vec<FamilyId>; 4] = match code.split(['-', '_']).next().unwrap_or_default() {
-        "ja" => [&families.japanese, &families.chinese, &families.korean, &families.arabic],
-        "ko" => [&families.korean, &families.chinese, &families.japanese, &families.arabic],
-        "ar" => [&families.arabic, &families.chinese, &families.japanese, &families.korean],
-        _ => [&families.chinese, &families.japanese, &families.korean, &families.arabic],
-    };
     let mut collection = slint::fontique_011::shared_collection();
+    // PingFang TC for Traditional Chinese, SC for the rest, each the other's fallback.
+    let pingfang: Vec<FamilyId> = if choice.system_chinese {
+        let names = if choice.language.contains("Hant") { ["PingFang TC", "PingFang SC"] } else { ["PingFang SC", "PingFang TC"] };
+        names.iter().filter_map(|name| collection.family_id(name)).collect()
+    } else {
+        Vec::new()
+    };
+    // The UI language's own script first; Chinese from PingFang before Noto Sans SC.
+    let scripts: [&Vec<FamilyId>; 5] = match choice.language.split(['-', '_']).next().unwrap_or_default() {
+        "ja" => [&families.japanese, &pingfang, &families.chinese, &families.korean, &families.arabic],
+        "ko" => [&families.korean, &pingfang, &families.chinese, &families.japanese, &families.arabic],
+        "ar" => [&families.arabic, &pingfang, &families.chinese, &families.japanese, &families.korean],
+        _ => [&pingfang, &families.chinese, &families.japanese, &families.korean, &families.arabic],
+    };
     // The system's emoji font, as fontique names it for the platform (Apple Color Emoji, Segoe UI
     // Emoji, fontconfig's "emoji").
     let emoji: Vec<FamilyId> = collection.generic_families(GenericFamily::Emoji).collect();

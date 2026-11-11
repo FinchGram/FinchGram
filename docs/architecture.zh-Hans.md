@@ -447,7 +447,7 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
    边到边读（[music.zh-Hans.md](music.zh-Hans.md)）。Lottie 贴纸要另想办法（rlottie），WebM 贴纸要能保留透明通道的 VP9 解码（libvpx；
    FFmpeg 自带的 VP9 解码器会丢掉透明通道）。在那之前，动态贴纸只显示它的静态缩略图；静态贴纸照原样显示。
 4. **渲染**：暂时用 Slint 的默认渲染器（FemtoVG）。设计稿的字体都已打包，界面用到的中文、日文、韩文和阿拉伯文由
-   Noto Sans SC、JP、KR、Arabic 提供，不归任何文字的符号区块（广告里的花体字母、带圈数字、箭头）由 Noto Sans Math 和
+   Noto Sans SC、JP、KR、Arabic 提供（Workbench 和 Terminal 的中文先用系统自带的苹方，和它们设计稿里的字体顺序一致；Broadsheet 的设计稿只写了 Noto Sans SC），不归任何文字的符号区块（广告里的花体字母、带圈数字、箭头）由 Noto Sans Math 和
    Symbols 2 提供，排版引擎对这些字符从不去查系统字体（回退顺序里界面语言自己的字体排在前面，`fonts.rs`）；emoji 用系统的彩色 emoji
    字体，`fonts.rs` 把它紧排在正文字体后面，免得 CJK 字体里黑白的 emoji 抢先（自己带心形、箭头字形的字体仍会画
    自己的，Source Sans 3 的 ❤ 就是）；消息里的其他文字暂时用系统字体。Skia 得从源码构建才行：它的 Rust 绑定默认会

@@ -692,7 +692,9 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
    transparency (libvpx; FFmpeg's own leaves it out). Until then a moving sticker shows its still
    thumbnail; still stickers show as they are.
 4. **Rendering**: Slint's default renderer (FemtoVG) for now. The design's typefaces are bundled,
-   with Noto Sans SC, JP, KR and Arabic for the UI's Chinese, Japanese, Korean and Arabic, and Noto
+   with Noto Sans SC, JP, KR and Arabic for the UI's Chinese, Japanese, Korean and Arabic
+   (Workbench and Terminal draw Chinese with the system's PingFang before Noto Sans SC, as their
+   design's font stacks do; Broadsheet's design names Noto Sans SC alone), and Noto
    Sans Math and Symbols 2 for the symbol blocks no script owns, which the text layout never looks
    up in the system's fonts (the UI
    language's own first among the fallbacks, `fonts.rs`); emoji come from the system's colour

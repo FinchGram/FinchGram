@@ -70,7 +70,9 @@ fn main() -> Result<(), slint::PlatformError> {
         settings.borrow().save();
     }
 
-    state.set_theme(theme_from_name(&settings.borrow().theme));
+    let theme = theme_from_name(&settings.borrow().theme);
+    apply_theme_fonts(theme);
+    state.set_theme(theme);
     state.set_appearance(current_appearance(&settings.borrow()).into());
     let widths = settings.borrow().list_widths;
     state.set_workbench_list_width(widths.workbench);
@@ -130,6 +132,7 @@ fn main() -> Result<(), slint::PlatformError> {
             let appearance = current_appearance(&settings.borrow());
             if let Some(ui) = ui.upgrade() {
                 let state = ui.global::<AppState>();
+                apply_theme_fonts(theme);
                 state.set_theme(theme);
                 toolbox::refresh();
                 // The theme's own light or dark comes with it, the window's buttons to match.
@@ -435,6 +438,12 @@ fn theme_name(theme: Theme) -> &'static str {
         Theme::Broadsheet => "broadsheet",
         Theme::Terminal => "terminal",
     }
+}
+
+/// The theme's Chinese typeface: the system's PingFang in Workbench and Terminal, Noto Sans SC in
+/// Broadsheet, as each one's design names it (src/fonts.rs).
+pub fn apply_theme_fonts(theme: Theme) {
+    fonts::system_chinese(!matches!(theme, Theme::Broadsheet));
 }
 
 /// The light or dark of the theme in use, what `AppState.appearance` holds: each theme keeps its

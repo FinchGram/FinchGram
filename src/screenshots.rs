@@ -2553,6 +2553,7 @@ fn screenshots() {
     let login = ui.global::<Login>();
 
     for (theme, theme_name) in [(Theme::Workbench, "workbench"), (Theme::Broadsheet, "broadsheet"), (Theme::Terminal, "terminal")] {
+        crate::apply_theme_fonts(theme);
         app.set_theme(theme);
         for appearance in ["light", "dark"] {
             app.set_appearance(appearance.into());
@@ -2788,6 +2789,7 @@ fn screenshots() {
     app.set_language("zh_Hans".into());
     app.set_appearance("light".into());
     for (theme, theme_name) in [(Theme::Workbench, "workbench"), (Theme::Broadsheet, "broadsheet"), (Theme::Terminal, "terminal")] {
+        crate::apply_theme_fonts(theme);
         app.set_theme(theme);
         app.set_telegram_state(TelegramState::Ready);
         app.set_page(Page::Chats);
@@ -2807,6 +2809,7 @@ fn screenshots() {
         voice(&ui, &window, &|page: &str| format!("zh-{theme_name}-{page}"));
         voice_messages(&ui, &window, &|page: &str| format!("zh-{theme_name}-{page}"));
     }
+    crate::apply_theme_fonts(Theme::Workbench);
     app.set_theme(Theme::Workbench);
     app.set_telegram_state(TelegramState::WaitPhoneNumber);
     login.set_step(LoginStep::Phone);
