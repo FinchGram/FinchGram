@@ -43,14 +43,61 @@ component Summary {
 
         VerticalLayout {
             spacing: 14px;
+            // The photo changes as a group's does in its management (ui/chat-manage-panel.slint, the
+            // design's ChatManage round): a band across its foot, a click for a picture. The
+            // profile's own design has no control for it (GitHub issue 2).
             HorizontalLayout {
                 alignment: start;
-                Avatar {
-                    size: 104px;
-                    initial: Account.initial;
-                    picture: Account.large-picture;
-                    has-picture: Account.has-picture;
-                    font-size: 44px;
+                Rectangle {
+                    width: 104px;
+                    height: 104px;
+                    border-radius: Look.avatar-radius;
+                    clip: true;
+                    Avatar {
+                        size: 104px;
+                        initial: Account.initial;
+                        picture: Account.large-picture;
+                        has-picture: Account.has-picture;
+                        font-size: 44px;
+                    }
+                    Rectangle {
+                        y: parent.height - self.height;
+                        height: 24px;
+                        background: #000000.with-alpha(0.5);
+                        HorizontalLayout {
+                            alignment: center;
+                            spacing: 4px;
+                            if Account.photo-saving: VerticalLayout {
+                                alignment: center;
+                                Spinner {
+                                    size: 12px;
+                                    color: #ffffff;
+                                }
+                            }
+                            if !Account.photo-saving: VerticalLayout {
+                                alignment: center;
+                                Icon {
+                                    name: "camera";
+                                    size: 13px;
+                                    color: #ffffff;
+                                }
+                            }
+                            if !Account.photo-saving: Text {
+                                text: @tr("on the photo" => "Change");
+                                color: #ffffff;
+                                font-size: 11px;
+                                font-weight: 500;
+                                vertical-alignment: center;
+                            }
+                        }
+                    }
+                    TouchArea {
+                        enabled: !Account.photo-saving;
+                        mouse-cursor: Account.photo-saving ? default : pointer;
+                        clicked => {
+                            Account.change-photo();
+                        }
+                    }
                 }
             }
             VerticalLayout {

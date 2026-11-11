@@ -1947,8 +1947,8 @@ fn use_photo() {
 
 /// The square the frame shows of the picture at `zoom`, with the picture's overflow placed by
 /// `ox` and `oy` (0 … 1), as a JPEG file of [`PHOTO_SIDE`] pixels a side; with its pixels, for the
-/// page to show at once.
-fn crop_file(path: &std::path::Path, width: u32, height: u32, zoom: f32, ox: f32, oy: f32) -> Result<(String, SharedPixelBuffer<Rgba8Pixel>), String> {
+/// page to show at once. The account's own photo is made here too (account.rs).
+pub(super) fn crop_file(path: &std::path::Path, width: u32, height: u32, zoom: f32, ox: f32, oy: f32) -> Result<(String, SharedPixelBuffer<Rgba8Pixel>), String> {
     let picture = crate::images::read(path, CROP_SOURCE).map_err(|err| format!("cannot read the picture: {err}"))?;
     let (width, height) = if picture.width() > 0 && picture.height() > 0 { (picture.width(), picture.height()) } else { (width, height) };
     let (left, top, side) = crop_rect(width, height, zoom, ox, oy);

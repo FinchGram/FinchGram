@@ -798,9 +798,11 @@ export global Account {
     in-out property <image> picture;             // the account's photo, as ChatRow.picture
     in-out property <image> large-picture;       // the same in its big size, for the profile page
     in-out property <bool> has-picture;
+    in-out property <bool> photo-saving;         // a new photo going up (the profile page's photo)
     in-out property <bool> saving;
     in-out property <bool> saved;
     in-out property <string> save-error;
+    callback change-photo();                     // the profile page's photo clicked: a picture to become the account's
     callback save(string, string, string, string);   // first name, last name, username, bio
     callback copy-id();                          // the id onto the clipboard
     callback log-out();

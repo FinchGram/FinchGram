@@ -1,13 +1,13 @@
-//! The account logged in: who it is (the profile page, the title bars), editing its profile, and
-//! logging out.
+//! The account logged in: who it is (the profile page, the title bars), editing its profile and
+//! its photo, and logging out.
 
 use serde_json::json;
 use slint::{ComponentHandle, SharedString};
 
 use super::api::{PhoneNumberInfo, User, UserFullInfo};
 use super::store;
-use super::{Error, send, with_ui};
-use crate::{Account, MainWindow};
+use super::{Error, errors, manage, send, with_ui};
+use crate::{Account, MainWindow, ManageWords};
 
 /// Telegram's limit on a bio without Premium.
 const BIO_LIMIT: usize = 70;
@@ -17,6 +17,7 @@ pub fn connect(ui: &MainWindow) {
     account.on_save(|first_name, last_name, username, bio| {
         save(first_name.trim().to_string(), last_name.trim().to_string(), username.trim().trim_start_matches('@').to_string(), bio.trim().to_string());
     });
+    account.on_change_photo(change_photo);
     // The id onto the clipboard. The profile page says "Copied" itself: the chat windows' notice
     // is not on it.
     account.on_copy_id(|| {
@@ -88,8 +89,62 @@ pub fn forget() {
         account.set_bio(SharedString::new());
         account.set_initial(SharedString::new());
         account.set_has_picture(false);
+        account.set_photo_saving(false);
         account.set_saved(false);
         account.set_save_error(SharedString::new());
+    });
+}
+
+/// The profile page's photo clicked: a picture from the system's file panel, its middle square of
+/// 640 pixels (made as a group's photo is, manage.rs, at the crop frame's widest), sent as the
+/// account's new photo; Telegram's update of the account then shows it everywhere. The profile's
+/// design has no crop page, so there is none here (GitHub issue 2).
+fn change_photo() {
+    let slot = super::context();
+    crate::platform::choose_picture(move |path| {
+        let Some(path) = path else { return };
+        super::in_context(slot, || {
+            with_ui(|ui| {
+                let account = ui.global::<Account>();
+                account.set_save_error(SharedString::new());
+                account.set_photo_saving(true);
+            });
+        });
+        std::thread::spawn(move || {
+            let cropped = manage::crop_file(&path, 0, 0, 1.0, 0.5, 0.5);
+            let _ = slint::invoke_from_event_loop(move || {
+                super::in_context(slot, || match cropped {
+                    Ok((file, _)) => {
+                        let request = json!({
+                            "@type": "setProfilePhoto",
+                            "photo": { "@type": "inputChatPhotoStatic", "photo": { "@type": "inputFileLocal", "path": file.as_str() } },
+                            "is_public": false,
+                        });
+                        send(request, move |answer| {
+                            // TDLib answers once the photo is up and set (or refused): the file is done.
+                            let _ = std::fs::remove_file(&file);
+                            with_ui(|ui| {
+                                let account = ui.global::<Account>();
+                                account.set_photo_saving(false);
+                                match answer {
+                                    Ok(_) => {}
+                                    Err(Error::Telegram { message, .. }) => account.set_save_error(errors::explain(&message).into()),
+                                    Err(err) => account.set_save_error(err.to_string().into()),
+                                }
+                            });
+                        });
+                    }
+                    Err(err) => {
+                        eprintln!("account: cannot make the photo: {err}");
+                        with_ui(|ui| {
+                            let account = ui.global::<Account>();
+                            account.set_photo_saving(false);
+                            account.set_save_error(ui.global::<ManageWords>().invoke_cannot_read_picture());
+                        });
+                    }
+                });
+            });
+        });
     });
 }
 
