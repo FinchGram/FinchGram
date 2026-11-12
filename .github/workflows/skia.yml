@@ -1,0 +1,54 @@
+name: skia
+
+# Builds Skia (as pinned in vendor/skia/build.sh: its static libraries with the Rust bindings the
+# skia-bindings crate links, which Slint's Skia renderer draws the window through) on a clean
+# Apple-silicon runner. Pushing a tag such as skia-0.153.3-1 also publishes it as a release of this
+# repository, which scripts/fetch-skia.sh pins by tag and SHA-256. A manual run only builds.
+# Every Action is pinned to a commit (its full SHA, the version beside it), never to a movable
+# tag or branch: what this builds ships inside the app (docs/conventions.md, Release first).
+on:
+  workflow_dispatch:
+  push:
+    tags: ["skia-*"] # skia-<skia-bindings version>-<n>; -<n> counts rebuilds of the same version
+
+jobs:
+  macos-arm64:
+    runs-on: macos-latest # Apple silicon
+    permissions:
+      contents: write # gh release create needs it; the default token is read-only
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      # skia-bindings' own build script builds Skia and generates the bindings: cargo runs it.
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master, 2026-10-16
+        with:
+          toolchain: stable
+
+      - name: Install build tools
+        run: brew install ninja # python3 comes with the runner; gn comes from Skia's own bin/fetch-gn
+
+      - name: Build
+        run: vendor/skia/build.sh
+
+      # A manual run's package, to look at; a tag's is in the release below, and artifacts count
+      # against the organization's 0.5 GB of Actions storage (release.yml).
+      - name: Upload build output
+        if: "!startsWith(github.ref, 'refs/tags/skia-')"
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: skia-macos-arm64
+          path: vendor/skia/dist
+          retention-days: 3
+
+      # --latest=false: this repository's "Latest release" is always the newest app (v*), which
+      # installed copies of FinchGram look for to update themselves.
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/skia-')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --latest=false \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file vendor/skia/dist/BUILD-INFO.txt \
+            vendor/skia/dist/*.tar.gz vendor/skia/dist/SHA256SUMS

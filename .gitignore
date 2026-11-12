@@ -6,6 +6,8 @@
 /vendor/*/dist/
 # The UI fonts, downloaded by scripts/fetch-fonts.sh.
 /vendor/fonts/
+# Where Skia's archive is on this machine, written by scripts/fetch-skia.sh.
+/.cargo/config.toml
 /lang/*.pot
 # msgmerge --update keeps the previous .po beside the new one.
 *.po~
