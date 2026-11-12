@@ -19,7 +19,8 @@ bench = false
 doctest = false
 
 [dependencies]
-slint = { workspace = true }
+# What the generated Rust needs of Slint; the app says which backend and renderers (its Cargo.toml).
+slint = { workspace = true, features = ["std", "compat-1-2"] }
 
 [build-dependencies]
 slint-build = { workspace = true }

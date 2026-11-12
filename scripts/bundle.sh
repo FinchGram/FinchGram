@@ -23,6 +23,7 @@ MIN_MACOS="12.0" # keep in sync with MACOS_MIN in vendor/tdlib/build.sh
 
 TDLIB="$ROOT/vendor/tdlib/bin"
 MPV="$ROOT/vendor/mpv/bin"
+SKIA="$ROOT/vendor/skia/bin"
 FONTS="$ROOT/vendor/fonts"
 ICONS="$ROOT/ui/logo/png"
 APP="$ROOT/dist/$APP_NAME.app"
@@ -36,17 +37,22 @@ done
 for f in libmpv.2.dylib BUILD-INFO.txt LICENSE-mpv.txt; do
   [ -e "$MPV/$f" ] || { echo "missing $MPV/$f - run scripts/fetch-mpv.sh first" >&2; exit 1; }
 done
+for f in BUILD-INFO.txt LICENSE-Skia.txt; do
+  [ -e "$SKIA/$f" ] || { echo "missing $SKIA/$f - run scripts/fetch-skia.sh first" >&2; exit 1; }
+done
 ls "$FONTS"/*-OFL.txt >/dev/null 2>&1 || { echo "missing $FONTS - run scripts/fetch-fonts.sh first" >&2; exit 1; }
 
 cargo build --release --manifest-path "$ROOT/Cargo.toml" --bin "$BIN"
-# The executable holds the 39 MB of fonts once (src/fonts.rs); a copy that is far larger holds
+# The executable holds the 43 MB of fonts once (src/fonts.rs); a copy that is far larger holds
 # them twice, as v0.3.25 did when they were consts, and is not shipped.
 BYTES=$(stat -f %z "$ROOT/target/release/$BIN")
-# The binary was 92 MB at v0.4.22, 103 MB at v0.5.0 and 128 MB at v0.7.9 (the UI's three themes
-# and each tool grow it); the fonts in it twice (the v0.3.25 mistake, src/fonts.rs) would add 39 MB
-# more. The limit, raised from 130 MB on 2026-11-01 when 0.7.9 left 2 MB under it, leaves room to
-# grow and still stops that: 128 + 39 = 167 MB.
-if [ "$BYTES" -gt 160000000 ]; then
+# The binary was 92 MB at v0.4.22, 103 MB at v0.5.0, 128 MB at v0.7.9 and 150 MB at v0.7.14 (the
+# UI's three themes and each tool grow it), and 158 MB with Skia and wgpu in it (0.8.0,
+# docs/skia.md); the fonts in it twice (the v0.3.25 mistake, src/fonts.rs) would add 43 MB more.
+# The limit, raised from 130 MB on 2026-11-01 when 0.7.9 left 2 MB under it and from 160 MB on
+# 2026-11-11 when Skia left 2 MB under that, leaves room to grow and still stops that:
+# 158 + 43 = 201 MB.
+if [ "$BYTES" -gt 185000000 ]; then
   echo "$BIN is $BYTES bytes, more than it should be: are the fonts in it twice (src/fonts.rs)?" >&2
   exit 1
 fi
@@ -66,6 +72,10 @@ cp "$TDLIB/BUILD-INFO.txt" "$RESOURCES/finchgram-tdlib-BUILD-INFO.txt"
 # libmpv's: mpv, FFmpeg, libplacebo, libass, FreeType, FriBidi, HarfBuzz.
 cp "$MPV"/LICENSE-*.txt "$RESOURCES/"
 cp "$MPV/BUILD-INFO.txt" "$RESOURCES/libmpv-BUILD-INFO.txt"
+# Skia's, linked into the executable (it draws the window): Skia, expat, libjpeg-turbo, libpng,
+# zlib, wuffs.
+cp "$SKIA"/LICENSE-*.txt "$RESOURCES/"
+cp "$SKIA/BUILD-INFO.txt" "$RESOURCES/skia-BUILD-INFO.txt"
 for licence in "$FONTS"/*-OFL.txt; do
   cp "$licence" "$RESOURCES/LICENSE-Fonts-$(basename "$licence")"
 done

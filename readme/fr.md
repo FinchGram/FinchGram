@@ -204,13 +204,14 @@ choisi, avec votre propre clé.
 Pour l'instant, le développement nécessite macOS sur Apple silicon : finchgram-tdlib n'est compilé que
 pour cette plateforme. Linux et Windows suivront.
 
-Ni finchgram-tdlib, ni libmpv, ni les polices de l'interface ne sont dans git : `vendor/tdlib/` et
-`vendor/mpv/` ne contiennent que les scripts qui les compilent, et les polices viennent de Google Fonts.
-Après le clonage, récupérez-les une fois :
+Ni finchgram-tdlib, ni libmpv, ni Skia, ni les polices de l'interface ne sont dans git : `vendor/tdlib/`,
+`vendor/mpv/` et `vendor/skia/` ne contiennent que les scripts qui les compilent, et les polices viennent
+de Google Fonts. Après le clonage, récupérez-les une fois :
 
 ```sh
 scripts/fetch-tdlib.sh    # télécharge la release figée de finchgram-tdlib dans vendor/tdlib/bin/ et vérifie le SHA-256
 scripts/fetch-mpv.sh      # télécharge la release figée de libmpv dans vendor/mpv/bin/ et vérifie le SHA-256
+scripts/fetch-skia.sh     # télécharge la release figée de Skia dans vendor/skia/bin/, vérifie le SHA-256 et indique à cargo où elle se trouve
 scripts/fetch-fonts.sh    # télécharge les polices figées de l'interface dans vendor/fonts/ et vérifie leur SHA-256
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -233,8 +234,9 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 
 `build.rs` copie `vendor/tdlib/bin/finchgram-tdlib` à côté de l'exécutable compilé : `cargo run` utilise
 ainsi exactement le même programme que l'application empaquetée ; il lie libmpv depuis `vendor/mpv/bin/`
-et la copie au même endroit, et les polices de `vendor/fonts/` sont compilées dans l'exécutable. S'il en
-manque un, la compilation échoue avec un message qui l'explique. Rust 1.92 ou plus récent.
+et la copie au même endroit, et les polices de `vendor/fonts/` sont compilées dans l'exécutable. Skia, qui
+dessine la fenêtre, est lié depuis l'archive de `vendor/skia/bin/`. S'il en manque un, la compilation
+échoue avec un message qui l'explique. Rust 1.92 ou plus récent.
 
 La base de données de TDLib et les fichiers téléchargés se trouvent dans
 `~/Library/Application Support/FinchGram/tdlib/`, les réglages dans
@@ -247,6 +249,7 @@ La base de données de TDLib et les fichiers téléchargés se trouvent dans
   mpv.yml                # compile libmpv sur une machine propre ; publie les tags mpv-* comme releases
   check.yml              # clippy et les tests à chaque push sur main
   release.yml            # compile et publie l'application pour les commits Release v*
+  skia.yml               # compile Skia sur une machine propre ; publie les tags skia-* comme releases
   tdlib.yml              # compile finchgram-tdlib sur une machine propre ; publie les tags tdlib-* comme releases
 Cargo.toml
 build.rs                 # copie vendor/tdlib/bin/ à côté de l'exécutable
@@ -262,6 +265,7 @@ scripts/
   bundle.sh              # construit dist/FinchGram.app (ce qu'exécute le workflow de release)
   fetch-fonts.sh         # les polices figées de l'interface dans vendor/fonts/
   fetch-mpv.sh           # la release figée de libmpv dans vendor/mpv/bin/
+  fetch-skia.sh          # la release figée de Skia dans vendor/skia/bin/, et son emplacement pour cargo
   fetch-tdlib.sh         # la release figée de finchgram-tdlib dans vendor/tdlib/bin/
   readme-pictures.sh     # copie les images des README de target/screenshots/ vers docs/screenshots/
   release.sh             # lance une release : version, tag, push ; GitHub Actions fait le reste
@@ -288,7 +292,7 @@ src/
     notifications.rs     #   notifications des nouveaux messages, le nombre de non-lus dans le Dock
     online.rs            #   le compte est en ligne tant que la fenêtre est devant et utilisée
   platform/              # ce qui change d'un système d'exploitation à l'autre
-  player/                # la vidéo avec libmpv, dessinée dans la fenêtre par OpenGL
+  player/                # la vidéo avec libmpv, qui dessine dans une surface que la fenêtre affiche
   screenshot/            # l'outil de capture : la capture, le calque, les annotations, l'image
   downloads/             # la page Téléchargements : WebDAV, FTP, FTPS et SFTP, avec un moteur à plusieurs connexions
   music/                 # la page Musique : le client de l'API Subsonic, les morceaux mis en cache, la file et la barre de lecture
@@ -321,6 +325,10 @@ vendor/fonts/            # hors de git : les polices de l'interface (scripts/fet
 vendor/mpv/              # libmpv : mpv et FFmpeg, qui lisent les vidéos
   build.sh               #   la compile à partir de sources figées : versions et SHA-256 en tête
   bin/                   #   hors de git : la bibliothèque (scripts/fetch-mpv.sh ou build.sh install)
+vendor/skia/             # Skia, qui dessine la fenêtre
+  build.sh               #   le compile à partir de sources figées : les commits et le nom de l'archive en tête
+  Cargo.lock             #   fige les crates que cette compilation utilise
+  bin/                   #   hors de git : l'archive (scripts/fetch-skia.sh ou build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   le compile à partir de sources figées : commit de TDLib, version et SHA-256 d'OpenSSL en tête
   host/                  #   notre petit programme hôte (main.cpp) et son CMakeLists.txt

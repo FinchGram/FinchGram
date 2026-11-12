@@ -142,12 +142,13 @@ FinchGram은 Telegram 공식 앱이 하는 일만 하고, 금지된 일은 하�
 지금은 개발에 Apple silicon macOS가 필요합니다. finchgram-tdlib을 아직 그 플랫폼용으로만 빌드하기 때문입니다.
 Linux와 Windows는 나중에 지원합니다.
 
-finchgram-tdlib, libmpv, UI 글꼴은 git에 들어 있지 않습니다. `vendor/tdlib/`와 `vendor/mpv/`에는 그것들을
-빌드하는 스크립트만 있고, 글꼴은 Google Fonts에서 받습니다. clone한 뒤 한 번 받아 오세요:
+finchgram-tdlib, libmpv, Skia, UI 글꼴은 git에 들어 있지 않습니다. `vendor/tdlib/`, `vendor/mpv/`, `vendor/skia/`에는
+그것들을 빌드하는 스크립트만 있고, 글꼴은 Google Fonts에서 받습니다. clone한 뒤 한 번 받아 오세요:
 
 ```sh
 scripts/fetch-tdlib.sh    # 고정된 finchgram-tdlib 릴리스를 vendor/tdlib/bin/에 내려받고 SHA-256을 검증
 scripts/fetch-mpv.sh      # 고정된 libmpv 릴리스를 vendor/mpv/bin/에 내려받고 SHA-256을 검증
+scripts/fetch-skia.sh     # 고정된 Skia 릴리스를 vendor/skia/bin/에 내려받고 SHA-256을 검증한 뒤, 그 위치를 cargo에 알림
 scripts/fetch-fonts.sh    # 고정된 UI 글꼴을 vendor/fonts/에 내려받고 SHA-256을 검증
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -169,8 +170,8 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 
 `build.rs`는 `vendor/tdlib/bin/finchgram-tdlib`을 컴파일된 실행 파일 옆에 복사합니다. 그래서 `cargo run`은
 패키징된 앱과 정확히 같은 프로그램을 사용합니다. libmpv는 `vendor/mpv/bin/`에서 링크하고 마찬가지로 옆에
-복사합니다. `vendor/fonts/`의 글꼴은 실행 파일에 포함됩니다. 하나라도 없으면 빌드가 그 이유를 알리는 메시지와
-함께 실패합니다. Rust 1.92 이상이 필요합니다.
+복사합니다. `vendor/fonts/`의 글꼴은 실행 파일에 포함됩니다. 창을 그리는 Skia는 `vendor/skia/bin/`의 아카이브에서
+링크합니다. 하나라도 없으면 빌드가 그 이유를 알리는 메시지와 함께 실패합니다. Rust 1.92 이상이 필요합니다.
 
 TDLib의 데이터베이스와 내려받은 파일은 `~/Library/Application Support/FinchGram/tdlib/`에,
 설정은 `~/Library/Application Support/FinchGram/settings.toml`에 있습니다.
@@ -182,6 +183,7 @@ TDLib의 데이터베이스와 내려받은 파일은 `~/Library/Application Sup
   mpv.yml                # 깨끗한 머신에서 libmpv를 빌드하고, mpv-* 태그를 릴리스로 공개
   check.yml              # main에 push할 때마다 clippy와 테스트 실행
   release.yml            # Release v* 커밋에서 앱을 빌드해 릴리스로 공개
+  skia.yml               # 깨끗한 머신에서 Skia를 빌드하고, skia-* 태그를 릴리스로 공개
   tdlib.yml              # 깨끗한 머신에서 finchgram-tdlib을 빌드하고, tdlib-* 태그를 릴리스로 공개
 Cargo.toml
 build.rs                 # vendor/tdlib/bin/을 실행 파일 옆에 복사
@@ -197,6 +199,7 @@ scripts/
   bundle.sh              # dist/FinchGram.app을 빌드(릴리스 워크플로가 실행하는 것)
   fetch-fonts.sh         # 고정된 UI 글꼴을 vendor/fonts/로
   fetch-mpv.sh           # 고정된 libmpv 릴리스를 vendor/mpv/bin/으로
+  fetch-skia.sh          # 고정된 Skia 릴리스를 vendor/skia/bin/으로, 그 위치를 cargo에 알림
   fetch-tdlib.sh         # 고정된 finchgram-tdlib 릴리스를 vendor/tdlib/bin/으로
   readme-pictures.sh     # README의 그림을 target/screenshots/에서 docs/screenshots/로 복사
   release.sh             # 릴리스 시작: 버전, 태그, push; 나머지는 GitHub Actions가 처리
@@ -223,7 +226,7 @@ src/
     notifications.rs     #   새 메시지 알림, Dock 아이콘의 읽지 않은 수
     online.rs            #   창이 앞에 있고 쓰이는 동안 계정은 온라인
   platform/              # 운영 체제마다 달라지는 부분
-  player/                # libmpv로 동영상 재생. OpenGL로 창에 그림
+  player/                # libmpv로 동영상 재생. 창이 보여 주는 서피스에 그림
   screenshot/            # 스크린샷 도구: 캡처, 오버레이, 주석, 그림
   downloads/             # 다운로드 페이지: WebDAV, FTP, FTPS, SFTP, 다중 연결 엔진
   music/                 # 음악 페이지: Subsonic API 클라이언트, 캐시로 받는 곡, 대기열과 재생 막대
@@ -256,6 +259,10 @@ vendor/fonts/            # git에 없음: UI 글꼴(scripts/fetch-fonts.sh)
 vendor/mpv/              # libmpv: 동영상 재생용 mpv와 FFmpeg
   build.sh               #   고정된 소스로 빌드: 버전과 SHA-256은 맨 위에 고정
   bin/                   #   git에 없음: 라이브러리 자체(scripts/fetch-mpv.sh 또는 build.sh install)
+vendor/skia/             # Skia: 창을 그리는 데 사용
+  build.sh               #   고정된 소스로 빌드: 커밋과 아카이브 이름은 맨 위에 고정
+  Cargo.lock             #   그 빌드가 쓰는 crate를 고정
+  bin/                   #   git에 없음: 아카이브 자체(scripts/fetch-skia.sh 또는 build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   고정된 소스로 빌드: TDLib 커밋, OpenSSL 버전과 SHA-256은 맨 위에 고정
   host/                  #   작은 호스트 프로그램(main.cpp)과 그 CMakeLists.txt

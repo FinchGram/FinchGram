@@ -148,12 +148,13 @@ FinchGram は Telegram 公式アプリがすることだけをし、禁じられ
 現時点では、開発には Apple silicon の macOS が必要です。finchgram-tdlib はまだそれ向けにしかビルドしていません。
 Linux と Windows は後日対応します。
 
-finchgram-tdlib、libmpv、UI フォントは git に入っていません。`vendor/tdlib/` と `vendor/mpv/` にあるのは
-それらをビルドするスクリプトだけで、フォントは Google Fonts から取得します。clone したら、まず一度取得してください：
+finchgram-tdlib、libmpv、Skia、UI フォントは git に入っていません。`vendor/tdlib/`、`vendor/mpv/`、`vendor/skia/` に
+あるのはそれらをビルドするスクリプトだけで、フォントは Google Fonts から取得します。clone したら、まず一度取得してください：
 
 ```sh
 scripts/fetch-tdlib.sh    # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ にダウンロードし、SHA-256 を検証
 scripts/fetch-mpv.sh      # 固定バージョンの libmpv リリースを vendor/mpv/bin/ にダウンロードし、SHA-256 を検証
+scripts/fetch-skia.sh     # 固定バージョンの Skia リリースを vendor/skia/bin/ にダウンロードし、SHA-256 を検証して、場所を cargo に伝える
 scripts/fetch-fonts.sh    # 固定バージョンの UI フォントを vendor/fonts/ にダウンロードし、SHA-256 を検証
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -175,8 +176,9 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 
 `build.rs` は `vendor/tdlib/bin/finchgram-tdlib` を、コンパイルされた実行ファイルの隣にコピーします。そのため
 `cargo run` は、パッケージ化されたアプリとまったく同じプログラムを使います。libmpv は `vendor/mpv/bin/` から
-リンクし、同じく隣にコピーします。`vendor/fonts/` のフォントは実行ファイルに組み込まれます。どれかが欠けていると、
-ビルドはその旨のメッセージを出して失敗します。Rust 1.92 以降が必要です。
+リンクし、同じく隣にコピーします。`vendor/fonts/` のフォントは実行ファイルに組み込まれます。ウィンドウを描画する
+Skia は `vendor/skia/bin/` のアーカイブからリンクします。どれかが欠けていると、ビルドはその旨のメッセージを出して
+失敗します。Rust 1.92 以降が必要です。
 
 TDLib のデータベースとダウンロードしたファイルは `~/Library/Application Support/FinchGram/tdlib/` に、
 設定は `~/Library/Application Support/FinchGram/settings.toml` にあります。
@@ -188,6 +190,7 @@ TDLib のデータベースとダウンロードしたファイルは `~/Library
   mpv.yml                # クリーンなマシンで libmpv をビルドし、mpv-* タグをリリースとして公開
   check.yml              # main への push ごとに clippy とテストを実行
   release.yml            # Release v* コミットでアプリをビルドして公開
+  skia.yml               # クリーンなマシンで Skia をビルドし、skia-* タグをリリースとして公開
   tdlib.yml              # クリーンなマシンで finchgram-tdlib をビルドし、tdlib-* タグをリリースとして公開
 Cargo.toml
 build.rs                 # vendor/tdlib/bin/ を実行ファイルの隣にコピー
@@ -203,6 +206,7 @@ scripts/
   bundle.sh              # dist/FinchGram.app をビルド（リリースのワークフローが実行するもの）
   fetch-fonts.sh         # 固定バージョンの UI フォントを vendor/fonts/ へ
   fetch-mpv.sh           # 固定バージョンの libmpv リリースを vendor/mpv/bin/ へ
+  fetch-skia.sh          # 固定バージョンの Skia リリースを vendor/skia/bin/ へ。場所を cargo に伝える
   fetch-tdlib.sh         # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ へ
   readme-pictures.sh     # README の画像を target/screenshots/ から docs/screenshots/ にコピー
   release.sh             # リリースを開始：バージョン、タグ、push。残りは GitHub Actions が行う
@@ -229,7 +233,7 @@ src/
     notifications.rs     #   新着メッセージの通知、Dock アイコンの未読数
     online.rs            #   ウィンドウが前面で使われている間、アカウントはオンライン
   platform/              # OS ごとに異なる部分
-  player/                # libmpv による動画再生。OpenGL でウィンドウに描画
+  player/                # libmpv による動画再生。ウィンドウが表示するサーフェスに描画
   screenshot/            # スクリーンショット機能：撮影、オーバーレイ、書き込み、画像
   downloads/             # ダウンロードページ：WebDAV・FTP・FTPS・SFTP、複数接続のエンジン付き
   music/                 # 音楽ページ：Subsonic API クライアント、キャッシュへの取得、キューと再生バー
@@ -262,6 +266,10 @@ vendor/fonts/            # git には入らない：UI フォント（scripts/fe
 vendor/mpv/              # libmpv：動画再生用の mpv と FFmpeg
   build.sh               #   固定したソースからビルド：バージョンと SHA-256 は冒頭で固定
   bin/                   #   git 管理外：ライブラリ本体（scripts/fetch-mpv.sh または build.sh install）
+vendor/skia/             # Skia：ウィンドウの描画用
+  build.sh               #   固定したソースからビルド：コミットとアーカイブ名は冒頭で固定
+  Cargo.lock             #   そのビルドが使う crate を固定
+  bin/                   #   git 管理外：アーカイブ本体（scripts/fetch-skia.sh または build.sh install）
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   固定したソースからビルド：TDLib のコミット、OpenSSL のバージョンと SHA-256 は冒頭で固定
   host/                  #   小さなホストプログラム（main.cpp）とその CMakeLists.txt

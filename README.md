@@ -185,12 +185,14 @@ you use voice input, your voice to the AI vendor you chose, under your own key.
 Development needs macOS on Apple silicon for now: finchgram-tdlib is only built for it. Linux and
 Windows will follow.
 
-finchgram-tdlib, libmpv and the UI fonts are not in git: `vendor/tdlib/` and `vendor/mpv/` only hold
-the scripts that build them, and the fonts come from Google Fonts. After cloning, get them once:
+finchgram-tdlib, libmpv, Skia and the UI fonts are not in git: `vendor/tdlib/`, `vendor/mpv/` and
+`vendor/skia/` only hold the scripts that build them, and the fonts come from Google Fonts. After
+cloning, get them once:
 
 ```sh
 scripts/fetch-tdlib.sh    # downloads the pinned finchgram-tdlib release into vendor/tdlib/bin/ and verifies the SHA-256
 scripts/fetch-mpv.sh      # downloads the pinned libmpv release into vendor/mpv/bin/ and verifies the SHA-256
+scripts/fetch-skia.sh     # downloads the pinned Skia release into vendor/skia/bin/, verifies the SHA-256, and tells cargo where it is
 scripts/fetch-fonts.sh    # downloads the pinned UI fonts into vendor/fonts/ and verifies their SHA-256
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -212,8 +214,9 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 
 `build.rs` copies `vendor/tdlib/bin/finchgram-tdlib` next to the compiled executable, so `cargo run`
 uses exactly the same program as the packaged app; it links libmpv from `vendor/mpv/bin/` and copies it
-there too, and the fonts in `vendor/fonts/` are compiled into the executable. Without any of them the
-build fails with a message saying so. Rust 1.92 or newer.
+there too, and the fonts in `vendor/fonts/` are compiled into the executable. Skia, which draws the
+window, is linked from the archive in `vendor/skia/bin/`. Without any of them the build fails with a
+message saying so. Rust 1.92 or newer.
 
 TDLib's database and downloaded files are in `~/Library/Application Support/FinchGram/tdlib/`, the
 settings in `~/Library/Application Support/FinchGram/settings.toml`.
@@ -225,6 +228,7 @@ settings in `~/Library/Application Support/FinchGram/settings.toml`.
   mpv.yml                # builds libmpv on a clean runner; publishes mpv-* tags as releases
   check.yml              # clippy and the tests on every push to main
   release.yml            # builds and publishes the app for the Release v* commits
+  skia.yml               # builds Skia on a clean runner; publishes skia-* tags as releases
   tdlib.yml              # builds finchgram-tdlib on a clean runner; publishes tdlib-* tags as releases
 Cargo.toml
 build.rs                 # copies vendor/tdlib/bin/ next to the executable
@@ -240,6 +244,7 @@ scripts/
   bundle.sh              # builds dist/FinchGram.app (what the release workflow runs)
   fetch-fonts.sh         # the pinned UI fonts into vendor/fonts/
   fetch-mpv.sh           # the pinned libmpv release into vendor/mpv/bin/
+  fetch-skia.sh          # the pinned Skia release into vendor/skia/bin/, and where it is for cargo
   fetch-tdlib.sh         # the pinned finchgram-tdlib release into vendor/tdlib/bin/
   readme-pictures.sh     # copies the READMEs' pictures from target/screenshots/ into docs/screenshots/
   release.sh             # starts a release: version, tag, push; GitHub Actions does the rest
@@ -266,7 +271,7 @@ src/
     notifications.rs     #   notifications of new messages, the unread count on the Dock icon
     online.rs            #   the account is online while the window is in front and in use
   platform/              # what differs from one operating system to another
-  player/                # video through libmpv, drawn into the window with OpenGL
+  player/                # video through libmpv, which draws into a surface the window shows
   screenshot/            # the screenshot tool: capture, the overlay, annotations, the picture
   downloads/             # the Downloads page: WebDAV, FTP, FTPS and SFTP, with a multi-connection engine
   music/                 # the Music page: the Subsonic API client, songs fetched into the cache, the queue and the player bar
@@ -299,6 +304,10 @@ vendor/fonts/            # not in git: the UI fonts (scripts/fetch-fonts.sh)
 vendor/mpv/              # libmpv: mpv and FFmpeg, which play video
   build.sh               #   builds it from pinned sources: versions and SHA-256 at the top
   bin/                   #   not in git: the library (scripts/fetch-mpv.sh, or build.sh install)
+vendor/skia/             # Skia, which draws the window
+  build.sh               #   builds it from pinned sources: the commits and the archive's name at the top
+  Cargo.lock             #   pins the crates that build uses
+  bin/                   #   not in git: the archive (scripts/fetch-skia.sh, or build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   builds it from pinned sources: TDLib commit, OpenSSL version and SHA-256 at the top
   host/                  #   our small host program (main.cpp) and its CMakeLists.txt

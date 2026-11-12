@@ -34,10 +34,25 @@ things fit together.
   pages or visual design beyond the design.
 - Video and voice messages play through mpv, as libmpv built from pinned sources in
   `vendor/mpv/` the way finchgram-tdlib is (`mpv-*` releases, `scripts/fetch-mpv.sh`); the app links
-  it and draws its frames with OpenGL (`src/player/`). Media follow the design's media-viewer.js.
+  it, and mpv draws its frames with OpenGL, the one way its render API has on a GPU, in a context of
+  its own, into a surface the window shows (`src/player/`, `src/platform/video.rs`). Media follow
+  the design's media-viewer.js.
   Voice messages (`src/telegram/voice.rs`, the design's round "秘密聊天与通话", B1 and B2) play
   through an mpv of their own with no video (`src/player/audio.rs`), and are recorded by holding
   the composer's microphone, as AAC in M4A by AVAudioRecorder, which TDLib takes as voice notes.
+- The window is drawn by Slint's Skia renderer over Metal (docs/skia.md; the maintainer's word of
+  2026-11-11, "Slint 留下，FemtoVG 换成 Skia，OpenGL 的依赖逐项迁走", and, since mpv cannot leave
+  OpenGL: the window on Metal, OpenGL only inside mpv). Skia is built from pinned sources in
+  `vendor/skia/` (`skia-*` releases; `scripts/fetch-skia.sh`, which also writes `.cargo/config.toml`,
+  not in git, to tell the skia-bindings crate where the archive is). Nothing of FinchGram's own is
+  drawn with OpenGL, and mpv never shares a context with the window: a video frame goes through an
+  IOSurface that mpv draws into and Metal reads. No renderer to fall back to.
+- Slint is used as it is released: never forked, never patched, nothing of it changed (the
+  maintainer's words of 2026-11-12: "你别fork slint，也别修slint，别改slint的任何东西"). What a Slint
+  version does badly waits for the Slint version that does it right. So 0.8.0 takes more memory
+  than 0.7.14 (Slint 1.18.1's Skia renderer copies every font file and every image it draws with,
+  about 300 MB with Chinese text and emoji on the screen, docs/skia.md), until the app moves to the
+  Slint that shares them with Skia ("内存问题等到slint发新版自然就解决了").
 - The MCP server (`src/mcp/`, `src/telegram/tools.rs`, docs/mcp.md) is what sets FinchGram apart:
   AI assistants' apps work with the user's Telegram through the running app, over a Unix socket
   with `finchgram mcp` as the stdio bridge, inside the one TDLib session and without an async
@@ -157,6 +172,10 @@ things fit together.
 - Each doc in `docs/` has a `.zh-Hans.md` version; change both.
 - The TDLib version is pinned in `vendor/tdlib/build.sh`, `scripts/fetch-tdlib.sh` and
   `TDLIB_VERSION` in `src/telegram/mod.rs`; `src/telegram/api.rs` follows that version's td_api.tl.
+- Skia's version is the skia-bindings crate's: in Cargo.lock (Slint's Skia renderer chooses it),
+  in Cargo.toml (`=`), in the pinned block of `vendor/skia/build.sh` with the `Cargo.lock` beside it,
+  and in `scripts/fetch-skia.sh`. A Slint upgrade that brings a new skia-safe needs a new `skia-*`
+  vendor build before the app builds again (docs/skia.md).
 
 ## Working
 
@@ -173,13 +192,17 @@ things fit together.
   minutes, about $1.80 a release) was dropped for its cost. Artifacts count against the
   organization's 0.5 GB of Actions storage a month, measured by the hour: keep none that a release
   page already holds.
-- Build and check: `scripts/fetch-tdlib.sh`, `scripts/fetch-mpv.sh` and `scripts/fetch-fonts.sh` once, then `cargo build`,
+- Build and check: `scripts/fetch-tdlib.sh`, `scripts/fetch-mpv.sh`, `scripts/fetch-skia.sh` and `scripts/fetch-fonts.sh` once, then `cargo build`,
   `cargo test --workspace`, `cargo clippy --workspace --all-targets` (keep it free of warnings;
   `--workspace` takes in the release signing tool, `crates/finchgram-release-sign/`, and the UI,
   `crates/finchgram-ui/`, whose generated Rust, about a million lines, compiles only when `ui/` or
   `lang/` change). One heavy cargo job at a time: never two builds, clippy or picture runs at once. After changing the UI, run
   `cargo test screenshots -- --ignored` and look at `target/screenshots/`: every page in every theme,
-  light and dark, drawn with made-up data (there is no api_id here to log in with).
+  light and dark, drawn with made-up data (there is no api_id here to log in with). They are the
+  software renderer's pictures: how Skia draws text and corners they do not show. After changing how
+  video is drawn (`src/player/`, `src/platform/video.rs`), run
+  `cargo test video_frames -- --ignored`: the app's own player in the app's own window, drawn by
+  Skia over Metal into a texture and read back (the colours, which way up, every frame).
 - `FINCHGRAM_TEST_DC=1` uses Telegram's test servers.
 - `scripts/bundle.sh` builds `dist/FinchGram.app` for trying the packaged app; a release only ever
   goes through `scripts/release.sh`, and only when asked.

@@ -13,22 +13,14 @@ pub fn play_url(url: &str, volume: i32, muted: bool) {
             eprintln!("pop-out player: cannot start mpv: {err}");
             return;
         }
-        let load = Load { path: url.to_string(), looping: false, speed: 1.0, volume, muted };
         player.tell(Shown::Loading(true));
-        if player.render.is_null() {
-            // The renderer is made when the pop-out first renders; the stream loads then.
-            player.waiting = Some(load);
-            player.redraw();
-        } else {
-            player.load(load);
-        }
+        player.load(Load { path: url.to_string(), looping: false, speed: 1.0, volume, muted });
     });
 }
 
 /// Nothing plays in the pop-out.
 pub fn stop() {
     with_screen(Screen::Popout, |player| {
-        player.waiting = None;
         if player.loaded {
             player.command(&["stop"]);
         }
@@ -38,6 +30,7 @@ pub fn stop() {
         player.width = 0;
         player.height = 0;
         player.handed = false;
+        player.drawn = false;
         player.tell(Shown::Frame(slint::Image::default()));
         player.tell(Shown::Loading(false));
     });

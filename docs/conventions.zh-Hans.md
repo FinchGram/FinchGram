@@ -52,12 +52,20 @@ libmpv 跟 finchgram-tdlib 一样照这个做：`vendor/mpv/build.sh` 按锁定�
 `vendor/mpv/bin/`。`build.rs` 从那里链接它，并把它复制到可执行文件旁边；app 包把它放在 `Contents/Frameworks/`
 里，可执行文件的 run path 只在那里找它。
 
+画窗口用的 Skia 也照这个做，只是它是经由一个 crate 进来的：Slint 的 Skia 渲染器带来的 skia-bindings，默认会从
+rust-skia 自己的 release 下载一个 Skia 的包，或者下载源码自己编译。`vendor/skia/build.sh` 从锁定的 commit 构建
+的就是这个包（Skia 的静态库和对应的 Rust 绑定），旁边的 `Cargo.lock` 锁定构建本身用到的 crate；CI 从
+`skia-<skia-bindings 版本号>-<n>` 这样的 tag 构建并发布它（`.github/workflows/skia.yml`），
+`scripts/fetch-skia.sh` 把锁定的 release 下载到 `vendor/skia/bin/`，并写一个 `.cargo/config.toml`（不进 git：
+里面是这台机器上的路径），告诉这个 crate 包在哪里。Cargo.toml 不许这个 crate 自己编译 Skia（`no-compile`），
+没被告知包在哪里的构建会被 `build.rs` 叫停（[skia.zh-Hans.md](skia.zh-Hans.md)）。
+
 ## 2. 一个仓库
 
 - 源码、vendor 构建（`vendor/`）和发布全在这里，都公开。酷丸工具箱拆成三个仓库，是因为它的源码不公开；
   FinchGram 没有理由这样拆。
-- tag：app 用 `v<版本号>`，finchgram-tdlib 用 `tdlib-<版本号>-<n>`，libmpv 用 `mpv-<版本号>-<n>`（`<n>` 是同一个
-  版本的第几次构建）。
+- tag：app 用 `v<版本号>`，finchgram-tdlib 用 `tdlib-<版本号>-<n>`，libmpv 用 `mpv-<版本号>-<n>`，Skia 用
+  `skia-<版本号>-<n>`（`<n>` 是同一个版本的第几次构建）。
 - vendor 的 release 发布时加 `--latest=false`，这样本仓库的 “Latest release” 永远是最新的 app，
   已安装的 app 就靠它来自动更新。
 - 二进制只放在 release 里，永远不进 git 历史：`vendor/*/bin/`、`vendor/*/work/`、`vendor/*/dist/`、

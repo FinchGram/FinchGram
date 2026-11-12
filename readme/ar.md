@@ -139,12 +139,14 @@ http على الشبكة المحلية، أو شهادة حقيقية).
 يتطلب التطوير حاليًا macOS على Apple silicon: إذ لا يُبنى finchgram-tdlib إلا له حتى الآن. سيأتي دعم Linux
 وWindows لاحقًا.
 
-لا يوجد finchgram-tdlib ولا libmpv ولا خطوط الواجهة في git: يحتوي `vendor/tdlib/` و`vendor/mpv/` فقط على
-السكربتات التي تبنيهما، وتأتي الخطوط من Google Fonts. بعد استنساخ المستودع، احصل عليها مرة واحدة:
+لا يوجد finchgram-tdlib ولا libmpv ولا Skia ولا خطوط الواجهة في git: تحتوي `vendor/tdlib/` و`vendor/mpv/`
+و`vendor/skia/` فقط على السكربتات التي تبنيها، وتأتي الخطوط من Google Fonts. بعد استنساخ المستودع، احصل عليها
+مرة واحدة:
 
 ```sh
 scripts/fetch-tdlib.sh    # ينزّل إصدار finchgram-tdlib المثبّت إلى vendor/tdlib/bin/ ويتحقق من SHA-256
 scripts/fetch-mpv.sh      # ينزّل إصدار libmpv المثبّت إلى vendor/mpv/bin/ ويتحقق من SHA-256
+scripts/fetch-skia.sh     # ينزّل إصدار Skia المثبّت إلى vendor/skia/bin/ ويتحقق من SHA-256 ويخبر cargo بمكانه
 scripts/fetch-fonts.sh    # ينزّل خطوط الواجهة المثبّتة إلى vendor/fonts/ ويتحقق من SHA-256
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -166,8 +168,8 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 
 ينسخ `build.rs` الملف `vendor/tdlib/bin/finchgram-tdlib` بجوار الملف التنفيذي المُصرَّف، فيستخدم `cargo run`
 البرنامج نفسه تمامًا الذي يستخدمه التطبيق المُحزَّم؛ ويربط libmpv من `vendor/mpv/bin/` وينسخها هناك أيضًا،
-وتُضمَّن الخطوط الموجودة في `vendor/fonts/` داخل الملف التنفيذي. ومن دون أيٍّ منها يفشل البناء برسالة توضّح
-ذلك. يتطلب Rust 1.92 أو أحدث.
+وتُضمَّن الخطوط الموجودة في `vendor/fonts/` داخل الملف التنفيذي. أما Skia التي ترسم النافذة فتُربط من الأرشيف
+الموجود في `vendor/skia/bin/`. ومن دون أيٍّ منها يفشل البناء برسالة توضّح ذلك. يتطلب Rust 1.92 أو أحدث.
 
 قاعدة بيانات TDLib والملفات المنزّلة موجودة في `~/Library/Application Support/FinchGram/tdlib/`، والإعدادات
 في `~/Library/Application Support/FinchGram/settings.toml`.
@@ -179,6 +181,7 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   mpv.yml                # يبني libmpv على جهاز نظيف؛ وينشر وسوم mpv-* كإصدارات
   check.yml              # clippy والاختبارات مع كل push إلى main
   release.yml            # يبني التطبيق وينشره لإيداعات Release v*
+  skia.yml               # يبني Skia على جهاز نظيف؛ وينشر وسوم skia-* كإصدارات
   tdlib.yml              # يبني finchgram-tdlib على جهاز نظيف؛ وينشر وسوم tdlib-* كإصدارات
 Cargo.toml
 build.rs                 # ينسخ vendor/tdlib/bin/ بجوار الملف التنفيذي
@@ -194,6 +197,7 @@ scripts/
   bundle.sh              # يبني dist/FinchGram.app (وهو ما يشغّله مسار الإصدار)
   fetch-fonts.sh         # خطوط الواجهة المثبّتة إلى vendor/fonts/
   fetch-mpv.sh           # إصدار libmpv المثبّت إلى vendor/mpv/bin/
+  fetch-skia.sh          # إصدار Skia المثبّت إلى vendor/skia/bin/، ومكانه لـ cargo
   fetch-tdlib.sh         # إصدار finchgram-tdlib المثبّت إلى vendor/tdlib/bin/
   readme-pictures.sh     # ينسخ صور ملفات README من target/screenshots/ إلى docs/screenshots/
   release.sh             # يبدأ إصدارًا: رقم الإصدار، والوسم، والدفع؛ ويتولى GitHub Actions الباقي
@@ -220,7 +224,7 @@ src/
     notifications.rs     #   إشعارات الرسائل الجديدة، وعدد غير المقروءة على أيقونة Dock
     online.rs            #   يكون الحساب متصلًا ما دامت النافذة في المقدمة وقيد الاستخدام
   platform/              # ما يختلف من نظام تشغيل إلى آخر
-  player/                # الفيديو عبر libmpv، يُرسم في النافذة عبر OpenGL
+  player/                # الفيديو عبر libmpv التي ترسم على سطح تعرضه النافذة
   screenshot/            # أداة لقطة الشاشة: الالتقاط، الطبقة، التعليقات، الصورة
   downloads/             # صفحة التنزيلات: WebDAV وFTP وFTPS وSFTP بمحرّك متعدد الاتصالات
   music/                 # صفحة الموسيقى: عميل Subsonic API، الأغاني المجلوبة إلى الذاكرة المؤقتة، قائمة الانتظار وشريط التشغيل
@@ -253,6 +257,10 @@ vendor/fonts/            # ليس في git: خطوط الواجهة (scripts/fet
 vendor/mpv/              # libmpv: ‏mpv وFFmpeg لتشغيل الفيديو
   build.sh               #   يبنيها من مصادر مثبّتة: الإصدارات وSHA-256 في أعلى الملف
   bin/                   #   ليست في git: المكتبة نفسها (scripts/fetch-mpv.sh أو build.sh install)
+vendor/skia/             # Skia: ترسم النافذة
+  build.sh               #   يبنيها من مصادر مثبّتة: الإيداعات واسم الأرشيف في أعلى الملف
+  Cargo.lock             #   يثبّت الحزم (crates) التي يستخدمها هذا البناء
+  bin/                   #   ليست في git: الأرشيف نفسه (scripts/fetch-skia.sh أو build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   يبنيه من مصادر مثبّتة: commit لـ TDLib، وإصدار OpenSSL وSHA-256 في أعلى الملف
   host/                  #   برنامجنا المضيف الصغير (main.cpp) وملف CMakeLists.txt الخاص به

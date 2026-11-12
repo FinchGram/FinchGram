@@ -133,12 +133,13 @@ FinchGram 只做 Telegram 官方應用程式做的事，不做它們禁止的事
 
 目前開發需要 Apple silicon 的 macOS：finchgram-tdlib 暫時只為它建置。Linux 和 Windows 之後再支援。
 
-finchgram-tdlib、libmpv 和介面字型都不進 git：`vendor/tdlib/` 和 `vendor/mpv/` 裡只放建置它們的腳本，
-字型來自 Google Fonts。clone 之後先把它們下載一次：
+finchgram-tdlib、libmpv、Skia 和介面字型都不進 git：`vendor/tdlib/`、`vendor/mpv/` 和 `vendor/skia/` 裡只放建置
+它們的腳本，字型來自 Google Fonts。clone 之後先把它們下載一次：
 
 ```sh
 scripts/fetch-tdlib.sh    # 把鎖定的 finchgram-tdlib release 下載到 vendor/tdlib/bin/ 並驗證 SHA-256
 scripts/fetch-mpv.sh      # 把鎖定的 libmpv release 下載到 vendor/mpv/bin/ 並驗證 SHA-256
+scripts/fetch-skia.sh     # 把鎖定的 Skia release 下載到 vendor/skia/bin/ 並驗證 SHA-256，再告訴 cargo 它在哪裡
 scripts/fetch-fonts.sh    # 把鎖定的介面字型下載到 vendor/fonts/ 並驗證 SHA-256
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -158,7 +159,8 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 
 `build.rs` 把 `vendor/tdlib/bin/finchgram-tdlib` 複製到編譯出來的執行檔旁邊，所以 `cargo run`
 用的和打包後的 app 是完全相同的程式；它也從 `vendor/mpv/bin/` 連結 libmpv 並同樣複製過去，`vendor/fonts/`
-裡的字型則編譯進執行檔。缺少任何一樣，編譯都會直接失敗並說明原因。需要 Rust 1.92 或更新版本。
+裡的字型則編譯進執行檔。繪製視窗用的 Skia 從 `vendor/skia/bin/` 裡的封存檔連結。缺少任何一樣，編譯都會直接失敗並
+說明原因。需要 Rust 1.92 或更新版本。
 
 TDLib 的資料庫和下載的檔案在 `~/Library/Application Support/FinchGram/tdlib/`，設定在
 `~/Library/Application Support/FinchGram/settings.toml`。
@@ -170,6 +172,7 @@ TDLib 的資料庫和下載的檔案在 `~/Library/Application Support/FinchGram
   mpv.yml                # 在乾淨的機器上建置 libmpv；mpv-* tag 發佈為 release
   check.yml              # 每次 push 到 main 跑 clippy 和測試
   release.yml            # Release v* 提交時建置並發佈 app
+  skia.yml               # 在乾淨的機器上建置 Skia；skia-* tag 發佈為 release
   tdlib.yml              # 在乾淨的機器上建置 finchgram-tdlib；tdlib-* tag 發佈為 release
 Cargo.toml
 build.rs                 # 把 vendor/tdlib/bin/ 複製到執行檔旁邊
@@ -185,6 +188,7 @@ scripts/
   bundle.sh              # 建置 dist/FinchGram.app（release 流程執行的就是它）
   fetch-fonts.sh         # 把鎖定的介面字型下載到 vendor/fonts/
   fetch-mpv.sh           # 把鎖定的 libmpv release 下載到 vendor/mpv/bin/
+  fetch-skia.sh          # 把鎖定的 Skia release 下載到 vendor/skia/bin/，並告訴 cargo 它在哪裡
   fetch-tdlib.sh         # 把鎖定的 finchgram-tdlib release 下載到 vendor/tdlib/bin/
   readme-pictures.sh     # 把 README 用的圖從 target/screenshots/ 複製到 docs/screenshots/
   release.sh             # 發起一次 release：改版本、打 tag、push，其餘交給 GitHub Actions
@@ -211,7 +215,7 @@ src/
     notifications.rs     #   新訊息通知、Dock 圖示上的未讀數
     online.rs            #   視窗在前景、有人在用時，帳號是上線狀態
   platform/              # 隨作業系統而不同的部分
-  player/                # 用 libmpv 播放影片，經 OpenGL 畫進視窗
+  player/                # 用 libmpv 播放影片，畫進一塊由視窗顯示的 surface
   screenshot/            # 截圖工具：截取、覆蓋層、標註、成圖
   downloads/             # 下載頁面：WebDAV、FTP、FTPS 和 SFTP，帶多連線下載引擎
   music/                 # 音樂頁面：Subsonic API 客戶端、邊播邊下的快取、佇列與播放列
@@ -244,6 +248,10 @@ vendor/fonts/            # 不進 git：介面字型（scripts/fetch-fonts.sh）
 vendor/mpv/              # libmpv：mpv 和 FFmpeg，用來播放影片
   build.sh               #   從鎖定的原始碼建置它：版本和 SHA-256 都鎖定在腳本開頭
   bin/                   #   不進 git：函式庫本身（scripts/fetch-mpv.sh 下載，或 build.sh install）
+vendor/skia/             # Skia，用來繪製視窗
+  build.sh               #   從鎖定的原始碼建置它：各個 commit 和封存檔的名稱都鎖定在腳本開頭
+  Cargo.lock             #   鎖定這次建置用到的 crate
+  bin/                   #   不進 git：封存檔本身（scripts/fetch-skia.sh 下載，或 build.sh install）
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   從鎖定的原始碼建置它：TDLib commit、OpenSSL 版本和 SHA-256 都鎖定在腳本開頭
   host/                  #   我們的小型外殼程式（main.cpp）和它的 CMakeLists.txt

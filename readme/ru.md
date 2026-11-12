@@ -191,13 +191,14 @@ FinchGram делает то, что делают приложения Telegram, 
 Пока для разработки нужен macOS на Apple silicon: finchgram-tdlib собирается только для него. Linux и
 Windows появятся позже.
 
-Ни finchgram-tdlib, ни libmpv, ни шрифты интерфейса в git не хранятся: в `vendor/tdlib/` и `vendor/mpv/`
-лежат только скрипты, которые их собирают, а шрифты берутся из Google Fonts. После клонирования один раз
-получите их:
+Ни finchgram-tdlib, ни libmpv, ни Skia, ни шрифты интерфейса в git не хранятся: в `vendor/tdlib/`,
+`vendor/mpv/` и `vendor/skia/` лежат только скрипты, которые их собирают, а шрифты берутся из Google
+Fonts. После клонирования один раз получите их:
 
 ```sh
 scripts/fetch-tdlib.sh    # скачивает зафиксированный релиз finchgram-tdlib в vendor/tdlib/bin/ и проверяет SHA-256
 scripts/fetch-mpv.sh      # скачивает зафиксированный релиз libmpv в vendor/mpv/bin/ и проверяет SHA-256
+scripts/fetch-skia.sh     # скачивает зафиксированный релиз Skia в vendor/skia/bin/, проверяет SHA-256 и сообщает cargo, где он лежит
 scripts/fetch-fonts.sh    # скачивает зафиксированные шрифты интерфейса в vendor/fonts/ и проверяет их SHA-256
 FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 ```
@@ -221,7 +222,8 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
 `build.rs` копирует `vendor/tdlib/bin/finchgram-tdlib` рядом со скомпилированным исполняемым файлом, так
 что `cargo run` использует ровно ту же программу, что и упакованное приложение; он подключает libmpv из
 `vendor/mpv/bin/` и тоже копирует её туда, а шрифты из `vendor/fonts/` компилируются в исполняемый файл.
-Без любого из них сборка завершается ошибкой с объяснением. Rust 1.92 или новее.
+Skia, которая рисует окно, подключается из архива в `vendor/skia/bin/`. Без любого из них сборка
+завершается ошибкой с объяснением. Rust 1.92 или новее.
 
 База данных TDLib и скачанные файлы находятся в `~/Library/Application Support/FinchGram/tdlib/`,
 настройки — в `~/Library/Application Support/FinchGram/settings.toml`.
@@ -233,6 +235,7 @@ FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
   mpv.yml                # собирает libmpv на чистой машине; публикует теги mpv-* как релизы
   check.yml              # clippy и тесты при каждом push в main
   release.yml            # собирает и публикует приложение для коммитов Release v*
+  skia.yml               # собирает Skia на чистой машине; публикует теги skia-* как релизы
   tdlib.yml              # собирает finchgram-tdlib на чистой машине; публикует теги tdlib-* как релизы
 Cargo.toml
 build.rs                 # копирует vendor/tdlib/bin/ рядом с исполняемым файлом
@@ -248,6 +251,7 @@ scripts/
   bundle.sh              # собирает dist/FinchGram.app (его и запускает процесс релиза)
   fetch-fonts.sh         # зафиксированные шрифты интерфейса в vendor/fonts/
   fetch-mpv.sh           # зафиксированный релиз libmpv в vendor/mpv/bin/
+  fetch-skia.sh          # зафиксированный релиз Skia в vendor/skia/bin/ и его расположение для cargo
   fetch-tdlib.sh         # зафиксированный релиз finchgram-tdlib в vendor/tdlib/bin/
   readme-pictures.sh     # копирует картинки README из target/screenshots/ в docs/screenshots/
   release.sh             # запускает релиз: версия, тег, push; остальное делает GitHub Actions
@@ -274,7 +278,7 @@ src/
     notifications.rs     #   уведомления о новых сообщениях, число непрочитанных в Dock
     online.rs            #   аккаунт в сети, пока окно на переднем плане и им пользуются
   platform/              # то, что отличается от одной операционной системы к другой
-  player/                # видео через libmpv, выводится в окно через OpenGL
+  player/                # видео через libmpv, которая рисует на поверхности, показываемой окном
   screenshot/            # инструмент снимков экрана: снимок, оверлей, пометки, картинка
   downloads/             # страница «Загрузки»: WebDAV, FTP, FTPS и SFTP, движок на несколько соединений
   music/                 # страница «Музыка»: клиент Subsonic API, треки в кэше, очередь и панель воспроизведения
@@ -307,6 +311,10 @@ vendor/fonts/            # не в git: шрифты интерфейса (scrip
 vendor/mpv/              # libmpv: mpv и FFmpeg, которые воспроизводят видео
   build.sh               #   собирает её из зафиксированных исходников: версии и SHA-256 в начале
   bin/                   #   не в git: сама библиотека (scripts/fetch-mpv.sh или build.sh install)
+vendor/skia/             # Skia, которая рисует окно
+  build.sh               #   собирает её из зафиксированных исходников: коммиты и имя архива в начале
+  Cargo.lock             #   фиксирует крейты, которые использует эта сборка
+  bin/                   #   не в git: сам архив (scripts/fetch-skia.sh или build.sh install)
 vendor/tdlib/            # finchgram-tdlib
   build.sh               #   собирает его из зафиксированных исходников: коммит TDLib, версия и SHA-256 OpenSSL в начале
   host/                  #   наша небольшая программа-хост (main.cpp) и её CMakeLists.txt

@@ -347,7 +347,9 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   （只有打包成 .app 才有，`cargo run` 时没有）、Dock 图标上的未读数，以及让 Dock 图标跳一下（设置 → 通知与声音）；
   下载页面用的选目录面板和钥匙串（WebDAV 服务器的密码），以及麦克风和能不能用它的那一问：语音输入用 AVAudioEngine
   的 tap，语音消息用 AVAudioRecorder（`microphone.rs`）；选一张图片的面板（什么格式都行），以及 image crate 读不了的图片
-  （HEIC、TIFF、GIF、AVIF 等）交给 ImageIO 读，并按拍摄时的方向转正。
+  （HEIC、TIFF、GIF、AVIF 等）交给 ImageIO 读，并按拍摄时的方向转正；以及视频帧从 mpv 到窗口的那段路
+  （`video.rs`）：mpv 自己的 OpenGL 上下文，和一块 mpv 往里画、Metal 从里读的 IOSurface
+  （[skia.zh-Hans.md](skia.zh-Hans.md)）。
 - `src/update.rs`：自动更新（[conventions.md](conventions.zh-Hans.md) 第 3 节）。
 - `src/settings.rs`、`src/i18n.rs`、`src/fonts.rs`（界面字体，编译进可执行文件）。
 - `src/images.rs`：图片（照片、视频封面、聊天和联系人的头像、消息里自带的小预览图）在界面线程之外解码，并缓存最近的；
@@ -355,6 +357,8 @@ finchgram-tdlib   可执行文件旁边的一个独立程序，就像酷丸工�
   几十个字节的文件头就能要走几个 GB 的内存。
 - `src/screenshots.rs`：用 Slint 的软件渲染器和假数据，把每套主题的每个页面（浅色和深色）画成 PNG
   （`cargo test screenshots -- --ignored`）。
+- `src/player/frames.rs`：两段颜色已知的小视频，由 app 自己的播放器在 app 自己的窗口里播放，Skia 经 Metal 画进一张
+  纹理再读回来：颜色、上下左右、每一帧按顺序出现（`cargo test video_frames -- --ignored`）。
 - `src/telegram/timing.rs`：用同样的方式、很多假聊天和假消息，量页面跟上 store 要多久
   （`cargo test --release refresh_timing -- --ignored --nocapture`）。
 - `ui/`：`app.slint`（窗口：菜单，以及显示哪个页面）、`state.slint`、`telegram.slint` 和 `downloads.slint`（Rust 和页面共用的 global）、
@@ -450,17 +454,21 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
 3. **媒体播放**（媒体中心）：语音消息（mpv 能读的格式都行）、视频、GIF 和动态贴纸（WebM、Lottie）。2026-09-30 定了：用 mpv。
    它以 libmpv 的形式出现，跟 finchgram-tdlib 一样由 `vendor/mpv/build.sh` 从锁定的源码构建：mpv 加上 FFmpeg、
    libplacebo 和 libass（FreeType、FriBidi、HarfBuzz），全部静态链接进一个只依赖 macOS 的库；app 链接它，
-   并把它放在 app 包的 Frameworks 目录里。窗口每次渲染时，mpv 在 Slint 自己的 OpenGL 上下文里把当前帧画进我们的
-   一张纹理（`src/player/`），能硬解的用 VideoToolbox；媒体查看器显示这张纹理。代价是 libmpv 在 app 的进程里
+   并把它放在 app 包的 Frameworks 目录里。能硬解的 mpv 用 VideoToolbox；画的时候用 OpenGL，这是 libmpv 在 GPU 上
+   唯一的画法：在它自己的、不带窗口的上下文里，画进一块 surface，窗口把这块 surface 当纹理来读（macOS 上是
+   IOSurface，`src/platform/video.rs`）。窗口每次渲染之前，播放器让 mpv 画出最新一帧（`src/player/`，
+   [skia.zh-Hans.md](skia.zh-Hans.md)），媒体查看器显示这张纹理。代价是 libmpv 在 app 的进程里
    解码，一个故意构造的视频如果弄坏了解码器，窗口会跟着一起崩。FFmpeg 构建时
    去掉了编码器和设备，并跟着上游升级。从 mpv-0.41.0-2（2026-11-08）起带网络，供 Live 视图播放直播（画布「FinchGram Desktop 直播」第 12 轮）：HTTP、经 mbedTLS 的 HTTPS（Keychain 的根证书以文件交给它）、HLS、经 libxml2 的 DASH、RTSP；只有 Live 视图的播放器能用到网络，其他播放器都写明自己能打开的协议，只限本地文件（`src/player/mod.rs` 的 `LOCAL_PROTOCOLS`），所以 Telegram 文件里的播放列表绝不会让 FFmpeg 去取任何东西。如果还不够，就把播放挪进一个沙箱里的辅助进程，由它把画面交给 app
    （macOS 上用 IOSurface）。音乐也守着这条：用户自己服务器上的歌经 app 的 HTTP 客户端进缓存文件，由音乐自己的 mpv
    边到边读（[music.zh-Hans.md](music.zh-Hans.md)）。Lottie 贴纸要另想办法（rlottie），WebM 贴纸要能保留透明通道的 VP9 解码（libvpx；
    FFmpeg 自带的 VP9 解码器会丢掉透明通道）。在那之前，动态贴纸只显示它的静态缩略图；静态贴纸照原样显示。
-4. **渲染**：暂时用 Slint 的默认渲染器（FemtoVG）。设计稿的字体都已打包，界面用到的中文、日文、韩文和阿拉伯文由
+4. **渲染**：2026-11-11 起用 Slint 的 Skia 渲染器，在 macOS 上走 Metal（之前是 FemtoVG 走 OpenGL；这次迁移、
+   迁移前实测的结果，以及 OpenGL 还剩什么——mpv 自己的绘制——见 [skia.zh-Hans.md](skia.zh-Hans.md)）。
+   设计稿的字体都已打包，界面用到的中文、日文、韩文和阿拉伯文由
    Noto Sans SC、JP、KR、Arabic 提供（Workbench 和 Terminal 的中文先用系统自带的苹方，和它们设计稿里的字体顺序一致；Broadsheet 的设计稿只写了 Noto Sans SC），不归任何文字的符号区块（广告里的花体字母、带圈数字、箭头）由 Noto Sans Math 和
    Symbols 2 提供，排版引擎对这些字符从不去查系统字体（回退顺序里界面语言自己的字体排在前面，`fonts.rs`）；emoji 用系统的彩色 emoji
    字体，`fonts.rs` 把它紧排在正文字体后面，免得 CJK 字体里黑白的 emoji 抢先（自己带心形、箭头字形的字体仍会画
-   自己的，Source Sans 3 的 ❤ 就是）；消息里的其他文字暂时用系统字体。Skia 得从源码构建才行：它的 Rust 绑定默认会
-   下载预编译的库，这是 conventions.md 不允许的。改用由我们自己的 CI 构建的 Skia 2026-10-11 列入计划、次日暂停：
-   计划、原因，以及它对 tiny-skia 和 resvg 意味着什么，见 [skia.zh-Hans.md](skia.zh-Hans.md)。
+   自己的，Source Sans 3 的 ❤ 就是）；消息里的其他文字暂时用系统字体。Skia 由我们自己的 CI 从源码构建
+   （`vendor/skia/build.sh`）：它的 Rust 绑定默认会下载预编译的库，这是 conventions.md 不允许的。tiny-skia 和
+   resvg 还剩什么、以后我们自己的图哪些可以交给 Skia 画，也在 [skia.zh-Hans.md](skia.zh-Hans.md) 里。

@@ -136,5 +136,4 @@ unsafe extern "C" {
     );
     pub fn mpv_render_context_update(ctx: *mut mpv_render_context) -> u64;
     pub fn mpv_render_context_render(ctx: *mut mpv_render_context, params: *mut mpv_render_param) -> c_int;
-    pub fn mpv_render_context_free(ctx: *mut mpv_render_context);
 }

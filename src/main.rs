@@ -17,6 +17,8 @@ mod platform;
 mod player;
 mod screenshot;
 #[cfg(test)]
+mod offscreen;
+#[cfg(test)]
 mod screenshots;
 mod settings;
 mod speech;
@@ -373,6 +375,9 @@ fn main() -> Result<(), slint::PlatformError> {
 /// Before the process ends: TDLib writes its database out (finchgram-tdlib closes), and the MCP
 /// server's socket goes.
 fn shut_down() {
+    // Whatever holds a texture of the windows' renderer goes while that renderer lives.
+    live::popout::shut_down();
+    player::shut_down();
     telegram::shut_down();
     mcp::shut_down();
 }

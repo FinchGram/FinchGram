@@ -536,7 +536,8 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   microphone with the question whether FinchGram may use it: AVAudioEngine's tap for voice input,
   AVAudioRecorder for voice messages (`microphone.rs`); the open panel for one picture of any kind,
   and ImageIO for the pictures the image crate cannot read (HEIC, TIFF, GIF, AVIF, …), turned the
-  way they were taken.
+  way they were taken; and a video frame's way from mpv to the window (`video.rs`): an OpenGL
+  context of mpv's own, and an IOSurface that mpv draws into and Metal reads ([skia.md](skia.md)).
 - `src/update.rs`: the self-updater ([conventions.md](conventions.md), section 3).
 - `src/settings.rs`, `src/i18n.rs`, `src/fonts.rs` (the UI fonts, compiled into the executable).
 - `src/images.rs`: pictures (photos, video stills, the photos of chats and people, the tiny previews
@@ -546,6 +547,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   of header can ask for gigabytes.
 - `src/screenshots.rs`: every page in every theme, light and dark, drawn to a PNG with made-up data
   by Slint's software renderer (`cargo test screenshots -- --ignored`).
+- `src/player/frames.rs`: two small videos of known colours played by the app's own player in the
+  app's own window, drawn by Skia over Metal into a texture and read back: the colours, which way
+  up, every frame in its order (`cargo test video_frames -- --ignored`).
 - `src/telegram/timing.rs`: how long the pages take to follow the store, with many made-up chats and
   messages, drawn the same way (`cargo test --release refresh_timing -- --ignored --nocapture`).
 - `ui/`: `app.slint` (the window: its menus and which page shows), `state.slint` and
@@ -690,9 +694,11 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
    (WebM, Lottie). Decided on 2026-09-30: mpv. It comes as libmpv, built from pinned sources by
    `vendor/mpv/build.sh` as finchgram-tdlib is: mpv with FFmpeg, libplacebo and libass (FreeType,
    FriBidi, HarfBuzz), all static in one library that depends only on macOS; the app links it and
-   carries it in its bundle's Frameworks folder. Each time the window renders, mpv draws the frame into
-   an OpenGL texture of ours inside Slint's own context (`src/player/`), and decodes with VideoToolbox
-   where it can; the media viewer shows the texture. The price: libmpv decodes inside the app's
+   carries it in its bundle's Frameworks folder. mpv decodes with VideoToolbox where it can, and draws
+   with OpenGL, the one way libmpv has of drawing on the GPU: in a context of its own with no window,
+   into a surface the window reads as a texture (an IOSurface on macOS, `src/platform/video.rs`). Each
+   time the window is about to render, the player has mpv draw its newest frame (`src/player/`,
+   [skia.md](skia.md)), and the media viewer shows the texture. The price: libmpv decodes inside the app's
    process, so a crafted video that breaks a decoder takes the window with it. FFmpeg is
    built without encoders or devices, and follows upstream; should that not be enough, playback
    moves into a sandboxed helper process that hands its picture over (IOSurface on macOS). Since
@@ -706,7 +712,9 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
    Lottie stickers need something else (rlottie), and WebM stickers a VP9 decoder that keeps their
    transparency (libvpx; FFmpeg's own leaves it out). Until then a moving sticker shows its still
    thumbnail; still stickers show as they are.
-4. **Rendering**: Slint's default renderer (FemtoVG) for now. The design's typefaces are bundled,
+4. **Rendering**: Slint's Skia renderer, over Metal on macOS, since 2026-11-11 (FemtoVG over OpenGL
+   before; [skia.md](skia.md) has the move, what was measured before it, and what stays of OpenGL:
+   mpv's own drawing). The design's typefaces are bundled,
    with Noto Sans SC, JP, KR and Arabic for the UI's Chinese, Japanese, Korean and Arabic
    (Workbench and Terminal draw Chinese with the system's PingFang before Noto Sans SC, as their
    design's font stacks do; Broadsheet's design names Noto Sans SC alone), and Noto
@@ -715,8 +723,7 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
    language's own first among the fallbacks, `fonts.rs`); emoji come from the system's colour
    emoji font, which `fonts.rs` puts right after the body font so that the CJK fonts' black-and-
    white emoji do not win (a font that has its own glyph for a heart or an arrow still draws it, as
-   Source Sans 3 does ❤); other scripts in messages come from the system's fonts. Skia would need
-   building from source: its
-   Rust bindings download a prebuilt library by default, which conventions.md does not allow.
-   Moving to Skia, built by our own CI, was planned on 2026-10-11 and paused the next day: the plan,
-   why, and what it means for tiny-skia and resvg, is in [skia.md](skia.md).
+   Source Sans 3 does ❤); other scripts in messages come from the system's fonts. Skia is built
+   from source by our own CI (`vendor/skia/build.sh`): its Rust bindings would download a prebuilt
+   library by default, which conventions.md does not allow. What stays of tiny-skia and resvg, and
+   what of our own Skia could draw later, is in [skia.md](skia.md) too.

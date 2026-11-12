@@ -1,8 +1,8 @@
 //! The pop-out player (the canvas "FinchGram Desktop 直播", round 12: "Pop out · stays on top of
 //! other apps"): the stream left playing in a window of its own, above every app, while the user
-//! does something else; the main window's Watch closes meanwhile. A window has globals and an
-//! OpenGL context of its own, so it has a player of its own (src/player/popout.rs) and is handed
-//! what it shows. Its stream is a directory's, by its address; Telegram's play in the Live view.
+//! does something else; the main window's Watch closes meanwhile. A window has globals of its own,
+//! and this one a player of its own (src/player/popout.rs), and is handed what it shows. Its
+//! stream is a directory's, by its address; Telegram's play in the Live view.
 
 use std::cell::RefCell;
 
@@ -88,6 +88,13 @@ pub fn close() -> Option<String> {
 
 pub fn is_open() -> bool {
     PLAYING.with(|playing| playing.borrow().is_some())
+}
+
+/// The app ends: the window goes now, and its renderer with it, not when the thread's own
+/// variables are destroyed (src/player/, shut_down).
+pub fn shut_down() {
+    let window = WINDOW.with(|kept| kept.borrow_mut().take());
+    drop(window);
 }
 
 /// mpv opened the pop-out's stream.

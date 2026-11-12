@@ -336,8 +336,8 @@ release with everything in it.
   sent beside the picture (`src/live/chat.rs`): FinchGram joins as an anonymous chat user under the
   name Owncast gives, never the Telegram name, and keeps none of it.
 - **Left playing:** a stream goes on in the mini player when the user leaves Watch, over the chats
-  too; the pop-out puts it in a window of its own on top of every app (`src/live/popout.rs`, an
-  mpv of its own, since a window has its own OpenGL context). Telegram's streams stop with the view,
+  too; the pop-out puts it in a window of its own on top of every app (`src/live/popout.rs`, with a
+  player of its own, as the window has its own properties). Telegram's streams stop with the view,
   as before.
 - **Following** (`src/live/follows.rs`): the channels followed here are the database's
   (`live_follows`, layout 9) and are asked about by id; the live streams the user follows on

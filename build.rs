@@ -5,6 +5,36 @@ fn main() {
     copy_bundled_tdlib();
     link_bundled_mpv();
     check_bundled_fonts();
+    check_bundled_skia();
+}
+
+/// Skia draws the window (Slint's Skia renderer, docs/skia.md). The skia-bindings crate links the
+/// archive vendor/skia/build.sh makes, and finds it by the address in SKIA_BINARIES_URL, which
+/// scripts/fetch-skia.sh writes into .cargo/config.toml. Left to itself the crate would download
+/// rust-skia's own archive: this stops the build unless the address points into vendor/skia/bin/
+/// and an archive is there. (Cargo.toml's `no-compile` stops skia-bindings from building Skia.)
+fn check_bundled_skia() {
+    println!("cargo:rerun-if-env-changed=SKIA_BINARIES_URL");
+    println!("cargo:rerun-if-changed=vendor/skia/bin");
+
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR");
+    let folder = Path::new(&manifest_dir).join("vendor").join("skia").join("bin");
+    let address = std::env::var("SKIA_BINARIES_URL").unwrap_or_default();
+    let named = address.strip_prefix("file://").map(Path::new).is_some_and(|archive| archive.parent() == Some(folder.as_path()));
+    let there = std::fs::read_dir(&folder).is_ok_and(|entries| {
+        entries.flatten().any(|entry| {
+            let name = entry.file_name();
+            let name = name.to_string_lossy();
+            name.starts_with("skia-binaries-") && name.ends_with(".tar.gz")
+        })
+    });
+    assert!(
+        named && there,
+        "\n\nSkia is missing from {}, or cargo was not told where it is (SKIA_BINARIES_URL is {address:?}).\n\
+         FinchGram draws its window with its own build of Skia. \
+         Run scripts/fetch-skia.sh once to download it into vendor/skia/bin/.\n\n",
+        folder.display()
+    );
 }
 
 /// libmpv plays video (src/player/). The app links vendor/mpv/bin/libmpv.2.dylib and finds it at

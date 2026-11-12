@@ -68,13 +68,23 @@ tag (`.github/workflows/mpv.yml`), and `scripts/fetch-mpv.sh` downloads the pinn
 `vendor/mpv/bin/`. `build.rs` links it from there and copies it next to the executable; the bundle
 carries it in `Contents/Frameworks/`, where the executable's run path finds it and nowhere else.
 
+Skia, which draws the window, follows it too, though it comes in through a crate: skia-bindings,
+which Slint's Skia renderer brings, would download an archive of Skia from rust-skia's own releases,
+or build Skia from sources it downloads. `vendor/skia/build.sh` builds that very archive (Skia's
+static libraries with their Rust bindings) from pinned commits, with the `Cargo.lock` beside it for
+the crates the build itself uses; CI publishes it from a `skia-<skia-bindings version>-<n>` tag
+(`.github/workflows/skia.yml`), and `scripts/fetch-skia.sh` downloads the pinned release into
+`vendor/skia/bin/` and writes `.cargo/config.toml` (not in git: it holds this machine's path), which
+tells the crate where the archive is. Cargo.toml forbids the crate to build Skia itself
+(`no-compile`), and `build.rs` stops a build that was not told ([skia.md](skia.md)).
+
 ## 2. One repository
 
 - The source, the vendor builds (`vendor/`) and the releases are all here, in public. Coova
   Studio splits them into three repositories because its source is private; FinchGram has no reason
   to.
-- Tags: `v<version>` for the app, `tdlib-<version>-<n>` for finchgram-tdlib and `mpv-<version>-<n>`
-  for libmpv (`<n>` counts rebuilds of the same version).
+- Tags: `v<version>` for the app, `tdlib-<version>-<n>` for finchgram-tdlib, `mpv-<version>-<n>`
+  for libmpv and `skia-<version>-<n>` for Skia (`<n>` counts rebuilds of the same version).
 - Vendor releases are published with `--latest=false`, so this repository's "Latest release" is
   always the newest app, which installed copies look for to update themselves.
 - Binaries live in releases, never in git history: `vendor/*/bin/`, `vendor/*/work/`,

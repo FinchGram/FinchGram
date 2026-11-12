@@ -8,8 +8,6 @@
 use std::cell::{Cell, RefCell};
 use std::sync::Arc;
 
-use slint::ComponentHandle;
-
 use super::{Load, Screen, Shown, pipe, with_screen};
 
 /// Which side of the Live view the player plays for: what it tells of a start and an end goes
@@ -64,17 +62,8 @@ fn start(owner: Owner, url: String, volume: i32, muted: bool) {
             eprintln!("live player: cannot start mpv: {err}");
             return;
         }
-        let load = Load { path: url, looping: false, speed: 1.0, volume, muted };
         player.tell(Shown::Loading(true));
-        if player.render.is_null() {
-            // The renderer is made when the window next renders; the stream loads then.
-            player.waiting = Some(load);
-            if let Some(ui) = player.ui.upgrade() {
-                ui.window().request_redraw();
-            }
-        } else {
-            player.load(load);
-        }
+        player.load(Load { path: url, looping: false, speed: 1.0, volume, muted });
     });
 }
 
@@ -82,7 +71,6 @@ fn start(owner: Owner, url: String, volume: i32, muted: bool) {
 pub fn stop() {
     pipe::withdraw();
     with_screen(Screen::Live, |player| {
-        player.waiting = None;
         if player.loaded {
             player.command(&["stop"]);
         }
@@ -92,6 +80,7 @@ pub fn stop() {
         player.width = 0;
         player.height = 0;
         player.handed = false;
+        player.drawn = false;
         player.tell(Shown::Frame(slint::Image::default()));
         player.tell(Shown::Playing(false));
         player.tell(Shown::Loading(false));

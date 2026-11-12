@@ -89,6 +89,10 @@ jobs:
       - name: libmpv, pinned, from this repository's mpv-* release
         run: scripts/fetch-mpv.sh
 
+      # It also tells cargo where the archive is (.cargo/config.toml), so it runs before any build.
+      - name: Skia, pinned, from this repository's skia-* release
+        run: scripts/fetch-skia.sh
+
       - name: The UI fonts, pinned, from google/fonts
         run: scripts/fetch-fonts.sh
 

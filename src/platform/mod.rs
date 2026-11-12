@@ -5,6 +5,10 @@
 mod macos;
 #[cfg(target_os = "macos")]
 mod microphone;
+/// A video frame's way from mpv to the window: on macOS, OpenGL in a context of its own and an
+/// IOSurface that Metal reads. Another system's goes beside it, under the same names.
+#[cfg(target_os = "macos")]
+pub mod video;
 
 use slint::ComponentHandle;
 
@@ -473,9 +477,16 @@ pub fn device_model() -> &'static str {
 
 /// Select Slint's backend, with the window the design draws: on macOS the title bar is
 /// transparent and the pages run underneath it, the window buttons over each theme's own title
-/// bar.
+/// bar. The window is drawn by Slint's Skia renderer over Metal, through wgpu (docs/skia.md): both
+/// are asked for by name, and there is nothing to fall back to. A video's frame comes in as a
+/// texture of that renderer's device (src/player/).
 pub fn select_backend() -> Result<(), slint::PlatformError> {
+    use slint::wgpu_30::{WGPUConfiguration, WGPUSettings, wgpu};
+    let mut graphics = WGPUSettings::default();
+    graphics.backends = wgpu::Backends::METAL;
     slint::BackendSelector::new()
+        .require_wgpu_30(WGPUConfiguration::Automatic(graphics))
+        .renderer_name("skia-wgpu".into())
         .with_winit_window_attributes_hook(|attributes| {
             #[cfg(target_os = "macos")]
             let attributes = {

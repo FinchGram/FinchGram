@@ -7,6 +7,14 @@
 //!
 //! writes them to `target/screenshots/<theme>-<appearance>-<page>.png`. It takes over Slint's
 //! platform for the whole test process, so it only runs when asked for.
+//!
+//! The app's own window is drawn by Slint's Skia renderer over Metal (docs/skia.md), which draws
+//! text, rounded corners and shadows its own way. The same pages drawn by it, with no window either
+//! (src/offscreen.rs; it needs a GPU), go to `target/screenshots-skia/`:
+//!
+//! ```sh
+//! cargo test skia_pictures -- --ignored
+//! ```
 
 use std::rc::Rc;
 
@@ -21,8 +29,71 @@ const HEIGHT: u32 = 800;
 /// The menu bar Slint draws inside the window when there is no native one.
 const MENU_BAR: u32 = 24;
 
+/// What the pictures are drawn on: a window that is never on a screen, drawn by Slint's software
+/// renderer or by its Skia renderer over Metal.
+#[derive(Clone)]
+enum Canvas {
+    Software(Rc<MinimalSoftwareWindow>),
+    Skia(Rc<crate::offscreen::Window>, Rc<crate::offscreen::Graphics>),
+}
+
+impl Canvas {
+    /// Another window of the same kind: the screenshot tool's overlay.
+    fn another(&self) -> Canvas {
+        match self {
+            Canvas::Software(_) => Canvas::Software(MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer)),
+            Canvas::Skia(_, graphics) => Canvas::Skia(crate::offscreen::Window::new(graphics), graphics.clone()),
+        }
+    }
+
+    fn adapter(&self) -> Rc<dyn WindowAdapter> {
+        match self {
+            Canvas::Software(window) => window.clone(),
+            Canvas::Skia(window, _) => window.clone(),
+        }
+    }
+
+    fn set_size(&self, size: slint::PhysicalSize) {
+        match self {
+            Canvas::Software(window) => window.set_size(size),
+            Canvas::Skia(window, _) => window.set_size(size),
+        }
+    }
+
+    fn dispatch_event(&self, event: WindowEvent) {
+        match self {
+            Canvas::Software(window) => window.dispatch_event(event),
+            Canvas::Skia(window, _) => window.dispatch_event(event),
+        }
+    }
+
+    /// The window as it is now, `width` pixels wide and `height` high: red, green, blue.
+    fn draw(&self, width: u32, height: u32) -> Vec<u8> {
+        match self {
+            Canvas::Software(window) => {
+                let mut pixels = vec![slint::Rgb8Pixel::default(); (width * height) as usize];
+                window.request_redraw();
+                window.draw_if_needed(|renderer| {
+                    renderer.render(&mut pixels, width as usize);
+                });
+                pixels.iter().flat_map(|pixel| [pixel.r, pixel.g, pixel.b]).collect()
+            }
+            Canvas::Skia(window, _) => window.draw().as_chunks::<4>().0.iter().flat_map(|pixel| [pixel[0], pixel[1], pixel[2]]).collect(),
+        }
+    }
+
+    /// Where its pictures go, under target/.
+    fn folder(&self) -> std::path::PathBuf {
+        let name = match self {
+            Canvas::Software(_) => "screenshots",
+            Canvas::Skia(..) => "screenshots-skia",
+        };
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target").join(name)
+    }
+}
+
 struct Screenshots {
-    window: Rc<MinimalSoftwareWindow>,
+    window: Canvas,
 }
 
 thread_local! {
@@ -31,7 +102,7 @@ thread_local! {
     static CLOCK: std::cell::Cell<std::time::Duration> = const { std::cell::Cell::new(std::time::Duration::ZERO) };
     /// The main window has its adapter; the screenshot tool's overlay (a second window) gets one of
     /// its own, kept here for the test to draw.
-    static OVERLAY: std::cell::RefCell<Option<Rc<MinimalSoftwareWindow>>> = const { std::cell::RefCell::new(None) };
+    static OVERLAY: std::cell::RefCell<Option<Canvas>> = const { std::cell::RefCell::new(None) };
     /// The main window has been given its adapter.
     static HANDED: std::cell::Cell<bool> = const { std::cell::Cell::new(false) };
 }
@@ -39,11 +110,11 @@ thread_local! {
 impl Platform for Screenshots {
     fn create_window_adapter(&self) -> Result<Rc<dyn WindowAdapter>, slint::PlatformError> {
         if !HANDED.replace(true) {
-            return Ok(self.window.clone());
+            return Ok(self.window.adapter());
         }
-        let overlay = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
+        let overlay = self.window.another();
         OVERLAY.with(|slot| *slot.borrow_mut() = Some(overlay.clone()));
-        Ok(overlay)
+        Ok(overlay.adapter())
     }
 
     fn duration_since_start(&self) -> std::time::Duration {
@@ -53,64 +124,47 @@ impl Platform for Screenshots {
 
 /// Draw the window as it is now into `name`.png. Without a native menu bar, Slint draws the menu
 /// bar at the top of the window: the window is that much taller, and the picture leaves it out.
-fn save(window: &MinimalSoftwareWindow, name: &str) {
-    let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target").join("screenshots");
+fn save(window: &Canvas, name: &str) {
+    let directory = window.folder();
     std::fs::create_dir_all(&directory).expect("target/screenshots");
-    let mut pixels = vec![slint::Rgb8Pixel::default(); (WIDTH * (HEIGHT + MENU_BAR)) as usize];
     CLOCK.set(CLOCK.get() + std::time::Duration::from_secs(1));
     slint::platform::update_timers_and_animations();
     // Twice: text that wraps knows its height only once it has been laid out.
-    for _ in 0..2 {
-        window.request_redraw();
-        window.draw_if_needed(|renderer| {
-            renderer.render(&mut pixels, WIDTH as usize);
-        });
-    }
-    let bytes: Vec<u8> = pixels[(WIDTH * MENU_BAR) as usize..].iter().flat_map(|pixel| [pixel.r, pixel.g, pixel.b]).collect();
-    image::save_buffer(directory.join(format!("{name}.png")), &bytes, WIDTH, HEIGHT, image::ColorType::Rgb8)
-        .expect("write the screenshot");
+    window.draw(WIDTH, HEIGHT + MENU_BAR);
+    let pixels = window.draw(WIDTH, HEIGHT + MENU_BAR);
+    let bytes = &pixels[(WIDTH * MENU_BAR * 3) as usize..];
+    image::save_buffer(directory.join(format!("{name}.png")), bytes, WIDTH, HEIGHT, image::ColorType::Rgb8).expect("write the screenshot");
 }
 
 /// Draw the window without keeping the picture: what an `if` shows is made, or let go, only when
 /// the window is drawn (a page left and come back to between two pictures).
-fn settle(window: &MinimalSoftwareWindow) {
-    let mut pixels = vec![slint::Rgb8Pixel::default(); (WIDTH * (HEIGHT + MENU_BAR)) as usize];
+fn settle(window: &Canvas) {
     slint::platform::update_timers_and_animations();
-    window.request_redraw();
-    window.draw_if_needed(|renderer| {
-        renderer.render(&mut pixels, WIDTH as usize);
-    });
+    window.draw(WIDTH, HEIGHT + MENU_BAR);
 }
 
 /// Draw the screenshot tool's overlay, which has no menu bar, into `name`.png.
-fn save_overlay(window: &MinimalSoftwareWindow, name: &str) {
-    let directory = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("target").join("screenshots");
+fn save_overlay(window: &Canvas, name: &str) {
+    let directory = window.folder();
     std::fs::create_dir_all(&directory).expect("target/screenshots");
-    let mut pixels = vec![slint::Rgb8Pixel::default(); (WIDTH * HEIGHT) as usize];
     CLOCK.set(CLOCK.get() + std::time::Duration::from_secs(1));
     slint::platform::update_timers_and_animations();
-    for _ in 0..2 {
-        window.request_redraw();
-        window.draw_if_needed(|renderer| {
-            renderer.render(&mut pixels, WIDTH as usize);
-        });
-    }
-    let bytes: Vec<u8> = pixels.iter().flat_map(|pixel| [pixel.r, pixel.g, pixel.b]).collect();
-    image::save_buffer(directory.join(format!("{name}.png")), &bytes, WIDTH, HEIGHT, image::ColorType::Rgb8)
-        .expect("write the screenshot");
+    window.draw(WIDTH, HEIGHT);
+    let pixels = window.draw(WIDTH, HEIGHT);
+    image::save_buffer(directory.join(format!("{name}.png")), &pixels, WIDTH, HEIGHT, image::ColorType::Rgb8).expect("write the screenshot");
 }
 
 /// A right click at `x`, `y` in the picture, where the pointer then stays.
-fn right_click(window: &MinimalSoftwareWindow, x: f32, y: f32) {
+fn right_click(window: &Canvas, x: f32, y: f32) {
     click_with(window, x, y, PointerEventButton::Right);
 }
 
 /// A click at `x`, `y` in the picture, where the pointer then stays.
-fn click(window: &MinimalSoftwareWindow, x: f32, y: f32) {
+fn click(window: &Canvas, x: f32, y: f32) {
     click_with(window, x, y, PointerEventButton::Left);
 }
 
-fn click_with(window: &MinimalSoftwareWindow, x: f32, y: f32, button: PointerEventButton) {
+fn click_with(window: &Canvas, x: f32, y: f32, button: PointerEventButton) {
     let position = slint::LogicalPosition::new(x, y + MENU_BAR as f32);
     window.dispatch_event(WindowEvent::PointerMoved { position });
     window.dispatch_event(WindowEvent::PointerPressed { position, button });
@@ -118,7 +172,7 @@ fn click_with(window: &MinimalSoftwareWindow, x: f32, y: f32, button: PointerEve
 }
 
 /// The pointer resting at `x`, `y` in the picture, pressing nothing: what it hovers shows so.
-fn hover(window: &MinimalSoftwareWindow, x: f32, y: f32) {
+fn hover(window: &Canvas, x: f32, y: f32) {
     window.dispatch_event(WindowEvent::PointerMoved { position: slint::LogicalPosition::new(x, y + MENU_BAR as f32) });
 }
 
@@ -133,7 +187,7 @@ fn add_to_folder(theme: Theme) -> f32 {
 }
 
 /// The wheel turned at `x`, `y`: `down` logical pixels further down the page.
-fn scroll(window: &MinimalSoftwareWindow, x: f32, y: f32, down: f32) {
+fn scroll(window: &Canvas, x: f32, y: f32, down: f32) {
     let position = slint::LogicalPosition::new(x, y + MENU_BAR as f32);
     window.dispatch_event(WindowEvent::PointerMoved { position });
     window.dispatch_event(WindowEvent::PointerScrolled { position, delta_x: 0.0, delta_y: -down });
@@ -141,7 +195,7 @@ fn scroll(window: &MinimalSoftwareWindow, x: f32, y: f32, down: f32) {
 }
 
 /// Escape (closing a menu), and the pointer out of the window, so that nothing stays hovered.
-fn escape(window: &MinimalSoftwareWindow) {
+fn escape(window: &Canvas) {
     window.dispatch_event(WindowEvent::KeyPressed { text: Key::Escape.into() });
     window.dispatch_event(WindowEvent::KeyReleased { text: Key::Escape.into() });
     window.dispatch_event(WindowEvent::PointerExited);
@@ -832,7 +886,7 @@ fn info_sections() -> Vec<InfoSection> {
 /// The info panel's pages (the design's round 14) in its place, with made-up content: the shared
 /// media's three tabs, all members, a group that hides its members, auto-delete a member may not
 /// change, the mute's length and exceptions.
-fn info_pages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn info_pages(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     let page = ui.global::<InfoPage>();
     let words = ui.global::<InfoPageWords>();
     let month = |month: i32, rows: Vec<InfoTileRow>, files: Vec<InfoFile>, links: Vec<InfoLink>| InfoMonth {
@@ -1127,7 +1181,7 @@ fn open_news(ui: &MainWindow) {
 
 /// What can be done with a message (the design's fourth round): its menu (someone else's message,
 /// ours, a photo), replying, editing, forwarding, reporting, choosing, deleting, and a notice.
-fn message_actions(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn message_actions(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     use MessageAction as A;
     let actions = ui.global::<Actions>();
     let conversation = ui.global::<Conversation>();
@@ -1263,7 +1317,7 @@ fn found(section: FoundKind, index: i32, title: &str, kind: ChatKind, hue: Optio
 /// Bots (src/telegram/bots.rs): the group's pinned message as the bar under the header; a bot's
 /// chat with the buttons under its messages (one waiting for the bot's answer), its keyboard, its
 /// menu button; its commands offered for "/"; its answer as a dialog.
-fn bots(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn bots(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     let conversation = ui.global::<Conversation>();
     let actions = ui.global::<Actions>();
     conversation.set_pinned_message(ReplyQuote {
@@ -1349,7 +1403,7 @@ fn bots(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> 
 /// The design's fifth round (src/telegram/{reactions,topics,share,admin}.rs): the reactions'
 /// picker; the settings panel as an administrator and as a member; slow mode in the composer; a
 /// group with topics, its list, a new topic's form, a topic open, a closed one; the share panel.
-fn extras(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn extras(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     let conversation = ui.global::<Conversation>();
     // Keyboard Lab is open (open_keyboards): its end shows Mi's message with reactions and the
     // picker open on it, Jie's round video message and Mika's contact card.
@@ -1511,7 +1565,7 @@ fn extras(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -
     open_keyboards(ui);
 }
 
-fn compose(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: &dyn Fn(&str) -> String) {
+fn compose(ui: &MainWindow, window: &Canvas, theme: Theme, name: &dyn Fn(&str) -> String) {
     let search = ui.global::<Search>();
     let recent = [
         found(FoundKind::Chat, 0, "Keyboard Lab", ChatKind::Group, None),
@@ -1673,7 +1727,7 @@ fn compose(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: 
 /// The screenshot tool (the design's seventh round): in the window, the card when the system has
 /// not let FinchGram see the screen, the send card with a screenshot and the notice after saving
 /// one; on the overlay, each step from the window under the pointer to the annotations.
-fn screenshot_tool(ui: &MainWindow, window: &MinimalSoftwareWindow, overlay: &ShotWindow, overlay_window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn screenshot_tool(ui: &MainWindow, window: &Canvas, overlay: &ShotWindow, overlay_window: &Canvas, name: &dyn Fn(&str) -> String) {
     let screenshot = ui.global::<Screenshot>();
     let attachments = ui.global::<Attachments>();
     let actions = ui.global::<Actions>();
@@ -1819,7 +1873,7 @@ fn screenshot_tool(ui: &MainWindow, window: &MinimalSoftwareWindow, overlay: &Sh
 /// Sending attachments (the design's sixth round): the paperclip's menu, the card with photos,
 /// with one photo and a timer, with files (one too big), the drop zone, and the messages' states on
 /// their way (uploading, a file received, failed).
-fn attachments(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: &dyn Fn(&str) -> String) {
+fn attachments(ui: &MainWindow, window: &Canvas, theme: Theme, name: &dyn Fn(&str) -> String) {
     let attachments = ui.global::<Attachments>();
     let conversation = ui.global::<Conversation>();
     // The paperclip's menu, above the paperclip of each theme's composer.
@@ -1938,7 +1992,7 @@ fn attachments(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, na
 /// a second main language to switch to, the words mixing two languages and longer than the strip,
 /// so that the newest show; the last words being tidied; an upload's dictation, whose words come
 /// at the end; a dictation that stopped for want of Doubao's key, and one OpenAI refused.
-fn voice(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn voice(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     let voice = ui.global::<Voice>();
     voice.set_on(true);
     voice.set_service("OpenAI".into());
@@ -1988,7 +2042,7 @@ fn voice(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) ->
 /// ours, Mika's playing at 1.5×; one whose file is on its way, one that could not be had; then
 /// the composer recording: held, dragged left to cancel, locked, stopped to be listened to, a
 /// click that did not hold, and the microphone not allowed.
-fn voice_messages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn voice_messages(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     // The design's waveform (WAVE, 0 … 22) and Terminal's twenty blocks of it.
     const WAVE: [f32; 28] = [6., 10., 14., 9., 18., 22., 16., 12., 20., 22., 18., 10., 8., 14., 20., 16., 12., 22., 18., 9., 6., 12., 16., 20., 14., 10., 8., 12.];
     let bars: Vec<f32> = WAVE.iter().map(|height| height / 22.0).collect();
@@ -2069,7 +2123,7 @@ fn voice_messages(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn
 /// Chinese, a relay of Claude's for tidying), Doubao open with its key taken, while another
 /// language is being added, then scrolled to Chinese's speech recognition and its tidying and the
 /// voice messages; English through OpenAI's upload, and a connection whose address is plain http.
-fn voice_panel(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn voice_panel(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     use crate::settings::{AiVendor, VoiceInput};
     let app = ui.global::<AppState>();
     let voice = ui.global::<Voice>();
@@ -2161,7 +2215,7 @@ fn voice_panel(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&s
     app.set_page(page);
 }
 
-fn two_step(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn two_step(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     let app = ui.global::<AppState>();
     let password = ui.global::<PasswordSettings>();
     app.set_settings_section(SettingsSection::Privacy);
@@ -2190,7 +2244,7 @@ fn two_step(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str)
 /// Settings → AI access as in the design: on, with chosen chats, two apps (one connected now) and
 /// two turned away, and a log; the picker, plain and searched; off; and the dialog, for an app
 /// the system named and for one it would not.
-fn ai_access(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn ai_access(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     let app = ui.global::<AppState>();
     let ai = ui.global::<AiAccess>();
     let chat = |id: &str, title: &str, kind: ChatKind, members: i32, secret: bool, chosen: bool| AiChat {
@@ -2398,7 +2452,7 @@ fn fill_downloads(ui: &MainWindow) {
 /// empty and unreadable, the form for a new server and for one being edited, an SFTP server's key
 /// asked about (first met, changed, the folder waiting, the form, a download paused on it), and
 /// no server yet.
-fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: &dyn Fn(&str) -> String) {
+fn downloads(ui: &MainWindow, window: &Canvas, theme: Theme, name: &dyn Fn(&str) -> String) {
     let app = ui.global::<AppState>();
     let downloads = ui.global::<Downloads>();
     fill_downloads(ui);
@@ -2583,7 +2637,7 @@ fn downloads(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name
 /// The ninth round: changes on a server the user allows them on. The menu with Rename, Move to…
 /// and Delete…, the three dialogs, a name typed in place, files dragged in with uploads in the
 /// queue, what the server refused, a server that only reads, and the form's switch.
-fn downloads_changes(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: Theme, name: &dyn Fn(&str) -> String) {
+fn downloads_changes(ui: &MainWindow, window: &Canvas, theme: Theme, name: &dyn Fn(&str) -> String) {
     let downloads = ui.global::<Downloads>();
     let item = |name: &str, icon: &str, size: &str, count: i32| DialogItem { name: name.into(), icon: icon.into(), size: size.into(), count };
     let folder = |name: &str, current: bool, forbidden: bool| MoveFolder { name: name.into(), current, forbidden };
@@ -2724,7 +2778,17 @@ fn downloads_changes(ui: &MainWindow, window: &MinimalSoftwareWindow, theme: The
 #[test]
 #[ignore = "takes over Slint's platform; run with: cargo test screenshots -- --ignored"]
 fn screenshots() {
-    let window = MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer);
+    draw_every_page(Canvas::Software(MinimalSoftwareWindow::new(RepaintBufferType::NewBuffer)));
+}
+
+/// Every page drawn by Slint's Skia renderer over Metal, as the app's window is (the test is
+/// src/offscreen.rs's, so that `cargo test screenshots` does not start it too).
+pub(crate) fn draw_with_skia() {
+    let graphics = crate::offscreen::Graphics::new();
+    draw_every_page(Canvas::Skia(crate::offscreen::Window::new(&graphics), graphics));
+}
+
+fn draw_every_page(window: Canvas) {
     slint::platform::set_platform(Box::new(Screenshots { window: window.clone() })).expect("platform");
     crate::fonts::register();
     window.set_size(slint::PhysicalSize::new(WIDTH, HEIGHT + MENU_BAR));
@@ -3112,7 +3176,7 @@ fn live_channel(id: &str, source: LiveSource, name: &str, title: &str, status: L
 
 /// The live directory's pages (Discover, Following, Connections, Watch, the mini player), in
 /// their states, with the canvas's kind of made-up data.
-fn live_directory(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn live_directory(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     settle(window);
     // Settings › Live's languages, two chosen (the settings pictures show them).
     ui.global::<LiveDirectory>().set_preferred_languages(model(
@@ -3446,7 +3510,7 @@ fn live_comment(id: i32, name: &str, text: &str, stars: i32, tier: i32, host: bo
 /// The live streams' view (the canvas "FinchGram Live"): who is live, nobody open; a live story
 /// playing with its comments; one sent over WebRTC only, for the phone; the user's own, as its
 /// host, and the question before ending it; the form to go live, for the story and for a channel.
-fn live(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn live(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     // The theme's window is there to be asked for the view (a page just come back to is made at
     // the next drawing).
     settle(window);
@@ -3745,7 +3809,7 @@ fn fill_music(ui: &MainWindow) {
 /// The Music page's scenes: the albums with the queue and the bar, the queue hidden, an album, the
 /// artists, the favourites, the form for a new source and after its test, a source that cannot
 /// be reached, and no source yet.
-fn music(ui: &MainWindow, window: &MinimalSoftwareWindow, name: &dyn Fn(&str) -> String) {
+fn music(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
     use crate::{Music, MusicSection, MusicState, MusicView, SourceTest, TrackRow};
     let app = ui.global::<AppState>();
     let music = ui.global::<Music>();

@@ -17,13 +17,29 @@ members = ["crates/finchgram-release-sign", "crates/finchgram-ui"]
 
 [workspace.dependencies]
 # ~1.18: minor upgrades are deliberate. The unstable-* features (the transparent title bar, the
-# bundled fonts, src/main.rs and src/fonts.rs) may change in any minor release.
-slint = "~1.18"
+# bundled fonts, the video frame's texture: src/platform/, src/fonts.rs, src/player/) may change in
+# any minor release. Without Slint's default features: they bring its FemtoVG renderer, which draws
+# through OpenGL; each package names what it needs.
+slint = { version = "~1.18", default-features = false }
 slint-build = "~1.18"
 
 [dependencies]
 finchgram-ui = { path = "crates/finchgram-ui" }
-slint = { workspace = true, features = ["unstable-winit-030", "unstable-fontique-011"] }
+# The window is drawn by Slint's Skia renderer over Metal (docs/skia.md): renderer-skia, and
+# unstable-wgpu-30 for the video frame, which comes in as a texture. The rest is what Slint's
+# defaults gave. The software renderer draws the test pictures and the timing test, and stays in
+# every build so that building and testing ask for one set of features, and the UI's generated Rust
+# is compiled once; the app never draws its window with it (src/platform/, select_backend).
+slint = { workspace = true, features = [
+    "std", "backend-winit", "accessibility", "compat-1-2", "system-tray",
+    "renderer-skia", "renderer-software",
+    "unstable-winit-030", "unstable-fontique-011", "unstable-wgpu-30",
+] }
+# Skia itself is the archive vendor/skia/build.sh makes (scripts/fetch-skia.sh, build.rs). This
+# crate, which Slint's Skia renderer brings, would otherwise download rust-skia's own, or build Skia
+# from sources it downloads: no-compile forbids the second, and build.rs stops a build that was not
+# told where our archive is. The version is the one vendor/skia/build.sh is pinned for.
+skia-bindings = { version = "=0.153.3", features = ["no-compile"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 toml = "1"                                      # settings file
@@ -34,7 +50,6 @@ qrcode = { version = "0.14", default-features = false }   # the QR code for logg
 # Pictures in messages, decoded off the UI thread (src/images.rs); Slint uses the same crates.
 image = { version = "0.25", default-features = false, features = ["bmp", "jpeg", "png", "webp"] }
 base64 = "0.23"                                 # TDLib's bytes (a photo's tiny preview)
-glow = "0.18"                                   # the video's OpenGL texture (src/player/); Slint's renderer uses it too
 # The self-updater (src/update.rs) and the release signing tool (src/bin/).
 ureq = { version = "3", features = ["platform-verifier"] }    # the Keychain's roots too, for a music server of the user's own
 semver = "1"
@@ -116,6 +131,11 @@ objc2-av-foundation = { version = "0.3", default-features = false, features = ["
 # draws them into pixels; the same objc2 family.
 objc2-image-io = { version = "0.3", default-features = false, features = ["std", "CGImageProperties", "CGImageSource", "objc2-core-graphics"] }
 objc2-core-graphics = { version = "0.3", default-features = false, features = ["std", "CGBitmapContext", "CGColorSpace", "CGContext", "CGImage"] }
+# A video frame's way from mpv to the window (src/player/surface.rs, docs/skia.md): mpv draws with
+# OpenGL into an IOSurface, and Metal reads the same surface as a texture, which wgpu and Slint take.
+# The same objc2 family, at the versions wgpu's Metal backend uses: its texture type is theirs.
+objc2-io-surface = { version = "0.3", default-features = false, features = ["std", "IOSurfaceRef", "objc2-core-foundation"] }
+objc2-metal = { version = "0.3", default-features = false, features = ["std", "MTLDevice", "MTLPixelFormat", "MTLResource", "MTLTexture", "objc2-io-surface"] }
 
 # The UI's generated Rust in a development build: line tables only (enough for a backtrace), so its
 # million lines compile faster and their build cache stays smaller; nobody steps through it.

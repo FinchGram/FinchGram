@@ -1,155 +1,277 @@
-# 全面接入 Skia：窗口、我们自己画的图，以及 tiny-skia 和 resvg 能去掉多少
+# 窗口换成 Skia + Metal，OpenGL 只留给 mpv
 
 [English](skia.md)
 
-状态：暂停（维护者，2026-10-12）。2026-10-11 写成待办的第一项；第二天权衡它能带来什么之后，维护者决定暂停。
-窗口仍用 FemtoVG：第 2 步对 app 自己画的东西没有任何改变（那些都是先画成图片再交给 Slint 显示，与渲染器无关），
-却带着下文说的 mpv 风险。第 1 步和第 3 步等第一个真正需要 Skia 的功能一起做，比如动态贴纸（Skottie）或图片编辑；
-在那之前截图工具的 resvg 留着，或者用纯 Rust 换掉（parley、skrifa、tiny-skia，Slint 已经全带进了构建）。
-将来做 PDF 走 macOS 的 PDFKit：Skia 只会写 PDF，不会读也不会改。下面的东西都还没做。文中的事实以 2026-10-11
-Cargo.lock 里的版本为准：Slint 1.18.1、skia-safe 和 skia-bindings 0.153.3、resvg 0.48.1。开工需要新增一个
-vendor 构建（推一个 `skia-*` tag），并改发布工作流。
+状态：2026-11-11 做完，2026-11-12 随 0.8.0 发布，暂时带着它在内存上的代价（见下文"内存"和"已定"）。
+维护者 11 日的话："Slint 留下，FemtoVG 换成 Skia，OpenGL 的依赖逐项迁走"；在弄清
+mpv 离不开 OpenGL 之后定下的目标是：窗口和 FinchGram 自己画的一切都走 Metal，OpenGL 只留在 mpv 内部，用 mpv
+自己的一个上下文。`vendor/skia/build.sh` 从源码构建 Skia、以及视频帧的整条路，都先在 app 之外试过（见下文
+"实测结果"），然后才改的 app（见"怎么做的"）。2026-10-11 有过第一版计划：窗口用 Skia 但仍走 OpenGL，和 mpv 共用一个上下文；
+第二天就暂停了，因为它没有收益，还带着风险（两边会共用 OpenGL 的状态）。改走 Metal 之后这个风险不存在了，
+窗口也真的离开了 OpenGL。
 
-## 现在谁在画什么
+文中的事实以 Cargo.lock 里的版本为准：Slint 1.18.1、skia-safe 和 skia-bindings 0.153.3、wgpu 30.0.1，
+以及 mpv 0.41.0（`vendor/mpv/build.sh`）。
 
-- 窗口：Slint 的 FemtoVG 渲染器，走 OpenGL（Slint 的默认功能）。媒体查看器里的视频由 libmpv 画进同一个上下文里
-  我们自己的一张 OpenGL 纹理（`src/player/`）。
-- 测试图片和计时测试：Slint 的软件渲染器（`src/screenshots.rs`、`src/telegram/timing.rs`）。
-- 我们自己画的图，用 resvg（resvg 底下用 tiny-skia 画）：
-  - 截图工具出的图：标注先写成一段 SVG，用打包的字体画在从屏幕上抠下来的选区上，再由 `image` crate 存成 PNG
-    （`src/screenshot/export.rs`）；
-  - 菜单栏图标：把标志（`ui/logo/svg/FinchGram-mark-16.svg`）画成 36 像素见方的模板图（`src/platform/macos.rs`
-    的 `mark_png`）。
-- Slint 自己：`ui/` 里每个 `@image-url("….svg")`（所有 Phosphor 图标和标志）都由 resvg 按显示尺寸栅格化，
-  不管窗口用哪个渲染器（`i-slint-core` 的 `graphics/image/svg.rs`）。
+## OpenGL 原来用在哪里，各自怎么处理
 
-`cargo tree -i resvg` 两处都能看到：FinchGram 自己，以及 Slint 经由 `i-slint-common` 和 `i-slint-core`。
-tiny-skia（0.12）只是跟着 resvg 进来的。
+| | 用在哪里 | 怎么处理 |
+|---|---|---|
+| 1 | 窗口：Slint 的 FemtoVG 渲染器靠 OpenGL 画每一页 | 换成 Slint 的 Skia 渲染器，它在 macOS 上走 Metal |
+| 2 | 视频帧的交接：mpv 画进窗口的 OpenGL 上下文里的一张纹理，Slint 把它当图片显示（`glow`，以及在 mpv 前后保存、恢复 OpenGL 状态） | mpv 画进一块 IOSurface，Metal 读同一块内存，不再共用任何状态 |
+| 3 | 弹出窗口有自己的播放器，因为每个窗口有自己的 OpenGL 上下文 | 所有窗口共用一个 Metal 设备；单独的播放器暂时留着，因为那个窗口有自己的属性 |
+| 4 | mpv 自己画画面：libmpv 的 render API 只会 OpenGL 和普通内存 | 留着，放在 mpv 自己的、不带窗口的 OpenGL 上下文里 |
+| 5 | Slint 的 Skia 渲染器不管要不要都会编译 Skia 的 OpenGL 后端、`glow` 和 `glutin` | 留在构建里，不会被调用；只有 Slint 能改 |
 
-## 哪些能去掉，哪些只有 Slint 能改
+所以 OpenGL 并没有离开 app，而是被关起来了。FinchGram 自己的代码大约调用十五个 OpenGL 和 CGL 函数，全是为了
+第 4 项：一个上下文、一张纹理、一个帧缓冲、一次 flush。
 
-- **我们自己的能去掉。** 上面两张图改用 Skia 画，`resvg` 从 Cargo.toml 里删掉（第 3 步）。
-- **Slint 的去不掉，Slint 1.18 现在就是这样。** 它的 Skia 渲染器自己打开了 `i-slint-core` 的 `svg` 功能
-  （`i-slint-renderer-skia` 1.18.1 的 Cargo.toml），画 SVG 图片的办法是让 resvg 栅格化，再把像素交给 Skia
-  （`cached_image.rs` 的 `ImageInner::Svg`）。FemtoVG 和软件渲染器也一样。所以换过去以后，resvg 和 tiny-skia
-  仍然会被 Slint 编进 app，FinchGram 怎么做都一样。
-- 要彻底去掉，得让 Slint 用 Skia 自己的 SVG 模块（SkSVGDOM，skia-safe 的 `svg` 功能）画 SVG，而且它的 Skia
-  渲染器不再要求 `svg`。这是 Slint 里的改动：向上游提（issue 或 pull request），或者 fork Slint，而 fork
-  每次升级 Slint 都得跟着搬一遍。建议：向上游提，不 fork。
-- 把图标改成 Slint 的 `Path` 元素（用 Phosphor 的路径数据，由 Skia 直接画）能让每个图标都由 Skia 画，但这些
-  crate 照样留在构建里。只有和上面 Slint 那项改动一起做才值得。
+## 调研结论
 
-## 步骤
+### Slint
 
-### 1. Skia 由我们自己的 CI 构建
+- 它的 Skia 渲染器在 macOS 上有三种 surface：wgpu（默认，底下是 Metal；已经没有直接的 Metal surface 了）、
+  OpenGL（`renderer-skia-opengl` 功能）和软件（`i-slint-renderer-skia` 的 `lib.rs`）。用
+  `BackendSelector::require_wgpu_30(…)` 加 `renderer_name("skia-wgpu")` 得到的就是第一种，没有别的 surface
+  可退。
+- 所有窗口用同一个 wgpu 设备：第一个窗口创建，后面的窗口找到它（`SkiaSharedContext`）。
+- 外来的画面以 `slint::Image::try_from(wgpu::Texture)` 进来，需要 `unstable-wgpu-30` 功能。Slint 只收两种
+  格式，`Rgba8Unorm` 和 `Rgba8UnormSrgb`，并要求纹理的用途写着 `TEXTURE_BINDING | RENDER_ATTACHMENT`
+  （`i-slint-core` 的 `graphics/wgpu_30.rs`）；它实际上只读这张纹理（`wgpu_30_surface/metal.rs` 的
+  `import_metal_texture`）。OpenGL 纹理（`BorrowedOpenGLTexture`）只有 OpenGL surface 才画，所以渲染器和
+  交接方式必须一起换。
+- 渲染通知器给的是 `GraphicsAPI::WGPU30 { instance, device, queue }`。设了通知器之后 Slint 每次都重画整个
+  窗口，所以纹理的内容变了不用重新设置也会显示出来。
+- 文字的排版和以前一样（parley 和 fontique，各渲染器共用）；字形由 Skia 画。
 
-已知的事实：
+### mpv
 
-- Slint 1.18.1 的 Skia 渲染器用的是 skia-safe 0.153.3，也就是 Skia m153：rust-skia 的 commit
-  `b7f043e0b1e2a850e702245de811f01df1f6b0ff`（2026-09-04），rust-skia 自己 fork 的 Skia 在 tag
-  `m153-0.101.2`（`61e7ca4e`）。crates.io 上的这个 crate 就是这个 commit 的 `skia-bindings/`，只多了打包用的
-  文件和给 docs.rs 用的绑定（所以它的 `.cargo_vcs_info.json` 写着 "dirty"）。
-- 它在 FinchGram 构建里的功能：`gl`，Apple 系统上还有 `metal`（这两个是 Slint 要的），加上 skia-safe 的默认
-  功能 `binary-cache`、`embed-icudtl`、`pdf` 和 `jpeg`（Slint 没有关掉）。预编译包按 key 命名，这一组的 key 是
-  `b7f043e0b1e2a850e702-aarch64-apple-darwin-ganesh-gl-jpegd-jpege-metal-pdf`。
-- skia-bindings 的构建脚本默认从 rust-skia 自己的 release（`github.com/rust-skia/skia-binaries`，4.95 MB）
-  下载这个包，下载失败就自己下载源码来编译 Skia。conventions.md 两样都不允许：不用第三方预编译的二进制，
-  也没有退路。
-- 它也能从 `SKIA_BINARIES_URL` 指的任何地方取同样的包（一个带 `{tag}` 和 `{key}` 的模板；`file://` 加绝对路径
-  可以，相对路径不行）。它的 `no-compile` 功能把"下载失败就编译 Skia"变成构建错误。
+- libmpv 的 render API 有两个后端，`"opengl"` 和 `"sw"`（`render.h`）。软件那个，按头文件自己的话，
+  "extremely simple (but slow)"：每一帧都在 CPU 上转换，而且不收硬件解码器的帧。
+- 上游：mpv 0.42 给 render API 加了 Direct3D 11，是 Windows 用的；有一个 pull request（#16818）把新的渲染器
+  接进 render API，先做的也是 OpenGL。macOS 上的 Metal 或 Vulkan 都没有。mpv 自己在 macOS 上的窗口代码放不进
+  别的程序的窗口里（0.41 不接受外来的窗口）。
+- 所以 mpv 的画面只有这几条路：留着它的 OpenGL 并把它关起来（选了这条）；用它的软件渲染器，OpenGL 没了但视频
+  变差（每一帧都靠 CPU，不能用硬件帧，渲染器的颜色处理也没有了）；等上游；或者不用 mpv，这一条不考虑。
 
-要做的：
+### OpenGL 和 Metal 共用一块 surface
 
-- `vendor/skia/build.sh`，开头锁定：rust-skia 的 commit、必须产出的 key、最老支持的 macOS（12.0，和其他 vendor
-  构建一样；rust-skia 会把 `MACOSX_DEPLOYMENT_TARGET` 传给编译器）。它把 rust-skia 签出到这个 commit（连同 Skia
-  子模块），按 Slint 要的功能构建 `skia-safe`，这样功能组合和 key 都和 app 的一致。构建时设
-  `FORCE_SKIA_BUILD=1`，保证不会去下载 rust-skia 的包；再设 `BUILD_ARTIFACTSTAGINGDIRECTORY`，让构建导出
-  `skia-binaries/`（静态库、生成的绑定、Skia 的许可证和 key）。脚本把它打成 `skia-binaries-<key>.tar.gz`，
-  检查 key 对不对、库是不是为 macOS 12.0 编的，再写 BUILD-INFO.txt 和 SHA256SUMS。Skia 自己的第三方代码按它的
-  DEPS 文件来，每个都锁定到 commit（`tools/git-sync-deps`）；gn 由 Skia 的 `bin/fetch-gn` 取，ninja 用 Homebrew
-  装，和 mpv 用 meson、ninja 一样：都是构建工具，不进 app。
-- `.github/workflows/skia.yml`，照 mpv.yml 的样子：tag 是 `skia-<skia-bindings 版本>-<n>`，第一个是
-  `skia-0.153.3-1`，用 `--latest=false` 发布。
-- `scripts/fetch-skia.sh` 把锁定的包下载到 `vendor/skia/bin/`，检查 SHA-256，再写一个 `.cargo/config.toml`
+2026-11-11 用两个小程序实测（macOS 26.6.2，Apple M4 Max；这台机器上的 OpenGL 是 "4.1 Metal"，也就是苹果自己
+架在 Metal 上的 OpenGL）：
+
+- 不带窗口的 OpenGL 上下文（CGL，3.2 core profile）画进一张以 IOSurface 为存储的纹理
+  （`CGLTexImageIOSurface2D`，`GL_TEXTURE_RECTANGLE`），外面套一个帧缓冲。Metal 在同一块 surface 上创建纹理
+  （`newTextureWithDescriptor:iosurface:plane:`），读到的就是 OpenGL 画的内容；OpenGL `glFlush` 之后，
+  第二帧也能读到。
+- OpenGL 只接受 `GL_BGRA` 加 `GL_UNSIGNED_INT_8_8_8_8_REV`；`GL_RGBA` 被拒绝（CGL 错误 10008）。内存里的字节
+  顺序是蓝、绿、红、alpha。
+- Metal 在它上面既能建 BGRA 纹理也能建 RGBA 纹理。Slint 要的 RGBA 那种，红蓝是反的，除非在描述里写明
+  （`swizzle`：红取蓝、蓝取红）：这样颜色就对了，而且不用拷贝。
+- 带 swizzle 的纹理不能做渲染目标（Metal 校验层的原话："Texture swizzling is not compatable with
+  MTLTextureUsageRenderTarget"）。所以它按只读创建；对 wgpu 那一层，用途仍然写着 `RENDER_ATTACHMENT`，
+  这是 Slint 要求的，但它从不使用。这一点依赖 Slint 1.18.1 的现状。以后的 Slint 如果真要往这种纹理里画，
+  退路是在 GPU 上多拷一次，拷进一张 wgpu 自己的纹理。
+
+## 实测结果
+
+都是 2026-11-11 在同一台 Mac 上测的；GitHub 的 runner 和 macOS 12 上都没跑过。
+
+### 从源码构建 Skia
+
+`vendor/skia/build.sh` 从零跑完（取源码、构建、检查、打包）：88 秒，其中构建 49 秒（ninja 31 秒编了 1037 个
+目标文件）。包是 4.9 MB：`libskia.a`（13.5 MB）和绑定，加上 Skia 及其内含各库（expat、libjpeg-turbo、
+libpng、zlib、wuffs）的许可证。它的名字正是 skia-bindings 要找的；每个目标文件都标着 macOS 12.0；
+skia-bindings 在不许自己编译 Skia（`no-compile`）的设置下，从一个 `file://` 地址接受了它。
+
+GitHub 的 runner（macos-latest，三核；macOS 26.7.2，Xcode 26.6）在 2026-11-12 做同样的事用了 6 分 21 秒。
+它出的包 4.8 MB，就是 `skia-0.153.3-1` 这个 release，app 用它构建。它的绑定和本机的差 137 行，全是 libc++
+自己的内部类型在另一个 Xcode 里的叫法；app 的测试和视频检查用它都通过。
+
+一个只有几行的 Slint 程序，按 app 的发布配置编译：用 FemtoVG 是 10.1 MB，用 Skia + Metal 是 16.4 MB，
+多 6.2 MB。
+
+### 一帧视频，从 mpv 到 Slint 画出来
+
+app 之外的一个程序（`frame-check`，和 Skia 构建的中间文件放在一起，不进 git）按 app 的方式设置 mpv，并按 app
+将来的方式画：mpv 在自己的 OpenGL 上下文里画进 IOSurface，Slint 的 Skia 渲染器经 Metal 把它画出来。测试视频
+是十二帧的四个象限，红、绿、蓝、白，每帧轮换一格，中间一个灰块标明帧号：颜色、上下左右、是第几帧，都从像素值
+读出来，不靠眼睛判断。
+
+不开窗口（Slint 画进一张纹理再读回来），mpv 一帧一帧地步进：
+
+| 视频 | 解码 | mpv 写进 surface 的 | Slint 画出来的 |
+|---|---|---|---|
+| FFV1，RGB，320×180 | FFmpeg | 12 帧全对 | 12 帧全对，数值分毫不差 |
+| H.264，1280×720 | VideoToolbox（nv12） | 12 帧全对 | 12 帧全对 |
+| HEVC Main 10，1920×1080 | VideoToolbox（p010） | 12 帧全对 | 12 帧全对 |
+
+每块 surface 只把图像交给 Slint 一次，之后的每一帧都不用重新设置就显示出来了。全程开着 Metal 的校验层，
+没有任何报错。
+
+在按 app 的方式创建的窗口里（透明标题栏），由 Skia 经 Metal 绘制，mpv 的帧在渲染通知器里画：同样三段视频，
+把窗口从屏幕上截下来，和场景自己画的红、绿、蓝、白方块比对：颜色相同，位置正确。播放时：
+
+| 视频 | 6 秒内画出的帧 | 丢掉的帧 | mpv 每帧绘制 |
+|---|---|---|---|
+| H.264，1920×1080，每秒 60 帧 | 336 到 338 | 6 到 8 | 约 1.5 毫秒 |
+| HEVC Main 10，3840×2160，每秒 60 帧（按 2560×1440 画） | 337 到 340 | 4 到 7 | 约 2.1 毫秒 |
+
+（这六秒包含打开文件的时间；丢掉的帧推断是开头那几帧，没有逐帧核对。）把 OpenGL 画的内容交出去的那次 flush
+耗时 0.02 毫秒。
+
+### 改完之后的 app
+
+- 可执行文件 157.9 MB（0.7.14 是 150.4 MB），多 7.5 MB。`scripts/bundle.sh` 原来的上限是 160 MB，现在是 185 MB。
+- 截图测试画的每一页（1837 页：三套主题、浅色和深色、十一种语言）都用软件渲染器和 Skia + Metal 各画了一遍
+  （`cargo test skia_pictures -- --ignored`），再逐像素比较。差别最大的一页有 1.96% 的像素相差较远
+  （某个通道差 48/255 以上），中位数是 0.48%：都是文字和圆角的边缘。没有任何一页缺东西或者错位。软件渲染器
+  一直画不出来的东西，Skia 的图里都有：彩色 emoji、头像的圆角、圆形的视频消息。
+- app 里的视频检查（`cargo test video_frames -- --ignored`）：两段视频都是 12 帧全对、顺序正确，窗口的渲染器
+  没了之后那一帧也在新的 surface 里重新出现。
+- `scripts/bundle.sh` 在本机从头跑到尾：32 分钟，打出的包 206 MB，里面有 Skia 的许可证。
+- 那个包里的程序启动过一次，用的是它自己的主目录，没有账号（本机没有 api_id）：窗口出现在屏幕上，显示登录页时
+  占 96 MB，选退出后一秒内结束，没有崩溃报告。没有人看过那个窗口：启动它的终端没有截屏的权限。
+
+### 内存
+
+一个小窗口（640×120），里面一行文字，每秒重绘六十次，然后停下；记录进程的内存占用（活动监视器的"内存"一栏），
+机器有 128 GB 内存：
+
+| 窗口由谁画 | 空闲时 | 重绘中，拉丁文 | 加中文（苹方） | 加 emoji |
+|---|---|---|---|---|
+| FemtoVG + OpenGL（0.7.14 及以前的 app） | 54 MB | 279 MB | 281 MB | 282 MB |
+| FemtoVG + Metal | 45 到 52 MB | 470 MB | 473 MB | 470 MB |
+| Skia + Metal（这次的改动） | 341 MB | 431 MB | 537 MB | 730 MB |
+| Skia + Metal，字体缓存不拷贝（试验） | 77 MB | 430 MB | 457 MB | 466 MB |
+
+- 窗口重绘期间，GPU 一侧会多占几百 MB，不管谁来画；最后一帧之后一秒就还回去：走 OpenGL 约 225 MB，
+  走 Metal 约 400 MB。（具体多少可能和机器的内存大小有关。）
+- 常驻的那部分是 Slint 造成的。它的 Skia 渲染器每用到一个字体的一个字重或一种变体，就把整个字体文件在内存里
+  拷贝一份（`i-slint-renderer-skia` 1.18.1 的 `font_cache.rs`，`Data::new_copy`）；FemtoVG 和软件渲染器
+  用的是 fontique 映射进来的那一份。Apple Color Emoji 的文件是 192 MB；苹方是 78 MB，之后每多一个字重
+  12.6 MB；Noto Sans SC 每个字重 17.8 MB。一个有 emoji 和中文的聊天，就比 0.7.14 多占大约 300 MB。
+  （安装版 0.7.14 用了六个小时之后是 632 MB。）
+- 试验：把那个文件改六行（不拷贝，用 `Data::new_bytes`，字体数据永久保留：系统字体的文件是映射进来的，
+  app 自己的字体本来就在可执行文件里），Skia 空闲时就是 77 MB。这只是一次测量：app 里没有改 Slint 的任何东西。
+- 拷贝与否，画出来的东西一样。拷贝就是整个文件变成进程自己的内存，第一次用到这个字体时要把文件读一遍；
+  这是简单而安全的做法，因为 Skia 拿着的是自己的一份。不拷贝，用的就是映射文件的那些页，和系统共享，
+  内存紧张时可以丢掉，但这些字节必须活得比 Skia 用它们的时间长。
+- Slint 的 Skia 渲染器对每张图片的像素也同样多留一份拷贝（表里没有体现：那个窗口不显示图片）。
+- 整轮截图测试（1837 页、两个窗口、十一种语言的字体）的峰值：软件渲染器 65 MB，Skia 1427 MB，其中 740 MB
+  在 GPU 一侧（Skia 给每个窗口最多留 256 MB 的纹理，Slint 没有另设上限），其余大部分是字体。
+
+### 过程中看到的
+
+- mpv 说"有一帧要画"的时候，也可能是原来那一帧（比如暂停之后）：不能拿它的通知当帧数来数。
+- 在 mpv 等着显示一帧的时候去问它视频的尺寸，要花几十毫秒。app 的做法是用 mpv 主动报告的尺寸，不知道的时候
+  才问。
+- 窗口被别的窗口完全盖住时，macOS 只偶尔让它重绘；没来得及画的帧 mpv 就丢掉（声音照常）。所以测试窗口得
+  置顶。
+- mpv 的 render 调用会等到这一帧该显示的时刻才返回（`MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME`，默认打开，
+  app 没有改它）。每秒 60 帧时这没什么；每秒 10 帧的视频，每一帧要在界面线程上等 30 到 50 毫秒，关掉等待后
+  是 3 毫秒。app 从 0.2.0 起就是这样画视频的；这个数是在测试程序里量的，不是在 app 里量的。它不属于这次迁移，
+  先原样留着：关掉等待后，一帧最多会提前 50 毫秒显示，改之前得先想清楚（音画同步）。
+
+## 怎么做的
+
+### Skia，由我们自己的 CI 构建
+
+- skia-bindings 的构建脚本会按自己的确切版本从 rust-skia 的 release 下载一个 Skia 的包，下载失败就下载源码来
+  编译。conventions.md 两样都不允许。它也能从 `SKIA_BINARIES_URL` 指的任何地方取同样的包，而它的
+  `no-compile` 功能把"下载失败就编译 Skia"变成错误。
+- `vendor/skia/build.sh` 构建的就是这个包。开头锁定的有：skia-bindings 0.153.3 发布时所在的 rust-skia commit
+  （包就是按它命名的）、那个 commit 锁定的 Skia commit、功能组合（Slint 的 Skia 渲染器向 skia-safe 要的
+  `gl` 和 `metal`，加上 skia-safe 自己的默认功能）、包的名字，以及 macOS 12.0。活儿交给 skia-bindings 自己的
+  构建脚本去干（设 `FORCE_SKIA_BUILD`，就不会去下载 rust-skia 的包；设 `BUILD_ARTIFACTSTAGINGDIRECTORY`，
+  它就把包的内容导出来），中间隔着一个只有一行依赖的 crate，它的 `Cargo.lock` 放在脚本旁边，锁定那个构建脚本
+  用到的 crate（bindgen 等等）。Skia 的第三方代码按 Skia 的 DEPS 文件锁定的 commit 来；gn 由 Skia 自己的
+  `bin/fetch-gn` 取，ninja 用 Homebrew 装：都是构建工具，和 mpv 用 meson、ninja 一样。脚本检查包的名字、
+  版本、每个目标文件是不是为 macOS 12.0 编的，再把包连同许可证和 BUILD-INFO.txt 打在一起。
+- `.github/workflows/skia.yml` 在 `skia-<skia-bindings 版本>-<n>` 这样的 tag 上构建，用 `--latest=false`
+  发布，和 mpv.yml 一样。
+- `scripts/fetch-skia.sh` 把锁定的包下载到 `vendor/skia/bin/`，检查 SHA-256，再写 `.cargo/config.toml`
   （不进 git），内容是
-  `[env] SKIA_BINARIES_URL = "file://<仓库路径>/vendor/skia/bin/skia-binaries-{key}.tar.gz"`。路径必须是绝对的，
-  进 git 的文件写不出来（Cargo 的 `relative = true` 给出的是路径，不是 `file://` URL）。
-- Cargo.toml 加上 `skia-bindings = { version = "=0.153.3", features = ["no-compile"] }`，配注释说明原因。
-  `SKIA_BINARIES_URL` 没指向 `vendor/skia/bin/` 里的包时，build.rs 停下来并提示"先运行 scripts/fetch-skia.sh"，
-  和 libmpv、字体的做法一样。（没跑这个脚本时，skia-bindings 仍可能在这次被 build.rs 叫停的构建里去取 rust-skia
-  的包，但取来的东西不会被链接进去。）
-- `release.yml` 和另外三个脚本一起运行 `scripts/fetch-skia.sh`。
-- 从此以后，升级 Slint 如果带来新的 skia-safe，就要重做一次 vendor 构建：Cargo.lock 里 skia-bindings 的版本、
-  `vendor/skia/build.sh` 和 `scripts/fetch-skia.sh` 要一起改。
+  `[env] SKIA_BINARIES_URL = "file://<仓库路径>/vendor/skia/bin/skia-binaries-{key}.tar.gz"`：
+  skia-bindings 只认带绝对路径的 `file://` 地址，而进 git 的文件写不出绝对路径。
+- Cargo.toml 要求 `skia-bindings` 带 `no-compile`，版本和 Cargo.lock 里的完全一致。地址没指向
+  `vendor/skia/bin/` 时，`build.rs` 停下来并提示"先运行 scripts/fetch-skia.sh"。（没跑这个脚本时，
+  skia-bindings 仍可能在这次被 build.rs 叫停的构建里去取 rust-skia 的包，但取来的东西不会被链接进去。）
+- 升级 Slint 如果带来新的 skia-safe，就要先重做一次 vendor 构建：Cargo.lock 里 skia-bindings 的版本、
+  `vendor/skia/build.sh` 开头的锁定块及其 `Cargo.lock`、`scripts/fetch-skia.sh` 要一起改。
 
-要量的：CI 构建要多久（mpv 的上限是 120 分钟），app 会大多少（这些库是静态的，链接器会丢掉没被调用的部分）。
+### 窗口
 
-### 2. 窗口换成 Skia，走 OpenGL
+- Cargo.toml：`slint` 不用默认功能，只留 app 用到的，加上 `renderer-skia` 和 `unstable-wgpu-30`；FemtoVG 和
+  `glow` 不再是 app 自己的依赖。软件渲染器留着：测试图片和计时测试用它画，而且构建和测试用同一组功能，
+  UI 生成的那份 Rust 才只编译一次。app 运行时绝不会退到它上面。
+- `select_backend()` 要求 Metal 上的 wgpu 和 `skia-wgpu` 渲染器。做不到的 Mac 在启动时报错，而不是换一个
+  渲染器。
 
-- Cargo.toml：`slint` 设 `default-features = false`，留下 app 用到的默认功能（`std`、`backend-winit`、
-  `accessibility`、`compat-1-2`、`system-tray`），加上 `renderer-skia-opengl`，去掉 `renderer-femtovg`。
-  `renderer-software` 挪到 `[dev-dependencies]`，只给测试图片和计时测试用；edition 2024 的依赖解析不会把它带进
-  app。不留第二个渲染器当退路。
-- 用 OpenGL，不用 Metal。macOS 上 Slint 的 Skia 渲染器默认走 Metal（经由 wgpu），但 libmpv 的 render API
-  只能画进 OpenGL 或普通内存，而 Slint 只有 Skia 的 OpenGL surface 才能接收播放器的纹理（`BorrowedOpenGLTexture`，
-  `opengl_surface.rs` 里的 `import_opengl_texture`）。开了 `renderer-skia-opengl`，这个 surface 排在第一个试，
-  渲染通知器给的仍然是 `GraphicsAPI::NativeOpenGL`，所以 `src/player/` 的结构不用变。`select_backend()` 里也写明
-  （`renderer_name("skia-opengl")`、`require_opengl()`），这样万一落到别的 surface 上，启动时就报错，而不是视频一片黑。
-- Slint 的 winit 后端会打开 Skia 渲染器的默认功能，所以 wgpu 30（Slint 的 Metal 路径）虽然不用也会编进去：
-  这也算在要量的体积里。
-- **风险在视频。** Skia 会记住自己设过的 OpenGL 状态，不再重复设置；FemtoVG 每一帧开始时都把需要的状态重新设一遍。
-  Slint 1.18.1 在 BeforeRendering 之前会 flush Skia，但之后不重置 Skia 的状态（没有调用 `DirectContext::reset`）。
-  libmpv 画的时候要求 OpenGL 处在默认状态，画完也留下默认状态，只有 viewport、scissor 区域、混合函数和清屏颜色
-  除外（`render_gl.h`）。播放器的 `GlState` 恢复的是 FemtoVG 需要的那些；Skia 下一次画的时候，仍可能以为某个
-  program、buffer、纹理或混合设置还是它设的样子，而 mpv 已经改过了。两条出路：
-  1. 让 mpv 在自己的 OpenGL 上下文里画，和 Slint 的上下文共享纹理（`CGLCreateContext` 时把 Slint 的上下文作为共享
-     对象，mpv 画的前后切换当前上下文，切回去之前 flush），Skia 的状态就完全不会被碰到。render_gl.h 自己也说，
-     共享上下文是互不干扰状态的办法。先试这个。
-  2. 让 Slint 在通知器之后重置 Skia 的上下文（`gr_context.reset(None)`）：上游一行的改动；先看更新的 Slint 有没有。
+### 视频帧
 
-  测试：视频播放的同时滚动聊天列表、让查看器的控件淡入淡出；再连着放两个尺寸相同的视频，以及把同一个视频放两次
-  （[media-files.zh-Hans.md](media-files.zh-Hans.md)）。
-- 字体不用改。Slint 1.18.1 的 Skia 渲染器和 FemtoVG 用同一套 parley 和 fontique 排版（`shared-parley`），
-  并用 fontique 的字体数据创建 Skia 的 typeface（`font_cache.rs`），所以打包的字体和 `fonts::prefer` 照常生效。
-- 在安装好的 app 里看三套主题的浅色和深色（测试图片看不出来）：文字、头像的圆角、阴影、
-  透明标题栏、截图覆盖层（第一帧、十字光标）、视频，以及滚动很长的聊天（数字看 `refresh_timing`）。
+- `src/platform/video.rs`，放在平台层，因为它全是 macOS 的东西：不带窗口的 OpenGL 上下文，每个播放器一个，
+  连同 FinchGram 调用的那几个 OpenGL 函数（手写声明；mpv 自己在程序已加载的库里找它要的 OpenGL 函数）；
+  以及播放器画进去的那块 IOSurface，既是 OpenGL 的帧缓冲，也是交给 Slint 的纹理，视频尺寸变了就重建。
+  别的系统的做法以后放在它旁边，用同样的名字。
+- 播放器启动时就在自己的上下文里创建 mpv 的渲染器，所以文件不必再等窗口先渲染一次。什么时候画仍由窗口的
+  渲染通知器决定：每次渲染之前，播放器进入自己的上下文，让 mpv 画最新一帧，flush，再退出。窗口的渲染器没了
+  的时候（窗口被隐藏），surface 跟着释放，因为它的纹理属于那个渲染器的设备；mpv 的渲染器留着。
+- 程序结束之前，凡是持有 wgpu 纹理的东西都先放掉，弹出窗口也在那时关闭：不能在线程自己的变量被销毁的过程中
+  拆掉 Metal 设备。
+- `src/player/frames.rs` 在 app 本身里把这一切检查一遍（`cargo test video_frames -- --ignored`）：app 自己的
+  播放器、app 自己的窗口，由 Skia 经 Metal 画进一张纹理再读回来。两段颜色已知的小视频，一段由 FFmpeg 解码，
+  一段由 VideoToolbox 解码：颜色、上下左右、每一帧按顺序出现，以及窗口的渲染器没了之后，那一帧在新的 surface
+  里重新出现。
 
-### 3. 我们自己的图改用 Skia 画，resvg 从 Cargo.toml 删掉
+### 看 Skia 画出来的样子
 
-- `screenshot/export.rs`：在抠下来的选区上建一个 Skia 的 raster surface，标注直接画上去，不再经过 SVG：
-  矩形和椭圆画描边，箭头和画笔用它们现成的路径字符串（`Path::from_svg`），马赛克格子画成矩形，和现在一样先画外圈的
-  衬色、再画颜色。PNG 用 Skia 的编码器，或者照旧用 `image` crate。
-- 图里的文字需要字形整形（shaping）和回退字体（中文、日文、韩文、阿拉伯文），而且只用打包的字体。两种做法：
-  1. 用 parley（0.11.1，已经随 Slint 在构建里）在只含打包字体的 fontique 字体集里排版，再用 Skia 画出字形
-     （`draw_glyphs_at`，typeface 用同一份字体数据创建），和 Slint 的 Skia 渲染器的做法一样；
-  2. 用 Skia 的 `textlayout`（SkParagraph，带 HarfBuzz 和 ICU），这会改变 vendor 构建的功能组合，包从 4.95 MB
-     变成 17.3 MB。
+- `src/offscreen.rs` 就是那个从不上屏的窗口：Slint 的 Skia 渲染器经 Metal 画进一张纹理
+  （`slint::platform::skia_renderer::SkiaWGPU30Renderer`），再读回来。它需要 GPU，不需要显示器。
+- `cargo test skia_pictures -- --ignored` 用它把截图测试画的每一页（`src/screenshots.rs`：每套主题、浅色和深色、
+  假数据）都画一遍，放进 `target/screenshots-skia/`，和软件渲染器画的 `target/screenshots/` 并排：文字、圆角和
+  阴影是 Skia 画出来的样子。
 
-  建议：第 1 种。
-- `mark_png`：标志只有一条路径，用 even-odd 填充；`Path::from_svg` 可以直接吃它的 `d`，和现在一样缩放进 36 像素。
-  不需要 SVG 模块。
-- 然后从 Cargo.toml 里删掉 `resvg`（连同 macOS 依赖上面那段提到它的注释），`cargo tree -i resvg` 就只剩 Slint。
-- 测试：测试图片里截图工具的那几页，再加一个单元测试，读 `compose()` 出图里的几个像素（箭头尖上的颜色、文字所在处
-  有没有字）：看像素值，不靠眼睛。
+### 留下的，以及要等谁
 
-### 4. 文档，以及要一起改的地方
+- mpv 的 OpenGL：等 libmpv 在 macOS 上有别的画法。
+- 构建里的 Skia OpenGL 后端、`glow` 和 `glutin`：Slint 的 Skia 渲染器无条件要它们；程序为了它们和 mpv
+  仍然链接 OpenGL.framework。
+- resvg 和 tiny-skia：不管用哪个渲染器，Slint 都用 resvg 栅格化每一张 SVG 图片（`i-slint-core` 的
+  `graphics/image/svg.rs`），它的 Skia 渲染器自己就要求这个功能。
 
-- architecture.md（及 zh-Hans）：待定问题 4 有了答案；截图工具那一段（用 Skia，不再用 resvg）。
-- conventions.md（及 zh-Hans）：Skia 和 finchgram-tdlib、libmpv、字体一样成为 vendor 构建；tag 多一种
-  `skia-<版本>-<n>`。
-- 11 种语言的 README 和 CLAUDE.md：`scripts/fetch-skia.sh` 和其他 fetch 脚本放在一起；目录树里加上 `vendor/skia/`
-  和 `skia.yml`。
-- CLAUDE.md 的"保持同步"：Cargo.lock 里 skia-bindings 的版本、`vendor/skia/build.sh` 和 `scripts/fetch-skia.sh`。
+## 已定：Slint 发布成什么样就用什么样
+
+维护者，2026-11-12："你别fork slint，也别修slint，别改slint的任何东西"，"内存问题等到slint发新版自然就解决了"。
+所以 0.8.0 用原样的 Slint 1.18.1 构建，在那之前就带着上面说的内存占用。
+
+Slint 自己已经改了：从 2026-10-26 起，它的主分支把字体文件和像素缓冲区交给 Skia 时不再拷贝（提交 35c801a7，
+"share image and font data with Skia"，对应问题 #14398；列在 1.19.0 的更新日志里，到 2026-11-12 还没发布）。
+那一版带来 skia-safe 0.156.0，所以升级要先重做一次 Skia 的 vendor 构建（见"怎么做的"），它用的 wgpu 也可能
+比 `wgpu_30` 新。有一块不会变：macOS 上 Skia 读不了字体合集里第一个以外的字重
+（issues.skia.org/issues/310510989），Slint 只能把那个字重重建一份，苹方每多用一个字重 12.6 MB。
+
+## 还没验证的
+
+- macOS 12，app 支持的最老版本。
+- app 在屏幕上是什么样：Skia 画的各页图片是画进纹理里的，一个点一个像素，窗口本身还没有人看过。由维护者在
+  安装好的 app 里看：三套主题浅色和深色下的文字（按屏幕自己的缩放）、头像的圆角、阴影、透明标题栏、
+  截图工具的覆盖层（第一帧、十字光标）、视频、弹出窗口、滚动很长的聊天。
+- 连续运行几小时、插拔显示器、休眠和唤醒。
+- 现在的 app 被别的窗口盖住时，是否也像测试窗口那样丢视频帧。
 
 ## 以后再说，不在这次里
 
-- Slint 自己的 resvg（见上）：向上游提 issue 或 pull request。
-- 测试图片改用 Skia 画。这次仍由软件渲染器画，头像还是方角（`ui/widgets.slint`）。Skia 可以画：经由
-  `slint::platform::skia_renderer`（公开 API，走 wgpu 和 Metal，需要 `unstable-wgpu-30`），或者经由
-  `i-slint-renderer-skia` 的 `SkiaRenderer::new_with_surface` 配一个我们自己的 raster surface（Skia 在 CPU 上画，
-  用的是 Slint 的内部 API）。第 2 步做完再定。
-- 动态贴纸：TGS 贴纸就是 gzip 压缩的 Lottie 动画，Skia 的 Skottie 能播（skia-safe 的 `skottie` 功能），可以不用
-  rlottie（architecture.zh-Hans.md 待定问题 3）。它也需要 `textlayout`，体积如上。能不能把 Telegram 的贴纸播对，
-  要拿真贴纸试。
-- Metal：只有在有办法把 mpv 的画面送进 Metal 之后（IOSurface，就是待定问题 3 里沙箱播放器那个办法）。
-- `image` crate 留着：不管用什么画，Slint 都用它解码图片（`image-decoders`）。
+- **我们自己的图改用 Skia 画，resvg 从 Cargo.toml 删掉。** 截图工具出的图（`src/screenshot/export.rs`：
+  标注先写成 SVG，由 resvg 画在选区上）和菜单栏图标（`src/platform/macos.rs` 的 `mark_png`）可以改用 Skia
+  画：矩形、椭圆和它们现成的路径（`Path::from_svg`）；文字用 parley 在只含打包字体的字体集里排版，再按字形
+  画出来，和 Slint 的 Skia 渲染器的做法一样（用 Skia 自己的 `textlayout` 会让包变成 17 MB）。`resvg` 会从
+  Cargo.toml 里消失，但仍经由 Slint 留在构建里。等第一个要画更多东西的功能一起做。
+- **Slint 自己的 resvg**：要去掉它，得让 Slint 用 Skia 的 SVG 模块画 SVG，这是 Slint 里的改动（向上游提
+  issue 或 pull request；不 fork）。
+- **动态贴纸**：TGS 贴纸就是 gzip 压缩的 Lottie 动画，Skia 的 Skottie 能播（skia-safe 的 `skottie` 功能，
+  它需要 `textlayout`），可以不用 rlottie（architecture.zh-Hans.md 待定问题 3）。能不能把 Telegram 的贴纸
+  播对，要拿真贴纸试。
+- **mpv 离开界面线程**：有了自己的上下文，mpv 的绘制不必再发生在窗口渲染的地方；放到它自己的线程上，上面说的
+  那个等待就不会占着界面线程了。这需要两块 surface 轮换。
+- **PDF**：Skia 只会写 PDF，不会读也不会改；看 PDF 走 macOS 的 PDFKit。
+- `image` crate 留着：不管用什么画，Slint 都用它解码图片。

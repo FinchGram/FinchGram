@@ -18,7 +18,7 @@ set -euo pipefail
 REPO="FinchGram/FinchGram"                  # this repository on GitHub
 RELEASE="skia-0.153.3-1"                    # release tag
 ASSET="skia-0.153.3-macos-arm64.tar.gz"     # asset name in that release
-SHA256="PENDING: push the tag skia-0.153.3-1 and take this from the release's SHA256SUMS"
+SHA256="81f28a4a85be975e433f85aaefe9332373837c74ed9f9e8a5f5f8df555be202a"
 # -----------------------------------------------------------------------------------
 
 URL="https://github.com/$REPO/releases/download/$RELEASE/$ASSET"
@@ -34,11 +34,6 @@ if [ "${1:-}" = "--local" ]; then
   [ -f "$PACKAGE" ] || { echo "no package in vendor/skia/dist: run vendor/skia/build.sh first" >&2; exit 1; }
   echo "taking this machine's own build, $PACKAGE (releases fetch the published one)"
 else
-  case "$SHA256" in *PENDING*)
-    echo "SHA256 in $0 is not pinned yet: publish the $RELEASE release first (push the tag)." >&2
-    echo "Until then, build Skia here: vendor/skia/build.sh && vendor/skia/build.sh install" >&2
-    exit 1 ;;
-  esac
   PACKAGE="$TMP/$ASSET"
   echo "downloading $URL"
   # --retry-all-errors: GitHub's download host can answer 504 after the transfer began, which plain
