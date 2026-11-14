@@ -85,10 +85,11 @@ fn decode(path: &Path, out_dir: &Path) -> Option<VideoInfo> {
         if handle.is_null() {
             return None;
         }
+        let out_dir = out_dir.to_string_lossy();
         let options = [
             ("vo", "image"),
             ("vo-image-format", "jpg"),
-            ("vo-image-outdir", &out_dir.to_string_lossy()),
+            ("vo-image-outdir", out_dir.as_ref()),
             ("vf", "scale=320:-2"),
             ("frames", "1"),
             ("ao", "null"),
@@ -97,7 +98,9 @@ fn decode(path: &Path, out_dir: &Path) -> Option<VideoInfo> {
             ("terminal", "no"),
             ("msg-level", "all=no"),
         ];
-        for (name, value) in options {
+        // The file itself and nothing it names (LOCAL_ONLY): the still goes out with the message,
+        // and must be a frame of the file the user chose, not of one that file points at.
+        for (name, value) in super::LOCAL_ONLY.into_iter().chain(options) {
             let (name, value) = (CString::new(name).ok()?, CString::new(value).ok()?);
             if mpv::mpv_set_option_string(handle, name.as_ptr(), value.as_ptr()) < 0 {
                 eprintln!("video probe: mpv refused the option {}", name.to_string_lossy());

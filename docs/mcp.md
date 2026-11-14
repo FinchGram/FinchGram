@@ -133,7 +133,8 @@ credentials from the environment". FinchGram's answer has three layers:
    a socket, `finchgram-mcp.sock` in the user's temporary folder): only processes of the same
    user can open it. No port is opened. At most 32 connections are open at once, and at most 8
    of them waiting for `initialize`; one that has not initialized within two minutes is closed,
-   whatever else it says, and so is one that does not read an answer within thirty seconds; before
+   whatever else it says and however slowly it says it (the two minutes are for the whole of it,
+   not for each read), and so is one that does not read an answer within thirty seconds; before
    `initialize` nothing but initialize and ping is answered. After it a connection may stay quiet
    as long as it likes, as an assistant's app does. The bridge, for its part, takes no one for
    FinchGram: before it passes a line on, it asks the system which process listens at the socket
@@ -178,7 +179,9 @@ credentials from the environment". FinchGram's answer has three layers:
    for one account carries over to the next. When the system cannot
    name the program, the
    dialog says so and makes Don't Allow the safe choice. Such a program's answer lasts for the run
-   and for that process only (its pid and when it started); one the system cannot place at all, not
+   and for that process only (its pid and the moment it started, to the microsecond: another
+   script run by the same interpreter is another process, and is asked about); one the system
+   cannot place at all, not
    even its process, is turned away without a question. A line over 1 MB from a connection ends it,
    and what a client says of itself goes into the log without its control characters.
 3. **Settings decide what it may do**: the switch, the chats, the sending choice. They are read

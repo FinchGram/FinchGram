@@ -1148,21 +1148,23 @@ pub fn check_space(dest: &Path, needed: u64) -> Result<(), Error> {
 /// way made. Everything the engines write, rename or remove goes through one, by name within it:
 /// a link put under the download folder, in place of a file (O_NOFOLLOW again, `file`) or of a
 /// folder (this), cannot send them elsewhere; and `..` has no place in a path under the root. The
-/// root is the folder the user chose, theirs: it is followed wherever it leads.
+/// root is the folder the user chose, theirs: it is followed wherever it leads. The music cache
+/// writes its files the same way, under its own root (`open_own`, `rename_own`, `remove_own`;
+/// src/music/fetch.rs).
 pub(crate) struct Folder(OwnedFd);
 
 impl Folder {
     /// The folder `path`, which is under `root` (or is it), `make`ing what is missing on the way;
     /// without `make`, a folder that is not there is an error.
     pub(crate) fn under(root: &Path, path: &Path, make: bool) -> Result<Folder, Error> {
-        let relative = path.strip_prefix(root).map_err(|_| Error::Disk(format!("{} is not under the download folder {}", path.display(), root.display())))?;
+        let relative = path.strip_prefix(root).map_err(|_| Error::Disk(format!("{} is not under the folder {}", path.display(), root.display())))?;
         if make {
             fs::create_dir_all(root).map_err(disk)?;
         }
         let mut folder = Folder(OwnedFd::from(File::open(root).map_err(disk)?));
         for part in relative.components() {
             let Component::Normal(name) = part else {
-                return Err(Error::Disk(format!("{} is not a plain path under the download folder", path.display())));
+                return Err(Error::Disk(format!("{} is not a plain path under {}", path.display(), root.display())));
             };
             folder = folder.child(name, make)?;
         }
@@ -1188,7 +1190,7 @@ impl Folder {
         let fd = unsafe { sys::openat(self.0.as_raw_fd(), c_name.as_ptr(), O_RDONLY | O_DIRECTORY | O_NOFOLLOW | O_CLOEXEC) };
         if fd < 0 {
             let err = std::io::Error::last_os_error();
-            return Err(Error::Disk(format!("{} in the download folder is not a folder, or is a link: {err}", name.to_string_lossy())));
+            return Err(Error::Disk(format!("{} is not a folder, or is a link: {err}", name.to_string_lossy())));
         }
         // SAFETY: a descriptor openat just gave, owned by nothing else.
         Ok(Folder(unsafe { OwnedFd::from_raw_fd(fd) }))
@@ -1272,6 +1274,25 @@ pub(crate) fn make_folder(root: &Path, dest: &Path) -> Result<(), Error> {
 pub(crate) fn open_own(root: &Path, path: &Path, truncate: bool) -> Result<File, Error> {
     let (folder, name) = place(root, path, true)?;
     folder.file(&name, truncate)
+}
+
+/// One of a folder's own files under another name in the same folder, `from` to `to`, both under
+/// `root`: in place of whatever is called `to`, and through no symbolic link on the way
+/// (`Folder`); a link under either name is the thing renamed or replaced, never followed. For a
+/// cache that keeps a file under its own name once all of it is there (src/music/fetch.rs).
+pub(crate) fn rename_own(root: &Path, from: &Path, to: &Path) -> Result<(), Error> {
+    let (folder, name) = place(root, from, false)?;
+    let target = to.file_name().filter(|_| to.parent() == from.parent()).ok_or_else(|| Error::Disk(format!("{} is not beside {}", to.display(), from.display())))?;
+    folder.rename(&name, target)
+}
+
+/// One of a folder's own files gone: by its name within its folder under `root`, through no link
+/// on the way; a link under that name is what goes, not what it points at. Nothing happens when
+/// it is not there.
+pub(crate) fn remove_own(root: &Path, path: &Path) {
+    if let Ok((folder, name)) = place(root, path, false) {
+        folder.remove(&name);
+    }
 }
 
 /// A finished `.part` in its place: `dest` itself, or "name (2).ext", "name (3).ext" … when that

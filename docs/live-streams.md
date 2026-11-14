@@ -323,13 +323,17 @@ release with everything in it.
   Unavailable), the source's own viewer count or none, never an estimate. Thumbnails are fetched
   from their sources (owncast.directory for Owncast, each PeerTube instance) into
   ~/Documents/FinchGram/live_thumbnails, a day's worth, by a worker of their own; fetching them shows
-  those servers the user's address, as any picture of the web does.
+  those servers the user's address, as any picture of the web does. A thumbnail's address is a
+  stranger's word, and it is fetched without the user asking, so the client connects to addresses
+  of the public internet only (`src/live/thumbnails.rs`): one that names this Mac, the home
+  network or another private one, at once or after a redirect, is not asked for.
 - **Watch** (`src/live/watch.rs`): the app asks the channel's source for the stream when it plays,
   never the directory: an Owncast server's /api/status and /hls/stream.m3u8, a PeerTube channel's
   live (video-channels/<name>/videos?isLive, then the video's playlist), an Icecast station's
   stream, a submitted playlist. The live player plays it by its address, through the vendored
   FFmpeg's network (mpv-0.41.0-2), which only the Live view's players may reach; its certificates
-  are checked against the Keychain's roots (`src/live/roots.rs` writes them for mbedTLS). Pause
+  are always checked, against the Keychain's roots (`src/live/roots.rs` writes them for mbedTLS;
+  when they cannot be had, an HTTPS stream does not play, rather than play unchecked). Pause
   keeps what comes meanwhile (mpv's cache) and "Go live" opens the stream again at the edge; the
   quality menu lists the stream's variants. A Telegram channel of the directory is opened by its
   username through TDLib and plays as the user's own live streams do. Owncast's chat is read and

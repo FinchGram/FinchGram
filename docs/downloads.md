@@ -75,7 +75,8 @@ with the same size is skipped.
 The design's ninth round ("写操作 · 删除 移动 重命名 上传", 2026-10-24). Everything in it hangs on
 one switch in the server's form, "Allow changes to files on this server", below the password: off
 for every server, including the ones added before this round, until the user turns it on (the
-`allow_changes` column of the `servers` table, layout 4). With it off, the page is the read-only
+`allow_changes` column of the `servers` table, layout 4, believed only with the row's tag, layout
+10: a program that can write the file cannot turn it on). With it off, the page is the read-only
 client it was: no Upload, no Move…, no Delete, no write items in the menu. With it on, on a server
 that is reached:
 
@@ -278,7 +279,9 @@ Copy link gives `sftp://me@host:2222/films/film.mkv` or `ftps://…` for those s
 - The servers, with their passwords, are in the app's database, `finchgram.db` next to it: a
   plain SQLite file any tool opens, the `servers` table with the protocol, the address, the port,
   the account of each and whether the user allows changes on it (`allow_changes`, layout 4, 0 for
-  every server of before); only the password column is sealed (AES-256-GCM) under a random key
+  every server of before; since layout 10 each row carries a tag under the Keychain's key, over
+  the server and that switch, and a row that says yes without it allows nothing); only the
+  password column is sealed (AES-256-GCM) under a random key
   kept in the macOS Keychain under "FinchGram" (the account "database"), in the login keychain
   only, where only this app reads it (docs/architecture.md, The app's database), and sealed to its
   server: the protocol, the address, the port and the account are the seal's additional data, so

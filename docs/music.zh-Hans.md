@@ -24,7 +24,9 @@
 
 音乐有自己的一个 mpv（`src/player/music.rs`），不带视频，与查看器的、语音消息的各不相扰：歌与歌之间无缝衔接，下一首排在 mpv 播放列表里当前这首的后面，并提前打开（`gapless-audio`、`prefetch-playlist`）。
 
-音乐的 mpv 只能打开文件（它的 FFmpeg 只限本地协议，`src/player/mod.rs` 的 `LOCAL_PROTOCOLS`；只有 Live 视图的播放器能用到网络，见 docs/architecture.md），所以 mpv 不自己去取歌。取歌的是 `src/music/fetch.rs`，用 app 自己的 HTTP 客户端（ureq，除常规根证书外也信任 Keychain 里的，照顾用户自签证书的服务器）：以 Range 请求把服务器的 `stream` 地址读进缓存文件，mpv 通过 `finchgram://` 流回调（`src/player/stream.rs`，和 TDLib 送来的视频一个路数）边到边读。拖到还没到的位置，取歌就挪过去，之后再回头补上跳过的部分。整个文件留在缓存里，以自己的名字（在路上时叫 ".part"），下次这首歌直接从磁盘播。
+音乐的 mpv 只能打开文件，文件里提到的东西一概不碰（它的 FFmpeg 只限本地协议，mpv 不跟随任何引用，`src/player/mod.rs` 的 `LOCAL_ONLY`；只有 Live 视图的播放器能用到网络，见 docs/architecture.md），所以 mpv 不自己去取歌。取歌的是 `src/music/fetch.rs`，用 app 自己的 HTTP 客户端（ureq，除常规根证书外也信任 Keychain 里的，照顾用户自签证书的服务器）：以 Range 请求把服务器的 `stream` 地址读进缓存文件，mpv 通过 `finchgram://` 流回调（`src/player/stream.rs`，和 TDLib 送来的视频一个路数）边到边读。拖到还没到的位置，取歌就挪过去，之后再回头补上跳过的部分。整个文件留在缓存里，以自己的名字，下次这首歌直接从磁盘播；在路上时是它旁边的一个 ".part"，每次取歌各用各的，放弃或失败时删掉（下次从头取）。
+
+服务器是用户自己的，但它发多少并不照单全收：一首歌绝不写过服务器自己说的大小；没说大小的流（边发边转码的）不超过 2 GB；也绝不写进磁盘最后那点空间（沿用下载的余量，开始写之前问一次，知道大小时问一次，之后每 32 MB 再问）；服务器反复只回已经有的内容时，就放弃这次取歌。缓存里的文件一律在缓存自己的文件夹里按名字写，不经过任何符号链接（下载的 `Folder`，`src/downloads/transfer.rs`）：有人在缓存里用一首歌或一张封面的名字放个链接，或把某个来源的文件夹换成链接，既不会顺着写出去，裁剪缓存时也不会走进去。
 
 线上送来什么格式，由服务器对名为"FinchGram"的客户端的转码设置决定；FinchGram 不特别要求什么。一首歌开始时告诉服务器（`scrobble`，`submission=false`，即"正在播放"），播过一半或四分钟（以先到者为准）再告诉一次（`submission=true`）：播放次数，以及服务器配了 Last.fm 或 ListenBrainz 时的 scrobble。
 
@@ -32,7 +34,7 @@
 
 - 来源连同密码放在 app 的数据库里（`music_sources`，布局 8），每个密码封存时绑定到它的来源（种类、地址、端口、账号），和下载服务器的密码绑定到服务器一样。
 - 音量、随机、循环、队列栏是否显示、上次看的来源、缓存上限放在 settings.toml 的 `[music]`。
-- 歌和封面放在 `~/Documents/FinchGram/music_cache/<来源>/`，来源是其地址与账号的哈希，歌按 id 命名，封面在 `covers/` 下。页面打开和一首歌结束时按 `cache_limit_mb`（默认 2048，0 为不限）裁掉最旧的歌；封面不计入。
+- 歌和封面放在 `~/Documents/FinchGram/music_cache/<来源>/`，来源是其地址与账号的哈希，歌按 id 命名，封面在 `covers/` 下。页面打开和一首歌结束时按 `cache_limit_mb`（默认 2048，0 为不限）裁掉最旧的歌；封面不计入，正在取的歌计入。FinchGram 在取歌途中退出留下的 ".part"，放满十分钟后在下一次裁剪时删掉。
 
 ## API
 

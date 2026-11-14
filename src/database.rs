@@ -16,7 +16,10 @@
 //! have the app send it the password. A credential is sealed to its name and to what its owner
 //! binds it to, an AI vendor's API format and address (src/speech/mod.rs), for the same reason:
 //! the address is in settings.toml, and a program that can write that file could otherwise point
-//! the vendor at a server of its own and have the app send the key there. The rows of the
+//! the vendor at a server of its own and have the app send the key there. A server's row carries
+//! a tag under the same key (`seal`), over the server and whether the user allows changes on it:
+//! changes are allowed by a row FinchGram wrote that way and by no other, so that a program that
+//! can write the file cannot turn them on behind the user's back. The rows of the
 //! programs allowed carry a tag under the same key (`seal`), over the program, the answer and the
 //! Telegram account the answer was given for, so that a row written by anything but FinchGram,
 //! changed since, or kept from another account's time, is not believed: the user is asked about
@@ -72,7 +75,10 @@ const KEY_ACCOUNT: &str = "database";
 /// 9 (after 0.7.10): `live_follows`, the channels the user follows in the Live view (src/live/,
 ///    docs/live-streams.md): the live directory's id, the source and the name, in the order
 ///    followed. Nothing secret, nothing sealed.
-pub const LAYOUT: i32 = 9;
+/// 10 (after 0.8.0): `servers.seal`, the row's tag, over the server and whether the user allows
+///    changes on it: `allow_changes` is believed only with it. The rows of before are tagged as
+///    they are (the switch is the user's own, and stays as they left it).
+pub const LAYOUT: i32 = 10;
 
 /// The tables of layout 1, as 0.6.0 made them.
 const TABLES_OF_LAYOUT_1: &str = "CREATE TABLE IF NOT EXISTS servers (
@@ -135,6 +141,14 @@ impl ServerRecord {
     fn binding(&self) -> String {
         binding(&self.protocol, &self.address, self.port, &self.username)
     }
+}
+
+/// What a server's row is tagged over (`servers.seal`): the server it names (`binding`) and
+/// whether the user allows changes on it. The switch is one the user turns on in the server's
+/// form, for that server: a row that says yes without this tag (a file written by anything but
+/// FinchGram, or the tag of another server's row) allows nothing.
+fn server_text(binding: &str, allow_changes: bool) -> String {
+    format!("server\0{binding}\0{}", u8::from(allow_changes))
 }
 
 /// The seal's additional data for a server's password: its protocol, address, port and account,
@@ -312,7 +326,12 @@ fn copy_aside(connection: &Connection, path: &Path, backup: &Path, what: &str) -
 /// The layout brought from `from` up to LAYOUT, one step at a time, each a transaction that ends
 /// by stamping the version; `key` is the Keychain's, for a step that seals something again.
 fn upgrade(connection: &Connection, from: i32, key: &[u8; 32]) -> Result<(), String> {
-    for to in (from + 1)..=LAYOUT {
+    upgrade_to(connection, from, LAYOUT, key)
+}
+
+/// The steps from `from` up to `newest`: LAYOUT, but for a test that makes an older file.
+fn upgrade_to(connection: &Connection, from: i32, newest: i32, key: &[u8; 32]) -> Result<(), String> {
+    for to in (from + 1)..=newest {
         let step = || -> Result<(), String> {
             match to {
                 1 => connection.execute_batch(TABLES_OF_LAYOUT_1).map_err(|err| err.to_string()),
@@ -398,6 +417,14 @@ fn upgrade(connection: &Connection, from: i32, key: &[u8; 32]) -> Result<(), Str
                         )
                         .map_err(|err| err.to_string())
                 }
+                10 => {
+                    // A server's row gets its tag, over the server and whether the user allows
+                    // changes on it; from here on the switch is believed only with it. The rows
+                    // of before are tagged as they are: the switch is the user's own, turned on
+                    // in the server's form, and stays as they left it.
+                    connection.execute_batch("ALTER TABLE servers ADD COLUMN seal TEXT NOT NULL DEFAULT '';").map_err(|err| err.to_string())?;
+                    tag_servers(connection, key)
+                }
                 _ => Err(format!("no step to layout {to}")),
             }
         };
@@ -431,6 +458,19 @@ fn reseal_servers(connection: &Connection, key: &[u8; 32]) -> Result<(), String>
     Ok(())
 }
 
+/// The servers' rows of layout 9, which had no tag, tagged as they are (layout 10).
+fn tag_servers(connection: &Connection, key: &[u8; 32]) -> Result<(), String> {
+    let mut statement = connection.prepare("SELECT id, protocol, address, port, username, allow_changes FROM servers").map_err(|err| err.to_string())?;
+    let rows: Vec<(i64, String, String, i64, String, i64)> = statement
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?)))
+        .and_then(Iterator::collect)
+        .map_err(|err| err.to_string())?;
+    for (id, protocol, address, port, username, allow_changes) in rows {
+        let text = server_text(&binding(&protocol, &address, u16::try_from(port).unwrap_or(0), &username), allow_changes != 0);
+        connection.execute("UPDATE servers SET seal = ?1 WHERE id = ?2", params![cipher::tag(key, &text), id]).map_err(|err| err.to_string())?;
+    }
+    Ok(())
+}
 
 fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
     let mut name = path.as_os_str().to_os_string();
@@ -579,11 +619,11 @@ pub fn save_servers(servers: &[ServerRecord]) -> Result<(), String> {
     for server in servers {
         sealed.push(ServerRecord { password: cipher::seal(&key, &server.binding(), &server.password)?, ..server.clone() });
     }
-    with(|connection| write_servers(connection, &sealed))
+    with(|connection| write_servers(connection, &key, &sealed))
 }
 
 fn read_servers(connection: &Connection, key: &[u8; 32]) -> rusqlite::Result<Vec<ServerRecord>> {
-    let mut statement = connection.prepare("SELECT name, protocol, address, port, username, password, allow_changes FROM servers ORDER BY position, id")?;
+    let mut statement = connection.prepare("SELECT name, protocol, address, port, username, password, allow_changes, seal FROM servers ORDER BY position, id")?;
     let rows = statement.query_map([], |row| {
         let mut server = ServerRecord {
             name: row.get(0)?,
@@ -594,6 +634,13 @@ fn read_servers(connection: &Connection, key: &[u8; 32]) -> rusqlite::Result<Vec
             password: row.get(5)?,
             allow_changes: row.get::<_, i64>(6)? != 0,
         };
+        // Changes are allowed by a row FinchGram wrote that way, for this server, and by no
+        // other: a row that says so without its tag is a server changes are not allowed on.
+        let seal: String = row.get(7)?;
+        if server.allow_changes && !cipher::tag_matches(key, &server_text(&server.binding(), true), &seal) {
+            eprintln!("database: the row of {} says changes are allowed, and FinchGram did not write it so: they are not", server.address);
+            server.allow_changes = false;
+        }
         server.password = cipher::open(key, &server.binding(), &server.password).unwrap_or_else(|err| {
             eprintln!("database: the password of {} cannot be opened: {err}", server.address);
             String::new()
@@ -603,14 +650,15 @@ fn read_servers(connection: &Connection, key: &[u8; 32]) -> rusqlite::Result<Vec
     rows.collect()
 }
 
-/// `servers` written as they are: their passwords sealed already.
-fn write_servers(connection: &Connection, servers: &[ServerRecord]) -> rusqlite::Result<()> {
+/// `servers` written as they are, their passwords sealed already, each row with its tag.
+fn write_servers(connection: &Connection, key: &[u8; 32], servers: &[ServerRecord]) -> rusqlite::Result<()> {
     connection.execute_batch("BEGIN; DELETE FROM servers;")?;
     let written: rusqlite::Result<()> = servers.iter().enumerate().try_for_each(|(position, server)| {
+        let seal = cipher::tag(key, &server_text(&server.binding(), server.allow_changes));
         connection
             .execute(
-                "INSERT INTO servers (position, name, protocol, address, port, username, password, allow_changes) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
-                params![position as i64, server.name, server.protocol, server.address, i64::from(server.port), server.username, server.password, i64::from(server.allow_changes)],
+                "INSERT INTO servers (position, name, protocol, address, port, username, password, allow_changes, seal) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                params![position as i64, server.name, server.protocol, server.address, i64::from(server.port), server.username, server.password, i64::from(server.allow_changes), seal],
             )
             .map(|_| ())
     });
@@ -1138,10 +1186,10 @@ mod tests {
         let servers = vec![a_server("Home NAS", "secret"), ServerRecord { protocol: "sftp".into(), address: "sb-ams.example.net".into(), port: 0, allow_changes: true, ..a_server("Seedbox", "") }];
         {
             let connection = open_at(&path, &key, &backup).expect("a new database");
-            write_servers(&connection, &sealed_copies(&servers, &key)).expect("write");
-            write_servers(&connection, &sealed_copies(&servers[1..], &key)).expect("write again");
+            write_servers(&connection, &key, &sealed_copies(&servers, &key)).expect("write");
+            write_servers(&connection, &key, &sealed_copies(&servers[1..], &key)).expect("write again");
             assert_eq!(read_servers(&connection, &key).expect("read"), servers[1..]);
-            write_servers(&connection, &sealed_copies(&servers, &key)).expect("write all");
+            write_servers(&connection, &key, &sealed_copies(&servers, &key)).expect("write all");
             assert_eq!(read_servers(&connection, &key).expect("read"), servers);
             // The file is a plain database, with the password not in it as it is.
             connection.execute_batch("PRAGMA wal_checkpoint(TRUNCATE);").expect("checkpoint");
@@ -1171,6 +1219,72 @@ mod tests {
             connection.execute(&format!("UPDATE servers SET {column} WHERE name = 'Home NAS'"), []).expect("changed");
             assert_eq!(read_servers(&connection, &key).expect("read")[0].password, "", "{column}");
         }
+        let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
+    }
+
+    #[test]
+    fn changes_are_allowed_by_a_row_finchgram_wrote_that_way_and_by_no_other() {
+        let (path, backup) = scratch("changes");
+        let key = a_key(21);
+        let seedbox = ServerRecord { protocol: "sftp".into(), address: "sb-ams.example.net".into(), port: 0, allow_changes: true, ..a_server("Seedbox", "hunter2") };
+        let servers = vec![a_server("Home NAS", "secret"), seedbox];
+        let connection = open_at(&path, &key, &backup).expect("a new database");
+        write_servers(&connection, &key, &sealed_copies(&servers, &key)).expect("write");
+        assert_eq!(read_servers(&connection, &key).expect("read"), servers);
+        // The column turned on in the file, by anything that can write it: the password still
+        // opens (it is sealed to the server, which is the same), and changes are not allowed.
+        connection.execute("UPDATE servers SET allow_changes = 1 WHERE name = 'Home NAS'", []).expect("turned on");
+        let read = read_servers(&connection, &key).expect("read");
+        assert_eq!((read[0].password.as_str(), read[0].allow_changes), ("secret", false));
+        assert!(read[1].allow_changes);
+        // Nor with the tag of the row that does allow them, which is another server's.
+        connection.execute("UPDATE servers SET seal = (SELECT seal FROM servers WHERE name = 'Seedbox') WHERE name = 'Home NAS'", []).expect("copied");
+        assert!(!read_servers(&connection, &key).expect("read")[0].allow_changes);
+        // A row allowed to change, pointed at another server: neither the password nor the switch.
+        connection.execute("UPDATE servers SET address = 'evil.example' WHERE name = 'Seedbox'", []).expect("moved");
+        let read = read_servers(&connection, &key).expect("read");
+        assert_eq!((read[1].password.as_str(), read[1].allow_changes), ("", false));
+        // Under another key the tag is nobody's.
+        connection.execute("UPDATE servers SET address = 'sb-ams.example.net' WHERE name = 'Seedbox'", []).expect("back");
+        assert!(read_servers(&connection, &key).expect("read")[1].allow_changes);
+        assert!(!read_servers(&connection, &a_key(22)).expect("read")[1].allow_changes);
+        // Turned off by the user, it is off.
+        write_servers(&connection, &key, &sealed_copies(&[a_server("Home NAS", "secret"), ServerRecord { allow_changes: false, ..servers[1].clone() }], &key)).expect("write");
+        assert!(read_servers(&connection, &key).expect("read").iter().all(|server| !server.allow_changes));
+        let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
+    }
+
+    #[test]
+    fn layout_nine_keeps_the_servers_the_user_allowed_changes_on() {
+        let (path, backup) = scratch("nine");
+        let key = a_key(23);
+        {
+            // A file as 0.8.0 left it: layout 9, a server changes are allowed on and one not,
+            // their rows without a tag.
+            std::fs::create_dir_all(path.parent().expect("the folder")).expect("mkdir");
+            let connection = Connection::open(&path).expect("a file");
+            upgrade_to(&connection, 0, 9, &key).expect("layout 9");
+            for (position, name, address, allow_changes) in [(0, "Home NAS", "https://nas.home/dav", 1), (1, "Archive", "https://archive.example/dav", 0)] {
+                connection
+                    .execute(
+                        "INSERT INTO servers (position, name, protocol, address, port, username, password, allow_changes) VALUES (?1, ?2, 'webdav', ?3, 0, 'me', ?4, ?5)",
+                        params![position, name, address, cipher::seal(&key, &binding("webdav", address, 0, "me"), "secret").expect("sealed"), allow_changes],
+                    )
+                    .expect("a server");
+            }
+            assert_eq!(connection.query_row("PRAGMA user_version", [], |row| row.get::<_, i32>(0)).expect("version"), 9);
+        }
+        let (connection, upgraded_from) = open_at_noting(&path, &key, &backup).expect("brought up");
+        assert_eq!(upgraded_from, Some(9));
+        assert_eq!(connection.query_row("PRAGMA user_version", [], |row| row.get::<_, i32>(0)).expect("version"), LAYOUT);
+        let servers = read_servers(&connection, &key).expect("read");
+        assert_eq!(servers.iter().map(|server| (server.name.as_str(), server.password.as_str(), server.allow_changes)).collect::<Vec<_>>(), [("Home NAS", "secret", true), ("Archive", "secret", false)]);
+        // From here on the column alone allows nothing.
+        connection.execute("UPDATE servers SET allow_changes = 1 WHERE name = 'Archive'", []).expect("turned on");
+        assert!(!read_servers(&connection, &key).expect("read")[1].allow_changes);
+        let copies: Vec<PathBuf> = std::fs::read_dir(&backup).expect("the backup folder").flatten().map(|entry| entry.path()).collect();
+        assert_eq!(copies.len(), 1);
+        assert!(copies[0].file_name().expect("name").to_string_lossy().starts_with("finchgram-layout-9-"));
         let _ = std::fs::remove_dir_all(path.parent().expect("the folder"));
     }
 

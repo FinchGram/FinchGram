@@ -240,8 +240,9 @@ enum Task {
     Songs0f { request: u64, client: Client, id: String, then: Then },
     Star { client: Client, what: Starrable, on: bool },
     Scrobble { client: Client, id: String, submission: bool },
-    /// The cache measured, and trimmed to `limit` bytes (0 for none) when it has grown past it.
-    Cache { folder: PathBuf, limit: u64 },
+    /// The cache measured, and trimmed to `limit` bytes (0 for none) when it has grown past it;
+    /// `fetching` are the files the songs on their way are written into now.
+    Cache { folder: PathBuf, limit: u64, fetching: Vec<PathBuf> },
 }
 
 /// What to do with an album's songs once they come.
@@ -495,8 +496,8 @@ fn start_worker() -> Sender<Task> {
                         eprintln!("music: cannot tell the server a song plays: {err}");
                     }
                 }
-                Task::Cache { folder, limit } => {
-                    let bytes = trim_cache(&folder, limit);
+                Task::Cache { folder, limit, fetching } => {
+                    let bytes = trim_cache(&folder, limit, &fetching);
                     let _ = slint::invoke_from_event_loop(move || show_cache(bytes));
                 }
             }
@@ -522,11 +523,14 @@ fn start_cover_worker() -> Sender<CoverTask> {
     let (sender, tasks) = mpsc::channel::<CoverTask>();
     let started = std::thread::Builder::new().name("music-covers".into()).spawn(move || {
         for CoverTask { client, id, path } in tasks {
+            // Written by name within the cache's folders, through no link, as the songs are
+            // (fetch.rs): a link put there under a cover's name is not written through.
             let fetched = client.cover_art(&id, COVER_SIZE).and_then(|(bytes, _)| {
-                if let Some(folder) = path.parent() {
-                    std::fs::create_dir_all(folder).map_err(|err| subsonic::Error::Unreadable(err.to_string()))?;
-                }
-                std::fs::write(&path, bytes).map_err(|err| subsonic::Error::Unreadable(err.to_string()))
+                use std::io::Write as _;
+                crate::downloads::transfer::open_own(&cache_folder(), &path, true)
+                    .map_err(|err| err.to_string())
+                    .and_then(|mut file| file.write_all(&bytes).map_err(|err| err.to_string()))
+                    .map_err(subsonic::Error::Unreadable)
             });
             let _ = slint::invoke_from_event_loop(move || cover_fetched(id, path, fetched.is_ok()));
         }
@@ -1447,26 +1451,42 @@ fn cover_path(source_key: &str, id: &str) -> PathBuf {
     cache_folder().join(source_key).join("covers").join(file_name_of(id))
 }
 
-/// The song's file once whole, and while on its way.
-fn song_paths(source_key: &str, track: &Track) -> (PathBuf, PathBuf) {
-    let folder = cache_folder().join(source_key);
+/// The song's file once whole; while on its way it is a ".part" beside it, the fetch's own
+/// (fetch.rs).
+fn song_path(source_key: &str, track: &Track) -> PathBuf {
     let suffix = if track.suffix.is_empty() { "bin".to_string() } else { file_name_of(&track.suffix) };
-    let whole = folder.join(format!("{}.{suffix}", file_name_of(&track.id)));
-    let part = folder.join(format!("{}.{suffix}.part", file_name_of(&track.id)));
-    (whole, part)
+    cache_folder().join(source_key).join(format!("{}.{suffix}", file_name_of(&track.id)))
 }
+
+/// A song on its way that nothing has written to for this long, and that no fetch of this run is
+/// writing, is nobody's: a fetch removes its own file when it is given up or fails, so this one
+/// was left by a FinchGram that quit while it fetched.
+const PART_LEFT_AFTER: Duration = Duration::from_secs(10 * 60);
 
 /// The cache measured, on the worker, and trimmed to the setting.
 fn measure_cache() {
-    let limit = with_state(|state| state.settings.borrow().music.cache_limit_mb.saturating_mul(1 << 20)).unwrap_or(0);
-    send(Task::Cache { folder: cache_folder(), limit });
+    let measured = with_state(|state| {
+        let limit = state.settings.borrow().music.cache_limit_mb.saturating_mul(1 << 20);
+        let playing = [state.playback.current.as_ref(), state.playback.next.as_ref()];
+        let fetching = playing.into_iter().flatten().filter_map(|playing| playing.fetch.as_ref()).map(|fetch| fetch.part().to_path_buf()).collect();
+        (limit, fetching)
+    });
+    let (limit, fetching) = measured.unwrap_or_default();
+    send(Task::Cache { folder: cache_folder(), limit, fetching });
 }
 
-/// Every song file under `folder`, oldest first, with its size; covers and parts are not counted.
-fn cached_songs(folder: &Path) -> Vec<(PathBuf, u64, std::time::SystemTime)> {
-    let mut songs = Vec::new();
-    let Ok(sources) = std::fs::read_dir(folder) else { return songs };
+/// What the cache holds under `folder`: its songs, oldest first, and the songs on their way
+/// (".part"), each with its size and when it was last written. Covers are not counted. A source's
+/// folder that is a link is not walked, nor is a link among the files a song: the cache deletes
+/// what it lists, and must not be led to another folder's files.
+#[allow(clippy::type_complexity)]
+fn cached_songs(folder: &Path) -> (Vec<(PathBuf, u64, std::time::SystemTime)>, Vec<(PathBuf, u64, std::time::SystemTime)>) {
+    let (mut songs, mut parts) = (Vec::new(), Vec::new());
+    let Ok(sources) = std::fs::read_dir(folder) else { return (songs, parts) };
     for source in sources.flatten() {
+        if !source.file_type().is_ok_and(|kind| kind.is_dir()) {
+            continue;
+        }
         let Ok(files) = std::fs::read_dir(source.path()) else { continue };
         for file in files.flatten() {
             let Ok(kind) = file.file_type() else { continue };
@@ -1474,23 +1494,28 @@ fn cached_songs(folder: &Path) -> Vec<(PathBuf, u64, std::time::SystemTime)> {
                 continue;
             }
             let path = file.path();
-            if path.extension().is_some_and(|extension| extension == "part") {
-                continue;
-            }
-            if let Ok(meta) = file.metadata() {
-                songs.push((path, meta.len(), meta.modified().unwrap_or(std::time::UNIX_EPOCH)));
-            }
+            let Ok(meta) = file.metadata() else { continue };
+            let found = (path, meta.len(), meta.modified().unwrap_or(std::time::UNIX_EPOCH));
+            if found.0.extension().is_some_and(|extension| extension == "part") { parts.push(found) } else { songs.push(found) }
         }
     }
     songs.sort_by_key(|(_, _, modified)| *modified);
-    songs
+    (songs, parts)
 }
 
-/// The oldest songs deleted until the cache is within `limit` bytes (0 for no limit): what is
-/// left, in bytes.
-fn trim_cache(folder: &Path, limit: u64) -> u64 {
-    let songs = cached_songs(folder);
+/// The cache put in order: the songs on their way that nobody is fetching any more deleted
+/// (PART_LEFT_AFTER; `fetching` are the ones this run is writing), then the oldest songs until
+/// the cache, with what is on its way, is within `limit` bytes (0 for no limit). What is left,
+/// in bytes.
+fn trim_cache(folder: &Path, limit: u64, fetching: &[PathBuf]) -> u64 {
+    let (songs, parts) = cached_songs(folder);
     let mut total: u64 = songs.iter().map(|(_, size, _)| *size).sum();
+    for (path, size, modified) in &parts {
+        let left = !fetching.contains(path) && modified.elapsed().is_ok_and(|age| age > PART_LEFT_AFTER);
+        if !(left && std::fs::remove_file(path).is_ok()) {
+            total += size;
+        }
+    }
     if limit > 0 {
         for (path, size, _) in &songs {
             if total <= limit {
@@ -1979,11 +2004,11 @@ fn start_current() {
 
 /// Where mpv reads the song from: the cache file when it is whole, else a stream its fetch feeds.
 fn prepare(agent: &ureq::Agent, source: &Source, index: usize, track: &Track) -> Playing {
-    let (whole, part) = song_paths(&source.key(), track);
+    let whole = song_path(&source.key(), track);
     if whole.is_file() {
         return Playing { at: index, url: whole.to_string_lossy().into_owned(), fetch: None };
     }
-    let fetch = fetch::Fetch::start(agent.clone(), source.client(agent).stream_url(&track.id), part, whole, track.size, |_, _| {});
+    let fetch = fetch::Fetch::start(agent.clone(), source.client(agent).stream_url(&track.id), cache_folder(), whole, track.size, |_, _| {});
     Playing { at: index, url: fetch.url.clone(), fetch: Some(fetch) }
 }
 
@@ -2540,22 +2565,57 @@ mod tests {
         assert_eq!(file_name_of("al-6dGM/siesu:Yw9"), "al-6dGM_siesu_Yw9");
     }
 
+    /// A file of `size` bytes last written `age` seconds ago.
+    fn aged(path: &Path, size: u64, age: u64) {
+        std::fs::write(path, vec![0u8; size as usize]).expect("a file");
+        let file = std::fs::File::options().write(true).open(path).expect("the file");
+        file.set_modified(std::time::SystemTime::now() - Duration::from_secs(age)).expect("a date");
+    }
+
     #[test]
     fn the_cache_is_trimmed_oldest_first() {
         let folder = std::env::temp_dir().join(format!("finchgram-music-cache-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&folder);
         let source = folder.join("abcd");
         std::fs::create_dir_all(source.join("covers")).expect("folders");
-        for (name, size, age) in [("old.mp3", 300u64, 30u64), ("new.flac", 500, 10), ("part.mp3.part", 900, 0)] {
-            std::fs::write(source.join(name), vec![0u8; size as usize]).expect("a file");
-            let when = std::time::SystemTime::now() - Duration::from_secs(age);
-            let file = std::fs::File::options().write(true).open(source.join(name)).expect("the file");
-            file.set_modified(when).expect("a date");
+        for (name, size, age) in [("old.mp3", 300u64, 30u64), ("new.flac", 500, 10), ("part.mp3.3.part", 900, 0)] {
+            aged(&source.join(name), size, age);
         }
         std::fs::write(source.join("covers").join("al-1"), vec![0u8; 100]).expect("a cover");
-        assert_eq!(trim_cache(&folder, 0), 800);
-        assert_eq!(trim_cache(&folder, 600), 500);
-        assert!(!source.join("old.mp3").exists() && source.join("new.flac").exists() && source.join("part.mp3.part").exists());
+        // A song on its way counts: it is on the disk as the songs are.
+        assert_eq!(trim_cache(&folder, 0, &[]), 1700);
+        assert_eq!(trim_cache(&folder, 1500, &[]), 1400);
+        assert!(!source.join("old.mp3").exists() && source.join("new.flac").exists() && source.join("part.mp3.3.part").exists());
+        // It is never deleted for room while it may be someone's; the songs go first, all of them.
+        assert_eq!(trim_cache(&folder, 600, &[]), 900);
+        assert!(!source.join("new.flac").exists() && source.join("part.mp3.3.part").exists());
+        let _ = std::fs::remove_dir_all(&folder);
+    }
+
+    #[test]
+    fn a_song_left_on_its_way_goes_and_a_linked_folder_is_left_alone() {
+        let folder = std::env::temp_dir().join(format!("finchgram-music-parts-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&folder);
+        let (cache, outside) = (folder.join("cache"), folder.join("outside"));
+        let source = cache.join("abcd");
+        std::fs::create_dir_all(&source).expect("folders");
+        std::fs::create_dir_all(&outside).expect("folders");
+        let age = PART_LEFT_AFTER.as_secs() + 60;
+        aged(&source.join("song.mp3"), 300, 5);
+        // Left by a FinchGram that quit while it fetched; one this run is fetching, quiet for as
+        // long (the Mac slept); and one just started.
+        aged(&source.join("left.mp3.1.part"), 400, age);
+        aged(&source.join("ours.mp3.2.part"), 500, age);
+        aged(&source.join("fresh.mp3.3.part"), 600, 0);
+        // A folder of the user's, linked into the cache as a source would be: old files in it.
+        aged(&outside.join("thesis.mp3"), 700, age);
+        aged(&outside.join("draft.mp3.9.part"), 800, age);
+        std::os::unix::fs::symlink(&outside, cache.join("linked")).expect("a link");
+        let fetching = [source.join("ours.mp3.2.part")];
+        assert_eq!(trim_cache(&cache, 1, &fetching), 1100);
+        assert!(!source.join("left.mp3.1.part").exists() && !source.join("song.mp3").exists());
+        assert!(source.join("ours.mp3.2.part").exists() && source.join("fresh.mp3.3.part").exists());
+        assert!(outside.join("thesis.mp3").exists() && outside.join("draft.mp3.9.part").exists());
         let _ = std::fs::remove_dir_all(&folder);
     }
 }

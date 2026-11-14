@@ -2,28 +2,48 @@
 //! reads them from there through a stream (src/player/stream.rs) as they arrive, waiting at the
 //! edge; when mpv seeks past what has arrived, the fetch moves there, and comes back for what it
 //! skipped. One thread per song. A file fetched whole stays in the cache for the next time, under
-//! its own name; one on its way is ".part".
+//! its own name; one on its way is ".part", each fetch's its own, and gone when the fetch is given
+//! up or fails (the next one starts over).
 //!
-//! The vendored FFmpeg has no network code (docs/architecture.md): this is where the network is,
-//! the app's own HTTP client, with the Keychain's roots.
+//! The music's mpv opens files only (docs/architecture.md): this is where the network is, the
+//! app's own HTTP client, with the Keychain's roots.
+//!
+//! The server is the user's own, and still not believed about how much it sends: a song is never
+//! written past the size the server said it has, one of no size said never past
+//! MOST_WITHOUT_A_SIZE, and never into the last room of the disk (the downloads' margin,
+//! src/downloads/transfer.rs). The files are written by name within the cache's folders, through
+//! no symbolic link (the downloads' `Folder`): a link put into the cache under a song's name, or
+//! in place of a folder, is not written through.
 
-use std::fs::OpenOptions;
 use std::io::Read as _;
 use std::os::unix::fs::FileExt as _;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex};
 
+use crate::downloads::transfer;
 use crate::player::stream::{self, Stream};
 
 /// Bytes read from the server at a time, and written to the file.
 const CHUNK: usize = 64 << 10;
+/// The most a song may bring when the server does not say its size (a stream it transcodes as
+/// it sends): fifteen hours at 320 kbit/s. A server that goes on past it is not sending a song.
+const MOST_WITHOUT_A_SIZE: u64 = 2 << 30;
+/// The room on the disk is asked about again every so many bytes written: well under the margin
+/// that is kept free (`transfer::check_space`), so that most of the margin is always there.
+const SPACE_ASKED_EVERY: u64 = 32 << 20;
+
+/// Each fetch writes a file of its own: two of one song (the song queued twice) do not write
+/// into each other's, and one given up removes only what is its.
+static NEXT_PART: AtomicU64 = AtomicU64::new(1);
 
 /// A song on its way, or there: the stream mpv reads it through, the URL it is offered under,
 /// and the thread fetching it.
 pub struct Fetch {
     /// "finchgram://n": what mpv plays.
     pub url: String,
+    /// The file the song is written into while on its way.
+    part: PathBuf,
     control: Arc<Control>,
     done: Arc<AtomicBool>,
     failed: Arc<AtomicBool>,
@@ -66,10 +86,12 @@ impl Control {
 }
 
 impl Fetch {
-    /// Fetch `http_url` into `part`, renamed to `whole` once it is all there; `size` the song's
-    /// size when known (0 otherwise); `progress(from, to)` is told what has arrived, as parts of
-    /// the file, from the fetching thread.
-    pub fn start(agent: ureq::Agent, http_url: String, part: PathBuf, whole: PathBuf, size: u64, progress: impl Fn(f32, f32) + Send + Sync + 'static) -> Fetch {
+    /// Fetch `http_url` into a ".part" beside `whole`, renamed to `whole` once it is all there;
+    /// `root` is the cache's folder, which `whole` is under; `size` the song's size when known (0
+    /// otherwise); `progress(from, to)` is told what has arrived, as parts of the file, from the
+    /// fetching thread.
+    pub fn start(agent: ureq::Agent, http_url: String, root: PathBuf, whole: PathBuf, size: u64, progress: impl Fn(f32, f32) + Send + Sync + 'static) -> Fetch {
+        let part = transfer::with_suffix(&whole, &format!(".{}.part", NEXT_PART.fetch_add(1, Ordering::Relaxed)));
         let control = Arc::new(Control::new());
         let stream = Stream::new(
             size,
@@ -83,8 +105,8 @@ impl Fetch {
         let done = Arc::new(AtomicBool::new(false));
         let failed = Arc::new(AtomicBool::new(false));
         let started = std::thread::Builder::new().name("music-fetch".into()).spawn({
-            let (stream, control, done, failed) = (stream.clone(), control.clone(), done.clone(), failed.clone());
-            move || match fetch(&agent, &http_url, &part, &whole, &stream, &control) {
+            let (stream, control, done, failed, part) = (stream.clone(), control.clone(), done.clone(), failed.clone(), part.clone());
+            move || match fetch(&agent, &http_url, &root, &part, &whole, &stream, &control) {
                 Ok(true) => done.store(true, Ordering::Release),
                 Ok(false) => {}
                 Err(err) => {
@@ -99,7 +121,12 @@ impl Fetch {
             failed.store(true, Ordering::Release);
             stream.failed();
         }
-        Fetch { url, control, done, failed }
+        Fetch { url, part, control, done, failed }
+    }
+
+    /// The file the song is written into while on its way: the cache leaves it alone (mod.rs).
+    pub fn part(&self) -> &Path {
+        &self.part
     }
 
     /// The whole file is in the cache.
@@ -111,8 +138,8 @@ impl Fetch {
         self.failed.load(Ordering::Acquire)
     }
 
-    /// Over: the stream is withdrawn, a read under way returns, the thread stops; a partial file
-    /// stays and is fetched again next time.
+    /// Over: the stream is withdrawn, a read under way returns, the thread stops and removes
+    /// what it had written; the song is fetched from its start next time.
     pub fn cancel(&self) {
         self.control.cancel();
         stream::withdraw_music(&self.url);
@@ -125,16 +152,34 @@ impl Drop for Fetch {
     }
 }
 
-/// The fetch itself, on its thread: true once the file is whole, false when cancelled.
-fn fetch(agent: &ureq::Agent, http_url: &str, part: &Path, whole: &Path, stream: &Stream, control: &Control) -> Result<bool, String> {
-    if let Some(folder) = part.parent() {
-        std::fs::create_dir_all(folder).map_err(|err| format!("cannot make {}: {err}", folder.display()))?;
+/// The fetch itself, on its thread: true once the file is whole, false when cancelled. The file
+/// it writes is its own, under `root` through no link (`transfer::open_own`): whatever is under
+/// its name goes first (a file left by a FinchGram that quit while it fetched, or a link put
+/// there), and so does the file itself when the fetch is given up or fails.
+fn fetch(agent: &ureq::Agent, http_url: &str, root: &Path, part: &Path, whole: &Path, stream: &Stream, control: &Control) -> Result<bool, String> {
+    transfer::remove_own(root, part);
+    let file = transfer::open_own(root, part, true).map_err(|err| format!("cannot write {}: {err}", part.display()))?;
+    let outcome = bring(agent, http_url, root, part, whole, &file, stream, control);
+    if !matches!(outcome, Ok(true)) {
+        transfer::remove_own(root, part);
     }
-    let file = OpenOptions::new().create(true).write(true).truncate(true).open(part).map_err(|err| format!("cannot write {}: {err}", part.display()))?;
+    outcome
+}
+
+/// The song's bytes into `file` (which is at `part`), range by range, until all of it is there
+/// and the file is renamed `whole`.
+#[allow(clippy::too_many_arguments)]
+fn bring(agent: &ureq::Agent, http_url: &str, root: &Path, part: &Path, whole: &Path, file: &std::fs::File, stream: &Stream, control: &Control) -> Result<bool, String> {
     // What is on the disk, as (from, to) ranges in order, merged.
     let mut ranges: Vec<(u64, u64)> = Vec::new();
     let mut total: Option<u64> = None;
     let mut from: u64 = 0;
+    // The room on the disk is asked about before anything is written, when the song's size is
+    // known, and again every so many bytes written: a server that sends without end stops at the
+    // margin, not at a full disk.
+    transfer::check_space(part, 0).map_err(|err| err.to_string())?;
+    let mut unchecked: u64 = 0;
+    let held = |ranges: &[(u64, u64)]| ranges.iter().map(|(from, to)| to - from).sum::<u64>();
     loop {
         if control.is_cancelled() {
             return Ok(false);
@@ -153,12 +198,16 @@ fn fetch(agent: &ureq::Agent, http_url: &str, part: &Path, whole: &Path, stream:
             200 => (0, header("content-length").and_then(|length| length.parse::<u64>().ok())),
             _ => return Err(format!("HTTP {status}")),
         };
+        let had = held(&ranges);
         if start != from {
             // The server does not do ranges (200 from the start): everything comes again.
             ranges.clear();
         }
-        if let Some(size) = size {
+        if let Some(size) = size
+            && total != Some(size)
+        {
             total = Some(size);
+            transfer::check_space(part, size.saturating_sub(held(&ranges))).map_err(|err| err.to_string())?;
         }
         let mut position = start;
         let mut buffer = vec![0u8; CHUNK];
@@ -181,8 +230,14 @@ fn fetch(agent: &ureq::Agent, http_url: &str, part: &Path, whole: &Path, stream:
             if read == 0 {
                 break;
             }
-            file.write_all_at(&buffer[..read], position).map_err(|err| format!("cannot write {}: {err}", part.display()))?;
             let to = position + read as u64;
+            within(to, total)?;
+            unchecked += read as u64;
+            if unchecked >= SPACE_ASKED_EVERY {
+                unchecked = 0;
+                transfer::check_space(part, 0).map_err(|err| err.to_string())?;
+            }
+            file.write_all_at(&buffer[..read], position).map_err(|err| format!("cannot write {}: {err}", part.display()))?;
             add(&mut ranges, position, to);
             position = to;
             if let Some(window) = window_of(&ranges, to - 1) {
@@ -200,7 +255,7 @@ fn fetch(agent: &ureq::Agent, http_url: &str, part: &Path, whole: &Path, stream:
             None => ranges.last().map_or(0, |(_, to)| *to),
         };
         if ranges.len() == 1 && ranges[0] == (0, whole_size) {
-            std::fs::rename(part, whole).map_err(|err| format!("cannot keep {}: {err}", whole.display()))?;
+            transfer::rename_own(root, part, whole).map_err(|err| format!("cannot keep {}: {err}", whole.display()))?;
             stream.arrived(Some(whole.to_path_buf()), 0, whole_size, true, whole_size);
             return Ok(true);
         }
@@ -208,8 +263,23 @@ fn fetch(agent: &ureq::Agent, http_url: &str, part: &Path, whole: &Path, stream:
             // Everything came and still is not all of it: the size was wrong somewhere.
             return Err("the file came short".into());
         }
+        if held(&ranges) <= had {
+            // An answer that brought nothing the file did not have: asking again would go on
+            // for as long as the server answers that way.
+            return Err("the server sent nothing new".into());
+        }
         // A gap to fill: the first byte not on the disk.
         from = first_gap(&ranges, whole_size).ok_or("the file came short")?;
+    }
+}
+
+/// Whether a song that has come as far as byte `to` is still within what it may bring: the size
+/// the server said it has (`total`), or MOST_WITHOUT_A_SIZE when it said none.
+fn within(to: u64, total: Option<u64>) -> Result<(), String> {
+    match total {
+        Some(total) if to > total => Err(format!("the server sent more than the {total} bytes it said the song has")),
+        None if to > MOST_WITHOUT_A_SIZE => Err(format!("the server said no size and sent more than {} MB", MOST_WITHOUT_A_SIZE >> 20)),
+        _ => Ok(()),
     }
 }
 
@@ -339,9 +409,9 @@ mod tests {
         let content = pattern(900_000);
         let address = serve(content.clone(), true, true);
         let folder = scratch("ranges");
-        let (part, whole) = (folder.join("song.part"), folder.join("song.mp3"));
+        let whole = folder.join("source").join("song.mp3");
         let shown = Arc::new(Mutex::new(Vec::new()));
-        let fetch = Fetch::start(ureq::Agent::new_with_defaults(), address, part.clone(), whole.clone(), content.len() as u64, {
+        let fetch = Fetch::start(ureq::Agent::new_with_defaults(), address, folder.clone(), whole.clone(), content.len() as u64, {
             let shown = shown.clone();
             move |from, to| shown.lock().unwrap().push((from, to))
         });
@@ -351,7 +421,9 @@ mod tests {
         assert!(wait_until(|| fetch.is_done()), "fetched within ten seconds");
         assert!(!fetch.is_failed());
         assert_eq!(std::fs::read(&whole).expect("the whole file"), content);
-        assert!(!part.exists());
+        // The file it was written into is beside it while on its way, and is the song itself now.
+        assert!(fetch.part().starts_with(folder.join("source")) && fetch.part().extension().is_some_and(|extension| extension == "part"));
+        assert!(!fetch.part().exists());
         let shown = shown.lock().unwrap();
         assert_eq!(shown.last(), Some(&(0.0, 0.0)));
         assert!(shown.iter().any(|(from, _)| (*from - 0.6666).abs() < 0.01), "a window from the seek among {:?}", &shown[..shown.len().min(12)]);
@@ -362,12 +434,94 @@ mod tests {
     fn a_server_without_ranges_gives_the_whole_file_and_a_missing_one_fails_the_stream() {
         let content = pattern(100_000);
         let folder = scratch("plain");
-        let fetch = Fetch::start(ureq::Agent::new_with_defaults(), serve(content.clone(), false, true), folder.join("a.part"), folder.join("a.mp3"), 0, |_, _| {});
+        let fetch = Fetch::start(ureq::Agent::new_with_defaults(), serve(content.clone(), false, true), folder.clone(), folder.join("a.mp3"), 0, |_, _| {});
         assert!(wait_until(|| fetch.is_done()));
         assert_eq!(std::fs::read(folder.join("a.mp3")).expect("the file"), content);
-        let missing = Fetch::start(ureq::Agent::new_with_defaults(), serve(Vec::new(), true, false), folder.join("b.part"), folder.join("b.mp3"), 0, |_, _| {});
+        let missing = Fetch::start(ureq::Agent::new_with_defaults(), serve(Vec::new(), true, false), folder.clone(), folder.join("b.mp3"), 0, |_, _| {});
         assert!(wait_until(|| missing.is_failed()));
         assert!(!folder.join("b.mp3").exists());
+        // What a fetch that failed had written is gone with it: nothing but the song is left.
+        assert!(wait_until(|| !missing.part().exists()));
+        assert_eq!(std::fs::read_dir(&folder).expect("the folder").flatten().map(|entry| entry.file_name()).collect::<Vec<_>>(), ["a.mp3"]);
+        let _ = std::fs::remove_dir_all(&folder);
+    }
+
+    /// A server that answers every request with `head` and then `body`.
+    fn answer(head: String, body: Vec<u8>) -> String {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("a port");
+        let address = format!("http://{}/song.mp3", listener.local_addr().expect("the address"));
+        std::thread::spawn(move || {
+            for connection in listener.incoming() {
+                let Ok(mut connection) = connection else { break };
+                let mut request = Vec::new();
+                let mut byte = [0u8; 1];
+                while !request.ends_with(b"\r\n\r\n") && connection.read(&mut byte).map(|read| read == 1).unwrap_or(false) {
+                    request.push(byte[0]);
+                }
+                let _ = connection.write_all(head.as_bytes());
+                let _ = connection.write_all(&body);
+            }
+        });
+        address
+    }
+
+    #[test]
+    fn a_song_is_not_written_past_the_size_the_server_said() {
+        // "Ten bytes of the song", and a hundred thousand sent.
+        let head = "HTTP/1.1 206 Partial Content\r\nContent-Range: bytes 0-9/10\r\nContent-Length: 100000\r\nConnection: close\r\n\r\n".to_string();
+        let folder = scratch("too-much");
+        let fetch = Fetch::start(ureq::Agent::new_with_defaults(), answer(head, pattern(100_000)), folder.clone(), folder.join("song.mp3"), 0, |_, _| {});
+        assert!(wait_until(|| fetch.is_failed()));
+        assert!(wait_until(|| !fetch.part().exists()));
+        assert!(!folder.join("song.mp3").exists());
+        assert_eq!(within(10, Some(10)), Ok(()));
+        assert!(within(11, Some(10)).is_err());
+        // No size said (a stream transcoded as it is sent): a ceiling of its own.
+        assert_eq!(within(MOST_WITHOUT_A_SIZE, None), Ok(()));
+        assert!(within(MOST_WITHOUT_A_SIZE + 1, None).is_err());
+        // A size said is the song's, however large.
+        assert_eq!(within(MOST_WITHOUT_A_SIZE + 1, Some(MOST_WITHOUT_A_SIZE * 4)), Ok(()));
+        let _ = std::fs::remove_dir_all(&folder);
+    }
+
+    #[test]
+    fn a_server_that_keeps_sending_the_same_bytes_is_given_up() {
+        // The first ten bytes of a hundred, whatever is asked for: the fetch would ask for the
+        // rest again and again.
+        let head = "HTTP/1.1 206 Partial Content\r\nContent-Range: bytes 0-9/100\r\nContent-Length: 10\r\nConnection: close\r\n\r\n".to_string();
+        let folder = scratch("same-bytes");
+        let fetch = Fetch::start(ureq::Agent::new_with_defaults(), answer(head, pattern(10)), folder.clone(), folder.join("song.mp3"), 0, |_, _| {});
+        assert!(wait_until(|| fetch.is_failed()));
+        assert!(wait_until(|| !fetch.part().exists()));
+        let _ = std::fs::remove_dir_all(&folder);
+    }
+
+    #[test]
+    fn a_link_in_the_cache_is_not_written_through() {
+        let content = pattern(50_000);
+        let folder = scratch("links");
+        let (root, outside) = (folder.join("cache"), folder.join("outside"));
+        std::fs::create_dir_all(root.join("source")).expect("folders");
+        std::fs::create_dir_all(&outside).expect("folders");
+        let fetched = |part: &Path, whole: &Path| {
+            let stream = Stream::new(0, |_| {}, |_, _| {});
+            fetch(&ureq::Agent::new_with_defaults(), &serve(content.clone(), true, true), &root, part, whole, &stream, &Control::new())
+        };
+        // A link under the very name the song is written to while on its way: the link goes,
+        // what it pointed at stays as it was, and the song is fetched into a file of its own.
+        let victim = outside.join("notes.txt");
+        std::fs::write(&victim, b"the user's own words").expect("a file");
+        let (part, whole) = (root.join("source").join("song.mp3.1.part"), root.join("source").join("song.mp3"));
+        std::os::unix::fs::symlink(&victim, &part).expect("a link");
+        assert_eq!(fetched(&part, &whole), Ok(true));
+        assert_eq!(std::fs::read(&victim).expect("the file"), b"the user's own words");
+        assert_eq!(std::fs::read(&whole).expect("the song"), content);
+        assert!(std::fs::symlink_metadata(&part).is_err());
+        // A link in place of the source's folder: nothing is written where it leads.
+        std::os::unix::fs::symlink(&outside, root.join("linked")).expect("a link");
+        let (part, whole) = (root.join("linked").join("song.mp3.2.part"), root.join("linked").join("song.mp3"));
+        assert!(fetched(&part, &whole).is_err());
+        assert_eq!(std::fs::read_dir(&outside).expect("the folder").count(), 1);
         let _ = std::fs::remove_dir_all(&folder);
     }
 

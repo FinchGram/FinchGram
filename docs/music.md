@@ -60,15 +60,25 @@ The music has an mpv of its own (`src/player/music.rs`), with no video, beside t
 the voice messages': songs follow each other without a gap, the next one queued behind the current
 one in mpv's playlist and opened ahead of time (`gapless-audio`, `prefetch-playlist`).
 
-The music's mpv may open files only (its FFmpeg is held to local protocols, `LOCAL_PROTOCOLS` in
-`src/player/mod.rs`; only the Live view's players reach the network, docs/architecture.md), so mpv
-does not fetch a song itself. `src/music/fetch.rs` does, with the app's own HTTP client (ureq, with
+The music's mpv may open files only, and nothing a file names (its FFmpeg is held to local
+protocols and mpv follows no reference, `LOCAL_ONLY` in `src/player/mod.rs`; only the Live view's
+players reach the network, docs/architecture.md), so mpv does not fetch a song itself. `src/music/fetch.rs` does, with the app's own HTTP client (ureq, with
 the Keychain's roots as well as the usual ones, for a server behind a certificate of the user's
 own): the server's `stream` URL is read with Range requests into a file of the cache, and mpv reads
 that file as it arrives through the `finchgram://` stream callbacks (`src/player/stream.rs`, the
 same way a video arrives from TDLib). A seek past what has arrived moves the fetch there, and the
-fetch comes back for what it skipped. The whole file stays in the cache under its own name (".part"
-while on its way), so the next time the song plays from the disk.
+fetch comes back for what it skipped. The whole file stays in the cache under its own name, so the
+next time the song plays from the disk; while on its way it is a ".part" beside it, each fetch's
+its own, removed when the fetch is given up or fails (the next one starts over).
+
+The server is the user's own, and still not believed about how much it sends: a song is never
+written past the size the server said it has, a stream of no size said (one transcoded as it is
+sent) never past 2 GB, and never into the last room of the disk (the downloads' margin, asked
+about before anything is written, when the size is known, and every 32 MB after); and a server
+that keeps answering with nothing new is given up. The cache's files are written by name
+within its folders, through no symbolic link (the downloads' `Folder`,
+`src/downloads/transfer.rs`): a link put into the cache under a song's or a cover's name, or in
+place of a source's folder, is neither written through nor walked when the cache is trimmed.
 
 The server's own transcoding settings for the client named "FinchGram" decide what comes over
 the wire; FinchGram asks for nothing in particular. The server is told when a song starts
@@ -86,7 +96,8 @@ ListenBrainz where the server scrobbles.
 - Songs and covers in `~/Documents/FinchGram/music_cache/<source>/`, the source a hash of its
   address and account, songs by their ids, covers under `covers/`. The cache is trimmed to
   `cache_limit_mb` (2048 by default, 0 for no limit), the oldest songs first, when the page opens
-  and when a song ends; the covers are not counted.
+  and when a song ends; the covers are not counted, the songs on their way are. A ".part" left by
+  a FinchGram that quit while it fetched goes at the next trimming, once it is ten minutes old.
 
 ## The API
 

@@ -423,7 +423,9 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
 （之前的密钥在那次首次启动时由语音输入重新封一遍，也只有那一次还能打开），并给程序的行标上当时允许的账号；之前的行没写账号，
 一律丢掉，每个程序再被问一次。表结构 7（0.7.6 之后）加了 `mcp_apps.identity`：没有团队签名的程序除路径之外还要对上的
 代码哈希，记在行的标签里；之前的行又丢掉一次。表结构 8（0.7.7 之后）加了 `music_sources`，音乐页面的服务器，每个密码封起来时
-绑定到它的来源。settings 的键名改动必须带 serde alias，钥匙串条目的名字永远不改。
+绑定到它的来源。表结构 9（0.7.10 之后）加了 `live_follows`。表结构 10（0.8.0 之后）给服务器的每一行加了标签，盖住这台服务器
+和用户是否允许改动它：`allow_changes` 只有带着标签才算数，能写这个文件的程序没法替用户把它打开；之前的行按原样补上标签。
+settings 的键名改动必须带 serde alias，钥匙串条目的名字永远不改。
 
 ## 平台
 
@@ -459,7 +461,7 @@ AI 访问里允许过或拒绝过的程序（docs/mcp.zh-Hans.md）、你信任�
    IOSurface，`src/platform/video.rs`）。窗口每次渲染之前，播放器让 mpv 画出最新一帧（`src/player/`，
    [skia.zh-Hans.md](skia.zh-Hans.md)），媒体查看器显示这张纹理。代价是 libmpv 在 app 的进程里
    解码，一个故意构造的视频如果弄坏了解码器，窗口会跟着一起崩。FFmpeg 构建时
-   去掉了编码器和设备，并跟着上游升级。从 mpv-0.41.0-2（2026-11-08）起带网络，供 Live 视图播放直播（画布「FinchGram Desktop 直播」第 12 轮）：HTTP、经 mbedTLS 的 HTTPS（Keychain 的根证书以文件交给它）、HLS、经 libxml2 的 DASH、RTSP；只有 Live 视图的播放器能用到网络，其他播放器都写明自己能打开的协议，只限本地文件（`src/player/mod.rs` 的 `LOCAL_PROTOCOLS`），所以 Telegram 文件里的播放列表绝不会让 FFmpeg 去取任何东西。如果还不够，就把播放挪进一个沙箱里的辅助进程，由它把画面交给 app
+   去掉了编码器和设备，并跟着上游升级。从 mpv-0.41.0-2（2026-11-08）起带网络，供 Live 视图播放直播（画布「FinchGram Desktop 直播」第 12 轮）：HTTP、经 mbedTLS 的 HTTPS（Keychain 的根证书以文件交给它）、HLS、经 libxml2 的 DASH、RTSP；只有 Live 视图的播放器能用到网络，而且每张证书都校验（`tls-verify`，mpv 默认是不校验的；拿不到根证书时 HTTPS 的流就不播，而不是不校验地播）。其他播放器只打开交给它的那一个文件，文件里提到的东西一概不碰（`src/player/mod.rs` 的 `LOCAL_ONLY`）：FFmpeg 的协议只限本地文件，mpv 不跟随任何引用（播放列表、剪辑列表、cue、Matroska 的其他分段），也不自动加载旁边的文件；所以一个 Telegram 文件哪怕内容其实是一份别的文件或地址的清单，不管它叫什么名字，都不会让 app 去取、去播别的东西。把语音消息解码后交给用户自己的 AI 服务商的那个解码器（`src/player/decode.rs`）另外只认几种声音文件，因为它解出来的东西会离开这台 Mac（2026-11-13 的安全审查）。如果还不够，就把播放挪进一个沙箱里的辅助进程，由它把画面交给 app
    （macOS 上用 IOSurface）。音乐也守着这条：用户自己服务器上的歌经 app 的 HTTP 客户端进缓存文件，由音乐自己的 mpv
    边到边读（[music.zh-Hans.md](music.zh-Hans.md)）。Lottie 贴纸要另想办法（rlottie），WebM 贴纸要能保留透明通道的 VP9 解码（libvpx；
    FFmpeg 自带的 VP9 解码器会丢掉透明通道）。在那之前，动态贴纸只显示它的静态缩略图；静态贴纸照原样显示。

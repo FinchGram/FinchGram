@@ -38,17 +38,28 @@ use crate::{Live, MainWindow, Viewer};
 /// A video larger than this on its longer side is drawn this large: the viewer shows it smaller.
 const LARGEST: i64 = 2560;
 
-/// What FFmpeg may open for a player of files on the Mac (Telegram's, the music cache's): nothing
-/// over the network, not even a playlist inside a file pointing at one. mpv's own streams of the
-/// app ("finchgram://") are no FFmpeg protocol and stay open.
-pub(crate) const LOCAL_PROTOCOLS: [(&str, &str); 2] =
-    [("stream-lavf-o", "protocol_whitelist=[file,crypto,data]"), ("demuxer-lavf-o", "protocol_whitelist=[file,crypto,data]")];
+/// The protocols FFmpeg may open for a player of files on the Mac: none of the network's.
+pub(crate) const LOCAL_PROTOCOLS: &str = "protocol_whitelist=[file,crypto,data]";
+
+/// What a player of files on the Mac (Telegram's, the music cache's, one the user attaches) may
+/// open: the file it is given, and nothing that file names. A file is someone else's words: one
+/// that is a playlist or an edit list inside, whatever its name says, would otherwise have mpv
+/// play the files and addresses it lists, and the transcription (decode.rs) would hand a file of
+/// the Mac to the user's AI vendor. So FFmpeg opens nothing over the network (LOCAL_PROTOCOLS),
+/// mpv follows no reference (playlists, edit lists, cue sheets, archives, a Matroska file's other
+/// segments, whatever FFmpeg would open besides the file), and no file beside it is loaded with
+/// it (subtitles, sound, covers). mpv's own streams of the app ("finchgram://") are no FFmpeg
+/// protocol and stay open.
+pub(crate) const LOCAL_ONLY: [(&str, &str); 4] =
+    [("stream-lavf-o", LOCAL_PROTOCOLS), ("demuxer-lavf-o", LOCAL_PROTOCOLS), ("access-references", "no"), ("autoload-files", "no")];
 
 /// What FFmpeg may open for the Live view's streams (src/live/watch.rs): HTTP(S) for HLS, DASH and
-/// Icecast, RTSP over its transports. The certificates are checked against the Keychain's roots.
-const NETWORK_PROTOCOLS: [(&str, &str); 2] = [
+/// Icecast, RTSP over its transports. Every certificate is checked (`tls-verify`), against the
+/// Keychain's roots (`Player::start`): mpv's own default is not to check at all.
+const NETWORK_PROTOCOLS: [(&str, &str); 3] = [
     ("stream-lavf-o", "protocol_whitelist=[https,http,tls,tcp,crypto,data,rtsp,rtp,udp]"),
     ("demuxer-lavf-o", "protocol_whitelist=[https,http,tls,tcp,crypto,data,rtsp,rtp,udp]"),
+    ("tls-verify", "yes"),
 ];
 
 /// What mpv reports, by the number given when observing it.
@@ -337,11 +348,13 @@ impl Player {
             let roots = if self.screen.networked() { crate::live::roots::file() } else { None };
             let roots = roots.map(|path| path.to_string_lossy().to_string()).unwrap_or_default();
             let reach: Vec<(&str, &str)> = match self.screen {
-                Screen::Viewer => LOCAL_PROTOCOLS.to_vec(),
+                Screen::Viewer => LOCAL_ONLY.to_vec(),
+                // Without the roots (the Keychain gave none, or their file could not be written)
+                // the certificates are checked all the same, against nothing: an HTTPS stream
+                // then does not play, rather than play unchecked.
                 Screen::Live | Screen::Popout if roots.is_empty() => NETWORK_PROTOCOLS.to_vec(),
                 Screen::Live | Screen::Popout => {
                     let mut options = NETWORK_PROTOCOLS.to_vec();
-                    options.push(("tls-verify", "yes"));
                     options.push(("tls-ca-file", roots.as_str()));
                     options
                 }

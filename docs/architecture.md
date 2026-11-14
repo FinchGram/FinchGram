@@ -651,7 +651,10 @@ tagged the programs' rows for the account they were allowed for; the rows of bef
 and were dropped, so every program asks again once. Layout 7 (after 0.7.6) added `mcp_apps.identity`,
 the cdhash a program without a team's signature is held to besides its path, in the row's tag;
 the rows of before were dropped once more. Layout 8 (after 0.7.7) added `music_sources`, the
-music page's servers, each password sealed to its source.
+music page's servers, each password sealed to its source. Layout 9 (after 0.7.10) added
+`live_follows`. Layout 10 (after 0.8.0) gave the servers' rows a tag, over the server and whether
+the user allows changes on it: `allow_changes` is believed only with it, so that a program that
+can write the file cannot turn it on; the rows of before were tagged as they were.
 Settings keys are never renamed without a serde alias, and the Keychain items keep their names.
 
 ## Platforms
@@ -704,9 +707,16 @@ Settings keys are never renamed without a serde alias, and the Keychain items ke
    moves into a sandboxed helper process that hands its picture over (IOSurface on macOS). Since
    mpv-0.41.0-2 (2026-11-08) it has network code for the Live view's streams (the canvas "FinchGram
    Desktop 直播", round 12): HTTP, HTTPS through mbedTLS (the Keychain's roots handed to it as a
-   file), HLS, DASH through libxml2, RTSP; only the Live view's players may reach it, each other
-   player naming the protocols it may open, files only (`LOCAL_PROTOCOLS`, `src/player/mod.rs`), so
-   that a playlist inside a Telegram file never makes FFmpeg fetch anything. Music keeps it that way:
+   file), HLS, DASH through libxml2, RTSP; only the Live view's players may reach it, and they
+   check every certificate (`tls-verify`, which mpv leaves off by default; without the roots an
+   HTTPS stream does not play, rather than play unchecked). Every other player opens the file it is
+   given and nothing that file names (`LOCAL_ONLY`, `src/player/mod.rs`): FFmpeg's protocols are
+   held to files, mpv follows no reference (playlists, edit lists, cue sheets, a Matroska file's
+   other segments) and loads no file beside it, so that a Telegram file that is a list of other
+   files or addresses inside, whatever its name says, has nothing fetched and nothing else played.
+   The decoder that hands a voice message's sound to the user's AI vendor (`src/player/decode.rs`)
+   takes sound files of a few kinds only besides, since what it decodes leaves the Mac (the
+   security review of 2026-11-13). Music keeps it that way:
    songs from the user's own server come through the app's HTTP client into a cache file, which an
    mpv of the music's own reads as it arrives ([music.md](music.md)).
    Lottie stickers need something else (rlottie), and WebM stickers a VP9 decoder that keeps their

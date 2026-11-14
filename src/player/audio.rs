@@ -101,7 +101,7 @@ impl Audio {
             }
             // Nothing of the user's own mpv is read, no video is decoded or shown, and a file
             // played to its end is let go.
-            for (name, value) in super::LOCAL_PROTOCOLS.into_iter().chain([
+            for (name, value) in super::LOCAL_ONLY.into_iter().chain([
                 ("config", "no"),
                 ("vo", "null"),
                 ("vid", "no"),

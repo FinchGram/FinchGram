@@ -18,7 +18,7 @@ pub mod tools;
 
 use std::cell::{Cell, RefCell};
 use std::fs;
-use std::io::{BufRead, BufReader, BufWriter, ErrorKind, Read, Write};
+use std::io::{BufRead, BufReader, BufWriter, ErrorKind, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::PathBuf;
@@ -52,9 +52,9 @@ const LINE_LIMIT: u64 = 1024 * 1024;
 /// a thread; many more is a program misbehaving, and the rest are turned away at the door.
 const MOST_CONNECTIONS: usize = 32;
 /// A connection that has not said `initialize` within this long is closed, whether it says
-/// nothing or anything else: a program that connects and never initializes would otherwise hold
-/// its thread for good. Once initialized it may be quiet as long as it likes: an assistant's app
-/// keeps its connection open for hours.
+/// nothing, anything else, or a line it never ends: a program that connects and never initializes
+/// would otherwise hold its thread, and its place among MOST_PENDING, for good. Once initialized it
+/// may be quiet as long as it likes: an assistant's app keeps its connection open for hours.
 const HANDSHAKE_TIMEOUT: Duration = Duration::from_secs(120);
 /// How many connections may wait for `initialize` at once (one asks the user, the others wait
 /// their turn at the dialog): more than this is a program opening connections and not using them,
@@ -238,32 +238,24 @@ fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>, pending: Pending) {
     };
     let mut writing = BufWriter::new(stream);
     let mut session = protocol::Session::new(&backend);
-    // Until `initialize` the client has HANDSHAKE_TIMEOUT between its lines; after it, as long
-    // as it likes.
-    let mut timed = reading.set_read_timeout(Some(HANDSHAKE_TIMEOUT)).is_ok();
     let mut reader = BufReader::new(reading);
     let mut line = Vec::new();
-    let started = Instant::now();
+    // Until `initialize` the client has HANDSHAKE_TIMEOUT in all, however it spends it; after
+    // it, as long as it likes.
+    let initialize_by = Instant::now() + HANDSHAKE_TIMEOUT;
     let mut pending = Some(pending);
     loop {
-        if !session.ready() && started.elapsed() > HANDSHAKE_TIMEOUT {
-            backend.log("did not initialize within two minutes: the connection is closed");
-            break;
-        }
-        line.clear();
-        // A line's worth and one byte more: a line still going at the limit ends the connection.
-        match reader.by_ref().take(LINE_LIMIT + 1).read_until(b'\n', &mut line) {
-            Ok(0) => break,
-            Err(err) if timed && matches!(err.kind(), ErrorKind::WouldBlock | ErrorKind::TimedOut) => {
-                backend.log("said nothing for two minutes before initialize: the connection is closed");
+        match read_line(&mut reader, &mut line, (!session.ready()).then_some(initialize_by)) {
+            Ok(Line::Whole) => {}
+            Ok(Line::Closed) | Err(_) => break,
+            Ok(Line::Late) => {
+                backend.log("did not initialize within two minutes: the connection is closed");
                 break;
             }
-            Err(_) => break,
-            Ok(_) if line.len() as u64 > LINE_LIMIT => {
+            Ok(Line::TooLong) => {
                 backend.log("sent a line over the limit of 1 MB: the connection is closed");
                 break;
             }
-            Ok(_) => {}
         }
         if let Some(answer) = session.handle(&String::from_utf8_lossy(&line))
             && (writeln!(writing, "{answer}").is_err() || writing.flush().is_err())
@@ -272,9 +264,6 @@ fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>, pending: Pending) {
         }
         if session.ready() {
             pending = None;
-            if timed {
-                timed = reader.get_ref().set_read_timeout(None).is_err();
-            }
         }
     }
     drop(pending);
@@ -282,6 +271,71 @@ fn serve(stream: UnixStream, ui: slint::Weak<MainWindow>, pending: Pending) {
     if backend.live.get() {
         let host = backend.host.clone();
         let _ = backend.ui.upgrade_in_event_loop(move |_| access::disconnected(&host));
+    }
+}
+
+/// How a line of a client's came (`read_line`).
+#[derive(Debug, PartialEq, Eq)]
+enum Line {
+    /// A line, in the buffer, its newline with it (or the last one of a client that then closed).
+    Whole,
+    /// The client closed the connection.
+    Closed,
+    /// The line went over LINE_LIMIT and still had not ended.
+    TooLong,
+    /// The moment given passed before the line had ended.
+    Late,
+}
+
+/// The client's next line into `line`. With `until`, the whole line must have come by that
+/// moment: a read waits no longer than what is left of it, however the bytes come, so that one
+/// byte now and then (each within any timeout of a single read) does not keep the line, and the
+/// connection, going. Without it a read waits as long as the client is quiet. A line still going
+/// past LINE_LIMIT is given up: any process of the user's may connect before the user has allowed
+/// it, and a reader that took bytes until a newline came would hold them all in memory.
+fn read_line(reader: &mut BufReader<UnixStream>, line: &mut Vec<u8>, until: Option<Instant>) -> std::io::Result<Line> {
+    line.clear();
+    loop {
+        let patience = match until {
+            Some(until) => {
+                let left = until.saturating_duration_since(Instant::now());
+                if left.is_zero() {
+                    return Ok(Line::Late);
+                }
+                Some(left)
+            }
+            None => None,
+        };
+        // Only a read that goes to the socket waits: what is in the buffer is there already.
+        // (macOS refuses to set a timeout on a socket the other end has closed; for a client
+        // that may be as quiet as it likes that is no matter, its next read says it is closed.)
+        if reader.buffer().is_empty() {
+            let set = reader.get_ref().set_read_timeout(patience);
+            if until.is_some() {
+                set?;
+            }
+        }
+        let arrived = match reader.fill_buf() {
+            Ok(arrived) => arrived,
+            Err(err) if err.kind() == ErrorKind::Interrupted => continue,
+            Err(err) if until.is_some() && matches!(err.kind(), ErrorKind::WouldBlock | ErrorKind::TimedOut) => return Ok(Line::Late),
+            Err(err) => return Err(err),
+        };
+        if arrived.is_empty() {
+            return Ok(if line.is_empty() { Line::Closed } else { Line::Whole });
+        }
+        let (taken, ended) = match arrived.iter().position(|byte| *byte == b'\n') {
+            Some(at) => (at + 1, true),
+            None => (arrived.len(), false),
+        };
+        line.extend_from_slice(&arrived[..taken]);
+        reader.consume(taken);
+        if line.len() as u64 > LINE_LIMIT {
+            return Ok(Line::TooLong);
+        }
+        if ended {
+            return Ok(Line::Whole);
+        }
     }
 }
 
@@ -417,5 +471,62 @@ mod tests {
         assert_eq!(choose_socket_path(Some(long), PathBuf::from("/var/folders/ab/T"), "mcp.sock"), PathBuf::from("/var/folders/ab/T/finchgram-mcp.sock"));
         assert_eq!(choose_socket_path(None, PathBuf::from("/tmp"), "mcp-test.sock"), PathBuf::from("/tmp/finchgram-mcp-test.sock"));
         assert!(socket_path().as_os_str().len() <= SOCKET_PATH_MAX + "finchgram-mcp-test.sock".len());
+    }
+
+    #[test]
+    fn lines_come_one_at_a_time_and_the_last_one_of_a_client_that_closed() {
+        let (ours, mut theirs) = UnixStream::pair().expect("a pair");
+        let mut reader = BufReader::new(ours);
+        let mut line = Vec::new();
+        theirs.write_all(b"one\ntwo\nthree").expect("written");
+        assert_eq!((read_line(&mut reader, &mut line, None).expect("read"), line.as_slice()), (Line::Whole, &b"one\n"[..]));
+        assert_eq!((read_line(&mut reader, &mut line, None).expect("read"), line.as_slice()), (Line::Whole, &b"two\n"[..]));
+        drop(theirs);
+        assert_eq!((read_line(&mut reader, &mut line, None).expect("read"), line.as_slice()), (Line::Whole, &b"three"[..]));
+        assert_eq!(read_line(&mut reader, &mut line, None).expect("read"), Line::Closed);
+    }
+
+    #[test]
+    fn a_line_that_dribbles_in_does_not_outlast_its_moment() {
+        // A byte every 20 ms and never a newline: each read is well within any timeout of its
+        // own, and the line goes on for as long as the client likes (four seconds here).
+        let (ours, mut theirs) = UnixStream::pair().expect("a pair");
+        let dribbling = std::thread::spawn(move || {
+            for _ in 0..200 {
+                if theirs.write_all(b"x").is_err() {
+                    break;
+                }
+                std::thread::sleep(Duration::from_millis(20));
+            }
+        });
+        let mut reader = BufReader::new(ours);
+        let mut line = Vec::new();
+        let started = Instant::now();
+        let outcome = read_line(&mut reader, &mut line, Some(started + Duration::from_millis(200))).expect("read");
+        let took = started.elapsed();
+        assert_eq!(outcome, Line::Late);
+        assert!(took >= Duration::from_millis(200) && took < Duration::from_millis(1000), "{took:?}");
+        assert!(!line.is_empty() && line.len() < 50, "{} bytes", line.len());
+        // A client that says nothing at all is given up at the same moment; one whose moment
+        // has passed, at once.
+        let started = Instant::now();
+        assert_eq!(read_line(&mut reader, &mut line, Some(started)).expect("read"), Line::Late);
+        assert!(started.elapsed() < Duration::from_millis(100));
+        drop(reader);
+        dribbling.join().expect("the client's thread");
+    }
+
+    #[test]
+    fn a_line_over_the_limit_is_given_up() {
+        let (ours, mut theirs) = UnixStream::pair().expect("a pair");
+        let writing = std::thread::spawn(move || {
+            let _ = theirs.write_all(&vec![b'x'; LINE_LIMIT as usize + 4096]);
+        });
+        let mut reader = BufReader::new(ours);
+        let mut line = Vec::new();
+        assert_eq!(read_line(&mut reader, &mut line, None).expect("read"), Line::TooLong);
+        assert!(line.len() as u64 > LINE_LIMIT && (line.len() as u64) < LINE_LIMIT + 64 * 1024);
+        drop(reader);
+        writing.join().expect("the client's thread");
     }
 }

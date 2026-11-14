@@ -136,7 +136,7 @@ impl Music {
             // Nothing of the user's own mpv is read, no video is decoded or shown; songs follow
             // each other without a gap, the next opened while the current one plays; a file
             // played to its end is let go, and mpv waits for the next.
-            for (name, value) in super::LOCAL_PROTOCOLS.into_iter().chain([
+            for (name, value) in super::LOCAL_ONLY.into_iter().chain([
                 ("config", "no"),
                 ("vo", "null"),
                 ("vid", "no"),

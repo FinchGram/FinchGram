@@ -33,10 +33,23 @@ thread_local! {
 
 /// A program whose answer is not kept (`Host::kept`, peer.rs: the system would not name it, or it
 /// is an interpreter that runs any script), allowed or turned away for this run: by its key ("pid
-/// N", or the interpreter), and only for the process that was, by when it started.
+/// N", or the interpreter), and only for the process that was, by its number and the moment it
+/// started.
 struct SessionApp {
     app: McpApp,
+    pid: i32,
     started: u64,
+}
+
+impl SessionApp {
+    /// Whether this answer is about the process at `host`: the program of that `key`, and the
+    /// very process, by its number and the moment it started (to the microsecond: a number is
+    /// used again only long after). An interpreter's answer is one script's: another script run
+    /// by the same interpreter is another process, and is asked about, even one started within
+    /// the same second. A process the system would not say the start of is never the one.
+    fn is_for(&self, key: &str, host: &Host) -> bool {
+        self.app.key == key && self.pid == host.pid && self.started == host.started && host.started != 0
+    }
 }
 
 struct State {
@@ -259,7 +272,7 @@ pub fn admit(host: Host, answer: mpsc::Sender<Admission>) {
             // told so (`show_question`); their answer takes the row.
             super::log(&format!("{}: its code is not the code the user answered about: asked again", host.describe()));
         }
-        if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.key == key && known.started == host.started) {
+        if let Some(known) = state.session_apps.iter_mut().find(|known| known.is_for(&key, &host)) {
             known.app.last_used = now;
             return Some(if known.app.allowed { Admission::Allowed } else { Admission::Denied });
         }
@@ -328,7 +341,7 @@ pub fn admitted(host: &Host) -> bool {
         let key = host.key();
         settings.mcp.enabled
             && database::mcp_app(&key, settings.mcp.account)
-                .or_else(|| state.session_apps.iter().find(|known| known.app.key == key && known.started == host.started).map(|known| known.app.clone()))
+                .or_else(|| state.session_apps.iter().find(|known| known.is_for(&key, host)).map(|known| known.app.clone()))
                 .is_some_and(|app| app.allowed && app.identity == host.identity())
     })
 }
@@ -384,7 +397,7 @@ pub fn record(host: &Host, activity: Activity) {
                 eprintln!("mcp: cannot note the program's use: {err}");
             }
         }
-        if let Some(known) = state.session_apps.iter_mut().find(|known| known.app.key == key && known.started == host.started) {
+        if let Some(known) = state.session_apps.iter_mut().find(|known| known.is_for(&key, host)) {
             known.app.last_used = now;
         }
         state.activity.insert(0, entry);
@@ -483,7 +496,7 @@ fn remember(host: &Host, allowed: bool) {
             }
         } else {
             state.session_apps.retain(|known| known.app.key != app.key);
-            state.session_apps.push(SessionApp { app, started: host.started });
+            state.session_apps.push(SessionApp { app, pid: host.pid, started: host.started });
         }
     });
 }
@@ -642,6 +655,25 @@ mod tests {
         assert!(desktop.contains(r#""command": "/Users/x/My Apps/FinchGram.app/Contents/MacOS/finchgram""#));
         let (code, _) = commands("/Users/x/it's here/finchgram");
         assert_eq!(code, "claude mcp add finchgram -- '/Users/x/it'\\''s here/finchgram' mcp");
+    }
+
+    #[test]
+    fn an_answer_for_the_run_is_held_to_the_very_process() {
+        let node = |pid: i32, started: u64| Host { pid, path: Some("/opt/homebrew/bin/node".into()), signature: None, hash: None, started };
+        let allowed = node(4100, 1_794_000_000_250_000);
+        let key = allowed.key();
+        let answer = SessionApp { app: McpApp { key: key.clone(), allowed: true, ..McpApp::default() }, pid: allowed.pid, started: allowed.started };
+        assert!(answer.is_for(&key, &allowed));
+        // Another script run by the same interpreter within the same second: another process.
+        assert!(!answer.is_for(&key, &node(4101, 1_794_000_000_250_000)));
+        assert!(!answer.is_for(&key, &node(4101, 1_794_000_000_900_000)));
+        // The same number given to a later process.
+        assert!(!answer.is_for(&key, &node(4100, 1_794_000_300_000_000)));
+        // Another program under the same number and moment is not it either.
+        assert!(!answer.is_for("/usr/bin/python3", &allowed));
+        // A process the system would not say the start of is nobody's answer.
+        let unknown = SessionApp { app: McpApp { key: key.clone(), allowed: true, ..McpApp::default() }, pid: 4100, started: 0 };
+        assert!(!unknown.is_for(&key, &node(4100, 0)));
     }
 
     #[test]

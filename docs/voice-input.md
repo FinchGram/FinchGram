@@ -167,7 +167,10 @@ it (the round "秘密聊天与通话"). The first section says what is built; th
   user's own vendor can be set. With it on, Telegram is not asked: the message goes straight to the
   vendor and model chosen for voice messages (the maintainer's answer of 2026-10-26, "直接用 AI
   vendor"): its file as it is to an OpenAI-compatible vendor's upload, or decoded by libmpv's PCM
-  writer (`src/player/decode.rs`, faster than real time) to the rate of the realtime ones; the
+  writer (`src/player/decode.rs`, faster than real time) to the rate of the realtime ones (that one
+  file and nothing it names, and only as a sound file of the kinds voice messages come in: a file
+  that is a list of other files inside would otherwise have a sound file of the Mac decoded in its
+  place and sent); the
   language found from the message itself; no tidying. With nothing chosen, the bubble says to
   choose them. A second click hides the words, a third shows them again; they are kept in memory
   for the session, nowhere else. This hands Telegram's content (someone else's voice) to a service

@@ -59,9 +59,10 @@ pub struct Host {
     /// what its answer is held to besides its path (`identity`). None for one with such a
     /// signature, which needs none, and for one with no signature at all.
     pub hash: Option<String>,
-    /// When the process started, in seconds since the epoch; 0 when the system would not say. A
-    /// program the system would not name is remembered for the run by its pid and this: a later
-    /// process under the same pid (pids are reused) is a stranger (access.rs).
+    /// When the process started, in microseconds since the epoch; 0 when the system would not
+    /// say. A program whose answer is not kept is remembered for the run by its pid and this: a
+    /// later process under the same pid (pids are reused) is a stranger, and so is another
+    /// process of the same program, whenever it started (access.rs).
     pub started: u64,
 }
 
@@ -312,9 +313,10 @@ mod system {
         i32::try_from(bsd_info(pid)?.pbi_ppid).ok()
     }
 
-    /// When the process `pid` started, in seconds since the epoch.
+    /// When the process `pid` started, in microseconds since the epoch, as the system noted it.
     pub fn started_at(pid: i32) -> Option<u64> {
-        Some(bsd_info(pid)?.pbi_start_tvsec)
+        let info = bsd_info(pid)?;
+        Some(info.pbi_start_tvsec.saturating_mul(1_000_000).saturating_add(info.pbi_start_tvusec))
     }
 
     /// The code signature of the process `pid`, as the system validates it under a certificate
@@ -471,7 +473,20 @@ mod tests {
         assert_eq!(path.canonicalize().ok(), std::env::current_exe().ok().and_then(|exe| exe.canonicalize().ok()));
         let parent = system::parent_of(me).expect("a parent");
         assert!(parent > 0 && parent != me);
-        assert!(system::started_at(me).is_some_and(|started| started > 1_600_000_000));
+        // Microseconds since the epoch: this very second, and the same at every asking.
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).expect("a clock").as_micros() as u64;
+        let started = system::started_at(me).expect("when this process started");
+        assert!(started > 1_600_000_000_000_000 && started <= now && now - started < 3_600_000_000, "{started} against {now}");
+        assert_eq!(system::started_at(me), Some(started));
+        // Two processes of one program started one after the other are told apart by it.
+        let spawn = || std::process::Command::new("/bin/sleep").arg("30").spawn().expect("sleep");
+        let (mut first, mut second) = (spawn(), spawn());
+        let moment = |child: &std::process::Child| system::started_at(i32::try_from(child.id()).expect("a pid")).expect("when it started");
+        assert_ne!((first.id(), moment(&first)), (second.id(), moment(&second)));
+        for child in [&mut first, &mut second] {
+            let _ = child.kill();
+            let _ = child.wait();
+        }
         let (ours, theirs) = UnixStream::pair().expect("a pair");
         assert_eq!(system::peer_pid(&ours), Some(me));
         // The other end is this program: what the bridge requires of FinchGram's socket.
