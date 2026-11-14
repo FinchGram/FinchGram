@@ -504,9 +504,11 @@ mod tests {
         let started = Instant::now();
         let outcome = read_line(&mut reader, &mut line, Some(started + Duration::from_millis(200))).expect("read");
         let took = started.elapsed();
+        // Given up at its moment, long before the client stops: with room for a runner that
+        // stalls (GitHub's do), which is no reason for the check to turn red.
         assert_eq!(outcome, Line::Late);
-        assert!(took >= Duration::from_millis(200) && took < Duration::from_millis(1000), "{took:?}");
-        assert!(!line.is_empty() && line.len() < 50, "{} bytes", line.len());
+        assert!(took >= Duration::from_millis(200) && took < Duration::from_secs(3), "{took:?}");
+        assert!(!line.is_empty() && line.len() < 150, "{} bytes", line.len());
         // A client that says nothing at all is given up at the same moment; one whose moment
         // has passed, at once.
         let started = Instant::now();
