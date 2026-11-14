@@ -1424,7 +1424,14 @@ mod tests {
 
     /// Takes one from `counter` when there is one to take.
     fn take(counter: &AtomicUsize) -> bool {
-        counter.fetch_update(Ordering::SeqCst, Ordering::SeqCst, |left| left.checked_sub(1)).is_ok()
+        let mut left = counter.load(Ordering::SeqCst);
+        while left > 0 {
+            match counter.compare_exchange_weak(left, left - 1, Ordering::SeqCst, Ordering::SeqCst) {
+                Ok(_) => return true,
+                Err(now) => left = now,
+            }
+        }
+        false
     }
 
     fn answer(stream: TcpStream, content: &[u8], ranges: bool, authorization: Option<&str>, requests: &Mutex<Vec<String>>, counters: &Counters) {

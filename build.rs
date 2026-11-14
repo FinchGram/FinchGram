@@ -37,9 +37,22 @@ fn check_bundled_skia() {
     );
 }
 
+/// Where cargo puts the executable it is about to produce (`cargo build`, `cargo run`):
+/// target/<profile>, the folder its own "build" folder is in. OUT_DIR is
+/// target/<profile>/build/<package>-<hash>/out up to cargo 1.99 and
+/// target/<profile>/build/<package>/<hash>/out since 1.100, so the folder is found by its name,
+/// not by counting up from OUT_DIR: counting put what is copied here into target/<profile>/build
+/// under 1.100, where neither `cargo run` nor the tests found it.
+fn executable_dir() -> PathBuf {
+    let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR"));
+    let build = out_dir.ancestors().find(|folder| folder.file_name().is_some_and(|name| name == "build"));
+    let build = build.unwrap_or_else(|| panic!("unexpected OUT_DIR layout: {} is in no folder called build", out_dir.display()));
+    build.parent().expect("cargo's build folder is in the profile's").to_path_buf()
+}
+
 /// libmpv plays video (src/player/). The app links vendor/mpv/bin/libmpv.2.dylib and finds it at
-/// run time through its run paths: next to the executable (`cargo run`: it is copied there), one
-/// folder up (the test executables in target/<profile>/deps/), and in the bundle's Frameworks
+/// run time through its run paths: next to the executable (`cargo run`: it is copied there), in
+/// target/<profile> from where cargo puts a test executable, and in the bundle's Frameworks
 /// folder (scripts/bundle.sh). Like finchgram-tdlib, it is never looked for anywhere else.
 fn link_bundled_mpv() {
     println!("cargo:rerun-if-changed=vendor/mpv/bin");
@@ -61,11 +74,20 @@ fn link_bundled_mpv() {
     let _ = std::fs::remove_file(&link);
     std::os::unix::fs::symlink(&library, &link).unwrap_or_else(|err| panic!("cannot link {}: {err}", link.display()));
     println!("cargo:rustc-link-search=native={}", link_dir.display());
+    // A test executable is in target/<profile>/deps up to cargo 1.99: one folder up.
     for path in ["@executable_path", "@executable_path/..", "@executable_path/../Frameworks"] {
         println!("cargo:rustc-link-arg=-Wl,-rpath,{path}");
     }
+    // Since cargo 1.100 it is in target/<profile>/build/<package>/<hash>/out, as deep as OUT_DIR
+    // is. `cargo test` finds the library all the same (it has the dynamic linker fall back to
+    // target/<profile>); this is for a test executable run by anything else, a debugger say.
+    // Never in a release build: the app that ships looks nowhere outside its bundle.
+    let exe_dir = executable_dir();
+    let depth = out_dir.strip_prefix(&exe_dir).map_or(0, |below| below.components().count());
+    if depth > 3 && std::env::var("PROFILE").is_ok_and(|profile| profile != "release") {
+        println!("cargo:rustc-link-arg=-Wl,-rpath,@executable_path{}", "/..".repeat(depth));
+    }
 
-    let exe_dir = out_dir.ancestors().nth(3).expect("unexpected OUT_DIR layout").to_path_buf();
     let dest = exe_dir.join("libmpv.2.dylib");
     std::fs::copy(&library, &dest)
         .unwrap_or_else(|err| panic!("cannot copy {} to {}: {err}", library.display(), dest.display()));
@@ -95,9 +117,8 @@ fn copy_bundled_tdlib() {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR");
     let bin = Path::new(&manifest_dir).join("vendor").join("tdlib").join("bin");
 
-    // OUT_DIR is target/<profile>/build/<pkg>-<hash>/out; the executable lands in target/<profile>/.
-    let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR"));
-    let exe_dir = out_dir.ancestors().nth(3).expect("unexpected OUT_DIR layout").to_path_buf();
+    // The executable lands in target/<profile>.
+    let exe_dir = executable_dir();
 
     let program = bin.join("finchgram-tdlib");
     assert!(
