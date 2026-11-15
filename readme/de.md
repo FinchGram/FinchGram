@@ -42,7 +42,7 @@ Update installiert; das kannst du auch, mit dem öffentlichen Schlüssel in
 
 | Workbench | Broadsheet | Terminal |
 |---|---|---|
-| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-light-chats.png) |
+| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-dark-chats.png) |
 
 Workbench, die Voreinstellung, ist ein Arbeitsfenster mit Tabs. Broadsheet liest sich wie eine
 Zeitung, mit einer Akzentfarbe je Konto. Terminal ist ein Bildschirm in Festbreitenschrift mit

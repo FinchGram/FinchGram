@@ -41,7 +41,7 @@ actualización; tú también puedes, con la clave pública de [release-signing.p
 
 | Workbench | Broadsheet | Terminal |
 |---|---|---|
-| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-light-chats.png) |
+| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-dark-chats.png) |
 
 Workbench, el tema por defecto, es una ventana de trabajo con pestañas. Broadsheet se lee como un
 periódico, con un color de acento por cuenta. Terminal es una pantalla monoespaciada con comandos.

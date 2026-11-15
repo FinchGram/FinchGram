@@ -40,7 +40,7 @@ LLC의 Developer ID로 서명되고 Apple의 공증을 받았으므로 다른 �
 
 | Workbench | Broadsheet | Terminal |
 |---|---|---|
-| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-light-chats.png) |
+| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-dark-chats.png) |
 
 기본 테마 Workbench는 탭이 있는 작업 창입니다. Broadsheet는 신문처럼 읽히고 계정마다 강조색이 있습니다. Terminal은
 고정폭 글꼴 화면에 명령을 씁니다. 모두 라이트와 다크가 있고, 시스템을 따르거나 직접 고를 수 있습니다(설정 › 외관).

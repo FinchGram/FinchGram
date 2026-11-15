@@ -41,7 +41,7 @@ Telegram, и соблюдает [условия API Telegram](https://core.teleg
 
 | Workbench | Broadsheet | Terminal |
 |---|---|---|
-| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-light-chats.png) |
+| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-dark-chats.png) |
 
 Workbench, тема по умолчанию, — рабочее окно с вкладками. Broadsheet читается как газета, с акцентным
 цветом для каждого аккаунта. Terminal — моноширинный экран с командами. У каждой есть светлая и тёмная

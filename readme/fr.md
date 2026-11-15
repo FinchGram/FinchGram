@@ -43,7 +43,7 @@ d'installer une mise à jour ; vous le pouvez aussi, avec la clé publique de
 
 | Workbench | Broadsheet | Terminal |
 |---|---|---|
-| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-light-chats.png) |
+| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-dark-chats.png) |
 
 Workbench, le thème par défaut, est une fenêtre de travail à onglets. Broadsheet se lit comme un
 journal, avec une couleur d'accent par compte. Terminal est un écran en chasse fixe avec des

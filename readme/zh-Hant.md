@@ -39,7 +39,7 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
 
 | 工作台 | 報紙 | 終端 |
 |---|---|---|
-| ![工作台](../docs/screenshots/workbench-light-chats.png) | ![報紙](../docs/screenshots/broadsheet-light-chats.png) | ![終端](../docs/screenshots/terminal-light-chats.png) |
+| ![工作台](../docs/screenshots/workbench-light-chats.png) | ![報紙](../docs/screenshots/broadsheet-light-chats.png) | ![終端](../docs/screenshots/terminal-dark-chats.png) |
 
 工作台是預設主題，一個帶分頁的工作視窗。報紙讀起來像報紙，每個帳號有自己的強調色。終端是等寬字型的畫面，
 帶指令。每套都有淺色和深色，跟隨系統或自己選，在「設定 › 外觀」裡。

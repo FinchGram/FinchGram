@@ -41,7 +41,7 @@ atualização; você também pode, com a chave pública em [release-signing.pub]
 
 | Workbench | Broadsheet | Terminal |
 |---|---|---|
-| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-light-chats.png) |
+| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-dark-chats.png) |
 
 O Workbench, o padrão, é uma janela de trabalho com abas. O Broadsheet se lê como um jornal, com uma
 cor de destaque por conta. O Terminal é uma tela monoespaçada com comandos. Cada um tem um lado claro

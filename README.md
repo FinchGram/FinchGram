@@ -42,7 +42,7 @@ installs an update; so can you, with the public key in [release-signing.pub](rel
 
 | Workbench | Broadsheet | Terminal |
 |---|---|---|
-| ![Workbench](docs/screenshots/workbench-light-chats.png) | ![Broadsheet](docs/screenshots/broadsheet-light-chats.png) | ![Terminal](docs/screenshots/terminal-light-chats.png) |
+| ![Workbench](docs/screenshots/workbench-light-chats.png) | ![Broadsheet](docs/screenshots/broadsheet-light-chats.png) | ![Terminal](docs/screenshots/terminal-dark-chats.png) |
 
 Workbench, the default, is a working window with tabs. Broadsheet reads like a newspaper, with an
 accent colour per account. Terminal is a monospace screen with commands. Each has a light and a dark

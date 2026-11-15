@@ -40,7 +40,7 @@ Brookville LLC の Developer ID で署名され、Apple の公証を受けてい
 
 | Workbench | Broadsheet | Terminal |
 |---|---|---|
-| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-light-chats.png) |
+| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-dark-chats.png) |
 
 デフォルトの Workbench はタブ付きの作業ウィンドウ。Broadsheet は新聞のような読み心地で、アカウントごとのアクセントカラー。
 Terminal は等幅フォントの画面でコマンドが使えます。どれもライトとダークがあり、システムに従うか自分で選べます

@@ -39,7 +39,7 @@ FinchGram 通过 Telegram 官方的库 [TDLib](https://core.telegram.org/tdlib) 
 
 | 工作台 | 报纸 | 终端 |
 |---|---|---|
-| ![工作台](../docs/screenshots/workbench-light-chats.png) | ![报纸](../docs/screenshots/broadsheet-light-chats.png) | ![终端](../docs/screenshots/terminal-light-chats.png) |
+| ![工作台](../docs/screenshots/workbench-light-chats.png) | ![报纸](../docs/screenshots/broadsheet-light-chats.png) | ![终端](../docs/screenshots/terminal-dark-chats.png) |
 
 工作台是默认主题，一个带标签页的工作窗口。报纸读起来像报纸，每个账号有自己的强调色。终端是等宽字体的屏幕，
 带命令。每套都有浅色和深色，跟随系统或自己选，在“设置 › 外观”里。

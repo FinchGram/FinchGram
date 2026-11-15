@@ -39,7 +39,7 @@
 
 | Workbench | Broadsheet | Terminal |
 |---|---|---|
-| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-light-chats.png) |
+| ![Workbench](../docs/screenshots/workbench-light-chats.png) | ![Broadsheet](../docs/screenshots/broadsheet-light-chats.png) | ![Terminal](../docs/screenshots/terminal-dark-chats.png) |
 
 Workbench، السمة الافتراضية، نافذة عمل بعلامات تبويب. وBroadsheet تُقرأ كصحيفة، بلون مميز لكل حساب. وTerminal شاشة
 بخط ثابت العرض مع أوامر. لكل منها جانب فاتح وآخر داكن، تبعًا للنظام أو لاختيارك، في الإعدادات ← المظهر.

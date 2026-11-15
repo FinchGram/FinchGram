@@ -13,7 +13,7 @@ PICTURES=(
   workbench-light-chats
   workbench-dark-chats
   broadsheet-light-chats
-  terminal-light-chats
+  terminal-dark-chats
   terminal-dark-command-line
   terminal-dark-toolbox
   workbench-light-viewer-photo
