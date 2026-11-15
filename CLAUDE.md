@@ -180,7 +180,16 @@ things fit together.
 - The README exists in 11 languages: `README.md` (English) and `readme/<code>.md` (zh-Hans,
   zh-Hant, es, pt, de, fr, ru, ja, ko, ar). A change goes into all 11 with the same structure;
   line 3 is the language switcher.
-- Each doc in `docs/` has a `.zh-Hans.md` version; change both.
+- The README stays short (the maintainer's words of 2026-11-14: "现在readme太长了", "引用其他的文档，
+  拆成小文档，而不是啥都往readme里加"): what FinchGram is, a line a feature with a link, the download,
+  the themes, Telegram's rules, and where the documents are. Whatever is more than a line goes into
+  `docs/`, one small file a subject: `features.md` (what it does, in full, with pictures),
+  `terminal.md` (using the Terminal theme), `development.md`, `layout.md`, `translations.md`,
+  `releases.md`, beside the subjects' own (`downloads.md`, `music.md`, `mcp.md`, …). A new feature
+  gets its line in the README's list only if it is one a newcomer chooses the app for; else it goes
+  into `docs/features.md`.
+- Each doc in `docs/` has a `.zh-Hans.md` version; change both. The READMEs of the other nine
+  languages link to the English documents (zh-Hant to the Simplified Chinese ones).
 - The TDLib version is pinned in `vendor/tdlib/build.sh`, `scripts/fetch-tdlib.sh` and
   `TDLIB_VERSION` in `src/telegram/mod.rs`; `src/telegram/api.rs` follows that version's td_api.tl.
 - Skia's version is the skia-bindings crate's: in Cargo.lock (Slint's Skia renderer chooses it),
@@ -217,7 +226,8 @@ things fit together.
 - `FINCHGRAM_TEST_DC=1` uses Telegram's test servers.
 - `scripts/bundle.sh` builds `dist/FinchGram.app` for trying the packaged app; a release only ever
   goes through `scripts/release.sh`, and only when asked.
-- Think of contributors: a fresh clone must build and run by following the README.
+- Think of contributors: a fresh clone must build and run by following the README and
+  `docs/development.md`.
 - Telegram's API terms (core.telegram.org/api/terms) are part of the design: nothing that
   interferes with read receipts, typing or online status; official sponsored messages in channels
   are shown. FinchGram trains nothing and hands nothing of Telegram to any AI on its own; what of

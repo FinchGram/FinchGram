@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Copies the pictures the READMEs show into docs/screenshots/ from the ones the picture test draws
+# Copies the pictures the READMEs and the docs show into docs/screenshots/ from the ones the picture test draws
 # (`cargo test screenshots -- --ignored`, src/screenshots.rs: every page, with made-up chats).
 # Run it after a change to the UI, then commit docs/screenshots/.
 set -euo pipefail
@@ -14,6 +14,8 @@ PICTURES=(
   workbench-dark-chats
   broadsheet-light-chats
   terminal-light-chats
+  terminal-dark-command-line
+  terminal-dark-toolbox
   workbench-light-viewer-photo
   workbench-light-shot-annotated
   workbench-light-shot-send-card

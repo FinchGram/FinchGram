@@ -14,52 +14,17 @@ FinchGram は Telegram 公式のライブラリ [TDLib](https://core.telegram.or
 
 ## できること
 
-- **チャット。** 電話番号、認証コード、2 段階認証のパスワードでログイン、または QR コードをスキャンしてログイン。新規登録も
-  できます。チャット一覧には Telegram のフォルダ、ピン留め、未読数、メンションが表示されます。すべてを横断する検索（⌘K）：
-  自分のチャットと連絡先、ユーザー名で探す公開のユーザー、グループ、チャンネル、電話番号で探す人、そしてメッセージ。
-  チャット内検索（⌘F）、チャンネル一覧、ボット一覧もあります。鉛筆からは、新しいグループ、チャンネル、チャットを作ったり、
-  連絡先を追加したりできます。
-  複数アカウント（最大 10）、それぞれに TDLib を 1 つずつ。アカウントメニューか ⌘1 … ⌘0 で切り替え。
-  グループとチャンネルの管理：写真、名前と説明、公開ユーザー名または招待リンク、メンバーと管理者とその権限、メンバーの権限、低速モード、参加承認、トピック。チャンネルの署名とディスカッショングループ。
-- **メッセージ。** 書式付きテキスト（太字、斜体、コード、リンク）、返信と転送、写真、動画、GIF、ステッカー、ファイル、
-  リンクのプレビューカード。メッセージを右クリックするとメニューが開きます：返信、編集、コピー、リンクのコピー、転送、報告、
-  削除、複数選択。自動消滅の写真と動画はぼかして表示され、一度だけ開けます。Telegram 公式アプリと同じです。
-  ボットのメッセージの下に付くボタン、ボットのキーボード、コマンド、メニューボタン。ヘッダーの下には、
-  チャットのピン留めされたメッセージが表示されます。コンテンツが保護されているチャットは、前面にある間、
-  スクリーンショットにも画面収録にも写りません。リアクションはパネルから選んで付けられ、
-  ダブルクリックすると既定のリアクションが付きます。丸いビデオメッセージはその場で再生でき、
-  連絡先カードには「メッセージ」「連絡先を追加」「共有」があります。投稿やカードは複数のチャットへ一度に共有でき、
-  下書きはチャットごとに保存されて端末間で同期されます。トピックのあるグループは、開くとまずトピックの一覧が表示されます。
-  スローモードは入力欄でカウントダウンされ、チャット設定パネルではグループのルールを確認でき、
-  管理者は権限とオプションを設定できます。
-- **メディア。** 写真と動画はウィンドウ全体のビューアで開き、同じアルバムの他の写真も見られます。動画はソースから
-  ビルドした mpv で再生します。チャットが許可していれば「ダウンロード」に保存できます。
-- **ダウンロード。** メディアセンターのダウンロードクライアント、WebDAV・FTP・FTPS・SFTP 対応：NAS、シードボックス、PikPak、Alist/OpenList、あるいは
-  `vget serve` で共有しているフォルダを、アプリの中で閲覧できます。ファイルは複数の接続で同時に受け取り、止まっても続きから
-  再開します。写真と動画は届くとビューアで開き、パスワードは封印して FinchGram のデータベースに保存されます。
-  [docs/downloads.md](../docs/downloads.md) を参照。
-- **音楽。** 自分のサーバーのための音楽プレーヤー：Navidrome、gonic、LMS、Ampache、Nextcloud Music、Koel（Subsonic API を話すサーバーならどれでも）を追加すると、そのライブラリを内蔵プレーヤーで再生できます。曲間の途切れなし、キューつき、再生バーはどのページでも下部に；曲は再生しながらキャッシュされます。
-- **ライブ配信。** チャット・チャンネル・ボットの隣にある専用のビューで、Owncast や PeerTube のサーバー、Icecast のラジオ局、Telegram のチャンネルでいま配信中の人を見つけ、フォローして、アプリ内で視聴できます。Owncast のチャットは映像の横に出ます。Telegram 自身のライブ配信もここにあります：連絡先とフォロー中のチャンネルのライブストーリー、チャットのライブ配信とビデオチャットを、コメントと一緒に。ライブストーリーやチャンネルのライブ配信を始めることもでき、FinchGram が OBS に入れるアドレスとキーを示します。
-- **送信。** 写真、動画、ファイルはクリップから送信できるほか、ウィンドウにドラッグするか貼り付けても送れます。送る前に
-  カードで確認：キャプションを付ける、写真として送るかファイルとして送るか、最大 10 個をアルバムにまとめる、個人チャットでは
-  自動消滅タイマー、サイレント送信。
-- **スクリーンショット。** 入力欄のはさみ、または ⌘⇧A で画面を固定：ウィンドウを選ぶかドラッグで範囲を指定し、四角、楕円、
-  矢印、ペン、文字、モザイクを描き込んで、そのまま送信、コピー、保存できます。WeChat と同じように、どのチャットからでも。
-- **チャットのメニュー。** ミュート、ピン留め、IDのコピー、フォルダに入れる。相手のブロックと解除、報告、
-  グループやチャンネルからの退出、チャットの削除。フォルダを右クリックすると、その中のチャットをすべて既読にしたり、
-  並び順を選べます：最新のメッセージ順、名前順、未読順。ピン留めしたチャットは常に先頭です。
-- **通知。** 新着メッセージは macOS の通知で届き、その数が Dock アイコンに表示されます。ウィンドウを閉じても FinchGram は
-  Dock に残り、メニューバーに置くこともできます。
-- **3 つのテーマ。** Workbench、Broadsheet、Terminal。それぞれライトとダークがあり、再起動なしで切り替えられます。
-- **設定。** ログイン時に起動、Enter で送信、スクリーンショットのショートカット、通知のサウンドとプレビュー、2 段階認証、
-  表示言語、そして更新：アプリは GitHub Releases から自動更新し、検証できないものは一切インストールしません。
-- **音声メッセージ。** チャットの中でそのまま再生でき、波形と時間、1×・1.5×・2× の速度が付きます。聞いたことは Telegram 公式アプリと同じく相手に伝わります。マイクを押したまま話すと録音され、離すと送信、左にドラッグで取り消し、上にドラッグで固定。固定したら止めて聞き直してから送れます。
-- **音声入力。** 入力欄の ✦ を押して話すと、言葉が入力欄に入ります。送信はあなたが行います。使う AI プロバイダーは自分で追加し、それぞれに名前、API の形式、あなた自身のキー、必要ならあなた自身のアドレス（中継サービスや、ネットワーク内のサーバー）を設定します。音声入力、言葉を整える（「えー」「あの」を取り除く）、ボイスメッセージの文字起こしは三つの機能で、それぞれにスイッチがあり、AI プロバイダーとモデルはリストから選びます。何も勝手には選びません。音声には OpenAI のリアルタイム文字起こし、Qwen と Doubao（どちらも中国語に強い）、または OpenAI の文字起こし API に対応した任意のサービス、整えるのには OpenAI、Anthropic、Gemini の形式が使えます。混ざった他の言語の言葉は話したまま残ります。ツールボックス → AI → 音声入力で、オンにするまでオフ。ボイスメッセージの「文字起こし」は Telegram 自身の文字起こしを使い、オンにするとあなたの AI プロバイダーを使います。[docs/voice-input.md](../docs/voice-input.md) を参照。
-- **AI アシスタント。** Claude Desktop、Claude Code など Model Context Protocol を話すアプリは、あなたが許可すれば FinchGram を通じてチャットを読み、操作できます。ツールボックス → AI アクセスで、オンにするまでオフ。見せるチャットと送信を許すかどうかを選び、アプリは初めて接続するときに確認を求めます。[docs/mcp.md](../docs/mcp.md) を参照。
-- **言語。** インターフェースとこの README は 11 言語。
+- **Telegram 公式アプリと同じことが、ひととおり。** フォルダ・検索・最大 10 アカウントのチャット。返信・リアクション・ボット・トピック・下書きのあるメッセージ。写真・動画・ファイル・音声メッセージ。自分のグループとチャンネルの管理。
+- **スクリーンショット機能。** ⌘⇧A で画面を止め、ウィンドウか範囲を選んで、書き込みをして送信。WeChat のように、どのチャットからでも。
+- **ダウンロード。** 自分のサーバー用のダウンロードクライアント。WebDAV・FTP・FTPS・SFTP に対応（NAS、シードボックス、PikPak）。[詳しく](../docs/downloads.md)
+- **音楽。** Subsonic API に対応した自分のサーバー（Navidrome など）のためのプレーヤー。[詳しく](../docs/music.md)
+- **ライブ配信。** Owncast、PeerTube、Icecast と Telegram 自身の配信を、探して、フォローして、アプリの中で視聴。[詳しく](../docs/live-streams.md)
+- **音声入力。** 話した言葉が入力欄に入ります。使う AI プロバイダーは自分で選び、キーも自分のもの。[詳しく](../docs/voice-input.md)
+- **AI アシスタント。** Claude などの MCP 対応アプリが、あなたが許可すれば、FinchGram を通してチャットを読み、操作します。[詳しく](../docs/mcp.md)
+- **3 つのテーマ。** Workbench、Broadsheet、Terminal。それぞれライトとダーク。Terminal には本当に使えるコマンドラインがあります。[使い方](../docs/terminal.md)
+- **11 の言語**。アップデートは、検証してからアプリが自分でインストールします。
 
-まだないもの：秘密のチャットと通話、投票と予約送信、キーワードフィルター、Windows と Linux。
-[次に来るもの](../docs/architecture.md#not-now)も参照してください。
+[できることのすべて（画像付き）](../docs/features.md)。まだないもの：秘密のチャットと通話、投票と予約送信、キーワードフィルター、Windows と Linux。 [次に来るもの](../docs/architecture.md#not-now)も参照してください。
 
 ## ダウンロード
 
@@ -81,60 +46,9 @@ Brookville LLC の Developer ID で署名され、Apple の公証を受けてい
 Terminal は等幅フォントの画面でコマンドが使えます。どれもライトとダークがあり、システムに従うか自分で選べます
 （設定 › 外観）。
 
+Terminal は画面いちばん下の行でコマンドを実行します。⌘K を押すか、`/` を入力してください。コマンドとキーは [Terminal テーマ](../docs/terminal.md)にあります。
+
 <p align="center"><img src="../docs/screenshots/workbench-dark-chats.png" width="800" alt="Workbench、ダーク"></p>
-
-## スクリーンショット機能
-
-<p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="書き込み付きのスクリーンショットオーバーレイ"></p>
-
-⌘⇧A を押すか、クリップの隣のはさみをクリックします。画面が暗くなってオーバーレイの下で固定されます。ドラッグで範囲を
-指定でき（拡大鏡とピクセル単位のサイズ付き）、ウィンドウをクリックすればそのまま丸ごと選べます。ツールバーで四角、
-楕円、矢印、ペン、文字、モザイクを 3 種類の太さと 6 色で描け、取り消しもできます。Done で画像が送信カードに入り、
-キャプションを添えられます。⌘C でコピー、⌘S で「ダウンロード」に保存。設定 › 一般 › スクリーンショットでショートカットと、
-撮影中に FinchGram のウィンドウを隠すかどうかを変えられます。
-
-<p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="スクリーンショットを載せた送信カード"></p>
-
-## AI アシスタント
-
-<p align="center"><img src="../docs/screenshots/workbench-light-ai-access.png" width="800" alt="ツールボックス → AI アクセス"></p>
-
-FinchGram は MCP サーバーです。Mac 上の AI アシスタントのアプリ（Claude Desktop、Claude Code、Cursor など）が、起動中の FinchGram を通じて、あなた自身のアカウントで Telegram を読み、操作できます。ツールボックス → AI アクセスがそのスイッチで、既定ではオフです。そこで、アシスタントが見られるチャット（シークレットチャット以外のすべて、または選んだものだけ）と書けること（あなたの名前でメッセージを送る、下書きだけ残してあなたが送る、何も書かない）を選び、どのアプリが接続したか（名前は macOS が報告するもの）と何を求めたかを確認できます。アプリが初めて接続するとき、FinchGram は許可するかを尋ねます。読んでも既読にはならず、シークレットチャットは決して見せず、AI のために何も保存しません。Claude Code や Claude Desktop に貼る 1 行はページに用意されています。詳しくは [docs/mcp.md](../docs/mcp.md)。
-
-## ダウンロードページ
-
-<p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="ダウンロードページ"></p>
-
-表示 → ダウンロード、または歯車の上のダウンロードアイコンから開きます。WebDAV・FTP・FTPS・SFTP のサーバー（NAS、シードボックス、PikPak、
-Alist/OpenList、Nextcloud、`rclone serve webdav`、あるいは `vget serve` で共有しているフォルダ）を追加し、そのフォルダを
-閲覧して、ファイルにチェックを付けるか、フォルダをまるごと選ぶと、ファイルは ~/Documents/FinchGram/webdav に届きます：ファイルごとに
-8 MB のチャンクを最大 12 本の接続で受け取り、「再試行」の後は止まったところから続きます。メンテナーのコマンドラインツール
-vget と同じ仕組みです。右側のキューには速度と残りが表示されます。「開く」は写真や動画を取得してビューアで表示します。
-FinchGram は、そのサーバーに対して許可しない限りサーバー上の何も変更せず（許可すれば削除・移動・名前の変更・アップロードができます）、パスワードは平文のファイルではなく、封印して FinchGram のデータベースに保存されます。詳細と、まだないもの
-（自己署名証明書は拒否されます：LAN では http を、あるいは正規の証明書を使ってください）は
-[docs/downloads.md](../docs/downloads.md) にあります。
-
-## 音楽ページ
-
-<p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="音楽ページ"></p>
-
-表示 → 音楽、またはツールボックスの「音楽」。ソースを追加します：Subsonic API を話す自分のサーバー（Navidrome、gonic、LMS、Ampache、Nextcloud Music、Koel など）のアドレスとアカウント。パスワードは FinchGram のデータベースに封印して保存されます。アルバム、アーティスト、曲、ジャンル、プレイリスト、お気に入りをたどり、アルバムを再生またはシャッフルし、曲をキューに追加；星はサーバーに書き戻されます。曲は FinchGram 自身の HTTP クライアントで `~/Documents/FinchGram/music_cache` に届き、届きながら途切れなく次々と再生されます。再生バーはどのページでも下部に残ります。詳しくは [docs/music.md](../docs/music.md)。
-
-## ライブ配信
-
-<p align="center"><img src="../docs/screenshots/workbench-light-live.png" width="800" alt="ライブストーリーを見る"></p>
-
-左側の 4 つ目の項目（チャット・チャンネル・ボットの隣、Terminal では LIVE、または /live）は、複数のソースをまとめたライブ配信クライアントで、Telegram へのログインが必要です。**見つける**では services.finchgram.com のディレクトリ（[docs/live-directory.md](../docs/live-directory.md)、誰でも提供でき、プルリクエストで変更することも、フォークして自分で運用することもできる、公開の読み取り専用 JSON API）を検索します：いま配信中の Owncast と PeerTube のチャンネル（それぞれのプロジェクト自身のオプトイン式ディレクトリから）、Xiph のディレクトリにある Icecast のラジオ局、審査済みの HLS ストリームと Telegram のチャンネルを、ソース、カテゴリ、言語、状態で絞り込み、カードかリストで表示します。**フォロー中**には、フォローしたチャンネルが入ります。あなたの Telegram のライブ配信も、フォローしているものとして数えられます。**視聴**では、FinchGram 自身の libmpv で配信をアプリ内で再生します。画質の選択、ライブの最新位置への移動、ほかの画面を見ている間のミニプレーヤー、ほかのアプリより常に手前に表示されるウィンドウがあります。Owncast のチャットは映像の横で読み書きでき、名前は Owncast があなたに付けたものを使い、Telegram の名前は決して使いません。**接続**ではリンクを開きます：Owncast や PeerTube のページ、Icecast のラジオ局、HLS プレイリスト、Telegram のチャンネル。**配信する**では、ライブストーリーやチャンネルのライブ配信を Telegram で始め、OBS に入れるサーバーとキーが表示されます。自分の配信はホストとして開き、視聴者数、Stars、上位サポーター、コメントの削除、終了を扱えます。
-
-Telegram 自身の配信も同じビューにあります：連絡先とフォロー中のチャンネルのライブストーリー、チャットのライブ配信とビデオチャット。誰かが配信中なら項目に赤い点が付き、配信中のチャットはチャット一覧とヘッダーの下にもそう表示されます。FinchGram には WebRTC がないため、Telegram がストリームとして送る配信、つまり RTMP で送られるすべての配信（OBS、XSplit、ffmpeg）を再生します。スマートフォンのカメラからの配信は、スマートフォンで見るものとして一覧に出ます。視聴は Telegram 公式アプリと同じく視聴者として参加します。無料のコメントはここで書けます。有料コメントはレベルごとの色で表示され、送信は当面 Telegram 公式アプリで行います。年齢制限付きのチャンネルは設定 › ライブで表示するまで非表示のままで、成人向けの配信はそもそも掲載されません。Twitch、YouTube、Kick、Bilibili はまだ統合されていません。詳しくは [docs/live-streams.md](../docs/live-streams.md)。
-
-## 仕組み
-
-アプリはシェルです。Telegram そのものは TDLib が担い、実行ファイルの隣で別プログラム `finchgram-tdlib` として動きます。
-これはこのリポジトリがピン留めしたソースからビルドします。シェルは `src/telegram/` を通してのみ、TDLib 自身の JSON で
-やり取りします。動画は同じ方法でビルドした libmpv で再生します。利用者のマシンから何も取らず、ビルド時にはこのピン留め済み・
-チェックサム付きの成果物以外は何もダウンロードしません。ソース、vendor ビルド（`vendor/`）、リリース、すべてが公開です。
-[docs/architecture.md](../docs/architecture.md) と [docs/conventions.md](../docs/conventions.md) を参照してください。
 
 ## Telegram のルール
 
@@ -143,168 +57,18 @@ FinchGram は Telegram 公式アプリがすることだけをし、禁じられ
 メディアは一度だけ開け、Telegram から得たものは、ツールボックス → AI アクセスであなたがアシスタントを許可するか、ボイスメッセージを自分の AI プロバイダーで文字起こしする設定をオンにしない限り、どの AI にも渡しません。Telegram と、更新のための GitHub と、音声入力を使っているあいだあなた自身のキーで、選んだ AI プロバイダーに送る声のほかに、
 あなたのマシンから出ていくものはありません。
 
+## ドキュメント
+
+ドキュメントは英語と中国語です。
+
+- [FinchGram にできること](../docs/features.md)：すべての機能を画像付きで。
+- [Terminal テーマ](../docs/terminal.md)：コマンドラインとコマンド一覧。
+- [ソースからのビルド](../docs/development.md)、[リポジトリの構成](../docs/layout.md)、[翻訳](../docs/translations.md)、[リリース](../docs/releases.md)。
+- [アーキテクチャ](../docs/architecture.md)と[規約](../docs/conventions.md)：どう作られているか、そしてなぜか。
+
 ## 開発
 
-現時点では、開発には Apple silicon の macOS が必要です。finchgram-tdlib はまだそれ向けにしかビルドしていません。
-Linux と Windows は後日対応します。
-
-finchgram-tdlib、libmpv、Skia、UI フォントは git に入っていません。`vendor/tdlib/`、`vendor/mpv/`、`vendor/skia/` に
-あるのはそれらをビルドするスクリプトだけで、フォントは Google Fonts から取得します。clone したら、まず一度取得してください：
-
-```sh
-scripts/fetch-tdlib.sh    # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ にダウンロードし、SHA-256 を検証
-scripts/fetch-mpv.sh      # 固定バージョンの libmpv リリースを vendor/mpv/bin/ にダウンロードし、SHA-256 を検証
-scripts/fetch-skia.sh     # 固定バージョンの Skia リリースを vendor/skia/bin/ にダウンロードし、SHA-256 を検証して、場所を cargo に伝える
-scripts/fetch-fonts.sh    # 固定バージョンの UI フォントを vendor/fonts/ にダウンロードし、SHA-256 を検証
-FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
-```
-
-- finchgram-tdlib 自体を変更するときは、ここでビルドしてください（数分かかります。Xcode または
-  Command Line Tools と、`brew install cmake ninja gperf` が必要です。いずれもビルド用のツールです）：
-
-  ```sh
-  vendor/tdlib/build.sh && vendor/tdlib/build.sh install
-  ```
-
-- `FINCHGRAM_API_ID` と `FINCHGRAM_API_HASH`：自分のものを
-  [my.telegram.org](https://my.telegram.org) → API development tools で取得します。コンパイル時に読み込まれ、
-  リポジトリには決して入れません。これがなくてもアプリは起動し、API ID がないことを表示します。
-- `FINCHGRAM_TEST_DC=1 cargo run` は Telegram のテストサーバーを使います。テストサーバーには専用のアカウントがあり、
-  アプリはそのために別のデータベースを持ちます。
-- `cargo test screenshots -- --ignored` は、すべてのテーマのすべてのページを、ライトとダークで、架空の
-  チャットとともに `target/screenshots/` に描き出します。アカウントなしで UI を確認する方法です。
-
-`build.rs` は `vendor/tdlib/bin/finchgram-tdlib` を、コンパイルされた実行ファイルの隣にコピーします。そのため
-`cargo run` は、パッケージ化されたアプリとまったく同じプログラムを使います。libmpv は `vendor/mpv/bin/` から
-リンクし、同じく隣にコピーします。`vendor/fonts/` のフォントは実行ファイルに組み込まれます。ウィンドウを描画する
-Skia は `vendor/skia/bin/` のアーカイブからリンクします。どれかが欠けていると、ビルドはその旨のメッセージを出して
-失敗します。Rust 1.92 以降が必要です。
-
-TDLib のデータベースとダウンロードしたファイルは `~/Library/Application Support/FinchGram/tdlib/` に、
-設定は `~/Library/Application Support/FinchGram/settings.toml` にあります。
-
-## 構成
-
-```
-.github/workflows/
-  mpv.yml                # クリーンなマシンで libmpv をビルドし、mpv-* タグをリリースとして公開
-  check.yml              # main への push ごとに clippy とテストを実行
-  release.yml            # Release v* コミットでアプリをビルドして公開
-  skia.yml               # クリーンなマシンで Skia をビルドし、skia-* タグをリリースとして公開
-  tdlib.yml              # クリーンなマシンで finchgram-tdlib をビルドし、tdlib-* タグをリリースとして公開
-Cargo.toml
-build.rs                 # vendor/tdlib/bin/ を実行ファイルの隣にコピー
-crates/
-  finchgram-release-sign/ # リリースを支える Ed25519 署名ツール（独立したパッケージ）
-  finchgram-ui/          # UI：ui/app.slint をコンパイルし、lang/ を同梱（独立したパッケージ）
-docs/                    # architecture.md、conventions.md、downloads.md、drag-and-drop.md、media-files.md、skia.md（+ zh-Hans）
-  screenshots/           #   README に載せる画像。スクリーンショットテストから（scripts/readme-pictures.sh）
-lang/                    # 翻訳：lang/<コード>/LC_MESSAGES/finchgram.po、バイナリに組み込まれる
-readme/                  # この README の他の言語版
-release-signing.pub      # リリースへの署名を許された公開鍵。アプリに組み込まれる
-scripts/
-  bundle.sh              # dist/FinchGram.app をビルド（リリースのワークフローが実行するもの）
-  fetch-fonts.sh         # 固定バージョンの UI フォントを vendor/fonts/ へ
-  fetch-mpv.sh           # 固定バージョンの libmpv リリースを vendor/mpv/bin/ へ
-  fetch-skia.sh          # 固定バージョンの Skia リリースを vendor/skia/bin/ へ。場所を cargo に伝える
-  fetch-tdlib.sh         # 固定バージョンの finchgram-tdlib リリースを vendor/tdlib/bin/ へ
-  readme-pictures.sh     # README の画像を target/screenshots/ から docs/screenshots/ にコピー
-  release.sh             # リリースを開始：バージョン、タグ、push。残りは GitHub Actions が行う
-  sign.sh                # アプリに署名：通常はアドホック、リリースのワークフローでは Developer ID
-src/
-  main.rs                # ウィンドウ、設定、言語とテーマ、アップデート。Telegram を起動
-  fonts.rs               # UI フォント。実行ファイルに組み込まれる
-  images.rs              # メッセージの画像。UI スレッドの外でデコード
-  telegram/              # finchgram-tdlib と通信する唯一のコード
-    process.rs           #   プログラムを実行：標準入出力で TDLib の JSON をやり取り
-    api.rs               #   FinchGram が使う TDLib の型（固定バージョンの td_api.tl に準拠）
-    mod.rs               #   リクエストと応答、再起動。アップデートは store へ
-    store.rs             #   TDLib から届いたチャット・ユーザー・メッセージ。ページのモデル
-    login.rs             #   ログイン、新規登録
-    chats.rs             #   チャット一覧
-    conversation.rs      #   開いているチャット：メッセージ、送信
-    actions.rs           #   メッセージの操作：右クリックメニュー、返信、転送など
-    account.rs           #   プロフィール、ログアウト
-    password.rs          #   設定の 2 段階認証
-    files.rs             #   ファイルのダウンロード
-    avatars.rs           #   チャットと相手の写真。頭文字の代わりに表示
-    viewer.rs            #   メディアビューア：写真、動画、「ダウンロード」への保存
-    rich_text.rs         #   書式付きテキスト：太字、斜体、リンクなど
-    notifications.rs     #   新着メッセージの通知、Dock アイコンの未読数
-    online.rs            #   ウィンドウが前面で使われている間、アカウントはオンライン
-  platform/              # OS ごとに異なる部分
-  player/                # libmpv による動画再生。ウィンドウが表示するサーフェスに描画
-  screenshot/            # スクリーンショット機能：撮影、オーバーレイ、書き込み、画像
-  downloads/             # ダウンロードページ：WebDAV・FTP・FTPS・SFTP、複数接続のエンジン付き
-  music/                 # 音楽ページ：Subsonic API クライアント、キャッシュへの取得、キューと再生バー
-    remote.rs            #   三つのクライアントの共通の顔：一覧、確認、取得
-    webdav.rs            #   PROPFIND の一覧、アドレス、Basic 認証
-    ftp.rs               #   suppaftp による FTP と FTPS：単一ストリーム、REST で再開
-    sftp.rs              #   russh による SFTP：複数セッションでチャンク取得、サーバー鍵を記憶
-    transfer.rs          #   ファイルをチャンクに分けて複数の接続で受け取る。止まっても続きから
-    mod.rs               #   ページの状態、そのスレッド、キュー、サーバーのフォーム
-  update.rs              # 自動アップデート：GitHub Releases、署名の検証、入れ替え、再起動
-  settings.rs            # ユーザーの設定（settings.toml）
-  i18n.rs                # UI の言語：保存された選択、なければシステムの言語、それもなければ英語
-  screenshots.rs         # すべてのページを PNG に描画（cargo test screenshots -- --ignored）
-ui/
-  app.slint              # メインウィンドウ：メニューと、どのページを表示するか
-  state.slint            # アプリの状態。Rust とページで共有
-  telegram.slint         # Telegram の内容：アカウント、ログイン、チャット、メッセージ
-  downloads.slint        # ダウンロードページの状態：サーバー、フォルダ、キュー
-  look.slint             # テーマの色・書体・形。共有ページ用
-  format.slint           # UI の言語で書く日付・数・メッセージの種類
-  widgets.slint          # 共有の小さな部品。chat.slint はチャットウィンドウの共有部分
-  viewer.slint           # ウィンドウ全体を覆うメディアビューア。テーマごとのスタイル
-  pages/                 # 3 つのテーマで共有するページ：ログイン、設定、プロフィール、ダウンロード
-  workbench/             # ワークベンチテーマのチャットウィンドウ（既定）
-  broadsheet/            # ブロードシートテーマのチャットウィンドウ
-  terminal/              # ターミナルテーマのチャットウィンドウ
-  icons/                 # Phosphor アイコン（MIT）、通常とデュオトーン。icons.slint が一覧
-  logo/                  # FinchGram のロゴ（svg、png）と使用ルール
-vendor/fonts/            # git には入らない：UI フォント（scripts/fetch-fonts.sh）
-vendor/mpv/              # libmpv：動画再生用の mpv と FFmpeg
-  build.sh               #   固定したソースからビルド：バージョンと SHA-256 は冒頭で固定
-  bin/                   #   git 管理外：ライブラリ本体（scripts/fetch-mpv.sh または build.sh install）
-vendor/skia/             # Skia：ウィンドウの描画用
-  build.sh               #   固定したソースからビルド：コミットとアーカイブ名は冒頭で固定
-  Cargo.lock             #   そのビルドが使う crate を固定
-  bin/                   #   git 管理外：アーカイブ本体（scripts/fetch-skia.sh または build.sh install）
-vendor/tdlib/            # finchgram-tdlib
-  build.sh               #   固定したソースからビルド：TDLib のコミット、OpenSSL のバージョンと SHA-256 は冒頭で固定
-  host/                  #   小さなホストプログラム（main.cpp）とその CMakeLists.txt
-  bin/                   #   git 管理外：アプリが使うプログラム（scripts/fetch-tdlib.sh または build.sh install）
-  work/, dist/           #   git 管理外：ローカルビルドの中間ファイルとパッケージ
-```
-
-## 翻訳
-
-UI のテキストはすべて `@tr("English text")` と書きます。同じ文字列は、どこに出てきても訳は一つです（crates/finchgram-ui/build.rs が
-Slint のデフォルトコンテキストを無効にしています）。同じ英文でも別の場所で違う訳が必要なら、コンテキストを付けます：
-`@tr("menu" => "Open")`。公式ツールで抽出し、各言語にマージします：
-
-```sh
-cargo install slint-tr-extractor                                          # 一度だけ
-find ui -name '*.slint' | sort | xargs slint-tr-extractor --no-default-translation-context -o lang/finchgram.pot
-for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finchgram.pot; done   # brew install gettext が必要
-```
-
-その後 `msgstr` を埋めて、もう一度 `cargo build` します。原文の言語は英語で、ほかの 10 言語を同梱しています。
-
-## リリース
-
-リリースは GitHub Actions だけが、タグの付いたコミットからクリーンなマシンでビルドし
-（`.github/workflows/release.yml`）、このリポジトリで公開します：zip にしたアプリ、`SHA256SUMS`、
-その Ed25519 署名。インストール済みのアプリはここから自動でアップデートし、検証できないものは
-一切インストールしません。メンテナーはコマンド一つでリリースを始めます：
-
-```sh
-scripts/release.sh patch    # 0.1.0 -> 0.1.1。minor、major、または正確なバージョンも可
-```
-
-署名には North Brookville LLC の Apple Developer ID を使い、Hardened Runtime を有効にして、Apple の公証を受けて
-います。ダウンロードしたアプリは Gatekeeper に確認されることなく開き、アプリ自身がインストールしたアップデートも同じ
-です。
+アプリは殻です。Telegram そのものは TDLib が担当し、アプリの隣で別プログラムとして動きます。TDLib はこのリポジトリが固定したソースからビルドしたもので、libmpv と Skia も同じです。ビルドには Apple silicon の macOS と自分の Telegram API ID が必要です。手順は [docs/development.md](../docs/development.md) にあります。
 
 ## 貢献
 

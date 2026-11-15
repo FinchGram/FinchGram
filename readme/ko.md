@@ -14,48 +14,17 @@ FinchGram은 Telegram 공식 라이브러리 [TDLib](https://core.telegram.org/t
 
 ## 할 수 있는 일
 
-- **채팅.** 전화번호, 인증 코드, 2단계 인증 비밀번호로 로그인하거나 QR 코드를 스캔해 로그인하고, 새 계정을 만들 수도
-  있습니다. 채팅 목록에는 Telegram의 폴더, 고정, 읽지 않은 수, 멘션이 표시되고, 통합 검색(⌘K)이 있습니다: 내 채팅과
-  연락처, 사용자 이름으로 찾는 공개 사용자·그룹·채널, 전화번호로 찾는 사람, 그리고 메시지. 채팅 내 검색(⌘F), 채널 보기,
-  봇 보기도 있습니다. 연필 버튼으로 새 그룹, 채널, 채팅을 만들거나 연락처를 추가합니다.
-  여러 계정(최대 10개), 계정마다 별도의 TDLib. 계정 메뉴나 ⌘1 … ⌘0으로 전환.
-  그룹과 채널 관리: 사진, 이름과 설명, 공개 사용자명 또는 초대 링크, 멤버와 관리자 및 그 권한, 멤버 권한, 슬로우 모드, 가입 승인, 토픽; 채널의 서명과 토론 그룹.
-- **메시지.** 서식 있는 텍스트(굵게, 기울임, 코드, 링크), 답장과 전달, 사진, 동영상, GIF, 스티커, 파일, 링크 미리보기
-  카드. 메시지를 마우스 오른쪽 버튼으로 클릭하면 메뉴가 열립니다: 답장, 수정, 복사, 링크 복사, 전달, 신고, 삭제, 여러 개
-  선택. 자동 삭제로 보낸 사진과 동영상은 흐리게 표시되고 한 번만 열 수 있습니다. Telegram 공식 앱과 같습니다. 봇 메시지
-  아래의 버튼, 봇의 키보드, 명령과 메뉴 버튼, 그리고 채팅 헤더 아래의 고정된 메시지. 콘텐츠를 보호하는 채팅은 앞에 있는
-  동안 스크린샷과 화면 녹화에서 제외됩니다. 반응은 선택 창에서 고르거나 더블클릭으로 기본 반응을 달 수 있습니다. 원형
-  동영상 메시지는 그 자리에서 바로 재생되고, 연락처 카드에는 '메시지 보내기', '연락처 추가', '공유' 버튼이 있습니다.
-  게시물이나 카드를 여러 채팅에 한꺼번에 공유할 수 있고, 임시 저장은 채팅마다 따로 보관되어 기기 간에도 이어집니다.
-  주제가 있는 그룹은 주제 목록으로 열리고, 슬로우 모드는 입력란에서 남은 시간이 카운트다운됩니다. 채팅 설정 패널에는
-  그룹의 규칙이, 관리자에게는 그룹의 권한과 옵션이 표시됩니다.
-- **미디어.** 사진과 동영상은 창 전체를 덮는 뷰어에서 열리고, 같은 앨범의 다른 사진도 볼 수 있습니다. 동영상은 소스에서
-  빌드한 mpv로 재생합니다. 채팅이 허용하면 '다운로드'에 저장할 수 있습니다.
-- **다운로드.** 미디어 센터의 다운로드 클라이언트, WebDAV·FTP·FTPS·SFTP 지원: 내 NAS, 시드박스, PikPak, Alist/OpenList, 또는 `vget serve`로 공유한
-  폴더를 앱 안에서 둘러봅니다. 파일은 여러 연결로 한꺼번에 받고 멈춘 뒤에도 이어서 받으며, 사진과 동영상은 도착하면
-  뷰어에서 열리고, 비밀번호는 봉인된 채 FinchGram의 데이터베이스에 보관됩니다. [docs/downloads.md](../docs/downloads.md) 참고.
-- **음악.** 내 서버를 위한 음악 플레이어: Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel(Subsonic API를 쓰는 서버라면 무엇이든)을 추가하면 그 라이브러리를 내장 플레이어로 재생합니다. 곡 사이 끊김 없음, 대기열 지원, 재생 막대는 모든 페이지 하단에; 곡은 재생하면서 캐시됩니다.
-- **라이브 방송.** 채팅·채널·봇 옆의 별도 보기에서 Owncast와 PeerTube 서버, Icecast 방송국, Telegram 채널에서 지금 방송 중인 사람을 찾아 팔로우하고 앱에서 시청합니다. Owncast 채팅은 영상 옆에 나옵니다. Telegram 자체의 라이브도 여기 있습니다: 연락처와 팔로우하는 채널의 라이브 스토리, 채팅의 라이브 방송과 영상 채팅을 댓글과 함께. 라이브 스토리나 채널 라이브 방송을 시작할 수도 있으며, FinchGram이 OBS에 넣을 주소와 키를 알려 줍니다.
-- **보내기.** 사진, 동영상, 파일은 클립 메뉴에서 보내거나 창에 끌어다 놓거나 붙여 넣어 보낼 수 있습니다. 보내기 전에
-  카드로 확인합니다: 설명 추가, 사진으로 또는 파일로, 최대 10개를 앨범으로 묶기, 개인 채팅에서는 자동 삭제 타이머,
-  소리 없이 보내기.
-- **스크린샷.** 입력란의 가위 또는 ⌘⇧A로 화면을 고정합니다: 창을 선택하거나 영역을 끌어 지정하고, 사각형, 타원, 화살표,
-  펜, 글자, 모자이크를 그려 넣은 뒤 바로 보내거나 복사하거나 저장합니다. WeChat처럼, 모든 채팅에서.
-- **채팅 메뉴.** 음소거, 고정, ID 복사, 폴더에 넣기. 상대 차단과 해제, 신고, 그룹이나 채널 나가기, 채팅 삭제.
-  폴더를 오른쪽 클릭하면 그 안의 채팅을 모두 읽음으로 표시하거나 정렬 기준을 고를 수 있습니다: 최신 메시지,
-  이름, 읽지 않은 메시지. 고정한 채팅은 항상 맨 위에 있습니다.
-- **알림.** 새 메시지는 macOS 알림으로 오고 그 수가 Dock 아이콘에 표시됩니다. 창을 닫아도 FinchGram은 Dock에 남고,
-  메뉴 막대에 둘 수도 있습니다.
-- **세 가지 테마.** Workbench, Broadsheet, Terminal. 각각 라이트와 다크가 있고, 다시 시작하지 않고 바꿀 수 있습니다.
-- **설정.** 로그인 시 실행, Enter로 보내기, 스크린샷 단축키, 알림 소리와 미리보기, 2단계 인증, 인터페이스 언어, 그리고
-  업데이트: 앱은 GitHub Releases에서 스스로 업데이트하며 검증할 수 없는 것은 설치하지 않습니다.
-- **음성 메시지.** 채팅 안에서 바로 재생되며 파형, 시간, 1×·1.5×·2× 속도가 있습니다. 들으면 Telegram 공식 앱처럼 보낸 사람에게 표시됩니다. 마이크를 누른 채 말하면 녹음되고, 놓으면 전송, 왼쪽으로 끌면 취소, 위로 끌면 고정됩니다. 고정한 뒤에는 멈춰서 들어 보고 보낼 수 있습니다.
-- **음성 입력.** 입력창의 ✦를 누르고 말하면 글자가 입력창에 들어가며 보내는 것은 직접 합니다. 쓸 AI 제공업체는 직접 추가하고, 업체마다 이름, API 형식, 본인의 키, 원하면 본인의 주소(중계 서비스나 네트워크 안의 서버)를 정합니다. 음성 입력, 글 다듬기('음', '어' 빼기), 음성 메시지 받아쓰기는 세 가지 기능으로 각각 스위치가 있고, 기능마다 AI 제공업체와 모델을 목록에서 고릅니다. 아무것도 대신 고르지 않습니다. 음성에는 OpenAI의 실시간 받아쓰기, Qwen과 Doubao(둘 다 중국어에 강함), 또는 OpenAI 받아쓰기 API를 지원하는 모든 서비스를, 글 다듬기에는 OpenAI, Anthropic, Gemini 형식을 쓸 수 있습니다. 섞여 들어간 다른 언어의 말은 말한 그대로 남습니다. 도구 상자 → AI → 음성 입력에서 켜며, 켤 때까지 꺼져 있습니다. 음성 메시지 아래의 '받아쓰기'는 Telegram 자체 받아쓰기를 쓰고, 켜 두면 본인의 AI 제공업체를 씁니다. [docs/voice-input.md](../docs/voice-input.md) 참고.
-- **AI 어시스턴트.** Claude Desktop, Claude Code 등 Model Context Protocol을 쓰는 앱이 내가 허용하면 FinchGram을 통해 채팅을 읽고 대신 작업할 수 있습니다. 도구 상자 → AI 접근은 켤 때까지 꺼져 있고, 보여 줄 채팅과 전송 허용 여부를 고르며, 앱은 처음 연결할 때 허락을 구합니다. [docs/mcp.md](../docs/mcp.md) 참고.
-- **언어.** 인터페이스와 이 README는 11개 언어.
+- **Telegram 공식 앱이 하는 일을 그대로.** 폴더, 검색, 최대 열 개 계정의 채팅; 답장, 반응, 봇, 주제, 임시 저장이 있는 메시지; 사진, 동영상, 파일, 음성 메시지; 내 그룹과 채널 관리.
+- **스크린샷 도구.** ⌘⇧A로 화면을 멈추고, 창이나 영역을 골라 그 위에 그린 뒤 보냅니다. WeChat처럼 어느 채팅에서나.
+- **다운로드.** 내 서버를 위한 다운로드 클라이언트. WebDAV, FTP, FTPS, SFTP 지원: NAS, 시드박스, PikPak. [자세히](../docs/downloads.md)
+- **음악.** Subsonic API를 쓰는 내 서버(Navidrome 등)를 위한 플레이어. [자세히](../docs/music.md)
+- **라이브 방송.** Owncast, PeerTube, Icecast와 Telegram 자체 방송을 찾고, 팔로우하고, 앱 안에서 봅니다. [자세히](../docs/live-streams.md)
+- **음성 입력.** 말하면 입력창에 글이 들어갑니다. AI 업체는 직접 고르고, 키도 내 것을 씁니다. [자세히](../docs/voice-input.md)
+- **AI 어시스턴트.** Claude 같은 MCP 앱이, 내가 허락하면 FinchGram을 통해 채팅을 읽고 그 안에서 동작합니다. [자세히](../docs/mcp.md)
+- **세 가지 테마.** Workbench, Broadsheet, Terminal, 각각 라이트와 다크. Terminal에는 실제로 쓸 수 있는 명령줄이 있습니다. [사용법](../docs/terminal.md)
+- **열한 개 언어**, 그리고 앱이 검증한 뒤 스스로 설치하는 업데이트.
 
-아직 없는 것: 비밀 채팅과 통화, 투표와 예약 메시지, 키워드 필터, Windows와 Linux.
-[다음에 올 것](../docs/architecture.md#not-now)도 보세요.
+[할 수 있는 모든 일, 그림과 함께](../docs/features.md). 아직 없는 것: 비밀 채팅과 통화, 투표와 예약 메시지, 키워드 필터, Windows와 Linux. [다음에 올 것](../docs/architecture.md#not-now)도 보세요.
 
 ## 다운로드
 
@@ -76,59 +45,9 @@ LLC의 Developer ID로 서명되고 Apple의 공증을 받았으므로 다른 �
 기본 테마 Workbench는 탭이 있는 작업 창입니다. Broadsheet는 신문처럼 읽히고 계정마다 강조색이 있습니다. Terminal은
 고정폭 글꼴 화면에 명령을 씁니다. 모두 라이트와 다크가 있고, 시스템을 따르거나 직접 고를 수 있습니다(설정 › 외관).
 
+Terminal은 창 맨 아래 줄에서 명령을 실행합니다. ⌘K를 누르거나 `/`를 입력하세요. 명령과 키는 [Terminal 테마](../docs/terminal.md)에 있습니다.
+
 <p align="center"><img src="../docs/screenshots/workbench-dark-chats.png" width="800" alt="Workbench, 다크"></p>
-
-## 스크린샷 도구
-
-<p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="주석이 있는 스크린샷 오버레이"></p>
-
-⌘⇧A를 누르거나 클립 옆의 가위를 클릭합니다. 화면이 어두워진 채 오버레이 아래에 고정됩니다. 영역을 끌어 지정하거나
-(돋보기와 픽셀 단위 크기가 함께 표시됩니다), 창을 클릭해 통째로 고를 수 있습니다. 도구 모음으로 사각형, 타원, 화살표, 펜,
-글자, 모자이크를 세 가지 굵기와 여섯 가지 색으로 그릴 수 있고, 실행 취소도 됩니다. Done을 누르면 그림이 보내기 카드에
-들어가 설명을 붙일 수 있습니다. ⌘C는 복사, ⌘S는 '다운로드'에 저장. 설정 › 일반 › 스크린샷에서 단축키와, 찍는 동안
-FinchGram 창을 숨길지 정할 수 있습니다.
-
-<p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="스크린샷이 담긴 보내기 카드"></p>
-
-## AI 어시스턴트
-
-<p align="center"><img src="../docs/screenshots/workbench-light-ai-access.png" width="800" alt="도구 상자 → AI 접근"></p>
-
-FinchGram은 MCP 서버입니다. Mac의 AI 어시스턴트 앱(Claude Desktop, Claude Code, Cursor 등)이 실행 중인 FinchGram을 통해 내 계정으로 Telegram을 읽고 작업할 수 있습니다. 도구 상자 → AI 접근이 그 스위치이며 기본값은 꺼짐입니다. 거기서 어시스턴트가 볼 채팅(비밀 채팅을 뺀 전부, 또는 고른 채팅만)과 쓸 수 있는 것(내 이름으로 메시지 보내기, 임시 저장만 남기고 내가 보내기, 아무것도 안 쓰기)을 고르고, 어떤 앱이 연결했는지(이름은 macOS가 알려 준 것)와 무엇을 요청했는지 볼 수 있습니다. 앱이 처음 연결할 때 FinchGram이 허용할지 묻습니다. 읽어도 읽음으로 표시되지 않고, 비밀 채팅은 절대 보여 주지 않으며, AI를 위해 아무것도 저장하지 않습니다. Claude Code나 Claude Desktop에 붙여 넣을 한 줄은 페이지에 준비되어 있습니다. 자세한 내용은 [docs/mcp.md](../docs/mcp.md).
-
-## 다운로드 페이지
-
-<p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="다운로드 페이지"></p>
-
-보기 → 다운로드, 또는 톱니바퀴 위의 다운로드 아이콘. WebDAV, FTP, FTPS 또는 SFTP 서버(NAS, 시드박스, PikPak, Alist/OpenList, Nextcloud,
-`rclone serve webdav`, 또는 `vget serve`로 공유한 폴더)를 추가하고, 폴더를 둘러보며 파일을 체크하거나 폴더를 통째로
-고르면 ~/Documents/FinchGram/webdav에 도착합니다: 파일마다 8 MB 조각으로 최대 12개 연결을 써서 받고, '다시 시도'를 누르면
-멈춘 곳부터 이어서 받습니다. 메인테이너의 명령줄 도구 vget과 같은 방식입니다. 오른쪽의 대기열에는 속도와 남은 양이
-표시되고, '열기'는 사진이나 동영상을 받아 뷰어에 보여 줍니다. FinchGram은 해당 서버에 대해 허용하지 않는 한 서버의 어떤 것도 바꾸지 않으며(허용하면 거기서 삭제, 이동, 이름 바꾸기, 업로드를 할 수 있습니다), 비밀번호는 평문 파일이
-아니라 봉인된 채 FinchGram의 데이터베이스에 들어갑니다. 자세한 내용과 아직 없는 것(자체 서명 인증서는 거부됩니다: LAN에서는 http를, 아니면
-정식 인증서를 쓰세요)은 [docs/downloads.md](../docs/downloads.md)에 있습니다.
-
-## 음악 페이지
-
-<p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="음악 페이지"></p>
-
-보기 → 음악, 또는 도구 상자의 '음악'. 소스를 추가합니다: Subsonic API를 쓰는 내 서버(Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel 등)의 주소와 계정. 비밀번호는 FinchGram 데이터베이스에 봉인되어 보관됩니다. 앨범, 아티스트, 곡, 장르, 재생목록, 즐겨찾기를 둘러보고, 앨범을 재생하거나 섞어 듣고, 곡을 대기열에 넣습니다; 별은 서버에 다시 기록됩니다. 곡은 FinchGram 자체 HTTP 클라이언트로 `~/Documents/FinchGram/music_cache`에 받아지며 받는 대로 끊김 없이 이어서 재생됩니다. 재생 막대는 모든 페이지 하단에 남습니다. 자세한 내용은 [docs/music.md](../docs/music.md).
-
-## 라이브 방송
-
-<p align="center"><img src="../docs/screenshots/workbench-light-live.png" width="800" alt="라이브 스토리 보기"></p>
-
-왼쪽 네 번째 항목(채팅·채널·봇 옆, Terminal에서는 LIVE 또는 /live)은 여러 소스를 아우르는 라이브 클라이언트이며, Telegram 로그인이 필요합니다. **둘러보기**는 services.finchgram.com의 디렉터리([docs/live-directory.md](../docs/live-directory.md), 누구나 제공할 수 있고 풀 리퀘스트로 바꾸거나 포크해서 직접 운영할 수 있는 공개 읽기 전용 JSON API)를 검색합니다: 지금 방송 중인 Owncast와 PeerTube 채널(두 프로젝트가 각자 운영하는 옵트인 디렉터리에서), Xiph 디렉터리의 Icecast 방송국, 검토를 거친 HLS 스트림과 Telegram 채널을 소스, 카테고리, 언어, 상태별로 찾아 카드나 목록으로 보여 줍니다. **팔로잉**에는 팔로우한 채널이 모이며, 내 Telegram의 라이브 방송도 팔로우한 것으로 칩니다. **시청**은 FinchGram 자체의 libmpv로 앱에서 방송을 재생하며, 화질 선택, 라이브 최신 지점으로 이동, 다른 곳을 보는 동안의 미니 플레이어, 다른 앱 위에 항상 떠 있는 창을 지원합니다. Owncast 채팅은 영상 옆에서 읽고 보낼 수 있고, Owncast가 정해 준 이름으로 나가며 Telegram 이름은 절대 쓰지 않습니다. **연결**은 링크를 엽니다: Owncast나 PeerTube 페이지, Icecast 방송국, HLS 재생 목록, Telegram 채널. **방송하기**는 내 라이브 스토리나 채널 라이브 방송을 Telegram에서 시작하고 OBS에 넣을 서버와 키를 보여 줍니다. 내 방송은 호스트로 열려 시청자 수, Stars, 상위 후원자, 댓글 삭제, 종료를 다룹니다.
-
-Telegram 자체의 방송도 같은 보기에 있습니다: 연락처와 팔로우하는 채널의 라이브 스토리, 채팅의 라이브 방송과 영상 채팅. 누군가 방송 중이면 항목에 빨간 점이 붙고, 방송 중인 채팅은 채팅 목록과 헤더 아래에도 표시됩니다. FinchGram에는 WebRTC가 없어서 Telegram이 스트림으로 보내는 방송, 즉 RTMP로 송출되는 모든 방송(OBS, XSplit, ffmpeg)을 재생합니다. 휴대폰 카메라로 하는 방송은 휴대폰에서 보도록 목록에 나옵니다. 시청은 Telegram 공식 앱과 같이 시청자로 참여하는 것입니다. 무료 댓글은 여기서 쓸 수 있고, 유료 댓글은 등급별 색으로 표시되며 보내기는 당분간 Telegram 공식 앱에서 합니다. 연령 제한 채널은 설정 › 라이브에서 표시하기 전까지 숨겨지고, 성인 방송은 아예 목록에 오르지 않습니다. Twitch, YouTube, Kick, Bilibili는 아직 연동되지 않았습니다. 자세한 내용은 [docs/live-streams.md](../docs/live-streams.md).
-
-## 어떻게 만들었나
-
-앱은 껍데기입니다. Telegram 자체는 TDLib이 맡고, 실행 파일 옆에서 별도 프로그램 `finchgram-tdlib`으로 실행됩니다. 이것은
-이 저장소가 고정된 소스에서 빌드합니다. 껍데기는 `src/telegram/`을 통해서만, TDLib 자체의 JSON으로 통신합니다. 동영상은
-같은 방식으로 빌드한 libmpv로 재생합니다. 사용자의 컴퓨터에서 아무것도 가져오지 않고, 빌드할 때 이 고정되고 체크섬이
-있는 빌드 외에는 아무것도 내려받지 않습니다. 소스, vendor 빌드(`vendor/`), 릴리스까지 모두 공개입니다.
-[docs/architecture.md](../docs/architecture.md)와 [docs/conventions.md](../docs/conventions.md)를 보세요.
 
 ## Telegram의 규칙
 
@@ -137,167 +56,18 @@ FinchGram은 Telegram 공식 앱이 하는 일만 하고, 금지된 일은 하�
 열리며, Telegram에서 온 것은 도구 상자 → AI 접근에서 어시스턴트를 허용하거나 음성 메시지를 본인의 AI 제공업체로 받아쓰는 설정을 켜지 않는 한 어떤 AI에도 넘기지 않습니다. Telegram과 업데이트용 GitHub, 그리고 음성 입력을 쓰는 동안 본인의 키로 직접 고른 AI 제공업체에 보내는 목소리 외에는 아무것도 컴퓨터 밖으로
 나가지 않습니다.
 
+## 문서
+
+문서는 영어와 중국어로 되어 있습니다.
+
+- [FinchGram이 하는 일](../docs/features.md): 모든 기능을 그림과 함께.
+- [Terminal 테마](../docs/terminal.md): 명령줄과 명령 목록.
+- [소스에서 빌드하기](../docs/development.md), [저장소 구조](../docs/layout.md), [번역](../docs/translations.md), [릴리스](../docs/releases.md).
+- [아키텍처](../docs/architecture.md)와 [규칙](../docs/conventions.md): 어떻게 만들었고, 왜 그렇게 했는지.
+
 ## 개발
 
-지금은 개발에 Apple silicon macOS가 필요합니다. finchgram-tdlib을 아직 그 플랫폼용으로만 빌드하기 때문입니다.
-Linux와 Windows는 나중에 지원합니다.
-
-finchgram-tdlib, libmpv, Skia, UI 글꼴은 git에 들어 있지 않습니다. `vendor/tdlib/`, `vendor/mpv/`, `vendor/skia/`에는
-그것들을 빌드하는 스크립트만 있고, 글꼴은 Google Fonts에서 받습니다. clone한 뒤 한 번 받아 오세요:
-
-```sh
-scripts/fetch-tdlib.sh    # 고정된 finchgram-tdlib 릴리스를 vendor/tdlib/bin/에 내려받고 SHA-256을 검증
-scripts/fetch-mpv.sh      # 고정된 libmpv 릴리스를 vendor/mpv/bin/에 내려받고 SHA-256을 검증
-scripts/fetch-skia.sh     # 고정된 Skia 릴리스를 vendor/skia/bin/에 내려받고 SHA-256을 검증한 뒤, 그 위치를 cargo에 알림
-scripts/fetch-fonts.sh    # 고정된 UI 글꼴을 vendor/fonts/에 내려받고 SHA-256을 검증
-FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
-```
-
-- finchgram-tdlib 자체를 바꾸려면 여기서 빌드하세요(몇 분 걸립니다. Xcode 또는 Command Line Tools와
-  `brew install cmake ninja gperf`가 필요하며, 모두 빌드 도구일 뿐입니다):
-
-  ```sh
-  vendor/tdlib/build.sh && vendor/tdlib/build.sh install
-  ```
-
-- `FINCHGRAM_API_ID`와 `FINCHGRAM_API_HASH`: 자신의 것을
-  [my.telegram.org](https://my.telegram.org) → API development tools에서 발급받으세요. 컴파일할 때 읽히며
-  절대 저장소에 넣지 않습니다. 이것이 없어도 앱은 실행되며, API ID가 없다고 알려 줍니다.
-- `FINCHGRAM_TEST_DC=1 cargo run`은 Telegram의 테스트 서버를 사용합니다. 테스트 서버에는 별도의 계정이
-  있으며, 앱은 이를 위해 별도의 데이터베이스를 둡니다.
-- `cargo test screenshots -- --ignored`는 모든 테마의 모든 페이지를 라이트와 다크로, 가상의 채팅과 함께
-  `target/screenshots/`에 그립니다. 계정 없이 UI를 볼 수 있는 방법입니다.
-
-`build.rs`는 `vendor/tdlib/bin/finchgram-tdlib`을 컴파일된 실행 파일 옆에 복사합니다. 그래서 `cargo run`은
-패키징된 앱과 정확히 같은 프로그램을 사용합니다. libmpv는 `vendor/mpv/bin/`에서 링크하고 마찬가지로 옆에
-복사합니다. `vendor/fonts/`의 글꼴은 실행 파일에 포함됩니다. 창을 그리는 Skia는 `vendor/skia/bin/`의 아카이브에서
-링크합니다. 하나라도 없으면 빌드가 그 이유를 알리는 메시지와 함께 실패합니다. Rust 1.92 이상이 필요합니다.
-
-TDLib의 데이터베이스와 내려받은 파일은 `~/Library/Application Support/FinchGram/tdlib/`에,
-설정은 `~/Library/Application Support/FinchGram/settings.toml`에 있습니다.
-
-## 구조
-
-```
-.github/workflows/
-  mpv.yml                # 깨끗한 머신에서 libmpv를 빌드하고, mpv-* 태그를 릴리스로 공개
-  check.yml              # main에 push할 때마다 clippy와 테스트 실행
-  release.yml            # Release v* 커밋에서 앱을 빌드해 릴리스로 공개
-  skia.yml               # 깨끗한 머신에서 Skia를 빌드하고, skia-* 태그를 릴리스로 공개
-  tdlib.yml              # 깨끗한 머신에서 finchgram-tdlib을 빌드하고, tdlib-* 태그를 릴리스로 공개
-Cargo.toml
-build.rs                 # vendor/tdlib/bin/을 실행 파일 옆에 복사
-crates/
-  finchgram-release-sign/ # 릴리스에 쓰는 Ed25519 서명 도구, 별도 패키지
-  finchgram-ui/          # UI: ui/app.slint를 컴파일하고 lang/을 포함, 별도 패키지
-docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
-  screenshots/           #   README에 싣는 그림, 스크린샷 테스트에서 (scripts/readme-pictures.sh)
-lang/                    # 번역: lang/<코드>/LC_MESSAGES/finchgram.po, 바이너리에 포함됨
-readme/                  # 이 README의 다른 언어판
-release-signing.pub      # 릴리스에 서명할 수 있는 공개 키; 앱에 포함됨
-scripts/
-  bundle.sh              # dist/FinchGram.app을 빌드(릴리스 워크플로가 실행하는 것)
-  fetch-fonts.sh         # 고정된 UI 글꼴을 vendor/fonts/로
-  fetch-mpv.sh           # 고정된 libmpv 릴리스를 vendor/mpv/bin/으로
-  fetch-skia.sh          # 고정된 Skia 릴리스를 vendor/skia/bin/으로, 그 위치를 cargo에 알림
-  fetch-tdlib.sh         # 고정된 finchgram-tdlib 릴리스를 vendor/tdlib/bin/으로
-  readme-pictures.sh     # README의 그림을 target/screenshots/에서 docs/screenshots/로 복사
-  release.sh             # 릴리스 시작: 버전, 태그, push; 나머지는 GitHub Actions가 처리
-  sign.sh                # 앱에 서명: 기본은 애드혹, 릴리스 워크플로에서는 Developer ID
-src/
-  main.rs                # 창, 설정, 언어와 테마, 업데이트. Telegram을 시작
-  fonts.rs               # UI 글꼴. 실행 파일에 포함됨
-  images.rs              # 메시지의 이미지. UI 스레드 밖에서 디코딩
-  telegram/              # finchgram-tdlib과 통신하는 유일한 코드
-    process.rs           #   프로그램 실행: 표준 입출력으로 TDLib의 JSON을 주고받음
-    api.rs               #   FinchGram이 쓰는 TDLib 타입(고정 버전의 td_api.tl 기준)
-    mod.rs               #   요청과 응답, 다시 시작. 업데이트는 store로
-    store.rs             #   TDLib이 알려 준 채팅·사용자·메시지. 페이지의 모델
-    login.rs             #   로그인, 가입
-    chats.rs             #   채팅 목록
-    conversation.rs      #   열린 채팅: 메시지, 보내기
-    actions.rs           #   메시지 작업: 오른쪽 클릭 메뉴, 답장, 전달 등
-    account.rs           #   프로필, 로그아웃
-    password.rs          #   설정의 2단계 인증
-    files.rs             #   파일 다운로드
-    avatars.rs           #   채팅과 사람의 사진. 이니셜 대신 표시
-    viewer.rs            #   미디어 뷰어: 사진, 동영상, ‘다운로드’에 저장
-    rich_text.rs         #   서식 있는 텍스트: 굵게, 기울임, 링크 등
-    notifications.rs     #   새 메시지 알림, Dock 아이콘의 읽지 않은 수
-    online.rs            #   창이 앞에 있고 쓰이는 동안 계정은 온라인
-  platform/              # 운영 체제마다 달라지는 부분
-  player/                # libmpv로 동영상 재생. 창이 보여 주는 서피스에 그림
-  screenshot/            # 스크린샷 도구: 캡처, 오버레이, 주석, 그림
-  downloads/             # 다운로드 페이지: WebDAV, FTP, FTPS, SFTP, 다중 연결 엔진
-  music/                 # 음악 페이지: Subsonic API 클라이언트, 캐시로 받는 곡, 대기열과 재생 막대
-    remote.rs            #   세 클라이언트의 공통 얼굴: 목록, 확인, 받기
-    webdav.rs            #   PROPFIND 목록, 주소, Basic 인증
-    ftp.rs               #   suppaftp로 FTP와 FTPS: 단일 스트림, REST로 이어받기
-    sftp.rs              #   russh로 SFTP: 여러 세션으로 조각 받기, 서버 키 기억
-    transfer.rs          #   파일 하나를 조각으로 여러 연결에 나눠 받음. 멈춘 뒤에도 이어서 받음
-    mod.rs               #   페이지의 상태, 스레드, 대기열, 서버 폼
-  update.rs              # 자동 업데이트: GitHub Releases, 서명 확인, 교체, 재시작
-  settings.rs            # 사용자 설정(settings.toml)
-  i18n.rs                # UI 언어: 저장된 선택, 없으면 시스템 언어, 그것도 없으면 영어
-  screenshots.rs         # 모든 페이지를 PNG로 그림(cargo test screenshots -- --ignored)
-ui/
-  app.slint              # 메인 창: 메뉴와, 어떤 페이지를 보여 줄지
-  state.slint            # 앱의 상태. Rust와 페이지가 함께 씀
-  telegram.slint         # Telegram이 보여 주는 것: 계정, 로그인, 채팅, 메시지
-  downloads.slint        # 다운로드 페이지의 상태: 서버, 폴더, 대기열
-  look.slint             # 테마의 색·글꼴·모양. 공유 페이지용
-  format.slint           # UI 언어로 쓴 날짜·수·메시지 종류
-  widgets.slint          # 작은 공유 부품. chat.slint는 채팅 창의 공유 부분
-  viewer.slint           # 창 전체를 덮는 미디어 뷰어. 테마마다 다른 모양
-  pages/                 # 세 테마가 함께 쓰는 페이지: 로그인, 설정, 프로필, 다운로드
-  workbench/             # 워크벤치 테마의 채팅 창(기본)
-  broadsheet/            # 브로드시트 테마의 채팅 창
-  terminal/              # 터미널 테마의 채팅 창
-  icons/                 # Phosphor 아이콘(MIT), 일반과 듀오톤. icons.slint가 목록
-  logo/                  # FinchGram 로고(svg, png)와 사용 규칙
-vendor/fonts/            # git에 없음: UI 글꼴(scripts/fetch-fonts.sh)
-vendor/mpv/              # libmpv: 동영상 재생용 mpv와 FFmpeg
-  build.sh               #   고정된 소스로 빌드: 버전과 SHA-256은 맨 위에 고정
-  bin/                   #   git에 없음: 라이브러리 자체(scripts/fetch-mpv.sh 또는 build.sh install)
-vendor/skia/             # Skia: 창을 그리는 데 사용
-  build.sh               #   고정된 소스로 빌드: 커밋과 아카이브 이름은 맨 위에 고정
-  Cargo.lock             #   그 빌드가 쓰는 crate를 고정
-  bin/                   #   git에 없음: 아카이브 자체(scripts/fetch-skia.sh 또는 build.sh install)
-vendor/tdlib/            # finchgram-tdlib
-  build.sh               #   고정된 소스로 빌드: TDLib 커밋, OpenSSL 버전과 SHA-256은 맨 위에 고정
-  host/                  #   작은 호스트 프로그램(main.cpp)과 그 CMakeLists.txt
-  bin/                   #   git에 없음: 앱이 쓰는 프로그램(scripts/fetch-tdlib.sh 또는 build.sh install)
-  work/, dist/           #   git에 없음: 로컬 빌드의 중간 파일과 패키지
-```
-
-## 번역
-
-UI의 모든 텍스트는 `@tr("English text")`로 씁니다. 같은 문자열은 어디에 나오든 번역이 하나입니다
-(crates/finchgram-ui/build.rs가 Slint의 기본 컨텍스트를 끕니다). 같은 영어 문장이 다른 곳에서 다른 말로 옮겨져야 하면
-컨텍스트를 붙이세요: `@tr("menu" => "Open")`. 공식 도구로 추출한 뒤 각 언어에 병합합니다:
-
-```sh
-cargo install slint-tr-extractor                                          # 한 번만
-find ui -name '*.slint' | sort | xargs slint-tr-extractor --no-default-translation-context -o lang/finchgram.pot
-for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finchgram.pot; done   # brew install gettext 필요
-```
-
-그런 다음 `msgstr` 항목을 채우고 다시 `cargo build`를 실행하세요. 원본 언어는 영어이며, 나머지 10개 언어가
-포함되어 있습니다.
-
-## 릴리스
-
-릴리스는 오직 GitHub Actions가 태그가 붙은 커밋으로 깨끗한 머신에서 빌드하며
-(`.github/workflows/release.yml`), 이 저장소에 공개합니다: 압축한 앱, `SHA256SUMS`, 그리고 그 Ed25519
-서명. 설치된 앱은 여기서 스스로 업데이트하며, 검증할 수 없는 것은 아무것도 설치하지 않습니다.
-메인테이너는 명령 하나로 릴리스를 시작합니다:
-
-```sh
-scripts/release.sh patch    # 0.1.0 -> 0.1.1; minor, major 또는 정확한 버전도 가능
-```
-
-서명은 North Brookville LLC의 Apple Developer ID로 하고, hardened runtime을 켜고, Apple의 공증을 받습니다.
-내려받은 앱은 Gatekeeper의 확인 없이 열리고, 앱이 직접 설치한 업데이트도 마찬가지입니다.
+앱은 껍데기입니다. Telegram 자체는 TDLib가 맡고, 앱 옆에서 별도 프로그램으로 실행됩니다. TDLib는 이 저장소가 고정된 소스에서 빌드하며, libmpv와 Skia도 마찬가지입니다. 빌드하려면 Apple silicon의 macOS와 본인의 Telegram API ID가 필요합니다. 단계는 [docs/development.md](../docs/development.md)에 있습니다.
 
 ## 기여
 

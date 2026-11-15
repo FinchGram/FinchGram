@@ -14,44 +14,17 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
 
 ## 能做什麼
 
-- **聊天。** 用手機號碼、驗證碼和兩步驟驗證密碼登入，或者掃 QR code 登入；也可以註冊新帳號。聊天列表帶 Telegram
-  的資料夾、置頂、未讀數和 @ 提醒；一個什麼都能搜的搜尋框（⌘K）：你的聊天和聯絡人，用使用者名稱找到的公開使用者、
-  群組和頻道，用手機號碼找到的人，還有訊息；聊天內搜尋（⌘F）；還有頻道檢視和機器人檢視。
-  鉛筆可以建立新群組、頻道或聊天，或者新增聯絡人。
-  多帳號，最多十個，每個帳號各自一個 TDLib：在帳號選單裡切換，或按 ⌘1 … ⌘0。
-  管理群組和頻道：頭像、名稱和簡介、公開使用者名稱或邀請連結、成員和管理員及其權限、成員權限、慢速模式、加入審核和話題；頻道的簽名和討論群。
-- **訊息。** 帶格式的文字（粗體、斜體、程式碼、連結）、回覆和轉傳、照片、影片、GIF、貼圖、檔案，以及連結預覽卡片。
-  在訊息上按右鍵打開它的選單：回覆、編輯、複製、複製連結、轉傳、檢舉、刪除，或選取多則。設為自毀的照片和影片
-  以模糊顯示、只能打開一次，和 Telegram 官方應用程式一樣。機器人訊息下方的按鈕，以及機器人的鍵盤、指令和選單按鈕；
-  聊天標題下方的置頂訊息。內容受保護的聊天顯示在最前面時，不會出現在截圖和螢幕錄影裡。表情回應，有選擇器，
-  連點兩下訊息就送出預設的那個；圓形影片訊息直接在原處播放；聯絡人名片，有傳訊息、新增聯絡人和分享；
-  一次把貼文或名片分享給好幾個聊天；草稿按聊天分別保存，跨裝置同步；開了話題的群組，打開就是話題列表；
-  慢速模式在輸入框裡倒數計時；聊天設定面板裡有群組的規則，管理員則是群組的權限和選項。
-- **媒體。** 照片和影片在蓋住整個視窗的檢視器裡打開，可以翻看同一相簿的其他圖片；影片用從原始碼建置的 mpv
-  播放。聊天允許時可以儲存到「下載項目」。
-- **下載。** 媒體中心裡的下載客戶端，走 WebDAV、FTP、FTPS 或 SFTP：你的 NAS、seedbox、PikPak、Alist/OpenList，或者用 `vget serve` 分享的
-  資料夾，都能在 app 裡瀏覽。檔案走多條連線同時下載，中斷後可以接著下；照片和影片一到就在檢視器裡打開；密碼封在 FinchGram
-  的資料庫裡。見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)。
-- **音樂。** 播放你自己伺服器上音樂的播放器：新增一個 Navidrome、gonic、LMS、Ampache、Nextcloud Music 或 Koel（任何會說 Subsonic API 的伺服器），在內建播放器裡播它的曲庫，首尾無縫，有佇列，播放列在每一頁底部；歌邊播邊快取。
-- **直播。** 在聊天、頻道、機器人旁邊單獨一欄：發現 Owncast 和 PeerTube 伺服器、Icecast 電台和 Telegram 頻道裡此刻誰在直播，追蹤他們，在應用程式裡觀看，Owncast 的聊天室就在畫面旁邊。Telegram 自己的直播也在這裡：聯絡人和你關注的頻道的直播動態，以及你的聊天裡的直播和視訊聊天，連同留言。也可以開播：自己的直播動態，或頻道的直播，FinchGram 給出填進 OBS 的位址和金鑰。
-- **傳送。** 照片、影片和檔案可以從迴紋針選單傳送，也可以拖進視窗或直接貼上。送出之前先在一張卡片裡顯示：
-  可以加說明文字，按照片傳或按檔案傳，最多十個合成一個相簿，私訊裡可以設自毀計時器，也可以靜音傳送。
-- **截圖。** 輸入列裡的剪刀或 ⌘⇧A 會定住螢幕：取一個視窗或拖一個選取範圍，畫上方框、橢圓、箭頭、畫筆、文字和馬賽克，
-  然後直接傳送、複製或儲存。和微信一樣，每個聊天裡都有。
-- **聊天選單。** 靜音、置頂、複製 ID、放進資料夾；封鎖或解除封鎖對方、檢舉、退出群組或頻道、刪除聊天。
-  在資料夾上按右鍵，可以把裡面的聊天全部標為已讀，或者選擇排序方式：按最新訊息、按名稱、按未讀訊息，
-  置頂的始終在最前。
-- **通知。** 新訊息以 macOS 通知提醒，未讀數顯示在 Dock 圖示上；關閉視窗後 FinchGram 留在 Dock 裡，也可以住進選單列。
-- **三套主題。** 工作台、報紙和終端，各有淺色和深色，切換不用重新啟動。
-- **設定。** 開機時啟動、按 Enter 傳送、截圖快捷鍵、通知的聲音和預覽、兩步驟驗證、介面語言，還有更新：app 從
-  GitHub Releases 自動更新，驗證不過的一律不裝。
-- **語音訊息。** 在聊天裡直接播放，帶波形、時長和 1×、1.5×、2× 倍速；聽過對方看得到，和 Telegram 官方應用程式一樣。按住麥克風錄音：放開傳送，向左拖取消，向上拖鎖定，鎖定後可以停下來先試聽再傳。
-- **語音輸入。** 在輸入框裡按一下 ✦ 然後說話，字進到輸入框裡，由你來傳送。你新增自己的 AI 服務商，每個有名稱、API 格式、你自己的金鑰，願意的話還可以填自己的位址（中轉站，或區域網路裡的伺服器）。語音輸入、整理文字（去掉「嗯」「呃」）、語音訊息轉文字是三個功能，各有各的開關，每個功能用哪個 AI 服務商、哪個模型都由你從清單裡選，不替你選任何東西。語音辨識可以用 OpenAI 的即時轉寫、通義千問和豆包（中文都很強），或任何支援 OpenAI 轉寫介面的服務；整理文字用 OpenAI、Anthropic 或 Gemini 的格式。夾雜的其他語言照你說的原樣保留。百寶箱 → AI → 語音輸入，預設關著。語音訊息下面的「轉文字」用 Telegram 自己的轉寫，你打開開關後改用你自己的 AI 服務商。見 [docs/voice-input.zh-Hans.md](../docs/voice-input.zh-Hans.md)。
-- **AI 助理。** Claude Desktop、Claude Code 以及其他會說 Model Context Protocol 的應用程式，可以在你允許後透過 FinchGram 讀你的聊天並代你操作：百寶箱 → AI 存取，預設關著，由你選哪些聊天、助理能不能傳訊息，應用程式第一次連線時會先問你。見 [docs/mcp.md](../docs/mcp.md)。
-- **語言。** 介面和這份 README 都有十一種語言。
+- **Telegram 該有的都有。** 聊天、資料夾、搜尋，最多十個帳號；訊息的回覆、回應、機器人、話題和草稿；照片、影片、檔案和語音訊息；管理自己的群組和頻道。
+- **截圖工具。** ⌘⇧A 定住畫面：取一個視窗或拖一個選區，在上面標註，傳送出去。在每個聊天裡都能用，像微信那樣。
+- **下載。** 一個下載用戶端，連你自己的伺服器，走 WebDAV、FTP、FTPS 或 SFTP：NAS、seedbox、PikPak。[詳見](../docs/downloads.zh-Hans.md)
+- **音樂。** 播放你自己伺服器上的音樂，只要它支援 Subsonic API（Navidrome 等）。[詳見](../docs/music.zh-Hans.md)
+- **直播。** Owncast、PeerTube、Icecast 和 Telegram 自己的直播：發現、追蹤，就在 app 裡看。[詳見](../docs/live-streams.zh-Hans.md)
+- **語音輸入。** 對著輸入框說話，走你自己選的 AI 服務商、用你自己的金鑰。[詳見](../docs/voice-input.zh-Hans.md)
+- **AI 助理。** Claude 等支援 MCP 的應用程式，在你允許之後，透過 FinchGram 讀你的聊天並在其中操作。[詳見](../docs/mcp.zh-Hans.md)
+- **三套主題。** 工作台、報紙和終端，各有淺色和深色。終端有一條真能用的指令列。[怎麼用](../docs/terminal.zh-Hans.md)
+- **十一種語言**，還會自己更新：先驗證，再安裝。
 
-還沒有的：秘密聊天和通話、投票和排程訊息、關鍵字過濾、Windows 和 Linux。見
-[接下來做什麼](../docs/architecture.md#not-now)。
+[全部功能，附圖](../docs/features.zh-Hans.md)。還沒有的：秘密聊天和通話、投票和排程訊息、關鍵字過濾、Windows 和 Linux。見 [接下來做什麼](../docs/architecture.md#not-now)。
 
 ## 下載
 
@@ -71,57 +44,9 @@ FinchGram 透過 Telegram 官方的函式庫 [TDLib](https://core.telegram.org/t
 工作台是預設主題，一個帶分頁的工作視窗。報紙讀起來像報紙，每個帳號有自己的強調色。終端是等寬字型的畫面，
 帶指令。每套都有淺色和深色，跟隨系統或自己選，在「設定 › 外觀」裡。
 
+終端主題在最下面那一列執行指令：按 ⌘K，或者輸入 `/`。指令和按鍵見[終端主題](../docs/terminal.zh-Hans.md)。
+
 <p align="center"><img src="../docs/screenshots/workbench-dark-chats.png" width="800" alt="工作台，深色"></p>
-
-## 截圖工具
-
-<p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="截圖覆蓋層，帶標註"></p>
-
-按 ⌘⇧A，或者點迴紋針旁邊的剪刀。螢幕定住，整個畫面壓暗：拖一個選取範圍，範圍內不壓暗，帶放大鏡和像素尺寸；
-點一下某個視窗則整個取下。工具列可以畫方框、橢圓、箭頭、畫筆、文字和馬賽克，三種粗細、六種顏色，可以復原。
-按 Done 把圖放進傳送卡片，可以配上說明文字；⌘C 複製；⌘S 存到「下載項目」。「設定 › 一般 › 截圖」裡可以改快捷鍵，
-也可以決定截圖時要不要先把 FinchGram 的視窗藏起來。
-
-<p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="帶截圖的傳送卡片"></p>
-
-## AI 助理
-
-<p align="center"><img src="../docs/screenshots/workbench-light-ai-access.png" width="800" alt="百寶箱 → AI 存取"></p>
-
-FinchGram 是一個 MCP 伺服器：你 Mac 上的 AI 助理應用程式（Claude Desktop、Claude Code、Cursor……）可以透過正在執行的 FinchGram、用你自己的帳號讀你的 Telegram 並在其中操作。百寶箱 → AI 存取 是開關，預設關著。在那裡你選助理能看到哪些聊天（除秘密聊天外的全部，或只限選定的）、能寫什麼（以你的名義傳訊息、只留草稿由你傳、或什麼都不寫），也能看到哪些應用程式連線過——名稱是 macOS 回報的——以及它們要過什麼。應用程式第一次連線時，FinchGram 會問你允不允許。讀取不會標已讀，秘密聊天永遠不給看，也不為 AI 儲存任何東西。頁面上備好了貼進 Claude Code 或 Claude Desktop 的那一行；細節見 [docs/mcp.md](../docs/mcp.md)。
-
-## 下載頁面
-
-<p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="下載頁面"></p>
-
-檢視 → 下載，或者點齒輪上方的下載圖示。加一個伺服器，WebDAV、FTP、FTPS 或 SFTP（NAS、seedbox、PikPak、Alist/OpenList、Nextcloud、
-`rclone serve webdav`，或者用 `vget serve` 分享的資料夾），瀏覽它的資料夾，勾選檔案或整個資料夾一起拿，檔案就會到
-~/Documents/FinchGram/webdav 裡：每個檔案切成 8 MB 的區塊、最多同時走十二條連線，按「重試」後從停下的地方接著下，和維護者的
-命令列工具 vget 一個做法。右邊的佇列顯示速度和還剩多少；「打開」會把照片或影片取回來，在檢視器裡顯示。除非你為某台伺服器允許，FinchGram 不會變更
-伺服器上的任何東西（允許後可以在那台上刪除、移動、重新命名、上傳）；密碼封起來存進 FinchGram 的資料庫，永遠不以明文寫進檔案。細節和還沒做的部分見 [docs/downloads.zh-Hans.md](../docs/downloads.zh-Hans.md)
-（自簽憑證會被拒絕：區域網路裡用 http，或者用正式的憑證）。
-
-## 音樂頁面
-
-<p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="音樂頁面"></p>
-
-顯示 → 音樂，或百寶箱裡的音樂。新增一個來源：你自己的、會說 Subsonic API 的伺服器（Navidrome、gonic、LMS、Ampache、Nextcloud Music、Koel……），填位址和帳號；密碼封存在 FinchGram 的資料庫裡。瀏覽它的專輯、藝人、歌曲、類型、播放清單和收藏，播放或隨機播放一張專輯，把歌加進佇列；打星會寫回伺服器。歌透過 FinchGram 自己的 HTTP 客戶端進到 `~/Documents/FinchGram/music_cache`，邊到邊播，首尾無縫；播放列留在每一頁的底部。詳見 [docs/music.md](../docs/music.md)。
-
-## 直播
-
-<p align="center"><img src="../docs/screenshots/workbench-light-live.png" width="800" alt="觀看一則直播動態"></p>
-
-左側第四個入口，在聊天、頻道、機器人旁邊（Terminal 裡是 LIVE，或 /live），是一個匯集多個來源的直播客戶端，要登入 Telegram 才能用。**探索**搜尋 services.finchgram.com 上的直播目錄（[docs/live-directory.md](../docs/live-directory.md)，一個開放的唯讀 JSON API，誰都可以提供，可以用 PR 修改，也可以 fork 走自己架設）：此刻在播的 Owncast 和 PeerTube 頻道（來自這兩個專案各自的自願登記目錄）、Xiph 目錄裡的 Icecast 電台，以及審核過的 HLS 直播串流和 Telegram 頻道；可以依來源、分類、語言和狀態篩選，以卡片或清單顯示。**追蹤中**保存你追蹤的頻道；你 Telegram 裡的直播也算作已追蹤。**觀看**用 FinchGram 自帶的 libmpv 在應用程式裡播放直播：可以選畫質、跳回直播最新處，去看別的頁面時有迷你播放器接著播，還能開一個始終浮在其他應用程式之上的視窗；Owncast 的聊天室在畫面旁邊，能看也能發，用的是 Owncast 給你的名字，從不用你的 Telegram 名字。**連線**開啟一個連結：Owncast 或 PeerTube 的頁面、Icecast 電台、HLS 播放清單或 Telegram 頻道。**開播**會把你的直播動態或頻道直播開在 Telegram 上，並給出填進 OBS 的伺服器位址和金鑰；你自己的直播以主播身分開啟，能看到觀看人數、Stars、贊助榜，能刪留言、結束直播。
-
-Telegram 自己的直播也在同一個檢視裡：聯絡人和你關注的頻道的直播動態，以及你的聊天裡的直播和視訊聊天；有人在播時入口上有個紅點，正在直播的聊天在聊天列表裡和標題下方也會標出來。FinchGram 沒有 WebRTC：它播放 Telegram 以串流形式送來的直播，也就是所有透過 RTMP 推流的直播（OBS、XSplit、ffmpeg）；手機鏡頭開的直播會列出來，標著在手機上看。觀看就是以觀眾身分加入，和 Telegram 自己的應用程式一樣；免費留言可以直接寫，付費留言依級別上色顯示，發付費留言暫時交給 Telegram 自己的應用程式。限制級頻道會一直隱藏，直到你在「設定 › 直播」裡選擇顯示；成人直播一律不列出。Twitch、YouTube、Kick 和 Bilibili 尚未整合。詳見 [docs/live-streams.md](../docs/live-streams.md)。
-
-## 怎麼做的
-
-app 是一個外殼。Telegram 本身交給 TDLib，它作為一個獨立程式跑在執行檔旁邊：`finchgram-tdlib`，由本倉庫從鎖定的
-原始碼建置；外殼只透過 `src/telegram/` 跟它通訊，用的是 TDLib 自己的 JSON。影片用同樣方式建置的 libmpv 播放。
-不從使用者的機器上拿任何東西，建置時除了這些鎖定且帶校驗和的產物之外什麼也不下載。所有東西都公開：原始碼、vendor 建置
-（`vendor/`）和發佈。見 [docs/architecture.md](../docs/architecture.md) 和
-[docs/conventions.md](../docs/conventions.md)。
 
 ## Telegram 的規矩
 
@@ -129,162 +54,18 @@ FinchGram 只做 Telegram 官方應用程式做的事，不做它們禁止的事
 能看到你正在輸入和在線上，頻道裡的贊助訊息照常顯示，自毀媒體只能打開一次，來自 Telegram 的內容不會交給任何 AI，除非你在百寶箱 → AI 存取裡放一個助理進來，或者打開了用你自己的 AI 服務商把語音訊息轉文字。
 除了 Telegram、用來更新的 GitHub，以及你用語音輸入時以你自己的金鑰傳給你所選 AI 服務商的聲音，什麼都不會離開你的機器。
 
+## 文件
+
+文件有英文和簡體中文兩種。
+
+- [FinchGram 能做什麼](../docs/features.zh-Hans.md)：每一項功能，附圖。
+- [終端主題](../docs/terminal.zh-Hans.md)：它的指令列和全部指令。
+- [從原始碼建置](../docs/development.zh-Hans.md)、[目錄結構](../docs/layout.zh-Hans.md)、[翻譯](../docs/translations.zh-Hans.md)、[發佈](../docs/releases.zh-Hans.md)。
+- [架構](../docs/architecture.zh-Hans.md)和[慣例](../docs/conventions.zh-Hans.md)：它是怎麼做的，為什麼這麼做。
+
 ## 開發
 
-目前開發需要 Apple silicon 的 macOS：finchgram-tdlib 暫時只為它建置。Linux 和 Windows 之後再支援。
-
-finchgram-tdlib、libmpv、Skia 和介面字型都不進 git：`vendor/tdlib/`、`vendor/mpv/` 和 `vendor/skia/` 裡只放建置
-它們的腳本，字型來自 Google Fonts。clone 之後先把它們下載一次：
-
-```sh
-scripts/fetch-tdlib.sh    # 把鎖定的 finchgram-tdlib release 下載到 vendor/tdlib/bin/ 並驗證 SHA-256
-scripts/fetch-mpv.sh      # 把鎖定的 libmpv release 下載到 vendor/mpv/bin/ 並驗證 SHA-256
-scripts/fetch-skia.sh     # 把鎖定的 Skia release 下載到 vendor/skia/bin/ 並驗證 SHA-256，再告訴 cargo 它在哪裡
-scripts/fetch-fonts.sh    # 把鎖定的介面字型下載到 vendor/fonts/ 並驗證 SHA-256
-FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
-```
-
-- 要修改 finchgram-tdlib 本身時，請在本機建置（幾分鐘；需要 Xcode 或 Command Line Tools，以及
-  `brew install cmake ninja gperf`，都只是建置工具）：
-
-  ```sh
-  vendor/tdlib/build.sh && vendor/tdlib/build.sh install
-  ```
-
-- `FINCHGRAM_API_ID` 和 `FINCHGRAM_API_HASH`：使用你自己的，在 [my.telegram.org](https://my.telegram.org)
-  → API development tools 申請。它們在編譯時讀取，永遠不進儲存庫。沒有它們 app 也能啟動，會提示沒有 API ID。
-- `FINCHGRAM_TEST_DC=1 cargo run` 連線到 Telegram 的測試伺服器，那裡有獨立的帳號；app 會為它另外保存一個資料庫。
-- `cargo test screenshots -- --ignored` 用假資料把每套主題的每個頁面（淺色和深色）畫成圖片，存到
-  `target/screenshots/`：不用登入帳號也能看介面。
-
-`build.rs` 把 `vendor/tdlib/bin/finchgram-tdlib` 複製到編譯出來的執行檔旁邊，所以 `cargo run`
-用的和打包後的 app 是完全相同的程式；它也從 `vendor/mpv/bin/` 連結 libmpv 並同樣複製過去，`vendor/fonts/`
-裡的字型則編譯進執行檔。繪製視窗用的 Skia 從 `vendor/skia/bin/` 裡的封存檔連結。缺少任何一樣，編譯都會直接失敗並
-說明原因。需要 Rust 1.92 或更新版本。
-
-TDLib 的資料庫和下載的檔案在 `~/Library/Application Support/FinchGram/tdlib/`，設定在
-`~/Library/Application Support/FinchGram/settings.toml`。
-
-## 目錄結構
-
-```
-.github/workflows/
-  mpv.yml                # 在乾淨的機器上建置 libmpv；mpv-* tag 發佈為 release
-  check.yml              # 每次 push 到 main 跑 clippy 和測試
-  release.yml            # Release v* 提交時建置並發佈 app
-  skia.yml               # 在乾淨的機器上建置 Skia；skia-* tag 發佈為 release
-  tdlib.yml              # 在乾淨的機器上建置 finchgram-tdlib；tdlib-* tag 發佈為 release
-Cargo.toml
-build.rs                 # 把 vendor/tdlib/bin/ 複製到執行檔旁邊
-crates/
-  finchgram-release-sign/ # release 背後的 Ed25519 簽名工具，獨立一個套件
-  finchgram-ui/          # 介面：編譯 ui/app.slint，打包 lang/，獨立一個套件
-docs/                    # architecture.md、conventions.md、downloads.md、drag-and-drop.md、media-files.md、skia.md（以及簡體中文版）
-  screenshots/           #   README 裡的圖，來自截圖測試（scripts/readme-pictures.sh）
-lang/                    # 翻譯：lang/<代碼>/LC_MESSAGES/finchgram.po，編譯進二進位檔
-readme/                  # 這份 README 的其他語言版本
-release-signing.pub      # 允許為 release 簽名的公鑰，編譯進 app
-scripts/
-  bundle.sh              # 建置 dist/FinchGram.app（release 流程執行的就是它）
-  fetch-fonts.sh         # 把鎖定的介面字型下載到 vendor/fonts/
-  fetch-mpv.sh           # 把鎖定的 libmpv release 下載到 vendor/mpv/bin/
-  fetch-skia.sh          # 把鎖定的 Skia release 下載到 vendor/skia/bin/，並告訴 cargo 它在哪裡
-  fetch-tdlib.sh         # 把鎖定的 finchgram-tdlib release 下載到 vendor/tdlib/bin/
-  readme-pictures.sh     # 把 README 用的圖從 target/screenshots/ 複製到 docs/screenshots/
-  release.sh             # 發起一次 release：改版本、打 tag、push，其餘交給 GitHub Actions
-  sign.sh                # 為 app 簽名：預設臨時簽名，release 流程裡用 Developer ID
-src/
-  main.rs                # 視窗、設定、語言和主題、更新；啟動 Telegram
-  fonts.rs               # 介面字型，編譯進執行檔
-  images.rs              # 訊息裡的圖片，在介面執行緒之外解碼
-  telegram/              # 唯一與 finchgram-tdlib 打交道的程式碼
-    process.rs           #   執行這個程式：透過標準輸入輸出傳遞 TDLib 的 JSON
-    api.rs               #   FinchGram 用到的 TDLib 型別（依照鎖定版本的 td_api.tl 撰寫）
-    mod.rs               #   請求和回覆、重新啟動；更新交給 store
-    store.rs             #   TDLib 告訴我們的聊天、使用者和訊息；頁面用的 model
-    login.rs             #   登入、註冊
-    chats.rs             #   聊天列表
-    conversation.rs      #   開啟的聊天：訊息、傳送
-    actions.rs           #   訊息操作：右鍵選單、回覆、轉傳等
-    account.rs           #   個人資料、登出
-    password.rs          #   設定裡的兩步驟驗證
-    files.rs             #   下載檔案
-    avatars.rs           #   聊天和聯絡人的頭像，代替首字母色塊
-    viewer.rs            #   媒體檢視器：照片、影片、儲存到「下載」
-    rich_text.rs         #   帶格式的文字：粗體、斜體、連結……
-    notifications.rs     #   新訊息通知、Dock 圖示上的未讀數
-    online.rs            #   視窗在前景、有人在用時，帳號是上線狀態
-  platform/              # 隨作業系統而不同的部分
-  player/                # 用 libmpv 播放影片，畫進一塊由視窗顯示的 surface
-  screenshot/            # 截圖工具：截取、覆蓋層、標註、成圖
-  downloads/             # 下載頁面：WebDAV、FTP、FTPS 和 SFTP，帶多連線下載引擎
-  music/                 # 音樂頁面：Subsonic API 客戶端、邊播邊下的快取、佇列與播放列
-    remote.rs            #   三個客戶端的同一張臉：列目錄、檢查伺服器、取檔案
-    webdav.rs            #   PROPFIND 目錄列表、位址、Basic 驗證
-    ftp.rs               #   FTP 和 FTPS，用 suppaftp：單一串流，REST 接著下
-    sftp.rs              #   SFTP，用 russh：多個工作階段分塊下載，記住伺服器金鑰
-    transfer.rs          #   一個檔案切塊、走多條連線，中斷後接著下
-    mod.rs               #   頁面的狀態、它的執行緒、佇列、伺服器表單
-  update.rs              # 自動更新：GitHub Releases、驗證簽名、替換、重新啟動
-  settings.rs            # 使用者偏好（settings.toml）
-  i18n.rs                # 介面語言：已儲存的選擇，否則跟隨系統，否則英文
-  screenshots.rs         # 把每個頁面畫成 PNG（cargo test screenshots -- --ignored）
-ui/
-  app.slint              # 主視窗：選單，以及顯示哪個頁面
-  state.slint            # app 的狀態，Rust 和頁面共用
-  telegram.slint         # Telegram 的內容：帳號、登入、聊天、訊息
-  downloads.slint        # 下載頁面的狀態：伺服器、資料夾、佇列
-  look.slint             # 目前主題的顏色、字型和形狀，給共用頁面用
-  format.slint           # 依介面語言寫出的日期、數量和訊息類型
-  widgets.slint          # 共用的小元件；chat.slint 是聊天視窗共用的部分
-  viewer.slint           # 覆蓋整個視窗的媒體檢視器，三套主題各有樣式
-  pages/                 # 三套主題共用的頁面：登入、設定、個人資料、下載
-  workbench/             # 工作台主題的聊天視窗（預設）
-  broadsheet/            # 報紙主題的聊天視窗
-  terminal/              # 終端主題的聊天視窗
-  icons/                 # Phosphor 圖示（MIT），一般和雙色兩種；icons.slint 列出它們
-  logo/                  # FinchGram 的 logo（svg、png）和使用規則
-vendor/fonts/            # 不進 git：介面字型（scripts/fetch-fonts.sh）
-vendor/mpv/              # libmpv：mpv 和 FFmpeg，用來播放影片
-  build.sh               #   從鎖定的原始碼建置它：版本和 SHA-256 都鎖定在腳本開頭
-  bin/                   #   不進 git：函式庫本身（scripts/fetch-mpv.sh 下載，或 build.sh install）
-vendor/skia/             # Skia，用來繪製視窗
-  build.sh               #   從鎖定的原始碼建置它：各個 commit 和封存檔的名稱都鎖定在腳本開頭
-  Cargo.lock             #   鎖定這次建置用到的 crate
-  bin/                   #   不進 git：封存檔本身（scripts/fetch-skia.sh 下載，或 build.sh install）
-vendor/tdlib/            # finchgram-tdlib
-  build.sh               #   從鎖定的原始碼建置它：TDLib commit、OpenSSL 版本和 SHA-256 都鎖定在腳本開頭
-  host/                  #   我們的小型外殼程式（main.cpp）和它的 CMakeLists.txt
-  bin/                   #   不進 git：app 使用的程式（scripts/fetch-tdlib.sh 下載，或 build.sh install）
-  work/, dist/           #   不進 git：本機建置的中間檔案和打包好的套件
-```
-
-## 翻譯
-
-介面上的每一段文字都寫成 `@tr("English text")`。同一個字串無論出現在哪裡都只有一種譯法（crates/finchgram-ui/build.rs 關閉了
-Slint 的預設 context）；同一句英文在別處需要不同譯法時，給它一個 context：`@tr("menu" => "Open")`。
-用官方工具擷取，再合併到每種語言：
-
-```sh
-cargo install slint-tr-extractor                                          # 安裝一次
-find ui -name '*.slint' | sort | xargs slint-tr-extractor --no-default-translation-context -o lang/finchgram.pot
-for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finchgram.pot; done   # 需要 brew install gettext
-```
-
-然後填好 `msgstr`，重新 `cargo build`。英文是來源語言；其餘十種都附帶。
-
-## 發佈
-
-release 只由 GitHub Actions 在乾淨的機器上、從打了 tag 的 commit 建置（`.github/workflows/release.yml`），
-發佈在本儲存庫裡：壓縮好的 app、`SHA256SUMS` 和它的 Ed25519 簽名。已安裝的 app 從這裡自動更新，
-驗證不通過的一律不安裝。維護者用一條指令發起 release：
-
-```sh
-scripts/release.sh patch    # 0.1.0 -> 0.1.1；也可以是 minor、major 或一個具體版本號
-```
-
-app 用 North Brookville LLC 的 Apple Developer ID 簽名，開啟 Hardened Runtime，並經 Apple 公證：下載的 app 開啟時
-Gatekeeper 不會攔，app 自己安裝的更新也一樣。
+app 是一個外殼：Telegram 本身交給 TDLib，它作為獨立程式跑在旁邊，由本儲存庫從鎖定的原始碼建置，libmpv 和 Skia 也一樣。建置需要 Apple silicon 的 macOS 和你自己的 Telegram API ID；步驟見 [docs/development.zh-Hans.md](../docs/development.zh-Hans.md)。
 
 ## 參與
 

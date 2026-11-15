@@ -15,86 +15,17 @@ un client non officiel, qui n'est pas fait par Telegram.
 
 ## Ce qu'il fait
 
-- **Discussions.** Connexion avec le numéro de téléphone, le code et le mot de passe de la validation
-  en deux étapes, ou en scannant un code QR ; ou création d'un nouveau compte. La liste des
-  discussions avec les dossiers de Telegram, les discussions épinglées, les compteurs de non-lus et
-  les mentions ; une recherche globale (⌘K) : vos discussions et contacts, les utilisateurs, groupes
-  et chaînes publics par nom d'utilisateur, les personnes par numéro de téléphone, et les messages ;
-  une recherche dans la discussion (⌘F) ; une vue de vos chaînes et une de vos bots. Le crayon crée
-  un nouveau groupe, une chaîne ou une discussion, ou ajoute un contact.
-  Plusieurs comptes, jusqu’à dix, chacun avec son propre TDLib : on passe de l’un à l’autre depuis le menu du compte ou avec ⌘1 … ⌘0.
-  Gérer ses groupes et chaînes : photo, nom et description, nom d’utilisateur public ou liens d’invitation, membres et administrateurs avec leurs droits, permissions des membres, mode lent, approbation des demandes et sujets ; signatures et groupe de discussion d’une chaîne.
-- **Messages.** Du texte avec sa mise en forme (gras, italique, code, liens), réponses et transferts,
-  photos, vidéos, GIF, stickers, fichiers et une carte d'aperçu pour un lien. Un clic droit sur un
-  message ouvre son menu : répondre, modifier, copier, copier le lien, transférer, signaler,
-  supprimer ou en sélectionner plusieurs. Les photos et vidéos envoyées pour s'autodétruire
-  s'affichent floutées et s'ouvrent une seule fois, comme dans les applications de Telegram.
-  Les boutons des bots sous leurs messages, leurs claviers, leurs commandes et leur bouton de menu ;
-  le message épinglé de la discussion sous l'en-tête. Une discussion qui protège son contenu
-  n'apparaît ni dans les captures d'écran ni dans les enregistrements de l'écran tant qu'elle est au
-  premier plan. Les réactions, avec un sélecteur et un double-clic pour celle par défaut ; les
-  messages vidéo ronds, lus sur place ; les fiches de contact avec Message, Ajouter un contact et
-  Partager ; le partage d'une publication ou d'une fiche vers plusieurs discussions à la fois ; les
-  brouillons conservés par discussion et d'un appareil à l'autre ; les groupes avec sujets s'ouvrent
-  sur leurs sujets ; le mode lent avec son compte à rebours dans le champ de saisie, et les règles
-  d'un groupe ou, pour ses administrateurs, ses autorisations et options dans le panneau des
-  réglages de la discussion.
-- **Médias.** Les photos et vidéos s'ouvrent dans une visionneuse par-dessus la fenêtre, avec le reste
-  de leur album ; la vidéo passe par mpv, compilé depuis les sources. Enregistrement dans
-  Téléchargements là où la discussion le permet.
-- **Téléchargements.** Un client de téléchargement dans le centre multimédia, en WebDAV, FTP, FTPS ou SFTP :
-  votre NAS, une seedbox, PikPak, Alist/OpenList ou un dossier partagé avec `vget serve`, parcourus dans l'application. Les fichiers
-  arrivent par plusieurs connexions à la fois et reprennent après un arrêt ; les photos et vidéos
-  s'ouvrent dans la visionneuse dès qu'elles arrivent ; les mots de passe sont conservés scellés dans la
-  base de données de FinchGram. Voir [docs/downloads.md](../docs/downloads.md).
-- **Musique.** Un lecteur de musique pour vos propres serveurs : ajoutez un serveur Navidrome, gonic, LMS, Ampache, Nextcloud Music ou Koel (tout ce qui parle l'API Subsonic) et écoutez sa bibliothèque dans le lecteur intégré, sans blanc entre les morceaux, avec une file d'attente et une barre de lecture au bas de chaque page ; les morceaux sont mis en cache pendant la lecture.
-- **Directs.** Une vue à part, à côté des discussions, des canaux et des bots : découvrez qui est en direct sur les serveurs Owncast et PeerTube, les stations Icecast et les canaux Telegram, suivez-les et regardez-les dans l'app, avec le chat d'Owncast à côté de l'image. Ceux de Telegram y sont aussi : les stories en direct de vos contacts et des canaux que vous suivez, et les directs et appels vidéo de vos discussions, avec leurs commentaires. Passez en direct avec une story ou le direct d'un canal : FinchGram vous donne l'adresse et la clé à mettre dans OBS.
-- **Envoi.** Photos, vidéos et fichiers depuis le trombone, en les glissant dans la fenêtre ou en les
-  collant. Une carte les montre avant l'envoi : avec une légende, en photo ou en fichier, ensemble
-  dans un album de dix au plus, avec un minuteur d'autodestruction dans une discussion privée, sans
-  son.
-- **Captures d'écran.** Les ciseaux du champ de saisie, ou ⌘⇧A, figent l'écran : prenez une fenêtre
-  ou tracez une sélection, dessinez dessus rectangles, ellipses, flèches, traits, texte et mosaïque,
-  puis envoyez, copiez ou enregistrez. Comme dans WeChat, depuis chaque discussion.
-- **Le menu d'une discussion.** Mettre en sourdine, épingler, copier son ID, ranger dans un
-  dossier ; bloquer ou débloquer une personne, signaler, quitter un groupe ou une chaîne,
-  supprimer une discussion. Un clic droit sur un dossier marque toutes ses discussions comme lues,
-  ou les trie : par dernier message, par nom ou par messages non lus ; les épinglées restent en
-  haut.
-- **Notifications.** Les nouveaux messages arrivent en notifications macOS et leur nombre s'affiche
-  sur l'icône du Dock ; FinchGram reste dans le Dock quand sa fenêtre se ferme et peut vivre dans la
-  barre des menus.
-- **Trois thèmes.** Workbench, Broadsheet et Terminal, chacun en clair et en sombre, changés sans
-  redémarrer.
-- **Réglages.** Ouvrir à la connexion, envoyer avec Entrée, le raccourci de capture, sons et aperçus
-  des notifications, validation en deux étapes, langue de l'interface, et mises à jour : l'application
-  se met à jour elle-même depuis GitHub Releases et n'installe rien qu'elle ne puisse vérifier.
-- **Messages vocaux.** Ils se lisent dans la discussion, avec leur forme d'onde, le temps et 1×,
-  1,5× ou 2× ; l'écoute se voit chez l'expéditeur, comme dans les applications de Telegram.
-  Maintenez le micro pour en enregistrer un : relâchez pour l'envoyer, glissez à gauche pour
-  annuler ou vers le haut pour le verrouiller, puis arrêtez-le pour l'écouter avant de l'envoyer.
-- **Saisie vocale.** Appuyez sur ✦ dans la zone de saisie et parlez : le texte arrive dans la zone,
-  prêt à être envoyé par vous. Vous ajoutez vos fournisseurs d'IA, chacun avec un nom, le format de
-  son API, votre propre clé et, si vous voulez, votre propre adresse (un relais, ou un serveur de
-  votre réseau). La saisie vocale, la mise au propre du texte (sans les euh ni les hum) et la
-  transcription des messages vocaux sont trois fonctions, chacune avec son interrupteur, et vous
-  choisissez dans des listes le fournisseur d'IA et le modèle de chacune ; rien n'est choisi à votre
-  place. Pour la voix : la transcription en temps réel d'OpenAI, Qwen et Doubao (tous deux forts en
-  chinois), ou tout service qui parle l'API de transcription d'OpenAI ; pour la mise au propre : le
-  format d'OpenAI, d'Anthropic ou de Gemini. Les mots d'autres langues glissés dedans restent tels
-  que vous les dites. Boîte à outils → AI → Saisie vocale, désactivée tant que vous ne l'activez
-  pas. « Transcrire » sous un message vocal utilise la transcription de Telegram ou, si vous
-  l'activez, votre propre fournisseur d'IA. Voir [docs/voice-input.md](../docs/voice-input.md).
-- **Assistants IA.** Claude Desktop, Claude Code et les autres apps qui parlent le Model Context
-  Protocol peuvent lire vos discussions et y agir via FinchGram, une fois que vous les y autorisez :
-  Boîte à outils → Accès IA, désactivé tant que vous ne l'activez pas, avec les discussions que vous
-  choisissez et le droit d'envoyer ou non, et une question la première fois qu'une app se connecte.
-  Voir [docs/mcp.md](../docs/mcp.md).
-- **Langues.** L'interface et ce README en onze langues.
+- **Telegram, comme dans ses propres apps.** Des discussions avec dossiers, recherche et jusqu'à dix comptes ; des messages avec réponses, réactions, bots, sujets et brouillons ; photos, vidéos, fichiers et messages vocaux ; la gestion de vos groupes et chaînes.
+- **Un outil de capture.** ⌘⇧A fige l'écran : prenez une fenêtre ou une sélection, dessinez dessus, envoyez. Depuis chaque discussion, comme dans WeChat.
+- **Téléchargements.** Un client de téléchargement pour vos propres serveurs en WebDAV, FTP, FTPS ou SFTP : un NAS, une seedbox, PikPak. [En savoir plus](../docs/downloads.md)
+- **Musique.** Un lecteur pour vos propres serveurs qui parlent l'API Subsonic : Navidrome et ses semblables. [En savoir plus](../docs/music.md)
+- **Directs.** Owncast, PeerTube, Icecast et ceux de Telegram : à découvrir, à suivre et à regarder dans l'app. [En savoir plus](../docs/live-streams.md)
+- **Saisie vocale.** Parlez, et les mots vont dans la zone de saisie, par le fournisseur d'IA que vous choisissez et avec votre propre clé. [En savoir plus](../docs/voice-input.md)
+- **Assistants IA.** Claude et d'autres apps MCP lisent vos discussions et y agissent à travers FinchGram, une fois que vous l'autorisez. [En savoir plus](../docs/mcp.md)
+- **Trois thèmes.** Workbench, Broadsheet et Terminal, chacun clair et sombre. Terminal a une vraie ligne de commande. [Comment s'en servir](../docs/terminal.md)
+- **Onze langues**, et des mises à jour que l'app installe elle-même, après les avoir vérifiées.
 
-Pas encore : discussions secrètes et appels, sondages et messages programmés, filtres par
-mots-clés, Windows et Linux. Voir
-[ce qui vient ensuite](../docs/architecture.md#not-now).
+[Tout ce qu'il fait, en images](../docs/features.md). Pas encore : discussions secrètes et appels, sondages et messages programmés, filtres par mots-clés, Windows et Linux. Voir [ce qui vient ensuite](../docs/architecture.md#not-now).
 
 ## Téléchargement
 
@@ -119,74 +50,9 @@ journal, avec une couleur d'accent par compte. Terminal est un écran en chasse 
 commandes. Chacun a un côté clair et un côté sombre, selon le système ou votre choix, dans Réglages →
 Apparence.
 
+Terminal exécute des commandes depuis la ligne du bas : appuyez sur ⌘K, ou tapez `/`. [Le thème Terminal](../docs/terminal.md) donne les commandes et les touches.
+
 <p align="center"><img src="../docs/screenshots/workbench-dark-chats.png" width="800" alt="Workbench, sombre"></p>
-
-## L'outil de capture
-
-<p align="center"><img src="../docs/screenshots/workbench-light-shot-annotated.png" width="800" alt="Le calque de capture, avec des annotations"></p>
-
-Appuyez sur ⌘⇧A, ou sur les ciseaux à côté du trombone. L'écran se fige, assombri, sous un calque :
-vous tracez une sélection, avec une loupe et la taille en pixels, ou cliquez une fenêtre pour la
-prendre entière. La barre d'outils dessine rectangles, ellipses, flèches, traits, texte et mosaïque,
-en trois tailles et six couleurs, avec annulation. Done met l'image dans la carte d'envoi, où une
-légende peut l'accompagner ; ⌘C la copie ; ⌘S l'enregistre dans Téléchargements. Réglages → Général
-→ Captures d'écran tient le raccourci et dit si la fenêtre de FinchGram se cache pendant ce temps.
-
-<p align="center"><img src="../docs/screenshots/workbench-light-shot-send-card.png" width="800" alt="La carte d'envoi avec une capture"></p>
-
-## Assistants IA
-
-<p align="center"><img src="../docs/screenshots/workbench-light-ai-access.png" width="800" alt="Boîte à outils → Accès IA"></p>
-
-FinchGram est un serveur MCP : l'app d'un assistant IA sur votre Mac (Claude Desktop, Claude Code,
-Cursor…) peut lire votre Telegram et y agir via l'app en cours d'exécution, avec votre propre
-compte. Boîte à outils → Accès IA est l'interrupteur, désactivé par défaut. Vous y choisissez les
-discussions qu'un assistant peut voir (toutes sauf les secrètes, ou seulement celles que vous
-choisissez) et ce qu'il peut écrire (des messages en votre nom, des brouillons seulement que vous
-envoyez, ou rien), et vous voyez quelles apps se sont connectées, sous le nom que macOS leur donne,
-et ce qu'elles ont demandé. La première fois qu'une app se connecte, FinchGram demande s'il faut
-l'autoriser. Lire ne marque rien comme lu, les discussions secrètes ne sont jamais montrées, et rien
-n'est conservé pour une IA. La page donne la ligne à coller dans Claude Code ou Claude Desktop ; les
-détails sont dans [docs/mcp.md](../docs/mcp.md).
-
-## La page Téléchargements
-
-<p align="center"><img src="../docs/screenshots/workbench-light-downloads.png" width="800" alt="La page Téléchargements"></p>
-
-Présentation → Téléchargements, ou l'icône de téléchargement au-dessus de la roue dentée. Ajoutez un
-serveur en WebDAV, FTP, FTPS ou SFTP (un NAS, une seedbox, PikPak, Alist/OpenList, Nextcloud, `rclone serve webdav` ou un
-dossier partagé avec `vget serve`), parcourez ses dossiers, cochez des fichiers ou prenez un dossier
-entier, et ils arrivent dans ~/Documents/FinchGram/webdav : chaque fichier par morceaux de 8 Mo, sur douze
-connexions au plus, en reprenant là où il s'était arrêté après un Réessayer, comme le fait vget,
-l'outil en ligne de commande du mainteneur. La file d'attente à droite montre la vitesse et ce qui
-reste ; Ouvrir récupère une photo ou une vidéo et la montre dans la visionneuse. FinchGram ne modifie
-rien sur un serveur sauf si vous l’autorisez pour ce serveur (il peut alors y supprimer, déplacer, renommer et téléverser), et le mot de passe va scellé dans la base de données de FinchGram, jamais en clair dans un fichier.
-[docs/downloads.md](../docs/downloads.md) donne les détails et ce qui manque encore (un certificat
-autosigné est refusé : utilisez http sur le réseau local, ou un vrai certificat).
-
-## La page Musique
-
-<p align="center"><img src="../docs/screenshots/workbench-light-music.png" width="800" alt="La page Musique"></p>
-
-Affichage → Musique, ou Musique dans la boîte à outils. Ajoutez une source : un serveur à vous qui parle l'API Subsonic (Navidrome, gonic, LMS, Ampache, Nextcloud Music, Koel…), son adresse et votre compte ; le mot de passe est conservé scellé dans la base de données de FinchGram. Parcourez ses albums, artistes, morceaux, genres, listes de lecture et favoris, lisez un album ou mélangez-le, ajoutez des morceaux à la file ; les étoiles repartent vers le serveur. Les morceaux arrivent par le client HTTP de FinchGram dans `~/Documents/FinchGram/music_cache` et jouent à mesure qu'ils arrivent, l'un après l'autre sans blanc ; la barre de lecture reste au bas de chaque page. Détails dans [docs/music.md](../docs/music.md).
-
-## Directs
-
-<p align="center"><img src="../docs/screenshots/workbench-light-live.png" width="800" alt="Regarder une story en direct"></p>
-
-La quatrième entrée à gauche, à côté des discussions, des canaux et des bots (LIVE dans Terminal, ou /live), est un client de directs qui réunit plusieurs sources, et demande d'être connecté à Telegram. **Découvrir** cherche dans l'annuaire de services.finchgram.com ([docs/live-directory.md](../docs/live-directory.md), une API JSON ouverte, en lecture seule, que chacun peut servir, modifier par pull request, ou forker pour héberger la sienne) : les chaînes Owncast et PeerTube en direct, tirées des annuaires sur inscription volontaire de ces projets eux-mêmes, les stations Icecast de l'annuaire de Xiph, et des flux HLS et canaux Telegram vérifiés, par source, catégorie, langue et statut, en cartes ou en liste. **Suivi** garde les chaînes que vous suivez ; les directs de votre Telegram comptent comme suivis. **Regarder** lit un direct dans l'app, par le libmpv propre à FinchGram, avec le choix de la qualité, le retour au direct, un mini-lecteur pendant que vous regardez ailleurs, et une fenêtre qui reste au-dessus des autres apps ; le chat d'Owncast se lit et s'écrit à côté de l'image, sous le nom qu'Owncast vous donne, jamais sous votre nom Telegram. **Connexions** ouvre un lien : une page Owncast ou PeerTube, une station Icecast, une playlist HLS ou un canal Telegram. **Diffuser** lance votre story en direct, ou le direct d'un canal, sur Telegram et affiche le serveur et la clé pour OBS ; votre propre direct s'ouvre en tant qu'hôte, avec ses spectateurs, ses Stars, ses meilleurs soutiens, la suppression des commentaires et la fin.
-
-Les directs de Telegram lui-même sont dans la même vue : les stories en direct de vos contacts et des canaux que vous suivez, et les directs et appels vidéo de vos discussions ; un point rouge s'allume sur l'entrée tant que quelqu'un est en direct, et une discussion en direct le signale dans la liste et sous son en-tête. FinchGram n'a pas de WebRTC : il lit ce que Telegram envoie en flux, c'est-à-dire tout direct envoyé en RTMP (OBS, XSplit, ffmpeg) ; un direct filmé depuis un téléphone est listé pour le téléphone. Regarder rejoint le direct comme spectateur, comme dans les apps de Telegram ; vous écrivez ici des commentaires gratuits, et les payants s'affichent dans leurs couleurs, leur envoi restant pour l'instant aux apps de Telegram. Les chaînes pour public averti restent masquées tant que vous ne les affichez pas dans Réglages › Directs, et les directs pour adultes ne sont pas listés du tout ; Twitch, YouTube, Kick et Bilibili ne sont pas encore intégrés. Les détails sont dans [docs/live-streams.md](../docs/live-streams.md).
-
-## Comment c'est fait
-
-L'application est une coquille. Telegram lui-même est l'affaire de TDLib, qui tourne comme un
-programme à part à côté de l'exécutable, `finchgram-tdlib`, que ce dépôt compile depuis des sources
-figées ; la coquille ne lui parle que par `src/telegram/`, dans le JSON de TDLib. La vidéo passe par
-libmpv, compilé de la même manière. Rien n'est pris sur la machine de l'utilisateur, et une
-compilation ne télécharge rien d'autre que ces builds figés et vérifiés par somme de contrôle. Tout
-est public : les sources, les builds de `vendor/` et les versions. Voir
-[docs/architecture.md](../docs/architecture.md) et [docs/conventions.md](../docs/conventions.md).
 
 ## Les règles de Telegram
 
@@ -199,174 +65,18 @@ propre fournisseur d'IA. Rien ne quitte votre machine sauf vers Telegram, vers G
 pendant que vous utilisez la saisie vocale, votre voix vers le fournisseur d'IA que vous avez
 choisi, avec votre propre clé.
 
+## Documentation
+
+Les documents sont en anglais et en chinois.
+
+- [Ce que fait FinchGram](../docs/features.md) : chaque fonction, en images.
+- [Le thème Terminal](../docs/terminal.md) : sa ligne de commande et ses commandes.
+- [Compiler depuis les sources](../docs/development.md), [l'organisation du dépôt](../docs/layout.md), [les traductions](../docs/translations.md) et [les versions publiées](../docs/releases.md).
+- [Architecture](../docs/architecture.md) et [conventions](../docs/conventions.md) : comment c'est fait, et pourquoi.
+
 ## Développement
 
-Pour l'instant, le développement nécessite macOS sur Apple silicon : finchgram-tdlib n'est compilé que
-pour cette plateforme. Linux et Windows suivront.
-
-Ni finchgram-tdlib, ni libmpv, ni Skia, ni les polices de l'interface ne sont dans git : `vendor/tdlib/`,
-`vendor/mpv/` et `vendor/skia/` ne contiennent que les scripts qui les compilent, et les polices viennent
-de Google Fonts. Après le clonage, récupérez-les une fois :
-
-```sh
-scripts/fetch-tdlib.sh    # télécharge la release figée de finchgram-tdlib dans vendor/tdlib/bin/ et vérifie le SHA-256
-scripts/fetch-mpv.sh      # télécharge la release figée de libmpv dans vendor/mpv/bin/ et vérifie le SHA-256
-scripts/fetch-skia.sh     # télécharge la release figée de Skia dans vendor/skia/bin/, vérifie le SHA-256 et indique à cargo où elle se trouve
-scripts/fetch-fonts.sh    # télécharge les polices figées de l'interface dans vendor/fonts/ et vérifie leur SHA-256
-FINCHGRAM_API_ID=… FINCHGRAM_API_HASH=… cargo run
-```
-
-- Pour modifier finchgram-tdlib lui-même, compilez-le ici (quelques minutes ; il faut Xcode ou les
-  Command Line Tools, et `brew install cmake ninja gperf`, uniquement des outils de compilation) :
-
-  ```sh
-  vendor/tdlib/build.sh && vendor/tdlib/build.sh install
-  ```
-
-- `FINCHGRAM_API_ID` et `FINCHGRAM_API_HASH` : les vôtres, obtenus sur
-  [my.telegram.org](https://my.telegram.org) → API development tools. Ils sont lus à la compilation et
-  n'ont jamais leur place dans le dépôt. Sans eux, l'application démarre et indique qu'elle n'a pas
-  d'API ID.
-- `FINCHGRAM_TEST_DC=1 cargo run` utilise les serveurs de test de Telegram, qui ont leurs propres
-  comptes ; l'application garde pour eux une base de données distincte.
-- `cargo test screenshots -- --ignored` dessine chaque page de chaque thème, en clair et en sombre, avec
-  des discussions inventées, dans `target/screenshots/` : de quoi voir l'interface sans compte.
-
-`build.rs` copie `vendor/tdlib/bin/finchgram-tdlib` à côté de l'exécutable compilé : `cargo run` utilise
-ainsi exactement le même programme que l'application empaquetée ; il lie libmpv depuis `vendor/mpv/bin/`
-et la copie au même endroit, et les polices de `vendor/fonts/` sont compilées dans l'exécutable. Skia, qui
-dessine la fenêtre, est lié depuis l'archive de `vendor/skia/bin/`. S'il en manque un, la compilation
-échoue avec un message qui l'explique. Rust 1.92 ou plus récent.
-
-La base de données de TDLib et les fichiers téléchargés se trouvent dans
-`~/Library/Application Support/FinchGram/tdlib/`, les réglages dans
-`~/Library/Application Support/FinchGram/settings.toml`.
-
-## Organisation
-
-```
-.github/workflows/
-  mpv.yml                # compile libmpv sur une machine propre ; publie les tags mpv-* comme releases
-  check.yml              # clippy et les tests à chaque push sur main
-  release.yml            # compile et publie l'application pour les commits Release v*
-  skia.yml               # compile Skia sur une machine propre ; publie les tags skia-* comme releases
-  tdlib.yml              # compile finchgram-tdlib sur une machine propre ; publie les tags tdlib-* comme releases
-Cargo.toml
-build.rs                 # copie vendor/tdlib/bin/ à côté de l'exécutable
-crates/
-  finchgram-release-sign/ # l'outil de signature Ed25519 des releases, un paquet à part
-  finchgram-ui/          # l'interface : compile ui/app.slint et intègre lang/, un paquet à part
-docs/                    # architecture.md, conventions.md, downloads.md, drag-and-drop.md, media-files.md, skia.md (+ zh-Hans)
-  screenshots/           #   les images que montrent les README, issues du test de captures (scripts/readme-pictures.sh)
-lang/                    # traductions : lang/<code>/LC_MESSAGES/finchgram.po, compilées dans le binaire
-readme/                  # ce README dans d'autres langues
-release-signing.pub      # les clés publiques autorisées à signer les releases ; compilées dans l'application
-scripts/
-  bundle.sh              # construit dist/FinchGram.app (ce qu'exécute le workflow de release)
-  fetch-fonts.sh         # les polices figées de l'interface dans vendor/fonts/
-  fetch-mpv.sh           # la release figée de libmpv dans vendor/mpv/bin/
-  fetch-skia.sh          # la release figée de Skia dans vendor/skia/bin/, et son emplacement pour cargo
-  fetch-tdlib.sh         # la release figée de finchgram-tdlib dans vendor/tdlib/bin/
-  readme-pictures.sh     # copie les images des README de target/screenshots/ vers docs/screenshots/
-  release.sh             # lance une release : version, tag, push ; GitHub Actions fait le reste
-  sign.sh                # signe l'application : ad hoc, ou avec le Developer ID dans le workflow de release
-src/
-  main.rs                # la fenêtre, les réglages, la langue et le thème, les mises à jour ; démarre Telegram
-  fonts.rs               # les polices de l'interface, compilées dans l'exécutable
-  images.rs              # les images des messages, décodées hors du fil de l'interface
-  telegram/              # le seul code qui parle à finchgram-tdlib
-    process.rs           #   exécute le programme : le JSON de TDLib sur l'entrée et la sortie standard
-    api.rs               #   les types TDLib qu'utilise FinchGram (td_api.tl de la version figée)
-    mod.rs               #   requêtes et réponses, redémarrage ; les mises à jour vont au store
-    store.rs             #   ce que TDLib a dit des discussions, utilisateurs et messages ; les modèles des pages
-    login.rs             #   la connexion, l'inscription
-    chats.rs             #   la liste des discussions
-    conversation.rs      #   la discussion ouverte : messages, écriture
-    actions.rs           #   ce qu'on peut faire d'un message : son menu, répondre, transférer…
-    account.rs           #   le profil, la déconnexion
-    password.rs          #   la validation en deux étapes dans les réglages
-    files.rs             #   le téléchargement des fichiers
-    avatars.rs           #   les photos des discussions et des personnes, à la place de leurs initiales
-    viewer.rs            #   la visionneuse : photos, vidéos, enregistrer dans Téléchargements
-    rich_text.rs         #   texte mis en forme : gras, italique, liens…
-    notifications.rs     #   notifications des nouveaux messages, le nombre de non-lus dans le Dock
-    online.rs            #   le compte est en ligne tant que la fenêtre est devant et utilisée
-  platform/              # ce qui change d'un système d'exploitation à l'autre
-  player/                # la vidéo avec libmpv, qui dessine dans une surface que la fenêtre affiche
-  screenshot/            # l'outil de capture : la capture, le calque, les annotations, l'image
-  downloads/             # la page Téléchargements : WebDAV, FTP, FTPS et SFTP, avec un moteur à plusieurs connexions
-  music/                 # la page Musique : le client de l'API Subsonic, les morceaux mis en cache, la file et la barre de lecture
-    remote.rs            #   une seule façade pour les trois clients : lister, vérifier, récupérer
-    webdav.rs            #   les listes PROPFIND, les adresses, l'authentification Basic
-    ftp.rs               #   FTP et FTPS via suppaftp : un flux, REST pour reprendre
-    sftp.rs              #   SFTP via russh : morceaux sur plusieurs sessions, clé du serveur mémorisée
-    transfer.rs          #   un fichier par morceaux sur plusieurs connexions, qui reprend après un arrêt
-    mod.rs               #   l'état de la page, ses fils, la file d'attente, le formulaire des serveurs
-  update.rs              # la mise à jour automatique : GitHub Releases, signature, remplacement, relance
-  settings.rs            # les préférences de l'utilisateur (settings.toml)
-  i18n.rs                # langue de l'interface : le choix enregistré, sinon celle du système, sinon l'anglais
-  screenshots.rs         # chaque page dessinée en PNG (cargo test screenshots -- --ignored)
-ui/
-  app.slint              # la fenêtre principale : les menus, et quelle page s'affiche
-  state.slint            # l'état de l'application, partagé par Rust et les pages
-  telegram.slint         # ce que montre Telegram : le compte, la connexion, les discussions, les messages
-  downloads.slint        # l'état de la page Téléchargements : les serveurs, le dossier, la file d'attente
-  look.slint             # couleurs, typographie et formes du thème, pour les pages partagées
-  format.slint           # dates, nombres et types de message dans la langue de l'interface
-  widgets.slint          # petites pièces partagées ; chat.slint : ce que partagent les fenêtres de discussion
-  viewer.slint           # la visionneuse sur toute la fenêtre, à la manière de chaque thème
-  pages/                 # les pages que partagent les trois thèmes : connexion, réglages, profil, téléchargements
-  workbench/             # la fenêtre de discussion du thème Workbench (par défaut)
-  broadsheet/            # la fenêtre de discussion du thème Broadsheet
-  terminal/              # la fenêtre de discussion du thème Terminal
-  icons/                 # icônes Phosphor (MIT), normales et bicolores ; icons.slint les énumère
-  logo/                  # le logo de FinchGram (svg, png) et ses règles
-vendor/fonts/            # hors de git : les polices de l'interface (scripts/fetch-fonts.sh)
-vendor/mpv/              # libmpv : mpv et FFmpeg, qui lisent les vidéos
-  build.sh               #   la compile à partir de sources figées : versions et SHA-256 en tête
-  bin/                   #   hors de git : la bibliothèque (scripts/fetch-mpv.sh ou build.sh install)
-vendor/skia/             # Skia, qui dessine la fenêtre
-  build.sh               #   le compile à partir de sources figées : les commits et le nom de l'archive en tête
-  Cargo.lock             #   fige les crates que cette compilation utilise
-  bin/                   #   hors de git : l'archive (scripts/fetch-skia.sh ou build.sh install)
-vendor/tdlib/            # finchgram-tdlib
-  build.sh               #   le compile à partir de sources figées : commit de TDLib, version et SHA-256 d'OpenSSL en tête
-  host/                  #   notre petit programme hôte (main.cpp) et son CMakeLists.txt
-  bin/                   #   hors de git : le programme qu'utilise l'application (scripts/fetch-tdlib.sh ou build.sh install)
-  work/, dist/           #   hors de git : les fichiers intermédiaires et le paquet d'une compilation locale
-```
-
-## Traductions
-
-Chaque texte de l'interface s'écrit `@tr("English text")`. Une chaîne a une seule traduction partout où
-elle apparaît (crates/finchgram-ui/build.rs désactive le contexte par défaut de Slint) ; quand le même texte anglais demande
-d'autres mots ailleurs, donnez-lui un contexte : `@tr("menu" => "Open")`. Extrayez les textes avec
-l'outil officiel, puis fusionnez-les dans chaque langue :
-
-```sh
-cargo install slint-tr-extractor                                          # une fois
-find ui -name '*.slint' | sort | xargs slint-tr-extractor --no-default-translation-context -o lang/finchgram.pot
-for po in lang/*/LC_MESSAGES/finchgram.po; do msgmerge --update "$po" lang/finchgram.pot; done   # nécessite brew install gettext
-```
-
-Remplissez ensuite les entrées `msgstr` et relancez `cargo build`. L'anglais est la langue source ; les
-dix autres sont fournies.
-
-## Versions publiées
-
-Les releases ne sont compilées que par GitHub Actions, à partir d'un commit tagué et sur une machine
-propre (`.github/workflows/release.yml`), puis publiées dans ce dépôt : l'application zippée,
-`SHA256SUMS` et sa signature Ed25519. Les copies installées se mettent à jour d'elles-mêmes depuis
-là et n'installent rien qu'elles ne puissent vérifier. Un mainteneur lance une release en une
-commande :
-
-```sh
-scripts/release.sh patch    # 0.1.0 -> 0.1.1 ; aussi minor, major ou une version précise
-```
-
-L'application est signée avec l'Apple Developer ID de North Brookville LLC, avec le hardened runtime,
-et notariée par Apple : une copie téléchargée s'ouvre sans question de Gatekeeper, et les mises à
-jour installées par l'application elle-même aussi.
+L'app est une coque : Telegram lui-même est l'affaire de TDLib, qui tourne comme un programme à part à côté d'elle et que ce dépôt compile depuis des sources figées, comme libmpv et Skia. Compiler demande macOS sur Apple silicon et un API ID Telegram à vous ; les étapes sont dans [docs/development.md](../docs/development.md).
 
 ## Contribuer
 
