@@ -194,6 +194,13 @@ fn scroll(window: &Canvas, x: f32, y: f32, down: f32) {
     window.dispatch_event(WindowEvent::PointerExited);
 }
 
+/// A key pressed and let go: a letter, or one of Slint's keys.
+fn press(window: &Canvas, key: impl Into<SharedString>) {
+    let text: SharedString = key.into();
+    window.dispatch_event(WindowEvent::KeyPressed { text: text.clone() });
+    window.dispatch_event(WindowEvent::KeyReleased { text });
+}
+
 /// Escape (closing a menu), and the pointer out of the window, so that nothing stays hovered.
 fn escape(window: &Canvas) {
     window.dispatch_event(WindowEvent::KeyPressed { text: Key::Escape.into() });
@@ -1177,6 +1184,75 @@ fn open_news(ui: &MainWindow) {
             ..post("2", "07:30", "Four flagship phones launch this week; cameras and on-device features lead, prices hold.")
         },
     ]));
+}
+
+/// Terminal's command line (the design's 1b; ui/terminal/commands.slint), driven by the keys as a
+/// user drives it. In the group: ⌘K, which puts "/" on the line, with every command that can run
+/// there; "/se" and the arrow down; a name completed with Tab and words after it. In a channel one
+/// only reads: the line that ⌘K brings for a command, and "/m". With no chat in front: what the
+/// line says, and its commands. And "/" typed into the toolbox's search, which the line takes. It
+/// leaves the channel in front, as it found it.
+fn command_line(ui: &MainWindow, window: &Canvas, name: &dyn Fn(&str) -> String) {
+    let app = ui.global::<AppState>();
+    let conversation = ui.global::<Conversation>();
+    let toolbox = ui.global::<Toolbox>();
+    // ⌘K (the menu bar's Search): a command is asked for.
+    let ask = || {
+        app.set_search_requests(app.get_search_requests() + 1);
+        settle(window);
+    };
+
+    open_keyboards(ui);
+    settle(window);
+    ask();
+    save(window, &name("command-line"));
+    press(window, "s");
+    press(window, "e");
+    settle(window);
+    press(window, Key::DownArrow);
+    save(window, &name("command-line-pick"));
+    press(window, Key::UpArrow);
+    press(window, Key::Tab);
+    for letter in ["k", "e", "e", "b"] {
+        press(window, letter);
+    }
+    save(window, &name("command-line-words"));
+    press(window, Key::Escape);
+    settle(window);
+
+    open_news(ui);
+    settle(window);
+    ask();
+    press(window, "m");
+    save(window, &name("command-line-channel"));
+    press(window, Key::Escape);
+    settle(window);
+
+    conversation.set_chat_id(SharedString::new());
+    settle(window);
+    save(window, &name("command-line-no-chat"));
+    ask();
+    save(window, &name("command-line-no-chat-list"));
+    press(window, Key::Escape);
+    settle(window);
+
+    open_keyboards(ui);
+    set_toolbox(ui);
+    toolbox.set_open(true);
+    settle(window);
+    press(window, "/");
+    settle(window);
+    for letter in ["t", "o"] {
+        press(window, letter);
+    }
+    save(window, &name("command-line-toolbox"));
+    press(window, Key::Escape);
+    toolbox.set_open(false);
+    settle(window);
+
+    open_news(ui);
+    settle(window);
+    window.dispatch_event(WindowEvent::PointerExited);
 }
 
 /// What can be done with a message (the design's fourth round): its menu (someone else's message,
@@ -2795,6 +2871,8 @@ fn draw_every_page(window: Canvas) {
 
     let ui = MainWindow::new().expect("window");
     ui.show().expect("show");
+    // Terminal's command line lists its commands through this, in the pictures as in the app.
+    crate::command_line::connect(&ui);
     fill(&ui);
     fill_chats(&ui);
     // The screenshot tool's overlay: a window of its own, over a made-up screen.
@@ -3003,6 +3081,9 @@ fn draw_every_page(window: Canvas) {
             ui.global::<Viewer>().set_open(false);
             open_news(&ui);
             save(&window, &name("channel"));
+            if theme == Theme::Terminal {
+                command_line(&ui, &window, &name);
+            }
             live(&ui, &window, &name);
             live_directory(&ui, &window, &name);
             app.set_page(Page::Settings);

@@ -4564,6 +4564,20 @@ msgstr "음소거"
 msgid "Write a message, or / for commands"
 msgstr "메시지를 입력하거나 /로 명령을 사용하세요"
 
+#: ui/terminal/terminal.slint:2560
+msgid "/ for commands"
+msgstr "/로 명령을 사용하세요"
+
+#: ui/terminal/terminal.slint:2680 ui/terminal/terminal.slint:2783
+msgctxt "terminal"
+msgid "run"
+msgstr "실행"
+
+#: ui/terminal/terminal.slint:2778
+msgctxt "terminal"
+msgid "complete"
+msgstr "자동 완성"
+
 #: ui/terminal/terminal.slint:2457
 msgid "save"
 msgstr "저장"

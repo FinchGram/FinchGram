@@ -4640,6 +4640,20 @@ msgstr "silenciar"
 msgid "Write a message, or / for commands"
 msgstr "Escribe un mensaje, o / para los comandos"
 
+#: ui/terminal/terminal.slint:2560
+msgid "/ for commands"
+msgstr "/ para los comandos"
+
+#: ui/terminal/terminal.slint:2680 ui/terminal/terminal.slint:2783
+msgctxt "terminal"
+msgid "run"
+msgstr "ejecutar"
+
+#: ui/terminal/terminal.slint:2778
+msgctxt "terminal"
+msgid "complete"
+msgstr "completar"
+
 #: ui/terminal/terminal.slint:2457
 msgid "save"
 msgstr "guardar"

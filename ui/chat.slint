@@ -142,10 +142,24 @@ export component MessageInput inherits Rectangle {
     callback send(string);
     // The user changed the words (not Rust, not sending).
     callback edited(string);
+    // A key its owner takes before the box does (Terminal's command line: the arrows, Tab, Return
+    // and Escape over its list of commands); true when taken. Nobody's, it takes nothing.
+    callback key(KeyEvent) -> bool;
     height: clamp(input.preferred-height + 2 * padding-y, base-height, tallest);
 
     public function focus-text() {
         input.focus();
+    }
+
+    // The keyboard leaves the box.
+    public function leave() {
+        input.clear-focus();
+    }
+
+    // These words in the box, the cursor after them (a command completed).
+    public function put(words: string) {
+        input.text = words;
+        input.set-selection-offsets(2147483647, 2147483647);
     }
 
     // Voice input's words went in at the end: the keyboard here, the cursor after them.
@@ -219,6 +233,9 @@ export component MessageInput inherits Rectangle {
                 }
                 if root.takes-dictation && event.text == Key.Escape && self.preedit-text == "" && Voice.shown {
                     Voice.cancel();
+                    return accept;
+                }
+                if self.preedit-text == "" && root.key(event) {
                     return accept;
                 }
                 if event.text == Key.Return && !event.modifiers.shift && !event.modifiers.alt && self.preedit-text == ""

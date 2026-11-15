@@ -4653,6 +4653,20 @@ msgstr "stummschalten"
 msgid "Write a message, or / for commands"
 msgstr "Nachricht schreiben oder / für Befehle"
 
+#: ui/terminal/terminal.slint:2560
+msgid "/ for commands"
+msgstr "/ für Befehle"
+
+#: ui/terminal/terminal.slint:2680 ui/terminal/terminal.slint:2783
+msgctxt "terminal"
+msgid "run"
+msgstr "ausführen"
+
+#: ui/terminal/terminal.slint:2778
+msgctxt "terminal"
+msgid "complete"
+msgstr "vervollständigen"
+
 #: ui/terminal/terminal.slint:2457
 msgid "save"
 msgstr "sichern"

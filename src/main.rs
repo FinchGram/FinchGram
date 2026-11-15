@@ -4,6 +4,7 @@
 //! through finchgram-tdlib, a separate program next to this executable (src/telegram/,
 //! docs/architecture.md).
 
+mod command_line;
 mod database;
 mod downloads;
 mod toolbox;
@@ -161,6 +162,8 @@ fn main() -> Result<(), slint::PlatformError> {
     telegram::connect_chat_order(&ui, settings.clone());
     telegram::connect_chat_info(&ui, settings.clone());
     toolbox::connect(&ui, settings.clone());
+    // Terminal's command line: which commands start with what is typed (src/command_line.rs).
+    command_line::connect(&ui);
     // The Live view's directory, Following and Watch (src/live/); its follows are the database's.
     live::connect(&ui, settings.clone());
     // Voice input (src/speech/): its key is the database's, so after it opens.

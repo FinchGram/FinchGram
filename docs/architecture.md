@@ -153,6 +153,22 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
   Broadsheet follow the system until told otherwise, Terminal starts dark. A theme switched to
   comes back as it was left.
 - What the design shows but FinchGram does not have yet is greyed out, never left to look working.
+- Terminal's command line (`ui/terminal/commands.slint`, CommandLine in `ui/terminal/terminal.slint`,
+  `src/command_line.rs`; the design's 1b, "keyboard first, a / command line"): the line at the foot
+  writes messages and runs commands, and it runs commands wherever the window is (the maintainer's
+  word of 2026-11-14: in a terminal theme the commands must really work). With a chat that takes
+  words in front it does both; with no chat in front, or while a group's topics are listed, it
+  takes commands only and says so ("/ for commands"); in a chat one only reads (a channel, a closed
+  topic) there is no input while it is read (no cursor under a channel, 2026-10-08). ⌘K, which is
+  also the status bar's [⌘K cmd], asks for a command: the keyboard goes to the line with "/" on it
+  (the design's openCmd), and in a chat one only reads the line comes for that one command. "/"
+  lists above the line what can run where the window is: the commands of the chat's bot first
+  (they go to the chat as they are), then the line's own, sifted by what is typed, a name typed
+  in full first, ten rows in sight. ↑ ↓ pick a row, Tab completes its name, Return runs it (so "/se" is "/search" while that
+  row is lit, whatever sends messages in Settings → General), Escape gives it up; words after a
+  name go with it ("/search keeb", "/tools ai"). A "/word" that is nobody's command goes to the
+  chat, as Telegram's apps send it. "/" typed into the toolbox's search is the line's too. The
+  menus show a command beside the entry it stands for, as the other themes' menus show shortcuts.
 
 ## In the shell's code
 
@@ -359,7 +375,9 @@ profile are pages the three share (`ui/pages/`), in the theme's colours, type an
     but puts the list in the pane's place under /tools (the command line and the status bar stay;
     "/tools 传输" or "/tools transfers" jumps to a category, the same command again or Esc closes,
     /accounts is the accounts category). ⌘J opens it in every theme (View → Toolbox). A search box
-    at the top filters by name (⏎ opens the first tool found), the categories stand at the left
+    at the top filters by name (⏎ opens the first tool found; Terminal's is a prompt line as its
+    chat search is, no box and no rule under it, as tall as the command line, and "/" typed there
+    is a command, which the command line takes), the categories stand at the left
     (All, then accounts, transfers, music, live streams, Jellyfin, Emby, messages, AI: the
     design's Media category was dissolved on 2026-10-31 at the maintainer's word, each of its
     tools a category of its own; in toolbox.rs a category is a row

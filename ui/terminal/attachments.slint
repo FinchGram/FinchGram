@@ -692,9 +692,10 @@ component SendCard inherits Rectangle {
                         send-menu := VerticalLayout {
                             padding-top: 4px;
                             padding-bottom: 4px;
+                            // No command beside these two: the design's send menu has none, and the
+                            // command line runs none of that name.
                             AttachItem {
                                 label: AttachWords.silent();
-                                command: "/silent";
                                 activated => {
                                     Attachments.send-menu-open = false;
                                     Attachments.send(true);
@@ -702,7 +703,6 @@ component SendCard inherits Rectangle {
                             }
                             AttachItem {
                                 label: AttachWords.schedule();
-                                command: "/later";
                                 enabled: false;
                                 badge: AttachWords.not-available();
                             }

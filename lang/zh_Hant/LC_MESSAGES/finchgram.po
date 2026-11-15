@@ -4518,6 +4518,20 @@ msgstr "靜音"
 msgid "Write a message, or / for commands"
 msgstr "輸入訊息，或按 / 叫出指令"
 
+#: ui/terminal/terminal.slint:2560
+msgid "/ for commands"
+msgstr "按 / 叫出指令"
+
+#: ui/terminal/terminal.slint:2680 ui/terminal/terminal.slint:2783
+msgctxt "terminal"
+msgid "run"
+msgstr "執行"
+
+#: ui/terminal/terminal.slint:2778
+msgctxt "terminal"
+msgid "complete"
+msgstr "補全"
+
 #: ui/terminal/terminal.slint:2457
 msgid "save"
 msgstr "儲存"

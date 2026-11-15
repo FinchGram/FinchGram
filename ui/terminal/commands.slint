@@ -1,0 +1,25 @@
+// Terminal's command line (the design's 1b, "等宽 · 键盘优先 · / 命令行"): one line at the foot writes
+// messages and runs commands, and it runs them wherever the window is, a chat open or none (the
+// maintainer's word of 2026-11-14: a terminal theme's commands must really work). The line is
+// CommandLine in terminal.slint, where the commands are listed with what each does; which of them
+// start with what is typed is src/command_line.rs's.
+import { BotCommand } from "../telegram.slint";
+
+// A command, a row of the list above the line: "/mute", what it does in a few words, whether it
+// can run where the window is now (some need a chat in front, some one that takes words: the list
+// offers those that can), and whether words go after its name ("/search keeb"). `bot` for a
+// command of the chat's bot, which goes to the chat as it is.
+export struct Command {
+    command: string,
+    description: string,
+    available: bool,
+    words: bool,
+    bot: bool,
+}
+
+export global Commands {
+    // The rows for what is typed: the bot's commands and, of the line's own, those that can run,
+    // whose name starts with the word typed ("/se": "/search", "/settings"), a name typed in full
+    // first; once words follow the name ("/search keeb"), the line's command of that name alone.
+    pure callback matching([Command], [BotCommand], string) -> [Command];
+}

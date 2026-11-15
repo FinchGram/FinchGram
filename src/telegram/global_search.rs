@@ -119,7 +119,12 @@ fn show() {
 
 /// Terminal's "/search words": open with the words.
 fn show_with(line: &str) {
-    let words = line.trim().strip_prefix("/search").unwrap_or(line).trim();
+    // The command's name is the same in any case ("/SEARCH keeb").
+    let line = line.trim();
+    let words = match line.get(..7) {
+        Some(name) if name.eq_ignore_ascii_case("/search") => line[7..].trim(),
+        _ => line,
+    };
     show();
     with_search(|search| search.set_query(words.into()));
     edited(words);

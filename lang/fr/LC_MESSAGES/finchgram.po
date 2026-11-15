@@ -4667,6 +4667,20 @@ msgstr "mettre en sourdine"
 msgid "Write a message, or / for commands"
 msgstr "Écrivez un message, ou / pour les commandes"
 
+#: ui/terminal/terminal.slint:2560
+msgid "/ for commands"
+msgstr "/ pour les commandes"
+
+#: ui/terminal/terminal.slint:2680 ui/terminal/terminal.slint:2783
+msgctxt "terminal"
+msgid "run"
+msgstr "exécuter"
+
+#: ui/terminal/terminal.slint:2778
+msgctxt "terminal"
+msgid "complete"
+msgstr "compléter"
+
 #: ui/terminal/terminal.slint:2457
 msgid "save"
 msgstr "enregistrer"

@@ -4600,6 +4600,20 @@ msgstr "ミュート"
 msgid "Write a message, or / for commands"
 msgstr "メッセージを入力、または / でコマンド"
 
+#: ui/terminal/terminal.slint:2560
+msgid "/ for commands"
+msgstr "/ でコマンド"
+
+#: ui/terminal/terminal.slint:2680 ui/terminal/terminal.slint:2783
+msgctxt "terminal"
+msgid "run"
+msgstr "実行"
+
+#: ui/terminal/terminal.slint:2778
+msgctxt "terminal"
+msgid "complete"
+msgstr "補完"
+
 #: ui/terminal/terminal.slint:2457
 msgid "save"
 msgstr "保存"

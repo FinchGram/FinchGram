@@ -266,14 +266,13 @@ component ToolLine inherits Rectangle {
     }
 }
 
-// A command at the foot: /settings, /me.
+// A command at the foot: /settings, /me. As tall as the foot, so its words stand on the hint's line.
 component FootCommand inherits Rectangle {
     in property <string> command;
     in property <string> label;
     in property <bool> enabled: true;
     callback activated();
     width: content.preferred-width;
-    height: 24px;
 
     content := HorizontalLayout {
         spacing: 6px;
@@ -299,6 +298,12 @@ component FootCommand inherits Rectangle {
 
 export component TerminalToolbox inherits Rectangle {
     background: P.bg;
+    // "/" typed into the search: a command begins, and commands are the line's at the foot
+    // (terminal.slint), which takes it and the keyboard. So "/tools ai", as the foot says, can be
+    // typed right here.
+    callback command();
+    // The categories' column at the left; the head's command stands over it.
+    property <length> column: 176px;
     property <bool> open: Toolbox.open;
     changed open => {
         if self.open {
@@ -333,82 +338,84 @@ export component TerminalToolbox inherits Rectangle {
         }
 
         VerticalLayout {
-            // The head: the command as typed, the search box, [esc].
+            // The head, a prompt line as the chat's own search is one: the words on the line
+            // itself, no box around them and no rule under them (the maintainer's word of
+            // 2026-11-14; the design's 7b underlined a box 26px tall), and as tall as the command
+            // line at the foot. The command as typed stands over the column, so the search starts
+            // where the sections do, whatever the command's length; then what was found, [esc].
             Rectangle {
-                height: 34px;
+                height: P.foot-height;
                 background: P.pane-head;
                 HorizontalLayout {
                     padding-left: 16px;
                     padding-right: 16px;
                     spacing: 12px;
                     T {
+                        width: root.column - 12px;
                         text: "» /tools" + (Toolbox.category != "all" && !Toolbox.searching ? " " + root.category-label(Toolbox.category) : "")
                             + (Toolbox.searching ? " \"" + Toolbox.query + "\"" : "");
                         color: P.accent;
                         font-weight: 600;
+                        overflow: elide;
                     }
-                    Rectangle {
+                    HorizontalLayout {
                         horizontal-stretch: 1;
-                        max-width: 460px;
-                        height: 26px;
-                        Rectangle {
-                            y: parent.height - 1px;
-                            height: 1px;
-                            background: P.line;
+                        spacing: 8px;
+                        T {
+                            text: "❯";
+                            color: P.accent;
                         }
-                        HorizontalLayout {
-                            spacing: 8px;
-                            T {
-                                text: "❯";
-                                color: P.accent;
+                        Rectangle {
+                            horizontal-stretch: 1;
+                            if Toolbox.query == "": T {
+                                width: parent.width;
+                                height: parent.height;
+                                text: ToolboxWords.search();
+                                color: P.faint;
+                                overflow: elide;
                             }
-                            Rectangle {
-                                horizontal-stretch: 1;
-                                if Toolbox.query == "": T {
-                                    width: parent.width;
-                                    height: parent.height;
-                                    text: ToolboxWords.search();
-                                    color: P.faint;
-                                    overflow: elide;
-                                }
-                                search-box := TextInput {
-                                    width: parent.width;
-                                    height: parent.height;
-                                    text <=> Toolbox.query;
-                                    single-line: true;
-                                    color: P.text;
-                                    font-family: P.font;
-                                    font-size: 13px;
-                                    vertical-alignment: center;
-                                    selection-background-color: Look.input-sel;
-                                    selection-foreground-color: P.text;
-                                    text-cursor-width: Look.cursor-width;
-                                    edited => {
+                            search-box := TextInput {
+                                width: parent.width;
+                                height: parent.height;
+                                text <=> Toolbox.query;
+                                single-line: true;
+                                color: P.text;
+                                font-family: P.font;
+                                font-size: 13px;
+                                vertical-alignment: center;
+                                selection-background-color: Look.input-sel;
+                                selection-foreground-color: P.text;
+                                text-cursor-width: Look.cursor-width;
+                                edited => {
+                                    if self.text == "/" {
+                                        self.text = "";
+                                        Toolbox.search("");
+                                        root.command();
+                                    } else {
                                         Toolbox.search(self.text);
                                     }
-                                    accepted => {
-                                        Toolbox.open-first();
-                                    }
+                                }
+                                accepted => {
+                                    Toolbox.open-first();
                                 }
                             }
-                            if Toolbox.searching: T {
-                                text: ToolboxWords.hits(Toolbox.hits);
-                                color: P.faint;
-                                font-size: 12px;
-                            }
-                            if Toolbox.searching: T {
-                                text: "[×]";
-                                color: clear.has-hover ? P.accent : P.muted;
-                                clear := TouchArea {
-                                    mouse-cursor: pointer;
-                                    clicked => {
-                                        Toolbox.search("");
-                                    }
+                        }
+                        if Toolbox.searching: T {
+                            text: ToolboxWords.hits(Toolbox.hits);
+                            color: P.faint;
+                            font-size: 12px;
+                        }
+                        if Toolbox.searching: T {
+                            text: "[×]";
+                            color: clear.has-hover ? P.accent : P.muted;
+                            clear := TouchArea {
+                                mouse-cursor: pointer;
+                                clicked => {
+                                    Toolbox.search("");
                                 }
                             }
                         }
                     }
-                    Rectangle { horizontal-stretch: 1; }
                     T {
                         text: "[esc]";
                         color: close.has-hover ? P.accent : P.faint;
@@ -425,7 +432,7 @@ export component TerminalToolbox inherits Rectangle {
                 vertical-stretch: 1;
                 // The column: All, then the categories.
                 Rectangle {
-                    width: 176px;
+                    width: root.column;
                     Rectangle {
                         x: parent.width - 1px;
                         width: 1px;

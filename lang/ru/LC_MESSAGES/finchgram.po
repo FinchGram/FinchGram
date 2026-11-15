@@ -4650,6 +4650,20 @@ msgstr "выключить уведомления"
 msgid "Write a message, or / for commands"
 msgstr "Напишите сообщение или / для команд"
 
+#: ui/terminal/terminal.slint:2560
+msgid "/ for commands"
+msgstr "/ для команд"
+
+#: ui/terminal/terminal.slint:2680 ui/terminal/terminal.slint:2783
+msgctxt "terminal"
+msgid "run"
+msgstr "выполнить"
+
+#: ui/terminal/terminal.slint:2778
+msgctxt "terminal"
+msgid "complete"
+msgstr "дополнить"
+
 #: ui/terminal/terminal.slint:2457
 msgid "save"
 msgstr "сохранить"

@@ -1,7 +1,7 @@
 // Terminal (the design's "1b 终端"): monospace and keyboard first. The chat list marks each chat
 // with its kind's icon, the other themes' (a person, a group, a channel's megaphone, a robot, a
 // bookmark; a pin before a pinned one); the chat reads as a log; one command line writes messages
-// and runs commands ("/mute", "/pin", …).
+// and runs commands ("/mute", "/pin", …), wherever the window is (commands.slint).
 import { ListView } from "std-widgets.slint";
 import { Toolbox, ToolboxWords } from "../toolbox.slint";
 import { TerminalToolbox } from "toolbox.slint";
@@ -10,7 +10,7 @@ import { ChatInfo } from "../chat-info.slint";
 import { AppState, Page, Connection, Theme, Screenshot } from "../state.slint";
 import {
     Chats, Conversation, Account, ChatRow, MessageRow, RowKind, ChatKind, Content, Viewer, Actions, ComposeBar, ActionNotice, Attachments, AttachKind, FileState, ChatOrder,
-    VoiceNote, TranscriptProblem } from "../telegram.slint";
+    VoiceNote, TranscriptProblem, BotCommand } from "../telegram.slint";
 import { Fmt } from "../format.slint";
 import { Mark, Icon, Paragraph, ListEdge, WindowButtonsSpace, WindowMover } from "../widgets.slint";
 import { ChatScroll, MessageInput, RichText, MessageArea, ActionWords, KeyScope, AttachWords, ChatMenuWords, SearchInput, SearchWords, ButtonGrid, BotWords } from "../chat.slint";
@@ -20,6 +20,7 @@ import { Downloads } from "../downloads.slint";
 import { Music, PlayerBar } from "../music.slint";
 import { TerminalPalette as P } from "palette.slint";
 import { Sign } from "signs.slint";
+import { Commands, Command } from "commands.slint";
 import { Voice, VoiceState, VoiceWords, Recorder, RecordStage, RecordDrag } from "../voice.slint";
 import { TerminalActions } from "actions.slint";
 import { TerminalAttachments } from "attachments.slint";
@@ -1798,12 +1799,6 @@ component Pane inherits Rectangle {
     }
 }
 
-// The commands of the command line.
-export struct Command {
-    command: string,
-    description: string,
-}
-
 // What to do with the messages chosen, in place of the command line (the design's 1b): "[Forward]",
 // in the faint colour where they do not all allow it.
 component BarAction {
@@ -1987,102 +1982,292 @@ component CommandLine inherits Rectangle {
         + (root.hold-tip ? 28px : 0px);
     height: P.foot-height + root.above;
     background: P.cmd;
-    // A reply or an edit begins, a menu or dialog closed: the keyboard comes back here.
+    // One line writes messages and runs commands, and it runs commands wherever the window is
+    // (the maintainer's word of 2026-11-14: a terminal theme's commands must really work): with
+    // no chat in front, or while a group's topics are listed, it takes commands only.
     // A chat one only reads (a channel, mostly), or a closed topic: no words to write, so no input
-    // and no cursor; a channel has muting in their place, as the other themes' composer does, a
-    // closed topic the words saying so (src/telegram/topics.rs).
+    // and no cursor while it is read (2026-10-08); a channel has muting in their place, as the
+    // other themes' composer does, a closed topic the words saying so (src/telegram/topics.rs).
+    // ⌘K asks for the line there (`asked`): it comes for a command, and goes when the keyboard
+    // leaves it.
     property <bool> read-only: Conversation.chat-id != "" && (!Conversation.can-write || Conversation.topic-closed);
     // Where words can go: not while a group's topics are listed.
     property <bool> writable: Conversation.chat-id != "" && Conversation.can-write && !Conversation.topic-closed && !Conversation.showing-topics;
+    property <bool> has-chat: Conversation.chat-id != "";
+    property <bool> asked;
+    property <bool> shown: !root.read-only || root.asked;
+    // A reply or an edit begins, a menu or dialog closed: the keyboard comes back here.
     property <int> focus-requests: Actions.focus-requests;
     changed focus-requests => {
         if !root.read-only {
             input.focus-text();
         }
     }
+    // Another chat in front, or the keyboard elsewhere: a line that was asked for goes.
+    property <string> chat: Conversation.chat-id;
+    changed chat => {
+        root.put-away();
+    }
+    property <bool> focused: input.has-focus;
+    changed focused => {
+        if !self.focused {
+            root.put-away();
+        }
+    }
+    // The commands, in the list's order: what each does, whether it can run where the window is
+    // now, and `words` for those that take words after their name. /search is the first: ⌘K and
+    // Return is the search over everything, as ⌘K is in the other themes; nothing that changes
+    // anything stands first.
     property <[Command]> commands: [
-        { command: "/photo", description: AttachWords.photo-or-video() },
-        { command: "/file", description: AttachWords.file() },
-        { command: "/voice", description: VoiceWords.voice-input() },
-        { command: "/mute", description: @tr("Mute or unmute this chat") },
-        { command: "/pin", description: @tr("Pin or unpin this chat") },
-        { command: "/readall", description: @tr("Mark every chat in this folder as read") },
-        { command: "/id", description: @tr("Copy this chat's ID") },
-        { command: "/search", description: @tr("Search chats, contacts, @usernames and messages") },
-        { command: "/group", description: ComposeWords.new-group() },
-        { command: "/channel", description: ComposeWords.new-channel() },
-        { command: "/dm", description: ComposeWords.new-chat() },
-        { command: "/contact", description: ComposeWords.add-contact() },
-        { command: "/tools", description: ToolboxWords.title() },
-        { command: "/music", description: ToolboxWords.music() },
-        { command: "/live", description: ToolboxWords.live() },
-        { command: "/accounts", description: ToolboxWords.accounts() },
-        { command: "/settings", description: ToolboxWords.settings() },
-        { command: "/me", description: ToolboxWords.profile() },
+        { command: "/search", description: @tr("Search chats, contacts, @usernames and messages"), available: true, words: true },
+        { command: "/find", description: SearchWords.placeholder, available: root.has-chat, words: false },
+        { command: "/info", description: @tr("Chat Info"), available: root.has-chat, words: false },
+        { command: "/mute", description: @tr("Mute or unmute this chat"), available: root.has-chat, words: false },
+        { command: "/pin", description: @tr("Pin or unpin this chat"), available: root.has-chat, words: false },
+        { command: "/id", description: @tr("Copy this chat's ID"), available: root.has-chat, words: false },
+        { command: "/photo", description: AttachWords.photo-or-video(), available: root.writable && (Conversation.can-send-photos || Conversation.can-send-videos), words: false },
+        { command: "/file", description: AttachWords.file(), available: root.writable && Conversation.can-send-files, words: false },
+        { command: "/voice", description: VoiceWords.voice-input(), available: root.writable, words: false },
+        { command: "/readall", description: @tr("Mark every chat in this folder as read"), available: true, words: false },
+        { command: "/group", description: ComposeWords.new-group(), available: true, words: false },
+        { command: "/channel", description: ComposeWords.new-channel(), available: true, words: false },
+        { command: "/dm", description: ComposeWords.new-chat(), available: true, words: false },
+        { command: "/contact", description: ComposeWords.add-contact(), available: true, words: false },
+        { command: "/tools", description: ToolboxWords.title(), available: true, words: true },
+        { command: "/downloads", description: ToolboxWords.downloads(), available: true, words: false },
+        { command: "/music", description: ToolboxWords.music(), available: true, words: false },
+        { command: "/live", description: ToolboxWords.live(), available: true, words: false },
+        { command: "/accounts", description: ToolboxWords.accounts(), available: true, words: false },
+        { command: "/settings", description: ToolboxWords.settings(), available: true, words: false },
+        { command: "/me", description: ToolboxWords.profile(), available: true, words: false },
     ];
     property <string> typed: input.text;
+    // A command is being written: "/…", but not while a message is edited, whose words are on the
+    // line then, whatever they begin with.
+    property <bool> commanding: root.typed.starts-with("/") && Actions.bar != ComposeBar.edit;
+    // "/…" typed: what it can be (src/command_line.rs): the commands of the chat's bot that start
+    // so (sifted already, src/telegram/bots.rs; where words can go), then the line's own; a name
+    // typed in full comes first. The first row runs on Return until the arrows pick another; ten
+    // rows are in sight.
+    property <[BotCommand]> no-bots;
+    property <[Command]> nothing;
+    property <[BotCommand]> bots: root.writable ? Conversation.commands : root.no-bots;
+    property <[Command]> found: root.commanding && root.shown && !Actions.selecting ? Commands.matching(root.commands, root.bots, root.typed) : root.nothing;
+    property <bool> listing: root.found.length > 0;
+    property <int> picked;
+    property <int> lit: min(root.picked, root.found.length - 1);
+    property <int> first;
+    property <int> in-sight: min(root.found.length, 10);
+    property <length> rolled;
+    changed typed => {
+        root.picked = 0;
+        root.first = 0;
+    }
 
-    public function focus-line() {
-        if !root.read-only {
-            input.focus-text();
+    // A command is asked for: ⌘K, the status bar's [⌘K cmd] (the design's openCmd: "/" on the
+    // line, so that the list of commands shows at once), or "/" typed where no command can go (the
+    // toolbox's search). The keyboard comes here; in a chat one only reads the line comes with it.
+    // Words already on the line stay as they are.
+    public function ask() {
+        if root.read-only && !Actions.selecting {
+            root.asked = true;
+        }
+        if root.typed == "" {
+            input.put("/");
+            Conversation.command-typed("/");
+        }
+        input.focus-text();
+    }
+
+    // A line that was asked for in a chat one only reads goes, with what was typed on it.
+    function put-away() {
+        if root.asked {
+            root.asked = false;
+            input.text = "";
+            Conversation.command-typed("");
+            input.leave();
         }
     }
 
-    function run(line: string) {
-        if line.starts-with("/photo") {
+    // The arrows: the row picked, round the ends, and kept in sight.
+    function pick(row: int) {
+        root.picked = row < 0 ? root.found.length - 1 : row >= root.found.length ? 0 : row;
+        root.first = root.picked < root.first ? root.picked
+            : root.picked >= root.first + root.in-sight ? root.picked - root.in-sight + 1 : root.first;
+    }
+
+    // The wheel over the list: a row at a time.
+    function roll(delta: length) {
+        root.rolled += delta;
+        if root.rolled <= -26px {
+            root.first = max(0, min(root.found.length - root.in-sight, root.first + 1));
+            root.rolled = 0px;
+        } else if root.rolled >= 26px {
+            root.first = max(0, root.first - 1);
+            root.rolled = 0px;
+        }
+        // The row picked stays among those in sight.
+        root.picked = max(root.first, min(root.first + root.in-sight - 1, root.lit));
+    }
+
+    // Tab: the picked row's name onto the line, a space after one that takes words.
+    function complete() {
+        let row = root.found[root.lit];
+        let words = row.words ? row.command + " " : row.command;
+        input.put(words);
+        Conversation.command-typed(words);
+    }
+
+    // Return on a line that starts with "/": the picked row runs ("/se" is "/search" while that
+    // is the row lit), with the words typed after its name.
+    function enter() {
+        let line = root.typed;
+        let row = root.lit;
+        input.text = "";
+        root.submit(line, row);
+    }
+
+    // A row clicked.
+    function click(row: int) {
+        let line = root.typed;
+        input.text = "";
+        root.submit(line, row);
+    }
+
+    // The line's words go: a message, where words can go; or a command, the row-th of those the
+    // words can be.
+    function submit(line: string, row: int) {
+        if line.starts-with("/") && Actions.bar != ComposeBar.edit {
+            root.execute(Commands.matching(root.commands, root.bots, line), row, line);
+        } else if !root.writable || Conversation.slow-wait > 0 {
+            // Nowhere for the words to go, or slow mode still holds (the hint says for how long):
+            // they stay on the line.
+            input.text = line;
+        } else {
+            Conversation.send(line);
+        }
+    }
+
+    // The row-th of the rows a command line can be runs; a line that can be none of them goes to
+    // the chat, where words can go.
+    function execute(rows: [Command], row: int, line: string) {
+        Conversation.command-typed("");
+        if rows.length > 0 {
+            root.run(rows[max(0, min(row, rows.length - 1))], line);
+            root.put-away();
+        } else if root.writable {
+            // No command of the line's and none of the bot's list: sent as it is, as Telegram's
+            // apps do (a bot's command it did not list, "/start@bot").
+            Conversation.send-command(line);
+        } else {
+            input.text = line;
+        }
+    }
+
+    // A row runs. The bot's command goes to the chat as it is; the line's own does its work, the
+    // words typed after its name going with it ("/search keeb", "/tools ai").
+    function run(row: Command, line: string) {
+        if row.bot {
+            Conversation.send-command(row.command);
+        } else if row.command == "/photo" {
             Attachments.choose(AttachKind.photo);
-        } else if line.starts-with("/file") {
+        } else if row.command == "/file" {
             Attachments.choose(AttachKind.file);
-        } else if line.starts-with("/voice") {
+        } else if row.command == "/voice" {
             // Voice input: once starts, again finishes; while it is off, its panel in the toolbox
             // comes, where it is turned on (src/speech/).
             Voice.press();
             Voice.release();
-        } else if line.starts-with("/mute") {
+        } else if row.command == "/find" {
+            // The search in this chat, the line under the pane head.
+            Conversation.search-open = true;
+            Conversation.search-requests += 1;
+        } else if row.command == "/info" {
+            ChatInfo.toggle();
+        } else if row.command == "/mute" {
             Conversation.toggle-mute();
-        } else if line.starts-with("/pin") {
+        } else if row.command == "/pin" {
             Conversation.toggle-pin();
-        } else if line.starts-with("/readall") {
-            Chats.mark-all-read(Chats.folder);
-        } else if line.starts-with("/id") {
+        } else if row.command == "/id" {
             Conversation.copy-id();
-        } else if line.starts-with("/search") {
+        } else if row.command == "/readall" {
+            Chats.mark-all-read(Chats.folder);
+        } else if row.command == "/search" {
             // "/search keeb": the search over everything, with the words.
-            Search.show-with(line);
-        } else if line.starts-with("/group") {
+            Search.show-with(root.with-words(row, line));
+        } else if row.command == "/group" {
             NewChat.start(NewDialog.group);
-        } else if line.starts-with("/channel") {
+        } else if row.command == "/channel" {
             NewChat.start(NewDialog.channel);
-        } else if line.starts-with("/dm") {
+        } else if row.command == "/dm" {
             NewChat.start(NewDialog.direct);
-        } else if line.starts-with("/contact") {
+        } else if row.command == "/contact" {
             NewChat.start(NewDialog.contact);
-        } else if line.starts-with("/tools") {
+        } else if row.command == "/tools" {
             // The toolbox in the pane's place (toolbox.slint): "/tools 传输" at a category; the
             // same command again closes it. Words that name no category leave it as it is.
-            Toolbox.command(line);
-        } else if line.starts-with("/music") {
+            Toolbox.command(root.with-words(row, line));
+        } else if row.command == "/downloads" {
+            Toolbox.open-tool("downloads");
+        } else if row.command == "/music" {
             AppState.page = Page.music;
-        } else if line.starts-with("/live") {
+        } else if row.command == "/live" {
             // The live streams' view (pages/live.slint), in the pane's place.
             Live.show-requests += 1;
-        } else if line.starts-with("/accounts") {
+        } else if row.command == "/accounts" {
             Toolbox.command("accounts");
-        } else if line.starts-with("/settings") {
+        } else if row.command == "/settings" {
             AppState.page = Page.settings;
-        } else if line.starts-with("/me") {
+        } else if row.command == "/me" {
             AppState.page = Page.profile;
-        } else if !line.starts-with("/") {
-            // Slow mode still holds (the hint says for how long): the words stay on the line.
-            if Conversation.slow-wait > 0 {
-                input.text = line;
-            } else {
-                Conversation.send(line);
-            }
-        } else if Conversation.can-write {
-            // A bot's command, or any other "/words": sent as they are, as Telegram's apps do.
-            Conversation.send-command(line);
         }
+    }
+
+    // The line as typed when words follow the command's name, the name alone when it was picked
+    // from its beginning ("/se").
+    pure function with-words(row: Command, line: string) -> string {
+        return line.to-lowercase().starts-with(row.command + " ") ? line : row.command;
+    }
+
+    // The keys the line takes before its box does (chat.slint's MessageInput): over a command,
+    // Return runs it whatever sends messages (Settings → General), the arrows pick a row of the
+    // list, Tab completes, Escape gives the command up; on words that are no command, Escape puts
+    // away a line that was asked for, then the toolbox while it is open.
+    function key(event: KeyEvent) -> bool {
+        if root.commanding {
+            if event.text == Key.Return && !event.modifiers.shift && !event.modifiers.alt {
+                root.enter();
+                return true;
+            }
+            if root.listing && event.text == Key.DownArrow {
+                root.pick(root.lit + 1);
+                return true;
+            }
+            if root.listing && event.text == Key.UpArrow {
+                root.pick(root.lit - 1);
+                return true;
+            }
+            if root.listing && event.text == Key.Tab {
+                root.complete();
+                return true;
+            }
+            if event.text == Key.Escape {
+                input.text = "";
+                Conversation.command-typed("");
+                root.put-away();
+                return true;
+            }
+            return false;
+        }
+        if event.text == Key.Escape && root.asked {
+            root.put-away();
+            return true;
+        }
+        if event.text == Key.Escape && Toolbox.open {
+            Toolbox.close();
+            return true;
+        }
+        return false;
     }
 
     Rectangle {
@@ -2351,29 +2536,31 @@ component CommandLine inherits Rectangle {
                 }
             }
         }
-        // A closed topic: the words saying so, in the input's place.
-        if Conversation.chat-id != "" && Conversation.topic-closed: T {
+        // A closed topic: the words saying so, in the input's place (until a command is asked for).
+        if Conversation.chat-id != "" && Conversation.topic-closed && !root.asked: T {
             horizontal-stretch: 1;
             text: ExtraWords.topic-closed();
             color: P.muted;
             overflow: elide;
         }
         VerticalLayout {
-            horizontal-stretch: Conversation.chat-id != "" && Conversation.topic-closed ? 0 : 1;
+            horizontal-stretch: Conversation.chat-id != "" && Conversation.topic-closed && !root.asked ? 0 : 1;
             alignment: center;
             Rectangle {
             height: input.height;
             input := MessageInput {
                 width: parent.width;
-                // Out of sight where there is nothing to write; its room keeps the line's shape.
-                visible: !root.read-only;
+                // Out of sight where there is nothing to write, until a command is asked for; its
+                // room keeps the line's shape.
+                visible: root.shown;
                 text <=> Conversation.draft;
                 allow-empty: Actions.bar == ComposeBar.forward;
-                takes-dictation: !root.read-only;
-                // Nothing goes while a group's topics are listed.
-                enabled: Conversation.chat-id != "" && !Actions.selecting && !root.read-only && !Conversation.showing-topics;
-                // Slow mode holding: how long still, in the placeholder (src/telegram/admin.rs).
-                placeholder: Conversation.slow-wait > 0 ? ExtraWords.slow-wait-placeholder(Conversation.slow-wait)
+                takes-dictation: root.writable;
+                enabled: root.shown && !Actions.selecting;
+                // Where no words can go the line takes commands, and says so. Slow mode holding:
+                // how long still, in the placeholder (src/telegram/admin.rs).
+                placeholder: !root.writable ? @tr("/ for commands")
+                    : Conversation.slow-wait > 0 ? ExtraWords.slow-wait-placeholder(Conversation.slow-wait)
                     : Conversation.keyboard-placeholder != "" ? Conversation.keyboard-placeholder : @tr("Write a message, or / for commands");
                 text-color: P.text;
                 placeholder-color: P.faint;
@@ -2388,16 +2575,20 @@ component CommandLine inherits Rectangle {
                 base-height: 26px;
                 tallest: 90px;
                 send(words) => {
-                    root.run(words);
+                    root.submit(words, 0);
                 }
                 // A command is no message: writing one is no typing; the bot's commands that
-                // start so are offered among the line's own.
+                // start so are offered with the line's own. Words that have nowhere to go are
+                // nobody's draft.
                 edited(words) => {
-                    if words.starts-with("/") {
+                    if words.starts-with("/") && Actions.bar != ComposeBar.edit {
                         Conversation.command-typed(words);
-                    } else {
+                    } else if root.writable {
                         Conversation.edited(words);
                     }
+                }
+                key(event) => {
+                    return root.key(event);
                 }
             }
             if Recorder.busy: RecordLine {
@@ -2486,8 +2677,12 @@ component CommandLine inherits Rectangle {
                 }
             }
         }
-        // Slow mode's wait, or its rule, in the hint's place.
-        if !root.read-only && !Conversation.showing-topics && !Recorder.busy && (root.typed != "" || Conversation.slow-wait > 0 || !Conversation.can-send-voice || Voice.busy): T {
+        // Over a command: what Return does. Else slow mode's wait, or its rule, in the hint's place.
+        if root.shown && !Actions.selecting && root.commanding: T {
+            text: "⏎ " + @tr("terminal" => "run");
+            color: P.faint;
+        }
+        if root.writable && !root.commanding && !Recorder.busy && (root.typed != "" || Conversation.slow-wait > 0 || !Conversation.can-send-voice || Voice.busy): T {
             text: Conversation.slow-wait > 0 ? ExtraWords.slow-wait-hint(Conversation.slow-wait)
                 : Conversation.slow-limited ? ExtraWords.slow-hint(Conversation.slow-mode)
                 : (AppState.send-with-enter ? "⏎ " : "⌘⏎ ") + (Actions.bar == ComposeBar.edit ? @tr("save") : @tr("send"));
@@ -2497,12 +2692,13 @@ component CommandLine inherits Rectangle {
 
     if Actions.selecting: SelectionLine { }
 
-    // What "/…" can be, above the line.
-    if root.typed.starts-with("/"): Rectangle {
+    // What "/…" can be, above the line: ten rows in sight, the one Return runs lit (the arrows and
+    // the pointer move it), the bot's commands in the second accent; the keys under them.
+    if root.listing: Rectangle {
         x: 16px;
         y: -self.height - 6px;
-        width: 420px;
-        height: suggestions.preferred-height;
+        width: min(540px, root.width - 32px);
+        height: root.in-sight * 26px + 37px;
         border-radius: 4px;
         background: P.side;
         border-width: 1px;
@@ -2510,63 +2706,96 @@ component CommandLine inherits Rectangle {
         drop-shadow-blur: 30px;
         drop-shadow-offset-y: 12px;
         drop-shadow-color: P.shadow;
-        suggestions := VerticalLayout {
-            padding-top: 6px;
-            padding-bottom: 6px;
-            for command in root.commands: Rectangle {
-                visible: command.command.starts-with(root.typed) || root.typed == "/";
-                height: self.visible ? 26px : 0px;
-                background: pick.has-hover ? P.sel : transparent;
-                HorizontalLayout {
-                    padding-left: 12px;
-                    padding-right: 12px;
-                    spacing: 8px;
-                    T {
-                        width: 140px;
-                        text: command.command;
-                        color: P.accent;
+        // Nothing under the list takes its clicks.
+        TouchArea { }
+        Rectangle {
+            x: 1px;
+            y: 6px;
+            width: parent.width - 2px;
+            height: root.in-sight * 26px;
+            clip: true;
+            VerticalLayout {
+                y: -root.first * 26px;
+                height: root.found.length * 26px;
+                for row[index] in root.found: Rectangle {
+                    height: 26px;
+                    background: index == root.lit ? P.sel : transparent;
+                    HorizontalLayout {
+                        padding-left: 11px;
+                        padding-right: 11px;
+                        spacing: 8px;
+                        T {
+                            width: 116px;
+                            text: row.command;
+                            color: row.bot ? P.accent2 : P.accent;
+                            overflow: elide;
+                        }
+                        T {
+                            horizontal-stretch: 1;
+                            text: row.description;
+                            color: P.muted;
+                            overflow: elide;
+                        }
                     }
-                    T {
-                        horizontal-stretch: 1;
-                        text: command.description;
-                        color: P.muted;
-                        overflow: elide;
-                    }
-                }
-                pick := TouchArea {
-                    clicked => {
-                        root.run(command.command);
-                        input.text = "";
+                    TouchArea {
+                        mouse-cursor: pointer;
+                        clicked => {
+                            root.click(index);
+                        }
+                        // The pointer moved onto the row (not the list under a pointer at rest).
+                        pointer-event(event) => {
+                            if event.kind == PointerEventKind.move {
+                                root.picked = index;
+                            }
+                        }
+                        scroll-event(event) => {
+                            root.roll(event.delta-y);
+                            return accept;
+                        }
                     }
                 }
             }
-            // The chat's bot's own (src/telegram/bots.rs), already sifted by what is typed.
-            for command in Conversation.commands: Rectangle {
-                height: 26px;
-                background: pick-bot.has-hover ? P.sel : transparent;
-                HorizontalLayout {
-                    padding-left: 12px;
-                    padding-right: 12px;
-                    spacing: 8px;
-                    T {
-                        width: 140px;
-                        text: command.command;
-                        color: P.accent2;
-                        overflow: elide;
-                    }
-                    T {
-                        horizontal-stretch: 1;
-                        text: command.description;
-                        color: P.muted;
-                        overflow: elide;
-                    }
-                }
-                pick-bot := TouchArea {
-                    clicked => {
-                        Conversation.send-command(command.command);
-                        input.text = "";
-                    }
-                }
+        }
+        Rectangle {
+            x: 1px;
+            y: parent.height - 26px;
+            width: parent.width - 2px;
+            height: 1px;
+            background: P.line;
+        }
+        HorizontalLayout {
+            x: 0;
+            y: parent.height - 25px;
+            width: parent.width;
+            height: 24px;
+            padding-left: 12px;
+            padding-right: 12px;
+            spacing: 14px;
+            T {
+                text: ComposeWords.keys-select().to-lowercase();
+                color: P.faint;
+                font-size: 11px;
+            }
+            T {
+                text: "tab " + @tr("terminal" => "complete");
+                color: P.faint;
+                font-size: 11px;
+            }
+            T {
+                text: "⏎ " + @tr("terminal" => "run");
+                color: P.faint;
+                font-size: 11px;
+            }
+            T {
+                text: ComposeWords.keys-close().to-lowercase();
+                color: P.faint;
+                font-size: 11px;
+            }
+            Rectangle { horizontal-stretch: 1; }
+            T {
+                text: (root.lit + 1) + "/" + root.found.length;
+                color: P.faint;
+                font-size: 11px;
             }
         }
     }
@@ -2644,10 +2873,11 @@ export component TerminalWindow inherits Rectangle {
         root.view = TerminalView.live;
     }
 
-    // ⌘K, from the menu bar (app.slint): the command line, which has /search (the design's 1b).
+    // ⌘K, from the menu bar (app.slint): the command line, "/" on it and its commands listed,
+    // /search among them (the design's 1b); it comes for a command in a chat one only reads too.
     property <int> search-requests: AppState.search-requests;
     changed search-requests => {
-        line.focus-line();
+        line.ask();
     }
 
     VerticalLayout {
@@ -2671,7 +2901,11 @@ export component TerminalWindow inherits Rectangle {
                         }
                     }
                     if root.view == TerminalView.live: LivePane { }
-                    if Toolbox.open: TerminalToolbox { }
+                    if Toolbox.open: TerminalToolbox {
+                        command => {
+                            line.ask();
+                        }
+                    }
                 }
                 line := CommandLine { }
             }
@@ -2680,7 +2914,7 @@ export component TerminalWindow inherits Rectangle {
         if Music.playing: PlayerBar { }
         StatusBar {
             search => {
-                line.focus-line();
+                line.ask();
             }
         }
     }

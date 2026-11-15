@@ -32,6 +32,17 @@ things fit together.
   Appearance without a restart (docs/architecture.md). Every change to the pages goes into all three,
   Workbench first. What the design shows but FinchGram cannot do yet is greyed out; never invent
   pages or visual design beyond the design.
+- Terminal's command line is real (the maintainer's words of 2026-11-14: "既然这个terminal theme，你就
+  应该允许命令行 … 要真的能用", "既然做了这个theme，就要做到极致"): the line at the foot runs its "/"
+  commands wherever the window is (no chat in front, a group's topics listed, the toolbox open; in
+  a chat one only reads ⌘K brings it, so that no cursor blinks under a channel), "/" lists what can
+  run, the arrows pick, Tab completes, Return runs (ui/terminal/commands.slint, CommandLine in
+  ui/terminal/terminal.slint, src/command_line.rs; docs/architecture.md). A command a Terminal
+  menu or the toolbox shows beside an entry is to be one the line runs. Not there yet (open since
+  2026-11-14, the maintainer to decide): the message menu's /reply … /select, as the design draws
+  them, which need a message to act on that the line has no way to name; and /poll, greyed with
+  its entry until there are polls. The commands are the app's own features by another road: a new
+  feature may get a command, a command never invents a feature.
 - Video and voice messages play through mpv, as libmpv built from pinned sources in
   `vendor/mpv/` the way finchgram-tdlib is (`mpv-*` releases, `scripts/fetch-mpv.sh`); the app links
   it, and mpv draws its frames with OpenGL, the one way its render API has on a GPU, in a context of
